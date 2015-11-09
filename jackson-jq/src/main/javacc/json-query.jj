@@ -1,0 +1,843 @@
+options {
+	STATIC = false;
+	LOOKAHEAD = 1;
+	DEBUG_PARSER = false;
+	UNICODE_INPUT = true;
+	JDK_VERSION = "1.7";
+}
+
+PARSER_BEGIN(JsonQueryParser)
+	package net.thisptr.jackson.jq.internal.javacc;
+
+	import java.io.StringReader;
+	import java.util.List;
+	import java.util.Stack;
+	import java.util.ArrayList;
+
+	import net.thisptr.jackson.jq.JsonQuery;
+	import net.thisptr.jackson.jq.internal.misc.Pair;
+	import net.thisptr.jackson.jq.internal.tree.*;
+	import net.thisptr.jackson.jq.internal.tree.binaryop.*;
+	import net.thisptr.jackson.jq.internal.tree.literal.*;
+	import net.thisptr.jackson.jq.internal.tree.fieldaccess.*;
+
+	public class JsonQueryParser {
+		public static JsonQuery compile(final String line) throws ParseException {
+			final JsonQueryParser parser = new JsonQueryParser(new StringReader(line));
+			return parser.Start();
+		}
+	}
+PARSER_END(JsonQueryParser)
+
+TOKEN_MGR_DECLS:
+{
+	Stack<Integer> depthStack = new Stack<Integer>();
+	int depth = 0;
+	int stringInterpLevel = 0;
+}
+
+SKIP: { <SPACES: " " | "\t" | "\r" | "\n"> }
+
+// TOKEN: { <OP_NOT: "not"> } is a normal built-in function
+TOKEN: { <OP_AND: "and"> }
+TOKEN: { <OP_OR: "or"> }
+TOKEN: { <OP_DEFAULT: "//"> }
+
+TOKEN: { <COMP_EQUAL: "=="> }
+TOKEN: { <COMP_NOT_EQUAL: "!="> }
+TOKEN: { <COMP_GREATER: ">"> }
+TOKEN: { <COMP_GREATER_EQUAL: ">="> }
+TOKEN: { <COMP_LESS: "<"> }
+TOKEN: { <COMP_LESS_EQUAL: "<="> }
+
+TOKEN: { <PLUS: "+"> }
+TOKEN: { <MINUS: "-"> }
+TOKEN: { <TIMES: "*"> }
+TOKEN: { <DIVIDE: "/"> }
+TOKEN: { <MODULO: "%"> }
+
+TOKEN: { <ASSIGN_OP: "="> }
+TOKEN: { <UPDATE_OP: "|="> }
+
+TOKEN: { <PLUS_EQUAL: "+="> }
+TOKEN: { <MINUS_EQUAL: "-="> }
+TOKEN: { <TIMES_EQUAL: "*="> }
+TOKEN: { <DIVIDE_EQUAL: "/="> }
+TOKEN: { <MODULO_EQUAL: "%="> }
+TOKEN: { <DEFAULT_EQUAL: "//="> }
+
+TOKEN: {
+	<OPEN_PAR: "(">
+	{
+		depth += 1;
+	}
+}
+
+TOKEN: {
+	<CLOSE_PAR: ")">
+	{
+		if (depth == 0) {
+			stringInterpLevel -= 1;
+			depth = depthStack.pop();
+			SwitchTo(STATE_STRING);
+		} else {
+			depth -= 1;
+		}
+	}
+}
+
+TOKEN: { <SEMICOLON: ";"> }
+TOKEN: { <DOT: "."> }
+TOKEN: { <RECURSION: ".."> }
+
+TOKEN: { <OPEN_BRACKET: "["> }
+TOKEN: { <CLOSE_BRACKET: "]"> }
+TOKEN: { <QUESTION: "?"> }
+
+TOKEN: { <DOLLAR: "$"> }
+TOKEN: { <PIPE: "|"> }
+TOKEN: { <ATSIGN: "@"> }
+
+TOKEN: { <OPEN_BRACE: "{"> }
+TOKEN: { <CLOSE_BRACE: "}"> }
+
+TOKEN: { <COLON: ":"> }
+TOKEN: { <COMMA: ","> }
+
+TOKEN: { <BOOLEAN_LITERAL_TRUE: "true"> }
+TOKEN: { <BOOLEAN_LITERAL_FALSE: "false"> }
+TOKEN: { <NULL_LITERAL: "null"> }
+TOKEN: { <INTEGER_LITERAL: (["1"-"9"] (["0"-"9"])*) | "0"> }
+TOKEN: {
+	<FLOAT_LITERAL: (("0" | ["1"-"9"] (<DIGIT>)*) ("." (["0"-"9"])+)? | "." (["0"-"9"])+) (<EXPONENT>)?>
+	| <#EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+>
+}
+
+TOKEN: {
+	<QUOTE: "\""> : STATE_STRING
+}
+
+<STATE_STRING> TOKEN: {
+	<ENDQUOTE: <QUOTE>> : DEFAULT
+	| <VISIBLE_CHAR:~["\"", "\\", "\b", "\f", "\n", "\r", "\t"]>
+}
+
+<STATE_STRING> MORE: {
+	"\\" : STATE_STRING_ESCAPE
+}
+
+<STATE_STRING_ESCAPE> TOKEN: {
+	<ESCAPE_CHAR: ["\"", "\\", "/", "b", "f", "n", "r", "t"]> : STATE_STRING
+}
+
+<STATE_STRING_ESCAPE> TOKEN: {
+	<OPEN_INTERP: <OPEN_PAR>>
+	{
+		stringInterpLevel += 1;
+		depthStack.push(depth);
+		depth = 0;
+		SwitchTo(DEFAULT);
+	}
+}
+
+<STATE_STRING_ESCAPE> TOKEN: {
+	<CODEPOINT_CHAR: "u" (["0"-"9", "a"-"f", "A"-"F"]){4}> : STATE_STRING
+}
+
+TOKEN: {
+	<KEYWORD_IF: "if">
+	| <KEYWORD_THEN: "then">
+	| <KEYWORD_ELIF: "elif">
+	| <KEYWORD_ELSE: "else">
+}
+TOKEN: {
+	<KEYWORD_END: "end">
+}
+
+TOKEN: {
+	<KEYWORD_AS: "as">
+}
+TOKEN: {
+	<KEYWORD_DEF: "def">
+}
+TOKEN: {
+	<KEYWORD_REDUCE: "reduce">
+	| <KEYWORD_FOREACH: "foreach">
+}
+
+TOKEN: {
+	<KEYWORD_TRY: "try">
+	| <KEYWORD_CATCH: "catch">
+}
+
+TOKEN: {
+	<IDENTIFIER: <LETTER> (<LETTER> | <DIGIT>)*>
+	| <#LETTER: ["a"-"z","A"-"Z","_"]>
+	| <#DIGIT: ["0"-"9"]>
+}
+
+JsonQuery Start():
+{
+	JsonQuery q;
+}
+{
+	q = JsonQuery()
+	<EOF>
+	{ return q; }
+}
+
+JsonQuery JsonQuery():
+{
+	Token t;
+	JsonQuery tmp;
+	final List<Pair<JsonQuery, String>> qs = new ArrayList<Pair<JsonQuery, String>>();
+}
+{
+	tmp = TupleExpression()
+	(
+		{ t = null; }
+		(
+			<KEYWORD_AS>
+			<DOLLAR>
+			t = <IDENTIFIER>
+		)?
+		<PIPE>
+		{ qs.add(Pair.<JsonQuery, String> of(tmp, t != null ? t.image : null)); }
+		tmp = TupleExpression()
+	)*
+	{ qs.add(Pair.<JsonQuery, String> of(tmp, null)); }
+	{
+		if (qs.size() == 1)
+			return qs.get(0)._1;
+		return new PipedQuery(qs);
+	}
+}
+
+JsonQuery JsonQueryWithoutComma():
+{
+	Token t;
+	JsonQuery tmp;
+	final List<Pair<JsonQuery, String>> qs = new ArrayList<Pair<JsonQuery, String>>();
+}
+{
+	tmp = BinaryOperatorExpression()
+	(
+		{ t = null; }
+		(
+			<KEYWORD_AS>
+			<DOLLAR>
+			t = <IDENTIFIER>
+		)?
+		<PIPE>
+		{ qs.add(Pair.<JsonQuery, String> of(tmp, t != null ? t.image : null)); }
+		tmp = BinaryOperatorExpression()
+	)*
+	{ qs.add(Pair.<JsonQuery, String> of(tmp, null)); }
+	{
+		if (qs.size() == 1)
+			return qs.get(0)._1;
+		return new PipedQuery(qs);
+	}
+}
+
+JsonQuery TupleExpression():
+{
+	JsonQuery tmp;
+	final List<JsonQuery> qs = new ArrayList<JsonQuery>();
+}
+{
+	tmp = BinaryOperatorExpression()
+	{ qs.add(tmp); }
+	(
+		<COMMA>
+		tmp = BinaryOperatorExpression()
+		{ qs.add(tmp); }
+	)*
+	{
+		if (qs.size() == 1)
+			return qs.get(0);
+		return new Tuple(qs);
+	}
+}
+
+JsonQuery BinaryOperatorExpression():
+{
+	Token t;
+	JsonQuery expr;
+	List<JsonQuery> exprs = new ArrayList<JsonQuery>();
+	List<BinaryOperatorExpression.Operator> operators = new ArrayList<BinaryOperatorExpression.Operator>();
+}
+{
+	expr = PrimaryExpression()
+	{ exprs.add(expr); }
+	(
+		(
+			t = <TIMES>
+			|
+			t = <DIVIDE>
+			|
+			t = <MODULO>
+			|
+			t = <PLUS>
+			|
+			t = <MINUS>
+			|
+			t = <COMP_EQUAL>
+			|
+			t = <COMP_NOT_EQUAL>
+			|
+			t = <COMP_GREATER>
+			|
+			t = <COMP_GREATER_EQUAL>
+			|
+			t = <COMP_LESS>
+			|
+			t = <COMP_LESS_EQUAL>
+			|
+			t = <OP_AND>
+			|
+			t = <OP_OR>
+			|
+			t = <OP_DEFAULT>
+			|
+			t = <ASSIGN_OP>
+			|
+			t = <UPDATE_OP>
+			|
+			t = <PLUS_EQUAL>
+			|
+			t = <MINUS_EQUAL>
+			|
+			t = <TIMES_EQUAL>
+			|
+			t = <DIVIDE_EQUAL>
+			|
+			t = <MODULO_EQUAL>
+			|
+			t = <DEFAULT_EQUAL>
+		)
+		{ operators.add(BinaryOperatorExpression.Operator.fromImage(t.image)); }
+		expr = PrimaryExpression()
+		{ exprs.add(expr); }
+	)*
+	{ return BinaryOperatorExpression.buildTree(exprs, operators); }
+}
+
+JsonQuery FunctionDefinition():
+{
+	final List<String> args = new ArrayList<String>();
+	Token fname;
+	String tmp;
+	JsonQuery body;
+}
+{
+	<KEYWORD_DEF>
+	fname = <IDENTIFIER>
+	(
+		<OPEN_PAR>
+		tmp = FunctionDefinitionParam()
+		{ args.add(tmp); }
+		(
+			<SEMICOLON>
+			tmp = FunctionDefinitionParam()
+			{ args.add(tmp); }
+		)*
+		<CLOSE_PAR>
+	)?
+	<COLON>
+	body = JsonQuery()
+	<SEMICOLON>
+	{ return new FunctionDefinition(fname.image, args, body); }
+}
+
+String FunctionDefinitionParam():
+{
+	Token param;
+	boolean isvar = false;
+}
+{
+	(
+		<DOLLAR>
+		{ isvar = true; }
+	)?
+	param = <IDENTIFIER>
+	{ return (isvar ? "$" : "") + param.image; }
+}
+
+JsonQuery PrimaryExpression():
+{
+	Token t;
+	JsonQuery tmp;
+	List<JsonQuery> exprs = new ArrayList<JsonQuery>();
+}
+{
+	(
+		tmp = FunctionDefinition()
+		{ exprs.add(tmp); }
+	)*
+	(
+		tmp = ThisObjectAccess()
+	|
+		tmp = VariableAccess()
+	|
+		LOOKAHEAD(3)
+		tmp = ValueLiteral()
+		(
+			tmp = FieldAccessor(tmp)
+		)?
+	|
+		LOOKAHEAD(3)
+		tmp = FormattingFilter()
+		(
+			tmp = FieldAccessor(tmp)
+		)?
+	|
+		tmp = ArrayConstruction()
+		(
+			tmp = FieldAccessor(tmp)
+		)?
+	|
+		tmp = ObjectConstruction()
+		(
+			tmp = FieldAccessor(tmp)
+		)?
+	|
+		tmp = FunctionCall()
+        (
+			tmp = FieldAccessor(tmp)
+        )?
+	|
+		<OPEN_PAR>
+		tmp = JsonQuery()
+		<CLOSE_PAR>
+	|
+		<MINUS>
+		tmp = PrimaryExpression()
+		{ tmp = new NegativeExpression(tmp); }
+	|
+		tmp = ConditionalExpression()
+	|
+		tmp = ReduceExpression()
+	|
+		tmp = RecursionOperator()
+	|
+		tmp = ForeachExpression()
+	|
+		tmp = TryCatchExpression()
+	)
+	{
+		exprs.add(tmp);
+		if (exprs.size() == 1)
+			return exprs.get(0);
+		return new SemicolonOperator(exprs);
+	}
+}
+
+JsonQuery RecursionOperator():
+{
+}
+{
+	<RECURSION>
+	{ return new RecursionOperator(); }
+}
+
+JsonQuery FormattingFilter():
+{
+	Token t;
+}
+{
+	<ATSIGN>
+	t = <IDENTIFIER>
+	{ return new FormattingFilter(t.image); }
+}
+
+JsonQuery TryCatchExpression():
+{
+	JsonQuery tryExpr, catchExpr;
+}
+{
+	<KEYWORD_TRY>
+	tryExpr = JsonQuery()
+	<KEYWORD_CATCH>
+	catchExpr = PrimaryExpression()
+	{ return new TryCatch(tryExpr, catchExpr); }
+}
+
+JsonQuery ForeachExpression():
+{
+	Token var;
+	JsonQuery initExpr, updateExpr, extractExpr = null, iterExpr;
+}
+{
+	<KEYWORD_FOREACH>
+	iterExpr = PrimaryExpression()
+	<KEYWORD_AS>
+	<DOLLAR>
+	var = <IDENTIFIER>
+	<OPEN_PAR>
+	initExpr = JsonQuery()
+	<SEMICOLON>
+	updateExpr = JsonQuery()
+	(
+		<SEMICOLON>
+		extractExpr = JsonQuery()
+	)?
+	<CLOSE_PAR>
+	{ return new ForeachExpression(var.image, initExpr, updateExpr, extractExpr, iterExpr); }
+}
+
+JsonQuery ReduceExpression():
+{
+	Token t;
+	JsonQuery tmpIterExpr, tmpInitExpr, tmpReduceExpr;
+}
+{
+	<KEYWORD_REDUCE>
+	tmpIterExpr = PrimaryExpression()
+	<KEYWORD_AS>
+	<DOLLAR>
+	t = <IDENTIFIER>
+	<OPEN_PAR>
+	tmpInitExpr = JsonQuery()
+	<SEMICOLON>
+	tmpReduceExpr = JsonQuery()
+	<CLOSE_PAR>
+	{ return new ReduceExpression(t.image, tmpInitExpr, tmpReduceExpr, tmpIterExpr); }
+}
+
+JsonQuery VariableAccess():
+{
+	Token t;
+	JsonQuery tmp;
+}
+{
+	<DOLLAR>
+	t = <IDENTIFIER>
+	{ tmp = new VariableAccess(t.image); }
+	(
+		tmp = FieldAccessor(tmp)
+	)?
+	{ return tmp; }
+}
+
+JsonQuery ConditionalExpression():
+{
+	JsonQuery tmpPred;
+	JsonQuery tmpExpr;
+	final List<Pair<JsonQuery, JsonQuery>> switches = new ArrayList<Pair<JsonQuery, JsonQuery>>();
+	final JsonQuery otherwise;
+}
+{
+	<KEYWORD_IF>
+	tmpPred = JsonQuery()
+	<KEYWORD_THEN>
+	tmpExpr = JsonQuery()
+	{ switches.add(Pair.of(tmpPred, tmpExpr)); }
+	(
+		<KEYWORD_ELIF>
+		tmpPred = JsonQuery()
+		<KEYWORD_THEN>
+		tmpExpr = JsonQuery()
+		{ switches.add(Pair.of(tmpPred, tmpExpr)); }
+	)*
+	<KEYWORD_ELSE>
+	otherwise = JsonQuery()
+	<KEYWORD_END>
+	{
+		return new Conditional(switches, otherwise);
+	}
+}
+
+JsonQuery ObjectConstruction():
+{
+	final ObjectConstruction obj = new ObjectConstruction();
+}
+{
+	<OPEN_BRACE>
+	(
+		ObjectLiteralField(obj)
+		(
+			<COMMA>
+			ObjectLiteralField(obj)
+		)*
+	)?
+	<CLOSE_BRACE>
+	{ return obj; }
+}
+
+JsonQuery ObjectLiteralFieldValue():
+{
+	JsonQuery valueExpr;
+}
+{
+	<COLON>
+	(
+		<OPEN_PAR>
+		valueExpr = JsonQuery()
+		<CLOSE_PAR>
+		{ return valueExpr; }
+	|
+		valueExpr = JsonQueryWithoutComma()
+		{ return valueExpr; }
+	)
+}
+
+void ObjectLiteralField(final ObjectConstruction obj):
+{
+	Token tmp = null;
+	JsonQuery keyExpr = null;
+	JsonQuery valueExpr = null;
+}
+{
+	(
+		keyExpr = StringInterpolation()
+	|
+		tmp = <IDENTIFIER>
+		{ keyExpr = new StringLiteral(tmp.image); }
+	|
+		<OPEN_PAR>
+		keyExpr = JsonQuery()
+		<CLOSE_PAR>
+	)
+	(
+		valueExpr = ObjectLiteralFieldValue()
+	)?
+	{ obj.addField(keyExpr, valueExpr); }
+}
+
+JsonQuery ArrayConstruction():
+{
+	JsonQuery tmp = null;
+}
+{
+	<OPEN_BRACKET>
+	(
+		tmp = JsonQuery()
+	)?
+	<CLOSE_BRACKET>
+	{
+		if (tmp == null)
+			return new ArrayConstruction();
+		return new ArrayConstruction(tmp);
+	}
+}
+
+JsonQuery ValueLiteral():
+{
+	Token token;
+	String text;
+	JsonQuery tmp;
+}
+{
+	(
+		tmp = StringInterpolation()
+	|
+		token = <INTEGER_LITERAL>
+		{ tmp = new LongLiteral(Long.parseLong(token.image)); }
+	|
+		token = <FLOAT_LITERAL>
+		{ tmp = new DoubleLiteral(Double.parseDouble(token.image)); }
+	|
+		<NULL_LITERAL>
+		{ tmp = new NullLiteral(); }
+	|
+		<BOOLEAN_LITERAL_TRUE>
+		{ tmp = new BooleanLiteral(true); }
+	|
+		<BOOLEAN_LITERAL_FALSE>
+		{ tmp = new BooleanLiteral(false); }
+	)
+	{ return tmp; }
+}
+
+JsonQuery FunctionCall():
+{
+	JsonQuery tmp;
+	final Token fname;
+	final List<JsonQuery> fargs = new ArrayList<JsonQuery>();
+}
+{
+	fname = <IDENTIFIER>
+	(
+		<OPEN_PAR>
+		(
+			tmp = JsonQuery()
+			{ fargs.add(tmp); }
+			(
+				<SEMICOLON>
+				tmp = JsonQuery()
+				{ fargs.add(tmp); }
+			)*
+		)?
+		<CLOSE_PAR>
+	)?
+	{ return new FunctionCall(fname.image, fargs); }
+}
+
+JsonQuery FieldAccessor(JsonQuery obj):
+{
+}
+{
+	(
+		LOOKAHEAD(2)
+		obj = IdentifierFieldAccessor(obj)
+	|
+		obj = StringFieldAccessor(obj)
+	|
+		obj = BracketFieldAccessor(obj)
+	)+
+	{ return obj; }
+}
+
+JsonQuery ThisObjectAccess():
+{
+	Token identifier;
+	boolean permissive;
+	JsonQuery tmp = new ThisObject();
+}
+{
+	(
+		LOOKAHEAD(2)
+		(
+			LOOKAHEAD(2)
+			tmp = IdentifierFieldAccessor(tmp)
+		|
+			LOOKAHEAD(2)
+			tmp = StringFieldAccessor(tmp)
+		|
+			<DOT>
+			tmp = BracketFieldAccessor(tmp)
+		)
+		(
+			tmp = FieldAccessor(tmp)
+		)?
+	|
+		<DOT>
+	)
+	{ return tmp; }
+}
+
+JsonQuery IdentifierFieldAccessor(JsonQuery obj):
+{
+	Token identifier;
+	boolean permissive = false;
+}
+{
+	<DOT>
+	identifier = <IDENTIFIER>
+	(
+		<QUESTION>
+		{ permissive = true; }
+	)?
+	{ return new IdentifierFieldAccess(obj, identifier.image, permissive); }
+}
+
+JsonQuery StringFieldAccessor(JsonQuery obj):
+{
+	JsonQuery fieldName;
+	boolean permissive = false;
+}
+{
+	<DOT>
+	fieldName = StringInterpolation()
+	(
+		<QUESTION>
+		{ permissive = true; }
+	)?
+	{ return new StringFieldAccess(obj, fieldName, permissive); }
+}
+
+JsonQuery BracketFieldAccessor(JsonQuery obj):
+{
+	JsonQuery begin = null, end = null;
+	boolean rangeAccess = true;
+	boolean permissive = false;
+}
+{
+	<OPEN_BRACKET>
+	(
+		begin = JsonQuery()
+		(
+			<COLON>
+			(
+				end = JsonQuery()
+			|
+				{ /* empty */ }
+			)
+		|
+			{ rangeAccess = false; }
+		)
+	|
+		<COLON>
+		(
+			end = JsonQuery()
+		)?
+	)?
+	<CLOSE_BRACKET>
+	(
+		<QUESTION>
+		{ permissive = true; }
+	)?
+	{
+		if (rangeAccess) {
+			if (begin == null && end == null)
+				return new BracketExtractFieldAccess(obj, permissive);
+			return new BracketFieldAccess(obj, begin, end, permissive);
+		} else {
+			return new BracketFieldAccess(obj, begin, permissive);
+		}
+	}
+}
+
+JsonQuery StringInterpolation():
+{
+	Token t;
+	final StringBuilder builder = new StringBuilder();
+	final List<Pair<Integer, JsonQuery>> interpolations = new ArrayList<Pair<Integer, JsonQuery>>();
+	JsonQuery tmp;
+	JsonQuery formatter = null;
+}
+{
+	(
+		formatter = FormattingFilter()
+	)?
+	<QUOTE>
+	(
+		t = <VISIBLE_CHAR>
+		{ builder.append(t.image); }
+	|
+		t = <ESCAPE_CHAR>
+		{
+			if (t.image.charAt(0) != '\\')
+				throw new IllegalStateException("???");
+			final char c = t.image.charAt(1);
+			switch (c)
+			{
+				case '\"': builder.append('\"'); break;
+				case '\\': builder.append('\\'); break;
+				case 'b': builder.append((char) 0x08); break;
+				case 'f': builder.append((char) 0x0c); break;
+				case 'r': builder.append((char) 0x0d); break;
+				case 't': builder.append((char) 0x09); break;
+				case 'n': builder.append((char) 0x0a); break;
+				default: {
+					throw new IllegalStateException("Unexpected escape char: " + c);
+				}
+			}
+		}
+	|
+		t = <CODEPOINT_CHAR>
+		{
+			if (t.image.charAt(0) != '\\' || t.image.charAt(1) != 'u')
+				throw new IllegalStateException("???");
+			builder.appendCodePoint(Integer.parseInt(t.image.substring(2), 16));
+		}
+	|
+		<OPEN_INTERP>
+		tmp = JsonQuery()
+		<CLOSE_PAR>
+		{ interpolations.add(Pair.of(builder.length(), tmp)); }
+	)*
+	<ENDQUOTE>
+	{ return new StringInterpolation(builder.toString(), interpolations, formatter); }
+}
