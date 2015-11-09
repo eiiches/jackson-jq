@@ -4,13 +4,13 @@
 	<groupId>net.thisptr</groupId>
 	<artifactId>jackson-jq-parent</artifactId>
 	<packaging>pom</packaging>
-	<version>0.0.1</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<name>jackson-jq-parent</name>
 
 	<scm>
 		<connection>scm:git:ssh://git@github.com/eiiches/jackson-jq.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/eiiches/jackson-jq.git</developerConnection>
-		<tag>jackson-jq-parent-0.0.1</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<modules>
