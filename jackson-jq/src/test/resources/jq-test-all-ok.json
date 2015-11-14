@@ -661,6 +661,26 @@
         "in": null
     }, 
     {
+        "q": "[range(0,1;3,4)]", 
+        "out": [
+            [
+                0, 
+                1, 
+                2, 
+                0, 
+                1, 
+                2, 
+                3, 
+                1, 
+                2, 
+                1, 
+                2, 
+                3
+            ]
+        ], 
+        "in": null
+    }, 
+    {
         "q": "[range(0;10;3)]", 
         "out": [
             [
@@ -688,6 +708,39 @@
                 -2, 
                 -3, 
                 -4
+            ]
+        ], 
+        "in": null
+    }, 
+    {
+        "q": "[range(0,1;4,5;1,2)]", 
+        "out": [
+            [
+                0, 
+                1, 
+                2, 
+                3, 
+                0, 
+                2, 
+                0, 
+                1, 
+                2, 
+                3, 
+                4, 
+                0, 
+                2, 
+                4, 
+                1, 
+                2, 
+                3, 
+                1, 
+                3, 
+                1, 
+                2, 
+                3, 
+                4, 
+                1, 
+                3
             ]
         ], 
         "in": null
@@ -917,26 +970,8 @@
         ]
     }, 
     {
-        "q": "flatten(-1,3,2,1)", 
+        "q": "flatten(3,2,1)", 
         "out": [
-            [
-                0, 
-                [
-                    1
-                ], 
-                [
-                    [
-                        2
-                    ]
-                ], 
-                [
-                    [
-                        [
-                            3
-                        ]
-                    ]
-                ]
-            ], 
             [
                 0, 
                 1, 
@@ -1429,6 +1464,37 @@
         ]
     }, 
     {
+        "q": "utf8bytelength", 
+        "out": [
+            6
+        ], 
+        "in": "asdf\u03bc"
+    }, 
+    {
+        "q": "[.[] | try utf8bytelength catch .]", 
+        "out": [
+            [
+                "array ([]) only strings have UTF-8 byte length", 
+                "object ({}) only strings have UTF-8 byte length", 
+                "array ([1,2]) only strings have UTF-8 byte length", 
+                "number (55) only strings have UTF-8 byte length", 
+                "boolean (true) only strings have UTF-8 byte length", 
+                "boolean (false) only strings have UTF-8 byte length"
+            ]
+        ], 
+        "in": [
+            [], 
+            {}, 
+            [
+                1, 
+                2
+            ], 
+            55, 
+            true, 
+            false
+        ]
+    }, 
+    {
         "q": "map(keys)", 
         "out": [
             [
@@ -1559,6 +1625,13 @@
             1, 
             2
         ]
+    }, 
+    {
+        "q": "def a: 0; . | a", 
+        "out": [
+            0
+        ], 
+        "in": null
     }, 
     {
         "q": "def f(a;b;c;d;e;f;g;h;i;j): [j,i,h,g,f,e,d,c,b,a]; f(.[0];.[1];.[2];.[3];.[4];.[5];.[6];.[7];.[8];.[9])", 
@@ -1943,6 +2016,72 @@
         ]
     }, 
     {
+        "q": "try path(.a | map(select(.b == 0))) catch .", 
+        "out": [
+            "Invalid path expression with result [{\"b\":0}]"
+        ], 
+        "in": {
+            "a": [
+                {
+                    "b": 0
+                }
+            ]
+        }
+    }, 
+    {
+        "q": "try path(.a | map(select(.b == 0)) | .[0]) catch .", 
+        "out": [
+            "Invalid path expression near attempt to access element 0 of [{\"b\":0}]"
+        ], 
+        "in": {
+            "a": [
+                {
+                    "b": 0
+                }
+            ]
+        }
+    }, 
+    {
+        "q": "try path(.a | map(select(.b == 0)) | .c) catch .", 
+        "out": [
+            "Invalid path expression near attempt to access element \"c\" of [{\"b\":0}]"
+        ], 
+        "in": {
+            "a": [
+                {
+                    "b": 0
+                }
+            ]
+        }
+    }, 
+    {
+        "q": "try path(.a | map(select(.b == 0)) | .[]) catch .", 
+        "out": [
+            "Invalid path expression near attempt to iterate through [{\"b\":0}]"
+        ], 
+        "in": {
+            "a": [
+                {
+                    "b": 0
+                }
+            ]
+        }
+    }, 
+    {
+        "q": "path(.a[path(.b)[0]])", 
+        "out": [
+            [
+                "a", 
+                "b"
+            ]
+        ], 
+        "in": {
+            "a": {
+                "b": 0
+            }
+        }
+    }, 
+    {
         "q": "[paths]", 
         "out": [
             [
@@ -1999,6 +2138,37 @@
                     "a": 2
                 }
             ]
+        ]
+    }, 
+    {
+        "q": "try delpaths(0) catch .", 
+        "out": [
+            "Paths must be specified as an array"
+        ], 
+        "in": {}
+    }, 
+    {
+        "q": "del(.[1], .[-6], .[2], .[-3:9])", 
+        "out": [
+            [
+                0, 
+                3, 
+                5, 
+                6, 
+                9
+            ]
+        ], 
+        "in": [
+            0, 
+            1, 
+            2, 
+            3, 
+            4, 
+            5, 
+            6, 
+            7, 
+            8, 
+            9
         ]
     }, 
     {
@@ -2180,6 +2350,69 @@
         }
     }, 
     {
+        "q": "try ((map(select(.a == 1))[].b) = 10) catch .", 
+        "out": [
+            "Invalid path expression near attempt to iterate through [{\"a\":1}]"
+        ], 
+        "in": [
+            {
+                "a": 0
+            }, 
+            {
+                "a": 1
+            }
+        ]
+    }, 
+    {
+        "q": "try ((map(select(.a == 1))[].a) |= .+1) catch .", 
+        "out": [
+            "Invalid path expression near attempt to iterate through [{\"a\":1}]"
+        ], 
+        "in": [
+            {
+                "a": 0
+            }, 
+            {
+                "a": 1
+            }
+        ]
+    }, 
+    {
+        "q": "def x: .[1,2]; x=10", 
+        "out": [
+            [
+                0, 
+                10, 
+                10
+            ]
+        ], 
+        "in": [
+            0, 
+            1, 
+            2
+        ]
+    }, 
+    {
+        "q": "try (def x: reverse; x=10) catch .", 
+        "out": [
+            "Invalid path expression with result [2,1,0]"
+        ], 
+        "in": [
+            0, 
+            1, 
+            2
+        ]
+    }, 
+    {
+        "q": ".[] = 1", 
+        "out": [], 
+        "in": [
+            0, 
+            1, 
+            2
+        ]
+    }, 
+    {
         "q": "[.[] | if .foo then \"yep\" else \"nope\" end]", 
         "out": [
             [
@@ -2256,6 +2489,44 @@
             }, 
             {}
         ]
+    }, 
+    {
+        "q": "[if 1,null,2 then 3 else 4 end]", 
+        "out": [
+            [
+                3, 
+                4, 
+                3
+            ]
+        ], 
+        "in": null
+    }, 
+    {
+        "q": "[if empty then 3 else 4 end]", 
+        "out": [
+            []
+        ], 
+        "in": null
+    }, 
+    {
+        "q": "[if 1 then 3,4 else 5 end]", 
+        "out": [
+            [
+                3, 
+                4
+            ]
+        ], 
+        "in": null
+    }, 
+    {
+        "q": "[if null then 3 else 5,6 end]", 
+        "out": [
+            [
+                5, 
+                6
+            ]
+        ], 
+        "in": null
     }, 
     {
         "q": "[.[] | [.foo[] // .bar]]", 
@@ -2550,197 +2821,6 @@
         ]
     }, 
     {
-        "q": "[match(\"( )*\"; \"gn\")]", 
-        "out": [
-            []
-        ], 
-        "in": "abc"
-    }, 
-    {
-        "q": "[match(\"a\"; \"gi\")]", 
-        "out": [
-            []
-        ], 
-        "in": "\u0101\u00e1\u00e0\u00e4"
-    }, 
-    {
-        "q": "[match([\"(bar)\"])]", 
-        "out": [
-            [
-                {
-                    "captures": [
-                        {
-                            "length": 3, 
-                            "string": "bar", 
-                            "name": null, 
-                            "offset": 4
-                        }
-                    ], 
-                    "length": 3, 
-                    "string": "bar", 
-                    "offset": 4
-                }
-            ]
-        ], 
-        "in": "foo bar"
-    }, 
-    {
-        "q": "[match(\"bar\")]", 
-        "out": [
-            [
-                {
-                    "captures": [], 
-                    "length": 3, 
-                    "string": "bar", 
-                    "offset": 3
-                }
-            ]
-        ], 
-        "in": "a\u0304 bar with a combining codepoint U+0304"
-    }, 
-    {
-        "q": "[match(\"ba\u0304r\")]", 
-        "out": [
-            [
-                {
-                    "captures": [], 
-                    "length": 4, 
-                    "string": "ba\u0304r", 
-                    "offset": 2
-                }
-            ]
-        ], 
-        "in": "a ba\u0304r"
-    }, 
-    {
-        "q": "[match(\".+?\\\\b\")]", 
-        "out": [
-            [
-                {
-                    "captures": [], 
-                    "length": 2, 
-                    "string": "a\u0304", 
-                    "offset": 0
-                }
-            ]
-        ], 
-        "in": "a\u0304 two-codepoint grapheme"
-    }, 
-    {
-        "q": "[match([\"foo (?<bar123>bar)? foo\", \"ig\"])]", 
-        "out": [
-            [
-                {
-                    "captures": [
-                        {
-                            "length": 3, 
-                            "string": "bar", 
-                            "name": "bar123", 
-                            "offset": 4
-                        }
-                    ], 
-                    "length": 11, 
-                    "string": "foo bar foo", 
-                    "offset": 0
-                }, 
-                {
-                    "captures": [
-                        {
-                            "length": 0, 
-                            "string": null, 
-                            "name": "bar123", 
-                            "offset": -1
-                        }
-                    ], 
-                    "length": 8, 
-                    "string": "foo  foo", 
-                    "offset": 12
-                }
-            ]
-        ], 
-        "in": "foo bar foo foo  foo"
-    }, 
-    {
-        "q": "[test(\"( )*\"; \"gn\")]", 
-        "out": [
-            [
-                false
-            ]
-        ], 
-        "in": "abc"
-    }, 
-    {
-        "q": "[test(\"\u0101\")]", 
-        "out": [
-            [
-                true
-            ]
-        ], 
-        "in": "\u0101"
-    }, 
-    {
-        "q": "capture(\"(?<a>[a-z]+)-(?<n>[0-9]+)\")", 
-        "out": [
-            {
-                "a": "xyzzy", 
-                "n": "14"
-            }
-        ], 
-        "in": "xyzzy-14"
-    }, 
-    {
-        "q": "[.[] | sub(\", \"; \":\")]", 
-        "out": [
-            [
-                "a,b:c, d, e,f", 
-                ":a,b, c, d, e,f, "
-            ]
-        ], 
-        "in": [
-            "a,b, c, d, e,f", 
-            ", a,b, c, d, e,f, "
-        ]
-    }, 
-    {
-        "q": "sub(\"^(?<head>.)\"; \"Head=\\(.head) Tail=\")", 
-        "out": [
-            "Head=a Tail=bcdef"
-        ], 
-        "in": "abcdef"
-    }, 
-    {
-        "q": "[.[] | gsub(\", \"; \":\")]", 
-        "out": [
-            [
-                "a,b:c:d:e,f", 
-                ":a,b:c:d:e,f:"
-            ]
-        ], 
-        "in": [
-            "a,b, c, d, e,f", 
-            ", a,b, c, d, e,f, "
-        ]
-    }, 
-    {
-        "q": "[.[] | scan(\", \")]", 
-        "out": [
-            [
-                ", ", 
-                ", ", 
-                ", ", 
-                ", ", 
-                ", ", 
-                ", ", 
-                ", ", 
-                ", "
-            ]
-        ], 
-        "in": [
-            "a,b, c, d, e,f", 
-            ", a,b, c, d, e,f, "
-        ]
-    }, 
-    {
         "q": "[.[] | split(\", \")]", 
         "out": [
             [
@@ -2775,95 +2855,6 @@
             ]
         ], 
         "in": "abc"
-    }, 
-    {
-        "q": "[.[]|[[sub(\", *\";\":\")], [gsub(\", *\";\":\")], [scan(\", *\")]]]", 
-        "out": [
-            [
-                [
-                    [
-                        "a:b, c, d, e,f"
-                    ], 
-                    [
-                        "a:b:c:d:e:f"
-                    ], 
-                    [
-                        ",", 
-                        ", ", 
-                        ", ", 
-                        ", ", 
-                        ","
-                    ]
-                ], 
-                [
-                    [
-                        ":a,b, c, d, e,f, "
-                    ], 
-                    [
-                        ":a:b:c:d:e:f:"
-                    ], 
-                    [
-                        ", ", 
-                        ",", 
-                        ", ", 
-                        ", ", 
-                        ", ", 
-                        ",", 
-                        ", "
-                    ]
-                ]
-            ]
-        ], 
-        "in": [
-            "a,b, c, d, e,f", 
-            ", a,b, c, d, e,f, "
-        ]
-    }, 
-    {
-        "q": "[.[]|[[sub(\", +\";\":\")], [gsub(\", +\";\":\")], [scan(\", +\")]]]", 
-        "out": [
-            [
-                [
-                    [
-                        "a,b:c, d, e,f"
-                    ], 
-                    [
-                        "a,b:c:d:e,f"
-                    ], 
-                    [
-                        ", ", 
-                        ", ", 
-                        ", "
-                    ]
-                ], 
-                [
-                    [
-                        ":a,b, c, d, e,f, "
-                    ], 
-                    [
-                        ":a,b:c:d:e,f:"
-                    ], 
-                    [
-                        ", ", 
-                        ", ", 
-                        ", ", 
-                        ", ", 
-                        ", "
-                    ]
-                ]
-            ]
-        ], 
-        "in": [
-            "a,b, c, d, e,f", 
-            ", a,b, c, d, e,f, "
-        ]
-    }, 
-    {
-        "q": "gsub(\"(?<x>.)[^a]*\"; \"+\\(.x)-\")", 
-        "out": [
-            "+A-+a-"
-        ], 
-        "in": "Abcabc"
     }, 
     {
         "q": "[.[]|ltrimstr(\"foo\")]", 
@@ -3638,7 +3629,9 @@
         "out": [
             {
                 "a": 1, 
-                "b": 2
+                "c": 3, 
+                "b": 2, 
+                "d": 4
             }
         ], 
         "in": [
@@ -3647,27 +3640,16 @@
                 "key": "a"
             }, 
             {
-                "value": 2, 
+                "Value": 2, 
                 "Key": "b"
-            }
-        ]
-    }, 
-    {
-        "q": "from_entries", 
-        "out": [
-            {
-                "a": 1, 
-                "b": 2
-            }
-        ], 
-        "in": [
-            {
-                "Value": 1, 
-                "key": "a"
             }, 
             {
-                "Name": "b", 
-                "value": 2
+                "name": "c", 
+                "value": 3
+            }, 
+            {
+                "Name": "d", 
+                "Value": 4
             }
         ]
     }, 
@@ -4068,6 +4050,47 @@
         ]
     }, 
     {
+        "q": "flatten(0)", 
+        "out": [
+            [
+                0, 
+                [
+                    1
+                ], 
+                [
+                    [
+                        2
+                    ]
+                ], 
+                [
+                    [
+                        [
+                            3
+                        ]
+                    ]
+                ]
+            ]
+        ], 
+        "in": [
+            0, 
+            [
+                1
+            ], 
+            [
+                [
+                    2
+                ]
+            ], 
+            [
+                [
+                    [
+                        3
+                    ]
+                ]
+            ]
+        ]
+    }, 
+    {
         "q": "flatten(2)", 
         "out": [
             [
@@ -4132,6 +4155,30 @@
         ]
     }, 
     {
+        "q": "try flatten(-1) catch .", 
+        "out": [
+            "flatten depth must not be negative"
+        ], 
+        "in": [
+            0, 
+            [
+                1
+            ], 
+            [
+                [
+                    2
+                ]
+            ], 
+            [
+                [
+                    [
+                        3
+                    ]
+                ]
+            ]
+        ]
+    }, 
+    {
         "q": "transpose", 
         "out": [
             [
@@ -4163,6 +4210,23 @@
         "in": "useful but not for \u00e9"
     }, 
     {
+        "q": "strftime(\"%A, %B %e, %Y\")", 
+        "out": [
+            "Tuesday, June 30, 2015"
+        ], 
+        "in": 1435677542.822351
+    }, 
+    {
+        "q": "include \"c\"; [a, c]", 
+        "out": [
+            [
+                0, 
+                "acmehbah"
+            ]
+        ], 
+        "in": null
+    }, 
+    {
         "q": "try -. catch .", 
         "out": [
             "string (\"very-long-...) cannot be negated"
@@ -4170,19 +4234,63 @@
         "in": "very-long-string"
     }, 
     {
-        "q": "try join(\",\") catch .", 
+        "q": "join(\",\")", 
         "out": [
-            "string (\",\") and number (2) cannot be added"
+            "1,2,true,false,3.4"
         ], 
         "in": [
             "1", 
-            2
+            2, 
+            true, 
+            false, 
+            3.4
+        ]
+    }, 
+    {
+        "q": ".[] | join(\",\")", 
+        "out": [
+            "", 
+            "", 
+            ",", 
+            ",,"
+        ], 
+        "in": [
+            [], 
+            [
+                null
+            ], 
+            [
+                null, 
+                null
+            ], 
+            [
+                null, 
+                null, 
+                null
+            ]
+        ]
+    }, 
+    {
+        "q": ".[] | join(\",\")", 
+        "out": [
+            "a,", 
+            ",a"
+        ], 
+        "in": [
+            [
+                "a", 
+                null
+            ], 
+            [
+                null, 
+                "a"
+            ]
         ]
     }, 
     {
         "q": "try join(\",\") catch .", 
         "out": [
-            "string (\",\") and object ({\"a\":{\"b\":{...) cannot be added"
+            "string (\"1,2,\") and object ({\"a\":{\"b\":{...) cannot be added"
         ], 
         "in": [
             "1", 
@@ -4195,5 +4303,76 @@
                 }
             }
         ]
+    }, 
+    {
+        "q": "try join(\",\") catch .", 
+        "out": [
+            "string (\"1,2,\") and array ([3,4,5]) cannot be added"
+        ], 
+        "in": [
+            "1", 
+            "2", 
+            [
+                3, 
+                4, 
+                5
+            ]
+        ]
+    }, 
+    {
+        "q": "{if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,include:15,module:16}", 
+        "out": [
+            {
+                "and": 1, 
+                "then": 3, 
+                "elif": 5, 
+                "include": 15, 
+                "end": 6, 
+                "reduce": 9, 
+                "module": 16, 
+                "else": 4, 
+                "try": 11, 
+                "as": 7, 
+                "foreach": 10, 
+                "catch": 12, 
+                "import": 14, 
+                "label": 13, 
+                "or": 2, 
+                "def": 8, 
+                "if": 0
+            }
+        ], 
+        "in": null
+    }, 
+    {
+        "q": "try (1/.) catch .", 
+        "out": [
+            "number (1) and number (0) cannot be divided because the divisor is zero"
+        ], 
+        "in": 0
+    }, 
+    {
+        "q": "try (1%.) catch .", 
+        "out": [
+            "number (1) and number (0) cannot be divided (remainder) because the divisor is zero"
+        ], 
+        "in": 0
+    }, 
+    {
+        "q": "[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2] == $powers", 
+        "out": [
+            true
+        ], 
+        "in": null
+    }, 
+    {
+        "q": "[range(-99/2;99/2;1)] as $orig | [$orig[]|pow(2;.)|log2] as $back | ($orig|keys)[]|. as $k | (($orig|.[$k])-($back|.[$k]))|if . < 0 then . * -1 else . end|select(.>.00005)", 
+        "out": [], 
+        "in": null
+    }, 
+    {
+        "q": "(.[{}] = 0)?", 
+        "out": [], 
+        "in": null
     }
 ]

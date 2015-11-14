@@ -2,9 +2,9 @@
 
 import json
 import urllib2
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
-unsupported = set([
+unsupported = [
     "env.PAGER",
     '[while(.<100; .*2|if . > 10 then break else . end)]',
     'del(.[2:4],.[0],.[-2:])',
@@ -15,7 +15,6 @@ unsupported = set([
     '["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])',
     'map(getpath([2])), map(setpath([2]; 42)), map(delpaths([[2]]))',
     'map(delpaths([[0,"foo"]]))',
-    '["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])',
     'delpaths([[-200]])',
     'del(.), del(empty), del((.foo,.bar,.baz) | .[2,3,0]), del(.foo[0], .bar[0], .foo, .baz.bar[0].x)',
     'def inc(x): x |= .+1; inc(.[].a)',
@@ -28,7 +27,6 @@ unsupported = set([
     "modulemeta",
     "import \"test_bind_order\" as check; check::check",
     "[label | while(.<100; .*2|if . > 10 then break else . end)]",
-    "[(label $here | .[] | if .>1 then break $here else . end), \"hi!\"]",
     "[(label $here | .[] | if .>1 then break $here else . end), \"hi!\"]",
     "(label | (label | 2 | break2)), 1",
     "[label | foreach .[] as $item ([3, null]; if .[0] < 1 then break else [.[0] -1, $item] end; .[1])]",
@@ -49,16 +47,19 @@ unsupported = set([
     "strftime(\"%Y-%m-%dT%H:%M:%SZ\")",
     "gmtime",
     "{if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,module:15}",
-])
+    "[1,null,Infinity,-Infinity,NaN,-NaN]",
+]
+
 
 def load_jq_all():
     result = []
-    lines = urllib2.urlopen('https://raw.githubusercontent.com/stedolan/jq/master/tests/all.test').read().split('\n')
+    lines = urllib2.urlopen('https://raw.githubusercontent.com/stedolan/jq/master/tests/jq.test').read().split('\n')
     ite = iter(lines)
     while True:
         try:
             line = ite.next().decode('utf-8')
-        except StopIteration: break
+        except StopIteration:
+            break
         if not line or line.startswith('#'):
             continue
 
@@ -67,29 +68,35 @@ def load_jq_all():
             while line:
                 try:
                     line = ite.next().decode('utf-8')
-                except StopIteration: break
+                except StopIteration:
+                    break
             continue
 
         _q = line
 
         line = ite.next().decode('utf-8')
         print line
-        _in = json.loads(line.replace(u'\ufeff', u' '))
+        try:
+            _in = json.loads(line.replace(u'\ufeff', u' '))
+        except ValueError:
+            ite.next()
 
         _out = []
         while True:
             try:
                 line = ite.next().decode('utf-8').replace('\ufeff', ' ')
-            except StopIteration: break
+            except StopIteration:
+                break
             if not line or line.startswith('#'):
                 break
             _out.append(json.loads(line))
         result.append({'q': _q, 'in': _in, 'out': _out})
     return result
 
+
 def load_jq_manual():
     html = urllib2.urlopen('http://stedolan.github.io/jq/manual').read()
-    soup = BeautifulSoup(html)
+    soup = BeautifulSoup(html, 'lxml')
 
     def f(values):
         q = values[0].replace('jq ', '')[1:-1]
@@ -120,7 +127,7 @@ def load_jq_manual():
         try:
             return {'q': q, 'in': json.loads(values[1]), 'out': f_out(values[2:])}
         except Exception as e:
-            print e, values;
+            print e, values
 
     d = map(f, [map(lambda td: td.text, elm.findAll('td')) for elm in soup.findAll('table', 'manual-example')])
     return d

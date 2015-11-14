@@ -3,3 +3,4 @@
 .settings
 target/
 dependency-reduced-pom.xml
+*.py[cod]

@@ -542,39 +542,6 @@
         "in": null
     }, 
     {
-        "q": "[match(\"( )*\"; \"g\")]", 
-        "out": [
-            [
-                {
-                    "captures": [], 
-                    "length": 0, 
-                    "string": "", 
-                    "offset": 0
-                }, 
-                {
-                    "captures": [], 
-                    "length": 0, 
-                    "string": "", 
-                    "offset": 1
-                }, 
-                {
-                    "captures": [], 
-                    "length": 0, 
-                    "string": "", 
-                    "offset": 2
-                }
-            ]
-        ], 
-        "in": "abc"
-    }, 
-    {
-        "q": "gsub(\"(?<d>\\\\d)\"; \":\\(.d);\")", 
-        "out": [
-            "a:1;b:2;"
-        ], 
-        "in": "a1b2"
-    }, 
-    {
         "q": "bsearch(4)", 
         "out": [
             -4
@@ -707,30 +674,6 @@
         "q": "import \"test_bind_order\" as check; check::check", 
         "out": [
             true
-        ], 
-        "in": null
-    }, 
-    {
-        "q": "{if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,module:15}", 
-        "out": [
-            {
-                "and": 1, 
-                "then": 3, 
-                "elif": 5, 
-                "end": 6, 
-                "reduce": 9, 
-                "module": 15, 
-                "else": 4, 
-                "try": 11, 
-                "as": 7, 
-                "foreach": 10, 
-                "catch": 12, 
-                "import": 14, 
-                "label": 13, 
-                "or": 2, 
-                "def": 8, 
-                "if": 0
-            }
         ], 
         "in": null
     }
