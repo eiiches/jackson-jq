@@ -22,7 +22,7 @@
 	<properties>
 		<org.slf4j-version>1.7.7</org.slf4j-version>
 		<junit-version>4.11</junit-version>
-		<com.fasterxml.jackson-version>2.4.2</com.fasterxml.jackson-version>
+		<com.fasterxml.jackson-version>2.6.4</com.fasterxml.jackson-version>
 		<com.google.guava-version>18.0</com.google.guava-version>
 	</properties>
 
