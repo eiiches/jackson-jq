@@ -6,25 +6,17 @@ jackson-jq
 Installation
 ------------
 
-1. Install jackson-jq to your local maven repository. (TODO: publish jars to the maven central)
+Just add jackson-jq in your pom.xml.
 
-    ```sh
-    git clone https://github.com/eiiches/jackson-jq.git
-    cd jackson-jq
-    mvn install
-    ```
-
-2. Add the following snippet to your POM.
-
-    ```xml
-    <dependencies>
-        <dependency>
-            <groupId>net.thisptr</groupId>
-            <artifactId>jackson-jq</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-    </dependencies>
-    ```
+```xml
+<dependencies>
+	<dependency>
+		<groupId>net.thisptr</groupId>
+		<artifactId>jackson-jq</artifactId>
+		<version>0.0.2</version>
+	</dependency>
+</dependencies>
+```
 
 Usage
 -----

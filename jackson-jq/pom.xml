@@ -2,13 +2,13 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>jackson-jq</artifactId>
-	<name>jackson-jq</name>
+	<name>${project.groupId}:${project.artifactId}</name>
 	<packaging>jar</packaging>
 
 	<parent>
 		<groupId>net.thisptr</groupId>
 		<artifactId>jackson-jq-parent</artifactId>
-		<version>0.0.1</version>
+		<version>0.0.2</version>
 	</parent>
 
 	<dependencies>
