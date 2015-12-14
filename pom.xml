@@ -5,11 +5,29 @@
 	<artifactId>jackson-jq-parent</artifactId>
 	<packaging>pom</packaging>
 	<version>0.0.2-SNAPSHOT</version>
-	<name>jackson-jq-parent</name>
+	<name>${project.groupId}:${project.artifactId}</name>
+	<description>jq for Jackson JSON Processor</description>
+	<url>https://github.com/eiiches/jackson-jq</url>
+
+	<licenses>
+		<license>
+			<name>The Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Eiichi Sato</name>
+			<email>sato.eiichi@gmail.com</email>
+			<organizationUrl>https://github.com/eiiches</organizationUrl>
+		</developer>
+	</developers>
 
 	<scm>
-		<connection>scm:git:ssh://git@github.com/eiiches/jackson-jq.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/eiiches/jackson-jq.git</developerConnection>
+		<connection>scm:git:git@github.com:eiiches/jackson-jq.git</connection>
+		<developerConnection>scm:git:git@github.com:eiiches/jackson-jq.git</developerConnection>
+		<url>git@github.com:juven/git-demo.git</url>
 		<tag>HEAD</tag>
 	</scm>
 
@@ -18,6 +36,13 @@
 		<module>jackson-jq-extra</module>
 		<module>jackson-jq-cli</module>
 	</modules>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 	<properties>
 		<org.slf4j-version>1.7.7</org.slf4j-version>
@@ -82,6 +107,54 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.9.1</version>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.3</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>false</autoReleaseAfterClose>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>release</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.5</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
