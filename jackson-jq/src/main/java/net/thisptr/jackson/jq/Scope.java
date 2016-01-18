@@ -164,7 +164,7 @@ public class Scope {
 			try {
 				result.add(Class.forName(className));
 			} catch (Throwable th) {
-				System.err.println("Failed to load class " + className + ": " + th.getMessage());
+				System.err.println("Failed to load class " + className + ": " + th.getClass().getSimpleName() + ": " + th.getMessage());
 				continue;
 			}
 		}
