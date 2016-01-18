@@ -3,7 +3,7 @@
 scriptpath=`readlink -f $0`
 scriptdir=`dirname $scriptpath`
 
-jarpath=`find $scriptdir/../jackson-jq-cli -name "jackson-jq-cli-*.jar" | grep -v sources`
+jarpath=`find $scriptdir/../jackson-jq-cli -name "jackson-jq-cli-*.jar" | grep -v sources | grep -v javadoc`
 if [ -z $jarpath ]; then
     echo "ERROR: jackson-jar-cli-\${version}.jar does not exist; please run 'mvn package' first." 1>&2
     exit 1
