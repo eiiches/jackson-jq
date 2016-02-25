@@ -26,7 +26,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.MoreObjects;
-import com.google.common.io.Resources;
 
 public class Scope {
 	private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper();
@@ -176,8 +175,8 @@ public class Scope {
 	private static List<JqJson> readConfig() throws IOException {
 		final List<JqJson> result = new ArrayList<>();
 		final ClassLoader loader = MoreObjects.firstNonNull(
-	        Thread.currentThread().getContextClassLoader(),
-	        Resources.class.getClassLoader());
+	        	Thread.currentThread().getContextClassLoader(),
+	        	Scope.class.getClassLoader());
 		final Enumeration<URL> iter = loader.getResources("jq.json");
 		while (iter.hasMoreElements()) {
 			try (final InputStream is = iter.nextElement().openStream()) {
