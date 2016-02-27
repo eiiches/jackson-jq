@@ -110,6 +110,7 @@
 		{"name": "sort_by", "args": ["f"], "body": "sort(f)"},
 		{"name": "unique_by", "args": ["f"], "body": "unique(f)"},
 		{"name": "group_by", "args": ["f"], "body": "group(f)"},
-		{"name": "leaf_paths", "args": [], "body": "paths(scalars)"}
+		{"name": "leaf_paths", "args": [], "body": "paths(scalars)"},
+		{"name": "walk", "args": ["f"], "body": ". as $in | if type == \"object\" then reduce keys[] as $key ( {}; . + { ($key):  ($in[$key] | walk(f)) } ) | f elif type == \"array\" then map( walk(f) ) | f else f end"}
 	]
 }
