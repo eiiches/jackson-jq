@@ -18,6 +18,10 @@ Just add jackson-jq in your pom.xml.
 </dependencies>
 ```
 
+### Requirements
+
+ - Java 8 or later
+
 Usage
 -----
 

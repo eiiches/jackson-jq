@@ -10,10 +10,10 @@ import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.IllegalJsonInputException;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
+import net.thisptr.jackson.jq.internal.misc.Strings;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.google.common.base.Joiner;
 
 @BuiltinFunction("@sh/0")
 public class AtShFunction implements Function {
@@ -30,7 +30,7 @@ public class AtShFunction implements Function {
 					throw new IllegalJsonInputException(i.getNodeType() + " cannot be escaped for shell");
 				}
 			}
-			return Collections.<JsonNode> singletonList(new TextNode(Joiner.on(" ").join(tokens)));
+			return Collections.<JsonNode> singletonList(new TextNode(Strings.join(" ", tokens)));
 		} else if (in.isTextual()) {
 			return Collections.<JsonNode> singletonList(new TextNode(escape(in.asText())));
 		} else if (in.isValueNode()) {
