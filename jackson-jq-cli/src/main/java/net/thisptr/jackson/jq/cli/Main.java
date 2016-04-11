@@ -34,6 +34,7 @@ public class Main {
 					}
 				} catch (JsonQueryException e) {
 					System.err.println("jq: error: " + e.getMessage());
+					System.exit(1);
 				}
 			}
 		}
