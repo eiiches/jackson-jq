@@ -50,14 +50,12 @@ public class Main {
 			options.addOption(OPT_RAW);
 			options.addOption(OPT_HELP);
 			command = parser.parse(options, args);
-			if (command.hasOption(OPT_HELP.getOpt())) {
+			final List<String> rest = command.getArgList();
+			if (rest.isEmpty() || command.hasOption(OPT_HELP.getOpt())) {
 				final HelpFormatter help = new HelpFormatter();
 				help.printHelp("jackson-jq [OPTIONS...] QUERY", options, false);
 				System.exit(0);
 			}
-			final List<String> rest = command.getArgList();
-			if (rest.isEmpty())
-				throw new ParseException("missing query argument");
 			jq = JsonQuery.compile(rest.get(0));
 		} catch (ParseException e) {
 			System.err.println("invalid arguments: " + Arrays.toString(args));
