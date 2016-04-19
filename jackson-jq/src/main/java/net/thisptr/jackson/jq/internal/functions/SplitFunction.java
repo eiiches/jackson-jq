@@ -9,12 +9,12 @@ import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
+import net.thisptr.jackson.jq.internal.misc.Strings;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.google.common.base.Splitter;
 
 @BuiltinFunction("split/1")
 public class SplitFunction implements Function {
@@ -45,13 +45,6 @@ public class SplitFunction implements Function {
 		return out;
 	}
 
-	private static List<String> toList(final Iterable<String> iter) {
-		final List<String> result = new ArrayList<>();
-		for (final String item : iter)
-			result.add(item);
-		return result;
-	}
-
 	protected String[] split(final String in, final String sep) {
 		final List<String> result;
 		if (sep.isEmpty()) {
@@ -63,7 +56,7 @@ public class SplitFunction implements Function {
 				offset += Character.charCount(codepoint);
 			}
 		} else {
-			result = toList(Splitter.on(sep).split(in));
+			return Strings.splitToArray(in, sep);
 		}
 		return result.toArray(new String[result.size()]);
 	}

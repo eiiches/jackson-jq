@@ -18,7 +18,7 @@ public class JsonQueryUtils {
 	}
 
 	public static <T> List<T> apply(final Scope scope, final JsonQuery jq, final Object in, final Class<T> resultType) throws IOException {
-		return map(scope.getObjectMapper(), jq.apply(scope, scope.getObjectMapper().valueToTree(in)), resultType);
+		return map(scope.getObjectMapper(), jq.apply(scope, (JsonNode) scope.getObjectMapper().valueToTree(in)), resultType);
 	}
 
 	public static <T> List<T> apply(final JsonQuery jq, final Object in, final TypeReference<T> resultType) throws IOException {
@@ -26,7 +26,7 @@ public class JsonQueryUtils {
 	}
 
 	public static <T> List<T> apply(final Scope scope, final JsonQuery jq, final Object in, final TypeReference<T> resultType) throws IOException {
-		return map(scope.getObjectMapper(), jq.apply(scope, scope.getObjectMapper().valueToTree(in)), resultType);
+		return map(scope.getObjectMapper(), jq.apply(scope, (JsonNode) scope.getObjectMapper().valueToTree(in)), resultType);
 	}
 
 	public static <T> List<T> map(final ObjectMapper mapper, final List<JsonNode> xs, final TypeReference<T> resultType) throws IOException {

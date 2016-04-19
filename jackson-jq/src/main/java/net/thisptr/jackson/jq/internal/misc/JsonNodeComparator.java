@@ -9,7 +9,6 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.google.common.collect.Lists;
 
 @SuppressWarnings("serial")
 public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {

@@ -8,6 +8,7 @@ import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
+import net.thisptr.jackson.jq.internal.misc.Lists;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,7 +16,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.google.common.collect.Lists;
 
 @BuiltinFunction("keys/0")
 public class KeysFunction implements Function {

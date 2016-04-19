@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.JsonQuery;
@@ -15,6 +16,7 @@ import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
+import net.thisptr.jackson.jq.internal.misc.Strings;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,7 +24,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.google.common.base.Splitter;
 
 @BuiltinFunction("uriparse/0")
 public class UriParseFunction implements Function {
@@ -81,26 +82,19 @@ public class UriParseFunction implements Function {
 		}
 	}
 
-	private static Splitter ampersand = Splitter.on("&");
-	private static Splitter equal = Splitter.on("=");
-
-	private static List<String> toList(final Iterable<String> iter) {
-		final List<String> result = new ArrayList<>();
-		for (final String item : iter)
-			result.add(item);
-		return result;
-	}
+	private static final Pattern AMPERSAND = Pattern.compile(Pattern.quote("&"));
+	private static final Pattern EQUAL = Pattern.compile(Pattern.quote("="));
 
 	private Map<String, JsonNode> parseQueryObj(final Scope scope, final String rawQuery) {
 		final Map<String, List<String>> result = new HashMap<>();
 		if (rawQuery == null)
 			return Collections.emptyMap();
-		for (final String kv : ampersand.split(rawQuery)) {
-			final List<String> tuple = toList(equal.split(kv));
-			if (tuple.size() != 2)
+		for (final String kv : Strings.splitToArray(rawQuery, AMPERSAND)) {
+			final String[] tuple = Strings.splitToArray(kv, EQUAL);
+			if (tuple.length != 2)
 				continue;
-			final String keyEncoded = tuple.get(0);
-			final String valueEncoded = tuple.get(1);
+			final String keyEncoded = tuple[0];
+			final String valueEncoded = tuple[1];
 
 			try {
 				final String key = URLDecoder.decode(keyEncoded, "UTF-8");

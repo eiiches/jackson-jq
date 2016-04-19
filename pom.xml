@@ -4,7 +4,7 @@
 	<groupId>net.thisptr</groupId>
 	<artifactId>jackson-jq-parent</artifactId>
 	<packaging>pom</packaging>
-	<version>0.0.4</version>
+	<version>0.0.5</version>
 	<name>${project.groupId}:${project.artifactId}</name>
 	<description>jq for Jackson JSON Processor</description>
 	<url>https://github.com/eiiches/jackson-jq</url>
@@ -28,7 +28,7 @@
 		<connection>scm:git:git@github.com:eiiches/jackson-jq.git</connection>
 		<developerConnection>scm:git:git@github.com:eiiches/jackson-jq.git</developerConnection>
 		<url>git@github.com:juven/git-demo.git</url>
-		<tag>jackson-jq-parent-0.0.4</tag>
+		<tag>jackson-jq-parent-0.0.5</tag>
 	</scm>
 
 	<modules>
@@ -48,7 +48,6 @@
 		<org.slf4j-version>1.7.13</org.slf4j-version>
 		<junit-version>4.12</junit-version>
 		<com.fasterxml.jackson-version>2.7.0</com.fasterxml.jackson-version>
-		<com.google.guava-version>19.0</com.google.guava-version>
 	</properties>
 
 	<dependencies>
@@ -77,8 +76,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.1</version>
 				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
+					<source>1.8</source>
+					<target>1.8</target>
 					<compilerArgument>-Xlint:all</compilerArgument>
 					<showWarnings>true</showWarnings>
 					<showDeprecation>true</showDeprecation>

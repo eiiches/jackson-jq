@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -13,7 +14,6 @@ import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.google.common.collect.ImmutableList;
 
 @BuiltinFunction("contains/1")
 public class ContainsFunction implements Function {
@@ -44,7 +44,9 @@ public class ContainsFunction implements Function {
 			}
 			return true;
 		} else if (haystack.isObject() && needle.isObject()) {
-			for (final Entry<String, JsonNode> field : ImmutableList.copyOf(needle.fields())) {
+			final Iterator<Entry<String, JsonNode>> iter = needle.fields();
+			while (iter.hasNext()) {
+				final Entry<String, JsonNode> field = iter.next();
 				final JsonNode tmp = haystack.get(field.getKey());
 				if (tmp == null)
 					return false;
