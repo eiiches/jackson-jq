@@ -583,5 +583,37 @@
 		"q": "[10][\"10\":null]?",
 		"in": null,
 		"out": []
+	},
+	{
+		"q": "map([try ((.[0] == 0, false) and (.a, true)) catch .])[]",
+		"in": [[0], [1]],
+		"out": [
+			["Cannot index array with string \"a\""],
+			[false, false]
+		]
+	},
+	{
+		"q": "map([try ((.[0] == 0, false) and (false, true)) catch .])[]",
+		"in": [[0], [1]],
+		"out": [
+			[false, true, false],
+			[false, false]
+		]
+	},
+	{
+		"q": "map([try ((.[0] == 0, true) or (.a, true)) catch .])[]",
+		"in": [[0], [1]],
+		"out": [
+			[true, true],
+			["Cannot index array with string \"a\""]
+		]
+	},
+	{
+		"q": "map([try ((.[0] == 0, true) or (false, true)) catch .])[]",
+		"in": [[0], [1]],
+		"out": [
+			[true, true],
+			[false, true, true]
+		]
 	}
 ]

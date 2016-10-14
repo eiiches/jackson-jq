@@ -8,14 +8,14 @@
 	<parent>
 		<groupId>net.thisptr</groupId>
 		<artifactId>jackson-jq-parent</artifactId>
-		<version>0.0.5</version>
+		<version>0.0.6</version>
 	</parent>
 
 	<dependencies>
 		<dependency>
 			<groupId>net.thisptr</groupId>
 			<artifactId>jackson-jq-extra</artifactId>
-			<version>0.0.5</version>
+			<version>0.0.6</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>
