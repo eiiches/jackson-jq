@@ -13,7 +13,7 @@ Just add jackson-jq in your pom.xml.
 	<dependency>
 		<groupId>net.thisptr</groupId>
 		<artifactId>jackson-jq</artifactId>
-		<version>0.0.6</version>
+		<version>0.0.7-SNAPSHOT</version>
 	</dependency>
 </dependencies>
 ```
