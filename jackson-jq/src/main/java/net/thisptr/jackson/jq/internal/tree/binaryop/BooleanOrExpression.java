@@ -1,10 +1,32 @@
 package net.thisptr.jackson.jq.internal.tree.binaryop;
 
-import net.thisptr.jackson.jq.JsonQuery;
-import net.thisptr.jackson.jq.internal.operators.OrOperator;
+import java.util.ArrayList;
+import java.util.List;
 
-public class BooleanOrExpression extends SimpleBinaryOperatorExpression {
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+
+import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
+
+public class BooleanOrExpression extends BinaryOperatorExpression {
 	public BooleanOrExpression(final JsonQuery lhs, final JsonQuery rhs) {
-		super(lhs, rhs, new OrOperator());
+		super(lhs, rhs, "or");
+	}
+
+	@Override
+	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
+		final List<JsonNode> out = new ArrayList<>();
+		for (final JsonNode l : lhs.apply(scope, in)) {
+			if (JsonNodeUtils.asBoolean(l)) {
+				out.add(BooleanNode.TRUE);
+				continue;
+			}
+			for (final JsonNode r : rhs.apply(scope, in))
+				out.add(BooleanNode.valueOf(JsonNodeUtils.asBoolean(r)));
+		}
+		return out;
 	}
 }
