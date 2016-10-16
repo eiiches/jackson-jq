@@ -71,15 +71,17 @@ System.out.println(result);
 // ["aaa"]
 ```
 
-Commandline Tool
-----------------
+Using a jackson-jq command line tool
+------------------------------------
 
-`jackson-jq` provides a command line tool useful for testing and debugging purpose.
+We provide a CLI tool for testing a jackson-jq query. The tool has to be build with `mvn package`, but alternatively, Homebrew (or Linuxbrew) users can just `brew tap eiiches/jackson-jq && brew install jackson-jq` and `jackson-jq` will be available on $PATH.
 
 ```
 $ bin/jackson-jq '.foo' <<< '{"foo":10}'
 10
 ```
+
+See `bin/jackson-jq --help` for more information.
 
 Extra modules
 -------------
