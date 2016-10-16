@@ -55,13 +55,4 @@
 			</plugin>
 		</plugins>
 	</build>
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.jruby.jcodings</groupId>
-				<artifactId>jcodings</artifactId>
-				<version>1.0.18</version>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 </project>
