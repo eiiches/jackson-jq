@@ -83,6 +83,50 @@ $ bin/jackson-jq '.foo' <<< '{"foo":10}'
 
 See `bin/jackson-jq --help` for more information.
 
+
+Difference between jq and jackson-jq
+------------------------------------
+
+Here is a *current* status of differences between jackson-jq and the jq. If you find something not in this list, please report an issue.
+
+ - Missing language features in jackson-jq
+   - Modules
+   - Complex assignments
+     - e.g) `jq '(.[]|select(. > 0)) += 10' <<< '[-1, 0, 1]'`
+   - Destructuring
+     - e.g) `[1, 2] as [$a, $b]`
+   - `try` without `catch` clause
+     - `catch` clause is required in jackson-jq.
+     - e.g) `try .a` fails to compile. Try `try .a catch empty` instead.
+   - `(expression)?` syntax
+     - `?` can be only used after *accessors* in jackson-jq.
+     - e.g) `(.a)?` does not compile in jackson-jq (while `.a?` does).
+   - Streams
+
+ - Missing functions in jackson-jq
+   - Datetime functions: `fromdate/0`, `mktime/0`, `gmtime/0`
+   - Path manipulation functions: `getpath/1`, `setpath/2` and `delpaths/1`
+   - Numeric constants: `infinite/0` and `nan/0`
+   - Others:
+     - `env/0`
+     - `bsearch/1`
+     - `utf8bytelength`
+     - and more
+
+ - Known corner cases
+   - When the function with the same name is defined more than once in the same-level scope, jackson-jq uses the last one. e.g) `def f: 1; def g: f; def f: 2; g` evaluates to 2 in jackson-jq, while jq evaluates it to 1.
+
+Additionally, test cases used in jackson-jq (mostly from the jq unit tests) might be useful to learn exactly what queries are working and what are not working.
+
+ - Test cases not working
+   - [jackson-jq/src/test/resources/jq-test-all-ng.json](jackson-jq/src/test/resources/jq-test-all-ng.json)
+   - [jackson-jq/src/test/resources/jq-test-official-ng.json](jackson-jq/src/test/resources/jq-test-official-ng.json)
+
+ - Test cases working
+   - [jackson-jq/src/test/resources/jq-test-all-ok.json](jackson-jq/src/test/resources/jq-test-all-ok.json)
+   - [jackson-jq/src/test/resources/jq-test-official-ok.json](jackson-jq/src/test/resources/jq-test-official-ok.json)
+   - [jackson-jq/src/test/resources/jq-test-extra-ok.json](jackson-jq/src/test/resources/jq-test-extra-ok.json)
+
 Extra modules
 -------------
 
