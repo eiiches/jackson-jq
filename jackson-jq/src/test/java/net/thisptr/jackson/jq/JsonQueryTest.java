@@ -54,6 +54,7 @@ public class JsonQueryTest {
 		@JsonProperty("out")
 		public List<JsonNode> out;
 
+		public String source;
 		public boolean ignoreFailure = false;
 
 		@Override
@@ -69,8 +70,10 @@ public class JsonQueryTest {
 				final ObjectMapper mapper = new ObjectMapper();
 				try (final InputStream in = JsonTestCases.class.getClassLoader().getResourceAsStream(resourceName)) {
 					final TestCase[] result = mapper.readValue(in, TestCase[].class);
-					for (final TestCase tc : result)
+					for (final TestCase tc : result) {
 						tc.ignoreFailure = ignoreFailure;
+						tc.source = resourceName;
+					}
 					return result;
 				}
 			} catch (Exception e) {
@@ -96,7 +99,7 @@ public class JsonQueryTest {
 		@Theory
 		public void test(final TestCase tc) throws Throwable {
 			try {
-				log.info("Running test: {}", tc.toString().replace('\n', ' '));
+				log.info("Running test ({}): {}", tc.source, tc.toString().replace('\n', ' '));
 				final JsonQuery q = JsonQuery.compile(tc.q);
 				final String s1 = q.toString();
 

@@ -1,0 +1,85 @@
+del(.), del(empty), del((.foo,.bar,.baz) | .[2,3,0]), del(.foo[0], .bar[0], .foo, .baz.bar[0].x)
+try ((map(select(.a == 1))[].a) |= .+1) catch .
+["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])
+.[] | (infinite * .) < 0
+del(.[1], .[-6], .[2], .[-3:9])
+gmtime
+try path(.a | map(select(.b == 0)) | .[]) catch .
+include "c"; [a, c]
+env.PAGER
+modulemeta
+strptime("%Y-%m-%dT%H:%M:%SZ")|mktime
+[foreach .[] as [$i, $j] (0; . + $i - $j)]
+try path(.a | map(select(.b == 0)) | .[0]) catch .
+[.[]|try .a]
+delpaths([[-200]])
+import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]
+try error("\($__loc__)") catch .
+[label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]
+[label | foreach .[] as $item ([3, null]; if .[0] < 1 then break else [.[0] -1, $item] end; .[1])]
+path(.foo[0,1])
+. as $i | . as [$i] | $i
+(.[{}] = 0)?
+. as [$a, $b, {c: $c}] | $a + $b + $c
+[while(.<100; .*2|if . > 10 then break else . end)]
+{if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,include:15,module:16}
+gsub("(?<d>\\d)"; ":\(.d);")
+import "test_bind_order" as check; check::check
+getpath(["a","b"])
+try (def x: reverse; x=10) catch .
+def f: .+1; def g: f; def f: .+100; def f(a):a+.+11; [(g|f(20)), f]
+. as $dot|fromstream($dot|tostream)|.==$dot
+[foreach .[] as {a:$a} (0; . + $a; -.)]
+(..|select(type=="boolean")) |= if . then 1 else 0 end
+fromdate
+. as [$i] | . as $i | $i
+utf8bytelength
+[.[] | try utf8bytelength catch .]
+[.[]|(.a)?]
+map(getpath([2])), map(setpath([2]; 42)), map(delpaths([[2]]))
+import "c" as foo; [foo::a, foo::c]
+[match("( )*"; "g")]
+del(.[2:4],.[0],.[-2:])
+try ((map(select(.a == 1))[].b) = 10) catch .
+try (def x: reverse; x=10) catch .' <<< '[0,1,2]
+map_values(.+1)
+fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))
+strftime("%A, %B %d, %Y")
+setpath([0,"a"]; 1)
+def inc(x): x |= .+1; inc(.[].a)
+. as {as: $kw, "str": $str, ("e"+"x"+"p"): $exp} | [$kw, $str, $exp]
+path(.a[path(.b)[0]])
+try path(.a | map(select(.b == 0))) catch .
+[.[]|(.a, .a)?]
+try path(.a | map(select(.b == 0)) | .c) catch .
+def x: .[1,2]; x=10
+.[] as [$a, $b] | {a: $a, b: $b}
+infinite, nan | type
+reduce .[] as [$i, {j:$j}] (0; . + $i - $j)
+(label | (label | 2 | break2)), 1
+try delpaths(0) catch .
+path(.a[0].b)
+{if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,module:15}
+[getpath(["a","b"], ["a","c"])]
+[[.[]|[.a,.a]]?]
+[1, {c:3, d:4}] as [$a, {c:$b, b:$c}] | $a, $b, $c
+reduce [[1,2,10], [3,4,10]][] as [$i,$j] (0; . + $i * $j)
+.[] as [$a, $b] | [$b, $a]
+[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2] == $powers
+bsearch(0)
+[range(-99/2;99/2;1)] as $orig | [$orig[]|pow(2;.)|log2] as $back | ($orig|keys)[]|. as $k | (($orig|.[$k])-($back|.[$k]))|if . < 0 then . * -1 else . end|select(.>.00005)
+[1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])]
+[label | while(.<100; .*2|if . > 10 then break else . end)]
+map(delpaths([[0,"foo"]]))
+path(.)
+bsearch(4)
+strptime("%Y-%m-%dT%H:%M:%SZ")
+[(label $here | .[] | if .>1 then break $here else . end), "hi!"]
+[strptime("%Y-%m-%dT%H:%M:%SZ")|(.,mktime)]
+strftime("%Y-%m-%dT%H:%M:%SZ")
+[path(..)]
+.[] | (1 / .)?
+setpath(["a","b"]; 1)
+bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end
+path(.[] | select(.>3))
+# vim: ft=jq

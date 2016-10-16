@@ -1,1570 +1,1659 @@
 [
     {
-        "q": ".", 
+        "in": "Hello, world!",
         "out": [
             "Hello, world!"
-        ], 
-        "in": "Hello, world!"
-    }, 
+        ],
+        "q": "."
+    },
     {
-        "q": ".foo", 
+        "in": {
+            "bar": "less interesting data",
+            "foo": 42
+        },
         "out": [
             42
-        ], 
-        "in": {
-            "foo": 42, 
-            "bar": "less interesting data"
-        }
-    }, 
+        ],
+        "q": ".foo"
+    },
     {
-        "q": ".foo", 
+        "in": {
+            "alsonotfoo": false,
+            "notfoo": true
+        },
         "out": [
             null
-        ], 
-        "in": {
-            "alsonotfoo": false, 
-            "notfoo": true
-        }
-    }, 
+        ],
+        "q": ".foo"
+    },
     {
-        "q": ".[\"foo\"]", 
-        "out": [
-            42
-        ], 
         "in": {
             "foo": 42
-        }
-    }, 
-    {
-        "q": ".foo?", 
+        },
         "out": [
             42
-        ], 
-        "in": {
-            "foo": 42, 
-            "bar": "less interesting data"
-        }
-    }, 
+        ],
+        "q": ".[\"foo\"]"
+    },
     {
-        "q": ".foo?", 
+        "in": {
+            "bar": "less interesting data",
+            "foo": 42
+        },
+        "out": [
+            42
+        ],
+        "q": ".foo?"
+    },
+    {
+        "in": {
+            "alsonotfoo": false,
+            "notfoo": true
+        },
         "out": [
             null
-        ], 
-        "in": {
-            "alsonotfoo": false, 
-            "notfoo": true
-        }
-    }, 
+        ],
+        "q": ".foo?"
+    },
     {
-        "q": ".[\"foo\"]?", 
-        "out": [
-            42
-        ], 
         "in": {
             "foo": 42
-        }
-    }, 
+        },
+        "out": [
+            42
+        ],
+        "q": ".[\"foo\"]?"
+    },
     {
-        "q": "[.foo?]", 
+        "in": [
+            1,
+            2
+        ],
         "out": [
             []
-        ], 
-        "in": [
-            1, 
-            2
-        ]
-    }, 
+        ],
+        "q": "[.foo?]"
+    },
     {
-        "q": ".[0]", 
-        "out": [
-            {
-                "good": true, 
-                "name": "JSON"
-            }
-        ], 
         "in": [
             {
-                "good": true, 
+                "good": true,
                 "name": "JSON"
-            }, 
+            },
             {
-                "good": false, 
+                "good": false,
                 "name": "XML"
             }
-        ]
-    }, 
+        ],
+        "out": [
+            {
+                "good": true,
+                "name": "JSON"
+            }
+        ],
+        "q": ".[0]"
+    },
     {
-        "q": ".[2]", 
+        "in": [
+            {
+                "good": true,
+                "name": "JSON"
+            },
+            {
+                "good": false,
+                "name": "XML"
+            }
+        ],
         "out": [
             null
-        ], 
-        "in": [
-            {
-                "good": true, 
-                "name": "JSON"
-            }, 
-            {
-                "good": false, 
-                "name": "XML"
-            }
-        ]
-    }, 
+        ],
+        "q": ".[2]"
+    },
     {
-        "q": ".[2:4]", 
+        "in": [
+            "a",
+            "b",
+            "c",
+            "d",
+            "e"
+        ],
         "out": [
             [
-                "c", 
+                "c",
                 "d"
             ]
-        ], 
-        "in": [
-            "a", 
-            "b", 
-            "c", 
-            "d", 
-            "e"
-        ]
-    }, 
+        ],
+        "q": ".[2:4]"
+    },
     {
-        "q": ".[2:4]", 
+        "in": "abcdefghi",
         "out": [
             "cd"
-        ], 
-        "in": "abcdefghi"
-    }, 
+        ],
+        "q": ".[2:4]"
+    },
     {
-        "q": ".[:3]", 
+        "in": [
+            "a",
+            "b",
+            "c",
+            "d",
+            "e"
+        ],
         "out": [
             [
-                "a", 
-                "b", 
+                "a",
+                "b",
                 "c"
             ]
-        ], 
-        "in": [
-            "a", 
-            "b", 
-            "c", 
-            "d", 
-            "e"
-        ]
-    }, 
+        ],
+        "q": ".[:3]"
+    },
     {
-        "q": ".[-2:]", 
+        "in": [
+            "a",
+            "b",
+            "c",
+            "d",
+            "e"
+        ],
         "out": [
             [
-                "d", 
+                "d",
                 "e"
             ]
-        ], 
-        "in": [
-            "a", 
-            "b", 
-            "c", 
-            "d", 
-            "e"
-        ]
-    }, 
+        ],
+        "q": ".[-2:]"
+    },
     {
-        "q": ".[]", 
+        "in": [
+            1,
+            2,
+            3
+        ],
         "out": [
-            {
-                "good": true, 
-                "name": "JSON"
-            }, 
-            {
-                "good": false, 
-                "name": "XML"
-            }
-        ], 
+            2
+        ],
+        "q": ".[-2]"
+    },
+    {
         "in": [
             {
-                "good": true, 
+                "good": true,
                 "name": "JSON"
-            }, 
+            },
             {
-                "good": false, 
+                "good": false,
                 "name": "XML"
             }
-        ]
-    }, 
-    {
-        "q": ".[]", 
-        "out": [], 
-        "in": []
-    }, 
-    {
-        "q": ".[]", 
+        ],
         "out": [
-            1, 
-            1
-        ], 
+            {
+                "good": true,
+                "name": "JSON"
+            },
+            {
+                "good": false,
+                "name": "XML"
+            }
+        ],
+        "q": ".[]"
+    },
+    {
+        "in": [],
+        "out": [],
+        "q": ".[]"
+    },
+    {
         "in": {
-            "a": 1, 
+            "a": 1,
             "b": 1
-        }
-    }, 
-    {
-        "q": ".foo, .bar", 
+        },
         "out": [
-            42, 
+            1,
+            1
+        ],
+        "q": ".[]"
+    },
+    {
+        "in": {
+            "bar": "something else",
+            "baz": true,
+            "foo": 42
+        },
+        "out": [
+            42,
             "something else"
-        ], 
-        "in": {
-            "baz": true, 
-            "foo": 42, 
-            "bar": "something else"
-        }
-    }, 
+        ],
+        "q": ".foo, .bar"
+    },
     {
-        "q": ".user, .projects[]", 
-        "out": [
-            "stedolan", 
-            "jq", 
-            "wikiflow"
-        ], 
         "in": {
-            "user": "stedolan", 
             "projects": [
-                "jq", 
+                "jq",
                 "wikiflow"
-            ]
-        }
-    }, 
-    {
-        "q": ".[4,2]", 
+            ],
+            "user": "stedolan"
+        },
         "out": [
-            "e", 
-            "c"
-        ], 
+            "stedolan",
+            "jq",
+            "wikiflow"
+        ],
+        "q": ".user, .projects[]"
+    },
+    {
         "in": [
-            "a", 
-            "b", 
-            "c", 
-            "d", 
+            "a",
+            "b",
+            "c",
+            "d",
             "e"
-        ]
-    }, 
-    {
-        "q": ".[] | .name", 
+        ],
         "out": [
-            "JSON", 
-            "XML"
-        ], 
+            "e",
+            "c"
+        ],
+        "q": ".[4,2]"
+    },
+    {
         "in": [
             {
-                "good": true, 
+                "good": true,
                 "name": "JSON"
-            }, 
+            },
             {
-                "good": false, 
+                "good": false,
                 "name": "XML"
             }
-        ]
-    }, 
+        ],
+        "out": [
+            "JSON",
+            "XML"
+        ],
+        "q": ".[] | .name"
+    },
     {
-        "q": "[.user, .projects[]]", 
+        "in": {
+            "projects": [
+                "jq",
+                "wikiflow"
+            ],
+            "user": "stedolan"
+        },
         "out": [
             [
-                "stedolan", 
-                "jq", 
+                "stedolan",
+                "jq",
                 "wikiflow"
             ]
-        ], 
-        "in": {
-            "user": "stedolan", 
-            "projects": [
-                "jq", 
-                "wikiflow"
-            ]
-        }
-    }, 
+        ],
+        "q": "[.user, .projects[]]"
+    },
     {
-        "q": "{user, title: .titles[]}", 
-        "out": [
-            {
-                "user": "stedolan", 
-                "title": "JQ Primer"
-            }, 
-            {
-                "user": "stedolan", 
-                "title": "More JQ"
-            }
-        ], 
         "in": {
             "titles": [
-                "JQ Primer", 
+                "JQ Primer",
                 "More JQ"
-            ], 
+            ],
             "user": "stedolan"
-        }
-    }, 
+        },
+        "out": [
+            {
+                "title": "JQ Primer",
+                "user": "stedolan"
+            },
+            {
+                "title": "More JQ",
+                "user": "stedolan"
+            }
+        ],
+        "q": "{user, title: .titles[]}"
+    },
     {
-        "q": "{(.user): .titles}", 
+        "in": {
+            "titles": [
+                "JQ Primer",
+                "More JQ"
+            ],
+            "user": "stedolan"
+        },
         "out": [
             {
                 "stedolan": [
-                    "JQ Primer", 
+                    "JQ Primer",
                     "More JQ"
                 ]
             }
-        ], 
-        "in": {
-            "titles": [
-                "JQ Primer", 
-                "More JQ"
-            ], 
-            "user": "stedolan"
-        }
-    }, 
+        ],
+        "q": "{(.user): .titles}"
+    },
     {
-        "q": ".a + 1", 
-        "out": [
-            8
-        ], 
         "in": {
             "a": 7
-        }
-    }, 
-    {
-        "q": ".a + .b", 
+        },
         "out": [
-            [
-                1, 
-                2, 
-                3, 
-                4
-            ]
-        ], 
+            8
+        ],
+        "q": ".a + 1"
+    },
+    {
         "in": {
             "a": [
-                1, 
+                1,
                 2
-            ], 
+            ],
             "b": [
-                3, 
+                3,
                 4
             ]
-        }
-    }, 
-    {
-        "q": ".a + null", 
+        },
         "out": [
-            1
-        ], 
+            [
+                1,
+                2,
+                3,
+                4
+            ]
+        ],
+        "q": ".a + .b"
+    },
+    {
         "in": {
             "a": 1
-        }
-    }, 
-    {
-        "q": ".a + 1", 
+        },
         "out": [
             1
-        ], 
-        "in": {}
-    }, 
+        ],
+        "q": ".a + null"
+    },
     {
-        "q": "{a: 1} + {b: 2} + {c: 3} + {a: 42}", 
+        "in": {},
+        "out": [
+            1
+        ],
+        "q": ".a + 1"
+    },
+    {
+        "in": null,
         "out": [
             {
-                "a": 42, 
-                "c": 3, 
-                "b": 2
+                "a": 42,
+                "b": 2,
+                "c": 3
             }
-        ], 
-        "in": null
-    }, 
+        ],
+        "q": "{a: 1} + {b: 2} + {c: 3} + {a: 42}"
+    },
     {
-        "q": "4 - .a", 
-        "out": [
-            1
-        ], 
         "in": {
             "a": 3
-        }
-    }, 
+        },
+        "out": [
+            1
+        ],
+        "q": "4 - .a"
+    },
     {
-        "q": ". - [\"xml\", \"yaml\"]", 
+        "in": [
+            "xml",
+            "yaml",
+            "json"
+        ],
         "out": [
             [
                 "json"
             ]
-        ], 
-        "in": [
-            "xml", 
-            "yaml", 
-            "json"
-        ]
-    }, 
+        ],
+        "q": ". - [\"xml\", \"yaml\"]"
+    },
     {
-        "q": "10 / . * 3", 
+        "in": 5,
         "out": [
             6
-        ], 
-        "in": 5
-    }, 
+        ],
+        "q": "10 / . * 3"
+    },
     {
-        "q": ". / \", \"", 
+        "in": "a, b,c,d, e",
         "out": [
             [
-                "a", 
-                "b,c,d", 
+                "a",
+                "b,c,d",
                 "e"
             ]
-        ], 
-        "in": "a, b,c,d, e"
-    }, 
+        ],
+        "q": ". / \", \""
+    },
     {
-        "q": "{\"k\": {\"a\": 1, \"b\": 2}} * {\"k\": {\"a\": 0,\"c\": 3}}", 
+        "in": null,
         "out": [
             {
                 "k": {
-                    "a": 0, 
-                    "c": 3, 
-                    "b": 2
+                    "a": 0,
+                    "b": 2,
+                    "c": 3
                 }
             }
-        ], 
-        "in": null
-    }, 
+        ],
+        "q": "{\"k\": {\"a\": 1, \"b\": 2}} * {\"k\": {\"a\": 0,\"c\": 3}}"
+    },
     {
-        "q": ".[] | length", 
-        "out": [
-            2, 
-            6, 
-            1, 
-            0
-        ], 
         "in": [
             [
-                1, 
+                1,
                 2
-            ], 
-            "string", 
+            ],
+            "string",
             {
                 "a": 2
-            }, 
+            },
             null
-        ]
-    }, 
+        ],
+        "out": [
+            2,
+            6,
+            1,
+            0
+        ],
+        "q": ".[] | length"
+    },
     {
-        "q": "keys", 
+        "in": {
+            "Foo": 3,
+            "abc": 1,
+            "abcd": 2
+        },
         "out": [
             [
-                "Foo", 
-                "abc", 
+                "Foo",
+                "abc",
                 "abcd"
             ]
-        ], 
-        "in": {
-            "abcd": 2, 
-            "abc": 1, 
-            "Foo": 3
-        }
-    }, 
+        ],
+        "q": "keys"
+    },
     {
-        "q": "keys", 
+        "in": [
+            42,
+            3,
+            35
+        ],
         "out": [
             [
-                0, 
-                1, 
+                0,
+                1,
                 2
             ]
-        ], 
-        "in": [
-            42, 
-            3, 
-            35
-        ]
-    }, 
+        ],
+        "q": "keys"
+    },
     {
-        "q": "map(has(\"foo\"))", 
-        "out": [
-            [
-                true, 
-                false
-            ]
-        ], 
         "in": [
             {
                 "foo": 42
-            }, 
+            },
             {}
-        ]
-    }, 
-    {
-        "q": "map(has(2))", 
+        ],
         "out": [
             [
-                false, 
-                true
+                true,
+                false
             ]
-        ], 
+        ],
+        "q": "map(has(\"foo\"))"
+    },
+    {
         "in": [
             [
-                0, 
+                0,
                 1
-            ], 
+            ],
             [
-                "a", 
-                "b", 
+                "a",
+                "b",
                 "c"
             ]
-        ]
-    }, 
+        ],
+        "out": [
+            [
+                false,
+                true
+            ]
+        ],
+        "q": "map(has(2))"
+    },
     {
-        "q": "del(.foo)", 
+        "in": [
+            "foo",
+            "bar"
+        ],
+        "out": [
+            true,
+            false
+        ],
+        "q": ".[] | in({\"foo\": 42})"
+    },
+    {
+        "in": [
+            2,
+            0
+        ],
+        "out": [
+            [
+                false,
+                true
+            ]
+        ],
+        "q": "map(in([0,1]))"
+    },
+    {
+        "in": [
+            1,
+            2,
+            3
+        ],
+        "out": [
+            [
+                2,
+                3,
+                4
+            ]
+        ],
+        "q": "map(.+1)"
+    },
+    {
+        "in": {
+            "bar": 9001,
+            "baz": 42,
+            "foo": 42
+        },
         "out": [
             {
-                "baz": 42, 
-                "bar": 9001
+                "bar": 9001,
+                "baz": 42
             }
-        ], 
-        "in": {
-            "baz": 42, 
-            "foo": 42, 
-            "bar": 9001
-        }
-    }, 
+        ],
+        "q": "del(.foo)"
+    },
     {
-        "q": "del(.[1, 2])", 
+        "in": [
+            "foo",
+            "bar",
+            "baz"
+        ],
         "out": [
             [
                 "foo"
             ]
-        ], 
-        "in": [
-            "foo", 
-            "bar", 
-            "baz"
-        ]
-    }, 
+        ],
+        "q": "del(.[1, 2])"
+    },
     {
-        "q": "to_entries", 
+        "in": {
+            "a": 1,
+            "b": 2
+        },
         "out": [
             [
                 {
-                    "value": 1, 
-                    "key": "a"
-                }, 
+                    "key": "a",
+                    "value": 1
+                },
                 {
-                    "value": 2, 
-                    "key": "b"
+                    "key": "b",
+                    "value": 2
                 }
             ]
-        ], 
-        "in": {
-            "a": 1, 
-            "b": 2
-        }
-    }, 
+        ],
+        "q": "to_entries"
+    },
     {
-        "q": "from_entries", 
+        "in": [
+            {
+                "key": "a",
+                "value": 1
+            },
+            {
+                "key": "b",
+                "value": 2
+            }
+        ],
         "out": [
             {
-                "a": 1, 
+                "a": 1,
                 "b": 2
             }
-        ], 
-        "in": [
-            {
-                "value": 1, 
-                "key": "a"
-            }, 
-            {
-                "value": 2, 
-                "key": "b"
-            }
-        ]
-    }, 
+        ],
+        "q": "from_entries"
+    },
     {
-        "q": "with_entries(.key |= \"KEY_\" + .)", 
+        "in": {
+            "a": 1,
+            "b": 2
+        },
         "out": [
             {
-                "KEY_a": 1, 
+                "KEY_a": 1,
                 "KEY_b": 2
             }
-        ], 
-        "in": {
-            "a": 1, 
-            "b": 2
-        }
-    }, 
+        ],
+        "q": "with_entries(.key |= \"KEY_\" + .)"
+    },
     {
-        "q": "map(select(. >= 2))", 
+        "in": [
+            1,
+            5,
+            3,
+            0,
+            7
+        ],
         "out": [
             [
-                5, 
-                3, 
+                5,
+                3,
                 7
             ]
-        ], 
-        "in": [
-            1, 
-            5, 
-            3, 
-            0, 
-            7
-        ]
-    }, 
+        ],
+        "q": "map(select(. >= 2))"
+    },
     {
-        "q": ".[]|numbers", 
+        "in": [
+            {
+                "id": "first",
+                "val": 1
+            },
+            {
+                "id": "second",
+                "val": 2
+            }
+        ],
+        "out": [
+            {
+                "id": "second",
+                "val": 2
+            }
+        ],
+        "q": ".[] | select(.id == \"second\")"
+    },
+    {
+        "in": [
+            [],
+            {},
+            1,
+            "foo",
+            null,
+            true,
+            false
+        ],
         "out": [
             1
-        ], 
-        "in": [
-            [], 
-            {}, 
-            1, 
-            "foo", 
-            null, 
-            true, 
-            false
-        ]
-    }, 
+        ],
+        "q": ".[]|numbers"
+    },
     {
-        "q": "1, empty, 2", 
+        "in": null,
         "out": [
-            1, 
+            1,
             2
-        ], 
-        "in": null
-    }, 
+        ],
+        "q": "1, empty, 2"
+    },
     {
-        "q": "[1,2,empty,3]", 
+        "in": null,
         "out": [
             [
-                1, 
-                2, 
+                1,
+                2,
                 3
             ]
-        ], 
-        "in": null
-    }, 
+        ],
+        "q": "[1,2,empty,3]"
+    },
     {
-        "q": "map(.+1)", 
-        "out": [
-            [
-                2, 
-                3, 
-                4
-            ]
-        ], 
         "in": [
-            1, 
-            2, 
-            3
-        ]
-    }, 
-    {
-        "q": "[paths]", 
-        "out": [
+            1,
             [
-                [
-                    0
-                ], 
-                [
-                    1
-                ], 
-                [
-                    1, 
-                    0
-                ], 
-                [
-                    1, 
-                    1
-                ], 
-                [
-                    1, 
-                    1, 
-                    "a"
-                ]
-            ]
-        ], 
-        "in": [
-            1, 
-            [
-                [], 
+                [],
                 {
                     "a": 2
                 }
             ]
-        ]
-    }, 
-    {
-        "q": "[paths(scalars)]", 
+        ],
         "out": [
             [
                 [
                     0
-                ], 
+                ],
                 [
-                    1, 
-                    1, 
+                    1
+                ],
+                [
+                    1,
+                    0
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    1,
+                    1,
                     "a"
                 ]
             ]
-        ], 
+        ],
+        "q": "[paths]"
+    },
+    {
         "in": [
-            1, 
+            1,
             [
-                [], 
+                [],
                 {
                     "a": 2
                 }
             ]
-        ]
-    }, 
+        ],
+        "out": [
+            [
+                [
+                    0
+                ],
+                [
+                    1,
+                    1,
+                    "a"
+                ]
+            ]
+        ],
+        "q": "[paths(scalars)]"
+    },
     {
-        "q": "add", 
+        "in": [
+            "a",
+            "b",
+            "c"
+        ],
         "out": [
             "abc"
-        ], 
-        "in": [
-            "a", 
-            "b", 
-            "c"
-        ]
-    }, 
+        ],
+        "q": "add"
+    },
     {
-        "q": "add", 
+        "in": [
+            1,
+            2,
+            3
+        ],
         "out": [
             6
-        ], 
-        "in": [
-            1, 
-            2, 
-            3
-        ]
-    }, 
+        ],
+        "q": "add"
+    },
     {
-        "q": "add", 
+        "in": [],
         "out": [
             null
-        ], 
-        "in": []
-    }, 
+        ],
+        "q": "add"
+    },
     {
-        "q": "any", 
+        "in": [
+            true,
+            false
+        ],
         "out": [
             true
-        ], 
-        "in": [
-            true, 
-            false
-        ]
-    }, 
+        ],
+        "q": "any"
+    },
     {
-        "q": "any", 
+        "in": [
+            false,
+            false
+        ],
         "out": [
             false
-        ], 
-        "in": [
-            false, 
-            false
-        ]
-    }, 
+        ],
+        "q": "any"
+    },
     {
-        "q": "any", 
+        "in": [],
         "out": [
             false
-        ], 
-        "in": []
-    }, 
+        ],
+        "q": "any"
+    },
     {
-        "q": "all", 
+        "in": [
+            true,
+            false
+        ],
         "out": [
             false
-        ], 
-        "in": [
-            true, 
-            false
-        ]
-    }, 
+        ],
+        "q": "all"
+    },
     {
-        "q": "all", 
+        "in": [
+            true,
+            true
+        ],
         "out": [
             true
-        ], 
-        "in": [
-            true, 
-            true
-        ]
-    }, 
+        ],
+        "q": "all"
+    },
     {
-        "q": "all", 
+        "in": [],
         "out": [
             true
-        ], 
-        "in": []
-    }, 
+        ],
+        "q": "all"
+    },
     {
-        "q": "flatten", 
+        "in": [
+            1,
+            [
+                2
+            ],
+            [
+                [
+                    3
+                ]
+            ]
+        ],
         "out": [
             [
-                1, 
-                2, 
+                1,
+                2,
                 3
             ]
-        ], 
+        ],
+        "q": "flatten"
+    },
+    {
         "in": [
-            1, 
+            1,
             [
                 2
-            ], 
+            ],
             [
                 [
                     3
                 ]
             ]
-        ]
-    }, 
-    {
-        "q": "flatten(1)", 
+        ],
         "out": [
             [
-                1, 
-                2, 
+                1,
+                2,
                 [
                     3
                 ]
             ]
-        ], 
-        "in": [
-            1, 
-            [
-                2
-            ], 
-            [
-                [
-                    3
-                ]
-            ]
-        ]
-    }, 
+        ],
+        "q": "flatten(1)"
+    },
     {
-        "q": "flatten", 
+        "in": [
+            []
+        ],
         "out": [
             []
-        ], 
-        "in": [
-            []
-        ]
-    }, 
+        ],
+        "q": "flatten"
+    },
     {
-        "q": "flatten", 
+        "in": [
+            {
+                "foo": "bar"
+            },
+            [
+                {
+                    "foo": "baz"
+                }
+            ]
+        ],
         "out": [
             [
                 {
                     "foo": "bar"
-                }, 
+                },
                 {
                     "foo": "baz"
                 }
             ]
-        ], 
-        "in": [
-            {
-                "foo": "bar"
-            }, 
-            [
-                {
-                    "foo": "baz"
-                }
-            ]
-        ]
-    }, 
+        ],
+        "q": "flatten"
+    },
     {
-        "q": "range(2;4)", 
+        "in": null,
         "out": [
-            2, 
+            2,
             3
-        ], 
-        "in": null
-    }, 
+        ],
+        "q": "range(2;4)"
+    },
     {
-        "q": "[range(2;4)]", 
+        "in": null,
         "out": [
             [
-                2, 
+                2,
                 3
             ]
-        ], 
-        "in": null
-    }, 
+        ],
+        "q": "[range(2;4)]"
+    },
     {
-        "q": "[range(4)]", 
+        "in": null,
         "out": [
             [
-                0, 
-                1, 
-                2, 
+                0,
+                1,
+                2,
                 3
             ]
-        ], 
-        "in": null
-    }, 
+        ],
+        "q": "[range(4)]"
+    },
     {
-        "q": "floor", 
+        "in": null,
+        "out": [
+            [
+                0,
+                3,
+                6,
+                9
+            ]
+        ],
+        "q": "[range(0;10;3)]"
+    },
+    {
+        "in": null,
+        "out": [
+            []
+        ],
+        "q": "[range(0;10;-1)]"
+    },
+    {
+        "in": null,
+        "out": [
+            [
+                0,
+                -1,
+                -2,
+                -3,
+                -4
+            ]
+        ],
+        "q": "[range(0;-5;-1)]"
+    },
+    {
+        "in": 3.14159,
         "out": [
             3
-        ], 
-        "in": 3.14159
-    }, 
+        ],
+        "q": "floor"
+    },
     {
-        "q": "sqrt", 
+        "in": 9,
         "out": [
             3
-        ], 
-        "in": 9
-    }, 
+        ],
+        "q": "sqrt"
+    },
     {
-        "q": ".[] | tonumber", 
-        "out": [
-            1, 
-            1
-        ], 
         "in": [
-            1, 
+            1,
             "1"
-        ]
-    }, 
-    {
-        "q": ".[] | tostring", 
+        ],
         "out": [
-            "1", 
-            "1", 
-            "[1]"
-        ], 
+            1,
+            1
+        ],
+        "q": ".[] | tonumber"
+    },
+    {
         "in": [
-            1, 
-            "1", 
+            1,
+            "1",
             [
                 1
             ]
-        ]
-    }, 
+        ],
+        "out": [
+            "1",
+            "1",
+            "[1]"
+        ],
+        "q": ".[] | tostring"
+    },
     {
-        "q": "map(type)", 
+        "in": [
+            0,
+            false,
+            [],
+            {},
+            null,
+            "hello"
+        ],
         "out": [
             [
-                "number", 
-                "boolean", 
-                "array", 
-                "object", 
-                "null", 
+                "number",
+                "boolean",
+                "array",
+                "object",
+                "null",
                 "string"
             ]
-        ], 
-        "in": [
-            0, 
-            false, 
-            [], 
-            {}, 
-            null, 
-            "hello"
-        ]
-    }, 
+        ],
+        "q": "map(type)"
+    },
     {
-        "q": "sort", 
+        "in": [
+            8,
+            3,
+            null,
+            6
+        ],
         "out": [
             [
-                null, 
-                3, 
-                6, 
+                null,
+                3,
+                6,
                 8
             ]
-        ], 
-        "in": [
-            8, 
-            3, 
-            null, 
-            6
-        ]
-    }, 
+        ],
+        "q": "sort"
+    },
     {
-        "q": "sort(.foo)", 
+        "in": [
+            {
+                "bar": 10,
+                "foo": 4
+            },
+            {
+                "bar": 100,
+                "foo": 3
+            },
+            {
+                "bar": 1,
+                "foo": 2
+            }
+        ],
         "out": [
             [
                 {
-                    "foo": 2, 
-                    "bar": 1
-                }, 
+                    "bar": 1,
+                    "foo": 2
+                },
                 {
-                    "foo": 3, 
-                    "bar": 100
-                }, 
+                    "bar": 100,
+                    "foo": 3
+                },
                 {
-                    "foo": 4, 
-                    "bar": 10
+                    "bar": 10,
+                    "foo": 4
                 }
             ]
-        ], 
+        ],
+        "q": "sort_by(.foo)"
+    },
+    {
         "in": [
             {
-                "foo": 4, 
-                "bar": 10
-            }, 
+                "bar": 10,
+                "foo": 1
+            },
             {
-                "foo": 3, 
-                "bar": 100
-            }, 
+                "bar": 100,
+                "foo": 3
+            },
             {
-                "foo": 2, 
-                "bar": 1
+                "bar": 1,
+                "foo": 1
             }
-        ]
-    }, 
-    {
-        "q": "group(.foo)", 
+        ],
         "out": [
             [
                 [
                     {
-                        "foo": 1, 
-                        "bar": 10
-                    }, 
+                        "bar": 10,
+                        "foo": 1
+                    },
                     {
-                        "foo": 1, 
-                        "bar": 1
+                        "bar": 1,
+                        "foo": 1
                     }
-                ], 
+                ],
                 [
                     {
-                        "foo": 3, 
-                        "bar": 100
+                        "bar": 100,
+                        "foo": 3
                     }
                 ]
             ]
-        ], 
-        "in": [
-            {
-                "foo": 1, 
-                "bar": 10
-            }, 
-            {
-                "foo": 3, 
-                "bar": 100
-            }, 
-            {
-                "foo": 1, 
-                "bar": 1
-            }
-        ]
-    }, 
+        ],
+        "q": "group_by(.foo)"
+    },
     {
-        "q": "min", 
+        "in": [
+            5,
+            4,
+            2,
+            7
+        ],
         "out": [
             2
-        ], 
-        "in": [
-            5, 
-            4, 
-            2, 
-            7
-        ]
-    }, 
+        ],
+        "q": "min"
+    },
     {
-        "q": "max(.foo)", 
+        "in": [
+            {
+                "bar": 14,
+                "foo": 1
+            },
+            {
+                "bar": 3,
+                "foo": 2
+            }
+        ],
         "out": [
             {
-                "foo": 2, 
-                "bar": 3
+                "bar": 3,
+                "foo": 2
             }
-        ], 
-        "in": [
-            {
-                "foo": 1, 
-                "bar": 14
-            }, 
-            {
-                "foo": 2, 
-                "bar": 3
-            }
-        ]
-    }, 
+        ],
+        "q": "max_by(.foo)"
+    },
     {
-        "q": "unique", 
+        "in": [
+            1,
+            2,
+            5,
+            3,
+            5,
+            3,
+            1,
+            3
+        ],
         "out": [
             [
-                1, 
-                2, 
-                3, 
+                1,
+                2,
+                3,
                 5
             ]
-        ], 
-        "in": [
-            1, 
-            2, 
-            5, 
-            3, 
-            5, 
-            3, 
-            1, 
-            3
-        ]
-    }, 
+        ],
+        "q": "unique"
+    },
     {
-        "q": "unique(.foo)", 
+        "in": [
+            {
+                "bar": 2,
+                "foo": 1
+            },
+            {
+                "bar": 3,
+                "foo": 1
+            },
+            {
+                "bar": 5,
+                "foo": 4
+            }
+        ],
         "out": [
             [
                 {
-                    "foo": 1, 
-                    "bar": 2
-                }, 
+                    "bar": 2,
+                    "foo": 1
+                },
                 {
-                    "foo": 4, 
-                    "bar": 5
+                    "bar": 5,
+                    "foo": 4
                 }
             ]
-        ], 
-        "in": [
-            {
-                "foo": 1, 
-                "bar": 2
-            }, 
-            {
-                "foo": 1, 
-                "bar": 3
-            }, 
-            {
-                "foo": 4, 
-                "bar": 5
-            }
-        ]
-    }, 
+        ],
+        "q": "unique_by(.foo)"
+    },
     {
-        "q": "unique(length)", 
+        "in": [
+            "chunky",
+            "bacon",
+            "kitten",
+            "cicada",
+            "asparagus"
+        ],
         "out": [
             [
-                "bacon", 
-                "chunky", 
+                "bacon",
+                "chunky",
                 "asparagus"
             ]
-        ], 
-        "in": [
-            "chunky", 
-            "bacon", 
-            "kitten", 
-            "cicada", 
-            "asparagus"
-        ]
-    }, 
+        ],
+        "q": "unique_by(length)"
+    },
     {
-        "q": "reverse", 
+        "in": [
+            1,
+            2,
+            3,
+            4
+        ],
         "out": [
             [
-                4, 
-                3, 
-                2, 
+                4,
+                3,
+                2,
                 1
             ]
-        ], 
-        "in": [
-            1, 
-            2, 
-            3, 
-            4
-        ]
-    }, 
+        ],
+        "q": "reverse"
+    },
     {
-        "q": "contains(\"bar\")", 
+        "in": "foobar",
         "out": [
             true
-        ], 
-        "in": "foobar"
-    }, 
+        ],
+        "q": "contains(\"bar\")"
+    },
     {
-        "q": "contains([\"baz\", \"bar\"])", 
-        "out": [
-            true
-        ], 
         "in": [
-            "foobar", 
-            "foobaz", 
+            "foobar",
+            "foobaz",
             "blarp"
-        ]
-    }, 
+        ],
+        "out": [
+            true
+        ],
+        "q": "contains([\"baz\", \"bar\"])"
+    },
     {
-        "q": "contains([\"bazzzzz\", \"bar\"])", 
+        "in": [
+            "foobar",
+            "foobaz",
+            "blarp"
+        ],
         "out": [
             false
-        ], 
-        "in": [
-            "foobar", 
-            "foobaz", 
-            "blarp"
-        ]
-    }, 
+        ],
+        "q": "contains([\"bazzzzz\", \"bar\"])"
+    },
     {
-        "q": "contains({foo: 12, bar: [{barp: 12}]})", 
+        "in": {
+            "bar": [
+                1,
+                2,
+                {
+                    "barp": 12,
+                    "blip": 13
+                }
+            ],
+            "foo": 12
+        },
         "out": [
             true
-        ], 
+        ],
+        "q": "contains({foo: 12, bar: [{barp: 12}]})"
+    },
+    {
         "in": {
-            "foo": 12, 
             "bar": [
-                1, 
-                2, 
+                1,
+                2,
                 {
-                    "barp": 12, 
+                    "barp": 12,
                     "blip": 13
                 }
-            ]
-        }
-    }, 
-    {
-        "q": "contains({foo: 12, bar: [{barp: 15}]})", 
+            ],
+            "foo": 12
+        },
         "out": [
             false
-        ], 
-        "in": {
-            "foo": 12, 
-            "bar": [
-                1, 
-                2, 
-                {
-                    "barp": 12, 
-                    "blip": 13
-                }
-            ]
-        }
-    }, 
+        ],
+        "q": "contains({foo: 12, bar: [{barp: 15}]})"
+    },
     {
-        "q": "indices(\", \")", 
+        "in": "a,b, cd, efg, hijk",
         "out": [
             [
-                3, 
-                7, 
+                3,
+                7,
                 12
             ]
-        ], 
-        "in": "a,b, cd, efg, hijk"
-    }, 
+        ],
+        "q": "indices(\", \")"
+    },
     {
-        "q": "indices(1)", 
+        "in": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1,
+            4
+        ],
         "out": [
             [
-                1, 
-                3, 
+                1,
+                3,
                 5
             ]
-        ], 
-        "in": [
-            0, 
-            1, 
-            2, 
-            1, 
-            3, 
-            1, 
-            4
-        ]
-    }, 
+        ],
+        "q": "indices(1)"
+    },
     {
-        "q": "indices([1,2])", 
+        "in": [
+            0,
+            1,
+            2,
+            3,
+            1,
+            4,
+            2,
+            5,
+            1,
+            2,
+            6,
+            7
+        ],
         "out": [
             [
-                1, 
+                1,
                 8
             ]
-        ], 
-        "in": [
-            0, 
-            1, 
-            2, 
-            3, 
-            1, 
-            4, 
-            2, 
-            5, 
-            1, 
-            2, 
-            6, 
-            7
-        ]
-    }, 
+        ],
+        "q": "indices([1,2])"
+    },
     {
-        "q": "index(\", \")", 
+        "in": "a,b, cd, efg, hijk",
         "out": [
             3
-        ], 
-        "in": "a,b, cd, efg, hijk"
-    }, 
+        ],
+        "q": "index(\", \")"
+    },
     {
-        "q": "rindex(\", \")", 
+        "in": "a,b, cd, efg, hijk",
         "out": [
             12
-        ], 
-        "in": "a,b, cd, efg, hijk"
-    }, 
+        ],
+        "q": "rindex(\", \")"
+    },
     {
-        "q": "[.[]|startswith(\"foo\")]", 
-        "out": [
-            [
-                false, 
-                true, 
-                false, 
-                true, 
-                false
-            ]
-        ], 
-        "in": [
-            "fo", 
-            "foo", 
-            "barfoo", 
-            "foobar", 
-            "barfoob"
-        ]
-    }, 
-    {
-        "q": "[.[]|endswith(\"foo\")]", 
-        "out": [
-            [
-                false, 
-                true
-            ]
-        ], 
-        "in": [
-            "foobar", 
-            "barfoo"
-        ]
-    }, 
-    {
-        "q": "match(\"(abc)+\"; \"g\")", 
-        "out": [
-            {
-                "captures": [
-                    {
-                        "length": 3, 
-                        "string": "abc", 
-                        "name": null, 
-                        "offset": 0
-                    }
-                ], 
-                "length": 3, 
-                "string": "abc", 
-                "offset": 0
-            }, 
-            {
-                "captures": [
-                    {
-                        "length": 3, 
-                        "string": "abc", 
-                        "name": null, 
-                        "offset": 4
-                    }
-                ], 
-                "length": 3, 
-                "string": "abc", 
-                "offset": 4
-            }
-        ], 
-        "in": "abc abc"
-    }, 
-    {
-        "q": "match(\"foo\")", 
-        "out": [
-            {
-                "captures": [], 
-                "length": 3, 
-                "string": "foo", 
-                "offset": 0
-            }
-        ], 
-        "in": "foo bar foo"
-    }, 
-    {
-        "q": "match([\"foo\", \"ig\"])", 
-        "out": [
-            {
-                "captures": [], 
-                "length": 3, 
-                "string": "foo", 
-                "offset": 0
-            }, 
-            {
-                "captures": [], 
-                "length": 3, 
-                "string": "FOO", 
-                "offset": 8
-            }
-        ], 
-        "in": "foo bar FOO"
-    }, 
-    {
-        "q": "match(\"foo (?<bar123>bar)? foo\"; \"ig\")", 
-        "out": [
-            {
-                "captures": [
-                    {
-                        "length": 3, 
-                        "string": "bar", 
-                        "name": "bar123", 
-                        "offset": 4
-                    }
-                ], 
-                "length": 11, 
-                "string": "foo bar foo", 
-                "offset": 0
-            }, 
-            {
-                "captures": [
-                    {
-                        "length": 0, 
-                        "string": null, 
-                        "name": "bar123", 
-                        "offset": -1
-                    }
-                ], 
-                "length": 8, 
-                "string": "foo  foo", 
-                "offset": 12
-            }
-        ], 
-        "in": "foo bar foo foo  foo"
-    }, 
-    {
-        "q": "test(\"foo\")", 
+        "in": "bar",
         "out": [
             true
-        ], 
-        "in": "foo"
-    }, 
+        ],
+        "q": "inside(\"foobar\")"
+    },
     {
-        "q": "test(\"foo\"; \"i\")", 
+        "in": [
+            "baz",
+            "bar"
+        ],
         "out": [
             true
-        ], 
-        "in": "Foo"
-    }, 
+        ],
+        "q": "inside([\"foobar\", \"foobaz\", \"blarp\"])"
+    },
     {
-        "q": "test(\"foo\")", 
+        "in": [
+            "bazzzzz",
+            "bar"
+        ],
         "out": [
             false
-        ], 
-        "in": "bar"
-    }, 
+        ],
+        "q": "inside([\"foobar\", \"foobaz\", \"blarp\"])"
+    },
     {
-        "q": "[.[]|ltrimstr(\"foo\")]", 
+        "in": {
+            "bar": [
+                {
+                    "barp": 12
+                }
+            ],
+            "foo": 12
+        },
+        "out": [
+            true
+        ],
+        "q": "inside({\"foo\": 12, \"bar\":[1,2,{\"barp\":12, \"blip\":13}]})"
+    },
+    {
+        "in": {
+            "bar": [
+                {
+                    "barp": 15
+                }
+            ],
+            "foo": 12
+        },
+        "out": [
+            false
+        ],
+        "q": "inside({\"foo\": 12, \"bar\":[1,2,{\"barp\":12, \"blip\":13}]})"
+    },
+    {
+        "in": [
+            "fo",
+            "foo",
+            "barfoo",
+            "foobar",
+            "barfoob"
+        ],
         "out": [
             [
-                "fo", 
-                "", 
-                "barfoo", 
-                "bar", 
+                false,
+                true,
+                false,
+                true,
+                false
+            ]
+        ],
+        "q": "[.[]|startswith(\"foo\")]"
+    },
+    {
+        "in": [
+            "foobar",
+            "barfoo"
+        ],
+        "out": [
+            [
+                false,
+                true
+            ]
+        ],
+        "q": "[.[]|endswith(\"foo\")]"
+    },
+    {
+        "in": [
+            [
+                1,
+                2
+            ],
+            [
+                3,
+                4
+            ]
+        ],
+        "out": [
+            [
+                1,
+                3
+            ],
+            [
+                1,
+                4
+            ],
+            [
+                2,
+                3
+            ],
+            [
+                2,
+                4
+            ]
+        ],
+        "q": "combinations"
+    },
+    {
+        "in": [
+            0,
+            1
+        ],
+        "out": [
+            [
+                0,
+                0
+            ],
+            [
+                0,
+                1
+            ],
+            [
+                1,
+                0
+            ],
+            [
+                1,
+                1
+            ]
+        ],
+        "q": "combinations(2)"
+    },
+    {
+        "in": [
+            "fo",
+            "foo",
+            "barfoo",
+            "foobar",
+            "afoo"
+        ],
+        "out": [
+            [
+                "fo",
+                "",
+                "barfoo",
+                "bar",
                 "afoo"
             ]
-        ], 
-        "in": [
-            "fo", 
-            "foo", 
-            "barfoo", 
-            "foobar", 
-            "afoo"
-        ]
-    }, 
+        ],
+        "q": "[.[]|ltrimstr(\"foo\")]"
+    },
     {
-        "q": "[.[]|rtrimstr(\"foo\")]", 
+        "in": [
+            "fo",
+            "foo",
+            "barfoo",
+            "foobar",
+            "foob"
+        ],
         "out": [
             [
-                "fo", 
-                "", 
-                "bar", 
-                "foobar", 
+                "fo",
+                "",
+                "bar",
+                "foobar",
                 "foob"
             ]
-        ], 
-        "in": [
-            "fo", 
-            "foo", 
-            "barfoo", 
-            "foobar", 
-            "foob"
-        ]
-    }, 
+        ],
+        "q": "[.[]|rtrimstr(\"foo\")]"
+    },
     {
-        "q": "explode", 
+        "in": "foobar",
         "out": [
             [
-                102, 
-                111, 
-                111, 
-                98, 
-                97, 
+                102,
+                111,
+                111,
+                98,
+                97,
                 114
             ]
-        ], 
-        "in": "foobar"
-    }, 
+        ],
+        "q": "explode"
+    },
     {
-        "q": "implode", 
+        "in": [
+            65,
+            66,
+            67
+        ],
         "out": [
             "ABC"
-        ], 
-        "in": [
-            65, 
-            66, 
-            67
-        ]
-    }, 
+        ],
+        "q": "implode"
+    },
     {
-        "q": "split(\", \")", 
+        "in": "a, b,c,d, e, ",
         "out": [
             [
-                "a", 
-                "b,c,d", 
-                "e"
+                "a",
+                "b,c,d",
+                "e",
+                ""
             ]
-        ], 
-        "in": "a, b,c,d, e"
-    }, 
+        ],
+        "q": "split(\", \")"
+    },
     {
-        "q": "join(\", \")", 
+        "in": [
+            "a",
+            "b,c,d",
+            "e"
+        ],
         "out": [
             "a, b,c,d, e"
-        ], 
-        "in": [
-            "a", 
-            "b,c,d", 
-            "e"
-        ]
-    }, 
+        ],
+        "q": "join(\", \")"
+    },
     {
-        "q": "recurse(.foo[])", 
+        "in": [
+            "a",
+            1,
+            2.3,
+            true,
+            null,
+            false
+        ],
         "out": [
-            {
-                "foo": [
-                    {
-                        "foo": []
-                    }, 
-                    {
-                        "foo": [
-                            {
-                                "foo": []
-                            }
-                        ]
-                    }
-                ]
-            }, 
-            {
-                "foo": []
-            }, 
-            {
-                "foo": [
-                    {
-                        "foo": []
-                    }
-                ]
-            }, 
-            {
-                "foo": []
-            }
-        ], 
+            "a 1 2.3 true  false"
+        ],
+        "q": "join(\" \")"
+    },
+    {
+        "in": 1,
+        "out": [
+            [
+                1,
+                2,
+                4,
+                8,
+                16,
+                32,
+                64
+            ]
+        ],
+        "q": "[while(.<100; .*2)]"
+    },
+    {
+        "in": 4,
+        "out": [
+            24
+        ],
+        "q": "[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]"
+    },
+    {
         "in": {
             "foo": [
                 {
                     "foo": []
-                }, 
+                },
                 {
                     "foo": [
                         {
@@ -1573,294 +1662,654 @@
                     ]
                 }
             ]
-        }
-    }, 
-    {
-        "q": "recurse", 
+        },
         "out": [
             {
-                "a": 0, 
-                "b": [
-                    1
+                "foo": [
+                    {
+                        "foo": []
+                    },
+                    {
+                        "foo": [
+                            {
+                                "foo": []
+                            }
+                        ]
+                    }
                 ]
-            }, 
-            0, 
-            [
-                1
-            ], 
-            1
-        ], 
+            },
+            {
+                "foo": []
+            },
+            {
+                "foo": [
+                    {
+                        "foo": []
+                    }
+                ]
+            },
+            {
+                "foo": []
+            }
+        ],
+        "q": "recurse(.foo[])"
+    },
+    {
         "in": {
-            "a": 0, 
+            "a": 0,
             "b": [
                 1
             ]
-        }
-    }, 
-    {
-        "q": "..|.a?", 
+        },
         "out": [
+            {
+                "a": 0,
+                "b": [
+                    1
+                ]
+            },
+            0,
+            [
+                1
+            ],
             1
-        ], 
+        ],
+        "q": "recurse"
+    },
+    {
+        "in": 2,
+        "out": [
+            2,
+            4,
+            16
+        ],
+        "q": "recurse(. * .; . < 20)"
+    },
+    {
+        "in": [
+            [
+                4,
+                1,
+                7
+            ],
+            [
+                8,
+                5,
+                2
+            ],
+            [
+                3,
+                6,
+                9
+            ]
+        ],
+        "out": [
+            [
+                [
+                    1,
+                    4,
+                    7
+                ],
+                [
+                    2,
+                    5,
+                    8
+                ],
+                [
+                    3,
+                    6,
+                    9
+                ]
+            ]
+        ],
+        "q": "walk(if type == \"array\" then sort else . end)"
+    },
+    {
+        "in": [
+            {
+                "_a": {
+                    "__b": 2
+                }
+            }
+        ],
+        "out": [
+            [
+                {
+                    "a": {
+                        "b": 2
+                    }
+                }
+            ]
+        ],
+        "q": "walk( if type == \"object\" then with_entries( .key |= sub( \"^_+\"; \"\") ) else . end )"
+    },
+    {
         "in": [
             [
                 {
                     "a": 1
                 }
             ]
-        ]
-    }, 
+        ],
+        "out": [
+            1
+        ],
+        "q": "..|.a?"
+    },
     {
-        "q": "\"The input was \\(.), which is one less than \\(.+1)\"", 
+        "in": [
+            [
+                1
+            ],
+            [
+                2,
+                3
+            ]
+        ],
+        "out": [
+            [
+                [
+                    1,
+                    2
+                ],
+                [
+                    null,
+                    3
+                ]
+            ]
+        ],
+        "q": "transpose"
+    },
+    {
+        "in": 42,
         "out": [
             "The input was 42, which is one less than 43"
-        ], 
-        "in": 42
-    }, 
+        ],
+        "q": "\"The input was \\(.), which is one less than \\(.+1)\""
+    },
     {
-        "q": "[.[]|tostring]", 
-        "out": [
-            [
-                "1", 
-                "foo", 
-                "[\"foo\"]"
-            ]
-        ], 
         "in": [
-            1, 
-            "foo", 
+            1,
+            "foo",
             [
                 "foo"
             ]
-        ]
-    }, 
-    {
-        "q": "[.[]|tojson]", 
+        ],
         "out": [
             [
-                "1", 
-                "\"foo\"", 
+                "1",
+                "foo",
                 "[\"foo\"]"
             ]
-        ], 
+        ],
+        "q": "[.[]|tostring]"
+    },
+    {
         "in": [
-            1, 
-            "foo", 
+            1,
+            "foo",
             [
                 "foo"
             ]
-        ]
-    }, 
-    {
-        "q": "[.[]|tojson|fromjson]", 
+        ],
         "out": [
             [
-                1, 
-                "foo", 
+                "1",
+                "\"foo\"",
+                "[\"foo\"]"
+            ]
+        ],
+        "q": "[.[]|tojson]"
+    },
+    {
+        "in": [
+            1,
+            "foo",
+            [
+                "foo"
+            ]
+        ],
+        "out": [
+            [
+                1,
+                "foo",
                 [
                     "foo"
                 ]
             ]
-        ], 
-        "in": [
-            1, 
-            "foo", 
-            [
-                "foo"
-            ]
-        ]
-    }, 
+        ],
+        "q": "[.[]|tojson|fromjson]"
+    },
     {
-        "q": "@html", 
+        "in": "This works if x < y",
         "out": [
             "This works if x &lt; y"
-        ], 
-        "in": "This works if x < y"
-    }, 
+        ],
+        "q": "@html"
+    },
     {
-        "q": "@sh \"echo \\(.)\"", 
+        "in": "O'Hara's Ale",
         "out": [
             "echo 'O'\\''Hara'\\''s Ale'"
-        ], 
-        "in": "O'Hara's Ale"
-    }, 
+        ],
+        "q": "@sh \"echo \\(.)\""
+    },
     {
-        "q": ".[] == 1", 
-        "out": [
-            true, 
-            true, 
-            false, 
-            false
-        ], 
         "in": [
-            1, 
-            1.0, 
-            "1", 
+            1,
+            1.0,
+            "1",
             "banana"
-        ]
-    }, 
+        ],
+        "out": [
+            true,
+            true,
+            false,
+            false
+        ],
+        "q": ".[] == 1"
+    },
     {
-        "q": "if . == 0 then\n  \"zero\"\nelif . == 1 then\n  \"one\"\nelse\n  \"many\"\nend", 
+        "in": 2,
         "out": [
             "many"
-        ], 
-        "in": 2
-    }, 
+        ],
+        "q": "if . == 0 then\n  \"zero\"\nelif . == 1 then\n  \"one\"\nelse\n  \"many\"\nend"
+    },
     {
-        "q": ". < 5", 
+        "in": 2,
         "out": [
             true
-        ], 
-        "in": 2
-    }, 
+        ],
+        "q": ". < 5"
+    },
     {
-        "q": "42 and \"a string\"", 
+        "in": null,
         "out": [
             true
-        ], 
-        "in": null
-    }, 
+        ],
+        "q": "42 and \"a string\""
+    },
     {
-        "q": "(true, false) or false", 
+        "in": null,
         "out": [
-            true, 
+            true,
             false
-        ], 
-        "in": null
-    }, 
+        ],
+        "q": "(true, false) or false"
+    },
     {
-        "q": "(true, true) and (true, false)", 
+        "in": null,
         "out": [
-            true, 
-            false, 
-            true, 
+            true,
+            false,
+            true,
             false
-        ], 
-        "in": null
-    }, 
+        ],
+        "q": "(true, true) and (true, false)"
+    },
     {
-        "q": "[true, false | not]", 
+        "in": null,
         "out": [
             [
-                false, 
+                false,
                 true
             ]
-        ], 
-        "in": null
-    }, 
+        ],
+        "q": "[true, false | not]"
+    },
     {
-        "q": ".foo // 42", 
-        "out": [
-            19
-        ], 
         "in": {
             "foo": 19
-        }
-    }, 
+        },
+        "out": [
+            19
+        ],
+        "q": ".foo // 42"
+    },
     {
-        "q": ".foo // 42", 
+        "in": {},
         "out": [
             42
-        ], 
-        "in": {}
-    }, 
+        ],
+        "q": ".foo // 42"
+    },
     {
-        "q": ".bar as $x | .foo | . + $x", 
+        "in": true,
+        "out": [
+            ". is not an object"
+        ],
+        "q": "try .a catch \". is not an object\""
+    },
+    {
+        "in": true,
+        "out": [
+            "some exception"
+        ],
+        "q": "try error(\"some exception\") catch ."
+    },
+    {
+        "in": "foo",
+        "out": [
+            true
+        ],
+        "q": "test(\"foo\")"
+    },
+    {
+        "in": [
+            "xabcd",
+            "ABC"
+        ],
+        "out": [
+            true,
+            true
+        ],
+        "q": ".[] | test(\"a b c # spaces are ignored\"; \"ix\")"
+    },
+    {
+        "in": "abc abc",
+        "out": [
+            {
+                "captures": [
+                    {
+                        "length": 3,
+                        "name": null,
+                        "offset": 0,
+                        "string": "abc"
+                    }
+                ],
+                "length": 3,
+                "offset": 0,
+                "string": "abc"
+            },
+            {
+                "captures": [
+                    {
+                        "length": 3,
+                        "name": null,
+                        "offset": 4,
+                        "string": "abc"
+                    }
+                ],
+                "length": 3,
+                "offset": 4,
+                "string": "abc"
+            }
+        ],
+        "q": "match(\"(abc)+\"; \"g\")"
+    },
+    {
+        "in": "foo bar foo",
+        "out": [
+            {
+                "captures": [],
+                "length": 3,
+                "offset": 0,
+                "string": "foo"
+            }
+        ],
+        "q": "match(\"foo\")"
+    },
+    {
+        "in": "foo bar FOO",
+        "out": [
+            {
+                "captures": [],
+                "length": 3,
+                "offset": 0,
+                "string": "foo"
+            },
+            {
+                "captures": [],
+                "length": 3,
+                "offset": 8,
+                "string": "FOO"
+            }
+        ],
+        "q": "match([\"foo\", \"ig\"])"
+    },
+    {
+        "in": "foo bar foo foo  foo",
+        "out": [
+            {
+                "captures": [
+                    {
+                        "length": 3,
+                        "name": "bar123",
+                        "offset": 4,
+                        "string": "bar"
+                    }
+                ],
+                "length": 11,
+                "offset": 0,
+                "string": "foo bar foo"
+            },
+            {
+                "captures": [
+                    {
+                        "length": 0,
+                        "name": "bar123",
+                        "offset": -1,
+                        "string": null
+                    }
+                ],
+                "length": 8,
+                "offset": 12,
+                "string": "foo  foo"
+            }
+        ],
+        "q": "match(\"foo (?<bar123>bar)? foo\"; \"ig\")"
+    },
+    {
+        "in": "abc",
+        "out": [
+            3
+        ],
+        "q": "[ match(\".\"; \"g\")] | length"
+    },
+    {
+        "in": "xyzzy-14",
+        "out": [
+            {
+                "a": "xyzzy",
+                "n": "14"
+            }
+        ],
+        "q": "capture(\"(?<a>[a-z]+)-(?<n>[0-9]+)\")"
+    },
+    {
+        "in": {
+            "bar": 200,
+            "foo": 10
+        },
         "out": [
             210
-        ], 
-        "in": {
-            "foo": 10, 
-            "bar": 200
-        }
-    }, 
+        ],
+        "q": ".bar as $x | .foo | . + $x"
+    },
     {
-        "q": ". as $i|[(.*2|. as $i| $i), $i]", 
+        "in": 5,
         "out": [
             [
-                10, 
+                10,
                 5
             ]
-        ], 
-        "in": 5
-    }, 
+        ],
+        "q": ". as $i|[(.*2|. as $i| $i), $i]"
+    },
     {
-        "q": "def addvalue(f): . + [f]; map(addvalue(.[0]))", 
+        "in": [
+            [
+                1,
+                2
+            ],
+            [
+                10,
+                20
+            ]
+        ],
         "out": [
             [
                 [
-                    1, 
-                    2, 
+                    1,
+                    2,
                     1
-                ], 
+                ],
                 [
-                    10, 
-                    20, 
+                    10,
+                    20,
                     10
                 ]
             ]
-        ], 
+        ],
+        "q": "def addvalue(f): . + [f]; map(addvalue(.[0]))"
+    },
+    {
         "in": [
             [
-                1, 
+                1,
                 2
-            ], 
+            ],
             [
-                10, 
+                10,
                 20
             ]
-        ]
-    }, 
-    {
-        "q": "def addvalue(f): f as $x | map(. + $x); addvalue(.[0])", 
+        ],
         "out": [
             [
                 [
-                    1, 
-                    2, 
-                    1, 
+                    1,
+                    2,
+                    1,
                     2
-                ], 
+                ],
                 [
-                    10, 
-                    20, 
-                    1, 
+                    10,
+                    20,
+                    1,
                     2
                 ]
             ]
-        ], 
-        "in": [
-            [
-                1, 
-                2
-            ], 
-            [
-                10, 
-                20
-            ]
-        ]
-    }, 
+        ],
+        "q": "def addvalue(f): f as $x | map(. + $x); addvalue(.[0])"
+    },
     {
-        "q": "reduce .[] as $item (0; . + $item)", 
+        "in": [
+            10,
+            2,
+            5,
+            3
+        ],
         "out": [
             20
-        ], 
-        "in": [
-            10, 
-            2, 
-            5, 
-            3
-        ]
-    }, 
+        ],
+        "q": "reduce .[] as $item (0; . + $item)"
+    },
     {
-        "q": ".foo += 1", 
+        "in": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+        ],
+        "out": [
+            [
+                0,
+                1,
+                2
+            ]
+        ],
+        "q": "[limit(3;.[])]"
+    },
+    {
+        "in": 10,
+        "out": [
+            [
+                0,
+                9,
+                5
+            ]
+        ],
+        "q": "[first(range(.)), last(range(.)), nth(./2; range(.))]"
+    },
+    {
+        "in": 10,
+        "out": [
+            [
+                0,
+                9,
+                5
+            ]
+        ],
+        "q": "[range(.)]|[first, last, nth(5)]"
+    },
+    {
+        "in": [
+            1,
+            2,
+            3,
+            4,
+            null,
+            "a",
+            "b",
+            null
+        ],
+        "out": [
+            [
+                [
+                    1,
+                    2,
+                    3,
+                    4
+                ],
+                [
+                    "a",
+                    "b"
+                ]
+            ]
+        ],
+        "q": "[foreach .[] as $item ([[],[]]; if $item == null then [[],.[0]] else [(.[0] + [$item]),[]] end; if $item == null then .[1] else empty end)]"
+    },
+    {
+        "in": null,
+        "out": [
+            0,
+            3,
+            6,
+            9
+        ],
+        "q": "def range(init; upto; by): def _range: if (by > 0 and . < upto) or (by < 0 and . > upto) then ., ((.+by)|_range) else . end; if by == 0 then init else init|_range end | select((by > 0 and . < upto) or (by < 0 and . > upto)); range(0; 10; 3)"
+    },
+    {
+        "in": 1,
+        "out": [
+            [
+                1,
+                2,
+                4,
+                8,
+                16,
+                32,
+                64
+            ]
+        ],
+        "q": "def while(cond; update): def _while: if cond then ., (update | _while) else empty end; _while; [while(.<100; .*2)]"
+    },
+    {
+        "in": {
+            "foo": 42
+        },
         "out": [
             {
                 "foo": 43
             }
-        ], 
-        "in": {
-            "foo": 42
-        }
+        ],
+        "q": ".foo += 1"
     }
 ]
