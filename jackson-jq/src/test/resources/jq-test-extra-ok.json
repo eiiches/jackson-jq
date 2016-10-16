@@ -608,5 +608,13 @@
 			[true, true],
 			[false, true, true]
 		]
+	},
+	{
+		"q": ".[]|gsub(\"(?<d>\\\\d)\"; \"\\(.d|tonumber+1)\")",
+		"in": ["1a2b3", "1a2b"],
+		"out": [
+			"2a3b4",
+			"2a3b"
+		]
 	}
 ]

@@ -23,7 +23,6 @@ path(.foo[0,1])
 . as [$a, $b, {c: $c}] | $a + $b + $c
 [while(.<100; .*2|if . > 10 then break else . end)]
 {if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,include:15,module:16}
-gsub("(?<d>\\d)"; ":\(.d);")
 import "test_bind_order" as check; check::check
 getpath(["a","b"])
 try (def x: reverse; x=10) catch .
