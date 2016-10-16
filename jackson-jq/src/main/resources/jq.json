@@ -38,7 +38,6 @@
 		"net.thisptr.jackson.jq.internal.functions.ReverseFunction",
 		"net.thisptr.jackson.jq.internal.functions.ScanFunction",
 		"net.thisptr.jackson.jq.internal.functions.SortFunction",
-		"net.thisptr.jackson.jq.internal.functions.Split2Function",
 		"net.thisptr.jackson.jq.internal.functions.SplitFunction",
 		"net.thisptr.jackson.jq.internal.functions.StartsWithFunction",
 		"net.thisptr.jackson.jq.internal.functions.TestFunction",
