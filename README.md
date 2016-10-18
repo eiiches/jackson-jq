@@ -84,8 +84,8 @@ $ bin/jackson-jq '.foo' <<< '{"foo":10}'
 See `bin/jackson-jq --help` for more information.
 
 
-Difference between jq and jackson-jq
-------------------------------------
+Differences between jq and jackson-jq
+-------------------------------------
 
 Here is a *current* status of differences between jackson-jq and the jq. If you find something not in this list, please report an issue.
 
@@ -106,7 +106,6 @@ Here is a *current* status of differences between jackson-jq and the jq. If you 
  - Missing functions in jackson-jq
    - Datetime functions: `fromdate/0`, `mktime/0`, `gmtime/0`
    - Path manipulation functions: `getpath/1`, `setpath/2` and `delpaths/1`
-   - Numeric constants: `infinite/0` and `nan/0`
    - Others:
      - `env/0`
      - `bsearch/1`

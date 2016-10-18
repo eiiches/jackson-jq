@@ -616,5 +616,16 @@
 			"2a3b4",
 			"2a3b"
 		]
+	},
+	{
+		"q": "(null, 1.7976931348623157e+308, nan, infinite, -nan, -infinite) | [type, tojson, isinfinite, isnan]",
+		"out": [
+			["null", "null", false, false],
+			["number", "1.7976931348623157e+308", false, false],
+			["number", "null", false, true],
+			["number", "1.7976931348623157e+308", true, false],
+			["number", "null", false, true],
+			["number", "-1.7976931348623157e+308", true, false]
+		]
 	}
 ]

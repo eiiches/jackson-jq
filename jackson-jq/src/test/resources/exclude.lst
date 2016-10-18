@@ -1,7 +1,6 @@
 del(.), del(empty), del((.foo,.bar,.baz) | .[2,3,0]), del(.foo[0], .bar[0], .foo, .baz.bar[0].x)
 try ((map(select(.a == 1))[].a) |= .+1) catch .
 ["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])
-.[] | (infinite * .) < 0
 del(.[1], .[-6], .[2], .[-3:9])
 gmtime
 try path(.a | map(select(.b == 0)) | .[]) catch .
@@ -53,7 +52,6 @@ try path(.a | map(select(.b == 0))) catch .
 try path(.a | map(select(.b == 0)) | .c) catch .
 def x: .[1,2]; x=10
 .[] as [$a, $b] | {a: $a, b: $b}
-infinite, nan | type
 reduce .[] as [$i, {j:$j}] (0; . + $i - $j)
 (label | (label | 2 | break2)), 1
 try delpaths(0) catch .

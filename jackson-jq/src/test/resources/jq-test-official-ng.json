@@ -138,25 +138,6 @@
         "q": "try error(\"\\($__loc__)\") catch ."
     },
     {
-        "in": [
-            -1,
-            1
-        ],
-        "out": [
-            true,
-            false
-        ],
-        "q": ".[] | (infinite * .) < 0"
-    },
-    {
-        "in": null,
-        "out": [
-            "number",
-            "number"
-        ],
-        "q": "infinite, nan | type"
-    },
-    {
         "in": null,
         "out": [
             "less"
