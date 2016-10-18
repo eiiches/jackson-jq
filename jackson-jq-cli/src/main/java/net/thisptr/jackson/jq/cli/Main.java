@@ -1,13 +1,12 @@
 package net.thisptr.jackson.jq.cli;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
-
-import net.thisptr.jackson.jq.JsonQuery;
-import net.thisptr.jackson.jq.exception.JsonQueryException;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -22,6 +21,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+
 public class Main {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -33,6 +35,11 @@ public class Main {
 	private static final Option OPT_RAW = Option.builder("r")
 			.longOpt("raw")
 			.desc("output raw strings, not JSON texts")
+			.build();
+
+	private static final Option OPT_NULL_INPUT = Option.builder("n")
+			.longOpt("null-input")
+			.desc("use `null` as the single input value")
 			.build();
 
 	private static final Option OPT_HELP = Option.builder("h")
@@ -48,6 +55,7 @@ public class Main {
 			final Options options = new Options();
 			options.addOption(OPT_COMPACT);
 			options.addOption(OPT_RAW);
+			options.addOption(OPT_NULL_INPUT);
 			options.addOption(OPT_HELP);
 			command = parser.parse(options, args);
 			final List<String> rest = command.getArgList();
@@ -67,7 +75,12 @@ public class Main {
 			MAPPER.enable(SerializationFeature.INDENT_OUTPUT);
 		}
 
-		try (final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
+		InputStream is = System.in;
+		if (command.hasOption(OPT_NULL_INPUT.getOpt())) {
+			is = new ByteArrayInputStream("null".getBytes());
+		}
+
+		try (final BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
 			final JsonParser parser = MAPPER.getFactory().createParser(reader);
 			while (!parser.isClosed()) {
 				final JsonNode tree = parser.readValueAsTree();
