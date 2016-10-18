@@ -101,6 +101,7 @@ Here is a *current* status of differences between jackson-jq and the jq. If you 
    - `(expression)?` syntax
      - `?` can be only used after *accessors* in jackson-jq.
      - e.g) `(.a)?` does not compile in jackson-jq (while `.a?` does).
+   - `label` syntax
    - Streams
 
  - Missing functions in jackson-jq
