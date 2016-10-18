@@ -40,7 +40,6 @@ import "c" as foo; [foo::a, foo::c]
 del(.[2:4],.[0],.[-2:])
 try ((map(select(.a == 1))[].b) = 10) catch .
 try (def x: reverse; x=10) catch .' <<< '[0,1,2]
-map_values(.+1)
 fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))
 strftime("%A, %B %d, %Y")
 setpath([0,"a"]; 1)

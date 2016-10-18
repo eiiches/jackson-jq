@@ -130,6 +130,7 @@
 		{"name": "in", "args": ["xs"], "body": ". as $x | xs | has($x)"},
 		{"name": "inside", "args": ["xs"], "body": ". as $x | xs | contains($x)"},
 		{"name": "combinations", "args": [], "body": "if length == 0 then [] else .[0][] as $x | (.[1:] | combinations) as $y | [$x] + $y end"},
-		{"name": "combinations", "args": ["n"], "body": ". as $dot | [range(n) | $dot] | combinations"}
+		{"name": "combinations", "args": ["n"], "body": ". as $dot | [range(n) | $dot] | combinations"},
+		{"name": "map_values", "args": ["f"], "body": ".[] |= f"}
 	]
 }

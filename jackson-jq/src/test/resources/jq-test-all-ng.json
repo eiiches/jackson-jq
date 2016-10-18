@@ -214,21 +214,6 @@
         "q": "[.[] | try utf8bytelength catch .]"
     },
     {
-        "in": [
-            0,
-            1,
-            2
-        ],
-        "out": [
-            [
-                1,
-                2,
-                3
-            ]
-        ],
-        "q": "map_values(.+1)"
-    },
-    {
         "in": 1,
         "out": [
             [
