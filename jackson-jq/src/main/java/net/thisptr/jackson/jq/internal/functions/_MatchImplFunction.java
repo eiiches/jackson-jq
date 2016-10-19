@@ -82,7 +82,6 @@ public class _MatchImplFunction implements Function {
 			}
 		}
 
-		System.out.println(out);
 		return out;
 	}
 
