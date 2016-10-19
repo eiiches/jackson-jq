@@ -440,6 +440,18 @@
     },
     {
         "in": [
+            1,
+            0,
+            -1
+        ],
+        "out": [
+            1,
+            -1
+        ],
+        "q": ".[] | (1 / .)?"
+    },
+    {
+        "in": [
             [
                 1,
                 2
@@ -2016,11 +2028,43 @@
         "q": "try .a catch \". is not an object\""
     },
     {
+        "in": [
+            {},
+            true,
+            {
+                "a": 1
+            }
+        ],
+        "out": [
+            [
+                null,
+                1
+            ]
+        ],
+        "q": "[.[]|try .a]"
+    },
+    {
         "in": true,
         "out": [
             "some exception"
         ],
         "q": "try error(\"some exception\") catch ."
+    },
+    {
+        "in": [
+            {},
+            true,
+            {
+                "a": 1
+            }
+        ],
+        "out": [
+            [
+                null,
+                1
+            ]
+        ],
+        "q": "[.[]|(.a)?]"
     },
     {
         "in": "foo",

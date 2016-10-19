@@ -10,7 +10,6 @@ modulemeta
 strptime("%Y-%m-%dT%H:%M:%SZ")|mktime
 [foreach .[] as [$i, $j] (0; . + $i - $j)]
 try path(.a | map(select(.b == 0)) | .[0]) catch .
-[.[]|try .a]
 delpaths([[-200]])
 import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]
 try error("\($__loc__)") catch .
@@ -33,7 +32,6 @@ fromdate
 . as [$i] | . as $i | $i
 utf8bytelength
 [.[] | try utf8bytelength catch .]
-[.[]|(.a)?]
 map(getpath([2])), map(setpath([2]; 42)), map(delpaths([[2]]))
 import "c" as foo; [foo::a, foo::c]
 [match("( )*"; "g")]
@@ -47,7 +45,6 @@ def inc(x): x |= .+1; inc(.[].a)
 . as {as: $kw, "str": $str, ("e"+"x"+"p"): $exp} | [$kw, $str, $exp]
 path(.a[path(.b)[0]])
 try path(.a | map(select(.b == 0))) catch .
-[.[]|(.a, .a)?]
 try path(.a | map(select(.b == 0)) | .c) catch .
 def x: .[1,2]; x=10
 .[] as [$a, $b] | {a: $a, b: $b}
@@ -74,7 +71,6 @@ strptime("%Y-%m-%dT%H:%M:%SZ")
 [strptime("%Y-%m-%dT%H:%M:%SZ")|(.,mktime)]
 strftime("%Y-%m-%dT%H:%M:%SZ")
 [path(..)]
-.[] | (1 / .)?
 setpath(["a","b"]; 1)
 bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end
 path(.[] | select(.>3))

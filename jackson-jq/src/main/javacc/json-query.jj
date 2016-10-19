@@ -410,6 +410,10 @@ JsonQuery PrimaryExpression():
 		<OPEN_PAR>
 		tmp = JsonQuery()
 		<CLOSE_PAR>
+		(
+			<QUESTION>
+			{ tmp = new TryCatch.Question(tmp); }
+		)?
 	|
 		<MINUS>
 		tmp = PrimaryExpression()
@@ -453,13 +457,15 @@ JsonQuery FormattingFilter():
 
 JsonQuery TryCatchExpression():
 {
-	JsonQuery tryExpr, catchExpr;
+	JsonQuery tryExpr, catchExpr = null;
 }
 {
 	<KEYWORD_TRY>
 	tryExpr = JsonQuery()
-	<KEYWORD_CATCH>
-	catchExpr = PrimaryExpression()
+	(
+		<KEYWORD_CATCH>
+		catchExpr = PrimaryExpression()
+	)?
 	{ return new TryCatch(tryExpr, catchExpr); }
 }
 

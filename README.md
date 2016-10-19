@@ -97,12 +97,6 @@ Here is a *current* status of differences between jackson-jq and the jq. If you 
      - e.g) `jq '(.[]|select(. > 0)) += 10' <<< '[-1, 0, 1]'`
    - Destructuring
      - e.g) `[1, 2] as [$a, $b]`
-   - `try` without `catch` clause
-     - `catch` clause is required in jackson-jq.
-     - e.g) `try .a` fails to compile. Try `try .a catch empty` instead.
-   - `(expression)?` syntax
-     - `?` can be only used after *accessors* in jackson-jq.
-     - e.g) `(.a)?` does not compile in jackson-jq (while `.a?` does).
    - `label` syntax
    - Streams
 
