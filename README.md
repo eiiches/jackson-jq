@@ -93,12 +93,14 @@ Here is a *current* status of differences between jackson-jq and the jq. If you 
 
  - Missing language features in jackson-jq
    - [Breaking out of control structures](https://stedolan.github.io/jq/manual/#Breakingoutofcontrolstructures)
-     - jq once had label-less `break` in `reduce` and `foreach` in the master branch, but the feature was removed without ever being shipped as jq-1.5. Actually, jackson-jq implemented it then and still has it. Proper `label $out` and `break $out` syntax will be implemented in the future version of jackson-jq.
-       - e.g) `jq -n '(1,2,3) | label $out | if . == 2 then break $out else . end'` does not work.
+     - jq once had label-less `break` in `reduce` and `foreach` in the master branch, but the feature was removed without ever being shipped as jq-1.5. Actually, jackson-jq implemented it then and still has it. Proper `label $out` and `break $out` syntax will be implemented in the future version of jackson-jq. e.g)
+        - `jackson-jq -n '(1,2,3) | label $out | if . == 2 then break $out else . end'` does not work.
+
    - [Complex assignments](https://stedolan.github.io/jq/manual/#Complexassignments)
      - Currently, complex assignments only work when the left-hand side is a simple field access. Won't work if `select/1` or any filters are used in left-hand side. e.g)
-       - `jq '.a[]|.b += 10' <<< '{"a": [{"b": 1}, {"b": 2}]}` does work.
-       - `jq '.a[]|select(.b>1) += 10' <<< '{"a": [{"b": 1}, {"b": 2}]}'` does not work.
+        - `jackson-jq '.a[]|.b += 10' <<< '{"a": [{"b": 1}, {"b": 2}]}` does work.
+        - `jackson-jq '.a[]|select(.b>1) += 10' <<< '{"a": [{"b": 1}, {"b": 2}]}'` does not work.
+
    - [Modules](https://stedolan.github.io/jq/manual/#Modules)
    - [Streaming](https://stedolan.github.io/jq/manual/#Streaming)
    - [I/O](https://stedolan.github.io/jq/manual/#IO)
