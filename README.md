@@ -166,6 +166,7 @@ Using jackson-jq-extra module
 #### uriparse/0
 
  - `jackson-jq -n '"http://user@www.example.com:8080/index.html?foo=1&bar=%20#hash" | uriparse'` #=>
+ 
    ```json
    {
      "scheme" : "http",
