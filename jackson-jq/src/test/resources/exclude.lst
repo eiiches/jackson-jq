@@ -16,9 +16,7 @@ try error("\($__loc__)") catch .
 [label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]
 [label | foreach .[] as $item ([3, null]; if .[0] < 1 then break else [.[0] -1, $item] end; .[1])]
 path(.foo[0,1])
-. as $i | . as [$i] | $i
 (.[{}] = 0)?
-. as [$a, $b, {c: $c}] | $a + $b + $c
 [while(.<100; .*2|if . > 10 then break else . end)]
 {if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,include:15,module:16}
 import "test_bind_order" as check; check::check
@@ -29,7 +27,6 @@ def f: .+1; def g: f; def f: .+100; def f(a):a+.+11; [(g|f(20)), f]
 [foreach .[] as {a:$a} (0; . + $a; -.)]
 (..|select(type=="boolean")) |= if . then 1 else 0 end
 fromdate
-. as [$i] | . as $i | $i
 utf8bytelength
 [.[] | try utf8bytelength catch .]
 map(getpath([2])), map(setpath([2]; 42)), map(delpaths([[2]]))
@@ -47,7 +44,6 @@ path(.a[path(.b)[0]])
 try path(.a | map(select(.b == 0))) catch .
 try path(.a | map(select(.b == 0)) | .c) catch .
 def x: .[1,2]; x=10
-.[] as [$a, $b] | {a: $a, b: $b}
 reduce .[] as [$i, {j:$j}] (0; . + $i - $j)
 (label | (label | 2 | break2)), 1
 try delpaths(0) catch .
@@ -55,9 +51,7 @@ path(.a[0].b)
 {if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,module:15}
 [getpath(["a","b"], ["a","c"])]
 [[.[]|[.a,.a]]?]
-[1, {c:3, d:4}] as [$a, {c:$b, b:$c}] | $a, $b, $c
 reduce [[1,2,10], [3,4,10]][] as [$i,$j] (0; . + $i * $j)
-.[] as [$a, $b] | [$b, $a]
 [range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2] == $powers
 bsearch(0)
 [range(-99/2;99/2;1)] as $orig | [$orig[]|pow(2;.)|log2] as $back | ($orig|keys)[]|. as $k | (($orig|.[$k])-($back|.[$k]))|if . < 0 then . * -1 else . end|select(.>.00005)

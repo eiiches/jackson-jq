@@ -20,6 +20,8 @@ PARSER_BEGIN(JsonQueryParser)
 	import net.thisptr.jackson.jq.internal.tree.binaryop.*;
 	import net.thisptr.jackson.jq.internal.tree.literal.*;
 	import net.thisptr.jackson.jq.internal.tree.fieldaccess.*;
+	import net.thisptr.jackson.jq.internal.tree.matcher.*;
+	import net.thisptr.jackson.jq.internal.tree.matcher.matchers.*;
 
 	public class JsonQueryParser {
 		public static JsonQuery compile(final String line) throws ParseException {
@@ -188,24 +190,24 @@ JsonQuery Start():
 
 JsonQuery JsonQuery():
 {
-	Token t;
-	JsonQuery tmp;
-	final List<Pair<JsonQuery, String>> qs = new ArrayList<Pair<JsonQuery, String>>();
+	JsonQuery expr;
+	PatternMatcher matcher;
+	final List<Pair<JsonQuery, PatternMatcher>> qs = new ArrayList<Pair<JsonQuery, PatternMatcher>>();
 }
 {
-	tmp = TupleExpression()
+	expr = TupleExpression()
 	(
-		{ t = null; }
 		(
 			<KEYWORD_AS>
-			<DOLLAR>
-			t = <IDENTIFIER>
-		)?
+			matcher = Matcher()
+		|
+			{ matcher = null; }
+		)
 		<PIPE>
-		{ qs.add(Pair.<JsonQuery, String> of(tmp, t != null ? t.image : null)); }
-		tmp = TupleExpression()
+		{ qs.add(Pair.<JsonQuery, PatternMatcher> of(expr, matcher)); }
+		expr = TupleExpression()
 	)*
-	{ qs.add(Pair.<JsonQuery, String> of(tmp, null)); }
+	{ qs.add(Pair.<JsonQuery, PatternMatcher> of(expr, null)); }
 	{
 		if (qs.size() == 1)
 			return qs.get(0)._1;
@@ -215,24 +217,24 @@ JsonQuery JsonQuery():
 
 JsonQuery JsonQueryWithoutComma():
 {
-	Token t;
-	JsonQuery tmp;
-	final List<Pair<JsonQuery, String>> qs = new ArrayList<Pair<JsonQuery, String>>();
+	JsonQuery expr;
+	PatternMatcher matcher;
+	final List<Pair<JsonQuery, PatternMatcher>> qs = new ArrayList<Pair<JsonQuery, PatternMatcher>>();
 }
 {
-	tmp = BinaryOperatorExpression()
+	expr = BinaryOperatorExpression()
 	(
-		{ t = null; }
 		(
 			<KEYWORD_AS>
-			<DOLLAR>
-			t = <IDENTIFIER>
-		)?
+			matcher = Matcher()
+		|
+			{ matcher = null; }
+		)
 		<PIPE>
-		{ qs.add(Pair.<JsonQuery, String> of(tmp, t != null ? t.image : null)); }
-		tmp = BinaryOperatorExpression()
+		{ qs.add(Pair.<JsonQuery, PatternMatcher> of(expr, matcher)); }
+		expr = BinaryOperatorExpression()
 	)*
-	{ qs.add(Pair.<JsonQuery, String> of(tmp, null)); }
+	{ qs.add(Pair.<JsonQuery, PatternMatcher> of(expr, null)); }
 	{
 		if (qs.size() == 1)
 			return qs.get(0)._1;
@@ -561,54 +563,63 @@ JsonQuery ObjectConstruction():
 {
 	<OPEN_BRACE>
 	(
-		ObjectLiteralField(obj)
+		ObjectField(obj)
 		(
 			<COMMA>
-			ObjectLiteralField(obj)
+			ObjectField(obj)
 		)*
 	)?
 	<CLOSE_BRACE>
 	{ return obj; }
 }
 
-JsonQuery ObjectLiteralFieldValue():
-{
-	JsonQuery valueExpr;
-}
-{
-	<COLON>
-	(
-		<OPEN_PAR>
-		valueExpr = JsonQuery()
-		<CLOSE_PAR>
-		{ return valueExpr; }
-	|
-		valueExpr = JsonQueryWithoutComma()
-		{ return valueExpr; }
-	)
-}
-
-void ObjectLiteralField(final ObjectConstruction obj):
+void ObjectField(final ObjectConstruction obj):
 {
 	Token tmp = null;
 	JsonQuery keyExpr = null;
 	JsonQuery valueExpr = null;
 }
 {
+	keyExpr = ObjectFieldName()
 	(
-		keyExpr = StringInterpolation()
-	|
-		tmp = <IDENTIFIER>
-		{ keyExpr = new StringLiteral(tmp.image); }
-	|
-		<OPEN_PAR>
-		keyExpr = JsonQuery()
-		<CLOSE_PAR>
-	)
-	(
-		valueExpr = ObjectLiteralFieldValue()
+		<COLON>
+		valueExpr = ObjectFieldValue()
 	)?
 	{ obj.addField(keyExpr, valueExpr); }
+}
+
+JsonQuery ObjectFieldName():
+{
+	Token token;
+	JsonQuery expr;
+}
+{
+	(
+		expr = StringInterpolation()
+	|
+		token = <IDENTIFIER>
+		{ expr = new StringLiteral(token.image); }
+	|
+		<OPEN_PAR>
+		expr = JsonQuery()
+		<CLOSE_PAR>
+	)
+	{ return expr; }
+}
+
+JsonQuery ObjectFieldValue():
+{
+	JsonQuery expr;
+}
+{
+	(
+		<OPEN_PAR>
+		expr = JsonQuery()
+		<CLOSE_PAR>
+	|
+		expr = JsonQueryWithoutComma()
+	)
+	{ return expr; }
 }
 
 JsonQuery ArrayConstruction():
@@ -846,4 +857,70 @@ JsonQuery StringInterpolation():
 	)*
 	<ENDQUOTE>
 	{ return new StringInterpolation(builder.toString(), interpolations, formatter); }
+}
+
+PatternMatcher Matcher():
+{
+	PatternMatcher matcher;
+}
+{
+	(
+		matcher = ValueMatcher()
+	|
+		matcher = ArrayMatcher()
+	|
+		matcher = ObjectMatcher()
+	)
+	{ return matcher; }
+}
+
+PatternMatcher ArrayMatcher():
+{
+	PatternMatcher matcher;
+	final List<PatternMatcher> matchers = new ArrayList<PatternMatcher>();
+}
+{
+	<OPEN_BRACKET>
+	matcher = Matcher()
+	{ matchers.add(matcher); }
+	(
+		<COMMA>
+		matcher = Matcher()
+		{ matchers.add(matcher); }
+	)*
+	<CLOSE_BRACKET>
+	{ return new ArrayMatcher(matchers); }
+}
+
+PatternMatcher ObjectMatcher():
+{
+	JsonQuery name;
+	PatternMatcher matcher;
+	final List<Pair<JsonQuery, PatternMatcher>> matchers = new ArrayList<Pair<JsonQuery, PatternMatcher>>();
+}
+{
+	<OPEN_BRACE>
+	name = ObjectFieldName()
+	<COLON>
+	matcher = Matcher()
+	{ matchers.add(Pair.of(name, matcher)); }
+	(
+		<COMMA>
+		name = ObjectFieldName()
+		<COLON>
+		matcher = Matcher()
+		{ matchers.add(Pair.of(name, matcher)); }
+	)*
+	<CLOSE_BRACE>
+	{ return new ObjectMatcher(matchers); }
+}
+
+PatternMatcher ValueMatcher():
+{
+	Token token;
+}
+{
+	<DOLLAR>
+	token = <IDENTIFIER>
+	{ return new ValueMatcher(token.image); }
 }

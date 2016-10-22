@@ -29,4 +29,9 @@ public class Pair<T, U> {
 			result.add(item._2);
 		return result;
 	}
+
+	@Override
+	public String toString() {
+		return String.format("(%s, %s)", _1, _2);
+	}
 }
