@@ -656,5 +656,18 @@
 	{
 		"q": "foreach [1,2,3,4,5,6][] as $v (0; .+$v, .+$v+1; .)",
 		"out": [1,2,4,5,8,9,13,14,19,20,26,27]
+	},
+	{
+		"q": ".[] as [$n, $h] | try ($h | contains($n)) catch .",
+		"in": [
+			[true, true],
+			["str", true],
+			[false, true]
+		],
+		"out": [
+			true,
+			"boolean (true) and string (\"str\") cannot have their containment checked",
+			"boolean (true) and boolean (false) cannot have their containment checked"
+		]
 	}
 ]
