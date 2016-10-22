@@ -128,21 +128,73 @@ Additionally, test cases used in jackson-jq (mostly from the jq unit tests) migh
    - [jackson-jq/src/test/resources/jq-test-official-ok.json](jackson-jq/src/test/resources/jq-test-official-ok.json)
    - [jackson-jq/src/test/resources/jq-test-extra-ok.json](jackson-jq/src/test/resources/jq-test-extra-ok.json)
 
-Extra modules
--------------
+Using jackson-jq-extra module
+-----------------------------
 
-### jackson-jq-extra
+`jackson-jq-extra` module provides extra functions that you might find useful. These functions do not exist in jq.
 
-This module provides the following functions:
+### POM
 
- - uuid4
- - random
- - strptime
- - strftime
- - uriparse
- - uridecode
- - hostname
- - timestamp
+```xml
+<dependencies>
+    <dependency>
+        <groupId>net.thisptr</groupId>
+        <artifactId>jackson-jq-extra</artifactId>
+        <version>0.0.7-SNAPSHOT</version>
+    </dependency>
+</dependencies>
+```
+
+### Examples
+
+#### uuid4/0
+
+ - `jackson-jq -n 'uuid4'` #=> `"a69cf146-f40e-42e1-ae88-12590bdae947"`
+
+#### random/0
+
+ - `jackson-jq -n 'random'` #=> `0.43292159535427466`
+
+#### timestamp/0, strptime/{1, 2}, strftime/{1, 2}
+
+ - `jackson-jq -n 'timestamp'` #=> `1477162056362`
+ - `jackson-jq -n '1477162342372 | strftime("yyyy-MM-dd HH:mm:ss.SSSXXX")'` #=> `"2016-10-23 03:52:22.372+09:00"`
+ - `jackson-jq -n '1477162342372 | strftime("yyyy-MM-dd HH:mm:ss.SSSXXX"; "UTC")'` #=> `"2016-10-22 18:52:22.372Z"`
+ - `jackson-jq -n '"2016-10-23 03:52:22.372+09:00" | strptime("yyyy-MM-dd HH:mm:ss.SSSXXX")'` #=> `1477162342372`
+ - `jackson-jq -n '"2016-10-22 18:52:22.372" | strptime("yyyy-MM-dd HH:mm:ss.SSS"; "UTC")'` #=> `1477162342372`
+
+#### uriparse/0
+
+ - `jackson-jq -n '"http://user@www.example.com:8080/index.html?foo=1&bar=%20#hash" | uriparse'` #=>
+   ```json
+   {
+     "scheme" : "http",
+     "user_info" : "user",
+     "raw_user_info" : "user",
+     "host" : "www.example.com",
+     "port" : 8080,
+     "authority" : "user@www.example.com:8080",
+     "raw_authority" : "user@www.example.com:8080",
+     "path" : "/index.html",
+     "raw_path" : "/index.html",
+     "query" : "foo=1&bar= ",
+     "raw_query" : "foo=1&bar=%20",
+     "query_obj" : {
+       "bar" : " ",
+       "foo" : "1"
+     },
+     "fragment" : "hash",
+     "raw_fragment" : "hash"
+   }
+   ```
+
+#### uridecode/0
+
+ - `jackson-jq -n '"%66%6f%6f" | uridecode'` #=> `"foo"`
+
+#### hostname/0
+
+ - `jackson-jq -n 'hostname'` #=> `"jenkins-slave01"`
 
 License
 -------
