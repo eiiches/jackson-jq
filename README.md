@@ -95,9 +95,7 @@ Here is a *current* status of differences between jackson-jq and the jq. If you 
    - Modules
    - Complex assignments
      - e.g) `jq '(.[]|select(. > 0)) += 10' <<< '[-1, 0, 1]'`
-   - Destructuring
-     - e.g) `[1, 2] as [$a, $b]`
-   - `label` syntax
+   - `label` and `break`
    - Streams
 
  - Missing functions in jackson-jq

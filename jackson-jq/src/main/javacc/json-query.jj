@@ -473,15 +473,15 @@ JsonQuery TryCatchExpression():
 
 JsonQuery ForeachExpression():
 {
-	Token var;
+	PatternMatcher matcher;
 	JsonQuery initExpr, updateExpr, extractExpr = null, iterExpr;
 }
 {
 	<KEYWORD_FOREACH>
 	iterExpr = PrimaryExpression()
 	<KEYWORD_AS>
-	<DOLLAR>
-	var = <IDENTIFIER>
+	matcher = Matcher()
+
 	<OPEN_PAR>
 	initExpr = JsonQuery()
 	<SEMICOLON>
@@ -491,26 +491,25 @@ JsonQuery ForeachExpression():
 		extractExpr = JsonQuery()
 	)?
 	<CLOSE_PAR>
-	{ return new ForeachExpression(var.image, initExpr, updateExpr, extractExpr, iterExpr); }
+	{ return new ForeachExpression(matcher, initExpr, updateExpr, extractExpr, iterExpr); }
 }
 
 JsonQuery ReduceExpression():
 {
-	Token t;
+	PatternMatcher matcher;
 	JsonQuery tmpIterExpr, tmpInitExpr, tmpReduceExpr;
 }
 {
 	<KEYWORD_REDUCE>
 	tmpIterExpr = PrimaryExpression()
 	<KEYWORD_AS>
-	<DOLLAR>
-	t = <IDENTIFIER>
+	matcher = Matcher()
 	<OPEN_PAR>
 	tmpInitExpr = JsonQuery()
 	<SEMICOLON>
 	tmpReduceExpr = JsonQuery()
 	<CLOSE_PAR>
-	{ return new ReduceExpression(t.image, tmpInitExpr, tmpReduceExpr, tmpIterExpr); }
+	{ return new ReduceExpression(matcher, tmpInitExpr, tmpReduceExpr, tmpIterExpr); }
 }
 
 JsonQuery VariableAccess():

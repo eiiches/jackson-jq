@@ -8,7 +8,6 @@ include "c"; [a, c]
 env.PAGER
 modulemeta
 strptime("%Y-%m-%dT%H:%M:%SZ")|mktime
-[foreach .[] as [$i, $j] (0; . + $i - $j)]
 try path(.a | map(select(.b == 0)) | .[0]) catch .
 delpaths([[-200]])
 import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]
@@ -24,7 +23,6 @@ getpath(["a","b"])
 try (def x: reverse; x=10) catch .
 def f: .+1; def g: f; def f: .+100; def f(a):a+.+11; [(g|f(20)), f]
 . as $dot|fromstream($dot|tostream)|.==$dot
-[foreach .[] as {a:$a} (0; . + $a; -.)]
 (..|select(type=="boolean")) |= if . then 1 else 0 end
 fromdate
 utf8bytelength
@@ -44,14 +42,12 @@ path(.a[path(.b)[0]])
 try path(.a | map(select(.b == 0))) catch .
 try path(.a | map(select(.b == 0)) | .c) catch .
 def x: .[1,2]; x=10
-reduce .[] as [$i, {j:$j}] (0; . + $i - $j)
 (label | (label | 2 | break2)), 1
 try delpaths(0) catch .
 path(.a[0].b)
 {if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,module:15}
 [getpath(["a","b"], ["a","c"])]
 [[.[]|[.a,.a]]?]
-reduce [[1,2,10], [3,4,10]][] as [$i,$j] (0; . + $i * $j)
 [range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2] == $powers
 bsearch(0)
 [range(-99/2;99/2;1)] as $orig | [$orig[]|pow(2;.)|log2] as $back | ($orig|keys)[]|. as $k | (($orig|.[$k])-($back|.[$k]))|if . < 0 then . * -1 else . end|select(.>.00005)
