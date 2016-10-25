@@ -1,12 +1,5 @@
 [
     {
-        "in": "\u03bc",
-        "out": [
-            2
-        ],
-        "q": "utf8bytelength"
-    },
-    {
         "in": null,
         "out": [
             [

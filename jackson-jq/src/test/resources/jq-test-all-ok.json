@@ -1562,6 +1562,37 @@
         "q": "[.[] | length]"
     },
     {
+        "in": "asdf\u03bc",
+        "out": [
+            6
+        ],
+        "q": "utf8bytelength"
+    },
+    {
+        "in": [
+            [],
+            {},
+            [
+                1,
+                2
+            ],
+            55,
+            true,
+            false
+        ],
+        "out": [
+            [
+                "array ([]) only strings have UTF-8 byte length",
+                "object ({}) only strings have UTF-8 byte length",
+                "array ([1,2]) only strings have UTF-8 byte length",
+                "number (55) only strings have UTF-8 byte length",
+                "boolean (true) only strings have UTF-8 byte length",
+                "boolean (false) only strings have UTF-8 byte length"
+            ]
+        ],
+        "q": "[.[] | try utf8bytelength catch .]"
+    },
+    {
         "in": [
             {},
             {

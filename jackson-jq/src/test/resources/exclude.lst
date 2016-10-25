@@ -25,8 +25,6 @@ def f: .+1; def g: f; def f: .+100; def f(a):a+.+11; [(g|f(20)), f]
 . as $dot|fromstream($dot|tostream)|.==$dot
 (..|select(type=="boolean")) |= if . then 1 else 0 end
 fromdate
-utf8bytelength
-[.[] | try utf8bytelength catch .]
 map(getpath([2])), map(setpath([2]; 42)), map(delpaths([[2]]))
 import "c" as foo; [foo::a, foo::c]
 del(.[2:4],.[0],.[-2:])

@@ -111,7 +111,6 @@ Here is a *current* status of differences between jackson-jq and the jq. If you 
    - Others:
      - `env/0`
      - `bsearch/1`
-     - `utf8bytelength`
      - and more
 
  - Known corner cases

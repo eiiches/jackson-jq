@@ -48,7 +48,8 @@
 		"net.thisptr.jackson.jq.internal.functions.ToJsonFunction",
 		"net.thisptr.jackson.jq.internal.functions.ToNumberFunction",
 		"net.thisptr.jackson.jq.internal.functions.ToStringFunction",
-		"net.thisptr.jackson.jq.internal.functions.TypeFunction"
+		"net.thisptr.jackson.jq.internal.functions.TypeFunction",
+		"net.thisptr.jackson.jq.internal.functions.Utf8ByteLengthFunction"
 	],
 	"functions": [
 		{"name": "@text", "body": "tostring"},
