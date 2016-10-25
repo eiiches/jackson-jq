@@ -1,0 +1,336 @@
+[
+    {
+        "in": "abc",
+        "out": [
+            [
+                {
+                    "captures": [],
+                    "length": 0,
+                    "offset": 0,
+                    "string": ""
+                },
+                {
+                    "captures": [],
+                    "length": 0,
+                    "offset": 1,
+                    "string": ""
+                },
+                {
+                    "captures": [],
+                    "length": 0,
+                    "offset": 2,
+                    "string": ""
+                }
+            ]
+        ],
+        "q": "[match(\"( )*\"; \"g\")]"
+    },
+    {
+        "in": "abc",
+        "out": [
+            []
+        ],
+        "q": "[match(\"( )*\"; \"gn\")]"
+    },
+    {
+        "in": "\u0101\u00e1\u00e0\u00e4",
+        "out": [
+            []
+        ],
+        "q": "[match(\"a\"; \"gi\")]"
+    },
+    {
+        "in": "foo bar",
+        "out": [
+            [
+                {
+                    "captures": [
+                        {
+                            "length": 3,
+                            "name": null,
+                            "offset": 4,
+                            "string": "bar"
+                        }
+                    ],
+                    "length": 3,
+                    "offset": 4,
+                    "string": "bar"
+                }
+            ]
+        ],
+        "q": "[match([\"(bar)\"])]"
+    },
+    {
+        "in": "a\u0304 bar with a combining codepoint U+0304",
+        "out": [
+            [
+                {
+                    "captures": [],
+                    "length": 3,
+                    "offset": 3,
+                    "string": "bar"
+                }
+            ]
+        ],
+        "q": "[match(\"bar\")]"
+    },
+    {
+        "in": "a ba\u0304r",
+        "out": [
+            [
+                {
+                    "captures": [],
+                    "length": 4,
+                    "offset": 2,
+                    "string": "ba\u0304r"
+                }
+            ]
+        ],
+        "q": "[match(\"ba\u0304r\")]"
+    },
+    {
+        "in": "a\u0304 two-codepoint grapheme",
+        "out": [
+            [
+                {
+                    "captures": [],
+                    "length": 2,
+                    "offset": 0,
+                    "string": "a\u0304"
+                }
+            ]
+        ],
+        "q": "[match(\".+?\\\\b\")]"
+    },
+    {
+        "in": "foo bar foo foo  foo",
+        "out": [
+            [
+                {
+                    "captures": [
+                        {
+                            "length": 3,
+                            "name": "bar123",
+                            "offset": 4,
+                            "string": "bar"
+                        }
+                    ],
+                    "length": 11,
+                    "offset": 0,
+                    "string": "foo bar foo"
+                },
+                {
+                    "captures": [
+                        {
+                            "length": 0,
+                            "name": "bar123",
+                            "offset": -1,
+                            "string": null
+                        }
+                    ],
+                    "length": 8,
+                    "offset": 12,
+                    "string": "foo  foo"
+                }
+            ]
+        ],
+        "q": "[match([\"foo (?<bar123>bar)? foo\", \"ig\"])]"
+    },
+    {
+        "in": "abc",
+        "out": [
+            [
+                false
+            ]
+        ],
+        "q": "[test(\"( )*\"; \"gn\")]"
+    },
+    {
+        "in": "\u0101",
+        "out": [
+            [
+                true
+            ]
+        ],
+        "q": "[test(\"\u0101\")]"
+    },
+    {
+        "in": "xyzzy-14",
+        "out": [
+            {
+                "a": "xyzzy",
+                "n": "14"
+            }
+        ],
+        "q": "capture(\"(?<a>[a-z]+)-(?<n>[0-9]+)\")"
+    },
+    {
+        "in": [
+            "a,b, c, d, e,f",
+            ", a,b, c, d, e,f, "
+        ],
+        "out": [
+            [
+                "a,b:c, d, e,f",
+                ":a,b, c, d, e,f, "
+            ]
+        ],
+        "q": "[.[] | sub(\", \"; \":\")]"
+    },
+    {
+        "in": "abcdef",
+        "out": [
+            "Head=a Tail=bcdef"
+        ],
+        "q": "sub(\"^(?<head>.)\"; \"Head=\\(.head) Tail=\")"
+    },
+    {
+        "in": [
+            "a,b, c, d, e,f",
+            ", a,b, c, d, e,f, "
+        ],
+        "out": [
+            [
+                "a,b:c:d:e,f",
+                ":a,b:c:d:e,f:"
+            ]
+        ],
+        "q": "[.[] | gsub(\", \"; \":\")]"
+    },
+    {
+        "in": "a1b2",
+        "out": [
+            "a:1;b:2;"
+        ],
+        "q": "gsub(\"(?<d>\\\\d)\"; \":\\(.d);\")"
+    },
+    {
+        "in": "aaaaa",
+        "out": [
+            "bbbbb"
+        ],
+        "q": "gsub(\"a\";\"b\")"
+    },
+    {
+        "in": "",
+        "out": [
+            ""
+        ],
+        "q": "gsub( \"(.*)\"; \"\";  \"x\")"
+    },
+    {
+        "in": [
+            "a,b, c, d, e,f",
+            ", a,b, c, d, e,f, "
+        ],
+        "out": [
+            [
+                ", ",
+                ", ",
+                ", ",
+                ", ",
+                ", ",
+                ", ",
+                ", ",
+                ", "
+            ]
+        ],
+        "q": "[.[] | scan(\", \")]"
+    },
+    {
+        "in": [
+            "a,b, c, d, e,f",
+            ", a,b, c, d, e,f, "
+        ],
+        "out": [
+            [
+                [
+                    [
+                        "a:b, c, d, e,f"
+                    ],
+                    [
+                        "a:b:c:d:e:f"
+                    ],
+                    [
+                        ",",
+                        ", ",
+                        ", ",
+                        ", ",
+                        ","
+                    ]
+                ],
+                [
+                    [
+                        ":a,b, c, d, e,f, "
+                    ],
+                    [
+                        ":a:b:c:d:e:f:"
+                    ],
+                    [
+                        ", ",
+                        ",",
+                        ", ",
+                        ", ",
+                        ", ",
+                        ",",
+                        ", "
+                    ]
+                ]
+            ]
+        ],
+        "q": "[.[]|[[sub(\", *\";\":\")], [gsub(\", *\";\":\")], [scan(\", *\")]]]"
+    },
+    {
+        "in": [
+            "a,b, c, d, e,f",
+            ", a,b, c, d, e,f, "
+        ],
+        "out": [
+            [
+                [
+                    [
+                        "a,b:c, d, e,f"
+                    ],
+                    [
+                        "a,b:c:d:e,f"
+                    ],
+                    [
+                        ", ",
+                        ", ",
+                        ", "
+                    ]
+                ],
+                [
+                    [
+                        ":a,b, c, d, e,f, "
+                    ],
+                    [
+                        ":a,b:c:d:e,f:"
+                    ],
+                    [
+                        ", ",
+                        ", ",
+                        ", ",
+                        ", ",
+                        ", "
+                    ]
+                ]
+            ]
+        ],
+        "q": "[.[]|[[sub(\", +\";\":\")], [gsub(\", +\";\":\")], [scan(\", +\")]]]"
+    },
+    {
+        "in": "Abcabc",
+        "out": [
+            "+A-+a-"
+        ],
+        "q": "gsub(\"(?<x>.)[^a]*\"; \"+\\(.x)-\")"
+    },
+    {
+        "in": "\u2019",
+        "out": [
+            "\u2019!"
+        ],
+        "q": "sub(\"(?<x>.)\"; \"\\(.x)!\")"
+    }
+]

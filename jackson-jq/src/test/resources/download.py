@@ -4,9 +4,9 @@ import json
 import yaml
 from urllib import request as urllib2
 
-def load_jq_all():
+def load_jq_tests_from_url(url):
     result = []
-    lines = urllib2.urlopen('https://raw.githubusercontent.com/stedolan/jq/master/tests/jq.test').read().decode('utf-8').split('\n')
+    lines = urllib2.urlopen(url).read().decode('utf-8').split('\n')
     print(lines)
     ite = iter(lines)
     while True:
@@ -80,14 +80,13 @@ if __name__ == '__main__':
     with open('exclude.lst') as f:
         excludes = set(line.strip() for line in f if line and not line.startswith('#'))
 
-    d = load_jq_all()
-    with open('jq-test-all-ok.json', 'w') as f:
-        json.dump(list(filter(lambda x: x['q'] not in excludes, d)), f, indent=4, sort_keys=True)
-    with open('jq-test-all-ng.json', 'w') as f:
-        json.dump(list(filter(lambda x: x['q'] in excludes, d)), f, indent=4, sort_keys=True)
+    def emit_tests(cases, fname_ok, fname_ng):
+        with open(fname_ok, 'w') as f:
+            json.dump(list(filter(lambda x: x['q'] not in excludes, cases)), f, indent=4, sort_keys=True)
+        with open(fname_ng, 'w') as f:
+            json.dump(list(filter(lambda x: x['q'] in excludes, cases)), f, indent=4, sort_keys=True)
 
-    d = load_jq_manual()
-    with open('jq-test-official-ok.json', 'w') as f:
-        json.dump(list(filter(lambda x: x['q'] not in excludes, d)), f, indent=4, sort_keys=True)
-    with open('jq-test-official-ng.json', 'w') as f:
-        json.dump(list(filter(lambda x: x['q'] in excludes, d)), f, indent=4, sort_keys=True)
+    emit_tests(load_jq_tests_from_url('https://raw.githubusercontent.com/stedolan/jq/master/tests/jq.test'), 'jq-test-all-ok.json', 'jq-test-all-ng.json')
+    emit_tests(load_jq_tests_from_url('https://raw.githubusercontent.com/stedolan/jq/master/tests/onig.test'), 'jq-test-onig-ok.json', 'jq-test-onig-ng.json')
+    emit_tests(load_jq_manual(), 'jq-test-manual-ok.json', 'jq-test-manual-ng.json')
+

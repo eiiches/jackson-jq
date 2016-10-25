@@ -29,7 +29,6 @@ utf8bytelength
 [.[] | try utf8bytelength catch .]
 map(getpath([2])), map(setpath([2]; 42)), map(delpaths([[2]]))
 import "c" as foo; [foo::a, foo::c]
-[match("( )*"; "g")]
 del(.[2:4],.[0],.[-2:])
 try ((map(select(.a == 1))[].b) = 10) catch .
 try (def x: reverse; x=10) catch .' <<< '[0,1,2]

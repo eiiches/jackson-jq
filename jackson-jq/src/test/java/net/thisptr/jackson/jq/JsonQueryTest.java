@@ -8,10 +8,6 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
-import net.thisptr.jackson.jq.JsonQuery;
-import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
-
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
@@ -27,6 +23,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 
 @RunWith(Enclosed.class)
 public class JsonQueryTest {
@@ -82,19 +81,25 @@ public class JsonQueryTest {
 		}
 
 		@DataPoints
-		public static TestCase[] TESTCASES_OFFICIAL = loadTestCases("jq-test-official-ok.json", false);
+		public static TestCase[] TESTCASES_MANUAL = loadTestCases("jq-test-manual-ok.json", false);
+
+		@DataPoints
+		public static TestCase[] TESTCASES_ONIG = loadTestCases("jq-test-onig-ok.json", false);
+
+		@DataPoints
+		public static TestCase[] TESTCASES_ALL = loadTestCases("jq-test-all-ok.json", false);
 
 		@DataPoints
 		public static TestCase[] TESTCASES_EXTRA = loadTestCases("jq-test-extra-ok.json", false);
 
 		@DataPoints
-		public static TestCase[] TESTCASES_JQ_ALL = loadTestCases("jq-test-all-ok.json", false);
+		public static TestCase[] TESTCASES_ALL_FAIL = loadTestCases("jq-test-all-ng.json", true);
 
 		@DataPoints
-		public static TestCase[] TESTCASES_JQ_ALL_FAIL = loadTestCases("jq-test-all-ng.json", true);
+		public static TestCase[] TESTCASES_MANUAL_FAIL = loadTestCases("jq-test-manual-ng.json", true);
 
 		@DataPoints
-		public static TestCase[] TESTCASES_OFFICIAL_FAIL = loadTestCases("jq-test-official-ng.json", true);
+		public static TestCase[] TESTCASES_ONIG_FAIL = loadTestCases("jq-test-onig-ng.json", true);
 
 		@Theory
 		public void test(final TestCase tc) throws Throwable {

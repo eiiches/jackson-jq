@@ -121,11 +121,13 @@ Additionally, test cases used in jackson-jq (mostly from the jq unit tests) migh
 
  - Test cases not working
    - [jackson-jq/src/test/resources/jq-test-all-ng.json](jackson-jq/src/test/resources/jq-test-all-ng.json)
-   - [jackson-jq/src/test/resources/jq-test-official-ng.json](jackson-jq/src/test/resources/jq-test-official-ng.json)
+   - [jackson-jq/src/test/resources/jq-test-manual-ng.json](jackson-jq/src/test/resources/jq-test-manual-ng.json)
+   - [jackson-jq/src/test/resources/jq-test-onig-ng.json](jackson-jq/src/test/resources/jq-test-onig-ng.json)
 
  - Test cases working
    - [jackson-jq/src/test/resources/jq-test-all-ok.json](jackson-jq/src/test/resources/jq-test-all-ok.json)
-   - [jackson-jq/src/test/resources/jq-test-official-ok.json](jackson-jq/src/test/resources/jq-test-official-ok.json)
+   - [jackson-jq/src/test/resources/jq-test-manual-ok.json](jackson-jq/src/test/resources/jq-test-manual-ok.json)
+   - [jackson-jq/src/test/resources/jq-test-onig-ok.json](jackson-jq/src/test/resources/jq-test-onig-ok.json)
    - [jackson-jq/src/test/resources/jq-test-extra-ok.json](jackson-jq/src/test/resources/jq-test-extra-ok.json)
 
 Using jackson-jq-extra module

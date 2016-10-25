@@ -26,31 +26,40 @@ import net.thisptr.jackson.jq.internal.misc.Preconditions;
 @BuiltinFunction("_match_impl/3")
 public class _MatchImplFunction implements Function {
 
+	private static int UTF8CharLength(final byte ch) {
+		if ((ch & 0b10000000) == 0b00000000)
+			return 1;
+		if ((ch & 0b11100000) == 0b11000000)
+			return 2;
+		if ((ch & 0b11110000) == 0b11100000)
+			return 3;
+		if ((ch & 0b11111000) == 0b11110000)
+			return 4;
+		if ((ch & 0b11111100) == 0b11111000)
+			return 5;
+		if ((ch & 0b11111110) == 0b11111100)
+			return 6;
+		if ((ch & 0b11000000) == 0b10000000)
+			throw new IllegalArgumentException(String.format("This is not a first byte of unicode charactor: %x", ch));
+		if (ch == 0xfe || ch == 0xff)
+			throw new IllegalArgumentException(String.format("This is a part of a byte order mark (BOM): %x", ch));
+		throw new IllegalArgumentException(String.format("This is an unknown UTF-8 byte: %x", ch));
+	}
+
 	private static int[] UTF8CharIndex(final byte[] bytes) {
 		final int[] r = new int[bytes.length + 1];
 
-		int c = 0;
-		for (int i = 0; i < bytes.length; ++i) {
-			if (bytes[i] <= 0b01111111) {
-				r[i] = c++;
-			} else if (bytes[i] <= 0b10111111) {
-				// always i > 0 because this can't appear in the first byte.
-				r[i] = r[i - 1];
-			} else if (bytes[i] <= 0b11011111) {
-				r[i] = c++;
-			} else if (bytes[i] <= 0b11101111) {
-				r[i] = c++;
-			} else if (bytes[i] <= 0b11110111) {
-				r[i] = c++;
-			} else if (bytes[i] <= 0b11111011) {
-				r[i] = c++;
-			} else if (bytes[i] <= 0b11111101) {
-				r[i] = c++;
-			} else {
-				throw new IllegalStateException("0xfe and 0xff are illegal in utf-8 sequence");
-			}
+		int i_utf8 = 0;
+		int i_codepoint = 0;
+
+		while (i_utf8 < bytes.length) {
+			final int charLen = UTF8CharLength(bytes[i_utf8]);
+			for (int i = 0; i < charLen; ++i)
+				r[i_utf8 + i] = i_codepoint;
+			i_codepoint += 1;
+			i_utf8 += charLen;
 		}
-		r[bytes.length] = c;
+		r[bytes.length] = i_codepoint;
 
 		return r;
 	}
@@ -128,8 +137,10 @@ public class _MatchImplFunction implements Function {
 				obj.length = cindex[m.getEnd()] - cindex[m.getBegin()];
 				obj.string = new String(ibytes, m.getBegin(), m.getEnd() - m.getBegin());
 
+				// 1. regions is null when there is no capture groups
+				// 2. for zero-width match, we do not include captures
 				final Region regions = m.getRegion();
-				if (regions != null) {
+				if (regions != null && m.getEnd() != m.getBegin()) {
 					for (int i = 1; i < regions.numRegs; ++i) {
 						final CaptureObject capture = new CaptureObject();
 						if (regions.beg[i] >= 0) {
@@ -148,7 +159,11 @@ public class _MatchImplFunction implements Function {
 
 				matches.add(mapper.valueToTree(obj));
 
-				offset = m.getEnd();
+				if (m.getEnd() == offset) {
+					++offset;
+				} else {
+					offset = m.getEnd();
+				}
 			} while (pattern.global && offset != ibytes.length);
 
 			return matches;
