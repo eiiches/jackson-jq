@@ -3,15 +3,16 @@ package net.thisptr.jackson.jq.internal.functions;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.IntNode;
+
 import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.IntNode;
+import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
 
 @BuiltinFunction("length/0")
 public class LengthFunction implements Function {
@@ -24,7 +25,7 @@ public class LengthFunction implements Function {
 
 	public JsonNode length(final JsonNode in) throws JsonQueryException {
 		if (in.isTextual()) {
-			return new IntNode(in.asText().length());
+			return IntNode.valueOf(UnicodeUtils.lengthUtf32(in.asText()));
 		} else if (in.isArray() || in.isObject()) {
 			return new IntNode(in.size());
 		} else if (in.isNull()) {

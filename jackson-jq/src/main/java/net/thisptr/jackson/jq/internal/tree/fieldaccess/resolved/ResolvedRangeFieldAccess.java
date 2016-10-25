@@ -7,6 +7,7 @@ import java.util.List;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.Range;
+import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -32,9 +33,9 @@ public class ResolvedRangeFieldAccess extends ResolvedFieldAccess {
 					array.add(in.get(index));
 				out.add(array);
 			} else if (in.isTextual()) {
-				final String tmp = in.asText();
-				final Range r = range.over(tmp.length());
-				out.add(new TextNode(tmp.substring((int) r.begin, (int) r.end)));
+				final String _in = in.asText();
+				final Range r = range.over(UnicodeUtils.lengthUtf32(_in));
+				out.add(new TextNode(UnicodeUtils.substringUtf32(_in, (int) r.begin, (int) r.end)));
 			} else if (in.isNull()) {
 				out.add(NullNode.getInstance());
 			} else {

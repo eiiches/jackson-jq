@@ -669,5 +669,29 @@
 			"boolean (true) and string (\"str\") cannot have their containment checked",
 			"boolean (true) and boolean (false) cannot have their containment checked"
 		]
+	},
+	{
+		"q": ".[] | [length, utf8bytelength]",
+		"in": [
+			"𠮷", "\ud842\udfb7",
+			"𠮟", "\ud842\udf9f",
+			"\ud834\udd1e",
+			"🗼", "\ud83d\uddfc"
+		],
+		"out": [
+			[1, 4], [1, 4],
+			[1, 4], [1, 4],
+			[1, 4],
+			[1, 4], [1, 4]
+		]
+	},
+	{
+		"q": ".[] | .[0:1]",
+		"in": [
+			"𠮟", "\ud842\udf9f"
+		],
+		"out": [
+			"𠮟", "\ud842\udf9f"
+		]
 	}
 ]

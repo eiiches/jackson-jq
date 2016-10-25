@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.internal.functions;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,53 +23,15 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.OnigUtils;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
+import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
 
 @BuiltinFunction("_match_impl/3")
 public class _MatchImplFunction implements Function {
-
-	private static int UTF8CharLength(final byte ch) {
-		if ((ch & 0b10000000) == 0b00000000)
-			return 1;
-		if ((ch & 0b11100000) == 0b11000000)
-			return 2;
-		if ((ch & 0b11110000) == 0b11100000)
-			return 3;
-		if ((ch & 0b11111000) == 0b11110000)
-			return 4;
-		if ((ch & 0b11111100) == 0b11111000)
-			return 5;
-		if ((ch & 0b11111110) == 0b11111100)
-			return 6;
-		if ((ch & 0b11000000) == 0b10000000)
-			throw new IllegalArgumentException(String.format("This is not a first byte of unicode charactor: %x", ch));
-		if (ch == 0xfe || ch == 0xff)
-			throw new IllegalArgumentException(String.format("This is a part of a byte order mark (BOM): %x", ch));
-		throw new IllegalArgumentException(String.format("This is an unknown UTF-8 byte: %x", ch));
-	}
-
-	private static int[] UTF8CharIndex(final byte[] bytes) {
-		final int[] r = new int[bytes.length + 1];
-
-		int i_utf8 = 0;
-		int i_codepoint = 0;
-
-		while (i_utf8 < bytes.length) {
-			final int charLen = UTF8CharLength(bytes[i_utf8]);
-			for (int i = 0; i < charLen; ++i)
-				r[i_utf8 + i] = i_codepoint;
-			i_codepoint += 1;
-			i_utf8 += charLen;
-		}
-		r[bytes.length] = i_codepoint;
-
-		return r;
-	}
-
 	@Override
 	public List<JsonNode> apply(final Scope scope, final List<JsonQuery> args, final JsonNode in) throws JsonQueryException {
 		Preconditions.checkInputType("_match_impl/3", in, JsonNodeType.STRING);
-		final byte[] ibytes = in.asText().getBytes();
-		final int[] cindex = UTF8CharIndex(ibytes);
+		final byte[] ibytes = in.asText().getBytes(StandardCharsets.UTF_8);
+		final int[] cindex = UnicodeUtils.UTF8CharIndex(ibytes);
 
 		final List<JsonNode> regexTuple = args.get(0).apply(scope, in);
 		final List<JsonNode> modifiersTuple = args.get(1).apply(scope, in);
@@ -146,7 +109,7 @@ public class _MatchImplFunction implements Function {
 						if (regions.beg[i] >= 0) {
 							capture.offset = cindex[regions.beg[i]];
 							capture.length = cindex[regions.end[i]] - cindex[regions.beg[i]];
-							capture.string = new String(ibytes, regions.beg[i], regions.end[i] - regions.beg[i]);
+							capture.string = new String(ibytes, regions.beg[i], regions.end[i] - regions.beg[i], StandardCharsets.UTF_8);
 						} else {
 							capture.offset = -1;
 							capture.length = 0;

@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.internal.misc;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 
 import org.jcodings.specific.UTF8Encoding;
@@ -18,7 +19,7 @@ public class OnigUtils {
 
 		public Pattern(final String regexText, final String flags) throws JsonQueryException {
 			final int modifiers = parseModifiers(flags) | Option.CAPTURE_GROUP;
-			final byte[] regexBytes = regexText.getBytes();
+			final byte[] regexBytes = regexText.getBytes(StandardCharsets.UTF_8);
 			this.regex = new Regex(regexBytes, 0, regexBytes.length, modifiers, UTF8Encoding.INSTANCE, Syntax.PerlNG);
 			this.global = isGlobal(flags);
 			this.names = names(regex);
@@ -30,7 +31,7 @@ public class OnigUtils {
 				return names;
 			for (final Iterator<NameEntry> iter = regex.namedBackrefIterator(); iter.hasNext();) {
 				final NameEntry backref = iter.next();
-				final String name = new String(backref.name, backref.nameP, backref.nameEnd - backref.nameP);
+				final String name = new String(backref.name, backref.nameP, backref.nameEnd - backref.nameP, StandardCharsets.UTF_8);
 				for (final int index : backref.getBackRefs()) {
 					names[index] = name;
 				}
@@ -50,7 +51,7 @@ public class OnigUtils {
 			return Option.NONE;
 
 		int result = Option.NONE;
-		for (final byte ch : flags.getBytes()) {
+		for (final byte ch : flags.getBytes(StandardCharsets.UTF_8)) {
 			switch (ch) {
 				case 'g':
 					// ignore for now

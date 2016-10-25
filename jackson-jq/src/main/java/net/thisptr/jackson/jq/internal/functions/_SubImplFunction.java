@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.internal.functions;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -72,14 +73,14 @@ public class _SubImplFunction implements Function {
 	private static List<List<JsonNode>> sub(final Scope scope, final OnigUtils.Pattern pattern, final String inputText, final JsonQuery replace) throws JsonQueryException {
 		final List<List<JsonNode>> result = new ArrayList<>();
 
-		final byte[] inputBytes = inputText.getBytes();
+		final byte[] inputBytes = inputText.getBytes(StandardCharsets.UTF_8);
 		final Matcher m = pattern.regex.matcher(inputBytes);
 		int offset = 0;
 		do {
 			if (m.search(offset, inputBytes.length, Option.NONE) < 0)
 				break;
 
-			result.add(Collections.singletonList(TextNode.valueOf(new String(inputBytes, offset, m.getBegin() - offset))));
+			result.add(Collections.singletonList(TextNode.valueOf(new String(inputBytes, offset, m.getBegin() - offset, StandardCharsets.UTF_8))));
 
 			final ObjectNode captures = scope.getObjectMapper().createObjectNode();
 			final Region regions = m.getRegion();
@@ -89,7 +90,7 @@ public class _SubImplFunction implements Function {
 					if (name == null)
 						continue;
 					if (regions.beg[i] >= 0) {
-						final String value = new String(inputBytes, regions.beg[i], regions.end[i] - regions.beg[i]);
+						final String value = new String(inputBytes, regions.beg[i], regions.end[i] - regions.beg[i], StandardCharsets.UTF_8);
 						captures.set(name, TextNode.valueOf(value));
 					} else {
 						captures.set(name, NullNode.getInstance());
@@ -102,7 +103,7 @@ public class _SubImplFunction implements Function {
 			offset = m.getEnd();
 		} while (pattern.global && offset != inputBytes.length);
 
-		result.add(Collections.singletonList(TextNode.valueOf(new String(inputBytes, offset, inputBytes.length - offset))));
+		result.add(Collections.singletonList(TextNode.valueOf(new String(inputBytes, offset, inputBytes.length - offset, StandardCharsets.UTF_8))));
 		return result;
 	}
 }

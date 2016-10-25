@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.internal.functions;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -12,6 +11,7 @@ import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
+import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
 
 @BuiltinFunction("utf8bytelength/0")
 public class Utf8ByteLengthFunction implements Function {
@@ -19,11 +19,6 @@ public class Utf8ByteLengthFunction implements Function {
 	public List<JsonNode> apply(final Scope scope, final List<JsonQuery> args, final JsonNode in) throws JsonQueryException {
 		if (!in.isTextual())
 			throw JsonQueryException.format("%s (%s) only strings have UTF-8 byte length", in.getNodeType(), in);
-		return Collections.<JsonNode> singletonList(IntNode.valueOf(length(in.asText())));
-	}
-
-	private static int length(final String in) throws JsonQueryException {
-		// TODO: implement without creating an array
-		return in.getBytes(StandardCharsets.UTF_8).length;
+		return Collections.<JsonNode> singletonList(IntNode.valueOf(UnicodeUtils.lengthUtf8(in.asText())));
 	}
 }
