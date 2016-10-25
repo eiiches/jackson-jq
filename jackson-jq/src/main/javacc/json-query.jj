@@ -413,6 +413,9 @@ JsonQuery PrimaryExpression():
 		tmp = JsonQuery()
 		<CLOSE_PAR>
 		(
+			tmp = FieldAccessor(tmp)
+		)?
+		(
 			<QUESTION>
 			{ tmp = new TryCatch.Question(tmp); }
 		)?
