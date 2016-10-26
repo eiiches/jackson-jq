@@ -702,5 +702,15 @@
 		"out": [
 			1
 		]
+	},
+	{
+		"q": "try ((error(\"foo\"))[10]?) catch .",
+		"out": [
+			"foo"
+		]
+	},
+	{
+		"q": "try ((error(\"foo\"))?) catch .",
+		"out": []
 	}
 ]
