@@ -29,6 +29,7 @@
 		"net.thisptr.jackson.jq.internal.functions.MathFunction$AtanFunction",
 		"net.thisptr.jackson.jq.internal.functions.MathFunction$CosFunction",
 		"net.thisptr.jackson.jq.internal.functions.MathFunction$FloorFunction",
+		"net.thisptr.jackson.jq.internal.functions.MathFunction$Log2Function",
 		"net.thisptr.jackson.jq.internal.functions.MathFunction$SinFunction",
 		"net.thisptr.jackson.jq.internal.functions.MathFunction$SqrtFunction",
 		"net.thisptr.jackson.jq.internal.functions.MaxFunction",
@@ -49,7 +50,8 @@
 		"net.thisptr.jackson.jq.internal.functions.ToNumberFunction",
 		"net.thisptr.jackson.jq.internal.functions.ToStringFunction",
 		"net.thisptr.jackson.jq.internal.functions.TypeFunction",
-		"net.thisptr.jackson.jq.internal.functions.Utf8ByteLengthFunction"
+		"net.thisptr.jackson.jq.internal.functions.Utf8ByteLengthFunction",
+		"net.thisptr.jackson.jq.internal.functions.math.PowFunction"
 	],
 	"functions": [
 		{"name": "@text", "body": "tostring"},

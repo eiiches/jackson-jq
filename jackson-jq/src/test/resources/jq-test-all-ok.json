@@ -4340,5 +4340,17 @@
             "number (1) and number (0) cannot be divided (remainder) because the divisor is zero"
         ],
         "q": "try (1%.) catch ."
+    },
+    {
+        "in": null,
+        "out": [
+            true
+        ],
+        "q": "[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2] == $powers"
+    },
+    {
+        "in": null,
+        "out": [],
+        "q": "[range(-99/2;99/2;1)] as $orig | [$orig[]|pow(2;.)|log2] as $back | ($orig|keys)[]|. as $k | (($orig|.[$k])-($back|.[$k]))|if . < 0 then . * -1 else . end|select(.>.00005)"
     }
 ]

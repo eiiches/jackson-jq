@@ -3,16 +3,16 @@ package net.thisptr.jackson.jq.internal.functions;
 import java.util.Collections;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.DoubleNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
+
 import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.DoubleNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
 
 public abstract class MathFunction implements Function {
 	@Override
@@ -60,6 +60,14 @@ public abstract class MathFunction implements Function {
 		@Override
 		protected double f(final double v) {
 			return Math.sqrt(v);
+		}
+	}
+
+	@BuiltinFunction("log2/0")
+	public static class Log2Function extends MathFunction {
+		@Override
+		protected double f(final double v) {
+			return Math.log10(v) / Math.log10(2);
 		}
 	}
 }
