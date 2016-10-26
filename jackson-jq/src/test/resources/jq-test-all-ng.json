@@ -70,21 +70,6 @@
         "q": "del(.[2:4],.[0],.[-2:])"
     },
     {
-        "in": {
-            "as": 1,
-            "exp": 3,
-            "str": 2
-        },
-        "out": [
-            [
-                1,
-                2,
-                3
-            ]
-        ],
-        "q": ". as {as: $kw, \"str\": $str, (\"e\"+\"x\"+\"p\"): $exp} | [$kw, $str, $exp]"
-    },
-    {
         "in": 1,
         "out": [
             [
@@ -661,31 +646,6 @@
             true
         ],
         "q": "import \"test_bind_order\" as check; check::check"
-    },
-    {
-        "in": null,
-        "out": [
-            {
-                "and": 1,
-                "as": 7,
-                "catch": 12,
-                "def": 8,
-                "elif": 5,
-                "else": 4,
-                "end": 6,
-                "foreach": 10,
-                "if": 0,
-                "import": 14,
-                "include": 15,
-                "label": 13,
-                "module": 16,
-                "or": 2,
-                "reduce": 9,
-                "then": 3,
-                "try": 11
-            }
-        ],
-        "q": "{if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,include:15,module:16}"
     },
     {
         "in": null,

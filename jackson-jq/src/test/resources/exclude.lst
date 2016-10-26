@@ -20,11 +20,6 @@ import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, f
 import "test_bind_order" as check; check::check
 import "c" as foo; [foo::a, foo::c]
 
-# unquoted keywords as dict keys
-. as {as: $kw, "str": $str, ("e"+"x"+"p"): $exp} | [$kw, $str, $exp]
-{if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,module:15}
-{if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,include:15,module:16}
-
 # label and break
 [(label $here | .[] | if .>1 then break $here else . end), "hi!"]
 [label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]

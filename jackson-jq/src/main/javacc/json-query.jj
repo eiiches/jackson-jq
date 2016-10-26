@@ -173,9 +173,46 @@ TOKEN: {
 }
 
 TOKEN: {
+	<KEYWORD_LABEL: "label">
+	| <KEYWORD_IMPORT: "import">
+	| <KEYWORD_INCLUDE: "include">
+	| <KEYWORD_MODULE: "module">
+}
+
+TOKEN: {
 	<IDENTIFIER: <LETTER> (<LETTER> | <DIGIT>)*>
 	| <#LETTER: ["a"-"z","A"-"Z","_"]>
 	| <#DIGIT: ["0"-"9"]>
+}
+
+String KeywordAsString():
+{
+	Token token;
+}
+{
+	(
+		token = <KEYWORD_IF>
+	|	token = <KEYWORD_THEN>
+	|	token = <KEYWORD_ELIF>
+	|	token = <KEYWORD_ELSE>
+	|	token = <KEYWORD_END>
+	|	token = <KEYWORD_AS>
+	|	token = <KEYWORD_DEF>
+	|	token = <BOOLEAN_LITERAL_TRUE>
+	|	token = <BOOLEAN_LITERAL_FALSE>
+	|	token = <OP_AND>
+	|	token = <OP_OR>
+	|	token = <NULL_LITERAL>
+	|	token = <KEYWORD_REDUCE>
+	|	token = <KEYWORD_FOREACH>
+	|	token = <KEYWORD_TRY>
+	|	token = <KEYWORD_CATCH>
+	|	token = <KEYWORD_LABEL>
+	|	token = <KEYWORD_IMPORT>
+	|	token = <KEYWORD_INCLUDE>
+	|	token = <KEYWORD_MODULE>
+	)
+	{ return token.image; }
 }
 
 JsonQuery Start():
@@ -594,9 +631,13 @@ JsonQuery ObjectFieldName():
 {
 	Token token;
 	JsonQuery expr;
+	String keywordAsString;
 }
 {
 	(
+		keywordAsString = KeywordAsString()
+		{ expr = new StringLiteral(keywordAsString); }
+	|
 		expr = StringInterpolation()
 	|
 		token = <IDENTIFIER>
