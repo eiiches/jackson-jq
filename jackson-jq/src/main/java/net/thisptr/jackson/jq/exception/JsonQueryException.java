@@ -15,11 +15,23 @@ public class JsonQueryException extends JsonProcessingException {
 	}
 
 	public static JsonQueryException format(String format, Object... args) {
-		final Object[] args2 = args.clone();
-		for (int i = 0; i < args2.length; ++i) {
-			if (args2[i] instanceof JsonNodeType)
-				args2[i] = args2[i].toString().toLowerCase();
+		final Object[] args_ = new Object[args.length];
+		for (int i = 0; i < args.length; ++i) {
+			if (args[i] instanceof JsonNodeType) {
+				args_[i] = args[i].toString().toLowerCase();
+				continue;
+			}
+			if (args[i] instanceof Double) {
+				final double val = ((Double) args[i]).doubleValue();
+				if (val == (long) val) {
+					args_[i] = Long.valueOf((long) val);
+				} else {
+					args_[i] = val;
+				}
+				continue;
+			}
+			args_[i] = args[i];
 		}
-		return new JsonQueryException(String.format(format, args2));
+		return new JsonQueryException(String.format(format, args_));
 	}
 }

@@ -4,20 +4,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
+import java.util.ServiceLoader;
 import java.util.TreeMap;
-
-import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.BuiltinFunction;
-import net.thisptr.jackson.jq.internal.JsonQueryFunction;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -26,14 +20,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.BuiltinFunction;
+import net.thisptr.jackson.jq.internal.JsonQueryFunction;
+
 public class Scope {
 	private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper();
 
 	private static final class RootScopeHolder {
-		public static final Scope scope = new Scope(null);
+		public static final Scope INSTANCE = new Scope(null);
 		static {
 			try {
-				scope.loadDefault();
+				INSTANCE.loadBuiltinFunctions();
+				INSTANCE.loadMacros();
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw e;
@@ -73,7 +72,7 @@ public class Scope {
 	private ObjectMapper mapper = DEFAULT_MAPPER;
 
 	public Scope() {
-		this(RootScopeHolder.scope);
+		this(RootScopeHolder.INSTANCE);
 	}
 
 	public Scope(final Scope parentScope) {
@@ -141,34 +140,10 @@ public class Scope {
 
 		@JsonProperty("functions")
 		public List<JqFuncDef> functions = new ArrayList<>();
-
-		@JsonProperty("classes")
-		public List<String> classes = new ArrayList<>();
 	}
 
 	public static Scope rootScope() {
-		return RootScopeHolder.scope;
-	}
-
-	private static Collection<Class<?>> classes(final List<JqJson> configs) throws IOException {
-		final Set<String> clazzes = new HashSet<>();
-		for (final JqJson jqJson : configs) {
-			if (jqJson.classes == null)
-				continue;
-			for (final String className : jqJson.classes) {
-				clazzes.add(className);
-			}
-		}
-		final List<Class<?>> result = new ArrayList<>();
-		for (final String className : clazzes) {
-			try {
-				result.add(Class.forName(className));
-			} catch (Throwable th) {
-				System.err.println("Failed to load class " + className + ": " + th.getClass().getSimpleName() + ": " + th.getMessage());
-				continue;
-			}
-		}
-		return result;
+		return RootScopeHolder.INSTANCE;
 	}
 
 	private static List<JqJson> readConfig() throws IOException {
@@ -188,23 +163,24 @@ public class Scope {
 		return result;
 	}
 
-	private void loadDefault() {
+	private void loadBuiltinFunctions() {
+		for (final Function fn : ServiceLoader.load(Function.class)) {
+			final BuiltinFunction annotation = fn.getClass().getAnnotation(BuiltinFunction.class);
+			if (annotation == null)
+				continue;
+			for (final String name : annotation.value())
+				addFunction(name, fn);
+		}
+	}
+
+	private void loadMacros() {
 		try {
 			final List<JqJson> configs = readConfig();
-			for (final Class<?> clazz : classes(configs)) {
-				if (!Function.class.isAssignableFrom(clazz))
-					continue;
-				final BuiltinFunction annotation = clazz.getAnnotation(BuiltinFunction.class);
-				if (annotation == null)
-					continue;
-				for (final String name : annotation.value())
-					addFunction(name, (Function) clazz.newInstance());
-			}
 			for (final JqJson jqJson : configs) {
 				for (final JqJson.JqFuncDef def : jqJson.functions)
 					addFunction(def.name, def.args.size(), new JsonQueryFunction(def.name, def.args, JsonQuery.compile(def.body)));
 			}
-		} catch (final IOException | InstantiationException | IllegalAccessException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException("Failed to instanciate default Scope object", e);
 		}
 	}

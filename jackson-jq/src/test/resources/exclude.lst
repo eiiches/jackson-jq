@@ -1,0 +1,70 @@
+env.PAGER
+def f: .+1; def g: f; def f: .+100; def f(a):a+.+11; [(g|f(20)), f]
+try error("\($__loc__)") catch .
+
+# complex assignments
+try ((map(select(.a == 1))[].a) |= .+1) catch .
+(.[{}] = 0)?
+try (def x: reverse; x=10) catch .
+(..|select(type=="boolean")) |= if . then 1 else 0 end
+try ((map(select(.a == 1))[].b) = 10) catch .
+try (def x: reverse; x=10) catch .' <<< '[0,1,2]
+def inc(x): x |= .+1; inc(.[].a)
+def x: .[1,2]; x=10
+[[.[]|[.a,.a]]?]
+
+# modules
+modulemeta
+include "c"; [a, c]
+import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]
+import "test_bind_order" as check; check::check
+import "c" as foo; [foo::a, foo::c]
+
+# label and break
+[(label $here | .[] | if .>1 then break $here else . end), "hi!"]
+[label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]
+
+# bsearch
+bsearch(0)
+bsearch(4)
+bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end
+
+# time
+gmtime
+fromdate
+strptime("%Y-%m-%dT%H:%M:%SZ")|mktime
+strftime("%A, %B %d, %Y")
+strptime("%Y-%m-%dT%H:%M:%SZ")
+[strptime("%Y-%m-%dT%H:%M:%SZ")|(.,mktime)]
+strftime("%Y-%m-%dT%H:%M:%SZ")
+
+# paths
+path(.a[path(.b)[0]])
+try path(.a | map(select(.b == 0))) catch .
+try path(.a | map(select(.b == 0)) | .c) catch .
+try delpaths(0) catch .
+path(.a[0].b)
+[getpath(["a","b"], ["a","c"])]
+map(delpaths([[0,"foo"]]))
+path(.)
+[path(..)]
+setpath(["a","b"]; 1)
+["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])
+try path(.a | map(select(.b == 0)) | .[]) catch .
+try path(.a | map(select(.b == 0)) | .[0]) catch .
+delpaths([[-200]])
+path(.foo[0,1])
+getpath(["a","b"])
+map(getpath([2])), map(setpath([2]; 42)), map(delpaths([[2]]))
+setpath([0,"a"]; 1)
+path(.[] | select(.>3))
+del(.), del(empty), del((.foo,.bar,.baz) | .[2,3,0]), del(.foo[0], .bar[0], .foo, .baz.bar[0].x)
+del(.[1], .[-6], .[2], .[-3:9])
+del(.[2:4],.[0],.[-2:])
+
+# streams
+. as $dot|fromstream($dot|tostream)|.==$dot
+fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))
+[1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])]
+
+# vim: ft=jq

@@ -1,9 +1,0 @@
-[
-    {
-        "q": "env.PAGER", 
-        "out": [
-            "less"
-        ], 
-        "in": null
-    }
-]

@@ -1,0 +1,11 @@
+machine:
+  java:
+    version: oraclejdk8
+dependencies:
+  override:
+    - mvn install -DskipTests
+test:
+  override:
+    - mvn test
+
+# vim: ft=yaml sw=2 ts=2 et

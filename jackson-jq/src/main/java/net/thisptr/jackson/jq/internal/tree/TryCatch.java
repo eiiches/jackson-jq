@@ -1,21 +1,26 @@
 package net.thisptr.jackson.jq.internal.tree;
 
+import java.util.Collections;
 import java.util.List;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-
 public class TryCatch extends JsonQuery {
-	private JsonQuery tryExpr;
-	private JsonQuery catchExpr;
+	protected JsonQuery tryExpr;
+	protected JsonQuery catchExpr;
 
 	public TryCatch(final JsonQuery tryExpr, final JsonQuery catchExpr) {
 		this.tryExpr = tryExpr;
 		this.catchExpr = catchExpr;
+	}
+
+	public TryCatch(final JsonQuery tryExpr) {
+		this(tryExpr, null);
 	}
 
 	@Override
@@ -23,12 +28,31 @@ public class TryCatch extends JsonQuery {
 		try {
 			return tryExpr.apply(scope, in);
 		} catch (JsonQueryException e) {
-			return catchExpr.apply(scope, new TextNode(e.getMessage()));
+			if (catchExpr != null) {
+				return catchExpr.apply(scope, new TextNode(e.getMessage()));
+			} else {
+				return Collections.emptyList();
+			}
+		}
+	}
+
+	public static class Question extends TryCatch {
+		public Question(JsonQuery tryExpr) {
+			super(tryExpr);
+		}
+
+		@Override
+		public String toString() {
+			return String.format("(%s)?", tryExpr);
 		}
 	}
 
 	@Override
 	public String toString() {
-		return String.format("(try (%s) catch (%s))", tryExpr, catchExpr);
+		if (catchExpr != null) {
+			return String.format("(try (%s) catch (%s))", tryExpr, catchExpr);
+		} else {
+			return String.format("(try (%s))", tryExpr);
+		}
 	}
 }

@@ -126,13 +126,6 @@
 		]
 	},
 	{
-		"q": "split2(\",\")",
-		"in": "a,b,c",
-		"out": [
-			["a", "b", "c"]
-		]
-	},
-	{
 		"q": "{ids:[.ids|split(\",\")[]|tonumber|.+100],name}",
 		"in": {
 			"ids": "12,15,23",
@@ -615,5 +608,109 @@
 			[true, true],
 			[false, true, true]
 		]
+	},
+	{
+		"q": ".[]|gsub(\"(?<d>\\\\d)\"; \"\\(.d|tonumber+1)\")",
+		"in": ["1a2b3", "1a2b"],
+		"out": [
+			"2a3b4",
+			"2a3b"
+		]
+	},
+	{
+		"q": "(null, 1.7976931348623157e+308, nan, infinite, -nan, -infinite) | [type, tojson, isinfinite, isnan]",
+		"out": [
+			["null", "null", false, false],
+			["number", "1.7976931348623157e+308", false, false],
+			["number", "null", false, true],
+			["number", "1.7976931348623157e+308", true, false],
+			["number", "null", false, true],
+			["number", "-1.7976931348623157e+308", true, false]
+		]
+	},
+	{
+		"q": "(., .) as {(.a, .b): $a, (.a, .b): $a} | [$a, $a]",
+		"in": {"a": "a", "b": "b"},
+		"out": [
+			["a","a"],
+			["a","a"],
+			["b","b"],
+			["b","b"],
+			["a","a"],
+			["a","a"],
+			["b","b"],
+			["b","b"]
+		]
+	},
+	{
+		"q": "reduce [{a: 1, b: 4}, {a: 2, b: 5}, {a: 3, b: 6}][] as {\"\\(\"a\",\"b\")\": $a} ((\"a\", \"b\"); . + (($a, $a + 1) | tostring))",
+		"out": [
+			"a253647",
+			"b253647"
+		]
+	},
+	{
+		"q": "foreach [{a:1,b:2},{a:3,b:4},{a:5,b:6}][] as {\"\\(\"a\",\"b\")\": $v} (0, 1; .+$v+1, .+$v; ., .*10)",
+		"out": [2,20,1,10,4,40,3,30,7,70,6,60,11,110,10,100,16,160,15,150,22,220,21,210,3,30,2,20,5,50,4,40,8,80,7,70,12,120,11,110,17,170,16,160,23,230,22,220]
+	},
+	{
+		"q": "foreach [1,2,3,4,5,6][] as $v (0; .+$v, .+$v+1; .)",
+		"out": [1,2,4,5,8,9,13,14,19,20,26,27]
+	},
+	{
+		"q": ".[] as [$n, $h] | try ($h | contains($n)) catch .",
+		"in": [
+			[true, true],
+			["str", true],
+			[false, true]
+		],
+		"out": [
+			true,
+			"boolean (true) and string (\"str\") cannot have their containment checked",
+			"boolean (true) and boolean (false) cannot have their containment checked"
+		]
+	},
+	{
+		"q": ".[] | [length, utf8bytelength]",
+		"in": [
+			"𠮷", "\ud842\udfb7",
+			"𠮟", "\ud842\udf9f",
+			"\ud834\udd1e",
+			"🗼", "\ud83d\uddfc"
+		],
+		"out": [
+			[1, 4], [1, 4],
+			[1, 4], [1, 4],
+			[1, 4],
+			[1, 4], [1, 4]
+		]
+	},
+	{
+		"q": ".[] | .[0:1]",
+		"in": [
+			"𠮟", "\ud842\udf9f"
+		],
+		"out": [
+			"𠮟", "\ud842\udf9f"
+		]
+	},
+	{
+		"q": "(.)[0]?",
+		"in": [
+			1, 2, 3
+		],
+		"out": [
+			1
+		]
+	},
+	{
+		"q": "try ((error(\"foo\"))[10]?) catch .",
+		"out": [
+			"foo"
+		]
+	},
+	{
+		"q": "try ((error(\"foo\"))?) catch .",
+		"out": []
 	}
 ]

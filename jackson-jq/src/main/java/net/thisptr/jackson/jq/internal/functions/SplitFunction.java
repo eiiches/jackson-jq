@@ -3,6 +3,11 @@ package net.thisptr.jackson.jq.internal.functions;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.fasterxml.jackson.databind.node.TextNode;
+
 import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
@@ -11,31 +16,16 @@ import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.internal.misc.Strings;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.TextNode;
-
 @BuiltinFunction("split/1")
 public class SplitFunction implements Function {
-	private String fname;
-
-	protected SplitFunction(final String fname) {
-		this.fname = fname;
-	}
-
-	public SplitFunction() {
-		this("split");
-	}
-
 	@Override
 	public List<JsonNode> apply(final Scope scope, final List<JsonQuery> args, final JsonNode in) throws JsonQueryException {
-		Preconditions.checkInputType(fname, in, JsonNodeType.STRING);
+		Preconditions.checkInputType("split", in, JsonNodeType.STRING);
 
 		final List<JsonNode> out = new ArrayList<>();
 		for (final JsonNode sep : args.get(0).apply(scope, in)) {
 			if (!sep.isTextual())
-				throw new JsonQueryException("1st argument of " + fname + "() must evaluate to string, not " + sep.getNodeType());
+				throw new JsonQueryException("1st argument of split() must evaluate to string, not " + sep.getNodeType());
 
 			final ArrayNode row = scope.getObjectMapper().createArrayNode();
 			for (final String seg : split(in.asText(), sep.asText()))

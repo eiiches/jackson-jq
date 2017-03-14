@@ -8,10 +8,6 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
-import net.thisptr.jackson.jq.JsonQuery;
-import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
-
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
@@ -27,6 +23,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 
 @RunWith(Enclosed.class)
 public class JsonQueryTest {
@@ -54,6 +53,7 @@ public class JsonQueryTest {
 		@JsonProperty("out")
 		public List<JsonNode> out;
 
+		public String source;
 		public boolean ignoreFailure = false;
 
 		@Override
@@ -69,8 +69,10 @@ public class JsonQueryTest {
 				final ObjectMapper mapper = new ObjectMapper();
 				try (final InputStream in = JsonTestCases.class.getClassLoader().getResourceAsStream(resourceName)) {
 					final TestCase[] result = mapper.readValue(in, TestCase[].class);
-					for (final TestCase tc : result)
+					for (final TestCase tc : result) {
 						tc.ignoreFailure = ignoreFailure;
+						tc.source = resourceName;
+					}
 					return result;
 				}
 			} catch (Exception e) {
@@ -79,24 +81,30 @@ public class JsonQueryTest {
 		}
 
 		@DataPoints
-		public static TestCase[] TESTCASES_OFFICIAL = loadTestCases("jq-test-official-ok.json", false);
+		public static TestCase[] TESTCASES_MANUAL = loadTestCases("jq-test-manual-ok.json", false);
+
+		@DataPoints
+		public static TestCase[] TESTCASES_ONIG = loadTestCases("jq-test-onig-ok.json", false);
+
+		@DataPoints
+		public static TestCase[] TESTCASES_ALL = loadTestCases("jq-test-all-ok.json", false);
 
 		@DataPoints
 		public static TestCase[] TESTCASES_EXTRA = loadTestCases("jq-test-extra-ok.json", false);
 
 		@DataPoints
-		public static TestCase[] TESTCASES_JQ_ALL = loadTestCases("jq-test-all-ok.json", false);
+		public static TestCase[] TESTCASES_ALL_FAIL = loadTestCases("jq-test-all-ng.json", true);
 
 		@DataPoints
-		public static TestCase[] TESTCASES_JQ_ALL_FAIL = loadTestCases("jq-test-all-ng.json", true);
+		public static TestCase[] TESTCASES_MANUAL_FAIL = loadTestCases("jq-test-manual-ng.json", true);
 
 		@DataPoints
-		public static TestCase[] TESTCASES_OFFICIAL_FAIL = loadTestCases("jq-test-official-ng.json", true);
+		public static TestCase[] TESTCASES_ONIG_FAIL = loadTestCases("jq-test-onig-ng.json", true);
 
 		@Theory
 		public void test(final TestCase tc) throws Throwable {
 			try {
-				log.info("Running test: {}", tc.toString().replace('\n', ' '));
+				log.info("Running test ({}): {}", tc.source, tc.toString().replace('\n', ' '));
 				final JsonQuery q = JsonQuery.compile(tc.q);
 				final String s1 = q.toString();
 

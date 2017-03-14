@@ -3,12 +3,12 @@ package net.thisptr.jackson.jq.internal.misc;
 import java.util.Arrays;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
+
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.exception.IllegalJsonArgumentException;
 import net.thisptr.jackson.jq.exception.IllegalJsonInputException;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
 
 public class Preconditions {
 
@@ -40,5 +40,28 @@ public class Preconditions {
 		checkInputType(fname, in, JsonNodeType.ARRAY);
 		for (final JsonNode i : in)
 			checkInputElementType(fname, i, types);
+	}
+
+	public static void checkArgumentType(final String fname, final int aindex, final JsonNode value, final JsonNodeType... types) throws IllegalJsonArgumentException {
+		final JsonNodeType t = value.getNodeType();
+		for (final JsonNodeType type : types)
+			if (t == type)
+				return;
+
+		final String indexText;
+		switch (aindex) {
+			case 1:
+				indexText = "1st";
+				break;
+			case 2:
+				indexText = "2nd";
+				break;
+			case 3:
+				indexText = "3rd";
+				break;
+			default:
+				indexText = aindex + "th";
+		}
+		throw new IllegalJsonArgumentException(String.format("cannot accept %s as %s argument of %s; expected one of %s", value.getNodeType(), indexText, fname, Arrays.toString(types)));
 	}
 }
