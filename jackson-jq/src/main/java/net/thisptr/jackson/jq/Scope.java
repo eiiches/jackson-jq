@@ -146,12 +146,14 @@ public class Scope {
 		return RootScopeHolder.INSTANCE;
 	}
 
-	private static List<JqJson> readConfig() throws IOException {
+	private static final String resolvePath(final Class<?> clazz, final String name) {
+		final String base = clazz.getName();
+		return base.substring(0, base.lastIndexOf('.')).replace('.', '/') + '/' + name;
+	}
+
+	private static List<JqJson> loadConfig(final ClassLoader loader, final String path) throws IOException {
 		final List<JqJson> result = new ArrayList<>();
-		ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		if (loader == null)
-			loader = Scope.class.getClassLoader();
-		final Enumeration<URL> iter = loader.getResources("jq.json");
+		final Enumeration<URL> iter = loader.getResources(path);
 		while (iter.hasMoreElements()) {
 			try (final InputStream is = iter.nextElement().openStream()) {
 				final MappingIterator<JqJson> iter2 = DEFAULT_MAPPER.readValues(DEFAULT_MAPPER.getFactory().createParser(is), JqJson.class);
@@ -161,6 +163,13 @@ public class Scope {
 			}
 		}
 		return result;
+	}
+
+	private static List<JqJson> loadConfig() throws IOException {
+		ClassLoader loader = Thread.currentThread().getContextClassLoader();
+		if (loader == null)
+			loader = Scope.class.getClassLoader();
+		return loadConfig(loader, resolvePath(Scope.class, "jq.json"));
 	}
 
 	private void loadBuiltinFunctions() {
@@ -175,7 +184,7 @@ public class Scope {
 
 	private void loadMacros() {
 		try {
-			final List<JqJson> configs = readConfig();
+			final List<JqJson> configs = loadConfig();
 			for (final JqJson jqJson : configs) {
 				for (final JqJson.JqFuncDef def : jqJson.functions)
 					addFunction(def.name, def.args.size(), new JsonQueryFunction(def.name, def.args, JsonQuery.compile(def.body)));
