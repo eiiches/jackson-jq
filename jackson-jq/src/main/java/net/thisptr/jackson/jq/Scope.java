@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.TreeMap;
 
@@ -19,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.JsonQueryFunction;
@@ -27,15 +27,17 @@ import net.thisptr.jackson.jq.internal.JsonQueryFunction;
 public class Scope {
 	private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper();
 
+	@Deprecated
 	private static final class RootScopeHolder {
+		@Deprecated
 		public static final Scope INSTANCE = new Scope(null);
 		static {
 			try {
-				INSTANCE.loadBuiltinFunctions();
-				INSTANCE.loadMacros();
+				final ClassLoader classLoader = Optional.ofNullable(Thread.currentThread().getContextClassLoader())
+						.orElse(Scope.class.getClassLoader());
+				INSTANCE.loadFunctions(classLoader);
 			} catch (Exception e) {
-				e.printStackTrace();
-				throw e;
+				throw new RuntimeException("Failed to instantiate default Scope object", e);
 			}
 		}
 	}
@@ -52,6 +54,7 @@ public class Scope {
 	}
 
 	@JsonProperty("functions")
+	@SuppressWarnings("unused")
 	private Map<String, String> debugFunctions() {
 		final Map<String, String> result = new TreeMap<>();
 		for (final Entry<String, Function> f : functions.entrySet())
@@ -71,6 +74,16 @@ public class Scope {
 	@JsonIgnore
 	private ObjectMapper mapper = DEFAULT_MAPPER;
 
+	/**
+	 * Use {@link #Scope(Scope) Scope(null)} instead and explicitly
+	 * call {@link #loadFunctions(ClassLoader)} with the appropriate
+	 * {@link ClassLoader} for your application. E.g.:
+	 * <pre>
+	 * final Scope scope = new Scope(null);
+	 * scope.loadFunctions(Thread.currentThread().getContextClassLoader());
+	 * </pre>
+	 */
+	@Deprecated
 	public Scope() {
 		this(RootScopeHolder.INSTANCE);
 	}
@@ -142,13 +155,28 @@ public class Scope {
 		public List<JqFuncDef> functions = new ArrayList<>();
 	}
 
+	@Deprecated
 	public static Scope rootScope() {
 		return RootScopeHolder.INSTANCE;
 	}
 
+	/**
+	 * Dynamically resolve the path for a resource as packages may be relocated, e.g. by
+	 * the maven-shade-plugin.
+	 */
 	private static final String resolvePath(final Class<?> clazz, final String name) {
 		final String base = clazz.getName();
 		return base.substring(0, base.lastIndexOf('.')).replace('.', '/') + '/' + name;
+	}
+
+	/**
+	 * Load function definitions from the default resource
+	 * from an arbitrary {@link ClassLoader}.
+	 * E.g. in an OSGi context this may be the Bundle's {@link ClassLoader}.
+	 */
+	public void loadFunctions(final ClassLoader classLoader) {
+		loadMacros(classLoader, resolvePath(Scope.class, "jq.json"));
+		loadBuiltinFunctions(classLoader);
 	}
 
 	private static List<JqJson> loadConfig(final ClassLoader loader, final String path) throws IOException {
@@ -165,15 +193,8 @@ public class Scope {
 		return result;
 	}
 
-	private static List<JqJson> loadConfig() throws IOException {
-		ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		if (loader == null)
-			loader = Scope.class.getClassLoader();
-		return loadConfig(loader, resolvePath(Scope.class, "jq.json"));
-	}
-
-	private void loadBuiltinFunctions() {
-		for (final Function fn : ServiceLoader.load(Function.class)) {
+	private void loadBuiltinFunctions(final ClassLoader classLoader) {
+		for (final Function fn : ServiceLoader.load(Function.class, classLoader)) {
 			final BuiltinFunction annotation = fn.getClass().getAnnotation(BuiltinFunction.class);
 			if (annotation == null)
 				continue;
@@ -182,15 +203,15 @@ public class Scope {
 		}
 	}
 
-	private void loadMacros() {
+	private void loadMacros(final ClassLoader classLoader, final String path) {
 		try {
-			final List<JqJson> configs = loadConfig();
+			final List<JqJson> configs = loadConfig(classLoader, path);
 			for (final JqJson jqJson : configs) {
 				for (final JqJson.JqFuncDef def : jqJson.functions)
 					addFunction(def.name, def.args.size(), new JsonQueryFunction(def.name, def.args, JsonQuery.compile(def.body)));
 			}
 		} catch (final IOException e) {
-			throw new RuntimeException("Failed to instanciate default Scope object", e);
+			throw new RuntimeException("Failed to load macros", e);
 		}
 	}
 }
