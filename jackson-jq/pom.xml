@@ -3,12 +3,12 @@
 
 	<artifactId>jackson-jq</artifactId>
 	<name>${project.groupId}:${project.artifactId}</name>
-	<packaging>jar</packaging>
+	<packaging>bundle</packaging>
 
 	<parent>
 		<groupId>net.thisptr</groupId>
 		<artifactId>jackson-jq-parent</artifactId>
-		<version>0.0.7</version>
+		<version>0.0.8</version>
 	</parent>
 
 	<dependencies>
