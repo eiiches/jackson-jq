@@ -21,7 +21,7 @@ jackson-jq/src/test/resources
 
 These files are generated from files in stedolan/jq repository:
 
-jackson-jq/src/main/resources/jq.json
+jackson-jq/src/main/resources/net/thisptr/jackson/jq/jq.json
 jackson-jq/src/test/resources/jq-test-all-ng.json
 jackson-jq/src/test/resources/jq-test-all-ok.json
 jackson-jq/src/test/resources/jq-test-official-ng.json

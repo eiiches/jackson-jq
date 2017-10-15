@@ -204,6 +204,6 @@ License
 This software is licensed under Apache Software License, Version 2.0, with some exceptions:
 
  - [jackson-jq/src/test/resources](jackson-jq/src/test/resources) contains test cases from [stedolan/jq](https://github.com/stedolan/jq).
- - [jackson-jq/src/main/resources/jq.json](jackson-jq/src/main/resources/jq.json) contains function definitions extracted from [stedolan/jq](https://github.com/stedolan/jq).
+ - [jackson-jq/src/main/resources/net/thisptr/jackson/jq/jq.json](jackson-jq/src/main/resources/net/thisptr/jackson/jq/jq.json) contains function definitions extracted from [stedolan/jq](https://github.com/stedolan/jq).
 
 See [COPYING](COPYING) for details.
