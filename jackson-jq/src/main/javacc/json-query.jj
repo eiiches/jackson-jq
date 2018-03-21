@@ -89,7 +89,18 @@ TOKEN: {
 }
 
 TOKEN: { <SEMICOLON: ";"> }
-TOKEN: { <DOT: "."> }
+
+// We have to be careful about spaces after ".". jq-1.4 or newer does not allow spaces between "." and <identifier> in field accessors.
+// For example, '. foo' is an error while '.foo' is not. This distinction is important to parse "if . then . else empty end".
+// IDENTIFIER_AFTER_DOT and OTHERWISE_AFTER_DOT should not be re-ordered. The order matters.
+TOKEN: { <DOT: "."> : STATE_DOT }
+<STATE_DOT> TOKEN: {
+	<IDENTIFIER_AFTER_DOT: <IDENTIFIER>> : DEFAULT
+}
+<STATE_DOT> MORE: {
+	<OTHERWISE_AFTER_DOT: ""> : DEFAULT
+}
+
 TOKEN: { <RECURSION: ".."> }
 
 TOKEN: { <OPEN_BRACKET: "["> }
@@ -784,7 +795,7 @@ JsonQuery IdentifierFieldAccessor(JsonQuery obj):
 }
 {
 	<DOT>
-	identifier = <IDENTIFIER>
+	identifier = <IDENTIFIER_AFTER_DOT>
 	(
 		<QUESTION>
 		{ permissive = true; }
