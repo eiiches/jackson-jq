@@ -6,3 +6,6 @@ net.thisptr.jackson.jq.extra.functions.TimestampFunction
 net.thisptr.jackson.jq.extra.functions.UriDecodeFunction
 net.thisptr.jackson.jq.extra.functions.UriParseFunction
 net.thisptr.jackson.jq.extra.functions.Uuid4Function
+net.thisptr.jackson.jq.extra.functions.ToIso8601Function
+net.thisptr.jackson.jq.extra.functions.FromIso8601Function
+net.thisptr.jackson.jq.extra.functions.NowFunction
