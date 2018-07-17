@@ -712,5 +712,12 @@
 	{
 		"q": "try ((error(\"foo\"))?) catch .",
 		"out": []
+	},
+	{
+		"q": ".foreach",
+		"in": {"foreach": 10},
+		"out": [
+			10
+		]
 	}
 ]
