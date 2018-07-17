@@ -218,7 +218,7 @@ public class Scope {
 			final List<JqJson> configs = loadConfig(classLoader, path);
 			for (final JqJson jqJson : configs) {
 				for (final JqJson.JqFuncDef def : jqJson.functions)
-					addFunction(def.name, def.args.size(), new JsonQueryFunction(def.name, def.args, JsonQuery.compile(def.body)));
+					addFunction(def.name, def.args.size(), new JsonQueryFunction(def.name, def.args, JsonQuery.compile(def.body), this));
 			}
 		} catch (final IOException e) {
 			throw new RuntimeException("Failed to load macros", e);

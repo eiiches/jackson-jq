@@ -7,7 +7,6 @@ import java.util.Arrays;
 
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
-import net.thisptr.jackson.jq.internal.JsonQueryFunction;
 
 import org.junit.Test;
 
@@ -19,11 +18,13 @@ import com.fasterxml.jackson.databind.node.NullNode;
 public class JsonQueryFunctionTest {
 	@Test
 	public void test() throws JsonProcessingException, IOException {
-		final Scope scope = new Scope();
 		final ObjectMapper mapper = new ObjectMapper();
 
-		scope.addFunction("inc", 1, new JsonQueryFunction("inc", Arrays.asList("x"), JsonQuery.compile("x + 1")));
-		scope.addFunction("fib", 1, new JsonQueryFunction("fib", Arrays.asList("x"), JsonQuery.compile("if x == 0 then 0 elif x == 1 then 1 else fib(x-1) + fib(x-2) end")));
+		final Scope scope = Scope.newEmptyScope();
+		scope.loadFunctions(Scope.class.getClassLoader());
+
+		scope.addFunction("inc", 1, new JsonQueryFunction("inc", Arrays.asList("x"), JsonQuery.compile("x + 1"), scope));
+		scope.addFunction("fib", 1, new JsonQueryFunction("fib", Arrays.asList("x"), JsonQuery.compile("if x == 0 then 0 elif x == 1 then 1 else fib(x-1) + fib(x-2) end"), scope));
 		scope.addFunction("fib", 0, new JsonQueryFunction("fib", Arrays.<String> asList(), JsonQuery.compile("fib(.)"), scope));
 
 		assertEquals(Arrays.asList(mapper.readTree("2")), JsonQuery.compile("inc(1)").apply(scope, NullNode.getInstance()));
