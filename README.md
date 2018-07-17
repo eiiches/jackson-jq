@@ -15,7 +15,7 @@ Just add jackson-jq in your pom.xml.
 	<dependency>
 		<groupId>net.thisptr</groupId>
 		<artifactId>jackson-jq</artifactId>
-		<version>0.0.8</version>
+		<version>0.0.9</version>
 	</dependency>
 </dependencies>
 ```
@@ -104,6 +104,7 @@ Here is a *current* status of differences between jackson-jq and the jq. If you 
    - [Modules](https://stedolan.github.io/jq/manual/#Modules)
    - [Streaming](https://stedolan.github.io/jq/manual/#Streaming)
    - [I/O](https://stedolan.github.io/jq/manual/#IO)
+   - `{$foo}` syntax, a syntactic sugar for `{foo:$foo}` (#24)
 
  - Missing functions in jackson-jq
    - Datetime functions: `fromdate/0`, `mktime/0`, `gmtime/0`
@@ -141,7 +142,7 @@ Using jackson-jq-extra module
     <dependency>
         <groupId>net.thisptr</groupId>
         <artifactId>jackson-jq-extra</artifactId>
-        <version>0.0.8</version>
+        <version>0.0.9</version>
     </dependency>
 </dependencies>
 ```

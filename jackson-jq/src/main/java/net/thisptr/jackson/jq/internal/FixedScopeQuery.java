@@ -18,7 +18,7 @@ public class FixedScopeQuery extends JsonQuery {
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope _, final JsonNode in) throws JsonQueryException {
+	public List<JsonNode> apply(final Scope unused, final JsonNode in) throws JsonQueryException {
 		return query.apply(scope, in);
 	}
 }

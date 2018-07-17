@@ -25,15 +25,11 @@ public class JsonQueryFunction implements Function {
 		this.closure = closure;
 	}
 
-	public JsonQueryFunction(final String name, final List<String> params, final JsonQuery body) {
-		this(name, params, body, Scope.rootScope());
-	}
-
 	@Override
 	public List<JsonNode> apply(final Scope scope, final List<JsonQuery> args, final JsonNode in) throws JsonQueryException {
 		Preconditions.checkArgumentCount(name, args, params.size());
 
-		final Scope fnScope = new Scope(closure);
+		final Scope fnScope = Scope.newChildScope(closure);
 		fnScope.addFunction(name, params.size(), this);
 
 		final List<JsonNode> out = new ArrayList<>();
@@ -53,7 +49,7 @@ public class JsonQueryFunction implements Function {
 					applyRecursive(out, fnScope, scope, args, in, i + 1);
 				}
 			} else {
-				fnScope.addFunction(param, 0, new JsonQueryFunction(param, Collections.<String> emptyList(), new FixedScopeQuery(scope, args.get(i))));
+				fnScope.addFunction(param, 0, new JsonQueryFunction(param, Collections.<String> emptyList(), new FixedScopeQuery(scope, args.get(i)), fnScope));
 				applyRecursive(out, fnScope, scope, args, in, i + 1);
 			}
 		}

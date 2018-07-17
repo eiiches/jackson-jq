@@ -36,11 +36,15 @@ public class JsonQueryParserTest {
 	public void testSupportedQueries() throws IOException, ParseException, TokenMgrError {
 		final List<String> loadQueries = loadQueries("compiler-test-ok.txt");
 		for (int i = 0; i < loadQueries.size(); i++) {
-			final JsonQuery jq = JsonQueryParser.compile(loadQueries.get(i));
-			if (jq == null) {
-				System.out.printf("%d: ---%n", i);
-			} else {
-				System.out.printf("%d: %s%n", i, jq);
+			try {
+				final JsonQuery jq = JsonQueryParser.compile(loadQueries.get(i));
+				if (jq == null) {
+					System.out.printf("%d: ---%n", i);
+				} else {
+					System.out.printf("%d: %s%n", i, jq);
+				}
+			} catch (final Throwable th) {
+				throw new RuntimeException("Failed to compile \"" + loadQueries.get(i) + "\"", th);
 			}
 		}
 	}

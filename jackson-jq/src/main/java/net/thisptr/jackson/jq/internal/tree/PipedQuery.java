@@ -36,7 +36,7 @@ public class PipedQuery extends JsonQuery {
 		final PatternMatcher matcher = head._2;
 
 		final Scope scope2 = matcher != null
-				? new Scope(scope)
+				? Scope.newChildScope(scope)
 				: scope;
 
 		for (final JsonNode o : q.apply(scope, in)) {

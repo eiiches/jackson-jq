@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.JsonQueryFunction;
@@ -75,11 +76,11 @@ public class Scope {
 	private ObjectMapper mapper = DEFAULT_MAPPER;
 
 	/**
-	 * Use {@link #Scope(Scope) Scope(null)} instead and explicitly
+	 * Use {@link Scope#newEmptyScope()} instead and explicitly
 	 * call {@link #loadFunctions(ClassLoader)} with the appropriate
 	 * {@link ClassLoader} for your application. E.g.:
 	 * <pre>
-	 * final Scope scope = new Scope(null);
+	 * final Scope scope = Scope.newEmptyScope();
 	 * scope.loadFunctions(Thread.currentThread().getContextClassLoader());
 	 * </pre>
 	 */
@@ -88,8 +89,17 @@ public class Scope {
 		this(RootScopeHolder.INSTANCE);
 	}
 
+	@Deprecated
 	public Scope(final Scope parentScope) {
 		this.parentScope = parentScope;
+	}
+
+	public static Scope newEmptyScope() {
+		return new Scope(null);
+	}
+
+	public static Scope newChildScope(final Scope scope) {
+		return new Scope(scope);
 	}
 
 	public void addFunction(final String name, final int n, final Function q) {
@@ -208,7 +218,7 @@ public class Scope {
 			final List<JqJson> configs = loadConfig(classLoader, path);
 			for (final JqJson jqJson : configs) {
 				for (final JqJson.JqFuncDef def : jqJson.functions)
-					addFunction(def.name, def.args.size(), new JsonQueryFunction(def.name, def.args, JsonQuery.compile(def.body)));
+					addFunction(def.name, def.args.size(), new JsonQueryFunction(def.name, def.args, JsonQuery.compile(def.body), this));
 			}
 		} catch (final IOException e) {
 			throw new RuntimeException("Failed to load macros", e);
