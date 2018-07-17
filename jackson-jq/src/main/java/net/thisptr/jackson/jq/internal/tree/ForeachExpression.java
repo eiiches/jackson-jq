@@ -38,7 +38,7 @@ public class ForeachExpression extends JsonQuery {
 				// Wrap in array to allow mutation inside lambda
 				final JsonNode[] accumulators = new JsonNode[] { accumulator };
 
-				final Scope childScope = new Scope(scope);
+				final Scope childScope = Scope.newChildScope(scope);
 				for (final JsonNode item : iterExpr.apply(scope, in)) {
 
 					final Stack<Pair<String, JsonNode>> stack = new Stack<>();

@@ -41,7 +41,7 @@ public class ReduceExpression extends JsonQuery {
 
 				try {
 
-					final Scope childScope = new Scope(scope);
+					final Scope childScope = Scope.newChildScope(scope);
 					for (final JsonNode item : iterExpr.apply(scope, in)) {
 						final Stack<Pair<String, JsonNode>> stack = new Stack<>();
 						matcher.match(scope, item, (final List<Pair<String, JsonNode>> vars) -> {

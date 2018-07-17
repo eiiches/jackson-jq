@@ -29,7 +29,7 @@ public class JsonQueryFunction implements Function {
 	public List<JsonNode> apply(final Scope scope, final List<JsonQuery> args, final JsonNode in) throws JsonQueryException {
 		Preconditions.checkArgumentCount(name, args, params.size());
 
-		final Scope fnScope = new Scope(closure);
+		final Scope fnScope = Scope.newChildScope(closure);
 		fnScope.addFunction(name, params.size(), this);
 
 		final List<JsonNode> out = new ArrayList<>();

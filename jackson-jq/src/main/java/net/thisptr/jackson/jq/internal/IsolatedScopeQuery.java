@@ -17,7 +17,7 @@ public class IsolatedScopeQuery extends JsonQuery {
 
 	@Override
 	public List<JsonNode> apply(Scope scope, JsonNode in) throws JsonQueryException {
-		final Scope isolatedScope = new Scope(scope);
+		final Scope isolatedScope = Scope.newChildScope(scope);
 		return q.apply(isolatedScope, in);
 	}
 
