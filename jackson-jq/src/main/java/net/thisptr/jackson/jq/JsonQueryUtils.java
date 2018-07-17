@@ -11,8 +11,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class JsonQueryUtils {
 	private JsonQueryUtils() {}
 
+	@Deprecated
 	private static Scope defaultScope = new Scope();
 
+	@Deprecated
 	public static <T> List<T> apply(final JsonQuery jq, final Object in, final Class<T> resultType) throws IOException {
 		return apply(defaultScope, jq, in, resultType);
 	}
@@ -21,6 +23,7 @@ public class JsonQueryUtils {
 		return map(scope.getObjectMapper(), jq.apply(scope, (JsonNode) scope.getObjectMapper().valueToTree(in)), resultType);
 	}
 
+	@Deprecated
 	public static <T> List<T> apply(final JsonQuery jq, final Object in, final TypeReference<T> resultType) throws IOException {
 		return apply(defaultScope, jq, in, resultType);
 	}
