@@ -263,4 +263,10 @@ public class JsonNodeUtils {
 			throw new IllegalStateException();
 		}
 	}
+
+	public static JsonNode nullToNullNode(final JsonNode value) {
+		if (value == null)
+			return NullNode.getInstance();
+		return value;
+	}
 }

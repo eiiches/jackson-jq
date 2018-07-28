@@ -104,7 +104,6 @@ Here is a *current* status of differences between jackson-jq and the jq. If you 
    - [Modules](https://stedolan.github.io/jq/manual/#Modules)
    - [Streaming](https://stedolan.github.io/jq/manual/#Streaming)
    - [I/O](https://stedolan.github.io/jq/manual/#IO)
-   - `{$foo}` syntax, a syntactic sugar for `{foo:$foo}` (#24)
 
  - Missing functions in jackson-jq
    - Datetime functions: `fromdate/0`, `mktime/0`, `gmtime/0`

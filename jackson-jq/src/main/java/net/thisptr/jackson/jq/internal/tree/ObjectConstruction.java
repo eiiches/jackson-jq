@@ -1,64 +1,25 @@
 package net.thisptr.jackson.jq.internal.tree;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 public class ObjectConstruction extends JsonQuery {
-	private List<FieldDef> fields = new ArrayList<>();
-
-	private static class FieldDef {
-		public final JsonQuery keyExpr;
-		public final JsonQuery valueExpr;
-
-		public FieldDef(final JsonQuery keyExpr, final JsonQuery valueExpr) {
-			this.keyExpr = keyExpr;
-			this.valueExpr = valueExpr;
-		}
-
-		public List<JsonNode> values(final Scope scope, final JsonNode in, final String key) throws JsonQueryException {
-			if (valueExpr == null) {
-				final JsonNode tmp = in.get(key);
-				return Collections.singletonList(tmp == null ? NullNode.getInstance() : tmp);
-			} else {
-				return valueExpr.apply(scope, in);
-			}
-		}
-
-		public List<String> keys(final Scope scope, final JsonNode in) throws JsonQueryException {
-			final List<String> result = new ArrayList<>();
-			for (final JsonNode keyNode : keyExpr.apply(scope, in)) {
-				if (!keyNode.isTextual())
-					throw new JsonQueryException("key must evaluate to string");
-				result.add(keyNode.asText());
-			}
-			return result;
-		}
-
-		@Override
-		public String toString() {
-			String result = "(" + keyExpr.toString() + ")";
-			if (valueExpr != null)
-				return result + ": " + valueExpr;
-			return result;
-		}
-	}
+	private final List<FieldConstruction> fields = new ArrayList<>();
 
 	public ObjectConstruction() {}
 
-	public void addField(final JsonQuery keyExpr, final JsonQuery valueExpr) {
-		fields.add(new FieldDef(keyExpr, valueExpr));
+	public void add(final FieldConstruction field) {
+		fields.add(field);
 	}
 
 	@Override
@@ -69,7 +30,7 @@ public class ObjectConstruction extends JsonQuery {
 		return out;
 	}
 
-	private static void applyRecursive(final Scope scope, final JsonNode in, final List<JsonNode> out, final List<FieldDef> fields, final Map<String, JsonNode> tmp) throws JsonQueryException {
+	private static void applyRecursive(final Scope scope, final JsonNode in, final List<JsonNode> out, final List<FieldConstruction> fields, final Map<String, JsonNode> tmp) throws JsonQueryException {
 		if (fields.size() == 0) {
 			final ObjectNode obj = scope.getObjectMapper().createObjectNode();
 			for (final Entry<String, JsonNode> e : tmp.entrySet())
@@ -77,22 +38,18 @@ public class ObjectConstruction extends JsonQuery {
 			out.add(obj);
 			return;
 		}
-
-		final FieldDef def = fields.get(0);
-		final List<String> keys = def.keys(scope, in);
-		for (final String key : keys) {
-			for (final JsonNode value : def.values(scope, in, key)) {
-				tmp.put(key, value);
-				applyRecursive(scope, in, out, fields.subList(1, fields.size()), tmp);
-			}
-		}
+		fields.get(0).evaluate(scope, in, (k, v) -> {
+			tmp.put(k, v);
+			applyRecursive(scope, in, out, fields.subList(1, fields.size()), tmp);
+			tmp.remove(k);
+		});
 	}
 
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder("{");
 		String sep = "";
-		for (final FieldDef field : fields) {
+		for (final FieldConstruction field : fields) {
 			builder.append(sep);
 			builder.append(field);
 			sep = ",";

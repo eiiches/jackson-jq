@@ -226,6 +226,28 @@ String KeywordAsString():
 	{ return token.image; }
 }
 
+String IdentifierAsString():
+{
+	Token token;
+}
+{
+	token = <IDENTIFIER>
+	{ return token.image; }
+}
+
+String KeywordOrIdentifier():
+{
+	String text;
+}
+{
+	(
+		text = KeywordAsString()
+	|
+		text = IdentifierAsString()
+	)
+	{ return text; }
+}
+
 JsonQuery Start():
 {
 	JsonQuery q;
@@ -625,17 +647,47 @@ JsonQuery ObjectConstruction():
 
 void ObjectField(final ObjectConstruction obj):
 {
-	Token tmp = null;
-	JsonQuery keyExpr = null;
-	JsonQuery valueExpr = null;
+	String name;
+	JsonQuery value = null;
+	JsonQuery key = null;
 }
 {
-	keyExpr = ObjectFieldName()
+	// - {$a}               -- VariableKeyFieldConstruction
+	// - {a}                -- IdentifierKeyFieldConstruction
+	// - {"a"}, {"\(.a)"}   -- StringFieldConstruction
+	// - {a: 20}
+	// - {"a": 20}, {"\(.a)": 20}
+	// - {(1|tostring): 10} -- JsonQueryFieldConstruction
 	(
+		// {$name}
+		<DOLLAR>
+		name = KeywordOrIdentifier()
+		{ obj.add(new VariableKeyFieldConstruction(name)); }
+	|
+		// {name}, {name: value}
+		name = KeywordOrIdentifier()
+		(
+			<COLON>
+			value = ObjectFieldValue()
+		)?
+		{ obj.add(new IdentifierKeyFieldConstruction(name, value)); }
+	|
+		// {"name"}, {"name": value}
+		key = StringInterpolation()
+		(
+			<COLON>
+			value = ObjectFieldValue()
+		)?
+		{ obj.add(new StringKeyFieldConstruction(key, value)); }
+	|
+		// {(keyexpr): value}
+		<OPEN_PAR>
+		key = JsonQuery()
+		<CLOSE_PAR>
 		<COLON>
-		valueExpr = ObjectFieldValue()
-	)?
-	{ obj.addField(keyExpr, valueExpr); }
+		value = ObjectFieldValue()
+		{ obj.add(new JsonQueryKeyFieldConstruction(key, value)); }
+	)
 }
 
 JsonQuery ObjectFieldName():
