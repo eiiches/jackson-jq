@@ -80,6 +80,8 @@ TOKEN: {
 	{
 		if (depth == 0) {
 			stringInterpLevel -= 1;
+			if (depthStack.isEmpty())
+				throw new IllegalStateException("Unexpected ')' at line " + input_stream.getBeginLine() + ", column " + input_stream.getBeginColumn() + ".");
 			depth = depthStack.pop();
 			SwitchTo(STATE_STRING);
 		} else {
