@@ -804,10 +804,12 @@ JsonQuery FieldAccessor(JsonQuery obj):
 }
 {
 	(
-		LOOKAHEAD(2)
-		obj = IdentifierFieldAccessor(obj)
-	|
-		obj = StringFieldAccessor(obj)
+		<DOT>
+		(
+			obj = IdentifierFieldAccessor(obj)
+		|
+			obj = StringFieldAccessor(obj)
+		)
 	|
 		obj = BracketFieldAccessor(obj)
 	)+
@@ -821,24 +823,19 @@ JsonQuery ThisObjectAccess():
 	JsonQuery tmp = new ThisObject();
 }
 {
+	<DOT>
 	(
-		LOOKAHEAD(2)
 		(
-			LOOKAHEAD(2)
 			tmp = IdentifierFieldAccessor(tmp)
 		|
-			LOOKAHEAD(2)
 			tmp = StringFieldAccessor(tmp)
 		|
-			<DOT>
 			tmp = BracketFieldAccessor(tmp)
 		)
 		(
 			tmp = FieldAccessor(tmp)
 		)?
-	|
-		<DOT>
-	)
+	)?
 	{ return tmp; }
 }
 
@@ -848,7 +845,6 @@ JsonQuery IdentifierFieldAccessor(JsonQuery obj):
 	boolean permissive = false;
 }
 {
-	<DOT>
 	identifier = <IDENTIFIER_AFTER_DOT>
 	(
 		<QUESTION>
@@ -863,7 +859,6 @@ JsonQuery StringFieldAccessor(JsonQuery obj):
 	boolean permissive = false;
 }
 {
-	<DOT>
 	fieldName = StringInterpolation()
 	(
 		<QUESTION>
