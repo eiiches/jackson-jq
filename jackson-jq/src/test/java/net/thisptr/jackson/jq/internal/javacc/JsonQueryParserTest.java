@@ -1,6 +1,6 @@
 package net.thisptr.jackson.jq.internal.javacc;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,9 +8,10 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.thisptr.jackson.jq.JsonQuery;
-
 import org.junit.Test;
+
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.exception.JsonQueryException;
 
 public class JsonQueryParserTest {
 	private static List<String> loadQueries(final String fname) throws IOException, TokenMgrError {
@@ -37,7 +38,7 @@ public class JsonQueryParserTest {
 		final List<String> loadQueries = loadQueries("compiler-test-ok.txt");
 		for (int i = 0; i < loadQueries.size(); i++) {
 			try {
-				final JsonQuery jq = JsonQueryParser.compile(loadQueries.get(i));
+				final Expression jq = ExpressionParser.compile(loadQueries.get(i));
 				if (jq == null) {
 					System.out.printf("%d: ---%n", i);
 				} else {
@@ -53,12 +54,10 @@ public class JsonQueryParserTest {
 	public void testUnsupportedQueries() throws IOException {
 		final List<String> loadQueries = loadQueries("compiler-test-ng.txt");
 		for (int i = 0; i < loadQueries.size(); i++) {
-			try {
-				JsonQueryParser.compile(loadQueries.get(i));
-			} catch (final ParseException | TokenMgrError e) {
-				continue;
-			}
-			fail("should throw ParseException");
+			final String q = loadQueries.get(i);
+			assertThrows(JsonQueryException.class, () -> {
+				ExpressionParser.compile(q);
+			});
 		}
 	}
 }

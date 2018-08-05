@@ -3,15 +3,15 @@ package net.thisptr.jackson.jq.internal.operators;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
-import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 
 public class PlusOperator implements BinaryOperator {
 	@Override

@@ -1,16 +1,8 @@
 package net.thisptr.jackson.jq.internal.functions;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-
-import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.JsonQuery;
-import net.thisptr.jackson.jq.Scope;
-import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.BuiltinFunction;
-import net.thisptr.jackson.jq.internal.misc.Preconditions;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -18,10 +10,18 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.BuiltinFunction;
+import net.thisptr.jackson.jq.internal.misc.Preconditions;
+
 @BuiltinFunction("to_entries/0")
 public class ToEntriesFunction implements Function {
 	@Override
-	public List<JsonNode> apply(final Scope scope, final List<JsonQuery> args, final JsonNode in) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
 		Preconditions.checkInputType("to_entries", in, JsonNodeType.OBJECT);
 
 		final ArrayNode out = scope.getObjectMapper().createArrayNode();
@@ -34,6 +34,6 @@ public class ToEntriesFunction implements Function {
 			out.add(entryNode);
 		}
 
-		return Collections.singletonList((JsonNode) out);
+		output.emit(out);
 	}
 }

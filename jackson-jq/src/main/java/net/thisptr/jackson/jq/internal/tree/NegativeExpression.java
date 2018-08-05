@@ -1,32 +1,28 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 
-import com.fasterxml.jackson.databind.JsonNode;
+public class NegativeExpression implements Expression {
+	private Expression value;
 
-public class NegativeExpression extends JsonQuery {
-	private JsonQuery value;
-
-	public NegativeExpression(final JsonQuery value) {
+	public NegativeExpression(final Expression value) {
 		this.value = value;
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
-		for (final JsonNode i : value.apply(scope, in)) {
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+		value.apply(scope, in, (i) -> {
 			if (!i.isNumber())
 				throw new JsonQueryTypeException(in, "cannot be negated");
-			out.add(JsonNodeUtils.asNumericNode(-i.asDouble()));
-		}
-		return out;
+			output.emit(JsonNodeUtils.asNumericNode(-i.asDouble()));
+		});
 	}
 
 	@Override

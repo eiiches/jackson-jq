@@ -5,8 +5,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
+
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
@@ -15,20 +20,18 @@ import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.misc.Pair;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-
 @BuiltinFunction("sort/1")
 public class SortFunction implements Function {
 	private static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final List<JsonQuery> args, final JsonNode items) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode items, final Output output) throws JsonQueryException {
 		Preconditions.checkInputType("sort", items, JsonNodeType.ARRAY);
 
 		final List<Pair<JsonNode, JsonNode>> zipped = new ArrayList<>(items.size());
 		for (final JsonNode item : items) {
-			final JsonNode value = JsonNodeUtils.asArrayNode(scope.getObjectMapper(), args.get(0).apply(scope, item));
+			final ArrayNode value = scope.getObjectMapper().createArrayNode();
+			args.get(0).apply(scope, item, value::add);
 			zipped.add(Pair.of(item, value));
 		}
 
@@ -39,6 +42,6 @@ public class SortFunction implements Function {
 			}
 		});
 
-		return Collections.<JsonNode> singletonList(JsonNodeUtils.asArrayNode(scope.getObjectMapper(), Pair._1(zipped)));
+		output.emit(JsonNodeUtils.asArrayNode(scope.getObjectMapper(), Pair._1(zipped)));
 	}
 }

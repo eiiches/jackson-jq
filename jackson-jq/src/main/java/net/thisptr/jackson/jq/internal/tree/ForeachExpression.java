@@ -1,26 +1,25 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
-import net.thisptr.jackson.jq.exception.JsonQueryBreakException;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.Pair;
 import net.thisptr.jackson.jq.internal.tree.matcher.PatternMatcher;
 
-public class ForeachExpression extends JsonQuery {
-	private JsonQuery iterExpr;
-	private JsonQuery updateExpr;
-	private JsonQuery initExpr;
-	private JsonQuery extractExpr;
+public class ForeachExpression implements Expression {
+	private Expression iterExpr;
+	private Expression updateExpr;
+	private Expression initExpr;
+	private Expression extractExpr;
 	private PatternMatcher matcher;
 
-	public ForeachExpression(final PatternMatcher matcher, final JsonQuery initExpr, final JsonQuery updateExpr, final JsonQuery extractExpr, final JsonQuery iterExpr) {
+	public ForeachExpression(final PatternMatcher matcher, final Expression initExpr, final Expression updateExpr, final Expression extractExpr, final Expression iterExpr) {
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.updateExpr = updateExpr;
@@ -29,43 +28,33 @@ public class ForeachExpression extends JsonQuery {
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
 
-		try {
+		initExpr.apply(scope, in, (accumulator) -> {
+			// Wrap in array to allow mutation inside lambda
+			final JsonNode[] accumulators = new JsonNode[] { accumulator };
 
-			for (final JsonNode accumulator : initExpr.apply(scope, in)) {
-				// Wrap in array to allow mutation inside lambda
-				final JsonNode[] accumulators = new JsonNode[] { accumulator };
+			final Scope childScope = Scope.newChildScope(scope);
 
-				final Scope childScope = Scope.newChildScope(scope);
-				for (final JsonNode item : iterExpr.apply(scope, in)) {
+			iterExpr.apply(scope, in, (item) -> {
+				final Stack<Pair<String, JsonNode>> stack = new Stack<>();
+				matcher.match(scope, item, (final List<Pair<String, JsonNode>> vars) -> {
+					for (int i = vars.size() - 1; i >= 0; --i) {
+						final Pair<String, JsonNode> var = vars.get(i);
+						childScope.setValue(var._1, var._2);
+					}
 
-					final Stack<Pair<String, JsonNode>> stack = new Stack<>();
-					matcher.match(scope, item, (final List<Pair<String, JsonNode>> vars) -> {
-						for (int i = vars.size() - 1; i >= 0; --i) {
-							final Pair<String, JsonNode> var = vars.get(i);
-							childScope.setValue(var._1, var._2);
+					updateExpr.apply(childScope, accumulators[0], (newaccumulator) -> {
+						if (extractExpr != null) {
+							extractExpr.apply(childScope, newaccumulator, output);
+						} else {
+							output.emit(newaccumulator);
 						}
-
-						for (final JsonNode newaccumulator : updateExpr.apply(childScope, accumulators[0])) {
-							if (extractExpr != null) {
-								for (final JsonNode extract : extractExpr.apply(childScope, newaccumulator))
-									out.add(extract);
-							} else {
-								out.add(newaccumulator);
-							}
-							accumulators[0] = newaccumulator;
-						}
-					}, stack, true);
-				}
-			}
-
-		} catch (JsonQueryBreakException e) {
-			/* ignore */
-		}
-
-		return out;
+						accumulators[0] = newaccumulator;
+					});
+				}, stack, true);
+			});
+		});
 	}
 
 	@Override

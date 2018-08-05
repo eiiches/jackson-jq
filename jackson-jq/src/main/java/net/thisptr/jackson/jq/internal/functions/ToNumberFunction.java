@@ -1,26 +1,26 @@
 package net.thisptr.jackson.jq.internal.functions;
 
-import java.util.Collections;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 @BuiltinFunction("tonumber/0")
 public class ToNumberFunction implements Function {
 	@Override
-	public List<JsonNode> apply(final Scope scope, final List<JsonQuery> args, final JsonNode in) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
 		if (in.isNumber()) {
-			return Collections.singletonList(in);
+			output.emit(in);
 		} else if (in.isTextual()) {
 			final double value = Double.parseDouble(in.asText());
-			return Collections.singletonList(JsonNodeUtils.asNumericNode(value));
+			output.emit(JsonNodeUtils.asNumericNode(value));
 		} else {
 			throw JsonQueryException.format("%s cannot be parsed as a number", in.getNodeType());
 		}

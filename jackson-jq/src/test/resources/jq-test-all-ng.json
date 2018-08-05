@@ -3,56 +3,6 @@
         "in": [
             0,
             1,
-            2
-        ],
-        "out": [
-            [
-                0,
-                1,
-                "hi!"
-            ]
-        ],
-        "q": "[(label $here | .[] | if .>1 then break $here else . end), \"hi!\"]"
-    },
-    {
-        "in": [
-            0,
-            2,
-            1
-        ],
-        "out": [
-            [
-                0,
-                "hi!"
-            ]
-        ],
-        "q": "[(label $here | .[] | if .>1 then break $here else . end), \"hi!\"]"
-    },
-    {
-        "in": [
-            11,
-            22,
-            33,
-            44,
-            55,
-            66,
-            77,
-            88,
-            99
-        ],
-        "out": [
-            [
-                11,
-                22,
-                33
-            ]
-        ],
-        "q": "[label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]"
-    },
-    {
-        "in": [
-            0,
-            1,
             2,
             3,
             4,
@@ -646,10 +596,5 @@
             true
         ],
         "q": "import \"test_bind_order\" as check; check::check"
-    },
-    {
-        "in": null,
-        "out": [],
-        "q": "(.[{}] = 0)?"
     }
 ]

@@ -1,24 +1,23 @@
 package net.thisptr.jackson.jq.internal;
 
-import java.util.List;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 
-import com.fasterxml.jackson.databind.JsonNode;
+public class IsolatedScopeQuery implements Expression {
+	private Expression q;
 
-public class IsolatedScopeQuery extends JsonQuery {
-	private JsonQuery q;
-
-	public IsolatedScopeQuery(final JsonQuery q) {
+	public IsolatedScopeQuery(final Expression q) {
 		this.q = q;
 	}
 
 	@Override
-	public List<JsonNode> apply(Scope scope, JsonNode in) throws JsonQueryException {
+	public void apply(Scope scope, JsonNode in, Output output) throws JsonQueryException {
 		final Scope isolatedScope = Scope.newChildScope(scope);
-		return q.apply(isolatedScope, in);
+		q.apply(isolatedScope, in, output);
 	}
 
 	@Override

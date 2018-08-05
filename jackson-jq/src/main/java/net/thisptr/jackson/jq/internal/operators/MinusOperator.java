@@ -2,14 +2,14 @@ package net.thisptr.jackson.jq.internal.operators;
 
 import java.util.TreeSet;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 
 public class MinusOperator implements BinaryOperator {
 	private static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();

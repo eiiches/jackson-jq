@@ -1,19 +1,19 @@
 package net.thisptr.jackson.jq.internal.functions;
 
-import java.util.Collections;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.fasterxml.jackson.databind.node.NullNode;
+
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
-import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.NullNode;
 
 public abstract class AbstractMaxFunction implements Function {
 	protected static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();
@@ -25,19 +25,21 @@ public abstract class AbstractMaxFunction implements Function {
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final List<JsonQuery> args, final JsonNode in) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
 		Preconditions.checkInputType(fname, in, JsonNodeType.ARRAY);
 
 		JsonNode maxItem = NullNode.getInstance();
 		JsonNode maxValue = null;
 		for (final JsonNode i : in) {
-			final JsonNode value = JsonNodeUtils.asArrayNode(scope.getObjectMapper(), args.get(0).apply(scope, i));
+			final ArrayNode value = scope.getObjectMapper().createArrayNode();
+			args.get(0).apply(scope, i, value::add);
 			if (maxValue == null || !isLarger(maxValue, value)) {
 				maxValue = value;
 				maxItem = i;
 			}
 		}
-		return Collections.singletonList(maxItem);
+
+		output.emit(maxItem);
 	}
 
 	protected abstract boolean isLarger(final JsonNode criteria, final JsonNode value);

@@ -2,16 +2,16 @@ package net.thisptr.jackson.jq.internal.tree;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 
 public class IdentifierKeyFieldConstruction implements FieldConstruction {
 	private final String key;
-	private final JsonQuery value;
+	private final Expression value;
 
-	public IdentifierKeyFieldConstruction(final String key, final JsonQuery value) {
+	public IdentifierKeyFieldConstruction(final String key, final Expression value) {
 		this.key = key;
 		this.value = value;
 	}
@@ -25,8 +25,7 @@ public class IdentifierKeyFieldConstruction implements FieldConstruction {
 		if (value == null) {
 			consumer.accept(key, JsonNodeUtils.nullToNullNode(in.get(key)));
 		} else {
-			for (final JsonNode v : value.apply(scope, in))
-				consumer.accept(key, v);
+			value.apply(scope, in, (v) -> consumer.accept(key, v));
 		}
 	}
 

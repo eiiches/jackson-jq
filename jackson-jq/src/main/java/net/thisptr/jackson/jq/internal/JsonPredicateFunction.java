@@ -1,14 +1,14 @@
 package net.thisptr.jackson.jq.internal;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 
@@ -20,7 +20,7 @@ public class JsonPredicateFunction implements Function {
 	}
 
 	@Override
-	public List<JsonNode> apply(Scope scope, List<JsonQuery> args, JsonNode in) throws JsonQueryException {
-		return Collections.singletonList(BooleanNode.valueOf(predicate.test(in)));
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
+		output.emit(BooleanNode.valueOf(predicate.test(in)));
 	}
 }

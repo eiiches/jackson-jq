@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.internal.functions;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -8,8 +7,9 @@ import java.util.Map.Entry;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
@@ -21,16 +21,14 @@ public class ContainsFunction implements Function {
 	private static final JsonNodeComparator COMPARATOR = JsonNodeComparator.getInstance();
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final List<JsonQuery> args, final JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
-		for (final JsonNode value : args.get(0).apply(scope, in)) {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
+		args.get(0).apply(scope, in, (value) -> {
 			if (in.getNodeType() != value.getNodeType()
 					|| (in.isBoolean() && in.asBoolean() != value.asBoolean())) {
 				throw JsonQueryTypeException.format("%s (%s) and %s (%s) cannot have their containment checked", in.getNodeType(), in, value.getNodeType(), value);
 			}
-			out.add(BooleanNode.valueOf(contains(value, in)));
-		}
-		return out;
+			output.emit(BooleanNode.valueOf(contains(value, in)));
+		});
 	}
 
 	private static boolean contains(final JsonNode needle, final JsonNode haystack) throws JsonQueryException {

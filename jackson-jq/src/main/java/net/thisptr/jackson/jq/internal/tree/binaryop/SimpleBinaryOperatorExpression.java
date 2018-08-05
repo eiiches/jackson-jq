@@ -1,29 +1,27 @@
 package net.thisptr.jackson.jq.internal.tree.binaryop;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.operators.BinaryOperator;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 public abstract class SimpleBinaryOperatorExpression extends BinaryOperatorExpression {
 	private BinaryOperator operator;
 
-	public SimpleBinaryOperatorExpression(final JsonQuery lhs, final JsonQuery rhs, final BinaryOperator operator) {
+	public SimpleBinaryOperatorExpression(final Expression lhs, final Expression rhs, final BinaryOperator operator) {
 		super(lhs, rhs, operator.image());
 		this.operator = operator;
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
-		for (final JsonNode l : lhs.apply(scope, in))
-			for (final JsonNode r : rhs.apply(scope, in))
-				out.add(operator.apply(scope.getObjectMapper(), l, r));
-		return out;
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+		lhs.apply(scope, in, (l) -> {
+			rhs.apply(scope, in, (r) -> {
+				output.emit(operator.apply(scope.getObjectMapper(), l, r));
+			});
+		});
 	}
 }

@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.internal.tree.binaryop.BinaryOperatorExpression.Operator.Associativity;
 import net.thisptr.jackson.jq.internal.tree.binaryop.assignment.Assignment;
 import net.thisptr.jackson.jq.internal.tree.binaryop.assignment.ComplexAlternativeAssignment;
@@ -24,12 +24,12 @@ import net.thisptr.jackson.jq.internal.tree.binaryop.comparison.CompareLessEqual
 import net.thisptr.jackson.jq.internal.tree.binaryop.comparison.CompareLessTest;
 import net.thisptr.jackson.jq.internal.tree.binaryop.comparison.CompareNotEqualTest;
 
-public abstract class BinaryOperatorExpression extends JsonQuery {
-	protected JsonQuery lhs;
-	protected JsonQuery rhs;
+public abstract class BinaryOperatorExpression implements Expression {
+	protected Expression lhs;
+	protected Expression rhs;
 	private String image;
 
-	public BinaryOperatorExpression(final JsonQuery lhs, final JsonQuery rhs, final String image) {
+	public BinaryOperatorExpression(final Expression lhs, final Expression rhs, final String image) {
 		this.lhs = lhs;
 		this.rhs = rhs;
 		this.image = image;
@@ -80,7 +80,7 @@ public abstract class BinaryOperatorExpression extends JsonQuery {
 			this.associativity = associativity;
 			this.clazz = clazz;
 			try {
-				this.constructor = clazz.getConstructor(JsonQuery.class, JsonQuery.class);
+				this.constructor = clazz.getConstructor(Expression.class, Expression.class);
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
@@ -99,7 +99,7 @@ public abstract class BinaryOperatorExpression extends JsonQuery {
 				lookup.put(op.image, op);
 		}
 
-		public JsonQuery buildTree(JsonQuery lhs, JsonQuery rhs) {
+		public Expression buildTree(Expression lhs, Expression rhs) {
 			try {
 				return constructor.newInstance(lhs, rhs);
 			} catch (Exception e) {
@@ -108,15 +108,15 @@ public abstract class BinaryOperatorExpression extends JsonQuery {
 		}
 	}
 
-	public static JsonQuery buildTree(final List<JsonQuery> exprs, final List<Operator> operators) {
+	public static Expression buildTree(final List<Expression> exprs, final List<Operator> operators) {
 		if (exprs.size() != operators.size() + 1)
 			throw new IllegalArgumentException();
 
 		// shunting-yard algorithm
-		final Stack<JsonQuery> stackExprs = new Stack<>();
+		final Stack<Expression> stackExprs = new Stack<>();
 		final Stack<Operator> stackOperators = new Stack<>();
 
-		final Iterator<JsonQuery> iterExpr = exprs.iterator();
+		final Iterator<Expression> iterExpr = exprs.iterator();
 		final Iterator<Operator> iterOperator = operators.iterator();
 
 		stackExprs.push(iterExpr.next());
@@ -127,8 +127,8 @@ public abstract class BinaryOperatorExpression extends JsonQuery {
 				if (op1.precedence > op2.precedence
 						|| op1.precedence == op2.precedence && op1.associativity == Associativity.LEFT) {
 					final Operator op = stackOperators.pop();
-					final JsonQuery rhs = stackExprs.pop();
-					final JsonQuery lhs = stackExprs.pop();
+					final Expression rhs = stackExprs.pop();
+					final Expression lhs = stackExprs.pop();
 					stackExprs.push(op.buildTree(lhs, rhs));
 				} else {
 					break;
@@ -140,8 +140,8 @@ public abstract class BinaryOperatorExpression extends JsonQuery {
 
 		while (!stackOperators.isEmpty()) {
 			final Operator op = stackOperators.pop();
-			final JsonQuery rhs = stackExprs.pop();
-			final JsonQuery lhs = stackExprs.pop();
+			final Expression rhs = stackExprs.pop();
+			final Expression lhs = stackExprs.pop();
 			stackExprs.push(op.buildTree(lhs, rhs));
 		}
 

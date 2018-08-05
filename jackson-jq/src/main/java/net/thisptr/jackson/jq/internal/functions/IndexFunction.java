@@ -1,31 +1,29 @@
 package net.thisptr.jackson.jq.internal.functions;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.JsonQuery;
-import net.thisptr.jackson.jq.Scope;
-import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.BuiltinFunction;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.BuiltinFunction;
+
 @BuiltinFunction("index/1")
 public class IndexFunction implements Function {
 	@Override
-	public List<JsonNode> apply(Scope scope, List<JsonQuery> args, JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
-		for (final JsonNode needle : args.get(0).apply(scope, in)) {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
+		args.get(0).apply(scope, in, (needle) -> {
 			final List<Integer> tmp = IndicesFunction.indices(needle, in);
 			if (tmp.isEmpty()) {
-				out.add(NullNode.getInstance());
+				output.emit(NullNode.getInstance());
 			} else {
-				out.add(new IntNode(tmp.get(0)));
+				output.emit(new IntNode(tmp.get(0)));
 			}
-		}
-		return out;
+		});
 	}
 }

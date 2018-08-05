@@ -9,11 +9,12 @@ import java.util.Map.Entry;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 
-public class ObjectConstruction extends JsonQuery {
+public class ObjectConstruction implements Expression {
 	private final List<FieldConstruction> fields = new ArrayList<>();
 
 	public ObjectConstruction() {}
@@ -23,24 +24,22 @@ public class ObjectConstruction extends JsonQuery {
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
 		final Map<String, JsonNode> tmp = new HashMap<>();
-		applyRecursive(scope, in, out, fields, tmp);
-		return out;
+		applyRecursive(scope, in, output, fields, tmp);
 	}
 
-	private static void applyRecursive(final Scope scope, final JsonNode in, final List<JsonNode> out, final List<FieldConstruction> fields, final Map<String, JsonNode> tmp) throws JsonQueryException {
+	private static void applyRecursive(final Scope scope, final JsonNode in, final Output output, final List<FieldConstruction> fields, final Map<String, JsonNode> tmp) throws JsonQueryException {
 		if (fields.size() == 0) {
 			final ObjectNode obj = scope.getObjectMapper().createObjectNode();
 			for (final Entry<String, JsonNode> e : tmp.entrySet())
 				obj.set(e.getKey(), e.getValue());
-			out.add(obj);
+			output.emit(obj);
 			return;
 		}
 		fields.get(0).evaluate(scope, in, (k, v) -> {
 			tmp.put(k, v);
-			applyRecursive(scope, in, out, fields.subList(1, fields.size()), tmp);
+			applyRecursive(scope, in, output, fields.subList(1, fields.size()), tmp);
 			tmp.remove(k);
 		});
 	}

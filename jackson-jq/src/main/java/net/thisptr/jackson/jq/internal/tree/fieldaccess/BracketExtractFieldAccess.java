@@ -1,15 +1,15 @@
 package net.thisptr.jackson.jq.internal.tree.fieldaccess;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedAllFieldAccess;
 import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedFieldAccess;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 public class BracketExtractFieldAccess extends FieldAccess {
-	public BracketExtractFieldAccess(final JsonQuery src, final boolean permissive) {
+	public BracketExtractFieldAccess(final Expression src, final boolean permissive) {
 		super(src, permissive);
 	}
 

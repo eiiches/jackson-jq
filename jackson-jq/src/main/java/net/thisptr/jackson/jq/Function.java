@@ -2,10 +2,11 @@ package net.thisptr.jackson.jq;
 
 import java.util.List;
 
-import net.thisptr.jackson.jq.exception.JsonQueryException;
-
 import com.fasterxml.jackson.databind.JsonNode;
 
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+
 public interface Function {
-	List<JsonNode> apply(Scope scope, List<JsonQuery> args, JsonNode in) throws JsonQueryException;
+
+	void apply(Scope scope, List<Expression> args, JsonNode in, Output output) throws JsonQueryException;
 }

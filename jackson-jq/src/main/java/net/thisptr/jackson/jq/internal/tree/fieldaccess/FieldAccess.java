@@ -3,27 +3,28 @@ package net.thisptr.jackson.jq.internal.tree.fieldaccess;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedFieldAccess;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-public abstract class FieldAccess extends JsonQuery {
-	protected JsonQuery target;
+public abstract class FieldAccess implements Expression {
+	protected Expression target;
 	protected boolean permissive;
 
-	public FieldAccess(final JsonQuery target, final boolean permissive) {
+	public FieldAccess(final Expression target, final boolean permissive) {
 		this.target = target;
 		this.permissive = permissive;
 	}
 
 	public static class ResolvedPath {
-		public JsonQuery target;
+		public Expression target;
 		public List<ResolvedFieldAccess> path;
 
-		public ResolvedPath(final JsonQuery target) {
+		public ResolvedPath(final Expression target) {
 			this.target = target;
 			this.path = new ArrayList<>();
 		}
@@ -35,12 +36,11 @@ public abstract class FieldAccess extends JsonQuery {
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
 		final ResolvedFieldAccess resolvedFieldAccess = resolveFieldAccess(scope, in);
-		for (final JsonNode i : target.apply(scope, in))
-			out.addAll(resolvedFieldAccess.apply(scope, i));
-		return out;
+		target.apply(scope, in, (i) -> {
+			resolvedFieldAccess.apply(scope, i, output);
+		});
 	}
 
 	public abstract ResolvedFieldAccess resolveFieldAccess(final Scope scope, final JsonNode in) throws JsonQueryException;

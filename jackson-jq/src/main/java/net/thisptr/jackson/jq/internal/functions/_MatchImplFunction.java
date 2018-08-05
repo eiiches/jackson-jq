@@ -16,8 +16,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
@@ -28,16 +29,20 @@ import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
 @BuiltinFunction("_match_impl/3")
 public class _MatchImplFunction implements Function {
 	@Override
-	public List<JsonNode> apply(final Scope scope, final List<JsonQuery> args, final JsonNode in) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
 		Preconditions.checkInputType("_match_impl/3", in, JsonNodeType.STRING);
 		final byte[] ibytes = in.asText().getBytes(StandardCharsets.UTF_8);
 		final int[] cindex = UnicodeUtils.UTF8CharIndex(ibytes);
 
-		final List<JsonNode> regexTuple = args.get(0).apply(scope, in);
-		final List<JsonNode> modifiersTuple = args.get(1).apply(scope, in);
-		final List<JsonNode> testTuple = args.get(2).apply(scope, in);
+		// FIXME: these pre-calculations may result in to wrong output in case of break statement
+		final List<JsonNode> regexTuple = new ArrayList<>();
+		args.get(0).apply(scope, in, regexTuple::add);
 
-		final List<JsonNode> out = new ArrayList<>();
+		final List<JsonNode> modifiersTuple = new ArrayList<>();
+		args.get(1).apply(scope, in, modifiersTuple::add);
+
+		final List<JsonNode> testTuple = new ArrayList<>();
+		args.get(2).apply(scope, in, testTuple::add);
 
 		for (final JsonNode regex : regexTuple) {
 			Preconditions.checkArgumentType("_match_impl/3", 1, regex, JsonNodeType.STRING);
@@ -49,12 +54,10 @@ public class _MatchImplFunction implements Function {
 					Preconditions.checkArgumentType("_match_impl/3", 3, test, JsonNodeType.BOOLEAN);
 
 					final OnigUtils.Pattern p = new OnigUtils.Pattern(regex.asText(), modifiers.isNull() ? null : modifiers.asText());
-					out.add(match(scope.getObjectMapper(), p, ibytes, cindex, test.asBoolean()));
+					output.emit(match(scope.getObjectMapper(), p, ibytes, cindex, test.asBoolean()));
 				}
 			}
 		}
-
-		return out;
 	}
 
 	@JsonIgnoreProperties(ignoreUnknown = true)

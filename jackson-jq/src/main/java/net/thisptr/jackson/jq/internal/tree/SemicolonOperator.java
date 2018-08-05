@@ -1,34 +1,35 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import java.util.Collections;
 import java.util.List;
-
-import net.thisptr.jackson.jq.JsonQuery;
-import net.thisptr.jackson.jq.Scope;
-import net.thisptr.jackson.jq.exception.JsonQueryException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class SemicolonOperator extends JsonQuery {
-	private List<JsonQuery> qs;
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.exception.JsonQueryException;
 
-	public SemicolonOperator(final List<JsonQuery> qs) {
+public class SemicolonOperator implements Expression {
+	private List<Expression> qs;
+
+	public SemicolonOperator(final List<Expression> qs) {
 		this.qs = qs;
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
-		List<JsonNode> result = Collections.emptyList();
-		for (final JsonQuery q : qs)
-			result = q.apply(scope, in);
-		return result;
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+		if (qs.isEmpty())
+			return;
+		for (final Expression q : qs.subList(0, qs.size() - 1))
+			q.apply(scope, in, (out) -> {});
+		qs.get(qs.size() - 1).apply(scope, in, output);
 	}
 
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
 		String sep = "";
-		for (final JsonQuery q : qs) {
+		for (final Expression q : qs) {
 			builder.append(sep);
 			builder.append(q);
 			sep = "; ";

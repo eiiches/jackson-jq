@@ -1,7 +1,9 @@
 package net.thisptr.jackson.jq.exception;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 public class JsonQueryException extends JsonProcessingException {
 	private static final long serialVersionUID = -7241258446595502920L;
@@ -12,6 +14,14 @@ public class JsonQueryException extends JsonProcessingException {
 
 	public JsonQueryException(final Throwable e) {
 		super(e);
+	}
+
+	public JsonQueryException(final String msg, final Throwable rootCause) {
+		super(msg, rootCause);
+	}
+
+	public JsonNode getMessageAsJsonNode() {
+		return new TextNode(getMessage());
 	}
 
 	public static JsonQueryException format(String format, Object... args) {

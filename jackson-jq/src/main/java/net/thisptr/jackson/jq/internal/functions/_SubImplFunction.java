@@ -16,8 +16,9 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
@@ -27,26 +28,22 @@ import net.thisptr.jackson.jq.internal.misc.Preconditions;
 @BuiltinFunction("_sub_impl/3")
 public class _SubImplFunction implements Function {
 	@Override
-	public List<JsonNode> apply(final Scope scope, final List<JsonQuery> args, final JsonNode in) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
 		Preconditions.checkInputType("_sub_impl/3", in, JsonNodeType.STRING);
 
-		final List<JsonNode> result = new ArrayList<>();
-
-		for (final JsonNode regexText : args.get(0).apply(scope, in)) {
+		args.get(0).apply(scope, in, (regexText) -> {
 			Preconditions.checkArgumentType("_sub_impl/3", 1, regexText, JsonNodeType.STRING);
 
-			for (final JsonNode flagsText : args.get(2).apply(scope, in)) {
+			args.get(2).apply(scope, in, (flagsText) -> {
 				Preconditions.checkArgumentType("_sub_impl/3", 3, flagsText, JsonNodeType.STRING);
 
 				final OnigUtils.Pattern p = new OnigUtils.Pattern(regexText.asText(), flagsText.asText());
-				concat(result, sub(scope, p, in.asText(), args.get(1)));
-			}
-		}
-
-		return result;
+				concat(output, sub(scope, p, in.asText(), args.get(1)));
+			});
+		});
 	}
 
-	private static void concat(final List<JsonNode> out, final int index, final Stack<JsonNode> stack, final List<List<JsonNode>> values) {
+	private static void concat(final Output output, final int index, final Stack<JsonNode> stack, final List<List<JsonNode>> values) throws JsonQueryException {
 		if (index == values.size()) {
 			final StringBuilder builder = new StringBuilder();
 			for (final JsonNode item : stack) {
@@ -56,21 +53,21 @@ public class _SubImplFunction implements Function {
 					builder.append(item.toString());
 				}
 			}
-			out.add(TextNode.valueOf(builder.toString()));
+			output.emit(TextNode.valueOf(builder.toString()));
 		} else {
 			for (final JsonNode value : values.get(index)) {
 				stack.push(value);
-				concat(out, index + 1, stack, values);
+				concat(output, index + 1, stack, values);
 				stack.pop();
 			}
 		}
 	}
 
-	private static void concat(final List<JsonNode> out, final List<List<JsonNode>> values) {
-		concat(out, 0, new Stack<>(), values);
+	private static void concat(final Output output, final List<List<JsonNode>> values) throws JsonQueryException {
+		concat(output, 0, new Stack<>(), values);
 	}
 
-	private static List<List<JsonNode>> sub(final Scope scope, final OnigUtils.Pattern pattern, final String inputText, final JsonQuery replace) throws JsonQueryException {
+	private static List<List<JsonNode>> sub(final Scope scope, final OnigUtils.Pattern pattern, final String inputText, final Expression replace) throws JsonQueryException {
 		final List<List<JsonNode>> result = new ArrayList<>();
 
 		final byte[] inputBytes = inputText.getBytes(StandardCharsets.UTF_8);
@@ -98,7 +95,10 @@ public class _SubImplFunction implements Function {
 				}
 			}
 
-			result.add(replace.apply(scope, captures));
+			final List<JsonNode> tmp = new ArrayList<>();
+			replace.apply(scope, captures, tmp::add);
+
+			result.add(tmp);
 
 			offset = m.getEnd();
 		} while (pattern.global && offset != inputBytes.length);

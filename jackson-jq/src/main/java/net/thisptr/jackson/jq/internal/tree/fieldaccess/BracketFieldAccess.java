@@ -1,10 +1,12 @@
 package net.thisptr.jackson.jq.internal.tree.fieldaccess;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.IntNode;
+
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
@@ -15,21 +17,18 @@ import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedIndexFi
 import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedRangeFieldAccess;
 import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedStringFieldAccess;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-
 public class BracketFieldAccess extends FieldAccess {
-	private JsonQuery end;
-	private JsonQuery begin;
+	private Expression end;
+	private Expression begin;
 	private boolean isRange;
 
-	public BracketFieldAccess(final JsonQuery src, final JsonQuery begin, final boolean permissive) {
+	public BracketFieldAccess(final Expression src, final Expression begin, final boolean permissive) {
 		super(src, permissive);
 		this.begin = begin;
 		this.isRange = false;
 	}
 
-	public BracketFieldAccess(final JsonQuery src, final JsonQuery begin, final JsonQuery end, final boolean permissive) {
+	public BracketFieldAccess(final Expression src, final Expression begin, final Expression end, final boolean permissive) {
 		super(src, permissive);
 		this.begin = begin;
 		this.end = end;
@@ -48,8 +47,20 @@ public class BracketFieldAccess extends FieldAccess {
 	@Override
 	public ResolvedFieldAccess resolveFieldAccess(final Scope scope, final JsonNode in) throws JsonQueryException {
 		if (isRange) {
-			final List<JsonNode> accessorBeginTuple = begin == null ? Collections.singletonList((JsonNode) new IntNode(0)) : begin.apply(scope, in);
-			final List<JsonNode> accessorEndTuple = end == null ? Collections.singletonList((JsonNode) new IntNode(Integer.MAX_VALUE)) : end.apply(scope, in);
+			final List<JsonNode> accessorBeginTuple = new ArrayList<>();
+			if (begin == null) {
+				accessorBeginTuple.add(new IntNode(0));
+			} else {
+				begin.apply(scope, in, accessorBeginTuple::add);
+			}
+
+			final List<JsonNode> accessorEndTuple = new ArrayList<>();
+			if (end == null) {
+				accessorEndTuple.add(new IntNode(Integer.MAX_VALUE));
+			} else {
+				end.apply(scope, in, accessorEndTuple::add);
+			}
+
 			final List<Range> ranges = new ArrayList<>();
 			for (final JsonNode accessorBegin : accessorBeginTuple) {
 				for (final JsonNode accessorEnd : accessorEndTuple) {
@@ -69,7 +80,8 @@ public class BracketFieldAccess extends FieldAccess {
 			final List<Long> indices = new ArrayList<>();
 			final List<String> keys = new ArrayList<>();
 
-			final List<JsonNode> accessorTuple = begin.apply(scope, in);
+			final List<JsonNode> accessorTuple = new ArrayList<>();
+			begin.apply(scope, in, accessorTuple::add);
 			for (final JsonNode accessor : accessorTuple) {
 				if (JsonNodeUtils.isIntegralNumber(accessor)) {
 					final long index = accessor.asLong();

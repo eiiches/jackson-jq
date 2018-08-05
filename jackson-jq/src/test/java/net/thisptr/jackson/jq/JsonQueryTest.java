@@ -83,6 +83,7 @@ public class JsonQueryTest {
 	@ParameterizedTest
 	@MethodSource("defaultTestCases")
 	public void test(final String tcText) throws Throwable {
+		boolean failed = false;
 		final TestCase tc = MAPPER.readValue(tcText, TestCase.class);
 		try {
 			LOG.info("Running test ({}): {}", tc.file, tc.toString().replace('\n', ' '));
@@ -133,9 +134,12 @@ public class JsonQueryTest {
 				assertTrue(r == 0, "The contract JsonQuery.compile($.toString()).apply(in) != $.apply(in) violated.");
 			}
 		} catch (final Throwable e) {
+			failed = true;
 			LOG.error(" * Failed with: {}", e.getMessage());
 			if (!tc.knownToFail)
 				throw e;
 		}
+
+		assertEquals(tc.knownToFail, failed, "marked knownToFail but succeeded");
 	}
 }

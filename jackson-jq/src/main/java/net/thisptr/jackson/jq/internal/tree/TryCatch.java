@@ -1,43 +1,38 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import java.util.Collections;
-import java.util.List;
-
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 
-public class TryCatch extends JsonQuery {
-	protected JsonQuery tryExpr;
-	protected JsonQuery catchExpr;
+public class TryCatch implements Expression {
+	protected Expression tryExpr;
+	protected Expression catchExpr;
 
-	public TryCatch(final JsonQuery tryExpr, final JsonQuery catchExpr) {
+	public TryCatch(final Expression tryExpr, final Expression catchExpr) {
 		this.tryExpr = tryExpr;
 		this.catchExpr = catchExpr;
 	}
 
-	public TryCatch(final JsonQuery tryExpr) {
+	public TryCatch(final Expression tryExpr) {
 		this(tryExpr, null);
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
 		try {
-			return tryExpr.apply(scope, in);
+			tryExpr.apply(scope, in, output);
 		} catch (JsonQueryException e) {
 			if (catchExpr != null) {
-				return catchExpr.apply(scope, new TextNode(e.getMessage()));
-			} else {
-				return Collections.emptyList();
+				catchExpr.apply(scope, e.getMessageAsJsonNode(), output);
 			}
 		}
 	}
 
 	public static class Question extends TryCatch {
-		public Question(JsonQuery tryExpr) {
+		public Question(Expression tryExpr) {
 			super(tryExpr);
 		}
 

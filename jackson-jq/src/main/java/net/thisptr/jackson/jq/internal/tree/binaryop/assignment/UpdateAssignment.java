@@ -1,29 +1,30 @@
 package net.thisptr.jackson.jq.internal.tree.binaryop.assignment;
 
-import java.util.Collections;
 import java.util.List;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.NullNode;
+
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.IllegalJsonArgumentException;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils.Mutation;
+import net.thisptr.jackson.jq.internal.misc.JsonQueryUtils;
 import net.thisptr.jackson.jq.internal.tree.ThisObject;
 import net.thisptr.jackson.jq.internal.tree.binaryop.BinaryOperatorExpression;
 import net.thisptr.jackson.jq.internal.tree.fieldaccess.FieldAccess;
 import net.thisptr.jackson.jq.internal.tree.fieldaccess.FieldAccess.ResolvedPath;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.NullNode;
-
 public class UpdateAssignment extends BinaryOperatorExpression {
-	public UpdateAssignment(final JsonQuery lhs, final JsonQuery rhs) {
+	public UpdateAssignment(final Expression lhs, final Expression rhs) {
 		super(lhs, rhs, "|=");
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
 		if (!(lhs instanceof FieldAccess))
 			throw new IllegalJsonArgumentException("left hand side must be FieldAccess");
 
@@ -31,13 +32,14 @@ public class UpdateAssignment extends BinaryOperatorExpression {
 		if (!(resolvedPath.target instanceof ThisObject))
 			throw new IllegalJsonArgumentException("cannot update value");
 
-		return Collections.singletonList((JsonNodeUtils.mutate(scope.getObjectMapper(), in, resolvedPath.path, new Mutation() {
+		output.emit(JsonNodeUtils.mutate(scope.getObjectMapper(), in, resolvedPath.path, new Mutation() {
+			@Override
 			public JsonNode apply(final JsonNode node) throws JsonQueryException {
-				final List<JsonNode> rvalues = rhs.apply(scope, node);
+				final List<JsonNode> rvalues = JsonQueryUtils.applyToArrayList(rhs, scope, node);
 				if (rvalues.isEmpty())
 					return NullNode.getInstance();
 				return rvalues.get(rvalues.size() - 1);
 			}
-		}, true)));
+		}, true));
 	}
 }

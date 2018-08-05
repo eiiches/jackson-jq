@@ -1,28 +1,26 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import net.thisptr.jackson.jq.JsonQuery;
-import net.thisptr.jackson.jq.Scope;
-import net.thisptr.jackson.jq.exception.JsonQueryException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class Tuple extends JsonQuery {
-	private List<JsonQuery> qs;
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.exception.JsonQueryException;
 
-	public Tuple(final List<JsonQuery> qs) {
+public class Tuple implements Expression {
+	private List<Expression> qs;
+
+	public Tuple(final List<Expression> qs) {
 		this.qs = qs;
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
-		for (final JsonQuery q : qs) {
-			out.addAll(q.apply(scope, in));
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+		for (final Expression q : qs) {
+			q.apply(scope, in, output);
 		}
-		return out;
 	}
 
 	@Override

@@ -1,14 +1,13 @@
 package net.thisptr.jackson.jq.internal.tree.literal;
 
-import java.util.Collections;
-import java.util.List;
-
-import net.thisptr.jackson.jq.JsonQuery;
-import net.thisptr.jackson.jq.Scope;
-
 import com.fasterxml.jackson.databind.JsonNode;
 
-public abstract class ValueLiteral extends JsonQuery {
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+
+public abstract class ValueLiteral implements Expression {
 	private JsonNode value;
 
 	public ValueLiteral(final JsonNode value) {
@@ -16,8 +15,8 @@ public abstract class ValueLiteral extends JsonQuery {
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) {
-		return Collections.singletonList(value);
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+		output.emit(value);
 	}
 
 	@Override

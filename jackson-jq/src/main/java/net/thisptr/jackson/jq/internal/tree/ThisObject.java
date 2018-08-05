@@ -1,17 +1,16 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import java.util.Collections;
-import java.util.List;
-
-import net.thisptr.jackson.jq.JsonQuery;
-import net.thisptr.jackson.jq.Scope;
-
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class ThisObject extends JsonQuery {
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+
+public class ThisObject implements Expression {
 	@Override
-	public List<JsonNode> apply(Scope scope, JsonNode in) {
-		return Collections.singletonList(in);
+	public void apply(Scope scope, JsonNode in, final Output output) throws JsonQueryException {
+		output.emit(in);
 	}
 
 	@Override

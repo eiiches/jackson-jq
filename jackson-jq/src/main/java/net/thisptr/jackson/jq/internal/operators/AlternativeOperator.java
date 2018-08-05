@@ -1,10 +1,10 @@
 package net.thisptr.jackson.jq.internal.operators;
 
-import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 
 public class AlternativeOperator implements BinaryOperator {
 	@Override

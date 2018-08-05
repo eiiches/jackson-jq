@@ -1,8 +1,8 @@
 package net.thisptr.jackson.jq.internal.functions;
 
-import net.thisptr.jackson.jq.internal.BuiltinFunction;
-
 import com.fasterxml.jackson.databind.JsonNode;
+
+import net.thisptr.jackson.jq.internal.BuiltinFunction;
 
 @BuiltinFunction("min/1")
 public class MinFunction extends AbstractMaxFunction {

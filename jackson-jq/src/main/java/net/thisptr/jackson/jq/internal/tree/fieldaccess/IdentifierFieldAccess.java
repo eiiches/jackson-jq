@@ -2,18 +2,18 @@ package net.thisptr.jackson.jq.internal.tree.fieldaccess;
 
 import java.util.Collections;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.internal.tree.ThisObject;
 import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedFieldAccess;
 import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedStringFieldAccess;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 public class IdentifierFieldAccess extends FieldAccess {
 	private String field;
 
-	public IdentifierFieldAccess(final JsonQuery obj, final String field, final boolean permissive) {
+	public IdentifierFieldAccess(final Expression obj, final String field, final boolean permissive) {
 		super(obj, permissive);
 		this.field = field;
 	}

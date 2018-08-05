@@ -4,15 +4,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import net.thisptr.jackson.jq.exception.IllegalJsonArgumentException;
-import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedAllFieldAccess;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedEmptyFieldAccess;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedFieldAccess;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedIndexFieldAccess;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedRangeFieldAccess;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedStringFieldAccess;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -22,6 +13,15 @@ import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.MissingNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import net.thisptr.jackson.jq.exception.IllegalJsonArgumentException;
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedAllFieldAccess;
+import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedEmptyFieldAccess;
+import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedFieldAccess;
+import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedIndexFieldAccess;
+import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedRangeFieldAccess;
+import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedStringFieldAccess;
 
 public class JsonNodeUtils {
 	private JsonNodeUtils() {}

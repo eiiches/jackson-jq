@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 
 public class Main {
@@ -46,6 +47,11 @@ public class Main {
 			.longOpt("help")
 			.desc("print this message")
 			.build();
+
+	private static final Scope ROOT_SCOPE = Scope.newEmptyScope();
+	static {
+		ROOT_SCOPE.loadFunctions(Scope.class.getClassLoader());
+	}
 
 	public static void main(String[] args) throws IOException, ParseException {
 		final CommandLine command;
@@ -87,7 +93,7 @@ public class Main {
 				if (tree == null)
 					continue;
 				try {
-					for (final JsonNode out : jq.apply(tree)) {
+					for (final JsonNode out : jq.apply(ROOT_SCOPE, tree)) {
 						if (out.isTextual() && command.hasOption(OPT_RAW.getOpt())) {
 							System.out.println(out.asText());
 						} else {

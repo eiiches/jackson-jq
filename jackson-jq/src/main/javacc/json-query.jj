@@ -6,7 +6,7 @@ options {
 	JDK_VERSION = "1.7";
 }
 
-PARSER_BEGIN(JsonQueryParser)
+PARSER_BEGIN(ExpressionParser)
 	package net.thisptr.jackson.jq.internal.javacc;
 
 	import java.io.StringReader;
@@ -14,7 +14,7 @@ PARSER_BEGIN(JsonQueryParser)
 	import java.util.Stack;
 	import java.util.ArrayList;
 
-	import net.thisptr.jackson.jq.JsonQuery;
+	import net.thisptr.jackson.jq.Expression;
 	import net.thisptr.jackson.jq.internal.misc.Pair;
 	import net.thisptr.jackson.jq.internal.tree.*;
 	import net.thisptr.jackson.jq.internal.tree.binaryop.*;
@@ -22,15 +22,23 @@ PARSER_BEGIN(JsonQueryParser)
 	import net.thisptr.jackson.jq.internal.tree.fieldaccess.*;
 	import net.thisptr.jackson.jq.internal.tree.matcher.*;
 	import net.thisptr.jackson.jq.internal.tree.matcher.matchers.*;
+	import net.thisptr.jackson.jq.internal.javacc.TokenMgrError;
+	import net.thisptr.jackson.jq.exception.JsonQueryException;
 
 	@SuppressWarnings("unused")
-	public class JsonQueryParser {
-		public static JsonQuery compile(final String line) throws ParseException {
-			final JsonQueryParser parser = new JsonQueryParser(new StringReader(line));
-			return parser.Start();
+	public class ExpressionParser {
+		public static Expression compile(final String line) throws JsonQueryException {
+			try {
+				final ExpressionParser parser = new ExpressionParser(new StringReader(line));
+				return parser.Start();
+			} catch (TokenMgrError e) {
+				throw new JsonQueryException("Cannot compile query: " + line, e);
+			} catch (Exception e) {
+				throw new JsonQueryException("Cannot compile query: " + line, e);
+			}
 		}
 	}
-PARSER_END(JsonQueryParser)
+PARSER_END(ExpressionParser)
 
 TOKEN_MGR_DECLS:
 {
@@ -188,6 +196,7 @@ TOKEN: {
 
 TOKEN: {
 	<KEYWORD_LABEL: "label">
+	| <KEYWORD_BREAK: "break">
 	| <KEYWORD_IMPORT: "import">
 	| <KEYWORD_INCLUDE: "include">
 	| <KEYWORD_MODULE: "module">
@@ -222,6 +231,7 @@ String KeywordAsString():
 	|	token = <KEYWORD_TRY>
 	|	token = <KEYWORD_CATCH>
 	|	token = <KEYWORD_LABEL>
+	|	token = <KEYWORD_BREAK>
 	|	token = <KEYWORD_IMPORT>
 	|	token = <KEYWORD_INCLUDE>
 	|	token = <KEYWORD_MODULE>
@@ -251,74 +261,122 @@ String KeywordOrIdentifier():
 	{ return text; }
 }
 
-JsonQuery Start():
+Expression Start():
 {
-	JsonQuery q;
+	Expression q;
 }
 {
-	q = JsonQuery()
+	q = Expression()
 	<EOF>
 	{ return q; }
 }
 
-JsonQuery JsonQuery():
+Expression Expression():
 {
-	JsonQuery expr;
-	PatternMatcher matcher;
-	final List<Pair<JsonQuery, PatternMatcher>> qs = new ArrayList<Pair<JsonQuery, PatternMatcher>>();
+	PipeComponent component;
+	List<PipeComponent> components = new ArrayList<PipeComponent>();
 }
 {
-	expr = TupleExpression()
+	component = PipeComponent()
+	{ components.add(component); }
 	(
-		(
-			<KEYWORD_AS>
-			matcher = Matcher()
-		|
-			{ matcher = null; }
-		)
 		<PIPE>
-		{ qs.add(Pair.<JsonQuery, PatternMatcher> of(expr, matcher)); }
+		component = PipeComponent()
+		{ components.add(component); }
+	)*
+	{
+		if (!component.canTerminatePipe()) {
+			if (components.size() > 1) {
+				throw new IllegalStateException("Pipe cannot be terminated by assignment or label: | " + component);
+			} else {
+				throw new IllegalStateException("Assignment or label must be followed by pipes: " + component);
+			}
+		}
+		if (components.size() == 1 && (component instanceof TransformPipeComponent))
+			return ((TransformPipeComponent) component).expr;
+		return new PipedQuery(components);
+	}
+}
+
+Expression JsonQueryWithoutComma():
+{
+	PipeComponent component;
+	List<PipeComponent> components = new ArrayList<PipeComponent>();
+}
+{
+	component = PipeComponentWithoutComma()
+	{ components.add(component); }
+	(
+		<PIPE>
+		component = PipeComponentWithoutComma()
+		{ components.add(component); }
+	)*
+	{
+		if (!component.canTerminatePipe()) {
+			if (components.size() > 1) {
+				throw new IllegalStateException("Pipe cannot be terminated by assignment or label: | " + component);
+			} else {
+				throw new IllegalStateException("Assignment or label must be followed by pipes: " + component);
+			}
+		}
+		if (components.size() == 1 && (component instanceof TransformPipeComponent))
+			return ((TransformPipeComponent) component).expr;
+		return new PipedQuery(components);
+	}
+}
+
+PipeComponent PipeComponent():
+{
+	String name;
+	Expression expr;
+	PatternMatcher matcher;
+}
+{
+	(
+		<KEYWORD_LABEL>
+		<DOLLAR>
+		name = IdentifierAsString()
+		{ return new LabelPipeComponent(name); }
+	|
 		expr = TupleExpression()
-	)*
-	{ qs.add(Pair.<JsonQuery, PatternMatcher> of(expr, null)); }
-	{
-		if (qs.size() == 1)
-			return qs.get(0)._1;
-		return new PipedQuery(qs);
-	}
-}
-
-JsonQuery JsonQueryWithoutComma():
-{
-	JsonQuery expr;
-	PatternMatcher matcher;
-	final List<Pair<JsonQuery, PatternMatcher>> qs = new ArrayList<Pair<JsonQuery, PatternMatcher>>();
-}
-{
-	expr = BinaryOperatorExpression()
-	(
 		(
 			<KEYWORD_AS>
 			matcher = Matcher()
+			{ return new AssignPipeComponent(expr, matcher); }
 		|
-			{ matcher = null; }
+			{ return new TransformPipeComponent(expr); }
 		)
-		<PIPE>
-		{ qs.add(Pair.<JsonQuery, PatternMatcher> of(expr, matcher)); }
-		expr = BinaryOperatorExpression()
-	)*
-	{ qs.add(Pair.<JsonQuery, PatternMatcher> of(expr, null)); }
-	{
-		if (qs.size() == 1)
-			return qs.get(0)._1;
-		return new PipedQuery(qs);
-	}
+	)
 }
 
-JsonQuery TupleExpression():
+PipeComponent PipeComponentWithoutComma():
 {
-	JsonQuery tmp;
-	final List<JsonQuery> qs = new ArrayList<JsonQuery>();
+	String name;
+	Expression expr;
+	PatternMatcher matcher;
+}
+{
+	(
+		<KEYWORD_LABEL>
+		<DOLLAR>
+		name = IdentifierAsString()
+		{ return new LabelPipeComponent(name); }
+	|
+		expr = BinaryOperatorExpression()
+		(
+			<KEYWORD_AS>
+			matcher = Matcher()
+			{ return new AssignPipeComponent(expr, matcher); }
+		|
+			{ return new TransformPipeComponent(expr); }
+		)
+	)
+}
+
+Expression TupleExpression():
+{
+	Expression tmp;
+	final List<Expression> qs = new ArrayList<Expression>();
 }
 {
 	tmp = BinaryOperatorExpression()
@@ -335,11 +393,11 @@ JsonQuery TupleExpression():
 	}
 }
 
-JsonQuery BinaryOperatorExpression():
+Expression BinaryOperatorExpression():
 {
 	Token t;
-	JsonQuery expr;
-	List<JsonQuery> exprs = new ArrayList<JsonQuery>();
+	Expression expr;
+	List<Expression> exprs = new ArrayList<Expression>();
 	List<BinaryOperatorExpression.Operator> operators = new ArrayList<BinaryOperatorExpression.Operator>();
 }
 {
@@ -398,12 +456,12 @@ JsonQuery BinaryOperatorExpression():
 	{ return BinaryOperatorExpression.buildTree(exprs, operators); }
 }
 
-JsonQuery FunctionDefinition():
+Expression FunctionDefinition():
 {
 	final List<String> args = new ArrayList<String>();
 	Token fname;
 	String tmp;
-	JsonQuery body;
+	Expression body;
 }
 {
 	<KEYWORD_DEF>
@@ -420,7 +478,7 @@ JsonQuery FunctionDefinition():
 		<CLOSE_PAR>
 	)?
 	<COLON>
-	body = JsonQuery()
+	body = Expression()
 	<SEMICOLON>
 	{ return new FunctionDefinition(fname.image, args, body); }
 }
@@ -439,11 +497,11 @@ String FunctionDefinitionParam():
 	{ return (isvar ? "$" : "") + param.image; }
 }
 
-JsonQuery PrimaryExpression():
+Expression PrimaryExpression():
 {
 	Token t;
-	JsonQuery tmp;
-	List<JsonQuery> exprs = new ArrayList<JsonQuery>();
+	Expression tmp;
+	List<Expression> exprs = new ArrayList<Expression>();
 }
 {
 	(
@@ -475,7 +533,7 @@ JsonQuery PrimaryExpression():
 		)?
 	|
 		<OPEN_PAR>
-		tmp = JsonQuery()
+		tmp = Expression()
 		<CLOSE_PAR>
 		(
 			tmp = FieldAccessor(tmp)
@@ -498,6 +556,8 @@ JsonQuery PrimaryExpression():
 		tmp = ForeachExpression()
 	|
 		tmp = TryCatchExpression()
+	|
+		tmp = BreakExpression()
 	)
 	{
 		exprs.add(tmp);
@@ -507,7 +567,7 @@ JsonQuery PrimaryExpression():
 	}
 }
 
-JsonQuery RecursionOperator():
+Expression RecursionOperator():
 {
 }
 {
@@ -515,7 +575,7 @@ JsonQuery RecursionOperator():
 	{ return new RecursionOperator(); }
 }
 
-JsonQuery FormattingFilter():
+Expression FormattingFilter():
 {
 	Token t;
 }
@@ -525,13 +585,13 @@ JsonQuery FormattingFilter():
 	{ return new FormattingFilter(t.image); }
 }
 
-JsonQuery TryCatchExpression():
+Expression TryCatchExpression():
 {
-	JsonQuery tryExpr, catchExpr = null;
+	Expression tryExpr, catchExpr = null;
 }
 {
 	<KEYWORD_TRY>
-	tryExpr = JsonQuery()
+	tryExpr = Expression()
 	(
 		<KEYWORD_CATCH>
 		catchExpr = PrimaryExpression()
@@ -539,10 +599,21 @@ JsonQuery TryCatchExpression():
 	{ return new TryCatch(tryExpr, catchExpr); }
 }
 
-JsonQuery ForeachExpression():
+Expression BreakExpression():
+{
+	String name;
+}
+{
+	<KEYWORD_BREAK>
+	<DOLLAR>
+	name = IdentifierAsString()
+	{ return new BreakExpression(name); }
+}
+
+Expression ForeachExpression():
 {
 	PatternMatcher matcher;
-	JsonQuery initExpr, updateExpr, extractExpr = null, iterExpr;
+	Expression initExpr, updateExpr, extractExpr = null, iterExpr;
 }
 {
 	<KEYWORD_FOREACH>
@@ -551,21 +622,21 @@ JsonQuery ForeachExpression():
 	matcher = Matcher()
 
 	<OPEN_PAR>
-	initExpr = JsonQuery()
+	initExpr = Expression()
 	<SEMICOLON>
-	updateExpr = JsonQuery()
+	updateExpr = Expression()
 	(
 		<SEMICOLON>
-		extractExpr = JsonQuery()
+		extractExpr = Expression()
 	)?
 	<CLOSE_PAR>
 	{ return new ForeachExpression(matcher, initExpr, updateExpr, extractExpr, iterExpr); }
 }
 
-JsonQuery ReduceExpression():
+Expression ReduceExpression():
 {
 	PatternMatcher matcher;
-	JsonQuery tmpIterExpr, tmpInitExpr, tmpReduceExpr;
+	Expression tmpIterExpr, tmpInitExpr, tmpReduceExpr;
 }
 {
 	<KEYWORD_REDUCE>
@@ -573,17 +644,17 @@ JsonQuery ReduceExpression():
 	<KEYWORD_AS>
 	matcher = Matcher()
 	<OPEN_PAR>
-	tmpInitExpr = JsonQuery()
+	tmpInitExpr = Expression()
 	<SEMICOLON>
-	tmpReduceExpr = JsonQuery()
+	tmpReduceExpr = Expression()
 	<CLOSE_PAR>
 	{ return new ReduceExpression(matcher, tmpInitExpr, tmpReduceExpr, tmpIterExpr); }
 }
 
-JsonQuery VariableAccess():
+Expression VariableAccess():
 {
 	Token t;
-	JsonQuery tmp;
+	Expression tmp;
 }
 {
 	<DOLLAR>
@@ -595,35 +666,35 @@ JsonQuery VariableAccess():
 	{ return tmp; }
 }
 
-JsonQuery ConditionalExpression():
+Expression ConditionalExpression():
 {
-	JsonQuery tmpPred;
-	JsonQuery tmpExpr;
-	final List<Pair<JsonQuery, JsonQuery>> switches = new ArrayList<Pair<JsonQuery, JsonQuery>>();
-	final JsonQuery otherwise;
+	Expression tmpPred;
+	Expression tmpExpr;
+	final List<Pair<Expression, Expression>> switches = new ArrayList<Pair<Expression, Expression>>();
+	final Expression otherwise;
 }
 {
 	<KEYWORD_IF>
-	tmpPred = JsonQuery()
+	tmpPred = Expression()
 	<KEYWORD_THEN>
-	tmpExpr = JsonQuery()
+	tmpExpr = Expression()
 	{ switches.add(Pair.of(tmpPred, tmpExpr)); }
 	(
 		<KEYWORD_ELIF>
-		tmpPred = JsonQuery()
+		tmpPred = Expression()
 		<KEYWORD_THEN>
-		tmpExpr = JsonQuery()
+		tmpExpr = Expression()
 		{ switches.add(Pair.of(tmpPred, tmpExpr)); }
 	)*
 	<KEYWORD_ELSE>
-	otherwise = JsonQuery()
+	otherwise = Expression()
 	<KEYWORD_END>
 	{
 		return new Conditional(switches, otherwise);
 	}
 }
 
-JsonQuery ObjectConstruction():
+Expression ObjectConstruction():
 {
 	final ObjectConstruction obj = new ObjectConstruction();
 }
@@ -643,8 +714,8 @@ JsonQuery ObjectConstruction():
 void ObjectField(final ObjectConstruction obj):
 {
 	String name;
-	JsonQuery value = null;
-	JsonQuery key = null;
+	Expression value = null;
+	Expression key = null;
 }
 {
 	// - {$a}               -- VariableKeyFieldConstruction
@@ -677,7 +748,7 @@ void ObjectField(final ObjectConstruction obj):
 	|
 		// {(keyexpr): value}
 		<OPEN_PAR>
-		key = JsonQuery()
+		key = Expression()
 		<CLOSE_PAR>
 		<COLON>
 		value = ObjectFieldValue()
@@ -685,10 +756,10 @@ void ObjectField(final ObjectConstruction obj):
 	)
 }
 
-JsonQuery ObjectFieldName():
+Expression ObjectFieldName():
 {
 	Token token;
-	JsonQuery expr;
+	Expression expr;
 	String keywordAsString;
 }
 {
@@ -702,20 +773,20 @@ JsonQuery ObjectFieldName():
 		{ expr = new StringLiteral(token.image); }
 	|
 		<OPEN_PAR>
-		expr = JsonQuery()
+		expr = Expression()
 		<CLOSE_PAR>
 	)
 	{ return expr; }
 }
 
-JsonQuery ObjectFieldValue():
+Expression ObjectFieldValue():
 {
-	JsonQuery expr;
+	Expression expr;
 }
 {
 	(
 		<OPEN_PAR>
-		expr = JsonQuery()
+		expr = Expression()
 		<CLOSE_PAR>
 	|
 		expr = JsonQueryWithoutComma()
@@ -723,14 +794,14 @@ JsonQuery ObjectFieldValue():
 	{ return expr; }
 }
 
-JsonQuery ArrayConstruction():
+Expression ArrayConstruction():
 {
-	JsonQuery tmp = null;
+	Expression tmp = null;
 }
 {
 	<OPEN_BRACKET>
 	(
-		tmp = JsonQuery()
+		tmp = Expression()
 	)?
 	<CLOSE_BRACKET>
 	{
@@ -740,11 +811,11 @@ JsonQuery ArrayConstruction():
 	}
 }
 
-JsonQuery ValueLiteral():
+Expression ValueLiteral():
 {
 	Token token;
 	String text;
-	JsonQuery tmp;
+	Expression tmp;
 }
 {
 	(
@@ -766,22 +837,22 @@ JsonQuery ValueLiteral():
 	{ return tmp; }
 }
 
-JsonQuery FunctionCall():
+Expression FunctionCall():
 {
-	JsonQuery tmp;
+	Expression tmp;
 	final Token fname;
-	final List<JsonQuery> fargs = new ArrayList<JsonQuery>();
+	final List<Expression> fargs = new ArrayList<Expression>();
 }
 {
 	fname = <IDENTIFIER>
 	(
 		<OPEN_PAR>
 		(
-			tmp = JsonQuery()
+			tmp = Expression()
 			{ fargs.add(tmp); }
 			(
 				<SEMICOLON>
-				tmp = JsonQuery()
+				tmp = Expression()
 				{ fargs.add(tmp); }
 			)*
 		)?
@@ -790,7 +861,7 @@ JsonQuery FunctionCall():
 	{ return new FunctionCall(fname.image, fargs); }
 }
 
-JsonQuery FieldAccessor(JsonQuery obj):
+Expression FieldAccessor(Expression obj):
 {
 }
 {
@@ -807,11 +878,11 @@ JsonQuery FieldAccessor(JsonQuery obj):
 	{ return obj; }
 }
 
-JsonQuery ThisObjectAccess():
+Expression ThisObjectAccess():
 {
 	Token identifier;
 	boolean permissive;
-	JsonQuery tmp = new ThisObject();
+	Expression tmp = new ThisObject();
 }
 {
 	<DOT>
@@ -830,7 +901,7 @@ JsonQuery ThisObjectAccess():
 	{ return tmp; }
 }
 
-JsonQuery IdentifierFieldAccessor(JsonQuery obj):
+Expression IdentifierFieldAccessor(Expression obj):
 {
 	Token identifier;
 	boolean permissive = false;
@@ -844,9 +915,9 @@ JsonQuery IdentifierFieldAccessor(JsonQuery obj):
 	{ return new IdentifierFieldAccess(obj, identifier.image, permissive); }
 }
 
-JsonQuery StringFieldAccessor(JsonQuery obj):
+Expression StringFieldAccessor(Expression obj):
 {
-	JsonQuery fieldName;
+	Expression fieldName;
 	boolean permissive = false;
 }
 {
@@ -858,20 +929,20 @@ JsonQuery StringFieldAccessor(JsonQuery obj):
 	{ return new StringFieldAccess(obj, fieldName, permissive); }
 }
 
-JsonQuery BracketFieldAccessor(JsonQuery obj):
+Expression BracketFieldAccessor(Expression obj):
 {
-	JsonQuery begin = null, end = null;
+	Expression begin = null, end = null;
 	boolean rangeAccess = true;
 	boolean permissive = false;
 }
 {
 	<OPEN_BRACKET>
 	(
-		begin = JsonQuery()
+		begin = Expression()
 		(
 			<COLON>
 			(
-				end = JsonQuery()
+				end = Expression()
 			|
 				{ /* empty */ }
 			)
@@ -881,7 +952,7 @@ JsonQuery BracketFieldAccessor(JsonQuery obj):
 	|
 		<COLON>
 		(
-			end = JsonQuery()
+			end = Expression()
 		)?
 	)?
 	<CLOSE_BRACKET>
@@ -900,13 +971,13 @@ JsonQuery BracketFieldAccessor(JsonQuery obj):
 	}
 }
 
-JsonQuery StringInterpolation():
+Expression StringInterpolation():
 {
 	Token t;
 	final StringBuilder builder = new StringBuilder();
-	final List<Pair<Integer, JsonQuery>> interpolations = new ArrayList<Pair<Integer, JsonQuery>>();
-	JsonQuery tmp;
-	JsonQuery formatter = null;
+	final List<Pair<Integer, Expression>> interpolations = new ArrayList<Pair<Integer, Expression>>();
+	Expression tmp;
+	Expression formatter = null;
 }
 {
 	(
@@ -945,7 +1016,7 @@ JsonQuery StringInterpolation():
 		}
 	|
 		<OPEN_INTERP>
-		tmp = JsonQuery()
+		tmp = Expression()
 		<CLOSE_PAR>
 		{ interpolations.add(Pair.of(builder.length(), tmp)); }
 	)*
@@ -988,9 +1059,9 @@ PatternMatcher ArrayMatcher():
 
 PatternMatcher ObjectMatcher():
 {
-	JsonQuery name;
+	Expression name;
 	PatternMatcher matcher;
-	final List<Pair<JsonQuery, PatternMatcher>> matchers = new ArrayList<Pair<JsonQuery, PatternMatcher>>();
+	final List<Pair<Expression, PatternMatcher>> matchers = new ArrayList<Pair<Expression, PatternMatcher>>();
 }
 {
 	<OPEN_BRACE>

@@ -340,11 +340,23 @@
 		]
 	},
 	{
-		"q": "[foreach .[] as $item ([3, null]; if .[0] < 1 then break else [.[0] -1, $item] end; .[1])]",
+		"q": "[foreach .[] as $item ([3, null]; label $out | if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]",
 		"in": [11, 22, 33, 44, 55, 66, 77, 88, 99],
 		"out": [
 			[11, 22, 33]
 		]
+	},
+	{
+		"q": "[label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]",
+		"in": [11, 22, 33, 44, 55, 66, 77, 88, 99],
+		"out": [
+			[11, 22, 33]
+		]
+	},
+	{
+		"q": "label $out | [foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]",
+		"in": [11, 22, 33, 44, 55, 66, 77, 88, 99],
+		"out": []
 	},
 	{
 		"q": "[foreach range(5) as $item (0; $item)]",
@@ -718,6 +730,49 @@
 		"in": {"foreach": 10},
 		"out": [
 			10
+		]
+	},
+	{
+		"q": "try (1,2,3,error(\"break\"),4,5) catch .",
+		"in": null,
+		"out": [
+			1, 2, 3, "break"
+		]
+	},
+	{
+		"q": "try (1,2,3,error(\"break\"),4,5)",
+		"in": null,
+		"out": [
+			1, 2, 3
+		]
+	},
+	{
+		"q": "try \"\\(1,2,3,error(\"break\"),4,5)\" catch .",
+		"in": null,
+		"out": [
+			"1", "2", "3", "break"
+		]
+	},
+	{
+		"q": "try \"\\(1,2)\\(1,2,3,error(\"break\"),4,5)\" catch .",
+		"in": null,
+		"out": [
+			"11", "21", "12", "22", "13", "23", "break"
+		]
+	},
+	{
+		"q": "try \"\\(1,2,3,error(\"break\"),4,5)\\(1,2)\" catch .",
+		"in": null,
+		"out": [
+			"11", "21", "31", "break"
+		]
+	},
+	{
+		"q": "label $out | label $out2 | ((try (break $out) catch .), (try (label $out2 | (1, break $out2)) catch .))",
+		"in": null,
+		"out": [
+			{"__jq": 0},
+			1
 		]
 	}
 ]

@@ -1,8 +1,8 @@
 package net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Expression;
 
-public abstract class ResolvedFieldAccess extends JsonQuery {
+public abstract class ResolvedFieldAccess implements Expression {
 	public boolean permissive;
 
 	protected ResolvedFieldAccess(final boolean permissive) {

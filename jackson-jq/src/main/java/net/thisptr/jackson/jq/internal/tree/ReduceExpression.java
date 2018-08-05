@@ -7,20 +7,20 @@ import java.util.Stack;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
-import net.thisptr.jackson.jq.exception.JsonQueryBreakException;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.Pair;
 import net.thisptr.jackson.jq.internal.tree.matcher.PatternMatcher;
 
-public class ReduceExpression extends JsonQuery {
-	private JsonQuery iterExpr;
-	private JsonQuery reduceExpr;
-	private JsonQuery initExpr;
+public class ReduceExpression implements Expression {
+	private Expression iterExpr;
+	private Expression reduceExpr;
+	private Expression initExpr;
 	private PatternMatcher matcher;
 
-	public ReduceExpression(final PatternMatcher matcher, final JsonQuery initExpr, final JsonQuery reduceExpr, final JsonQuery iterExpr) {
+	public ReduceExpression(final PatternMatcher matcher, final Expression initExpr, final Expression reduceExpr, final Expression iterExpr) {
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.reduceExpr = reduceExpr;
@@ -30,42 +30,33 @@ public class ReduceExpression extends JsonQuery {
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+		initExpr.apply(scope, in, (accumulator) -> {
+			// Wrap in array to allow mutation inside lambda
+			final JsonNode[] accumulators = new JsonNode[] { accumulator };
 
-		try {
+			try {
 
-			for (final JsonNode accumulator : initExpr.apply(scope, in)) {
-				// Wrap in array to allow mutation inside lambda
-				final JsonNode[] accumulators = new JsonNode[] { accumulator };
+				final Scope childScope = Scope.newChildScope(scope);
+				iterExpr.apply(scope, in, (item) -> {
+					final Stack<Pair<String, JsonNode>> stack = new Stack<>();
+					matcher.match(scope, item, (final List<Pair<String, JsonNode>> vars) -> {
+						for (int i = vars.size() - 1; i >= 0; --i) {
+							final Pair<String, JsonNode> var = vars.get(i);
+							childScope.setValue(var._1, var._2);
+						}
 
-				try {
+						// We only use the last value from reduce expression.
+						final List<JsonNode> reduceResult = new ArrayList<>();
+						reduceExpr.apply(childScope, accumulators[0], reduceResult::add);
+						accumulators[0] = reduceResult.isEmpty() ? NullNode.getInstance() : reduceResult.get(reduceResult.size() - 1);
+					}, stack, true);
+				});
 
-					final Scope childScope = Scope.newChildScope(scope);
-					for (final JsonNode item : iterExpr.apply(scope, in)) {
-						final Stack<Pair<String, JsonNode>> stack = new Stack<>();
-						matcher.match(scope, item, (final List<Pair<String, JsonNode>> vars) -> {
-							for (int i = vars.size() - 1; i >= 0; --i) {
-								final Pair<String, JsonNode> var = vars.get(i);
-								childScope.setValue(var._1, var._2);
-							}
-
-							// We only use the last value from reduce expression.
-							final List<JsonNode> reduceResult = reduceExpr.apply(childScope, accumulators[0]);
-							accumulators[0] = reduceResult.isEmpty() ? NullNode.getInstance() : reduceResult.get(reduceResult.size() - 1);
-						}, stack, true);
-					}
-
-				} finally {
-					out.add(accumulators[0]);
-				}
+			} finally {
+				output.emit(accumulators[0]);
 			}
-
-		} catch (JsonQueryBreakException e) {
-			/* ignore */
-		}
-
-		return out;
+		});
 	}
 
 	@Override

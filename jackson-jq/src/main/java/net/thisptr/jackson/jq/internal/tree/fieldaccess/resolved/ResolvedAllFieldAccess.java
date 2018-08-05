@@ -1,14 +1,13 @@
 package net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 public class ResolvedAllFieldAccess extends ResolvedFieldAccess {
 	public ResolvedAllFieldAccess(final boolean permissive) {
@@ -16,23 +15,21 @@ public class ResolvedAllFieldAccess extends ResolvedFieldAccess {
 	}
 
 	@Override
-	public List<JsonNode> apply(Scope scope, JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
+	public void apply(Scope scope, JsonNode in, final Output output) throws JsonQueryException {
 		if (in.isNull()) {
 			if (!permissive)
 				throw new JsonQueryException("Cannot iterate over null");
 		} else if (in.isArray()) {
 			final Iterator<JsonNode> values = in.iterator();
 			while (values.hasNext())
-				out.add(values.next());
+				output.emit(values.next());
 		} else if (in.isObject()) {
 			final Iterator<Entry<String, JsonNode>> fields = in.fields();
 			while (fields.hasNext())
-				out.add(fields.next().getValue());
+				output.emit(fields.next().getValue());
 		} else {
 			if (!permissive)
 				throw JsonQueryException.format("Cannot iterate over %s", in.getNodeType());
 		}
-		return out;
 	}
 }

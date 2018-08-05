@@ -1,32 +1,29 @@
 package net.thisptr.jackson.jq.internal.tree.binaryop;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 
 public class BooleanAndExpression extends BinaryOperatorExpression {
-	public BooleanAndExpression(final JsonQuery lhs, final JsonQuery rhs) {
+	public BooleanAndExpression(final Expression lhs, final Expression rhs) {
 		super(lhs, rhs, "and");
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
-		for (final JsonNode l : lhs.apply(scope, in)) {
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+		lhs.apply(scope, in, (l) -> {
 			if (!JsonNodeUtils.asBoolean(l)) {
-				out.add(BooleanNode.FALSE);
-				continue;
+				output.emit(BooleanNode.FALSE);
+				return;
 			}
-			for (final JsonNode r : rhs.apply(scope, in))
-				out.add(BooleanNode.valueOf(JsonNodeUtils.asBoolean(r)));
-		}
-		return out;
+			rhs.apply(scope, in, (r) -> {
+				output.emit(BooleanNode.valueOf(JsonNodeUtils.asBoolean(r)));
+			});
+		});
 	}
 }

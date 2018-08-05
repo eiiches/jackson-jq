@@ -1,15 +1,13 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import java.util.Collections;
-import java.util.List;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-public class VariableAccess extends JsonQuery {
+public class VariableAccess implements Expression {
 	private String name;
 
 	public VariableAccess(final String name) {
@@ -17,11 +15,11 @@ public class VariableAccess extends JsonQuery {
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
 		final JsonNode value = scope.getValue(name);
 		if (value == null)
 			throw new JsonQueryException("Undefined variable: $" + name);
-		return Collections.singletonList(value);
+		output.emit(value);
 	}
 
 	@Override

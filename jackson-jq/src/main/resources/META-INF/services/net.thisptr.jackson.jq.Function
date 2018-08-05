@@ -3,7 +3,6 @@ net.thisptr.jackson.jq.internal.functions.AtBase64Function
 net.thisptr.jackson.jq.internal.functions.AtHtmlFunction
 net.thisptr.jackson.jq.internal.functions.AtShFunction
 net.thisptr.jackson.jq.internal.functions.AtUriFunction
-net.thisptr.jackson.jq.internal.functions.BreakFunction
 net.thisptr.jackson.jq.internal.functions.ContainsFunction
 net.thisptr.jackson.jq.internal.functions.DelFunction
 net.thisptr.jackson.jq.internal.functions.EmptyFunction

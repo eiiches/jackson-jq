@@ -2,28 +2,29 @@ package net.thisptr.jackson.jq.internal.tree;
 
 import java.util.List;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-public class FunctionCall extends JsonQuery {
+public class FunctionCall implements Expression {
 	private String name;
-	private List<JsonQuery> args;
+	private List<Expression> args;
 
-	public FunctionCall(final String name, final List<JsonQuery> args) {
+	public FunctionCall(final String name, final List<Expression> args) {
 		this.name = name;
 		this.args = args;
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
 		final Function f = scope.getFunction(name, args.size());
 		if (f == null)
 			throw new JsonQueryException(String.format("Function %s/%s does not exist", name, args.size()));
-		return f.apply(scope, args, in);
+		f.apply(scope, args, in, output);
 	}
 
 	@Override
@@ -34,7 +35,7 @@ public class FunctionCall extends JsonQuery {
 			final StringBuilder builder = new StringBuilder(name);
 			builder.append("(");
 			String sep = "";
-			for (final JsonQuery arg : args) {
+			for (final Expression arg : args) {
 				builder.append(sep);
 				if (arg == null) {
 					builder.append("null");

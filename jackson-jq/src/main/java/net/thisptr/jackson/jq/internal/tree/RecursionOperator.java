@@ -1,27 +1,23 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-public class RecursionOperator extends JsonQuery {
+public class RecursionOperator implements Expression {
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
-		applyRecursive(scope, in, out);
-		return out;
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+		applyRecursive(scope, in, output);
 	}
 
-	private static void applyRecursive(final Scope scope, final JsonNode in, final List<JsonNode> out) throws JsonQueryException {
-		out.add(in);
+	private static void applyRecursive(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+		output.emit(in);
 		if (in.isObject() || in.isArray()) {
 			for (final JsonNode child : in)
-				applyRecursive(scope, child, out);
+				applyRecursive(scope, child, output);
 		}
 	}
 

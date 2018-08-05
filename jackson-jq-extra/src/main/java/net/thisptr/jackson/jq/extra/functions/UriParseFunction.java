@@ -10,20 +10,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.JsonQuery;
-import net.thisptr.jackson.jq.Scope;
-import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.BuiltinFunction;
-import net.thisptr.jackson.jq.internal.misc.Preconditions;
-import net.thisptr.jackson.jq.internal.misc.Strings;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.TextNode;
+
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.BuiltinFunction;
+import net.thisptr.jackson.jq.internal.misc.Preconditions;
+import net.thisptr.jackson.jq.internal.misc.Strings;
 
 @BuiltinFunction("uriparse/0")
 public class UriParseFunction implements Function {
@@ -124,13 +125,13 @@ public class UriParseFunction implements Function {
 	}
 
 	@Override
-	public List<JsonNode> apply(Scope scope, List<JsonQuery> args, JsonNode in) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
 		Preconditions.checkInputType("uriparse", in, JsonNodeType.STRING);
 
 		try {
 			final URI uri = new URI(in.asText());
 			final Result result = new Result(uri, parseQueryObj(scope, uri.getRawQuery()));
-			return Collections.singletonList(scope.getObjectMapper().valueToTree(result));
+			output.emit(scope.getObjectMapper().valueToTree(result));
 		} catch (URISyntaxException e) {
 			throw new JsonQueryException(e);
 		}

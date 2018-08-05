@@ -1,53 +1,50 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.misc.Pair;
 
-import com.fasterxml.jackson.databind.JsonNode;
+public class Conditional implements Expression {
+	private Expression otherwise;
+	private List<Pair<Expression, Expression>> switches;
 
-public class Conditional extends JsonQuery {
-	private JsonQuery otherwise;
-	private List<Pair<JsonQuery, JsonQuery>> switches;
-
-	public Conditional(final List<Pair<JsonQuery, JsonQuery>> switches, final JsonQuery otherwise) {
+	public Conditional(final List<Pair<Expression, Expression>> switches, final Expression otherwise) {
 		this.switches = switches;
 		this.otherwise = otherwise;
 	}
 
-	private void applyRecursive(final List<JsonNode> out, final Scope scope, final List<Pair<JsonQuery, JsonQuery>> switches, final JsonNode in) throws JsonQueryException {
-		final Pair<JsonQuery, JsonQuery> sw = switches.get(0);
-		final List<JsonNode> rs = sw._1.apply(scope, in);
-		for (final JsonNode r : rs) {
+	private void applyRecursive(final Output output, final Scope scope, final List<Pair<Expression, Expression>> switches, final JsonNode in) throws JsonQueryException {
+		final Pair<Expression, Expression> sw = switches.get(0);
+		sw._1.apply(scope, in, (r) -> {
 			if (JsonNodeUtils.asBoolean(r)) {
-				out.addAll(sw._2.apply(scope, in));
+				sw._2.apply(scope, in, output);
 			} else {
 				if (switches.size() > 1) {
-					applyRecursive(out, scope, switches.subList(1, switches.size()), in);
+					applyRecursive(output, scope, switches.subList(1, switches.size()), in);
 				} else {
-					out.addAll(otherwise.apply(scope, in));
+					otherwise.apply(scope, in, output);
 				}
 			}
-		}
+		});
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
-		applyRecursive(out, scope, switches, in);
-		return out;
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+		applyRecursive(output, scope, switches, in);
 	}
 
 	@Override
 	public String toString() {
 		String ifstr = "if";
 		final StringBuilder builder = new StringBuilder();
-		for (final Pair<JsonQuery, JsonQuery> sw : switches) {
+		for (final Pair<Expression, Expression> sw : switches) {
 			builder.append(ifstr);
 			builder.append(" ");
 			builder.append(sw._1 != null ? sw._1 : "null");

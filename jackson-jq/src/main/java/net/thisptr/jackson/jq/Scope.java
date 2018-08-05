@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +22,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
+import net.thisptr.jackson.jq.internal.IsolatedScopeQuery;
 import net.thisptr.jackson.jq.internal.JsonQueryFunction;
+import net.thisptr.jackson.jq.internal.javacc.ExpressionParser;
 
 public class Scope {
 	private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper();
@@ -46,11 +47,11 @@ public class Scope {
 	@BuiltinFunction("debug_scope/0")
 	public static class DebugScopeFunction implements Function {
 		@Override
-		public List<JsonNode> apply(final Scope scope, final List<JsonQuery> args, final JsonNode in) throws JsonQueryException {
+		public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
 			final Map<String, Object> info = new HashMap<>();
 			info.put("scope", scope);
 			info.put("input", in);
-			return Collections.singletonList(DEFAULT_MAPPER.valueToTree(info));
+			output.emit(DEFAULT_MAPPER.valueToTree(info));
 		}
 	}
 
@@ -79,6 +80,7 @@ public class Scope {
 	 * Use {@link Scope#newEmptyScope()} instead and explicitly
 	 * call {@link #loadFunctions(ClassLoader)} with the appropriate
 	 * {@link ClassLoader} for your application. E.g.:
+	 *
 	 * <pre>
 	 * final Scope scope = Scope.newEmptyScope();
 	 * scope.loadFunctions(Thread.currentThread().getContextClassLoader());
@@ -218,7 +220,7 @@ public class Scope {
 			final List<JqJson> configs = loadConfig(classLoader, path);
 			for (final JqJson jqJson : configs) {
 				for (final JqJson.JqFuncDef def : jqJson.functions)
-					addFunction(def.name, def.args.size(), new JsonQueryFunction(def.name, def.args, JsonQuery.compile(def.body), this));
+					addFunction(def.name, def.args.size(), new JsonQueryFunction(def.name, def.args, new IsolatedScopeQuery(ExpressionParser.compile(def.body)), this));
 			}
 		} catch (final IOException e) {
 			throw new RuntimeException("Failed to load macros", e);

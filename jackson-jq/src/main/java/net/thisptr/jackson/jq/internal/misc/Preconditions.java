@@ -6,13 +6,13 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.exception.IllegalJsonArgumentException;
 import net.thisptr.jackson.jq.exception.IllegalJsonInputException;
 
 public class Preconditions {
 
-	public static void checkArgumentCount(final String fname, final List<JsonQuery> args, final int... nums) throws IllegalJsonArgumentException {
+	public static void checkArgumentCount(final String fname, final List<Expression> args, final int... nums) throws IllegalJsonArgumentException {
 		final int nargs = args.size();
 		for (final int num : nums)
 			if (nargs == num)

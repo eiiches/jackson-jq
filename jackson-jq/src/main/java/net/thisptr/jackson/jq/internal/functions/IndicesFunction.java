@@ -3,34 +3,33 @@ package net.thisptr.jackson.jq.internal.functions;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
+
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-
 @BuiltinFunction("indices/1")
 public class IndicesFunction implements Function {
 	private static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final List<JsonQuery> args, final JsonNode in) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
 		Preconditions.checkInputType("indices", in, JsonNodeType.STRING, JsonNodeType.ARRAY);
 
-		final List<JsonNode> out = new ArrayList<>();
-		for (final JsonNode needle : args.get(0).apply(scope, in)) {
+		args.get(0).apply(scope, in, (needle) -> {
 			final ArrayNode indices = scope.getObjectMapper().createArrayNode();
 			for (final int index : indices(needle, in))
 				indices.add(index);
-			out.add(indices);
-		}
-		return out;
+			output.emit(indices);
+		});
 	}
 
 	public static List<Integer> indices(final JsonNode needle, final JsonNode haystack) throws JsonQueryException {

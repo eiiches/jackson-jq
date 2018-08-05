@@ -1,11 +1,11 @@
 package net.thisptr.jackson.jq.internal.operators;
 
-import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.BooleanNode;
+
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 
 public abstract class ComparisonOperator implements BinaryOperator {
 	private static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();

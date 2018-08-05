@@ -6,7 +6,7 @@ import java.util.Stack;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
@@ -15,9 +15,9 @@ import net.thisptr.jackson.jq.internal.misc.Pair;
 import net.thisptr.jackson.jq.internal.tree.matcher.PatternMatcher;
 
 public class ObjectMatcher implements PatternMatcher {
-	private List<Pair<JsonQuery, PatternMatcher>> matchers;
+	private List<Pair<Expression, PatternMatcher>> matchers;
 
-	public ObjectMatcher(final List<Pair<JsonQuery, PatternMatcher>> matchers) {
+	public ObjectMatcher(final List<Pair<Expression, PatternMatcher>> matchers) {
 		this.matchers = matchers;
 	}
 
@@ -25,11 +25,11 @@ public class ObjectMatcher implements PatternMatcher {
 		if (index >= matchers.size())
 			return;
 
-		final Pair<JsonQuery, PatternMatcher> kvexpr = matchers.get(index);
-		final JsonQuery keyexpr = kvexpr._1;
+		final Pair<Expression, PatternMatcher> kvexpr = matchers.get(index);
+		final Expression keyexpr = kvexpr._1;
 		final PatternMatcher matcher = kvexpr._2;
 
-		for (final JsonNode key : keyexpr.apply(scope, in)) {
+		keyexpr.apply(scope, in, (key) -> {
 			if (!key.isTextual())
 				throw JsonQueryTypeException.format("Cannot index %s with %s", in.getNodeType(), key.getNodeType());
 
@@ -39,7 +39,7 @@ public class ObjectMatcher implements PatternMatcher {
 			matcher.match(scope, value != null ? value : NullNode.getInstance(), out, accumulate, emit && index == matchers.size() - 1);
 			recursive(scope, in, out, accumulate, emit, index + 1);
 			accumulate.setSize(size);
-		}
+		});
 	}
 
 	@Override
@@ -50,35 +50,11 @@ public class ObjectMatcher implements PatternMatcher {
 		recursive(scope, in, out, accumulate, emit, 0);
 	}
 
-	// . as [$a, {(.a, .a): $b}] === .[0] as $a | (.[1].a, .[1].a) as $b
-
-	// public void match(final Scope scope, final JsonNode in, final boolean emit, final Map<String, JsonNode> accum, final Consumer<Map<String, JsonNode>> out)
-	// throws JsonQueryException {
-	// if (!in.isObject() && !in.isNull())
-	// throw JsonQueryTypeException.format("Cannot index %s with string", in.getNodeType());
-	//
-	// recursive(scope, in, emit, out, 0);
-	// }
-	//
-	// {
-	// for (int i = 0; i < matchers.size(); ++i) {
-	// final PatternMatcher matcher = matchers.get(i);
-	//
-	// for (final JsonNode key : entry.getKey().apply(scope, in)) {
-	// if (!key.isTextual())
-	// throw JsonQueryTypeException.format("Cannot index %s with %s", in.getNodeType(), key.getNodeType());
-	//
-	// final JsonNode value = in.get(key.asText());
-	// matcher.match(value != null ? value : NullNode.getInstance(), out);
-	// }
-	// }
-	// }
-
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder("{");
 		String sep = "";
-		for (final Pair<JsonQuery, PatternMatcher> entry : matchers) {
+		for (final Pair<Expression, PatternMatcher> entry : matchers) {
 			sb.append(sep);
 			sb.append(entry._1);
 			sb.append(": ");

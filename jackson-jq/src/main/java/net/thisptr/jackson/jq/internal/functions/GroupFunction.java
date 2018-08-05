@@ -1,33 +1,34 @@
 package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
+
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
+import net.thisptr.jackson.jq.internal.misc.JsonQueryUtils;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
 
 @BuiltinFunction("group/1")
 public class GroupFunction implements Function {
 	private static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final List<JsonQuery> args, final JsonNode in) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
 		Preconditions.checkInputType("group", in, JsonNodeType.ARRAY);
 
 		final TreeMap<JsonNode, List<JsonNode>> result = new TreeMap<>(comparator);
 		for (final JsonNode i : in) {
-			final JsonNode fx = JsonNodeUtils.asArrayNode(scope.getObjectMapper(), args.get(0).apply(scope, i));
+			final JsonNode fx = JsonQueryUtils.applyToArrayNode(args.get(0), scope, i);
 			List<JsonNode> values = result.get(fx);
 			if (values == null) {
 				values = new ArrayList<>();
@@ -39,6 +40,6 @@ public class GroupFunction implements Function {
 		final List<JsonNode> groups = new ArrayList<>(result.size());
 		for (final List<JsonNode> values : result.values())
 			groups.add(JsonNodeUtils.asArrayNode(scope.getObjectMapper(), values));
-		return Collections.<JsonNode> singletonList(JsonNodeUtils.asArrayNode(scope.getObjectMapper(), groups));
+		output.emit(JsonNodeUtils.asArrayNode(scope.getObjectMapper(), groups));
 	}
 }

@@ -1,52 +1,37 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
-
-import net.thisptr.jackson.jq.JsonQuery;
-import net.thisptr.jackson.jq.Scope;
-import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.misc.Pair;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
-public class StringInterpolation extends JsonQuery {
-	private List<Pair<Integer, JsonQuery>> interpolations;
-	private String template;
-	private JsonQuery formatter;
+import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.misc.Pair;
 
-	public StringInterpolation(final String template, final List<Pair<Integer, JsonQuery>> interpolations, final JsonQuery formatter) {
+public class StringInterpolation implements Expression {
+	private final List<Pair<Integer, Expression>> interpolations;
+	private final String template;
+	private final Expression formatter;
+
+	public StringInterpolation(final String template, final List<Pair<Integer, Expression>> interpolations, final Expression formatter) {
 		this.template = template;
 		this.interpolations = interpolations;
 		this.formatter = formatter;
 	}
 
 	@Override
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
-		if (interpolations.isEmpty())
-			return Collections.<JsonNode> singletonList(new TextNode(template));
-
-		final Stack<Pair<Integer, List<JsonNode>>> values = new Stack<>();
-		for (final Pair<Integer, JsonQuery> entry : interpolations) {
-			List<JsonNode> tmp = entry._2.apply(scope, in);
-			if (formatter != null)
-				tmp = formatter.apply(scope, tmp);
-			values.push(Pair.of(entry._1, tmp));
-		}
-
-		final List<JsonNode> out = new ArrayList<>();
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
 		final Stack<Pair<Integer, JsonNode>> stack = new Stack<>();
-		recurse(out, stack, values);
-		return out;
+		recurse(scope, in, output, stack, interpolations);
 	}
 
-	private void recurse(final List<JsonNode> out, final Stack<Pair<Integer, JsonNode>> stack, final Stack<Pair<Integer, List<JsonNode>>> values) {
-		if (values.isEmpty()) {
+	private void recurse(final Scope scope, final JsonNode in, final Output output, final Stack<Pair<Integer, JsonNode>> stack, final List<Pair<Integer, Expression>> interpolations) throws JsonQueryException {
+		if (interpolations.isEmpty()) {
 			final StringBuilder builder = new StringBuilder();
-
 			int pos = 0;
 			for (int index = stack.size() - 1; index >= 0; --index) {
 				final Pair<Integer, JsonNode> head = stack.get(index);
@@ -56,14 +41,23 @@ public class StringInterpolation extends JsonQuery {
 				builder.append(head._2.isValueNode() ? head._2.asText() : head._2.toString());
 			}
 			builder.append(template.substring(pos));
-			out.add(new TextNode(builder.toString()));
+			output.emit(new TextNode(builder.toString()));
 		} else {
-			final Pair<Integer, List<JsonNode>> last = values.pop();
-			for (final JsonNode value : last._2) {
-				stack.push(Pair.of(last._1, value));
-				recurse(out, stack, values);
-				stack.pop();
-			}
+			final Pair<Integer, Expression> rhead = interpolations.get(interpolations.size() - 1);
+			final List<Pair<Integer, Expression>> rtail = interpolations.subList(0, interpolations.size() - 1);
+			rhead._2.apply(scope, in, (interpolated) -> {
+				if (formatter != null) {
+					formatter.apply(scope, interpolated, (formatted) -> {
+						stack.push(Pair.of(rhead._1, formatted));
+						recurse(scope, in, output, stack, rtail);
+						stack.pop();
+					});
+				} else {
+					stack.push(Pair.of(rhead._1, interpolated));
+					recurse(scope, in, output, stack, rtail);
+					stack.pop();
+				}
+			});
 		}
 	}
 
@@ -76,7 +70,7 @@ public class StringInterpolation extends JsonQuery {
 			builder.append(" ");
 		}
 		builder.append("\"");
-		for (final Pair<Integer, JsonQuery> interpolation : interpolations) {
+		for (final Pair<Integer, Expression> interpolation : interpolations) {
 			copyEscaped(builder, template, pos, interpolation._1);
 			pos = interpolation._1;
 			builder.append("\\(");
