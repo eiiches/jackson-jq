@@ -454,32 +454,24 @@ JsonQuery PrimaryExpression():
 	|
 		tmp = VariableAccess()
 	|
-		LOOKAHEAD(3)
-		tmp = ValueLiteral()
+		(
+			tmp = ValueLiteral()
+		|
+			// StringInterpolation and FormattingFilter could both start with @filter_name, hence LOOKAHEAD(3).
+			LOOKAHEAD(3)
+			tmp = StringInterpolation()
+		|
+			tmp = FormattingFilter()
+		|
+			tmp = ArrayConstruction()
+		|
+			tmp = ObjectConstruction()
+		|
+			tmp = FunctionCall()
+		)
 		(
 			tmp = FieldAccessor(tmp)
 		)?
-	|
-		LOOKAHEAD(3)
-		tmp = FormattingFilter()
-		(
-			tmp = FieldAccessor(tmp)
-		)?
-	|
-		tmp = ArrayConstruction()
-		(
-			tmp = FieldAccessor(tmp)
-		)?
-	|
-		tmp = ObjectConstruction()
-		(
-			tmp = FieldAccessor(tmp)
-		)?
-	|
-		tmp = FunctionCall()
-        (
-			tmp = FieldAccessor(tmp)
-        )?
 	|
 		<OPEN_PAR>
 		tmp = JsonQuery()
@@ -755,8 +747,6 @@ JsonQuery ValueLiteral():
 }
 {
 	(
-		tmp = StringInterpolation()
-	|
 		token = <INTEGER_LITERAL>
 		{ tmp = new LongLiteral(Long.parseLong(token.image)); }
 	|
