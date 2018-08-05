@@ -23,6 +23,7 @@ PARSER_BEGIN(JsonQueryParser)
 	import net.thisptr.jackson.jq.internal.tree.matcher.*;
 	import net.thisptr.jackson.jq.internal.tree.matcher.matchers.*;
 
+	@SuppressWarnings("unused")
 	public class JsonQueryParser {
 		public static JsonQuery compile(final String line) throws ParseException {
 			final JsonQueryParser parser = new JsonQueryParser(new StringReader(line));
