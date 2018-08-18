@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
@@ -11,6 +10,7 @@ import org.joni.Option;
 import org.joni.Region;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -38,37 +38,44 @@ public class _SubImplFunction implements Function {
 				Preconditions.checkArgumentType("_sub_impl/3", 3, flagsText, JsonNodeType.STRING);
 
 				final OnigUtils.Pattern p = new OnigUtils.Pattern(regexText.asText(), flagsText.asText());
-				concat(output, sub(scope, p, in.asText(), args.get(1)));
+				final List<JsonNode> match = match(scope.getObjectMapper(), p, in.asText());
+
+				// This just repeats same emit()s the number of times as the number of flags. This is to emulate jq behavior (which is probably a bug).
+				args.get(2).apply(scope, in, (dummy) -> {
+					replaceAndConcat(scope, new Stack<String>(), output, match, args.get(1), in, args.get(2));
+				});
 			});
 		});
 	}
 
-	private static void concat(final Output output, final int index, final Stack<JsonNode> stack, final List<List<JsonNode>> values) throws JsonQueryException {
-		if (index == values.size()) {
-			final StringBuilder builder = new StringBuilder();
-			for (final JsonNode item : stack) {
-				if (item.isTextual()) {
-					builder.append(item.asText());
-				} else {
-					builder.append(item.toString());
-				}
+	private void replaceAndConcat(Scope scope, Stack<String> stack, Output output, List<JsonNode> match, Expression replaceExpr, final JsonNode in, final Expression flags) throws JsonQueryException {
+		if (match.isEmpty()) {
+			final StringBuilder sb = new StringBuilder();
+			for (int i = stack.size() - 1; i >= 0; --i) {
+				sb.append(stack.get(i));
 			}
-			output.emit(TextNode.valueOf(builder.toString()));
+			output.emit(new TextNode(sb.toString()));
+			return;
+		}
+
+		final JsonNode rhead = match.get(match.size() - 1);
+		final List<JsonNode> rtail = match.subList(0, match.size() - 1);
+
+		if (rhead.isTextual()) {
+			stack.push(rhead.textValue());
+			replaceAndConcat(scope, stack, output, rtail, replaceExpr, in, flags);
+			stack.pop();
 		} else {
-			for (final JsonNode value : values.get(index)) {
-				stack.push(value);
-				concat(output, index + 1, stack, values);
+			replaceExpr.apply(scope, rhead, (replacement) -> {
+				stack.push(replacement.asText());
+				replaceAndConcat(scope, stack, output, rtail, replaceExpr, in, flags);
 				stack.pop();
-			}
+			});
 		}
 	}
 
-	private static void concat(final Output output, final List<List<JsonNode>> values) throws JsonQueryException {
-		concat(output, 0, new Stack<>(), values);
-	}
-
-	private static List<List<JsonNode>> sub(final Scope scope, final OnigUtils.Pattern pattern, final String inputText, final Expression replace) throws JsonQueryException {
-		final List<List<JsonNode>> result = new ArrayList<>();
+	private static List<JsonNode> match(final ObjectMapper mapper, final OnigUtils.Pattern pattern, final String inputText) throws JsonQueryException {
+		final List<JsonNode> result = new ArrayList<>();
 
 		final byte[] inputBytes = inputText.getBytes(StandardCharsets.UTF_8);
 		final Matcher m = pattern.regex.matcher(inputBytes);
@@ -77,9 +84,9 @@ public class _SubImplFunction implements Function {
 			if (m.search(offset, inputBytes.length, Option.NONE) < 0)
 				break;
 
-			result.add(Collections.singletonList(TextNode.valueOf(new String(inputBytes, offset, m.getBegin() - offset, StandardCharsets.UTF_8))));
+			result.add(TextNode.valueOf(new String(inputBytes, offset, m.getBegin() - offset, StandardCharsets.UTF_8)));
 
-			final ObjectNode captures = scope.getObjectMapper().createObjectNode();
+			final ObjectNode captures = mapper.createObjectNode();
 			final Region regions = m.getRegion();
 			if (regions != null) {
 				for (int i = 1; i < regions.numRegs; ++i) {
@@ -95,15 +102,12 @@ public class _SubImplFunction implements Function {
 				}
 			}
 
-			final List<JsonNode> tmp = new ArrayList<>();
-			replace.apply(scope, captures, tmp::add);
-
-			result.add(tmp);
+			result.add(captures);
 
 			offset = m.getEnd();
 		} while (pattern.global && offset != inputBytes.length);
 
-		result.add(Collections.singletonList(TextNode.valueOf(new String(inputBytes, offset, inputBytes.length - offset, StandardCharsets.UTF_8))));
+		result.add(TextNode.valueOf(new String(inputBytes, offset, inputBytes.length - offset, StandardCharsets.UTF_8)));
 		return result;
 	}
 }

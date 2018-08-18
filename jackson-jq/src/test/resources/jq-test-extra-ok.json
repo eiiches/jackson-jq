@@ -774,5 +774,42 @@
 			{"__jq": 0},
 			1
 		]
+	},
+	{
+		"q": "try (\"abcabc\" | sub(\"a\", \"b\", error(\"foo\"); \"1\", \"2\", error(\"bar\"); \"\", \"g\", error(\"baz\"))) catch .",
+		"in": null,
+		"out": [
+			"1bcabc", "2bcabc", "bar"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | sub(\"a\", \"b\", error(\"foo\"); \"1\", \"2\"; \"\", \"g\", error(\"baz\"))) catch .",
+		"in": null,
+		"out": [
+			"1bcabc", "2bcabc", "1bcabc", "2bcabc", "baz"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | sub(\"a\", \"b\", error(\"foo\"); \"1\", \"2\"; \"\", \"g\")) catch .",
+		"in": null,
+		"out": [
+			"1bcabc", "2bcabc", "1bcabc", "2bcabc", "1bc1bc", "2bc1bc", "1bc2bc", "2bc2bc", "1bc1bc", "2bc1bc", "1bc2bc", "2bc2bc",
+			"a1cabc", "a2cabc", "a1cabc", "a2cabc", "a1ca1c", "a2ca1c", "a1ca2c", "a2ca2c", "a1ca1c", "a2ca1c", "a1ca2c", "a2ca2c",
+			"foo"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | sub(\"a\"; \"1\", \"2\", error(\"bar\"); \"g\")) catch .",
+		"in": null,
+		"out": [
+			"1bc1bc", "2bc1bc", "bar"
+		]
+	},
+	{
+		"q": "\"gg\" | sub(\"g\"; \"1\"; .)",
+		"in": null,
+		"out": [
+			"11"
+		]
 	}
 ]
