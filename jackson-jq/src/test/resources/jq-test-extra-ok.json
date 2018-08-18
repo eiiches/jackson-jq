@@ -811,5 +811,66 @@
 		"out": [
 			"11"
 		]
+	},
+	{
+		"q": "\"abcabc\" | _match_impl(\"a\", \"b\"; \"\", \"g\"; false, true)",
+		"in": null,
+		"out": [
+			[{"offset":0,"length":1,"string":"a","captures":[]}],
+			[{"offset":1,"length":1,"string":"b","captures":[]}],
+			[{"offset":0,"length":1,"string":"a","captures":[]},{"offset":3,"length":1,"string":"a","captures":[]}],
+			[{"offset":1,"length":1,"string":"b","captures":[]},{"offset":4,"length":1,"string":"b","captures":[]}],
+			true,
+			true,
+			true,
+			true
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | _match_impl(\"a\", \"b\", error(\"foo\"); \"\", \"g\", error(\"bar\"); false, true, error(\"baz\"))) catch .",
+		"in": null,
+		"out": [
+			[{"offset":0,"length":1,"string":"a","captures":[]}],
+			[{"offset":1,"length":1,"string":"b","captures":[]}],
+			"foo"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | _match_impl(\"a\", \"b\"; \"\", \"g\", error(\"bar\"); false, true, error(\"baz\"))) catch .",
+		"in": null,
+		"out": [
+			[{"offset":0,"length":1,"string":"a","captures":[]}],
+			[{"offset":1,"length":1,"string":"b","captures":[]}],
+			[{"offset":0,"length":1,"string":"a","captures":[]},{"offset":3,"length":1,"string":"a","captures":[]}],
+			[{"offset":1,"length":1,"string":"b","captures":[]},{"offset":4,"length":1,"string":"b","captures":[]}],
+			"bar"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | _match_impl(\"a\", \"b\"; \"\", \"g\"; false, true, error(\"baz\"))) catch .",
+		"in": null,
+		"out": [
+			[{"offset":0,"length":1,"string":"a","captures":[]}],
+			[{"offset":1,"length":1,"string":"b","captures":[]}],
+			[{"offset":0,"length":1,"string":"a","captures":[]},{"offset":3,"length":1,"string":"a","captures":[]}],
+			[{"offset":1,"length":1,"string":"b","captures":[]},{"offset":4,"length":1,"string":"b","captures":[]}],
+			true,
+			true,
+			true,
+			true,
+			"baz"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | match(\"a\", \"b\"; \"\", \"g\")) catch .",
+		"in": null,
+		"out": [
+			{"offset":0,"length":1,"string":"a","captures":[]},
+			{"offset":1,"length":1,"string":"b","captures":[]},
+			{"offset":0,"length":1,"string":"a","captures":[]},
+			{"offset":3,"length":1,"string":"a","captures":[]},
+			{"offset":1,"length":1,"string":"b","captures":[]},
+			{"offset":4,"length":1,"string":"b","captures":[]}
+		]
 	}
 ]

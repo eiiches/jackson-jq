@@ -34,30 +34,17 @@ public class _MatchImplFunction implements Function {
 		final byte[] ibytes = in.asText().getBytes(StandardCharsets.UTF_8);
 		final int[] cindex = UnicodeUtils.UTF8CharIndex(ibytes);
 
-		// FIXME: these pre-calculations may result in to wrong output in case of break statement
-		final List<JsonNode> regexTuple = new ArrayList<>();
-		args.get(0).apply(scope, in, regexTuple::add);
-
-		final List<JsonNode> modifiersTuple = new ArrayList<>();
-		args.get(1).apply(scope, in, modifiersTuple::add);
-
-		final List<JsonNode> testTuple = new ArrayList<>();
-		args.get(2).apply(scope, in, testTuple::add);
-
-		for (final JsonNode regex : regexTuple) {
-			Preconditions.checkArgumentType("_match_impl/3", 1, regex, JsonNodeType.STRING);
-
-			for (final JsonNode modifiers : modifiersTuple) {
-				Preconditions.checkArgumentType("_match_impl/3", 2, modifiers, JsonNodeType.STRING, JsonNodeType.NULL);
-
-				for (final JsonNode test : testTuple) {
-					Preconditions.checkArgumentType("_match_impl/3", 3, test, JsonNodeType.BOOLEAN);
-
-					final OnigUtils.Pattern p = new OnigUtils.Pattern(regex.asText(), modifiers.isNull() ? null : modifiers.asText());
+		args.get(2).apply(scope, in, (test) -> {
+			Preconditions.checkArgumentType("_match_impl/3", 3, test, JsonNodeType.BOOLEAN);
+			args.get(1).apply(scope, in, (flags) -> {
+				Preconditions.checkArgumentType("_match_impl/3", 2, flags, JsonNodeType.STRING, JsonNodeType.NULL);
+				args.get(0).apply(scope, in, (regex) -> {
+					Preconditions.checkArgumentType("_match_impl/3", 1, regex, JsonNodeType.STRING);
+					final OnigUtils.Pattern p = new OnigUtils.Pattern(regex.asText(), flags.isNull() ? null : flags.asText());
 					output.emit(match(scope.getObjectMapper(), p, ibytes, cindex, test.asBoolean()));
-				}
-			}
-		}
+				});
+			});
+		});
 	}
 
 	@JsonIgnoreProperties(ignoreUnknown = true)
