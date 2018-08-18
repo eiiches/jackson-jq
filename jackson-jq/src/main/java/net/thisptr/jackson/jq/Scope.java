@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.TreeMap;
 
@@ -28,21 +27,6 @@ import net.thisptr.jackson.jq.internal.javacc.ExpressionParser;
 
 public class Scope {
 	private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper();
-
-	@Deprecated
-	private static final class RootScopeHolder {
-		@Deprecated
-		public static final Scope INSTANCE = new Scope(null);
-		static {
-			try {
-				final ClassLoader classLoader = Optional.ofNullable(Thread.currentThread().getContextClassLoader())
-						.orElse(Scope.class.getClassLoader());
-				INSTANCE.loadFunctions(classLoader);
-			} catch (Exception e) {
-				throw new RuntimeException("Failed to instantiate default Scope object", e);
-			}
-		}
-	}
 
 	@BuiltinFunction("debug_scope/0")
 	public static class DebugScopeFunction implements Function {
@@ -76,23 +60,7 @@ public class Scope {
 	@JsonIgnore
 	private ObjectMapper mapper = DEFAULT_MAPPER;
 
-	/**
-	 * Use {@link Scope#newEmptyScope()} instead and explicitly
-	 * call {@link #loadFunctions(ClassLoader)} with the appropriate
-	 * {@link ClassLoader} for your application. E.g.:
-	 *
-	 * <pre>
-	 * final Scope scope = Scope.newEmptyScope();
-	 * scope.loadFunctions(Thread.currentThread().getContextClassLoader());
-	 * </pre>
-	 */
-	@Deprecated
-	public Scope() {
-		this(RootScopeHolder.INSTANCE);
-	}
-
-	@Deprecated
-	public Scope(final Scope parentScope) {
+	private Scope(final Scope parentScope) {
 		this.parentScope = parentScope;
 	}
 
@@ -165,11 +133,6 @@ public class Scope {
 
 		@JsonProperty("functions")
 		public List<JqFuncDef> functions = new ArrayList<>();
-	}
-
-	@Deprecated
-	public static Scope rootScope() {
-		return RootScopeHolder.INSTANCE;
 	}
 
 	/**
