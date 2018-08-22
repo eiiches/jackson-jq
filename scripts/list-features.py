@@ -4,8 +4,6 @@ import json
 import yaml
 from urllib import request as urllib2
 import re
-import html
-import cgi
 
 def htmlescape(string):
     def conv(match):
@@ -35,7 +33,7 @@ def titleescape(string):
 
     return ''.join(chars)
 
-def foo():
+def main():
     with urllib2.urlopen('https://raw.githubusercontent.com/stedolan/jq/master/docs/content/3.manual/v1.5/manual.yml') as f:
         manual = yaml.load(f)
 
@@ -59,4 +57,4 @@ def foo():
     for item in items:
         print('| {item:<{width}} |            |'.format(item=item, width=length))
 
-foo()
+main()
