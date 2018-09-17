@@ -27,51 +27,7 @@ Just add jackson-jq in your pom.xml.
 Usage
 -----
 
-### Basic Example
-
-```java
-ObjectMapper MAPPER = new ObjectMapper();
-
-JsonQuery q = JsonQuery.compile("{ids:[.ids|split(\",\")[]|tonumber|.+100],name}");
-
-JsonNode in = MAPPER.readTree("{\"ids\":\"12,15,23\",\"name\":\"jackson\",\"timestamp\":1418785331123}");
-System.out.println(in);
-// {"ids": "12,15,23", "name": "jackson", "timestamp": 1418785331123}
-
-List<JsonNode> result = q.apply(in);
-System.out.println(result);
-// [{"ids": [112, 115, 123], "name": "jackson"}]
-```
-
-### Exposing Java variables
-
-```java
-Scope scope = new Scope();
-scope.setValue("headers", MAPPER.readTree("{\"base\":10}"));
-JsonQuery q = JsonQuery.compile("$headers.base + 3");
-List<JsonNode> result = q.apply(scope, NullNode.getInstance());
-System.out.println(result);
-// [13]
-```
-
-### Defining custom functions
-
-```java
-Scope scope = new Scope();
-scope.addFunction("repeat", 1, new Function() {
-	@Override
-	public List<JsonNode> apply(Scope scope, List<JsonQuery> args, JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
-		for (JsonNode arg : args.get(0).apply(in))
-			out.add(new TextNode(Strings.repeat(in.asText(), arg.asInt())));
-		return out;
-	}
-});
-JsonQuery q = JsonQuery.compile(".name|repeat(3)");
-List<JsonNode> result = q.apply(scope, MAPPER.readTree("{\"name\":\"a\"}"));
-System.out.println(result);
-// ["aaa"]
-```
+See [jackson-jq/src/test/java/examples/Usage.java](jackson-jq/src/test/java/examples/Usage.java).
 
 Using a jackson-jq command line tool
 ------------------------------------
