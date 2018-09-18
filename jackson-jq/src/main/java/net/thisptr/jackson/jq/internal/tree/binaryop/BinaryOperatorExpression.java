@@ -49,7 +49,7 @@ public abstract class BinaryOperatorExpression implements Expression {
 		TIMES_EQUAL("*=", 6, Associativity.RIGHT, ComplexMultiplyAssignment.class),
 		DIVIDE_EQUAL("/=", 6, Associativity.RIGHT, ComplexDivideAssignment.class),
 		MODULO_EQUAL("%=", 6, Associativity.RIGHT, ComplexModuloAssignment.class),
-		DEFAULT("//", 5, Associativity.LEFT, AlternativeOperator.class),
+		DEFAULT("//", 5, Associativity.LEFT, AlternativeOperatorExpression.class),
 		OR("or", 4, Associativity.LEFT, BooleanOrExpression.class),
 		AND("and", 4, Associativity.LEFT, BooleanAndExpression.class),
 		LESS_EQUAL("<=", 3, Associativity.LEFT, CompareLessEqualTest.class),

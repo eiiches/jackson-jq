@@ -11,8 +11,8 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.path.Path;
 
-public class AlternativeOperator extends BinaryOperatorExpression {
-	public AlternativeOperator(final Expression valueExpr, final Expression defaultExpr) {
+public class AlternativeOperatorExpression extends BinaryOperatorExpression {
+	public AlternativeOperatorExpression(final Expression valueExpr, final Expression defaultExpr) {
 		super(valueExpr, defaultExpr, "//");
 	}
 
