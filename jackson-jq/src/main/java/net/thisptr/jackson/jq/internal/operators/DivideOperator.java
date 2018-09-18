@@ -1,7 +1,5 @@
 package net.thisptr.jackson.jq.internal.operators;
 
-import java.util.regex.Pattern;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -10,6 +8,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
+import net.thisptr.jackson.jq.internal.misc.Strings;
 
 public class DivideOperator implements BinaryOperator {
 
@@ -23,7 +22,7 @@ public class DivideOperator implements BinaryOperator {
 			return JsonNodeUtils.asNumericNode(dividend / divisor);
 		} else if (lhs.isTextual() && rhs.isTextual()) {
 			final ArrayNode result = mapper.createArrayNode();
-			for (final String token : lhs.asText().split(Pattern.quote(rhs.asText())))
+			for (final String token : Strings.split(lhs.asText(), rhs.asText()))
 				result.add(new TextNode(token));
 			return result;
 		} else {
