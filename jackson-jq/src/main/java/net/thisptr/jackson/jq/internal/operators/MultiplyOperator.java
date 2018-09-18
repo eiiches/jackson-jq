@@ -23,11 +23,20 @@ public class MultiplyOperator implements BinaryOperator {
 		} else if (lhs.isNumber() && rhs.isNumber()) {
 			final double r = lhs.asDouble() * rhs.asDouble();
 			return JsonNodeUtils.asNumericNode(r);
-		} else if (lhs.isTextual() && rhs.canConvertToInt()) {
-			final int count = rhs.asInt();
+		} else if (lhs.isTextual() && rhs.isNumber()) {
+			final double count = rhs.asDouble();
 			if (count <= 0)
 				return NullNode.getInstance();
-			return new TextNode(Strings.repeat(lhs.asText(), count));
+			if (count < 2)
+				return lhs;
+			return new TextNode(Strings.repeat(lhs.asText(), (int) count));
+		} else if (lhs.isNumber() && rhs.isTextual()) {
+			final double count = lhs.asDouble();
+			if (count <= 0)
+				return NullNode.getInstance();
+			if (count < 2)
+				return rhs;
+			return new TextNode(Strings.repeat(rhs.asText(), (int) count));
 		} else if (lhs.isObject() && rhs.isObject()) {
 			return mergeRecursive(mapper, (ObjectNode) lhs, (ObjectNode) rhs);
 		} else {
