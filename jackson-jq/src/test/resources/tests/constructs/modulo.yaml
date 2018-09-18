@@ -1,0 +1,6 @@
+- {"v":"[1.5,1.5]","q":"((-1.0 - -1.0) % -1.5)","in":[false],"out":[0]}
+- {"v":"[1.5,1.5]","q":"(try ((((0.5 and 0.5), -1, (\"foo\" // 1)) % (null // 1))) catch (\"__ERROR__\"))","in":0.5,"out":["__ERROR__"]}
+- {"v":"[1.5,1.5]","q":"(try ((1 % true)) catch (\"__ERROR__\"))","in":true,"out":["__ERROR__"]}
+- q: 'try (1 % true) catch .'
+  out:
+  - 'number (1) and boolean (true) cannot be divided (remainder)'
