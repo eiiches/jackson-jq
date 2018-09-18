@@ -112,7 +112,7 @@ The following table (generated from jq-1.5 manual) lists all the features jq pro
 | [Builtin operators and functions](https://stedolan.github.io/jq/manual/v1.5/#Builtinoperatorsandfunctions)                                                                                                                                                                                                                         | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Addition &#45; `+`](https://stedolan.github.io/jq/manual/v1.5/#Addition&#45;&#43;)                                                                                                                                                                                                                 | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Subtraction &#45; `-`](https://stedolan.github.io/jq/manual/v1.5/#Subtraction&#45;&#45;)                                                                                                                                                                                                           | ○          |
-| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Multiplication, division, modulo &#45; `*`, `/`, and `%`](https://stedolan.github.io/jq/manual/v1.5/#Multiplication&#44;division&#44;modulo&#45;&#42;&#44;&#47;&#44;and&#37;)                                                                                                                      | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Multiplication, division, modulo &#45; `*`, `/`, and `%`](https://stedolan.github.io/jq/manual/v1.5/#Multiplication&#44;division&#44;modulo&#45;&#42;&#44;&#47;&#44;and&#37;)                                                                                                                      | ○<sup>※5</sup> |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`length`](https://stedolan.github.io/jq/manual/v1.5/#length)                                                                                                                                                                                                                                       | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`keys`, `keys_unsorted`](https://stedolan.github.io/jq/manual/v1.5/#keys&#44;keys&#95;unsorted)                                                                                                                                                                                                    | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`has(key)`](https://stedolan.github.io/jq/manual/v1.5/#has&#40;key&#41;)                                                                                                                                                                                                                           | ○          |
@@ -231,6 +231,8 @@ The following table (generated from jq-1.5 manual) lists all the features jq pro
 
 ※4) `@html`, `@uri`, `@sh`, `@base64` are not implemented yet.
 
+※5) While `jq-1.5 '0 / .' <<< 0` throws a zero-division error as one might expect, jq-1.5 silently evaluates a compile-time constant `0 / 0` division as `null`.
+ - jackson-jq just throws an error whenever divisor is zero.
 
 Additionally, test cases used in jackson-jq (from the jq unit tests) might be useful to know what kind of queries work or not work.
 
