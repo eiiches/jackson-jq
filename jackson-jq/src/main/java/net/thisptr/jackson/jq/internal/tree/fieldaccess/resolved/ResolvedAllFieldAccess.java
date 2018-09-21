@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -17,22 +18,44 @@ public class ResolvedAllFieldAccess extends ResolvedFieldAccess {
 
 	@Override
 	public List<JsonNode> apply(Scope scope, JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
+
+		final int size = in.size();
+
 		if (in.isNull()) {
 			if (!permissive)
 				throw new JsonQueryException("Cannot iterate over null");
 		} else if (in.isArray()) {
-			final Iterator<JsonNode> values = in.iterator();
-			while (values.hasNext())
-				out.add(values.next());
+			switch (in.size()) {
+				case 0:
+					break;
+				case 1:
+					return Collections.singletonList(in.elements().next());
+				default:
+					final List<JsonNode> out = new ArrayList<>(size);
+					for (JsonNode child : in) {
+						out.add(child);
+					}
+					return out;
+			}
 		} else if (in.isObject()) {
-			final Iterator<Entry<String, JsonNode>> fields = in.fields();
-			while (fields.hasNext())
-				out.add(fields.next().getValue());
+			switch (in.size()) {
+				case 0:
+					break;
+				case 1:
+					return Collections.singletonList(in.fields().next().getValue());
+				default:
+					final List<JsonNode> out = new ArrayList<>(size);
+					final Iterator<Entry<String, JsonNode>> fields = in.fields();
+					while (fields.hasNext()) {
+						out.add(fields.next().getValue());
+					}
+					return out;
+			}
 		} else {
 			if (!permissive)
 				throw JsonQueryException.format("Cannot iterate over %s", in.getNodeType());
 		}
-		return out;
+
+		return Collections.emptyList();
 	}
 }

@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.internal.tree.fieldaccess;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import net.thisptr.jackson.jq.JsonQuery;
@@ -36,11 +37,19 @@ public abstract class FieldAccess extends JsonQuery {
 
 	@Override
 	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
 		final ResolvedFieldAccess resolvedFieldAccess = resolveFieldAccess(scope, in);
-		for (final JsonNode i : target.apply(scope, in))
-			out.addAll(resolvedFieldAccess.apply(scope, i));
-		return out;
+		final List<JsonNode> nodes = target.apply(scope, in);
+		switch (nodes.size()) {
+			case 0:
+				return Collections.emptyList();
+			case 1:
+				return resolvedFieldAccess.apply(scope, nodes.get(0));
+			default:
+				final List<JsonNode> out = new ArrayList<>(nodes.size());
+				for (final JsonNode i : nodes)
+					out.addAll(resolvedFieldAccess.apply(scope, i));
+				return out;
+		}
 	}
 
 	public abstract ResolvedFieldAccess resolveFieldAccess(final Scope scope, final JsonNode in) throws JsonQueryException;
