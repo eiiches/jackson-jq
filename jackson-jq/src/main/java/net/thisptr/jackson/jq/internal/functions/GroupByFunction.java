@@ -19,13 +19,13 @@ import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.misc.JsonQueryUtils;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
 
-@BuiltinFunction("group/1")
-public class GroupFunction implements Function {
+@BuiltinFunction("group_by/1")
+public class GroupByFunction implements Function {
 	private static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();
 
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
-		Preconditions.checkInputType("group", in, JsonNodeType.ARRAY);
+		Preconditions.checkInputType("group_by", in, JsonNodeType.ARRAY);
 
 		final TreeMap<JsonNode, List<JsonNode>> result = new TreeMap<>(comparator);
 		for (final JsonNode i : in) {

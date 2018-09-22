@@ -11,7 +11,7 @@ net.thisptr.jackson.jq.internal.functions.ExplodeFunction
 net.thisptr.jackson.jq.internal.functions.FromEntriesFunction
 net.thisptr.jackson.jq.internal.functions.FromJsonFunction
 net.thisptr.jackson.jq.internal.functions.GetPathFunction
-net.thisptr.jackson.jq.internal.functions.GroupFunction
+net.thisptr.jackson.jq.internal.functions.GroupByFunction
 net.thisptr.jackson.jq.internal.functions.HasFunction
 net.thisptr.jackson.jq.internal.functions.ImplodeFunction
 net.thisptr.jackson.jq.internal.functions.IndexFunction
