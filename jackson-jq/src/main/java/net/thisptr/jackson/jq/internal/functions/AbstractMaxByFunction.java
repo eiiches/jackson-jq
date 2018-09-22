@@ -16,12 +16,12 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
 
-public abstract class AbstractMaxFunction implements Function {
+public abstract class AbstractMaxByFunction implements Function {
 	protected static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();
 
 	private String fname;
 
-	public AbstractMaxFunction(final String fname) {
+	public AbstractMaxByFunction(final String fname) {
 		this.fname = fname;
 	}
 

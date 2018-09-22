@@ -32,8 +32,8 @@ net.thisptr.jackson.jq.internal.functions.MathFunction$Log2Function
 net.thisptr.jackson.jq.internal.functions.MathFunction$SinFunction
 net.thisptr.jackson.jq.internal.functions.MathFunction$SqrtFunction
 net.thisptr.jackson.jq.internal.functions.math.PowFunction
-net.thisptr.jackson.jq.internal.functions.MaxFunction
-net.thisptr.jackson.jq.internal.functions.MinFunction
+net.thisptr.jackson.jq.internal.functions.MaxByFunction
+net.thisptr.jackson.jq.internal.functions.MinByFunction
 net.thisptr.jackson.jq.internal.functions.NanFunction
 net.thisptr.jackson.jq.internal.functions.NotFunction
 net.thisptr.jackson.jq.internal.functions.PathFunction

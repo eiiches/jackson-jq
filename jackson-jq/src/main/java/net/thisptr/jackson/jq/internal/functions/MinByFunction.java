@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 
-@BuiltinFunction("min/1")
-public class MinFunction extends AbstractMaxFunction {
-	public MinFunction() {
-		super("min");
+@BuiltinFunction("min_by/1")
+public class MinByFunction extends AbstractMaxByFunction {
+	public MinByFunction() {
+		super("min_by");
 	}
 
 	@Override
