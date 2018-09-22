@@ -19,13 +19,13 @@ import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.misc.Pair;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
 
-@BuiltinFunction("sort/1")
-public class SortFunction implements Function {
+@BuiltinFunction("sort_by/1")
+public class SortByFunction implements Function {
 	private static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();
 
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode items, final Output output, final Version version) throws JsonQueryException {
-		Preconditions.checkInputType("sort", items, JsonNodeType.ARRAY);
+		Preconditions.checkInputType("sort_by", items, JsonNodeType.ARRAY);
 
 		final List<Pair<JsonNode, JsonNode>> zipped = new ArrayList<>(items.size());
 		for (final JsonNode item : items) {

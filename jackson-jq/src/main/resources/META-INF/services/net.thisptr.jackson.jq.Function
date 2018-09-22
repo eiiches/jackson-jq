@@ -43,7 +43,7 @@ net.thisptr.jackson.jq.internal.functions.ReverseFunction
 net.thisptr.jackson.jq.internal.functions.RIndexFunction
 net.thisptr.jackson.jq.internal.functions.RTrimStrFunction
 net.thisptr.jackson.jq.internal.functions.SetPathFunction
-net.thisptr.jackson.jq.internal.functions.SortFunction
+net.thisptr.jackson.jq.internal.functions.SortByFunction
 net.thisptr.jackson.jq.internal.functions.SplitFunction
 net.thisptr.jackson.jq.internal.functions.StartsWithFunction
 net.thisptr.jackson.jq.internal.functions._SubImplFunction
