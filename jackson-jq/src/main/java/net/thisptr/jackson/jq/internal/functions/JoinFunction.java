@@ -19,6 +19,8 @@ public class JoinFunction implements Function {
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
 		args.get(0).apply(scope, in, (sep) -> {
+			if (!in.isArray() && !in.isObject())
+				throw new JsonQueryTypeException("Cannot iterate over %s", in);
 
 			JsonNode isep = null;
 			final StringBuilder builder = new StringBuilder();
