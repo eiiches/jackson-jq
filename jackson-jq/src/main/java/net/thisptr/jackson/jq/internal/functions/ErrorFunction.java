@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.internal.functions;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -18,8 +17,8 @@ import net.thisptr.jackson.jq.internal.BuiltinFunction;
 public class ErrorFunction implements Function {
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
-		final List<JsonNode> msgs = new ArrayList<>();
-		args.get(0).apply(scope, in, msgs::add);
-		throw new JsonQueryUserException(msgs);
+		args.get(0).apply(scope, in, (out) -> {
+			throw new JsonQueryUserException(out);
+		});
 	}
 }
