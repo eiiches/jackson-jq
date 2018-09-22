@@ -27,53 +27,7 @@ Just add jackson-jq in your pom.xml.
 Usage
 -----
 
-```java
-// First of all, you have to prepare a Scope which is a container of built-in/user-defined functions and variables.
-Scope rootScope = Scope.newEmptyScope();
-
-// Scope#loadFunctions(ClassLoader) loads built-in functions (implemented in java) via ServiceLoader mechanism
-// and other built-in functions (implemented in jq) from classpath:net/thisptr/jackson/jq/jq.json.
-rootScope.loadFunctions(Scope.class.getClassLoader());
-
-// You can also define a custom function. E.g.
-rootScope.addFunction("repeat", 1, new Function() {
-	@Override
-	public void apply(Scope scope, List<Expression> args, JsonNode in, Output output) throws JsonQueryException {
-		args.get(0).apply(scope, in, (times) -> {
-			output.emit(new TextNode(Strings.repeat(in.asText(), times.asInt())));
-		});
-	}
-});
-
-// After this initial setup, rootScope should not be modified (via Scope#setValue(...),
-// Scope#addFunction(...), etc.) so that it can be shared (in a read-only manner) across mutliple threads
-// because you want to avoid heavy lifting of loading built-in functions every time which involves
-// file system operations and a lot of parsing.
-
-// You can create a child Scope instead of directly modifying the rootScope. This is especially useful when
-// you want to use variables or functions that is only local to the specific execution context (such as
-// a thread, request, etc).
-// Creating a child Scope is a very light-weight operation that just allocates a Scope and sets
-// one of its fields to point to the given parent scope. It's completely okay to create a child Scope
-// per every apply() invocations if you need to do so.
-Scope childScope = Scope.newChildScope(rootScope);
-
-// Scope#setValue(...) sets a custom variable that can be used from jq expressions. This variable is local to the
-// childScope and cannot be accessed from the rootScope. The rootScope will not be modified by this call.
-childScope.setValue("param", IntNode.valueOf(42));
-
-// JsonQuery#compile(...) parses and compiles a given expression. The resulting JsonQuery instance
-// is immutable and thread-safe. It should be reused as possible if you repeatedly use the same expression.
-JsonQuery q = JsonQuery.compile("$param * 2");
-
-// You need a JsonNode to use as an input to the JsonQuery. There are many ways you can grab a JsonNode.
-// In this example, we just parse a JSON text into a JsonNode.
-JsonNode in = MAPPER.readTree("{\"ids\":\"12,15,23\",\"name\":\"jackson\",\"timestamp\":1418785331123}");
-
-// Finally, JsonQuery#apply(...)  executes the query with given input and returns a list of JsonNode.
-// The childScope will not be modified by this call because it internally creates a child scope as necessary.
-q.apply(childScope, in); // => [84]
-```
+See [jackson-jq/src/test/java/examples/Usage.java](jackson-jq/src/test/java/examples/Usage.java).
 
 Using a jackson-jq command line tool
 ------------------------------------
