@@ -12,8 +12,6 @@ public class IsInfiniteFunction extends JsonPredicateFunction {
 	}
 
 	private static boolean test(final JsonNode value) {
-		if ((value.isDouble() || value.isFloat()) && Double.isInfinite(value.asDouble()))
-			return true;
-		return false;
+		return (value.isDouble() || value.isFloat()) && Double.isInfinite(value.asDouble());
 	}
 }

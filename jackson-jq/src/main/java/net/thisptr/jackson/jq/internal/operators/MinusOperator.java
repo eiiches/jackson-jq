@@ -24,7 +24,7 @@ public class MinusOperator implements BinaryOperator {
 			return JsonNodeUtils.asNumericNode(r);
 		} else if (lhs.isArray() && rhs.isArray()) {
 			final ArrayNode result = mapper.createArrayNode();
-			final TreeSet<JsonNode> rset = new TreeSet<JsonNode>(comparator);
+			final TreeSet<JsonNode> rset = new TreeSet<>(comparator);
 			for (final JsonNode r : rhs)
 				rset.add(r);
 			for (final JsonNode l : lhs)

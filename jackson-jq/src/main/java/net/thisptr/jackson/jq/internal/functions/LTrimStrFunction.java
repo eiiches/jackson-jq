@@ -31,7 +31,7 @@ public class LTrimStrFunction implements Function {
 			if (!text.startsWith(prefix)) {
 				output.emit(in);
 			} else {
-				output.emit(new TextNode(text.substring(prefix.length(), text.length())));
+				output.emit(new TextNode(text.substring(prefix.length())));
 			}
 		});
 	}

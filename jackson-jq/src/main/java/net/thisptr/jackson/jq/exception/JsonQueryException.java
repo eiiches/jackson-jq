@@ -32,9 +32,9 @@ public class JsonQueryException extends JsonProcessingException {
 				continue;
 			}
 			if (args[i] instanceof Double) {
-				final double val = ((Double) args[i]).doubleValue();
+				final double val = ((Double) args[i]);
 				if (val == (long) val) {
-					args_[i] = Long.valueOf((long) val);
+					args_[i] = (long) val;
 				} else {
 					args_[i] = val;
 				}

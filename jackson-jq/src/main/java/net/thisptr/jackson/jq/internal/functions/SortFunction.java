@@ -1,8 +1,6 @@
 package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -35,12 +33,7 @@ public class SortFunction implements Function {
 			zipped.add(Pair.of(item, value));
 		}
 
-		Collections.sort(zipped, new Comparator<Pair<JsonNode, JsonNode>>() {
-			@Override
-			public int compare(final Pair<JsonNode, JsonNode> o1, final Pair<JsonNode, JsonNode> o2) {
-				return comparator.compare(o1._2, o2._2);
-			}
-		});
+		zipped.sort((o1, o2) -> comparator.compare(o1._2, o2._2));
 
 		output.emit(JsonNodeUtils.asArrayNode(scope.getObjectMapper(), Pair._1(zipped)));
 	}

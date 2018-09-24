@@ -47,7 +47,7 @@ public class JsonQueryFunction implements Function {
 					applyRecursive(output, fnScope, scope, args, in, i + 1);
 				});
 			} else {
-				fnScope.addFunction(param, 0, new JsonQueryFunction(param, Collections.<String>emptyList(), new FixedScopeQuery(scope, args.get(i)), fnScope));
+				fnScope.addFunction(param, 0, new JsonQueryFunction(param, Collections.emptyList(), new FixedScopeQuery(scope, args.get(i)), fnScope));
 				applyRecursive(output, fnScope, scope, args, in, i + 1);
 			}
 		}

@@ -42,7 +42,7 @@ public class _SubImplFunction implements Function {
 
 				// This just repeats same emit()s the number of times as the number of flags. This is to emulate jq behavior (which is probably a bug).
 				args.get(2).apply(scope, in, (dummy) -> {
-					replaceAndConcat(scope, new Stack<String>(), output, match, args.get(1), in, args.get(2));
+					replaceAndConcat(scope, new Stack<>(), output, match, args.get(1), in, args.get(2));
 				});
 			});
 		});
@@ -74,7 +74,7 @@ public class _SubImplFunction implements Function {
 		}
 	}
 
-	private static List<JsonNode> match(final ObjectMapper mapper, final OnigUtils.Pattern pattern, final String inputText) throws JsonQueryException {
+	private static List<JsonNode> match(final ObjectMapper mapper, final OnigUtils.Pattern pattern, final String inputText) {
 		final List<JsonNode> result = new ArrayList<>();
 
 		final byte[] inputBytes = inputText.getBytes(StandardCharsets.UTF_8);

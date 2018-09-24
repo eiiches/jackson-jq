@@ -31,7 +31,7 @@ public class ContainsFunction implements Function {
 		});
 	}
 
-	private static boolean contains(final JsonNode needle, final JsonNode haystack) throws JsonQueryException {
+	private static boolean contains(final JsonNode needle, final JsonNode haystack) {
 		if (haystack.isTextual() && needle.isTextual()) {
 			return haystack.asText().contains(needle.asText());
 		} else if (haystack.isArray() && needle.isArray()) {
@@ -43,7 +43,7 @@ public class ContainsFunction implements Function {
 						break;
 					}
 				}
-				if (found == false)
+				if (!found)
 					return false;
 			}
 			return true;

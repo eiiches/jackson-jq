@@ -34,7 +34,7 @@ public class JsonQueryParserTest {
 	}
 
 	@Test
-	public void testSupportedQueries() throws IOException, ParseException, TokenMgrError {
+	public void testSupportedQueries() throws IOException, TokenMgrError {
 		final List<String> loadQueries = loadQueries("compiler-test-ok.txt");
 		for (int i = 0; i < loadQueries.size(); i++) {
 			try {
@@ -53,11 +53,8 @@ public class JsonQueryParserTest {
 	@Test
 	public void testUnsupportedQueries() throws IOException {
 		final List<String> loadQueries = loadQueries("compiler-test-ng.txt");
-		for (int i = 0; i < loadQueries.size(); i++) {
-			final String q = loadQueries.get(i);
-			assertThrows(JsonQueryException.class, () -> {
-				ExpressionParser.compile(q);
-			});
+		for (String q : loadQueries) {
+			assertThrows(JsonQueryException.class, () -> ExpressionParser.compile(q));
 		}
 	}
 }

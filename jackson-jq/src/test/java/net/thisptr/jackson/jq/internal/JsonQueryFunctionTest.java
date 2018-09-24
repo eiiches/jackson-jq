@@ -7,7 +7,6 @@ import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -18,7 +17,7 @@ import net.thisptr.jackson.jq.internal.javacc.ExpressionParser;
 
 public class JsonQueryFunctionTest {
 	@Test
-	public void test() throws JsonProcessingException, IOException {
+	public void test() throws IOException {
 		final ObjectMapper mapper = new ObjectMapper();
 
 		final Scope scope = Scope.newEmptyScope();

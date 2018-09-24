@@ -29,11 +29,7 @@ public class GroupFunction implements Function {
 		final TreeMap<JsonNode, List<JsonNode>> result = new TreeMap<>(comparator);
 		for (final JsonNode i : in) {
 			final JsonNode fx = JsonQueryUtils.applyToArrayNode(args.get(0), scope, i);
-			List<JsonNode> values = result.get(fx);
-			if (values == null) {
-				values = new ArrayList<>();
-				result.put(fx, values);
-			}
+			List<JsonNode> values = result.computeIfAbsent(fx, k -> new ArrayList<>());
 			values.add(i);
 		}
 
