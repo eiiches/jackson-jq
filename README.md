@@ -161,7 +161,7 @@ The following table (generated from jq-1.5 manual) lists all the features jq pro
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`until(cond; next)`](https://stedolan.github.io/jq/manual/v1.5/#until&#40;cond&#59;next&#41;)                                                                                                                                                                                                      | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`recurse(f)`, `recurse`, `recurse(f; condition)`, `recurse_down`](https://stedolan.github.io/jq/manual/v1.5/#recurse&#40;f&#41;&#44;recurse&#44;recurse&#40;f&#59;condition&#41;&#44;recurse&#95;down)                                                                                             | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`..`](https://stedolan.github.io/jq/manual/v1.5/#&#46;&#46;)                                                                                                                                                                                                                                       | ○          |
-| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`env`](https://stedolan.github.io/jq/manual/v1.5/#env)                                                                                                                                                                                                                                             | ×          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`env`](https://stedolan.github.io/jq/manual/v1.5/#env)                                                                                                                                                                                                                                             | ○<sup>※6</sup> |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`transpose`](https://stedolan.github.io/jq/manual/v1.5/#transpose)                                                                                                                                                                                                                                 | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`bsearch(x)`](https://stedolan.github.io/jq/manual/v1.5/#bsearch&#40;x&#41;)                                                                                                                                                                                                                       | ×          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [String interpolation &#45; `\(foo)`](https://stedolan.github.io/jq/manual/v1.5/#Stringinterpolation&#45;&#92;&#40;foo&#41;)                                                                                                                                                                        | ○          |
@@ -231,6 +231,9 @@ The following table (generated from jq-1.5 manual) lists all the features jq pro
 
 ※5) While `jq-1.5 '0 / .' <<< 0` throws a zero-division error as one might expect, jq-1.5 silently evaluates a compile-time constant `0 / 0` division as `null`.
  - jackson-jq just throws an error whenever divisor is zero.
+
+※6) `env/0` function is not available by default and must be added manually to the scope.
+ - `SCOPE.addFunction("env", 0, new EnvFunction())`
 
 Additionally, test cases used in jackson-jq (from the jq unit tests) might be useful to know what kind of queries work or not work.
 
