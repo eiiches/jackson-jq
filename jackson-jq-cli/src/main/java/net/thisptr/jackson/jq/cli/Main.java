@@ -26,6 +26,7 @@ import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.Versions;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.functions.EnvFunction;
 
 public class Main {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -104,6 +105,7 @@ public class Main {
 
 		final Scope scope = Scope.newEmptyScope();
 		scope.loadFunctions(Scope.class.getClassLoader(), version);
+		scope.addFunction("env", 0, new EnvFunction());
 
 		try (final BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
 			final JsonParser parser = MAPPER.getFactory().createParser(reader);
