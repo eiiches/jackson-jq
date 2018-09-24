@@ -30,7 +30,7 @@ public class ObjectConstruction implements Expression {
 	}
 
 	private static void applyRecursive(final Scope scope, final JsonNode in, final Output output, final List<FieldConstruction> fields, final Map<String, JsonNode> tmp) throws JsonQueryException {
-		if (fields.size() == 0) {
+		if (fields.isEmpty()) {
 			final ObjectNode obj = scope.getObjectMapper().createObjectNode();
 			for (final Entry<String, JsonNode> e : tmp.entrySet())
 				obj.set(e.getKey(), e.getValue());

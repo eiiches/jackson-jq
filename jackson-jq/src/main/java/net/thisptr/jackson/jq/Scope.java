@@ -135,11 +135,13 @@ public class Scope {
 		public List<JqFuncDef> functions = new ArrayList<>();
 	}
 
+	private static final String CONFIG_PATH = resolvePath(Scope.class, "jq.json");
+
 	/**
 	 * Dynamically resolve the path for a resource as packages may be relocated, e.g. by
 	 * the maven-shade-plugin.
 	 */
-	private static final String resolvePath(final Class<?> clazz, final String name) {
+	private static String resolvePath(final Class<?> clazz, final String name) {
 		final String base = clazz.getName();
 		return base.substring(0, base.lastIndexOf('.')).replace('.', '/') + '/' + name;
 	}
@@ -150,13 +152,13 @@ public class Scope {
 	 * E.g. in an OSGi context this may be the Bundle's {@link ClassLoader}.
 	 */
 	public void loadFunctions(final ClassLoader classLoader) {
-		loadMacros(classLoader, resolvePath(Scope.class, "jq.json"));
+		loadMacros(classLoader);
 		loadBuiltinFunctions(classLoader);
 	}
 
-	private static List<JqJson> loadConfig(final ClassLoader loader, final String path) throws IOException {
+	private static List<JqJson> loadConfig(final ClassLoader loader) throws IOException {
 		final List<JqJson> result = new ArrayList<>();
-		final Enumeration<URL> iter = loader.getResources(path);
+		final Enumeration<URL> iter = loader.getResources(CONFIG_PATH);
 		while (iter.hasMoreElements()) {
 			try (final InputStream is = iter.nextElement().openStream()) {
 				final MappingIterator<JqJson> iter2 = DEFAULT_MAPPER.readValues(DEFAULT_MAPPER.getFactory().createParser(is), JqJson.class);
@@ -178,9 +180,9 @@ public class Scope {
 		}
 	}
 
-	private void loadMacros(final ClassLoader classLoader, final String path) {
+	private void loadMacros(final ClassLoader classLoader) {
 		try {
-			final List<JqJson> configs = loadConfig(classLoader, path);
+			final List<JqJson> configs = loadConfig(classLoader);
 			for (final JqJson jqJson : configs) {
 				for (final JqJson.JqFuncDef def : jqJson.functions)
 					addFunction(def.name, def.args.size(), new JsonQueryFunction(def.name, def.args, new IsolatedScopeQuery(ExpressionParser.compile(def.body)), this));

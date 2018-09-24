@@ -31,7 +31,7 @@ public class ArrayConstruction implements Expression {
 	@Override
 	public String toString() {
 		if (q == null)
-			return String.format("[]");
+			return "[]";
 		return String.format("[%s]", q);
 	}
 }

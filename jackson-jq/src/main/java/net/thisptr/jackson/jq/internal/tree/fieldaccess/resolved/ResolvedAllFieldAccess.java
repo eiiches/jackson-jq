@@ -20,9 +20,9 @@ public class ResolvedAllFieldAccess extends ResolvedFieldAccess {
 			if (!permissive)
 				throw new JsonQueryException("Cannot iterate over null");
 		} else if (in.isArray()) {
-			final Iterator<JsonNode> values = in.iterator();
-			while (values.hasNext())
-				output.emit(values.next());
+			for (JsonNode value: in) {
+				output.emit(value);
+			}
 		} else if (in.isObject()) {
 			final Iterator<Entry<String, JsonNode>> fields = in.fields();
 			while (fields.hasNext())

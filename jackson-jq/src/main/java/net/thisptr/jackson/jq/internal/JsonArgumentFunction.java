@@ -30,7 +30,7 @@ public abstract class JsonArgumentFunction implements Function {
 
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
-		final List<List<JsonNode>> _args = new ArrayList<>();
+		final List<List<JsonNode>> _args = new ArrayList<>(args.size());
 		for (final Expression arg : args) {
 			final List<JsonNode> out = new ArrayList<>();
 			arg.apply(scope, in, out::add);

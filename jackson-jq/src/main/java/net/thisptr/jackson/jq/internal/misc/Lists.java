@@ -7,7 +7,7 @@ import java.util.List;
 public class Lists {
 
 	public static <T> List<T> newArrayList(final Iterator<T> iter) {
-		final List<T> result = new ArrayList<T>();
+		final List<T> result = new ArrayList<>();
 		while (iter.hasNext())
 			result.add(iter.next());
 		return result;

@@ -43,14 +43,14 @@ public class ToJsonFunction implements Function {
 
 	private static class DoubleNodeSerializer extends JsonSerializer<DoubleNode> {
 		@Override
-		public void serialize(DoubleNode value, JsonGenerator gen, SerializerProvider serializers) throws IOException, JsonProcessingException {
+		public void serialize(DoubleNode value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
 			gen.writeRaw(format(value.asDouble()));
 		}
 	}
 
 	private static class FloatNodeSerializer extends JsonSerializer<FloatNode> {
 		@Override
-		public void serialize(FloatNode value, JsonGenerator gen, SerializerProvider serializers) throws IOException, JsonProcessingException {
+		public void serialize(FloatNode value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
 			gen.writeRaw(format(value.asDouble()));
 		}
 	}

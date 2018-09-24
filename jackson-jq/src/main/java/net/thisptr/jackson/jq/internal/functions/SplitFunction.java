@@ -19,6 +19,9 @@ import net.thisptr.jackson.jq.internal.misc.Strings;
 
 @BuiltinFunction("split/1")
 public class SplitFunction implements Function {
+
+	private static final String[] EMPTY_STRING_ARRAY = new String[0];
+
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
 		Preconditions.checkInputType("split", in, JsonNodeType.STRING);
@@ -47,6 +50,6 @@ public class SplitFunction implements Function {
 		} else {
 			return Strings.splitToArray(in, sep);
 		}
-		return result.toArray(new String[result.size()]);
+		return result.toArray(EMPTY_STRING_ARRAY);
 	}
 }

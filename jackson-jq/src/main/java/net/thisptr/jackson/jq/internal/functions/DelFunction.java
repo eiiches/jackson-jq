@@ -33,11 +33,6 @@ public class DelFunction implements Function {
 		if (!(resolvedPath.target instanceof ThisObject))
 			throw new IllegalJsonArgumentException("cannot delete from " + resolvedPath.target);
 
-		output.emit(JsonNodeUtils.mutate(scope.getObjectMapper(), in, resolvedPath.path, new Mutation() {
-			@Override
-			public JsonNode apply(JsonNode value) {
-				return null;
-			}
-		}, false));
+		output.emit(JsonNodeUtils.mutate(scope.getObjectMapper(), in, resolvedPath.path, value -> null, false));
 	}
 }

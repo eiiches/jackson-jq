@@ -22,7 +22,7 @@ public class FormattingFilter implements Expression {
 		final Function f = scope.getFunction("@" + name, 0);
 		if (f == null)
 			throw new JsonQueryException("Formatting operator @" + name + " does not exist");
-		f.apply(scope, Collections.<Expression>emptyList(), in, output);
+		f.apply(scope, Collections.emptyList(), in, output);
 	}
 
 	@Override

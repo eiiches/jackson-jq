@@ -37,15 +37,13 @@ public class JsonNodeUtils {
 	public static boolean isIntegralNumber(final JsonNode n) {
 		if (!n.isNumber())
 			return false;
-		if (n.asDouble() == n.asLong())
-			return true;
-		return false;
+		return n.asDouble() == n.asLong();
 	}
 
 	public static JsonNode asNumericNode(final long value) {
 		if (((int) value) == value)
 			return new IntNode((int) value);
-		return new LongNode((long) value);
+		return new LongNode(value);
 	}
 
 	public static JsonNode asNumericNode(final double value) {
