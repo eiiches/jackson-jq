@@ -26,13 +26,17 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.google.common.reflect.ClassPath;
+import com.google.common.reflect.ClassPath.ResourceInfo;
 
 import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 
 public class JsonQueryTest {
 	private static final Logger LOG = LoggerFactory.getLogger(JsonQueryTest.class);
 
-	private static final ObjectMapper MAPPER = new ObjectMapper();
+	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
+	private static final ObjectMapper YAML_MAPPER = new YAMLMapper();
 
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class TestCase {
@@ -48,8 +52,8 @@ public class JsonQueryTest {
 		@JsonProperty("file")
 		public String file;
 
-		@JsonProperty("known_to_fail")
-		public boolean knownToFail = false;
+		@JsonProperty("failing")
+		public Boolean failing;
 
 		@JsonProperty("v")
 		@JsonDeserialize(using = VersionRangeDeserializer.class)
@@ -78,30 +82,60 @@ public class JsonQueryTest {
 		}
 	}
 
-	public static List<TestCase> loadTestCases(final String resourceName, final boolean ignoreFailure) throws Throwable {
+	private static List<TestCase> loadTestCases(final ClassLoader classLoader, final String resourceName, final boolean failing) throws Throwable {
 		final TestCase[] result;
-		try (InputStream in = JsonQueryTest.class.getClassLoader().getResourceAsStream(resourceName)) {
-			result = MAPPER.readValue(in, TestCase[].class);
+		try (InputStream in = classLoader.getResourceAsStream(resourceName)) {
+			if (resourceName.endsWith(".yaml")) {
+				result = YAML_MAPPER.readValue(in, TestCase[].class);
+			} else if (resourceName.endsWith(".json")) {
+				result = JSON_MAPPER.readValue(in, TestCase[].class);
+			} else {
+				throw new IllegalArgumentException("unsupported file format");
+			}
 			for (final TestCase tc : result) {
-				tc.knownToFail = ignoreFailure;
+				if (tc.failing == null)
+					tc.failing = failing;
 				tc.file = resourceName;
 			}
 		}
 		return Arrays.asList(result);
 	}
 
-	static Stream<String> defaultTestCases() throws Throwable {
+	private static List<TestCase> loadTestCasesDirectory(final ClassLoader classLoader, final String directory, final boolean failing) throws Throwable {
 		final List<TestCase> testCases = new ArrayList<>();
-		testCases.addAll(loadTestCases("jq-test-manual-ok.json", false));
-		testCases.addAll(loadTestCases("jq-test-manual-ng.json", true));
-		testCases.addAll(loadTestCases("jq-test-all-ok.json", false));
-		testCases.addAll(loadTestCases("jq-test-all-ng.json", true));
-		testCases.addAll(loadTestCases("jq-test-extra-ok.json", false));
-		testCases.addAll(loadTestCases("jq-test-onig-ok.json", false));
-		testCases.addAll(loadTestCases("jq-test-onig-ng.json", true));
+		final ClassPath classPath = ClassPath.from(classLoader);
+		for (final ResourceInfo resource : classPath.getResources()) {
+			final String name = resource.getResourceName();
+			if (!name.startsWith(directory))
+				continue;
+			if (!name.endsWith(".json") && !name.endsWith(".yaml"))
+				continue;
+			try {
+				testCases.addAll(loadTestCases(classLoader, name, failing));
+			} catch (final Throwable e) {
+				throw new RuntimeException("Failed to load " + name, e);
+			}
+		}
+		return testCases;
+	}
+
+	static Stream<String> defaultTestCases() throws Throwable {
+		final ClassLoader classLoader = JsonQueryTest.class.getClassLoader();
+
+		final List<TestCase> testCases = new ArrayList<>();
+		testCases.addAll(loadTestCases(classLoader, "jq-test-manual-ok.json", false));
+		testCases.addAll(loadTestCases(classLoader, "jq-test-manual-ng.json", true));
+		testCases.addAll(loadTestCases(classLoader, "jq-test-all-ok.json", false));
+		testCases.addAll(loadTestCases(classLoader, "jq-test-all-ng.json", true));
+		testCases.addAll(loadTestCases(classLoader, "jq-test-extra-ok.json", false));
+		testCases.addAll(loadTestCases(classLoader, "jq-test-onig-ok.json", false));
+		testCases.addAll(loadTestCases(classLoader, "jq-test-onig-ng.json", true));
+		testCases.addAll(loadTestCasesDirectory(classLoader, "tests", false));
+		testCases.addAll(loadTestCasesDirectory(classLoader, "failing_tests", true));
+
 		return testCases.stream().map(a -> {
 			try {
-				return MAPPER.writeValueAsString(a);
+				return JSON_MAPPER.writeValueAsString(a);
 			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -161,17 +195,17 @@ public class JsonQueryTest {
 		} catch (final Throwable e) {
 			failed = true;
 			LOG.error(" * Failed with: {}", e.getMessage());
-			if (!tc.knownToFail)
+			if (!tc.failing)
 				throw e;
 		}
 
-		assertEquals(tc.knownToFail, failed, "marked knownToFail but succeeded");
+		assertEquals(tc.failing, failed, "marked failing but succeeded");
 	}
 
 	@ParameterizedTest
 	@MethodSource("defaultTestCases")
 	public void test(final String tcText) throws Throwable {
-		final TestCase tc = MAPPER.readValue(tcText, TestCase.class);
+		final TestCase tc = JSON_MAPPER.readValue(tcText, TestCase.class);
 		for (final Version version : Versions.versions()) {
 			if (tc.version == null || tc.version.contains(version)) {
 				test(tc, version);
