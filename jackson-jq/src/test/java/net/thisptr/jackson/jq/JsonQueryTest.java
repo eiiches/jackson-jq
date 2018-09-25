@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -30,6 +31,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.reflect.ClassPath;
 import com.google.common.reflect.ClassPath.ResourceInfo;
 
+import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 
 public class JsonQueryTest {
@@ -54,6 +56,9 @@ public class JsonQueryTest {
 
 		@JsonProperty("failing")
 		public Boolean failing;
+
+		@JsonProperty("should_compile")
+		public boolean shouldCompile = true;
 
 		@JsonProperty("v")
 		@JsonDeserialize(using = VersionRangeDeserializer.class)
@@ -143,9 +148,15 @@ public class JsonQueryTest {
 	}
 
 	private void test(final TestCase tc, final Version version) throws Throwable {
+		LOG.info("Running test ({}): {}", tc.file, tc.toString().replace('\n', ' '));
+
+		if (!tc.shouldCompile) {
+			assertThrows(JsonQueryException.class, () -> JsonQuery.compile(tc.q, version));
+			return;
+		}
+
 		boolean failed = false;
 		try {
-			LOG.info("Running test ({}): {}", tc.file, tc.toString().replace('\n', ' '));
 			final JsonQuery q = JsonQuery.compile(tc.q, version);
 			final String s1 = q.toString();
 
