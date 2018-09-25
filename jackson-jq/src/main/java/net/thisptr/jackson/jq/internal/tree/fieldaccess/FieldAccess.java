@@ -5,8 +5,6 @@ import java.util.Map.Entry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.LongNode;
-import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
@@ -57,19 +55,22 @@ public abstract class FieldAccess implements Expression {
 		ObjectFieldPath.resolve(pobj, ppath, output, key, permissive);
 	}
 
-	protected static void emitArrayIndexPath(boolean permissive, long _index, final JsonNode pobj, final Path ppath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
+	protected static void emitArrayIndexPath(boolean permissive, final JsonNode index, final JsonNode pobj, final Path ppath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
+		assert index.isNumber();
 		if (requirePath && ppath == null)
-			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", _index, JsonNodeUtils.toString(pobj));
-		ArrayIndexPath.resolve(pobj, ppath, output, (int) _index, permissive);
+			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(index), JsonNodeUtils.toString(pobj));
+		ArrayIndexPath.resolve(pobj, ppath, output, index, permissive);
 	}
 
 	private static final ObjectMapper MAPPER = new ObjectMapper(); // FIXME
 
-	protected static void emitArrayRangeIndexPath(boolean permissive, final Long start, final Long end, final JsonNode pobj, final Path ppath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
+	protected static void emitArrayRangeIndexPath(boolean permissive, final JsonNode start, final JsonNode end, final JsonNode pobj, final Path ppath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
+		assert start.isNull() || start.isNumber();
+		assert end.isNull() || end.isNumber();
 		if (requirePath && ppath == null) {
 			final ObjectNode subpath = MAPPER.createObjectNode();
-			subpath.set("start", start == null ? NullNode.getInstance() : LongNode.valueOf(start));
-			subpath.set("end", end == null ? NullNode.getInstance() : LongNode.valueOf(end));
+			subpath.set("start", start);
+			subpath.set("end", end);
 			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", Strings.truncate(JsonNodeUtils.toString(subpath), 14), JsonNodeUtils.toString(pobj));
 		}
 		ArrayRangeIndexPath.resolve(pobj, ppath, output, start, end, permissive);

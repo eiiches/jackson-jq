@@ -7,7 +7,6 @@ import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
-import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.tree.literal.NullLiteral;
 import net.thisptr.jackson.jq.path.Path;
 
@@ -44,11 +43,8 @@ public class BracketFieldAccess extends FieldAccess {
 			if (isRange) {
 				startExpr.apply(scope, in, (start) -> {
 					endExpr.apply(scope, in, (end) -> {
-						if ((JsonNodeUtils.isIntegralNumber(start) || start.isNull())
-								&& (JsonNodeUtils.isIntegralNumber(end) || end.isNull())) {
-							final Long indexBegin = start.isNull() ? null : start.asLong();
-							final Long indexEnd = end.isNull() ? null : end.asLong();
-							emitArrayRangeIndexPath(permissive, indexBegin, indexEnd, pobj, ppath, output, requirePath);
+						if ((start.isNumber() || start.isNull()) && (end.isNumber() || end.isNull())) {
+							emitArrayRangeIndexPath(permissive, start, end, pobj, ppath, output, requirePath);
 						} else {
 							if (!permissive)
 								throw new JsonQueryTypeException("Start and end indices of an %s slice must be numbers", pobj.getNodeType());
@@ -57,8 +53,8 @@ public class BracketFieldAccess extends FieldAccess {
 				});
 			} else { // isRange == false
 				startExpr.apply(scope, in, (accessor) -> {
-					if (JsonNodeUtils.isIntegralNumber(accessor)) {
-						emitArrayIndexPath(permissive, accessor.asLong(), pobj, ppath, output, requirePath);
+					if (accessor.isNumber()) {
+						emitArrayIndexPath(permissive, accessor, pobj, ppath, output, requirePath);
 					} else if (accessor.isTextual()) {
 						emitObjectFieldPath(permissive, accessor.asText(), pobj, ppath, output, requirePath);
 					} else {

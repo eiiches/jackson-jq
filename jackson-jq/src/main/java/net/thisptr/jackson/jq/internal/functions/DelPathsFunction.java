@@ -49,7 +49,7 @@ public class DelPathsFunction implements Function {
 						for (int j = 0; j < oldval.size(); ++j)
 							newval.add(MissingNode.getInstance());
 						return newval;
-					} else if ((path instanceof ArrayIndexPath) && ((ArrayIndexPath) path).index < 0 && version.compareTo(Versions.JQ_1_5) <= 0) {
+					} else if ((path instanceof ArrayIndexPath) && ((ArrayIndexPath) path).index.asDouble() < 0 && version.compareTo(Versions.JQ_1_5) <= 0) {
 						// jq-1.5: [1,2,[1,3]]|delpaths([[-1,1]]) #=> [1,2,[1]]
 						// jq-1.5: [1,2,[1,3]]|delpaths([[-1]]) #=> [1,2,[1,3]]
 						// jq-master: [1,2,[1,3]]|delpaths([[-1]]) #=> [1,2]

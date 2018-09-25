@@ -3,7 +3,6 @@ package net.thisptr.jackson.jq.path;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -20,19 +19,27 @@ import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
 public class ArrayRangeIndexPath implements Path {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
-	public final Long start;
-	public final Long end;
+	public final JsonNode start;
+	public final JsonNode end;
 	private final Path parent;
 
-	public static ArrayRangeIndexPath chainIfNotNull(final Path parent, final Long start, final Long end) {
+	public static ArrayRangeIndexPath chainIfNotNull(final Path parent, final JsonNode start, final JsonNode end) {
 		if (parent == null)
 			return null;
 		return new ArrayRangeIndexPath(parent, start, end);
 	}
 
-	public ArrayRangeIndexPath(final Path parent, final Long start, final Long end) {
+	public ArrayRangeIndexPath(final Path parent, final JsonNode start, final JsonNode end) {
 		if (parent == null)
 			throw new NullPointerException("parent must not be null");
+		if (start == null)
+			throw new NullPointerException("start must not be null");
+		if (end == null)
+			throw new NullPointerException("end must not be null");
+		if (!start.isNumber() && !start.isNull())
+			throw new IllegalArgumentException("start must be java null or json number");
+		if (!end.isNumber() && !end.isNull())
+			throw new IllegalArgumentException("end must be java null or json number");
 		this.parent = parent;
 		this.start = start;
 		this.end = end;
@@ -48,8 +55,8 @@ public class ArrayRangeIndexPath implements Path {
 	@Override
 	public void toJsonNode(final ArrayNode out) throws JsonQueryException {
 		final ObjectNode range = MAPPER.createObjectNode();
-		range.set("start", start == null ? NullNode.getInstance() : LongNode.valueOf(start));
-		range.set("end", end == null ? NullNode.getInstance() : LongNode.valueOf(end));
+		range.set("start", start);
+		range.set("end", end);
 		parent.toJsonNode(out);
 		out.add(range);
 	}
@@ -61,11 +68,13 @@ public class ArrayRangeIndexPath implements Path {
 		}, permissive);
 	}
 
-	private static JsonNode mutate(JsonNode in, final Long start, final Long end, final Mutation mutation) throws JsonQueryException {
+	private static JsonNode mutate(JsonNode in, final JsonNode start, final JsonNode end, final Mutation mutation) throws JsonQueryException {
+		assert start.isNull() || start.isNumber();
+		assert end.isNull() || end.isNumber();
 		if (in == null)
 			in = NullNode.getInstance();
 		if (in.isArray()) {
-			final Range r = new Range(start, end).over(in.size());
+			final Range r = Range.resolve(start, end, in.size());
 			final ArrayNode out = MAPPER.createArrayNode();
 			for (int index = 0; index < r.start; ++index)
 				out.add(in.get(index));
@@ -94,16 +103,18 @@ public class ArrayRangeIndexPath implements Path {
 		}
 	}
 
-	public static void resolve(final JsonNode pobj, final Path ppath, final PathOutput output, final Long start, final Long end, final boolean permissive) throws JsonQueryException {
+	public static void resolve(final JsonNode pobj, final Path ppath, final PathOutput output, final JsonNode start, final JsonNode end, final boolean permissive) throws JsonQueryException {
+		assert start.isNull() || start.isNumber();
+		assert end.isNull() || end.isNumber();
 		if (pobj.isArray()) {
-			final Range r = new Range(start, end).over(pobj.size());
+			final Range r = Range.resolve(start, end, pobj.size());
 			final ArrayNode subarray = MAPPER.createArrayNode();
 			for (long index = r.start; index < r.end; ++index)
 				subarray.add(pobj.get((int) index));
 			output.emit(subarray, ArrayRangeIndexPath.chainIfNotNull(ppath, start, end));
 		} else if (pobj.isTextual()) {
-			final Range r = new Range(start, end).over(UnicodeUtils.lengthUtf32(pobj.textValue()));
-			final TextNode substring = new TextNode(UnicodeUtils.substringUtf32(pobj.textValue(), (int) r.start.longValue(), (int) r.end.longValue()));
+			final Range r = Range.resolve(start, end, UnicodeUtils.lengthUtf32(pobj.textValue()));
+			final TextNode substring = new TextNode(UnicodeUtils.substringUtf32(pobj.textValue(), (int) r.start, (int) r.end));
 			output.emit(substring, ArrayRangeIndexPath.chainIfNotNull(ppath, start, end));
 		} else if (pobj.isNull()) {
 			output.emit(NullNode.getInstance(), ArrayRangeIndexPath.chainIfNotNull(ppath, start, end));
