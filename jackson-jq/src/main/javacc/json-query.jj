@@ -514,8 +514,19 @@ Expression PrimaryExpression():
 	)*
 	(
 		tmp = ThisObjectAccess()
+		(
+			<QUESTION>
+			{ tmp = new TryCatch.Question(tmp); }
+		)*
 	|
 		tmp = VariableAccess()
+		(
+			tmp = FieldAccessor(tmp)
+		)?
+		(
+			<QUESTION>
+			{ tmp = new TryCatch.Question(tmp); }
+		)*
 	|
 		(
 			tmp = ValueLiteral()
@@ -535,6 +546,10 @@ Expression PrimaryExpression():
 		(
 			tmp = FieldAccessor(tmp)
 		)?
+		(
+			<QUESTION>
+			{ tmp = new TryCatch.Question(tmp); }
+		)*
 	|
 		<OPEN_PAR>
 		tmp = Expression()
@@ -545,7 +560,7 @@ Expression PrimaryExpression():
 		(
 			<QUESTION>
 			{ tmp = new TryCatch.Question(tmp); }
-		)?
+		)*
 	|
 		<MINUS>
 		tmp = PrimaryExpression()
@@ -663,11 +678,7 @@ Expression VariableAccess():
 {
 	<DOLLAR>
 	t = <IDENTIFIER>
-	{ tmp = new VariableAccess(t.image); }
-	(
-		tmp = FieldAccessor(tmp)
-	)?
-	{ return tmp; }
+	{ return new VariableAccess(t.image); }
 }
 
 Expression ConditionalExpression():
