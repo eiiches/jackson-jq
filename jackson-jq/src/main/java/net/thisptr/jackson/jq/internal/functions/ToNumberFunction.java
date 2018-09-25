@@ -20,8 +20,12 @@ public class ToNumberFunction implements Function {
 		if (in.isNumber()) {
 			output.emit(in);
 		} else if (in.isTextual()) {
-			final double value = Double.parseDouble(in.asText());
-			output.emit(JsonNodeUtils.asNumericNode(value));
+			try {
+				final double value = Double.parseDouble(in.asText());
+				output.emit(JsonNodeUtils.asNumericNode(value));
+			} catch (final NumberFormatException e) {
+				throw new JsonQueryException(e);
+			}
 		} else {
 			throw JsonQueryException.format("%s cannot be parsed as a number", in.getNodeType());
 		}
