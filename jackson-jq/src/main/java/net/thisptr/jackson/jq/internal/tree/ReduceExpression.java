@@ -35,27 +35,23 @@ public class ReduceExpression implements Expression {
 			// Wrap in array to allow mutation inside lambda
 			final JsonNode[] accumulators = new JsonNode[] { accumulator };
 
-			try {
+			final Scope childScope = Scope.newChildScope(scope);
+			iterExpr.apply(scope, in, (item) -> {
+				final Stack<Pair<String, JsonNode>> stack = new Stack<>();
+				matcher.match(scope, item, (final List<Pair<String, JsonNode>> vars) -> {
+					for (int i = vars.size() - 1; i >= 0; --i) {
+						final Pair<String, JsonNode> var = vars.get(i);
+						childScope.setValue(var._1, var._2);
+					}
 
-				final Scope childScope = Scope.newChildScope(scope);
-				iterExpr.apply(scope, in, (item) -> {
-					final Stack<Pair<String, JsonNode>> stack = new Stack<>();
-					matcher.match(scope, item, (final List<Pair<String, JsonNode>> vars) -> {
-						for (int i = vars.size() - 1; i >= 0; --i) {
-							final Pair<String, JsonNode> var = vars.get(i);
-							childScope.setValue(var._1, var._2);
-						}
+					// We only use the last value from reduce expression.
+					final List<JsonNode> reduceResult = new ArrayList<>();
+					reduceExpr.apply(childScope, accumulators[0], reduceResult::add);
+					accumulators[0] = reduceResult.isEmpty() ? NullNode.getInstance() : reduceResult.get(reduceResult.size() - 1);
+				}, stack, true);
+			});
 
-						// We only use the last value from reduce expression.
-						final List<JsonNode> reduceResult = new ArrayList<>();
-						reduceExpr.apply(childScope, accumulators[0], reduceResult::add);
-						accumulators[0] = reduceResult.isEmpty() ? NullNode.getInstance() : reduceResult.get(reduceResult.size() - 1);
-					}, stack, true);
-				});
-
-			} finally {
-				output.emit(accumulators[0]);
-			}
+			output.emit(accumulators[0]);
 		});
 	}
 
