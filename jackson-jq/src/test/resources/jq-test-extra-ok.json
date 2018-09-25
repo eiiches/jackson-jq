@@ -414,14 +414,14 @@
 		"q": "try (.[]) catch .",
 		"in": null,
 		"out": [
-			"Cannot iterate over null"
+			"Cannot iterate over null (null)"
 		]
 	},
 	{
 		"q": "try (.[]) catch .",
 		"in": 10,
 		"out": [
-			"Cannot iterate over number"
+			"Cannot iterate over number (10)"
 		]
 	},
 	{
@@ -507,25 +507,25 @@
 		"q": "try del(.[]) catch .",
 		"in": null,
 		"out": [
-			"Cannot iterate over null"
+			"Cannot iterate over null (null)"
 		]
 	},
 	{
-		"q": "map(try .[] = 20 catch .)[]",
+		"q": "map(try (.[] = 20) catch .)[]",
 		"in": [
 			"text", false, 10, {"a": 10}, [1, 2, 3], null
 		],
 		"out": [
-			"Cannot iterate over string",
-			"Cannot iterate over boolean",
-			"Cannot iterate over number",
+			"Cannot iterate over string (\"text\")",
+			"Cannot iterate over boolean (false)",
+			"Cannot iterate over number (10)",
 			{"a": 20},
 			[20, 20, 20],
-			"Cannot iterate over null"
+			"Cannot iterate over null (null)"
 		]
 	},
 	{
-		"q": "map(try .[1,2] = 30 catch .)[]",
+		"q": "map(try (.[1,2] = 30) catch .)[]",
 		"in": [
 			"text", false, 10, {"a": 10}, [1, 2, 3], null
 		],
@@ -705,7 +705,8 @@
 			[1, 4], [1, 4],
 			[1, 4],
 			[1, 4], [1, 4]
-		]
+		],
+		"v": "[1.6, 1.6]"
 	},
 	{
 		"q": ".[] | .[0:1]",

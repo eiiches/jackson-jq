@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.misc.MoreExceptions;
 import net.thisptr.jackson.jq.path.ArrayIndexPath;
 import net.thisptr.jackson.jq.path.ArrayRangeIndexPath;
 import net.thisptr.jackson.jq.path.ObjectFieldPath;
@@ -33,7 +34,7 @@ public abstract class FieldAccess implements Expression {
 			throw new JsonQueryException(String.format("Invalid path expression near attempt to iterate through %s", pobj)); // TODO: truncate
 		if (pobj.isNull()) {
 			if (!permissive)
-				throw new JsonQueryException("Cannot iterate over null");
+				throw new JsonQueryException("Cannot iterate over null (null)");
 		} else if (pobj.isArray()) {
 			for (int i = 0; i < pobj.size(); ++i)
 				output.emit(pobj.get(i), ArrayIndexPath.chainIfNotNull(ppath, i));
@@ -45,7 +46,7 @@ public abstract class FieldAccess implements Expression {
 			}
 		} else {
 			if (!permissive)
-				throw JsonQueryException.format("Cannot iterate over %s", pobj.getNodeType());
+				throw new JsonQueryException(MoreExceptions.format("Cannot iterate over %s", pobj));
 		}
 	}
 
