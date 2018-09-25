@@ -116,13 +116,7 @@ public class JsonQueryTest {
 		final ClassLoader classLoader = JsonQueryTest.class.getClassLoader();
 
 		final List<TestCase> testCases = new ArrayList<>();
-		testCases.addAll(loadTestCases(classLoader, "jq-test-manual-ok.json", false));
-		testCases.addAll(loadTestCases(classLoader, "jq-test-manual-ng.json", true));
-		testCases.addAll(loadTestCases(classLoader, "jq-test-all-ok.json", false));
-		testCases.addAll(loadTestCases(classLoader, "jq-test-all-ng.json", true));
 		testCases.addAll(loadTestCases(classLoader, "jq-test-extra-ok.json", false));
-		testCases.addAll(loadTestCases(classLoader, "jq-test-onig-ok.json", false));
-		testCases.addAll(loadTestCases(classLoader, "jq-test-onig-ng.json", true));
 		testCases.addAll(loadTestCasesDirectory(classLoader, "tests", false));
 		testCases.addAll(loadTestCasesDirectory(classLoader, "failing_tests", true));
 

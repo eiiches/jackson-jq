@@ -1,0 +1,984 @@
+# This file is generated from stedolan/jq files. Different license terms apply:
+#
+# jq is copyright (C) 2012 Stephen Dolan
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# jq's documentation (everything found under the docs/ subdirectory in
+# the source tree) is licensed under the Creative Commons CC BY 3.0
+# license, which can be found at:
+#
+#          https://creativecommons.org/licenses/by/3.0/
+#
+- q: '.'
+  in: "Hello, world!"
+  out:
+  - "Hello, world!"
+  v: '[1.5, 1.5]'
+- q: '.foo'
+  in: {"foo": 42, "bar": "less interesting data"}
+  out:
+  - 42
+  v: '[1.5, 1.5]'
+- q: '.foo'
+  in: {"notfoo": true, "alsonotfoo": false}
+  out:
+  - null
+  v: '[1.5, 1.5]'
+- q: '.["foo"]'
+  in: {"foo": 42}
+  out:
+  - 42
+  v: '[1.5, 1.5]'
+- q: '.foo?'
+  in: {"foo": 42, "bar": "less interesting data"}
+  out:
+  - 42
+  v: '[1.5, 1.5]'
+- q: '.foo?'
+  in: {"notfoo": true, "alsonotfoo": false}
+  out:
+  - null
+  v: '[1.5, 1.5]'
+- q: '.["foo"]?'
+  in: {"foo": 42}
+  out:
+  - 42
+  v: '[1.5, 1.5]'
+- q: '[.foo?]'
+  in: [1, 2]
+  out:
+  - []
+  v: '[1.5, 1.5]'
+- q: '.[0]'
+  in: [{"name": "JSON", "good": true}, {"name": "XML", "good": false}]
+  out:
+  - {"name": "JSON", "good": true}
+  v: '[1.5, 1.5]'
+- q: '.[2]'
+  in: [{"name": "JSON", "good": true}, {"name": "XML", "good": false}]
+  out:
+  - null
+  v: '[1.5, 1.5]'
+- q: '.[2:4]'
+  in: ["a", "b", "c", "d", "e"]
+  out:
+  - ["c", "d"]
+  v: '[1.5, 1.5]'
+- q: '.[2:4]'
+  in: "abcdefghi"
+  out:
+  - "cd"
+  v: '[1.5, 1.5]'
+- q: '.[:3]'
+  in: ["a", "b", "c", "d", "e"]
+  out:
+  - ["a", "b", "c"]
+  v: '[1.5, 1.5]'
+- q: '.[-2:]'
+  in: ["a", "b", "c", "d", "e"]
+  out:
+  - ["d", "e"]
+  v: '[1.5, 1.5]'
+- q: '.[-2]'
+  in: [1, 2, 3]
+  out:
+  - 2
+  v: '[1.5, 1.5]'
+- q: '.[]'
+  in: [{"name": "JSON", "good": true}, {"name": "XML", "good": false}]
+  out:
+  - {"name": "JSON", "good": true}
+  - {"name": "XML", "good": false}
+  v: '[1.5, 1.5]'
+- q: '.[]'
+  in: []
+  out: []
+  v: '[1.5, 1.5]'
+- q: '.[]'
+  in: {"a": 1, "b": 1}
+  out:
+  - 1
+  - 1
+  v: '[1.5, 1.5]'
+- q: '.foo, .bar'
+  in: {"foo": 42, "bar": "something else", "baz": true}
+  out:
+  - 42
+  - "something else"
+  v: '[1.5, 1.5]'
+- q: '.user, .projects[]'
+  in: {"user": "stedolan", "projects": ["jq", "wikiflow"]}
+  out:
+  - "stedolan"
+  - "jq"
+  - "wikiflow"
+  v: '[1.5, 1.5]'
+- q: '.[4,2]'
+  in: ["a", "b", "c", "d", "e"]
+  out:
+  - "e"
+  - "c"
+  v: '[1.5, 1.5]'
+- q: '.[] | .name'
+  in: [{"name": "JSON", "good": true}, {"name": "XML", "good": false}]
+  out:
+  - "JSON"
+  - "XML"
+  v: '[1.5, 1.5]'
+- q: '[.user, .projects[]]'
+  in: {"user": "stedolan", "projects": ["jq", "wikiflow"]}
+  out:
+  - ["stedolan", "jq", "wikiflow"]
+  v: '[1.5, 1.5]'
+- q: '{user, title: .titles[]}'
+  in: {"user": "stedolan", "titles": ["JQ Primer", "More JQ"]}
+  out:
+  - {"user": "stedolan", "title": "JQ Primer"}
+  - {"user": "stedolan", "title": "More JQ"}
+  v: '[1.5, 1.5]'
+- q: '{(.user): .titles}'
+  in: {"user": "stedolan", "titles": ["JQ Primer", "More JQ"]}
+  out:
+  - {"stedolan": ["JQ Primer", "More JQ"]}
+  v: '[1.5, 1.5]'
+- q: '.a + 1'
+  in: {"a": 7}
+  out:
+  - 8
+  v: '[1.5, 1.5]'
+- q: '.a + .b'
+  in: {"a": [1, 2], "b": [3, 4]}
+  out:
+  - [1, 2, 3, 4]
+  v: '[1.5, 1.5]'
+- q: '.a + null'
+  in: {"a": 1}
+  out:
+  - 1
+  v: '[1.5, 1.5]'
+- q: '.a + 1'
+  in: {}
+  out:
+  - 1
+  v: '[1.5, 1.5]'
+- q: '{a: 1} + {b: 2} + {c: 3} + {a: 42}'
+  in: null
+  out:
+  - {"a": 42, "b": 2, "c": 3}
+  v: '[1.5, 1.5]'
+- q: '4 - .a'
+  in: {"a": 3}
+  out:
+  - 1
+  v: '[1.5, 1.5]'
+- q: '. - ["xml", "yaml"]'
+  in: ["xml", "yaml", "json"]
+  out:
+  - ["json"]
+  v: '[1.5, 1.5]'
+- q: '10 / . * 3'
+  in: 5
+  out:
+  - 6
+  v: '[1.5, 1.5]'
+- q: '. / ", "'
+  in: "a, b,c,d, e"
+  out:
+  - ["a", "b,c,d", "e"]
+  v: '[1.5, 1.5]'
+- q: '{"k": {"a": 1, "b": 2}} * {"k": {"a": 0,"c": 3}}'
+  in: null
+  out:
+  - {"k": {"a": 0, "b": 2, "c": 3}}
+  v: '[1.5, 1.5]'
+- q: '.[] | (1 / .)?'
+  in: [1, 0, -1]
+  out:
+  - 1
+  - -1
+  v: '[1.5, 1.5]'
+- q: '.[] | length'
+  in: [[1, 2], "string", {"a": 2}, null]
+  out:
+  - 2
+  - 6
+  - 1
+  - 0
+  v: '[1.5, 1.5]'
+- q: 'keys'
+  in: {"abc": 1, "abcd": 2, "Foo": 3}
+  out:
+  - ["Foo", "abc", "abcd"]
+  v: '[1.5, 1.5]'
+- q: 'keys'
+  in: [42, 3, 35]
+  out:
+  - [0, 1, 2]
+  v: '[1.5, 1.5]'
+- q: 'map(has("foo"))'
+  in: [{"foo": 42}, {}]
+  out:
+  - [true, false]
+  v: '[1.5, 1.5]'
+- q: 'map(has(2))'
+  in: [[0, 1], ["a", "b", "c"]]
+  out:
+  - [false, true]
+  v: '[1.5, 1.5]'
+- q: '.[] | in({"foo": 42})'
+  in: ["foo", "bar"]
+  out:
+  - true
+  - false
+  v: '[1.5, 1.5]'
+- q: 'map(in([0,1]))'
+  in: [2, 0]
+  out:
+  - [false, true]
+  v: '[1.5, 1.5]'
+- q: 'path(.a[0].b)'
+  in: null
+  out:
+  - ["a", 0, "b"]
+  v: '[1.5, 1.5]'
+- q: '[path(..)]'
+  in: {"a": [{"b": 1}]}
+  out:
+  - [[], ["a"], ["a", 0], ["a", 0, "b"]]
+  v: '[1.5, 1.5]'
+- q: 'del(.foo)'
+  in: {"foo": 42, "bar": 9001, "baz": 42}
+  out:
+  - {"bar": 9001, "baz": 42}
+  v: '[1.5, 1.5]'
+- q: 'del(.[1, 2])'
+  in: ["foo", "bar", "baz"]
+  out:
+  - ["foo"]
+  v: '[1.5, 1.5]'
+- q: 'to_entries'
+  in: {"a": 1, "b": 2}
+  out:
+  - [{"key": "a", "value": 1}, {"key": "b", "value": 2}]
+  v: '[1.5, 1.5]'
+- q: 'from_entries'
+  in: [{"key": "a", "value": 1}, {"key": "b", "value": 2}]
+  out:
+  - {"a": 1, "b": 2}
+  v: '[1.5, 1.5]'
+- q: 'with_entries(.key |= "KEY_" + .)'
+  in: {"a": 1, "b": 2}
+  out:
+  - {"KEY_a": 1, "KEY_b": 2}
+  v: '[1.5, 1.5]'
+- q: 'map(select(. >= 2))'
+  in: [1, 5, 3, 0, 7]
+  out:
+  - [5, 3, 7]
+  v: '[1.5, 1.5]'
+- q: '.[] | select(.id == "second")'
+  in: [{"id": "first", "val": 1}, {"id": "second", "val": 2}]
+  out:
+  - {"id": "second", "val": 2}
+  v: '[1.5, 1.5]'
+- q: '.[]|numbers'
+  in: [[], {}, 1, "foo", null, true, false]
+  out:
+  - 1
+  v: '[1.5, 1.5]'
+- q: '1, empty, 2'
+  in: null
+  out:
+  - 1
+  - 2
+  v: '[1.5, 1.5]'
+- q: '[1,2,empty,3]'
+  in: null
+  out:
+  - [1, 2, 3]
+  v: '[1.5, 1.5]'
+- q: 'try error("\($__loc__)") catch .'
+  in: null
+  out:
+  - "{\"file\":\"<top-level>\",\"line\":1}"
+  v: '[1.5, 1.5]'
+  failing: true
+- q: 'map(.+1)'
+  in: [1, 2, 3]
+  out:
+  - [2, 3, 4]
+  v: '[1.5, 1.5]'
+- q: 'map_values(.+1)'
+  in: {"a": 1, "b": 2, "c": 3}
+  out:
+  - {"a": 2, "b": 3, "c": 4}
+  v: '[1.5, 1.5]'
+- q: '[paths]'
+  in: [1, [[], {"a": 2}]]
+  out:
+  - [[0], [1], [1, 0], [1, 1], [1, 1, "a"]]
+  v: '[1.5, 1.5]'
+- q: '[paths(scalars)]'
+  in: [1, [[], {"a": 2}]]
+  out:
+  - [[0], [1, 1, "a"]]
+  v: '[1.5, 1.5]'
+- q: 'add'
+  in: ["a", "b", "c"]
+  out:
+  - "abc"
+  v: '[1.5, 1.5]'
+- q: 'add'
+  in: [1, 2, 3]
+  out:
+  - 6
+  v: '[1.5, 1.5]'
+- q: 'add'
+  in: []
+  out:
+  - null
+  v: '[1.5, 1.5]'
+- q: 'any'
+  in: [true, false]
+  out:
+  - true
+  v: '[1.5, 1.5]'
+- q: 'any'
+  in: [false, false]
+  out:
+  - false
+  v: '[1.5, 1.5]'
+- q: 'any'
+  in: []
+  out:
+  - false
+  v: '[1.5, 1.5]'
+- q: 'all'
+  in: [true, false]
+  out:
+  - false
+  v: '[1.5, 1.5]'
+- q: 'all'
+  in: [true, true]
+  out:
+  - true
+  v: '[1.5, 1.5]'
+- q: 'all'
+  in: []
+  out:
+  - true
+  v: '[1.5, 1.5]'
+- q: 'flatten'
+  in: [1, [2], [[3]]]
+  out:
+  - [1, 2, 3]
+  v: '[1.5, 1.5]'
+- q: 'flatten(1)'
+  in: [1, [2], [[3]]]
+  out:
+  - [1, 2, [3]]
+  v: '[1.5, 1.5]'
+- q: 'flatten'
+  in: [[]]
+  out:
+  - []
+  v: '[1.5, 1.5]'
+- q: 'flatten'
+  in: [{"foo": "bar"}, [{"foo": "baz"}]]
+  out:
+  - [{"foo": "bar"}, {"foo": "baz"}]
+  v: '[1.5, 1.5]'
+- q: 'range(2;4)'
+  in: null
+  out:
+  - 2
+  - 3
+  v: '[1.5, 1.5]'
+- q: '[range(2;4)]'
+  in: null
+  out:
+  - [2, 3]
+  v: '[1.5, 1.5]'
+- q: '[range(4)]'
+  in: null
+  out:
+  - [0, 1, 2, 3]
+  v: '[1.5, 1.5]'
+- q: '[range(0;10;3)]'
+  in: null
+  out:
+  - [0, 3, 6, 9]
+  v: '[1.5, 1.5]'
+- q: '[range(0;10;-1)]'
+  in: null
+  out:
+  - []
+  v: '[1.5, 1.5]'
+- q: '[range(0;-5;-1)]'
+  in: null
+  out:
+  - [0, -1, -2, -3, -4]
+  v: '[1.5, 1.5]'
+- q: 'floor'
+  in: 3.14159
+  out:
+  - 3
+  v: '[1.5, 1.5]'
+- q: 'sqrt'
+  in: 9
+  out:
+  - 3
+  v: '[1.5, 1.5]'
+- q: '.[] | tonumber'
+  in: [1, "1"]
+  out:
+  - 1
+  - 1
+  v: '[1.5, 1.5]'
+- q: '.[] | tostring'
+  in: [1, "1", [1]]
+  out:
+  - "1"
+  - "1"
+  - "[1]"
+  v: '[1.5, 1.5]'
+- q: 'map(type)'
+  in: [0, false, [], {}, null, "hello"]
+  out:
+  - ["number", "boolean", "array", "object", "null", "string"]
+  v: '[1.5, 1.5]'
+- q: '.[] | (infinite * .) < 0'
+  in: [-1, 1]
+  out:
+  - true
+  - false
+  v: '[1.5, 1.5]'
+- q: 'infinite, nan | type'
+  in: null
+  out:
+  - "number"
+  - "number"
+  v: '[1.5, 1.5]'
+- q: 'sort'
+  in: [8, 3, null, 6]
+  out:
+  - [null, 3, 6, 8]
+  v: '[1.5, 1.5]'
+- q: 'sort_by(.foo)'
+  in: [{"foo": 4, "bar": 10}, {"foo": 3, "bar": 100}, {"foo": 2, "bar": 1}]
+  out:
+  - [{"foo": 2, "bar": 1}, {"foo": 3, "bar": 100}, {"foo": 4, "bar": 10}]
+  v: '[1.5, 1.5]'
+- q: 'group_by(.foo)'
+  in: [{"foo": 1, "bar": 10}, {"foo": 3, "bar": 100}, {"foo": 1, "bar": 1}]
+  out:
+  - [[{"foo": 1, "bar": 10}, {"foo": 1, "bar": 1}], [{"foo": 3, "bar": 100}]]
+  v: '[1.5, 1.5]'
+- q: 'min'
+  in: [5, 4, 2, 7]
+  out:
+  - 2
+  v: '[1.5, 1.5]'
+- q: 'max_by(.foo)'
+  in: [{"foo": 1, "bar": 14}, {"foo": 2, "bar": 3}]
+  out:
+  - {"foo": 2, "bar": 3}
+  v: '[1.5, 1.5]'
+- q: 'unique'
+  in: [1, 2, 5, 3, 5, 3, 1, 3]
+  out:
+  - [1, 2, 3, 5]
+  v: '[1.5, 1.5]'
+- q: 'unique_by(.foo)'
+  in: [{"foo": 1, "bar": 2}, {"foo": 1, "bar": 3}, {"foo": 4, "bar": 5}]
+  out:
+  - [{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]
+  v: '[1.5, 1.5]'
+- q: 'unique_by(length)'
+  in: ["chunky", "bacon", "kitten", "cicada", "asparagus"]
+  out:
+  - ["bacon", "chunky", "asparagus"]
+  v: '[1.5, 1.5]'
+- q: 'reverse'
+  in: [1, 2, 3, 4]
+  out:
+  - [4, 3, 2, 1]
+  v: '[1.5, 1.5]'
+- q: 'contains("bar")'
+  in: "foobar"
+  out:
+  - true
+  v: '[1.5, 1.5]'
+- q: 'contains(["baz", "bar"])'
+  in: ["foobar", "foobaz", "blarp"]
+  out:
+  - true
+  v: '[1.5, 1.5]'
+- q: 'contains(["bazzzzz", "bar"])'
+  in: ["foobar", "foobaz", "blarp"]
+  out:
+  - false
+  v: '[1.5, 1.5]'
+- q: 'contains({foo: 12, bar: [{barp: 12}]})'
+  in: {"foo": 12, "bar": [1, 2, {"barp": 12, "blip": 13}]}
+  out:
+  - true
+  v: '[1.5, 1.5]'
+- q: 'contains({foo: 12, bar: [{barp: 15}]})'
+  in: {"foo": 12, "bar": [1, 2, {"barp": 12, "blip": 13}]}
+  out:
+  - false
+  v: '[1.5, 1.5]'
+- q: 'indices(", ")'
+  in: "a,b, cd, efg, hijk"
+  out:
+  - [3, 7, 12]
+  v: '[1.5, 1.5]'
+- q: 'indices(1)'
+  in: [0, 1, 2, 1, 3, 1, 4]
+  out:
+  - [1, 3, 5]
+  v: '[1.5, 1.5]'
+- q: 'indices([1,2])'
+  in: [0, 1, 2, 3, 1, 4, 2, 5, 1, 2, 6, 7]
+  out:
+  - [1, 8]
+  v: '[1.5, 1.5]'
+- q: 'index(", ")'
+  in: "a,b, cd, efg, hijk"
+  out:
+  - 3
+  v: '[1.5, 1.5]'
+- q: 'rindex(", ")'
+  in: "a,b, cd, efg, hijk"
+  out:
+  - 12
+  v: '[1.5, 1.5]'
+- q: 'inside("foobar")'
+  in: "bar"
+  out:
+  - true
+  v: '[1.5, 1.5]'
+- q: 'inside(["foobar", "foobaz", "blarp"])'
+  in: ["baz", "bar"]
+  out:
+  - true
+  v: '[1.5, 1.5]'
+- q: 'inside(["foobar", "foobaz", "blarp"])'
+  in: ["bazzzzz", "bar"]
+  out:
+  - false
+  v: '[1.5, 1.5]'
+- q: 'inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})'
+  in: {"foo": 12, "bar": [{"barp": 12}]}
+  out:
+  - true
+  v: '[1.5, 1.5]'
+- q: 'inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})'
+  in: {"foo": 12, "bar": [{"barp": 15}]}
+  out:
+  - false
+  v: '[1.5, 1.5]'
+- q: '[.[]|startswith("foo")]'
+  in: ["fo", "foo", "barfoo", "foobar", "barfoob"]
+  out:
+  - [false, true, false, true, false]
+  v: '[1.5, 1.5]'
+- q: '[.[]|endswith("foo")]'
+  in: ["foobar", "barfoo"]
+  out:
+  - [false, true]
+  v: '[1.5, 1.5]'
+- q: 'combinations'
+  in: [[1, 2], [3, 4]]
+  out:
+  - [1, 3]
+  - [1, 4]
+  - [2, 3]
+  - [2, 4]
+  v: '[1.5, 1.5]'
+- q: 'combinations(2)'
+  in: [0, 1]
+  out:
+  - [0, 0]
+  - [0, 1]
+  - [1, 0]
+  - [1, 1]
+  v: '[1.5, 1.5]'
+- q: '[.[]|ltrimstr("foo")]'
+  in: ["fo", "foo", "barfoo", "foobar", "afoo"]
+  out:
+  - ["fo", "", "barfoo", "bar", "afoo"]
+  v: '[1.5, 1.5]'
+- q: '[.[]|rtrimstr("foo")]'
+  in: ["fo", "foo", "barfoo", "foobar", "foob"]
+  out:
+  - ["fo", "", "bar", "foobar", "foob"]
+  v: '[1.5, 1.5]'
+- q: 'explode'
+  in: "foobar"
+  out:
+  - [102, 111, 111, 98, 97, 114]
+  v: '[1.5, 1.5]'
+- q: 'implode'
+  in: [65, 66, 67]
+  out:
+  - "ABC"
+  v: '[1.5, 1.5]'
+- q: 'split(", ")'
+  in: "a, b,c,d, e, "
+  out:
+  - ["a", "b,c,d", "e", ""]
+  v: '[1.5, 1.5]'
+- q: 'join(", ")'
+  in: ["a", "b,c,d", "e"]
+  out:
+  - "a, b,c,d, e"
+  v: '[1.5, 1.5]'
+- q: '[while(.<100; .*2)]'
+  in: 1
+  out:
+  - [1, 2, 4, 8, 16, 32, 64]
+  v: '[1.5, 1.5]'
+- q: '[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]'
+  in: 4
+  out:
+  - 24
+  v: '[1.5, 1.5]'
+- q: 'recurse(.foo[])'
+  in: {"foo": [{"foo": []}, {"foo": [{"foo": []}]}]}
+  out:
+  - {"foo": [{"foo": []}, {"foo": [{"foo": []}]}]}
+  - {"foo": []}
+  - {"foo": [{"foo": []}]}
+  - {"foo": []}
+  v: '[1.5, 1.5]'
+- q: 'recurse'
+  in: {"a": 0, "b": [1]}
+  out:
+  - {"a": 0, "b": [1]}
+  - 0
+  - [1]
+  - 1
+  v: '[1.5, 1.5]'
+- q: 'recurse(. * .; . < 20)'
+  in: 2
+  out:
+  - 2
+  - 4
+  - 16
+  v: '[1.5, 1.5]'
+- q: '..|.a?'
+  in: [[{"a": 1}]]
+  out:
+  - 1
+  v: '[1.5, 1.5]'
+- q: 'env.PAGER'
+  in: null
+  out:
+  - "less"
+  v: '[1.5, 1.5]'
+  failing: true
+- q: 'transpose'
+  in: [[1], [2, 3]]
+  out:
+  - [[1, 2], [null, 3]]
+  v: '[1.5, 1.5]'
+- q: 'bsearch(0)'
+  in: [0, 1]
+  out:
+  - 0
+  v: '[1.5, 1.5]'
+  failing: true
+- q: 'bsearch(0)'
+  in: [1, 2, 3]
+  out:
+  - -1
+  v: '[1.5, 1.5]'
+  failing: true
+- q: 'bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end'
+  in: [1, 2, 3]
+  out:
+  - [1, 2, 3, 4]
+  v: '[1.5, 1.5]'
+  failing: true
+- q: '"The input was \(.), which is one less than \(.+1)"'
+  in: 42
+  out:
+  - "The input was 42, which is one less than 43"
+  v: '[1.5, 1.5]'
+- q: '[.[]|tostring]'
+  in: [1, "foo", ["foo"]]
+  out:
+  - ["1", "foo", "[\"foo\"]"]
+  v: '[1.5, 1.5]'
+- q: '[.[]|tojson]'
+  in: [1, "foo", ["foo"]]
+  out:
+  - ["1", "\"foo\"", "[\"foo\"]"]
+  v: '[1.5, 1.5]'
+- q: '[.[]|tojson|fromjson]'
+  in: [1, "foo", ["foo"]]
+  out:
+  - [1, "foo", ["foo"]]
+  v: '[1.5, 1.5]'
+- q: '@html'
+  in: "This works if x < y"
+  out:
+  - "This works if x &lt; y"
+  v: '[1.5, 1.5]'
+- q: '@sh "echo \(.)"'
+  in: "O'Hara's Ale"
+  out:
+  - "echo 'O'\\''Hara'\\''s Ale'"
+  v: '[1.5, 1.5]'
+- q: 'fromdate'
+  in: "2015-03-05T23:51:47Z"
+  out:
+  - 1425599507
+  v: '[1.5, 1.5]'
+  failing: true
+- q: 'strptime("%Y-%m-%dT%H:%M:%SZ")'
+  in: "2015-03-05T23:51:47Z"
+  out:
+  - [2015, 2, 5, 23, 51, 47, 4, 63]
+  v: '[1.5, 1.5]'
+  failing: true
+- q: 'strptime("%Y-%m-%dT%H:%M:%SZ")|mktime'
+  in: "2015-03-05T23:51:47Z"
+  out:
+  - 1425599507
+  v: '[1.5, 1.5]'
+  failing: true
+- q: '.[] == 1'
+  in: [1, 1.0, "1", "banana"]
+  out:
+  - true
+  - true
+  - false
+  - false
+  v: '[1.5, 1.5]'
+- q: "if . == 0 then\n  \"zero\"\nelif . == 1 then\n  \"one\"\nelse\n  \"many\"\nend"
+  in: 2
+  out:
+  - "many"
+  v: '[1.5, 1.5]'
+- q: '. < 5'
+  in: 2
+  out:
+  - true
+  v: '[1.5, 1.5]'
+- q: '42 and "a string"'
+  in: null
+  out:
+  - true
+  v: '[1.5, 1.5]'
+- q: '(true, false) or false'
+  in: null
+  out:
+  - true
+  - false
+  v: '[1.5, 1.5]'
+- q: '(true, true) and (true, false)'
+  in: null
+  out:
+  - true
+  - false
+  - true
+  - false
+  v: '[1.5, 1.5]'
+- q: '[true, false | not]'
+  in: null
+  out:
+  - [false, true]
+  v: '[1.5, 1.5]'
+- q: '.foo // 42'
+  in: {"foo": 19}
+  out:
+  - 19
+  v: '[1.5, 1.5]'
+- q: '.foo // 42'
+  in: {}
+  out:
+  - 42
+  v: '[1.5, 1.5]'
+- q: 'try .a catch ". is not an object"'
+  in: true
+  out:
+  - ". is not an object"
+  v: '[1.5, 1.5]'
+- q: '[.[]|try .a]'
+  in: [{}, true, {"a": 1}]
+  out:
+  - [null, 1]
+  v: '[1.5, 1.5]'
+- q: 'try error("some exception") catch .'
+  in: true
+  out:
+  - "some exception"
+  v: '[1.5, 1.5]'
+- q: '[.[]|(.a)?]'
+  in: [{}, true, {"a": 1}]
+  out:
+  - [null, 1]
+  v: '[1.5, 1.5]'
+- q: 'test("foo")'
+  in: "foo"
+  out:
+  - true
+  v: '[1.5, 1.5]'
+- q: '.[] | test("a b c # spaces are ignored"; "ix")'
+  in: ["xabcd", "ABC"]
+  out:
+  - true
+  - true
+  v: '[1.5, 1.5]'
+- q: 'match("(abc)+"; "g")'
+  in: "abc abc"
+  out:
+  - {"offset": 0, "length": 3, "string": "abc", "captures": [{"offset": 0, "length": 3, "string": "abc", "name": null}]}
+  - {"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}
+  v: '[1.5, 1.5]'
+- q: 'match("foo")'
+  in: "foo bar foo"
+  out:
+  - {"offset": 0, "length": 3, "string": "foo", "captures": []}
+  v: '[1.5, 1.5]'
+- q: 'match(["foo", "ig"])'
+  in: "foo bar FOO"
+  out:
+  - {"offset": 0, "length": 3, "string": "foo", "captures": []}
+  - {"offset": 8, "length": 3, "string": "FOO", "captures": []}
+  v: '[1.5, 1.5]'
+- q: 'match("foo (?<bar123>bar)? foo"; "ig")'
+  in: "foo bar foo foo  foo"
+  out:
+  - {"offset": 0, "length": 11, "string": "foo bar foo", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]}
+  - {"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": -1, "length": 0, "string": null, "name": "bar123"}]}
+  v: '[1.5, 1.5]'
+- q: '[ match("."; "g")] | length'
+  in: "abc"
+  out:
+  - 3
+  v: '[1.5, 1.5]'
+- q: 'capture("(?<a>[a-z]+)-(?<n>[0-9]+)")'
+  in: "xyzzy-14"
+  out:
+  - {"a": "xyzzy", "n": "14"}
+  v: '[1.5, 1.5]'
+- q: '.bar as $x | .foo | . + $x'
+  in: {"foo": 10, "bar": 200}
+  out:
+  - 210
+  v: '[1.5, 1.5]'
+- q: '. as $i|[(.*2|. as $i| $i), $i]'
+  in: 5
+  out:
+  - [10, 5]
+  v: '[1.5, 1.5]'
+- q: '. as [$a, $b, {c: $c}] | $a + $b + $c'
+  in: [2, 3, {"c": 4, "d": 5}]
+  out:
+  - 9
+  v: '[1.5, 1.5]'
+- q: '.[] as [$a, $b] | {a: $a, b: $b}'
+  in: [[0], [0, 1], [2, 1, 0]]
+  out:
+  - {"a": 0, "b": null}
+  - {"a": 0, "b": 1}
+  - {"a": 2, "b": 1}
+  v: '[1.5, 1.5]'
+- q: 'def addvalue(f): . + [f]; map(addvalue(.[0]))'
+  in: [[1, 2], [10, 20]]
+  out:
+  - [[1, 2, 1], [10, 20, 10]]
+  v: '[1.5, 1.5]'
+- q: 'def addvalue(f): f as $x | map(. + $x); addvalue(.[0])'
+  in: [[1, 2], [10, 20]]
+  out:
+  - [[1, 2, 1, 2], [10, 20, 1, 2]]
+  v: '[1.5, 1.5]'
+- q: 'reduce .[] as $item (0; . + $item)'
+  in: [10, 2, 5, 3]
+  out:
+  - 20
+  v: '[1.5, 1.5]'
+- q: '[limit(3;.[])]'
+  in: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  out:
+  - [0, 1, 2]
+  v: '[1.5, 1.5]'
+- q: '[first(range(.)), last(range(.)), nth(./2; range(.))]'
+  in: 10
+  out:
+  - [0, 9, 5]
+  v: '[1.5, 1.5]'
+- q: '[range(.)]|[first, last, nth(5)]'
+  in: 10
+  out:
+  - [0, 9, 5]
+  v: '[1.5, 1.5]'
+- q: '[foreach .[] as $item ([[],[]]; if $item == null then [[],.[0]] else [(.[0] + [$item]),[]] end; if $item == null then .[1] else empty end)]'
+  in: [1, 2, 3, 4, null, "a", "b", null]
+  out:
+  - [[1, 2, 3, 4], ["a", "b"]]
+  v: '[1.5, 1.5]'
+- q: 'def range(init; upto; by): def _range: if (by > 0 and . < upto) or (by < 0 and . > upto) then ., ((.+by)|_range) else . end; if by == 0 then init else init|_range end | select((by > 0 and . < upto) or (by < 0 and . > upto)); range(0; 10; 3)'
+  in: null
+  out:
+  - 0
+  - 3
+  - 6
+  - 9
+  v: '[1.5, 1.5]'
+- q: 'def while(cond; update): def _while: if cond then ., (update | _while) else empty end; _while; [while(.<100; .*2)]'
+  in: 1
+  out:
+  - [1, 2, 4, 8, 16, 32, 64]
+  v: '[1.5, 1.5]'
+- q: '[1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])]'
+  in: 1
+  out:
+  - [[[0], 2], [[0]]]
+  v: '[1.5, 1.5]'
+  failing: true
+- q: 'fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))'
+  in: null
+  out:
+  - [2]
+  v: '[1.5, 1.5]'
+  failing: true
+- q: '. as $dot|fromstream($dot|tostream)|.==$dot'
+  in: [0, [1, {"a": 1}, {"b": 2}]]
+  out:
+  - true
+  v: '[1.5, 1.5]'
+  failing: true
+- q: '(..|select(type=="boolean")) |= if . then 1 else 0 end'
+  in: [true, false, [5, true, [true, [false]], false]]
+  out:
+  - [1, 0, [5, 1, [1, [0]], 0]]
+  v: '[1.5, 1.5]'
+- q: '.foo += 1'
+  in: {"foo": 42}
+  out:
+  - {"foo": 43}
+  v: '[1.5, 1.5]'
