@@ -1,0 +1,15 @@
+- q: 'startswith(empty)'
+  out: []
+  v: '[1.5,1.5]'
+- q: 'startswith(.)'
+  in: foo
+  out:
+  - true
+  v: '[1.5,1.5]'
+- q: 'try startswith("foo") catch .'
+  out:
+  - startswith() requires string inputs
+- q: 'try startswith(1) catch .'
+  in: foo
+  out:
+  - startswith() requires string inputs
