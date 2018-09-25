@@ -470,7 +470,7 @@
 		"q": "try tonumber catch .",
 		"in": false,
 		"out": [
-			"boolean cannot be parsed as a number"
+			"boolean (false) cannot be parsed as a number"
 		]
 	},
 	{
