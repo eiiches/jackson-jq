@@ -463,7 +463,7 @@
 		"q": "try length catch .",
 		"in": true,
 		"out": [
-			"boolean has no length"
+			"boolean (true) has no length"
 		]
 	},
 	{

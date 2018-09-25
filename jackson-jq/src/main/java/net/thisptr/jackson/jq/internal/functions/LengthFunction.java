@@ -11,6 +11,7 @@ import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
@@ -32,7 +33,7 @@ public class LengthFunction implements Function {
 		} else if (in.isNumber()) {
 			return JsonNodeUtils.asNumericNode(Math.abs(in.asDouble()));
 		} else {
-			throw JsonQueryException.format("%s has no length", in.getNodeType());
+			throw new JsonQueryTypeException("%s has no length", in);
 		}
 	}
 }
