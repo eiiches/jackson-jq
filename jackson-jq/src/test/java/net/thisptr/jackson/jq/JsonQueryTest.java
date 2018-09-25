@@ -1,8 +1,7 @@
 package net.thisptr.jackson.jq;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,30 +12,26 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.reflect.ClassPath;
 import com.google.common.reflect.ClassPath.ResourceInfo;
 
 import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
+import net.thisptr.jackson.jq.internal.misc.VersionRangeDeserializer;
+import net.thisptr.jackson.jq.test.evaluator.TrueJqEvaluator;
+import net.thisptr.jackson.jq.test.misc.ComparableJsonNode;
 
 public class JsonQueryTest {
-	private static final Logger LOG = LoggerFactory.getLogger(JsonQueryTest.class);
-
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 	private static final ObjectMapper YAML_MAPPER = new YAMLMapper();
 
@@ -60,6 +55,7 @@ public class JsonQueryTest {
 		@JsonProperty("should_compile")
 		public boolean shouldCompile = true;
 
+		@JsonInclude(Include.NON_NULL)
 		@JsonProperty("v")
 		@JsonDeserialize(using = VersionRangeDeserializer.class)
 		@JsonSerialize(using = ToStringSerializer.class)
@@ -68,22 +64,6 @@ public class JsonQueryTest {
 		@Override
 		public String toString() {
 			return String.format("jq '%s' <<< '%s' # should be %s, version = %s.", q, in, out, version != null ? version : "any");
-		}
-	}
-
-	public static class VersionRangeDeserializer extends StdDeserializer<VersionRange> {
-		private static final long serialVersionUID = -4054473248484615401L;
-
-		public VersionRangeDeserializer() {
-			super(VersionRange.class);
-		}
-
-		@Override
-		public VersionRange deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException, JsonProcessingException {
-			final String text = p.readValueAs(String.class);
-			if (text == null)
-				return null;
-			return VersionRange.valueOf(text);
 		}
 	}
 
@@ -147,8 +127,13 @@ public class JsonQueryTest {
 		});
 	}
 
+	private static List<ComparableJsonNode> wrap(final List<JsonNode> values) {
+		return ComparableJsonNode.wrap(values);
+	}
+
 	private void test(final TestCase tc, final Version version) throws Throwable {
-		LOG.info("Running test ({}): {}", tc.file, tc.toString().replace('\n', ' '));
+		final Scope scope = DefaultRootScope.getInstance(version);
+		final String command = String.format("%s '%s' <<< '%s'", TrueJqEvaluator.executable(version), tc.q, tc.in);
 
 		if (!tc.shouldCompile) {
 			assertThrows(JsonQueryException.class, () -> JsonQuery.compile(tc.q, version));
@@ -158,59 +143,28 @@ public class JsonQueryTest {
 		boolean failed = false;
 		try {
 			final JsonQuery q = JsonQuery.compile(tc.q, version);
+			assertThat(wrap(q.apply(scope, tc.in))).as("%s", command).isEqualTo(wrap(tc.out));
+
+			// JsonQuery.compile($.toString()).toString() === $.toString()
 			final String s1 = q.toString();
-
-			try {
-				final String s2 = JsonQuery.compile(s1, version).toString();
-				assertEquals(s1, s2);
-			} catch (Throwable e) {
-				LOG.error(" * toString() generated unparsable or incosistent query: {}", s1);
-				throw e;
-			}
-
-			final List<JsonNode> actual = q.apply(DefaultRootScope.getInstance(version), tc.in);
-			final List<JsonNode> expected = tc.out;
-
-			if (actual.size() != expected.size()) {
-				LOG.error(" * {} (actual) != {} (expected)", actual, expected);
-				LOG.error(" * Expected length of {}, but got {}.", expected.size(), actual.size());
-			}
-			assertEquals(actual.size(), expected.size());
-			for (int i = 0; i < actual.size(); ++i) {
-				final int r = new JsonNodeComparator().compare(actual.get(i), expected.get(i));
-				if (r != 0) {
-					LOG.error(" * {} (actual) != {} (expected)", actual, expected);
-					LOG.error(" * The {}'th element does not match: {} (actual) != {} (expected).", i, actual.get(i), expected.get(i));
-				}
-				assertTrue(r == 0, "0");
-			}
+			final String s2 = JsonQuery.compile(s1, version).toString();
+			assertThat(s2).as("inconsistent tostring: %s", command).isEqualTo(s1);
 
 			// JsonQuery.compile($.toString()).apply(in) === $.apply(in)
-			final JsonQuery q2 = JsonQuery.compile(s1, version);
-			final List<JsonNode> actual2 = q2.apply(DefaultRootScope.getInstance(version), tc.in);
-			if (actual.size() != actual2.size()) {
-				LOG.error(" * The contract JsonQuery.compile($.toString()).apply(in) != $.apply(in) violated: {} != {} (original)", s1, tc.q);
-				LOG.error(" * {} (actual) != {} (actual2)", actual, actual2);
-				LOG.error(" * Expected length of {}, but got {}.", actual.size(), actual2.size());
-			}
-			assertEquals(actual.size(), actual2.size(), "The contract JsonQuery.compile($.toString()).apply(in) != $.apply(in) violated.");
-			for (int i = 0; i < actual.size(); ++i) {
-				final int r = new JsonNodeComparator().compare(actual.get(i), actual2.get(i));
-				if (r != 0) {
-					LOG.error(" * The contract JsonQuery.compile($.toString()).apply(in) != $.apply(in) violated: {} != {} (original)", s1, tc.q);
-					LOG.error(" * {} (actual) != {} (actual2)", actual, actual2);
-					LOG.error(" * The {}'th element does not match: {} (actual) != {} (actual2).", i, actual.get(i), actual2.get(i));
-				}
-				assertTrue(r == 0, "The contract JsonQuery.compile($.toString()).apply(in) != $.apply(in) violated.");
-			}
+			final JsonQuery q1 = JsonQuery.compile(s1, version);
+			assertThat(wrap(q1.apply(scope, tc.in))).as("bad tostring: %s", command).isEqualTo(wrap(tc.out));
 		} catch (final Throwable e) {
 			failed = true;
-			LOG.error(" * Failed with: {}", e.getMessage());
-			if (!tc.failing)
+			if (!tc.failing) {
+				if (e instanceof AssertionError)
+					throw e;
+				e.addSuppressed(new RuntimeException("NOTE: " + command));
 				throw e;
+			}
 		}
 
-		assertEquals(tc.failing, failed, "marked failing but succeeded");
+		if (tc.failing)
+			assertThat(failed).describedAs("unexpectedly succeeded").isTrue();
 	}
 
 	@ParameterizedTest
