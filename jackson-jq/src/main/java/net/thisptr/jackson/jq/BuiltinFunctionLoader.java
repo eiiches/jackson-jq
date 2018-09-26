@@ -60,7 +60,7 @@ public class BuiltinFunctionLoader {
 	public Map<String, Function> loadFunctions(final ClassLoader classLoader, final Version version, final Scope closureScope) {
 		final Map<String, Function> functions = new HashMap<>();
 		loadMacros(functions, classLoader, version, closureScope);
-		loadBuiltinFunctions(functions, classLoader);
+		loadBuiltinFunctions(functions, version, classLoader);
 		return functions;
 	}
 
@@ -78,11 +78,16 @@ public class BuiltinFunctionLoader {
 		return result;
 	}
 
-	private void loadBuiltinFunctions(final Map<String, Function> functions, final ClassLoader classLoader) {
+	private void loadBuiltinFunctions(final Map<String, Function> functions, final Version version, final ClassLoader classLoader) {
 		for (final Function fn : ServiceLoader.load(Function.class, classLoader)) {
 			final BuiltinFunction annotation = fn.getClass().getAnnotation(BuiltinFunction.class);
 			if (annotation == null)
 				continue;
+			if (!annotation.version().isEmpty()) {
+				final VersionRange range = VersionRange.valueOf(annotation.version());
+				if (!range.contains(version))
+					continue;
+			}
 			for (final String name : annotation.value())
 				functions.put(name, fn);
 		}
