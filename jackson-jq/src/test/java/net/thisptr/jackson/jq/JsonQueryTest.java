@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
@@ -8,6 +9,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,6 +31,7 @@ import com.google.common.reflect.ClassPath.ResourceInfo;
 
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.VersionRangeDeserializer;
+import net.thisptr.jackson.jq.test.evaluator.Evaluator.Result;
 import net.thisptr.jackson.jq.test.evaluator.TrueJqEvaluator;
 import net.thisptr.jackson.jq.test.misc.ComparableJsonNode;
 
@@ -127,6 +131,8 @@ public class JsonQueryTest {
 		});
 	}
 
+	private static Map<Version, Boolean> hasJqCache = new ConcurrentHashMap<>();
+
 	private static List<ComparableJsonNode> wrap(final List<JsonNode> values) {
 		return ComparableJsonNode.wrap(values);
 	}
@@ -138,6 +144,12 @@ public class JsonQueryTest {
 		if (!tc.shouldCompile) {
 			assertThrows(JsonQueryException.class, () -> JsonQuery.compile(tc.q, version));
 			return;
+		}
+
+		if (hasJqCache.computeIfAbsent(version, v -> TrueJqEvaluator.hasJq(v))) {
+			final Result result = new TrueJqEvaluator().evaluate(tc.q, tc.in, version, 2000L);
+			assumeThat(result.error).as("%s", command).isNull();
+			assumeThat(wrap(tc.out)).as("%s", command).isEqualTo(wrap(result.values));
 		}
 
 		boolean failed = false;
