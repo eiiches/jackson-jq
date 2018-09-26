@@ -6,6 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.fasterxml.jackson.databind.node.NullNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -23,7 +24,12 @@ public class IndicesFunction implements Function {
 
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
-		Preconditions.checkInputType("indices", in, JsonNodeType.STRING, JsonNodeType.ARRAY);
+		Preconditions.checkInputType("indices", in, JsonNodeType.STRING, JsonNodeType.ARRAY, JsonNodeType.NULL);
+
+		if (in.isNull()) {
+			output.emit(NullNode.getInstance());
+			return;
+		}
 
 		args.get(0).apply(scope, in, (needle) -> {
 			final ArrayNode indices = scope.getObjectMapper().createArrayNode();

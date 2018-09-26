@@ -18,6 +18,11 @@ import net.thisptr.jackson.jq.internal.BuiltinFunction;
 public class IndexFunction implements Function {
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+		if (in.isNull()) {
+			output.emit(NullNode.getInstance());
+			return;
+		}
+
 		args.get(0).apply(scope, in, (needle) -> {
 			final List<Integer> tmp = IndicesFunction.indices(needle, in);
 			if (tmp.isEmpty()) {
