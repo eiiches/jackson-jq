@@ -2,8 +2,6 @@
 	"functions": [
 		{"name": "@text", "body": "tostring"},
 		{"name": "@json", "body": "tojson"},
-		{"name": "@tsv", "body": "map(tostring | gsub(\"\\t\"; \"\\\\t\")) | join(\"\\t\")"},
-		{"name": "@csv", "body": "map(if type == \"string\" then \"\\\"\" + gsub(\"\\\"\"; \"\\\"\\\"\") + \"\\\"\" else tostring end) | join(\",\")"},
 		{"name": "paths", "args": [], "body": "paths(.)"},
 		{"name": "arrays", "args": [], "body": "select(type == \"array\")"},
 		{"name": "booleans", "args": [], "body": "select(type == \"boolean\")"},

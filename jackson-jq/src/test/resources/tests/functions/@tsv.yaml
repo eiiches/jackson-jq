@@ -1,0 +1,4 @@
+- q: 'try @tsv catch .'
+  in: [["[]"]]
+  out:
+  - 'array (["[]"]) is not valid in a csv row'

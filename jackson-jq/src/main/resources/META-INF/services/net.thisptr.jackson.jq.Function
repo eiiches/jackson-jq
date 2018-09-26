@@ -1,3 +1,5 @@
+net.thisptr.jackson.jq.internal.filters.CsvFilter
+net.thisptr.jackson.jq.internal.filters.TsvFilter
 net.thisptr.jackson.jq.internal.functions.AtBase64Function
 net.thisptr.jackson.jq.internal.functions.AtBase64dFunction
 net.thisptr.jackson.jq.internal.functions.AtHtmlFunction

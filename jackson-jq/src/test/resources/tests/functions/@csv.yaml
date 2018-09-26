@@ -1,0 +1,4 @@
+- q: 'try @csv catch .'
+  in: {}
+  out:
+  - 'object ({}) cannot be csv-formatted, only array'
