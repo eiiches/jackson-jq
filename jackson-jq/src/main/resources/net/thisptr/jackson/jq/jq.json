@@ -20,8 +20,6 @@
 		{"name": "unique", "args": [], "body": "group_by(.) | map(.[0])"},
 		{"name": "unique_by", "args": ["f"], "body": "group_by(f) | map(.[0])"},
 		{"name": "with_entries", "args": ["f"], "body": "to_entries | map(f) | from_entries"},
-		{"name": "range", "args": ["size"], "body": "range(0; size; 1)"},
-		{"name": "range", "args": ["x", "y"], "body": "range(x; y; 1)"},
 		{"name": "select", "args": ["pred"], "body": "if pred then . else empty end"},
 		{"name": "map", "args": ["f"], "body": "[.[] | f]"},
 		{"name": "recurse", "args": ["f"], "body": "def r: ., (f | select(. != null) | r); r"},
