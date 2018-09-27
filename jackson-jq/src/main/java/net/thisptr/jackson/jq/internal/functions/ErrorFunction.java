@@ -18,6 +18,8 @@ public class ErrorFunction implements Function {
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
 		args.get(0).apply(scope, in, (out) -> {
+			if (out.isNull())
+				return;
 			throw new JsonQueryUserException(out);
 		});
 	}

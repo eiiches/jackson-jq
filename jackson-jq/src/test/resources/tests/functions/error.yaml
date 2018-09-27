@@ -5,3 +5,5 @@
 - q: 'try error(error("foo")) catch .'
   out:
   - foo
+- q: 'error(null)'
+  out: []
