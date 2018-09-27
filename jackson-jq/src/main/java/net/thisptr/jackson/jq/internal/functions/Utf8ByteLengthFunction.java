@@ -14,7 +14,7 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
 
-@BuiltinFunction("utf8bytelength/0")
+@BuiltinFunction(value = "utf8bytelength/0", version = "[1.6, )")
 public class Utf8ByteLengthFunction implements Function {
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
