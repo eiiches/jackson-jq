@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.internal.functions;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
@@ -26,7 +27,7 @@ public class AtShFunction implements Function {
 				if (i.isTextual()) {
 					tokens.add(escape(i.asText()));
 				} else if (i.isValueNode()) {
-					tokens.add(i.asText());
+					tokens.add(toString(scope, i));
 				} else {
 					throw new IllegalJsonInputException(i.getNodeType() + " cannot be escaped for shell");
 				}
@@ -35,9 +36,17 @@ public class AtShFunction implements Function {
 		} else if (in.isTextual()) {
 			output.emit(new TextNode(escape(in.asText())));
 		} else if (in.isValueNode()) {
-			output.emit(new TextNode(in.asText()));
+			output.emit(new TextNode(toString(scope, in)));
 		} else {
 			throw new IllegalJsonInputException(in.getNodeType() + " cannot be escaped for shell");
+		}
+	}
+
+	private static String toString(final Scope scope, final JsonNode node) throws JsonQueryException {
+		try {
+			return scope.getObjectMapper().writeValueAsString(node);
+		} catch (final JsonProcessingException e) {
+			throw new JsonQueryException(e);
 		}
 	}
 

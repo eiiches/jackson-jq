@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
@@ -20,7 +21,11 @@ public class ToStringFunction implements Function {
 		if (in.isTextual()) {
 			output.emit(in);
 		} else {
-			output.emit(new TextNode(in.toString()));
+			try {
+				output.emit(new TextNode(scope.getObjectMapper().writeValueAsString(in)));
+			} catch (final JsonProcessingException e) {
+				throw new JsonQueryException(e);
+			}
 		}
 	}
 }

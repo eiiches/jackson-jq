@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.internal.filters;
 
 import java.util.List;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
@@ -37,7 +38,11 @@ public abstract class AbstractSvFilter implements Function {
 			} else if (col.isNull()) {
 				// empty
 			} else if (col.isBoolean() || col.isNumber()) {
-				row.append(col.toString());
+				try {
+					row.append(scope.getObjectMapper().writeValueAsString(col));
+				} catch (JsonProcessingException e) {
+					throw new JsonQueryException(e);
+				}
 			} else {
 				throw new JsonQueryTypeException("%s is not valid in a csv row", col);
 			}

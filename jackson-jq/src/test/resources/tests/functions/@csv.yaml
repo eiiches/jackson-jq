@@ -2,3 +2,8 @@
   in: {}
   out:
   - 'object ({}) cannot be csv-formatted, only array'
+
+- q: '@csv'
+  in: [0.0]
+  out:
+  - "0"

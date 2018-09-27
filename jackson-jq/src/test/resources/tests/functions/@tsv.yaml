@@ -2,3 +2,8 @@
   in: [["[]"]]
   out:
   - 'array (["[]"]) is not valid in a csv row'
+
+- q: '@tsv'
+  in: [0.0]
+  out:
+  - "0"

@@ -13,10 +13,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
+import net.thisptr.jackson.jq.internal.misc.JsonQueryJacksonModule;
 import net.thisptr.jackson.jq.path.Path;
 
 public class Scope {
-	private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper();
+	private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper()
+			.registerModule(JsonQueryJacksonModule.getInstance());
 
 	@BuiltinFunction("debug_scope/0")
 	public static class DebugScopeFunction implements Function {
