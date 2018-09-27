@@ -14,11 +14,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.IsolatedScopeQuery;
 import net.thisptr.jackson.jq.internal.JsonQueryFunction;
 import net.thisptr.jackson.jq.internal.javacc.ExpressionParser;
+import net.thisptr.jackson.jq.internal.misc.VersionRangeDeserializer;
 
 public class BuiltinFunctionLoader {
 	private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper();
@@ -35,6 +37,10 @@ public class BuiltinFunctionLoader {
 
 			@JsonProperty("body")
 			public String body;
+
+			@JsonProperty("version")
+			@JsonDeserialize(using = VersionRangeDeserializer.class)
+			public VersionRange version;
 		}
 
 		@JsonProperty("functions")
@@ -97,8 +103,11 @@ public class BuiltinFunctionLoader {
 		try {
 			final List<JqJson> configs = loadConfig(classLoader, CONFIG_PATH);
 			for (final JqJson jqJson : configs) {
-				for (final JqJson.JqFuncDef def : jqJson.functions)
+				for (final JqJson.JqFuncDef def : jqJson.functions) {
+					if (def.version != null && !def.version.contains(version))
+						continue;
 					functions.put(def.name + "/" + def.args.size(), new JsonQueryFunction(def.name, def.args, new IsolatedScopeQuery(ExpressionParser.compile(def.body, version)), closureScope));
+				}
 			}
 		} catch (final IOException e) {
 			throw new RuntimeException("Failed to load macros", e);
