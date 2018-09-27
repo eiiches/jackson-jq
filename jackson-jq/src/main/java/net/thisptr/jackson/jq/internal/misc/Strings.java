@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.internal.misc;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class Strings {
@@ -22,11 +24,22 @@ public class Strings {
 		return builder.toString();
 	}
 
-	public static String[] splitToArray(final String text, final String sep) {
-		return text.split(Pattern.quote(sep), -1);
-	}
+	private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-	public static String[] splitToArray(final String text, final Pattern sep) {
-		return sep.split(text, -1);
+	public static String[] split(final String in, final String sep) {
+		if (sep.isEmpty()) {
+			final List<String> result = new ArrayList<>();
+			final int length = in.length();
+			for (int offset = 0; offset < length;) {
+				final int codepoint = in.codePointAt(offset);
+				result.add(new String(Character.toChars(codepoint)));
+				offset += Character.charCount(codepoint);
+			}
+			return result.toArray(EMPTY_STRING_ARRAY);
+		} else {
+			if (in.isEmpty())
+				return EMPTY_STRING_ARRAY;
+			return in.split(Pattern.quote(sep), -1);
+		}
 	}
 }
