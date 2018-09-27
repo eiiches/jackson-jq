@@ -2,7 +2,7 @@
 	"functions": [
 		{"name": "@text", "body": "tostring"},
 		{"name": "@json", "body": "tojson"},
-		{"name": "paths", "args": [], "body": "paths(.)"},
+		{"name": "paths", "args": [], "body": "paths(. != null)"},
 		{"name": "arrays", "args": [], "body": "select(type == \"array\")"},
 		{"name": "booleans", "args": [], "body": "select(type == \"boolean\")"},
 		{"name": "del", "args": ["f"], "body": "delpaths([path(f)])"},
