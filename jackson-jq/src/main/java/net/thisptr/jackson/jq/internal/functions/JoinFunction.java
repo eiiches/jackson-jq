@@ -10,6 +10,7 @@ import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
+import net.thisptr.jackson.jq.Versions;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
@@ -39,12 +40,14 @@ public class JoinFunction implements Function {
 					builder.append(item.asText());
 				} else if (item.isNull()) {
 					// append nothing
-				} else if (item.isNumber() || item.isBoolean()) {
+				} else if (version.compareTo(Versions.JQ_1_6) >= 0 && (item.isNumber() || item.isBoolean())) {
 					// https://github.com/stedolan/jq/commit/e17ccf229723d776c0d49341665256b855c70bda
 					// https://github.com/stedolan/jq/issues/930
 					builder.append(item.toString());
 				} else {
-					throw new JsonQueryTypeException(new TextNode(builder.toString()), item, "cannot be added");
+					if (version.compareTo(Versions.JQ_1_6) >= 0)
+						throw new JsonQueryTypeException(new TextNode(builder.toString()), item, "cannot be added");
+					throw new JsonQueryTypeException(sep, item, "cannot be added");
 				}
 
 				isep = sep;
