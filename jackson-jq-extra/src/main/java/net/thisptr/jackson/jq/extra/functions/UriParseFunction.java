@@ -18,13 +18,13 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.thisptr.jackson.jq.Expression;
-import net.thisptr.jackson.jq.Function; import net.thisptr.jackson.jq.Version;
+import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
-import net.thisptr.jackson.jq.internal.misc.Strings;
 
 @BuiltinFunction("uriparse/0")
 public class UriParseFunction implements Function {
@@ -90,8 +90,8 @@ public class UriParseFunction implements Function {
 		final Map<String, List<String>> result = new HashMap<>();
 		if (rawQuery == null)
 			return Collections.emptyMap();
-		for (final String kv : Strings.splitToArray(rawQuery, AMPERSAND)) {
-			final String[] tuple = Strings.splitToArray(kv, EQUAL);
+		for (final String kv : AMPERSAND.split(rawQuery, -1)) {
+			final String[] tuple = EQUAL.split(kv, -1);
 			if (tuple.length != 2)
 				continue;
 			final String keyEncoded = tuple[0];
