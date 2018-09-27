@@ -65,7 +65,7 @@
 		{"name": "until", "args": ["cond", "next"], "body": "def _until: if cond then . else (next|_until) end; _until"},
 		{"name": "while", "args": ["cond", "update"], "body": "def _while: if cond then ., (update | _while) else empty end; _while"},
 		{"name": "leaf_paths", "args": [], "body": "paths(scalars)"},
-		{"name": "walk", "args": ["f"], "body": ". as $in | if type == \"object\" then reduce keys[] as $key ( {}; . + { ($key):  ($in[$key] | walk(f)) } ) | f elif type == \"array\" then map( walk(f) ) | f else f end"},
+		{"name": "walk", "args": ["f"], "body": ". as $in | if type == \"object\" then reduce keys[] as $key ( {}; . + { ($key):  ($in[$key] | walk(f)) } ) | f elif type == \"array\" then map( walk(f) ) | f else f end", "version": "[1.6, )"},
 		{"name": "in", "args": ["xs"], "body": ". as $x | xs | has($x)"},
 		{"name": "inside", "args": ["xs"], "body": ". as $x | xs | contains($x)"},
 		{"name": "combinations", "args": [], "body": "if length == 0 then [] else .[0][] as $x | (.[1:] | combinations) as $y | [$x] + $y end"},
