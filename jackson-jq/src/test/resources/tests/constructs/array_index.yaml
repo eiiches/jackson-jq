@@ -1,0 +1,2 @@
+- q: '[1, 2][:]'
+  should_compile: false

@@ -968,7 +968,7 @@ Expression BracketFieldAccessor(Expression obj):
 		<COLON>
 		(
 			end = Expression()
-		)?
+		)
 	)?
 	<CLOSE_BRACKET>
 	(
