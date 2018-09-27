@@ -1,0 +1,6 @@
+# lhs is evaluated first
+- q: 'empty or error("foo")'
+  out: []
+- q: 'try (error("foo") or empty) catch .'
+  out:
+  - foo

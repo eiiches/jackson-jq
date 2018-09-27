@@ -4,3 +4,10 @@
 - q: 'try (1 % true) catch .'
   out:
   - 'number (1) and boolean (true) cannot be divided (remainder)'
+
+# rhs is evaluated first
+- q: 'error("foo") % empty'
+  out: []
+- q: 'try (empty % error("foo")) catch .'
+  out:
+  - foo

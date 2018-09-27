@@ -18,8 +18,8 @@ public abstract class SimpleBinaryOperatorExpression extends BinaryOperatorExpre
 
 	@Override
 	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
-		lhs.apply(scope, in, (l) -> {
-			rhs.apply(scope, in, (r) -> {
+		rhs.apply(scope, in, (r) -> {
+			lhs.apply(scope, in, (l) -> {
 				output.emit(operator.apply(scope.getObjectMapper(), l, r));
 			});
 		});
