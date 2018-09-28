@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -31,6 +33,8 @@ import com.google.common.reflect.ClassPath.ResourceInfo;
 
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.VersionRangeDeserializer;
+import net.thisptr.jackson.jq.test.evaluator.CachedEvaluator;
+import net.thisptr.jackson.jq.test.evaluator.Evaluator;
 import net.thisptr.jackson.jq.test.evaluator.Evaluator.Result;
 import net.thisptr.jackson.jq.test.evaluator.TrueJqEvaluator;
 import net.thisptr.jackson.jq.test.misc.ComparableJsonNode;
@@ -131,10 +135,22 @@ public class JsonQueryTest {
 		});
 	}
 
-	private static Map<Version, Boolean> hasJqCache = new ConcurrentHashMap<>();
-
 	private static List<ComparableJsonNode> wrap(final List<JsonNode> values) {
 		return ComparableJsonNode.wrap(values);
+	}
+
+	private static Map<Version, Boolean> hasJqCache = new ConcurrentHashMap<>();
+	private static Evaluator cachedJqEvaluator;
+
+	@BeforeAll
+	static void beforeAll() {
+		cachedJqEvaluator = new CachedEvaluator(new TrueJqEvaluator(), "/tmp/jackson-jq-test.cache");
+	}
+
+	@AfterAll
+	static void afterAll() throws Exception {
+		if (cachedJqEvaluator instanceof AutoCloseable)
+			((AutoCloseable) cachedJqEvaluator).close();
 	}
 
 	private void test(final TestCase tc, final Version version) throws Throwable {
@@ -147,7 +163,7 @@ public class JsonQueryTest {
 		}
 
 		if (hasJqCache.computeIfAbsent(version, v -> TrueJqEvaluator.hasJq(v))) {
-			final Result result = new TrueJqEvaluator().evaluate(tc.q, tc.in, version, 2000L);
+			final Result result = cachedJqEvaluator.evaluate(tc.q, tc.in, version, 2000L);
 			assumeThat(result.error).as("%s", command).isNull();
 			assumeThat(wrap(tc.out)).as("%s", command).isEqualTo(wrap(result.values));
 		}
