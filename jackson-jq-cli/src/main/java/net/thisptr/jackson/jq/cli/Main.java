@@ -112,13 +112,17 @@ public class Main {
 				if (tree == null)
 					continue;
 				try {
-					for (final JsonNode out : jq.apply(scope, tree)) {
+					jq.apply(scope, tree, (out) -> {
 						if (out.isTextual() && command.hasOption(OPT_RAW.getOpt())) {
 							System.out.println(out.asText());
 						} else {
-							System.out.println(MAPPER.writeValueAsString(out));
+							try {
+								System.out.println(MAPPER.writeValueAsString(out));
+							} catch (IOException e) {
+								throw new RuntimeException(e);
+							}
 						}
-					}
+					});
 				} catch (JsonQueryException e) {
 					System.err.println("jq: error: " + e.getMessage());
 					System.exit(1);
