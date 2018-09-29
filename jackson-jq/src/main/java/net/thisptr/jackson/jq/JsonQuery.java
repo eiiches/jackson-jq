@@ -22,6 +22,10 @@ public class JsonQuery {
 		return output;
 	}
 
+	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+		expr.apply(scope, in, output);
+	}
+
 	public static JsonQuery compile(final String path) throws JsonQueryException {
 		return new JsonQuery(new IsolatedScopeQuery(ExpressionParser.compile(path, Versions.JQ_1_5)));
 	}
