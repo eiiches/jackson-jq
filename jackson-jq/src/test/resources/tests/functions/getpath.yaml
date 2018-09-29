@@ -1,0 +1,11 @@
+- q: 'getpath([])'
+  in: foo
+  out:
+  - foo
+
+- q: 'try (getpath([false, []])) catch .'
+  out:
+  - "Cannot index null with boolean"
+- q: 'try (setpath([false, []]; null)) catch .'
+  out:
+  - "Cannot index null with boolean"

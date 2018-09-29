@@ -1,0 +1,5 @@
+- q: 'setpath([]; 0)'
+  in: {a: 0}
+  out:
+  - 0
+- {"v":"[1.5,1.5]","q":"setpath(89; empty)","in":[],"out":[]}
