@@ -17,8 +17,15 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 
 import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 
@@ -44,9 +51,30 @@ public class JsonQueryTest {
 		@JsonProperty("known_to_fail")
 		public boolean knownToFail = false;
 
+		@JsonProperty("v")
+		@JsonDeserialize(using = VersionRangeDeserializer.class)
+		@JsonSerialize(using = ToStringSerializer.class)
+		public VersionRange version;
+
 		@Override
 		public String toString() {
-			return String.format("jq '%s' <<< '%s' # should be %s", q, in, out);
+			return String.format("jq '%s' <<< '%s' # should be %s, version = %s.", q, in, out, version != null ? version : "any");
+		}
+	}
+
+	public static class VersionRangeDeserializer extends StdDeserializer<VersionRange> {
+		private static final long serialVersionUID = -4054473248484615401L;
+
+		public VersionRangeDeserializer() {
+			super(VersionRange.class);
+		}
+
+		@Override
+		public VersionRange deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException, JsonProcessingException {
+			final String text = p.readValueAs(String.class);
+			if (text == null)
+				return null;
+			return VersionRange.valueOf(text);
 		}
 	}
 
@@ -80,25 +108,22 @@ public class JsonQueryTest {
 		});
 	}
 
-	@ParameterizedTest
-	@MethodSource("defaultTestCases")
-	public void test(final String tcText) throws Throwable {
+	private void test(final TestCase tc, final Version version) throws Throwable {
 		boolean failed = false;
-		final TestCase tc = MAPPER.readValue(tcText, TestCase.class);
 		try {
 			LOG.info("Running test ({}): {}", tc.file, tc.toString().replace('\n', ' '));
-			final JsonQuery q = JsonQuery.compile(tc.q);
+			final JsonQuery q = JsonQuery.compile(tc.q, version);
 			final String s1 = q.toString();
 
 			try {
-				final String s2 = JsonQuery.compile(s1).toString();
+				final String s2 = JsonQuery.compile(s1, version).toString();
 				assertEquals(s1, s2);
 			} catch (Throwable e) {
 				LOG.error(" * toString() generated unparsable or incosistent query: {}", s1);
 				throw e;
 			}
 
-			final List<JsonNode> actual = q.apply(DefaultRootScope.getInstance(), tc.in);
+			final List<JsonNode> actual = q.apply(DefaultRootScope.getInstance(version), tc.in);
 			final List<JsonNode> expected = tc.out;
 
 			if (actual.size() != expected.size()) {
@@ -116,8 +141,8 @@ public class JsonQueryTest {
 			}
 
 			// JsonQuery.compile($.toString()).apply(in) === $.apply(in)
-			final JsonQuery q2 = JsonQuery.compile(s1);
-			final List<JsonNode> actual2 = q2.apply(DefaultRootScope.getInstance(), tc.in);
+			final JsonQuery q2 = JsonQuery.compile(s1, version);
+			final List<JsonNode> actual2 = q2.apply(DefaultRootScope.getInstance(version), tc.in);
 			if (actual.size() != actual2.size()) {
 				LOG.error(" * The contract JsonQuery.compile($.toString()).apply(in) != $.apply(in) violated: {} != {} (original)", s1, tc.q);
 				LOG.error(" * {} (actual) != {} (actual2)", actual, actual2);
@@ -141,5 +166,16 @@ public class JsonQueryTest {
 		}
 
 		assertEquals(tc.knownToFail, failed, "marked knownToFail but succeeded");
+	}
+
+	@ParameterizedTest
+	@MethodSource("defaultTestCases")
+	public void test(final String tcText) throws Throwable {
+		final TestCase tc = MAPPER.readValue(tcText, TestCase.class);
+		for (final Version version : Versions.versions()) {
+			if (tc.version == null || tc.version.contains(version)) {
+				test(tc, version);
+			}
+		}
 	}
 }

@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
@@ -20,7 +21,7 @@ import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 @BuiltinFunction("paths/1")
 public class PathsFunction implements Function {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
 		final Stack<JsonNode> stack = new Stack<>();
 		applyRecursive(scope, in, output, stack, args.get(0));
 	}

@@ -1,16 +1,13 @@
 package net.thisptr.jackson.jq.internal.tree.fieldaccess;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.tree.ThisObject;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedFieldAccess;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedStringFieldAccess;
+import net.thisptr.jackson.jq.path.Path;
 
 public class StringFieldAccess extends FieldAccess {
 	private Expression field;
@@ -33,13 +30,13 @@ public class StringFieldAccess extends FieldAccess {
 	}
 
 	@Override
-	public ResolvedFieldAccess resolveFieldAccess(final Scope scope, final JsonNode in) throws JsonQueryException {
-		final List<String> keys = new ArrayList<>();
+	public void apply(final Scope scope, final JsonNode in, final Path path, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		field.apply(scope, in, (key) -> {
-			if (!key.isTextual())
-				throw new IllegalStateException();
-			keys.add(key.asText());
+			target.apply(scope, in, path, (pobj, ppath) -> {
+				if (!key.isTextual() && !permissive)
+					throw new IllegalStateException(); // FIXME: exception type
+				emitObjectFieldPath(permissive, key.asText(), pobj, ppath, output, requirePath);
+			}, requirePath);
 		});
-		return new ResolvedStringFieldAccess(permissive, keys);
 	}
 }

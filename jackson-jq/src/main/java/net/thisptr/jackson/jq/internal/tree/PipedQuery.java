@@ -6,11 +6,12 @@ import java.util.Stack;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.Expression;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryBreakException;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.misc.Pair;
+import net.thisptr.jackson.jq.internal.tree.matcher.PatternMatcher.MatchWithPath;
+import net.thisptr.jackson.jq.path.Path;
 
 public class PipedQuery implements Expression {
 	private List<PipeComponent> components;
@@ -20,13 +21,13 @@ public class PipedQuery implements Expression {
 	}
 
 	@Override
-	public void apply(Scope scope, JsonNode in, final Output output) throws JsonQueryException {
-		applyRecursive(scope, in, output, components);
+	public void apply(final Scope scope, final JsonNode in, final Path path, final PathOutput output, final boolean requirePath) throws JsonQueryException {
+		pathRecursive(scope, in, path, output, components, requirePath);
 	}
 
-	private static void applyRecursive(final Scope scope, final JsonNode in, final Output output, final List<PipeComponent> components) throws JsonQueryException {
+	private static void pathRecursive(final Scope scope, final JsonNode in, final Path path, final PathOutput output, final List<PipeComponent> components, final boolean requirePath) throws JsonQueryException {
 		if (components.isEmpty()) {
-			output.emit(in);
+			output.emit(in, path);
 			return;
 		}
 
@@ -36,24 +37,24 @@ public class PipedQuery implements Expression {
 		if (head instanceof AssignPipeComponent) {
 			final Scope childScope = Scope.newChildScope(scope);
 			((AssignPipeComponent) head).expr.apply(scope, in, (o) -> {
-				final Stack<Pair<String, JsonNode>> accumulate = new Stack<>();
-				((AssignPipeComponent) head).matcher.match(scope, o, (final List<Pair<String, JsonNode>> vars) -> {
+				final Stack<MatchWithPath> accumulate = new Stack<>();
+				((AssignPipeComponent) head).matcher.matchWithPath(scope, o, path, (final List<MatchWithPath> vars) -> {
 					// Set values in reverse order since if there is the variable name crash,
 					// jq only uses the first match.
 					for (int i = vars.size() - 1; i >= 0; --i) {
-						final Pair<String, JsonNode> var = vars.get(i);
-						childScope.setValue(var._1, var._2);
+						final MatchWithPath var = vars.get(i);
+						childScope.setValueWithPath(var.name, var.value, var.path);
 					}
-					applyRecursive(childScope, in, output, tail);
+					pathRecursive(childScope, in, path, output, tail, requirePath);
 				}, accumulate, true);
 			});
 		} else if (head instanceof TransformPipeComponent) {
-			((TransformPipeComponent) head).expr.apply(scope, in, (o) -> {
-				applyRecursive(scope, o, output, tail);
-			});
+			((TransformPipeComponent) head).expr.apply(scope, in, path, (pobj, ppath) -> {
+				pathRecursive(scope, pobj, ppath, output, tail, requirePath);
+			}, requirePath);
 		} else if (head instanceof LabelPipeComponent) {
 			try {
-				applyRecursive(scope, in, output, tail);
+				pathRecursive(scope, in, path, output, tail, requirePath);
 			} catch (JsonQueryBreakException e) {
 				if (((LabelPipeComponent) head).name.equals(e.name()))
 					return;

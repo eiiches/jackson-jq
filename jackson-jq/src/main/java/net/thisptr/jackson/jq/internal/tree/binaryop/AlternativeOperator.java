@@ -5,10 +5,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.Expression;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
+import net.thisptr.jackson.jq.path.Path;
 
 public class AlternativeOperator extends BinaryOperatorExpression {
 	public AlternativeOperator(final Expression valueExpr, final Expression defaultExpr) {
@@ -16,16 +17,16 @@ public class AlternativeOperator extends BinaryOperatorExpression {
 	}
 
 	@Override
-	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+	public void apply(final Scope scope, final JsonNode in, final Path path, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		final AtomicBoolean emitted = new AtomicBoolean();
-		lhs.apply(scope, in, (out) -> {
+		lhs.apply(scope, in, path, (out, outpath) -> {
 			if (JsonNodeUtils.asBoolean(out)) {
-				output.emit(out);
+				output.emit(out, outpath);
 				emitted.set(true);
 			}
-		});
+		}, requirePath);
 		if (!emitted.get()) {
-			rhs.apply(scope, in, output);
+			rhs.apply(scope, in, path, output, requirePath);
 		}
 	}
 }

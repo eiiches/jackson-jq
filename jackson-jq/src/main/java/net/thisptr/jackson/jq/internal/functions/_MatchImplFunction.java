@@ -20,6 +20,7 @@ import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.OnigUtils;
@@ -29,7 +30,7 @@ import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
 @BuiltinFunction("_match_impl/3")
 public class _MatchImplFunction implements Function {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
 		Preconditions.checkInputType("_match_impl/3", in, JsonNodeType.STRING);
 		final byte[] ibytes = in.asText().getBytes(StandardCharsets.UTF_8);
 		final int[] cindex = UnicodeUtils.UTF8CharIndex(ibytes);

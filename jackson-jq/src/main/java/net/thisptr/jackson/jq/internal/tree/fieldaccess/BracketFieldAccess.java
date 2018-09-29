@@ -1,108 +1,71 @@
 package net.thisptr.jackson.jq.internal.tree.fieldaccess;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.IntNode;
 
 import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
-import net.thisptr.jackson.jq.internal.misc.Range;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedEmptyFieldAccess;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedFieldAccess;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedIndexFieldAccess;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedRangeFieldAccess;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedStringFieldAccess;
+import net.thisptr.jackson.jq.internal.tree.literal.NullLiteral;
+import net.thisptr.jackson.jq.path.Path;
 
 public class BracketFieldAccess extends FieldAccess {
-	private Expression end;
-	private Expression begin;
+	private Expression startExpr;
+	private Expression endExpr;
 	private boolean isRange;
 
-	public BracketFieldAccess(final Expression src, final Expression begin, final boolean permissive) {
+	public BracketFieldAccess(final Expression src, final Expression atExpr, final boolean permissive) {
 		super(src, permissive);
-		this.begin = begin;
+		this.startExpr = atExpr != null ? atExpr : new NullLiteral();
 		this.isRange = false;
 	}
 
-	public BracketFieldAccess(final Expression src, final Expression begin, final Expression end, final boolean permissive) {
+	public BracketFieldAccess(final Expression src, final Expression startExpr, final Expression endExpr, final boolean permissive) {
 		super(src, permissive);
-		this.begin = begin;
-		this.end = end;
+		this.startExpr = startExpr != null ? startExpr : new NullLiteral();
+		this.endExpr = endExpr != null ? endExpr : new NullLiteral();
 		this.isRange = true;
 	}
 
 	@Override
 	public String toString() {
 		if (isRange) {
-			return String.format("%s[%s : %s]%s", target, begin == null ? "" : begin, end == null ? "" : end, permissive ? "?" : "");
+			return String.format("%s[%s : %s]%s", target, startExpr == null ? "" : startExpr, endExpr == null ? "" : endExpr, permissive ? "?" : "");
 		} else {
-			return String.format("%s[%s]%s", target, begin, permissive ? "?" : "");
+			return String.format("%s[%s]%s", target, startExpr, permissive ? "?" : "");
 		}
 	}
 
 	@Override
-	public ResolvedFieldAccess resolveFieldAccess(final Scope scope, final JsonNode in) throws JsonQueryException {
-		if (isRange) {
-			final List<JsonNode> accessorBeginTuple = new ArrayList<>();
-			if (begin == null) {
-				accessorBeginTuple.add(new IntNode(0));
-			} else {
-				begin.apply(scope, in, accessorBeginTuple::add);
-			}
-
-			final List<JsonNode> accessorEndTuple = new ArrayList<>();
-			if (end == null) {
-				accessorEndTuple.add(new IntNode(Integer.MAX_VALUE));
-			} else {
-				end.apply(scope, in, accessorEndTuple::add);
-			}
-
-			final List<Range> ranges = new ArrayList<>();
-			for (final JsonNode accessorBegin : accessorBeginTuple) {
-				for (final JsonNode accessorEnd : accessorEndTuple) {
-					if (JsonNodeUtils.isIntegralNumber(accessorBegin) && JsonNodeUtils.isIntegralNumber(accessorEnd)) {
-						final long indexBegin = accessorBegin.asLong();
-						final long indexEnd = accessorEnd.asLong();
-						ranges.add(new Range(indexBegin, indexEnd));
+	public void apply(final Scope scope, final JsonNode in, final Path path, final PathOutput output, final boolean requirePath) throws JsonQueryException {
+		target.apply(scope, in, path, (pobj, ppath) -> {
+			if (isRange) {
+				startExpr.apply(scope, in, (start) -> {
+					endExpr.apply(scope, in, (end) -> {
+						if ((JsonNodeUtils.isIntegralNumber(start) || start.isNull())
+								&& (JsonNodeUtils.isIntegralNumber(end) || end.isNull())) {
+							final Long indexBegin = start.isNull() ? null : start.asLong();
+							final Long indexEnd = end.isNull() ? null : end.asLong();
+							emitArrayRangeIndexPath(permissive, indexBegin, indexEnd, pobj, ppath, output, requirePath);
+						} else {
+							if (!permissive)
+								throw JsonQueryException.format("Start and end indices of an %s slice must be numbers", pobj.getNodeType());
+						}
+					});
+				});
+			} else { // isRange == false
+				startExpr.apply(scope, in, (accessor) -> {
+					if (JsonNodeUtils.isIntegralNumber(accessor)) {
+						emitArrayIndexPath(permissive, accessor.asLong(), pobj, ppath, output, requirePath);
+					} else if (accessor.isTextual()) {
+						emitObjectFieldPath(permissive, accessor.asText(), pobj, ppath, output, requirePath);
 					} else {
 						if (!permissive)
-							throw JsonQueryException.format("Start and end indices of an %s slice must be numbers", in.getNodeType());
-						return new ResolvedEmptyFieldAccess(permissive);
+							throw JsonQueryException.format("Cannot index %s with %s", pobj.getNodeType(), accessor.getNodeType());
 					}
-				}
+				});
 			}
-			return new ResolvedRangeFieldAccess(permissive, ranges);
-		} else { // isRange == false
-			final List<Long> indices = new ArrayList<>();
-			final List<String> keys = new ArrayList<>();
-
-			final List<JsonNode> accessorTuple = new ArrayList<>();
-			begin.apply(scope, in, accessorTuple::add);
-			for (final JsonNode accessor : accessorTuple) {
-				if (JsonNodeUtils.isIntegralNumber(accessor)) {
-					final long index = accessor.asLong();
-					indices.add(index);
-				} else if (accessor.isTextual()) {
-					final String key = accessor.asText();
-					keys.add(key);
-				} else {
-					if (!permissive)
-						throw JsonQueryException.format("Cannot index %s with %s", in.getNodeType(), accessor.getNodeType());
-					return new ResolvedEmptyFieldAccess(permissive);
-				}
-			}
-
-			if (!indices.isEmpty() && !keys.isEmpty())
-				throw new JsonQueryException("bad index");
-			if (!indices.isEmpty())
-				return new ResolvedIndexFieldAccess(permissive, indices);
-			if (!keys.isEmpty())
-				return new ResolvedStringFieldAccess(permissive, keys);
-			return new ResolvedEmptyFieldAccess(permissive);
-		}
+		}, requirePath);
 	}
 }

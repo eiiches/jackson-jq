@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.List;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +17,7 @@ import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 
@@ -57,14 +56,14 @@ public class ToJsonFunction implements Function {
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 	static {
-		final SimpleModule module = new SimpleModule("JsonQuery", new Version(1, 0, 0, null, "net.thisptr", "jackson-jq"));
+		final SimpleModule module = new SimpleModule("JsonQuery", new com.fasterxml.jackson.core.Version(1, 0, 0, null, "net.thisptr", "jackson-jq"));
 		module.addSerializer(DoubleNode.class, new DoubleNodeSerializer());
 		module.addSerializer(FloatNode.class, new FloatNodeSerializer());
 		MAPPER.registerModule(module);
 	}
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
 		try {
 			output.emit(new TextNode(MAPPER.writeValueAsString(in)));
 		} catch (IOException e) {

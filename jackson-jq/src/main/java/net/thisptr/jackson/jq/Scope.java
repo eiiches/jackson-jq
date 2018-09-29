@@ -24,6 +24,7 @@ import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.IsolatedScopeQuery;
 import net.thisptr.jackson.jq.internal.JsonQueryFunction;
 import net.thisptr.jackson.jq.internal.javacc.ExpressionParser;
+import net.thisptr.jackson.jq.path.Path;
 
 public class Scope {
 	private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper();
@@ -31,7 +32,7 @@ public class Scope {
 	@BuiltinFunction("debug_scope/0")
 	public static class DebugScopeFunction implements Function {
 		@Override
-		public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
+		public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
 			final Map<String, Object> info = new HashMap<>();
 			info.put("scope", scope);
 			info.put("input", in);
@@ -54,8 +55,37 @@ public class Scope {
 	@JsonIgnore
 	private Map<String, Function> functions = new HashMap<>();
 
+	public interface ValueWithPath {
+		JsonNode value();
+
+		Path path();
+	}
+
+	private static class ValueWithPathImpl implements ValueWithPath {
+		@JsonProperty("value")
+		private final JsonNode value;
+
+		@JsonProperty("path")
+		private final Path path;
+
+		public ValueWithPathImpl(final JsonNode value, final Path path) {
+			this.value = value;
+			this.path = path;
+		}
+
+		@Override
+		public JsonNode value() {
+			return value;
+		}
+
+		@Override
+		public Path path() {
+			return path;
+		}
+	}
+
 	@JsonProperty("variables")
-	private Map<String, JsonNode> values = new HashMap<>();
+	private Map<String, ValueWithPath> values = new HashMap<>();
 
 	@JsonIgnore
 	private ObjectMapper mapper = DEFAULT_MAPPER;
@@ -102,14 +132,25 @@ public class Scope {
 	}
 
 	public void setValue(final String name, final JsonNode value) {
-		values.put(name, value);
+		setValueWithPath(name, value, null);
+	}
+
+	public void setValueWithPath(final String name, final JsonNode value, final Path path) {
+		values.put(name, new ValueWithPathImpl(value, path));
+	}
+
+	public ValueWithPath getValueWithPath(final String name) {
+		final ValueWithPath value = values.get(name);
+		if (value == null && parentScope != null)
+			return parentScope.getValueWithPath(name);
+		return value;
 	}
 
 	public JsonNode getValue(final String name) {
-		final JsonNode value = values.get(name);
-		if (value == null && parentScope != null)
-			return parentScope.getValue(name);
-		return value;
+		final ValueWithPath value = getValueWithPath(name);
+		if (value == null)
+			return null;
+		return value.value();
 	}
 
 	@JsonIgnore
@@ -151,8 +192,8 @@ public class Scope {
 	 * from an arbitrary {@link ClassLoader}.
 	 * E.g. in an OSGi context this may be the Bundle's {@link ClassLoader}.
 	 */
-	public void loadFunctions(final ClassLoader classLoader) {
-		loadMacros(classLoader);
+	public void loadFunctions(final ClassLoader classLoader, final Version version) {
+		loadMacros(classLoader, version);
 		loadBuiltinFunctions(classLoader);
 	}
 
@@ -180,12 +221,12 @@ public class Scope {
 		}
 	}
 
-	private void loadMacros(final ClassLoader classLoader) {
+	private void loadMacros(final ClassLoader classLoader, final Version version) {
 		try {
 			final List<JqJson> configs = loadConfig(classLoader);
 			for (final JqJson jqJson : configs) {
 				for (final JqJson.JqFuncDef def : jqJson.functions)
-					addFunction(def.name, def.args.size(), new JsonQueryFunction(def.name, def.args, new IsolatedScopeQuery(ExpressionParser.compile(def.body)), this));
+					addFunction(def.name, def.args.size(), new JsonQueryFunction(def.name, def.args, new IsolatedScopeQuery(ExpressionParser.compile(def.body, version)), this));
 			}
 		} catch (final IOException e) {
 			throw new RuntimeException("Failed to load macros", e);

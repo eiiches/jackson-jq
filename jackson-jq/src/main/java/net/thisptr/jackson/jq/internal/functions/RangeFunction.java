@@ -8,6 +8,7 @@ import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
@@ -17,7 +18,7 @@ import net.thisptr.jackson.jq.internal.misc.JsonQueryUtils;
 public class RangeFunction implements Function {
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
 		final List<JsonNode> beginTuple = JsonQueryUtils.applyToArrayList(args.get(0), scope, in);
 		final List<JsonNode> endTuple = JsonQueryUtils.applyToArrayList(args.get(1), scope, in);
 		final List<JsonNode> incTuple = JsonQueryUtils.applyToArrayList(args.get(2), scope, in);

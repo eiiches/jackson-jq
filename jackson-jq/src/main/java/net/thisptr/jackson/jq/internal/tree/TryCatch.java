@@ -3,9 +3,10 @@ package net.thisptr.jackson.jq.internal.tree;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.Expression;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.path.Path;
 
 public class TryCatch implements Expression {
 	protected Expression tryExpr;
@@ -21,12 +22,12 @@ public class TryCatch implements Expression {
 	}
 
 	@Override
-	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+	public void apply(final Scope scope, final JsonNode in, final Path path, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		try {
-			tryExpr.apply(scope, in, output);
+			tryExpr.apply(scope, in, path, output, requirePath);
 		} catch (JsonQueryException e) {
 			if (catchExpr != null) {
-				catchExpr.apply(scope, e.getMessageAsJsonNode(), output);
+				catchExpr.apply(scope, e.getMessageAsJsonNode(), null, output, requirePath);
 			}
 		}
 	}

@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.internal.tree.matcher.matchers;
 
 import java.util.List;
 import java.util.Stack;
+import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -12,8 +13,12 @@ import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.misc.Functional;
 import net.thisptr.jackson.jq.internal.misc.Pair;
 import net.thisptr.jackson.jq.internal.tree.matcher.PatternMatcher;
+import net.thisptr.jackson.jq.path.ArrayIndexPath;
+import net.thisptr.jackson.jq.path.Path;
 
 public class ArrayMatcher implements PatternMatcher {
+	private static final Logger LOG = Logger.getLogger(ArrayMatcher.class.getName());
+
 	private List<PatternMatcher> matchers;
 
 	public ArrayMatcher(final List<PatternMatcher> matchers) {
@@ -28,6 +33,20 @@ public class ArrayMatcher implements PatternMatcher {
 			final PatternMatcher matcher = matchers.get(i);
 			final JsonNode item = in.get(i);
 			matcher.match(scope, item != null ? item : NullNode.getInstance(), out, accumulate, emit && i == matchers.size() - 1);
+		}
+	}
+
+	@Override
+	public void matchWithPath(final Scope scope, final JsonNode in, final Path path, final MatchOutput output, final Stack<MatchWithPath> accumulate, final boolean emit) throws JsonQueryException {
+		if (matchers.size() > 1) {
+			LOG.warning("Use of jackson-jq specific behavior is discouraged. jq doesn't allow multiple matchers inside [] in path expressions: " + matchers);
+		}
+		if (!in.isArray() && !in.isNull())
+			throw JsonQueryTypeException.format("Cannot index %s with number", in.getNodeType());
+		for (int i = 0; i < matchers.size(); ++i) {
+			final PatternMatcher matcher = matchers.get(i);
+			final JsonNode item = in.get(i);
+			matcher.matchWithPath(scope, item != null ? item : NullNode.getInstance(), ArrayIndexPath.chainIfNotNull(path, i), output, accumulate, emit && i == matchers.size() - 1);
 		}
 	}
 

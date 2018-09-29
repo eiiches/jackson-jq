@@ -1,12 +1,16 @@
 package net.thisptr.jackson.jq;
 
-public class DefaultRootScope {
-	private static final Scope ROOT_SCOPE = Scope.newEmptyScope();
-	static {
-		ROOT_SCOPE.loadFunctions(Scope.class.getClassLoader());
-	}
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-	public static Scope getInstance() {
-		return ROOT_SCOPE;
+public class DefaultRootScope {
+	private static final Map<Version, Scope> ROOT_SCOPES = new ConcurrentHashMap<>();
+
+	public static Scope getInstance(final Version version) {
+		return ROOT_SCOPES.computeIfAbsent(version, v -> {
+			final Scope scope = Scope.newEmptyScope();
+			scope.loadFunctions(Scope.class.getClassLoader(), v);
+			return scope;
+		});
 	}
 }

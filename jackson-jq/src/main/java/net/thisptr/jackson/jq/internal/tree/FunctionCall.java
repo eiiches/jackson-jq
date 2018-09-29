@@ -6,25 +6,29 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.path.Path;
 
 public class FunctionCall implements Expression {
 	private String name;
 	private List<Expression> args;
+	private Version version;
 
-	public FunctionCall(final String name, final List<Expression> args) {
+	public FunctionCall(final String name, final List<Expression> args, final Version version) {
 		this.name = name;
 		this.args = args;
+		this.version = version;
 	}
 
 	@Override
-	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+	public void apply(Scope scope, JsonNode in, Path path, PathOutput output, final boolean requirePath) throws JsonQueryException {
 		final Function f = scope.getFunction(name, args.size());
 		if (f == null)
 			throw new JsonQueryException(String.format("Function %s/%s does not exist", name, args.size()));
-		f.apply(scope, args, in, output);
+		f.apply(scope, args, in, path, output, version);
 	}
 
 	@Override

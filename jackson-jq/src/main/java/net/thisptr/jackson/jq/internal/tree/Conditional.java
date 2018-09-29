@@ -5,11 +5,12 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.Expression;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.misc.Pair;
+import net.thisptr.jackson.jq.path.Path;
 
 public class Conditional implements Expression {
 	private Expression otherwise;
@@ -20,24 +21,24 @@ public class Conditional implements Expression {
 		this.otherwise = otherwise;
 	}
 
-	private void applyRecursive(final Output output, final Scope scope, final List<Pair<Expression, Expression>> switches, final JsonNode in) throws JsonQueryException {
+	private void pathRecursive(PathOutput output, Scope scope, List<Pair<Expression, Expression>> switches, JsonNode in, Path path) throws JsonQueryException {
 		final Pair<Expression, Expression> sw = switches.get(0);
 		sw._1.apply(scope, in, (r) -> {
 			if (JsonNodeUtils.asBoolean(r)) {
-				sw._2.apply(scope, in, output);
+				sw._2.apply(scope, in, path, output, false);
 			} else {
 				if (switches.size() > 1) {
-					applyRecursive(output, scope, switches.subList(1, switches.size()), in);
+					pathRecursive(output, scope, switches.subList(1, switches.size()), in, path);
 				} else {
-					otherwise.apply(scope, in, output);
+					otherwise.apply(scope, in, path, output, false);
 				}
 			}
 		});
 	}
 
 	@Override
-	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
-		applyRecursive(output, scope, switches, in);
+	public void apply(final Scope scope, final JsonNode in, final Path path, final PathOutput output, final boolean requirePath) throws JsonQueryException {
+		pathRecursive(output, scope, switches, in, path);
 	}
 
 	@Override

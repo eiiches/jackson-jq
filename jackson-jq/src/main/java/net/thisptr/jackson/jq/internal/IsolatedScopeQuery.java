@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.path.Path;
 
 public class IsolatedScopeQuery implements Expression {
 	private Expression q;
@@ -18,6 +20,12 @@ public class IsolatedScopeQuery implements Expression {
 	public void apply(Scope scope, JsonNode in, Output output) throws JsonQueryException {
 		final Scope isolatedScope = Scope.newChildScope(scope);
 		q.apply(isolatedScope, in, output);
+	}
+
+	@Override
+	public void apply(Scope scope, JsonNode in, Path path, PathOutput output, boolean requirePath) throws JsonQueryException {
+		final Scope isolatedScope = Scope.newChildScope(scope);
+		q.apply(isolatedScope, in, path, output, requirePath);
 	}
 
 	@Override

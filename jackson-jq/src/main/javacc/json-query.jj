@@ -15,6 +15,7 @@ PARSER_BEGIN(ExpressionParser)
 	import java.util.ArrayList;
 
 	import net.thisptr.jackson.jq.Expression;
+	import net.thisptr.jackson.jq.Version;
 	import net.thisptr.jackson.jq.internal.misc.Pair;
 	import net.thisptr.jackson.jq.internal.tree.*;
 	import net.thisptr.jackson.jq.internal.tree.binaryop.*;
@@ -27,9 +28,12 @@ PARSER_BEGIN(ExpressionParser)
 
 	@SuppressWarnings("unused")
 	public class ExpressionParser {
-		public static Expression compile(final String line) throws JsonQueryException {
+		private Version version;
+
+		public static Expression compile(final String line, final Version version) throws JsonQueryException {
 			try {
 				final ExpressionParser parser = new ExpressionParser(new StringReader(line));
+				parser.version = version;
 				return parser.Start();
 			} catch (TokenMgrError e) {
 				throw new JsonQueryException("Cannot compile query: " + line, e);
@@ -582,7 +586,7 @@ Expression FormattingFilter():
 {
 	<ATSIGN>
 	t = <IDENTIFIER>
-	{ return new FormattingFilter(t.image); }
+	{ return new FormattingFilter(t.image, version); }
 }
 
 Expression TryCatchExpression():
@@ -858,7 +862,7 @@ Expression FunctionCall():
 		)?
 		<CLOSE_PAR>
 	)?
-	{ return new FunctionCall(fname.image, fargs); }
+	{ return new FunctionCall(fname.image, fargs, version); }
 }
 
 Expression FieldAccessor(Expression obj):

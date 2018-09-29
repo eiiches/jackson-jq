@@ -9,6 +9,7 @@ import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.Output;
 import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
@@ -16,7 +17,7 @@ import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
 @BuiltinFunction("utf8bytelength/0")
 public class Utf8ByteLengthFunction implements Function {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
 		if (!in.isTextual())
 			throw JsonQueryException.format("%s (%s) only strings have UTF-8 byte length", in.getNodeType(), in);
 		output.emit(IntNode.valueOf(UnicodeUtils.lengthUtf8(in.asText())));

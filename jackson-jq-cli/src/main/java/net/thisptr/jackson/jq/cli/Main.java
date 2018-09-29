@@ -23,6 +23,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.Version;
+import net.thisptr.jackson.jq.Versions;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 
 public class Main {
@@ -43,39 +45,53 @@ public class Main {
 			.desc("use `null` as the single input value")
 			.build();
 
+	private static final Option OPT_VERSION = Option.builder()
+			.longOpt("jq")
+			.desc("specify jq version")
+			.numberOfArgs(1)
+			.build();
+
 	private static final Option OPT_HELP = Option.builder("h")
 			.longOpt("help")
 			.desc("print this message")
 			.build();
 
-	private static final Scope ROOT_SCOPE = Scope.newEmptyScope();
-	static {
-		ROOT_SCOPE.loadFunctions(Scope.class.getClassLoader());
-	}
-
 	public static void main(String[] args) throws IOException, ParseException {
+		final Options options = new Options();
+		options.addOption(OPT_COMPACT);
+		options.addOption(OPT_RAW);
+		options.addOption(OPT_NULL_INPUT);
+		options.addOption(OPT_VERSION);
+		options.addOption(OPT_HELP);
+
 		final CommandLine command;
-		final JsonQuery jq;
+		final List<String> rest;
 		try {
 			final CommandLineParser parser = new DefaultParser();
-			final Options options = new Options();
-			options.addOption(OPT_COMPACT);
-			options.addOption(OPT_RAW);
-			options.addOption(OPT_NULL_INPUT);
-			options.addOption(OPT_HELP);
 			command = parser.parse(options, args);
-			final List<String> rest = command.getArgList();
-			if (rest.isEmpty() || command.hasOption(OPT_HELP.getOpt())) {
-				final HelpFormatter help = new HelpFormatter();
-				help.printHelp("jackson-jq [OPTIONS...] QUERY", options, false);
-				System.exit(0);
-			}
-			jq = JsonQuery.compile(rest.get(0));
+			rest = command.getArgList();
 		} catch (ParseException e) {
 			System.err.println("invalid arguments: " + Arrays.toString(args));
 			System.exit(1);
 			throw e;
 		}
+
+		Version version = Versions.JQ_1_5;
+		if (command.hasOption(OPT_VERSION.getLongOpt())) {
+			version = Version.valueOf(command.getOptionValue(OPT_VERSION.getLongOpt()));
+			if (!Versions.versions().contains(version)) {
+				System.err.println("unsupported --jq version: " + version);
+				System.exit(1);
+			}
+		}
+
+		if (rest.isEmpty() || command.hasOption(OPT_HELP.getOpt())) {
+			final HelpFormatter help = new HelpFormatter();
+			help.printHelp("jackson-jq [OPTIONS...] QUERY", options, false);
+			System.exit(0);
+		}
+
+		final JsonQuery jq = JsonQuery.compile(rest.get(0), version);
 
 		if (!command.hasOption(OPT_COMPACT.getOpt())) {
 			MAPPER.enable(SerializationFeature.INDENT_OUTPUT);
@@ -86,6 +102,9 @@ public class Main {
 			is = new ByteArrayInputStream("null".getBytes());
 		}
 
+		final Scope scope = Scope.newEmptyScope();
+		scope.loadFunctions(Scope.class.getClassLoader(), version);
+
 		try (final BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
 			final JsonParser parser = MAPPER.getFactory().createParser(reader);
 			while (!parser.isClosed()) {
@@ -93,7 +112,7 @@ public class Main {
 				if (tree == null)
 					continue;
 				try {
-					for (final JsonNode out : jq.apply(ROOT_SCOPE, tree)) {
+					for (final JsonNode out : jq.apply(scope, tree)) {
 						if (out.isTextual() && command.hasOption(OPT_RAW.getOpt())) {
 							System.out.println(out.asText());
 						} else {

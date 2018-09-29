@@ -10,6 +10,7 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.Functional;
 import net.thisptr.jackson.jq.internal.misc.Pair;
 import net.thisptr.jackson.jq.internal.tree.matcher.PatternMatcher;
+import net.thisptr.jackson.jq.path.Path;
 
 public class ValueMatcher implements PatternMatcher {
 	private String name;
@@ -23,6 +24,13 @@ public class ValueMatcher implements PatternMatcher {
 		accumulate.push(Pair.of(name, in));
 		if (emit)
 			out.accept(accumulate);
+	}
+
+	@Override
+	public void matchWithPath(final Scope scope, final JsonNode in, final Path path, final MatchOutput output, final Stack<MatchWithPath> accumulate, final boolean emit) throws JsonQueryException {
+		accumulate.push(new MatchWithPath(name, in, path));
+		if (emit)
+			output.emit(accumulate);
 	}
 
 	@Override

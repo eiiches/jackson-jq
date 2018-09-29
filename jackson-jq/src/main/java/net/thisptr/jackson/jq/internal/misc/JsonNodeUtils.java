@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.internal.misc;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,18 +11,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.LongNode;
-import com.fasterxml.jackson.databind.node.MissingNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import net.thisptr.jackson.jq.exception.IllegalJsonArgumentException;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedAllFieldAccess;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedEmptyFieldAccess;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedFieldAccess;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedIndexFieldAccess;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedRangeFieldAccess;
-import net.thisptr.jackson.jq.internal.tree.fieldaccess.resolved.ResolvedStringFieldAccess;
 
 public class JsonNodeUtils {
 	private JsonNodeUtils() {}
@@ -112,159 +106,43 @@ public class JsonNodeUtils {
 		}
 	}
 
-	public static JsonNode mutate(final ObjectMapper mapper, final JsonNode in, final List<ResolvedFieldAccess> path, final Mutation mutation, final boolean creative) throws JsonQueryException {
-		if (path.isEmpty()) {
-			return mutation.apply(in);
-		} else {
-			final ResolvedFieldAccess accessHead = path.get(0);
-			final List<ResolvedFieldAccess> accessTail = path.subList(1, path.size());
-
-			if (accessHead instanceof ResolvedEmptyFieldAccess) {
-				return in;
-			} else if (accessHead instanceof ResolvedIndexFieldAccess) {
-				final ResolvedIndexFieldAccess access = (ResolvedIndexFieldAccess) accessHead;
-				if (in.isNull()) {
-					if (!creative)
-						return NullNode.getInstance();
-					final ArrayNode result = mapper.createArrayNode();
-					for (final long index : access.indices()) {
-						if (index < 0)
-							throw new JsonQueryException("Out of bounds negative array index");
-						while (index >= result.size())
-							result.add(NullNode.getInstance());
-						result.set((int) index, mutate(mapper, NullNode.getInstance(), accessTail, mutation, creative));
-					}
-					return result;
-				} else if (in.isArray()) {
-					final ArrayNode result = mapper.createArrayNode();
-					final ArrayNode tmp = mapper.createArrayNode();
-					copy(tmp, in);
-					for (long index : access.indices()) {
-						index = index >= 0 ? index : index + in.size();
-						JsonNode value = tmp.get((int) index);
-						if (value == null && creative)
-							value = NullNode.getInstance();
-						final JsonNode newvalue = mutate(mapper, value, accessTail, mutation, creative);
-						if (newvalue != null) {
-							while (index >= tmp.size())
-								tmp.add(NullNode.getInstance());
-							tmp.set((int) index, newvalue);
-						} else {
-							tmp.set((int) index, MissingNode.getInstance());
-						}
-					}
-					for (final JsonNode t : tmp)
-						if (!t.isMissingNode())
-							result.add(t);
-					return result;
-				} else {
-					if (!accessHead.permissive)
-						throw JsonQueryException.format("Cannot index %s with number", in.getNodeType());
-					return in;
-				}
-			} else if (accessHead instanceof ResolvedStringFieldAccess) {
-				final ResolvedStringFieldAccess access = (ResolvedStringFieldAccess) accessHead;
-				if (in.isNull()) {
-					if (!creative)
-						return NullNode.getInstance();
-					final ObjectNode result = mapper.createObjectNode();
-					for (final String key : access.keys())
-						result.set(key, mutate(mapper, NullNode.getInstance(), accessTail, mutation, creative));
-					return result;
-				} else if (in.isObject()) {
-					final ObjectNode result = mapper.createObjectNode();
-					copy(result, in);
-					for (final String key : access.keys()) {
-						JsonNode value = result.get(key);
-						if (value == null && creative)
-							value = NullNode.getInstance();
-						final JsonNode newvalue = mutate(mapper, value, accessTail, mutation, creative);
-						if (newvalue == null) {
-							result.remove(key);
-						} else if (newvalue != value) {
-							result.set(key, newvalue);
-						}
-					}
-					return result;
-				} else {
-					if (!accessHead.permissive)
-						throw JsonQueryException.format("Cannot index %s with string \"%s\"", in.getNodeType(), access.keys().get(0));
-					return in;
-				}
-			} else if (accessHead instanceof ResolvedRangeFieldAccess) {
-				final ResolvedRangeFieldAccess access = (ResolvedRangeFieldAccess) accessHead;
-				if (in.isNull()) {
-					final JsonNode newvalue = mutate(mapper, NullNode.getInstance(), accessTail, mutation, creative);
-					if (!newvalue.isArray())
-						throw new JsonQueryException("A slice of an array can only be assigned another array");
-					return newvalue;
-				} else if (in.isArray()) {
-					ArrayNode result = mapper.createArrayNode();
-					copy(result, in);
-					final ArrayNode tmp = mapper.createArrayNode();
-					for (Range range : access.ranges()) {
-						range = range.over(result.size());
-
-						for (int i = 0; i < range.begin; ++i)
-							tmp.add(result.get(i));
-						final ArrayNode slice = mapper.createArrayNode();
-						for (int i = (int) range.begin; i < range.end; ++i)
-							slice.add(result.get(i));
-						final JsonNode newvalue = mutate(mapper, slice, accessTail, mutation, creative);
-						if (newvalue != null && newvalue.isArray()) {
-							for (final JsonNode t : newvalue)
-								tmp.add(t);
-						} else {
-							if (newvalue != null)
-								throw new JsonQueryException("A slice of an array can only be assigned another array");
-						}
-						for (int i = (int) range.end; i < result.size(); ++i)
-							tmp.add(result.get(i));
-						result = tmp;
-					}
-					return result;
-				} else if (in.isTextual()) {
-					throw new JsonQueryException("Cannot update field at object index of string");
-				} else {
-					if (!accessHead.permissive)
-						throw JsonQueryException.format("Cannot index %s with object", in.getNodeType());
-					return in;
-				}
-			} else if (accessHead instanceof ResolvedAllFieldAccess) {
-				if (in.isNull()) {
-					throw new JsonQueryException("Cannot iterate over null");
-				} else if (in.isObject()) {
-					final ObjectNode result = mapper.createObjectNode();
-					final Iterator<Entry<String, JsonNode>> iter = in.fields();
-					while (iter.hasNext()) {
-						final Entry<String, JsonNode> entry = iter.next();
-						final String key = entry.getKey();
-						final JsonNode value = entry.getValue();
-						final JsonNode newvalue = mutate(mapper, value, accessTail, mutation, creative);
-						if (newvalue != null)
-							result.set(key, newvalue);
-					}
-					return result;
-				} else if (in.isArray()) {
-					final ArrayNode result = mapper.createArrayNode();
-					for (int key = 0; key < in.size(); ++key) {
-						final JsonNode value = in.get(key);
-						final JsonNode newvalue = mutate(mapper, value, accessTail, mutation, creative);
-						if (newvalue != null)
-							result.add(newvalue);
-					}
-					return result;
-				} else {
-					throw JsonQueryException.format("Cannot iterate over %s", in.getNodeType());
-				}
-			}
-			throw new IllegalStateException();
-		}
-	}
-
 	public static JsonNode nullToNullNode(final JsonNode value) {
 		if (value == null)
 			return NullNode.getInstance();
 		return value;
+	}
+
+	private static final ObjectMapper MAPPER = new ObjectMapper();
+
+	private static JsonNode filterInternal(final JsonNode in, final Predicate<JsonNode> pred) {
+		if (in.isObject()) {
+			final ObjectNode out = MAPPER.createObjectNode();
+			final Iterator<Entry<String, JsonNode>> iter = in.fields();
+			while (iter.hasNext()) {
+				final Entry<String, JsonNode> entry = iter.next();
+				if (!pred.test(entry.getValue()))
+					continue;
+				out.set(entry.getKey(), filterInternal(entry.getValue(), pred));
+			}
+			return out;
+		} else if (in.isArray()) {
+			final ArrayNode out = MAPPER.createArrayNode();
+			final Iterator<JsonNode> iter = in.iterator();
+			while (iter.hasNext()) {
+				final JsonNode val = iter.next();
+				if (!pred.test(val))
+					continue;
+				out.add(filterInternal(val, pred));
+			}
+			return out;
+		} else {
+			return in;
+		}
+	}
+
+	public static JsonNode filter(final JsonNode in, final Predicate<JsonNode> pred) {
+		if (!pred.test(in))
+			return NullNode.getInstance();
+		return filterInternal(in, pred);
 	}
 }
