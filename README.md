@@ -120,7 +120,7 @@ The following table (generated from jq-1.5 manual) lists all the features jq pro
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`bsearch(x)`](https://stedolan.github.io/jq/manual/v1.5/#bsearch&#40;x&#41;)                                                                                                                                                                                                                       | ×          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [String interpolation &#45; `\(foo)`](https://stedolan.github.io/jq/manual/v1.5/#Stringinterpolation&#45;&#92;&#40;foo&#41;)                                                                                                                                                                        | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Convert to&#47;from JSON](https://stedolan.github.io/jq/manual/v1.5/#Convertto&#47;fromJSON)                                                                                                                                                                                                       | ○          |
-| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Format strings and escaping](https://stedolan.github.io/jq/manual/v1.5/#Formatstringsandescaping)                                                                                                                                                                                                  | △<sup>※4</sup> |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Format strings and escaping](https://stedolan.github.io/jq/manual/v1.5/#Formatstringsandescaping)                                                                                                                                                                                                  | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Dates](https://stedolan.github.io/jq/manual/v1.5/#Dates)                                                                                                                                                                                                                                           | ×          |
 | [Conditionals and Comparisons](https://stedolan.github.io/jq/manual/v1.5/#ConditionalsandComparisons)                                                                                                                                                                                                                              | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`==`, `!=`](https://stedolan.github.io/jq/manual/v1.5/#&#61;&#61;&#44;&#33;&#61;)                                                                                                                                                                                                                  | ○          |
@@ -180,8 +180,6 @@ The following table (generated from jq-1.5 manual) lists all the features jq pro
 
 ※3) When the function with the same name is defined more than once in the same-level scope, jackson-jq uses the last one. E.g.
  - `def f: 1; def g: f; def f: 2; g` evaluates to 2 in jackson-jq, while jq evaluates it to 1.
-
-※4) `@html`, `@uri`, `@sh`, `@base64` are not implemented yet.
 
 ※5) While `jq-1.5 '0 / .' <<< 0` throws a zero-division error as one might expect, jq-1.5 silently evaluates a compile-time constant `0 / 0` division as `null`.
  - jackson-jq just throws an error whenever divisor is zero.
