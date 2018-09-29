@@ -1,8 +1,10 @@
 package net.thisptr.jackson.jq;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -74,11 +76,21 @@ public class BuiltinFunctionLoader {
 		final List<JqJson> result = new ArrayList<>();
 		final Enumeration<URL> iter = loader.getResources(path);
 		while (iter.hasMoreElements()) {
-			try (final InputStream is = iter.nextElement().openStream()) {
-				final MappingIterator<JqJson> iter2 = DEFAULT_MAPPER.readValues(DEFAULT_MAPPER.getFactory().createParser(is), JqJson.class);
-				while (iter2.hasNext()) {
-					result.add(iter2.next());
+			final StringBuilder buffer = new StringBuilder();
+			try (final BufferedReader reader = new BufferedReader(new InputStreamReader(iter.nextElement().openStream(), StandardCharsets.UTF_8))) {
+				while (true) {
+					final String line = reader.readLine();
+					if (line == null)
+						break;
+					if (line.startsWith("#"))
+						continue;
+					buffer.append(line);
+					buffer.append('\n');
 				}
+			}
+			final MappingIterator<JqJson> iter2 = DEFAULT_MAPPER.readValues(DEFAULT_MAPPER.getFactory().createParser(buffer.toString()), JqJson.class);
+			while (iter2.hasNext()) {
+				result.add(iter2.next());
 			}
 		}
 		return result;
