@@ -1,0 +1,19 @@
+- q: 'path(label $out | foreach .[] as $item (path(.); if $item == false then break $out else $item end; .))'
+  in: [1, 2, 3, false, 4]
+  out:
+  - [0]
+  - [1]
+  - [2]
+- q: 'try (path(label $out | foreach [1,2,3][] as $item ([]; if $item == false then break $out else $item end; .))) catch .'
+  out:
+  - "Invalid path expression near attempt to iterate through [1,2,3]"
+- q: 'try (path(label $out | foreach .[] as $item (path(.); if $item == false then break $out else $item end; .))) catch .'
+  out:
+  - "Cannot iterate over null (null)"
+- q: 'path(label $out | foreach .[] as $item ([]; if $item == false then break $out else 10 end; $item))'
+  out:
+  in: [1, 2, 3, false, 4]
+  out:
+  - [0]
+  - [1]
+  - [2]
