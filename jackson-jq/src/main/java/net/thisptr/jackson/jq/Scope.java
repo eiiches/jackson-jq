@@ -44,7 +44,7 @@ public class Scope {
 	private Scope parentScope;
 
 	@JsonIgnore
-	private Map<String, Function> functions = new HashMap<>();
+	private Map<String, Function> functions;
 
 	public interface ValueWithPath {
 		JsonNode value();
@@ -76,7 +76,7 @@ public class Scope {
 	}
 
 	@JsonProperty("variables")
-	private Map<String, ValueWithPath> values = new HashMap<>();
+	private Map<String, ValueWithPath> values;
 
 	@JsonIgnore
 	private ObjectMapper mapper = DEFAULT_MAPPER;
@@ -94,10 +94,12 @@ public class Scope {
 	}
 
 	public void addFunction(final String name, final int n, final Function q) {
-		functions.put(name + "/" + n, q);
+		addFunction(name + "/" + n, q);
 	}
 
 	public void addFunction(final String name, final Function q) {
+		if (functions == null)
+			functions = new HashMap<>();
 		functions.put(name, q);
 	}
 
@@ -109,10 +111,14 @@ public class Scope {
 	}
 
 	private Function getFunctionRecursive(final String name) {
-		final Function q = functions.get(name);
-		if (q == null && parentScope != null)
-			return parentScope.getFunctionRecursive(name);
-		return q;
+		if (functions != null) {
+			final Function q = functions.get(name);
+			if (q != null)
+				return q;
+		}
+		if (parentScope == null)
+			return null;
+		return parentScope.getFunctionRecursive(name);
 	}
 
 	public void setValue(final String name, final JsonNode value) {
@@ -120,14 +126,20 @@ public class Scope {
 	}
 
 	public void setValueWithPath(final String name, final JsonNode value, final Path path) {
+		if (values == null)
+			values = new HashMap<>();
 		values.put(name, new ValueWithPathImpl(value, path));
 	}
 
 	public ValueWithPath getValueWithPath(final String name) {
-		final ValueWithPath value = values.get(name);
-		if (value == null && parentScope != null)
-			return parentScope.getValueWithPath(name);
-		return value;
+		if (values != null) {
+			final ValueWithPath value = values.get(name);
+			if (value != null)
+				return value;
+		}
+		if (parentScope == null)
+			return null;
+		return parentScope.getValueWithPath(name);
 	}
 
 	public JsonNode getValue(final String name) {
