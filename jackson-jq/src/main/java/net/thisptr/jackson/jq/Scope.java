@@ -102,17 +102,10 @@ public class Scope {
 	}
 
 	public Function getFunction(final String name, final int nargs) {
-		final Function f = getFunctionRecursive(name, nargs);
+		final Function f = getFunctionRecursive(name + "/" + nargs);
 		if (f != null)
 			return f;
 		return getFunctionRecursive(name);
-	}
-
-	private Function getFunctionRecursive(final String name, final int nargs) {
-		final Function q = functions.get(name + "/" + nargs);
-		if (q == null && parentScope != null)
-			return parentScope.getFunctionRecursive(name, nargs);
-		return q;
 	}
 
 	private Function getFunctionRecursive(final String name) {
