@@ -7,10 +7,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.thisptr.jackson.jq.Expression;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.Pair;
+import net.thisptr.jackson.jq.path.Path;
 
 public class StringInterpolation implements Expression {
 	private final List<Pair<Integer, Expression>> interpolations;
@@ -24,12 +25,12 @@ public class StringInterpolation implements Expression {
 	}
 
 	@Override
-	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		final Stack<Pair<Integer, JsonNode>> stack = new Stack<>();
 		recurse(scope, in, output, stack, interpolations);
 	}
 
-	private void recurse(final Scope scope, final JsonNode in, final Output output, final Stack<Pair<Integer, JsonNode>> stack, final List<Pair<Integer, Expression>> interpolations) throws JsonQueryException {
+	private void recurse(final Scope scope, final JsonNode in, final PathOutput output, final Stack<Pair<Integer, JsonNode>> stack, final List<Pair<Integer, Expression>> interpolations) throws JsonQueryException {
 		if (interpolations.isEmpty()) {
 			final StringBuilder builder = new StringBuilder();
 			int pos = 0;
@@ -41,7 +42,7 @@ public class StringInterpolation implements Expression {
 				builder.append(head._2.isValueNode() ? head._2.asText() : head._2.toString());
 			}
 			builder.append(template.substring(pos));
-			output.emit(new TextNode(builder.toString()));
+			output.emit(new TextNode(builder.toString()), null);
 		} else {
 			final Pair<Integer, Expression> rhead = interpolations.get(interpolations.size() - 1);
 			final List<Pair<Integer, Expression>> rtail = interpolations.subList(0, interpolations.size() - 1);

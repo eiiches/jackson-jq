@@ -8,11 +8,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 
 import net.thisptr.jackson.jq.Expression;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.Pair;
 import net.thisptr.jackson.jq.internal.tree.matcher.PatternMatcher;
+import net.thisptr.jackson.jq.path.Path;
 
 public class ReduceExpression implements Expression {
 	private Expression iterExpr;
@@ -30,7 +31,7 @@ public class ReduceExpression implements Expression {
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
 
 	@Override
-	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		initExpr.apply(scope, in, (accumulator) -> {
 			// Wrap in array to allow mutation inside lambda
 			final JsonNode[] accumulators = new JsonNode[] { accumulator };
@@ -51,7 +52,7 @@ public class ReduceExpression implements Expression {
 				}, stack, true);
 			});
 
-			output.emit(accumulators[0]);
+			output.emit(accumulators[0], null);
 		});
 	}
 

@@ -7,16 +7,9 @@ import net.thisptr.jackson.jq.path.Path;
 
 public interface Expression {
 
-	@Deprecated
 	default void apply(Scope scope, JsonNode in, Output output) throws JsonQueryException {
-		apply(scope, in, null, (out, path) -> {
-			output.emit(out);
-		}, false);
+		apply(scope, in, null, output, false);
 	}
 
-	default void apply(Scope scope, JsonNode in, Path ipath, PathOutput output, boolean requirePath) throws JsonQueryException {
-		apply(scope, in, (out) -> {
-			output.emit(out, null);
-		});
-	}
+	void apply(Scope scope, JsonNode in, Path ipath, PathOutput output, boolean requirePath) throws JsonQueryException;
 }

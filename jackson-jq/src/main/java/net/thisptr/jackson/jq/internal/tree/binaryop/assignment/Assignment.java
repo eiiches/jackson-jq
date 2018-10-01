@@ -6,7 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.Expression;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.tree.binaryop.BinaryOperatorExpression;
@@ -19,7 +19,7 @@ public class Assignment extends BinaryOperatorExpression {
 	}
 
 	@Override
-	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {
+	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		rhs.apply(scope, in, (rval) -> {
 			final List<Path> lpaths = new ArrayList<>();
 			lhs.apply(scope, in, RootPath.getInstance(), (lval, lpath) -> {
@@ -30,7 +30,7 @@ public class Assignment extends BinaryOperatorExpression {
 			JsonNode out = in;
 			for (final Path lpath : lpaths)
 				out = lpath.mutate(out, (lval_) -> rval);
-			output.emit(out);
+			output.emit(out, null);
 		});
 	}
 }
