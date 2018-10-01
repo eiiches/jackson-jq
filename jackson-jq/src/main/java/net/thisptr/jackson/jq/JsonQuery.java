@@ -9,7 +9,7 @@ import net.thisptr.jackson.jq.internal.javacc.ExpressionParser;
 public class JsonQuery {
 	private final Expression expr;
 
-	public JsonQuery(final Expression expr) {
+	private JsonQuery(final Expression expr) {
 		this.expr = expr;
 	}
 
