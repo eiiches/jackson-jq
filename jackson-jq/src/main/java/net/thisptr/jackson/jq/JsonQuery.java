@@ -17,10 +17,6 @@ public class JsonQuery {
 		expr.apply(scope, in, output);
 	}
 
-	public static JsonQuery compile(final String path) throws JsonQueryException {
-		return new JsonQuery(new IsolatedScopeQuery(ExpressionParser.compile(path, Versions.JQ_1_5)));
-	}
-
 	public static JsonQuery compile(final String path, final Version version) throws JsonQueryException {
 		return new JsonQuery(new IsolatedScopeQuery(ExpressionParser.compile(path, version)));
 	}
