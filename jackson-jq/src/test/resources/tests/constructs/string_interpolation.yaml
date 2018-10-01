@@ -1,0 +1,6 @@
+- q: '"path: \(path(.)|tojson)"'
+  out:
+  - "path: []"
+- q: 'try (path("path: \([1,2][])")) catch .'
+  out:
+  - "Invalid path expression with result \"path: 1\""
