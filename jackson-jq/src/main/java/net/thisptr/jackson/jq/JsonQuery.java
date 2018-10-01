@@ -1,8 +1,5 @@
 package net.thisptr.jackson.jq;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.exception.JsonQueryException;
@@ -14,12 +11,6 @@ public class JsonQuery {
 
 	public JsonQuery(final Expression expr) {
 		this.expr = expr;
-	}
-
-	public List<JsonNode> apply(final Scope scope, final JsonNode in) throws JsonQueryException {
-		final List<JsonNode> output = new ArrayList<>();
-		expr.apply(scope, in, output::add);
-		return output;
 	}
 
 	public void apply(final Scope scope, final JsonNode in, final Output output) throws JsonQueryException {

@@ -165,7 +165,9 @@ public class JsonQueryTest {
 		boolean failed = false;
 		try {
 			final JsonQuery q = JsonQuery.compile(tc.q, version);
-			assertThat(wrap(q.apply(scope, tc.in))).as("%s", command).isEqualTo(wrap(tc.out));
+			final List<JsonNode> out = new ArrayList<>();
+			q.apply(scope, tc.in, out::add);
+			assertThat(wrap(out)).as("%s", command).isEqualTo(wrap(tc.out));
 
 			// JsonQuery.compile($.toString()).toString() === $.toString()
 			final String s1 = q.toString();
@@ -174,7 +176,9 @@ public class JsonQueryTest {
 
 			// JsonQuery.compile($.toString()).apply(in) === $.apply(in)
 			final JsonQuery q1 = JsonQuery.compile(s1, version);
-			assertThat(wrap(q1.apply(scope, tc.in))).as("bad tostring: %s", command).isEqualTo(wrap(tc.out));
+			final List<JsonNode> out1 = new ArrayList<>();
+			q1.apply(scope, tc.in, out1::add);
+			assertThat(wrap(out1)).as("bad tostring: %s", command).isEqualTo(wrap(tc.out));
 		} catch (final Throwable e) {
 			failed = true;
 			if (!tc.failing) {
