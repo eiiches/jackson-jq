@@ -6,6 +6,7 @@ import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.tree.literal.NullLiteral;
 import net.thisptr.jackson.jq.path.Path;
@@ -50,7 +51,7 @@ public class BracketFieldAccess extends FieldAccess {
 							emitArrayRangeIndexPath(permissive, indexBegin, indexEnd, pobj, ppath, output, requirePath);
 						} else {
 							if (!permissive)
-								throw JsonQueryException.format("Start and end indices of an %s slice must be numbers", pobj.getNodeType());
+								throw new JsonQueryTypeException("Start and end indices of an %s slice must be numbers", pobj.getNodeType());
 						}
 					});
 				});
@@ -62,7 +63,7 @@ public class BracketFieldAccess extends FieldAccess {
 						emitObjectFieldPath(permissive, accessor.asText(), pobj, ppath, output, requirePath);
 					} else {
 						if (!permissive)
-							throw JsonQueryException.format("Cannot index %s with %s", pobj.getNodeType(), accessor.getNodeType());
+							throw new JsonQueryTypeException("Cannot index %s with %s", pobj.getNodeType(), accessor.getNodeType());
 					}
 				});
 			}

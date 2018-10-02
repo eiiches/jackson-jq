@@ -26,7 +26,7 @@ public class ContainsFunction implements Function {
 		args.get(0).apply(scope, in, (value) -> {
 			if (in.getNodeType() != value.getNodeType()
 					|| (in.isBoolean() && in.asBoolean() != value.asBoolean())) {
-				throw JsonQueryTypeException.format("%s (%s) and %s (%s) cannot have their containment checked", in.getNodeType(), in, value.getNodeType(), value);
+				throw new JsonQueryTypeException("%s and %s cannot have their containment checked", in, value);
 			}
 			output.emit(BooleanNode.valueOf(contains(value, in)));
 		});

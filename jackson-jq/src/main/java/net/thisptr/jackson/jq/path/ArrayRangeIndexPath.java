@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.misc.Range;
 import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
 
@@ -78,7 +79,7 @@ public class ArrayRangeIndexPath implements Path {
 				oldval.add(in.get((int) index));
 			final JsonNode newval = mutation.apply(oldval);
 			if (!newval.isArray())
-				throw new JsonQueryException("A slice of an array can only be assigned another array");
+				throw new JsonQueryTypeException("A slice of an array can only be assigned another array");
 			for (final JsonNode element : newval)
 				out.add(element);
 			for (long index = r.end; index < in.size(); ++index)
@@ -90,10 +91,10 @@ public class ArrayRangeIndexPath implements Path {
 		} else if (in.isNull()) {
 			final JsonNode newval = mutation.apply(NullNode.getInstance());
 			if (!newval.isArray())
-				throw new JsonQueryException("A slice of an array can only be assigned another array");
+				throw new JsonQueryTypeException("A slice of an array can only be assigned another array");
 			return newval;
 		} else {
-			throw JsonQueryException.format("Cannot index %s with object", in.getNodeType());
+			throw new JsonQueryTypeException("Cannot index %s with object", in.getNodeType());
 		}
 	}
 
@@ -111,7 +112,7 @@ public class ArrayRangeIndexPath implements Path {
 			return Optional.of(NullNode.getInstance());
 		} else {
 			if (!permissive)
-				throw JsonQueryException.format("Cannot index %s with object", pobj.getNodeType());
+				throw new JsonQueryTypeException("Cannot index %s with object", pobj.getNodeType());
 			return Optional.empty();
 		}
 	}

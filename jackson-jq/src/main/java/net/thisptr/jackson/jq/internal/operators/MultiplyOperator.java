@@ -40,7 +40,7 @@ public class MultiplyOperator implements BinaryOperator {
 		} else if (lhs.isObject() && rhs.isObject()) {
 			return mergeRecursive(mapper, (ObjectNode) lhs, (ObjectNode) rhs);
 		} else {
-			throw new JsonQueryTypeException(lhs, rhs, "cannot be multiplied");
+			throw new JsonQueryTypeException("%s and %s cannot be multiplied", lhs, rhs);
 		}
 	}
 

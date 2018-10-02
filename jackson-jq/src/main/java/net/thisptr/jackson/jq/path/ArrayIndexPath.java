@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 
 /**
  * Despite the name, {@link ArrayIndexPath} can be used to index strings.
@@ -80,7 +81,7 @@ public class ArrayIndexPath implements Path {
 			out.set(_index, newval);
 			return out;
 		} else {
-			throw JsonQueryException.format("Cannot index %s with number", in.getNodeType());
+			throw new JsonQueryTypeException("Cannot index %s with number", in.getNodeType());
 		}
 	}
 
@@ -96,7 +97,7 @@ public class ArrayIndexPath implements Path {
 			return Optional.of(NullNode.getInstance());
 		} else {
 			if (!permissive)
-				throw JsonQueryException.format("Cannot index %s with number", pobj.getNodeType());
+				throw new JsonQueryTypeException("Cannot index %s with number", pobj.getNodeType());
 			return Optional.empty();
 		}
 	}

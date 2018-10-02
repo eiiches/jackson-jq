@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -112,7 +113,8 @@ public class JsonNodeUtils {
 		return value;
 	}
 
-	private static final ObjectMapper MAPPER = new ObjectMapper();
+	private static final ObjectMapper MAPPER = new ObjectMapper()
+			.registerModule(JsonQueryJacksonModule.getInstance());
 
 	private static JsonNode filterInternal(final JsonNode in, final Predicate<JsonNode> pred) {
 		if (in.isObject()) {
@@ -144,5 +146,13 @@ public class JsonNodeUtils {
 		if (!pred.test(in))
 			return NullNode.getInstance();
 		return filterInternal(in, pred);
+	}
+
+	public static String toString(final JsonNode node) {
+		try {
+			return MAPPER.writeValueAsString(node);
+		} catch (final JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

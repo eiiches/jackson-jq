@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
+import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.path.RootPath;
 
 @BuiltinFunction("path/1")
@@ -23,7 +24,7 @@ public class PathFunction implements Function {
 	public void apply(Scope scope, List<Expression> args, JsonNode in, Output output, Version version) throws JsonQueryException {
 		args.get(0).apply(scope, in, RootPath.getInstance(), (obj, path) -> {
 			if (path == null)
-				throw new JsonQueryException("Invalid path expression with result " + obj); // FIXME: format
+				throw new JsonQueryException("Invalid path expression with result %s", JsonNodeUtils.toString(obj));
 			final ArrayNode out = MAPPER.createArrayNode();
 			path.toJsonNode(out);
 			output.emit(out);

@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
-import net.thisptr.jackson.jq.internal.misc.MoreExceptions;
 
 @BuiltinFunction(value = "@base64d/0", version = "[1.6, )")
 public class AtBase64dFunction extends AbstractAtFormattingFunction {
@@ -16,7 +15,7 @@ public class AtBase64dFunction extends AbstractAtFormattingFunction {
 		try {
 			return new String(Base64.getDecoder().decode(text), StandardCharsets.UTF_8);
 		} catch (final Throwable th) {
-			throw new JsonQueryException(MoreExceptions.format("%s is not valid base64 data", TextNode.valueOf(text)), th);
+			throw new JsonQueryException("%s is not valid base64 data: %s", TextNode.valueOf(text), th.getMessage());
 		}
 	}
 }

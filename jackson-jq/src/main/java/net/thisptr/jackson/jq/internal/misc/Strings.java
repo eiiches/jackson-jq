@@ -42,4 +42,10 @@ public class Strings {
 			return in.split(Pattern.quote(sep), -1);
 		}
 	}
+
+	public static String truncate(final String text, final int len) {
+		if (text.length() <= len)
+			return text;
+		return text.substring(0, len - 3) + "...";
+	}
 }

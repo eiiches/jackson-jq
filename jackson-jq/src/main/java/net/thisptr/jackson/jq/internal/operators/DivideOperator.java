@@ -18,7 +18,7 @@ public class DivideOperator implements BinaryOperator {
 			final double divisor = rhs.asDouble();
 			final double dividend = lhs.asDouble();
 			if (divisor == 0.0)
-				throw JsonQueryException.format("number (%s) and number (%s) cannot be divided because the divisor is zero", dividend, divisor);
+				throw new JsonQueryException("%s and %s cannot be divided because the divisor is zero", lhs, rhs);
 			return JsonNodeUtils.asNumericNode(dividend / divisor);
 		} else if (lhs.isTextual() && rhs.isTextual()) {
 			final ArrayNode result = mapper.createArrayNode();
@@ -26,7 +26,7 @@ public class DivideOperator implements BinaryOperator {
 				result.add(new TextNode(token));
 			return result;
 		} else {
-			throw new JsonQueryTypeException(lhs, rhs, "cannot be divided");
+			throw new JsonQueryTypeException("%s and %s cannot be divided", lhs, rhs);
 		}
 	}
 

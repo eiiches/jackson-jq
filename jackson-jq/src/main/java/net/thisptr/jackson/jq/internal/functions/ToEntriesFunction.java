@@ -44,7 +44,7 @@ public class ToEntriesFunction implements Function {
 				out.add(entryNode);
 			}
 		} else {
-			throw JsonQueryTypeException.format("%s has no keys", in);
+			throw new JsonQueryTypeException("%s has no keys", in);
 		}
 
 		output.emit(out);

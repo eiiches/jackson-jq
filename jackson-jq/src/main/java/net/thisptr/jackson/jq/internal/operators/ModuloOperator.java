@@ -14,10 +14,10 @@ public class ModuloOperator implements BinaryOperator {
 			final long divisor = rhs.asLong();
 			final long dividend = lhs.asLong();
 			if (divisor == 0L)
-				throw JsonQueryException.format("number (%s) and number (%s) cannot be divided (remainder) because the divisor is zero", dividend, divisor);
+				throw new JsonQueryException("%s and %s cannot be divided (remainder) because the divisor is zero", lhs, rhs);
 			return JsonNodeUtils.asNumericNode(dividend % divisor);
 		} else {
-			throw new JsonQueryTypeException(lhs, rhs, "cannot be divided (remainder)");
+			throw new JsonQueryTypeException("%s and %s cannot be divided (remainder)", lhs, rhs);
 		}
 	}
 

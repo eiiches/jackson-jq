@@ -78,7 +78,7 @@ public class OnigUtils {
 					result |= Option.EXTEND;
 					break;
 				default:
-					throw JsonQueryException.format("%s is not a valid modifier string", flags);
+					throw new JsonQueryException("%s is not a valid modifier string", flags);
 			}
 		}
 		return result;

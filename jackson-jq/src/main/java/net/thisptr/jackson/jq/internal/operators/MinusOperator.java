@@ -32,7 +32,7 @@ public class MinusOperator implements BinaryOperator {
 					result.add(l);
 			return result;
 		} else {
-			throw new JsonQueryTypeException(lhs, rhs, "cannot be subtracted");
+			throw new JsonQueryTypeException("%s and %s cannot be subtracted", lhs, rhs);
 		}
 	}
 

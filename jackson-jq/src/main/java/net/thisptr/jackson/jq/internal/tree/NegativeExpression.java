@@ -21,7 +21,7 @@ public class NegativeExpression implements Expression {
 	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		value.apply(scope, in, (v) -> {
 			if (!v.isNumber())
-				throw new JsonQueryTypeException(in, "cannot be negated");
+				throw new JsonQueryTypeException("%s cannot be negated", in);
 			output.emit(JsonNodeUtils.asNumericNode(-v.asDouble()), null);
 		});
 	}

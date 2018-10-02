@@ -33,7 +33,7 @@ public class ObjectMatcher implements PatternMatcher {
 
 		keyexpr.apply(scope, in, (key) -> {
 			if (!key.isTextual())
-				throw JsonQueryTypeException.format("Cannot index %s with %s", in.getNodeType(), key.getNodeType());
+				throw new JsonQueryTypeException("Cannot index %s with %s", in.getNodeType(), key.getNodeType());
 
 			final JsonNode value = in.get(key.asText());
 
@@ -54,7 +54,7 @@ public class ObjectMatcher implements PatternMatcher {
 
 		keyexpr.apply(scope, in, (key) -> {
 			if (!key.isTextual())
-				throw JsonQueryTypeException.format("Cannot index %s with %s", in.getNodeType(), key.getNodeType());
+				throw new JsonQueryTypeException("Cannot index %s with %s", in.getNodeType(), key.getNodeType());
 
 			final JsonNode value = in.get(key.asText());
 			final Path valuepath = ObjectFieldPath.chainIfNotNull(inpath, key.asText());
@@ -69,7 +69,7 @@ public class ObjectMatcher implements PatternMatcher {
 	@Override
 	public void match(final Scope scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate, final boolean emit) throws JsonQueryException {
 		if (!in.isObject() && !in.isNull())
-			throw JsonQueryTypeException.format("Cannot index %s with string", in.getNodeType());
+			throw new JsonQueryTypeException("Cannot index %s with string", in.getNodeType());
 
 		recursive(scope, in, out, accumulate, emit, 0);
 	}
@@ -77,7 +77,7 @@ public class ObjectMatcher implements PatternMatcher {
 	@Override
 	public void matchWithPath(Scope scope, JsonNode in, Path path, MatchOutput output, Stack<MatchWithPath> accumulate, boolean emit) throws JsonQueryException {
 		if (!in.isObject() && !in.isNull())
-			throw JsonQueryTypeException.format("Cannot index %s with string", in.getNodeType());
+			throw new JsonQueryTypeException("Cannot index %s with string", in.getNodeType());
 
 		recursiveWithPath(scope, in, path, output, accumulate, emit, 0);
 	}

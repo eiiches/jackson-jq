@@ -28,7 +28,7 @@ public class ArrayMatcher implements PatternMatcher {
 	@Override
 	public void match(final Scope scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate, final boolean emit) throws JsonQueryException {
 		if (!in.isArray() && !in.isNull())
-			throw JsonQueryTypeException.format("Cannot index %s with number", in.getNodeType());
+			throw new JsonQueryTypeException("Cannot index %s with number", in.getNodeType());
 		for (int i = 0; i < matchers.size(); ++i) {
 			final PatternMatcher matcher = matchers.get(i);
 			final JsonNode item = in.get(i);
@@ -42,7 +42,7 @@ public class ArrayMatcher implements PatternMatcher {
 			LOG.warning("Use of jackson-jq specific behavior is discouraged. jq doesn't allow multiple matchers inside [] in path expressions: " + matchers);
 		}
 		if (!in.isArray() && !in.isNull())
-			throw JsonQueryTypeException.format("Cannot index %s with number", in.getNodeType());
+			throw new JsonQueryTypeException("Cannot index %s with number", in.getNodeType());
 		for (int i = 0; i < matchers.size(); ++i) {
 			final PatternMatcher matcher = matchers.get(i);
 			final JsonNode item = in.get(i);

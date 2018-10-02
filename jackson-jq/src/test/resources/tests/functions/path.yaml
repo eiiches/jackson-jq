@@ -75,3 +75,9 @@
 - q: 'try path(1 | .[]?) catch .'
   out:
   - "Invalid path expression near attempt to iterate through 1"
+- q: 'try (path([1,2,3,4,5,6,7,8,9][])) catch .'
+  out:
+  - "Invalid path expression near attempt to iterate through [1,2,3,4,5,6,7,8,9]"
+- q: 'try (path("longer string not truncated")) catch .'
+  out:
+  - "Invalid path expression with result \"longer string not truncated\""

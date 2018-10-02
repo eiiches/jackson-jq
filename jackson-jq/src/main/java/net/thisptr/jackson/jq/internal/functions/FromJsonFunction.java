@@ -26,13 +26,13 @@ public class FromJsonFunction implements Function {
 		try (final JsonParser parser = scope.getObjectMapper().getFactory().createParser(in.asText())) {
 			tree = parser.readValueAsTree();
 			if (tree == null)
-				throw JsonQueryException.format("failed to parse %s as json; empty", in);
+				throw new JsonQueryException("failed to parse %s as json; empty", in);
 			if (parser.nextToken() != null)
-				throw JsonQueryException.format("failed to parse %s as json; trailing data", in);
+				throw new JsonQueryException("failed to parse %s as json; trailing data", in);
 		} catch (final JsonQueryException e) {
 			throw e;
 		} catch (final IOException e) {
-			throw JsonQueryException.format("failed to parse %s as json", in);
+			throw new JsonQueryException("failed to parse %s as json", in);
 		}
 		output.emit(tree);
 	}

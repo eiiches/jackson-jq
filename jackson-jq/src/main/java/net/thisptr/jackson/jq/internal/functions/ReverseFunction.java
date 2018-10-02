@@ -38,21 +38,21 @@ public class ReverseFunction implements Function {
 				output.emit(out);
 				return;
 			}
-			throw JsonQueryException.format("Cannot index %s with number", in.getNodeType());
+			throw new JsonQueryTypeException("Cannot index %s with number", in.getNodeType());
 		}
 		if (in.isNumber()) {
 			if (in.asDouble() == 0.0) {
 				output.emit(out);
 				return;
 			}
-			throw JsonQueryException.format("Cannot index %s with number", in.getNodeType());
+			throw new JsonQueryTypeException("Cannot index %s with number", in.getNodeType());
 		}
 		if (in.isObject()) {
 			if (in.size() == 0) {
 				output.emit(out);
 				return;
 			}
-			throw JsonQueryException.format("Cannot index %s with number", in.getNodeType());
+			throw new JsonQueryTypeException("Cannot index %s with number", in.getNodeType());
 		}
 		if (in.isBoolean()) {
 			throw new JsonQueryTypeException("%s has no length", in);

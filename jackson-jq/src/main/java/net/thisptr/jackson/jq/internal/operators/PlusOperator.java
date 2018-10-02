@@ -47,7 +47,7 @@ public class PlusOperator implements BinaryOperator {
 		} else if (rhs.isNull()) {
 			return lhs;
 		} else {
-			throw new JsonQueryTypeException(lhs, rhs, "cannot be added");
+			throw new JsonQueryTypeException("%s and %s cannot be added", lhs, rhs);
 		}
 	}
 

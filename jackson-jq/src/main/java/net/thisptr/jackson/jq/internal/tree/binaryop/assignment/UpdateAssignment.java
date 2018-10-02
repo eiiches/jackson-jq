@@ -10,6 +10,7 @@ import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.tree.binaryop.BinaryOperatorExpression;
 import net.thisptr.jackson.jq.path.Path;
 import net.thisptr.jackson.jq.path.RootPath;
@@ -25,7 +26,7 @@ public class UpdateAssignment extends BinaryOperatorExpression {
 
 		lhs.apply(scope, in, RootPath.getInstance(), (lval, lpath) -> {
 			if (lpath == null)
-				throw new JsonQueryException("Invalid path expression with result " + lval); // FIXME: format
+				throw new JsonQueryException("Invalid path expression with result %s", JsonNodeUtils.toString(lval));
 			final List<JsonNode> rvals = new ArrayList<>();
 			rhs.apply(scope, lval, rvals::add);
 			if (out[0] == null || rvals.isEmpty()) {

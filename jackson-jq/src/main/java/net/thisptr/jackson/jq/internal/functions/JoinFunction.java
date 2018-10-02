@@ -32,7 +32,7 @@ public class JoinFunction implements Function {
 					} else if (isep.isNull()) {
 						// append nothing
 					} else {
-						throw new JsonQueryTypeException(new TextNode(builder.toString()), isep, "cannot be added");
+						throw new JsonQueryTypeException("%s and %s cannot be added", new TextNode(builder.toString()), isep);
 					}
 				}
 
@@ -46,8 +46,8 @@ public class JoinFunction implements Function {
 					builder.append(item.toString());
 				} else {
 					if (version.compareTo(Versions.JQ_1_6) >= 0)
-						throw new JsonQueryTypeException(new TextNode(builder.toString()), item, "cannot be added");
-					throw new JsonQueryTypeException(sep, item, "cannot be added");
+						throw new JsonQueryTypeException("%s and %s cannot be added", new TextNode(builder.toString()), item);
+					throw new JsonQueryTypeException("%s and %s cannot be added", sep, item);
 				}
 
 				isep = sep;

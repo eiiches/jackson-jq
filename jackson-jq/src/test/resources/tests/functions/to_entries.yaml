@@ -1,1 +1,4 @@
 - {"v":"[1.5,1.5]","q":"to_entries","in":[61,62],"out":[[{"key":0,"value":61},{"key":1,"value":62}]]}
+- q: 'try ("abcdefghijklm" | to_entries) catch .'
+  out:
+  - 'string ("abcdefghij...) has no keys'
