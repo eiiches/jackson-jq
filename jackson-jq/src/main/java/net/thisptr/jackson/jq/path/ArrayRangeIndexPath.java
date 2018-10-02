@@ -1,7 +1,5 @@
 package net.thisptr.jackson.jq.path;
 
-import java.util.Optional;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -59,9 +57,7 @@ public class ArrayRangeIndexPath implements Path {
 	@Override
 	public void get(final JsonNode in, final Path ipath, final PathOutput output, boolean permissive) throws JsonQueryException {
 		parent.get(in, ipath, (parent, ppath) -> {
-			final Optional<JsonNode> out = resolve(parent, start, end, permissive);
-			if (out.isPresent())
-				output.emit(out.get(), ArrayRangeIndexPath.chainIfNotNull(ppath, start, end));
+			resolve(parent, ppath, output, start, end, permissive);
 		}, permissive);
 	}
 
@@ -98,22 +94,22 @@ public class ArrayRangeIndexPath implements Path {
 		}
 	}
 
-	public static Optional<JsonNode> resolve(JsonNode pobj, final Long start, final Long end, boolean permissive) throws JsonQueryException {
+	public static void resolve(final JsonNode pobj, final Path ppath, final PathOutput output, final Long start, final Long end, final boolean permissive) throws JsonQueryException {
 		if (pobj.isArray()) {
 			final Range r = new Range(start, end).over(pobj.size());
 			final ArrayNode subarray = MAPPER.createArrayNode();
 			for (long index = r.start; index < r.end; ++index)
 				subarray.add(pobj.get((int) index));
-			return Optional.of(subarray);
+			output.emit(subarray, ArrayRangeIndexPath.chainIfNotNull(ppath, start, end));
 		} else if (pobj.isTextual()) {
 			final Range r = new Range(start, end).over(UnicodeUtils.lengthUtf32(pobj.textValue()));
-			return Optional.of(new TextNode(UnicodeUtils.substringUtf32(pobj.textValue(), (int) r.start.longValue(), (int) r.end.longValue())));
+			final TextNode substring = new TextNode(UnicodeUtils.substringUtf32(pobj.textValue(), (int) r.start.longValue(), (int) r.end.longValue()));
+			output.emit(substring, ArrayRangeIndexPath.chainIfNotNull(ppath, start, end));
 		} else if (pobj.isNull()) {
-			return Optional.of(NullNode.getInstance());
+			output.emit(NullNode.getInstance(), ArrayRangeIndexPath.chainIfNotNull(ppath, start, end));
 		} else {
 			if (!permissive)
 				throw new JsonQueryTypeException("Cannot index %s with object", pobj.getNodeType());
-			return Optional.empty();
 		}
 	}
 }

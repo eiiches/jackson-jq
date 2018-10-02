@@ -1,7 +1,5 @@
 package net.thisptr.jackson.jq.path;
 
-import java.util.Optional;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -41,9 +39,7 @@ public class ArrayIndexPath implements Path {
 	@Override
 	public void get(final JsonNode in, final Path ipath, final PathOutput output, boolean permissive) throws JsonQueryException {
 		parent.get(in, ipath, (parent, ppath) -> {
-			final Optional<JsonNode> out = resolve(parent, index, permissive);
-			if (out.isPresent())
-				output.emit(out.get(), ArrayIndexPath.chainIfNotNull(ppath, index));
+			resolve(parent, ppath, output, index, permissive);
 		}, permissive);
 	}
 
@@ -85,20 +81,19 @@ public class ArrayIndexPath implements Path {
 		}
 	}
 
-	public static Optional<JsonNode> resolve(final JsonNode pobj, final int index, final boolean permissive) throws JsonQueryException {
+	public static void resolve(final JsonNode pobj, final Path ppath, final PathOutput output, final int index, final boolean permissive) throws JsonQueryException {
 		if (pobj.isArray()) {
 			final int _index = index < 0 ? index + pobj.size() : index;
 			if (0 <= _index && _index < pobj.size()) {
-				return Optional.of(pobj.get(_index));
+				output.emit(pobj.get(_index), ArrayIndexPath.chainIfNotNull(ppath, index));
 			} else {
-				return Optional.of(NullNode.getInstance());
+				output.emit(NullNode.getInstance(), ArrayIndexPath.chainIfNotNull(ppath, index));
 			}
 		} else if (pobj.isNull()) {
-			return Optional.of(NullNode.getInstance());
+			output.emit(NullNode.getInstance(), ArrayIndexPath.chainIfNotNull(ppath, index));
 		} else {
 			if (!permissive)
 				throw new JsonQueryTypeException("Cannot index %s with number", pobj.getNodeType());
-			return Optional.empty();
 		}
 	}
 }

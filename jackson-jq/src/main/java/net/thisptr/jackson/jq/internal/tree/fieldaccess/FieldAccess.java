@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.internal.tree.fieldaccess;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,20 +54,13 @@ public abstract class FieldAccess implements Expression {
 	protected static void emitObjectFieldPath(boolean permissive, String key, final JsonNode pobj, final Path ppath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		if (requirePath && ppath == null)
 			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(TextNode.valueOf(key)), JsonNodeUtils.toString(pobj));
-		final Optional<JsonNode> obj = ObjectFieldPath.resolve(pobj, key, permissive);
-		if (obj.isPresent()) {
-			output.emit(obj.get(), ObjectFieldPath.chainIfNotNull(ppath, key));
-		}
+		ObjectFieldPath.resolve(pobj, ppath, output, key, permissive);
 	}
 
 	protected static void emitArrayIndexPath(boolean permissive, long _index, final JsonNode pobj, final Path ppath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		if (requirePath && ppath == null)
 			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", _index, JsonNodeUtils.toString(pobj));
-		final Optional<JsonNode> obj = ArrayIndexPath.resolve(pobj, (int) _index, permissive);
-		if (obj.isPresent()) {
-			final Path path = ArrayIndexPath.chainIfNotNull(ppath, (int) _index);
-			output.emit(obj.get(), path);
-		}
+		ArrayIndexPath.resolve(pobj, ppath, output, (int) _index, permissive);
 	}
 
 	private static final ObjectMapper MAPPER = new ObjectMapper(); // FIXME
@@ -80,10 +72,6 @@ public abstract class FieldAccess implements Expression {
 			subpath.set("end", end == null ? NullNode.getInstance() : LongNode.valueOf(end));
 			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", Strings.truncate(JsonNodeUtils.toString(subpath), 14), JsonNodeUtils.toString(pobj));
 		}
-		final Optional<JsonNode> obj = ArrayRangeIndexPath.resolve(pobj, start, end, permissive);
-		if (obj.isPresent()) {
-			final Path path = ArrayRangeIndexPath.chainIfNotNull(ppath, start, end);
-			output.emit(obj.get(), path);
-		}
+		ArrayRangeIndexPath.resolve(pobj, ppath, output, start, end, permissive);
 	}
 }

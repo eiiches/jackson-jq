@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.path;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,9 +40,7 @@ public class ObjectFieldPath implements Path {
 	@Override
 	public void get(final JsonNode in, final Path ipath, final PathOutput output, boolean permissive) throws JsonQueryException {
 		parent.get(in, ipath, (parent, ppath) -> {
-			final Optional<JsonNode> out = resolve(parent, key, permissive);
-			if (out.isPresent())
-				output.emit(out.get(), ObjectFieldPath.chainIfNotNull(ppath, key));
+			resolve(parent, ppath, output, key, permissive);
 		}, permissive);
 	}
 
@@ -78,16 +75,15 @@ public class ObjectFieldPath implements Path {
 		}
 	}
 
-	public static Optional<JsonNode> resolve(JsonNode pobj, String key, boolean permissive) throws JsonQueryException {
+	public static void resolve(JsonNode pobj, Path ppath, PathOutput output, String key, boolean permissive) throws JsonQueryException {
 		if (pobj.isNull()) {
-			return Optional.of(NullNode.getInstance());
+			output.emit(NullNode.getInstance(), ObjectFieldPath.chainIfNotNull(ppath, key));
 		} else if (pobj.isObject()) {
 			final JsonNode n = pobj.get(key);
-			return Optional.of(n == null ? NullNode.getInstance() : n);
+			output.emit(n == null ? NullNode.getInstance() : n, ObjectFieldPath.chainIfNotNull(ppath, key));
 		} else {
 			if (!permissive)
 				throw new JsonQueryException(String.format("Cannot index %s with string \"%s\"", JsonNodeUtils.typeOf(pobj), key));
-			return Optional.empty();
 		}
 	}
 }
