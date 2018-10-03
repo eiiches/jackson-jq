@@ -21,6 +21,9 @@ public class TsvFilter extends AbstractSvFilter {
 				case '\\':
 					builder.append("\\\\");
 					break;
+				case '\0':
+					builder.append("\\0");
+					break;
 				default:
 					builder.append(ch);
 			}
