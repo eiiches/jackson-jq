@@ -13,6 +13,8 @@ public class ModuloOperator implements BinaryOperator {
 		if (lhs.isNumber() && rhs.isNumber()) {
 			final long divisor = rhs.asLong();
 			final long dividend = lhs.asLong();
+			if (Double.isNaN(rhs.asDouble()))
+				return JsonNodeUtils.asNumericNode(dividend);
 			if (divisor == 0L)
 				throw new JsonQueryException("%s and %s cannot be divided (remainder) because the divisor is zero", lhs, rhs);
 			return JsonNodeUtils.asNumericNode(dividend % divisor);

@@ -11,3 +11,6 @@
 - q: 'try (empty % error("foo")) catch .'
   out:
   - foo
+
+- {"q":"(64.5 % nan)","in":84,"out":[64]}
+- {"q":"(nan % nan) | (., isnan)","in":84,"out":[0, false]}
