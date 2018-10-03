@@ -3,3 +3,5 @@
   out:
   - 0
 - {"v":"[1.5,1.5]","q":"setpath(89; empty)","in":[],"out":[]}
+
+- {"v":"[1.5,1.5]","q":"(try (setpath(scalars; floor)) catch (\"__ERROR__\"))","in":[0,14,14,14,14,0,0,0,0],"out":["__ERROR__"]}
