@@ -24,6 +24,9 @@ public class AtHtmlFunction extends AbstractAtFormattingFunction {
 				case '&':
 					builder.append("&amp;");
 					break;
+				case '\0':
+					builder.append("\\0");
+					break;
 				default:
 					builder.append(ch);
 					break;
