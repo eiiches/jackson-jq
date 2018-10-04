@@ -15,9 +15,6 @@ import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import net.thisptr.jackson.jq.exception.IllegalJsonArgumentException;
-import net.thisptr.jackson.jq.exception.JsonQueryException;
-
 public class JsonNodeUtils {
 	private JsonNodeUtils() {}
 
@@ -27,12 +24,6 @@ public class JsonNodeUtils {
 		if (n.isBoolean())
 			return n.asBoolean();
 		return true;
-	}
-
-	public static boolean isIntegralNumber(final JsonNode n) {
-		if (!n.isNumber())
-			return false;
-		return n.asDouble() == n.asLong();
 	}
 
 	public static JsonNode asNumericNode(final long value) {
@@ -81,29 +72,6 @@ public class JsonNodeUtils {
 				return "string";
 			default:
 				throw new IllegalArgumentException("Unknown JsonNodeType: " + in.getNodeType());
-		}
-	}
-
-	public interface Mutation {
-		JsonNode apply(JsonNode value) throws JsonQueryException;
-	}
-
-	public static void copy(final ArrayNode out, final JsonNode in) throws JsonQueryException {
-		if (!in.isArray())
-			throw new IllegalJsonArgumentException("input must be ARRAY");
-
-		for (final JsonNode i : in)
-			out.add(i);
-	}
-
-	public static void copy(final ObjectNode out, final JsonNode in) throws JsonQueryException {
-		if (!in.isObject())
-			throw new IllegalJsonArgumentException("input must be OBJECT");
-
-		final Iterator<Entry<String, JsonNode>> iter = in.fields();
-		while (iter.hasNext()) {
-			final Entry<String, JsonNode> entry = iter.next();
-			out.set(entry.getKey(), entry.getValue());
 		}
 	}
 
