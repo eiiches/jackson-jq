@@ -2,7 +2,6 @@
   out:
   - []
   v: '[1.5,1.5]'
-  failing: true
 - q: 'path(.a.b[])'
   in: {a: {b: [1,2]}}
   out:

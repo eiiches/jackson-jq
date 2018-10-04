@@ -1,0 +1,14 @@
+- q: 'true |= false'
+  in: true
+  out:
+  - false
+
+- q: '1 += 1'
+  in: 1
+  out:
+  - 2
+
+- q: '1 = 3'
+  in: 1
+  out:
+  - 3

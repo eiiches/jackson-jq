@@ -9,6 +9,7 @@ import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.operators.BinaryOperator;
 import net.thisptr.jackson.jq.internal.tree.binaryop.BinaryOperatorExpression;
@@ -28,6 +29,9 @@ public class ComplexAssignment extends BinaryOperatorExpression {
 		rhs.apply(scope, in, (rval) -> {
 			final List<Path> lpaths = new ArrayList<>();
 			lhs.apply(scope, in, RootPath.getInstance(), (lval, lpath) -> {
+				// `VALUE | path(VALUE) => []`
+				if (lpath == null && in.isValueNode() && JsonNodeComparator.getInstance().compare(in, lval) == 0)
+					lpath = RootPath.getInstance();
 				if (lpath == null)
 					throw new JsonQueryException("Invalid path expression with result %s", JsonNodeUtils.toString(lval));
 				lpaths.add(lpath);
