@@ -19,12 +19,13 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
+import net.thisptr.jackson.jq.path.Path;
 
 @BuiltinFunction("uriparse/0")
 public class UriParseFunction implements Function {
@@ -125,13 +126,13 @@ public class UriParseFunction implements Function {
 	}
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		Preconditions.checkInputType("uriparse", in, JsonNodeType.STRING);
 
 		try {
 			final URI uri = new URI(in.asText());
 			final Result result = new Result(uri, parseQueryObj(scope, uri.getRawQuery()));
-			output.emit(scope.getObjectMapper().valueToTree(result));
+			output.emit(scope.getObjectMapper().valueToTree(result), null);
 		} catch (URISyntaxException e) {
 			throw new JsonQueryException(e);
 		}

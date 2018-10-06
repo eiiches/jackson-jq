@@ -18,18 +18,19 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.OnigUtils;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
+import net.thisptr.jackson.jq.path.Path;
 
 @BuiltinFunction("_sub_impl/3")
 public class _SubImplFunction implements Function {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		Preconditions.checkInputType("_sub_impl/3", in, JsonNodeType.STRING);
 
 		args.get(0).apply(scope, in, (regexText) -> {
@@ -49,13 +50,13 @@ public class _SubImplFunction implements Function {
 		});
 	}
 
-	private void replaceAndConcat(Scope scope, Stack<String> stack, Output output, List<JsonNode> match, Expression replaceExpr, final JsonNode in, final Expression flags) throws JsonQueryException {
+	private void replaceAndConcat(Scope scope, Stack<String> stack, PathOutput output, List<JsonNode> match, Expression replaceExpr, final JsonNode in, final Expression flags) throws JsonQueryException {
 		if (match.isEmpty()) {
 			final StringBuilder sb = new StringBuilder();
 			for (int i = stack.size() - 1; i >= 0; --i) {
 				sb.append(stack.get(i));
 			}
-			output.emit(new TextNode(sb.toString()));
+			output.emit(new TextNode(sb.toString()), null);
 			return;
 		}
 

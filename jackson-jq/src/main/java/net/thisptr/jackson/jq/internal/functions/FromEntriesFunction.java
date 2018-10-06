@@ -8,17 +8,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
+import net.thisptr.jackson.jq.path.Path;
 
 @BuiltinFunction("from_entries/0")
 public class FromEntriesFunction implements Function {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		if (!in.isArray() && !in.isObject())
 			throw new JsonQueryTypeException("Cannot iterate over %s", in);
 
@@ -44,6 +45,6 @@ public class FromEntriesFunction implements Function {
 			out.set(key.asText(), value == null ? NullNode.getInstance() : value);
 		}
 
-		output.emit(out);
+		output.emit(out, null);
 	}
 }

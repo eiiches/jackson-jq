@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
@@ -18,13 +18,14 @@ import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.misc.JsonQueryUtils;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
+import net.thisptr.jackson.jq.path.Path;
 
 @BuiltinFunction("group_by/1")
 public class GroupByFunction implements Function {
 	private static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		Preconditions.checkInputType("group_by", in, JsonNodeType.ARRAY);
 
 		final TreeMap<JsonNode, List<JsonNode>> result = new TreeMap<>(comparator);
@@ -37,6 +38,6 @@ public class GroupByFunction implements Function {
 		final List<JsonNode> groups = new ArrayList<>(result.size());
 		for (final List<JsonNode> values : result.values())
 			groups.add(JsonNodeUtils.asArrayNode(scope.getObjectMapper(), values));
-		output.emit(JsonNodeUtils.asArrayNode(scope.getObjectMapper(), groups));
+		output.emit(JsonNodeUtils.asArrayNode(scope.getObjectMapper(), groups), null);
 	}
 }

@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.node.MissingNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.Versions;
@@ -26,7 +26,7 @@ import net.thisptr.jackson.jq.path.Path;
 public class DelPathsFunction implements Function {
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		args.get(0).apply(scope, in, (paths) -> {
 			if (!paths.isArray()) {
 				throw new JsonQueryException("Paths must be specified as an array");
@@ -60,7 +60,7 @@ public class DelPathsFunction implements Function {
 				}, false);
 			}
 
-			output.emit(JsonNodeUtils.filter(out, (val) -> !val.isMissingNode()));
+			output.emit(JsonNodeUtils.filter(out, (val) -> !val.isMissingNode()), null);
 		});
 	}
 }

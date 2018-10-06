@@ -17,6 +17,6 @@ public class UriParseFunctionTest {
 		final Scope scope = Scope.newEmptyScope();
 		scope.loadFunctions(Scope.class.getClassLoader(), Versions.JQ_1_5);
 		// check this does not throw NPE
-		new UriParseFunction().apply(scope, Collections.<Expression>emptyList(), new TextNode("http://google.com"), (out) -> {}, Versions.JQ_1_5);
+		new UriParseFunction().apply(scope, Collections.<Expression>emptyList(), new TextNode("http://google.com"), null, (out, opath) -> {}, Versions.JQ_1_5);
 	}
 }

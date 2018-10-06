@@ -9,12 +9,13 @@ import com.fasterxml.jackson.databind.node.NullNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
+import net.thisptr.jackson.jq.path.Path;
 
 public abstract class AbstractMaxByFunction implements Function {
 	protected static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();
@@ -26,7 +27,7 @@ public abstract class AbstractMaxByFunction implements Function {
 	}
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		Preconditions.checkInputType(fname, in, JsonNodeType.ARRAY);
 
 		JsonNode maxItem = NullNode.getInstance();
@@ -40,7 +41,7 @@ public abstract class AbstractMaxByFunction implements Function {
 			}
 		}
 
-		output.emit(maxItem);
+		output.emit(maxItem, null);
 	}
 
 	protected abstract boolean isLarger(final JsonNode criteria, final JsonNode value);

@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.node.IntNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.Versions;
@@ -18,12 +18,13 @@ import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.operators.PlusOperator;
+import net.thisptr.jackson.jq.path.Path;
 
 @BuiltinFunction({ "range/1", "range/2", "range/3" })
 public class RangeFunction implements Function {
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		if (args.size() == 1) {
 			args.get(0).apply(scope, in, (end) -> {
 				range1(output, end);
@@ -52,18 +53,18 @@ public class RangeFunction implements Function {
 		}
 	}
 
-	private static void range1(final Output output, final JsonNode end) throws JsonQueryException {
+	private static void range1(final PathOutput output, final JsonNode end) throws JsonQueryException {
 		range2(output, IntNode.valueOf(0), end);
 	}
 
-	private static JsonNode range2(final Output output, final JsonNode start, final JsonNode end) throws JsonQueryException {
+	private static JsonNode range2(final PathOutput output, final JsonNode start, final JsonNode end) throws JsonQueryException {
 		if (!start.isNumber() || !end.isNumber())
 			throw new JsonQueryTypeException("Range bounds must be numeric");
 		final double _start = start.asDouble();
 		final double _end = end.asDouble();
 		double i;
 		for (i = _start; i < _end; i += 1)
-			output.emit(JsonNodeUtils.asNumericNode(i));
+			output.emit(JsonNodeUtils.asNumericNode(i), null);
 		return JsonNodeUtils.asNumericNode(i);
 	}
 
@@ -71,13 +72,13 @@ public class RangeFunction implements Function {
 	private static final PlusOperator OPERATOR = new PlusOperator();
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
-	private static void range3(final Output output, final JsonNode start, final JsonNode end, final JsonNode incr) throws JsonQueryException {
+	private static void range3(final PathOutput output, final JsonNode start, final JsonNode end, final JsonNode incr) throws JsonQueryException {
 		final int dir = Integer.signum(COMPARATOR.compare(IntNode.valueOf(0), incr));
 		if (dir == 0)
 			return;
 		JsonNode cur = start;
 		while (Integer.signum(COMPARATOR.compare(cur, end)) == dir) {
-			output.emit(cur);
+			output.emit(cur, null);
 			cur = OPERATOR.apply(MAPPER, cur, incr);
 		}
 	}

@@ -8,11 +8,13 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.thisptr.jackson.jq.Expression;
-import net.thisptr.jackson.jq.Function; import net.thisptr.jackson.jq.Version;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
+import net.thisptr.jackson.jq.path.Path;
 
 @BuiltinFunction({ "hostname/0", "hostname/1" })
 public class HostnameFunction implements Function {
@@ -30,17 +32,17 @@ public class HostnameFunction implements Function {
 	}
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		if (args.size() == 1) {
 			args.get(0).apply(scope, in, (arg) -> {
 				if (arg.isTextual() && "fqdn".equals(arg.asText())) {
-					output.emit(fqdn);
+					output.emit(fqdn, null);
 				} else {
-					output.emit(hostname);
+					output.emit(hostname, null);
 				}
 			});
 		} else {
-			output.emit(hostname);
+			output.emit(hostname, null);
 		}
 	}
 }

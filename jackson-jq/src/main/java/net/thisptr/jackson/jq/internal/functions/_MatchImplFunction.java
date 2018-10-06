@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
@@ -26,11 +26,12 @@ import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.OnigUtils;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
+import net.thisptr.jackson.jq.path.Path;
 
 @BuiltinFunction("_match_impl/3")
 public class _MatchImplFunction implements Function {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		Preconditions.checkInputType("_match_impl/3", in, JsonNodeType.STRING);
 		final byte[] ibytes = in.asText().getBytes(StandardCharsets.UTF_8);
 		final int[] cindex = UnicodeUtils.UTF8CharIndex(ibytes);
@@ -42,7 +43,7 @@ public class _MatchImplFunction implements Function {
 				args.get(0).apply(scope, in, (regex) -> {
 					Preconditions.checkArgumentType("_match_impl/3", 1, regex, JsonNodeType.STRING);
 					final OnigUtils.Pattern p = new OnigUtils.Pattern(regex.asText(), flags.isNull() ? null : flags.asText());
-					output.emit(match(scope.getObjectMapper(), p, ibytes, cindex, test.asBoolean()));
+					output.emit(match(scope.getObjectMapper(), p, ibytes, cindex, test.asBoolean()), null);
 				});
 			});
 		});

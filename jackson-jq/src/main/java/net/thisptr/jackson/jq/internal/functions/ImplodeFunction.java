@@ -8,17 +8,18 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
+import net.thisptr.jackson.jq.path.Path;
 
 @BuiltinFunction("implode/0")
 public class ImplodeFunction implements Function {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		Preconditions.checkInputArrayType("implode", in, JsonNodeType.NUMBER);
 
 		final StringBuilder builder = new StringBuilder();
@@ -30,6 +31,6 @@ public class ImplodeFunction implements Function {
 			}
 		}
 
-		output.emit(new TextNode(builder.toString()));
+		output.emit(new TextNode(builder.toString()), null);
 	}
 }

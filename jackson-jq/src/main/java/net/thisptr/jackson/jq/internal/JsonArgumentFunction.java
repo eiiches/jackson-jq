@@ -8,17 +8,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.path.Path;
 
 public abstract class JsonArgumentFunction implements Function {
 	protected abstract JsonNode fn(final List<JsonNode> args, final JsonNode in) throws JsonQueryException;
 
-	private void combinations(final Output output, final Stack<JsonNode> args, final int index, final List<List<JsonNode>> argmat, final JsonNode in) throws JsonQueryException {
+	private void combinations(final PathOutput output, final Stack<JsonNode> args, final int index, final List<List<JsonNode>> argmat, final JsonNode in) throws JsonQueryException {
 		if (index >= argmat.size()) {
-			output.emit(fn(args, in));
+			output.emit(fn(args, in), null);
 			return;
 		}
 
@@ -30,7 +31,7 @@ public abstract class JsonArgumentFunction implements Function {
 	}
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		final List<List<JsonNode>> _args = new ArrayList<>(args.size());
 		for (final Expression arg : args) {
 			final List<JsonNode> out = new ArrayList<>();

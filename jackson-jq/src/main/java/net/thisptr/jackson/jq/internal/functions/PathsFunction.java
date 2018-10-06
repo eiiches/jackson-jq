@@ -11,26 +11,27 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
+import net.thisptr.jackson.jq.path.Path;
 
 @BuiltinFunction("paths/1")
 public class PathsFunction implements Function {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		final Stack<JsonNode> stack = new Stack<>();
 		applyRecursive(scope, in, output, stack, args.get(0));
 	}
 
-	private void applyRecursive(final Scope scope, final JsonNode in, final Output output, final Stack<JsonNode> stack, final Expression predicate) throws JsonQueryException {
+	private void applyRecursive(final Scope scope, final JsonNode in, final PathOutput output, final Stack<JsonNode> stack, final Expression predicate) throws JsonQueryException {
 		if (!stack.isEmpty()) {
 			predicate.apply(scope, in, (shouldInclude) -> {
 				if (JsonNodeUtils.asBoolean(shouldInclude))
-					output.emit(JsonNodeUtils.asArrayNode(scope.getObjectMapper(), stack));
+					output.emit(JsonNodeUtils.asArrayNode(scope.getObjectMapper(), stack), null);
 			});
 		}
 

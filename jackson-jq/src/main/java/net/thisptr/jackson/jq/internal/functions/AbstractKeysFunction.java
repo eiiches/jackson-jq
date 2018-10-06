@@ -11,12 +11,13 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.Lists;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
+import net.thisptr.jackson.jq.path.Path;
 
 public class AbstractKeysFunction implements Function {
 	private final boolean sortKeys;
@@ -28,7 +29,7 @@ public class AbstractKeysFunction implements Function {
 	}
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		Preconditions.checkInputType(name, in, JsonNodeType.OBJECT, JsonNodeType.ARRAY);
 
 		if (in.isObject()) {
@@ -39,12 +40,12 @@ public class AbstractKeysFunction implements Function {
 			final ArrayNode result = scope.getObjectMapper().createArrayNode();
 			for (final String key : keys)
 				result.add(new TextNode(key));
-			output.emit(result);
+			output.emit(result, null);
 		} else if (in.isArray()) {
 			final ArrayNode result = scope.getObjectMapper().createArrayNode();
 			for (int i = 0; i < in.size(); ++i)
 				result.add(new IntNode(i));
-			output.emit(result);
+			output.emit(result, null);
 		} else {
 			throw new IllegalStateException();
 		}

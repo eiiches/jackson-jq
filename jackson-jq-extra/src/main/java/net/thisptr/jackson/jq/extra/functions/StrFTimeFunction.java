@@ -10,18 +10,19 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
+import net.thisptr.jackson.jq.path.Path;
 
 @BuiltinFunction({ "strftime/1", "strftime/2" })
 public class StrFTimeFunction implements Function {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		Preconditions.checkInputType("strptime", in, JsonNodeType.NUMBER);
 
 		try {
@@ -34,10 +35,10 @@ public class StrFTimeFunction implements Function {
 						if (!tz.isTextual())
 							throw new JsonQueryTypeException("Timezone must be a string");
 						sdf.setTimeZone(TimeZone.getTimeZone(tz.asText()));
-						output.emit(new TextNode(sdf.format((long) in.asDouble())));
+						output.emit(new TextNode(sdf.format((long) in.asDouble())), null);
 					});
 				} else {
-					output.emit(new TextNode(sdf.format((long) in.asDouble())));
+					output.emit(new TextNode(sdf.format((long) in.asDouble())), null);
 				}
 			});
 		} catch (Exception e) {

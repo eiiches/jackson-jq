@@ -10,24 +10,25 @@ import com.fasterxml.jackson.databind.node.NullNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
+import net.thisptr.jackson.jq.path.Path;
 
 @BuiltinFunction("indices/1")
 public class IndicesFunction implements Function {
 	private static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		Preconditions.checkInputType("indices", in, JsonNodeType.STRING, JsonNodeType.ARRAY, JsonNodeType.NULL);
 
 		if (in.isNull()) {
-			output.emit(NullNode.getInstance());
+			output.emit(NullNode.getInstance(), null);
 			return;
 		}
 
@@ -35,7 +36,7 @@ public class IndicesFunction implements Function {
 			final ArrayNode indices = scope.getObjectMapper().createArrayNode();
 			for (final int index : indices(needle, in))
 				indices.add(index);
-			output.emit(indices);
+			output.emit(indices, null);
 		});
 	}
 

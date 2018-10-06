@@ -12,17 +12,18 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
+import net.thisptr.jackson.jq.path.Path;
 
 @BuiltinFunction("to_entries/0")
 public class ToEntriesFunction implements Function {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		final ArrayNode out = scope.getObjectMapper().createArrayNode();
 
 		if (in.isObject()) {
@@ -47,6 +48,6 @@ public class ToEntriesFunction implements Function {
 			throw new JsonQueryTypeException("%s has no keys", in);
 		}
 
-		output.emit(out);
+		output.emit(out, null);
 	}
 }

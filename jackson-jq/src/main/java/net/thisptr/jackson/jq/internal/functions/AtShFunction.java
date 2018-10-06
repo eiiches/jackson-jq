@@ -9,18 +9,19 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.IllegalJsonInputException;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.Strings;
+import net.thisptr.jackson.jq.path.Path;
 
 @BuiltinFunction("@sh/0")
 public class AtShFunction implements Function {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		if (in.isArray()) {
 			final List<String> tokens = new ArrayList<>();
 			for (final JsonNode i : in) {
@@ -32,11 +33,11 @@ public class AtShFunction implements Function {
 					throw new IllegalJsonInputException(i.getNodeType() + " cannot be escaped for shell");
 				}
 			}
-			output.emit(new TextNode(Strings.join(" ", tokens)));
+			output.emit(new TextNode(Strings.join(" ", tokens)), null);
 		} else if (in.isTextual()) {
-			output.emit(new TextNode(escape(in.asText())));
+			output.emit(new TextNode(escape(in.asText())), null);
 		} else if (in.isValueNode()) {
-			output.emit(new TextNode(toString(scope, in)));
+			output.emit(new TextNode(toString(scope, in)), null);
 		} else {
 			throw new IllegalJsonInputException(in.getNodeType() + " cannot be escaped for shell");
 		}

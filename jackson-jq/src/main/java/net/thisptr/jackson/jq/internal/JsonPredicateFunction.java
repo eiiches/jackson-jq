@@ -8,10 +8,11 @@ import com.fasterxml.jackson.databind.node.BooleanNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.path.Path;
 
 public class JsonPredicateFunction implements Function {
 	private Predicate<JsonNode> predicate;
@@ -21,7 +22,7 @@ public class JsonPredicateFunction implements Function {
 	}
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
-		output.emit(BooleanNode.valueOf(predicate.test(in)));
+	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
+		output.emit(BooleanNode.valueOf(predicate.test(in)), null);
 	}
 }

@@ -23,11 +23,11 @@ public class Scope {
 	@BuiltinFunction("debug_scope/0")
 	public static class DebugScopeFunction implements Function {
 		@Override
-		public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Output output, final Version version) throws JsonQueryException {
+		public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 			final Map<String, Object> info = new HashMap<>();
 			info.put("scope", scope);
 			info.put("input", in);
-			output.emit(DEFAULT_MAPPER.valueToTree(info));
+			output.emit(DEFAULT_MAPPER.valueToTree(info), null);
 		}
 	}
 
