@@ -47,7 +47,7 @@ TOKEN_MGR_DECLS:
 	int stringInterpLevel = 0;
 }
 
-SKIP: { <SPACES: " " | "\t" | "\r" | "\n"> }
+SKIP: { <SPACES: " " | "\t" | "\r" | "\n"> | <COMMENT: "#" (~["\n","\r"])* ("\n"|"\r"|"\r\n")?> }
 
 // TOKEN: { <OP_NOT: "not"> } is a normal built-in function
 TOKEN: { <OP_AND: "and"> }
