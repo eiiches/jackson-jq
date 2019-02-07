@@ -174,3 +174,4 @@ def addvalue(f): f as $x | map(. + $x); addvalue(.[0])
 gsub("\t", "\\t")
 .foo += 1
 with_entries(.key |= "KEY_" + .)
+. # comment
