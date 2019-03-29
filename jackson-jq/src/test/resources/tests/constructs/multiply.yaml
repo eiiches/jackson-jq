@@ -15,3 +15,8 @@
 - q: 'try (empty * error("foo")) catch .'
   out:
   - foo
+
+- q: '(try ((-1.5 * "baz")) catch ("__ERROR__"))'
+  out: ["__ERROR__"]
+  failing: true
+  justification: "jq interprets this as -(1.5 * baz) while jackson-jq as (-1.5) * baz. Defer resolution to future versions."
