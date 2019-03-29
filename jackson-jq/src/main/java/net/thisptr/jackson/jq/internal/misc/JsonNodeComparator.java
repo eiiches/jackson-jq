@@ -66,8 +66,15 @@ public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
 		if (type == JsonNodeType.BOOLEAN)
 			return Boolean.compare(o1.asBoolean(), o2.asBoolean());
 
-		if (type == JsonNodeType.NUMBER)
-			return Double.compare(o1.asDouble(), o2.asDouble());
+		if (type == JsonNodeType.NUMBER) {
+			final double a = o1.asDouble();
+			final double b = o2.asDouble();
+			if (Double.isNaN(a))
+				return -1;
+			if (Double.isNaN(b))
+				return 1;
+			return Double.compare(a, b);
+		}
 
 		if (type == JsonNodeType.STRING || type == JsonNodeType.BINARY)
 			return o1.asText().compareTo(o2.asText());
