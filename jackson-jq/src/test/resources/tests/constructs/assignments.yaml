@@ -100,8 +100,12 @@
   out:
   - "Invalid path expression near attempt to access element \"a\" of null"
   v: "[1.6,)"
+  failing: true
+  justification: "The jq documentation explicitly states `$var.foo is not a valid or useful path expression in .`."
 
 - q: 'try (def f($n): $n.a; [{a: 1}, {a: 2}] | path(f(.[2]))) catch .'
   out:
   - [2, "a"]
   v: "(,1.5]"
+  failing: true
+  justification: "The jq documentation explicitly states `$var.foo is not a valid or useful path expression in .`."

@@ -4,6 +4,9 @@
   - [0]
   - [1]
   - [2]
+  failing: true
+  justification: "The jq documentation explicitly states `$var.foo is not a valid or useful path expression in .`."
+
 - q: 'try (path(label $out | foreach [1,2,3][] as $item ([]; if $item == false then break $out else $item end; .))) catch .'
   out:
   - "Invalid path expression near attempt to iterate through [1,2,3]"
@@ -17,3 +20,5 @@
   - [0]
   - [1]
   - [2]
+  failing: true
+  justification: "The jq documentation explicitly states `$var.foo is not a valid or useful path expression in .`"

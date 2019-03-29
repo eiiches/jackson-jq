@@ -21,7 +21,7 @@ public class VariableAccess implements Expression {
 		final ValueWithPath value = scope.getValueWithPath(name);
 		if (value == null)
 			throw new JsonQueryException("$" + name + " is not defined");
-		output.emit(value.value(), value.path());
+		output.emit(value.value(), null);
 	}
 
 	@Override
