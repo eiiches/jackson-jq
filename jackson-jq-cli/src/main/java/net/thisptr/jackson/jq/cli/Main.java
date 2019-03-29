@@ -77,7 +77,7 @@ public class Main {
 			throw e;
 		}
 
-		Version version = Versions.JQ_1_5;
+		Version version = Versions.JQ_1_6;
 		if (command.hasOption(OPT_VERSION.getLongOpt())) {
 			version = Version.valueOf(command.getOptionValue(OPT_VERSION.getLongOpt()));
 			if (!Versions.versions().contains(version)) {
