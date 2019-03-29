@@ -97,6 +97,8 @@
 		{"name": "inside", "args": ["xs"], "body": ". as $x | xs | contains($x)"},
 		{"name": "combinations", "args": [], "body": "if length == 0 then [] else .[0][] as $x | (.[1:] | combinations) as $y | [$x] + $y end"},
 		{"name": "combinations", "args": ["n"], "body": ". as $dot | [range(n) | $dot] | combinations"},
-		{"name": "map_values", "args": ["f"], "body": ".[] |= f"}
+		{"name": "map_values", "args": ["f"], "body": ".[] |= f"},
+		{"name": "_modify", "args": ["paths", "update"], "body": "reduce path(paths) as $p (.; label $out | (setpath($p; getpath($p) | update) | ., break $out), delpaths([$p]))", "version": "[1.6, )"},
+		{"name": "_modify", "args": ["paths", "update"], "body": "reduce path(paths) as $p (.; setpath($p; getpath($p) | update))", "version": "[, 1.6)"}
 	]
 }

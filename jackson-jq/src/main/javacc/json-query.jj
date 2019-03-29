@@ -457,7 +457,7 @@ Expression BinaryOperatorExpression():
 		expr = PrimaryExpression()
 		{ exprs.add(expr); }
 	)*
-	{ return BinaryOperatorExpression.buildTree(exprs, operators); }
+	{ return BinaryOperatorExpression.buildTree(exprs, operators, version); }
 }
 
 Expression FunctionDefinition():

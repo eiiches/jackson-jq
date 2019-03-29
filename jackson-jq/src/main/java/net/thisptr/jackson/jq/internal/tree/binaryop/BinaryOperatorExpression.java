@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.internal.tree.binaryop.BinaryOperatorExpression.Operator.Associativity;
 import net.thisptr.jackson.jq.internal.tree.binaryop.assignment.Assignment;
 import net.thisptr.jackson.jq.internal.tree.binaryop.assignment.ComplexAlternativeAssignment;
@@ -69,6 +70,7 @@ public abstract class BinaryOperatorExpression implements Expression {
 		public final Associativity associativity;
 		public final Class<? extends BinaryOperatorExpression> clazz;
 		public final Constructor<? extends BinaryOperatorExpression> constructor;
+		public final boolean versionAware;
 
 		public enum Associativity {
 			LEFT, RIGHT
@@ -79,11 +81,23 @@ public abstract class BinaryOperatorExpression implements Expression {
 			this.precedence = precedence;
 			this.associativity = associativity;
 			this.clazz = clazz;
+
+			Constructor<? extends BinaryOperatorExpression> ctor;
+			boolean versionAware;
 			try {
-				this.constructor = clazz.getConstructor(Expression.class, Expression.class);
+				try {
+					ctor = clazz.getConstructor(Expression.class, Expression.class, Version.class);
+					versionAware = true;
+				} catch (NoSuchMethodException e) {
+					ctor = clazz.getConstructor(Expression.class, Expression.class);
+					versionAware = false;
+				}
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
+
+			this.constructor = ctor;
+			this.versionAware = versionAware;
 		}
 
 		public static Operator fromImage(final String image) {
@@ -99,8 +113,10 @@ public abstract class BinaryOperatorExpression implements Expression {
 				lookup.put(op.image, op);
 		}
 
-		public Expression buildTree(Expression lhs, Expression rhs) {
+		public Expression buildTree(final Expression lhs, final Expression rhs, final Version version) {
 			try {
+				if (versionAware)
+					return constructor.newInstance(lhs, rhs, version);
 				return constructor.newInstance(lhs, rhs);
 			} catch (Exception e) {
 				throw new RuntimeException(e);
@@ -108,7 +124,7 @@ public abstract class BinaryOperatorExpression implements Expression {
 		}
 	}
 
-	public static Expression buildTree(final List<Expression> exprs, final List<Operator> operators) {
+	public static Expression buildTree(final List<Expression> exprs, final List<Operator> operators, final Version version) {
 		if (exprs.size() != operators.size() + 1)
 			throw new IllegalArgumentException();
 
@@ -129,7 +145,7 @@ public abstract class BinaryOperatorExpression implements Expression {
 					final Operator op = stackOperators.pop();
 					final Expression rhs = stackExprs.pop();
 					final Expression lhs = stackExprs.pop();
-					stackExprs.push(op.buildTree(lhs, rhs));
+					stackExprs.push(op.buildTree(lhs, rhs, version));
 				} else {
 					break;
 				}
@@ -142,7 +158,7 @@ public abstract class BinaryOperatorExpression implements Expression {
 			final Operator op = stackOperators.pop();
 			final Expression rhs = stackExprs.pop();
 			final Expression lhs = stackExprs.pop();
-			stackExprs.push(op.buildTree(lhs, rhs));
+			stackExprs.push(op.buildTree(lhs, rhs, version));
 		}
 
 		return stackExprs.get(0);
