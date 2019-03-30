@@ -45,8 +45,8 @@
 	</distributionManagement>
 
 	<properties>
-		<org.slf4j-version>1.7.25</org.slf4j-version>
-		<com.fasterxml.jackson-version>2.9.6</com.fasterxml.jackson-version>
+		<org.slf4j-version>1.7.26</org.slf4j-version>
+		<com.fasterxml.jackson-version>2.9.8</com.fasterxml.jackson-version>
 	</properties>
 
 	<dependencies>
