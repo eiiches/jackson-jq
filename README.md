@@ -15,7 +15,7 @@ Just add jackson-jq in your pom.xml.
 	<dependency>
 		<groupId>net.thisptr</groupId>
 		<artifactId>jackson-jq</artifactId>
-		<version>0.0.9</version>
+		<version>0.0.10</version>
 	</dependency>
 </dependencies>
 ```
@@ -211,7 +211,7 @@ Using jackson-jq-extra module
     <dependency>
         <groupId>net.thisptr</groupId>
         <artifactId>jackson-jq-extra</artifactId>
-        <version>0.0.9</version>
+        <version>0.0.10</version>
     </dependency>
 </dependencies>
 ```
