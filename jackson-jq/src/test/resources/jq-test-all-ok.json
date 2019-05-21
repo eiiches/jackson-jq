@@ -107,6 +107,13 @@
         "q": "@base64"
     },
     {
+        "in": "Zm/Ds2Jhcgo=",
+        "out": [
+            "fo\u00f3bar\n"
+        ],
+        "q": "@base64d"
+    },
+    {
         "in": "\u03bc",
         "out": [
             "%CE%BC"

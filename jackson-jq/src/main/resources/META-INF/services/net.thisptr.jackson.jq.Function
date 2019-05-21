@@ -1,5 +1,6 @@
 net.thisptr.jackson.jq.Scope$DebugScopeFunction
 net.thisptr.jackson.jq.internal.functions.AtBase64Function
+net.thisptr.jackson.jq.internal.functions.AtBase64dFunction
 net.thisptr.jackson.jq.internal.functions.AtHtmlFunction
 net.thisptr.jackson.jq.internal.functions.AtShFunction
 net.thisptr.jackson.jq.internal.functions.AtUriFunction

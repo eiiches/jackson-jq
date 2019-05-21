@@ -183,7 +183,7 @@ The following table (generated from jq-1.5 manual) lists all the features jq pro
 ※3) When the function with the same name is defined more than once in the same-level scope, jackson-jq uses the last one. E.g.
  - `def f: 1; def g: f; def f: 2; g` evaluates to 2 in jackson-jq, while jq evaluates it to 1.
 
-※4) `@html`, `@uri`, `@sh`, `@base64` are not implemented yet.
+※4) `@html`, `@uri`, `@sh` are not implemented yet.
 
 
 Additionally, test cases used in jackson-jq (from the jq unit tests) might be useful to know what kind of queries work or not work.
