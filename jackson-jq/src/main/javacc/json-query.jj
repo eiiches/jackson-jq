@@ -23,6 +23,7 @@ PARSER_BEGIN(JsonQueryParser)
 	import net.thisptr.jackson.jq.internal.tree.matcher.*;
 	import net.thisptr.jackson.jq.internal.tree.matcher.matchers.*;
 
+	@SuppressWarnings("unused")
 	public class JsonQueryParser {
 		public static JsonQuery compile(final String line) throws ParseException {
 			final JsonQueryParser parser = new JsonQueryParser(new StringReader(line));
@@ -38,7 +39,7 @@ TOKEN_MGR_DECLS:
 	int stringInterpLevel = 0;
 }
 
-SKIP: { <SPACES: " " | "\t" | "\r" | "\n"> }
+SKIP: { <SPACES: " " | "\t" | "\r" | "\n"> | <COMMENT: "#" (~["\n","\r"])* ("\n"|"\r"|"\r\n")?> }
 
 // TOKEN: { <OP_NOT: "not"> } is a normal built-in function
 TOKEN: { <OP_AND: "and"> }
@@ -80,6 +81,8 @@ TOKEN: {
 	{
 		if (depth == 0) {
 			stringInterpLevel -= 1;
+			if (depthStack.isEmpty())
+				throw new IllegalStateException("Unexpected ')' at line " + input_stream.getBeginLine() + ", column " + input_stream.getBeginColumn() + ".");
 			depth = depthStack.pop();
 			SwitchTo(STATE_STRING);
 		} else {
@@ -224,6 +227,28 @@ String KeywordAsString():
 	|	token = <KEYWORD_MODULE>
 	)
 	{ return token.image; }
+}
+
+String IdentifierAsString():
+{
+	Token token;
+}
+{
+	token = <IDENTIFIER>
+	{ return token.image; }
+}
+
+String KeywordOrIdentifier():
+{
+	String text;
+}
+{
+	(
+		text = KeywordAsString()
+	|
+		text = IdentifierAsString()
+	)
+	{ return text; }
 }
 
 JsonQuery Start():
@@ -430,32 +455,24 @@ JsonQuery PrimaryExpression():
 	|
 		tmp = VariableAccess()
 	|
-		LOOKAHEAD(3)
-		tmp = ValueLiteral()
+		(
+			tmp = ValueLiteral()
+		|
+			// StringInterpolation and FormattingFilter could both start with @filter_name, hence LOOKAHEAD(3).
+			LOOKAHEAD(3)
+			tmp = StringInterpolation()
+		|
+			tmp = FormattingFilter()
+		|
+			tmp = ArrayConstruction()
+		|
+			tmp = ObjectConstruction()
+		|
+			tmp = FunctionCall()
+		)
 		(
 			tmp = FieldAccessor(tmp)
 		)?
-	|
-		LOOKAHEAD(3)
-		tmp = FormattingFilter()
-		(
-			tmp = FieldAccessor(tmp)
-		)?
-	|
-		tmp = ArrayConstruction()
-		(
-			tmp = FieldAccessor(tmp)
-		)?
-	|
-		tmp = ObjectConstruction()
-		(
-			tmp = FieldAccessor(tmp)
-		)?
-	|
-		tmp = FunctionCall()
-        (
-			tmp = FieldAccessor(tmp)
-        )?
 	|
 		<OPEN_PAR>
 		tmp = JsonQuery()
@@ -625,17 +642,47 @@ JsonQuery ObjectConstruction():
 
 void ObjectField(final ObjectConstruction obj):
 {
-	Token tmp = null;
-	JsonQuery keyExpr = null;
-	JsonQuery valueExpr = null;
+	String name;
+	JsonQuery value = null;
+	JsonQuery key = null;
 }
 {
-	keyExpr = ObjectFieldName()
+	// - {$a}               -- VariableKeyFieldConstruction
+	// - {a}                -- IdentifierKeyFieldConstruction
+	// - {"a"}, {"\(.a)"}   -- StringFieldConstruction
+	// - {a: 20}
+	// - {"a": 20}, {"\(.a)": 20}
+	// - {(1|tostring): 10} -- JsonQueryFieldConstruction
 	(
+		// {$name}
+		<DOLLAR>
+		name = KeywordOrIdentifier()
+		{ obj.add(new VariableKeyFieldConstruction(name)); }
+	|
+		// {name}, {name: value}
+		name = KeywordOrIdentifier()
+		(
+			<COLON>
+			value = ObjectFieldValue()
+		)?
+		{ obj.add(new IdentifierKeyFieldConstruction(name, value)); }
+	|
+		// {"name"}, {"name": value}
+		key = StringInterpolation()
+		(
+			<COLON>
+			value = ObjectFieldValue()
+		)?
+		{ obj.add(new StringKeyFieldConstruction(key, value)); }
+	|
+		// {(keyexpr): value}
+		<OPEN_PAR>
+		key = JsonQuery()
+		<CLOSE_PAR>
 		<COLON>
-		valueExpr = ObjectFieldValue()
-	)?
-	{ obj.addField(keyExpr, valueExpr); }
+		value = ObjectFieldValue()
+		{ obj.add(new JsonQueryKeyFieldConstruction(key, value)); }
+	)
 }
 
 JsonQuery ObjectFieldName():
@@ -701,8 +748,6 @@ JsonQuery ValueLiteral():
 }
 {
 	(
-		tmp = StringInterpolation()
-	|
 		token = <INTEGER_LITERAL>
 		{ tmp = new LongLiteral(Long.parseLong(token.image)); }
 	|
@@ -750,10 +795,12 @@ JsonQuery FieldAccessor(JsonQuery obj):
 }
 {
 	(
-		LOOKAHEAD(2)
-		obj = IdentifierFieldAccessor(obj)
-	|
-		obj = StringFieldAccessor(obj)
+		<DOT>
+		(
+			obj = IdentifierFieldAccessor(obj)
+		|
+			obj = StringFieldAccessor(obj)
+		)
 	|
 		obj = BracketFieldAccessor(obj)
 	)+
@@ -767,24 +814,19 @@ JsonQuery ThisObjectAccess():
 	JsonQuery tmp = new ThisObject();
 }
 {
+	<DOT>
 	(
-		LOOKAHEAD(2)
 		(
-			LOOKAHEAD(2)
 			tmp = IdentifierFieldAccessor(tmp)
 		|
-			LOOKAHEAD(2)
 			tmp = StringFieldAccessor(tmp)
 		|
-			<DOT>
 			tmp = BracketFieldAccessor(tmp)
 		)
 		(
 			tmp = FieldAccessor(tmp)
 		)?
-	|
-		<DOT>
-	)
+	)?
 	{ return tmp; }
 }
 
@@ -794,7 +836,6 @@ JsonQuery IdentifierFieldAccessor(JsonQuery obj):
 	boolean permissive = false;
 }
 {
-	<DOT>
 	identifier = <IDENTIFIER_AFTER_DOT>
 	(
 		<QUESTION>
@@ -809,7 +850,6 @@ JsonQuery StringFieldAccessor(JsonQuery obj):
 	boolean permissive = false;
 }
 {
-	<DOT>
 	fieldName = StringInterpolation()
 	(
 		<QUESTION>

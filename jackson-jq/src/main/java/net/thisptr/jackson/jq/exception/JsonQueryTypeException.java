@@ -13,17 +13,27 @@ public class JsonQueryTypeException extends JsonQueryException {
 	}
 
 	public JsonQueryTypeException(final JsonNode obj, final String msg) {
-		super(String.format("%s (%s) %s",
-				obj.getNodeType().toString().toLowerCase(),
-				truncate(obj.toString(), MAX_JSON_STRING_LENGTH), msg));
+		this("%s %s", obj, msg);
 	}
 
 	public JsonQueryTypeException(final JsonNode obj1, final JsonNode obj2, final String msg) {
-		super(String.format("%s (%s) and %s (%s) %s",
-				obj1.getNodeType().toString().toLowerCase(),
-				truncate(obj1.toString(), MAX_JSON_STRING_LENGTH),
-				obj2.getNodeType().toString().toLowerCase(),
-				truncate(obj2.toString(), MAX_JSON_STRING_LENGTH),
-				msg));
+		this("%s and %s %s", obj1, obj2, msg);
+	}
+
+	private static String formatJsonNodes(final String format, final Object... args) {
+		final Object[] formattedArguments = new Object[args.length];
+		for (int i = 0; i < args.length; ++i) {
+			if (args[i] instanceof JsonNode) {
+				final JsonNode node = (JsonNode) args[i];
+				formattedArguments[i] = String.format("%s (%s)", node.getNodeType().toString().toLowerCase(), truncate(node.toString(), MAX_JSON_STRING_LENGTH));
+			} else {
+				formattedArguments[i] = args[i];
+			}
+		}
+		return String.format(format, formattedArguments);
+	}
+
+	public JsonQueryTypeException(final String format, final Object... args) {
+		super(formatJsonNodes(format, args));
 	}
 }

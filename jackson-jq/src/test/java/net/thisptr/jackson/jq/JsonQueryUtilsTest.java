@@ -6,9 +6,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import net.thisptr.jackson.jq.JsonQuery;
-import net.thisptr.jackson.jq.JsonQueryUtils;
-
 import org.junit.Test;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -75,9 +72,9 @@ public class JsonQueryUtilsTest {
 
 	@Test
 	public void sort() throws IOException {
-		assertEquals(Arrays.asList(sortResult), JsonQueryUtils.apply(JsonQuery.compile("sort"), input, new TypeReference<List<Item>>() {}));
-		assertEquals(Arrays.asList(sortResultById), JsonQueryUtils.apply(JsonQuery.compile("sort(.id)"), input, new TypeReference<List<Item>>() {}));
-		assertEquals(Arrays.asList(sortResultByScore), JsonQueryUtils.apply(JsonQuery.compile("sort(.score)"), input, new TypeReference<List<Item>>() {}));
-		assertEquals(Arrays.asList(1, 2, 3), JsonQueryUtils.apply(JsonQuery.compile("[.[].id] | sort | .[]"), input, Integer.class));
+		assertEquals(Arrays.asList(sortResult), JsonQueryUtils.apply(DefaultRootScope.getInstance(), JsonQuery.compile("sort"), input, new TypeReference<List<Item>>() {}));
+		assertEquals(Arrays.asList(sortResultById), JsonQueryUtils.apply(DefaultRootScope.getInstance(), JsonQuery.compile("sort(.id)"), input, new TypeReference<List<Item>>() {}));
+		assertEquals(Arrays.asList(sortResultByScore), JsonQueryUtils.apply(DefaultRootScope.getInstance(), JsonQuery.compile("sort(.score)"), input, new TypeReference<List<Item>>() {}));
+		assertEquals(Arrays.asList(1, 2, 3), JsonQueryUtils.apply(DefaultRootScope.getInstance(), JsonQuery.compile("[.[].id] | sort | .[]"), input, Integer.class));
 	}
 }

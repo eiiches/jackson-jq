@@ -29,7 +29,7 @@ public class PathsFunction implements Function {
 
 	private void applyRecursive(final Scope scope, final JsonNode in, final List<JsonNode> out, final Stack<JsonNode> stack, final JsonQuery predicate) throws JsonQueryException {
 		if (!stack.isEmpty()) {
-			for (final JsonNode shouldInclude : predicate.apply(in))
+			for (final JsonNode shouldInclude : predicate.apply(scope, in))
 				if (JsonNodeUtils.asBoolean(shouldInclude))
 					out.add(JsonNodeUtils.asArrayNode(scope.getObjectMapper(), stack));
 		}

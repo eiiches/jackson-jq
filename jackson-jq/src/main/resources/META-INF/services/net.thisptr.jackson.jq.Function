@@ -22,6 +22,7 @@ net.thisptr.jackson.jq.internal.functions.IsInfiniteFunction
 net.thisptr.jackson.jq.internal.functions.IsNanFunction
 net.thisptr.jackson.jq.internal.functions.JoinFunction
 net.thisptr.jackson.jq.internal.functions.KeysFunction
+net.thisptr.jackson.jq.internal.functions.KeysUnsortedFunction
 net.thisptr.jackson.jq.internal.functions.LengthFunction
 net.thisptr.jackson.jq.internal.functions.LTrimStrFunction
 net.thisptr.jackson.jq.internal.functions._MatchImplFunction
