@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -104,7 +105,7 @@ public class Main {
 		}
 
 		final Scope scope = Scope.newEmptyScope();
-		scope.loadFunctions(Scope.class.getClassLoader(), version);
+		BuiltinFunctionLoader.getInstance().loadFunctions(version, scope);
 		scope.addFunction("env", 0, new EnvFunction());
 
 		try (final BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {

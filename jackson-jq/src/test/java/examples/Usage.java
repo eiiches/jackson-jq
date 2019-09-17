@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
+import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.JsonQuery;
@@ -30,9 +31,8 @@ public class Usage {
 		// First of all, you have to prepare a Scope which s a container of built-in/user-defined functions and variables.
 		Scope rootScope = Scope.newEmptyScope();
 
-		// Scope#loadFunctions(ClassLoader) loads built-in functions (implemented in java) via ServiceLoader mechanism
-		// and other built-in functions (implemented in jq) from classpath:net/thisptr/jackson/jq/jq.json.
-		rootScope.loadFunctions(Scope.class.getClassLoader(), Versions.JQ_1_5);
+		// Use BuiltinFunctionLoader to load built-in functions from the classpath.
+		BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_5, rootScope);
 
 		// You can also define a custom function. E.g.
 		rootScope.addFunction("repeat", 1, new Function() {

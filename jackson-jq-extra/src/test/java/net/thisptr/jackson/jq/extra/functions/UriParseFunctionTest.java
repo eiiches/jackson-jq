@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.node.TextNode;
 
+import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Versions;
@@ -15,7 +16,7 @@ public class UriParseFunctionTest {
 	@Test
 	public void test() throws JsonQueryException {
 		final Scope scope = Scope.newEmptyScope();
-		scope.loadFunctions(Scope.class.getClassLoader(), Versions.JQ_1_5);
+		BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_5, scope);
 		// check this does not throw NPE
 		new UriParseFunction().apply(scope, Collections.<Expression>emptyList(), new TextNode("http://google.com"), null, (out, opath) -> {}, Versions.JQ_1_5);
 	}

@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 
+import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Versions;
@@ -26,7 +27,7 @@ public class JsonQueryFunctionTest {
 		final ObjectMapper mapper = new ObjectMapper();
 
 		final Scope scope = Scope.newEmptyScope();
-		scope.loadFunctions(Scope.class.getClassLoader(), Versions.JQ_1_5);
+		BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_5, scope);
 
 		scope.addFunction("inc", 1, new JsonQueryFunction("inc", Arrays.asList("x"), new IsolatedScopeQuery(ExpressionParser.compile("x + 1", Versions.JQ_1_5)), scope));
 		scope.addFunction("fib", 1, new JsonQueryFunction("fib", Arrays.asList("x"), new IsolatedScopeQuery(ExpressionParser.compile("if x == 0 then 0 elif x == 1 then 1 else fib(x-1) + fib(x-2) end", Versions.JQ_1_5)), scope));

@@ -9,7 +9,7 @@ public class DefaultRootScope {
 	public static Scope getInstance(final Version version) {
 		return ROOT_SCOPES.computeIfAbsent(version, v -> {
 			final Scope scope = Scope.newEmptyScope();
-			scope.loadFunctions(Scope.class.getClassLoader(), v);
+			BuiltinFunctionLoader.getInstance().loadFunctions(v, scope);
 			return scope;
 		});
 	}

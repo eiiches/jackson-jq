@@ -24,7 +24,18 @@ import net.thisptr.jackson.jq.internal.JsonQueryFunction;
 import net.thisptr.jackson.jq.internal.javacc.ExpressionParser;
 import net.thisptr.jackson.jq.internal.misc.VersionRangeDeserializer;
 
+/**
+ * Use {@code BuiltinFunctionLoader.getInstance()} to obtain the instance.
+ */
 public class BuiltinFunctionLoader {
+	private static BuiltinFunctionLoader INSTANCE = new BuiltinFunctionLoader();
+
+	public static BuiltinFunctionLoader getInstance() {
+		return INSTANCE;
+	}
+
+	private BuiltinFunctionLoader() {}
+
 	private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper();
 
 	@JsonIgnoreProperties(ignoreUnknown = true)
@@ -65,11 +76,23 @@ public class BuiltinFunctionLoader {
 	 * from an arbitrary {@link ClassLoader}.
 	 * E.g. in an OSGi context this may be the Bundle's {@link ClassLoader}.
 	 */
-	public Map<String, Function> loadFunctions(final ClassLoader classLoader, final Version version, final Scope closureScope) {
+	public Map<String, Function> listFunctions(final ClassLoader classLoader, final Version version, final Scope closureScope) {
 		final Map<String, Function> functions = new HashMap<>();
 		loadMacros(functions, classLoader, version, closureScope);
 		loadBuiltinFunctions(functions, version, classLoader);
 		return functions;
+	}
+
+	public Map<String, Function> listFunctions(final Version version, final Scope closureScope) {
+		return listFunctions(BuiltinFunctionLoader.class.getClassLoader(), version, closureScope);
+	}
+
+	public void loadFunctions(final Version version, final Scope closureScope) {
+		listFunctions(version, closureScope).forEach(closureScope::addFunction);
+	}
+
+	public void loadFunctions(final ClassLoader classLoader, final Version version, final Scope closureScope) {
+		listFunctions(classLoader, version, closureScope).forEach(closureScope::addFunction);
 	}
 
 	private static List<JqJson> loadConfig(final ClassLoader loader, final String path) throws IOException {

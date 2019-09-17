@@ -134,11 +134,6 @@ public class Scope {
 		return value.value();
 	}
 
-	@Deprecated
-	public void loadFunctions(final ClassLoader classLoader, final Version version) {
-		new BuiltinFunctionLoader().loadFunctions(classLoader, version, this).forEach(this::addFunction);
-	}
-
 	@JsonIgnore
 	public ObjectMapper getObjectMapper() {
 		return mapper;

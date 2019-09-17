@@ -106,7 +106,7 @@ public class RandomTest {
 		GENERATORS.add(new RandomGenerator(1, (exprs) -> new BracketExtractFieldAccess(exprs.get(0), false)));
 
 		final Set<String> exclusions = EXCLUDED_FUNCTIONS.getOrDefault(VERSION, Collections.emptySet());
-		new BuiltinFunctionLoader().loadFunctions(Scope.class.getClassLoader(), VERSION, Scope.newEmptyScope()).forEach((signature, function) -> {
+		BuiltinFunctionLoader.getInstance().listFunctions(Scope.class.getClassLoader(), VERSION, Scope.newEmptyScope()).forEach((signature, function) -> {
 			if (exclusions.contains(signature))
 				return;
 			if (signature.contains("/")) {
