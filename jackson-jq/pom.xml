@@ -58,6 +58,15 @@
 					<excludePackageNames>net.thisptr.jackson.jq.internal.javacc</excludePackageNames>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Include-Resource>META-INF/services/net.thisptr.jackson.jq.Function=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.Function</Include-Resource>
+					</instructions>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 </project>
