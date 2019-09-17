@@ -31,6 +31,11 @@ public class ComparableJsonNode implements Comparable<ComparableJsonNode> {
 	}
 
 	@Override
+	public int hashCode() {
+		throw new UnsupportedOperationException("not implemented");
+	}
+
+	@Override
 	public String toString() {
 		return value.toString();
 	}
