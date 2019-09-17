@@ -48,13 +48,14 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<org.slf4j-version>1.7.26</org.slf4j-version>
 		<com.fasterxml.jackson-version>2.9.9</com.fasterxml.jackson-version>
+		<com.fasterxml.jackson.databind-version>2.9.9.3</com.fasterxml.jackson.databind-version>
 	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>${com.fasterxml.jackson-version}</version>
+			<version>${com.fasterxml.jackson.databind-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
