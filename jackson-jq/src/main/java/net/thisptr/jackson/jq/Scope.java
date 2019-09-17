@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -11,8 +10,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.JsonQueryJacksonModule;
 import net.thisptr.jackson.jq.path.Path;
 
@@ -20,19 +17,7 @@ public class Scope {
 	private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper()
 			.registerModule(JsonQueryJacksonModule.getInstance());
 
-	@BuiltinFunction("debug_scope/0")
-	public static class DebugScopeFunction implements Function {
-		@Override
-		public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-			final Map<String, Object> info = new HashMap<>();
-			info.put("scope", scope);
-			info.put("input", in);
-			output.emit(DEFAULT_MAPPER.valueToTree(info), null);
-		}
-	}
-
 	@JsonProperty("functions")
-	@SuppressWarnings("unused")
 	private Map<String, String> debugFunctions() {
 		final Map<String, String> result = new TreeMap<>();
 		for (final Entry<String, Function> f : functions.entrySet())

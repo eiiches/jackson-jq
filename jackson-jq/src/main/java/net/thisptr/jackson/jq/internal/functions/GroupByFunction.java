@@ -6,6 +6,7 @@ import java.util.TreeMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -20,6 +21,7 @@ import net.thisptr.jackson.jq.internal.misc.JsonQueryUtils;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.path.Path;
 
+@AutoService(Function.class)
 @BuiltinFunction("group_by/1")
 public class GroupByFunction implements Function {
 	private static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();

@@ -6,6 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -18,6 +19,7 @@ import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.Strings;
 import net.thisptr.jackson.jq.path.Path;
 
+@AutoService(Function.class)
 @BuiltinFunction("@sh/0")
 public class AtShFunction implements Function {
 	@Override
@@ -55,15 +57,15 @@ public class AtShFunction implements Function {
 		final StringBuilder builder = new StringBuilder("'");
 		for (final char ch : text.toCharArray()) {
 			switch (ch) {
-				case '\'':
-					builder.append("'\\''");
-					break;
-				case '\0':
-					builder.append("\\0");
-					break;
-				default:
-					builder.append(ch);
-					break;
+			case '\'':
+				builder.append("'\\''");
+				break;
+			case '\0':
+				builder.append("\\0");
+				break;
+			default:
+				builder.append(ch);
+				break;
 			}
 		}
 		builder.append("'");

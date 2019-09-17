@@ -14,6 +14,8 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.path.Path;
 
+// For security reasons, env/0 should not be loaded by default.
+// @AutoService(Function.class)
 @BuiltinFunction("env/0")
 public class EnvFunction implements Function {
 	private static final ObjectMapper MAPPER = new ObjectMapper();

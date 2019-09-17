@@ -4,10 +4,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.google.auto.service.AutoService;
 
+import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 
+@AutoService(Function.class)
 @BuiltinFunction(value = "@base64d/0", version = "[1.6, )")
 public class AtBase64dFunction extends AbstractAtFormattingFunction {
 	@Override

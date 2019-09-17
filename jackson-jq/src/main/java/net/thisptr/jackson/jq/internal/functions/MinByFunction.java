@@ -1,9 +1,12 @@
 package net.thisptr.jackson.jq.internal.functions;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.auto.service.AutoService;
 
+import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 
+@AutoService(Function.class)
 @BuiltinFunction("min_by/1")
 public class MinByFunction extends AbstractMaxByFunction {
 	public MinByFunction() {

@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.IntNode;
+import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -17,6 +18,7 @@ import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
 import net.thisptr.jackson.jq.path.Path;
 
+@AutoService(Function.class)
 @BuiltinFunction("length/0")
 public class LengthFunction implements Function {
 	@Override

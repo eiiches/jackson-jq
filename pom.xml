@@ -48,6 +48,7 @@
 		<org.slf4j-version>1.7.28</org.slf4j-version>
 		<com.fasterxml.jackson-version>2.9.9</com.fasterxml.jackson-version>
 		<com.fasterxml.jackson.databind-version>2.9.9.3</com.fasterxml.jackson.databind-version>
+		<com.google.auto.service-version>1.0-rc6</com.google.auto.service-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -93,6 +94,12 @@
 			<version>${org.slf4j-version}</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.google.auto.service</groupId>
+			<artifactId>auto-service-annotations</artifactId>
+			<version>${com.google.auto.service-version}</version>
+			<optional>true</optional> <!-- unnecessary for runtime -->
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -110,6 +117,13 @@
 					<compilerArgument>-Xlint:all</compilerArgument>
 					<showWarnings>true</showWarnings>
 					<showDeprecation>true</showDeprecation>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>com.google.auto.service</groupId>
+							<artifactId>auto-service</artifactId>
+							<version>${com.google.auto.service-version}</version>
+						</path>
+					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
 			<plugin>

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -19,6 +20,7 @@ import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.path.Path;
 
+@AutoService(Function.class)
 @BuiltinFunction("indices/1")
 public class IndicesFunction implements Function {
 	private static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();

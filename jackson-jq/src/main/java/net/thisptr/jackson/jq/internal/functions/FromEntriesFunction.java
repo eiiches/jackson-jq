@@ -5,6 +5,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -16,6 +17,7 @@ import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.path.Path;
 
+@AutoService(Function.class)
 @BuiltinFunction("from_entries/0")
 public class FromEntriesFunction implements Function {
 	@Override

@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -27,6 +28,7 @@ import net.thisptr.jackson.jq.internal.misc.OnigUtils;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.path.Path;
 
+@AutoService(Function.class)
 @BuiltinFunction("_sub_impl/3")
 public class _SubImplFunction implements Function {
 	@Override

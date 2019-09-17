@@ -1,10 +1,13 @@
 package net.thisptr.jackson.jq.internal.functions;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.auto.service.AutoService;
 
+import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.JsonPredicateFunction;
 
+@AutoService(Function.class)
 @BuiltinFunction("isnan/0")
 public class IsNanFunction extends JsonPredicateFunction {
 	public IsNanFunction() {

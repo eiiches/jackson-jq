@@ -1,7 +1,11 @@
 package net.thisptr.jackson.jq.internal.filters;
 
+import com.google.auto.service.AutoService;
+
+import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.internal.BuiltinFunction;
 
+@AutoService(Function.class)
 @BuiltinFunction("@csv/0")
 public class CsvFilter extends AbstractSvFilter {
 	@Override

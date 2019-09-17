@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.internal.functions;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -15,6 +16,7 @@ import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.path.Path;
 
+@AutoService(Function.class)
 @BuiltinFunction("tonumber/0")
 public class ToNumberFunction implements Function {
 	@Override

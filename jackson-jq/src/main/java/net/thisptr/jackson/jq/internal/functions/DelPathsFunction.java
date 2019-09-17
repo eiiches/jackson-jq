@@ -6,6 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.MissingNode;
+import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -22,6 +23,7 @@ import net.thisptr.jackson.jq.path.ArrayIndexPath;
 import net.thisptr.jackson.jq.path.ArrayRangeIndexPath;
 import net.thisptr.jackson.jq.path.Path;
 
+@AutoService(Function.class)
 @BuiltinFunction("delpaths/1")
 public class DelPathsFunction implements Function {
 

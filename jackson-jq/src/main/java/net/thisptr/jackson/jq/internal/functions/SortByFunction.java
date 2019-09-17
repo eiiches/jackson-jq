@@ -6,6 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -20,6 +21,7 @@ import net.thisptr.jackson.jq.internal.misc.Pair;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.path.Path;
 
+@AutoService(Function.class)
 @BuiltinFunction("sort_by/1")
 public class SortByFunction implements Function {
 	private static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();

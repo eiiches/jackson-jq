@@ -5,6 +5,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -25,6 +26,7 @@ public abstract class MathFunction implements Function {
 
 	protected abstract double f(final double f);
 
+	@AutoService(Function.class)
 	@BuiltinFunction("atan/0")
 	public static class AtanFunction extends MathFunction {
 		@Override
@@ -33,6 +35,7 @@ public abstract class MathFunction implements Function {
 		}
 	}
 
+	@AutoService(Function.class)
 	@BuiltinFunction("cos/0")
 	public static class CosFunction extends MathFunction {
 		@Override
@@ -41,6 +44,7 @@ public abstract class MathFunction implements Function {
 		}
 	}
 
+	@AutoService(Function.class)
 	@BuiltinFunction("floor/0")
 	public static class FloorFunction extends MathFunction {
 		@Override
@@ -49,6 +53,7 @@ public abstract class MathFunction implements Function {
 		}
 	}
 
+	@AutoService(Function.class)
 	@BuiltinFunction("sin/0")
 	public static class SinFunction extends MathFunction {
 		@Override
@@ -57,6 +62,7 @@ public abstract class MathFunction implements Function {
 		}
 	}
 
+	@AutoService(Function.class)
 	@BuiltinFunction("sqrt/0")
 	public static class SqrtFunction extends MathFunction {
 		@Override
@@ -65,6 +71,7 @@ public abstract class MathFunction implements Function {
 		}
 	}
 
+	@AutoService(Function.class)
 	@BuiltinFunction("log2/0")
 	public static class Log2Function extends MathFunction {
 		@Override

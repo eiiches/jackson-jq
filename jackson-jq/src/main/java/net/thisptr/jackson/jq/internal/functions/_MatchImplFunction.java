@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -28,6 +29,7 @@ import net.thisptr.jackson.jq.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
 import net.thisptr.jackson.jq.path.Path;
 
+@AutoService(Function.class)
 @BuiltinFunction("_match_impl/3")
 public class _MatchImplFunction implements Function {
 	@Override

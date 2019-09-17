@@ -30,7 +30,7 @@ public class BuiltinFunctionLoader {
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	private static class JqJson {
 		@JsonIgnoreProperties(ignoreUnknown = true)
-		public static class JqFuncDef {
+		private static class JqFuncDef {
 			@JsonProperty("name")
 			public String name;
 
