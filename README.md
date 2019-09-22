@@ -3,50 +3,82 @@ jackson-jq
 
 [jq](http://stedolan.github.io/jq/) for Jackson JSON Processor
 
-[![CircleCI](https://circleci.com/gh/eiiches/jackson-jq/tree/develop.svg?style=shield)](https://circleci.com/gh/eiiches/jackson-jq/tree/develop)
+[![GitHub Actions](/eiiches/jackson-jq/workflows/test/badge.svg)](/eiiches/jackson-jq/actions)
 
-Installation
-------------
-
-Just add jackson-jq in your pom.xml.
-
-```xml
-<dependencies>
-	<dependency>
-		<groupId>net.thisptr</groupId>
-		<artifactId>jackson-jq</artifactId>
-		<version>0.0.9</version>
-	</dependency>
-</dependencies>
-```
-
-### Requirements
-
- - Java 8 or later
+*You are currently viewing the develop/1.x branch. Some of the features may not be released yet.*
 
 Usage
 -----
 
-See [jackson-jq/src/test/java/examples/Usage.java](jackson-jq/src/test/java/examples/Usage.java).
+First, you need Java 8 or later.
+
+If you use Maven, add the following snippet to the `<dependencies>` section of your POM. For instructions for other build tools (Gradle, etc.), visit [jackson-jq](https://search.maven.org/artifact/net.thisptr/jackson-jq/0.0.10/jar) on search.maven.org.
+
+```xml
+<dependency>
+	<groupId>net.thisptr</groupId>
+	<artifactId>jackson-jq</artifactId>
+	<version>0.0.10</version>
+</dependency>
+```
+
+See [jackson-jq/src/test/java/examples/Usage.java](jackson-jq/src/test/java/examples/Usage.java) for the API usage.
 
 Using a jackson-jq command line tool
 ------------------------------------
 
-We provide a CLI tool for testing a jackson-jq query. The tool has to be build with `mvn package`, but alternatively, Homebrew (or Linuxbrew) users can just `brew tap eiiches/jackson-jq && brew install jackson-jq` and `jackson-jq` will be available on $PATH.
+To test a query quickly, we provide jackson-jq CLI.
 
+```sh
+$ curl -LO https://repo1.maven.org/maven2/net/thisptr/jackson-jq-cli/0.0.10/jackson-jq-cli-0.0.10.jar
+
+$ java -jar jackson-jq-cli-0.0.10.jar --help
+usage: jackson-jq [OPTIONS...] QUERY
+ -c,--compact      compact instead of pretty-printed output
+ -h,--help         print this message
+    --jq <arg>     specify jq version
+ -n,--null-input   use `null` as the single input value
+ -r,--raw          output raw strings, not JSON texts
+
+$ java -jar jackson-jq-cli-0.0.10.jar '.foo'
+{"foo": 42}
+42
 ```
-$ bin/jackson-jq '.foo' <<< '{"foo":10}'
-10
+
+To test a query with a specific jq version,
+
+```sh
+$ java -jar jackson-jq-cli-0.0.10.jar --jq 1.5 'join("-")'
+["1", 2]
+jq: error: string ("-") and number (2) cannot be added
+
+$ java -jar jackson-jq-cli-0.0.10.jar --jq 1.6 'join("-")' # jq-1.6 can join any values, not only strings
+["1", 2]
+"1-2"
 ```
 
-See `bin/jackson-jq --help` for more information.
+Homebrew (or Linuxbrew) users can alternatively run `brew tap eiiches/jackson-jq && brew install jackson-jq` to install the CLI. `jackson-jq` will be available on your $PATH.
 
+Branches and versioning
+-----------------------
+
+There are currently two development branches.
+
+* `develop/1.x`: This branch (you are viewing), which is currently under development for the future 1.0 release. The API is **not** stable yet. You can find preview releases (not stable, not recommended for production) at [Releases](/eiiches/jackson-jq/releases) page (tags: `1.0.0-preview.yyyyMMdd`).
+* `develop/0.x`: The development branch for 0.x versions. Features that need breaking API changes will no longer be added. Go to [Releases](/eiiches/jackson-jq/releases) and find the latest 0.x.y version.
+
+PRs can be sent to any of the develop/\* branches. The patch will be ported to the other branch(es) if necessary.
+
+We use [Semantic Versioning 2.0.0](https://semver.org/) for Java API versioning, 1.0.0 onwards. A jq behavior fix (even if it may possibly affect users) will not be considered a major change if the fix is to make the bahavior compatible with ./jq; these kind of incompatible changes are documented in the release note.
+
+If you get different results between ./jq and jackson-jq, please [file an issue](/eiiches/jackson-jq/issues). That is a bug on jackson-jq side.
 
 Implementation status and current limitations
 ---------------------------------------------
 
 jackson-jq aims to be a compatible jq implementation. However, not all the features are available; some features are not relevant as being a java library and some features are just yet to be implemented.
-The following table (generated from jq-1.5 manual) lists all the features jq provides. I try to keep this list accurate and up to date. If you find something is missing or wrong, please let us know.
+
+This table illustrates which features (picked from jq-1.5 manual) are supported and which are not in jackson-jq. We try to keep this list accurate and up to date. If you find something is missing or wrong, please file an issue.
 
 
 | Language Features / Functions                                                                                                                                                                                                                                                                                                      | jackson-jq |
@@ -196,16 +228,12 @@ Using jackson-jq-extra module
 
 `jackson-jq-extra` module provides extra functions that you might find useful. These functions do not exist in jq.
 
-### POM
-
 ```xml
-<dependencies>
-    <dependency>
-        <groupId>net.thisptr</groupId>
-        <artifactId>jackson-jq-extra</artifactId>
-        <version>0.0.9</version>
-    </dependency>
-</dependencies>
+<dependency>
+	<groupId>net.thisptr</groupId>
+	<artifactId>jackson-jq-extra</artifactId>
+	<version>0.0.10</version>
+</dependency>
 ```
 
 ### Examples
@@ -259,6 +287,12 @@ Using jackson-jq-extra module
 #### hostname/0
 
  - `jackson-jq -n 'hostname'` #=> `"jenkins-slave01"`
+
+Contributing
+------------
+
+* If you are planning to send a PR and the change is not small, please open an issue and discuss it with the authors first.
+* Other than bug reports or patches, documentation improvements (including small grammatical or wording corrections) would be greatly appreciated.
 
 License
 -------
