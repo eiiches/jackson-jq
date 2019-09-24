@@ -1,0 +1,3 @@
+- q: 'try (reduce error("foo") as $i (null; $i)) catch .'
+  out:
+  - foo

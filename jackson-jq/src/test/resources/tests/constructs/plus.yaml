@@ -1,0 +1,10 @@
+# rhs is evaluated first
+- q: 'error("foo") + empty'
+  out: []
+- q: 'try (empty + error("foo")) catch .'
+  out:
+  - foo
+- q: 'try (path(.[] + .[])) catch .'
+  in: [1, 2]
+  out:
+  - "Invalid path expression with result 2"

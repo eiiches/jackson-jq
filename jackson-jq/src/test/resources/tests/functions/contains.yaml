@@ -1,0 +1,10 @@
+- q: 'try ({"foo": [1,2,3,4,4,5,5,6]} | contains("foo")) catch .'
+  out:
+  - 'object ({"foo":[1,2...) and string ("foo") cannot have their containment checked'
+
+- q: 'contains("\u0000 jq ignores any string after \\0, but we do differently")'
+  in: "anystring"
+  out:
+  - true
+  failing: true
+  justification: "This is more safe."

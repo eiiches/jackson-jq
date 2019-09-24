@@ -1,0 +1,124 @@
+# This file is generated from stedolan/jq files. Different license terms apply:
+#
+# jq is copyright (C) 2012 Stephen Dolan
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# jq's documentation (everything found under the docs/ subdirectory in
+# the source tree) is licensed under the Creative Commons CC BY 3.0
+# license, which can be found at:
+#
+#          https://creativecommons.org/licenses/by/3.0/
+#
+- q: '[match("( )*"; "g")]'
+  in: "abc"
+  out:
+  - [{"offset": 0, "length": 0, "string": "", "captures": []}, {"offset": 1, "length": 0, "string": "", "captures": []}, {"offset": 2, "length": 0, "string": "", "captures": []}]
+  v: '[1.5, 1.5]'
+- q: '[match("( )*"; "gn")]'
+  in: "abc"
+  out:
+  - []
+  v: '[1.5, 1.5]'
+- q: '[match("a"; "gi")]'
+  in: "\u0101\xE1\xE0\xE4"
+  out:
+  - []
+  v: '[1.5, 1.5]'
+- q: '[match(["(bar)"])]'
+  in: "foo bar"
+  out:
+  - [{"offset": 4, "length": 3, "string": "bar", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": null}]}]
+  v: '[1.5, 1.5]'
+- q: '[match("bar")]'
+  in: "a\u0304 bar with a combining codepoint U+0304"
+  out:
+  - [{"offset": 3, "length": 3, "string": "bar", "captures": []}]
+  v: '[1.5, 1.5]'
+- q: "[match(\"ba\u0304r\")]"
+  in: "a ba\u0304r"
+  out:
+  - [{"offset": 2, "length": 4, "string": "ba\u0304r", "captures": []}]
+  v: '[1.5, 1.5]'
+- q: '[match(".+?\\b")]'
+  in: "a\u0304 two-codepoint grapheme"
+  out:
+  - [{"offset": 0, "length": 2, "string": "a\u0304", "captures": []}]
+  v: '[1.5, 1.5]'
+- q: '[match(["foo (?<bar123>bar)? foo", "ig"])]'
+  in: "foo bar foo foo  foo"
+  out:
+  - [{"offset": 0, "length": 11, "string": "foo bar foo", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]}, {"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": -1, "length": 0, "string": null, "name": "bar123"}]}]
+  v: '[1.5, 1.5]'
+- q: '[test("( )*"; "gn")]'
+  in: "abc"
+  out:
+  - [false]
+  v: '[1.5, 1.5]'
+- q: "[test(\"\u0101\")]"
+  in: "\u0101"
+  out:
+  - [true]
+  v: '[1.5, 1.5]'
+- q: 'capture("(?<a>[a-z]+)-(?<n>[0-9]+)")'
+  in: "xyzzy-14"
+  out:
+  - {"a": "xyzzy", "n": "14"}
+  v: '[1.5, 1.5]'
+- q: '[.[] | sub(", "; ":")]'
+  in: ["a,b, c, d, e,f", ", a,b, c, d, e,f, "]
+  out:
+  - ["a,b:c, d, e,f", ":a,b, c, d, e,f, "]
+  v: '[1.5, 1.5]'
+- q: 'sub("^(?<head>.)"; "Head=\(.head) Tail=")'
+  in: "abcdef"
+  out:
+  - "Head=a Tail=bcdef"
+  v: '[1.5, 1.5]'
+- q: '[.[] | gsub(", "; ":")]'
+  in: ["a,b, c, d, e,f", ", a,b, c, d, e,f, "]
+  out:
+  - ["a,b:c:d:e,f", ":a,b:c:d:e,f:"]
+  v: '[1.5, 1.5]'
+- q: 'gsub("(?<d>\\d)"; ":\(.d);")'
+  in: "a1b2"
+  out:
+  - "a:1;b:2;"
+  v: '[1.5, 1.5]'
+- q: '[.[] | scan(", ")]'
+  in: ["a,b, c, d, e,f", ", a,b, c, d, e,f, "]
+  out:
+  - [", ", ", ", ", ", ", ", ", ", ", ", ", ", ", "]
+  v: '[1.5, 1.5]'
+- q: '[.[]|[[sub(", *";":")], [gsub(", *";":")], [scan(", *")]]]'
+  in: ["a,b, c, d, e,f", ", a,b, c, d, e,f, "]
+  out:
+  - [[["a:b, c, d, e,f"], ["a:b:c:d:e:f"], [",", ", ", ", ", ", ", ","]], [[":a,b, c, d, e,f, "], [":a:b:c:d:e:f:"], [", ", ",", ", ", ", ", ", ", ",", ", "]]]
+  v: '[1.5, 1.5]'
+- q: '[.[]|[[sub(", +";":")], [gsub(", +";":")], [scan(", +")]]]'
+  in: ["a,b, c, d, e,f", ", a,b, c, d, e,f, "]
+  out:
+  - [[["a,b:c, d, e,f"], ["a,b:c:d:e,f"], [", ", ", ", ", "]], [[":a,b, c, d, e,f, "], [":a,b:c:d:e,f:"], [", ", ", ", ", ", ", ", ", "]]]
+  v: '[1.5, 1.5]'
+- q: 'gsub("(?<x>.)[^a]*"; "+\(.x)-")'
+  in: "Abcabc"
+  out:
+  - "+A-+a-"
+  v: '[1.5, 1.5]'

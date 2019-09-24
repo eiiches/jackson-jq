@@ -1,0 +1,15 @@
+- q: 'endswith(empty)'
+  out: []
+  v: '[1.5,1.5]'
+- q: 'endswith(.)'
+  in: foo
+  out:
+  - true
+  v: '[1.5,1.5]'
+- q: 'try endswith("foo") catch .'
+  out:
+  - endswith() requires string inputs
+- q: 'try endswith(1) catch .'
+  in: foo
+  out:
+  - endswith() requires string inputs

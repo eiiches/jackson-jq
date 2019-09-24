@@ -1,0 +1,1106 @@
+options {
+	STATIC = false;
+	LOOKAHEAD = 1;
+	DEBUG_PARSER = false;
+	UNICODE_INPUT = true;
+	JDK_VERSION = "1.7";
+}
+
+PARSER_BEGIN(ExpressionParser)
+	package net.thisptr.jackson.jq.internal.javacc;
+
+	import java.io.StringReader;
+	import java.util.List;
+	import java.util.Stack;
+	import java.util.ArrayList;
+
+	import net.thisptr.jackson.jq.Expression;
+	import net.thisptr.jackson.jq.Version;
+	import net.thisptr.jackson.jq.internal.misc.Pair;
+	import net.thisptr.jackson.jq.internal.tree.*;
+	import net.thisptr.jackson.jq.internal.tree.binaryop.*;
+	import net.thisptr.jackson.jq.internal.tree.literal.*;
+	import net.thisptr.jackson.jq.internal.tree.fieldaccess.*;
+	import net.thisptr.jackson.jq.internal.tree.matcher.*;
+	import net.thisptr.jackson.jq.internal.tree.matcher.matchers.*;
+	import net.thisptr.jackson.jq.internal.javacc.TokenMgrError;
+	import net.thisptr.jackson.jq.exception.JsonQueryException;
+
+	@SuppressWarnings("unused")
+	public class ExpressionParser {
+		private Version version;
+
+		public static Expression compile(final String line, final Version version) throws JsonQueryException {
+			try {
+				final ExpressionParser parser = new ExpressionParser(new StringReader(line));
+				parser.version = version;
+				return parser.Start();
+			} catch (TokenMgrError e) {
+				throw new JsonQueryException("Cannot compile query: " + line, e);
+			} catch (Exception e) {
+				throw new JsonQueryException("Cannot compile query: " + line, e);
+			}
+		}
+	}
+PARSER_END(ExpressionParser)
+
+TOKEN_MGR_DECLS:
+{
+	Stack<Integer> depthStack = new Stack<Integer>();
+	int depth = 0;
+	int stringInterpLevel = 0;
+}
+
+SKIP: { <SPACES: " " | "\t" | "\r" | "\n"> | <COMMENT: "#" (~["\n","\r"])* ("\n"|"\r"|"\r\n")?> }
+
+// TOKEN: { <OP_NOT: "not"> } is a normal built-in function
+TOKEN: { <OP_AND: "and"> }
+TOKEN: { <OP_OR: "or"> }
+TOKEN: { <OP_DEFAULT: "//"> }
+
+TOKEN: { <COMP_EQUAL: "=="> }
+TOKEN: { <COMP_NOT_EQUAL: "!="> }
+TOKEN: { <COMP_GREATER: ">"> }
+TOKEN: { <COMP_GREATER_EQUAL: ">="> }
+TOKEN: { <COMP_LESS: "<"> }
+TOKEN: { <COMP_LESS_EQUAL: "<="> }
+
+TOKEN: { <PLUS: "+"> }
+TOKEN: { <MINUS: "-"> }
+TOKEN: { <TIMES: "*"> }
+TOKEN: { <DIVIDE: "/"> }
+TOKEN: { <MODULO: "%"> }
+
+TOKEN: { <ASSIGN_OP: "="> }
+TOKEN: { <UPDATE_OP: "|="> }
+
+TOKEN: { <PLUS_EQUAL: "+="> }
+TOKEN: { <MINUS_EQUAL: "-="> }
+TOKEN: { <TIMES_EQUAL: "*="> }
+TOKEN: { <DIVIDE_EQUAL: "/="> }
+TOKEN: { <MODULO_EQUAL: "%="> }
+TOKEN: { <DEFAULT_EQUAL: "//="> }
+
+TOKEN: {
+	<OPEN_PAR: "(">
+	{
+		depth += 1;
+	}
+}
+
+TOKEN: {
+	<CLOSE_PAR: ")">
+	{
+		if (depth == 0) {
+			stringInterpLevel -= 1;
+			if (depthStack.isEmpty())
+				throw new IllegalStateException("Unexpected ')' at line " + input_stream.getBeginLine() + ", column " + input_stream.getBeginColumn() + ".");
+			depth = depthStack.pop();
+			SwitchTo(STATE_STRING);
+		} else {
+			depth -= 1;
+		}
+	}
+}
+
+TOKEN: { <SEMICOLON: ";"> }
+
+// We have to be careful about spaces after ".". jq-1.4 or newer does not allow spaces between "." and <identifier> in field accessors.
+// For example, '. foo' is an error while '.foo' is not. This distinction is important to parse "if . then . else empty end".
+// IDENTIFIER_AFTER_DOT and OTHERWISE_AFTER_DOT should not be re-ordered. The order matters.
+TOKEN: { <DOT: "."> : STATE_DOT }
+<STATE_DOT> TOKEN: {
+	<IDENTIFIER_AFTER_DOT: <IDENTIFIER>> : DEFAULT
+}
+<STATE_DOT> MORE: {
+	<OTHERWISE_AFTER_DOT: ""> : DEFAULT
+}
+
+TOKEN: { <RECURSION: ".."> }
+
+TOKEN: { <OPEN_BRACKET: "["> }
+TOKEN: { <CLOSE_BRACKET: "]"> }
+TOKEN: { <QUESTION: "?"> }
+
+TOKEN: { <DOLLAR: "$"> }
+TOKEN: { <PIPE: "|"> }
+TOKEN: { <ATSIGN: "@"> }
+
+TOKEN: { <OPEN_BRACE: "{"> }
+TOKEN: { <CLOSE_BRACE: "}"> }
+
+TOKEN: { <COLON: ":"> }
+TOKEN: { <COMMA: ","> }
+
+TOKEN: { <BOOLEAN_LITERAL_TRUE: "true"> }
+TOKEN: { <BOOLEAN_LITERAL_FALSE: "false"> }
+TOKEN: { <NULL_LITERAL: "null"> }
+TOKEN: { <INTEGER_LITERAL: (["1"-"9"] (["0"-"9"])*) | "0"> }
+TOKEN: {
+	<FLOAT_LITERAL: (("0" | ["1"-"9"] (<DIGIT>)*) ("." (["0"-"9"])+)? | "." (["0"-"9"])+) (<EXPONENT>)?>
+	| <#EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+>
+}
+
+TOKEN: {
+	<QUOTE: "\""> : STATE_STRING
+}
+
+<STATE_STRING> TOKEN: {
+	<ENDQUOTE: <QUOTE>> : DEFAULT
+	| <VISIBLE_CHAR:~["\"", "\\", "\b", "\f", "\n", "\r", "\t"]>
+}
+
+<STATE_STRING> MORE: {
+	"\\" : STATE_STRING_ESCAPE
+}
+
+<STATE_STRING_ESCAPE> TOKEN: {
+	<ESCAPE_CHAR: ["\"", "\\", "/", "b", "f", "n", "r", "t"]> : STATE_STRING
+}
+
+<STATE_STRING_ESCAPE> TOKEN: {
+	<OPEN_INTERP: <OPEN_PAR>>
+	{
+		stringInterpLevel += 1;
+		depthStack.push(depth);
+		depth = 0;
+		SwitchTo(DEFAULT);
+	}
+}
+
+<STATE_STRING_ESCAPE> TOKEN: {
+	<CODEPOINT_CHAR: "u" (["0"-"9", "a"-"f", "A"-"F"]){4}> : STATE_STRING
+}
+
+TOKEN: {
+	<KEYWORD_IF: "if">
+	| <KEYWORD_THEN: "then">
+	| <KEYWORD_ELIF: "elif">
+	| <KEYWORD_ELSE: "else">
+}
+TOKEN: {
+	<KEYWORD_END: "end">
+}
+
+TOKEN: {
+	<KEYWORD_AS: "as">
+}
+TOKEN: {
+	<KEYWORD_DEF: "def">
+}
+TOKEN: {
+	<KEYWORD_REDUCE: "reduce">
+	| <KEYWORD_FOREACH: "foreach">
+}
+
+TOKEN: {
+	<KEYWORD_TRY: "try">
+	| <KEYWORD_CATCH: "catch">
+}
+
+TOKEN: {
+	<KEYWORD_LABEL: "label">
+	| <KEYWORD_BREAK: "break">
+	| <KEYWORD_IMPORT: "import">
+	| <KEYWORD_INCLUDE: "include">
+	| <KEYWORD_MODULE: "module">
+}
+
+TOKEN: {
+	<IDENTIFIER: <LETTER> (<LETTER> | <DIGIT>)*>
+	| <#LETTER: ["a"-"z","A"-"Z","_"]>
+	| <#DIGIT: ["0"-"9"]>
+}
+
+String KeywordAsString():
+{
+	Token token;
+}
+{
+	(
+		token = <KEYWORD_IF>
+	|	token = <KEYWORD_THEN>
+	|	token = <KEYWORD_ELIF>
+	|	token = <KEYWORD_ELSE>
+	|	token = <KEYWORD_END>
+	|	token = <KEYWORD_AS>
+	|	token = <KEYWORD_DEF>
+	|	token = <BOOLEAN_LITERAL_TRUE>
+	|	token = <BOOLEAN_LITERAL_FALSE>
+	|	token = <OP_AND>
+	|	token = <OP_OR>
+	|	token = <NULL_LITERAL>
+	|	token = <KEYWORD_REDUCE>
+	|	token = <KEYWORD_FOREACH>
+	|	token = <KEYWORD_TRY>
+	|	token = <KEYWORD_CATCH>
+	|	token = <KEYWORD_LABEL>
+	|	token = <KEYWORD_BREAK>
+	|	token = <KEYWORD_IMPORT>
+	|	token = <KEYWORD_INCLUDE>
+	|	token = <KEYWORD_MODULE>
+	)
+	{ return token.image; }
+}
+
+String IdentifierAsString():
+{
+	Token token;
+}
+{
+	token = <IDENTIFIER>
+	{ return token.image; }
+}
+
+String KeywordOrIdentifier():
+{
+	String text;
+}
+{
+	(
+		text = KeywordAsString()
+	|
+		text = IdentifierAsString()
+	)
+	{ return text; }
+}
+
+Expression Start():
+{
+	Expression q;
+}
+{
+	q = Expression()
+	<EOF>
+	{ return q; }
+}
+
+Expression Expression():
+{
+	PipeComponent component;
+	List<PipeComponent> components = new ArrayList<PipeComponent>();
+}
+{
+	component = PipeComponent()
+	{ components.add(component); }
+	(
+		<PIPE>
+		component = PipeComponent()
+		{ components.add(component); }
+	)*
+	{
+		if (!component.canTerminatePipe()) {
+			if (components.size() > 1) {
+				throw new IllegalStateException("Pipe cannot be terminated by assignment or label: | " + component);
+			} else {
+				throw new IllegalStateException("Assignment or label must be followed by pipes: " + component);
+			}
+		}
+		if (components.size() == 1 && (component instanceof TransformPipeComponent))
+			return ((TransformPipeComponent) component).expr;
+		return new PipedQuery(components);
+	}
+}
+
+Expression JsonQueryWithoutComma():
+{
+	PipeComponent component;
+	List<PipeComponent> components = new ArrayList<PipeComponent>();
+}
+{
+	component = PipeComponentWithoutComma()
+	{ components.add(component); }
+	(
+		<PIPE>
+		component = PipeComponentWithoutComma()
+		{ components.add(component); }
+	)*
+	{
+		if (!component.canTerminatePipe()) {
+			if (components.size() > 1) {
+				throw new IllegalStateException("Pipe cannot be terminated by assignment or label: | " + component);
+			} else {
+				throw new IllegalStateException("Assignment or label must be followed by pipes: " + component);
+			}
+		}
+		if (components.size() == 1 && (component instanceof TransformPipeComponent))
+			return ((TransformPipeComponent) component).expr;
+		return new PipedQuery(components);
+	}
+}
+
+PipeComponent PipeComponent():
+{
+	String name;
+	Expression expr;
+	PatternMatcher matcher;
+}
+{
+	(
+		<KEYWORD_LABEL>
+		<DOLLAR>
+		name = IdentifierAsString()
+		{ return new LabelPipeComponent(name); }
+	|
+		expr = TupleExpression()
+		(
+			<KEYWORD_AS>
+			matcher = Matcher()
+			{ return new AssignPipeComponent(expr, matcher); }
+		|
+			{ return new TransformPipeComponent(expr); }
+		)
+	)
+}
+
+PipeComponent PipeComponentWithoutComma():
+{
+	String name;
+	Expression expr;
+	PatternMatcher matcher;
+}
+{
+	(
+		<KEYWORD_LABEL>
+		<DOLLAR>
+		name = IdentifierAsString()
+		{ return new LabelPipeComponent(name); }
+	|
+		expr = BinaryOperatorExpression()
+		(
+			<KEYWORD_AS>
+			matcher = Matcher()
+			{ return new AssignPipeComponent(expr, matcher); }
+		|
+			{ return new TransformPipeComponent(expr); }
+		)
+	)
+}
+
+Expression TupleExpression():
+{
+	Expression tmp;
+	final List<Expression> qs = new ArrayList<Expression>();
+}
+{
+	tmp = BinaryOperatorExpression()
+	{ qs.add(tmp); }
+	(
+		<COMMA>
+		tmp = BinaryOperatorExpression()
+		{ qs.add(tmp); }
+	)*
+	{
+		if (qs.size() == 1)
+			return qs.get(0);
+		return new Tuple(qs);
+	}
+}
+
+Expression BinaryOperatorExpression():
+{
+	Token t;
+	Expression expr;
+	List<Expression> exprs = new ArrayList<Expression>();
+	List<BinaryOperatorExpression.Operator> operators = new ArrayList<BinaryOperatorExpression.Operator>();
+}
+{
+	expr = PrimaryExpression()
+	{ exprs.add(expr); }
+	(
+		(
+			t = <TIMES>
+			|
+			t = <DIVIDE>
+			|
+			t = <MODULO>
+			|
+			t = <PLUS>
+			|
+			t = <MINUS>
+			|
+			t = <COMP_EQUAL>
+			|
+			t = <COMP_NOT_EQUAL>
+			|
+			t = <COMP_GREATER>
+			|
+			t = <COMP_GREATER_EQUAL>
+			|
+			t = <COMP_LESS>
+			|
+			t = <COMP_LESS_EQUAL>
+			|
+			t = <OP_AND>
+			|
+			t = <OP_OR>
+			|
+			t = <OP_DEFAULT>
+			|
+			t = <ASSIGN_OP>
+			|
+			t = <UPDATE_OP>
+			|
+			t = <PLUS_EQUAL>
+			|
+			t = <MINUS_EQUAL>
+			|
+			t = <TIMES_EQUAL>
+			|
+			t = <DIVIDE_EQUAL>
+			|
+			t = <MODULO_EQUAL>
+			|
+			t = <DEFAULT_EQUAL>
+		)
+		{ operators.add(BinaryOperatorExpression.Operator.fromImage(t.image)); }
+		expr = PrimaryExpression()
+		{ exprs.add(expr); }
+	)*
+	{ return BinaryOperatorExpression.buildTree(exprs, operators, version); }
+}
+
+Expression FunctionDefinition():
+{
+	final List<String> args = new ArrayList<String>();
+	Token fname;
+	String tmp;
+	Expression body;
+}
+{
+	<KEYWORD_DEF>
+	fname = <IDENTIFIER>
+	(
+		<OPEN_PAR>
+		tmp = FunctionDefinitionParam()
+		{ args.add(tmp); }
+		(
+			<SEMICOLON>
+			tmp = FunctionDefinitionParam()
+			{ args.add(tmp); }
+		)*
+		<CLOSE_PAR>
+	)?
+	<COLON>
+	body = Expression()
+	<SEMICOLON>
+	{ return new FunctionDefinition(fname.image, args, body); }
+}
+
+String FunctionDefinitionParam():
+{
+	Token param;
+	boolean isvar = false;
+}
+{
+	(
+		<DOLLAR>
+		{ isvar = true; }
+	)?
+	param = <IDENTIFIER>
+	{ return (isvar ? "$" : "") + param.image; }
+}
+
+Expression PrimaryExpression():
+{
+	Token t;
+	Expression tmp;
+	List<Expression> exprs = new ArrayList<Expression>();
+}
+{
+	(
+		tmp = FunctionDefinition()
+		{ exprs.add(tmp); }
+	)*
+	(
+		tmp = ThisObjectAccess()
+		(
+			<QUESTION>
+			{ tmp = new TryCatch.Question(tmp); }
+		)*
+	|
+		tmp = VariableAccess()
+		(
+			tmp = FieldAccessor(tmp)
+		)?
+		(
+			<QUESTION>
+			{ tmp = new TryCatch.Question(tmp); }
+		)*
+	|
+		(
+			tmp = ValueLiteral()
+		|
+			// StringInterpolation and FormattingFilter could both start with @filter_name, hence LOOKAHEAD(3).
+			LOOKAHEAD(3)
+			tmp = StringInterpolation()
+		|
+			tmp = FormattingFilter()
+		|
+			tmp = ArrayConstruction()
+		|
+			tmp = ObjectConstruction()
+		|
+			tmp = FunctionCall()
+		)
+		(
+			tmp = FieldAccessor(tmp)
+		)?
+		(
+			<QUESTION>
+			{ tmp = new TryCatch.Question(tmp); }
+		)*
+	|
+		<OPEN_PAR>
+		tmp = Expression()
+		<CLOSE_PAR>
+		(
+			tmp = FieldAccessor(tmp)
+		)?
+		(
+			<QUESTION>
+			{ tmp = new TryCatch.Question(tmp); }
+		)*
+	|
+		<MINUS>
+		tmp = PrimaryExpression()
+		{ tmp = new NegativeExpression(tmp); }
+	|
+		tmp = ConditionalExpression()
+	|
+		tmp = ReduceExpression()
+	|
+		tmp = RecursionOperator()
+	|
+		tmp = ForeachExpression()
+	|
+		tmp = TryCatchExpression()
+	|
+		tmp = BreakExpression()
+	)
+	{
+		exprs.add(tmp);
+		if (exprs.size() == 1)
+			return exprs.get(0);
+		return new SemicolonOperator(exprs);
+	}
+}
+
+Expression RecursionOperator():
+{
+}
+{
+	<RECURSION>
+	{ return new RecursionOperator(); }
+}
+
+Expression FormattingFilter():
+{
+	Token t;
+}
+{
+	<ATSIGN>
+	t = <IDENTIFIER>
+	{ return new FormattingFilter(t.image, version); }
+}
+
+Expression TryCatchExpression():
+{
+	Expression tryExpr, catchExpr = null;
+}
+{
+	<KEYWORD_TRY>
+	tryExpr = Expression()
+	(
+		<KEYWORD_CATCH>
+		catchExpr = PrimaryExpression()
+	)?
+	{ return new TryCatch(tryExpr, catchExpr); }
+}
+
+Expression BreakExpression():
+{
+	String name;
+}
+{
+	<KEYWORD_BREAK>
+	<DOLLAR>
+	name = IdentifierAsString()
+	{ return new BreakExpression(name); }
+}
+
+Expression ForeachExpression():
+{
+	PatternMatcher matcher;
+	Expression initExpr, updateExpr, extractExpr = null, iterExpr;
+}
+{
+	<KEYWORD_FOREACH>
+	iterExpr = PrimaryExpression()
+	<KEYWORD_AS>
+	matcher = Matcher()
+
+	<OPEN_PAR>
+	initExpr = Expression()
+	<SEMICOLON>
+	updateExpr = Expression()
+	(
+		<SEMICOLON>
+		extractExpr = Expression()
+	)?
+	<CLOSE_PAR>
+	{ return new ForeachExpression(matcher, initExpr, updateExpr, extractExpr, iterExpr); }
+}
+
+Expression ReduceExpression():
+{
+	PatternMatcher matcher;
+	Expression tmpIterExpr, tmpInitExpr, tmpReduceExpr;
+}
+{
+	<KEYWORD_REDUCE>
+	tmpIterExpr = PrimaryExpression()
+	<KEYWORD_AS>
+	matcher = Matcher()
+	<OPEN_PAR>
+	tmpInitExpr = Expression()
+	<SEMICOLON>
+	tmpReduceExpr = Expression()
+	<CLOSE_PAR>
+	{ return new ReduceExpression(matcher, tmpInitExpr, tmpReduceExpr, tmpIterExpr); }
+}
+
+Expression VariableAccess():
+{
+	Token t;
+	Expression tmp;
+}
+{
+	<DOLLAR>
+	t = <IDENTIFIER>
+	{ return new VariableAccess(t.image); }
+}
+
+Expression ConditionalExpression():
+{
+	Expression tmpPred;
+	Expression tmpExpr;
+	final List<Pair<Expression, Expression>> switches = new ArrayList<Pair<Expression, Expression>>();
+	final Expression otherwise;
+}
+{
+	<KEYWORD_IF>
+	tmpPred = Expression()
+	<KEYWORD_THEN>
+	tmpExpr = Expression()
+	{ switches.add(Pair.of(tmpPred, tmpExpr)); }
+	(
+		<KEYWORD_ELIF>
+		tmpPred = Expression()
+		<KEYWORD_THEN>
+		tmpExpr = Expression()
+		{ switches.add(Pair.of(tmpPred, tmpExpr)); }
+	)*
+	<KEYWORD_ELSE>
+	otherwise = Expression()
+	<KEYWORD_END>
+	{
+		return new Conditional(switches, otherwise);
+	}
+}
+
+Expression ObjectConstruction():
+{
+	final ObjectConstruction obj = new ObjectConstruction();
+}
+{
+	<OPEN_BRACE>
+	(
+		ObjectField(obj)
+		(
+			<COMMA>
+			ObjectField(obj)
+		)*
+	)?
+	<CLOSE_BRACE>
+	{ return obj; }
+}
+
+void ObjectField(final ObjectConstruction obj):
+{
+	String name;
+	Expression value = null;
+	Expression key = null;
+}
+{
+	// - {$a}               -- VariableKeyFieldConstruction
+	// - {a}                -- IdentifierKeyFieldConstruction
+	// - {"a"}, {"\(.a)"}   -- StringFieldConstruction
+	// - {a: 20}
+	// - {"a": 20}, {"\(.a)": 20}
+	// - {(1|tostring): 10} -- JsonQueryFieldConstruction
+	(
+		// {$name}
+		<DOLLAR>
+		name = KeywordOrIdentifier()
+		{ obj.add(new VariableKeyFieldConstruction(name)); }
+	|
+		// {name}, {name: value}
+		name = KeywordOrIdentifier()
+		(
+			<COLON>
+			value = ObjectFieldValue()
+		)?
+		{ obj.add(new IdentifierKeyFieldConstruction(name, value)); }
+	|
+		// {"name"}, {"name": value}
+		key = StringInterpolation()
+		(
+			<COLON>
+			value = ObjectFieldValue()
+		)?
+		{ obj.add(new StringKeyFieldConstruction(key, value)); }
+	|
+		// {(keyexpr): value}
+		<OPEN_PAR>
+		key = Expression()
+		<CLOSE_PAR>
+		<COLON>
+		value = ObjectFieldValue()
+		{ obj.add(new JsonQueryKeyFieldConstruction(key, value)); }
+	)
+}
+
+Expression ObjectFieldName():
+{
+	Token token;
+	Expression expr;
+	String keywordAsString;
+}
+{
+	(
+		keywordAsString = KeywordAsString()
+		{ expr = new StringLiteral(keywordAsString); }
+	|
+		expr = StringInterpolation()
+	|
+		token = <IDENTIFIER>
+		{ expr = new StringLiteral(token.image); }
+	|
+		<OPEN_PAR>
+		expr = Expression()
+		<CLOSE_PAR>
+	)
+	{ return expr; }
+}
+
+Expression ObjectFieldValue():
+{
+	Expression expr;
+}
+{
+	(
+		<OPEN_PAR>
+		expr = Expression()
+		<CLOSE_PAR>
+	|
+		expr = JsonQueryWithoutComma()
+	)
+	{ return expr; }
+}
+
+Expression ArrayConstruction():
+{
+	Expression tmp = null;
+}
+{
+	<OPEN_BRACKET>
+	(
+		tmp = Expression()
+	)?
+	<CLOSE_BRACKET>
+	{
+		if (tmp == null)
+			return new ArrayConstruction();
+		return new ArrayConstruction(tmp);
+	}
+}
+
+Expression ValueLiteral():
+{
+	Token token;
+	String text;
+	Expression tmp;
+}
+{
+	(
+		token = <INTEGER_LITERAL>
+		{ tmp = new LongLiteral(Long.parseLong(token.image)); }
+	|
+		token = <FLOAT_LITERAL>
+		{ tmp = new DoubleLiteral(Double.parseDouble(token.image)); }
+	|
+		<NULL_LITERAL>
+		{ tmp = new NullLiteral(); }
+	|
+		<BOOLEAN_LITERAL_TRUE>
+		{ tmp = new BooleanLiteral(true); }
+	|
+		<BOOLEAN_LITERAL_FALSE>
+		{ tmp = new BooleanLiteral(false); }
+	)
+	{ return tmp; }
+}
+
+Expression FunctionCall():
+{
+	Expression tmp;
+	final Token fname;
+	final List<Expression> fargs = new ArrayList<Expression>();
+}
+{
+	fname = <IDENTIFIER>
+	(
+		<OPEN_PAR>
+		(
+			tmp = Expression()
+			{ fargs.add(tmp); }
+			(
+				<SEMICOLON>
+				tmp = Expression()
+				{ fargs.add(tmp); }
+			)*
+		)?
+		<CLOSE_PAR>
+	)?
+	{ return new FunctionCall(fname.image, fargs, version); }
+}
+
+Expression FieldAccessor(Expression obj):
+{
+}
+{
+	(
+		<DOT>
+		(
+			obj = IdentifierFieldAccessor(obj)
+		|
+			obj = StringFieldAccessor(obj)
+		)
+	|
+		obj = BracketFieldAccessor(obj)
+	)+
+	{ return obj; }
+}
+
+Expression ThisObjectAccess():
+{
+	Token identifier;
+	boolean permissive;
+	Expression tmp = new ThisObject();
+}
+{
+	<DOT>
+	(
+		(
+			tmp = IdentifierFieldAccessor(tmp)
+		|
+			tmp = StringFieldAccessor(tmp)
+		|
+			tmp = BracketFieldAccessor(tmp)
+		)
+		(
+			tmp = FieldAccessor(tmp)
+		)?
+	)?
+	{ return tmp; }
+}
+
+Expression IdentifierFieldAccessor(Expression obj):
+{
+	Token identifier;
+	boolean permissive = false;
+}
+{
+	identifier = <IDENTIFIER_AFTER_DOT>
+	(
+		<QUESTION>
+		{ permissive = true; }
+	)?
+	{ return new IdentifierFieldAccess(obj, identifier.image, permissive); }
+}
+
+Expression StringFieldAccessor(Expression obj):
+{
+	Expression fieldName;
+	boolean permissive = false;
+}
+{
+	fieldName = StringInterpolation()
+	(
+		<QUESTION>
+		{ permissive = true; }
+	)?
+	{ return new StringFieldAccess(obj, fieldName, permissive); }
+}
+
+Expression BracketFieldAccessor(Expression obj):
+{
+	Expression begin = null, end = null;
+	boolean rangeAccess = true;
+	boolean permissive = false;
+}
+{
+	<OPEN_BRACKET>
+	(
+		begin = Expression()
+		(
+			<COLON>
+			(
+				end = Expression()
+			|
+				{ /* empty */ }
+			)
+		|
+			{ rangeAccess = false; }
+		)
+	|
+		<COLON>
+		(
+			end = Expression()
+		)
+	)?
+	<CLOSE_BRACKET>
+	(
+		<QUESTION>
+		{ permissive = true; }
+	)?
+	{
+		if (rangeAccess) {
+			if (begin == null && end == null)
+				return new BracketExtractFieldAccess(obj, permissive);
+			return new BracketFieldAccess(obj, begin, end, permissive);
+		} else {
+			return new BracketFieldAccess(obj, begin, permissive);
+		}
+	}
+}
+
+Expression StringInterpolation():
+{
+	Token t;
+	final StringBuilder builder = new StringBuilder();
+	final List<Pair<Integer, Expression>> interpolations = new ArrayList<Pair<Integer, Expression>>();
+	Expression tmp;
+	Expression formatter = null;
+}
+{
+	(
+		formatter = FormattingFilter()
+	)?
+	<QUOTE>
+	(
+		t = <VISIBLE_CHAR>
+		{ builder.append(t.image); }
+	|
+		t = <ESCAPE_CHAR>
+		{
+			if (t.image.charAt(0) != '\\')
+				throw new IllegalStateException("???");
+			final char c = t.image.charAt(1);
+			switch (c)
+			{
+				case '\"': builder.append('\"'); break;
+				case '\\': builder.append('\\'); break;
+				case 'b': builder.append((char) 0x08); break;
+				case 'f': builder.append((char) 0x0c); break;
+				case 'r': builder.append((char) 0x0d); break;
+				case 't': builder.append((char) 0x09); break;
+				case 'n': builder.append((char) 0x0a); break;
+				default: {
+					throw new IllegalStateException("Unexpected escape char: " + c);
+				}
+			}
+		}
+	|
+		t = <CODEPOINT_CHAR>
+		{
+			if (t.image.charAt(0) != '\\' || t.image.charAt(1) != 'u')
+				throw new IllegalStateException("???");
+			builder.appendCodePoint(Integer.parseInt(t.image.substring(2), 16));
+		}
+	|
+		<OPEN_INTERP>
+		tmp = Expression()
+		<CLOSE_PAR>
+		{ interpolations.add(Pair.of(builder.length(), tmp)); }
+	)*
+	<ENDQUOTE>
+	{ return new StringInterpolation(builder.toString(), interpolations, formatter); }
+}
+
+PatternMatcher Matcher():
+{
+	PatternMatcher matcher;
+}
+{
+	(
+		matcher = ValueMatcher()
+	|
+		matcher = ArrayMatcher()
+	|
+		matcher = ObjectMatcher()
+	)
+	{ return matcher; }
+}
+
+PatternMatcher ArrayMatcher():
+{
+	PatternMatcher matcher;
+	final List<PatternMatcher> matchers = new ArrayList<PatternMatcher>();
+}
+{
+	<OPEN_BRACKET>
+	matcher = Matcher()
+	{ matchers.add(matcher); }
+	(
+		<COMMA>
+		matcher = Matcher()
+		{ matchers.add(matcher); }
+	)*
+	<CLOSE_BRACKET>
+	{ return new ArrayMatcher(matchers); }
+}
+
+PatternMatcher ObjectMatcher():
+{
+	Expression name;
+	PatternMatcher matcher;
+	final List<Pair<Expression, PatternMatcher>> matchers = new ArrayList<Pair<Expression, PatternMatcher>>();
+}
+{
+	<OPEN_BRACE>
+	name = ObjectFieldName()
+	<COLON>
+	matcher = Matcher()
+	{ matchers.add(Pair.of(name, matcher)); }
+	(
+		<COMMA>
+		name = ObjectFieldName()
+		<COLON>
+		matcher = Matcher()
+		{ matchers.add(Pair.of(name, matcher)); }
+	)*
+	<CLOSE_BRACE>
+	{ return new ObjectMatcher(matchers); }
+}
+
+PatternMatcher ValueMatcher():
+{
+	Token token;
+}
+{
+	<DOLLAR>
+	token = <IDENTIFIER>
+	{ return new ValueMatcher(token.image); }
+}

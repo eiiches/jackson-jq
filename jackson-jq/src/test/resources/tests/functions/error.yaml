@@ -1,0 +1,9 @@
+- {"v":"[1.5,1.5]","q":"error(empty)","in":null,"out":[]}
+- q: 'try error("a", error("foo")) catch .'
+  out:
+  - a
+- q: 'try error(error("foo")) catch .'
+  out:
+  - foo
+- q: 'error(null)'
+  out: []

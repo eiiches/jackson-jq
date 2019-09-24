@@ -1,0 +1,21 @@
+- q: 'nan == nan, nan > nan, nan < nan, nan >= nan, nan <= nan'
+  out:
+  - false
+  - false
+  - true
+  - false
+  - true
+- q: '0 == nan, 0 > nan, 0 < nan, nan > 0, nan < 0'
+  out:
+  - false
+  - true
+  - false
+  - false
+  - true
+- q: '0 == nan, 0 >= nan, 0 <= nan, nan >= 0, nan <= 0'
+  out:
+  - false
+  - true
+  - false
+  - false
+  - true

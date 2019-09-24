@@ -1,0 +1,16 @@
+- {"v":"[1.5,1.5]","q":"from_entries","in":{},"out":[{}]}
+- q: 'try from_entries catch .'
+  in: 1
+  out:
+  - 'Cannot iterate over number (1)'
+- q: 'try from_entries catch .'
+  in: [{"key": "a", "value": 1}, 1]
+  out:
+  - 'Cannot index number with string "key"'
+- q: '{a: {key: "a", value: 1}} | from_entries'
+  out:
+  - {a: 1}
+- q: 'try from_entries catch .'
+  in: [{}]
+  out:
+  - 'Cannot use null (null) as object key'

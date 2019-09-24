@@ -1,0 +1,4 @@
+- {"v":"[1.5,1.5]","q":"split(\"baz\")","in":"","out":[[]]}
+- q: 'split(empty)'
+  in: []
+  out: []

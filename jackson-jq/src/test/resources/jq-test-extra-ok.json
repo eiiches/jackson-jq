@@ -1,0 +1,1002 @@
+[
+	{
+		"q": ".[(1,2):(3,4)]",
+		"in": [0, 1, 2, 3],
+		"out": [
+			[1, 2],
+			[1, 2, 3],
+			[2],
+			[2, 3]
+		]
+	},
+	{
+		"q": "10 % 3",
+		"in": null,
+		"out": [
+			1
+		]
+	},
+	{
+		"q": "2.5 * 4",
+		"in": null,
+		"out": [
+			10
+		]
+	},
+	{
+		"q": ". * 4",
+		"in": "ab",
+		"out": [
+			"abababab"
+		]
+	},
+	{
+		"q": "3.2 - 1.6",
+		"in": null,
+		"out": [
+			1.6
+		]
+	},
+	{
+		"q": "1.6 + 1.6",
+		"in": null,
+		"out": [
+			3.2
+		]
+	},
+	{
+		"q": ".[:-1]",
+		"in": [0, 1, 2],
+		"out": [
+			[0, 1]
+		]
+	},
+	{
+		"q": "if true then 1 else 0 end",
+		"in": null,
+		"out": [
+			1
+		]
+	},
+	{
+		"q": ".[] > 0, .[] <= 0, .[] != 0",
+		"in": [-1, 0, 1],
+		"out": [
+			false,
+			false,
+			true,
+			true,
+			true,
+			false,
+			true,
+			false,
+			true
+		]
+	},
+	{
+		"q": "join(\",\")",
+		"in": ["a","b","c",null],
+		"out": [
+			"a,b,c,"
+		]
+	},
+	{
+		"q": ".[] | test([\"foo\",\"i\"])",
+		"in": ["Foobar", "baz"],
+		"out": [
+			true,
+			false
+		]
+	},
+	{
+		"q": "[.[]|iterables], [.[]|scalars], [.[]|arrays], [.[]|booleans], [.[]|nulls], [.[]|objects], [.[]|strings], [.[]|values], [.[]|numbers]",
+		"in": [1, null, {"foo": 10}, [10, 20], "test", false],
+		"out": [
+			[{"foo": 10}, [10, 20]],
+			[1, null, "test", false],
+			[[10, 20]],
+			[false],
+			[null],
+			[{"foo": 10}],
+			["test"],
+			[1, {"foo": 10}, [10, 20], "test", false],
+			[1]
+		]
+	},
+	{
+		"q": "sub(\",\"; \":\")",
+		"in": "a,b,c",
+		"out": [
+			"a:b,c"
+		]
+	},
+	{
+		"q": "gsub(\",\"; \":\")",
+		"in": "a,b,c",
+		"out": [
+			"a:b:c"
+		]
+	},
+	{
+		"q": "scan(\",\")",
+		"in": "a,b,c",
+		"out": [
+			",",
+			","
+		]
+	},
+	{
+		"q": "{ids:[.ids|split(\",\")[]|tonumber|.+100],name}",
+		"in": {
+			"ids": "12,15,23",
+			"name": "jackson",
+			"timestamp": 1418785331123
+		},
+		"out": [
+			{"ids": [112, 115, 123], "name": "jackson"}
+		]
+	},
+	{
+		"q": ". * {content: {params: .content.params | split(\"&\") | map(split(\"=\") | {(.[0]):.[1]}) | add}}",
+		"in": {
+			"foo": "kept",
+			"content": {
+				"bar": "preseved",
+				"params":"qca=hoge&qcb=fuga"
+			}
+		},
+		"out": [{
+			"foo": "kept",
+			"content": {
+				"bar": "preseved",
+				"params": {
+					"qca": "hoge",
+					"qcb": "fuga"
+				}
+			}
+		}]
+	},
+	{
+		"q": ".foo.bar",
+		"in": {},
+		"out": [
+			null
+		]
+	},
+	{
+		"q": "with_entries({key: (\"KEY_\" + .key), value: (.value + 2, .value + 1)})",
+		"in": {"a": 10, "b": 20},
+		"out": [
+			{"KEY_a": 11, "KEY_b": 21}
+		]
+	},
+	{
+		"q": "with_entries(empty)",
+		"in": {"a": 10, "b": 20},
+		"out": [
+			{}
+		]
+	},
+	{
+		"q": "{group_id: .content.group_id, tmp: .content.entries[] | {entry_id: .id, child_id: .children[]}} | {group_id, entry_id: .tmp.entry_id, child_id: .tmp.child_id}",
+		"in": {
+			"content": {
+				"group_id": 543,
+				"entries": [
+					{"id": 1, "children": [10, 11, 12]},
+					{"id": 2, "children": [20, 21, 22]}
+				]
+			}
+		},
+		"out": [
+			{
+				"group_id": 543,
+				"entry_id": 1,
+				"child_id": 10
+			},
+			{
+				"group_id": 543,
+				"entry_id": 1,
+				"child_id": 11
+			},
+			{
+				"group_id": 543,
+				"entry_id": 1,
+				"child_id": 12
+			},
+			{
+				"group_id": 543,
+				"entry_id": 2,
+				"child_id": 20
+			},
+			{
+				"group_id": 543,
+				"entry_id": 2,
+				"child_id": 21
+			},
+			{
+				"group_id": 543,
+				"entry_id": 2,
+				"child_id": 22
+			}
+		]
+	},
+	{
+		"q": "del(.content[1:3])",
+		"in": {"content": [0, 1, 2, 3]},
+		"out": [
+			{"content": [0, 3]}
+		]
+	},
+	{
+		"q": "del(.content[1,2]), del(.content[1:-1])",
+		"in": {"content": [0, 1, 2, 3]},
+		"out": [
+			{"content": [0, 3]},
+			{"content": [0, 3]}
+		]
+	},
+	{
+		"q": "del(.content[0]), del(.content[1:]), del(.content[]), del(.[])",
+		"in": {"content": [0, 1, 2, 3]},
+		"out": [
+			{"content": [1, 2, 3]},
+			{"content": [0]},
+			{"content": []},
+			{}
+		]
+	},
+	{
+		"q": "del(.content[-1]), del(.content[-2:])",
+		"in": {"content": [0, 1, 2, 3]},
+		"out": [
+			{"content": [0, 1, 2]},
+			{"content": [0, 1]}
+		],
+		"v": "[1.6,)"
+	},
+	{
+		"q": "del(.content[-1]), del(.content[-2:])",
+		"in": {"content": [0, 1, 2, 3]},
+		"out": [
+			{"content": [0, 1, 2, 3]},
+			{"content": [0, 1]}
+		],
+		"v": "(,1.5]"
+	},
+	{
+		"q": "del(.content[0])",
+		"in": null,
+		"out": [
+			null
+		]
+	},
+	{
+		"q": "del(.foo?)",
+		"in": [1, 2],
+		"out": [
+			[1, 2]
+		]
+	},
+	{
+		"q": "del(.[1]?), del(.[1:2]?)",
+		"in": {"a": 10, "b": 20},
+		"out": [
+			{"a": 10, "b": 20},
+			{"a": 10, "b": 20}
+		]
+	},
+	{
+		"q": "[-1, 1-3, -1+3, -1+(-3), -(1+3), -(-3)+1, -1-3]",
+		"in": null,
+		"out": [
+			[-1, -2, 2, -4, -4, 4, -4]
+		]
+	},
+	{
+		"q": "[range(0; -5; -1)]",
+		"in": null,
+		"out": [
+			[0, -1, -2, -3, -4]
+		]
+	},
+	{
+		"q": "gsub(\"\\t\"; \"\\\\t\")",
+		"in": "\t",
+		"out": [
+			"\\t"
+		]
+	},
+	{
+		"q": "[\"rsync\", \"--bwlimit\", 2500, ., \"baz@example.com:\"] | @sh",
+		"in": "foo'bar\"",
+		"out": [
+			"'rsync' '--bwlimit' 2500 'foo'\\''bar\"' 'baz@example.com:'"
+		]
+	},
+	{
+		"q": "@sh",
+		"in": 10,
+		"out": [
+			"10"
+		]
+	},
+	{
+		"q": ".\"foo\"",
+		"in": {"foo": 10},
+		"out": [
+			10
+		]
+	},
+	{
+		"q": ".[0]",
+		"in": null,
+		"out": [
+			null
+		]
+	},
+	{
+		"q": "\"\\r\\n\\b\\t\\f\\\"\\\\\"",
+		"in": null,
+		"out": [
+			"\r\n\b\t\f\"\\"
+		]
+	},
+	{
+		"q": "\"\\(10)\\(\"20\")\\({\"30\": 40})\\(true)\\(false)\\(null)\\([10])\"",
+		"in": null,
+		"out": [
+			"1020{\"30\":40}truefalsenull[10]"
+		]
+	},
+	{
+		"q": "[foreach .[] as $item ([3, null]; label $out | if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]",
+		"in": [11, 22, 33, 44, 55, 66, 77, 88, 99],
+		"out": [
+			[11, 22, 33]
+		]
+	},
+	{
+		"q": "[label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]",
+		"in": [11, 22, 33, 44, 55, 66, 77, 88, 99],
+		"out": [
+			[11, 22, 33]
+		]
+	},
+	{
+		"q": "label $out | [foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]",
+		"in": [11, 22, 33, 44, 55, 66, 77, 88, 99],
+		"out": []
+	},
+	{
+		"q": "[foreach range(5) as $item (0; $item)]",
+		"in": null,
+		"out": [
+			[0, 1, 2, 3, 4]
+		]
+	},
+	{
+		"q": "try ([] * 10) catch .",
+		"in": null,
+		"out": [
+			"array ([]) and number (10) cannot be multiplied"
+		]
+	},
+	{
+		"q": "try ([] + 10) catch .",
+		"in": null,
+		"out": [
+			"array ([]) and number (10) cannot be added"
+		]
+	},
+	{
+		"q": "try ([] - 10) catch .",
+		"in": null,
+		"out": [
+			"array ([]) and number (10) cannot be subtracted"
+		]
+	},
+	{
+		"q": "try ([] / 10) catch .",
+		"in": null,
+		"out": [
+			"array ([]) and number (10) cannot be divided"
+		]
+	},
+	{
+		"q": "try (10 | .[10]) catch .",
+		"in": null,
+		"out": [
+			"Cannot index number with number"
+		]
+	},
+	{
+		"q": "try (.[]) catch .",
+		"in": null,
+		"out": [
+			"Cannot iterate over null (null)"
+		]
+	},
+	{
+		"q": "try (.[]) catch .",
+		"in": 10,
+		"out": [
+			"Cannot iterate over number (10)"
+		]
+	},
+	{
+		"q": "try (.[1:3]) catch .",
+		"in": {"a": 10},
+		"out": [
+			"Cannot index object with object"
+		]
+	},
+	{
+		"q": "try (.[1:\"a\"]) catch .",
+		"in": [1, 2, 3],
+		"out": [
+			"Start and end indices of an array slice must be numbers"
+		]
+	},
+	{
+		"q": "try (.[1:\"a\"]) catch .",
+		"in": "string",
+		"out": [
+			"Start and end indices of an string slice must be numbers"
+		]
+	},
+	{
+		"q": "try (.[[20]]) catch .",
+		"in": 10,
+		"out": [
+			"Cannot index number with array"
+		]
+	},
+	{
+		"q": "-3.4 | length",
+		"in": null,
+		"out": [
+			3.4
+		]
+	},
+	{
+		"q": "try length catch .",
+		"in": true,
+		"out": [
+			"boolean (true) has no length"
+		]
+	},
+	{
+		"q": "try tonumber catch .",
+		"in": false,
+		"out": [
+			"boolean (false) cannot be parsed as a number"
+		]
+	},
+	{
+		"q": ".num_entries[\"1\"] = 10",
+		"in": {},
+		"out": [
+			{"num_entries": {"1": 10}}
+		]
+	},
+	{
+		"q": ".num_entries[\"1\"] = 10",
+		"in": {"num_entries": {"2": 20}},
+		"out": [
+			{"num_entries": {"1": 10, "2": 20}}
+		]
+	},
+	{
+		"q": ".num_entries[\"1\"] = 10",
+		"in": null,
+		"out": [
+			{"num_entries": {"1": 10}}
+		]
+	},
+	{
+		"q": "map(.[empty] = 20)[]",
+		"in": [
+			"text", false, true, 10, {"a": 10}, [1, 2, 3], null
+		],
+		"out": [
+			"text", false, true, 10, {"a": 10}, [1, 2, 3], null
+		]
+	},
+	{
+		"q": "try del(.[]) catch .",
+		"in": null,
+		"out": [
+			"Cannot iterate over null (null)"
+		]
+	},
+	{
+		"q": "map(try (.[] = 20) catch .)[]",
+		"in": [
+			"text", false, 10, {"a": 10}, [1, 2, 3], null
+		],
+		"out": [
+			"Cannot iterate over string (\"text\")",
+			"Cannot iterate over boolean (false)",
+			"Cannot iterate over number (10)",
+			{"a": 20},
+			[20, 20, 20],
+			"Cannot iterate over null (null)"
+		]
+	},
+	{
+		"q": "map(try (.[1,2] = 30) catch .)[]",
+		"in": [
+			"text", false, 10, {"a": 10}, [1, 2, 3], null
+		],
+		"out": [
+			"Cannot index string with number",
+			"Cannot index boolean with number",
+			"Cannot index number with number",
+			"Cannot index object with number",
+			[1, 30, 30],
+			[null, 30, 30]
+		]
+	},
+	{
+		"q": "map(try (.[\"foo\",\"bar\"] = 30) catch .)[]",
+		"in": [
+			"text", false, 10, {"a": 1, "foo": 2, "bar": 30}, [1, 2, 3], null
+		],
+		"out": [
+			"Cannot index string with string \"foo\"",
+			"Cannot index boolean with string \"foo\"",
+			"Cannot index number with string \"foo\"",
+			{
+				"a": 1,
+				"foo": 30,
+				"bar": 30
+			},
+			"Cannot index array with string \"foo\"",
+			{
+				"foo": 30,
+				"bar": 30
+			}
+		]
+	},
+	{
+		"q": "map(try (.[1:3] = 30) catch .)[]",
+		"in": [
+			"text", false, 10, {"a": 1, "foo": 2, "bar": 30}, [1, 2], [1, 2, 3, 4, 5], null
+		],
+		"out": [
+			"Cannot update field at object index of string",
+			"Cannot index boolean with object",
+			"Cannot index number with object",
+			"Cannot index object with object",
+			"A slice of an array can only be assigned another array",
+			"A slice of an array can only be assigned another array",
+			"A slice of an array can only be assigned another array"
+		]
+	},
+	{
+		"q": "map(try (.[2:4] = [-1,-2]) catch .)[]",
+		"in": [
+			"text", false, 10, {"a": 1, "foo": 2, "bar": 30}, [1, 2], [1, 2, 3, 4, 5], null
+		],
+		"out": [
+			"Cannot update field at object index of string",
+			"Cannot index boolean with object",
+			"Cannot index number with object",
+			"Cannot index object with object",
+			[1, 2, -1, -2],
+			[1, 2, -1, -2, 5],
+			[-1, -2]
+		]
+	},
+	{
+		"q": "[10][null]?",
+		"in": null,
+		"out": []
+	},
+	{
+		"q": "[10][\"10\":null]?",
+		"in": null,
+		"out": []
+	},
+	{
+		"q": "map([try ((.[0] == 0, false) and (.a, true)) catch .])[]",
+		"in": [[0], [1]],
+		"out": [
+			["Cannot index array with string \"a\""],
+			[false, false]
+		]
+	},
+	{
+		"q": "map([try ((.[0] == 0, false) and (false, true)) catch .])[]",
+		"in": [[0], [1]],
+		"out": [
+			[false, true, false],
+			[false, false]
+		]
+	},
+	{
+		"q": "map([try ((.[0] == 0, true) or (.a, true)) catch .])[]",
+		"in": [[0], [1]],
+		"out": [
+			[true, true],
+			["Cannot index array with string \"a\""]
+		]
+	},
+	{
+		"q": "map([try ((.[0] == 0, true) or (false, true)) catch .])[]",
+		"in": [[0], [1]],
+		"out": [
+			[true, true],
+			[false, true, true]
+		]
+	},
+	{
+		"q": ".[]|gsub(\"(?<d>\\\\d)\"; \"\\(.d|tonumber+1)\")",
+		"in": ["1a2b3", "1a2b"],
+		"out": [
+			"2a3b4",
+			"2a3b"
+		]
+	},
+	{
+		"q": "(null, 1.7976931348623157e+308, nan, infinite, -nan, -infinite) | [type, tojson, isinfinite, isnan]",
+		"out": [
+			["null", "null", false, false],
+			["number", "1.7976931348623157e+308", false, false],
+			["number", "null", false, true],
+			["number", "1.7976931348623157e+308", true, false],
+			["number", "null", false, true],
+			["number", "-1.7976931348623157e+308", true, false]
+		]
+	},
+	{
+		"q": "(., .) as {(.a, .b): $a, (.a, .b): $a} | [$a, $a]",
+		"in": {"a": "a", "b": "b"},
+		"out": [
+			["a","a"],
+			["a","a"],
+			["b","b"],
+			["b","b"],
+			["a","a"],
+			["a","a"],
+			["b","b"],
+			["b","b"]
+		]
+	},
+	{
+		"q": "reduce [{a: 1, b: 4}, {a: 2, b: 5}, {a: 3, b: 6}][] as {\"\\(\"a\",\"b\")\": $a} ((\"a\", \"b\"); . + (($a, $a + 1) | tostring))",
+		"out": [
+			"a253647",
+			"b253647"
+		]
+	},
+	{
+		"q": "foreach [{a:1,b:2},{a:3,b:4},{a:5,b:6}][] as {\"\\(\"a\",\"b\")\": $v} (0, 1; .+$v+1, .+$v; ., .*10)",
+		"out": [2,20,1,10,4,40,3,30,7,70,6,60,11,110,10,100,16,160,15,150,22,220,21,210,3,30,2,20,5,50,4,40,8,80,7,70,12,120,11,110,17,170,16,160,23,230,22,220]
+	},
+	{
+		"q": "foreach [1,2,3,4,5,6][] as $v (0; .+$v, .+$v+1; .)",
+		"out": [1,2,4,5,8,9,13,14,19,20,26,27]
+	},
+	{
+		"q": ".[] as [$n, $h] | try ($h | contains($n)) catch .",
+		"in": [
+			[true, true],
+			["str", true],
+			[false, true]
+		],
+		"out": [
+			true,
+			"boolean (true) and string (\"str\") cannot have their containment checked",
+			"boolean (true) and boolean (false) cannot have their containment checked"
+		]
+	},
+	{
+		"q": ".[] | [length, utf8bytelength]",
+		"in": [
+			"𠮷", "\ud842\udfb7",
+			"𠮟", "\ud842\udf9f",
+			"\ud834\udd1e",
+			"🗼", "\ud83d\uddfc"
+		],
+		"out": [
+			[1, 4], [1, 4],
+			[1, 4], [1, 4],
+			[1, 4],
+			[1, 4], [1, 4]
+		],
+		"v": "[1.6, 1.6]"
+	},
+	{
+		"q": ".[] | .[0:1]",
+		"in": [
+			"𠮟", "\ud842\udf9f"
+		],
+		"out": [
+			"𠮟", "\ud842\udf9f"
+		]
+	},
+	{
+		"q": "(.)[0]?",
+		"in": [
+			1, 2, 3
+		],
+		"out": [
+			1
+		]
+	},
+	{
+		"q": "try ((error(\"foo\"))[10]?) catch .",
+		"out": [
+			"foo"
+		]
+	},
+	{
+		"q": "try ((error(\"foo\"))?) catch .",
+		"out": []
+	},
+	{
+		"q": ".foreach",
+		"in": {"foreach": 10},
+		"out": [
+			10
+		]
+	},
+	{
+		"q": "try (1,2,3,error(\"break\"),4,5) catch .",
+		"in": null,
+		"out": [
+			1, 2, 3, "break"
+		]
+	},
+	{
+		"q": "try (1,2,3,error(\"break\"),4,5)",
+		"in": null,
+		"out": [
+			1, 2, 3
+		]
+	},
+	{
+		"q": "try \"\\(1,2,3,error(\"break\"),4,5)\" catch .",
+		"in": null,
+		"out": [
+			"1", "2", "3", "break"
+		]
+	},
+	{
+		"q": "try \"\\(1,2)\\(1,2,3,error(\"break\"),4,5)\" catch .",
+		"in": null,
+		"out": [
+			"11", "21", "12", "22", "13", "23", "break"
+		]
+	},
+	{
+		"q": "try \"\\(1,2,3,error(\"break\"),4,5)\\(1,2)\" catch .",
+		"in": null,
+		"out": [
+			"11", "21", "31", "break"
+		]
+	},
+	{
+		"q": "label $out | label $out2 | ((try (break $out) catch .), (try (label $out2 | (1, break $out2)) catch .))",
+		"in": null,
+		"out": [
+			{"__jq": 0},
+			1
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | sub(\"a\", \"b\", error(\"foo\"); \"1\", \"2\", error(\"bar\"); \"\", \"g\", error(\"baz\"))) catch .",
+		"in": null,
+		"out": [
+			"1bcabc", "2bcabc", "bar"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | sub(\"a\", \"b\", error(\"foo\"); \"1\", \"2\"; \"\", \"g\", error(\"baz\"))) catch .",
+		"in": null,
+		"out": [
+			"1bcabc", "2bcabc", "1bcabc", "2bcabc", "baz"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | sub(\"a\", \"b\", error(\"foo\"); \"1\", \"2\"; \"\", \"g\")) catch .",
+		"in": null,
+		"out": [
+			"1bcabc", "2bcabc", "1bcabc", "2bcabc", "1bc1bc", "2bc1bc", "1bc2bc", "2bc2bc", "1bc1bc", "2bc1bc", "1bc2bc", "2bc2bc",
+			"a1cabc", "a2cabc", "a1cabc", "a2cabc", "a1ca1c", "a2ca1c", "a1ca2c", "a2ca2c", "a1ca1c", "a2ca1c", "a1ca2c", "a2ca2c",
+			"foo"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | sub(\"a\"; \"1\", \"2\", error(\"bar\"); \"g\")) catch .",
+		"in": null,
+		"out": [
+			"1bc1bc", "2bc1bc", "bar"
+		]
+	},
+	{
+		"q": "\"gg\" | sub(\"g\"; \"1\"; .)",
+		"in": null,
+		"out": [
+			"11"
+		]
+	},
+	{
+		"q": "\"abcabc\" | _match_impl(\"a\", \"b\"; \"\", \"g\"; false, true)",
+		"in": null,
+		"out": [
+			[{"offset":0,"length":1,"string":"a","captures":[]}],
+			[{"offset":1,"length":1,"string":"b","captures":[]}],
+			[{"offset":0,"length":1,"string":"a","captures":[]},{"offset":3,"length":1,"string":"a","captures":[]}],
+			[{"offset":1,"length":1,"string":"b","captures":[]},{"offset":4,"length":1,"string":"b","captures":[]}],
+			true,
+			true,
+			true,
+			true
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | _match_impl(\"a\", \"b\", error(\"foo\"); \"\", \"g\", error(\"bar\"); false, true, error(\"baz\"))) catch .",
+		"in": null,
+		"out": [
+			[{"offset":0,"length":1,"string":"a","captures":[]}],
+			[{"offset":1,"length":1,"string":"b","captures":[]}],
+			"foo"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | _match_impl(\"a\", \"b\"; \"\", \"g\", error(\"bar\"); false, true, error(\"baz\"))) catch .",
+		"in": null,
+		"out": [
+			[{"offset":0,"length":1,"string":"a","captures":[]}],
+			[{"offset":1,"length":1,"string":"b","captures":[]}],
+			[{"offset":0,"length":1,"string":"a","captures":[]},{"offset":3,"length":1,"string":"a","captures":[]}],
+			[{"offset":1,"length":1,"string":"b","captures":[]},{"offset":4,"length":1,"string":"b","captures":[]}],
+			"bar"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | _match_impl(\"a\", \"b\"; \"\", \"g\"; false, true, error(\"baz\"))) catch .",
+		"in": null,
+		"out": [
+			[{"offset":0,"length":1,"string":"a","captures":[]}],
+			[{"offset":1,"length":1,"string":"b","captures":[]}],
+			[{"offset":0,"length":1,"string":"a","captures":[]},{"offset":3,"length":1,"string":"a","captures":[]}],
+			[{"offset":1,"length":1,"string":"b","captures":[]},{"offset":4,"length":1,"string":"b","captures":[]}],
+			true,
+			true,
+			true,
+			true,
+			"baz"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | match(\"a\", \"b\"; \"\", \"g\")) catch .",
+		"in": null,
+		"out": [
+			{"offset":0,"length":1,"string":"a","captures":[]},
+			{"offset":1,"length":1,"string":"b","captures":[]},
+			{"offset":0,"length":1,"string":"a","captures":[]},
+			{"offset":3,"length":1,"string":"a","captures":[]},
+			{"offset":1,"length":1,"string":"b","captures":[]},
+			{"offset":4,"length":1,"string":"b","captures":[]}
+		]
+	},
+	{
+		"q": "path((.a, .b).\"\\(1,2)\")",
+		"in": null,
+		"out": [
+			["a","1"],
+			["b","1"],
+			["a","2"],
+			["b","2"]
+		]
+	},
+	{
+		"q": "path(((.A, .B).a, .b).\"\\(1,2)\")",
+		"in": null,
+		"out": [
+			["A","a","1"],
+			["B","a","1"],
+			["b","1"],
+			["A","a","2"],
+			["B","a","2"],
+			["b","2"]
+		]
+	},
+	{
+		"q": "path(.)",
+		"in": null,
+		"out": [
+			[]
+		]
+	},
+	{
+		"q": "[1,2,3,4,5] | (.[1:2], .[1:2]) = [1,2,3]",
+		"in": null,
+		"out": [
+			[1,1,2,3,2,3,3,4,5]
+		]
+	},
+	{
+		"q": "[1,2,3,4,5] | del(.[1:2], .[1:2])",
+		"in": null,
+		"out": [
+			[1,3,4,5]
+		]
+	},
+	{
+		"q": "[1,2,3] | (.[] | select(. > 1)) = ([10], [20])",
+		"in": null,
+		"out": [
+			[1, [10], [10]],
+			[1, [20], [20]]
+		]
+	},
+	{
+		"q": "[1,2,3] | (.[] | select(. > 1)) += (10, 20)",
+		"in": null,
+		"out": [
+			[1,12,13],
+			[1,22,23]
+		]
+	},
+	{
+		"q": "[1,null,3] | del(.[1].a)",
+		"in": null,
+		"out": [
+			[1,null,3]
+		]
+	},
+	{
+		"q": "{a: null, b: 1} | del(.a[1])",
+		"in": null,
+		"out": [
+			{"a":null,"b":1}
+		]
+	},
+	{
+		"q": "delpaths([[\"foo\",1]])",
+		"in": {"bar": false},
+		"out": [
+			{"bar": false}
+		]
+	},
+	{
+		"q": "delpaths([[5,\"a\"]])",
+		"in": [1,null,3],
+		"out": [
+			[1,null,3]
+		]
+	},
+	{
+		"q": "try (.[\"a\"] = 3) catch .",
+		"in": 1,
+		"out": [
+			"Cannot index number with string \"a\""
+		]
+	},
+	{
+		"q": "try (.[0] = 3) catch .",
+		"in": "foo",
+		"out": [
+			"Cannot index string with number"
+		]
+	},
+	{
+		"q": "try ([{b: 10}] | path(map(select(.b == 0)) | .[100:20])) catch .",
+		"in": null,
+		"out": [
+			"Invalid path expression near attempt to access element {\"start\":10... of []"
+		]
+	},
+	{
+		"q": "try (path(map(select(.a == 1))[].b)) catch .",
+		"in": [{"a":0},{"a":1}],
+		"out": [
+			"Invalid path expression near attempt to iterate through [{\"a\":1}]"
+		]
+	}
+]
