@@ -724,5 +724,10 @@
 		"q": "try tonumber catch (\"__ERROR__\")",
 		"in": "foo",
 		"out": ["__ERROR__"]
+	},
+	{
+		"q": "\"\\/\"",
+		"in": null,
+		"out": ["/"]
 	}
 ]
