@@ -3,22 +3,22 @@ jackson-jq
 
 [jq](http://stedolan.github.io/jq/) for Jackson JSON Processor
 
-[![GitHub Actions](/eiiches/jackson-jq/workflows/test/badge.svg)](/eiiches/jackson-jq/actions)
+[![GitHub Actions](https://github.com/eiiches/jackson-jq/workflows/test/badge.svg)](https://github.com/eiiches/jackson-jq/actions)
 
-*You are currently viewing the develop/1.x branch. Some of the features may not be released yet.*
+
 
 Usage
 -----
 
 First, you need Java 8 or later.
 
-If you use Maven, add the following snippet to the `<dependencies>` section of your POM. For instructions for other build tools (Gradle, etc.), visit [jackson-jq](https://search.maven.org/artifact/net.thisptr/jackson-jq/1.0.0-preview.20190925/jar) on search.maven.org.
+If you use Maven, add the following snippet to the `<dependencies>` section of your POM. For instructions for other build tools (Gradle, etc.), visit [jackson-jq](https://search.maven.org/artifact/net.thisptr/jackson-jq/1.0.0-preview.20191208/jar) on search.maven.org.
 
 ```xml
 <dependency>
 	<groupId>net.thisptr</groupId>
 	<artifactId>jackson-jq</artifactId>
-	<version>1.0.0-preview.20190925</version>
+	<version>1.0.0-preview.20191208</version>
 </dependency>
 ```
 
@@ -30,9 +30,9 @@ Using a jackson-jq command line tool
 To test a query quickly, we provide jackson-jq CLI.
 
 ```sh
-$ curl -LO https://repo1.maven.org/maven2/net/thisptr/jackson-jq-cli/1.0.0-preview.20190925/jackson-jq-cli-1.0.0-preview.20190925.jar
+$ curl -LO https://repo1.maven.org/maven2/net/thisptr/jackson-jq-cli/1.0.0-preview.20191208/jackson-jq-cli-1.0.0-preview.20191208.jar
 
-$ java -jar jackson-jq-cli-1.0.0-preview.20190925.jar --help
+$ java -jar jackson-jq-cli-1.0.0-preview.20191208.jar --help
 usage: jackson-jq [OPTIONS...] QUERY
  -c,--compact      compact instead of pretty-printed output
  -h,--help         print this message
@@ -40,7 +40,7 @@ usage: jackson-jq [OPTIONS...] QUERY
  -n,--null-input   use `null` as the single input value
  -r,--raw          output raw strings, not JSON texts
 
-$ java -jar jackson-jq-cli-1.0.0-preview.20190925.jar '.foo'
+$ java -jar jackson-jq-cli-1.0.0-preview.20191208.jar '.foo'
 {"foo": 42}
 42
 ```
@@ -48,11 +48,11 @@ $ java -jar jackson-jq-cli-1.0.0-preview.20190925.jar '.foo'
 To test a query with a specific jq version,
 
 ```sh
-$ java -jar jackson-jq-cli-1.0.0-preview.20190925.jar --jq 1.5 'join("-")'
+$ java -jar jackson-jq-cli-1.0.0-preview.20191208.jar --jq 1.5 'join("-")'
 ["1", 2]
 jq: error: string ("-") and number (2) cannot be added
 
-$ java -jar jackson-jq-cli-1.0.0-preview.20190925.jar --jq 1.6 'join("-")' # jq-1.6 can join any values, not only strings
+$ java -jar jackson-jq-cli-1.0.0-preview.20191208.jar --jq 1.6 'join("-")' # jq-1.6 can join any values, not only strings
 ["1", 2]
 "1-2"
 ```
@@ -64,14 +64,14 @@ Branches and versioning
 
 There are currently two development branches.
 
-* `develop/1.x`: This branch (you are viewing), which is currently under development for the future 1.0 release. The API is **not** stable yet. You can find preview releases (not stable, not recommended for production) at [Releases](/eiiches/jackson-jq/releases) page (tags: `1.0.0-preview.yyyyMMdd`).
-* `develop/0.x`: The development branch for 0.x versions. Features that need breaking API changes will no longer be added. Go to [Releases](/eiiches/jackson-jq/releases) and find the latest 0.x.y version.
+* `develop/1.x`: This branch (you are viewing), which is currently under development for the future 1.0 release. The API is **not** stable yet. You can find preview releases (not stable, not recommended for production) at [Releases](https://github.com/eiiches/jackson-jq/releases) page (tags: `1.0.0-preview.yyyyMMdd`).
+* `develop/0.x`: The development branch for 0.x versions. Features that need breaking API changes will no longer be added. Go to [Releases](https://github.com/eiiches/jackson-jq/releases) and find the latest 0.x.y version.
 
 PRs can be sent to any of the develop/\* branches. The patch will be ported to the other branch(es) if necessary.
 
 We use [Semantic Versioning 2.0.0](https://semver.org/) for Java API versioning, 1.0.0 onwards. A jq behavior fix (even if it may possibly affect users) will not be considered a major change if the fix is to make the bahavior compatible with ./jq; these kind of incompatible changes are documented in the release note.
 
-If you get different results between ./jq and jackson-jq, please [file an issue](/eiiches/jackson-jq/issues). That is a bug on jackson-jq side.
+If you get different results between ./jq and jackson-jq, please [file an issue](https://github.com/eiiches/jackson-jq/issues). That is a bug on jackson-jq side.
 
 Implementation status and current limitations
 ---------------------------------------------
@@ -174,6 +174,7 @@ This table illustrates which features (picked from jq-1.5 manual) are supported 
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`gsub(regex; string)`, `gsub(regex; string; flags)`](https://stedolan.github.io/jq/manual/v1.5/#gsub&#40;regex&#59;string&#41;&#44;gsub&#40;regex&#59;string&#59;flags&#41;)                                                                                                                       | ○          |
 | [Advanced features](https://stedolan.github.io/jq/manual/v1.5/#Advancedfeatures)                                                                                                                                                                                                                                                   | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Variables](https://stedolan.github.io/jq/manual/v1.5/#Variables)                                                                                                                                                                                                                                   | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Destructuring Alternative Operator: ?//](https://stedolan.github.io/jq/manual/v1.6/#DestructuringAlternativeOperator:?//)                                                                                                                                                                          | ✕ (#44)    |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Defining Functions](https://stedolan.github.io/jq/manual/v1.5/#DefiningFunctions)                                                                                                                                                                                                                  | ○<sup>*3</sup> |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Reduce](https://stedolan.github.io/jq/manual/v1.5/#Reduce)                                                                                                                                                                                                                                         | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`limit(n; exp)`](https://stedolan.github.io/jq/manual/v1.5/#limit&#40;n&#59;exp&#41;)                                                                                                                                                                                                              | ○          |
@@ -232,7 +233,7 @@ Using jackson-jq-extra module
 <dependency>
 	<groupId>net.thisptr</groupId>
 	<artifactId>jackson-jq-extra</artifactId>
-	<version>1.0.0-preview.20190925</version>
+	<version>1.0.0-preview.20191208</version>
 </dependency>
 ```
 

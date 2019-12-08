@@ -1017,6 +1017,7 @@ Expression StringInterpolation():
 				case 'r': builder.append((char) 0x0d); break;
 				case 't': builder.append((char) 0x09); break;
 				case 'n': builder.append((char) 0x0a); break;
+				case '/': builder.append('/'); break;
 				default: {
 					throw new IllegalStateException("Unexpected escape char: " + c);
 				}
