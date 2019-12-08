@@ -5,20 +5,20 @@ jackson-jq
 
 [![GitHub Actions](https://github.com/eiiches/jackson-jq/workflows/test/badge.svg)](https://github.com/eiiches/jackson-jq/actions)
 
-*You are currently viewing the develop/1.x branch. Some of the features may not be released yet.*
+
 
 Usage
 -----
 
 First, you need Java 8 or later.
 
-If you use Maven, add the following snippet to the `<dependencies>` section of your POM. For instructions for other build tools (Gradle, etc.), visit [jackson-jq](https://search.maven.org/artifact/net.thisptr/jackson-jq/1.0.0-preview.20190925/jar) on search.maven.org.
+If you use Maven, add the following snippet to the `<dependencies>` section of your POM. For instructions for other build tools (Gradle, etc.), visit [jackson-jq](https://search.maven.org/artifact/net.thisptr/jackson-jq/1.0.0-preview.20191208/jar) on search.maven.org.
 
 ```xml
 <dependency>
 	<groupId>net.thisptr</groupId>
 	<artifactId>jackson-jq</artifactId>
-	<version>1.0.0-preview.20190925</version>
+	<version>1.0.0-preview.20191208</version>
 </dependency>
 ```
 
@@ -30,9 +30,9 @@ Using a jackson-jq command line tool
 To test a query quickly, we provide jackson-jq CLI.
 
 ```sh
-$ curl -LO https://repo1.maven.org/maven2/net/thisptr/jackson-jq-cli/1.0.0-preview.20190925/jackson-jq-cli-1.0.0-preview.20190925.jar
+$ curl -LO https://repo1.maven.org/maven2/net/thisptr/jackson-jq-cli/1.0.0-preview.20191208/jackson-jq-cli-1.0.0-preview.20191208.jar
 
-$ java -jar jackson-jq-cli-1.0.0-preview.20190925.jar --help
+$ java -jar jackson-jq-cli-1.0.0-preview.20191208.jar --help
 usage: jackson-jq [OPTIONS...] QUERY
  -c,--compact      compact instead of pretty-printed output
  -h,--help         print this message
@@ -40,7 +40,7 @@ usage: jackson-jq [OPTIONS...] QUERY
  -n,--null-input   use `null` as the single input value
  -r,--raw          output raw strings, not JSON texts
 
-$ java -jar jackson-jq-cli-1.0.0-preview.20190925.jar '.foo'
+$ java -jar jackson-jq-cli-1.0.0-preview.20191208.jar '.foo'
 {"foo": 42}
 42
 ```
@@ -48,11 +48,11 @@ $ java -jar jackson-jq-cli-1.0.0-preview.20190925.jar '.foo'
 To test a query with a specific jq version,
 
 ```sh
-$ java -jar jackson-jq-cli-1.0.0-preview.20190925.jar --jq 1.5 'join("-")'
+$ java -jar jackson-jq-cli-1.0.0-preview.20191208.jar --jq 1.5 'join("-")'
 ["1", 2]
 jq: error: string ("-") and number (2) cannot be added
 
-$ java -jar jackson-jq-cli-1.0.0-preview.20190925.jar --jq 1.6 'join("-")' # jq-1.6 can join any values, not only strings
+$ java -jar jackson-jq-cli-1.0.0-preview.20191208.jar --jq 1.6 'join("-")' # jq-1.6 can join any values, not only strings
 ["1", 2]
 "1-2"
 ```
@@ -233,7 +233,7 @@ Using jackson-jq-extra module
 <dependency>
 	<groupId>net.thisptr</groupId>
 	<artifactId>jackson-jq-extra</artifactId>
-	<version>1.0.0-preview.20190925</version>
+	<version>1.0.0-preview.20191208</version>
 </dependency>
 ```
 
