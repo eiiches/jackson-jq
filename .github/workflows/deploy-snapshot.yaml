@@ -1,0 +1,32 @@
+# this name appears in the badge
+name: 'test'
+on:
+  push:
+    branches:
+    - develop/0.x
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+
+    - name: Download jq-1.5 and jq-1.6
+      run: |
+        mkdir -p $HOME/bin
+        wget -O $HOME/bin/jq-1.5 https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
+        wget -O $HOME/bin/jq-1.6 https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
+        chmod +x $HOME/bin/jq-1.5 $HOME/bin/jq-1.6
+
+    - name: Configure Maven
+      env:
+        M2_SETTINGS_XML: ${{ secrets.M2_SETTINGS_XML }}
+      run: |
+        mkdir -p $HOME/.m2
+        echo "$M2_SETTINGS_XML" > $HOME/.m2/settings.xml
+
+    - name: Build & Deploy
+      run: 'PATH="$HOME/bin:$PATH" mvn clean deploy'
