@@ -3,7 +3,7 @@ jackson-jq
 
 [jq](http://stedolan.github.io/jq/) for Jackson JSON Processor
 
-[![CircleCI](https://circleci.com/gh/eiiches/jackson-jq/tree/develop.svg?style=shield)](https://circleci.com/gh/eiiches/jackson-jq/tree/develop)
+[![GitHub Actions](https://github.com/eiiches/jackson-jq/workflows/test/badge.svg?branch=develop/0.x)](https://github.com/eiiches/jackson-jq/actions)
 
 Installation
 ------------
