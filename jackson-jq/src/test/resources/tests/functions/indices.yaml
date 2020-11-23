@@ -1,1 +1,2 @@
 - {"v":"[1.5,1.5]","q":"indices(-1.0)","in":null,"out":[null]}
+- {"v":"[1.5,1.6]","q":"indices(\"\")","in":"x","out":[[]],"ignore_true_jq_behavior":true}

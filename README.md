@@ -12,13 +12,13 @@ Usage
 
 First, you need Java 8 or later.
 
-If you use Maven, add the following snippet to the `<dependencies>` section of your POM. For instructions for other build tools (Gradle, etc.), visit [jackson-jq](https://search.maven.org/artifact/net.thisptr/jackson-jq/1.0.0-preview.20191208/jar) on search.maven.org.
+If you use Maven, add the following snippet to the `<dependencies>` section of your POM. For instructions for other build tools (Gradle, etc.), visit [jackson-jq](https://search.maven.org/artifact/net.thisptr/jackson-jq/1.0.0-preview.20201123/jar) on search.maven.org.
 
 ```xml
 <dependency>
 	<groupId>net.thisptr</groupId>
 	<artifactId>jackson-jq</artifactId>
-	<version>1.0.0-preview.20191208</version>
+	<version>1.0.0-preview.20201123</version>
 </dependency>
 ```
 
@@ -30,9 +30,9 @@ Using a jackson-jq command line tool
 To test a query quickly, we provide jackson-jq CLI.
 
 ```sh
-$ curl -LO https://repo1.maven.org/maven2/net/thisptr/jackson-jq-cli/1.0.0-preview.20191208/jackson-jq-cli-1.0.0-preview.20191208.jar
+$ curl -LO https://repo1.maven.org/maven2/net/thisptr/jackson-jq-cli/1.0.0-preview.20201123/jackson-jq-cli-1.0.0-preview.20201123.jar
 
-$ java -jar jackson-jq-cli-1.0.0-preview.20191208.jar --help
+$ java -jar jackson-jq-cli-1.0.0-preview.20201123.jar --help
 usage: jackson-jq [OPTIONS...] QUERY
  -c,--compact      compact instead of pretty-printed output
  -h,--help         print this message
@@ -40,7 +40,7 @@ usage: jackson-jq [OPTIONS...] QUERY
  -n,--null-input   use `null` as the single input value
  -r,--raw          output raw strings, not JSON texts
 
-$ java -jar jackson-jq-cli-1.0.0-preview.20191208.jar '.foo'
+$ java -jar jackson-jq-cli-1.0.0-preview.20201123.jar '.foo'
 {"foo": 42}
 42
 ```
@@ -48,11 +48,11 @@ $ java -jar jackson-jq-cli-1.0.0-preview.20191208.jar '.foo'
 To test a query with a specific jq version,
 
 ```sh
-$ java -jar jackson-jq-cli-1.0.0-preview.20191208.jar --jq 1.5 'join("-")'
+$ java -jar jackson-jq-cli-1.0.0-preview.20201123.jar --jq 1.5 'join("-")'
 ["1", 2]
 jq: error: string ("-") and number (2) cannot be added
 
-$ java -jar jackson-jq-cli-1.0.0-preview.20191208.jar --jq 1.6 'join("-")' # jq-1.6 can join any values, not only strings
+$ java -jar jackson-jq-cli-1.0.0-preview.20201123.jar --jq 1.6 'join("-")' # jq-1.6 can join any values, not only strings
 ["1", 2]
 "1-2"
 ```
@@ -130,7 +130,7 @@ This table illustrates which features (picked from jq-1.5 manual) are supported 
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`unique`, `unique_by(path_exp)`](https://stedolan.github.io/jq/manual/v1.5/#unique&#44;unique&#95;by&#40;path&#95;exp&#41;)                                                                                                                                                                        | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`reverse`](https://stedolan.github.io/jq/manual/v1.5/#reverse)                                                                                                                                                                                                                                     | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`contains(element)`](https://stedolan.github.io/jq/manual/v1.5/#contains&#40;element&#41;)                                                                                                                                                                                                         | ○          |
-| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`indices(s)`](https://stedolan.github.io/jq/manual/v1.5/#indices&#40;s&#41;)                                                                                                                                                                                                                       | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`indices(s)`](https://stedolan.github.io/jq/manual/v1.5/#indices&#40;s&#41;)                                                                                                                                                                                                                       | ○<sup>*9</sup> |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`index(s)`, `rindex(s)`](https://stedolan.github.io/jq/manual/v1.5/#index&#40;s&#41;&#44;rindex&#40;s&#41;)                                                                                                                                                                                        | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`inside`](https://stedolan.github.io/jq/manual/v1.5/#inside)                                                                                                                                                                                                                                       | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`startswith(str)`](https://stedolan.github.io/jq/manual/v1.5/#startswith&#40;str&#41;)                                                                                                                                                                                                             | ○          |
@@ -224,6 +224,8 @@ This table illustrates which features (picked from jq-1.5 manual) are supported 
 
 *8) `.foo |= empty` always throws an error in jackson-jq instead of producing an unexpected result. jq-1.5 and jq-1.6 respectively produces a different and incorrect result for `[1,2,3] | ((.[] | select(. > 1)) |= empty)`. [jq#897](https://github.com/stedolan/jq/issues/897) says "empty in the RHS is undefined". You can still use `_modify/2` directly if you really want to emulate the exact jq-1.5 or jq-1.6 behavior.
 
+*9) `"x" | indices("")` always returns an empty array in jackson-jq. The behavior is in line with jq after [2660b04](https://github.com/stedolan/jq/commit/2660b04a731568c54eb4b91fe811d81cbbf3470b) commit, but differs from how jq-1.5 and jq-1.6 behave.
+
 Using jackson-jq-extra module
 -----------------------------
 
@@ -233,7 +235,7 @@ Using jackson-jq-extra module
 <dependency>
 	<groupId>net.thisptr</groupId>
 	<artifactId>jackson-jq-extra</artifactId>
-	<version>1.0.0-preview.20191208</version>
+	<version>1.0.0-preview.20201123</version>
 </dependency>
 ```
 
