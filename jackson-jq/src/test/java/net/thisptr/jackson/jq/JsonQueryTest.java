@@ -63,6 +63,9 @@ public class JsonQueryTest {
 		@JsonProperty("should_compile")
 		public boolean shouldCompile = true;
 
+		@JsonProperty("ignore_true_jq_behavior")
+		public boolean ignoreTrueJqBehavior = false;
+
 		@JsonInclude(Include.NON_NULL)
 		@JsonProperty("v")
 		@JsonDeserialize(using = VersionRangeDeserializer.class)
@@ -156,7 +159,7 @@ public class JsonQueryTest {
 			return;
 		}
 
-		if (hasJqCache.computeIfAbsent(version, v -> TrueJqEvaluator.hasJq(v))) {
+		if (!tc.ignoreTrueJqBehavior && hasJqCache.computeIfAbsent(version, v -> TrueJqEvaluator.hasJq(v))) {
 			final Result result = cachedJqEvaluator.evaluate(tc.q, tc.in, version, 2000L);
 			assumeThat(result.error).as("%s", command).isNull();
 			assumeThat(wrap(tc.out)).as("%s", command).isEqualTo(wrap(result.values));
