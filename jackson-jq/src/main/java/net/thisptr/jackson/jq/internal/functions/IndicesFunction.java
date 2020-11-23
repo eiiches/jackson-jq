@@ -47,8 +47,10 @@ public class IndicesFunction implements Function {
 		if (needle.isTextual() && haystack.isTextual()) {
 			final String haystackText = haystack.asText();
 			final String needleText = needle.asText();
-			for (int index = haystackText.indexOf(needleText); index >= 0; index = haystackText.indexOf(needleText, index + 1))
-				result.add(index);
+			if (!needleText.isEmpty()) {
+				for (int index = haystackText.indexOf(needleText); index >= 0; index = haystackText.indexOf(needleText, index + 1))
+					result.add(index);
+			}
 		} else if (needle.isArray() && haystack.isArray()) {
 			if (needle.size() != 0) {
 				for (int i = 0; i < haystack.size(); ++i) {
