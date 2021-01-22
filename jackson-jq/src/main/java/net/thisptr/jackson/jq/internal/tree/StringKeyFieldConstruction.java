@@ -38,7 +38,7 @@ public class StringKeyFieldConstruction implements FieldConstruction {
 		if (value == null) {
 			return key.toString();
 		} else {
-			return key.toString() + ": " + value.toString();
+			return key + ": " + value;
 		}
 	}
 }

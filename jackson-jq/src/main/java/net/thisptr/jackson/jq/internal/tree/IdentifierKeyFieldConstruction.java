@@ -34,7 +34,7 @@ public class IdentifierKeyFieldConstruction implements FieldConstruction {
 		if (value == null) {
 			return key;
 		} else {
-			return key + ": " + value.toString();
+			return key + ": " + value;
 		}
 	}
 }

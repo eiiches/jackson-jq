@@ -29,7 +29,7 @@ public class TrueJqEvaluator implements Evaluator {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
 	public static String executable(final Version version) {
-		return "jq-" + version.toString();
+		return "jq-" + version;
 	}
 
 	public static boolean hasJq(final Version version) {

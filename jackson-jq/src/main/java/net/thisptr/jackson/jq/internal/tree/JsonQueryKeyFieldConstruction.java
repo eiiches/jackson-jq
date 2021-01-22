@@ -27,7 +27,7 @@ public class JsonQueryKeyFieldConstruction implements FieldConstruction {
 
 	@Override
 	public String toString() {
-		final String result = "(" + key.toString() + ")";
+		final String result = "(" + key + ")";
 		return result + ": " + value;
 	}
 }

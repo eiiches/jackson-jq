@@ -28,6 +28,6 @@ public class NegativeExpression implements Expression {
 
 	@Override
 	public String toString() {
-		return "-(" + value.toString() + ")";
+		return "-(" + value + ")";
 	}
 }
