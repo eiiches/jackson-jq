@@ -17,7 +17,6 @@ public class RootPath implements Path {
 
 	@Override
 	public void toJsonNode(final ArrayNode out) throws JsonQueryException {
-		return;
 	}
 
 	@Override
