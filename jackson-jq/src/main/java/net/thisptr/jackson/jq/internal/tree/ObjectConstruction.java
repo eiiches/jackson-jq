@@ -18,8 +18,6 @@ import net.thisptr.jackson.jq.path.Path;
 public class ObjectConstruction implements Expression {
 	private final List<FieldConstruction> fields = new ArrayList<>();
 
-	public ObjectConstruction() {}
-
 	public void add(final FieldConstruction field) {
 		fields.add(field);
 	}
