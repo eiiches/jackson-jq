@@ -998,5 +998,33 @@
 		"out": [
 			"Invalid path expression near attempt to iterate through [{\"a\":1}]"
 		]
+	},
+	{
+		"q": ". as {\"a\":$a, \"b\":$b, \"c\":$c} | [$a,$b,$c]",
+		"in": {"a":1, "b": 2,"c": 3},
+		"out": [
+			[1,2,3]
+		]
+	},
+	{
+		"q": ". as {\"outer\":{\"x\": $x}, \"x\": $y} | [$x, $y]",
+		"in": {"outer":{"x": 1}, "x": 2},
+		"out": [
+			[1,2]
+		]
+	},
+	{
+		"q": ". as {\"outer\":{\"x\": $x}, \"x\": $x} | $x",
+		"in": {"outer":{"x": 1}, "x": 2},
+		"out": [
+			1
+		]
+	},
+	{
+		"q": ". as {\"x\": $x, \"outer\":{\"x\": $x}} | $x",
+		"in": {"outer":{"x": 1}, "x": 2},
+		"out": [
+			2
+		]
 	}
 ]

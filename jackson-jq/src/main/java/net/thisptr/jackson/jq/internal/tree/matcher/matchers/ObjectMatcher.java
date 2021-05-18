@@ -40,7 +40,8 @@ public class ObjectMatcher implements PatternMatcher {
 			final int size = accumulate.size();
 			matcher.match(scope, value != null ? value : NullNode.getInstance(), out, accumulate, emit && index == matchers.size() - 1);
 			recursive(scope, in, out, accumulate, emit, index + 1);
-			accumulate.setSize(size);
+			if (emit) // value in accumulate needs to remain visible until it is emitted
+				accumulate.setSize(size);
 		});
 	}
 
@@ -62,7 +63,8 @@ public class ObjectMatcher implements PatternMatcher {
 			final int size = accumulate.size();
 			matcher.matchWithPath(scope, value != null ? value : NullNode.getInstance(), valuepath, output, accumulate, emit && index == matchers.size() - 1);
 			recursiveWithPath(scope, in, inpath, output, accumulate, emit, index + 1);
-			accumulate.setSize(size);
+			if (emit) // value in accumulate needs to remain visible until it is emitted
+				accumulate.setSize(size);
 		});
 	}
 
