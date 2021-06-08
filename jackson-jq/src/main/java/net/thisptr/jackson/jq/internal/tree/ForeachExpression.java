@@ -57,7 +57,7 @@ public class ForeachExpression extends JsonQuery {
 							}
 							accumulators[0] = newaccumulator;
 						}
-					}, stack, true);
+					}, stack);
 				}
 			}
 

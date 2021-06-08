@@ -21,9 +21,11 @@ public class ObjectMatcher implements PatternMatcher {
 		this.matchers = matchers;
 	}
 
-	private void recursive(final Scope scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate, final boolean emit, int index) throws JsonQueryException {
-		if (index >= matchers.size())
+	private void recursive(final Scope scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate, int index) throws JsonQueryException {
+		if (index >= matchers.size()) {
+			out.accept(accumulate);
 			return;
+		}
 
 		final Pair<JsonQuery, PatternMatcher> kvexpr = matchers.get(index);
 		final JsonQuery keyexpr = kvexpr._1;
@@ -36,43 +38,20 @@ public class ObjectMatcher implements PatternMatcher {
 			final JsonNode value = in.get(key.asText());
 
 			final int size = accumulate.size();
-			matcher.match(scope, value != null ? value : NullNode.getInstance(), out, accumulate, emit && index == matchers.size() - 1);
-			recursive(scope, in, out, accumulate, emit, index + 1);
+			matcher.match(scope, value != null ? value : NullNode.getInstance(), (match) -> {
+				recursive(scope, in, out, accumulate, index + 1);
+			}, accumulate);
 			accumulate.setSize(size);
 		}
 	}
 
 	@Override
-	public void match(final Scope scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate, final boolean emit) throws JsonQueryException {
+	public void match(final Scope scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException {
 		if (!in.isObject() && !in.isNull())
 			throw JsonQueryTypeException.format("Cannot index %s with string", in.getNodeType());
 
-		recursive(scope, in, out, accumulate, emit, 0);
+		recursive(scope, in, out, accumulate, 0);
 	}
-
-	// . as [$a, {(.a, .a): $b}] === .[0] as $a | (.[1].a, .[1].a) as $b
-
-	// public void match(final Scope scope, final JsonNode in, final boolean emit, final Map<String, JsonNode> accum, final Consumer<Map<String, JsonNode>> out)
-	// throws JsonQueryException {
-	// if (!in.isObject() && !in.isNull())
-	// throw JsonQueryTypeException.format("Cannot index %s with string", in.getNodeType());
-	//
-	// recursive(scope, in, emit, out, 0);
-	// }
-	//
-	// {
-	// for (int i = 0; i < matchers.size(); ++i) {
-	// final PatternMatcher matcher = matchers.get(i);
-	//
-	// for (final JsonNode key : entry.getKey().apply(scope, in)) {
-	// if (!key.isTextual())
-	// throw JsonQueryTypeException.format("Cannot index %s with %s", in.getNodeType(), key.getNodeType());
-	//
-	// final JsonNode value = in.get(key.asText());
-	// matcher.match(value != null ? value : NullNode.getInstance(), out);
-	// }
-	// }
-	// }
 
 	@Override
 	public String toString() {

@@ -50,7 +50,7 @@ public class PipedQuery extends JsonQuery {
 						scope2.setValue(var._1, var._2);
 					}
 					applyRecursive(scope2, in, out, qs.subList(1, qs.size()));
-				}, accumulate, true);
+				}, accumulate);
 			} else {
 				applyRecursive(scope2, o, out, qs.subList(1, qs.size()));
 			}
