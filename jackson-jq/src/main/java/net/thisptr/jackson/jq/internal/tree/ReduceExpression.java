@@ -53,7 +53,7 @@ public class ReduceExpression extends JsonQuery {
 							// We only use the last value from reduce expression.
 							final List<JsonNode> reduceResult = reduceExpr.apply(childScope, accumulators[0]);
 							accumulators[0] = reduceResult.isEmpty() ? NullNode.getInstance() : reduceResult.get(reduceResult.size() - 1);
-						}, stack, true);
+						}, stack);
 					}
 
 				} finally {
