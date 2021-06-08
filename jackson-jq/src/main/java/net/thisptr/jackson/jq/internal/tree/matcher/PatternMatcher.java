@@ -12,8 +12,7 @@ import net.thisptr.jackson.jq.internal.misc.Pair;
 import net.thisptr.jackson.jq.path.Path;
 
 public interface PatternMatcher {
-
-	void match(final Scope scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate, final boolean emit) throws JsonQueryException;
+	void match(final Scope scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException;
 
 	public static class MatchWithPath {
 		public final String name;
@@ -31,5 +30,5 @@ public interface PatternMatcher {
 		void emit(List<MatchWithPath> vars) throws JsonQueryException;
 	}
 
-	void matchWithPath(Scope scope, JsonNode in, Path path, MatchOutput output, Stack<MatchWithPath> accumulate, boolean emit) throws JsonQueryException;
+	void matchWithPath(Scope scope, JsonNode in, Path path, MatchOutput output, Stack<MatchWithPath> accumulate) throws JsonQueryException;
 }
