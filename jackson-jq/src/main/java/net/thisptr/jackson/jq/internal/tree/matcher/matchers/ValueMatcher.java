@@ -19,10 +19,9 @@ public class ValueMatcher implements PatternMatcher {
 	}
 
 	@Override
-	public void match(final Scope scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate, final boolean emit) throws JsonQueryException {
+	public void match(final Scope scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException {
 		accumulate.push(Pair.of(name, in));
-		if (emit)
-			out.accept(accumulate);
+		out.accept(accumulate);
 	}
 
 	@Override

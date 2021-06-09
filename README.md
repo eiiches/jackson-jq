@@ -3,7 +3,7 @@ jackson-jq
 
 [jq](http://stedolan.github.io/jq/) for Jackson JSON Processor
 
-[![CircleCI](https://circleci.com/gh/eiiches/jackson-jq/tree/develop.svg?style=shield)](https://circleci.com/gh/eiiches/jackson-jq/tree/develop)
+[![GitHub Actions](https://github.com/eiiches/jackson-jq/workflows/test/badge.svg?branch=develop%2F0.x)](https://github.com/eiiches/jackson-jq/actions)
 
 Installation
 ------------
@@ -15,7 +15,7 @@ Just add jackson-jq in your pom.xml.
 	<dependency>
 		<groupId>net.thisptr</groupId>
 		<artifactId>jackson-jq</artifactId>
-		<version>0.0.12</version>
+		<version>0.0.13</version>
 	</dependency>
 </dependencies>
 ```
@@ -211,7 +211,7 @@ Using jackson-jq-extra module
     <dependency>
         <groupId>net.thisptr</groupId>
         <artifactId>jackson-jq-extra</artifactId>
-        <version>0.0.12</version>
+        <version>0.0.13</version>
     </dependency>
 </dependencies>
 ```
