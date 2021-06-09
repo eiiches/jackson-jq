@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>net.thisptr</groupId>
 		<artifactId>jackson-jq-parent</artifactId>
-		<version>1.0.0-preview.20201123</version>
+		<version>1.0.0-preview.20210610</version>
 	</parent>
 
 	<dependencies>
@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>28.1-jre</version>
+			<version>30.1.1-jre</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

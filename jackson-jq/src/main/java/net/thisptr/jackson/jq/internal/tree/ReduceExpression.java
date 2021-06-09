@@ -49,7 +49,7 @@ public class ReduceExpression implements Expression {
 					final List<JsonNode> reduceResult = new ArrayList<>();
 					reduceExpr.apply(childScope, accumulators[0], reduceResult::add);
 					accumulators[0] = reduceResult.isEmpty() ? NullNode.getInstance() : reduceResult.get(reduceResult.size() - 1);
-				}, stack, true);
+				}, stack);
 			});
 
 			output.emit(accumulators[0], null);

@@ -46,7 +46,7 @@ public class PipedQuery implements Expression {
 						childScope.setValueWithPath(var.name, var.value, var.path);
 					}
 					pathRecursive(childScope, in, path, output, tail, requirePath);
-				}, accumulate, true);
+				}, accumulate);
 			});
 		} else if (head instanceof TransformPipeComponent) {
 			((TransformPipeComponent) head).expr.apply(scope, in, path, (pobj, ppath) -> {

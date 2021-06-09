@@ -55,7 +55,7 @@ public class ForeachExpression implements Expression {
 						accumulators[0] = newaccumulator;
 						accumulatorPaths[0] = newaccumulatorPath;
 					}, extractExpr != null ? false : requirePath);
-				}, stack, true);
+				}, stack);
 			}, requirePath);
 		}, false);
 	}
