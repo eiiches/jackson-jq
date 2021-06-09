@@ -22,26 +22,47 @@ public class ArrayMatcher implements PatternMatcher {
 		this.matchers = matchers;
 	}
 
-	@Override
-	public void match(final Scope scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate, final boolean emit) throws JsonQueryException {
-		if (!in.isArray() && !in.isNull())
-			throw new JsonQueryTypeException("Cannot index %s with number", in.getNodeType());
-		for (int i = 0; i < matchers.size(); ++i) {
-			final PatternMatcher matcher = matchers.get(i);
-			final JsonNode item = in.get(i);
-			matcher.match(scope, item != null ? item : NullNode.getInstance(), out, accumulate, emit && i == matchers.size() - 1);
+	private void recursive(final Scope scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate, int index) throws JsonQueryException {
+		if (index >= matchers.size()) {
+			out.accept(accumulate);
+			return;
 		}
+
+		final PatternMatcher matcher = matchers.get(index);
+		final JsonNode value = in.get(index);
+
+		matcher.match(scope, value != null ? value : NullNode.getInstance(), (match) -> {
+			recursive(scope, in, out, accumulate, index + 1);
+		}, accumulate);
 	}
 
 	@Override
-	public void matchWithPath(final Scope scope, final JsonNode in, final Path path, final MatchOutput output, final Stack<MatchWithPath> accumulate, final boolean emit) throws JsonQueryException {
+	public void match(final Scope scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException {
 		if (!in.isArray() && !in.isNull())
 			throw new JsonQueryTypeException("Cannot index %s with number", in.getNodeType());
-		for (int i = 0; i < matchers.size(); ++i) {
-			final PatternMatcher matcher = matchers.get(i);
-			final JsonNode item = in.get(i);
-			matcher.matchWithPath(scope, item != null ? item : NullNode.getInstance(), ArrayIndexPath.chainIfNotNull(path, i), output, accumulate, emit && i == matchers.size() - 1);
+		recursive(scope, in, out, accumulate, 0);
+	}
+
+	private void recursiveWithPath(final Scope scope, final JsonNode in, final Path path, final MatchOutput out, final Stack<MatchWithPath> accumulate, int index) throws JsonQueryException {
+		if (index >= matchers.size()) {
+			out.emit(accumulate);
+			return;
 		}
+
+		final PatternMatcher matcher = matchers.get(index);
+		final JsonNode value = in.get(index);
+		final ArrayIndexPath valuePath = ArrayIndexPath.chainIfNotNull(path, index);
+
+		matcher.matchWithPath(scope, value != null ? value : NullNode.getInstance(), valuePath, (match) -> {
+			recursiveWithPath(scope, in, path, out, accumulate, index + 1);
+		}, accumulate);
+	}
+
+	@Override
+	public void matchWithPath(final Scope scope, final JsonNode in, final Path path, final MatchOutput out, final Stack<MatchWithPath> accumulate) throws JsonQueryException {
+		if (!in.isArray() && !in.isNull())
+			throw new JsonQueryTypeException("Cannot index %s with number", in.getNodeType());
+		recursiveWithPath(scope, in, path, out, accumulate, 0);
 	}
 
 	@Override
