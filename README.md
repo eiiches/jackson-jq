@@ -94,7 +94,7 @@ This table illustrates which features (picked from jq-1.5 manual) are supported 
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`ǀ`](https://stedolan.github.io/jq/manual/v1.5/#&#124;)                                                                                                                                                                                                                                            | ○          |
 | [Types and Values](https://stedolan.github.io/jq/manual/v1.5/#TypesandValues)                                                                                                                                                                                                                                                      | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Array construction &#45; `[]`](https://stedolan.github.io/jq/manual/v1.5/#Arrayconstruction&#45;&#91;&#93;)                                                                                                                                                                                        | ○          |
-| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Objects &#45; `{}`](https://stedolan.github.io/jq/manual/v1.5/#Objects&#45;&#123;&#125;)                                                                                                                                                                                                           | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Objects &#45; `{}`](https://stedolan.github.io/jq/manual/v1.5/#Objects&#45;&#123;&#125;)                                                                                                                                                                                                           | ○<sup>*4</sup> |
 | [Builtin operators and functions](https://stedolan.github.io/jq/manual/v1.5/#Builtinoperatorsandfunctions)                                                                                                                                                                                                                         | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Addition &#45; `+`](https://stedolan.github.io/jq/manual/v1.5/#Addition&#45;&#43;)                                                                                                                                                                                                                 | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Subtraction &#45; `-`](https://stedolan.github.io/jq/manual/v1.5/#Subtraction&#45;&#45;)                                                                                                                                                                                                           | ○          |
@@ -213,6 +213,8 @@ This table illustrates which features (picked from jq-1.5 manual) are supported 
 
 *3) When the function with the same name is defined more than once in the same-level scope, jackson-jq uses the last one. E.g.
  - `def f: 1; def g: f; def f: 2; g` evaluates to 2 in jackson-jq, while jq evaluates it to 1.
+
+*4) The order of the keys in JSON is not preserved. It was a design decision but we are slowly trying to fix this in order to improve the compatibility with jq.
 
 *5) While `jq-1.5 '0 / .' <<< 0` throws a zero-division error as one might expect, jq-1.5 silently evaluates a compile-time constant `0 / 0` division as `null`.
  - jackson-jq just throws an error whenever divisor is zero.
