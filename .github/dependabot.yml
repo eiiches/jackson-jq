@@ -4,3 +4,19 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+  - package-ecosystem: "maven"
+    directory: "/jackson-jq/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "maven"
+    directory: "/jackson-jq-cli/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "maven"
+    directory: "/jackson-jq-extra/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
