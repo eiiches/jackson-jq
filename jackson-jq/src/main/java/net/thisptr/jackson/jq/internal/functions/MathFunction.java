@@ -79,4 +79,67 @@ public abstract class MathFunction implements Function {
 			return Math.log10(v) / Math.log10(2);
 		}
 	}
+
+	@AutoService(Function.class)
+	@BuiltinFunction("log/0")
+	public static class LogFunction extends MathFunction {
+		@Override
+		protected double f(final double v) {
+			return Math.log(v);
+		}
+	}
+
+	@AutoService(Function.class)
+	@BuiltinFunction("log10/0")
+	public static class Log10Function extends MathFunction {
+		@Override
+		protected double f(final double v) {
+			return Math.log10(v);
+		}
+	}
+
+	@AutoService(Function.class)
+	@BuiltinFunction(value = "log1p/0", version = "[1.6, )")
+	public static class Log1pFunction extends MathFunction {
+		@Override
+		protected double f(final double v) {
+			return Math.log1p(v);
+		}
+	}
+
+	@AutoService(Function.class)
+	@BuiltinFunction("exp/0")
+	public static class ExpFunction extends MathFunction {
+		@Override
+		protected double f(final double v) {
+			return Math.exp(v);
+		}
+	}
+
+	@AutoService(Function.class)
+	@BuiltinFunction(value = "expm1/0", version = "[1.6, )")
+	public static class Expm1Function extends MathFunction {
+		@Override
+		protected double f(final double v) {
+			return Math.expm1(v);
+		}
+	}
+
+	@AutoService(Function.class)
+	@BuiltinFunction("exp2/0")
+	public static class Exp2Function extends MathFunction {
+		@Override
+		protected double f(final double v) {
+			return Math.pow(2, v);
+		}
+	}
+
+	@AutoService(Function.class)
+	@BuiltinFunction(value = "exp10/0", version = "[1.6, )")
+	public static class Exp10Function extends MathFunction {
+		@Override
+		protected double f(final double v) {
+			return Math.pow(10, v);
+		}
+	}
 }
