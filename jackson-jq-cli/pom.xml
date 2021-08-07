@@ -15,7 +15,7 @@
 		<dependency>
 			<groupId>net.thisptr</groupId>
 			<artifactId>jackson-jq-extra</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>1.0.0-preview.20210610</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>
