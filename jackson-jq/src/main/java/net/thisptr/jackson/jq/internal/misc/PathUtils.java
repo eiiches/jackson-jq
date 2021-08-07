@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.path.ArrayIndexOfPath;
 import net.thisptr.jackson.jq.path.ArrayIndexPath;
 import net.thisptr.jackson.jq.path.ArrayRangeIndexPath;
 import net.thisptr.jackson.jq.path.InvalidPath;
@@ -35,6 +36,8 @@ public class PathUtils {
 				path = new ArrayIndexPath(path, segObj);
 			} else if (segObj.isTextual()) {
 				path = new ObjectFieldPath(path, segObj.asText());
+			} else if (segObj.isArray()) {
+				path = new ArrayIndexOfPath(path, segObj);
 			} else {
 				path = new InvalidPath(path, segObj);
 			}

@@ -43,3 +43,23 @@
 - q: '.[]."\("a","b")"'
   in: [{"a": 1, "b": 3}, {"a": 2, "b": 4}]
   out: [1, 2, 3, 4]
+
+- q: '.[["a","b"]]'
+  in: ["a", "b", "a", "a", "b"]
+  out:
+  - [0, 3]
+
+- q: 'path(.[["a","b"]])'
+  in: ["a", "b", "a", "a", "b"]
+  out:
+  - [["a", "b"]]
+
+- q: 'getpath([["a","b"]])'
+  in: ["a", "b", "a", "a", "b"]
+  out:
+  - [0, 3]
+
+- q: 'try(.[["a","b"]] |= "c") catch .'
+  in: ["a", "b", "a", "a", "b"]
+  out:
+  - "Cannot update field at array index of array"
