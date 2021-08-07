@@ -47,6 +47,55 @@ public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
 		return value;
 	}
 
+	protected int compareNumberNode(final JsonNode o1, final JsonNode o2) {
+		final double a = o1.asDouble();
+		final double b = o2.asDouble();
+		if (Double.isNaN(a))
+			return -1;
+		if (Double.isNaN(b))
+			return 1;
+		return Double.compare(a, b);
+	}
+
+	protected int compareArrayNode(final JsonNode o1, final JsonNode o2) {
+		final int s1 = o1.size();
+		final int s2 = o2.size();
+		final int s = Math.min(s1, s2);
+		for (int i = 0; i < s; ++i) {
+			final int rr = compare(o1.get(i), o2.get(i));
+			if (rr != 0)
+				return rr;
+		}
+		return Integer.compare(s1, s2);
+	}
+
+	protected int compareObjectNode(final JsonNode o1, final JsonNode o2) {
+		final List<String> names1 = Lists.newArrayList(o1.fieldNames());
+		final List<String> names2 = Lists.newArrayList(o2.fieldNames());
+
+		// compare by keys
+		Collections.sort(names1);
+		Collections.sort(names2);
+		final int s = Math.min(names1.size(), names2.size());
+		for (int i = 0; i < s; ++i) {
+			final int rr = names1.get(i).compareTo(names2.get(i));
+			if (rr != 0)
+				return rr;
+		}
+		final int rr = Integer.compare(names1.size(), names2.size());
+		if (rr != 0)
+			return rr;
+
+		// compare by values (keys are sorted alphabetically)
+		for (final String name : names1) {
+			final int rrr = compare(o1.get(name), o2.get(name));
+			if (rrr != 0)
+				return rrr;
+		}
+
+		return 0;
+	}
+
 	// null
 	// false
 	// true
@@ -67,55 +116,18 @@ public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
 			return Boolean.compare(o1.asBoolean(), o2.asBoolean());
 
 		if (type == JsonNodeType.NUMBER) {
-			final double a = o1.asDouble();
-			final double b = o2.asDouble();
-			if (Double.isNaN(a))
-				return -1;
-			if (Double.isNaN(b))
-				return 1;
-			return Double.compare(a, b);
+			return compareNumberNode(o1, o2);
 		}
 
 		if (type == JsonNodeType.STRING || type == JsonNodeType.BINARY)
 			return o1.asText().compareTo(o2.asText());
 
 		if (type == JsonNodeType.ARRAY) {
-			final int s1 = o1.size();
-			final int s2 = o2.size();
-			final int s = Math.min(s1, s2);
-			for (int i = 0; i < s; ++i) {
-				final int rr = compare(o1.get(i), o2.get(i));
-				if (rr != 0)
-					return rr;
-			}
-			return Integer.compare(s1, s2);
+			return compareArrayNode(o1, o2);
 		}
 
 		if (type == JsonNodeType.OBJECT) {
-			final List<String> names1 = Lists.newArrayList(o1.fieldNames());
-			final List<String> names2 = Lists.newArrayList(o2.fieldNames());
-
-			// compare by keys
-			Collections.sort(names1);
-			Collections.sort(names2);
-			final int s = Math.min(names1.size(), names2.size());
-			for (int i = 0; i < s; ++i) {
-				final int rr = names1.get(i).compareTo(names2.get(i));
-				if (rr != 0)
-					return rr;
-			}
-			final int rr = Integer.compare(names1.size(), names2.size());
-			if (rr != 0)
-				return rr;
-
-			// compare by values (keys are sorted alphabetically)
-			for (final String name : names1) {
-				final int rrr = compare(o1.get(name), o2.get(name));
-				if (rrr != 0)
-					return rrr;
-			}
-
-			return 0;
+			return compareObjectNode(o1, o2);
 		}
 
 		throw new IllegalArgumentException("Unknown JsonNodeType: " + type);
