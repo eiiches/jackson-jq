@@ -70,6 +70,9 @@ public class JsonQueryTest {
 		@JsonProperty("numerical_errors")
 		public double numericalErrors = 0;
 
+		@JsonProperty("ignore_field_order")
+		public boolean ignoreFieldOrder = false;
+
 		@JsonInclude(Include.NON_NULL)
 		@JsonProperty("v")
 		@JsonDeserialize(using = VersionRangeDeserializer.class)
@@ -159,7 +162,7 @@ public class JsonQueryTest {
 			return;
 		}
 
-		final Comparator<JsonNode> comparator = new JsonNodeComparatorForTests(false, tc.numericalErrors);
+		final Comparator<JsonNode> comparator = new JsonNodeComparatorForTests(!tc.ignoreFieldOrder, tc.numericalErrors);
 
 		if (!tc.ignoreTrueJqBehavior && hasJqCache.computeIfAbsent(version, v -> TrueJqEvaluator.hasJq(v))) {
 			final Result result = cachedJqEvaluator.evaluate(tc.q, tc.in, version, 2000L);
