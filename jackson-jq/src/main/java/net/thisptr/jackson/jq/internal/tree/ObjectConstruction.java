@@ -1,7 +1,7 @@
 package net.thisptr.jackson.jq.internal.tree;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -26,7 +26,7 @@ public class ObjectConstruction implements Expression {
 
 	@Override
 	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
-		final Map<String, JsonNode> tmp = new HashMap<>();
+		final Map<String, JsonNode> tmp = new LinkedHashMap<>(fields.size());
 		applyRecursive(scope, in, output, fields, tmp);
 	}
 
