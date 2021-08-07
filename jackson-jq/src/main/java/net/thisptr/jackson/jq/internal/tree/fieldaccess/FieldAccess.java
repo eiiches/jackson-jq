@@ -14,6 +14,7 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.misc.Strings;
+import net.thisptr.jackson.jq.path.ArrayIndexOfPath;
 import net.thisptr.jackson.jq.path.ArrayIndexPath;
 import net.thisptr.jackson.jq.path.ArrayRangeIndexPath;
 import net.thisptr.jackson.jq.path.ObjectFieldPath;
@@ -60,6 +61,13 @@ public abstract class FieldAccess implements Expression {
 		if (requirePath && ppath == null)
 			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(index), JsonNodeUtils.toString(pobj));
 		ArrayIndexPath.resolve(pobj, ppath, output, index, permissive);
+	}
+
+	protected static void emitArrayIndexOfPath(boolean permissive, final JsonNode subseqToLookFor, final JsonNode pobj, final Path ppath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
+		assert subseqToLookFor.isArray();
+		if (requirePath && ppath == null)
+			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(subseqToLookFor), JsonNodeUtils.toString(pobj));
+		ArrayIndexOfPath.resolve(pobj, ppath, output, subseqToLookFor, permissive);
 	}
 
 	private static final ObjectMapper MAPPER = new ObjectMapper(); // FIXME

@@ -59,6 +59,8 @@ public class BracketFieldAccess extends FieldAccess {
 						emitArrayIndexPath(permissive, accessor, pobj, ppath, output, requirePath);
 					} else if (accessor.isTextual()) {
 						emitObjectFieldPath(permissive, accessor.asText(), pobj, ppath, output, requirePath);
+					} else if (accessor.isArray()) {
+						emitArrayIndexOfPath(permissive, accessor, pobj, ppath, output, requirePath);
 					} else {
 						if (!permissive)
 							throw new JsonQueryTypeException("Cannot index %s with %s", pobj.getNodeType(), accessor.getNodeType());
