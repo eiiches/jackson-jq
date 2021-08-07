@@ -12,7 +12,8 @@ jobs:
     - name: Set up JDK 1.8
       uses: actions/setup-java@v2.1.0
       with:
-        java-version: 1.8
+        java-version: '8'
+        distribution: 'zulu'
 
     - name: Download jq-1.5 and jq-1.6
       run: |
