@@ -33,7 +33,6 @@ import com.google.common.reflect.ClassPath;
 import com.google.common.reflect.ClassPath.ResourceInfo;
 
 import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.internal.misc.VersionRangeDeserializer;
 import net.thisptr.jackson.jq.test.evaluator.CachedEvaluator;
 import net.thisptr.jackson.jq.test.evaluator.Evaluator;
@@ -204,7 +203,7 @@ public class JsonQueryTest {
 		}
 
 		if (tc.failing)
-			assertThat(failed).describedAs("unexpectedly succeeded").isTrue();
+			assertThat(failed).describedAs("The test case is marked as failing but completed successfully").isTrue();
 	}
 
 	@ParameterizedTest

@@ -24,4 +24,8 @@ public abstract class ValueLiteral implements Expression {
 	public String toString() {
 		return value.toString();
 	}
+
+	public JsonNode value() {
+		return value;
+	}
 }

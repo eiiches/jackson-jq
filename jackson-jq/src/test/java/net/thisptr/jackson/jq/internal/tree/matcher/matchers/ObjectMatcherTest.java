@@ -24,9 +24,9 @@ public class ObjectMatcherTest {
 	void test1() throws Exception {
 		final JsonNode in = new ObjectMapper().readTree("{\"outer\":{\"a\": 1, \"b\": 2}, \"c\": 3}");
 		final ObjectMatcher matcher = new ObjectMatcher(Arrays.asList(
-				Pair.of(ExpressionParser.compile("\"outer\"", Versions.JQ_1_6), new ObjectMatcher(Arrays.asList(
-						Pair.of(ExpressionParser.compile("(\"a\",\"b\")", Versions.JQ_1_6), new ValueMatcher("x"))))),
-				Pair.of(ExpressionParser.compile("\"c\"", Versions.JQ_1_6), new ValueMatcher("y"))));
+				new ObjectMatcher.FieldMatcher(false, ExpressionParser.compile("\"outer\"", Versions.JQ_1_6), new ObjectMatcher(Arrays.asList(
+						new ObjectMatcher.FieldMatcher(false, ExpressionParser.compile("(\"a\",\"b\")", Versions.JQ_1_6), new ValueMatcher("x"))))),
+				new ObjectMatcher.FieldMatcher(false, ExpressionParser.compile("\"c\"", Versions.JQ_1_6), new ValueMatcher("y"))));
 
 		final List<List<Pair<String, JsonNode>>> matches = new ArrayList<>();
 
@@ -44,9 +44,9 @@ public class ObjectMatcherTest {
 	void test2() throws Exception {
 		final JsonNode in = new ObjectMapper().readTree("{\"outer\":{\"a\": 1}, \"b\": 2, \"c\": 3}");
 		final ObjectMatcher matcher = new ObjectMatcher(Arrays.asList(
-				Pair.of(ExpressionParser.compile("\"outer\"", Versions.JQ_1_6), new ObjectMatcher(Arrays.asList(
-						Pair.of(ExpressionParser.compile("\"a\"", Versions.JQ_1_6), new ValueMatcher("x"))))),
-				Pair.of(ExpressionParser.compile("(\"b\",\"c\")", Versions.JQ_1_6), new ValueMatcher("y"))));
+				new ObjectMatcher.FieldMatcher(false, ExpressionParser.compile("\"outer\"", Versions.JQ_1_6), new ObjectMatcher(Arrays.asList(
+						new ObjectMatcher.FieldMatcher(false, ExpressionParser.compile("\"a\"", Versions.JQ_1_6), new ValueMatcher("x"))))),
+				new ObjectMatcher.FieldMatcher(false, ExpressionParser.compile("(\"b\",\"c\")", Versions.JQ_1_6), new ValueMatcher("y"))));
 
 		final List<List<Pair<String, JsonNode>>> matches = new ArrayList<>();
 
