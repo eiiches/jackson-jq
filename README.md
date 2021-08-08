@@ -1,7 +1,7 @@
 jackson-jq
 ==========
 
-[jq](http://stedolan.github.io/jq/) for Jackson JSON Processor
+Pure Java [jq](http://stedolan.github.io/jq/) Implementation for Jackson JSON Processor
 
 [![GitHub Actions](https://github.com/eiiches/jackson-jq/workflows/test/badge.svg)](https://github.com/eiiches/jackson-jq/actions)
 
@@ -28,6 +28,8 @@ Using a jackson-jq command line tool
 ------------------------------------
 
 To test a query quickly, we provide jackson-jq CLI.
+
+*Please note that jackson-jq is a Java library and the CLI is provided solely for debugging/testing purpose (and not for production). The command-line options might change without notice.*
 
 ```sh
 $ curl -LO https://repo1.maven.org/maven2/net/thisptr/jackson-jq-cli/1.0.0-preview.20210610/jackson-jq-cli-1.0.0-preview.20210610.jar
