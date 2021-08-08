@@ -233,9 +233,9 @@ This table illustrates which features (picked from jq-1.5 manual) are supported 
 *11) Operator precedences around `... as $foo | ...` differ between jq and jackson-jq. Use explicit parentheses to avoid the issue. See [jackson-jq#72](https://github.com/eiiches/jackson-jq/issues/72).
 
 ```console
-$ jq -n '1 + 3 as $a | ($a * 2) # interpreted as 1 + (3 as $a | ($a * 2))
+$ jq -n '1 + 3 as $a | ($a * 2)' # interpreted as 1 + (3 as $a | ($a * 2))
 7
-$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar -n '1 + 3 as $a | ($a * 2) # interpreted as (1 + 3) as $a | ($a * 2)
+$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
 8
 ```
 
