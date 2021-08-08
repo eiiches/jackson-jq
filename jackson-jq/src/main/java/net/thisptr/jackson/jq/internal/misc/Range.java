@@ -29,12 +29,12 @@ public class Range {
 				: size;
 		if (start >= size)
 			return new Range(size, size);
-		if (start > end || end <= 0)
-			return new Range(0L, 0L);
 		if (start < 0)
 			start = 0;
 		if (end > size)
 			end = size;
+		if (start > end)
+			return new Range((long) start, (long) start);
 		return new Range((long) start, (long) Math.ceil(end));
 	}
 }
