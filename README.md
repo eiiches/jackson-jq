@@ -173,7 +173,7 @@ This table illustrates which features (picked from jq-1.5 manual) are supported 
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`sub(regex; tostring)` `sub(regex; string; flags)`](https://stedolan.github.io/jq/manual/v1.5/#sub&#40;regex&#59;tostring&#41;sub&#40;regex&#59;string&#59;flags&#41;)                                                                                                                             | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`gsub(regex; string)`, `gsub(regex; string; flags)`](https://stedolan.github.io/jq/manual/v1.5/#gsub&#40;regex&#59;string&#41;&#44;gsub&#40;regex&#59;string&#59;flags&#41;)                                                                                                                       | ○          |
 | [Advanced features](https://stedolan.github.io/jq/manual/v1.5/#Advancedfeatures)                                                                                                                                                                                                                                                   | ○          |
-| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Variables](https://stedolan.github.io/jq/manual/v1.5/#Variables)                                                                                                                                                                                                                                   | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Variables](https://stedolan.github.io/jq/manual/v1.5/#Variables)                                                                                                                                                                                                                                   | ○<sup>*11</sup> |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Destructuring Alternative Operator: ?//](https://stedolan.github.io/jq/manual/v1.6/#DestructuringAlternativeOperator:?//)                                                                                                                                                                          | ✕ (#44)    |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Defining Functions](https://stedolan.github.io/jq/manual/v1.5/#DefiningFunctions)                                                                                                                                                                                                                  | ○<sup>*3</sup> |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Reduce](https://stedolan.github.io/jq/manual/v1.5/#Reduce)                                                                                                                                                                                                                                         | ○          |
@@ -229,6 +229,15 @@ This table illustrates which features (picked from jq-1.5 manual) are supported 
 *9) `"x" | indices("")` always returns an empty array in jackson-jq. The behavior is in line with jq after [2660b04](https://github.com/stedolan/jq/commit/2660b04a731568c54eb4b91fe811d81cbbf3470b) commit, but differs from how jq-1.5 and jq-1.6 behave.
 
 *10) Not all math functions are available.
+
+*11) Operator precedences around `... as $foo | ...` differ between jq and jackson-jq. Use explicit parentheses to avoid the issue. See [jackson-jq#72](https://github.com/eiiches/jackson-jq/issues/72).
+
+```console
+$ jq -n '1 + 3 as $a | ($a * 2) # interpreted as 1 + (3 as $a | ($a * 2))
+7
+$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar -n '1 + 3 as $a | ($a * 2) # interpreted as (1 + 3) as $a | ($a * 2)
+8
+```
 
 Using jackson-jq-extra module
 -----------------------------
