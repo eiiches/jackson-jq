@@ -75,14 +75,19 @@ We use [Semantic Versioning 2.0.0](https://semver.org/) for Java API versioning,
 
 If you get different results between ./jq and jackson-jq, please [file an issue](https://github.com/eiiches/jackson-jq/issues). That is a bug on jackson-jq side.
 
-Implementation status and current limitations
----------------------------------------------
+Implementation Status
+---------------------
 
-jackson-jq aims to be a compatible jq implementation. However, not all the features are available; some features are not relevant as being a java library and some features are just yet to be implemented.
+jackson-jq aims to be a compatible jq implementation. However, not every feature is available; some are intentionally omitted because thay are not relevant as a Java library; some may be incomplete, have bugs or are yet to be implemented.
+
+### List of Features
+
+<details>
+<summary>Click to see the list</summary>
+<br />
 
 This table illustrates which features (picked from jq-1.5 manual) are supported and which are not in jackson-jq. We try to keep this list accurate and up to date. If you find something is missing or wrong, please file an issue.
-
-
+  
 | Language Features / Functions                                                                                                                                                                                                                                                                                                      | jackson-jq |
 |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|
 | [Basic filters](https://stedolan.github.io/jq/manual/v1.5/#Basicfilters)                                                                                                                                                                                                                                                           | ○          |
@@ -185,7 +190,7 @@ This table illustrates which features (picked from jq-1.5 manual) are supported 
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`foreach`](https://stedolan.github.io/jq/manual/v1.5/#foreach)                                                                                                                                                                                                                                     | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Recursion](https://stedolan.github.io/jq/manual/v1.5/#Recursion)                                                                                                                                                                                                                                   | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Generators and iterators](https://stedolan.github.io/jq/manual/v1.5/#Generatorsanditerators)                                                                                                                                                                                                       | ○          |
-| [Math](https://stedolan.github.io/jq/manual/v1.5/#Math)                                                                                                                                                                                                                                                                            | ○<sup>*10</sup> |
+| [Math](https://stedolan.github.io/jq/manual/v1.5/#Math)                                                                                                                                                                                                                                                                            | △          |
 | [I&#47;O](https://stedolan.github.io/jq/manual/v1.5/#I&#47;O)                                                                                                                                                                                                                                                                      | N/A        |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`input`](https://stedolan.github.io/jq/manual/v1.5/#input)                                                                                                                                                                                                                                         | N/A        |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`inputs`](https://stedolan.github.io/jq/manual/v1.5/#inputs)                                                                                                                                                                                                                                       | N/A        |
@@ -208,31 +213,36 @@ This table illustrates which features (picked from jq-1.5 manual) are supported 
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`module <metadata>;`](https://stedolan.github.io/jq/manual/v1.5/#module&#60;metadata&#62;&#59;)                                                                                                                                                                                                    | ×          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`modulemeta`](https://stedolan.github.io/jq/manual/v1.5/#modulemeta)                                                                                                                                                                                                                               | ×          |
 
-*1) Error messages differ between jq and jackson-jq and they also tend to change between versions.
+</details>
 
-*2) Catching a break (`try (break $out) catch .`) always produces a `{__jq: 0}` in jackson-jq, while jq produces `{__jq: n}` where n is the index of the label the `break` statement tries to jump to. E.g.
- - `label $a | label $b | try (break $b) catch .` evaluates to `{"__jq":0}` not `{"__jq":1}`.
+### Known Compatibility Issues / Differences
 
-*3) When the function with the same name is defined more than once in the same-level scope, jackson-jq uses the last one. E.g.
- - `def f: 1; def g: f; def f: 2; g` evaluates to 2 in jackson-jq, while jq evaluates it to 1.
+#### Category: BUG
 
-*4) The order of the keys in JSON is not preserved. It was a design decision but we are slowly trying to fix this in order to improve the compatibility with jq.
+<details>
+<summary>(*11) Operator Precedences in <code>1 + 3 as $a | ($a * 2)</code></summary>
+  
+##### Description
 
-*5) While `jq-1.5 '0 / .' <<< 0` throws a zero-division error as one might expect, jq-1.5 silently evaluates a compile-time constant `0 / 0` division as `null`.
- - jackson-jq just throws an error whenever divisor is zero.
+The presence of `as $a` affects precedence of `|` and other operators in jq:
 
-*6) `env/0` function is not available by default and must be added manually to the scope.
- - `SCOPE.addFunction("env", 0, new EnvFunction())`
+```console
+$ jq -n '1 + 3 | (. * 2)' # interpreted as (1 + 3) | (. * 2)
+8
+$ jq -n '1 + 3 as $a | ($a * 2)' # interpreted as 1 + (3 as $a | ($a * 2))
+7
+```
 
-*7) `path(.foo as $a | $a)` always throws an error as $variables in jackson-jq does not carry path information like jq-1.5 accidentally? did. The behavior is fixed in jq-1.6 whose [documentation](https://stedolan.github.io/jq/manual/v1.6/#Assignment) explicitly states them as "not a valid or useful path expression". So, I dicided not to implement it even in jq-1.5 compatible mode.
+whereas jackson-jq consistently interprets them as `(1 + 3)` whether `as $a` is used or not:
 
-*8) `.foo |= empty` always throws an error in jackson-jq instead of producing an unexpected result. jq-1.5 and jq-1.6 respectively produces a different and incorrect result for `[1,2,3] | ((.[] | select(. > 1)) |= empty)`. [jq#897](https://github.com/stedolan/jq/issues/897) says "empty in the RHS is undefined". You can still use `_modify/2` directly if you really want to emulate the exact jq-1.5 or jq-1.6 behavior.
+```console
+$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar -n '1 + 3 | (. * 2)' # interpreted as (1 + 3) | (. * 2)
+8
+$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
+8
+```
 
-*9) `"x" | indices("")` always returns an empty array in jackson-jq. The behavior is in line with jq after [2660b04](https://github.com/stedolan/jq/commit/2660b04a731568c54eb4b91fe811d81cbbf3470b) commit, but differs from how jq-1.5 and jq-1.6 behave.
-
-*10) Not all math functions are available.
-
-*11) Operator precedences around `... as $foo | ...` differ between jq and jackson-jq. Use explicit parentheses to avoid the issue. See [jackson-jq#72](https://github.com/eiiches/jackson-jq/issues/72).
+##### Examples
 
 ```console
 $ jq -n '1 + 3 as $a | ($a * 2)' # interpreted as 1 + (3 as $a | ($a * 2))
@@ -240,6 +250,243 @@ $ jq -n '1 + 3 as $a | ($a * 2)' # interpreted as 1 + (3 as $a | ($a * 2))
 $ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
 8
 ```
+
+##### Workaround
+
+Use explicit parentheses.
+
+##### Links
+
+* [jackson-jq#72](https://github.com/eiiches/jackson-jq/issues/72)
+
+</details>
+
+
+<details>
+<summary>(*3) Multiple functions with the same name in the same scope</summary>
+
+##### Description
+
+If the function with the same is defined more than once at the same scope, jackson-jq uses the last one.
+
+##### Examples
+
+```console
+$ jq -n 'def f: 1; def g: f; def f: 2; g'
+1
+$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar -n 'def f: 1; def g: f; def f: 2; g'
+2
+```
+
+##### Workaround
+
+Avoid using the duplicate function name.
+
+```console
+$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar -n 'def f1: 1; def g: f1; def f2: 2; g'
+1
+```
+
+</details>
+
+
+#### Category: BY DESIGN
+
+<details>
+<summary>(*1) Error Message Wording</summary>
+
+##### Description
+
+Error messages differ between jq and jackson-jq and they also tend to change between versions.
+
+##### Workaround
+
+None. This is by design and will not be fixed.
+
+</details>
+
+<details>
+<summary>(*6) <code>env/0</code> is not available by default.</summary>
+
+##### Description
+
+`env/0` is not available by default for security reasons and must be added manually to the scope.
+
+##### Workaround
+
+Add `env/0` manually into the scope:
+
+```java
+SCOPE.addFunction("env", 0, new EnvFunction())
+```
+
+</details>
+
+<details>
+<summary>(*4) Field Ordering in JSON Object</summary>
+
+##### Description
+  
+The order of the keys in JSON is not preserved. It was a design decision but we are slowly trying to fix this in order to improve the compatibility with jq.
+
+##### Workaround
+
+None. Use array if the order is important.
+
+</details>
+  
+<details>
+<summary>(*5) <code>0 / 0</code> is an error in jackson-jq.</summary>
+
+##### Description
+
+jq evaluates `0 / 0`, if hard-coded, to NaN without any errors, whereas `0 | 0 / .` results in a zero-division error. jackson-jq always raises an error in both cases.
+
+##### Examples
+
+```console
+$ jq -n '0 / 0'
+null
+$ jq -n '10 / 0'
+jq: error: Division by zero? at <top-level>, line 1:
+10 / 0
+jq: 1 compile error
+$ jq '. / 0' <<< 0
+jq: error (at <stdin>:1): number (0) and number (0) cannot be divided because the divisor is zero
+$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar -n '0 / 0'
+jq: error: number (0) and number (0) cannot be divided because the divisor is zero
+```
+
+##### Workaround
+
+If you need NaN, use `nan` instead of `0 / 0`.
+  
+</details>
+
+<details>
+<summary>(*8) <code>... |= empty</code> is an error in jackson-jq.</summary>
+
+##### Description
+
+`.foo |= empty` always throws an error in jackson-jq instead of producing an unexpected result. jq-1.5 and jq-1.6 respectively produces a different and incorrect result for `[1,2,3] | ((.[] | select(. > 1)) |= empty)`. [jq#897](https://github.com/stedolan/jq/issues/897) says "empty in the RHS is undefined". You can still use `_modify/2` directly if you really want to emulate the exact jq-1.5 or jq-1.6 behavior.
+
+##### Examples
+
+```console
+$ jq-1.6 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
+[
+  1,
+  3
+]
+$ jq-1.5 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
+null
+$ jq-1.2 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
+[
+  1,
+  2,
+  3
+]
+$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar --jq 1.6 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
+jq: error: `|= empty` is undefined. See https://github.com/stedolan/jq/issues/897
+$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar --jq 1.5 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
+jq: error: `|= empty` is undefined. See https://github.com/stedolan/jq/issues/897
+```
+
+##### Workaround
+
+You can use `_modify/2` if you really want to the original behavior.
+
+```console
+$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar --jq 1.6 -n '[1,2,3] | _modify((.[] | select(. > 1)); empty)'
+[ 1, 3 ]
+$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar --jq 1.5 -n '[1,2,3] | _modify((.[] | select(. > 1)); empty)'
+null
+```
+
+</details>
+  
+<details>
+<summary>(*7) Variables don't carry path information even in jq 1.5 compat mode.</summary>
+
+##### Description
+  
+`path(.foo as $a | $a)` always throws an error as $variables in jackson-jq do not carry path information like jq-1.5 accidentally? did. The behavior is fixed in jq-1.6 whose [documentation](https://stedolan.github.io/jq/manual/v1.6/#Assignment) explicitly states them as "not a valid or useful path expression". So, I dicided not to implement it even in jq-1.5 compatible mode.
+
+##### Examples
+  
+jq 1.5
+
+```console
+$ jq-1.5 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
+["foo"]
+$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar --jq 1.5 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
+jq: error: Invalid path expression with result 1
+```
+
+jq 1.6
+
+```console
+$ jq-1.6 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
+jq: error (at <stdin>:1): Invalid path expression with result 1
+$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar --jq 1.6 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
+jq: error: Invalid path expression with result 1
+```
+
+##### Workaround
+
+None
+
+</details>
+
+<details>
+<summary>(*2) <code>try (break $label) catch .</code> always produces <code>{"__jq": 0}</code>.</summary>
+
+##### Description
+
+<code>try (break $label) catch .</code> always produces <code>{"__jq": 0}</code> in jackson-jq, while `__jq` should contain the index of the label the `break` statement jumps to.
+
+##### Examples
+
+```console
+$ jq -n 'label $a | label $b | try (break $b) catch .'
+{
+  "__jq": 1
+}
+$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar -n 'label $a | label $b | try (break $b) catch .'
+{
+  "__jq" : 0
+}
+```
+
+##### Workaround
+
+None. Tell us your use case if you need this feature.
+
+</details>
+
+#### Category: BUGFIX
+
+<details>
+<summary>(*9) <code>indices("")</code> returns <code>[]</code> (empty array) in jackson-jq.</summary>
+
+##### Description
+
+`indices/1` implementation in jq-1.5 and jq-1.6 had a bug that caused `indices("")` to end up in infinite loop which eventually leads to OOM. The bug is [fixed](https://github.com/stedolan/jq/commit/2660b04a731568c54eb4b91fe811d81cbbf3470b) and likely to be in jq-1.7 (not released yet). jackson-jq chose not to simulate this bug.
+
+##### Examples
+  
+```console
+$ jq-1.5 -n '"x" | indices("")' # stuck in infinite loop
+^C
+$ jq-1.6 -n '"x" | indices("")' # stuck in infinite loop
+^C
+$ jq-1.6-83-gb52fc10 -n '"x" | indices("")'
+[]
+$ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar -n '"x" | indices("")'
+[ ]
+```
+
+</details>
 
 Using jackson-jq-extra module
 -----------------------------
@@ -254,7 +501,8 @@ Using jackson-jq-extra module
 </dependency>
 ```
 
-### Examples
+<details>
+<summary>List of Functions</summary>
 
 #### uuid4/0
 
@@ -305,6 +553,8 @@ Using jackson-jq-extra module
 #### hostname/0
 
  - `jackson-jq -n 'hostname'` #=> `"jenkins-slave01"`
+
+</details>
 
 Contributing
 ------------
