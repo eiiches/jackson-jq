@@ -45,7 +45,7 @@
 	</distributionManagement>
 
 	<properties>
-		<org.slf4j-version>1.7.30</org.slf4j-version>
+		<org.slf4j-version>1.7.32</org.slf4j-version>
 		<com.fasterxml.jackson-version>2.12.3</com.fasterxml.jackson-version>
 		<com.fasterxml.jackson.databind-version>2.12.3</com.fasterxml.jackson.databind-version>
 		<com.google.auto.service-version>1.0</com.google.auto.service-version>
