@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.IsolatedScopeQuery;
 import net.thisptr.jackson.jq.internal.JsonQueryFunction;
 import net.thisptr.jackson.jq.internal.javacc.ExpressionParser;
@@ -119,17 +118,43 @@ public class BuiltinFunctionLoader {
 		return result;
 	}
 
+	private static String[] extractFunctionNamesFromAnnotationIfVersionMatch(Function fn, final Version version) {
+		final net.thisptr.jackson.jq.BuiltinFunction annotation = fn.getClass().getAnnotation(net.thisptr.jackson.jq.BuiltinFunction.class);
+		if (annotation == null)
+			return null;
+		if (!annotation.version().isEmpty()) {
+			final VersionRange range = VersionRange.valueOf(annotation.version());
+			if (!range.contains(version))
+				return new String[0];
+		}
+		return annotation.value();
+	}
+
+	@SuppressWarnings("deprecation")
+	private static String[] extractFunctionNamesFromDeprecatedAnnotationIfVersionMatch(Function fn, final Version version) {
+		final net.thisptr.jackson.jq.internal.BuiltinFunction annotation = fn.getClass().getAnnotation(net.thisptr.jackson.jq.internal.BuiltinFunction.class);
+		if (annotation == null)
+			return null;
+		if (!annotation.version().isEmpty()) {
+			final VersionRange range = VersionRange.valueOf(annotation.version());
+			if (!range.contains(version))
+				return new String[0];
+		}
+		return annotation.value();
+	}
+
 	private void loadBuiltinFunctions(final Map<String, Function> functions, final Version version, final ClassLoader classLoader) {
 		for (final Function fn : ServiceLoader.load(Function.class, classLoader)) {
-			final BuiltinFunction annotation = fn.getClass().getAnnotation(BuiltinFunction.class);
-			if (annotation == null)
-				continue;
-			if (!annotation.version().isEmpty()) {
-				final VersionRange range = VersionRange.valueOf(annotation.version());
-				if (!range.contains(version))
-					continue;
+			String[] names = extractFunctionNamesFromAnnotationIfVersionMatch(fn, version);
+			if (names == null) { // i.e. if annotation is missing,
+				// Look for deprecated annotation as well for compatibility reasons. TODO: Delete this in 1.0.0 release.
+				names = extractFunctionNamesFromDeprecatedAnnotationIfVersionMatch(fn, version);
 			}
-			for (final String name : annotation.value())
+
+			if (names == null) // i.e. no annotations found
+				continue;
+
+			for (final String name : names)
 				functions.put(name, fn);
 		}
 	}
