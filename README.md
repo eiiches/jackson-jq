@@ -61,6 +61,43 @@ $ java -jar jackson-jq-cli-1.0.0-preview.20210610.jar --jq 1.6 'join("-")' # jq-
 
 Homebrew (or Linuxbrew) users can alternatively run `brew tap eiiches/jackson-jq && brew install jackson-jq` to install the CLI. `jackson-jq` will be available on your $PATH.
 
+Using the maven plugin
+----------------------
+To integrate a jq transformation into your build, we provide a maven plugin.
+
+To apply a query to an input file, outputing the result in the project"s build directory,
+```xml
+<build>
+    <plugins>
+      <plugin>
+        <groupId>net.thisptr</groupId>
+        <artifactId>jackson-jq-maven-plugin</artifactId>
+        <version>1.0.0-preview.20210610</version>
+        <executions>
+          <execution>
+            <id>set-url</id>
+            <goals>
+              <goal>jq</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <inputFile>src/main/resources/swagger.json</inputFile>
+          <outputFile>${project.build.directory}/generated-sources/swagger.json</outputFile>
+          <filter>.host |= "apis.mycompany.com" | .basePath |= "/petstore/v2"</filter>
+          <!-- Alternatively, you can specify a module file -->
+          <!--module>src/main/resources/customize-swagger.jq</module-->
+        </configuration>
+      </plugin>
+       <plugin>
+          <!-- Use the modified json file with other plugins (eg: openapi-generator) -->
+          <!-- ... -->
+       </plugin>
+    </plugins>
+  </build>
+```
+See [jackson-jq-maven-plugin/src/test/resources/example-project](jackson-jq-maven-plugin/src/test/resources/example-project) for a sample POM.
+
 Branches and versioning
 -----------------------
 
