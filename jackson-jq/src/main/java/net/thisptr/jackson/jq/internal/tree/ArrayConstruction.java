@@ -21,6 +21,14 @@ public class ArrayConstruction implements Expression {
 		this.q = q;
 	}
 
+	public Expression getQ() {
+		return q;
+	}
+
+	public void setQ(Expression q) {
+		this.q = q;
+	}
+
 	@Override
 	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		final ArrayNode array = new ArrayNode(scope.getObjectMapper().getNodeFactory());

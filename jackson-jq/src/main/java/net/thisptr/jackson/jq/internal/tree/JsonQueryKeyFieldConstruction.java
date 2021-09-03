@@ -8,12 +8,30 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 
 public class JsonQueryKeyFieldConstruction implements FieldConstruction {
-	private final Expression key;
-	private final Expression value;
+	private Expression key;
+	private Expression value;
 
 	public JsonQueryKeyFieldConstruction(final Expression key, final Expression value) {
 		this.key = key;
 		this.value = value;
+	}
+
+	public JsonQueryKeyFieldConstruction() {}
+
+	public Expression getValue() {
+		return value;
+	}
+
+	public void setValue(Expression value) {
+		this.value = value;
+	}
+
+	public Expression getKey() {
+		return key;
+	}
+
+	public void setKey(Expression key) {
+		this.key = key;
 	}
 
 	@Override

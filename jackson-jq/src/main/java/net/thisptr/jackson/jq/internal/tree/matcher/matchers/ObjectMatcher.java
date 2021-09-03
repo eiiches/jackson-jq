@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.internal.tree.matcher.matchers;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
@@ -21,6 +22,16 @@ public class ObjectMatcher implements PatternMatcher {
 	private List<FieldMatcher> matchers;
 
 	public ObjectMatcher(final List<FieldMatcher> matchers) {
+		this.matchers = matchers;
+	}
+
+	public ObjectMatcher() {}
+
+	public List<FieldMatcher> getMatchers() {
+		return Collections.unmodifiableList(matchers);
+	}
+
+	public void setMatchers(List<FieldMatcher> matchers) {
 		this.matchers = matchers;
 	}
 

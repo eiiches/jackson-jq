@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.internal.tree;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
@@ -16,7 +17,17 @@ import net.thisptr.jackson.jq.path.Path;
 public class PipedQuery implements Expression {
 	private List<PipeComponent> components;
 
+	public PipedQuery() {}
+
 	public PipedQuery(final List<PipeComponent> components) {
+		this.components = components;
+	}
+
+	public List<PipeComponent> getComponents() {
+		return Collections.unmodifiableList(components);
+	}
+
+	public void setComponents(List<PipeComponent> components) {
 		this.components = components;
 	}
 

@@ -17,6 +17,16 @@ public abstract class SimpleBinaryOperatorExpression extends BinaryOperatorExpre
 		this.operator = operator;
 	}
 
+	public SimpleBinaryOperatorExpression() {}
+
+	public BinaryOperator getOperator() {
+		return operator;
+	}
+
+	public void setOperator(BinaryOperator operator) {
+		this.operator = operator;
+	}
+
 	@Override
 	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		rhs.apply(scope, in, (r) -> {

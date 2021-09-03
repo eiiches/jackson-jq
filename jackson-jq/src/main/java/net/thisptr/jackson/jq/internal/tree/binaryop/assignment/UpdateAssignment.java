@@ -27,6 +27,16 @@ public class UpdateAssignment extends BinaryOperatorExpression {
 		this.version = version;
 	}
 
+	public UpdateAssignment() {}
+
+	public Version getVersion() {
+		return version;
+	}
+
+	public void setVersion(Version version) {
+		this.version = version;
+	}
+
 	@Override
 	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		final JsonNode[] out = new JsonNode[] { in };

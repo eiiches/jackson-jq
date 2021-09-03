@@ -15,6 +15,10 @@ public class BooleanOrExpression extends BinaryOperatorExpression {
 		super(lhs, rhs, "or");
 	}
 
+	public BooleanOrExpression() {
+		super(null, null, "or");
+	}
+
 	@Override
 	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		lhs.apply(scope, in, (l) -> {

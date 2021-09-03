@@ -9,6 +9,9 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.path.Path;
 
 public class BracketExtractFieldAccess extends FieldAccess {
+
+	public BracketExtractFieldAccess() {}
+
 	public BracketExtractFieldAccess(final Expression src, final boolean permissive) {
 		super(src, permissive);
 	}

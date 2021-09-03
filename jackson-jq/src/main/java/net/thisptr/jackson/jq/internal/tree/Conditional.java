@@ -1,9 +1,9 @@
 package net.thisptr.jackson.jq.internal.tree;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
@@ -19,6 +19,24 @@ public class Conditional implements Expression {
 	public Conditional(final List<Pair<Expression, Expression>> switches, final Expression otherwise) {
 		this.switches = switches;
 		this.otherwise = otherwise;
+	}
+
+	public Conditional() {}
+
+	public void setOtherwise(Expression otherwise) {
+		this.otherwise = otherwise;
+	}
+
+	public Expression getOtherwise() {
+		return otherwise;
+	}
+
+	public void setSwitches(List<Pair<Expression, Expression>> switches) {
+		this.switches = switches;
+	}
+
+	public List<Pair<Expression, Expression>> getSwitches() {
+		return Collections.unmodifiableList(switches);
 	}
 
 	private void pathRecursive(PathOutput output, Scope scope, List<Pair<Expression, Expression>> switches, JsonNode in, Path path) throws JsonQueryException {

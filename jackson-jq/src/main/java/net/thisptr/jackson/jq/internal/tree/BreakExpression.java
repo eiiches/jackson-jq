@@ -10,9 +10,19 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.path.Path;
 
 public class BreakExpression implements Expression {
-	private final String name;
+	private String name;
 
 	public BreakExpression(final String name) {
+		this.name = name;
+	}
+
+	public BreakExpression() {}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
 		this.name = name;
 	}
 

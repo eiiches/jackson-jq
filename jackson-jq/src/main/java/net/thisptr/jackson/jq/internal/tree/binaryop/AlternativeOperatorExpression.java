@@ -16,6 +16,10 @@ public class AlternativeOperatorExpression extends BinaryOperatorExpression {
 		super(valueExpr, defaultExpr, "//");
 	}
 
+	public AlternativeOperatorExpression() {
+		super(null, null,  "//");
+	}
+
 	@Override
 	public void apply(final Scope scope, final JsonNode in, final Path path, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		final AtomicBoolean emitted = new AtomicBoolean();

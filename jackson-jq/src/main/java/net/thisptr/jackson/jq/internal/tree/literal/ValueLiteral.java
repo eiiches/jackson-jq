@@ -11,7 +11,17 @@ import net.thisptr.jackson.jq.path.Path;
 public abstract class ValueLiteral implements Expression {
 	private JsonNode value;
 
+	public ValueLiteral() {}
+
 	public ValueLiteral(final JsonNode value) {
+		this.value = value;
+	}
+
+	public JsonNode getValue() {
+		return value;
+	}
+
+	public void setValue(JsonNode value) {
 		this.value = value;
 	}
 

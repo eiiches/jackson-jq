@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.internal.tree;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -17,9 +18,35 @@ public class FunctionCall implements Expression {
 	private List<Expression> args;
 	private Version version;
 
+	public FunctionCall() {}
+
 	public FunctionCall(final String name, final List<Expression> args, final Version version) {
 		this.name = name;
 		this.args = args;
+		this.version = version;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public List<Expression> getArgs() {
+		return Collections.unmodifiableList(args);
+	}
+
+	public Version getVersion() {
+		return version;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public void setArgs(List<Expression> args) {
+		this.args = args;
+	}
+
+	public void setVersion(Version version) {
 		this.version = version;
 	}
 

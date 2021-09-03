@@ -15,6 +15,8 @@ public class BooleanAndExpression extends BinaryOperatorExpression {
 		super(lhs, rhs, "and");
 	}
 
+	public BooleanAndExpression() {}
+
 	@Override
 	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		lhs.apply(scope, in, (l) -> {

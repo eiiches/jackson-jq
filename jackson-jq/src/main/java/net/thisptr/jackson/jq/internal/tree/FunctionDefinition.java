@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.internal.tree;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,6 +21,32 @@ public class FunctionDefinition implements Expression {
 		this.fname = fname;
 		this.args = args;
 		this.body = body;
+	}
+
+	public FunctionDefinition() {}
+
+	public Expression getBody() {
+		return body;
+	}
+
+	public void setBody(Expression body) {
+		this.body = body;
+	}
+
+	public List<String> getArgs() {
+		return Collections.unmodifiableList(args);
+	}
+
+	public void setArgs(List<String> args) {
+		this.args = args;
+	}
+
+	public String getFname() {
+		return fname;
+	}
+
+	public void setFname(String fname) {
+		this.fname = fname;
 	}
 
 	@Override

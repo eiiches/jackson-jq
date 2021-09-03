@@ -8,4 +8,6 @@ public class CompareGreaterTest extends SimpleBinaryOperatorExpression {
 	public CompareGreaterTest(final Expression lhs, final Expression rhs) {
 		super(lhs, rhs, new GreaterOperator());
 	}
+
+	public CompareGreaterTest() {}
 }

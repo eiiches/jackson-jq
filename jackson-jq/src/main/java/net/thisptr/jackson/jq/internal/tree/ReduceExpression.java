@@ -28,6 +28,36 @@ public class ReduceExpression implements Expression {
 		this.iterExpr = iterExpr;
 	}
 
+	public ReduceExpression() {}
+
+	public PatternMatcher getMatcher() {
+		return matcher;
+	}
+
+	public void setMatcher(PatternMatcher matcher) {
+		this.matcher = matcher;
+	}
+
+	public Expression getInitExpr() {
+		return initExpr;
+	}
+
+	public void setInitExpr(Expression initExpr) {
+		this.initExpr = initExpr;
+	}
+
+	public Expression getIterExpr() {
+		return iterExpr;
+	}
+
+	public void setIterExpr(Expression iterExpr) {
+		this.iterExpr = iterExpr;
+	}
+
+	public Expression getReduceExpr() {
+		return reduceExpr;
+	}
+
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
 
 	@Override

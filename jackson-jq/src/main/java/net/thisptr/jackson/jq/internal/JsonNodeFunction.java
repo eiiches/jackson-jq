@@ -19,6 +19,16 @@ public class JsonNodeFunction implements Function {
 		this.value = value;
 	}
 
+	public JsonNodeFunction() {}
+
+	public JsonNode getValue() {
+		return value;
+	}
+
+	public void setValue(JsonNode value) {
+		this.value = value;
+	}
+
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		output.emit(value, null);

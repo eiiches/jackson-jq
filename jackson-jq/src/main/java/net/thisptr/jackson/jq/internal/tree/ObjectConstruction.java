@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.internal.tree;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,9 +17,17 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.path.Path;
 
 public class ObjectConstruction implements Expression {
-	private final List<FieldConstruction> fields = new ArrayList<>();
+	private List<FieldConstruction> fields = new ArrayList<>();
 
 	public ObjectConstruction() {}
+
+	public List<FieldConstruction> getFields() {
+		return Collections.unmodifiableList(fields);
+	}
+
+	public void setFields(List<FieldConstruction> fields) {
+		this.fields = fields;
+	}
 
 	public void add(final FieldConstruction field) {
 		fields.add(field);

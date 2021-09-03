@@ -4,11 +4,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Pair<T, U> {
-	public final T _1;
-	public final U _2;
+	public T _1;
+	public U _2;
 
 	public Pair(final T _1, final U _2) {
 		this._1 = _1;
+		this._2 = _2;
+	}
+
+	public Pair() {}
+
+	public T get_1() {
+		return _1;
+	}
+
+	public void set_1(T _1) {
+		this._1 = _1;
+	}
+
+	public U get_2() {
+		return _2;
+	}
+
+	public void set_2(U _2) {
 		this._2 = _2;
 	}
 

@@ -16,6 +16,16 @@ public class VariableAccess implements Expression {
 		this.name = name;
 	}
 
+	public VariableAccess() {}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	@Override
 	public void apply(final Scope scope, final JsonNode in, final Path path, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		final ValueWithPath value = scope.getValueWithPath(name);

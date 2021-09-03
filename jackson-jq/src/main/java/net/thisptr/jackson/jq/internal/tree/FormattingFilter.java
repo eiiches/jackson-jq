@@ -13,12 +13,30 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.path.Path;
 
 public class FormattingFilter implements Expression {
-	private final String name;
-	private final Version version;
+	private String name;
+	private Version version;
 
 	public FormattingFilter(final String name, final Version version) {
 		this.name = name;
 		this.version = version;
+	}
+
+	public FormattingFilter() {}
+
+	public Version getVersion() {
+		return version;
+	}
+
+	public void setVersion(Version version) {
+		this.version = version;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	@Override

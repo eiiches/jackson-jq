@@ -7,13 +7,31 @@ import java.util.regex.Pattern;
  * Use {@link net.thisptr.jackson.jq.Versions} to get a {@link Version} instance.
  */
 public class Version implements Comparable<Version> {
-	public final int major;
-	public final int minor;
+	public int major;
+	public int minor;
 
 	public static final Version LATEST = new Version(Integer.MAX_VALUE, Integer.MAX_VALUE);
 
+	public Version() {}
+
 	Version(final int major, final int minor) {
 		this.major = major;
+		this.minor = minor;
+	}
+
+	public int getMajor() {
+		return major;
+	}
+
+	public int getMinor() {
+		return minor;
+	}
+
+	public void setMajor(int major) {
+		this.major = major;
+	}
+
+	public void setMinor(int minor) {
 		this.minor = minor;
 	}
 

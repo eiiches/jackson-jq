@@ -17,6 +17,24 @@ public class FixedScopeQuery implements Expression {
 		this.query = query;
 	}
 
+	public FixedScopeQuery() {}
+
+	public Expression getQuery() {
+		return query;
+	}
+
+	public void setQuery(Expression query) {
+		this.query = query;
+	}
+
+	public void setScope(Scope scope) {
+		this.scope = scope;
+	}
+
+	public Scope getScope() {
+		return scope;
+	}
+
 	@Override
 	public void apply(Scope unused, JsonNode in, Path path, PathOutput output, boolean requirePath) throws JsonQueryException {
 		query.apply(scope, in, path, output, requirePath);
