@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,16 +14,6 @@ public class Tuple implements Expression {
 	private List<Expression> qs;
 
 	public Tuple(final List<Expression> qs) {
-		this.qs = qs;
-	}
-
-	public Tuple() {}
-
-	public List<Expression> getQs() {
-		return Collections.unmodifiableList(qs);
-	}
-
-	public void setQs(List<Expression> qs) {
 		this.qs = qs;
 	}
 

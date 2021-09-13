@@ -20,40 +20,10 @@ public class JsonQueryFunction implements Function {
 	private String name;
 	private Scope closure;
 
-	public JsonQueryFunction() {}
-
 	public JsonQueryFunction(final String name, final List<String> params, final Expression body, final Scope closure) {
 		this.name = name;
 		this.params = params;
 		this.body = body;
-		this.closure = closure;
-	}
-
-	public Expression getBody() {
-		return body;
-	}
-
-	public void setBody(Expression body) {
-		this.body = body;
-	}
-
-	public List<String> getParams() {
-		return Collections.unmodifiableList(params);
-	}
-
-	public void setParams(List<String> params) {
-		this.params = params;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public void setClosure(Scope closure) {
 		this.closure = closure;
 	}
 

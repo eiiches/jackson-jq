@@ -15,8 +15,6 @@ public class BracketFieldAccess extends FieldAccess {
 	private Expression endExpr;
 	private boolean isRange;
 
-	public BracketFieldAccess() {}
-
 	public BracketFieldAccess(final Expression src, final Expression atExpr, final boolean permissive) {
 		super(src, permissive);
 		this.startExpr = atExpr != null ? atExpr : new NullLiteral();
@@ -28,30 +26,6 @@ public class BracketFieldAccess extends FieldAccess {
 		this.startExpr = startExpr != null ? startExpr : new NullLiteral();
 		this.endExpr = endExpr != null ? endExpr : new NullLiteral();
 		this.isRange = true;
-	}
-
-	public Expression getEndExpr() {
-		return endExpr;
-	}
-
-	public void setEndExpr(Expression endExpr) {
-		this.endExpr = endExpr;
-	}
-
-	public Expression getStartExpr() {
-		return startExpr;
-	}
-
-	public void setStartExpr(Expression startExpr) {
-		this.startExpr = startExpr;
-	}
-
-	public boolean isRange() {
-		return isRange;
-	}
-
-	public void setRange(boolean range) {
-		isRange = range;
 	}
 
 	@Override

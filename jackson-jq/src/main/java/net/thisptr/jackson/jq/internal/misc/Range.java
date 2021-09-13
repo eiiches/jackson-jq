@@ -3,30 +3,12 @@ package net.thisptr.jackson.jq.internal.misc;
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class Range {
-	public long start;
-	public long end;
+	public final long start;
+	public final long end;
 
 	public Range(final long start, final long end) {
 		this.start = start;
 		this.end = end;
-	}
-
-	public Range() {}
-
-	public long getEnd() {
-		return end;
-	}
-
-	public void setEnd(long end) {
-		this.end = end;
-	}
-
-	public long getStart() {
-		return start;
-	}
-
-	public void setStart(long start) {
-		this.start = start;
 	}
 
 	private static double resolveToPositiveIndex(final JsonNode value, final long size) {

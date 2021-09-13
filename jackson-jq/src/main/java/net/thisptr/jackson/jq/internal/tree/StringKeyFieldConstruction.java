@@ -8,8 +8,8 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 
 public class StringKeyFieldConstruction implements FieldConstruction {
-	private Expression key;
-	private Expression value;
+	private final Expression key;
+	private final Expression value;
 
 	public StringKeyFieldConstruction(final Expression key, final Expression value) {
 		this.key = key;
@@ -18,24 +18,6 @@ public class StringKeyFieldConstruction implements FieldConstruction {
 
 	public StringKeyFieldConstruction(final Expression key) {
 		this(key, null);
-	}
-
-	public StringKeyFieldConstruction() {}
-
-	public Expression getKey() {
-		return key;
-	}
-
-	public void setKey(Expression key) {
-		this.key = key;
-	}
-
-	public Expression getValue() {
-		return value;
-	}
-
-	public void setValue(Expression value) {
-		this.value = value;
 	}
 
 	@Override

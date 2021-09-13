@@ -143,7 +143,7 @@ public class BuiltinFunctionLoader {
 		return annotation.value();
 	}
 
-	private void loadBuiltinFunctions(final Map<String, Function> functions, final Version version, final ClassLoader classLoader) {
+	public void loadBuiltinFunctions(final Map<String, Function> functions, final Version version, final ClassLoader classLoader) {
 		for (final Function fn : ServiceLoader.load(Function.class, classLoader)) {
 			String[] names = extractFunctionNamesFromAnnotationIfVersionMatch(fn, version);
 			if (names == null) { // i.e. if annotation is missing,
@@ -159,7 +159,7 @@ public class BuiltinFunctionLoader {
 		}
 	}
 
-	private void loadMacros(final Map<String, Function> functions, final ClassLoader classLoader, final Version version, final Scope closureScope) {
+	public void loadMacros(final Map<String, Function> functions, final ClassLoader classLoader, final Version version, final Scope closureScope) {
 		try {
 			final List<JqJson> configs = loadConfig(classLoader, CONFIG_PATH);
 			for (final JqJson jqJson : configs) {

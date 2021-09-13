@@ -28,48 +28,6 @@ public class ForeachExpression implements Expression {
 		this.iterExpr = iterExpr;
 	}
 
-	public ForeachExpression() {}
-
-	public Expression getIterExpr() {
-		return iterExpr;
-	}
-
-	public void setIterExpr(Expression iterExpr) {
-		this.iterExpr = iterExpr;
-	}
-
-	public Expression getInitExpr() {
-		return initExpr;
-	}
-
-	public void setInitExpr(Expression initExpr) {
-		this.initExpr = initExpr;
-	}
-
-	public PatternMatcher getMatcher() {
-		return matcher;
-	}
-
-	public void setMatcher(PatternMatcher matcher) {
-		this.matcher = matcher;
-	}
-
-	public Expression getExtractExpr() {
-		return extractExpr;
-	}
-
-	public void setExtractExpr(Expression extractExpr) {
-		this.extractExpr = extractExpr;
-	}
-
-	public Expression getUpdateExpr() {
-		return updateExpr;
-	}
-
-	public void setUpdateExpr(Expression updateExpr) {
-		this.updateExpr = updateExpr;
-	}
-
 	@Override
 	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 

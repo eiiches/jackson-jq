@@ -17,16 +17,6 @@ public class IdentifierFieldAccess extends FieldAccess {
 		this.field = field;
 	}
 
-	public IdentifierFieldAccess() {}
-
-	public String getField() {
-		return field;
-	}
-
-	public void setField(String field) {
-		this.field = field;
-	}
-
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();

@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
@@ -15,40 +14,14 @@ import net.thisptr.jackson.jq.internal.misc.Pair;
 import net.thisptr.jackson.jq.path.Path;
 
 public class StringInterpolation implements Expression {
-	private List<Pair<Integer, Expression>> interpolations;
-	private String template;
-	private Expression formatter;
+	private final List<Pair<Integer, Expression>> interpolations;
+	private final String template;
+	private final Expression formatter;
 
 	public StringInterpolation(final String template, final List<Pair<Integer, Expression>> interpolations, final Expression formatter) {
 		this.template = template;
 		this.interpolations = interpolations;
 		this.formatter = formatter;
-	}
-
-	public StringInterpolation() {}
-
-	public Expression getFormatter() {
-		return formatter;
-	}
-
-	public void setFormatter(Expression formatter) {
-		this.formatter = formatter;
-	}
-
-	public List<Pair<Integer, Expression>> getInterpolations() {
-		return Collections.unmodifiableList(interpolations);
-	}
-
-	public void setInterpolations(List<Pair<Integer, Expression>> interpolations) {
-		this.interpolations = interpolations;
-	}
-
-	public String getTemplate() {
-		return template;
-	}
-
-	public void setTemplate(String template) {
-		this.template = template;
 	}
 
 	@Override

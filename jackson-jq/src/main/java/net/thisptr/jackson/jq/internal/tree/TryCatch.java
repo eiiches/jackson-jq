@@ -21,24 +21,6 @@ public class TryCatch implements Expression {
 		this(tryExpr, null);
 	}
 
-	public TryCatch() {}
-
-	public Expression getCatchExpr() {
-		return catchExpr;
-	}
-
-	public void setCatchExpr(Expression catchExpr) {
-		this.catchExpr = catchExpr;
-	}
-
-	public Expression getTryExpr() {
-		return tryExpr;
-	}
-
-	public void setTryExpr(Expression tryExpr) {
-		this.tryExpr = tryExpr;
-	}
-
 	@Override
 	public void apply(final Scope scope, final JsonNode in, final Path path, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		try {

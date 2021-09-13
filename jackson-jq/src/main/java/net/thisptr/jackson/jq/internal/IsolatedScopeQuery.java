@@ -11,18 +11,6 @@ import net.thisptr.jackson.jq.path.Path;
 public class IsolatedScopeQuery implements Expression {
 	private Expression q;
 
-	public IsolatedScopeQuery() {
-
-	}
-
-	public Expression getQ() {
-		return q;
-	}
-
-	public void setQ(Expression q) {
-		this.q = q;
-	}
-
 	public IsolatedScopeQuery(final Expression q) {
 		this.q = q;
 	}

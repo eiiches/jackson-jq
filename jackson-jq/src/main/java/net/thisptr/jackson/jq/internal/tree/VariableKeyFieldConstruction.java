@@ -7,19 +7,9 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 
 public class VariableKeyFieldConstruction implements FieldConstruction {
-	private String name;
+	private final String name;
 
 	public VariableKeyFieldConstruction(final String name) {
-		this.name = name;
-	}
-
-	public VariableKeyFieldConstruction() {}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
 		this.name = name;
 	}
 

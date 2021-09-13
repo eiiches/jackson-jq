@@ -19,16 +19,6 @@ public class ValueMatcher implements PatternMatcher {
 		this.name = name;
 	}
 
-	public ValueMatcher() {}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
 	@Override
 	public void match(final Scope scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException {
 		accumulate.push(Pair.of(name, in));

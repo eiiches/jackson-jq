@@ -21,29 +21,11 @@ import net.thisptr.jackson.jq.path.ObjectFieldPath;
 import net.thisptr.jackson.jq.path.Path;
 
 public abstract class FieldAccess implements Expression {
-	protected Expression target;
-	protected boolean permissive;
-
-	public FieldAccess() {}
+	protected final Expression target;
+	protected final boolean permissive;
 
 	public FieldAccess(final Expression target, final boolean permissive) {
 		this.target = target;
-		this.permissive = permissive;
-	}
-
-	public Expression getTarget() {
-		return target;
-	}
-
-	public void setTarget(Expression target) {
-		this.target = target;
-	}
-
-	public boolean isPermissive() {
-		return permissive;
-	}
-
-	public void setPermissive(boolean permissive) {
 		this.permissive = permissive;
 	}
 

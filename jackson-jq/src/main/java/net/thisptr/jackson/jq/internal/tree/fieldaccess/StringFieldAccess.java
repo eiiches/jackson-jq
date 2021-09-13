@@ -17,16 +17,6 @@ public class StringFieldAccess extends FieldAccess {
 		this.field = field;
 	}
 
-	public StringFieldAccess() {}
-
-	public Expression getField() {
-		return field;
-	}
-
-	public void setField(Expression field) {
-		this.field = field;
-	}
-
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();

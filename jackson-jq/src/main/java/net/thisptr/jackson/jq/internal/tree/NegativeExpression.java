@@ -17,16 +17,6 @@ public class NegativeExpression implements Expression {
 		this.value = value;
 	}
 
-	public NegativeExpression() {}
-
-	public Expression getValue() {
-		return value;
-	}
-
-	public void setValue(Expression value) {
-		this.value = value;
-	}
-
 	@Override
 	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		value.apply(scope, in, (v) -> {
