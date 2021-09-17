@@ -23,7 +23,7 @@ public class JsonQueryJacksonModule extends SimpleModule {
 		return INSTANCE;
 	}
 
-	public JsonQueryJacksonModule() {
+	private JsonQueryJacksonModule() {
 		super("JsonQuery", new com.fasterxml.jackson.core.Version(1, 0, 0, null, "net.thisptr", "jackson-jq"));
 		addSerializer(DoubleNode.class, new DoubleNodeSerializer());
 		addSerializer(FloatNode.class, new FloatNodeSerializer());
