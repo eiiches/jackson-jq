@@ -36,6 +36,24 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
+	@BuiltinFunction("tan/0")
+	public static class tanFunction extends MathFunction {
+		@Override
+		protected double f(double v) {
+			return Math.tan(v);
+		}
+	}
+
+	@AutoService(Function.class)
+	@BuiltinFunction("acos/0")
+	public static class AcosFunction extends MathFunction {
+		@Override
+		protected double f(double v) {
+			return Math.acos(v);
+		}
+	}
+
+	@AutoService(Function.class)
 	@BuiltinFunction("cos/0")
 	public static class CosFunction extends MathFunction {
 		@Override
@@ -54,11 +72,29 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
+	@BuiltinFunction("asin/0")
+	public static class AsinFunction extends MathFunction {
+		@Override
+		protected double f(double v) {
+			return Math.asin(v);
+		}
+	}
+
+	@AutoService(Function.class)
 	@BuiltinFunction("sin/0")
 	public static class SinFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
 			return Math.sin(v);
+		}
+	}
+
+	@AutoService(Function.class)
+	@BuiltinFunction("cbrt/0")
+	public static class CbrtFunction extends MathFunction {
+		@Override
+		protected double f(final double v) {
+			return Math.cbrt(v);
 		}
 	}
 
