@@ -5,9 +5,9 @@ import java.net.URLEncoder;
 
 import com.google.auto.service.AutoService;
 
+import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.BuiltinFunction;
 
 /**
  * RFC2396

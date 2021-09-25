@@ -17,8 +17,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
-import net.thisptr.jackson.jq.internal.BuiltinFunction;
 import net.thisptr.jackson.jq.internal.IsolatedScopeQuery;
 import net.thisptr.jackson.jq.internal.JsonQueryFunction;
 import net.thisptr.jackson.jq.internal.javacc.ExpressionParser;
@@ -78,8 +76,8 @@ public class BuiltinFunctionLoader {
 	 */
 	public Map<String, Function> listFunctions(final ClassLoader classLoader, final Version version, final Scope closureScope) {
 		final Map<String, Function> functions = new HashMap<>();
-		loadMacros(functions, classLoader, version, closureScope);
-		loadBuiltinFunctions(functions, version, classLoader);
+		functions.putAll(loadFunctionsFromJsonJq(classLoader, version, closureScope));
+		functions.putAll(loadFunctionsFromServiceLoader(classLoader, version));
 		return functions;
 	}
 
@@ -119,23 +117,58 @@ public class BuiltinFunctionLoader {
 		return result;
 	}
 
-	private void loadBuiltinFunctions(final Map<String, Function> functions, final Version version, final ClassLoader classLoader) {
-		for (final Function fn : ServiceLoader.load(Function.class, classLoader)) {
-			final BuiltinFunction annotation = fn.getClass().getAnnotation(BuiltinFunction.class);
-			if (annotation == null)
-				continue;
-			if (!annotation.version().isEmpty()) {
-				final VersionRange range = VersionRange.valueOf(annotation.version());
-				if (!range.contains(version))
-					continue;
-			}
-			for (final String name : annotation.value())
-				functions.put(name, fn);
+	private static String[] extractFunctionNamesFromAnnotationIfVersionMatch(Function fn, final Version version) {
+		final net.thisptr.jackson.jq.BuiltinFunction annotation = fn.getClass().getAnnotation(net.thisptr.jackson.jq.BuiltinFunction.class);
+		if (annotation == null)
+			return null;
+		if (!annotation.version().isEmpty()) {
+			final VersionRange range = VersionRange.valueOf(annotation.version());
+			if (!range.contains(version))
+				return new String[0];
 		}
+		return annotation.value();
 	}
 
-	private void loadMacros(final Map<String, Function> functions, final ClassLoader classLoader, final Version version, final Scope closureScope) {
+	@SuppressWarnings("deprecation")
+	private static String[] extractFunctionNamesFromDeprecatedAnnotationIfVersionMatch(Function fn, final Version version) {
+		final net.thisptr.jackson.jq.internal.BuiltinFunction annotation = fn.getClass().getAnnotation(net.thisptr.jackson.jq.internal.BuiltinFunction.class);
+		if (annotation == null)
+			return null;
+		if (!annotation.version().isEmpty()) {
+			final VersionRange range = VersionRange.valueOf(annotation.version());
+			if (!range.contains(version))
+				return new String[0];
+		}
+		return annotation.value();
+	}
+
+	/**
+	 * Do not use this method. This method is only for Quarkus extension.
+	 */
+	public Map<String, Function> loadFunctionsFromServiceLoader(final ClassLoader classLoader, final Version version) {
+		final Map<String, Function> functions = new HashMap<>();
+		for (final Function fn : ServiceLoader.load(Function.class, classLoader)) {
+			String[] names = extractFunctionNamesFromAnnotationIfVersionMatch(fn, version);
+			if (names == null) { // i.e. if annotation is missing,
+				// Look for deprecated annotation as well for compatibility reasons. TODO: Delete this in 1.0.0 release.
+				names = extractFunctionNamesFromDeprecatedAnnotationIfVersionMatch(fn, version);
+			}
+
+			if (names == null) // i.e. no annotations found
+				continue;
+
+			for (final String name : names)
+				functions.put(name, fn);
+		}
+		return functions;
+	}
+
+	/**
+	 * Do not use this method. This method is only for Quarkus extension.
+	 */
+	public Map<String, Function> loadFunctionsFromJsonJq(final ClassLoader classLoader, final Version version, final Scope closureScope) {
 		try {
+			final Map<String, Function> functions = new HashMap<>();
 			final List<JqJson> configs = loadConfig(classLoader, CONFIG_PATH);
 			for (final JqJson jqJson : configs) {
 				for (final JqJson.JqFuncDef def : jqJson.functions) {
@@ -144,6 +177,7 @@ public class BuiltinFunctionLoader {
 					functions.put(def.name + "/" + def.args.size(), new JsonQueryFunction(def.name, def.args, new IsolatedScopeQuery(ExpressionParser.compile(def.body, version)), closureScope));
 				}
 			}
+			return functions;
 		} catch (final IOException e) {
 			throw new RuntimeException("Failed to load macros", e);
 		}

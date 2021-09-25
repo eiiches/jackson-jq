@@ -1075,25 +1075,45 @@ PatternMatcher ArrayMatcher():
 
 PatternMatcher ObjectMatcher():
 {
-	Expression name;
-	PatternMatcher matcher;
-	final List<Pair<Expression, PatternMatcher>> matchers = new ArrayList<Pair<Expression, PatternMatcher>>();
+	ObjectMatcher.FieldMatcher fmatcher;
+	final List<ObjectMatcher.FieldMatcher> matchers = new ArrayList<ObjectMatcher.FieldMatcher>();
 }
 {
 	<OPEN_BRACE>
-	name = ObjectFieldName()
-	<COLON>
-	matcher = Matcher()
-	{ matchers.add(Pair.of(name, matcher)); }
+	fmatcher = ObjectMatcherField()
+	{ matchers.add(fmatcher); }
 	(
 		<COMMA>
-		name = ObjectFieldName()
-		<COLON>
-		matcher = Matcher()
-		{ matchers.add(Pair.of(name, matcher)); }
+		fmatcher = ObjectMatcherField()
+		{ matchers.add(fmatcher); }
 	)*
 	<CLOSE_BRACE>
 	{ return new ObjectMatcher(matchers); }
+}
+
+ObjectMatcher.FieldMatcher ObjectMatcherField():
+{
+	Expression nameExpr = null;
+	String name;
+	PatternMatcher matcher = null;
+	boolean dollar = false; // true if {$x} or {$x:...}; false if {x:...}
+}
+{
+	(
+		<DOLLAR>
+		{ dollar = true; }
+		name = KeywordOrIdentifier()
+		{ nameExpr = new StringLiteral(name); }
+		(
+			<COLON>
+			matcher = Matcher()
+		)?
+	|
+		nameExpr = ObjectFieldName()
+		<COLON>
+		matcher = Matcher()
+	)
+	{ return new ObjectMatcher.FieldMatcher(dollar, nameExpr, matcher); }
 }
 
 PatternMatcher ValueMatcher():

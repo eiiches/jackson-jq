@@ -8,14 +8,14 @@
 	<parent>
 		<groupId>net.thisptr</groupId>
 		<artifactId>jackson-jq-parent</artifactId>
-		<version>1.0.0-preview.20210610</version>
+		<version>1.0.0-preview.20210926</version>
 	</parent>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.jruby.joni</groupId>
 			<artifactId>joni</artifactId>
-			<version>2.1.29</version>
+			<version>2.1.41</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>

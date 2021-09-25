@@ -28,8 +28,9 @@ public class ArrayMatcher implements PatternMatcher {
 			return;
 		}
 
-		final PatternMatcher matcher = matchers.get(index);
-		final JsonNode value = in.get(index);
+		final int rindex = matchers.size() - index - 1;
+		final PatternMatcher matcher = matchers.get(rindex);
+		final JsonNode value = in.get(rindex);
 
 		matcher.match(scope, value != null ? value : NullNode.getInstance(), (match) -> {
 			recursive(scope, in, out, accumulate, index + 1);
@@ -49,9 +50,10 @@ public class ArrayMatcher implements PatternMatcher {
 			return;
 		}
 
-		final PatternMatcher matcher = matchers.get(index);
-		final JsonNode value = in.get(index);
-		final ArrayIndexPath valuePath = ArrayIndexPath.chainIfNotNull(path, index);
+		final int rindex = matchers.size() - index - 1;
+		final PatternMatcher matcher = matchers.get(rindex);
+		final JsonNode value = in.get(rindex);
+		final ArrayIndexPath valuePath = ArrayIndexPath.chainIfNotNull(path, rindex);
 
 		matcher.matchWithPath(scope, value != null ? value : NullNode.getInstance(), valuePath, (match) -> {
 			recursiveWithPath(scope, in, path, out, accumulate, index + 1);

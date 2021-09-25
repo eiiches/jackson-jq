@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,7 +38,6 @@ import net.thisptr.jackson.jq.test.evaluator.CachedEvaluator;
 import net.thisptr.jackson.jq.test.evaluator.Evaluator;
 import net.thisptr.jackson.jq.test.evaluator.Evaluator.Result;
 import net.thisptr.jackson.jq.test.evaluator.TrueJqEvaluator;
-import net.thisptr.jackson.jq.test.misc.ComparableJsonNode;
 
 public class JsonQueryTest {
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
@@ -65,6 +65,12 @@ public class JsonQueryTest {
 
 		@JsonProperty("ignore_true_jq_behavior")
 		public boolean ignoreTrueJqBehavior = false;
+
+		@JsonProperty("numerical_errors")
+		public double numericalErrors = 0;
+
+		@JsonProperty("ignore_field_order")
+		public boolean ignoreFieldOrder = false;
 
 		@JsonInclude(Include.NON_NULL)
 		@JsonProperty("v")
@@ -132,10 +138,6 @@ public class JsonQueryTest {
 		});
 	}
 
-	private static List<ComparableJsonNode> wrap(final List<JsonNode> values) {
-		return ComparableJsonNode.wrap(values);
-	}
-
 	private static Map<Version, Boolean> hasJqCache = new ConcurrentHashMap<>();
 	private static Evaluator cachedJqEvaluator;
 
@@ -159,10 +161,14 @@ public class JsonQueryTest {
 			return;
 		}
 
+		final Comparator<JsonNode> comparator = new JsonNodeComparatorForTests(!tc.ignoreFieldOrder, tc.numericalErrors);
+
 		if (!tc.ignoreTrueJqBehavior && hasJqCache.computeIfAbsent(version, v -> TrueJqEvaluator.hasJq(v))) {
 			final Result result = cachedJqEvaluator.evaluate(tc.q, tc.in, version, 2000L);
 			assumeThat(result.error).as("%s", command).isNull();
-			assumeThat(wrap(tc.out)).as("%s", command).isEqualTo(wrap(result.values));
+			assumeThat(tc.out).as("%s", command)
+					.usingElementComparator(comparator)
+					.isEqualTo(result.values);
 		}
 
 		boolean failed = false;
@@ -170,7 +176,9 @@ public class JsonQueryTest {
 			final JsonQuery q = JsonQuery.compile(tc.q, version);
 			final List<JsonNode> out = new ArrayList<>();
 			q.apply(scope, tc.in, out::add);
-			assertThat(wrap(out)).as("%s", command).isEqualTo(wrap(tc.out));
+			assertThat(out).as("%s", command)
+					.usingElementComparator(comparator)
+					.isEqualTo(tc.out);
 
 			// JsonQuery.compile($.toString()).toString() === $.toString()
 			final String s1 = q.toString();
@@ -181,7 +189,9 @@ public class JsonQueryTest {
 			final JsonQuery q1 = JsonQuery.compile(s1, version);
 			final List<JsonNode> out1 = new ArrayList<>();
 			q1.apply(scope, tc.in, out1::add);
-			assertThat(wrap(out1)).as("bad tostring: %s", command).isEqualTo(wrap(tc.out));
+			assertThat(out1).as("bad tostring: %s", command)
+					.usingElementComparator(comparator)
+					.isEqualTo(tc.out);
 		} catch (final Throwable e) {
 			failed = true;
 			if (!tc.failing) {
@@ -193,7 +203,7 @@ public class JsonQueryTest {
 		}
 
 		if (tc.failing)
-			assertThat(failed).describedAs("unexpectedly succeeded").isTrue();
+			assertThat(failed).describedAs("The test case is marked as failing but completed successfully").isTrue();
 	}
 
 	@ParameterizedTest
