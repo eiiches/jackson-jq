@@ -142,6 +142,9 @@ public class BuiltinFunctionLoader {
 		return annotation.value();
 	}
 
+	/**
+	 * Do not use this method. This method is only for Quarkus extension.
+	 */
 	public Map<String, Function> loadFunctionsFromServiceLoader(final ClassLoader classLoader, final Version version) {
 		final Map<String, Function> functions = new HashMap<>();
 		for (final Function fn : ServiceLoader.load(Function.class, classLoader)) {
@@ -160,6 +163,9 @@ public class BuiltinFunctionLoader {
 		return functions;
 	}
 
+	/**
+	 * Do not use this method. This method is only for Quarkus extension.
+	 */
 	public Map<String, Function> loadFunctionsFromJsonJq(final ClassLoader classLoader, final Version version, final Scope closureScope) {
 		try {
 			final Map<String, Function> functions = new HashMap<>();
