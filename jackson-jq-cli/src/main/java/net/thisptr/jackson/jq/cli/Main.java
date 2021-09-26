@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.FileSystems;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,6 +29,10 @@ import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.Versions;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.functions.EnvFunction;
+import net.thisptr.jackson.jq.module.ModuleLoader;
+import net.thisptr.jackson.jq.module.loaders.BuiltinModuleLoader;
+import net.thisptr.jackson.jq.module.loaders.ChainedModuleLoader;
+import net.thisptr.jackson.jq.module.loaders.FileSystemModuleLoader;
 
 public class Main {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -107,6 +112,11 @@ public class Main {
 		final Scope scope = Scope.newEmptyScope();
 		BuiltinFunctionLoader.getInstance().loadFunctions(version, scope);
 		scope.addFunction("env", 0, new EnvFunction());
+
+		scope.setModuleLoader(new ChainedModuleLoader(new ModuleLoader[] {
+				BuiltinModuleLoader.getInstance(),
+				new FileSystemModuleLoader(scope, version, FileSystems.getDefault().getPath("").toAbsolutePath()),
+		}));
 
 		try (final BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
 			final JsonParser parser = MAPPER.getFactory().createParser(reader);
