@@ -95,6 +95,16 @@ public class Scope {
 		return getFunctionRecursive(name);
 	}
 
+	public Map<String, Function> getLocalFunctions() {
+		if (functions == null)
+			return new HashMap<>();
+		return new HashMap<>(functions);
+	}
+
+	public Scope getParentScope() {
+		return parentScope;
+	}
+
 	private Function getFunctionRecursive(final String name) {
 		if (functions != null) {
 			final Function q = functions.get(name);
