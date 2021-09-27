@@ -1,6 +1,9 @@
 package net.thisptr.jackson.jq;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -10,7 +13,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.thisptr.jackson.jq.internal.annotations.Experimental;
 import net.thisptr.jackson.jq.internal.misc.JsonQueryJacksonModule;
+import net.thisptr.jackson.jq.internal.module.loaders.NullModuleLoader;
+import net.thisptr.jackson.jq.module.Module;
+import net.thisptr.jackson.jq.module.ModuleLoader;
 import net.thisptr.jackson.jq.path.Path;
 
 public class Scope {
@@ -30,6 +37,15 @@ public class Scope {
 
 	@JsonIgnore
 	private Map<String, Function> functions;
+
+	@JsonIgnore
+	private Map<String, LinkedList<Module>> importedModules; // the last import comes first; the key is null when the module is loaded by an include statement.
+
+	@JsonIgnore
+	private Map<String, JsonNode> importedData; // the last import overwrites prior imports
+
+	@JsonIgnore
+	private ModuleLoader moduleLoader;
 
 	public interface ValueWithPath {
 		JsonNode value();
@@ -66,6 +82,8 @@ public class Scope {
 	@JsonIgnore
 	private ObjectMapper mapper = DEFAULT_MAPPER;
 
+	private Module currentModule;
+
 	private Scope(final Scope parentScope) {
 		this.parentScope = parentScope;
 	}
@@ -95,12 +113,14 @@ public class Scope {
 		return getFunctionRecursive(name);
 	}
 
+	@Experimental
 	public Map<String, Function> getLocalFunctions() {
 		if (functions == null)
 			return new HashMap<>();
 		return new HashMap<>(functions);
 	}
 
+	@Experimental
 	public Scope getParentScope() {
 		return parentScope;
 	}
@@ -147,5 +167,79 @@ public class Scope {
 	@JsonIgnore
 	public ObjectMapper getObjectMapper() {
 		return mapper;
+	}
+
+	@Experimental
+	public void setImportedData(final String name, final JsonNode data) {
+		if (importedData == null)
+			importedData = new HashMap<>();
+		importedData.put(name, data);
+	}
+
+	@Experimental
+	public JsonNode getImportedData(final String name) {
+		if (importedData != null) {
+			final JsonNode data = importedData.get(name);
+			if (data != null)
+				return data;
+		}
+		if (parentScope == null)
+			return null;
+		return parentScope.getImportedData(name);
+	}
+
+	@Experimental
+	public void addImportedModule(final String name, final Module module) {
+		if (importedModules == null)
+			importedModules = new HashMap<>();
+		importedModules.computeIfAbsent(name, (dummy) -> new LinkedList<>()).addFirst(module);
+	}
+
+	@Experimental
+	public List<Module> getImportedModules(final String name) { // the last import comes first
+		final List<Module> modules = new ArrayList<>();
+		getImportedModules(modules, name);
+		return modules;
+	}
+
+	@Experimental
+	private void getImportedModules(final List<Module> modules, final String name) {
+		if (importedModules != null) {
+			final List<Module> localModules = importedModules.get(name);
+			if (localModules != null) {
+				modules.addAll(localModules);
+			}
+		}
+		if (parentScope == null)
+			return;
+		parentScope.getImportedModules(modules, name);
+	}
+
+	@Experimental
+	public void setModuleLoader(final ModuleLoader moduleLoader) {
+		this.moduleLoader = moduleLoader;
+	}
+
+	@Experimental
+	public ModuleLoader getModuleLoader() {
+		if (this.moduleLoader != null)
+			return this.moduleLoader;
+		if (parentScope == null)
+			return NullModuleLoader.getInstance();
+		return parentScope.getModuleLoader();
+	}
+
+	@Experimental
+	public Module getCurrentModule() {
+		if (this.currentModule != null)
+			return this.currentModule;
+		if (parentScope == null)
+			return null;
+		return parentScope.getCurrentModule();
+	}
+
+	@Experimental
+	public void setCurrentModule(final Module module) {
+		this.currentModule = module;
 	}
 }

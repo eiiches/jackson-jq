@@ -11,7 +11,7 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.path.Path;
 
 public class Tuple implements Expression {
-	private List<Expression> qs;
+	public final List<Expression> qs;
 
 	public Tuple(final List<Expression> qs) {
 		this.qs = qs;

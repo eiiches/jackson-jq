@@ -114,9 +114,9 @@ public class RandomTest {
 				final String name = signature.split("/", 2)[0];
 				if (exclusions.contains(name))
 					return;
-				GENERATORS.add(new RandomGenerator(numArgs, (exprs) -> new FunctionCall(name, exprs, VERSION)));
+				GENERATORS.add(new RandomGenerator(numArgs, (exprs) -> new FunctionCall(null, name, exprs, VERSION)));
 			} else {
-				GENERATORS.add(new RandomGenerator(0, 10, (exprs) -> new FunctionCall(signature, exprs, VERSION)));
+				GENERATORS.add(new RandomGenerator(0, 10, (exprs) -> new FunctionCall(null, signature, exprs, VERSION)));
 			}
 		});
 	}

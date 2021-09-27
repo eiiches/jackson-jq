@@ -10,8 +10,7 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.path.Path;
 
 public class ArrayConstruction implements Expression {
-
-	private Expression q;
+	public final Expression q;
 
 	public ArrayConstruction() {
 		this(null);

@@ -8,8 +8,8 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 
 public class IdentifierKeyFieldConstruction implements FieldConstruction {
-	private final String key;
-	private final Expression value;
+	public final String key;
+	public final Expression value;
 
 	public IdentifierKeyFieldConstruction(final String key, final Expression value) {
 		this.key = key;

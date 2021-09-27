@@ -1,6 +1,9 @@
 package examples;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.FileSystems;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +22,10 @@ import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.Versions;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.Strings;
+import net.thisptr.jackson.jq.module.ModuleLoader;
+import net.thisptr.jackson.jq.module.loaders.BuiltinModuleLoader;
+import net.thisptr.jackson.jq.module.loaders.ChainedModuleLoader;
+import net.thisptr.jackson.jq.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.path.Path;
 
 public class Usage {
@@ -27,12 +34,12 @@ public class Usage {
 	 */
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, URISyntaxException {
 		// First of all, you have to prepare a Scope which s a container of built-in/user-defined functions and variables.
 		Scope rootScope = Scope.newEmptyScope();
 
 		// Use BuiltinFunctionLoader to load built-in functions from the classpath.
-		BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_5, rootScope);
+		BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, rootScope);
 
 		// You can also define a custom function. E.g.
 		rootScope.addFunction("repeat", 1, new Function() {
@@ -43,6 +50,18 @@ public class Usage {
 				});
 			}
 		});
+
+		// For import statements to work, you need to set ModuleLoader. BuiltinModuleLoader uses ServiceLoader mechanism to
+		// load Module implementations.
+		rootScope.setModuleLoader(BuiltinModuleLoader.getInstance());
+
+		// Alternatively, you can also use/combine FileSystemModuleLoader to load .jq/.json files from the file system.
+		rootScope.setModuleLoader(new ChainedModuleLoader(new ModuleLoader[] {
+				BuiltinModuleLoader.getInstance(),
+				new FileSystemModuleLoader(rootScope, Versions.JQ_1_6,
+						FileSystems.getDefault().getPath("").toAbsolutePath(), // search modules in the actual file system
+						Paths.get(Scope.class.getClassLoader().getResource("classpath_modules").toURI())), // or in the classpath resources
+		}));
 
 		// After this initial setup, rootScope should not be modified (via Scope#setValue(...),
 		// Scope#addFunction(...), etc.) so that it can be shared (in a read-only manner) across mutliple threads
@@ -63,7 +82,7 @@ public class Usage {
 
 		// JsonQuery#compile(...) parses and compiles a given expression. The resulting JsonQuery instance
 		// is immutable and thread-safe. It should be reused as possible if you repeatedly use the same expression.
-		JsonQuery q = JsonQuery.compile("$param * 2", Versions.JQ_1_5);
+		JsonQuery q = JsonQuery.compile("$param * 2", Versions.JQ_1_6);
 
 		// You need a JsonNode to use as an input to the JsonQuery. There are many ways you can grab a JsonNode.
 		// In this example, we just parse a JSON text into a JsonNode.

@@ -129,6 +129,7 @@ TOKEN: { <ATSIGN: "@"> }
 TOKEN: { <OPEN_BRACE: "{"> }
 TOKEN: { <CLOSE_BRACE: "}"> }
 
+TOKEN: { <DOUBLE_COLON: "::"> }
 TOKEN: { <COLON: ":"> }
 TOKEN: { <COMMA: ","> }
 
@@ -265,14 +266,96 @@ String KeywordOrIdentifier():
 	{ return text; }
 }
 
-Expression Start():
+ModuleDirective ModuleDirective():
 {
-	Expression q;
+	Expression metadata;
 }
 {
-	q = Expression()
+	<KEYWORD_MODULE>
+	(
+		metadata = Expression()
+	)
+	{ return new ModuleDirective(metadata); }
+}
+
+ImportStatement ImportStatement():
+{
+	Expression pathExpr;
+	String path;
+	String name;
+	Expression metadata = null;
+	boolean dollarImport = false;
+}
+{
+	<KEYWORD_IMPORT>
+	pathExpr = StringInterpolation()
+	{
+		if (!(pathExpr instanceof StringLiteral))
+			throw new IllegalStateException("Import path must be constant");
+		path = ((StringLiteral) pathExpr).value().asText();
+	}
+	<KEYWORD_AS>
+	(
+		<DOLLAR>
+		{ dollarImport = true; }
+		name = IdentifierAsString()
+	|
+		name = IdentifierAsString()
+	)
+	(
+		metadata = Expression()
+	)?
+	{ return new ImportStatement(path, dollarImport, name, metadata); }
+}
+
+ImportStatement IncludeStatement():
+{
+	Expression pathExpr;
+	String path;
+	Expression metadata = null;
+}
+{
+	<KEYWORD_INCLUDE>
+	pathExpr = StringInterpolation()
+	{
+		if (!(pathExpr instanceof StringLiteral))
+			throw new IllegalStateException("Include path must be constant");
+		path = ((StringLiteral) pathExpr).value().asText();
+	}
+	(
+		metadata = Expression()
+	)?
+	{ return new ImportStatement(path, false, null, metadata); }
+}
+
+Expression Start():
+{
+	ImportStatement imp;
+	ModuleDirective moduleDirective = null;
+	final List<ImportStatement> imports = new ArrayList<ImportStatement>();
+	Expression expr;
+}
+{
+	(
+		moduleDirective = ModuleDirective()
+		<SEMICOLON>
+	)?
+	(
+		(
+			imp = ImportStatement()
+		|
+			imp = IncludeStatement()
+		)
+		{ imports.add(imp); }
+		<SEMICOLON>
+	)*
+	expr = Expression()
 	<EOF>
-	{ return q; }
+	{
+		if (moduleDirective == null && imports.isEmpty())
+			return expr;
+		return new TopLevelExpression(moduleDirective, imports, expr);
+	}
 }
 
 Expression Expression():
@@ -674,11 +757,17 @@ Expression VariableAccess():
 {
 	Token t;
 	Expression tmp;
+	String moduleName = null;
 }
 {
 	<DOLLAR>
+	(
+		LOOKAHEAD(2) // both branches starts with <IDENTIFIER> with/without module name
+		moduleName = IdentifierAsString()
+		<DOUBLE_COLON>
+	)?
 	t = <IDENTIFIER>
-	{ return new VariableAccess(t.image); }
+	{ return new VariableAccess(moduleName, t.image); }
 }
 
 Expression ConditionalExpression():
@@ -857,8 +946,14 @@ Expression FunctionCall():
 	Expression tmp;
 	final Token fname;
 	final List<Expression> fargs = new ArrayList<Expression>();
+	String moduleName = null;
 }
 {
+	(
+		LOOKAHEAD(2) // fname and module::fname both starts with <IDENTIFIER>
+		moduleName = IdentifierAsString()
+		<DOUBLE_COLON>
+	)?
 	fname = <IDENTIFIER>
 	(
 		<OPEN_PAR>
@@ -873,7 +968,7 @@ Expression FunctionCall():
 		)?
 		<CLOSE_PAR>
 	)?
-	{ return new FunctionCall(fname.image, fargs, version); }
+	{ return new FunctionCall(moduleName, fname.image, fargs, version); }
 }
 
 Expression FieldAccessor(Expression obj):
@@ -1037,7 +1132,13 @@ Expression StringInterpolation():
 		{ interpolations.add(Pair.of(builder.length(), tmp)); }
 	)*
 	<ENDQUOTE>
-	{ return new StringInterpolation(builder.toString(), interpolations, formatter); }
+	{
+		if (interpolations.isEmpty() && formatter == null) {
+			return new StringLiteral(builder.toString());
+		} else {
+			return new StringInterpolation(builder.toString(), interpolations, formatter);
+		}
+	}
 }
 
 PatternMatcher Matcher():
