@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.thisptr.jackson.jq.internal.annotations.Experimental;
 import net.thisptr.jackson.jq.internal.misc.JsonQueryJacksonModule;
 import net.thisptr.jackson.jq.internal.module.loaders.NullModuleLoader;
 import net.thisptr.jackson.jq.module.Module;
@@ -112,12 +113,14 @@ public class Scope {
 		return getFunctionRecursive(name);
 	}
 
+	@Experimental
 	public Map<String, Function> getLocalFunctions() {
 		if (functions == null)
 			return new HashMap<>();
 		return new HashMap<>(functions);
 	}
 
+	@Experimental
 	public Scope getParentScope() {
 		return parentScope;
 	}
@@ -166,12 +169,14 @@ public class Scope {
 		return mapper;
 	}
 
+	@Experimental
 	public void setImportedData(final String name, final JsonNode data) {
 		if (importedData == null)
 			importedData = new HashMap<>();
 		importedData.put(name, data);
 	}
 
+	@Experimental
 	public JsonNode getImportedData(final String name) {
 		if (importedData != null) {
 			final JsonNode data = importedData.get(name);
@@ -183,18 +188,21 @@ public class Scope {
 		return parentScope.getImportedData(name);
 	}
 
+	@Experimental
 	public void addImportedModule(final String name, final Module module) {
 		if (importedModules == null)
 			importedModules = new HashMap<>();
 		importedModules.computeIfAbsent(name, (dummy) -> new LinkedList<>()).addFirst(module);
 	}
 
+	@Experimental
 	public List<Module> getImportedModules(final String name) { // the last import comes first
 		final List<Module> modules = new ArrayList<>();
 		getImportedModules(modules, name);
 		return modules;
 	}
 
+	@Experimental
 	private void getImportedModules(final List<Module> modules, final String name) {
 		if (importedModules != null) {
 			final List<Module> localModules = importedModules.get(name);
@@ -207,10 +215,12 @@ public class Scope {
 		parentScope.getImportedModules(modules, name);
 	}
 
+	@Experimental
 	public void setModuleLoader(final ModuleLoader moduleLoader) {
 		this.moduleLoader = moduleLoader;
 	}
 
+	@Experimental
 	public ModuleLoader getModuleLoader() {
 		if (this.moduleLoader != null)
 			return this.moduleLoader;
@@ -219,6 +229,7 @@ public class Scope {
 		return parentScope.getModuleLoader();
 	}
 
+	@Experimental
 	public Module getCurrentModule() {
 		if (this.currentModule != null)
 			return this.currentModule;
@@ -227,6 +238,7 @@ public class Scope {
 		return parentScope.getCurrentModule();
 	}
 
+	@Experimental
 	public void setCurrentModule(final Module module) {
 		this.currentModule = module;
 	}

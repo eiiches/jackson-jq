@@ -3,9 +3,11 @@ package net.thisptr.jackson.jq.module.loaders;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.annotations.Experimental;
 import net.thisptr.jackson.jq.module.Module;
 import net.thisptr.jackson.jq.module.ModuleLoader;
 
+@Experimental
 public class ChainedModuleLoader implements ModuleLoader {
 	private final ModuleLoader[] loaders;
 

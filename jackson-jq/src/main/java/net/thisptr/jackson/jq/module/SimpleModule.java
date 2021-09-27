@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.internal.annotations.Experimental;
 
+@Experimental
 public class SimpleModule implements Module {
 	private final Map<String, Function> functions = new HashMap<>();
 

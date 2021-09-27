@@ -24,12 +24,14 @@ import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.internal.annotations.Experimental;
 import net.thisptr.jackson.jq.internal.javacc.ExpressionParser;
 import net.thisptr.jackson.jq.internal.misc.Pair;
 import net.thisptr.jackson.jq.module.Module;
 import net.thisptr.jackson.jq.module.ModuleLoader;
 import net.thisptr.jackson.jq.module.SimpleModule;
 
+@Experimental
 public class FileSystemModuleLoader implements ModuleLoader {
 	private final List<Path> searchPaths;
 	private final Version version;
