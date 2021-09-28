@@ -66,7 +66,7 @@ Branches and versioning
 
 There are currently two development branches.
 
-* `develop/1.x`: This branch (you are viewing), which is currently under development for the future 1.0 release. The API is **not** stable yet. You can find preview releases (not stable, not recommended for production) at [Releases](https://github.com/eiiches/jackson-jq/releases) page (tags: `1.0.0-preview.yyyyMMdd`).
+* `develop/1.x`: This branch (you are viewing), which is currently under development for the future 1.0 release. You can find preview releases at [Releases](https://github.com/eiiches/jackson-jq/releases) page (tags: `1.0.0-preview.yyyyMMdd`). Although the API is not stable yet, I recommend new users to use these releases insetad of 0.x versions, because these releases have more features, better compatibility, and better performance.
 * `develop/0.x`: The development branch for 0.x versions. Features that need breaking API changes will no longer be added. Go to [Releases](https://github.com/eiiches/jackson-jq/releases) and find the latest 0.x.y version.
 
 PRs can be sent to any of the develop/\* branches. The patch will be ported to the other branch(es) if necessary.
