@@ -206,7 +206,7 @@ This table illustrates which features (picked from jq-1.5 manual) are supported 
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`ǀ=`](https://stedolan.github.io/jq/manual/v1.5/#&#124;&#61;)                                                                                                                                                                                                                                      | ○<sup>*8</sup> |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`+=`, `-=`, `*=`, `/=`, `%=`, `//=`](https://stedolan.github.io/jq/manual/v1.5/#&#43;&#61;&#44;&#45;&#61;&#44;&#42;&#61;&#44;&#47;&#61;&#44;&#37;&#61;&#44;&#47;&#47;&#61;)                                                                                                                        | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Complex assignments](https://stedolan.github.io/jq/manual/v1.5/#Complexassignments)                                                                                                                                                                                                                | ○          |
-| [Modules](https://stedolan.github.io/jq/manual/v1.5/#Modules)                                                                                                                                                                                                                                                                      | ×          |
+| [Modules](https://stedolan.github.io/jq/manual/v1.5/#Modules)                                                                                                                                                                                                                                                                      | △          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`import RelativePathString as NAME [<metadata>];`](https://stedolan.github.io/jq/manual/v1.5/#importRelativePathStringasNAME&#91;&#60;metadata&#62;&#93;&#59;)                                                                                                                                     | ×          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`include RelativePathString [<metadata>];`](https://stedolan.github.io/jq/manual/v1.5/#includeRelativePathString&#91;&#60;metadata&#62;&#93;&#59;)                                                                                                                                                 | ×          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`import RelativePathString as $NAME [<metadata>];`](https://stedolan.github.io/jq/manual/v1.5/#importRelativePathStringas&#36;NAME&#91;&#60;metadata&#62;&#93;&#59;)                                                                                                                               | ×          |
@@ -488,10 +488,12 @@ $ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar -n '"x" | indices("")'
 
 </details>
 
-Using jackson-jq-extra module
------------------------------
+Using jackson-jq/extras module
+------------------------------
 
-`jackson-jq-extra` module provides extra functions that you might find useful. These functions do not exist in jq.
+The `jackson-jq/extras` module is a jq module that provides some useful functions that do not exist in jq.
+
+To use this module, you need to add the following Maven dependency and set `BuiltinModuleLoader` (see [jackson-jq/src/test/java/examples/Usage.java](jackson-jq/src/test/java/examples/Usage.java)) to the scope.
 
 ```xml
 <dependency>
@@ -500,6 +502,16 @@ Using jackson-jq-extra module
 	<version>1.0.0-preview.20210926</version>
 </dependency>
 ```
+
+Now, you can import the module in jq:
+
+```jq
+import "jackson-jq/extras" as extras;
+
+extras::uuid4
+```
+
+For a historical reason, adding the Maven dependency also makes the functions directly available to jq. This behavior is deprecated and will be removed at some point in the future.
 
 <details>
 <summary>List of Functions</summary>
