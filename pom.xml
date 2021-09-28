@@ -4,7 +4,7 @@
 	<groupId>net.thisptr</groupId>
 	<artifactId>jackson-jq-parent</artifactId>
 	<packaging>pom</packaging>
-	<version>1.0.0-preview.20210928</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<name>${project.groupId}:${project.artifactId}</name>
 	<description>jq for Jackson JSON Processor</description>
 	<url>https://github.com/eiiches/jackson-jq</url>
@@ -28,7 +28,7 @@
 		<connection>scm:git:git@github.com:eiiches/jackson-jq.git</connection>
 		<developerConnection>scm:git:git@github.com:eiiches/jackson-jq.git</developerConnection>
 		<url>git@github.com:juven/git-demo.git</url>
-		<tag>1.0.0-preview.20210928</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<modules>
