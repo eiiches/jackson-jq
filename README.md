@@ -12,13 +12,13 @@ Usage
 
 First, you need Java 8 or later.
 
-If you use Maven, add the following snippet to the `<dependencies>` section of your POM. For instructions for other build tools (Gradle, etc.), visit [jackson-jq](https://search.maven.org/artifact/net.thisptr/jackson-jq/1.0.0-preview.20210926/jar) on search.maven.org.
+If you use Maven, add the following snippet to the `<dependencies>` section of your POM. For instructions for other build tools (Gradle, etc.), visit [jackson-jq](https://search.maven.org/artifact/net.thisptr/jackson-jq/1.0.0-preview.20210928/jar) on search.maven.org.
 
 ```xml
 <dependency>
 	<groupId>net.thisptr</groupId>
 	<artifactId>jackson-jq</artifactId>
-	<version>1.0.0-preview.20210926</version>
+	<version>1.0.0-preview.20210928</version>
 </dependency>
 ```
 
@@ -32,9 +32,9 @@ To test a query quickly, we provide jackson-jq CLI.
 *Please note that jackson-jq is a Java library and the CLI is provided solely for debugging/testing purpose (and not for production). The command-line options might change without notice.*
 
 ```sh
-$ curl -LO https://repo1.maven.org/maven2/net/thisptr/jackson-jq-cli/1.0.0-preview.20210926/jackson-jq-cli-1.0.0-preview.20210926.jar
+$ curl -LO https://repo1.maven.org/maven2/net/thisptr/jackson-jq-cli/1.0.0-preview.20210928/jackson-jq-cli-1.0.0-preview.20210928.jar
 
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar --help
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar --help
 usage: jackson-jq [OPTIONS...] QUERY
  -c,--compact      compact instead of pretty-printed output
  -h,--help         print this message
@@ -42,7 +42,7 @@ usage: jackson-jq [OPTIONS...] QUERY
  -n,--null-input   use `null` as the single input value
  -r,--raw          output raw strings, not JSON texts
 
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar '.foo'
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar '.foo'
 {"foo": 42}
 42
 ```
@@ -50,11 +50,11 @@ $ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar '.foo'
 To test a query with a specific jq version,
 
 ```sh
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar --jq 1.5 'join("-")'
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar --jq 1.5 'join("-")'
 ["1", 2]
 jq: error: string ("-") and number (2) cannot be added
 
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar --jq 1.6 'join("-")' # jq-1.6 can join any values, not only strings
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar --jq 1.6 'join("-")' # jq-1.6 can join any values, not only strings
 ["1", 2]
 "1-2"
 ```
@@ -206,7 +206,7 @@ This table illustrates which features (picked from jq-1.5 manual) are supported 
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`ǀ=`](https://stedolan.github.io/jq/manual/v1.5/#&#124;&#61;)                                                                                                                                                                                                                                      | ○<sup>*8</sup> |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`+=`, `-=`, `*=`, `/=`, `%=`, `//=`](https://stedolan.github.io/jq/manual/v1.5/#&#43;&#61;&#44;&#45;&#61;&#44;&#42;&#61;&#44;&#47;&#61;&#44;&#37;&#61;&#44;&#47;&#47;&#61;)                                                                                                                        | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Complex assignments](https://stedolan.github.io/jq/manual/v1.5/#Complexassignments)                                                                                                                                                                                                                | ○          |
-| [Modules](https://stedolan.github.io/jq/manual/v1.5/#Modules)                                                                                                                                                                                                                                                                      | ×          |
+| [Modules](https://stedolan.github.io/jq/manual/v1.5/#Modules)                                                                                                                                                                                                                                                                      | △          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`import RelativePathString as NAME [<metadata>];`](https://stedolan.github.io/jq/manual/v1.5/#importRelativePathStringasNAME&#91;&#60;metadata&#62;&#93;&#59;)                                                                                                                                     | ×          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`include RelativePathString [<metadata>];`](https://stedolan.github.io/jq/manual/v1.5/#includeRelativePathString&#91;&#60;metadata&#62;&#93;&#59;)                                                                                                                                                 | ×          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`import RelativePathString as $NAME [<metadata>];`](https://stedolan.github.io/jq/manual/v1.5/#importRelativePathStringas&#36;NAME&#91;&#60;metadata&#62;&#93;&#59;)                                                                                                                               | ×          |
@@ -236,9 +236,9 @@ $ jq -n '1 + 3 as $a | ($a * 2)' # interpreted as 1 + (3 as $a | ($a * 2))
 whereas jackson-jq consistently interprets them as `(1 + 3)` whether `as $a` is used or not:
 
 ```console
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar -n '1 + 3 | (. * 2)' # interpreted as (1 + 3) | (. * 2)
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar -n '1 + 3 | (. * 2)' # interpreted as (1 + 3) | (. * 2)
 8
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
 8
 ```
 
@@ -247,7 +247,7 @@ $ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar -n '1 + 3 as $a | ($a * 2)
 ```console
 $ jq -n '1 + 3 as $a | ($a * 2)' # interpreted as 1 + (3 as $a | ($a * 2))
 7
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
 8
 ```
 
@@ -274,7 +274,7 @@ If the function with the same is defined more than once at the same scope, jacks
 ```console
 $ jq -n 'def f: 1; def g: f; def f: 2; g'
 1
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar -n 'def f: 1; def g: f; def f: 2; g'
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar -n 'def f: 1; def g: f; def f: 2; g'
 2
 ```
 
@@ -283,7 +283,7 @@ $ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar -n 'def f: 1; def g: f; de
 Avoid using the duplicate function name.
 
 ```console
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar -n 'def f1: 1; def g: f1; def f2: 2; g'
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar -n 'def f1: 1; def g: f1; def f2: 2; g'
 1
 ```
 
@@ -353,7 +353,7 @@ jq: error: Division by zero? at <top-level>, line 1:
 jq: 1 compile error
 $ jq '. / 0' <<< 0
 jq: error (at <stdin>:1): number (0) and number (0) cannot be divided because the divisor is zero
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar -n '0 / 0'
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar -n '0 / 0'
 jq: error: number (0) and number (0) cannot be divided because the divisor is zero
 ```
 
@@ -386,9 +386,9 @@ $ jq-1.2 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
   2,
   3
 ]
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar --jq 1.6 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar --jq 1.6 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
 jq: error: `|= empty` is undefined. See https://github.com/stedolan/jq/issues/897
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar --jq 1.5 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar --jq 1.5 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
 jq: error: `|= empty` is undefined. See https://github.com/stedolan/jq/issues/897
 ```
 
@@ -397,9 +397,9 @@ jq: error: `|= empty` is undefined. See https://github.com/stedolan/jq/issues/89
 You can use `_modify/2` if you really want to the original behavior.
 
 ```console
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar --jq 1.6 -n '[1,2,3] | _modify((.[] | select(. > 1)); empty)'
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar --jq 1.6 -n '[1,2,3] | _modify((.[] | select(. > 1)); empty)'
 [ 1, 3 ]
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar --jq 1.5 -n '[1,2,3] | _modify((.[] | select(. > 1)); empty)'
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar --jq 1.5 -n '[1,2,3] | _modify((.[] | select(. > 1)); empty)'
 null
 ```
 
@@ -419,7 +419,7 @@ jq 1.5
 ```console
 $ jq-1.5 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
 ["foo"]
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar --jq 1.5 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar --jq 1.5 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
 jq: error: Invalid path expression with result 1
 ```
 
@@ -428,7 +428,7 @@ jq 1.6
 ```console
 $ jq-1.6 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
 jq: error (at <stdin>:1): Invalid path expression with result 1
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar --jq 1.6 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar --jq 1.6 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
 jq: error: Invalid path expression with result 1
 ```
 
@@ -452,7 +452,7 @@ $ jq -n 'label $a | label $b | try (break $b) catch .'
 {
   "__jq": 1
 }
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar -n 'label $a | label $b | try (break $b) catch .'
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar -n 'label $a | label $b | try (break $b) catch .'
 {
   "__jq" : 0
 }
@@ -482,24 +482,36 @@ $ jq-1.6 -n '"x" | indices("")' # stuck in infinite loop
 ^C
 $ jq-1.6-83-gb52fc10 -n '"x" | indices("")'
 []
-$ java -jar jackson-jq-cli-1.0.0-preview.20210926.jar -n '"x" | indices("")'
+$ java -jar jackson-jq-cli-1.0.0-preview.20210928.jar -n '"x" | indices("")'
 [ ]
 ```
 
 </details>
 
-Using jackson-jq-extra module
------------------------------
+Using jackson-jq/extras module
+------------------------------
 
-`jackson-jq-extra` module provides extra functions that you might find useful. These functions do not exist in jq.
+The `jackson-jq/extras` module is a jq module that provides some useful functions that do not exist in jq.
+
+To use this module, you need to add the following Maven dependency and set `BuiltinModuleLoader` (see [jackson-jq/src/test/java/examples/Usage.java](jackson-jq/src/test/java/examples/Usage.java)) to the scope.
 
 ```xml
 <dependency>
 	<groupId>net.thisptr</groupId>
 	<artifactId>jackson-jq-extra</artifactId>
-	<version>1.0.0-preview.20210926</version>
+	<version>1.0.0-preview.20210928</version>
 </dependency>
 ```
+
+Now, you can import the module in jq:
+
+```jq
+import "jackson-jq/extras" as extras;
+
+extras::uuid4
+```
+
+For a historical reason, adding the Maven dependency also makes the functions directly available to jq. This behavior is deprecated and will be removed at some point in the future.
 
 <details>
 <summary>List of Functions</summary>
