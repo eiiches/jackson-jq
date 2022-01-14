@@ -13,7 +13,7 @@ jobs:
       uses: actions/setup-java@v2.5.0
       with:
         java-version: '8'
-        distribution: 'zulu'
+        distribution: 'temurin'
 
     - name: Download jq-1.5 and jq-1.6
       run: |
