@@ -31,3 +31,6 @@ jobs:
 
     - name: Build & Deploy
       run: 'PATH="$HOME/bin:$PATH" mvn clean deploy'
+      
+    - name: Test
+      run: 'PATH="$HOME/bin:$PATH" mvn test'
