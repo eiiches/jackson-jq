@@ -284,6 +284,11 @@
 					<artifactId>maven-gpg-plugin</artifactId>
 					<version>3.0.1</version>
 				</plugin>
+				<plugin>
+					<groupId>org.jboss.jandex</groupId>
+					<artifactId>jandex-maven-plugin</artifactId>
+					<version>1.2.2</version>
+				</plugin>
 			</plugins>
 		</pluginManagement>
 	</build>

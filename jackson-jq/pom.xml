@@ -67,6 +67,33 @@
 					</instructions>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.jboss.jandex</groupId>
+				<artifactId>jandex-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>make-index</id>
+						<goals>
+							<goal>jandex</goal>
+						</goals>
+						<configuration>
+							<verbose>true</verbose>
+							<processDefaultFileSet>false</processDefaultFileSet>
+							<fileSets>
+								<fileSet>
+									<directory>${project.build.outputDirectory}</directory>
+									<includes>
+										<include>net/thisptr/jackson/jq/internal/filters/**/*.class</include>
+										<include>net/thisptr/jackson/jq/internal/functions/**/*.class</include>
+										<include>net/thisptr/jackson/jq/BuiltinFunction.class</include>
+										<include>net/thisptr/jackson/jq/Function.class</include>
+									</includes>
+								</fileSet>
+							</fileSets>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 </project>
