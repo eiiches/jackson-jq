@@ -88,6 +88,9 @@
 										<include>net/thisptr/jackson/jq/BuiltinFunction.class</include>
 										<include>net/thisptr/jackson/jq/Function.class</include>
 									</includes>
+									<excludes>
+										<exclude>net/thisptr/jackson/jq/internal/functions/EnvFunction.class</exclude>
+									</excludes>
 								</fileSet>
 							</fileSets>
 						</configuration>
