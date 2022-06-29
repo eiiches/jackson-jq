@@ -12,15 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import net.thisptr.jackson.jq.internal.IsolatedScopeQuery;
+import net.thisptr.jackson.jq.internal.JqJson;
 import net.thisptr.jackson.jq.internal.JsonQueryFunction;
 import net.thisptr.jackson.jq.internal.javacc.ExpressionParser;
-import net.thisptr.jackson.jq.internal.misc.VersionRangeDeserializer;
 
 /**
  * Use {@code BuiltinFunctionLoader.getInstance()} to obtain the instance.
@@ -35,28 +33,6 @@ public class BuiltinFunctionLoader {
 	private BuiltinFunctionLoader() {}
 
 	private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper();
-
-	@JsonIgnoreProperties(ignoreUnknown = true)
-	private static class JqJson {
-		@JsonIgnoreProperties(ignoreUnknown = true)
-		private static class JqFuncDef {
-			@JsonProperty("name")
-			public String name;
-
-			@JsonProperty("args")
-			public List<String> args = new ArrayList<>();
-
-			@JsonProperty("body")
-			public String body;
-
-			@JsonProperty("version")
-			@JsonDeserialize(using = VersionRangeDeserializer.class)
-			public VersionRange version;
-		}
-
-		@JsonProperty("functions")
-		public List<JqFuncDef> functions = new ArrayList<>();
-	}
 
 	private static final String CONFIG_PATH = resolvePath(Scope.class, "jq.json");
 
