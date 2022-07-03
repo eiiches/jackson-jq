@@ -8,19 +8,19 @@
 	<parent>
 		<groupId>net.thisptr</groupId>
 		<artifactId>jackson-jq-parent</artifactId>
-		<version>1.0.0-preview.20210928</version>
+		<version>1.0.0-preview.20220704</version>
 	</parent>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.jruby.joni</groupId>
 			<artifactId>joni</artifactId>
-			<version>2.1.41</version>
+			<version>2.1.43</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>31.0.1-jre</version>
+			<version>31.1-jre</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -66,6 +66,36 @@
 						<Include-Resource>META-INF/services/net.thisptr.jackson.jq.Function=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.Function</Include-Resource>
 					</instructions>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.jboss.jandex</groupId>
+				<artifactId>jandex-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>make-index</id>
+						<goals>
+							<goal>jandex</goal>
+						</goals>
+						<configuration>
+							<verbose>true</verbose>
+							<processDefaultFileSet>false</processDefaultFileSet>
+							<fileSets>
+								<fileSet>
+									<directory>${project.build.outputDirectory}</directory>
+									<includes>
+										<include>net/thisptr/jackson/jq/internal/filters/**/*.class</include>
+										<include>net/thisptr/jackson/jq/internal/functions/**/*.class</include>
+										<include>net/thisptr/jackson/jq/BuiltinFunction.class</include>
+										<include>net/thisptr/jackson/jq/Function.class</include>
+									</includes>
+									<excludes>
+										<exclude>net/thisptr/jackson/jq/internal/functions/EnvFunction.class</exclude>
+									</excludes>
+								</fileSet>
+							</fileSets>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
