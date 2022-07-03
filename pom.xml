@@ -79,7 +79,7 @@
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.22.0</version>
+			<version>3.23.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -210,7 +210,7 @@
 				<plugin>
 					<groupId>org.apache.felix</groupId>
 					<artifactId>maven-bundle-plugin</artifactId>
-					<version>5.1.4</version>
+					<version>5.1.6</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -270,7 +270,7 @@
 						<dependency>
 							<groupId>net.java.dev.javacc</groupId>
 							<artifactId>javacc</artifactId>
-							<version>7.0.10</version>
+							<version>7.0.11</version>
 						</dependency>
 					</dependencies>
 				</plugin>
