@@ -8,14 +8,14 @@
 	<parent>
 		<groupId>net.thisptr</groupId>
 		<artifactId>jackson-jq-parent</artifactId>
-		<version>1.0.0-preview.20220704</version>
+		<version>1.0.0-preview.20220705</version>
 	</parent>
 
 	<dependencies>
 		<dependency>
 			<groupId>net.thisptr</groupId>
 			<artifactId>jackson-jq</artifactId>
-			<version>1.0.0-preview.20220704</version>
+			<version>1.0.0-preview.20220705</version>
 		</dependency>
 	</dependencies>
 
@@ -26,7 +26,7 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Include-Resource>META-INF/services/net.thisptr.jackson.jq.Function=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.Function,META-INF/services/net.thisptr.jackson.jq.module.Module=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.module.Module</Include-Resource>
+						<Include-Resource>META-INF/services/net.thisptr.jackson.jq.Function=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.Function,META-INF/services/net.thisptr.jackson.jq.module.Module=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.module.Module,META-INF/jandex.idx=${project.build.outputDirectory}/META-INF/jandex.idx</Include-Resource>
 					</instructions>
 				</configuration>
 			</plugin>
