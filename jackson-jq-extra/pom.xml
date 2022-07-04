@@ -26,7 +26,7 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Include-Resource>META-INF/services/net.thisptr.jackson.jq.Function=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.Function,META-INF/services/net.thisptr.jackson.jq.module.Module=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.module.Module</Include-Resource>
+						<Include-Resource>META-INF/services/net.thisptr.jackson.jq.Function=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.Function,META-INF/services/net.thisptr.jackson.jq.module.Module=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.module.Module,META-INF/jandex.idx=${project.build.outputDirectory}/META-INF/jandex.idx</Include-Resource>
 					</instructions>
 				</configuration>
 			</plugin>
