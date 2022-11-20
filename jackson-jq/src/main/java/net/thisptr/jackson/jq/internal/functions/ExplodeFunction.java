@@ -25,8 +25,8 @@ public class ExplodeFunction implements Function {
 		Preconditions.checkInputType("explode", in, JsonNodeType.STRING);
 
 		final ArrayNode result = scope.getObjectMapper().createArrayNode();
-		for (final char ch : in.asText().toCharArray())
-			result.add((int) ch);
+		for (final int ch : in.asText().codePoints().toArray())
+			result.add(ch);
 		output.emit(result, null);
 	}
 }
