@@ -16,14 +16,20 @@ import net.thisptr.jackson.jq.exception.JsonQueryUserException;
 import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
-@BuiltinFunction("error/1")
+@BuiltinFunction({ "error/0", "error/1" })
 public class ErrorFunction implements Function {
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		args.get(0).apply(scope, in, (out) -> {
-			if (out.isNull())
+		if (args.size() == 0) {
+			if (in.isNull())
 				return;
-			throw new JsonQueryUserException(out);
-		});
+			throw new JsonQueryUserException(in);
+		} else {
+			args.get(0).apply(scope, in, (out) -> {
+				if (out.isNull())
+					return;
+				throw new JsonQueryUserException(out);
+			});
+		}
 	}
 }
