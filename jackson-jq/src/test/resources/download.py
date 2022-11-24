@@ -106,7 +106,7 @@ def load_jq_tests_from_url(url):
 
 def load_jq_manual(url):
     with urllib2.urlopen(url) as f:
-        manual = yaml.load(f)
+        manual = yaml.safe_load(f)
 
     result = []
     for section in manual['sections']:
@@ -174,9 +174,9 @@ if __name__ == '__main__':
 
     emit_tests('[1.5, 1.5]', load_jq_tests_from_url('https://raw.githubusercontent.com/stedolan/jq/jq-1.5/tests/jq.test'), 'tests/jq-1.5.yaml')
     emit_tests('[1.5, 1.5]', load_jq_tests_from_url('https://raw.githubusercontent.com/stedolan/jq/jq-1.5/tests/onig.test'), 'tests/jq-1.5-onig.yaml')
-    emit_tests('[1.5, 1.5]', load_jq_manual('https://raw.githubusercontent.com/stedolan/jq/master/docs/content/3.manual/v1.5/manual.yml'), 'tests/jq-1.5-manual.yaml')
+    emit_tests('[1.5, 1.5]', load_jq_manual('https://raw.githubusercontent.com/stedolan/jq/master/docs/content/manual/v1.5/manual.yml'), 'tests/jq-1.5-manual.yaml')
 
     emit_tests('[1.6, 1.6]', load_jq_tests_from_url('https://raw.githubusercontent.com/stedolan/jq/master/tests/jq.test'), 'tests/jq-1.6.yaml')
     emit_tests('[1.6, 1.6]', load_jq_tests_from_url('https://raw.githubusercontent.com/stedolan/jq/master/tests/onig.test'), 'tests/jq-1.6-onig.yaml')
-    emit_tests('[1.6, 1.6]', load_jq_manual('https://raw.githubusercontent.com/stedolan/jq/master/docs/content/3.manual/manual.yml'), 'tests/jq-1.6-manual.yaml')
+    emit_tests('[1.6, 1.6]', load_jq_manual('https://raw.githubusercontent.com/stedolan/jq/master/docs/content/manual/manual.yml'), 'tests/jq-1.6-manual.yaml')
 

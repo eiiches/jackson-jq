@@ -34,8 +34,8 @@ def titleescape(string):
     return ''.join(chars)
 
 def main():
-    with urllib2.urlopen('https://raw.githubusercontent.com/stedolan/jq/master/docs/content/3.manual/v1.5/manual.yml') as f:
-        manual = yaml.load(f)
+    with urllib2.urlopen('https://raw.githubusercontent.com/stedolan/jq/master/docs/content/manual/v1.5/manual.yml') as f:
+        manual = yaml.safe_load(f)
 
     sections = []
     for section in manual['sections']:
