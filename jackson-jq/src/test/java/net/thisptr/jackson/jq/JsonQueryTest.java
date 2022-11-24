@@ -203,7 +203,7 @@ public class JsonQueryTest {
 		}
 
 		if (tc.failing)
-			assertThat(failed).describedAs("The test case is marked as failing but completed successfully").isTrue();
+			assertThat(failed).as("succeeded but marked as failing: %s", command).isTrue();
 	}
 
 	@ParameterizedTest
