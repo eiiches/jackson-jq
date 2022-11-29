@@ -15,6 +15,6 @@ public class IsNanFunction extends JsonPredicateFunction {
 	}
 
 	private static boolean test(final JsonNode value) {
-		return (value.isDouble() || value.isFloat()) && Double.isNaN(value.asDouble());
+		return value.isNumber() && Double.isNaN(value.asDouble());
 	}
 }
