@@ -640,14 +640,14 @@
 		]
 	},
 	{
-		"q": "(null, 1.7976931348623157e+308, nan, infinite, -nan, -infinite) | [type, tojson, isinfinite, isnan]",
+		"q": "(null, 1.7976931348623157e+308, nan, infinite, -nan, -infinite) | [type, tojson, isinfinite, isfinite, isnan]",
 		"out": [
-			["null", "null", false, false],
-			["number", "1.7976931348623157e+308", false, false],
-			["number", "null", false, true],
-			["number", "1.7976931348623157e+308", true, false],
-			["number", "null", false, true],
-			["number", "-1.7976931348623157e+308", true, false]
+			["null", "null", false, false, false],
+			["number", "1.7976931348623157e+308", false, true, false],
+			["number", "null", false, true, true],
+			["number", "1.7976931348623157e+308", true, false, false],
+			["number", "null", false, true, true],
+			["number", "-1.7976931348623157e+308", true, false, false]
 		]
 	},
 	{
