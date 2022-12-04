@@ -90,6 +90,15 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
+	@BuiltinFunction(value = "round/0", version = "[1.6, )")
+	public static class RoundFunction extends MathFunction {
+		@Override
+		protected double f(final double v) {
+			return v >= 0 ? Math.round(v) : -Math.round(-v);
+		}
+	}
+
+	@AutoService(Function.class)
 	@BuiltinFunction("asin/0")
 	public static class AsinFunction extends MathFunction {
 		@Override
