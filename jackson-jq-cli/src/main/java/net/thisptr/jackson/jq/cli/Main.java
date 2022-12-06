@@ -29,13 +29,15 @@ import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.Versions;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.functions.EnvFunction;
+import net.thisptr.jackson.jq.internal.misc.JsonQueryJacksonModule;
 import net.thisptr.jackson.jq.module.ModuleLoader;
 import net.thisptr.jackson.jq.module.loaders.BuiltinModuleLoader;
 import net.thisptr.jackson.jq.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.module.loaders.FileSystemModuleLoader;
 
 public class Main {
-	private static final ObjectMapper MAPPER = new ObjectMapper();
+	private static final ObjectMapper MAPPER = new ObjectMapper()
+			.registerModule(JsonQueryJacksonModule.getInstance());
 
 	private static final Option OPT_COMPACT = Option.builder("c")
 			.longOpt("compact")
