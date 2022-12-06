@@ -64,6 +64,16 @@
   out:
   - "Cannot update field at array index of array"
 
+- q: '.[[]]'
+  in: ["a", "b", "a", "a", "b"]
+  out:
+  - []
+
+- q: 'path(.[[]])'
+  in: ["a", "b", "a", "a", "b"]
+  out:
+  - [[]]
+
 - q: '.[2:0] = [999]'
   in: [0, 1, 2, 3, 4]
   out:
