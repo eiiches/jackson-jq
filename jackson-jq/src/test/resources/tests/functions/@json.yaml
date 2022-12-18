@@ -2,3 +2,10 @@
   in: 0.0
   out:
   - "0"
+  v: "(, 1.6]"
+- q: '@json'
+  in: 0.0
+  out:
+  - "0.0"
+  v: "(1.6, ]"
+  failing: true

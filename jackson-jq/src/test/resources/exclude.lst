@@ -1,18 +1,31 @@
+# Environment variables
+$ENV.PAGER
 env.PAGER
+
+# Duplicate function name
 def f: .+1; def g: f; def f: .+100; def f(a):a+.+11; [(g|f(20)), f]
+def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g; def f: 4; [f, def f: g; def g: 5; f, g]+[f,g]
+
+# $__loc__
 try error("\($__loc__)") catch .
 
 # modules
-modulemeta
-include "c"; [a, c]
 import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]
-import "test_bind_order" as check; check::check
 import "c" as foo; [foo::a, foo::c]
+include "c"; [a, c]
+import "data" as $e; import "data" as $d; [$d[].this,$e[].that,$d::d[].this,$e::e[].that]|join(";")
+include "shadow1"; e
+include "shadow1"; include "shadow2"; e
+import "shadow1" as f; import "shadow2" as f; import "shadow1" as e; [e::e, f::e]
+modulemeta
+modulemeta | .deps |= length
+import "test_bind_order" as check; check::check
 
 # bsearch
 bsearch(0)
 bsearch(4)
 bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end
+bsearch(0,2,4)
 
 # time
 gmtime
@@ -29,11 +42,10 @@ strftime("%A, %B %e, %Y")
 fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))
 [1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])]
 
-# destructuring 1.6
-. as {$a, b: [$c, {$d}]} | [$a, $c, $d]
-. as {$a, $b:[$c, $d]}| [$a, $b, $c, $d]
-
 # destructuring with alternation
+.[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}
+.[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}
+.[] as [$a] ?// [$b] | if $a != null then error("err: \($a)") else {$a,$b} end
 .[] | . as {$a, b: [$c, {$d}]} ?// [$a, {$b}, $e] ?// $f | [$a, $b, $c, $d, $e, $f]
 try (.[] | . as {a:$a} ?// {a:$a} ?// {a:$a} | $a) catch ("__ERROR__")
 try (.[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a) catch ("__ERROR__")
@@ -56,13 +68,37 @@ try ([[3],[4],[5],6] | .[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a) catch ("__ERROR
 INDEX(range(5)|[., "foo\(.)"]; .[0])
 JOIN({"0":[0,"abc"],"1":[1,"bcd"],"2":[2,"def"],"3":[3,"efg"],"4":[4,"fgh"]}; .[0]|tostring)
 range(5;10)|IN(range(10))
+range(5;13)|IN(range(0;10;3))
 range(10;12)|IN(range(10))
 IN(range(10;20); range(10))
 IN(range(5;20); range(10))
+"-1"|IN(builtins[] / "/"|.[1])
+
+# builtins
+builtins|any(.[:1] == "_")
 
 # isempty
 isempty(empty)
 isempty(range(3))
 isempty(1,error("foo"))
+
+# error
+[repeat(.*2, error)?]
+[limit(0; error)]
+[limit(1; 1, error)]
+any(true, error; .)
+all(false, error; .)
+
+# Number precision
+map([., . == 1]) | tojson
+. as $big | [$big, $big + 1] | map(. > 10000000000000000000000000000000)
+13911860366432393 == 13911860366432392
+. - 10
+.[0] - 10
+.x - 10
+
+# if statement without else
+[if true then 3 end]
+[if false then 3 end]
 
 # vim: ft=jq

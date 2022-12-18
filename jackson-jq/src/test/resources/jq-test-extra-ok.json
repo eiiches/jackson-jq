@@ -784,7 +784,15 @@
 		"out": [
 			{"__jq": 0},
 			1
-		]
+		],
+		"v": "(, 1.6]"
+	},
+	{
+		"q": "label $out | label $out2 | ((try (break $out) catch .), (try (label $out2 | (1, break $out2)) catch .))",
+		"in": null,
+		"out": [],
+		"v": "(1.6, ]",
+		"failing": true
 	},
 	{
 		"q": "try (\"abcabc\" | sub(\"a\", \"b\", error(\"foo\"); \"1\", \"2\", error(\"bar\"); \"\", \"g\", error(\"baz\"))) catch .",

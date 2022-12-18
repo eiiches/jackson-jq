@@ -7,4 +7,5 @@
   out:
   - true
   failing: true
+  v: "(, 1.6]"
   justification: "This is more safe."

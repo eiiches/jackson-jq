@@ -7,6 +7,13 @@
   in: [0.0]
   out:
   - "0"
+  v: "(, 1.6]"
+- q: '@tsv'
+  in: [0.0]
+  out:
+  - "0.0"
+  v: "(1.6, ]"
+  failing: true
 
 - q: '[0,null,nan,infinite] | @csv'
   out:

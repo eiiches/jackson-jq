@@ -2,10 +2,25 @@
   in: 0.0
   out:
   - "0"
+  v: "(, 1.6]"
+- q: '@html'
+  in: 0.0
+  out:
+  - "0.0"
+  v: "(1.6, ]"
+  failing: true
+
 - q: '@html'
   in: [0.0]
   out:
   - "[0]"
+  v: "(, 1.6]"
+- q: '@html'
+  in: [0.0]
+  out:
+  - "[0.0]"
+  v: "(1.6, ]"
+  failing: true
 
 - q: '[range(0; 128)] | implode | @html'
   out:

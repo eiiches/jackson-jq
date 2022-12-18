@@ -2,10 +2,24 @@
   in: 0.0
   out:
   - "0"
+  v: "(, 1.6]"
+- q: '@sh'
+  in: 0.0
+  out:
+  - "0.0"
+  v: "(1.6, ]"
+  failing: true
 - q: '@sh'
   in: [0.0]
   out:
   - "0"
+  v: "(, 1.6]"
+- q: '@sh'
+  in: [0.0]
+  out:
+  - "0.0"
+  v: "(1.6, ]"
+  failing: true
 - q: '@sh'
   in: "\u0000"
   out:

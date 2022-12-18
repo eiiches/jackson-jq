@@ -1,6 +1,17 @@
 - {"q":"(1 * \"bar\")","in":[[0.0],true],"out":["bar"]}
 - {"q":"(0 * (\"baz\" * 1.0))","in":2,"out":[null]}
-- {"q":"(\"baz\" * 0.5)","in":"bar","out":["baz"]}
+
+- q: '("baz" * 0.5)'
+  in: 'bar'
+  out:
+  - "baz"
+  v: "(, 1.6]"
+- q: '("baz" * 0.5)'
+  in: 'bar'
+  out:
+  - null
+  v: "(1.6, ]"
+  failing: true
 
 - q: '3 * "foo"'
   out:
