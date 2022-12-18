@@ -29,7 +29,7 @@ public class TrueJqEvaluator implements Evaluator {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
 	public static String executable(final Version version) {
-		return "jq-" + version.toString();
+		return Versions.LATEST.equals(version) ? "jq" : "jq-" + version.toString();
 	}
 
 	public static boolean hasJq(final Version version) {
@@ -48,6 +48,7 @@ public class TrueJqEvaluator implements Evaluator {
 	@Override
 	public Result evaluate(final String expr, final JsonNode in, final Version version, final long timeout) throws IOException, InterruptedException, TimeoutException {
 		final ProcessBuilder pb = new ProcessBuilder(executable(version), "-c", expr);
+		pb.environment().put("PAGER", "less");
 		final Process p = pb.start();
 
 		try (final OutputStream stdin = p.getOutputStream()) {

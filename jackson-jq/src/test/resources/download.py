@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import decimal
 import json
 import yaml
 import yaml.nodes
@@ -31,6 +32,8 @@ class TestCase(object):
                 return node
             if isinstance(value, str):
                 return yaml.nodes.ScalarNode('tag:yaml.org,2002:str', value, style='"')
+            if isinstance(value, decimal.Decimal):
+                return yaml.nodes.ScalarNode('tag:yaml.org,2002:float', str(value), style=None)
             if isinstance(value, (int, float, bool)):
                 node = dumper.represent_data(value)
                 node.style = None
@@ -124,7 +127,7 @@ def load_jq_manual(url):
                 if not isinstance(example['input'], str):
                     in_ = example['input']
                 else:
-                    in_ = json.loads(example['input'])
+                    in_ = json.loads(example['input'], parse_float=decimal.Decimal)
 
                 result.append(TestCase(example['program'], in_, out))
     return result
@@ -176,7 +179,11 @@ if __name__ == '__main__':
     emit_tests('[1.5, 1.5]', load_jq_tests_from_url('https://raw.githubusercontent.com/stedolan/jq/jq-1.5/tests/onig.test'), 'tests/jq-1.5-onig.yaml')
     emit_tests('[1.5, 1.5]', load_jq_manual('https://raw.githubusercontent.com/stedolan/jq/master/docs/content/manual/v1.5/manual.yml'), 'tests/jq-1.5-manual.yaml')
 
-    emit_tests('[1.6, 1.6]', load_jq_tests_from_url('https://raw.githubusercontent.com/stedolan/jq/master/tests/jq.test'), 'tests/jq-1.6.yaml')
-    emit_tests('[1.6, 1.6]', load_jq_tests_from_url('https://raw.githubusercontent.com/stedolan/jq/master/tests/onig.test'), 'tests/jq-1.6-onig.yaml')
-    emit_tests('[1.6, 1.6]', load_jq_manual('https://raw.githubusercontent.com/stedolan/jq/master/docs/content/manual/manual.yml'), 'tests/jq-1.6-manual.yaml')
+    emit_tests('[1.6, 1.6]', load_jq_tests_from_url('https://raw.githubusercontent.com/stedolan/jq/jq-1.6/tests/jq.test'), 'tests/jq-1.6.yaml')
+    emit_tests('[1.6, 1.6]', load_jq_tests_from_url('https://raw.githubusercontent.com/stedolan/jq/jq-1.6/tests/onig.test'), 'tests/jq-1.6-onig.yaml')
+    emit_tests('[1.6, 1.6]', load_jq_manual('https://raw.githubusercontent.com/stedolan/jq/master/docs/content/manual/v1.6/manual.yml'), 'tests/jq-1.6-manual.yaml')
+
+    emit_tests('(1.6, ]', load_jq_tests_from_url('https://raw.githubusercontent.com/stedolan/jq/master/tests/jq.test'), 'tests/jq-latest.yaml')
+    emit_tests('(1.6, ]', load_jq_tests_from_url('https://raw.githubusercontent.com/stedolan/jq/master/tests/onig.test'), 'tests/jq-latest-onig.yaml')
+    emit_tests('(1.6, ]', load_jq_manual('https://raw.githubusercontent.com/stedolan/jq/master/docs/content/manual/manual.yml'), 'tests/jq-latest-manual.yaml')
 

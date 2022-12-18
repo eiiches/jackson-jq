@@ -10,8 +10,6 @@ public class Version implements Comparable<Version> {
 	public final int major;
 	public final int minor;
 
-	public static final Version LATEST = new Version(Integer.MAX_VALUE, Integer.MAX_VALUE);
-
 	Version(final int major, final int minor) {
 		this.major = major;
 		this.minor = minor;
@@ -73,6 +71,8 @@ public class Version implements Comparable<Version> {
 
 	@Override
 	public String toString() {
+		if (major == Integer.MAX_VALUE && minor == Integer.MAX_VALUE)
+			return "latest";
 		return major + "." + minor;
 	}
 }
