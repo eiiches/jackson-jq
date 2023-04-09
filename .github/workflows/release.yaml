@@ -23,6 +23,13 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
 
+    - name: Download jq-1.5 and jq-1.6
+      run: |
+        mkdir -p $HOME/bin
+        wget -O $HOME/bin/jq-1.5 https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
+        wget -O $HOME/bin/jq-1.6 https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
+        chmod +x $HOME/bin/jq-1.5 $HOME/bin/jq-1.6
+
     - name: Configure Maven
       env:
         M2_SETTINGS_XML: ${{ secrets.M2_SETTINGS_XML }}
@@ -55,7 +62,7 @@ jobs:
       run: |
         set -euo pipefail
         git checkout master/1.x
-        mvn -Prelease clean deploy
+        PATH="$HOME/bin:$PATH" mvn -Prelease clean deploy
 
     - name: Git Push
       run: |
