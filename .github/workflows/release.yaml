@@ -48,7 +48,7 @@ jobs:
     - name: Release
       run: |
         set -euo pipefail
-        scripts/release.sh ${{ github.event.inputs.release_version }} ${{ github.event.inputs.next_snapshot_version }}
+        PATH="$HOME/bin:$PATH" scripts/release.sh ${{ github.event.inputs.release_version }} ${{ github.event.inputs.next_snapshot_version }}
 
     - name: Configure GPG
       env:
