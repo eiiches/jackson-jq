@@ -46,8 +46,8 @@
 
 	<properties>
 		<org.slf4j-version>1.7.36</org.slf4j-version>
-		<com.fasterxml.jackson-version>2.13.3</com.fasterxml.jackson-version>
-		<com.fasterxml.jackson.databind-version>2.13.3</com.fasterxml.jackson.databind-version>
+		<com.fasterxml.jackson-version>2.14.2</com.fasterxml.jackson-version>
+		<com.fasterxml.jackson.databind-version>2.14.2</com.fasterxml.jackson.databind-version>
 		<com.google.auto.service-version>1.0.1</com.google.auto.service-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -61,25 +61,25 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
-			<version>5.8.2</version>
+			<version>5.9.2</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-params</artifactId>
-			<version>5.8.2</version>
+			<version>5.9.2</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.8.2</version>
+			<version>5.9.2</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.23.1</version>
+			<version>3.24.2</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -270,7 +270,7 @@
 						<dependency>
 							<groupId>net.java.dev.javacc</groupId>
 							<artifactId>javacc</artifactId>
-							<version>7.0.11</version>
+							<version>7.0.12</version>
 						</dependency>
 					</dependencies>
 				</plugin>
