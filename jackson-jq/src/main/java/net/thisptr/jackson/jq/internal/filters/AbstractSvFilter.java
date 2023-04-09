@@ -36,7 +36,7 @@ public abstract class AbstractSvFilter implements Function {
 
 			if (col.isTextual()) {
 				appendEscaped(row, col.asText());
-			} else if (col.isNull()) {
+			} else if (col.isNull() || col.isNumber() && Double.isNaN(col.asDouble())) {
 				// empty
 			} else if (col.isBoolean() || col.isNumber()) {
 				try {

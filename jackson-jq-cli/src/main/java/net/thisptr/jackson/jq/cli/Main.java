@@ -29,21 +29,23 @@ import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.Versions;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.functions.EnvFunction;
+import net.thisptr.jackson.jq.internal.misc.JsonQueryJacksonModule;
 import net.thisptr.jackson.jq.module.ModuleLoader;
 import net.thisptr.jackson.jq.module.loaders.BuiltinModuleLoader;
 import net.thisptr.jackson.jq.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.module.loaders.FileSystemModuleLoader;
 
 public class Main {
-	private static final ObjectMapper MAPPER = new ObjectMapper();
+	private static final ObjectMapper MAPPER = new ObjectMapper()
+			.registerModule(JsonQueryJacksonModule.getInstance());
 
 	private static final Option OPT_COMPACT = Option.builder("c")
 			.longOpt("compact")
 			.desc("compact instead of pretty-printed output")
 			.build();
 
-	private static final Option OPT_RAW = Option.builder("r")
-			.longOpt("raw")
+	private static final Option OPT_RAW_OUTPUT = Option.builder("r")
+			.longOpt("raw-output")
 			.desc("output raw strings, not JSON texts")
 			.build();
 
@@ -66,7 +68,7 @@ public class Main {
 	public static void main(String[] args) throws IOException, ParseException {
 		final Options options = new Options();
 		options.addOption(OPT_COMPACT);
-		options.addOption(OPT_RAW);
+		options.addOption(OPT_RAW_OUTPUT);
 		options.addOption(OPT_NULL_INPUT);
 		options.addOption(OPT_VERSION);
 		options.addOption(OPT_HELP);
@@ -126,7 +128,7 @@ public class Main {
 					continue;
 				try {
 					jq.apply(scope, tree, (out) -> {
-						if (out.isTextual() && command.hasOption(OPT_RAW.getOpt())) {
+						if (out.isTextual() && command.hasOption(OPT_RAW_OUTPUT.getOpt())) {
 							System.out.println(out.asText());
 						} else {
 							try {

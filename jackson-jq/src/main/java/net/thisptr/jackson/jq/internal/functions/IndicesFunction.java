@@ -53,16 +53,11 @@ public class IndicesFunction implements Function {
 			}
 		} else if (needle.isArray() && haystack.isArray()) {
 			if (needle.size() != 0) {
-				for (int i = 0; i < haystack.size(); ++i) {
-					boolean match = true;
-					for (int j = 0; j < needle.size(); ++j) {
-						if (i + j >= haystack.size() || comparator.compare(haystack.get(i + j), needle.get(j)) != 0) {
-							match = false;
-							break;
-						}
-					}
-					if (match)
-						result.add(i);
+				shift: for (int i = 0; i < haystack.size() - needle.size() + 1; ++i) {
+					for (int j = 0; j < needle.size(); ++j)
+						if (comparator.compare(haystack.get(i + j), needle.get(j)) != 0)
+							continue shift;
+					result.add(i);
 				}
 			}
 		} else if (haystack.isArray()) {

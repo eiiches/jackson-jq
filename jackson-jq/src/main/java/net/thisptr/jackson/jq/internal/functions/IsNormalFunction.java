@@ -8,13 +8,16 @@ import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.internal.JsonPredicateFunction;
 
 @AutoService(Function.class)
-@BuiltinFunction("isnan/0")
-public class IsNanFunction extends JsonPredicateFunction {
-	public IsNanFunction() {
-		super(IsNanFunction::test);
+@BuiltinFunction("isnormal/0")
+public class IsNormalFunction extends JsonPredicateFunction {
+	public IsNormalFunction() {
+		super(IsNormalFunction::test);
 	}
 
 	private static boolean test(final JsonNode value) {
-		return value.isNumber() && Double.isNaN(value.asDouble());
+		if (!value.isNumber())
+			return false;
+		final double v = value.asDouble();
+		return !Double.isInfinite(v) && (v <= -Double.MIN_NORMAL || Double.MIN_NORMAL <= v);
 	}
 }

@@ -5,11 +5,11 @@ on:
     - develop/1.x
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3.0.2
+    - uses: actions/checkout@v3.3.0
     - name: Set up JDK 1.8
-      uses: actions/setup-java@v3.4.0
+      uses: actions/setup-java@v3.10.0
       with:
         java-version: '8'
         distribution: 'temurin'

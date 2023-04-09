@@ -57,13 +57,13 @@ public class ArrayIndexOfPath implements Path {
 		final JsonNodeComparator comparator = JsonNodeComparator.getInstance();
 		final ArrayNode out = MAPPER.createArrayNode();
 
-		shift: for (int i = 0; i < seq.size() - subseq.size() + 1; ++i) {
-			for (int j = 0; j < subseq.size(); ++j) {
-				final int r = comparator.compare(seq.get(i + j), subseq.get(j));
-				if (r != 0)
-					continue shift;
+		if (subseq.size() != 0) {
+			shift: for (int i = 0; i < seq.size() - subseq.size() + 1; ++i) {
+				for (int j = 0; j < subseq.size(); ++j)
+					if (comparator.compare(seq.get(i + j), subseq.get(j)) != 0)
+						continue shift;
+				out.add(IntNode.valueOf(i));
 			}
-			out.add(IntNode.valueOf(i));
 		}
 
 		return out;
