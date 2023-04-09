@@ -1,0 +1,64 @@
+name: 'release'
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'release version; e.g. 0.0.1'
+        required: true
+      next_snapshot_version:
+        description: 'next snapshot version; e.g. 0.0.2-SNAPSHOT'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3.0.2
+      with:
+        fetch-depth: 0
+
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v3.5.1
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+
+    - name: Configure Maven
+      env:
+        M2_SETTINGS_XML: ${{ secrets.M2_SETTINGS_XML }}
+      run: |
+        set -euo pipefail
+        mkdir -p $HOME/.m2
+        echo "$M2_SETTINGS_XML" > $HOME/.m2/settings.xml
+
+    - name: Configure Git
+      run: |
+        set -euo pipefail
+        # https://github.com/orgs/community/discussions/26560
+        git config user.name 'github-actions[bot]'
+        git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+    - name: Release
+      run: |
+        set -euo pipefail
+        scripts/release.sh ${{ github.event.inputs.release_version }} ${{ github.event.inputs.next_snapshot_version }}
+
+    - name: Configure GPG
+      env:
+        GPG_SECRET_KEY: ${{ secrets.GPG_SECRET_KEY }}
+      run: |
+        set -euo pipefail
+        echo "$GPG_SECRET_KEY" | gpg --batch --import
+        gpg --list-secret-keys
+
+    - name: Build & Deploy
+      run: |
+        set -euo pipefail
+        git checkout master/1.x
+        mvn -Prelease clean deploy
+
+    - name: Git Push
+      run: |
+        set -euo pipefail
+        git push --tags
+        git push --all
