@@ -6,7 +6,7 @@ on:
     - develop/1.x
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3.3.0
     - name: Set up JDK 1.8
