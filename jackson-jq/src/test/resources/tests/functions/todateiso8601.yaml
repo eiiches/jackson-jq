@@ -1,0 +1,8 @@
+- q: 'todateiso8601'
+  in: "2023-09-30T00:00:00Z"
+  out: 1696032000
+  v: "[1.5,1.6]"
+- q: 'todateiso8601'
+  in: foo
+  out:
+  - foo
