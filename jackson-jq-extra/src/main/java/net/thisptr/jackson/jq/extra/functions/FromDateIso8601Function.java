@@ -4,24 +4,30 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.auto.service.AutoService;
 import net.thisptr.jackson.jq.*;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.tree.literal.StringLiteral;
+import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.path.Path;
 
-import java.util.Collections;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @AutoService(Function.class)
 @BuiltinFunction({ "fromdateiso8601/0" })
-public class FromDateIso8601Function extends StrPTimeFunction {
+public class FromDateIso8601Function implements Function {
     @Override
     public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-        super.apply(
-                scope,
-                Collections.singletonList(new StringLiteral("%Y-%m-%dT%H:%M:%SZ")),
-                in,
-                ipath,
-                output,
-                version
-        );
+        if (in.isNumber()) {
+            output.emit(in, null);
+        } else if (in.isTextual()) {
+            try {
+                long epochSeconds = ZonedDateTime.parse(in.asText()).toEpochSecond();
+                output.emit(JsonNodeUtils.asNumericNode(epochSeconds), null);
+            } catch (DateTimeParseException e) {
+                throw new JsonQueryException(e);
+            }
+        } else {
+            throw new JsonQueryTypeException("%s cannot be parsed as an ISO 8601 timestamp", in);
+        }
     }
 }
