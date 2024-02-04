@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.extra;
 
 import com.google.auto.service.AutoService;
-
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.extra.functions.HostnameFunction;
@@ -11,6 +10,7 @@ import net.thisptr.jackson.jq.extra.functions.StrPTimeFunction;
 import net.thisptr.jackson.jq.extra.functions.TimestampFunction;
 import net.thisptr.jackson.jq.extra.functions.UriDecodeFunction;
 import net.thisptr.jackson.jq.extra.functions.UriParseFunction;
+import net.thisptr.jackson.jq.extra.functions.Uuid35Function;
 import net.thisptr.jackson.jq.extra.functions.Uuid4Function;
 import net.thisptr.jackson.jq.module.BuiltinModule;
 import net.thisptr.jackson.jq.module.Module;
@@ -29,6 +29,8 @@ public class ModuleImpl extends SimpleModule {
 		addFunction(new UriDecodeFunction());
 		addFunction(new UriParseFunction());
 		addFunction(new Uuid4Function());
+		addFunction("uuid3/1", new Uuid35Function(3));
+		addFunction("uuid5/1", new Uuid35Function(5));
 	}
 
 	private void addFunction(final Function f) {
