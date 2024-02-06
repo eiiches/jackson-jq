@@ -93,12 +93,12 @@ public class _SubImplFunction implements Function {
 			final ObjectNode captures = mapper.createObjectNode();
 			final Region regions = m.getRegion();
 			if (regions != null) {
-				for (int i = 1; i < regions.numRegs; ++i) {
+				for (int i = 1; i < regions.getNumRegs(); ++i) {
 					final String name = pattern.names[i];
 					if (name == null)
 						continue;
-					if (regions.beg[i] >= 0) {
-						final String value = new String(inputBytes, regions.beg[i], regions.end[i] - regions.beg[i], StandardCharsets.UTF_8);
+					if (regions.getBeg(i) >= 0) {
+						final String value = new String(inputBytes, regions.getBeg(i), regions.getEnd(i) - regions.getBeg(i), StandardCharsets.UTF_8);
 						captures.set(name, TextNode.valueOf(value));
 					} else {
 						captures.set(name, NullNode.getInstance());
