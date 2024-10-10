@@ -13,6 +13,14 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.jruby.joni</groupId>
 			<artifactId>joni</artifactId>
 			<version>2.2.1</version>
@@ -26,7 +34,6 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-yaml</artifactId>
-			<version>${com.fasterxml.jackson-version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
