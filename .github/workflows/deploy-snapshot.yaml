@@ -21,6 +21,18 @@ jobs:
         wget -O $HOME/bin/jq-1.5 https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
         wget -O $HOME/bin/jq-1.6 https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
         chmod +x $HOME/bin/jq-1.5 $HOME/bin/jq-1.6
+        
+    - name: Download Dependencies
+      run: 'PATH="$HOME/bin:$PATH" mvn dependency:resolve dependency:resolve-plugins clean'
+        
+    - name: Compile
+      run: 'PATH="$HOME/bin:$PATH" mvn compile'
+        
+    - name: Compile Tests
+      run: 'PATH="$HOME/bin:$PATH" mvn test-compile'
+        
+    - name: Test
+      run: 'PATH="$HOME/bin:$PATH" mvn test'
 
     - name: Configure Maven
       env:
@@ -30,4 +42,5 @@ jobs:
         echo "$M2_SETTINGS_XML" > $HOME/.m2/settings.xml
 
     - name: Build & Deploy
-      run: 'PATH="$HOME/bin:$PATH" mvn clean deploy'
+      if: ${{ env.M2_SETTINGS_XML != '' }}
+      run: 'PATH="$HOME/bin:$PATH" mvn deploy'
