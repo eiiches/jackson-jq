@@ -28,6 +28,11 @@
 					<instructions>
 						<Include-Resource>META-INF/services/net.thisptr.jackson.jq.Function=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.Function,META-INF/services/net.thisptr.jackson.jq.module.Module=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.module.Module,META-INF/jandex.idx=${project.build.outputDirectory}/META-INF/jandex.idx</Include-Resource>
 					</instructions>
+					<archive>
+						<manifestEntries>
+							<Automatic-Module-Name>jackson-jq-extra</Automatic-Module-Name>
+						</manifestEntries>
+					</archive>
 				</configuration>
 			</plugin>
 			<plugin>
