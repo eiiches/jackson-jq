@@ -30,7 +30,7 @@
 					</instructions>
 					<archive>
 						<manifestEntries>
-							<Automatic-Module-Name>jackson-jq-extra</Automatic-Module-Name>
+							<Automatic-Module-Name>net.thisptr.jackson.jq.extra</Automatic-Module-Name>
 						</manifestEntries>
 					</archive>
 				</configuration>
