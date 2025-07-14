@@ -74,7 +74,7 @@
 					</instructions>
 					<archive>
 						<manifestEntries>
-							<Automatic-Module-Name>jackson-jq</Automatic-Module-Name>
+							<Automatic-Module-Name>net.thisptr.jackson.jq</Automatic-Module-Name>
 						</manifestEntries>
 					</archive>
 				</configuration>
