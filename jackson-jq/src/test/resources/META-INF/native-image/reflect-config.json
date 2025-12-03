@@ -39,7 +39,7 @@
 		}
 	},
 	{
-		"name": "com.fasterxml.jackson.databind.ser.std.ToStringSerializer",
+		"name": "tools.jackson.databind.ser.std.ToStringSerializer",
 		"methods": [
 			{
 				"name": "<init>",

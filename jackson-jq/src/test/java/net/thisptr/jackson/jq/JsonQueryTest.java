@@ -58,16 +58,16 @@ public class JsonQueryTest {
 		public Boolean failing;
 
 		@JsonProperty("should_compile")
-		public boolean shouldCompile = true;
+		public Boolean shouldCompile = true;
 
 		@JsonProperty("ignore_true_jq_behavior")
-		public boolean ignoreTrueJqBehavior = false;
+		public Boolean ignoreTrueJqBehavior = false;
 
 		@JsonProperty("numerical_errors")
-		public double numericalErrors = 0;
+		public Double numericalErrors = 0.0;
 
 		@JsonProperty("ignore_field_order")
-		public boolean ignoreFieldOrder = false;
+		public Boolean ignoreFieldOrder = false;
 
 		@JsonInclude(Include.NON_NULL)
 		@JsonProperty("v")
