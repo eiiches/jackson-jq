@@ -1,12 +1,11 @@
 package net.thisptr.jackson.jq.internal.tree.fieldaccess;
 
-import java.util.Iterator;
 import java.util.Map.Entry;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
@@ -39,9 +38,7 @@ public abstract class FieldAccess implements Expression {
 			for (int i = 0; i < pobj.size(); ++i)
 				output.emit(pobj.get(i), ArrayIndexPath.chainIfNotNull(ppath, i));
 		} else if (pobj.isObject()) {
-			final Iterator<Entry<String, JsonNode>> iter = pobj.fields();
-			while (iter.hasNext()) {
-				final Entry<String, JsonNode> entry = iter.next();
+			for (final Entry<String, JsonNode> entry : pobj.properties()) {
 				output.emit(entry.getValue(), ObjectFieldPath.chainIfNotNull(ppath, entry.getKey()));
 			}
 		} else {
@@ -52,7 +49,7 @@ public abstract class FieldAccess implements Expression {
 
 	protected static void emitObjectFieldPath(boolean permissive, String key, final JsonNode pobj, final Path ppath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		if (requirePath && ppath == null)
-			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(TextNode.valueOf(key)), JsonNodeUtils.toString(pobj));
+			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(StringNode.valueOf(key)), JsonNodeUtils.toString(pobj));
 		ObjectFieldPath.resolve(pobj, ppath, output, key, permissive);
 	}
 

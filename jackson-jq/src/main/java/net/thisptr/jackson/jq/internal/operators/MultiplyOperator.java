@@ -1,13 +1,12 @@
 package net.thisptr.jackson.jq.internal.operators;
 
-import java.util.Iterator;
 import java.util.Map.Entry;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.NullNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
@@ -23,20 +22,20 @@ public class MultiplyOperator implements BinaryOperator {
 		} else if (lhs.isNumber() && rhs.isNumber()) {
 			final double r = lhs.asDouble() * rhs.asDouble();
 			return JsonNodeUtils.asNumericNode(r);
-		} else if (lhs.isTextual() && rhs.isNumber()) {
+		} else if (lhs.isString() && rhs.isNumber()) {
 			final double count = rhs.asDouble();
 			if (count <= 0)
 				return NullNode.getInstance();
 			if (count < 2)
 				return lhs;
-			return new TextNode(Strings.repeat(lhs.asText(), (int) count));
-		} else if (lhs.isNumber() && rhs.isTextual()) {
+			return new StringNode(Strings.repeat(lhs.asString(), (int) count));
+		} else if (lhs.isNumber() && rhs.isString()) {
 			final double count = lhs.asDouble();
 			if (count <= 0)
 				return NullNode.getInstance();
 			if (count < 2)
 				return rhs;
-			return new TextNode(Strings.repeat(rhs.asText(), (int) count));
+			return new StringNode(Strings.repeat(rhs.asString(), (int) count));
 		} else if (lhs.isObject() && rhs.isObject()) {
 			return mergeRecursive(mapper, (ObjectNode) lhs, (ObjectNode) rhs);
 		} else {
@@ -47,15 +46,11 @@ public class MultiplyOperator implements BinaryOperator {
 	private static ObjectNode mergeRecursive(final ObjectMapper mapper, final ObjectNode lhs, final ObjectNode rhs) {
 		final ObjectNode result = mapper.createObjectNode();
 
-		final Iterator<Entry<String, JsonNode>> liter = lhs.fields();
-		while (liter.hasNext()) {
-			final Entry<String, JsonNode> e = liter.next();
+		for (final Entry<String, JsonNode> e : lhs.properties()) {
 			result.set(e.getKey(), e.getValue());
 		}
 
-		final Iterator<Entry<String, JsonNode>> riter = rhs.fields();
-		while (riter.hasNext()) {
-			final Entry<String, JsonNode> e = riter.next();
+		for (final Entry<String, JsonNode> e : rhs.properties()) {
 			final JsonNode l = result.get(e.getKey());
 			final JsonNode r = e.getValue();
 

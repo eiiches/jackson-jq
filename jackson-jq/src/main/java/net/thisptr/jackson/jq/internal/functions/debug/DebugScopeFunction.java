@@ -4,8 +4,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -21,8 +22,9 @@ import net.thisptr.jackson.jq.path.Path;
 @AutoService(Function.class)
 @BuiltinFunction("debug_scope/0")
 public class DebugScopeFunction implements Function {
-	private static final ObjectMapper MAPPER = new ObjectMapper()
-			.registerModule(JsonQueryJacksonModule.getInstance());
+	private static final ObjectMapper MAPPER = JsonMapper.builder()
+			.addModule(JsonQueryJacksonModule.getInstance())
+			.build();
 
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {

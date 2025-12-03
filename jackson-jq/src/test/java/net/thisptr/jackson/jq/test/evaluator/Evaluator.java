@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.test.evaluator;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.Version;
 

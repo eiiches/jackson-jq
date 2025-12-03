@@ -3,8 +3,8 @@ package net.thisptr.jackson.jq.internal.tree;
 import java.util.List;
 import java.util.Stack;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.StringNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
@@ -30,6 +30,16 @@ public class StringInterpolation implements Expression {
 		recurse(scope, in, output, stack, interpolations);
 	}
 
+	private static String nodeToString(final JsonNode node) {
+		if (node.isNull()) {
+			return "null";
+		} else if (node.isValueNode()) {
+			return node.asString();
+		} else {
+			return node.toString();
+		}
+	}
+
 	private void recurse(final Scope scope, final JsonNode in, final PathOutput output, final Stack<Pair<Integer, JsonNode>> stack, final List<Pair<Integer, Expression>> interpolations) throws JsonQueryException {
 		if (interpolations.isEmpty()) {
 			final StringBuilder builder = new StringBuilder();
@@ -39,10 +49,10 @@ public class StringInterpolation implements Expression {
 				builder.append(template.substring(pos, head._1));
 				pos = head._1;
 
-				builder.append(head._2.isValueNode() ? head._2.asText() : head._2.toString());
+				builder.append(nodeToString(head._2));
 			}
 			builder.append(template.substring(pos));
-			output.emit(new TextNode(builder.toString()), null);
+			output.emit(new StringNode(builder.toString()), null);
 		} else {
 			final Pair<Integer, Expression> rhead = interpolations.get(interpolations.size() - 1);
 			final List<Pair<Integer, Expression>> rtail = interpolations.subList(0, interpolations.size() - 1);

@@ -10,10 +10,10 @@ import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.ser.std.ToStringSerializer;
 
 import net.thisptr.jackson.jq.Version;
 
@@ -90,7 +90,7 @@ public class CachedEvaluator implements AutoCloseable, Evaluator {
 					value.error = "null";
 			}
 			db.put(key, MAPPER.writeValueAsBytes(value));
-		} catch (IOException | RocksDBException e) {
+		} catch (RocksDBException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -103,7 +103,7 @@ public class CachedEvaluator implements AutoCloseable, Evaluator {
 				return null;
 			final CachedEvaluator.Value value = MAPPER.readValue(bytes, CachedEvaluator.Value.class);
 			return new Result(value.out, value.error != null ? new RuntimeException(value.error) : null);
-		} catch (final IOException | RocksDBException e) {
+		} catch (final RocksDBException e) {
 			throw new RuntimeException(e);
 		}
 	}

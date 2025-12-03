@@ -1,6 +1,6 @@
 package net.thisptr.jackson.jq.internal.tree.fieldaccess;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
@@ -33,9 +33,9 @@ public class StringFieldAccess extends FieldAccess {
 	public void apply(final Scope scope, final JsonNode in, final Path path, final PathOutput output, final boolean requirePath) throws JsonQueryException {
 		field.apply(scope, in, (key) -> {
 			target.apply(scope, in, path, (pobj, ppath) -> {
-				if (!key.isTextual() && !permissive)
+				if (!key.isString() && !permissive)
 					throw new IllegalStateException(); // FIXME: exception type
-				emitObjectFieldPath(permissive, key.asText(), pobj, ppath, output, requirePath);
+				emitObjectFieldPath(permissive, key.asString(), pobj, ppath, output, requirePath);
 			}, requirePath);
 		});
 	}

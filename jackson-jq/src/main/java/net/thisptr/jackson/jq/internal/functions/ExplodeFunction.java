@@ -2,9 +2,9 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.JsonNodeType;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -25,7 +25,7 @@ public class ExplodeFunction implements Function {
 		Preconditions.checkInputType("explode", in, JsonNodeType.STRING);
 
 		final ArrayNode result = scope.getObjectMapper().createArrayNode();
-		for (final int ch : in.asText().codePoints().toArray())
+		for (final int ch : in.asString().codePoints().toArray())
 			result.add(ch);
 		output.emit(result, null);
 	}

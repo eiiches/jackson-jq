@@ -5,9 +5,9 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.TimeZone;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.LongNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeType;
+import tools.jackson.databind.node.LongNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -30,23 +30,23 @@ public class StrPTimeFunction implements Function {
 
 		try {
 			args.get(0).apply(scope, in, (fmt) -> {
-				if (!fmt.isTextual())
+				if (!fmt.isString())
 					throw new JsonQueryTypeException("Illegal argument type: %s", fmt.getNodeType());
-				final SimpleDateFormat sdf = new SimpleDateFormat(fmt.asText());
+				final SimpleDateFormat sdf = new SimpleDateFormat(fmt.asString());
 				if (args.size() == 2) {
 					args.get(1).apply(scope, in, (tz) -> {
-						if (!tz.isTextual())
+						if (!tz.isString())
 							throw new JsonQueryTypeException("Timezone must be a string");
-						sdf.setTimeZone(TimeZone.getTimeZone(tz.asText()));
+						sdf.setTimeZone(TimeZone.getTimeZone(tz.asString()));
 						try {
-							output.emit(new LongNode(sdf.parse(in.asText()).getTime()), null);
+							output.emit(new LongNode(sdf.parse(in.asString()).getTime()), null);
 						} catch (ParseException e) {
 							throw new JsonQueryException(e);
 						}
 					});
 				} else {
 					try {
-						output.emit(new LongNode(sdf.parse(in.asText()).getTime()), null);
+						output.emit(new LongNode(sdf.parse(in.asString()).getTime()), null);
 					} catch (ParseException e) {
 						throw new JsonQueryException(e);
 					}

@@ -3,11 +3,11 @@ package net.thisptr.jackson.jq.internal.functions;
 import java.util.Collections;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.IntNode;
+import tools.jackson.databind.node.JsonNodeType;
+import tools.jackson.databind.node.StringNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -33,13 +33,13 @@ public class AbstractKeysFunction implements Function {
 		Preconditions.checkInputType(name, in, JsonNodeType.OBJECT, JsonNodeType.ARRAY);
 
 		if (in.isObject()) {
-			final List<String> keys = Lists.newArrayList(in.fieldNames());
+			final List<String> keys = Lists.newArrayList(in.propertyNames());
 			if (sortKeys)
 				Collections.sort(keys);
 
 			final ArrayNode result = scope.getObjectMapper().createArrayNode();
 			for (final String key : keys)
-				result.add(new TextNode(key));
+				result.add(new StringNode(key));
 			output.emit(result, null);
 		} else if (in.isArray()) {
 			final ArrayNode result = scope.getObjectMapper().createArrayNode();

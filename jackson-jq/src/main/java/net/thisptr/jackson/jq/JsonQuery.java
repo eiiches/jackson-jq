@@ -1,6 +1,6 @@
 package net.thisptr.jackson.jq;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.IsolatedScopeQuery;

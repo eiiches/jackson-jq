@@ -4,7 +4,7 @@ import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.node.StringNode;
 
 import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.Expression;
@@ -18,6 +18,6 @@ public class UriParseFunctionTest {
 		final Scope scope = Scope.newEmptyScope();
 		BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_5, scope);
 		// check this does not throw NPE
-		new UriParseFunction().apply(scope, Collections.<Expression>emptyList(), new TextNode("http://google.com"), null, (out, opath) -> {}, Versions.JQ_1_5);
+		new UriParseFunction().apply(scope, Collections.<Expression>emptyList(), new StringNode("http://google.com"), null, (out, opath) -> {}, Versions.JQ_1_5);
 	}
 }

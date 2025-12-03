@@ -1,6 +1,6 @@
 package net.thisptr.jackson.jq.internal.misc;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 public class Range {
 	public final long start;

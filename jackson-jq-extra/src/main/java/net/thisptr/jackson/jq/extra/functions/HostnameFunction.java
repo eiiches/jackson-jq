@@ -3,9 +3,9 @@ package net.thisptr.jackson.jq.extra.functions;
 import java.net.InetAddress;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.NullNode;
+import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -26,8 +26,8 @@ public class HostnameFunction implements Function {
 	public HostnameFunction() {
 		try {
 			final InetAddress addr = InetAddress.getLocalHost();
-			this.hostname = new TextNode(addr.getHostName());
-			this.fqdn = new TextNode(addr.getCanonicalHostName());
+			this.hostname = new StringNode(addr.getHostName());
+			this.fqdn = new StringNode(addr.getCanonicalHostName());
 		} catch (Exception e) {
 			/* ignore */
 		}
@@ -37,7 +37,7 @@ public class HostnameFunction implements Function {
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		if (args.size() == 1) {
 			args.get(0).apply(scope, in, (arg) -> {
-				if (arg.isTextual() && "fqdn".equals(arg.asText())) {
+				if (arg.isString() && "fqdn".equals(arg.asString())) {
 					output.emit(fqdn, null);
 				} else {
 					output.emit(hostname, null);

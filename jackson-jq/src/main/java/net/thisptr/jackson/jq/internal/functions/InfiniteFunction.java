@@ -1,6 +1,6 @@
 package net.thisptr.jackson.jq.internal.functions;
 
-import com.fasterxml.jackson.databind.node.DoubleNode;
+import tools.jackson.databind.node.DoubleNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;

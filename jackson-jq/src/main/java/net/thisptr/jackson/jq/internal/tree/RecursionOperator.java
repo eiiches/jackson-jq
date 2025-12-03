@@ -1,9 +1,8 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import java.util.Iterator;
 import java.util.Map.Entry;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
@@ -17,9 +16,7 @@ public class RecursionOperator implements Expression {
 	private static void pathRecursive(final Scope scope, final JsonNode in, final Path path, final PathOutput output) throws JsonQueryException {
 		output.emit(in, path);
 		if (in.isObject()) {
-			final Iterator<Entry<String, JsonNode>> iter = in.fields();
-			while (iter.hasNext()) {
-				final Entry<String, JsonNode> entry = iter.next();
+			for (final Entry<String, JsonNode> entry : in.properties()) {
 				pathRecursive(scope, entry.getValue(), ObjectFieldPath.chainIfNotNull(path, entry.getKey()), output);
 			}
 		} else if (in.isArray()) {

@@ -2,10 +2,10 @@ package net.thisptr.jackson.jq.internal.utils;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.internal.tree.ArrayConstruction;
@@ -46,7 +46,7 @@ public class ExpressionUtils {
 					final StringKeyFieldConstruction f = (StringKeyFieldConstruction) field;
 					if (!(f.key instanceof StringLiteral)) // then the key is string interpolation and not a constant
 						return null;
-					final String k = ((StringLiteral) f.key).value().asText();
+					final String k = ((StringLiteral) f.key).value().asString();
 
 					final JsonNode v = evaluateLiteralExpression(f.value);
 					if (v == null)

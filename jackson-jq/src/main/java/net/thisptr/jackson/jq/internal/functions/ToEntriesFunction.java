@@ -4,11 +4,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.IntNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -29,11 +29,9 @@ public class ToEntriesFunction implements Function {
 		final ArrayNode out = scope.getObjectMapper().createArrayNode();
 
 		if (in.isObject()) {
-			final Iterator<Entry<String, JsonNode>> iter = in.fields();
-			while (iter.hasNext()) {
-				final Entry<String, JsonNode> entry = iter.next();
+			for (final Entry<String, JsonNode> entry : in.properties()) {
 				final ObjectNode entryNode = scope.getObjectMapper().createObjectNode();
-				entryNode.set("key", new TextNode(entry.getKey()));
+				entryNode.set("key", new StringNode(entry.getKey()));
 				entryNode.set("value", entry.getValue());
 				out.add(entryNode);
 			}

@@ -1,6 +1,6 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Scope;
@@ -23,12 +23,12 @@ public class StringKeyFieldConstruction implements FieldConstruction {
 	@Override
 	public void evaluate(final Scope scope, final JsonNode in, final FieldConsumer consumer) throws JsonQueryException {
 		key.apply(scope, in, (k) -> {
-			if (!k.isTextual())
+			if (!k.isString())
 				throw new JsonQueryException("key must evaluate to string");
 			if (value == null) {
-				consumer.accept(k.asText(), JsonNodeUtils.nullToNullNode(in.get(k.asText())));
+				consumer.accept(k.asString(), JsonNodeUtils.nullToNullNode(in.get(k.asString())));
 			} else {
-				value.apply(scope, in, (v) -> consumer.accept(k.asText(), v));
+				value.apply(scope, in, (v) -> consumer.accept(k.asString(), v));
 			}
 		});
 	}

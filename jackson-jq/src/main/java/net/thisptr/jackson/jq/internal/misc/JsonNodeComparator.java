@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeType;
 
 @SuppressWarnings("serial")
 public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
@@ -70,8 +70,8 @@ public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
 	}
 
 	protected int compareObjectNode(final JsonNode o1, final JsonNode o2) {
-		final List<String> names1 = Lists.newArrayList(o1.fieldNames());
-		final List<String> names2 = Lists.newArrayList(o2.fieldNames());
+		final List<String> names1 = Lists.newArrayList(o1.propertyNames());
+		final List<String> names2 = Lists.newArrayList(o2.propertyNames());
 
 		// compare by keys
 		Collections.sort(names1);
@@ -120,7 +120,7 @@ public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
 		}
 
 		if (type == JsonNodeType.STRING || type == JsonNodeType.BINARY)
-			return o1.asText().compareTo(o2.asText());
+			return o1.asString().compareTo(o2.asString());
 
 		if (type == JsonNodeType.ARRAY) {
 			return compareArrayNode(o1, o2);

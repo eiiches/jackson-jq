@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.MappingIterator;
+import tools.jackson.databind.ObjectMapper;
 
 import net.thisptr.jackson.jq.internal.IsolatedScopeQuery;
 import net.thisptr.jackson.jq.internal.JqJson;
@@ -85,7 +85,7 @@ public class BuiltinFunctionLoader {
 					buffer.append('\n');
 				}
 			}
-			final MappingIterator<JqJson> iter2 = DEFAULT_MAPPER.readValues(DEFAULT_MAPPER.getFactory().createParser(buffer.toString()), JqJson.class);
+			final MappingIterator<JqJson> iter2 = DEFAULT_MAPPER.readValues(DEFAULT_MAPPER.createParser(buffer.toString()), JqJson.class);
 			while (iter2.hasNext()) {
 				result.add(iter2.next());
 			}

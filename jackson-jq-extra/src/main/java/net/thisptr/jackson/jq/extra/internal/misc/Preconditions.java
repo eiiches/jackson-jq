@@ -2,8 +2,8 @@ package net.thisptr.jackson.jq.extra.internal.misc;
 
 import java.util.Arrays;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeType;
 
 import net.thisptr.jackson.jq.exception.IllegalJsonInputException;
 

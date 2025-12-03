@@ -2,9 +2,9 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.NullNode;
+import tools.jackson.databind.node.ObjectNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -37,14 +37,14 @@ public class FromEntriesFunction implements Function {
 				key = entry.get("name");
 			if (key == null)
 				key = entry.get("Name");
-			if (key == null || !key.isTextual())
+			if (key == null || !key.isString())
 				throw new JsonQueryTypeException("Cannot use %s as object key", key == null ? NullNode.getInstance() : key);
 
 			JsonNode value = entry.get("value");
 			if (value == null)
 				value = entry.get("Value");
 
-			out.set(key.asText(), value == null ? NullNode.getInstance() : value);
+			out.set(key.asString(), value == null ? NullNode.getInstance() : value);
 		}
 
 		output.emit(out, null);

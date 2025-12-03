@@ -1,7 +1,7 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.StringNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.internal.utils.ExpressionUtils;
@@ -32,7 +32,7 @@ public class ImportStatement {
 	public String toString() {
 		final StringBuilder s = new StringBuilder();
 		s.append("import ");
-		s.append(new TextNode(path).toString());
+		s.append(new StringNode(path).toString());
 		s.append(" as ");
 		if (dollarImport)
 			s.append('$');

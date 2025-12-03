@@ -1,13 +1,12 @@
 package net.thisptr.jackson.jq.internal.functions;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Stack;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.IntNode;
+import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -44,11 +43,9 @@ public class PathsFunction implements Function {
 				stack.pop();
 			}
 		} else if (in.isObject()) {
-			final Iterator<Entry<String, JsonNode>> iter = in.fields();
-			while (iter.hasNext()) {
-				final Entry<String, JsonNode> i = iter.next();
-				stack.push(new TextNode(i.getKey()));
-				applyRecursive(scope, i.getValue(), output, stack, predicate);
+			for (final Entry<String, JsonNode> entry : in.properties()) {
+				stack.push(new StringNode(entry.getKey()));
+				applyRecursive(scope, entry.getValue(), output, stack, predicate);
 				stack.pop();
 			}
 		}

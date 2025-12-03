@@ -2,9 +2,9 @@ package net.thisptr.jackson.jq.internal.filters;
 
 import java.util.List;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.StringNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -34,14 +34,14 @@ public abstract class AbstractSvFilter implements Function {
 			if (!heading)
 				appendSeparator(row);
 
-			if (col.isTextual()) {
-				appendEscaped(row, col.asText());
+			if (col.isString()) {
+				appendEscaped(row, col.asString());
 			} else if (col.isNull() || col.isNumber() && Double.isNaN(col.asDouble())) {
 				// empty
 			} else if (col.isBoolean() || col.isNumber()) {
 				try {
 					row.append(scope.getObjectMapper().writeValueAsString(col));
-				} catch (JsonProcessingException e) {
+				} catch (JacksonException e) {
 					throw new JsonQueryException(e);
 				}
 			} else {
@@ -51,6 +51,6 @@ public abstract class AbstractSvFilter implements Function {
 			heading = false;
 		}
 
-		output.emit(TextNode.valueOf(row.toString()), null);
+		output.emit(StringNode.valueOf(row.toString()), null);
 	}
 }

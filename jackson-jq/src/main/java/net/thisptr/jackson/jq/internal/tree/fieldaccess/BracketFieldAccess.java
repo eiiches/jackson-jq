@@ -1,6 +1,6 @@
 package net.thisptr.jackson.jq.internal.tree.fieldaccess;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
@@ -57,8 +57,8 @@ public class BracketFieldAccess extends FieldAccess {
 				target.apply(scope, in, path, (pobj, ppath) -> {
 					if (accessor.isNumber()) {
 						emitArrayIndexPath(permissive, accessor, pobj, ppath, output, requirePath);
-					} else if (accessor.isTextual()) {
-						emitObjectFieldPath(permissive, accessor.asText(), pobj, ppath, output, requirePath);
+					} else if (accessor.isString()) {
+						emitObjectFieldPath(permissive, accessor.asString(), pobj, ppath, output, requirePath);
 					} else if (accessor.isArray()) {
 						emitArrayIndexOfPath(permissive, accessor, pobj, ppath, output, requirePath);
 					} else {

@@ -1,14 +1,13 @@
 package net.thisptr.jackson.jq.path;
 
-import java.util.Iterator;
 import java.util.Map.Entry;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.NullNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
@@ -34,7 +33,7 @@ public class ObjectFieldPath implements Path {
 	@Override
 	public void toJsonNode(final ArrayNode out) throws JsonQueryException {
 		parent.toJsonNode(out);
-		out.add(new TextNode(key));
+		out.add(new StringNode(key));
 	}
 
 	@Override
@@ -61,9 +60,7 @@ public class ObjectFieldPath implements Path {
 		}
 		if (in.isObject()) {
 			final ObjectNode newobj = MAPPER.createObjectNode();
-			final Iterator<Entry<String, JsonNode>> iter = in.fields();
-			while (iter.hasNext()) {
-				final Entry<String, JsonNode> entry = iter.next();
+			for (final Entry<String, JsonNode> entry : in.properties()) {
 				newobj.set(entry.getKey(), entry.getValue());
 			}
 			final JsonNode newval = mutation.apply(newobj.get(key));

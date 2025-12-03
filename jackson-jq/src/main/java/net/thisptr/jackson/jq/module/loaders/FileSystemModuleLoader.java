@@ -14,11 +14,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.NullNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.MappingIterator;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.NullNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Scope;
@@ -193,10 +193,10 @@ public class FileSystemModuleLoader implements ModuleLoader {
 					throw new JsonQueryException("search path can only be overriden from imported modules, but not from a top-level unnamed module");
 
 				// jq does ignore non-textual search overrides, but i want it to fail fast.
-				if (!search.isTextual())
+				if (!search.isString())
 					throw new JsonQueryException("search path overrides must be a string");
 
-				Path searchPathOverride = callerModule.modulePath.getFileSystem().getPath(search.asText());
+				Path searchPathOverride = callerModule.modulePath.getFileSystem().getPath(search.asString());
 				searchPathOverride = callerModule.modulePath.getParent().resolve(searchPathOverride).normalize();
 
 				// still, the search path must be within the original search path
@@ -272,7 +272,7 @@ public class FileSystemModuleLoader implements ModuleLoader {
 
 		final ArrayNode data = MAPPER.createArrayNode();
 
-		final MappingIterator<JsonNode> iter = MAPPER.readValues(MAPPER.getFactory().createParser(moduleFile.bytes), JsonNode.class);
+		final MappingIterator<JsonNode> iter = MAPPER.readValues(MAPPER.createParser(moduleFile.bytes), JsonNode.class);
 		while (iter.hasNext())
 			data.add(iter.next());
 

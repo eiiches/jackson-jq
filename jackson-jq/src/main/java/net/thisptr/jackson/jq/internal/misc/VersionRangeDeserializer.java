@@ -1,11 +1,8 @@
 package net.thisptr.jackson.jq.internal.misc;
 
-import java.io.IOException;
-
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.deser.std.StdDeserializer;
 
 import net.thisptr.jackson.jq.VersionRange;
 
@@ -17,8 +14,8 @@ public class VersionRangeDeserializer extends StdDeserializer<VersionRange> {
 	}
 
 	@Override
-	public VersionRange deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException, JsonProcessingException {
-		final String text = p.readValueAs(String.class);
+	public VersionRange deserialize(final JsonParser p, final DeserializationContext ctxt) {
+		final String text = p.getString();
 		if (text == null)
 			return null;
 		return VersionRange.valueOf(text);

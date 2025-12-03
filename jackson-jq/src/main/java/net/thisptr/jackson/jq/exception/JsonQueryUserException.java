@@ -1,6 +1,6 @@
 package net.thisptr.jackson.jq.exception;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 
@@ -10,7 +10,7 @@ public class JsonQueryUserException extends JsonQueryException {
 	private JsonNode value;
 
 	public JsonQueryUserException(final JsonNode value) {
-		super(value.isTextual() ? value.asText() : JsonNodeUtils.toString(value));
+		super(value.isString() ? value.asString() : JsonNodeUtils.toString(value));
 		this.value = value;
 	}
 

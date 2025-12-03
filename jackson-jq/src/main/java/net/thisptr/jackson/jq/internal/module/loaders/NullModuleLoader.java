@@ -1,6 +1,6 @@
 package net.thisptr.jackson.jq.internal.module.loaders;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.module.Module;
 import net.thisptr.jackson.jq.module.ModuleLoader;

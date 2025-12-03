@@ -3,8 +3,8 @@ package net.thisptr.jackson.jq.internal.tree.matcher.matchers;
 import java.util.List;
 import java.util.Stack;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.NullNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.NullNode;
 
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;

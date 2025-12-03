@@ -1,13 +1,12 @@
 package net.thisptr.jackson.jq.internal.operators;
 
-import java.util.Iterator;
 import java.util.Map.Entry;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
@@ -27,18 +26,14 @@ public class PlusOperator implements BinaryOperator {
 			result.addAll((ArrayNode) lhs);
 			result.addAll((ArrayNode) rhs);
 			return result;
-		} else if (lhs.isTextual() && rhs.isTextual()) {
-			return new TextNode(lhs.asText() + rhs.asText());
+		} else if (lhs.isString() && rhs.isString()) {
+			return new StringNode(lhs.asString() + rhs.asString());
 		} else if (lhs.isObject() && rhs.isObject()) {
 			final ObjectNode result = mapper.createObjectNode();
-			final Iterator<Entry<String, JsonNode>> liter = lhs.fields();
-			while (liter.hasNext()) {
-				final Entry<String, JsonNode> e = liter.next();
+			for (final Entry<String, JsonNode> e : lhs.properties()) {
 				result.set(e.getKey(), e.getValue());
 			}
-			final Iterator<Entry<String, JsonNode>> riter = rhs.fields();
-			while (riter.hasNext()) {
-				final Entry<String, JsonNode> e = riter.next();
+			for (final Entry<String, JsonNode> e : rhs.properties()) {
 				result.set(e.getKey(), e.getValue());
 			}
 			return result;

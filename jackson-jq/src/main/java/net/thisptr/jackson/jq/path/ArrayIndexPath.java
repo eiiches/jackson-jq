@@ -1,10 +1,10 @@
 package net.thisptr.jackson.jq.path;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.NullNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.IntNode;
+import tools.jackson.databind.node.NullNode;
 
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
@@ -91,11 +91,17 @@ public class ArrayIndexPath implements Path {
 	public static void resolve(final JsonNode pobj, final Path ppath, final PathOutput output, final JsonNode index, final boolean permissive) throws JsonQueryException {
 		assert index.isNumber();
 		if (pobj.isArray()) {
-			final int indexAsInt = index.asInt();
-			if (index.asDouble() != indexAsInt) { // if index is not an integer, emit null
+			final double indexAsDouble = index.asDouble();
+			if (indexAsDouble < Integer.MIN_VALUE || indexAsDouble > Integer.MAX_VALUE) { // if index is not an integer, emit null
 				output.emit(NullNode.getInstance(), ArrayIndexPath.chainIfNotNull(ppath, index));
 				return;
 			}
+            final int indexAsInt = index.asInt();
+            if (indexAsDouble != indexAsInt) {
+                output.emit(NullNode.getInstance(), ArrayIndexPath.chainIfNotNull(ppath, index));
+                return;
+            }
+
 			final int indexResolved = indexAsInt < 0 ? indexAsInt + pobj.size() : indexAsInt;
 			if (indexResolved < 0 || pobj.size() <= indexResolved) { // out of range index
 				output.emit(NullNode.getInstance(), ArrayIndexPath.chainIfNotNull(ppath, index));

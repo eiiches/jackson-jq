@@ -3,8 +3,8 @@ package net.thisptr.jackson.jq.internal.misc;
 import java.util.Arrays;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeType;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.exception.IllegalJsonArgumentException;

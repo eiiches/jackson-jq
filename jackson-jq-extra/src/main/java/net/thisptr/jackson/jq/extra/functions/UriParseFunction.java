@@ -12,10 +12,10 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.JsonNodeType;
+import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -118,10 +118,10 @@ public class UriParseFunction implements Function {
 			if (entry.getValue().size() > 1) {
 				final ArrayNode arr = scope.getObjectMapper().createArrayNode();
 				for (final String value : entry.getValue())
-					arr.add(new TextNode(value));
+					arr.add(new StringNode(value));
 				result2.put(entry.getKey(), arr);
 			} else {
-				result2.put(entry.getKey(), new TextNode(entry.getValue().get(0)));
+				result2.put(entry.getKey(), new StringNode(entry.getValue().get(0)));
 			}
 		}
 		return result2;
@@ -132,7 +132,7 @@ public class UriParseFunction implements Function {
 		Preconditions.checkInputType("uriparse", in, JsonNodeType.STRING);
 
 		try {
-			final URI uri = new URI(in.asText());
+			final URI uri = new URI(in.asString());
 			final Result result = new Result(uri, parseQueryObj(scope, uri.getRawQuery()));
 			output.emit(scope.getObjectMapper().valueToTree(result), null);
 		} catch (URISyntaxException e) {

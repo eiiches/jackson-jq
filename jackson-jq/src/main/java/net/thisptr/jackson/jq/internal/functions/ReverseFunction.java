@@ -2,8 +2,8 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -36,8 +36,8 @@ public class ReverseFunction implements Function {
 
 		// below are to emulate jq behavior
 
-		if (in.isTextual()) {
-			if (in.asText().isEmpty()) {
+		if (in.isString()) {
+			if (in.asString().isEmpty()) {
 				output.emit(out, null);
 				return;
 			}

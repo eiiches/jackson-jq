@@ -2,8 +2,8 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.StringNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -18,11 +18,11 @@ public abstract class AbstractTrimStrFunction implements Function {
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		args.get(0).apply(scope, in, (trimText) -> {
-			if (!in.isTextual() || !trimText.isTextual()) {
+			if (!in.isString() || !trimText.isString()) {
 				output.emit(in, ipath);
 				return;
 			}
-			final JsonNode out = TextNode.valueOf(doTrim(in.asText(), trimText.asText()));
+			final JsonNode out = StringNode.valueOf(doTrim(in.asString(), trimText.asString()));
 			output.emit(out, null);
 		});
 	}

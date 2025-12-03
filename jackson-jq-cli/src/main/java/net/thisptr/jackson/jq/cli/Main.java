@@ -17,10 +17,11 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.JsonQuery;
@@ -36,8 +37,14 @@ import net.thisptr.jackson.jq.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.module.loaders.FileSystemModuleLoader;
 
 public class Main {
-	private static final ObjectMapper MAPPER = new ObjectMapper()
-			.registerModule(JsonQueryJacksonModule.getInstance());
+	private static final ObjectMapper COMPACT_MAPPER = JsonMapper.builder()
+			.addModule(JsonQueryJacksonModule.getInstance())
+			.build();
+
+	private static final ObjectMapper PRETTY_MAPPER = JsonMapper.builder()
+			.addModule(JsonQueryJacksonModule.getInstance())
+			.enable(SerializationFeature.INDENT_OUTPUT)
+			.build();
 
 	private static final Option OPT_COMPACT = Option.builder("c")
 			.longOpt("compact")
@@ -102,9 +109,7 @@ public class Main {
 
 		final JsonQuery jq = JsonQuery.compile(rest.get(0), version);
 
-		if (!command.hasOption(OPT_COMPACT.getOpt())) {
-			MAPPER.enable(SerializationFeature.INDENT_OUTPUT);
-		}
+		final ObjectMapper mapper = command.hasOption(OPT_COMPACT.getOpt()) ? COMPACT_MAPPER : PRETTY_MAPPER;
 
 		InputStream is = System.in;
 		if (command.hasOption(OPT_NULL_INPUT.getOpt())) {
@@ -121,21 +126,17 @@ public class Main {
 		}));
 
 		try (final BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
-			final JsonParser parser = MAPPER.getFactory().createParser(reader);
+			final JsonParser parser = mapper.createParser(reader);
 			while (!parser.isClosed()) {
 				final JsonNode tree = parser.readValueAsTree();
 				if (tree == null)
 					continue;
 				try {
 					jq.apply(scope, tree, (out) -> {
-						if (out.isTextual() && command.hasOption(OPT_RAW_OUTPUT.getOpt())) {
-							System.out.println(out.asText());
+						if (out.isString() && command.hasOption(OPT_RAW_OUTPUT.getOpt())) {
+							System.out.println(out.asString());
 						} else {
-							try {
-								System.out.println(MAPPER.writeValueAsString(out));
-							} catch (IOException e) {
-								throw new RuntimeException(e);
-							}
+							System.out.println(mapper.writeValueAsString(out));
 						}
 					});
 				} catch (JsonQueryException e) {

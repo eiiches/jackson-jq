@@ -4,9 +4,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeType;
+import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -27,7 +27,7 @@ public class UriDecodeFunction implements Function {
 		Preconditions.checkInputType("urldecode", in, JsonNodeType.STRING);
 
 		try {
-			output.emit(new TextNode(URLDecoder.decode(in.asText(), "UTF-8")), null);
+			output.emit(new StringNode(URLDecoder.decode(in.asString(), "UTF-8")), null);
 		} catch (UnsupportedEncodingException e) {
 			throw new JsonQueryException(e);
 		}

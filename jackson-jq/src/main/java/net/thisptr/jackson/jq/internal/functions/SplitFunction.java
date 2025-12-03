@@ -2,9 +2,9 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -25,12 +25,12 @@ public class SplitFunction implements Function {
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		args.get(0).apply(scope, in, (sep) -> {
-			if (!in.isTextual() || !sep.isTextual())
+			if (!in.isString() || !sep.isString())
 				throw new JsonQueryTypeException("split input and separator must be strings");
 
 			final ArrayNode row = scope.getObjectMapper().createArrayNode();
-			for (final String seg : Strings.split(in.asText(), sep.asText()))
-				row.add(new TextNode(seg));
+			for (final String seg : Strings.split(in.asString(), sep.asString()))
+				row.add(new StringNode(seg));
 
 			output.emit(row, null);
 		});

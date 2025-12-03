@@ -7,12 +7,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.ser.std.ToStringSerializer;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -125,13 +125,7 @@ public class JsonQueryTest {
 		testCases.addAll(loadTestCasesDirectory("tests", false));
 		testCases.addAll(loadTestCasesDirectory("failing_tests", true));
 
-		return testCases.stream().map(a -> {
-			try {
-				return JSON_MAPPER.writeValueAsString(a);
-			} catch (final IOException e) {
-				throw new RuntimeException(e);
-			}
-		});
+		return testCases.stream().map(JSON_MAPPER::writeValueAsString);
 	}
 
 	private static Map<Version, Boolean> hasJqCache = new ConcurrentHashMap<>();

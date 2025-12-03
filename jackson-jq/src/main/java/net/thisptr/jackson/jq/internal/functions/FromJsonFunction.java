@@ -1,10 +1,11 @@
 package net.thisptr.jackson.jq.internal.functions;
 
-import java.io.IOException;
 import java.util.List;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -22,11 +23,12 @@ import net.thisptr.jackson.jq.path.Path;
 public class FromJsonFunction implements Function {
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		if (!in.isTextual())
+		if (!in.isString())
 			throw new JsonQueryTypeException("%s only strings can be parsed", in);
 
 		final JsonNode tree;
-		try (final JsonParser parser = scope.getObjectMapper().getFactory().createParser(in.asText())) {
+		final ObjectMapper mapper = scope.getObjectMapper();
+		try (final JsonParser parser = mapper.createParser(in.asString())) {
 			tree = parser.readValueAsTree();
 			if (tree == null)
 				throw new JsonQueryException("failed to parse %s as json; empty", in);
@@ -34,7 +36,7 @@ public class FromJsonFunction implements Function {
 				throw new JsonQueryException("failed to parse %s as json; trailing data", in);
 		} catch (final JsonQueryException e) {
 			throw e;
-		} catch (final IOException e) {
+		} catch (final JacksonException e) {
 			throw new JsonQueryException("failed to parse %s as json", in);
 		}
 		output.emit(tree, null);

@@ -3,9 +3,9 @@ package net.thisptr.jackson.jq.internal.functions;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -27,19 +27,19 @@ public class AtShFunction implements Function {
 		if (in.isArray()) {
 			final List<String> tokens = new ArrayList<>();
 			for (final JsonNode i : in) {
-				if (i.isTextual()) {
-					tokens.add(escape(i.asText()));
+				if (i.isString()) {
+					tokens.add(escape(i.asString()));
 				} else if (i.isValueNode()) {
 					tokens.add(toString(scope, i));
 				} else {
 					throw new IllegalJsonInputException(i.getNodeType() + " cannot be escaped for shell");
 				}
 			}
-			output.emit(new TextNode(Strings.join(" ", tokens)), null);
-		} else if (in.isTextual()) {
-			output.emit(new TextNode(escape(in.asText())), null);
+			output.emit(new StringNode(Strings.join(" ", tokens)), null);
+		} else if (in.isString()) {
+			output.emit(new StringNode(escape(in.asString())), null);
 		} else if (in.isValueNode()) {
-			output.emit(new TextNode(toString(scope, in)), null);
+			output.emit(new StringNode(toString(scope, in)), null);
 		} else {
 			throw new IllegalJsonInputException(in.getNodeType() + " cannot be escaped for shell");
 		}
@@ -48,7 +48,7 @@ public class AtShFunction implements Function {
 	private static String toString(final Scope scope, final JsonNode node) throws JsonQueryException {
 		try {
 			return scope.getObjectMapper().writeValueAsString(node);
-		} catch (final JsonProcessingException e) {
+		} catch (final JacksonException e) {
 			throw new JsonQueryException(e);
 		}
 	}

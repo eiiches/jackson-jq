@@ -3,7 +3,7 @@ package net.thisptr.jackson.jq;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 
@@ -28,8 +28,8 @@ public class JsonNodeComparatorForTests extends JsonNodeComparator {
 	@Override
 	protected int compareObjectNode(final JsonNode o1, final JsonNode o2) {
 		if (strictFieldOrder) {
-			final Iterator<Entry<String, JsonNode>> it1 = o1.fields();
-			final Iterator<Entry<String, JsonNode>> it2 = o2.fields();
+			final Iterator<Entry<String, JsonNode>> it1 = o1.properties().iterator();
+			final Iterator<Entry<String, JsonNode>> it2 = o2.properties().iterator();
 			while (it1.hasNext() && it2.hasNext()) {
 				final Entry<String, JsonNode> entry1 = it1.next();
 				final Entry<String, JsonNode> entry2 = it2.next();

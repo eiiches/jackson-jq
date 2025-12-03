@@ -10,11 +10,12 @@ import org.joni.Region;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.BooleanNode;
+import tools.jackson.databind.node.JsonNodeType;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -35,7 +36,7 @@ public class _MatchImplFunction implements Function {
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		Preconditions.checkInputType("_match_impl/3", in, JsonNodeType.STRING);
-		final byte[] ibytes = in.asText().getBytes(StandardCharsets.UTF_8);
+		final byte[] ibytes = in.asString().getBytes(StandardCharsets.UTF_8);
 		final int[] cindex = UnicodeUtils.UTF8CharIndex(ibytes);
 
 		args.get(2).apply(scope, in, (test) -> {
@@ -44,7 +45,7 @@ public class _MatchImplFunction implements Function {
 				Preconditions.checkArgumentType("_match_impl/3", 2, flags, JsonNodeType.STRING, JsonNodeType.NULL);
 				args.get(0).apply(scope, in, (regex) -> {
 					Preconditions.checkArgumentType("_match_impl/3", 1, regex, JsonNodeType.STRING);
-					final OnigUtils.Pattern p = new OnigUtils.Pattern(regex.asText(), flags.isNull() ? null : flags.asText());
+					final OnigUtils.Pattern p = new OnigUtils.Pattern(regex.asString(), flags.isNull() ? null : flags.asString());
 					output.emit(match(scope.getObjectMapper(), p, ibytes, cindex, test.asBoolean()), null);
 				});
 			});
@@ -52,6 +53,7 @@ public class _MatchImplFunction implements Function {
 	}
 
 	@JsonIgnoreProperties(ignoreUnknown = true)
+	@JsonPropertyOrder({"offset", "length", "string", "name"})
 	private static class CaptureObject {
 		@JsonProperty("offset")
 		public int offset;
@@ -64,6 +66,7 @@ public class _MatchImplFunction implements Function {
 	}
 
 	@JsonIgnoreProperties(ignoreUnknown = true)
+	@JsonPropertyOrder({"offset", "length", "string", "captures"})
 	/* package private */static class MatchObject {
 		@JsonProperty("offset")
 		public int offset;

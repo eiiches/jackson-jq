@@ -3,10 +3,10 @@ package net.thisptr.jackson.jq.internal.functions;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.NullNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.JsonNodeType;
+import tools.jackson.databind.node.NullNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -44,9 +44,9 @@ public class IndicesFunction implements Function {
 
 	public static List<Integer> indices(final JsonNode needle, final JsonNode haystack) throws JsonQueryException {
 		final List<Integer> result = new ArrayList<>();
-		if (needle.isTextual() && haystack.isTextual()) {
-			final String haystackText = haystack.asText();
-			final String needleText = needle.asText();
+		if (needle.isString() && haystack.isString()) {
+			final String haystackText = haystack.asString();
+			final String needleText = needle.asString();
 			if (!needleText.isEmpty()) {
 				for (int index = haystackText.indexOf(needleText); index >= 0; index = haystackText.indexOf(needleText, index + 1))
 					result.add(index);

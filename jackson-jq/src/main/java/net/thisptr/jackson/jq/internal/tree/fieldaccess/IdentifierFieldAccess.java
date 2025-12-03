@@ -1,6 +1,6 @@
 package net.thisptr.jackson.jq.internal.tree.fieldaccess;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;

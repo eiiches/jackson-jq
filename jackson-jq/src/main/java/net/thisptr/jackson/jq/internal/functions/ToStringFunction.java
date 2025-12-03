@@ -2,9 +2,9 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -21,12 +21,12 @@ import net.thisptr.jackson.jq.path.Path;
 public class ToStringFunction implements Function {
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		if (in.isTextual()) {
+		if (in.isString()) {
 			output.emit(in, null);
 		} else {
 			try {
-				output.emit(new TextNode(scope.getObjectMapper().writeValueAsString(in)), null);
-			} catch (final JsonProcessingException e) {
+				output.emit(new StringNode(scope.getObjectMapper().writeValueAsString(in)), null);
+			} catch (final JacksonException e) {
 				throw new JsonQueryException(e);
 			}
 		}

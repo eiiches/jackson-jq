@@ -1,11 +1,10 @@
 package net.thisptr.jackson.jq.internal.functions;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.BooleanNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -36,8 +35,8 @@ public class ContainsFunction implements Function {
 	}
 
 	private static boolean contains(final JsonNode needle, final JsonNode haystack) {
-		if (haystack.isTextual() && needle.isTextual()) {
-			return haystack.asText().contains(needle.asText());
+		if (haystack.isString() && needle.isString()) {
+			return haystack.asString().contains(needle.asString());
 		} else if (haystack.isArray() && needle.isArray()) {
 			for (final JsonNode n : needle) {
 				boolean found = false;
@@ -52,9 +51,7 @@ public class ContainsFunction implements Function {
 			}
 			return true;
 		} else if (haystack.isObject() && needle.isObject()) {
-			final Iterator<Entry<String, JsonNode>> iter = needle.fields();
-			while (iter.hasNext()) {
-				final Entry<String, JsonNode> field = iter.next();
+			for (final Entry<String, JsonNode> field : needle.properties()) {
 				final JsonNode tmp = haystack.get(field.getKey());
 				if (tmp == null)
 					return false;

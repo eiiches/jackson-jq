@@ -3,8 +3,8 @@ package net.thisptr.jackson.jq.internal.tree.matcher.matchers;
 import java.util.List;
 import java.util.Stack;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.NullNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.NullNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Scope;
@@ -49,7 +49,7 @@ public class ObjectMatcher implements PatternMatcher {
 			final StringBuilder sb = new StringBuilder();
 			if (dollar) {
 				sb.append("$");
-				sb.append(((StringLiteral) name).value().asText());
+				sb.append(((StringLiteral) name).value().asString());
 			} else {
 				sb.append(name);
 			}
@@ -62,7 +62,7 @@ public class ObjectMatcher implements PatternMatcher {
 
 		public PatternMatcher matcher() {
 			if (matcher == null)
-				return new ValueMatcher(((StringLiteral) name).value().asText());
+				return new ValueMatcher(((StringLiteral) name).value().asString());
 			return matcher;
 		}
 	}
@@ -75,14 +75,14 @@ public class ObjectMatcher implements PatternMatcher {
 
 		final FieldMatcher fmatcher = matchers.get(index);
 		fmatcher.name.apply(scope, in, (key) -> {
-			if (!key.isTextual())
+			if (!key.isString())
 				throw new JsonQueryTypeException("Cannot index %s with %s", in.getNodeType(), key.getNodeType());
 
-			final JsonNode value = in.get(key.asText());
+			final JsonNode value = in.get(key.asString());
 
 			final int size = accumulate.size();
 			if (fmatcher.dollar)
-				accumulate.push(Pair.of(key.asText(), value));
+				accumulate.push(Pair.of(key.asString(), value));
 			fmatcher.matcher().match(scope, value != null ? value : NullNode.getInstance(), (match) -> {
 				recursive(scope, in, out, accumulate, index + 1);
 			}, accumulate);
@@ -98,15 +98,15 @@ public class ObjectMatcher implements PatternMatcher {
 
 		final FieldMatcher fmatcher = matchers.get(index);
 		fmatcher.name.apply(scope, in, (key) -> {
-			if (!key.isTextual())
+			if (!key.isString())
 				throw new JsonQueryTypeException("Cannot index %s with %s", in.getNodeType(), key.getNodeType());
 
-			final JsonNode value = in.get(key.asText());
-			final Path valuepath = ObjectFieldPath.chainIfNotNull(inpath, key.asText());
+			final JsonNode value = in.get(key.asString());
+			final Path valuepath = ObjectFieldPath.chainIfNotNull(inpath, key.asString());
 
 			final int size = accumulate.size();
 			if (fmatcher.dollar)
-				accumulate.push(new MatchWithPath(key.asText(), value, valuepath));
+				accumulate.push(new MatchWithPath(key.asString(), value, valuepath));
 			fmatcher.matcher().matchWithPath(scope, value != null ? value : NullNode.getInstance(), valuepath, (match) -> {
 				recursiveWithPath(scope, in, inpath, output, accumulate, index + 1);
 			}, accumulate);

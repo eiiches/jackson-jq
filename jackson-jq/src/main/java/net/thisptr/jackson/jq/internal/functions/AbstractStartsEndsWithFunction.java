@@ -2,8 +2,8 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.BooleanNode;
 
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
@@ -25,9 +25,9 @@ public abstract class AbstractStartsEndsWithFunction implements Function {
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		args.get(0).apply(scope, in, (needle) -> {
-			if (!needle.isTextual() || !in.isTextual())
+			if (!needle.isString() || !in.isString())
 				throw new JsonQueryException(fname + "() requires string inputs");
-			output.emit(BooleanNode.valueOf(doCheck(in.asText(), needle.asText())), null);
+			output.emit(BooleanNode.valueOf(doCheck(in.asString(), needle.asString())), null);
 		});
 	}
 }

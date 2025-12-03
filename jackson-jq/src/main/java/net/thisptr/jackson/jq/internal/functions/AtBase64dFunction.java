@@ -3,7 +3,7 @@ package net.thisptr.jackson.jq.internal.functions;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -18,7 +18,7 @@ public class AtBase64dFunction extends AbstractAtFormattingFunction {
 		try {
 			return new String(Base64.getDecoder().decode(text), StandardCharsets.UTF_8);
 		} catch (final Throwable th) {
-			throw new JsonQueryException("%s is not valid base64 data: %s", TextNode.valueOf(text), th.getMessage());
+			throw new JsonQueryException("%s is not valid base64 data: %s", StringNode.valueOf(text), th.getMessage());
 		}
 	}
 }

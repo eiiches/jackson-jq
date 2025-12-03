@@ -1,18 +1,17 @@
 package net.thisptr.jackson.jq.internal.misc;
 
-import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map.Entry;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.DoubleNode;
-import com.fasterxml.jackson.databind.node.FloatNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.Version;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.DoubleNode;
+import tools.jackson.databind.node.FloatNode;
+import tools.jackson.databind.node.ObjectNode;
 
 public class JsonQueryJacksonModule extends SimpleModule {
 	private static final long serialVersionUID = 1137650244815104623L;
@@ -24,7 +23,7 @@ public class JsonQueryJacksonModule extends SimpleModule {
 	}
 
 	private JsonQueryJacksonModule() {
-		super("JsonQuery", new com.fasterxml.jackson.core.Version(1, 0, 0, null, "net.thisptr", "jackson-jq"));
+		super("JsonQuery", new Version(1, 0, 0, null, "net.thisptr", "jackson-jq"));
 		addSerializer(DoubleNode.class, new DoubleNodeSerializer());
 		addSerializer(FloatNode.class, new FloatNodeSerializer());
 		addSerializer(ArrayNode.class, new ArrayNodeSerializer());
@@ -48,40 +47,38 @@ public class JsonQueryJacksonModule extends SimpleModule {
 		}
 	}
 
-	private static class ArrayNodeSerializer extends JsonSerializer<ArrayNode> {
+	private static class ArrayNodeSerializer extends ValueSerializer<ArrayNode> {
 		@Override
-		public void serialize(final ArrayNode value, final JsonGenerator gen, final SerializerProvider serializers) throws IOException {
+		public void serialize(final ArrayNode value, final JsonGenerator gen, final SerializationContext serializers) {
 			gen.writeStartArray();
 			for (final JsonNode element : value)
-				gen.writeObject(element);
+				gen.writePOJO(element);
 			gen.writeEndArray();
 		}
 	}
 
-	private static class ObjectNodeSerializer extends JsonSerializer<ObjectNode> {
+	private static class ObjectNodeSerializer extends ValueSerializer<ObjectNode> {
 
 		@Override
-		public void serialize(final ObjectNode value, final JsonGenerator gen, final SerializerProvider serializers) throws IOException {
+		public void serialize(final ObjectNode value, final JsonGenerator gen, final SerializationContext serializers) {
 			gen.writeStartObject();
-			final Iterator<Entry<String, JsonNode>> iter = value.fields();
-			while (iter.hasNext()) {
-				final Entry<String, JsonNode> entry = iter.next();
-				gen.writeObjectField(entry.getKey(), entry.getValue());
+			for (final Entry<String, JsonNode> entry : value.properties()) {
+				gen.writePOJOProperty(entry.getKey(), entry.getValue());
 			}
 			gen.writeEndObject();
 		}
 	}
 
-	private static class DoubleNodeSerializer extends JsonSerializer<DoubleNode> {
+	private static class DoubleNodeSerializer extends ValueSerializer<DoubleNode> {
 		@Override
-		public void serialize(DoubleNode value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+		public void serialize(DoubleNode value, JsonGenerator gen, SerializationContext serializers) {
 			gen.writeRawValue(format(value.asDouble()));
 		}
 	}
 
-	private static class FloatNodeSerializer extends JsonSerializer<FloatNode> {
+	private static class FloatNodeSerializer extends ValueSerializer<FloatNode> {
 		@Override
-		public void serialize(FloatNode value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+		public void serialize(FloatNode value, JsonGenerator gen, SerializationContext serializers) {
 			gen.writeRawValue(format(value.asDouble()));
 		}
 	}

@@ -5,15 +5,16 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.DoubleNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.LongNode;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.DoubleNode;
+import tools.jackson.databind.node.IntNode;
+import tools.jackson.databind.node.LongNode;
+import tools.jackson.databind.node.NullNode;
+import tools.jackson.databind.node.ObjectNode;
 
 public class JsonNodeUtils {
 	private JsonNodeUtils() {}
@@ -81,15 +82,14 @@ public class JsonNodeUtils {
 		return value;
 	}
 
-	private static final ObjectMapper MAPPER = new ObjectMapper()
-			.registerModule(JsonQueryJacksonModule.getInstance());
+	private static final ObjectMapper MAPPER = JsonMapper.builder()
+			.addModule(JsonQueryJacksonModule.getInstance())
+			.build();
 
 	private static JsonNode filterInternal(final JsonNode in, final Predicate<JsonNode> pred) {
 		if (in.isObject()) {
 			final ObjectNode out = MAPPER.createObjectNode();
-			final Iterator<Entry<String, JsonNode>> iter = in.fields();
-			while (iter.hasNext()) {
-				final Entry<String, JsonNode> entry = iter.next();
+			for (final Entry<String, JsonNode> entry : in.properties()) {
 				if (!pred.test(entry.getValue()))
 					continue;
 				out.set(entry.getKey(), filterInternal(entry.getValue(), pred));
@@ -119,7 +119,7 @@ public class JsonNodeUtils {
 	public static String toString(final JsonNode node) {
 		try {
 			return MAPPER.writeValueAsString(node);
-		} catch (final JsonProcessingException e) {
+		} catch (final JacksonException e) {
 			throw new RuntimeException(e);
 		}
 	}

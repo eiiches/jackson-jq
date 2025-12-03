@@ -1,14 +1,14 @@
 package net.thisptr.jackson.jq.exception;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeType;
+import tools.jackson.databind.node.StringNode;
 
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.misc.Strings;
 
-public class JsonQueryException extends JsonProcessingException {
+public class JsonQueryException extends JacksonException {
 	private static final long serialVersionUID = -7241258446595502920L;
 
 	public JsonQueryException(final String msg) {
@@ -24,7 +24,7 @@ public class JsonQueryException extends JsonProcessingException {
 	}
 
 	public JsonNode getMessageAsJsonNode() {
-		return new TextNode(getMessage());
+		return new StringNode(getMessage());
 	}
 
 	public JsonQueryException(final String format, final Object... args) {

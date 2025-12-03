@@ -11,8 +11,9 @@ import java.util.function.Supplier;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import net.thisptr.jackson.jq.internal.annotations.Experimental;
 import net.thisptr.jackson.jq.internal.misc.JsonQueryJacksonModule;
@@ -22,8 +23,9 @@ import net.thisptr.jackson.jq.module.ModuleLoader;
 import net.thisptr.jackson.jq.path.Path;
 
 public class Scope {
-	private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper()
-			.registerModule(JsonQueryJacksonModule.getInstance());
+	private static final ObjectMapper DEFAULT_MAPPER = JsonMapper.builder()
+			.addModule(JsonQueryJacksonModule.getInstance())
+			.build();
 
 	@JsonProperty("functions")
 	private Map<String, String> debugFunctions() {

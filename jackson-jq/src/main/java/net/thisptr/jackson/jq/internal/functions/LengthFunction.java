@@ -2,8 +2,8 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.IntNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.IntNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -27,8 +27,8 @@ public class LengthFunction implements Function {
 	}
 
 	public JsonNode length(final JsonNode in) throws JsonQueryException {
-		if (in.isTextual()) {
-			return IntNode.valueOf(UnicodeUtils.lengthUtf32(in.asText()));
+		if (in.isString()) {
+			return IntNode.valueOf(UnicodeUtils.lengthUtf32(in.asString()));
 		} else if (in.isArray() || in.isObject()) {
 			return new IntNode(in.size());
 		} else if (in.isNull()) {

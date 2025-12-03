@@ -2,8 +2,8 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.BooleanNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -26,9 +26,9 @@ public class HasFunction implements Function {
 		}
 		args.get(0).apply(scope, in, (keyName) -> {
 			if (in.isObject()) {
-				if (!keyName.isTextual())
+				if (!keyName.isString())
 					throw new JsonQueryException("argument 1 of has() must be string for object input");
-				output.emit(BooleanNode.valueOf(in.has(keyName.asText())), null);
+				output.emit(BooleanNode.valueOf(in.has(keyName.asString())), null);
 			} else if (in.isArray()) {
 				if (!keyName.isIntegralNumber())
 					throw new JsonQueryException("argument 1 of has() must be int for array input");

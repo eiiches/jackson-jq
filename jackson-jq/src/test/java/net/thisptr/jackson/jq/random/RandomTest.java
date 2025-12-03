@@ -20,12 +20,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.node.NullNode;
+import tools.jackson.databind.node.StringNode;
+import tools.jackson.databind.ser.std.ToStringSerializer;
 
 import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.Expression;
@@ -213,7 +213,7 @@ public class RandomTest {
 				if (expected.error != null) {
 					test.expression = new TryCatch(expr, new StringLiteral("__ERROR__"));
 					test.out = new ArrayList<>(expected.values);
-					test.out.add(TextNode.valueOf("__ERROR__"));
+					test.out.add(StringNode.valueOf("__ERROR__"));
 				} else {
 					test.expression = expr;
 					test.out = expected.values;

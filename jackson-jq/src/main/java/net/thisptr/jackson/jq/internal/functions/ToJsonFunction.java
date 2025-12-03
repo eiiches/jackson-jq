@@ -1,10 +1,10 @@
 package net.thisptr.jackson.jq.internal.functions;
 
-import java.io.IOException;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -23,8 +23,8 @@ public class ToJsonFunction implements Function {
 	@Override
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		try {
-			output.emit(new TextNode(scope.getObjectMapper().writeValueAsString(in)), null);
-		} catch (final IOException e) {
+			output.emit(new StringNode(scope.getObjectMapper().writeValueAsString(in)), null);
+		} catch (final JacksonException e) {
 			throw new JsonQueryException(e);
 		}
 	}

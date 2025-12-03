@@ -2,8 +2,8 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -30,17 +30,17 @@ public class JoinFunction implements Function {
 			final StringBuilder builder = new StringBuilder();
 			for (final JsonNode item : in) {
 				if (isep != null) {
-					if (isep.isTextual()) {
-						builder.append(isep.asText());
+					if (isep.isString()) {
+						builder.append(isep.asString());
 					} else if (isep.isNull()) {
 						// append nothing
 					} else {
-						throw new JsonQueryTypeException("%s and %s cannot be added", new TextNode(builder.toString()), isep);
+						throw new JsonQueryTypeException("%s and %s cannot be added", new StringNode(builder.toString()), isep);
 					}
 				}
 
-				if (item.isTextual()) {
-					builder.append(item.asText());
+				if (item.isString()) {
+					builder.append(item.asString());
 				} else if (item.isNull()) {
 					// append nothing
 				} else if (version.compareTo(Versions.JQ_1_6) >= 0 && (item.isNumber() || item.isBoolean())) {
@@ -49,13 +49,13 @@ public class JoinFunction implements Function {
 					builder.append(item.toString());
 				} else {
 					if (version.compareTo(Versions.JQ_1_6) >= 0)
-						throw new JsonQueryTypeException("%s and %s cannot be added", new TextNode(builder.toString()), item);
+						throw new JsonQueryTypeException("%s and %s cannot be added", new StringNode(builder.toString()), item);
 					throw new JsonQueryTypeException("%s and %s cannot be added", sep, item);
 				}
 
 				isep = sep;
 			}
-			output.emit(new TextNode(builder.toString()), null);
+			output.emit(new StringNode(builder.toString()), null);
 		});
 	}
 }

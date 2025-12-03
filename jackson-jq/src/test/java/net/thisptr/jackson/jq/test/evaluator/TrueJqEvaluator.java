@@ -15,10 +15,10 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.MappingIterator;
+import tools.jackson.databind.ObjectMapper;
 import com.google.common.io.ByteStreams;
 
 import net.thisptr.jackson.jq.Version;
@@ -63,7 +63,7 @@ public class TrueJqEvaluator implements Evaluator {
 
 		final List<JsonNode> values = new ArrayList<>();
 		try (final InputStream stdout = p.getInputStream()) {
-			final JsonParser parser = MAPPER.getFactory().createParser(ByteStreams.toByteArray(stdout));
+			final JsonParser parser = MAPPER.createParser(ByteStreams.toByteArray(stdout));
 			final MappingIterator<JsonNode> iter = MAPPER.readValues(parser, JsonNode.class);
 			while (iter.hasNextValue()) {
 				values.add(iter.nextValue());

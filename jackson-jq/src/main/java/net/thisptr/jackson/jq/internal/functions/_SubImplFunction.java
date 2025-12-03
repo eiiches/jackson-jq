@@ -9,12 +9,12 @@ import org.joni.Matcher;
 import org.joni.Option;
 import org.joni.Region;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.JsonNodeType;
+import tools.jackson.databind.node.NullNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -41,8 +41,8 @@ public class _SubImplFunction implements Function {
 			args.get(2).apply(scope, in, (flagsText) -> {
 				Preconditions.checkArgumentType("_sub_impl/3", 3, flagsText, JsonNodeType.STRING);
 
-				final OnigUtils.Pattern p = new OnigUtils.Pattern(regexText.asText(), flagsText.asText());
-				final List<JsonNode> match = match(scope.getObjectMapper(), p, in.asText());
+				final OnigUtils.Pattern p = new OnigUtils.Pattern(regexText.asString(), flagsText.asString());
+				final List<JsonNode> match = match(scope.getObjectMapper(), p, in.asString());
 
 				// This just repeats same emit()s the number of times as the number of flags. This is to emulate jq behavior (which is probably a bug).
 				args.get(2).apply(scope, in, (dummy) -> {
@@ -58,20 +58,20 @@ public class _SubImplFunction implements Function {
 			for (int i = stack.size() - 1; i >= 0; --i) {
 				sb.append(stack.get(i));
 			}
-			output.emit(new TextNode(sb.toString()), null);
+			output.emit(new StringNode(sb.toString()), null);
 			return;
 		}
 
 		final JsonNode rhead = match.get(match.size() - 1);
 		final List<JsonNode> rtail = match.subList(0, match.size() - 1);
 
-		if (rhead.isTextual()) {
-			stack.push(rhead.textValue());
+		if (rhead.isString()) {
+			stack.push(rhead.stringValue());
 			replaceAndConcat(scope, stack, output, rtail, replaceExpr, in, flags);
 			stack.pop();
 		} else {
 			replaceExpr.apply(scope, rhead, (replacement) -> {
-				stack.push(replacement.asText());
+				stack.push(replacement.asString());
 				replaceAndConcat(scope, stack, output, rtail, replaceExpr, in, flags);
 				stack.pop();
 			});
@@ -88,7 +88,7 @@ public class _SubImplFunction implements Function {
 			if (m.search(offset, inputBytes.length, Option.NONE) < 0)
 				break;
 
-			result.add(TextNode.valueOf(new String(inputBytes, offset, m.getBegin() - offset, StandardCharsets.UTF_8)));
+			result.add(StringNode.valueOf(new String(inputBytes, offset, m.getBegin() - offset, StandardCharsets.UTF_8)));
 
 			final ObjectNode captures = mapper.createObjectNode();
 			final Region regions = m.getRegion();
@@ -99,7 +99,7 @@ public class _SubImplFunction implements Function {
 						continue;
 					if (regions.getBeg(i) >= 0) {
 						final String value = new String(inputBytes, regions.getBeg(i), regions.getEnd(i) - regions.getBeg(i), StandardCharsets.UTF_8);
-						captures.set(name, TextNode.valueOf(value));
+						captures.set(name, StringNode.valueOf(value));
 					} else {
 						captures.set(name, NullNode.getInstance());
 					}
@@ -111,7 +111,7 @@ public class _SubImplFunction implements Function {
 			offset = m.getEnd();
 		} while (pattern.global && offset != inputBytes.length);
 
-		result.add(TextNode.valueOf(new String(inputBytes, offset, inputBytes.length - offset, StandardCharsets.UTF_8)));
+		result.add(StringNode.valueOf(new String(inputBytes, offset, inputBytes.length - offset, StandardCharsets.UTF_8)));
 		return result;
 	}
 }

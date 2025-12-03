@@ -46,7 +46,7 @@
 
 	<properties>
 		<org.slf4j-version>2.0.17</org.slf4j-version>
-		<com.fasterxml.jackson-version>2.19.2</com.fasterxml.jackson-version>
+		<tools.jackson-version>3.0.3</tools.jackson-version>
 		<com.google.auto.service-version>1.1.1</com.google.auto.service-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -54,9 +54,9 @@
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-				<groupId>com.fasterxml.jackson</groupId>
+				<groupId>tools.jackson</groupId>
 				<artifactId>jackson-bom</artifactId>
-				<version>${com.fasterxml.jackson-version}</version>
+				<version>${tools.jackson-version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -122,8 +122,8 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>17</source>
+					<target>17</target>
 					<compilerArgument>-Xlint:all,-processing</compilerArgument>
 					<showWarnings>true</showWarnings>
 					<showDeprecation>true</showDeprecation>

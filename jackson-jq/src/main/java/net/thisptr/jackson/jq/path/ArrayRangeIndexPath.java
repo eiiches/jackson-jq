@@ -1,11 +1,11 @@
 package net.thisptr.jackson.jq.path;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.NullNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
@@ -91,7 +91,7 @@ public class ArrayRangeIndexPath implements Path {
 				out.add(in.get((int) index));
 
 			return out;
-		} else if (in.isTextual()) {
+		} else if (in.isString()) {
 			throw new JsonQueryException("Cannot update field at object index of string");
 		} else if (in.isNull()) {
 			final JsonNode newval = mutation.apply(NullNode.getInstance());
@@ -112,9 +112,9 @@ public class ArrayRangeIndexPath implements Path {
 			for (long index = r.start; index < r.end; ++index)
 				subarray.add(pobj.get((int) index));
 			output.emit(subarray, ArrayRangeIndexPath.chainIfNotNull(ppath, start, end));
-		} else if (pobj.isTextual()) {
-			final Range r = Range.resolve(start, end, UnicodeUtils.lengthUtf32(pobj.textValue()));
-			final TextNode substring = new TextNode(UnicodeUtils.substringUtf32(pobj.textValue(), (int) r.start, (int) r.end));
+		} else if (pobj.isString()) {
+			final Range r = Range.resolve(start, end, UnicodeUtils.lengthUtf32(pobj.stringValue()));
+			final StringNode substring = new StringNode(UnicodeUtils.substringUtf32(pobj.stringValue(), (int) r.start, (int) r.end));
 			output.emit(substring, ArrayRangeIndexPath.chainIfNotNull(ppath, start, end));
 		} else if (pobj.isNull()) {
 			output.emit(NullNode.getInstance(), ArrayRangeIndexPath.chainIfNotNull(ppath, start, end));

@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -23,9 +23,9 @@ public class ToNumberFunction implements Function {
 	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
 		if (in.isNumber()) {
 			output.emit(in, null);
-		} else if (in.isTextual()) {
+		} else if (in.isString()) {
 			try {
-				final double value = Double.parseDouble(in.asText());
+				final double value = Double.parseDouble(in.asString());
 				output.emit(JsonNodeUtils.asNumericNode(value), null);
 			} catch (final NumberFormatException e) {
 				throw new JsonQueryException(e);

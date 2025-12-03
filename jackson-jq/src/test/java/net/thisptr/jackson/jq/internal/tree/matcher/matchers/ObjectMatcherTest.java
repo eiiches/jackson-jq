@@ -9,9 +9,9 @@ import java.util.Stack;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.IntNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.IntNode;
 
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Versions;

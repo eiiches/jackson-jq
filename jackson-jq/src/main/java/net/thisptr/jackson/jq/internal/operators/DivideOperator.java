@@ -1,9 +1,9 @@
 package net.thisptr.jackson.jq.internal.operators;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.StringNode;
 
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
@@ -20,10 +20,10 @@ public class DivideOperator implements BinaryOperator {
 			if (divisor == 0.0)
 				throw new JsonQueryException("%s and %s cannot be divided because the divisor is zero", lhs, rhs);
 			return JsonNodeUtils.asNumericNode(dividend / divisor);
-		} else if (lhs.isTextual() && rhs.isTextual()) {
+		} else if (lhs.isString() && rhs.isString()) {
 			final ArrayNode result = mapper.createArrayNode();
-			for (final String token : Strings.split(lhs.asText(), rhs.asText()))
-				result.add(new TextNode(token));
+			for (final String token : Strings.split(lhs.asString(), rhs.asString()))
+				result.add(new StringNode(token));
 			return result;
 		} else {
 			throw new JsonQueryTypeException("%s and %s cannot be divided", lhs, rhs);

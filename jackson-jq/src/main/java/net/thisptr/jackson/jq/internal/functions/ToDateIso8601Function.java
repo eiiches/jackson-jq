@@ -1,8 +1,8 @@
 package net.thisptr.jackson.jq.internal.functions;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeType;
+import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 import net.thisptr.jackson.jq.*;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
@@ -22,7 +22,7 @@ public class ToDateIso8601Function implements Function  {
         try {
             long epochSeconds = in.asLong();
             String iso8601String = Instant.ofEpochSecond(epochSeconds).toString();
-            output.emit(new TextNode(iso8601String), null);
+            output.emit(new StringNode(iso8601String), null);
         } catch (DateTimeException e) {
             throw new JsonQueryException(e);
         }        
