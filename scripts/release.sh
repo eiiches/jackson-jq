@@ -12,8 +12,8 @@ cd "$scriptdir/.."
 
 version="$1"
 next_version="$2"
-develop_branch=develop/1.x
-master_branch=master/1.x
+develop_branch=develop/2.x
+master_branch=master/2.x
 release_branch=release/$version
 tag_name=$version
 
