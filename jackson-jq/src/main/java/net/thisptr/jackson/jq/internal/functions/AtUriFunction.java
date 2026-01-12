@@ -18,7 +18,7 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
  */
 @AutoService(Function.class)
 @BuiltinFunction("@uri/0")
-public class AtUriFunction extends AbstractAtFormattingFunction {
+public class AtUriFunction<JsonNode> extends AbstractAtFormattingFunction<JsonNode> {
 	@Override
 	public String convert(final String text) throws JsonQueryException {
 		try {

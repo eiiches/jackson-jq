@@ -32,7 +32,15 @@
 	</scm>
 
 	<modules>
+		<module>jackson-jq-json-provider</module>
+		<module>jackson-jq-json-provider-jackson2-impl</module>
+		<module>jackson-jq-json-provider-jackson3-impl</module>
+		<module>jackson-jq-json-provider-gson-impl</module>
 		<module>jackson-jq</module>
+		<module>jackson-jq-it</module>
+		<module>jackson-jq-jackson2-it</module>
+		<module>jackson-jq-jackson3-it</module>
+		<module>jackson-jq-gson-it</module>
 		<module>jackson-jq-extra</module>
 		<module>jackson-jq-cli</module>
 	</modules>
@@ -46,7 +54,7 @@
 
 	<properties>
 		<org.slf4j-version>2.0.17</org.slf4j-version>
-		<tools.jackson-version>3.0.3</tools.jackson-version>
+		<com.fasterxml.jackson-version>2.19.2</com.fasterxml.jackson-version>
 		<com.google.auto.service-version>1.1.1</com.google.auto.service-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -54,9 +62,9 @@
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-				<groupId>tools.jackson</groupId>
+				<groupId>com.fasterxml.jackson</groupId>
 				<artifactId>jackson-bom</artifactId>
-				<version>${tools.jackson-version}</version>
+				<version>${com.fasterxml.jackson-version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -122,8 +130,7 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<source>17</source>
-					<target>17</target>
+					<release>8</release>
 					<compilerArgument>-Xlint:all,-processing</compilerArgument>
 					<showWarnings>true</showWarnings>
 					<showDeprecation>true</showDeprecation>
@@ -201,6 +208,11 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>3.5.3</version>
+					<configuration>
+						<systemPropertyVariables>
+							<jq.testcase.dir>${maven.multiModuleProjectDirectory}/tests</jq.testcase.dir>
+						</systemPropertyVariables>
+					</configuration>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>

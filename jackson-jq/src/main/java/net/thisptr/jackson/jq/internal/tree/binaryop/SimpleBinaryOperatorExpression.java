@@ -1,7 +1,5 @@
 package net.thisptr.jackson.jq.internal.tree.binaryop;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
@@ -9,19 +7,19 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.operators.BinaryOperator;
 import net.thisptr.jackson.jq.path.Path;
 
-public abstract class SimpleBinaryOperatorExpression extends BinaryOperatorExpression {
-	private BinaryOperator operator;
+public abstract class SimpleBinaryOperatorExpression<JsonNode> extends BinaryOperatorExpression<JsonNode> {
+	private BinaryOperator<JsonNode> operator;
 
-	public SimpleBinaryOperatorExpression(final Expression lhs, final Expression rhs, final BinaryOperator operator) {
+	public SimpleBinaryOperatorExpression(final Expression<JsonNode> lhs, final Expression<JsonNode> rhs, final BinaryOperator<JsonNode> operator) {
 		super(lhs, rhs, operator.image());
 		this.operator = operator;
 	}
 
 	@Override
-	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
+	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
 		rhs.apply(scope, in, (r) -> {
 			lhs.apply(scope, in, (l) -> {
-				output.emit(operator.apply(scope.getObjectMapper(), l, r), null);
+				output.emit(operator.apply(scope.jsonProvider(), l, r), null);
 			});
 		});
 	}

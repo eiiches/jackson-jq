@@ -1,15 +1,15 @@
 package net.thisptr.jackson.jq.internal.functions;
 
+import java.util.Iterator;
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.JsonNodeType;
-import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -19,20 +19,25 @@ import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction("implode/0")
-public class ImplodeFunction implements Function {
+public class ImplodeFunction<JsonNode> implements Function<JsonNode> {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		Preconditions.checkInputArrayType("implode", in, JsonNodeType.NUMBER);
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		Preconditions.checkInputArrayType(jsonProvider, "implode", in, JsonNodeType.NUMBER);
 
 		final StringBuilder builder = new StringBuilder();
-		for (final JsonNode ch : in) {
-			if (ch.canConvertToInt()) {
-				builder.append((char) ch.asInt());
+		final Iterator<JsonNode> iter = jsonProvider.elements(in);
+		while (iter.hasNext()) {
+			final JsonNode ch = iter.next();
+			final int intVal = jsonProvider.asInt(ch);
+			final double doubleVal = jsonProvider.asDouble(ch);
+			if (intVal == doubleVal) {
+				builder.append((char) intVal);
 			} else {
-				throw new JsonQueryException("input to implode() must be a list of codepoints; " + ch.getNodeType() + " found");
+				throw new JsonQueryException("input to implode() must be a list of codepoints; " + jsonProvider.getNodeType(ch) + " found");
 			}
 		}
 
-		output.emit(new StringNode(builder.toString()), null);
+		output.emit(jsonProvider.createString(builder.toString()), null);
 	}
 }

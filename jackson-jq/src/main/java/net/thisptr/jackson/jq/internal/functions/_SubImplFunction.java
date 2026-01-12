@@ -9,17 +9,13 @@ import org.joni.Matcher;
 import org.joni.Option;
 import org.joni.Region;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.JsonNodeType;
-import tools.jackson.databind.node.NullNode;
-import tools.jackson.databind.node.ObjectNode;
-import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -30,55 +26,56 @@ import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction("_sub_impl/3")
-public class _SubImplFunction implements Function {
+public class _SubImplFunction<JsonNode> implements Function<JsonNode> {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		Preconditions.checkInputType("_sub_impl/3", in, JsonNodeType.STRING);
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		Preconditions.checkInputType(jsonProvider, "_sub_impl/3", in, JsonNodeType.STRING);
 
 		args.get(0).apply(scope, in, (regexText) -> {
-			Preconditions.checkArgumentType("_sub_impl/3", 1, regexText, JsonNodeType.STRING);
+			Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 1, regexText, JsonNodeType.STRING);
 
 			args.get(2).apply(scope, in, (flagsText) -> {
-				Preconditions.checkArgumentType("_sub_impl/3", 3, flagsText, JsonNodeType.STRING);
+				Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 3, flagsText, JsonNodeType.STRING);
 
-				final OnigUtils.Pattern p = new OnigUtils.Pattern(regexText.asString(), flagsText.asString());
-				final List<JsonNode> match = match(scope.getObjectMapper(), p, in.asString());
+				final OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asText(regexText), jsonProvider.asText(flagsText));
+				final List<JsonNode> match = match(jsonProvider, p, jsonProvider.asText(in));
 
 				// This just repeats same emit()s the number of times as the number of flags. This is to emulate jq behavior (which is probably a bug).
 				args.get(2).apply(scope, in, (dummy) -> {
-					replaceAndConcat(scope, new Stack<>(), output, match, args.get(1), in, args.get(2));
+					replaceAndConcat(scope, jsonProvider, new Stack<>(), output, match, args.get(1), in, args.get(2));
 				});
 			});
 		});
 	}
 
-	private void replaceAndConcat(Scope scope, Stack<String> stack, PathOutput output, List<JsonNode> match, Expression replaceExpr, final JsonNode in, final Expression flags) throws JsonQueryException {
+	private void replaceAndConcat(Scope<JsonNode> scope, JsonProvider<JsonNode> jsonProvider, Stack<String> stack, PathOutput<JsonNode> output, List<JsonNode> match, Expression<JsonNode> replaceExpr, final JsonNode in, final Expression<JsonNode> flags) throws JsonQueryException {
 		if (match.isEmpty()) {
 			final StringBuilder sb = new StringBuilder();
 			for (int i = stack.size() - 1; i >= 0; --i) {
 				sb.append(stack.get(i));
 			}
-			output.emit(new StringNode(sb.toString()), null);
+			output.emit(jsonProvider.createString(sb.toString()), null);
 			return;
 		}
 
 		final JsonNode rhead = match.get(match.size() - 1);
 		final List<JsonNode> rtail = match.subList(0, match.size() - 1);
 
-		if (rhead.isString()) {
-			stack.push(rhead.stringValue());
-			replaceAndConcat(scope, stack, output, rtail, replaceExpr, in, flags);
+		if (jsonProvider.getNodeType(rhead) == JsonNodeType.STRING) {
+			stack.push(jsonProvider.asText(rhead));
+			replaceAndConcat(scope, jsonProvider, stack, output, rtail, replaceExpr, in, flags);
 			stack.pop();
 		} else {
 			replaceExpr.apply(scope, rhead, (replacement) -> {
-				stack.push(replacement.asString());
-				replaceAndConcat(scope, stack, output, rtail, replaceExpr, in, flags);
+				stack.push(jsonProvider.asText(replacement));
+				replaceAndConcat(scope, jsonProvider, stack, output, rtail, replaceExpr, in, flags);
 				stack.pop();
 			});
 		}
 	}
 
-	private static List<JsonNode> match(final ObjectMapper mapper, final OnigUtils.Pattern pattern, final String inputText) {
+	private static <JsonNode> List<JsonNode> match(final JsonProvider<JsonNode> jsonProvider, final OnigUtils.Pattern pattern, final String inputText) {
 		final List<JsonNode> result = new ArrayList<>();
 
 		final byte[] inputBytes = inputText.getBytes(StandardCharsets.UTF_8);
@@ -88,9 +85,9 @@ public class _SubImplFunction implements Function {
 			if (m.search(offset, inputBytes.length, Option.NONE) < 0)
 				break;
 
-			result.add(StringNode.valueOf(new String(inputBytes, offset, m.getBegin() - offset, StandardCharsets.UTF_8)));
+			result.add(jsonProvider.createString(new String(inputBytes, offset, m.getBegin() - offset, StandardCharsets.UTF_8)));
 
-			final ObjectNode captures = mapper.createObjectNode();
+			JsonNode captures = jsonProvider.createObject();
 			final Region regions = m.getRegion();
 			if (regions != null) {
 				for (int i = 1; i < regions.getNumRegs(); ++i) {
@@ -99,9 +96,9 @@ public class _SubImplFunction implements Function {
 						continue;
 					if (regions.getBeg(i) >= 0) {
 						final String value = new String(inputBytes, regions.getBeg(i), regions.getEnd(i) - regions.getBeg(i), StandardCharsets.UTF_8);
-						captures.set(name, StringNode.valueOf(value));
+						captures = jsonProvider.set(captures, name, jsonProvider.createString(value));
 					} else {
-						captures.set(name, NullNode.getInstance());
+						captures = jsonProvider.set(captures, name, jsonProvider.createNull());
 					}
 				}
 			}
@@ -111,7 +108,7 @@ public class _SubImplFunction implements Function {
 			offset = m.getEnd();
 		} while (pattern.global && offset != inputBytes.length);
 
-		result.add(StringNode.valueOf(new String(inputBytes, offset, inputBytes.length - offset, StandardCharsets.UTF_8)));
+		result.add(jsonProvider.createString(new String(inputBytes, offset, inputBytes.length - offset, StandardCharsets.UTF_8)));
 		return result;
 	}
 }

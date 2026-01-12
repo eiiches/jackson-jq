@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.NullNode;
-
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
@@ -15,13 +12,13 @@ import net.thisptr.jackson.jq.internal.misc.Pair;
 import net.thisptr.jackson.jq.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.path.Path;
 
-public class ReduceExpression implements Expression {
-	private Expression iterExpr;
-	private Expression reduceExpr;
-	private Expression initExpr;
-	private PatternMatcher matcher;
+public class ReduceExpression<JsonNode> implements Expression<JsonNode> {
+	private Expression<JsonNode> iterExpr;
+	private Expression<JsonNode> reduceExpr;
+	private Expression<JsonNode> initExpr;
+	private PatternMatcher<JsonNode> matcher;
 
-	public ReduceExpression(final PatternMatcher matcher, final Expression initExpr, final Expression reduceExpr, final Expression iterExpr) {
+	public ReduceExpression(final PatternMatcher<JsonNode> matcher, final Expression<JsonNode> initExpr, final Expression<JsonNode> reduceExpr, final Expression<JsonNode> iterExpr) {
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.reduceExpr = reduceExpr;
@@ -31,12 +28,13 @@ public class ReduceExpression implements Expression {
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
 
 	@Override
-	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
+	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
 		initExpr.apply(scope, in, (accumulator) -> {
 			// Wrap in array to allow mutation inside lambda
-			final JsonNode[] accumulators = new JsonNode[] { accumulator };
+			@SuppressWarnings("unchecked")
+			final JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
 
-			final Scope childScope = Scope.newChildScope(scope);
+			final Scope<JsonNode> childScope = Scope.newChildScope(scope);
 			iterExpr.apply(scope, in, (item) -> {
 				final Stack<Pair<String, JsonNode>> stack = new Stack<>();
 				matcher.match(scope, item, (final List<Pair<String, JsonNode>> vars) -> {
@@ -48,7 +46,7 @@ public class ReduceExpression implements Expression {
 					// We only use the last value from reduce expression.
 					final List<JsonNode> reduceResult = new ArrayList<>();
 					reduceExpr.apply(childScope, accumulators[0], reduceResult::add);
-					accumulators[0] = reduceResult.isEmpty() ? NullNode.getInstance() : reduceResult.get(reduceResult.size() - 1);
+					accumulators[0] = reduceResult.isEmpty() ? scope.jsonProvider().createNull() : reduceResult.get(reduceResult.size() - 1);
 				}, stack);
 			});
 

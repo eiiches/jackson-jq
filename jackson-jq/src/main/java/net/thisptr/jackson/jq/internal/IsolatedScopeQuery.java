@@ -1,23 +1,21 @@
 package net.thisptr.jackson.jq.internal;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.path.Path;
 
-public class IsolatedScopeQuery implements Expression {
-	private Expression q;
+public class IsolatedScopeQuery<JsonNode> implements Expression<JsonNode> {
+	private Expression<JsonNode> q;
 
-	public IsolatedScopeQuery(final Expression q) {
+	public IsolatedScopeQuery(final Expression<JsonNode> q) {
 		this.q = q;
 	}
 
 	@Override
-	public void apply(Scope scope, JsonNode in, Path path, PathOutput output, boolean requirePath) throws JsonQueryException {
-		final Scope isolatedScope = Scope.newChildScope(scope);
+	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		final Scope<JsonNode> isolatedScope = Scope.newChildScope(scope);
 		q.apply(isolatedScope, in, path, output, requirePath);
 	}
 

@@ -3,14 +3,13 @@ package net.thisptr.jackson.jq.internal.functions;
 import java.util.ArrayList;
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.MissingNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -25,44 +24,45 @@ import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction("delpaths/1")
-public class DelPathsFunction implements Function {
+public class DelPathsFunction<JsonNode> implements Function<JsonNode> {
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		args.get(0).apply(scope, in, (paths) -> {
-			if (!paths.isArray()) {
+			if (jsonProvider.getNodeType(paths) != JsonNodeType.ARRAY) {
 				throw new JsonQueryException("Paths must be specified as an array");
 			}
 
-			final List<JsonNode> sortedPaths = new ArrayList<>(paths.size());
-			for (final JsonNode path : paths) {
-				if (!path.isArray())
-					throw new JsonQueryException("Path must be specified as array, not " + path.getNodeType().toString().toLowerCase());
+			final List<JsonNode> sortedPaths = new ArrayList<>(jsonProvider.size(paths));
+			for (final JsonNode path : jsonProvider.iterate(paths)) {
+				if (jsonProvider.getNodeType(path) != JsonNodeType.ARRAY)
+					throw new JsonQueryException("Path must be specified as array, not " + JsonNodeUtils.typeOf(jsonProvider, path));
 				sortedPaths.add(path);
 			}
-			sortedPaths.sort(JsonNodeComparator.getInstance());
+			sortedPaths.sort(new JsonNodeComparator<>(jsonProvider));
 
 			JsonNode out = in;
 			for (int i = sortedPaths.size() - 1; i >= 0; --i) {
-				final Path path = PathUtils.toPath(sortedPaths.get(i));
-				out = path.mutate(out, (oldval) -> {
-					if ((path instanceof ArrayRangeIndexPath) && oldval.isArray()) {
-						final ArrayNode newval = scope.getObjectMapper().createArrayNode();
-						for (int j = 0; j < oldval.size(); ++j)
-							newval.add(MissingNode.getInstance());
+				final Path<JsonNode> path = PathUtils.toPath(jsonProvider, sortedPaths.get(i));
+				out = path.mutate(jsonProvider, out, (oldval) -> {
+					if ((path instanceof ArrayRangeIndexPath) && jsonProvider.getNodeType(oldval) == JsonNodeType.ARRAY) {
+						JsonNode newval = jsonProvider.createArray();
+						for (int j = 0; j < jsonProvider.size(oldval); ++j)
+							newval = jsonProvider.add(newval, jsonProvider.createMissing());
 						return newval;
-					} else if ((path instanceof ArrayIndexPath) && ((ArrayIndexPath) path).index.asDouble() < 0 && version.compareTo(Versions.JQ_1_5) <= 0) {
+					} else if ((path instanceof ArrayIndexPath) && jsonProvider.asDouble(((ArrayIndexPath<JsonNode>) path).index) < 0 && version.compareTo(Versions.JQ_1_5) <= 0) {
 						// jq-1.5: [1,2,[1,3]]|delpaths([[-1,1]]) #=> [1,2,[1]]
 						// jq-1.5: [1,2,[1,3]]|delpaths([[-1]]) #=> [1,2,[1,3]]
 						// jq-master: [1,2,[1,3]]|delpaths([[-1]]) #=> [1,2]
 						return oldval;
 					} else {
-						return MissingNode.getInstance();
+						return jsonProvider.createMissing();
 					}
 				}, false);
 			}
 
-			output.emit(JsonNodeUtils.filter(out, (val) -> !val.isMissingNode()), null);
+			output.emit(JsonNodeUtils.filter(jsonProvider, out, (val) -> jsonProvider.getNodeType(val) != JsonNodeType.MISSING), null);
 		});
 	}
 }

@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -16,9 +15,9 @@ import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction("empty/0")
-public class EmptyFunction implements Function {
+public class EmptyFunction<JsonNode> implements Function<JsonNode> {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
 		/* empty */
 	}
 }

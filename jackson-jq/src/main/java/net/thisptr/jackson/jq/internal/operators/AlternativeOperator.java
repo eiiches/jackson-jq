@@ -1,15 +1,13 @@
 package net.thisptr.jackson.jq.internal.operators;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 
-public class AlternativeOperator implements BinaryOperator {
+public class AlternativeOperator<JsonNode> implements BinaryOperator<JsonNode> {
 	@Override
-	public JsonNode apply(ObjectMapper mapper, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
-		return JsonNodeUtils.asBoolean(lhs) ? lhs : rhs;
+	public JsonNode apply(JsonProvider<JsonNode> jsonProvider, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
+		return JsonNodeUtils.asBoolean(jsonProvider, lhs) ? lhs : rhs;
 	}
 
 	@Override

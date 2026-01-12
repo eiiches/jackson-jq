@@ -1,8 +1,7 @@
 package net.thisptr.jackson.jq.internal.misc;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.NullNode;
-
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.path.ArrayIndexOfPath;
 import net.thisptr.jackson.jq.path.ArrayIndexPath;
@@ -13,33 +12,35 @@ import net.thisptr.jackson.jq.path.Path;
 import net.thisptr.jackson.jq.path.RootPath;
 
 public class PathUtils {
-	private static JsonNode parseArraySliceIndices(final JsonNode startOrEnd) throws JsonQueryException {
+	private static <JsonNode> JsonNode parseArraySliceIndices(final JsonProvider<JsonNode> jsonProvider, final JsonNode startOrEnd) throws JsonQueryException {
 		if (startOrEnd == null)
-			return NullNode.getInstance();
-		if (startOrEnd.isNumber())
+			return jsonProvider.createNull();
+		final JsonNodeType type = jsonProvider.getNodeType(startOrEnd);
+		if (type == JsonNodeType.NUMBER)
 			return startOrEnd;
-		if (startOrEnd.isNull())
+		if (type == JsonNodeType.NULL)
 			return startOrEnd;
 		throw new JsonQueryException("Start and end indices of an array slice must be numbers");
 	}
 
-	public static Path toPath(final JsonNode pathObj) throws JsonQueryException {
-		if (!pathObj.isArray())
+	public static <JsonNode> Path<JsonNode> toPath(final JsonProvider<JsonNode> jsonProvider, final JsonNode pathObj) throws JsonQueryException {
+		if (jsonProvider.getNodeType(pathObj) != JsonNodeType.ARRAY)
 			throw new JsonQueryException("Path must be specified as an array");
-		Path path = RootPath.getInstance();
-		for (final JsonNode segObj : pathObj) {
-			if (segObj.isObject()) {
-				final JsonNode start = parseArraySliceIndices(segObj.get("start"));
-				final JsonNode end = parseArraySliceIndices(segObj.get("end"));
-				path = new ArrayRangeIndexPath(path, start, end);
-			} else if (segObj.isNumber()) {
-				path = new ArrayIndexPath(path, segObj);
-			} else if (segObj.isString()) {
-				path = new ObjectFieldPath(path, segObj.asString());
-			} else if (segObj.isArray()) {
-				path = new ArrayIndexOfPath(path, segObj);
+		Path<JsonNode> path = RootPath.getInstance();
+		for (final JsonNode segObj : jsonProvider.iterate(pathObj)) {
+			final JsonNodeType type = jsonProvider.getNodeType(segObj);
+			if (type == JsonNodeType.OBJECT) {
+				final JsonNode start = parseArraySliceIndices(jsonProvider, jsonProvider.get(segObj, "start"));
+				final JsonNode end = parseArraySliceIndices(jsonProvider, jsonProvider.get(segObj, "end"));
+				path = new ArrayRangeIndexPath<>(path, start, end);
+			} else if (type == JsonNodeType.NUMBER) {
+				path = new ArrayIndexPath<>(path, segObj);
+			} else if (type == JsonNodeType.STRING) {
+				path = new ObjectFieldPath<>(path, jsonProvider.asText(segObj));
+			} else if (type == JsonNodeType.ARRAY) {
+				path = new ArrayIndexOfPath<>(path, segObj);
 			} else {
-				path = new InvalidPath(path, segObj);
+				path = new InvalidPath<>(path, segObj);
 			}
 		}
 		return path;

@@ -7,18 +7,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.JsonNodeType;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 
 @SuppressWarnings("serial")
-public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
-	private static final JsonNodeComparator defaultInstance = new JsonNodeComparator();
+public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Serializable {
+	private final JsonProvider<JsonNode> jsonProvider;
 
-	public static JsonNodeComparator getInstance() {
-		return defaultInstance;
+	public JsonNodeComparator(final JsonProvider<JsonNode> jsonProvider) {
+		this.jsonProvider = jsonProvider;
 	}
 
-	private static JsonNodeType[][] ordering = new JsonNodeType[][] {
+	private static final JsonNodeType[][] ordering = new JsonNodeType[][] {
 			new JsonNodeType[] { JsonNodeType.NULL, JsonNodeType.MISSING },
 			new JsonNodeType[] { JsonNodeType.BOOLEAN },
 			new JsonNodeType[] { JsonNodeType.NUMBER },
@@ -27,17 +27,17 @@ public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
 			new JsonNodeType[] { JsonNodeType.OBJECT },
 	};
 
-	private static Map<JsonNodeType, Integer> orderValues = new HashMap<>();
+	private static final Map<JsonNodeType, Integer> orderValues = new HashMap<>();
 	static {
 		for (int i = 0; i < ordering.length; i++)
 			for (final JsonNodeType type : ordering[i])
 				orderValues.put(type, i);
 	}
 
-	private static int orderValue(final JsonNode node) {
+	private int orderValue(final JsonNode node) {
 		if (node == null)
 			return 0;
-		return orderValue(node.getNodeType());
+		return orderValue(jsonProvider.getNodeType(node));
 	}
 
 	private static int orderValue(final JsonNodeType type) {
@@ -48,8 +48,8 @@ public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
 	}
 
 	protected int compareNumberNode(final JsonNode o1, final JsonNode o2) {
-		final double a = o1.asDouble();
-		final double b = o2.asDouble();
+		final double a = jsonProvider.asDouble(o1);
+		final double b = jsonProvider.asDouble(o2);
 		if (Double.isNaN(a))
 			return -1;
 		if (Double.isNaN(b))
@@ -58,11 +58,11 @@ public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
 	}
 
 	protected int compareArrayNode(final JsonNode o1, final JsonNode o2) {
-		final int s1 = o1.size();
-		final int s2 = o2.size();
+		final int s1 = jsonProvider.size(o1);
+		final int s2 = jsonProvider.size(o2);
 		final int s = Math.min(s1, s2);
 		for (int i = 0; i < s; ++i) {
-			final int rr = compare(o1.get(i), o2.get(i));
+			final int rr = compare(jsonProvider.get(o1, i), jsonProvider.get(o2, i));
 			if (rr != 0)
 				return rr;
 		}
@@ -70,8 +70,8 @@ public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
 	}
 
 	protected int compareObjectNode(final JsonNode o1, final JsonNode o2) {
-		final List<String> names1 = Lists.newArrayList(o1.propertyNames());
-		final List<String> names2 = Lists.newArrayList(o2.propertyNames());
+		final List<String> names1 = Lists.newArrayList(jsonProvider.fieldNames(o1));
+		final List<String> names2 = Lists.newArrayList(jsonProvider.fieldNames(o2));
 
 		// compare by keys
 		Collections.sort(names1);
@@ -88,7 +88,7 @@ public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
 
 		// compare by values (keys are sorted alphabetically)
 		for (final String name : names1) {
-			final int rrr = compare(o1.get(name), o2.get(name));
+			final int rrr = compare(jsonProvider.get(o1, name), jsonProvider.get(o2, name));
 			if (rrr != 0)
 				return rrr;
 		}
@@ -103,24 +103,25 @@ public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
 	// string, in alphabetical order
 	// array, in lexical order
 	// object, first compared as arrays in sorted order, then their values
+	@Override
 	public int compare(final JsonNode o1, final JsonNode o2) {
 		final int r = orderValue(o1) - orderValue(o2);
 		if (r != 0)
 			return r;
 
-		final JsonNodeType type = o1 != null ? o1.getNodeType() : null;
+		final JsonNodeType type = o1 != null ? jsonProvider.getNodeType(o1) : null;
 		if (type == null || type == JsonNodeType.MISSING || type == JsonNodeType.NULL)
 			return 0;
 
 		if (type == JsonNodeType.BOOLEAN)
-			return Boolean.compare(o1.asBoolean(), o2.asBoolean());
+			return Boolean.compare(jsonProvider.asBoolean(o1), jsonProvider.asBoolean(o2));
 
 		if (type == JsonNodeType.NUMBER) {
 			return compareNumberNode(o1, o2);
 		}
 
 		if (type == JsonNodeType.STRING || type == JsonNodeType.BINARY)
-			return o1.asString().compareTo(o2.asString());
+			return jsonProvider.asText(o1).compareTo(jsonProvider.asText(o2));
 
 		if (type == JsonNodeType.ARRAY) {
 			return compareArrayNode(o1, o2);

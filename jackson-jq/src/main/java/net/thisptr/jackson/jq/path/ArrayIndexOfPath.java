@@ -1,82 +1,76 @@
 package net.thisptr.jackson.jq.path;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.IntNode;
-
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 
-public class ArrayIndexOfPath implements Path {
+public class ArrayIndexOfPath<JsonNode> implements Path<JsonNode> {
 	public final JsonNode subseq; // sub sequence to look for
-	private final Path parent;
+	private final Path<JsonNode> parent;
 
-	public static ArrayIndexOfPath chainIfNotNull(final Path parent, final JsonNode subseq) {
+	public static <JsonNode> ArrayIndexOfPath<JsonNode> chainIfNotNull(final Path<JsonNode> parent, final JsonNode subseq) {
 		if (parent == null)
 			return null;
-		return new ArrayIndexOfPath(parent, subseq);
+		return new ArrayIndexOfPath<>(parent, subseq);
 	}
 
-	public ArrayIndexOfPath(final Path parent, final JsonNode subseq) {
+	public ArrayIndexOfPath(final Path<JsonNode> parent, final JsonNode subseq) {
 		if (parent == null)
 			throw new NullPointerException("parent must not be null");
 		this.parent = parent;
 		if (subseq == null)
 			throw new NullPointerException("subseq must not be null");
-		if (!subseq.isArray())
-			throw new IllegalArgumentException("subseq must be an array ");
+		// Note: cannot validate isArray() without JsonProvider here
 		this.subseq = subseq;
 	}
 
 	@Override
-	public void toJsonNode(final ArrayNode out) throws JsonQueryException {
-		parent.toJsonNode(out);
-		out.add(subseq);
+	public void toJsonNode(final JsonProvider<JsonNode> jsonProvider, final JsonNode out) throws JsonQueryException {
+		parent.toJsonNode(jsonProvider, out);
+		jsonProvider.add(out, subseq);
 	}
 
 	@Override
-	public void get(final JsonNode in, final Path ipath, final PathOutput output, boolean permissive) throws JsonQueryException {
-		parent.get(in, ipath, (parent, ppath) -> {
-			resolve(parent, ppath, output, subseq, permissive);
+	public void get(final JsonProvider<JsonNode> jsonProvider, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, boolean permissive) throws JsonQueryException {
+		parent.get(jsonProvider, in, ipath, (parent, ppath) -> {
+			resolve(jsonProvider, parent, ppath, output, subseq, permissive);
 		}, permissive);
 	}
 
-	private static final ObjectMapper MAPPER = new ObjectMapper();
-
 	@Override
-	public JsonNode mutate(final JsonNode in, final Mutation mutation, final boolean makeParent) throws JsonQueryException {
-		return parent.mutate(in, (oldval) -> {
+	public JsonNode mutate(final JsonProvider<JsonNode> jsonProvider, final JsonNode in, final Mutation<JsonNode> mutation, final boolean makeParent) throws JsonQueryException {
+		return parent.mutate(jsonProvider, in, (oldval) -> {
 			throw new JsonQueryException("Cannot update field at array index of array");
 		}, makeParent);
 	}
 
-	private static ArrayNode indexOfAll(final JsonNode seq, final JsonNode subseq) {
-		final JsonNodeComparator comparator = JsonNodeComparator.getInstance();
-		final ArrayNode out = MAPPER.createArrayNode();
+	private static <JsonNode> JsonNode indexOfAll(final JsonProvider<JsonNode> jsonProvider, final JsonNode seq, final JsonNode subseq) {
+		final JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
+		JsonNode out = jsonProvider.createArray();
 
-		if (subseq.size() != 0) {
-			shift: for (int i = 0; i < seq.size() - subseq.size() + 1; ++i) {
-				for (int j = 0; j < subseq.size(); ++j)
-					if (comparator.compare(seq.get(i + j), subseq.get(j)) != 0)
+		if (jsonProvider.size(subseq) != 0) {
+			shift: for (int i = 0; i < jsonProvider.size(seq) - jsonProvider.size(subseq) + 1; ++i) {
+				for (int j = 0; j < jsonProvider.size(subseq); ++j)
+					if (comparator.compare(jsonProvider.get(seq, i + j), jsonProvider.get(subseq, j)) != 0)
 						continue shift;
-				out.add(IntNode.valueOf(i));
+				out = jsonProvider.add(out, jsonProvider.createNumber(i));
 			}
 		}
 
 		return out;
 	}
 
-	public static void resolve(final JsonNode pobj, final Path ppath, final PathOutput output, final JsonNode subseq, final boolean permissive) throws JsonQueryException {
-		assert subseq.isArray();
-		if (pobj.isArray()) {
-			final ArrayNode indexList = indexOfAll(pobj, subseq);
+	public static <JsonNode> void resolve(final JsonProvider<JsonNode> jsonProvider, final JsonNode pobj, final Path<JsonNode> ppath, final PathOutput<JsonNode> output, final JsonNode subseq, final boolean permissive) throws JsonQueryException {
+		assert jsonProvider.getNodeType(subseq) == JsonNodeType.ARRAY;
+		if (jsonProvider.getNodeType(pobj) == JsonNodeType.ARRAY) {
+			final JsonNode indexList = indexOfAll(jsonProvider, pobj, subseq);
 			output.emit(indexList, ArrayIndexOfPath.chainIfNotNull(ppath, subseq));
 		} else {
 			if (!permissive)
-				throw new JsonQueryTypeException("Cannot index %s with array", pobj.getNodeType());
+				throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with array", jsonProvider.getNodeType(pobj));
 		}
 	}
 }

@@ -1,10 +1,11 @@
 package net.thisptr.jackson.jq;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.IntNode;
-import tools.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.path.Path;
 import org.junit.jupiter.api.Test;
 
@@ -22,13 +23,13 @@ public class CustomFunctionTest {
         ObjectMapper mapper = new ObjectMapper();
         Version version = Versions.JQ_1_6;
 
-        Scope rootScope = Scope.newEmptyScope();
+        Scope<JsonNode> rootScope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
 
         BuiltinFunctionLoader.getInstance().loadFunctions(version, rootScope);
 
-        rootScope.addFunction("times100", 1, new Function() {
+        rootScope.addFunction("times100", 1, new Function<JsonNode>() {
             @Override
-            public void apply(Scope scope, List<Expression> args, JsonNode in, Path path, PathOutput output, Version version) throws JsonQueryException {
+            public void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
                 args.get(0).apply(scope, in, (numberNode) -> {
                     assert (numberNode.isIntegralNumber());
                     output.emit(new IntNode(numberNode.asInt() * 100), null);
@@ -38,9 +39,9 @@ public class CustomFunctionTest {
 
         String input = "{ \"a\": 5 }";
 
-        Scope childScope = Scope.newChildScope(rootScope);
+        Scope<JsonNode> childScope = Scope.newChildScope(rootScope);
 
-        JsonQuery query = JsonQuery.compile("{ \"a\": times100(.a) }", version);
+        JsonQuery<JsonNode> query = JsonQuery.compile("{ \"a\": times100(.a) }", version);
 
         final List<JsonNode> out = new ArrayList<>();
         query.apply(childScope, mapper.readTree(input), out::add);

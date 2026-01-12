@@ -1,17 +1,15 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 
-public class IdentifierKeyFieldConstruction implements FieldConstruction {
+public class IdentifierKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
 	public final String key;
-	public final Expression value;
+	public final Expression<JsonNode> value;
 
-	public IdentifierKeyFieldConstruction(final String key, final Expression value) {
+	public IdentifierKeyFieldConstruction(final String key, final Expression<JsonNode> value) {
 		this.key = key;
 		this.value = value;
 	}
@@ -21,9 +19,9 @@ public class IdentifierKeyFieldConstruction implements FieldConstruction {
 	}
 
 	@Override
-	public void evaluate(final Scope scope, final JsonNode in, final FieldConsumer consumer) throws JsonQueryException {
+	public void evaluate(final Scope<JsonNode> scope, final JsonNode in, final FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		if (value == null) {
-			consumer.accept(key, JsonNodeUtils.nullToNullNode(in.get(key)));
+			consumer.accept(key, JsonNodeUtils.nullToNullNode(scope.jsonProvider(), scope.jsonProvider().get(in, key)));
 		} else {
 			value.apply(scope, in, (v) -> consumer.accept(key, v));
 		}

@@ -17,8 +17,8 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import tools.jackson.core.JsonParser;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.MappingIterator;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
@@ -30,20 +30,16 @@ import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.Versions;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.functions.EnvFunction;
-import net.thisptr.jackson.jq.internal.misc.JsonQueryJacksonModule;
+import net.thisptr.jackson.jq.jackson3.Jackson3JsonProviderImpl;
+import net.thisptr.jackson.jq.jackson3.JsonQueryJacksonModule;
 import net.thisptr.jackson.jq.module.ModuleLoader;
 import net.thisptr.jackson.jq.module.loaders.BuiltinModuleLoader;
 import net.thisptr.jackson.jq.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.module.loaders.FileSystemModuleLoader;
 
 public class Main {
-	private static final ObjectMapper COMPACT_MAPPER = JsonMapper.builder()
+	private static ObjectMapper MAPPER = JsonMapper.builder()
 			.addModule(JsonQueryJacksonModule.getInstance())
-			.build();
-
-	private static final ObjectMapper PRETTY_MAPPER = JsonMapper.builder()
-			.addModule(JsonQueryJacksonModule.getInstance())
-			.enable(SerializationFeature.INDENT_OUTPUT)
 			.build();
 
 	private static final Option OPT_COMPACT = Option.builder("c")
@@ -107,36 +103,38 @@ public class Main {
 			System.exit(0);
 		}
 
-		final JsonQuery jq = JsonQuery.compile(rest.get(0), version);
+		final JsonQuery<JsonNode> jq = JsonQuery.compile(rest.get(0), version);
 
-		final ObjectMapper mapper = command.hasOption(OPT_COMPACT.getOpt()) ? COMPACT_MAPPER : PRETTY_MAPPER;
+		if (!command.hasOption(OPT_COMPACT.getOpt())) {
+			MAPPER = MAPPER.rebuild()
+					.enable(SerializationFeature.INDENT_OUTPUT)
+					.build();
+		}
 
 		InputStream is = System.in;
 		if (command.hasOption(OPT_NULL_INPUT.getOpt())) {
 			is = new ByteArrayInputStream("null".getBytes());
 		}
 
-		final Scope scope = Scope.newEmptyScope();
+		final Scope<JsonNode> scope = Scope.newEmptyScope(Jackson3JsonProviderImpl.getInstance());
 		BuiltinFunctionLoader.getInstance().loadFunctions(version, scope);
 		scope.addFunction("env", 0, new EnvFunction());
 
-		scope.setModuleLoader(new ChainedModuleLoader(new ModuleLoader[] {
+		scope.setModuleLoader(new ChainedModuleLoader<>(new ModuleLoader[] {
 				BuiltinModuleLoader.getInstance(),
 				new FileSystemModuleLoader(scope, version, FileSystems.getDefault().getPath("").toAbsolutePath()),
 		}));
 
-		try (final BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
-			final JsonParser parser = mapper.createParser(reader);
-			while (!parser.isClosed()) {
-				final JsonNode tree = parser.readValueAsTree();
-				if (tree == null)
-					continue;
+		try (final BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+			 final MappingIterator<JsonNode> iter = MAPPER.readerFor(JsonNode.class).readValues(reader)) {
+			while (iter.hasNext()) {
+				final JsonNode tree = iter.next();
 				try {
-					jq.apply(scope, tree, (out) -> {
-						if (out.isString() && command.hasOption(OPT_RAW_OUTPUT.getOpt())) {
+					jq.apply(scope, tree, (JsonNode out) -> {
+						if (out.isTextual() && command.hasOption(OPT_RAW_OUTPUT.getOpt())) {
 							System.out.println(out.asString());
 						} else {
-							System.out.println(mapper.writeValueAsString(out));
+							System.out.println(MAPPER.writeValueAsString(out));
 						}
 					});
 				} catch (JsonQueryException e) {

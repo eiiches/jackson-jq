@@ -40,17 +40,5 @@
 		"allDeclaredFields": true,
 		"queryAllDeclaredMethods": true,
 		"queryAllDeclaredConstructors": true
-	},
-	{
-		"name": "net.thisptr.jackson.jq.internal.misc.VersionRangeDeserializer",
-		"methods": [
-			{
-				"name": "<init>",
-				"parameterTypes": []
-			}
-		],
-		"condition": {
-			"typeReachable": "net.thisptr.jackson.jq.internal.JqJson$JqFuncDef"
-		}
 	}
 ]

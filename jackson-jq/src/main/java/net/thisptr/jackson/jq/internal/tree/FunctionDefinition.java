@@ -2,8 +2,6 @@ package net.thisptr.jackson.jq.internal.tree;
 
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
@@ -11,20 +9,20 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.JsonQueryFunction;
 import net.thisptr.jackson.jq.path.Path;
 
-public class FunctionDefinition implements Expression {
-	private Expression body;
+public class FunctionDefinition<JsonNode> implements Expression<JsonNode> {
+	private Expression<JsonNode> body;
 	private String fname;
 	private List<String> args;
 
-	public FunctionDefinition(final String fname, final List<String> args, final Expression body) {
+	public FunctionDefinition(final String fname, final List<String> args, final Expression<JsonNode> body) {
 		this.fname = fname;
 		this.args = args;
 		this.body = body;
 	}
 
 	@Override
-	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
-		scope.addFunction(fname, args.size(), new JsonQueryFunction(fname, args, body, scope));
+	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
+		scope.addFunction(fname, args.size(), new JsonQueryFunction<>(fname, args, body, scope));
 	}
 
 	@Override

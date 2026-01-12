@@ -2,13 +2,13 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.ArrayNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -18,48 +18,51 @@ import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction("reverse/0")
-public class ReverseFunction implements Function {
+public class ReverseFunction<JsonNode> implements Function<JsonNode> {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		final ArrayNode out = scope.getObjectMapper().createArrayNode();
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		final JsonNode out = jsonProvider.createArray();
 
-		if (in.isNull()) {
+		final JsonNodeType type = jsonProvider.getNodeType(in);
+		if (type == JsonNodeType.NULL) {
 			output.emit(out, null);
 			return;
 		}
-		if (in.isArray()) {
-			for (int i = in.size() - 1; i >= 0; --i)
-				out.add(in.get(i));
+		if (type == JsonNodeType.ARRAY) {
+			final int size = jsonProvider.size(in);
+			for (int i = size - 1; i >= 0; --i)
+				jsonProvider.add(out, jsonProvider.get(in, i));
 			output.emit(out, null);
 			return;
 		}
 
 		// below are to emulate jq behavior
 
-		if (in.isString()) {
-			if (in.asString().isEmpty()) {
+		if (type == JsonNodeType.STRING) {
+			if (jsonProvider.asText(in).isEmpty()) {
 				output.emit(out, null);
 				return;
 			}
-			throw new JsonQueryTypeException("Cannot index %s with number", in.getNodeType());
+			throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with number", in);
 		}
-		if (in.isNumber()) {
-			if (in.asDouble() == 0.0) {
+		if (type == JsonNodeType.NUMBER) {
+			if (jsonProvider.asDouble(in) == 0.0) {
 				output.emit(out, null);
 				return;
 			}
-			throw new JsonQueryTypeException("Cannot index %s with number", in.getNodeType());
+			throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with number", in);
 		}
-		if (in.isObject()) {
-			if (in.size() == 0) {
+		if (type == JsonNodeType.OBJECT) {
+			if (jsonProvider.size(in) == 0) {
 				output.emit(out, null);
 				return;
 			}
-			throw new JsonQueryTypeException("Cannot index %s with number", in.getNodeType());
+			throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with number", in);
 		}
-		if (in.isBoolean()) {
-			throw new JsonQueryTypeException("%s has no length", in);
+		if (type == JsonNodeType.BOOLEAN) {
+			throw new JsonQueryTypeException(jsonProvider, "%s has no length", in);
 		}
-		throw new JsonQueryTypeException("%s cannot be reversed", in);
+		throw new JsonQueryTypeException(jsonProvider, "%s cannot be reversed", in);
 	}
 }

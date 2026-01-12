@@ -1,9 +1,21 @@
 package net.thisptr.jackson.jq.internal.tree.literal;
 
-import tools.jackson.databind.node.BooleanNode;
+import net.thisptr.jackson.jq.JsonProvider;
 
-public class BooleanLiteral extends ValueLiteral {
+public class BooleanLiteral<JsonNode> extends ValueLiteral<JsonNode> {
+	private boolean value;
+
 	public BooleanLiteral(final boolean value) {
-		super(BooleanNode.valueOf(value));
+		this.value = value;
+	}
+
+	@Override
+	public JsonNode value(JsonProvider<JsonNode> jsonProvider) {
+		return jsonProvider.createBoolean(value);
+	}
+
+	@Override
+	public String toString() {
+		return Boolean.toString(value);
 	}
 }

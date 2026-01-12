@@ -1,13 +1,12 @@
 package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
-
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
+import java.util.Map;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -18,11 +17,15 @@ import net.thisptr.jackson.jq.path.Path;
 // @AutoService(Function.class)
 // 2022-06-29(eiiches): commented out @BuiltinFunction("env/0") to make sure some custom function loaders don't load `env/0` accidentally.
 // @BuiltinFunction("env/0")
-public class EnvFunction implements Function {
-	private static final ObjectMapper MAPPER = new ObjectMapper();
+public class EnvFunction<JsonNode> implements Function<JsonNode> {
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		output.emit(MAPPER.valueToTree(System.getenv()), null);
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		final JsonNode result = jsonProvider.createObject();
+		for (final Map.Entry<String, String> entry : System.getenv().entrySet()) {
+			jsonProvider.set(result, entry.getKey(), jsonProvider.createString(entry.getValue()));
+		}
+		output.emit(result, null);
 	}
 }

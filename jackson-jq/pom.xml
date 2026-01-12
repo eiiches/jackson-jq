@@ -13,12 +13,9 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-annotations</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>tools.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
+			<groupId>net.thisptr</groupId>
+			<artifactId>jackson-jq-json-provider</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jruby.joni</groupId>
@@ -26,20 +23,9 @@
 			<version>2.2.6</version>
 		</dependency>
 		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-			<version>33.4.8-jre</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>tools.jackson.dataformat</groupId>
-			<artifactId>jackson-dataformat-yaml</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.rocksdb</groupId>
-			<artifactId>rocksdbjni</artifactId>
-			<version>7.10.2</version>
+			<groupId>net.thisptr</groupId>
+			<artifactId>jackson-jq-json-provider-jackson2-impl</artifactId>
+			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

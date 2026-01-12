@@ -16,23 +16,25 @@ import net.thisptr.jackson.jq.module.BuiltinModule;
 import net.thisptr.jackson.jq.module.Module;
 import net.thisptr.jackson.jq.module.SimpleModule;
 
+@SuppressWarnings("rawtypes")
 @AutoService(Module.class)
 @BuiltinModule(path = "jackson-jq/extras")
-public class ModuleImpl extends SimpleModule {
+public class ModuleImpl<JsonNode> extends SimpleModule<JsonNode> {
 
 	public ModuleImpl() {
-		addFunction(new HostnameFunction());
-		addFunction(new RandomFunction());
-		addFunction(new StrFTimeFunction());
-		addFunction(new StrPTimeFunction());
-		addFunction(new TimestampFunction());
-		addFunction(new UriDecodeFunction());
-		addFunction(new UriParseFunction());
-		addFunction(new Uuid4Function());
-		addFunction("uuid3/1", new Uuid35Function(3));
-		addFunction("uuid5/1", new Uuid35Function(5));
+		addFunction(new HostnameFunction<>());
+		addFunction(new RandomFunction<>());
+		addFunction(new StrFTimeFunction<>());
+		addFunction(new StrPTimeFunction<>());
+		addFunction(new TimestampFunction<>());
+		addFunction(new UriDecodeFunction<>());
+		addFunction(new UriParseFunction<>());
+		addFunction(new Uuid4Function<>());
+		addFunction("uuid3/1", new Uuid35Function<>(3));
+		addFunction("uuid5/1", new Uuid35Function<>(5));
 	}
 
+	@SuppressWarnings("unchecked")
 	private void addFunction(final Function f) {
 		final BuiltinFunction annotation = f.getClass().getAnnotation(BuiltinFunction.class);
 		for (final String fname : annotation.value())

@@ -1,11 +1,9 @@
 package net.thisptr.jackson.jq;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.path.Path;
 
-public interface PathOutput {
+public interface PathOutput<JsonNode> {
 
-	void emit(JsonNode out, Path path) throws JsonQueryException;
+	void emit(JsonNode out, Path<JsonNode> path) throws JsonQueryException;
 }

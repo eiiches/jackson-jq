@@ -1,9 +1,15 @@
 package net.thisptr.jackson.jq.internal.tree.literal;
 
-import tools.jackson.databind.node.NullNode;
+import net.thisptr.jackson.jq.JsonProvider;
 
-public class NullLiteral extends ValueLiteral {
-	public NullLiteral() {
-		super(NullNode.getInstance());
+public class NullLiteral<JsonNode> extends ValueLiteral<JsonNode> {
+	@Override
+	public JsonNode value(JsonProvider<JsonNode> jsonProvider) {
+		return jsonProvider.createNull();
+	}
+
+	@Override
+	public String toString() {
+		return "null";
 	}
 }

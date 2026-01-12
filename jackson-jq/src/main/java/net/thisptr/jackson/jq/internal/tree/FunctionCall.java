@@ -2,8 +2,6 @@ package net.thisptr.jackson.jq.internal.tree;
 
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.PathOutput;
@@ -13,35 +11,35 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.module.Module;
 import net.thisptr.jackson.jq.path.Path;
 
-public class FunctionCall implements Expression {
+public class FunctionCall<JsonNode> implements Expression<JsonNode> {
 	private final String name;
-	private final List<Expression> args;
+	private final List<Expression<JsonNode>> args;
 	private final Version version;
 	private final String moduleName;
 
-	public FunctionCall(final String moduleName, final String name, final List<Expression> args, final Version version) {
+	public FunctionCall(final String moduleName, final String name, final List<Expression<JsonNode>> args, final Version version) {
 		this.moduleName = moduleName;
 		this.name = name;
 		this.args = args;
 		this.version = version;
 	}
 
-	private Function lookupFunction(final Scope scope) throws JsonQueryException {
+	private Function<JsonNode> lookupFunction(final Scope<JsonNode> scope) throws JsonQueryException {
 		if (moduleName != null) {
-			for (final Module module : scope.getImportedModules(moduleName)) {
-				final Function f = module.getFunction(name, args.size());
+			for (final Module<JsonNode> module : scope.getImportedModules(moduleName)) {
+				final Function<JsonNode> f = module.getFunction(name, args.size());
 				if (f != null)
 					return f;
 			}
 			throw new JsonQueryException(String.format("Function %s::%s/%s does not exist", moduleName, name, args.size()));
 		} else {
-			final Function f = scope.getFunction(name, args.size());
+			final Function<JsonNode> f = scope.getFunction(name, args.size());
 			if (f != null)
 				return f;
 
 			// search functions loaded by "include" statement
-			for (final Module module : scope.getImportedModules(null)) {
-				final Function g = module.getFunction(name, args.size());
+			for (final Module<JsonNode> module : scope.getImportedModules(null)) {
+				final Function<JsonNode> g = module.getFunction(name, args.size());
 				if (g != null)
 					return g;
 			}
@@ -51,8 +49,8 @@ public class FunctionCall implements Expression {
 	}
 
 	@Override
-	public void apply(Scope scope, JsonNode in, Path path, PathOutput output, final boolean requirePath) throws JsonQueryException {
-		final Function f = lookupFunction(scope);
+	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
+		final Function<JsonNode> f = lookupFunction(scope);
 		f.apply(scope, args, in, path, output, version);
 	}
 
@@ -67,7 +65,7 @@ public class FunctionCall implements Expression {
 		if (!args.isEmpty()) {
 			builder.append("(");
 			String sep = "";
-			for (final Expression arg : args) {
+			for (final Expression<JsonNode> arg : args) {
 				builder.append(sep);
 				if (arg == null) {
 					builder.append("null");

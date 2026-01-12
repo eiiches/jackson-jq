@@ -8,19 +8,13 @@ import org.joni.Matcher;
 import org.joni.Option;
 import org.joni.Region;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.BooleanNode;
-import tools.jackson.databind.node.JsonNodeType;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -32,60 +26,71 @@ import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction("_match_impl/3")
-public class _MatchImplFunction implements Function {
+public class _MatchImplFunction<JsonNode> implements Function<JsonNode> {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		Preconditions.checkInputType("_match_impl/3", in, JsonNodeType.STRING);
-		final byte[] ibytes = in.asString().getBytes(StandardCharsets.UTF_8);
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
+		final byte[] ibytes = jsonProvider.asText(in).getBytes(StandardCharsets.UTF_8);
 		final int[] cindex = UnicodeUtils.UTF8CharIndex(ibytes);
 
 		args.get(2).apply(scope, in, (test) -> {
-			Preconditions.checkArgumentType("_match_impl/3", 3, test, JsonNodeType.BOOLEAN);
+			Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 3, test, JsonNodeType.BOOLEAN);
 			args.get(1).apply(scope, in, (flags) -> {
-				Preconditions.checkArgumentType("_match_impl/3", 2, flags, JsonNodeType.STRING, JsonNodeType.NULL);
+				Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 2, flags, JsonNodeType.STRING, JsonNodeType.NULL);
 				args.get(0).apply(scope, in, (regex) -> {
-					Preconditions.checkArgumentType("_match_impl/3", 1, regex, JsonNodeType.STRING);
-					final OnigUtils.Pattern p = new OnigUtils.Pattern(regex.asString(), flags.isNull() ? null : flags.asString());
-					output.emit(match(scope.getObjectMapper(), p, ibytes, cindex, test.asBoolean()), null);
+					Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 1, regex, JsonNodeType.STRING);
+					final OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asText(regex), jsonProvider.getNodeType(flags) == JsonNodeType.NULL ? null : jsonProvider.asText(flags));
+					output.emit(match(jsonProvider, p, ibytes, cindex, jsonProvider.asBoolean(test)), null);
 				});
 			});
 		});
 	}
 
-	@JsonIgnoreProperties(ignoreUnknown = true)
-	@JsonPropertyOrder({"offset", "length", "string", "name"})
 	private static class CaptureObject {
-		@JsonProperty("offset")
 		public int offset;
-		@JsonProperty("length")
 		public int length;
-		@JsonProperty("string")
 		public String string;
-		@JsonProperty("name")
 		public String name;
 	}
 
-	@JsonIgnoreProperties(ignoreUnknown = true)
-	@JsonPropertyOrder({"offset", "length", "string", "captures"})
 	/* package private */static class MatchObject {
-		@JsonProperty("offset")
 		public int offset;
-		@JsonProperty("length")
 		public int length;
-		@JsonProperty("string")
 		public String string;
-		@JsonProperty("captures")
 		public List<CaptureObject> captures = new ArrayList<>();
 	}
 
-	private static JsonNode match(final ObjectMapper mapper, final OnigUtils.Pattern pattern, final byte[] ibytes, final int[] cindex, final boolean test) {
+	private static <JsonNode> JsonNode captureToJson(final JsonProvider<JsonNode> jsonProvider, final CaptureObject capture) {
+		JsonNode node = jsonProvider.createObject();
+		node = jsonProvider.set(node, "offset", jsonProvider.createInt(capture.offset));
+		node = jsonProvider.set(node, "length", jsonProvider.createInt(capture.length));
+		node = jsonProvider.set(node, "string", capture.string == null ? jsonProvider.createNull() : jsonProvider.createString(capture.string));
+		node = jsonProvider.set(node, "name", capture.name == null ? jsonProvider.createNull() : jsonProvider.createString(capture.name));
+		return node;
+	}
+
+	private static <JsonNode> JsonNode matchToJson(final JsonProvider<JsonNode> jsonProvider, final MatchObject obj) {
+		JsonNode node = jsonProvider.createObject();
+		node = jsonProvider.set(node, "offset", jsonProvider.createInt(obj.offset));
+		node = jsonProvider.set(node, "length", jsonProvider.createInt(obj.length));
+		node = jsonProvider.set(node, "string", jsonProvider.createString(obj.string));
+		JsonNode capturesArray = jsonProvider.createArray();
+		for (final CaptureObject capture : obj.captures) {
+			capturesArray = jsonProvider.add(capturesArray, captureToJson(jsonProvider, capture));
+		}
+		node = jsonProvider.set(node, "captures", capturesArray);
+		return node;
+	}
+
+	private static <JsonNode> JsonNode match(final JsonProvider<JsonNode> jsonProvider, final OnigUtils.Pattern pattern, final byte[] ibytes, final int[] cindex, final boolean test) {
 		final Matcher m = pattern.regex.matcher(ibytes);
 
 		if (test) {
 			final boolean match = m.search(0, ibytes.length, Option.NONE) >= 0;
-			return BooleanNode.valueOf(match);
+			return jsonProvider.createBoolean(match);
 		} else {
-			final ArrayNode matches = mapper.createArrayNode();
+			JsonNode matches = jsonProvider.createArray();
 
 			int offset = 0;
 			do {
@@ -117,7 +122,7 @@ public class _MatchImplFunction implements Function {
 					}
 				}
 
-				matches.add(mapper.valueToTree(obj));
+				matches = jsonProvider.add(matches, matchToJson(jsonProvider, obj));
 
 				if (m.getEnd() == offset) {
 					++offset;

@@ -10,7 +10,7 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 
 @AutoService(Function.class)
 @BuiltinFunction("@base64/0")
-public class AtBase64Function extends AbstractAtFormattingFunction {
+public class AtBase64Function<JsonNode> extends AbstractAtFormattingFunction<JsonNode> {
 	@Override
 	public String convert(final String text) throws JsonQueryException {
 		return Base64.getEncoder().encodeToString(text.getBytes());

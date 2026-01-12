@@ -2,13 +2,13 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.IntNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -19,11 +19,12 @@ import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction(value = "utf8bytelength/0", version = "[1.6, )")
-public class Utf8ByteLengthFunction implements Function {
+public class Utf8ByteLengthFunction<JsonNode> implements Function<JsonNode> {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		if (!in.isString())
-			throw new JsonQueryTypeException("%s only strings have UTF-8 byte length", in);
-		output.emit(IntNode.valueOf(UnicodeUtils.lengthUtf8(in.asString())), null);
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		if (jsonProvider.getNodeType(in) != JsonNodeType.STRING)
+			throw new JsonQueryTypeException(jsonProvider, "%s only strings have UTF-8 byte length", in);
+		output.emit(jsonProvider.createNumber(UnicodeUtils.lengthUtf8(jsonProvider.asText(in))), null);
 	}
 }

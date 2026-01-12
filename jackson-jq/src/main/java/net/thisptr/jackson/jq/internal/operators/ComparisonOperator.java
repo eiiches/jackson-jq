@@ -1,14 +1,10 @@
 package net.thisptr.jackson.jq.internal.operators;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.BooleanNode;
-
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeComparator;
 
-public abstract class ComparisonOperator implements BinaryOperator {
-	private static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();
+public abstract class ComparisonOperator<JsonNode> implements BinaryOperator<JsonNode> {
 	private String image;
 
 	public ComparisonOperator(final String image) {
@@ -18,9 +14,9 @@ public abstract class ComparisonOperator implements BinaryOperator {
 	protected abstract boolean test(final int r);
 
 	@Override
-	public JsonNode apply(ObjectMapper mapper, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
-		final int r = comparator.compare(lhs, rhs);
-		return BooleanNode.valueOf(test(r));
+	public JsonNode apply(JsonProvider<JsonNode> jsonProvider, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
+		final int r = new JsonNodeComparator<>(jsonProvider).compare(lhs, rhs);
+		return jsonProvider.createBoolean(test(r));
 	}
 
 	@Override

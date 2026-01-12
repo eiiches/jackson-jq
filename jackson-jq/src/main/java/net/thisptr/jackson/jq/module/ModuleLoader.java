@@ -1,15 +1,13 @@
 package net.thisptr.jackson.jq.module;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.annotations.Experimental;
 
 @Experimental
-public interface ModuleLoader {
+public interface ModuleLoader<JsonNode> {
 	// import path as NAME
-	Module loadModule(Module caller, String path, JsonNode metadata) throws JsonQueryException;
+	Module<JsonNode> loadModule(Module<JsonNode> caller, String path, JsonNode metadata) throws JsonQueryException;
 
 	// import path as $NAME
-	JsonNode loadData(Module caller, String path, JsonNode metadata) throws JsonQueryException;
+	JsonNode loadData(Module<JsonNode> caller, String path, JsonNode metadata) throws JsonQueryException;
 }

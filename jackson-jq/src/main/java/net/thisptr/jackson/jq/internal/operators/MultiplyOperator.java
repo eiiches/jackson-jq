@@ -1,63 +1,67 @@
 package net.thisptr.jackson.jq.internal.operators;
 
+import java.util.Iterator;
 import java.util.Map.Entry;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.NullNode;
-import tools.jackson.databind.node.ObjectNode;
-import tools.jackson.databind.node.StringNode;
-
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.misc.Strings;
 
-public class MultiplyOperator implements BinaryOperator {
+public class MultiplyOperator<JsonNode> implements BinaryOperator<JsonNode> {
 	@Override
-	public JsonNode apply(ObjectMapper mapper, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
-		if (lhs.isIntegralNumber() && rhs.isIntegralNumber()) {
-			final long r = lhs.asLong() * rhs.asLong();
-			return JsonNodeUtils.asNumericNode(r);
-		} else if (lhs.isNumber() && rhs.isNumber()) {
-			final double r = lhs.asDouble() * rhs.asDouble();
-			return JsonNodeUtils.asNumericNode(r);
-		} else if (lhs.isString() && rhs.isNumber()) {
-			final double count = rhs.asDouble();
+	public JsonNode apply(JsonProvider<JsonNode> jsonProvider, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
+		final JsonNodeType ltype = jsonProvider.getNodeType(lhs);
+		final JsonNodeType rtype = jsonProvider.getNodeType(rhs);
+		if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.NUMBER) {
+			final double ld = jsonProvider.asDouble(lhs);
+			final double rd = jsonProvider.asDouble(rhs);
+			if (ld == (long) ld && rd == (long) rd) {
+				return JsonNodeUtils.asNumericNode(jsonProvider, (long) ld * (long) rd);
+			}
+			return JsonNodeUtils.asNumericNode(jsonProvider, ld * rd);
+		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.NUMBER) {
+			final double count = jsonProvider.asDouble(rhs);
 			if (count <= 0)
-				return NullNode.getInstance();
+				return jsonProvider.createNull();
 			if (count < 2)
 				return lhs;
-			return new StringNode(Strings.repeat(lhs.asString(), (int) count));
-		} else if (lhs.isNumber() && rhs.isString()) {
-			final double count = lhs.asDouble();
+			return jsonProvider.createString(Strings.repeat(jsonProvider.asText(lhs), (int) count));
+		} else if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.STRING) {
+			final double count = jsonProvider.asDouble(lhs);
 			if (count <= 0)
-				return NullNode.getInstance();
+				return jsonProvider.createNull();
 			if (count < 2)
 				return rhs;
-			return new StringNode(Strings.repeat(rhs.asString(), (int) count));
-		} else if (lhs.isObject() && rhs.isObject()) {
-			return mergeRecursive(mapper, (ObjectNode) lhs, (ObjectNode) rhs);
+			return jsonProvider.createString(Strings.repeat(jsonProvider.asText(rhs), (int) count));
+		} else if (ltype == JsonNodeType.OBJECT && rtype == JsonNodeType.OBJECT) {
+			return mergeRecursive(jsonProvider, lhs, rhs);
 		} else {
-			throw new JsonQueryTypeException("%s and %s cannot be multiplied", lhs, rhs);
+			throw new JsonQueryTypeException(jsonProvider, "%s and %s cannot be multiplied", lhs, rhs);
 		}
 	}
 
-	private static ObjectNode mergeRecursive(final ObjectMapper mapper, final ObjectNode lhs, final ObjectNode rhs) {
-		final ObjectNode result = mapper.createObjectNode();
+	private static <JsonNode> JsonNode mergeRecursive(final JsonProvider<JsonNode> jsonProvider, final JsonNode lhs, final JsonNode rhs) {
+		final JsonNode result = jsonProvider.createObject();
 
-		for (final Entry<String, JsonNode> e : lhs.properties()) {
-			result.set(e.getKey(), e.getValue());
+		final Iterator<Entry<String, JsonNode>> liter = jsonProvider.fields(lhs);
+		while (liter.hasNext()) {
+			final Entry<String, JsonNode> e = liter.next();
+			jsonProvider.set(result, e.getKey(), e.getValue());
 		}
 
-		for (final Entry<String, JsonNode> e : rhs.properties()) {
-			final JsonNode l = result.get(e.getKey());
+		final Iterator<Entry<String, JsonNode>> riter = jsonProvider.fields(rhs);
+		while (riter.hasNext()) {
+			final Entry<String, JsonNode> e = riter.next();
+			final JsonNode l = jsonProvider.get(result, e.getKey());
 			final JsonNode r = e.getValue();
 
 			JsonNode resolved = r;
-			if (l != null && l.isObject() && r.isObject())
-				resolved = mergeRecursive(mapper, (ObjectNode) l, (ObjectNode) r);
-			result.set(e.getKey(), resolved);
+			if (l != null && jsonProvider.getNodeType(l) == JsonNodeType.OBJECT && jsonProvider.getNodeType(r) == JsonNodeType.OBJECT)
+				resolved = mergeRecursive(jsonProvider, l, r);
+			jsonProvider.set(result, e.getKey(), resolved);
 		}
 		return result;
 	}

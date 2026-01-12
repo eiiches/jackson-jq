@@ -8,28 +8,28 @@ import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.internal.annotations.Experimental;
 
 @Experimental
-public class SimpleModule implements Module {
-	private final Map<String, Function> functions = new HashMap<>();
+public class SimpleModule<JsonNode> implements Module<JsonNode> {
+	private final Map<String, Function<JsonNode>> functions = new HashMap<>();
 
-	public void addFunction(final String fname, final int nargs, final Function f) {
+	public void addFunction(final String fname, final int nargs, final Function<JsonNode> f) {
 		addFunction(fname + "/" + nargs, f);
 	}
 
-	public void addFunction(final String fnameAndNarg, final Function f) {
+	public void addFunction(final String fnameAndNarg, final Function<JsonNode> f) {
 		functions.put(fnameAndNarg, f);
 	}
 
-	public void addAllFunctions(final Map<String, Function> functions) {
+	public void addAllFunctions(final Map<String, Function<JsonNode>> functions) {
 		this.functions.putAll(functions);
 	}
 
 	@Override
-	public Function getFunction(final String fname, final int nargs) {
+	public Function<JsonNode> getFunction(final String fname, final int nargs) {
 		return functions.get(fname + "/" + nargs);
 	}
 
 	@Override
-	public Map<String, Function> getAllFunctions() {
+	public Map<String, Function<JsonNode>> getAllFunctions() {
 		return Collections.unmodifiableMap(functions);
 	}
 }

@@ -2,8 +2,6 @@ package net.thisptr.jackson.jq.internal.tree;
 
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
@@ -12,19 +10,19 @@ import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.misc.Pair;
 import net.thisptr.jackson.jq.path.Path;
 
-public class Conditional implements Expression {
-	private Expression otherwise;
-	private List<Pair<Expression, Expression>> switches;
+public class Conditional<JsonNode> implements Expression<JsonNode> {
+	private Expression<JsonNode> otherwise;
+	private List<Pair<Expression<JsonNode>, Expression<JsonNode>>> switches;
 
-	public Conditional(final List<Pair<Expression, Expression>> switches, final Expression otherwise) {
+	public Conditional(final List<Pair<Expression<JsonNode>, Expression<JsonNode>>> switches, final Expression<JsonNode> otherwise) {
 		this.switches = switches;
 		this.otherwise = otherwise;
 	}
 
-	private void pathRecursive(PathOutput output, Scope scope, List<Pair<Expression, Expression>> switches, JsonNode in, Path path) throws JsonQueryException {
-		final Pair<Expression, Expression> sw = switches.get(0);
+	private void pathRecursive(PathOutput<JsonNode> output, Scope<JsonNode> scope, List<Pair<Expression<JsonNode>, Expression<JsonNode>>> switches, JsonNode in, Path path) throws JsonQueryException {
+		final Pair<Expression<JsonNode>, Expression<JsonNode>> sw = switches.get(0);
 		sw._1.apply(scope, in, (r) -> {
-			if (JsonNodeUtils.asBoolean(r)) {
+			if (JsonNodeUtils.asBoolean(scope.jsonProvider(), r)) {
 				sw._2.apply(scope, in, path, output, false);
 			} else {
 				if (switches.size() > 1) {
@@ -37,7 +35,7 @@ public class Conditional implements Expression {
 	}
 
 	@Override
-	public void apply(final Scope scope, final JsonNode in, final Path path, final PathOutput output, final boolean requirePath) throws JsonQueryException {
+	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> path, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
 		pathRecursive(output, scope, switches, in, path);
 	}
 
@@ -45,7 +43,7 @@ public class Conditional implements Expression {
 	public String toString() {
 		String ifstr = "if";
 		final StringBuilder builder = new StringBuilder();
-		for (final Pair<Expression, Expression> sw : switches) {
+		for (final Pair<Expression<JsonNode>, Expression<JsonNode>> sw : switches) {
 			builder.append(ifstr);
 			builder.append(" ");
 			builder.append(sw._1 != null ? sw._1 : "null");

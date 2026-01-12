@@ -14,13 +14,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.MappingIterator;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.NullNode;
-
 import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
@@ -32,12 +28,12 @@ import net.thisptr.jackson.jq.module.ModuleLoader;
 import net.thisptr.jackson.jq.module.SimpleModule;
 
 @Experimental
-public class FileSystemModuleLoader implements ModuleLoader {
+public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	private final List<Path> searchPaths;
 	private final Version version;
-	private final Scope parentScope;
+	private final Scope<JsonNode> parentScope;
 
-	public FileSystemModuleLoader(final Scope parentScope, final Version version, final Path... searchPaths) {
+	public FileSystemModuleLoader(final Scope<JsonNode> parentScope, final Version version, final Path... searchPaths) {
 		final List<Path> absoluteSearchPaths = new ArrayList<>();
 		for (final Path searchPath : searchPaths) {
 			if (!searchPath.isAbsolute())
@@ -99,36 +95,38 @@ public class FileSystemModuleLoader implements ModuleLoader {
 	}
 
 	// modules with the same path may exist in different search paths
-	private final ConcurrentHashMap<Pair<Path /* searchPath */, String /* relativePath */>, TryOnce<Module>> loadedModules = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Pair<Path /* searchPath */, String /* relativePath */>, TryOnce<Module<JsonNode>>> loadedModules = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<Pair<Path /* searchPath */, String /* relativePath */>, TryOnce<JsonNode>> loadedData = new ConcurrentHashMap<>();
 
-	private static final class FileSystemModule extends SimpleModule {
+	private final class FileSystemModule extends SimpleModule<JsonNode> {
 		private final Path modulePath;
 		private final Path searchPath;
-		private final FileSystemModuleLoader loader;
 
-		public FileSystemModule(final FileSystemModuleLoader loader, final Path searchPath, final Path modulePath) {
-			this.loader = loader;
+		public FileSystemModule(final Path searchPath, final Path modulePath) {
 			this.modulePath = modulePath;
 			this.searchPath = searchPath;
 		}
+
+		private FileSystemModuleLoader<JsonNode> loader() {
+			return FileSystemModuleLoader.this;
+		}
 	}
 
-	private Module loadModuleActual(final Path searchPath, final String path) throws IOException {
+	private Module<JsonNode> loadModuleActual(final Path searchPath, final String path) throws IOException {
 		final ModuleFile moduleFile = loadModuleFile(searchPath, path, "jq");
 		if (moduleFile == null)
 			return null;
 
 		final String moduleString = new String(moduleFile.bytes, StandardCharsets.UTF_8);
 
-		final FileSystemModule module = new FileSystemModule(this, moduleFile.searchPath, moduleFile.modulePath);
+		final FileSystemModule module = new FileSystemModule(moduleFile.searchPath, moduleFile.modulePath);
 
-		final Scope childScope = Scope.newChildScope(parentScope);
+		final Scope<JsonNode> childScope = Scope.newChildScope(parentScope);
 		childScope.setCurrentModule(module);
 
 		// TODO: use different parser instead of adding null at the end
-		final Expression expr = ExpressionParser.compile(moduleString + " null", version);
-		expr.apply(childScope, NullNode.getInstance(), null, (o, p) -> {}, false);
+		final Expression<JsonNode> expr = ExpressionParser.compile(moduleString + " null", version);
+		expr.apply(childScope, parentScope.jsonProvider().createNull(), null, (o, p) -> {}, false);
 
 		module.addAllFunctions(childScope.getLocalFunctions());
 		return module;
@@ -173,19 +171,20 @@ public class FileSystemModuleLoader implements ModuleLoader {
 		}
 	}
 
-	private Pair<List<Path>, String> resolvePathsFromImportDirective(final Module caller, final String path, final JsonNode metadata) throws JsonQueryException {
+	private Pair<List<Path>, String> resolvePathsFromImportDirective(final Module<JsonNode> caller, final String path, final JsonNode metadata) throws JsonQueryException {
 		List<Path> searchPaths = this.searchPaths;
 		String relativePath = path;
 
 		FileSystemModule callerModule = null;
-		if (caller instanceof FileSystemModule) { // implies caller != null
+		if (caller != null && caller.getClass() == FileSystemModule.class) {
 			callerModule = (FileSystemModule) caller;
-			if (callerModule.loader != this) // Imports from a FileSystemModule should be handled by the same loader
+			if (callerModule.loader() != this) // Imports from a FileSystemModule should be handled by the same loader
 				return null;
 		}
 
+		final JsonProvider<JsonNode> jsonProvider = parentScope.jsonProvider();
 		if (metadata != null) {
-			final JsonNode search = metadata.get("search");
+			final JsonNode search = jsonProvider.get(metadata, "search");
 			if (search != null) {
 				// disallow search overrides from top-level unnamed expression, which doesn't have a module path.
 				// i.e. import "foo" as foo {search: ./}; doesn't make sense. where is ./ ?
@@ -193,10 +192,10 @@ public class FileSystemModuleLoader implements ModuleLoader {
 					throw new JsonQueryException("search path can only be overriden from imported modules, but not from a top-level unnamed module");
 
 				// jq does ignore non-textual search overrides, but i want it to fail fast.
-				if (!search.isString())
+				if (jsonProvider.getNodeType(search) != JsonNodeType.STRING)
 					throw new JsonQueryException("search path overrides must be a string");
 
-				Path searchPathOverride = callerModule.modulePath.getFileSystem().getPath(search.asString());
+				Path searchPathOverride = callerModule.modulePath.getFileSystem().getPath(jsonProvider.asText(search));
 				searchPathOverride = callerModule.modulePath.getParent().resolve(searchPathOverride).normalize();
 
 				// still, the search path must be within the original search path
@@ -214,7 +213,7 @@ public class FileSystemModuleLoader implements ModuleLoader {
 	}
 
 	@Override
-	public Module loadModule(final Module caller, final String path, final JsonNode metadata) throws JsonQueryException {
+	public Module<JsonNode> loadModule(final Module<JsonNode> caller, final String path, final JsonNode metadata) throws JsonQueryException {
 		final Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
 		if (paths == null)
 			return null;
@@ -222,9 +221,9 @@ public class FileSystemModuleLoader implements ModuleLoader {
 		final String relativePath = paths._2;
 
 		for (final Path searchPath : searchPaths) {
-			final TryOnce<Module> tryOnce = loadedModules.computeIfAbsent(Pair.of(searchPath, relativePath), p -> new TryOnce<>());
+			final TryOnce<Module<JsonNode>> tryOnce = loadedModules.computeIfAbsent(Pair.of(searchPath, relativePath), p -> new TryOnce<>());
 			try {
-				final Module module = tryOnce.tryOnce(() -> {
+				final Module<JsonNode> module = tryOnce.tryOnce(() -> {
 					return loadModuleActual(searchPath, relativePath);
 				});
 				if (module != null)
@@ -239,10 +238,8 @@ public class FileSystemModuleLoader implements ModuleLoader {
 		return null;
 	}
 
-	private static final ObjectMapper MAPPER = new ObjectMapper();
-
 	@Override
-	public JsonNode loadData(final Module caller, final String path, final JsonNode metadata) throws JsonQueryException {
+	public JsonNode loadData(final Module<JsonNode> caller, final String path, final JsonNode metadata) throws JsonQueryException {
 		final Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
 		if (paths == null)
 			return null;
@@ -265,16 +262,18 @@ public class FileSystemModuleLoader implements ModuleLoader {
 		return null;
 	}
 
-	private JsonNode loadDataActual(final Path searchPath, final String path) throws IOException {
+	private JsonNode loadDataActual(final Path searchPath, final String path) throws Exception {
 		final ModuleFile moduleFile = loadModuleFile(searchPath, path, "json");
 		if (moduleFile == null)
 			return null;
 
-		final ArrayNode data = MAPPER.createArrayNode();
+		final JsonProvider<JsonNode> jsonProvider = parentScope.jsonProvider();
+		JsonNode data = jsonProvider.createArray();
 
-		final MappingIterator<JsonNode> iter = MAPPER.readValues(MAPPER.createParser(moduleFile.bytes), JsonNode.class);
-		while (iter.hasNext())
-			data.add(iter.next());
+		final List<JsonNode> values = jsonProvider.readMultipleValues(new String(moduleFile.bytes, StandardCharsets.UTF_8));
+		for (final JsonNode value : values) {
+			data = jsonProvider.add(data, value);
+		}
 
 		return data;
 	}

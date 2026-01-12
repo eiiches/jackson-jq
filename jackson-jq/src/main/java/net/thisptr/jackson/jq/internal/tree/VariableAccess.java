@@ -1,7 +1,5 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
@@ -9,7 +7,7 @@ import net.thisptr.jackson.jq.Scope.ValueWithPath;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.path.Path;
 
-public class VariableAccess implements Expression {
+public class VariableAccess<JsonNode> implements Expression<JsonNode> {
 	private final String name;
 	private final String moduleName;
 
@@ -19,7 +17,7 @@ public class VariableAccess implements Expression {
 	}
 
 	@Override
-	public void apply(final Scope scope, final JsonNode in, final Path path, final PathOutput output, final boolean requirePath) throws JsonQueryException {
+	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> path, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
 		if (moduleName != null) {
 			JsonNode data = null;
 			if (moduleName.equals(name))
@@ -28,7 +26,7 @@ public class VariableAccess implements Expression {
 				throw new JsonQueryException(String.format("$%s::%s is not defined", moduleName, name));
 			output.emit(data, null);
 		} else {
-			final ValueWithPath value = scope.getValueWithPath(name);
+			final ValueWithPath<JsonNode> value = scope.getValueWithPath(name);
 			if (value != null) {
 				output.emit(value.value(), null);
 				return;

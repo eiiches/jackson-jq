@@ -1,32 +1,31 @@
 package net.thisptr.jackson.jq.internal.operators;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.StringNode;
-
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.internal.misc.Strings;
 
-public class DivideOperator implements BinaryOperator {
+public class DivideOperator<JsonNode> implements BinaryOperator<JsonNode> {
 
 	@Override
-	public JsonNode apply(ObjectMapper mapper, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
-		if (lhs.isNumber() && rhs.isNumber()) {
-			final double divisor = rhs.asDouble();
-			final double dividend = lhs.asDouble();
+	public JsonNode apply(JsonProvider<JsonNode> jsonProvider, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
+		final JsonNodeType ltype = jsonProvider.getNodeType(lhs);
+		final JsonNodeType rtype = jsonProvider.getNodeType(rhs);
+		if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.NUMBER) {
+			final double divisor = jsonProvider.asDouble(rhs);
+			final double dividend = jsonProvider.asDouble(lhs);
 			if (divisor == 0.0)
-				throw new JsonQueryException("%s and %s cannot be divided because the divisor is zero", lhs, rhs);
-			return JsonNodeUtils.asNumericNode(dividend / divisor);
-		} else if (lhs.isString() && rhs.isString()) {
-			final ArrayNode result = mapper.createArrayNode();
-			for (final String token : Strings.split(lhs.asString(), rhs.asString()))
-				result.add(new StringNode(token));
+				throw new JsonQueryException(jsonProvider, "%s and %s cannot be divided because the divisor is zero", lhs, rhs);
+			return JsonNodeUtils.asNumericNode(jsonProvider, dividend / divisor);
+		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.STRING) {
+			final JsonNode result = jsonProvider.createArray();
+			for (final String token : Strings.split(jsonProvider.asText(lhs), jsonProvider.asText(rhs)))
+				jsonProvider.add(result, jsonProvider.createString(token));
 			return result;
 		} else {
-			throw new JsonQueryTypeException("%s and %s cannot be divided", lhs, rhs);
+			throw new JsonQueryTypeException(jsonProvider, "%s and %s cannot be divided", lhs, rhs);
 		}
 	}
 

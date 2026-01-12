@@ -1,6 +1,6 @@
 package net.thisptr.jackson.jq.internal.operators;
 
-public class EqualOperator extends ComparisonOperator {
+public class EqualOperator<JsonNode> extends ComparisonOperator<JsonNode> {
 	public EqualOperator() {
 		super("==");
 	}

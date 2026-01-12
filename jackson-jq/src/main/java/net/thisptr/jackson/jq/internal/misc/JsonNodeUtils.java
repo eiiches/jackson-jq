@@ -5,56 +5,49 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.DoubleNode;
-import tools.jackson.databind.node.IntNode;
-import tools.jackson.databind.node.LongNode;
-import tools.jackson.databind.node.NullNode;
-import tools.jackson.databind.node.ObjectNode;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 
 public class JsonNodeUtils {
 	private JsonNodeUtils() {}
 
-	public static boolean asBoolean(final JsonNode n) {
-		if (n == null || n.isNull() || n.isMissingNode())
+	public static <JsonNode> boolean asBoolean(final JsonProvider<JsonNode> jsonProvider, final JsonNode n) {
+		if (n == null || jsonProvider.getNodeType(n) == JsonNodeType.NULL || jsonProvider.isMissingNode(n))
 			return false;
-		if (n.isBoolean())
-			return n.asBoolean();
+		if (jsonProvider.getNodeType(n) == JsonNodeType.BOOLEAN)
+			return jsonProvider.asBoolean(n);
 		return true;
 	}
 
-	public static JsonNode asNumericNode(final long value) {
+	public static <JsonNode> JsonNode asNumericNode(final JsonProvider<JsonNode> jsonProvider, final long value) {
 		if (((int) value) == value)
-			return new IntNode((int) value);
-		return new LongNode(value);
+			return jsonProvider.createInt((int) value);
+		return jsonProvider.createLong(value);
 	}
 
-	public static JsonNode asNumericNode(final double value) {
+	public static <JsonNode> JsonNode asNumericNode(final JsonProvider<JsonNode> jsonProvider, final double value) {
 		if (((int) value) == value)
-			return new IntNode((int) value);
+			return jsonProvider.createInt((int) value);
 		if (((long) value) == value)
-			return new LongNode((long) value);
-		return new DoubleNode(value);
+			return jsonProvider.createLong((long) value);
+		return jsonProvider.createDouble(value);
 	}
 
-	public static ArrayNode asArrayNode(final ObjectMapper mapper, final List<JsonNode> values) {
-		final ArrayNode result = mapper.createArrayNode();
-		result.addAll(values);
+	public static <JsonNode> JsonNode asArrayNode(final JsonProvider<JsonNode> jsonProvider, final List<JsonNode> values) {
+		final JsonNode result = jsonProvider.createArray();
+		for (final JsonNode value : values)
+			jsonProvider.add(result, value);
 		return result;
 	}
 
-	public static List<JsonNode> asArrayList(final ArrayNode in) {
-		return Lists.newArrayList(in);
+	public static <JsonNode> List<JsonNode> asArrayList(final JsonProvider<JsonNode> jsonProvider, final JsonNode in) {
+		return Lists.newArrayList(jsonProvider.elements(in));
 	}
 
-	public static String typeOf(final JsonNode in) {
+	public static <JsonNode> String typeOf(final JsonProvider<JsonNode> jsonProvider, final JsonNode in) {
 		if (in == null)
 			return "null";
-		switch (in.getNodeType()) {
+		switch (jsonProvider.getNodeType(in)) {
 			case ARRAY:
 				return "array";
 			case BINARY:
@@ -72,37 +65,35 @@ public class JsonNodeUtils {
 			case STRING:
 				return "string";
 			default:
-				throw new IllegalArgumentException("Unknown JsonNodeType: " + in.getNodeType());
+				throw new IllegalArgumentException("Unknown JsonNodeType: " + jsonProvider.getNodeType(in));
 		}
 	}
 
-	public static JsonNode nullToNullNode(final JsonNode value) {
+	public static <JsonNode> JsonNode nullToNullNode(final JsonProvider<JsonNode> jsonProvider, final JsonNode value) {
 		if (value == null)
-			return NullNode.getInstance();
+			return jsonProvider.createNull();
 		return value;
 	}
 
-	private static final ObjectMapper MAPPER = JsonMapper.builder()
-			.addModule(JsonQueryJacksonModule.getInstance())
-			.build();
-
-	private static JsonNode filterInternal(final JsonNode in, final Predicate<JsonNode> pred) {
-		if (in.isObject()) {
-			final ObjectNode out = MAPPER.createObjectNode();
-			for (final Entry<String, JsonNode> entry : in.properties()) {
+	private static <JsonNode> JsonNode filterInternal(final JsonProvider<JsonNode> jsonProvider, final JsonNode in, final Predicate<JsonNode> pred) {
+		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
+			final JsonNode out = jsonProvider.createObject();
+			final Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(in);
+			while (iter.hasNext()) {
+				final Entry<String, JsonNode> entry = iter.next();
 				if (!pred.test(entry.getValue()))
 					continue;
-				out.set(entry.getKey(), filterInternal(entry.getValue(), pred));
+				jsonProvider.set(out, entry.getKey(), filterInternal(jsonProvider, entry.getValue(), pred));
 			}
 			return out;
-		} else if (in.isArray()) {
-			final ArrayNode out = MAPPER.createArrayNode();
-			final Iterator<JsonNode> iter = in.iterator();
+		} else if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
+			final JsonNode out = jsonProvider.createArray();
+			final Iterator<JsonNode> iter = jsonProvider.elements(in);
 			while (iter.hasNext()) {
 				final JsonNode val = iter.next();
 				if (!pred.test(val))
 					continue;
-				out.add(filterInternal(val, pred));
+				jsonProvider.add(out, filterInternal(jsonProvider, val, pred));
 			}
 			return out;
 		} else {
@@ -110,17 +101,21 @@ public class JsonNodeUtils {
 		}
 	}
 
-	public static JsonNode filter(final JsonNode in, final Predicate<JsonNode> pred) {
+	public static <JsonNode> JsonNode filter(final JsonProvider<JsonNode> jsonProvider, final JsonNode in, final Predicate<JsonNode> pred) {
 		if (!pred.test(in))
-			return NullNode.getInstance();
-		return filterInternal(in, pred);
+			return jsonProvider.createNull();
+		return filterInternal(jsonProvider, in, pred);
 	}
 
-	public static String toString(final JsonNode node) {
-		try {
-			return MAPPER.writeValueAsString(node);
-		} catch (final JacksonException e) {
-			throw new RuntimeException(e);
-		}
+	public static <JsonNode> String toString(final JsonProvider<JsonNode> jsonProvider, final JsonNode node) {
+		return jsonProvider.toString(node);
+	}
+
+	/**
+	 * Returns true if the node is a value node (not a container node like array or object).
+	 */
+	public static <JsonNode> boolean isValueNode(final JsonProvider<JsonNode> jsonProvider, final JsonNode node) {
+		final JsonNodeType type = jsonProvider.getNodeType(node);
+		return type != JsonNodeType.ARRAY && type != JsonNodeType.OBJECT;
 	}
 }

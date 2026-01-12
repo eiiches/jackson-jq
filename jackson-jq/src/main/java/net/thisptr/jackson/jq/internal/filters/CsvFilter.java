@@ -7,7 +7,7 @@ import net.thisptr.jackson.jq.Function;
 
 @AutoService(Function.class)
 @BuiltinFunction("@csv/0")
-public class CsvFilter extends AbstractSvFilter {
+public class CsvFilter<JsonNode> extends AbstractSvFilter<JsonNode> {
 	@Override
 	protected void appendEscaped(final StringBuilder builder, final String text) {
 		builder.append('"');

@@ -1,15 +1,15 @@
 package net.thisptr.jackson.jq.internal.functions;
 
+import java.util.Iterator;
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.NullNode;
-import tools.jackson.databind.node.ObjectNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -19,32 +19,36 @@ import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction("from_entries/0")
-public class FromEntriesFunction implements Function {
+public class FromEntriesFunction<JsonNode> implements Function<JsonNode> {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		if (!in.isArray() && !in.isObject())
-			throw new JsonQueryTypeException("Cannot iterate over %s", in);
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		final JsonNodeType inType = jsonProvider.getNodeType(in);
+		if (inType != JsonNodeType.ARRAY && inType != JsonNodeType.OBJECT)
+			throw new JsonQueryTypeException(jsonProvider, "Cannot iterate over %s", in);
 
-		final ObjectNode out = scope.getObjectMapper().createObjectNode();
-		for (final JsonNode entry : in) {
-			if (!entry.isObject())
-				throw new JsonQueryTypeException("Cannot index %s with string \"key\"", entry.getNodeType().toString().toLowerCase());
+		final JsonNode out = jsonProvider.createObject();
+		final Iterator<JsonNode> iter = jsonProvider.elements(in);
+		while (iter.hasNext()) {
+			final JsonNode entry = iter.next();
+			if (jsonProvider.getNodeType(entry) != JsonNodeType.OBJECT)
+				throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with string \"key\"", jsonProvider.getNodeType(entry));
 
-			JsonNode key = entry.get("key");
+			JsonNode key = jsonProvider.get(entry, "key");
 			if (key == null)
-				key = entry.get("Key");
+				key = jsonProvider.get(entry, "Key");
 			if (key == null)
-				key = entry.get("name");
+				key = jsonProvider.get(entry, "name");
 			if (key == null)
-				key = entry.get("Name");
-			if (key == null || !key.isString())
-				throw new JsonQueryTypeException("Cannot use %s as object key", key == null ? NullNode.getInstance() : key);
+				key = jsonProvider.get(entry, "Name");
+			if (key == null || jsonProvider.getNodeType(key) != JsonNodeType.STRING)
+				throw new JsonQueryTypeException(jsonProvider, "Cannot use %s as object key", key == null ? jsonProvider.createNull() : key);
 
-			JsonNode value = entry.get("value");
+			JsonNode value = jsonProvider.get(entry, "value");
 			if (value == null)
-				value = entry.get("Value");
+				value = jsonProvider.get(entry, "Value");
 
-			out.set(key.asString(), value == null ? NullNode.getInstance() : value);
+			jsonProvider.set(out, jsonProvider.asText(key), value == null ? jsonProvider.createNull() : value);
 		}
 
 		output.emit(out, null);

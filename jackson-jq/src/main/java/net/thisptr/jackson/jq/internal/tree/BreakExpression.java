@@ -1,7 +1,5 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
@@ -9,7 +7,7 @@ import net.thisptr.jackson.jq.exception.JsonQueryBreakException;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.path.Path;
 
-public class BreakExpression implements Expression {
+public class BreakExpression<JsonNode> implements Expression<JsonNode> {
 	private final String name;
 
 	public BreakExpression(final String name) {
@@ -17,7 +15,7 @@ public class BreakExpression implements Expression {
 	}
 
 	@Override
-	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
+	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
 		throw new JsonQueryBreakException(name);
 	}
 

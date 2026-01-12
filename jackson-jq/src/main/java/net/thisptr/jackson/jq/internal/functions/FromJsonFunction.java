@@ -2,15 +2,13 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import tools.jackson.core.JsonParser;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -20,24 +18,20 @@ import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction("fromjson/0")
-public class FromJsonFunction implements Function {
+public class FromJsonFunction<JsonNode> implements Function<JsonNode> {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		if (!in.isString())
-			throw new JsonQueryTypeException("%s only strings can be parsed", in);
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		if (jsonProvider.getNodeType(in) != JsonNodeType.STRING)
+			throw new JsonQueryTypeException(jsonProvider, "%s only strings can be parsed", in);
 
 		final JsonNode tree;
-		final ObjectMapper mapper = scope.getObjectMapper();
-		try (final JsonParser parser = mapper.createParser(in.asString())) {
-			tree = parser.readValueAsTree();
-			if (tree == null)
-				throw new JsonQueryException("failed to parse %s as json; empty", in);
-			if (parser.nextToken() != null)
-				throw new JsonQueryException("failed to parse %s as json; trailing data", in);
+		try {
+			tree = jsonProvider.fromStringStrict(jsonProvider.asText(in));
 		} catch (final JsonQueryException e) {
 			throw e;
-		} catch (final JacksonException e) {
-			throw new JsonQueryException("failed to parse %s as json", in);
+		} catch (final Exception e) {
+			throw new JsonQueryException("failed to parse %s as json", jsonProvider.toString(in));
 		}
 		output.emit(tree, null);
 	}

@@ -2,12 +2,8 @@ package net.thisptr.jackson.jq.internal.utils;
 
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.ObjectNode;
-
 import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.internal.tree.ArrayConstruction;
 import net.thisptr.jackson.jq.internal.tree.FieldConstruction;
 import net.thisptr.jackson.jq.internal.tree.IdentifierKeyFieldConstruction;
@@ -19,40 +15,40 @@ import net.thisptr.jackson.jq.internal.tree.literal.ValueLiteral;
 
 public class ExpressionUtils {
 
-	private static final ObjectMapper MAPPER = new ObjectMapper();
-
 	/**
-	 * @param expr
+	 * @param jsonProvider the JSON provider
+	 * @param expr the expression to evaluate
 	 * @return null if expr is not a constant
 	 */
-	public static JsonNode evaluateLiteralExpression(final Expression expr) {
+	@SuppressWarnings("unchecked")
+	public static <JsonNode> JsonNode evaluateLiteralExpression(final JsonProvider<JsonNode> jsonProvider, final Expression<JsonNode> expr) {
 		if (expr instanceof ObjectConstruction) {
-			final ObjectNode obj = MAPPER.createObjectNode();
+			final JsonNode obj = jsonProvider.createObject();
 
-			for (final FieldConstruction field : ((ObjectConstruction) expr).fields) {
+			for (final FieldConstruction<JsonNode> field : ((ObjectConstruction<JsonNode>) expr).fields) {
 				if (field instanceof IdentifierKeyFieldConstruction) {
-					final IdentifierKeyFieldConstruction f = (IdentifierKeyFieldConstruction) field;
+					final IdentifierKeyFieldConstruction<JsonNode> f = (IdentifierKeyFieldConstruction<JsonNode>) field;
 					final String k = f.key;
 
 					if (f.value == null) // this field depends on input and is not a constant
 						return null;
 
-					final JsonNode v = evaluateLiteralExpression(f.value);
+					final JsonNode v = evaluateLiteralExpression(jsonProvider, f.value);
 					if (v == null)
 						return null;
 
-					obj.set(k, v);
+					jsonProvider.set(obj, k, v);
 				} else if (field instanceof StringKeyFieldConstruction) {
-					final StringKeyFieldConstruction f = (StringKeyFieldConstruction) field;
+					final StringKeyFieldConstruction<JsonNode> f = (StringKeyFieldConstruction<JsonNode>) field;
 					if (!(f.key instanceof StringLiteral)) // then the key is string interpolation and not a constant
 						return null;
-					final String k = ((StringLiteral) f.key).value().asString();
+					final String k = ((StringLiteral<JsonNode>) f.key).value();
 
-					final JsonNode v = evaluateLiteralExpression(f.value);
+					final JsonNode v = evaluateLiteralExpression(jsonProvider, f.value);
 					if (v == null)
 						return null;
 
-					obj.set(k, v);
+					jsonProvider.set(obj, k, v);
 				} else {
 					return null;
 				}
@@ -60,28 +56,28 @@ public class ExpressionUtils {
 
 			return obj;
 		} else if (expr instanceof ArrayConstruction) {
-			final ArrayNode array = MAPPER.createArrayNode();
+			final JsonNode array = jsonProvider.createArray();
 
-			final Expression tuple = ((ArrayConstruction) expr).q;
+			final Expression<JsonNode> tuple = ((ArrayConstruction<JsonNode>) expr).q;
 			if (tuple == null)
 				return array; // empty
 
 			if (tuple instanceof Tuple) {
-				final List<Expression> values = ((Tuple) tuple).qs;
-				for (final Expression valueExpr : values) {
-					final JsonNode value = evaluateLiteralExpression(valueExpr);
+				final List<Expression<JsonNode>> values = ((Tuple<JsonNode>) tuple).qs;
+				for (final Expression<JsonNode> valueExpr : values) {
+					final JsonNode value = evaluateLiteralExpression(jsonProvider, valueExpr);
 					if (value == null)
 						return null;
 
-					array.add(value);
+					jsonProvider.add(array, value);
 				}
 			} else {
-				array.add(evaluateLiteralExpression(tuple));
+				jsonProvider.add(array, evaluateLiteralExpression(jsonProvider, tuple));
 			}
 
 			return array;
 		} else if (expr instanceof ValueLiteral) {
-			return ((ValueLiteral) expr).value();
+			return ((ValueLiteral<JsonNode>) expr).value(jsonProvider);
 		} else {
 			return null;
 		}

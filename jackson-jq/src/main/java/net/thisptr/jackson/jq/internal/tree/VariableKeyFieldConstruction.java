@@ -1,12 +1,10 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 
-public class VariableKeyFieldConstruction implements FieldConstruction {
+public class VariableKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
 	private final String name;
 
 	public VariableKeyFieldConstruction(final String name) {
@@ -14,8 +12,8 @@ public class VariableKeyFieldConstruction implements FieldConstruction {
 	}
 
 	@Override
-	public void evaluate(final Scope scope, final JsonNode in, final FieldConsumer consumer) throws JsonQueryException {
-		consumer.accept(name, JsonNodeUtils.nullToNullNode(scope.getValue(name)));
+	public void evaluate(final Scope<JsonNode> scope, final JsonNode in, final FieldConsumer<JsonNode> consumer) throws JsonQueryException {
+		consumer.accept(name, JsonNodeUtils.nullToNullNode(scope.jsonProvider(), scope.getValue(name)));
 	}
 
 	@Override

@@ -2,14 +2,13 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.IntNode;
-import tools.jackson.databind.node.NullNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -18,20 +17,21 @@ import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction("rindex/1")
-public class RIndexFunction implements Function {
+public class RIndexFunction<JsonNode> implements Function<JsonNode> {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		if (in.isNull()) {
-			output.emit(NullNode.getInstance(), null);
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		if (jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
+			output.emit(jsonProvider.createNull(), null);
 			return;
 		}
 
 		args.get(0).apply(scope, in, (needle) -> {
-			final List<Integer> tmp = IndicesFunction.indices(needle, in);
+			final List<Integer> tmp = IndicesFunction.indices(jsonProvider, needle, in);
 			if (tmp.isEmpty()) {
-				output.emit(NullNode.getInstance(), null);
+				output.emit(jsonProvider.createNull(), null);
 			} else {
-				output.emit(new IntNode(tmp.get(tmp.size() - 1)), null);
+				output.emit(jsonProvider.createInt(tmp.get(tmp.size() - 1)), null);
 			}
 		});
 	}

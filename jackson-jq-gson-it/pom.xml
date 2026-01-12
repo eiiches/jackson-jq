@@ -1,0 +1,46 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>jackson-jq-gson-it</artifactId>
+	<name>${project.groupId}:${project.artifactId}</name>
+	<packaging>jar</packaging>
+
+	<parent>
+		<groupId>net.thisptr</groupId>
+		<artifactId>jackson-jq-parent</artifactId>
+		<version>2.0.0-SNAPSHOT</version>
+	</parent>
+
+	<dependencies>
+		<!-- Base IT module -->
+		<dependency>
+			<groupId>net.thisptr</groupId>
+			<artifactId>jackson-jq-it</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Gson provider -->
+		<dependency>
+			<groupId>net.thisptr</groupId>
+			<artifactId>jackson-jq-json-provider-gson-impl</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Gson library -->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.11.0</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- JUnit runtime -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>

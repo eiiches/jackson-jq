@@ -1,25 +1,24 @@
 package net.thisptr.jackson.jq.internal.module.loaders;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.module.Module;
 import net.thisptr.jackson.jq.module.ModuleLoader;
 
-public class NullModuleLoader implements ModuleLoader {
+public class NullModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 
-	private static final NullModuleLoader INSTANCE = new NullModuleLoader();
+	private static final NullModuleLoader<Object> INSTANCE = new NullModuleLoader<>();
 
-	public static NullModuleLoader getInstance() {
-		return INSTANCE;
+	@SuppressWarnings("unchecked")
+	public static <JsonNode> NullModuleLoader<JsonNode> getInstance() {
+		return (NullModuleLoader<JsonNode>) INSTANCE;
 	}
 
 	@Override
-	public Module loadModule(final Module caller, final String path, final JsonNode metadata) {
+	public Module<JsonNode> loadModule(final Module<JsonNode> caller, final String path, final JsonNode metadata) {
 		return null;
 	}
 
 	@Override
-	public JsonNode loadData(final Module caller, final String path, final JsonNode metadata) {
+	public JsonNode loadData(final Module<JsonNode> caller, final String path, final JsonNode metadata) {
 		return null;
 	}
 }

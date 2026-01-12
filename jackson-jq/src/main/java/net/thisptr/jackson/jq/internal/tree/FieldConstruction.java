@@ -1,15 +1,13 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 
-public interface FieldConstruction {
+public interface FieldConstruction<JsonNode> {
 
-	interface FieldConsumer {
+	interface FieldConsumer<JsonNode> {
 		void accept(String name, JsonNode value) throws JsonQueryException;
 	}
 
-	void evaluate(Scope scope, JsonNode in, FieldConsumer consumer) throws JsonQueryException;
+	void evaluate(Scope<JsonNode> scope, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException;
 }

@@ -1,118 +1,115 @@
 package net.thisptr.jackson.jq.path;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.IntNode;
-import tools.jackson.databind.node.NullNode;
-
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 
-public class ArrayIndexPath implements Path {
+public class ArrayIndexPath<JsonNode> implements Path<JsonNode> {
 	public final JsonNode index;
-	private final Path parent;
+	private final Path<JsonNode> parent;
 
-	public static ArrayIndexPath chainIfNotNull(final Path parent, final int index) {
-		return chainIfNotNull(parent, IntNode.valueOf(index));
+	public static <JsonNode> ArrayIndexPath<JsonNode> chainIfNotNull(final JsonProvider<JsonNode> jsonProvider, final Path<JsonNode> parent, final int index) {
+		return chainIfNotNull(parent, jsonProvider.createNumber(index));
 	}
 
-	public static ArrayIndexPath chainIfNotNull(final Path parent, final JsonNode index) {
+	public static <JsonNode> ArrayIndexPath<JsonNode> chainIfNotNull(final Path<JsonNode> parent, final JsonNode index) {
 		if (parent == null)
 			return null;
-		return new ArrayIndexPath(parent, index);
+		return new ArrayIndexPath<>(parent, index);
 	}
 
-	public ArrayIndexPath(final Path parent, final JsonNode index) {
+	public ArrayIndexPath(final Path<JsonNode> parent, final JsonNode index) {
 		if (parent == null)
 			throw new NullPointerException("parent must not be null");
 		this.parent = parent;
 		if (index == null)
 			throw new NullPointerException("index must not be null");
-		if (!index.isNumber())
-			throw new IllegalArgumentException("index must be a number");
+		// Note: cannot validate isNumber() without JsonProvider here
 		this.index = index;
 	}
 
 	@Override
-	public void toJsonNode(final ArrayNode out) throws JsonQueryException {
-		parent.toJsonNode(out);
-		out.add(index);
+	public void toJsonNode(final JsonProvider<JsonNode> jsonProvider, final JsonNode out) throws JsonQueryException {
+		parent.toJsonNode(jsonProvider, out);
+		jsonProvider.add(out, index);
 	}
 
 	@Override
-	public void get(final JsonNode in, final Path ipath, final PathOutput output, boolean permissive) throws JsonQueryException {
-		parent.get(in, ipath, (parent, ppath) -> {
-			resolve(parent, ppath, output, index, permissive);
+	public void get(final JsonProvider<JsonNode> jsonProvider, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, boolean permissive) throws JsonQueryException {
+		parent.get(jsonProvider, in, ipath, (parent, ppath) -> {
+			resolve(jsonProvider, parent, ppath, output, index, permissive);
 		}, permissive);
 	}
 
-	private static final ObjectMapper MAPPER = new ObjectMapper();
-
 	@Override
-	public JsonNode mutate(final JsonNode in, final Mutation mutation, final boolean makeParent) throws JsonQueryException {
-		return parent.mutate(in, (oldval) -> {
-			return mutate(oldval, index, mutation, makeParent, !makeParent);
+	public JsonNode mutate(final JsonProvider<JsonNode> jsonProvider, final JsonNode in, final Mutation<JsonNode> mutation, final boolean makeParent) throws JsonQueryException {
+		return parent.mutate(jsonProvider, in, (oldval) -> {
+			return mutate(jsonProvider, oldval, index, mutation, makeParent, !makeParent);
 		}, makeParent);
 	}
 
-	private static JsonNode mutate(JsonNode in, final JsonNode index, final Mutation mutation, final boolean makeParent, final boolean deleteMode) throws JsonQueryException {
-		assert index.isNumber();
-		if (in == null || in.isNull()) {
+	private static <JsonNode> JsonNode mutate(final JsonProvider<JsonNode> jsonProvider, JsonNode in, final JsonNode index, final Mutation<JsonNode> mutation, final boolean makeParent, final boolean deleteMode) throws JsonQueryException {
+		assert jsonProvider.getNodeType(index) == JsonNodeType.NUMBER;
+		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
 			if (!makeParent)
 				return in;
-			in = MAPPER.createArrayNode();
+			in = jsonProvider.createArray();
 		}
-		if (in.isArray()) {
-			final int indexAsInt = index.asInt();
-			final int _index = indexAsInt < 0 ? indexAsInt + in.size() : indexAsInt;
-			if (deleteMode && (_index < 0 || in.size() <= _index))
+		if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
+			final double indexAsDouble = jsonProvider.asDouble(index);
+			if (Double.isNaN(indexAsDouble) || Double.isInfinite(indexAsDouble))
+				throw new JsonQueryException("Cannot use " + (Double.isNaN(indexAsDouble) ? "nan" : "infinite") + " as array index");
+			// Truncate fractional indices to int (jq behavior)
+			final int indexAsInt = (int) indexAsDouble;
+			final int _index = indexAsInt < 0 ? indexAsInt + jsonProvider.size(in) : indexAsInt;
+			if (deleteMode && (_index < 0 || jsonProvider.size(in) <= _index))
 				return in;
 			if (_index < 0)
 				throw new JsonQueryException("Out of bounds negative array index");
 
-			final JsonNode newval = mutation.apply(_index < in.size() ? in.get(_index) : null);
+			final JsonNode newval = mutation.apply(_index < jsonProvider.size(in) ? jsonProvider.get(in, _index) : null);
 			if (newval == null)
 				return in;
 
-			final ArrayNode out = MAPPER.createArrayNode();
-			for (int i = 0; i < in.size(); ++i)
-				out.add(in.get(i));
-			for (int i = in.size(); i <= _index; ++i)
-				out.add(NullNode.getInstance());
-			out.set(_index, newval);
+			final JsonNode out = jsonProvider.createArray();
+			for (int i = 0; i < jsonProvider.size(in); ++i)
+				jsonProvider.add(out, jsonProvider.get(in, i));
+			for (int i = jsonProvider.size(in); i <= _index; ++i)
+				jsonProvider.add(out, jsonProvider.createNull());
+			jsonProvider.set(out, _index, newval);
 			return out;
 		} else {
-			throw new JsonQueryTypeException("Cannot index %s with number", in.getNodeType());
+			throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with number", jsonProvider.getNodeType(in));
 		}
 	}
 
-	public static void resolve(final JsonNode pobj, final Path ppath, final PathOutput output, final JsonNode index, final boolean permissive) throws JsonQueryException {
-		assert index.isNumber();
-		if (pobj.isArray()) {
-			final double indexAsDouble = index.asDouble();
-			if (indexAsDouble < Integer.MIN_VALUE || indexAsDouble > Integer.MAX_VALUE) { // if index is not an integer, emit null
-				output.emit(NullNode.getInstance(), ArrayIndexPath.chainIfNotNull(ppath, index));
+	public static <JsonNode> void resolve(final JsonProvider<JsonNode> jsonProvider, final JsonNode pobj, final Path<JsonNode> ppath, final PathOutput<JsonNode> output, final JsonNode index, final boolean permissive) throws JsonQueryException {
+		assert jsonProvider.getNodeType(index) == JsonNodeType.NUMBER;
+		if (jsonProvider.getNodeType(pobj) == JsonNodeType.ARRAY) {
+			final double indexAsDouble = jsonProvider.asDouble(index);
+			// if index is not a valid integer (NaN, Infinity, or fractional), emit null
+			if (Double.isNaN(indexAsDouble) || Double.isInfinite(indexAsDouble)) {
+				output.emit(jsonProvider.createNull(), ArrayIndexPath.chainIfNotNull(ppath, index));
 				return;
 			}
-            final int indexAsInt = index.asInt();
-            if (indexAsDouble != indexAsInt) {
-                output.emit(NullNode.getInstance(), ArrayIndexPath.chainIfNotNull(ppath, index));
-                return;
-            }
-
-			final int indexResolved = indexAsInt < 0 ? indexAsInt + pobj.size() : indexAsInt;
-			if (indexResolved < 0 || pobj.size() <= indexResolved) { // out of range index
-				output.emit(NullNode.getInstance(), ArrayIndexPath.chainIfNotNull(ppath, index));
+			final int indexAsInt = (int) indexAsDouble;
+			if (indexAsDouble != indexAsInt) {
+				output.emit(jsonProvider.createNull(), ArrayIndexPath.chainIfNotNull(ppath, index));
 				return;
 			}
-			output.emit(pobj.get(indexResolved), ArrayIndexPath.chainIfNotNull(ppath, index));
-		} else if (pobj.isNull()) {
-			output.emit(NullNode.getInstance(), ArrayIndexPath.chainIfNotNull(ppath, index));
+			final int indexResolved = indexAsInt < 0 ? indexAsInt + jsonProvider.size(pobj) : indexAsInt;
+			if (indexResolved < 0 || jsonProvider.size(pobj) <= indexResolved) { // out of range index
+				output.emit(jsonProvider.createNull(), ArrayIndexPath.chainIfNotNull(ppath, index));
+				return;
+			}
+			output.emit(jsonProvider.get(pobj, indexResolved), ArrayIndexPath.chainIfNotNull(ppath, index));
+		} else if (jsonProvider.getNodeType(pobj) == JsonNodeType.NULL) {
+			output.emit(jsonProvider.createNull(), ArrayIndexPath.chainIfNotNull(ppath, index));
 		} else {
 			if (!permissive)
-				throw new JsonQueryTypeException("Cannot index %s with number", pobj.getNodeType());
+				throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with number", jsonProvider.getNodeType(pobj));
 		}
 	}
 }

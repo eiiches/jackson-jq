@@ -1,15 +1,16 @@
 package net.thisptr.jackson.jq.internal.functions;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.BooleanNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -20,28 +21,34 @@ import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction("contains/1")
-public class ContainsFunction implements Function {
-	private static final JsonNodeComparator COMPARATOR = JsonNodeComparator.getInstance();
+public class ContainsFunction<JsonNode> implements Function<JsonNode> {
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		args.get(0).apply(scope, in, (value) -> {
-			if (in.getNodeType() != value.getNodeType()
-					|| (in.isBoolean() && in.asBoolean() != value.asBoolean())) {
-				throw new JsonQueryTypeException("%s and %s cannot have their containment checked", in, value);
+			if (jsonProvider.getNodeType(in) != jsonProvider.getNodeType(value)
+					|| (jsonProvider.getNodeType(in) == JsonNodeType.BOOLEAN && jsonProvider.asBoolean(in) != jsonProvider.asBoolean(value))) {
+				throw new JsonQueryTypeException(jsonProvider, "%s and %s cannot have their containment checked", in, value);
 			}
-			output.emit(BooleanNode.valueOf(contains(value, in)), null);
+			output.emit(jsonProvider.createBoolean(contains(jsonProvider, value, in)), null);
 		});
 	}
 
-	private static boolean contains(final JsonNode needle, final JsonNode haystack) {
-		if (haystack.isString() && needle.isString()) {
-			return haystack.asString().contains(needle.asString());
-		} else if (haystack.isArray() && needle.isArray()) {
-			for (final JsonNode n : needle) {
+	private boolean contains(final JsonProvider<JsonNode> jsonProvider, final JsonNode needle, final JsonNode haystack) {
+		final JsonNodeType hType = jsonProvider.getNodeType(haystack);
+		final JsonNodeType nType = jsonProvider.getNodeType(needle);
+		if (hType == JsonNodeType.STRING && nType == JsonNodeType.STRING) {
+			return jsonProvider.asText(haystack).contains(jsonProvider.asText(needle));
+		} else if (hType == JsonNodeType.ARRAY && nType == JsonNodeType.ARRAY) {
+			final Iterator<JsonNode> nIter = jsonProvider.elements(needle);
+			while (nIter.hasNext()) {
+				final JsonNode n = nIter.next();
 				boolean found = false;
-				for (final JsonNode h : haystack) {
-					if (contains(n, h)) {
+				final Iterator<JsonNode> hIter = jsonProvider.elements(haystack);
+				while (hIter.hasNext()) {
+					final JsonNode h = hIter.next();
+					if (contains(jsonProvider, n, h)) {
 						found = true;
 						break;
 					}
@@ -50,17 +57,19 @@ public class ContainsFunction implements Function {
 					return false;
 			}
 			return true;
-		} else if (haystack.isObject() && needle.isObject()) {
-			for (final Entry<String, JsonNode> field : needle.properties()) {
-				final JsonNode tmp = haystack.get(field.getKey());
+		} else if (hType == JsonNodeType.OBJECT && nType == JsonNodeType.OBJECT) {
+			final Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(needle);
+			while (iter.hasNext()) {
+				final Entry<String, JsonNode> field = iter.next();
+				final JsonNode tmp = jsonProvider.get(haystack, field.getKey());
 				if (tmp == null)
 					return false;
-				if (!contains(field.getValue(), tmp))
+				if (!contains(jsonProvider, field.getValue(), tmp))
 					return false;
 			}
 			return true;
 		} else {
-			return COMPARATOR.compare(haystack, needle) == 0;
+			return new JsonNodeComparator<>(jsonProvider).compare(haystack, needle) == 0;
 		}
 	}
 }

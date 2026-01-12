@@ -6,35 +6,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.ObjectNode;
-
 import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.path.Path;
 
-public class ObjectConstruction implements Expression {
-	public final List<FieldConstruction> fields = new ArrayList<>();
+public class ObjectConstruction<JsonNode> implements Expression<JsonNode> {
+	public final List<FieldConstruction<JsonNode>> fields = new ArrayList<>();
 
 	public ObjectConstruction() {}
 
-	public void add(final FieldConstruction field) {
+	public void add(final FieldConstruction<JsonNode> field) {
 		fields.add(field);
 	}
 
 	@Override
-	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
+	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
 		final Map<String, JsonNode> tmp = new LinkedHashMap<>(fields.size());
 		applyRecursive(scope, in, output, fields, tmp);
 	}
 
-	private static void applyRecursive(final Scope scope, final JsonNode in, final PathOutput output, final List<FieldConstruction> fields, final Map<String, JsonNode> tmp) throws JsonQueryException {
+	private static <JsonNode> void applyRecursive(final Scope<JsonNode> scope, final JsonNode in, final PathOutput<JsonNode> output, final List<FieldConstruction<JsonNode>> fields, final Map<String, JsonNode> tmp) throws JsonQueryException {
 		if (fields.isEmpty()) {
-			final ObjectNode obj = scope.getObjectMapper().createObjectNode();
+			final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+			JsonNode obj = jsonProvider.createObject();
 			for (final Entry<String, JsonNode> e : tmp.entrySet())
-				obj.set(e.getKey(), e.getValue());
+				obj = jsonProvider.set(obj, e.getKey(), e.getValue());
 			output.emit(obj, null);
 			return;
 		}
@@ -49,7 +48,7 @@ public class ObjectConstruction implements Expression {
 	public String toString() {
 		final StringBuilder builder = new StringBuilder("{");
 		String sep = "";
-		for (final FieldConstruction field : fields) {
+		for (final FieldConstruction<JsonNode> field : fields) {
 			builder.append(sep);
 			builder.append(field);
 			sep = ",";

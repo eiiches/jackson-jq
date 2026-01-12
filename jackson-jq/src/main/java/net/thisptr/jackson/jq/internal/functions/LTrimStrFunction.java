@@ -7,7 +7,7 @@ import net.thisptr.jackson.jq.Function;
 
 @AutoService(Function.class)
 @BuiltinFunction("ltrimstr/1")
-public class LTrimStrFunction extends AbstractTrimStrFunction {
+public class LTrimStrFunction<JsonNode> extends AbstractTrimStrFunction<JsonNode> {
 	@Override
 	protected String doTrim(final String text, final String trim) {
 		if (!text.startsWith(trim))

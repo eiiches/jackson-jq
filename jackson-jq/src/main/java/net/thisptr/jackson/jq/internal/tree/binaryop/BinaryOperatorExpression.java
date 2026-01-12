@@ -23,12 +23,12 @@ import net.thisptr.jackson.jq.internal.tree.binaryop.comparison.CompareLessEqual
 import net.thisptr.jackson.jq.internal.tree.binaryop.comparison.CompareLessTest;
 import net.thisptr.jackson.jq.internal.tree.binaryop.comparison.CompareNotEqualTest;
 
-public abstract class BinaryOperatorExpression implements Expression {
-	protected Expression lhs;
-	protected Expression rhs;
+public abstract class BinaryOperatorExpression<JsonNode> implements Expression<JsonNode> {
+	protected Expression<JsonNode> lhs;
+	protected Expression<JsonNode> rhs;
 	private String image;
 
-	public BinaryOperatorExpression(final Expression lhs, final Expression rhs, final String image) {
+	public BinaryOperatorExpression(final Expression<JsonNode> lhs, final Expression<JsonNode> rhs, final String image) {
 		this.lhs = lhs;
 		this.rhs = rhs;
 		this.image = image;
@@ -39,6 +39,7 @@ public abstract class BinaryOperatorExpression implements Expression {
 		return String.format("(%s %s %s)", lhs, image, rhs);
 	}
 
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	public enum Operator {
 		ASSIGN("=", 6, Associativity.RIGHT) {
 			@Override
@@ -186,7 +187,7 @@ public abstract class BinaryOperatorExpression implements Expression {
 		 * @param version the version providing contextual information for the expression creation
 		 * @return a new instance of {@link Expression} that represents the operation between the lhs and rhs expressions
 		 */
-		protected abstract Expression create(Expression lhs, Expression rhs, Version version);
+		protected abstract <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version);
 
 		public enum Associativity {
 			LEFT, RIGHT
@@ -211,7 +212,7 @@ public abstract class BinaryOperatorExpression implements Expression {
 				lookup.put(op.image, op);
 		}
 
-		public Expression buildTree(final Expression lhs, final Expression rhs, final Version version) {
+		public <JsonNode> Expression<JsonNode> buildTree(final Expression<JsonNode> lhs, final Expression<JsonNode> rhs, final Version version) {
 			try {
 				return create(lhs, rhs, version);
 			} catch (Exception e) {
@@ -220,15 +221,23 @@ public abstract class BinaryOperatorExpression implements Expression {
 		}
 	}
 
-	public static Expression buildTree(final List<Expression> exprs, final List<Operator> operators, final Version version) {
+	/**
+	 * Raw types version for JavaCC compatibility.
+	 */
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public static Expression buildTree(final List exprs, final List<Operator> operators, final Version version) {
+		return buildTreeGeneric((List<Expression<Object>>) exprs, operators, version);
+	}
+
+	public static <JsonNode> Expression<JsonNode> buildTreeGeneric(final List<Expression<JsonNode>> exprs, final List<Operator> operators, final Version version) {
 		if (exprs.size() != operators.size() + 1)
 			throw new IllegalArgumentException();
 
 		// shunting-yard algorithm
-		final Stack<Expression> stackExprs = new Stack<>();
+		final Stack<Expression<JsonNode>> stackExprs = new Stack<>();
 		final Stack<Operator> stackOperators = new Stack<>();
 
-		final Iterator<Expression> iterExpr = exprs.iterator();
+		final Iterator<Expression<JsonNode>> iterExpr = exprs.iterator();
 		final Iterator<Operator> iterOperator = operators.iterator();
 
 		stackExprs.push(iterExpr.next());
@@ -239,8 +248,8 @@ public abstract class BinaryOperatorExpression implements Expression {
 				if (op1.precedence > op2.precedence
 						|| op1.precedence == op2.precedence && op1.associativity == Associativity.LEFT) {
 					final Operator op = stackOperators.pop();
-					final Expression rhs = stackExprs.pop();
-					final Expression lhs = stackExprs.pop();
+					final Expression<JsonNode> rhs = stackExprs.pop();
+					final Expression<JsonNode> lhs = stackExprs.pop();
 					stackExprs.push(op.buildTree(lhs, rhs, version));
 				} else {
 					break;
@@ -252,8 +261,8 @@ public abstract class BinaryOperatorExpression implements Expression {
 
 		while (!stackOperators.isEmpty()) {
 			final Operator op = stackOperators.pop();
-			final Expression rhs = stackExprs.pop();
-			final Expression lhs = stackExprs.pop();
+			final Expression<JsonNode> rhs = stackExprs.pop();
+			final Expression<JsonNode> lhs = stackExprs.pop();
 			stackExprs.push(op.buildTree(lhs, rhs, version));
 		}
 

@@ -1,34 +1,33 @@
 package net.thisptr.jackson.jq.internal.tree;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.Expression;
+import net.thisptr.jackson.jq.JsonNodeType;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
 
-public class StringKeyFieldConstruction implements FieldConstruction {
-	public final Expression key;
-	public final Expression value;
+public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
+	public final Expression<JsonNode> key;
+	public final Expression<JsonNode> value;
 
-	public StringKeyFieldConstruction(final Expression key, final Expression value) {
+	public StringKeyFieldConstruction(final Expression<JsonNode> key, final Expression<JsonNode> value) {
 		this.key = key;
 		this.value = value;
 	}
 
-	public StringKeyFieldConstruction(final Expression key) {
+	public StringKeyFieldConstruction(final Expression<JsonNode> key) {
 		this(key, null);
 	}
 
 	@Override
-	public void evaluate(final Scope scope, final JsonNode in, final FieldConsumer consumer) throws JsonQueryException {
+	public void evaluate(final Scope<JsonNode> scope, final JsonNode in, final FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		key.apply(scope, in, (k) -> {
-			if (!k.isString())
+			if (scope.jsonProvider().getNodeType(k) != JsonNodeType.STRING)
 				throw new JsonQueryException("key must evaluate to string");
 			if (value == null) {
-				consumer.accept(k.asString(), JsonNodeUtils.nullToNullNode(in.get(k.asString())));
+				consumer.accept(scope.jsonProvider().asText(k), JsonNodeUtils.nullToNullNode(scope.jsonProvider(), scope.jsonProvider().get(in, scope.jsonProvider().asText(k))));
 			} else {
-				value.apply(scope, in, (v) -> consumer.accept(k.asString(), v));
+				value.apply(scope, in, (v) -> consumer.accept(scope.jsonProvider().asText(k), v));
 			}
 		});
 	}

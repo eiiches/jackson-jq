@@ -1,16 +1,23 @@
 package net.thisptr.jackson.jq.internal.functions;
 
-import tools.jackson.databind.node.DoubleNode;
+import java.util.List;
+
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
-import net.thisptr.jackson.jq.internal.JsonNodeFunction;
+import net.thisptr.jackson.jq.PathOutput;
+import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.Version;
+import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction("infinite/0")
-public class InfiniteFunction extends JsonNodeFunction {
-	public InfiniteFunction() {
-		super(DoubleNode.valueOf(Double.POSITIVE_INFINITY));
+public class InfiniteFunction<T> implements Function<T> {
+	@Override
+	public void apply(final Scope<T> scope, final List<Expression<T>> args, final T in, final Path<T> ipath, final PathOutput<T> output, final Version version) throws JsonQueryException {
+		output.emit(scope.jsonProvider().createDouble(Double.POSITIVE_INFINITY), null);
 	}
 }

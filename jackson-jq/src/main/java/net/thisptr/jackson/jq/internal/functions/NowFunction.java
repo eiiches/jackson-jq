@@ -2,8 +2,6 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.DoubleNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -17,10 +15,10 @@ import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction("now/0")
-public class NowFunction implements Function {
+public class NowFunction<JsonNode> implements Function<JsonNode> {
 
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path path, final PathOutput output, final Version version) throws JsonQueryException {
-		output.emit(new DoubleNode(System.currentTimeMillis() / 1000.0), null);
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> path, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		output.emit(scope.jsonProvider().createDouble(System.currentTimeMillis() / 1000.0), null);
 	}
 }

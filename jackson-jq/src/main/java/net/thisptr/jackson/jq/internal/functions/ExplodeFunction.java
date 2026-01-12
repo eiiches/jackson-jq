@@ -2,14 +2,13 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.JsonNodeType;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -19,14 +18,15 @@ import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction("explode/0")
-public class ExplodeFunction implements Function {
+public class ExplodeFunction<JsonNode> implements Function<JsonNode> {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		Preconditions.checkInputType("explode", in, JsonNodeType.STRING);
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		Preconditions.checkInputType(jsonProvider, "explode", in, JsonNodeType.STRING);
 
-		final ArrayNode result = scope.getObjectMapper().createArrayNode();
-		for (final int ch : in.asString().codePoints().toArray())
-			result.add(ch);
+		final JsonNode result = jsonProvider.createArray();
+		for (final int ch : jsonProvider.asText(in).codePoints().toArray())
+			jsonProvider.add(result, jsonProvider.createInt(ch));
 		output.emit(result, null);
 	}
 }

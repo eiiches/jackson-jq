@@ -3,15 +3,13 @@ package net.thisptr.jackson.jq.internal.functions;
 import java.util.ArrayList;
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.JsonNodeType;
-import tools.jackson.databind.node.NullNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -22,50 +20,55 @@ import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction("indices/1")
-public class IndicesFunction implements Function {
-	private static final JsonNodeComparator comparator = JsonNodeComparator.getInstance();
-
+public class IndicesFunction<JsonNode> implements Function<JsonNode> {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		Preconditions.checkInputType("indices", in, JsonNodeType.STRING, JsonNodeType.ARRAY, JsonNodeType.NULL);
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		Preconditions.checkInputType(jsonProvider, "indices", in, JsonNodeType.STRING, JsonNodeType.ARRAY, JsonNodeType.NULL);
 
-		if (in.isNull()) {
-			output.emit(NullNode.getInstance(), null);
+		if (jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
+			output.emit(jsonProvider.createNull(), null);
 			return;
 		}
 
 		args.get(0).apply(scope, in, (needle) -> {
-			final ArrayNode indices = scope.getObjectMapper().createArrayNode();
-			for (final int index : indices(needle, in))
-				indices.add(index);
+			final JsonNode indices = jsonProvider.createArray();
+			for (final int index : indices(jsonProvider, needle, in))
+				jsonProvider.add(indices, jsonProvider.createInt(index));
 			output.emit(indices, null);
 		});
 	}
 
-	public static List<Integer> indices(final JsonNode needle, final JsonNode haystack) throws JsonQueryException {
+	public static <JsonNode> List<Integer> indices(final JsonProvider<JsonNode> jsonProvider, final JsonNode needle, final JsonNode haystack) throws JsonQueryException {
+		final JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
 		final List<Integer> result = new ArrayList<>();
-		if (needle.isString() && haystack.isString()) {
-			final String haystackText = haystack.asString();
-			final String needleText = needle.asString();
+		final JsonNodeType needleType = jsonProvider.getNodeType(needle);
+		final JsonNodeType haystackType = jsonProvider.getNodeType(haystack);
+		if (needleType == JsonNodeType.STRING && haystackType == JsonNodeType.STRING) {
+			final String haystackText = jsonProvider.asText(haystack);
+			final String needleText = jsonProvider.asText(needle);
 			if (!needleText.isEmpty()) {
 				for (int index = haystackText.indexOf(needleText); index >= 0; index = haystackText.indexOf(needleText, index + 1))
 					result.add(index);
 			}
-		} else if (needle.isArray() && haystack.isArray()) {
-			if (needle.size() != 0) {
-				shift: for (int i = 0; i < haystack.size() - needle.size() + 1; ++i) {
-					for (int j = 0; j < needle.size(); ++j)
-						if (comparator.compare(haystack.get(i + j), needle.get(j)) != 0)
+		} else if (needleType == JsonNodeType.ARRAY && haystackType == JsonNodeType.ARRAY) {
+			final int needleSize = jsonProvider.size(needle);
+			final int haystackSize = jsonProvider.size(haystack);
+			if (needleSize != 0) {
+				shift: for (int i = 0; i < haystackSize - needleSize + 1; ++i) {
+					for (int j = 0; j < needleSize; ++j)
+						if (comparator.compare(jsonProvider.get(haystack, i + j), jsonProvider.get(needle, j)) != 0)
 							continue shift;
 					result.add(i);
 				}
 			}
-		} else if (haystack.isArray()) {
-			for (int i = 0; i < haystack.size(); ++i)
-				if (comparator.compare(haystack.get(i), needle) == 0)
+		} else if (haystackType == JsonNodeType.ARRAY) {
+			final int haystackSize = jsonProvider.size(haystack);
+			for (int i = 0; i < haystackSize; ++i)
+				if (comparator.compare(jsonProvider.get(haystack, i), needle) == 0)
 					result.add(i);
 		} else {
-			throw new JsonQueryException("indices() is not applicable to " + haystack.getNodeType());
+			throw new JsonQueryException("indices() is not applicable to " + haystackType);
 		}
 		return result;
 	}

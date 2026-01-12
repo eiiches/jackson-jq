@@ -20,7 +20,7 @@ public class ClassLoaderUtils {
 	public static final FileSystem fileSystem = createFileSystem();
 
 	private static FileSystem createFileSystem() {
-		// This hack registers NativeImageResourceFileSystem when ran via Native Image
+		// This hack registers NativeImageResourceFileSystem when run via Native Image.
 		// https://github.com/oracle/graal/issues/7682
 		try {
 			FileSystem fileSystem = FileSystems.newFileSystem(

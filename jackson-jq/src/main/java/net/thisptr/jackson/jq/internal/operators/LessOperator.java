@@ -1,6 +1,6 @@
 package net.thisptr.jackson.jq.internal.operators;
 
-public class LessOperator extends ComparisonOperator {
+public class LessOperator<JsonNode> extends ComparisonOperator<JsonNode> {
 	public LessOperator() {
 		super("<");
 	}

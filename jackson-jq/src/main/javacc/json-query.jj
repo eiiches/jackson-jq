@@ -292,7 +292,7 @@ ImportStatement ImportStatement():
 	{
 		if (!(pathExpr instanceof StringLiteral))
 			throw new IllegalStateException("Import path must be constant");
-		path = ((StringLiteral) pathExpr).value().asString();
+		path = ((StringLiteral) pathExpr).value();
 	}
 	<KEYWORD_AS>
 	(
@@ -320,7 +320,7 @@ ImportStatement IncludeStatement():
 	{
 		if (!(pathExpr instanceof StringLiteral))
 			throw new IllegalStateException("Include path must be constant");
-		path = ((StringLiteral) pathExpr).value().asString();
+		path = ((StringLiteral) pathExpr).value();
 	}
 	(
 		metadata = Expression()

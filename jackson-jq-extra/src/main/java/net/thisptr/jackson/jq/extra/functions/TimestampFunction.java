@@ -2,8 +2,6 @@ package net.thisptr.jackson.jq.extra.functions;
 
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.LongNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
@@ -15,11 +13,12 @@ import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.path.Path;
 
+@SuppressWarnings("rawtypes")
 @AutoService(Function.class)
 @BuiltinFunction({ "timestamp/0" })
-public class TimestampFunction implements Function {
+public class TimestampFunction<JsonNode> implements Function<JsonNode> {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		output.emit(new LongNode(System.currentTimeMillis()), null);
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		output.emit(scope.jsonProvider().createLong(System.currentTimeMillis()), null);
 	}
 }

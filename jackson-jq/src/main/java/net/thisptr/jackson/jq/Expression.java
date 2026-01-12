@@ -1,15 +1,13 @@
 package net.thisptr.jackson.jq;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.path.Path;
 
-public interface Expression {
+public interface Expression<JsonNode> {
 
-	default void apply(Scope scope, JsonNode in, Output output) throws JsonQueryException {
+	default void apply(Scope<JsonNode> scope, JsonNode in, Output<JsonNode> output) throws JsonQueryException {
 		apply(scope, in, null, output, false);
 	}
 
-	void apply(Scope scope, JsonNode in, Path ipath, PathOutput output, boolean requirePath) throws JsonQueryException;
+	void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException;
 }

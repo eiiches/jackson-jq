@@ -1,17 +1,17 @@
 package net.thisptr.jackson.jq.internal.functions;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Stack;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.IntNode;
-import tools.jackson.databind.node.StringNode;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -21,31 +21,36 @@ import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
 @BuiltinFunction("paths/1")
-public class PathsFunction implements Function {
+public class PathsFunction<JsonNode> implements Function<JsonNode> {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		final Stack<JsonNode> stack = new Stack<>();
-		applyRecursive(scope, in, output, stack, args.get(0));
+		applyRecursive(jsonProvider, scope, in, output, stack, args.get(0));
 	}
 
-	private void applyRecursive(final Scope scope, final JsonNode in, final PathOutput output, final Stack<JsonNode> stack, final Expression predicate) throws JsonQueryException {
+	private void applyRecursive(final JsonProvider<JsonNode> jsonProvider, final Scope<JsonNode> scope, final JsonNode in, final PathOutput<JsonNode> output, final Stack<JsonNode> stack, final Expression<JsonNode> predicate) throws JsonQueryException {
 		if (!stack.isEmpty()) {
 			predicate.apply(scope, in, (shouldInclude) -> {
-				if (JsonNodeUtils.asBoolean(shouldInclude))
-					output.emit(JsonNodeUtils.asArrayNode(scope.getObjectMapper(), stack), null);
+				if (JsonNodeUtils.asBoolean(jsonProvider, shouldInclude))
+					output.emit(JsonNodeUtils.asArrayNode(jsonProvider, stack), null);
 			});
 		}
 
-		if (in.isArray()) {
-			for (int i = 0; i < in.size(); ++i) {
-				stack.push(new IntNode(i));
-				applyRecursive(scope, in.get(i), output, stack, predicate);
+		final JsonNodeType inType = jsonProvider.getNodeType(in);
+		if (inType == JsonNodeType.ARRAY) {
+			final int size = jsonProvider.size(in);
+			for (int i = 0; i < size; ++i) {
+				stack.push(jsonProvider.createInt(i));
+				applyRecursive(jsonProvider, scope, jsonProvider.get(in, i), output, stack, predicate);
 				stack.pop();
 			}
-		} else if (in.isObject()) {
-			for (final Entry<String, JsonNode> entry : in.properties()) {
-				stack.push(new StringNode(entry.getKey()));
-				applyRecursive(scope, entry.getValue(), output, stack, predicate);
+		} else if (inType == JsonNodeType.OBJECT) {
+			final Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(in);
+			while (iter.hasNext()) {
+				final Entry<String, JsonNode> entry = iter.next();
+				stack.push(jsonProvider.createString(entry.getKey()));
+				applyRecursive(jsonProvider, scope, entry.getValue(), output, stack, predicate);
 				stack.pop();
 			}
 		}

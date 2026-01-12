@@ -1,21 +1,23 @@
 package net.thisptr.jackson.jq.exception;
 
-import tools.jackson.databind.JsonNode;
-
-import net.thisptr.jackson.jq.internal.misc.JsonNodeUtils;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 
 public class JsonQueryUserException extends JsonQueryException {
 	private static final long serialVersionUID = -2719442463094461632L;
 
-	private JsonNode value;
+	private Object value;
 
-	public JsonQueryUserException(final JsonNode value) {
-		super(value.isString() ? value.asString() : JsonNodeUtils.toString(value));
+	public <JsonNode> JsonQueryUserException(final JsonProvider<JsonNode> jsonProvider, final JsonNode value) {
+		super(jsonProvider.getNodeType(value) == JsonNodeType.STRING
+				? jsonProvider.asText(value)
+				: jsonProvider.toString(value));
 		this.value = value;
 	}
 
 	@Override
-	public JsonNode getMessageAsJsonNode() {
-		return value;
+	@SuppressWarnings("unchecked")
+	public <JsonNode> JsonNode getMessageAsJsonNode(final JsonProvider<JsonNode> jsonProvider) {
+		return (JsonNode) value;
 	}
 }

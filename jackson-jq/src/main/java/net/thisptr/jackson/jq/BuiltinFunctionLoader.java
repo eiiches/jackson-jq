@@ -12,9 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-import tools.jackson.databind.MappingIterator;
-import tools.jackson.databind.ObjectMapper;
-
 import net.thisptr.jackson.jq.internal.IsolatedScopeQuery;
 import net.thisptr.jackson.jq.internal.JqJson;
 import net.thisptr.jackson.jq.internal.JsonQueryFunction;
@@ -31,8 +28,6 @@ public class BuiltinFunctionLoader {
 	}
 
 	private BuiltinFunctionLoader() {}
-
-	private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper();
 
 	private static final String CONFIG_PATH = resolvePath(Scope.class, "jq.json");
 
@@ -69,7 +64,7 @@ public class BuiltinFunctionLoader {
 		listFunctions(classLoader, version, closureScope).forEach(closureScope::addFunction);
 	}
 
-	private static List<JqJson> loadConfig(final ClassLoader loader, final String path) throws IOException {
+	private static <JsonNode> List<JqJson> loadConfig(final JsonProvider<JsonNode> jsonProvider, final ClassLoader loader, final String path) throws Exception {
 		final List<JqJson> result = new ArrayList<>();
 		final Enumeration<URL> iter = loader.getResources(path);
 		while (iter.hasMoreElements()) {
@@ -85,12 +80,42 @@ public class BuiltinFunctionLoader {
 					buffer.append('\n');
 				}
 			}
-			final MappingIterator<JqJson> iter2 = DEFAULT_MAPPER.readValues(DEFAULT_MAPPER.createParser(buffer.toString()), JqJson.class);
-			while (iter2.hasNext()) {
-				result.add(iter2.next());
+			final List<JsonNode> jsonNodes = jsonProvider.readMultipleValues(buffer.toString());
+			for (final JsonNode node : jsonNodes) {
+				result.add(parseJqJson(jsonProvider, node));
 			}
 		}
 		return result;
+	}
+
+	private static <JsonNode> JqJson parseJqJson(final JsonProvider<JsonNode> jsonProvider, final JsonNode node) {
+		final JqJson jqJson = new JqJson();
+		final JsonNode functionsNode = jsonProvider.get(node, "functions");
+		if (functionsNode != null && jsonProvider.getNodeType(functionsNode) == JsonNodeType.ARRAY) {
+			for (final JsonNode funcNode : jsonProvider.iterate(functionsNode)) {
+				final JqJson.JqFuncDef def = new JqJson.JqFuncDef();
+				final JsonNode nameNode = jsonProvider.get(funcNode, "name");
+				if (nameNode != null) {
+					def.name = jsonProvider.asText(nameNode);
+				}
+				final JsonNode bodyNode = jsonProvider.get(funcNode, "body");
+				if (bodyNode != null) {
+					def.body = jsonProvider.asText(bodyNode);
+				}
+				final JsonNode argsNode = jsonProvider.get(funcNode, "args");
+				if (argsNode != null && jsonProvider.getNodeType(argsNode) == JsonNodeType.ARRAY) {
+					for (final JsonNode argNode : jsonProvider.iterate(argsNode)) {
+						def.args.add(jsonProvider.asText(argNode));
+					}
+				}
+				final JsonNode versionNode = jsonProvider.get(funcNode, "version");
+				if (versionNode != null && jsonProvider.getNodeType(versionNode) == JsonNodeType.STRING) {
+					def.version = VersionRange.valueOf(jsonProvider.asText(versionNode));
+				}
+				jqJson.functions.add(def);
+			}
+		}
+		return jqJson;
 	}
 
 	private static String[] extractFunctionNamesFromAnnotationIfVersionMatch(Function fn, final Version version) {
@@ -142,10 +167,11 @@ public class BuiltinFunctionLoader {
 	/**
 	 * Do not use this method. This method is only for Quarkus extension.
 	 */
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	public Map<String, Function> loadFunctionsFromJsonJq(final ClassLoader classLoader, final Version version, final Scope closureScope) {
 		try {
 			final Map<String, Function> functions = new HashMap<>();
-			final List<JqJson> configs = loadConfig(classLoader, CONFIG_PATH);
+			final List<JqJson> configs = loadConfig(closureScope.jsonProvider(), classLoader, CONFIG_PATH);
 			for (final JqJson jqJson : configs) {
 				for (final JqJson.JqFuncDef def : jqJson.functions) {
 					if (def.version != null && !def.version.contains(version))
@@ -154,7 +180,7 @@ public class BuiltinFunctionLoader {
 				}
 			}
 			return functions;
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			throw new RuntimeException("Failed to load macros", e);
 		}
 	}

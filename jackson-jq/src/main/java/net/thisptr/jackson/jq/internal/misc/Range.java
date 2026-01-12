@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.internal.misc;
 
-import tools.jackson.databind.JsonNode;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 
 public class Range {
 	public final long start;
@@ -11,21 +12,21 @@ public class Range {
 		this.end = end;
 	}
 
-	private static double resolveToPositiveIndex(final JsonNode value, final long size) {
-		final double index = value.asDouble();
+	private static <JsonNode> double resolveToPositiveIndex(final JsonProvider<JsonNode> jsonProvider, final JsonNode value, final long size) {
+		final double index = jsonProvider.asDouble(value);
 		if (index < 0)
 			return index + size;
 		return index;
 	}
 
-	public static Range resolve(final JsonNode startNode, final JsonNode endNode, final long size) {
-		assert startNode.isNull() || startNode.isNumber();
-		assert endNode.isNull() || endNode.isNumber();
-		double start = startNode.isNumber()
-				? resolveToPositiveIndex(startNode, size)
+	public static <JsonNode> Range resolve(final JsonProvider<JsonNode> jsonProvider, final JsonNode startNode, final JsonNode endNode, final long size) {
+		assert jsonProvider.getNodeType(startNode) == JsonNodeType.NULL || jsonProvider.getNodeType(startNode) == JsonNodeType.NUMBER;
+		assert jsonProvider.getNodeType(endNode) == JsonNodeType.NULL || jsonProvider.getNodeType(endNode) == JsonNodeType.NUMBER;
+		double start = jsonProvider.getNodeType(startNode) == JsonNodeType.NUMBER
+				? resolveToPositiveIndex(jsonProvider, startNode, size)
 				: 0;
-		double end = endNode.isNumber()
-				? resolveToPositiveIndex(endNode, size)
+		double end = jsonProvider.getNodeType(endNode) == JsonNodeType.NUMBER
+				? resolveToPositiveIndex(jsonProvider, endNode, size)
 				: size;
 		if (start >= size)
 			return new Range(size, size);

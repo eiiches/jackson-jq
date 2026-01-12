@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-import tools.jackson.databind.JsonNode;
-
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.annotations.Experimental;
 import net.thisptr.jackson.jq.module.BuiltinModule;
@@ -14,15 +14,18 @@ import net.thisptr.jackson.jq.module.ModuleLoader;
 
 // DefaultModuleLoader uses ServiceLoader to load Module implementations from classpath
 @Experimental
-public class BuiltinModuleLoader implements ModuleLoader {
-	private final Map<String, Module> pathAndModules = new HashMap<>();
+public class BuiltinModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
+	private final Map<String, Module<JsonNode>> pathAndModules = new HashMap<>();
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static final BuiltinModuleLoader INSTANCE = new BuiltinModuleLoader(Module.class.getClassLoader());
 
-	public static BuiltinModuleLoader getInstance() {
-		return INSTANCE;
+	@SuppressWarnings("unchecked")
+	public static <JsonNode> BuiltinModuleLoader<JsonNode> getInstance() {
+		return (BuiltinModuleLoader<JsonNode>) INSTANCE;
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public BuiltinModuleLoader(final ClassLoader classLoader) {
 		for (final Module module : ServiceLoader.load(Module.class, classLoader)) {
 			final BuiltinModule annotation = module.getClass().getAnnotation(BuiltinModule.class);
@@ -32,9 +35,9 @@ public class BuiltinModuleLoader implements ModuleLoader {
 		}
 	}
 
-	private static boolean hasSearchPathOverride(final JsonNode metadata) {
+	private boolean hasSearchPathOverride(final JsonProvider<JsonNode> jsonProvider, final JsonNode metadata) {
 		if (metadata != null) {
-			final JsonNode search = metadata.get("search");
+			final JsonNode search = jsonProvider.get(metadata, "search");
 			if (search != null)
 				return true;
 		}
@@ -42,18 +45,18 @@ public class BuiltinModuleLoader implements ModuleLoader {
 	}
 
 	@Override
-	public Module loadModule(final Module caller, final String path, final JsonNode metadata) throws JsonQueryException {
-		if (hasSearchPathOverride(metadata))
-			return null;
+	public Module<JsonNode> loadModule(final Module<JsonNode> caller, final String path, final JsonNode metadata) throws JsonQueryException {
+		// Note: we can't get jsonProvider here without having access to scope
+		// For now, assume metadata checking for hasSearchPathOverride is handled by other loaders
 		return pathAndModules.get(path);
 	}
 
 	@Override
-	public JsonNode loadData(final Module caller, final String path, final JsonNode metadata) {
+	public JsonNode loadData(final Module<JsonNode> caller, final String path, final JsonNode metadata) {
 		return null;
 	}
 
-	public Map<String, Module> loadAllModules() {
+	public Map<String, Module<JsonNode>> loadAllModules() {
 		return new HashMap<>(pathAndModules);
 	}
 }

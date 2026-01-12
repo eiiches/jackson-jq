@@ -1,6 +1,6 @@
 package net.thisptr.jackson.jq.internal.operators;
 
-public class NotEqualOperator extends ComparisonOperator {
+public class NotEqualOperator<JsonNode> extends ComparisonOperator<JsonNode> {
 	public NotEqualOperator() {
 		super("!=");
 	}

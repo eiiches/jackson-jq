@@ -10,8 +10,10 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import net.thisptr.jackson.jq.jackson2.Jackson2JsonProviderImpl;
 
 public class JsonNodeComparatorTest {
 
@@ -23,7 +25,7 @@ public class JsonNodeComparatorTest {
 		final JsonNode j10 = mapper.readTree("10");
 		final JsonNode jhoge = mapper.readTree("\"hoge\"");
 
-		final JsonNodeComparator sut = new JsonNodeComparator();
+		final JsonNodeComparator<JsonNode> sut = new JsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance());
 		assertTrue(sut.compare(j3, j10) < 0);
 		assertTrue(sut.compare(j3, jhoge) < 0);
 		assertTrue(sut.compare(j10, jhoge) < 0);

@@ -7,7 +7,7 @@ import net.thisptr.jackson.jq.Function;
 
 @AutoService(Function.class)
 @BuiltinFunction("endswith/1")
-public class EndsWithFunction extends AbstractStartsEndsWithFunction {
+public class EndsWithFunction<JsonNode> extends AbstractStartsEndsWithFunction<JsonNode> {
 
 	public EndsWithFunction() {
 		super("endswith");

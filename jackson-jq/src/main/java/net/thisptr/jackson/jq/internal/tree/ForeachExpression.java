@@ -3,8 +3,6 @@ package net.thisptr.jackson.jq.internal.tree;
 import java.util.List;
 import java.util.Stack;
 
-import tools.jackson.databind.JsonNode;
-
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
@@ -13,14 +11,14 @@ import net.thisptr.jackson.jq.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.internal.tree.matcher.PatternMatcher.MatchWithPath;
 import net.thisptr.jackson.jq.path.Path;
 
-public class ForeachExpression implements Expression {
-	private Expression iterExpr;
-	private Expression updateExpr;
-	private Expression initExpr;
-	private Expression extractExpr;
-	private PatternMatcher matcher;
+public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
+	private Expression<JsonNode> iterExpr;
+	private Expression<JsonNode> updateExpr;
+	private Expression<JsonNode> initExpr;
+	private Expression<JsonNode> extractExpr;
+	private PatternMatcher<JsonNode> matcher;
 
-	public ForeachExpression(final PatternMatcher matcher, final Expression initExpr, final Expression updateExpr, final Expression extractExpr, final Expression iterExpr) {
+	public ForeachExpression(final PatternMatcher<JsonNode> matcher, final Expression<JsonNode> initExpr, final Expression<JsonNode> updateExpr, final Expression<JsonNode> extractExpr, final Expression<JsonNode> iterExpr) {
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.updateExpr = updateExpr;
@@ -29,20 +27,21 @@ public class ForeachExpression implements Expression {
 	}
 
 	@Override
-	public void apply(final Scope scope, final JsonNode in, final Path ipath, final PathOutput output, final boolean requirePath) throws JsonQueryException {
+	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
 
 		initExpr.apply(scope, in, ipath, (accumulator, accumulatorPath) -> {
 			// Wrap in array to allow mutation inside lambda
-			final JsonNode[] accumulators = new JsonNode[] { accumulator };
+			@SuppressWarnings("unchecked")
+			final JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
 			final Path[] accumulatorPaths = new Path[] { accumulatorPath };
 
-			final Scope childScope = Scope.newChildScope(scope);
+			final Scope<JsonNode> childScope = Scope.newChildScope(scope);
 
 			iterExpr.apply(scope, in, ipath, (item, itemPath) -> {
-				final Stack<MatchWithPath> stack = new Stack<>();
-				matcher.matchWithPath(scope, item, itemPath, (final List<MatchWithPath> vars) -> {
+				final Stack<MatchWithPath<JsonNode>> stack = new Stack<>();
+				matcher.matchWithPath(scope, item, itemPath, (final List<MatchWithPath<JsonNode>> vars) -> {
 					for (int i = vars.size() - 1; i >= 0; --i) {
-						final MatchWithPath var = vars.get(i);
+						final MatchWithPath<JsonNode> var = vars.get(i);
 						childScope.setValueWithPath(var.name, var.value, var.path);
 					}
 

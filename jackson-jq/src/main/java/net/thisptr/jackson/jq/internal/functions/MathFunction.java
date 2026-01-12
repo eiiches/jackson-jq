@@ -2,14 +2,13 @@ package net.thisptr.jackson.jq.internal.functions;
 
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.DoubleNode;
-import tools.jackson.databind.node.JsonNodeType;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
+import net.thisptr.jackson.jq.JsonNodeType;
+import net.thisptr.jackson.jq.JsonProvider;
 import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
@@ -17,18 +16,19 @@ import net.thisptr.jackson.jq.exception.JsonQueryException;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.path.Path;
 
-public abstract class MathFunction implements Function {
+public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 	@Override
-	public void apply(final Scope scope, final List<Expression> args, final JsonNode in, final Path ipath, final PathOutput output, final Version version) throws JsonQueryException {
-		Preconditions.checkInputType("mathfunc", in, JsonNodeType.NUMBER);
-		output.emit(new DoubleNode(f(in.asDouble())), null);
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		Preconditions.checkInputType(jsonProvider, "mathfunc", in, JsonNodeType.NUMBER);
+		output.emit(jsonProvider.createDouble(f(jsonProvider.asDouble(in))), null);
 	}
 
 	protected abstract double f(final double f);
 
 	@AutoService(Function.class)
 	@BuiltinFunction("atan/0")
-	public static class AtanFunction extends MathFunction {
+	public static class AtanFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(double v) {
 			return Math.atan(v);
@@ -37,7 +37,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("tan/0")
-	public static class TanFunction extends MathFunction {
+	public static class TanFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(double v) {
 			return Math.tan(v);
@@ -46,7 +46,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("tanh/0")
-	public static class TanhFunction extends MathFunction {
+	public static class TanhFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(double v) {
 			return Math.tanh(v);
@@ -55,7 +55,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("acos/0")
-	public static class AcosFunction extends MathFunction {
+	public static class AcosFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(double v) {
 			return Math.acos(v);
@@ -64,7 +64,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("cos/0")
-	public static class CosFunction extends MathFunction {
+	public static class CosFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(double v) {
 			return Math.cos(v);
@@ -73,7 +73,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("cosh/0")
-	public static class CoshFunction extends MathFunction {
+	public static class CoshFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(double v) {
 			return Math.cosh(v);
@@ -82,7 +82,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("floor/0")
-	public static class FloorFunction extends MathFunction {
+	public static class FloorFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(double f) {
 			return Math.floor(f);
@@ -91,7 +91,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("ceil/0")
-	public static class CeilFunction extends MathFunction {
+	public static class CeilFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(double f) {
 			return Math.ceil(f);
@@ -100,7 +100,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction(value = "round/0", version = "[1.6, )")
-	public static class RoundFunction extends MathFunction {
+	public static class RoundFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(final double v) {
 			return v >= 0 ? Math.round(v) : -Math.round(-v);
@@ -109,7 +109,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("asin/0")
-	public static class AsinFunction extends MathFunction {
+	public static class AsinFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(double v) {
 			return Math.asin(v);
@@ -118,7 +118,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("sin/0")
-	public static class SinFunction extends MathFunction {
+	public static class SinFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(double v) {
 			return Math.sin(v);
@@ -127,7 +127,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("sinh/0")
-	public static class SinhFunction extends MathFunction {
+	public static class SinhFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(double v) {
 			return Math.sinh(v);
@@ -136,7 +136,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("cbrt/0")
-	public static class CbrtFunction extends MathFunction {
+	public static class CbrtFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(final double v) {
 			return Math.cbrt(v);
@@ -145,7 +145,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("sqrt/0")
-	public static class SqrtFunction extends MathFunction {
+	public static class SqrtFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(final double v) {
 			return Math.sqrt(v);
@@ -154,7 +154,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("log2/0")
-	public static class Log2Function extends MathFunction {
+	public static class Log2Function<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(final double v) {
 			return Math.log10(v) / Math.log10(2);
@@ -163,7 +163,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("log/0")
-	public static class LogFunction extends MathFunction {
+	public static class LogFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(final double v) {
 			return Math.log(v);
@@ -172,7 +172,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("log10/0")
-	public static class Log10Function extends MathFunction {
+	public static class Log10Function<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(final double v) {
 			return Math.log10(v);
@@ -181,7 +181,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction(value = "log1p/0", version = "[1.6, )")
-	public static class Log1pFunction extends MathFunction {
+	public static class Log1pFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(final double v) {
 			return Math.log1p(v);
@@ -190,7 +190,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("exp/0")
-	public static class ExpFunction extends MathFunction {
+	public static class ExpFunction<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(final double v) {
 			return Math.exp(v);
@@ -199,7 +199,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction(value = "expm1/0", version = "[1.6, )")
-	public static class Expm1Function extends MathFunction {
+	public static class Expm1Function<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(final double v) {
 			return Math.expm1(v);
@@ -208,7 +208,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction("exp2/0")
-	public static class Exp2Function extends MathFunction {
+	public static class Exp2Function<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(final double v) {
 			return Math.pow(2, v);
@@ -217,7 +217,7 @@ public abstract class MathFunction implements Function {
 
 	@AutoService(Function.class)
 	@BuiltinFunction(value = "exp10/0", version = "[1.6, )")
-	public static class Exp10Function extends MathFunction {
+	public static class Exp10Function<JsonNode> extends MathFunction<JsonNode> {
 		@Override
 		protected double f(final double v) {
 			return Math.pow(10, v);
