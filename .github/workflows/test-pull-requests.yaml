@@ -19,7 +19,7 @@ jobs:
             maven-command: "mvn clean package -Pnative"
     name: "Build with ${{ matrix.java-env.name }}"
     steps:
-    - uses: actions/checkout@v5.0.0
+    - uses: actions/checkout@v6.0.2
     
     - name: Set up JDK 1.8
       if: matrix.java-env.name == 'JDK 1.8'
