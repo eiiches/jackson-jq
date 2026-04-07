@@ -4,7 +4,7 @@
 	<groupId>net.thisptr</groupId>
 	<artifactId>jackson-jq-parent</artifactId>
 	<packaging>pom</packaging>
-	<version>1.6.0</version>
+	<version>1.6.1</version>
 	<name>${project.groupId}:${project.artifactId}</name>
 	<description>jq for Jackson JSON Processor</description>
 	<url>https://github.com/eiiches/jackson-jq</url>
@@ -28,7 +28,7 @@
 		<connection>scm:git:git@github.com:eiiches/jackson-jq.git</connection>
 		<developerConnection>scm:git:git@github.com:eiiches/jackson-jq.git</developerConnection>
 		<url>git@github.com:eiiches/jackson-jq.git</url>
-		<tag>1.6.0</tag>
+		<tag>1.6.1</tag>
 	</scm>
 
 	<modules>
@@ -46,7 +46,7 @@
 
 	<properties>
 		<org.slf4j-version>2.0.17</org.slf4j-version>
-		<com.fasterxml.jackson-version>2.19.2</com.fasterxml.jackson-version>
+		<com.fasterxml.jackson-version>2.21.2</com.fasterxml.jackson-version>
 		<com.google.auto.service-version>1.1.1</com.google.auto.service-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -89,7 +89,7 @@
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.27.4</version>
+			<version>3.27.7</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
