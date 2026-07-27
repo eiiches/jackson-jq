@@ -33,6 +33,7 @@
 
 	<modules>
 		<module>jackson-jq</module>
+		<module>jackson-jq-regex-joni</module>
 		<module>jackson-jq-extra</module>
 		<module>jackson-jq-cli</module>
 	</modules>

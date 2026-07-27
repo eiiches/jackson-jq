@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.internal.functions;
+package net.thisptr.jackson.jq.regex.joni;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -7,7 +7,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import net.thisptr.jackson.jq.DefaultRootScope;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Version;
 import org.junit.jupiter.api.Test;

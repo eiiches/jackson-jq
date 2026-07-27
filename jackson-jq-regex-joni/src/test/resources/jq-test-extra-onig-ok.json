@@ -1,0 +1,345 @@
+[
+	{
+		"q": ".[] | test([\"foo\",\"i\"])",
+		"in": [
+			"Foobar",
+			"baz"
+		],
+		"out": [
+			true,
+			false
+		]
+	},
+	{
+		"q": "sub(\",\"; \":\")",
+		"in": "a,b,c",
+		"out": [
+			"a:b,c"
+		]
+	},
+	{
+		"q": "gsub(\",\"; \":\")",
+		"in": "a,b,c",
+		"out": [
+			"a:b:c"
+		]
+	},
+	{
+		"q": "scan(\",\")",
+		"in": "a,b,c",
+		"out": [
+			",",
+			","
+		]
+	},
+	{
+		"q": "gsub(\"\\t\"; \"\\\\t\")",
+		"in": "\t",
+		"out": [
+			"\\t"
+		]
+	},
+	{
+		"q": ".[]|gsub(\"(?<d>\\\\d)\"; \"\\(.d|tonumber+1)\")",
+		"in": [
+			"1a2b3",
+			"1a2b"
+		],
+		"out": [
+			"2a3b4",
+			"2a3b"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | sub(\"a\", \"b\", error(\"foo\"); \"1\", \"2\", error(\"bar\"); \"\", \"g\", error(\"baz\"))) catch .",
+		"in": null,
+		"out": [
+			"1bcabc",
+			"2bcabc",
+			"bar"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | sub(\"a\", \"b\", error(\"foo\"); \"1\", \"2\"; \"\", \"g\", error(\"baz\"))) catch .",
+		"in": null,
+		"out": [
+			"1bcabc",
+			"2bcabc",
+			"1bcabc",
+			"2bcabc",
+			"baz"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | sub(\"a\", \"b\", error(\"foo\"); \"1\", \"2\"; \"\", \"g\")) catch .",
+		"in": null,
+		"out": [
+			"1bcabc",
+			"2bcabc",
+			"1bcabc",
+			"2bcabc",
+			"1bc1bc",
+			"2bc1bc",
+			"1bc2bc",
+			"2bc2bc",
+			"1bc1bc",
+			"2bc1bc",
+			"1bc2bc",
+			"2bc2bc",
+			"a1cabc",
+			"a2cabc",
+			"a1cabc",
+			"a2cabc",
+			"a1ca1c",
+			"a2ca1c",
+			"a1ca2c",
+			"a2ca2c",
+			"a1ca1c",
+			"a2ca1c",
+			"a1ca2c",
+			"a2ca2c",
+			"foo"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | sub(\"a\"; \"1\", \"2\", error(\"bar\"); \"g\")) catch .",
+		"in": null,
+		"out": [
+			"1bc1bc",
+			"2bc1bc",
+			"bar"
+		]
+	},
+	{
+		"q": "\"gg\" | sub(\"g\"; \"1\"; .)",
+		"in": null,
+		"out": [
+			"11"
+		]
+	},
+	{
+		"q": "\"abcabc\" | _match_impl(\"a\", \"b\"; \"\", \"g\"; false, true)",
+		"in": null,
+		"out": [
+			[
+				{
+					"offset": 0,
+					"length": 1,
+					"string": "a",
+					"captures": []
+				}
+			],
+			[
+				{
+					"offset": 1,
+					"length": 1,
+					"string": "b",
+					"captures": []
+				}
+			],
+			[
+				{
+					"offset": 0,
+					"length": 1,
+					"string": "a",
+					"captures": []
+				},
+				{
+					"offset": 3,
+					"length": 1,
+					"string": "a",
+					"captures": []
+				}
+			],
+			[
+				{
+					"offset": 1,
+					"length": 1,
+					"string": "b",
+					"captures": []
+				},
+				{
+					"offset": 4,
+					"length": 1,
+					"string": "b",
+					"captures": []
+				}
+			],
+			true,
+			true,
+			true,
+			true
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | _match_impl(\"a\", \"b\", error(\"foo\"); \"\", \"g\", error(\"bar\"); false, true, error(\"baz\"))) catch .",
+		"in": null,
+		"out": [
+			[
+				{
+					"offset": 0,
+					"length": 1,
+					"string": "a",
+					"captures": []
+				}
+			],
+			[
+				{
+					"offset": 1,
+					"length": 1,
+					"string": "b",
+					"captures": []
+				}
+			],
+			"foo"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | _match_impl(\"a\", \"b\"; \"\", \"g\", error(\"bar\"); false, true, error(\"baz\"))) catch .",
+		"in": null,
+		"out": [
+			[
+				{
+					"offset": 0,
+					"length": 1,
+					"string": "a",
+					"captures": []
+				}
+			],
+			[
+				{
+					"offset": 1,
+					"length": 1,
+					"string": "b",
+					"captures": []
+				}
+			],
+			[
+				{
+					"offset": 0,
+					"length": 1,
+					"string": "a",
+					"captures": []
+				},
+				{
+					"offset": 3,
+					"length": 1,
+					"string": "a",
+					"captures": []
+				}
+			],
+			[
+				{
+					"offset": 1,
+					"length": 1,
+					"string": "b",
+					"captures": []
+				},
+				{
+					"offset": 4,
+					"length": 1,
+					"string": "b",
+					"captures": []
+				}
+			],
+			"bar"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | _match_impl(\"a\", \"b\"; \"\", \"g\"; false, true, error(\"baz\"))) catch .",
+		"in": null,
+		"out": [
+			[
+				{
+					"offset": 0,
+					"length": 1,
+					"string": "a",
+					"captures": []
+				}
+			],
+			[
+				{
+					"offset": 1,
+					"length": 1,
+					"string": "b",
+					"captures": []
+				}
+			],
+			[
+				{
+					"offset": 0,
+					"length": 1,
+					"string": "a",
+					"captures": []
+				},
+				{
+					"offset": 3,
+					"length": 1,
+					"string": "a",
+					"captures": []
+				}
+			],
+			[
+				{
+					"offset": 1,
+					"length": 1,
+					"string": "b",
+					"captures": []
+				},
+				{
+					"offset": 4,
+					"length": 1,
+					"string": "b",
+					"captures": []
+				}
+			],
+			true,
+			true,
+			true,
+			true,
+			"baz"
+		]
+	},
+	{
+		"q": "try (\"abcabc\" | match(\"a\", \"b\"; \"\", \"g\")) catch .",
+		"in": null,
+		"out": [
+			{
+				"offset": 0,
+				"length": 1,
+				"string": "a",
+				"captures": []
+			},
+			{
+				"offset": 1,
+				"length": 1,
+				"string": "b",
+				"captures": []
+			},
+			{
+				"offset": 0,
+				"length": 1,
+				"string": "a",
+				"captures": []
+			},
+			{
+				"offset": 3,
+				"length": 1,
+				"string": "a",
+				"captures": []
+			},
+			{
+				"offset": 1,
+				"length": 1,
+				"string": "b",
+				"captures": []
+			},
+			{
+				"offset": 4,
+				"length": 1,
+				"string": "b",
+				"captures": []
+			}
+		]
+	}
+]

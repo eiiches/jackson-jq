@@ -488,6 +488,21 @@ $ java -jar jackson-jq-cli-1.6.2.jar -n '"x" | indices("")'
 
 </details>
 
+Using jackson-jq-regex-joni module
+-----------------------------------
+
+Regex functions (`test`, `match`, `capture`, `scan`, `sub`, `gsub`, `splits`, `split/2`) are provided by a separate module backed by [Joni](https://github.com/jruby/joni) (Oniguruma for Java). To use regex functions, add the following Maven dependency:
+
+```xml
+<dependency>
+	<groupId>net.thisptr</groupId>
+	<artifactId>jackson-jq-regex-joni</artifactId>
+	<version>1.6.2</version>
+</dependency>
+```
+
+The regex functions are automatically discovered and registered via `ServiceLoader` when the artifact is on the classpath. No additional configuration is needed.
+
 Using jackson-jq/extras module
 ------------------------------
 

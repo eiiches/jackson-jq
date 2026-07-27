@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.internal.functions;
+package net.thisptr.jackson.jq.regex.joni;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
@@ -25,7 +25,6 @@ import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.misc.OnigUtils;
 import net.thisptr.jackson.jq.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.path.Path;
 

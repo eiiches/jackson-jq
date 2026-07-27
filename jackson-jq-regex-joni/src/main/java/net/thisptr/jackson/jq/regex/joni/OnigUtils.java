@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.internal.misc;
+package net.thisptr.jackson.jq.regex.joni;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
