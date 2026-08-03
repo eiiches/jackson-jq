@@ -1,0 +1,14 @@
+[
+	{
+		"name": "net.thisptr.jackson.jq.regex.joni._MatchImplFunction$CaptureObject",
+		"allDeclaredFields": true,
+		"queryAllDeclaredMethods": true,
+		"queryAllDeclaredConstructors": true
+	},
+	{
+		"name": "net.thisptr.jackson.jq.regex.joni._MatchImplFunction$MatchObject",
+		"allDeclaredFields": true,
+		"queryAllDeclaredMethods": true,
+		"queryAllDeclaredConstructors": true
+	}
+]

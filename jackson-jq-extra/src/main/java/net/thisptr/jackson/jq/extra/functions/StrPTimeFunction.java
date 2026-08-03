@@ -17,7 +17,6 @@ import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.extra.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.path.Path;
 
@@ -31,12 +30,12 @@ public class StrPTimeFunction implements Function {
 		try {
 			args.get(0).apply(scope, in, (fmt) -> {
 				if (!fmt.isTextual())
-					throw new JsonQueryTypeException("Illegal argument type: %s", fmt.getNodeType());
+					throw new JsonQueryException("Illegal argument type: %s", fmt.getNodeType());
 				final SimpleDateFormat sdf = new SimpleDateFormat(fmt.asText());
 				if (args.size() == 2) {
 					args.get(1).apply(scope, in, (tz) -> {
 						if (!tz.isTextual())
-							throw new JsonQueryTypeException("Timezone must be a string");
+							throw new JsonQueryException("Timezone must be a string");
 						sdf.setTimeZone(TimeZone.getTimeZone(tz.asText()));
 						try {
 							output.emit(new LongNode(sdf.parse(in.asText()).getTime()), null);

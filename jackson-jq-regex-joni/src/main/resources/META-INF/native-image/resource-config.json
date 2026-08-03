@@ -1,0 +1,12 @@
+{
+	"resources": {
+		"includes": [
+			{
+				"condition": {
+					"typeReachable": "net.thisptr.jackson.jq.BuiltinFunctionLoader"
+				},
+				"pattern": "net/thisptr/jackson/jq/jq.json"
+			}
+		]
+	}
+}

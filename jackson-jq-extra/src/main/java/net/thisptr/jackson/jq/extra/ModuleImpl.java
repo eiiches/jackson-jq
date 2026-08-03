@@ -1,5 +1,9 @@
 package net.thisptr.jackson.jq.extra;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.google.auto.service.AutoService;
 import net.thisptr.jackson.jq.BuiltinFunction;
 import net.thisptr.jackson.jq.Function;
@@ -14,11 +18,11 @@ import net.thisptr.jackson.jq.extra.functions.Uuid35Function;
 import net.thisptr.jackson.jq.extra.functions.Uuid4Function;
 import net.thisptr.jackson.jq.module.BuiltinModule;
 import net.thisptr.jackson.jq.module.Module;
-import net.thisptr.jackson.jq.module.SimpleModule;
 
 @AutoService(Module.class)
 @BuiltinModule(path = "jackson-jq/extras")
-public class ModuleImpl extends SimpleModule {
+public class ModuleImpl implements Module {
+	private final Map<String, Function> functions = new HashMap<>();
 
 	public ModuleImpl() {
 		addFunction(new HostnameFunction());
@@ -37,5 +41,19 @@ public class ModuleImpl extends SimpleModule {
 		final BuiltinFunction annotation = f.getClass().getAnnotation(BuiltinFunction.class);
 		for (final String fname : annotation.value())
 			addFunction(fname, f);
+	}
+
+	private void addFunction(final String fnameAndNarg, final Function f) {
+		functions.put(fnameAndNarg, f);
+	}
+
+	@Override
+	public Function getFunction(final String fname, final int nargs) {
+		return functions.get(fname + "/" + nargs);
+	}
+
+	@Override
+	public Map<String, Function> getAllFunctions() {
+		return Collections.unmodifiableMap(functions);
 	}
 }

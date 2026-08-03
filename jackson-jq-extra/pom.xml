@@ -14,8 +14,14 @@
 	<dependencies>
 		<dependency>
 			<groupId>net.thisptr</groupId>
-			<artifactId>jackson-jq</artifactId>
+			<artifactId>jackson-jq-spi</artifactId>
 			<version>1.6.3-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr</groupId>
+			<artifactId>jackson-jq-core</artifactId>
+			<version>1.6.3-SNAPSHOT</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 

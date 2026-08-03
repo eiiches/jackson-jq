@@ -14,18 +14,19 @@
 	<dependencies>
 		<dependency>
 			<groupId>net.thisptr</groupId>
-			<artifactId>jackson-jq</artifactId>
+			<artifactId>jackson-jq-spi</artifactId>
 			<version>1.6.3-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr</groupId>
+			<artifactId>jackson-jq-regex-tests</artifactId>
+			<version>1.6.3-SNAPSHOT</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.jruby.joni</groupId>
 			<artifactId>joni</artifactId>
 			<version>2.2.6</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.dataformat</groupId>
-			<artifactId>jackson-dataformat-yaml</artifactId>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
@@ -36,7 +37,11 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Include-Resource>META-INF/services/net.thisptr.jackson.jq.Function=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.Function,META-INF/jandex.idx=${project.build.outputDirectory}/META-INF/jandex.idx</Include-Resource>
+						<Include-Resource>
+							{maven-resources},
+							META-INF/services/net.thisptr.jackson.jq.Function=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.Function,
+							META-INF/jandex.idx=${project.build.outputDirectory}/META-INF/jandex.idx
+						</Include-Resource>
 					</instructions>
 					<archive>
 						<manifestEntries>

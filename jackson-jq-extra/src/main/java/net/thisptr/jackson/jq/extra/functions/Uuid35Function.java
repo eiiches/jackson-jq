@@ -14,7 +14,6 @@ import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.extra.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.extra.internal.misc.UuidUtils;
 import net.thisptr.jackson.jq.path.Path;
@@ -32,7 +31,7 @@ public class Uuid35Function implements Function {
 
 		args.get(0).apply(scope, in, (namespaceArg) -> {
 			if (!namespaceArg.isTextual())
-				throw new JsonQueryTypeException("namespace must be string, but got: %s", namespaceArg.getNodeType());
+				throw new JsonQueryException("namespace must be string, but got: %s", namespaceArg.getNodeType());
 			UUID namespace;
 			try {
 				namespace = UUID.fromString(namespaceArg.asText());

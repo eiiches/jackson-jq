@@ -14,12 +14,17 @@
 	<dependencies>
 		<dependency>
 			<groupId>net.thisptr</groupId>
-			<artifactId>jackson-jq-extra</artifactId>
+			<artifactId>jackson-jq-core</artifactId>
 			<version>1.6.3-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>net.thisptr</groupId>
 			<artifactId>jackson-jq-regex-joni</artifactId>
+			<version>1.6.3-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr</groupId>
+			<artifactId>jackson-jq-extra</artifactId>
 			<version>1.6.3-SNAPSHOT</version>
 		</dependency>
 		<dependency>

@@ -24,8 +24,6 @@ import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
-import net.thisptr.jackson.jq.internal.misc.Preconditions;
-import net.thisptr.jackson.jq.internal.misc.UnicodeUtils;
 import net.thisptr.jackson.jq.path.Path;
 
 @AutoService(Function.class)
