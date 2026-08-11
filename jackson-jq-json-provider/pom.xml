@@ -7,7 +7,7 @@
 	<packaging>bundle</packaging>
 
 	<parent>
-		<groupId>net.thisptr</groupId>
+		<groupId>net.thisptr.jackson.jq.v2</groupId>
 		<artifactId>jackson-jq-parent</artifactId>
 		<version>2.0.0-SNAPSHOT</version>
 	</parent>
@@ -17,14 +17,52 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>compile-module-info</id>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+						<configuration>
+							<release>9</release>
+							<compileSourceRoots>
+								<compileSourceRoot>${project.basedir}/src/main/java9</compileSourceRoot>
+							</compileSourceRoots>
+							<multiReleaseOutput>true</multiReleaseOutput>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>generate-manifest</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>manifest</goal>
+						</goals>
+					</execution>
+				</executions>
 				<configuration>
+					<instructions>
+						<Export-Package>net.thisptr.jackson.jq.v2.json</Export-Package>
+					</instructions>
 					<archive>
 						<manifestEntries>
-							<Automatic-Module-Name>net.thisptr.jackson.jq.provider</Automatic-Module-Name>
+							<Multi-Release>true</Multi-Release>
 						</manifestEntries>
 					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<configuration>
+					<sourcepath>${project.basedir}/src/main/java</sourcepath>
 				</configuration>
 			</plugin>
 			<plugin>

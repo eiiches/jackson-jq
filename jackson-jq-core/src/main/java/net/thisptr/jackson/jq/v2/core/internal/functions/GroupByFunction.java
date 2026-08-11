@@ -1,0 +1,48 @@
+package net.thisptr.jackson.jq.v2.core.internal.functions;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.TreeMap;
+
+import com.google.auto.service.AutoService;
+
+import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
+import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.misc.JsonQueryUtils;
+import net.thisptr.jackson.jq.v2.core.internal.misc.Preconditions;
+import net.thisptr.jackson.jq.v2.json.JsonNodeType;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.PathOutput;
+import net.thisptr.jackson.jq.v2.spi.Scope;
+import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.Path;
+
+@AutoService(Function.class)
+@FunctionRegistration("group_by/1")
+public class GroupByFunction<JsonNode> implements Function<JsonNode> {
+	@Override
+	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		Preconditions.checkInputType(jsonProvider, "group_by", in, JsonNodeType.ARRAY);
+
+		final JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
+		final TreeMap<JsonNode, List<JsonNode>> result = new TreeMap<>(comparator);
+		final Iterator<JsonNode> iter = jsonProvider.elements(in);
+		while (iter.hasNext()) {
+			final JsonNode i = iter.next();
+			final JsonNode fx = JsonQueryUtils.applyToArrayNode(args.get(0), scope, i);
+			List<JsonNode> values = result.computeIfAbsent(fx, k -> new ArrayList<>());
+			values.add(i);
+		}
+
+		final List<JsonNode> groups = new ArrayList<>(result.size());
+		for (final List<JsonNode> values : result.values())
+			groups.add(JsonNodeUtils.asArrayNode(jsonProvider, values));
+		output.emit(JsonNodeUtils.asArrayNode(jsonProvider, groups), null);
+	}
+}

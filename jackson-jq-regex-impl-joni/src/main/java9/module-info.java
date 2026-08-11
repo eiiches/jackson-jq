@@ -1,0 +1,13 @@
+module net.thisptr.jackson.jq.v2.regex.impl.joni {
+	requires static com.google.auto.service;
+	requires net.thisptr.jackson.jq.v2.json;
+	requires net.thisptr.jackson.jq.v2.spi;
+	requires org.jruby.joni;
+
+	provides net.thisptr.jackson.jq.v2.spi.internal.InternalJqLibrary with
+		net.thisptr.jackson.jq.v2.regex.impl.joni.RegexJqLibrary;
+
+	provides net.thisptr.jackson.jq.v2.spi.Function with
+		net.thisptr.jackson.jq.v2.regex.impl.joni._MatchImplFunction,
+		net.thisptr.jackson.jq.v2.regex.impl.joni._SubImplFunction;
+}

@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>net.thisptr</groupId>
+	<groupId>net.thisptr.jackson.jq.v2</groupId>
 	<artifactId>jackson-jq-parent</artifactId>
 	<packaging>pom</packaging>
 	<version>2.0.0-SNAPSHOT</version>
@@ -33,15 +33,20 @@
 
 	<modules>
 		<module>jackson-jq-json-provider</module>
-		<module>jackson-jq-json-provider-jackson2-impl</module>
-		<module>jackson-jq-json-provider-jackson3-impl</module>
-		<module>jackson-jq-json-provider-gson-impl</module>
-		<module>jackson-jq</module>
-		<module>jackson-jq-it</module>
-		<module>jackson-jq-jackson2-it</module>
-		<module>jackson-jq-jackson3-it</module>
-		<module>jackson-jq-gson-it</module>
-		<module>jackson-jq-extra</module>
+		<module>jackson-jq-json-provider-impl-jackson2</module>
+		<module>jackson-jq-json-provider-impl-jackson3</module>
+		<module>jackson-jq-json-provider-impl-gson</module>
+		<module>jackson-jq-spi</module>
+		<module>jackson-jq-core</module>
+		<module>jackson-jq-regex-impl-joni</module>
+		<module>jackson-jq-tests</module>
+		<module>jackson-jq-tests-jackson2</module>
+		<module>jackson-jq-tests-jackson3</module>
+		<module>jackson-jq-tests-gson</module>
+		<module>jackson-jq-ext-module-uuid</module>
+		<module>jackson-jq-ext-module-time</module>
+		<module>jackson-jq-ext-module-uri</module>
+		<module>jackson-jq-ext-module-random</module>
 		<module>jackson-jq-cli</module>
 	</modules>
 
@@ -53,9 +58,9 @@
 	</distributionManagement>
 
 	<properties>
-		<org.slf4j-version>2.0.17</org.slf4j-version>
-		<com.fasterxml.jackson-version>2.19.2</com.fasterxml.jackson-version>
+		<org.slf4j-version>2.0.18</org.slf4j-version>
 		<com.google.auto.service-version>1.1.1</com.google.auto.service-version>
+		<com.google.errorprone-version>2.50.0</com.google.errorprone-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -64,16 +69,33 @@
 			<dependency>
 				<groupId>com.fasterxml.jackson</groupId>
 				<artifactId>jackson-bom</artifactId>
-				<version>${com.fasterxml.jackson-version}</version>
+				<version>2.22.1</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>tools.jackson</groupId>
+				<artifactId>jackson-bom</artifactId>
+				<version>3.2.1</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
 			<dependency>
 				<groupId>org.junit</groupId>
 				<artifactId>junit-bom</artifactId>
-				<version>5.13.4</version>
+				<version>6.1.3</version>
 				<type>pom</type>
 				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.google.code.gson</groupId>
+				<artifactId>gson</artifactId>
+				<version>2.11.0</version>
+			</dependency>
+			<dependency>
+				<groupId>org.assertj</groupId>
+				<artifactId>assertj-core</artifactId>
+				<version>3.27.7</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -97,7 +119,6 @@
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.27.4</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -123,6 +144,26 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<configuration>
+					<configLocation>${maven.multiModuleProjectDirectory}/build-tools/checkstyle/checkstyle.xml</configLocation>
+					<consoleOutput>true</consoleOutput>
+					<excludes>module-info.java</excludes>
+					<failOnViolation>true</failOnViolation>
+					<includeTestSourceDirectory>true</includeTestSourceDirectory>
+				</configuration>
+				<executions>
+					<execution>
+						<id>checkstyle</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 			</plugin>
@@ -139,6 +180,11 @@
 							<groupId>com.google.auto.service</groupId>
 							<artifactId>auto-service</artifactId>
 							<version>${com.google.auto.service-version}</version>
+						</path>
+						<path>
+							<groupId>com.google.errorprone</groupId>
+							<artifactId>error_prone_core</artifactId>
+							<version>${com.google.errorprone-version}</version>
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
@@ -195,6 +241,9 @@
 								<requireMavenVersion>
 									<version>3.6.3</version>
 								</requireMavenVersion>
+								<requireJavaVersion>
+									<version>[21,)</version>
+								</requireJavaVersion>
 							</rules>
 						</configuration>
 					</execution>
@@ -206,13 +255,13 @@
 			<plugins>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-checkstyle-plugin</artifactId>
+					<version>3.6.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>3.5.3</version>
-					<configuration>
-						<systemPropertyVariables>
-							<jq.testcase.dir>${maven.multiModuleProjectDirectory}/tests</jq.testcase.dir>
-						</systemPropertyVariables>
-					</configuration>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -232,7 +281,7 @@
 				<plugin>
 					<groupId>org.apache.felix</groupId>
 					<artifactId>maven-bundle-plugin</artifactId>
-					<version>5.1.9</version>
+					<version>6.0.2</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -316,6 +365,66 @@
 	</build>
 
 	<profiles>
+		<profile>
+			<id>error-prone</id>
+			<activation>
+				<jdk>[21,)</jdk>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-compiler-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>default-compile</id>
+								<configuration>
+									<fork>true</fork>
+									<compilerArgs>
+										<arg>-XDcompilePolicy=simple</arg>
+										<arg>--should-stop=ifError=FLOW</arg>
+										<arg>-Xplugin:ErrorProne</arg>
+										<arg>-XDaddTypeAnnotationsToSymbol=true</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
+										<arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
+										<arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
+									</compilerArgs>
+								</configuration>
+							</execution>
+							<execution>
+								<id>default-testCompile</id>
+								<configuration>
+									<fork>true</fork>
+									<compilerArgs>
+										<arg>-XDcompilePolicy=simple</arg>
+										<arg>--should-stop=ifError=FLOW</arg>
+										<arg>-Xplugin:ErrorProne</arg>
+										<arg>-XDaddTypeAnnotationsToSymbol=true</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
+										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
+										<arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
+										<arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
+									</compilerArgs>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 		<profile>
 			<id>release</id>
 			<build>

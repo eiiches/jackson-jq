@@ -1,0 +1,13 @@
+-runfw: org.apache.felix.framework;version='[7.0.5,7.0.6)'
+-runee: JavaSE-17
+-tester: biz.aQute.tester.junit-platform
+-runstartlevel: order=leastdependenciesfirst,begin=1,step=1
+-runrequires: \
+	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.smoketests.osgi.application)',\
+	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.jackson-jq-ext-module-random)',\
+	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.jackson-jq-ext-module-time)',\
+	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.jackson-jq-ext-module-uri)',\
+	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.jackson-jq-ext-module-uuid)',\
+	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.jackson-jq-regex-impl-joni)',\
+	osgi.identity;filter:='(osgi.identity=junit-jupiter-engine)',\
+	osgi.identity;filter:='(osgi.identity=junit-platform-launcher)'

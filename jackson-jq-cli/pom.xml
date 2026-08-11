@@ -6,20 +6,45 @@
 	<packaging>jar</packaging>
 
 	<parent>
-		<groupId>net.thisptr</groupId>
+		<groupId>net.thisptr.jackson.jq.v2</groupId>
 		<artifactId>jackson-jq-parent</artifactId>
 		<version>2.0.0-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>
 		<dependency>
-			<groupId>net.thisptr</groupId>
-			<artifactId>jackson-jq-extra</artifactId>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>net.thisptr</groupId>
-			<artifactId>jackson-jq-json-provider-jackson3-impl</artifactId>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-uuid</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-time</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-uri</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-random</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-regex-impl-joni</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-json-provider-impl-jackson3</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
@@ -48,10 +73,7 @@
 							</artifactSet>
 							<transformers>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>net.thisptr.jackson.jq.cli.Main</mainClass>
-								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>net/thisptr/jackson/jq/jq.json</resource>
+									<mainClass>net.thisptr.jackson.jq.v2.cli.Main</mainClass>
 								</transformer>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
 							</transformers>

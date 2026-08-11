@@ -13,6 +13,18 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "maven"
+    directory: "/smoke-tests/osgi/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "maven"
+    directory: "/smoke-tests/jpms/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "maven"
+    directory: "/smoke-tests/graalvm/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "maven"
     directory: "/jackson-jq-extra/"
     schedule:
       interval: "daily"

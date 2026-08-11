@@ -1,7 +1,7 @@
 jackson-jq
 ==========
 
-Pure Java [jq](http://stedolan.github.io/jq/) Implementation for Jackson JSON Processor
+A pure-Java, embeddable [jq](http://stedolan.github.io/jq/) implementation with pluggable JSON providers.
 
 [![GitHub Actions](https://github.com/eiiches/jackson-jq/workflows/test/badge.svg)](https://github.com/eiiches/jackson-jq/actions)
 
@@ -12,11 +12,11 @@ Usage
 
 First, you need Java 8 or later.
 
-If you use Maven, add the following snippet to the `<dependencies>` section of your POM. For instructions for other build tools (Gradle, etc.), visit [jackson-jq](https://search.maven.org/artifact/net.thisptr/jackson-jq/2.0.0-alpha1/jar) on search.maven.org.
+If you use Maven, add the following snippet to the `<dependencies>` section of your POM. For instructions for other build tools (Gradle, etc.), visit [jackson-jq](https://search.maven.org/artifact/net.thisptr.jackson.jq.v2/jackson-jq/2.0.0-alpha1/jar) on search.maven.org.
 
 ```xml
 <dependency>
-	<groupId>net.thisptr</groupId>
+	<groupId>net.thisptr.jackson.jq.v2</groupId>
 	<artifactId>jackson-jq</artifactId>
 	<version>2.0.0-alpha1</version>
 </dependency>
@@ -32,7 +32,7 @@ To test a query quickly, we provide jackson-jq CLI.
 *Please note that jackson-jq is a Java library and the CLI is provided solely for debugging/testing purpose (and not for production). The command-line options might change without notice.*
 
 ```sh
-$ curl -LO https://repo1.maven.org/maven2/net/thisptr/jackson-jq-cli/2.0.0-alpha1/jackson-jq-cli-2.0.0-alpha1.jar
+$ curl -LO https://repo1.maven.org/maven2/net/thisptr/jackson/jq/v2/jackson-jq-cli/2.0.0-alpha1/jackson-jq-cli-2.0.0-alpha1.jar
 
 $ java -jar jackson-jq-cli-2.0.0-alpha1.jar --help
 usage: jackson-jq [OPTIONS...] QUERY
@@ -488,53 +488,73 @@ $ java -jar jackson-jq-cli-2.0.0-alpha1.jar -n '"x" | indices("")'
 
 </details>
 
-Using jackson-jq/extras module
-------------------------------
+Using the jackson-jq-regex-impl-joni module
+-------------------------------------------
 
-The `jackson-jq/extras` module is a jq module that provides some useful functions that do not exist in jq.
-
-To use this module, you need to add the following Maven dependency and set `BuiltinModuleLoader` (see [jackson-jq/src/test/java/examples/Usage.java](jackson-jq/src/test/java/examples/Usage.java)) to the scope.
+Regex functions (`test`, `match`, `capture`, `scan`, `sub`, `gsub`, `splits`, and `split/2`) are provided by a separate module backed by [Joni](https://github.com/jruby/joni). Add the following dependency to enable them:
 
 ```xml
 <dependency>
-	<groupId>net.thisptr</groupId>
-	<artifactId>jackson-jq-extra</artifactId>
+	<groupId>net.thisptr.jackson.jq.v2</groupId>
+	<artifactId>jackson-jq-regex-impl-joni</artifactId>
 	<version>2.0.0-alpha1</version>
 </dependency>
 ```
 
-Now, you can import the module in jq:
+The functions are discovered automatically through `ServiceLoader`. The command-line application includes this module by default.
 
-```jq
-import "jackson-jq/extras" as extras;
+Using extension modules
+-----------------------
 
-extras::uuid4
+Functions that do not exist in jq are provided by separate extension modules. Add only the dependencies your application needs and configure the scope with `ClassPathModuleLoader` (see [jackson-jq-core/src/test/java/examples/Usage.java](jackson-jq-core/src/test/java/examples/Usage.java)).
+
+| Maven artifact | jq module | Functions |
+| --- | --- | --- |
+| `jackson-jq-ext-module-uuid` | `jackson-jq/uuid` | `uuid3/1`, `uuid4/0`, `uuid5/1` |
+| `jackson-jq-ext-module-time` | `jackson-jq/time` | `timestamp/0`, `strptime/{1,2}`, `strftime/{1,2}` |
+| `jackson-jq-ext-module-uri` | `jackson-jq/uri` | `uriparse/0`, `uridecode/0` |
+| `jackson-jq-ext-module-random` | `jackson-jq/random` | `random/0` |
+
+For example, add the UUID extension:
+
+```xml
+<dependency>
+	<groupId>net.thisptr.jackson.jq.v2</groupId>
+	<artifactId>jackson-jq-ext-module-uuid</artifactId>
+	<version>2.0.0-SNAPSHOT</version>
+</dependency>
 ```
 
-For a historical reason, adding the Maven dependency also makes the functions directly available to jq. This behavior is deprecated and will be removed at some point in the future.
+Then import it in jq:
+
+```jq
+import "jackson-jq/uuid" as uuid;
+
+uuid::uuid4
+```
+
+Extension functions are available only through their imported module namespace.
 
 <details>
 <summary>List of Functions</summary>
 
 #### uuid4/0
 
- - `jackson-jq -n 'uuid4'` #=> `"a69cf146-f40e-42e1-ae88-12590bdae947"`
+ - `jackson-jq -n 'import "jackson-jq/uuid" as uuid; uuid::uuid4'` #=> `"a69cf146-f40e-42e1-ae88-12590bdae947"`
 
 #### random/0
 
- - `jackson-jq -n 'random'` #=> `0.43292159535427466`
+ - `jackson-jq -n 'import "jackson-jq/random" as random; random::random'` #=> `0.43292159535427466`
 
 #### timestamp/0, strptime/{1, 2}, strftime/{1, 2}
 
- - `jackson-jq -n 'timestamp'` #=> `1477162056362`
- - `jackson-jq -n '1477162342372 | strftime("yyyy-MM-dd HH:mm:ss.SSSXXX")'` #=> `"2016-10-23 03:52:22.372+09:00"`
- - `jackson-jq -n '1477162342372 | strftime("yyyy-MM-dd HH:mm:ss.SSSXXX"; "UTC")'` #=> `"2016-10-22 18:52:22.372Z"`
- - `jackson-jq -n '"2016-10-23 03:52:22.372+09:00" | strptime("yyyy-MM-dd HH:mm:ss.SSSXXX")'` #=> `1477162342372`
- - `jackson-jq -n '"2016-10-22 18:52:22.372" | strptime("yyyy-MM-dd HH:mm:ss.SSS"; "UTC")'` #=> `1477162342372`
+ - `jackson-jq -n 'import "jackson-jq/time" as time; time::timestamp'` #=> `1477162056362`
+ - `jackson-jq -n 'import "jackson-jq/time" as time; 1477162342372 | time::strftime("yyyy-MM-dd HH:mm:ss.SSSXXX"; "UTC")'` #=> `"2016-10-22 18:52:22.372Z"`
+ - `jackson-jq -n 'import "jackson-jq/time" as time; "2016-10-22 18:52:22.372" | time::strptime("yyyy-MM-dd HH:mm:ss.SSS"; "UTC")'` #=> `1477162342372`
 
 #### uriparse/0
 
- - `jackson-jq -n '"http://user@www.example.com:8080/index.html?foo=1&bar=%20#hash" | uriparse'` #=>
+ - `jackson-jq -n 'import "jackson-jq/uri" as uri; "http://user@www.example.com:8080/index.html?foo=1&bar=%20#hash" | uri::uriparse'` #=>
  
    ```json
    {
@@ -560,11 +580,7 @@ For a historical reason, adding the Maven dependency also makes the functions di
 
 #### uridecode/0
 
- - `jackson-jq -n '"%66%6f%6f" | uridecode'` #=> `"foo"`
-
-#### hostname/0
-
- - `jackson-jq -n 'hostname'` #=> `"jenkins-slave01"`
+ - `jackson-jq -n 'import "jackson-jq/uri" as uri; "%66%6f%6f" | uri::uridecode'` #=> `"foo"`
 
 </details>
 
@@ -580,6 +596,6 @@ License
 This software is licensed under Apache Software License, Version 2.0, with some exceptions:
 
  - [jackson-jq/src/test/resources](jackson-jq/src/test/resources) contains test cases from [stedolan/jq](https://github.com/stedolan/jq).
- - [jackson-jq/src/main/resources/net/thisptr/jackson/jq/jq.json](jackson-jq/src/main/resources/net/thisptr/jackson/jq/jq.json) contains function definitions extracted from [stedolan/jq](https://github.com/stedolan/jq).
+ - [CoreJqLibrary.java](jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/CoreJqLibrary.java) and [RegexJqLibrary.java](jackson-jq-regex-impl-joni/src/main/java/net/thisptr/jackson/jq/v2/regex/impl/joni/RegexJqLibrary.java) contain function definitions extracted from [jqlang/jq](https://github.com/jqlang/jq).
 
 See [COPYING](COPYING) for details.

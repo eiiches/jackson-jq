@@ -1,0 +1,38 @@
+package net.thisptr.jackson.jq.v2.core.internal.functions;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import com.google.auto.service.AutoService;
+
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.PathOutput;
+import net.thisptr.jackson.jq.v2.spi.Scope;
+import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.Path;
+
+@AutoService(Function.class)
+@FunctionRegistration("builtins/0")
+public class BuiltinsFunction<JsonNode> implements Function<JsonNode> {
+
+	@Override
+	public void apply(Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> path, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		// root scope
+		while (scope.getParentScope() != null)
+			scope = scope.getParentScope();
+
+		final List<String> builtins = new ArrayList<>(scope.getLocalFunctions().keySet());
+		Collections.sort(builtins);
+
+		final JsonNode result = jsonProvider.createArray();
+		for (final String builtin : builtins)
+			jsonProvider.add(result, jsonProvider.createString(builtin));
+		output.emit(result, null);
+	}
+}
