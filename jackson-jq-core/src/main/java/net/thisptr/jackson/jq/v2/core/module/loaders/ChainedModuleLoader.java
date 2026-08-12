@@ -13,9 +13,9 @@ public class ChainedModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	}
 
 	@Override
-	public Module<JsonNode> loadModule(final Module<JsonNode> caller, final String path, final JsonNode metadata) throws JsonQueryException {
+	public Module loadModule(final Module caller, final String path, final JsonNode metadata) throws JsonQueryException {
 		for (final ModuleLoader<JsonNode> loader : loaders) {
-			final Module<JsonNode> module = loader.loadModule(caller, path, metadata);
+			final Module module = loader.loadModule(caller, path, metadata);
 			if (module != null)
 				return module;
 		}
@@ -23,7 +23,7 @@ public class ChainedModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	}
 
 	@Override
-	public JsonNode loadData(final Module<JsonNode> caller, final String path, final JsonNode metadata) throws JsonQueryException {
+	public JsonNode loadData(final Module caller, final String path, final JsonNode metadata) throws JsonQueryException {
 		for (final ModuleLoader<JsonNode> loader : loaders) {
 			final JsonNode data = loader.loadData(caller, path, metadata);
 			if (data != null)

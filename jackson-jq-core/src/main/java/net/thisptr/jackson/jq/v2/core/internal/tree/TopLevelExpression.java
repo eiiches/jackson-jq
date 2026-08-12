@@ -27,7 +27,7 @@ public class TopLevelExpression<JsonNode> implements Expression<JsonNode> {
 
 		for (final ImportStatement<JsonNode> imp : imports) {
 			if (!imp.dollarImport) {
-				final Module<JsonNode> module = moduleLoader.loadModule(scope.getCurrentModule(), imp.path, imp.getMetadata(scope.jsonProvider()));
+				final Module module = moduleLoader.loadModule(scope.getCurrentModule(), imp.path, imp.getMetadata(scope.jsonProvider()));
 				if (module == null)
 					throw new JsonQueryException("module not found: " + imp.path);
 				scope.addImportedModule(imp.name, module);

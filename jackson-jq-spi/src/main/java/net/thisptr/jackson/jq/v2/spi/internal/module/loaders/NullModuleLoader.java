@@ -13,12 +13,12 @@ public class NullModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	}
 
 	@Override
-	public Module<JsonNode> loadModule(final Module<JsonNode> caller, final String path, final JsonNode metadata) {
+	public Module loadModule(final Module caller, final String path, final JsonNode metadata) {
 		return null;
 	}
 
 	@Override
-	public JsonNode loadData(final Module<JsonNode> caller, final String path, final JsonNode metadata) {
+	public JsonNode loadData(final Module caller, final String path, final JsonNode metadata) {
 		return null;
 	}
 }

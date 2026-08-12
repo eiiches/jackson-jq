@@ -41,7 +41,7 @@ public class Scope<JsonNode> {
 
 	private Map<String, Function> functions;
 
-	private Map<String, LinkedList<Module<JsonNode>>> importedModules; // the last import comes first; the key is null when the module is loaded by an include statement.
+	private Map<String, LinkedList<Module>> importedModules; // the last import comes first; the key is null when the module is loaded by an include statement.
 
 	private Map<String, JsonNode> importedData; // the last import overwrites prior imports
 
@@ -97,7 +97,7 @@ public class Scope<JsonNode> {
 
 	private Map<String, ValueWithPath<JsonNode>> values;
 
-	private Module<JsonNode> currentModule;
+	private Module currentModule;
 
 	private Scope(final Scope<JsonNode> parentScope) {
 		this.parentScope = parentScope;
@@ -206,21 +206,21 @@ public class Scope<JsonNode> {
 		return parentScope.getImportedData(name);
 	}
 
-	public void addImportedModule(final String name, final Module<JsonNode> module) {
+	public void addImportedModule(final String name, final Module module) {
 		if (importedModules == null)
 			importedModules = new HashMap<>();
 		importedModules.computeIfAbsent(name, (dummy) -> new LinkedList<>()).addFirst(module);
 	}
 
-	public List<Module<JsonNode>> getImportedModules(final String name) { // the last import comes first
-		final List<Module<JsonNode>> modules = new ArrayList<>();
+	public List<Module> getImportedModules(final String name) { // the last import comes first
+		final List<Module> modules = new ArrayList<>();
 		getImportedModules(modules, name);
 		return modules;
 	}
 
-	private void getImportedModules(final List<Module<JsonNode>> modules, final String name) {
+	private void getImportedModules(final List<Module> modules, final String name) {
 		if (importedModules != null) {
-			final List<Module<JsonNode>> localModules = importedModules.get(name);
+			final List<Module> localModules = importedModules.get(name);
 			if (localModules != null) {
 				modules.addAll(localModules);
 			}
@@ -242,7 +242,7 @@ public class Scope<JsonNode> {
 		return parentScope.getModuleLoader();
 	}
 
-	public Module<JsonNode> getCurrentModule() {
+	public Module getCurrentModule() {
 		if (this.currentModule != null)
 			return this.currentModule;
 		if (parentScope == null)
@@ -250,7 +250,7 @@ public class Scope<JsonNode> {
 		return parentScope.getCurrentModule();
 	}
 
-	public void setCurrentModule(final Module<JsonNode> module) {
+	public void setCurrentModule(final Module module) {
 		this.currentModule = module;
 	}
 }

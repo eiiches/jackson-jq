@@ -26,7 +26,7 @@ public class FunctionCall<JsonNode> implements Expression<JsonNode> {
 
 	private Function lookupFunction(final Scope<JsonNode> scope) throws JsonQueryException {
 		if (moduleName != null) {
-			for (final Module<JsonNode> module : scope.getImportedModules(moduleName)) {
+			for (final Module module : scope.getImportedModules(moduleName)) {
 				final Function f = module.getFunction(name, args.size());
 				if (f != null)
 					return f;
@@ -38,7 +38,7 @@ public class FunctionCall<JsonNode> implements Expression<JsonNode> {
 				return f;
 
 			// search functions loaded by "include" statement
-			for (final Module<JsonNode> module : scope.getImportedModules(null)) {
+			for (final Module module : scope.getImportedModules(null)) {
 				final Function g = module.getFunction(name, args.size());
 				if (g != null)
 					return g;

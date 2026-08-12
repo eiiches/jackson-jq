@@ -7,7 +7,7 @@ import java.util.Map;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
-public class SimpleModule<JsonNode> implements Module<JsonNode> {
+public class SimpleModule implements Module {
 	private final Map<String, Function> functions = new HashMap<>();
 
 	public void addFunction(final String fname, final int nargs, final Function f) {

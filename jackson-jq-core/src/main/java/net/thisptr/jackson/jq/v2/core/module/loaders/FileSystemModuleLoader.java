@@ -93,10 +93,10 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	}
 
 	// modules with the same path may exist in different search paths
-	private final ConcurrentHashMap<Pair<Path /* searchPath */, String /* relativePath */>, TryOnce<Module<JsonNode>>> loadedModules = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Pair<Path /* searchPath */, String /* relativePath */>, TryOnce<Module>> loadedModules = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<Pair<Path /* searchPath */, String /* relativePath */>, TryOnce<JsonNode>> loadedData = new ConcurrentHashMap<>();
 
-	private final class FileSystemModule extends SimpleModule<JsonNode> {
+	private final class FileSystemModule extends SimpleModule {
 		private final Path modulePath;
 		private final Path searchPath;
 
@@ -110,7 +110,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		}
 	}
 
-	private Module<JsonNode> loadModuleActual(final Path searchPath, final String path) throws IOException {
+	private Module loadModuleActual(final Path searchPath, final String path) throws IOException {
 		final ModuleFile moduleFile = loadModuleFile(searchPath, path, "jq");
 		if (moduleFile == null)
 			return null;
@@ -169,7 +169,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		}
 	}
 
-	private Pair<List<Path>, String> resolvePathsFromImportDirective(final Module<JsonNode> caller, final String path, final JsonNode metadata) throws JsonQueryException {
+	private Pair<List<Path>, String> resolvePathsFromImportDirective(final Module caller, final String path, final JsonNode metadata) throws JsonQueryException {
 		List<Path> searchPaths = this.searchPaths;
 		String relativePath = path;
 
@@ -211,7 +211,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	}
 
 	@Override
-	public Module<JsonNode> loadModule(final Module<JsonNode> caller, final String path, final JsonNode metadata) throws JsonQueryException {
+	public Module loadModule(final Module caller, final String path, final JsonNode metadata) throws JsonQueryException {
 		final Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
 		if (paths == null)
 			return null;
@@ -219,9 +219,9 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		final String relativePath = paths._2;
 
 		for (final Path searchPath : searchPaths) {
-			final TryOnce<Module<JsonNode>> tryOnce = loadedModules.computeIfAbsent(Pair.of(searchPath, relativePath), p -> new TryOnce<>());
+			final TryOnce<Module> tryOnce = loadedModules.computeIfAbsent(Pair.of(searchPath, relativePath), p -> new TryOnce<>());
 			try {
-				final Module<JsonNode> module = tryOnce.tryOnce(() -> {
+				final Module module = tryOnce.tryOnce(() -> {
 					return loadModuleActual(searchPath, relativePath);
 				});
 				if (module != null)
@@ -237,7 +237,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	}
 
 	@Override
-	public JsonNode loadData(final Module<JsonNode> caller, final String path, final JsonNode metadata) throws JsonQueryException {
+	public JsonNode loadData(final Module caller, final String path, final JsonNode metadata) throws JsonQueryException {
 		final Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
 		if (paths == null)
 			return null;

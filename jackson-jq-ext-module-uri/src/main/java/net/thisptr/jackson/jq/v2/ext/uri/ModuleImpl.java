@@ -14,7 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.module.ModuleRegistration;
 
 @AutoService(Module.class)
 @ModuleRegistration(path = "jackson-jq/uri")
-public class ModuleImpl<JsonNode> implements Module<JsonNode> {
+public class ModuleImpl implements Module {
 	private final Map<String, Function> functions = new HashMap<>();
 
 	public ModuleImpl() {
