@@ -194,7 +194,7 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<J
 			LEFT, RIGHT
 		}
 
-		private Operator(String image, int precedence, Associativity associativity) {
+		Operator(String image, int precedence, Associativity associativity) {
 			this.image = image;
 			this.precedence = precedence;
 			this.associativity = associativity;

@@ -375,7 +375,7 @@
 									<compilerArgs>
 										<arg>-XDcompilePolicy=simple</arg>
 										<arg>--should-stop=ifError=FLOW</arg>
-										<arg>-Xplugin:ErrorProne -Xep:Var:ERROR -Xep:UnnecessaryFinal:ERROR -XepExcludedPaths:.*/generated-sources/.*</arg>
+										<arg>-Xplugin:ErrorProne -Xep:Var:ERROR -Xep:UnnecessaryFinal:ERROR -Xep:DefaultCharset:ERROR -Xep:DeprecatedVariable:ERROR -Xep:EmptyCatch:ERROR -Xep:FallThrough:ERROR -Xep:ImmutableEnumChecker:ERROR -Xep:IncorrectMainMethod:ERROR -Xep:InconsistentHashCode:ERROR -Xep:MissingOverride:ERROR -Xep:WildcardImport:ERROR -Xep:RemoveUnusedImports:ERROR -Xep:Finally:ERROR -Xep:BadInstanceof:ERROR -Xep:BadImport:ERROR -XepExcludedPaths:.*/generated-sources/.*</arg>
 										<arg>-XDaddTypeAnnotationsToSymbol=true</arg>
 										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
 										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
@@ -397,7 +397,7 @@
 									<compilerArgs>
 										<arg>-XDcompilePolicy=simple</arg>
 										<arg>--should-stop=ifError=FLOW</arg>
-										<arg>-Xplugin:ErrorProne -Xep:Var:ERROR -Xep:UnnecessaryFinal:ERROR -XepExcludedPaths:.*/generated-sources/.*</arg>
+										<arg>-Xplugin:ErrorProne -Xep:Var:ERROR -Xep:UnnecessaryFinal:ERROR -Xep:DefaultCharset:ERROR -Xep:DeprecatedVariable:ERROR -Xep:EmptyCatch:ERROR -Xep:FallThrough:ERROR -Xep:ImmutableEnumChecker:ERROR -Xep:IncorrectMainMethod:ERROR -Xep:InconsistentHashCode:ERROR -Xep:MissingOverride:ERROR -Xep:WildcardImport:ERROR -Xep:RemoveUnusedImports:ERROR -Xep:Finally:ERROR -Xep:BadInstanceof:ERROR -Xep:BadImport:ERROR -XepExcludedPaths:.*/generated-sources/.*</arg>
 										<arg>-XDaddTypeAnnotationsToSymbol=true</arg>
 										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
 										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>

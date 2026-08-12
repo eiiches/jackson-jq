@@ -55,7 +55,7 @@ public class Jackson2JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 		private boolean strictFieldOrder;
 		private double numericalErrors;
 
-		public Jackson2JsonNodeComparator(boolean strictFieldOrder, double numericalErrors) {
+		Jackson2JsonNodeComparator(boolean strictFieldOrder, double numericalErrors) {
 			super(Jackson2JsonProviderImpl.getInstance());
 			this.strictFieldOrder = strictFieldOrder;
 			this.numericalErrors = numericalErrors;

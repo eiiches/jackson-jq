@@ -12,7 +12,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public interface PatternMatcher<JsonNode> {
 	void match(Scope<JsonNode> scope, JsonNode in, Functional.Consumer<List<Pair<String, JsonNode>>> out, Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException;
 
-	public static class MatchWithPath<JsonNode> {
+	class MatchWithPath<JsonNode> {
 		public String name;
 		public JsonNode value;
 		public Path<JsonNode> path;

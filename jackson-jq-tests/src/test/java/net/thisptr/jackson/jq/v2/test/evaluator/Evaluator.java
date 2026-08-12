@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import net.thisptr.jackson.jq.v2.spi.Version;
 
 public interface Evaluator {
-	public static class Result {
+	class Result {
 		public List<JsonNode> values;
 		public Throwable error;
 

@@ -97,7 +97,7 @@ public class _MatchImplFunction implements Function {
 				MatchObject obj = new MatchObject();
 				obj.offset = cindex[m.getBegin()];
 				obj.length = cindex[m.getEnd()] - cindex[m.getBegin()];
-				obj.string = new String(ibytes, m.getBegin(), m.getEnd() - m.getBegin());
+				obj.string = new String(ibytes, m.getBegin(), m.getEnd() - m.getBegin(), StandardCharsets.UTF_8);
 
 				// 1. regions is null when there is no capture groups
 				// 2. for zero-width match, we do not include captures

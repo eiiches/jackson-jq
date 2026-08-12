@@ -57,7 +57,7 @@ public class GsonJsonQueryTest extends AbstractJsonQueryTest<JsonElement> {
 		private boolean strictFieldOrder;
 		private double numericalErrors;
 
-		public GsonJsonNodeComparator(boolean strictFieldOrder, double numericalErrors) {
+		GsonJsonNodeComparator(boolean strictFieldOrder, double numericalErrors) {
 			super(GsonJsonProviderImpl.getInstance());
 			this.strictFieldOrder = strictFieldOrder;
 			this.numericalErrors = numericalErrors;

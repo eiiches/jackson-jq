@@ -53,7 +53,7 @@ public class JsonQueryJacksonModule extends SimpleModule {
 	private static class ArrayNodeSerializer extends StdSerializer<ArrayNode> {
 		private static long serialVersionUID = 1L;
 
-		public ArrayNodeSerializer() {
+		ArrayNodeSerializer() {
 			super(ArrayNode.class);
 		}
 
@@ -69,7 +69,7 @@ public class JsonQueryJacksonModule extends SimpleModule {
 	private static class ObjectNodeSerializer extends StdSerializer<ObjectNode> {
 		private static long serialVersionUID = 1L;
 
-		public ObjectNodeSerializer() {
+		ObjectNodeSerializer() {
 			super(ObjectNode.class);
 		}
 
@@ -89,7 +89,7 @@ public class JsonQueryJacksonModule extends SimpleModule {
 	private static class DoubleNodeSerializer extends StdSerializer<DoubleNode> {
 		private static long serialVersionUID = 1L;
 
-		public DoubleNodeSerializer() {
+		DoubleNodeSerializer() {
 			super(DoubleNode.class);
 		}
 
@@ -102,7 +102,7 @@ public class JsonQueryJacksonModule extends SimpleModule {
 	private static class FloatNodeSerializer extends StdSerializer<FloatNode> {
 		private static long serialVersionUID = 1L;
 
-		public FloatNodeSerializer() {
+		FloatNodeSerializer() {
 			super(FloatNode.class);
 		}
 

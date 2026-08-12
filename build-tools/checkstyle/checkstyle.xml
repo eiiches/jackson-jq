@@ -6,6 +6,8 @@
 <module name="Checker">
 	<property name="charset" value="UTF-8"/>
 
+	<module name="NewlineAtEndOfFile"/>
+
 	<module name="TreeWalker">
 		<module name="AvoidStarImport">
 			<property name="allowClassImports" value="false"/>
@@ -17,6 +19,11 @@
 		</module>
 		<module name="RedundantImport"/>
 		<module name="UnusedImports"/>
+
+		<module name="RedundantModifier"/>
+		<module name="ModifierOrder"/>
+		<module name="EqualsHashCode"/>
+		<module name="EmptyStatement"/>
 
 		<module name="CustomImportOrder">
 			<property name="customImportOrderRules"

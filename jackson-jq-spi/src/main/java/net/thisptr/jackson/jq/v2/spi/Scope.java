@@ -53,10 +53,10 @@ public class Scope<JsonNode> {
 		Path path();
 	}
 
-	private static abstract class AbstractValueWithPath<JsonNode> implements ValueWithPath<JsonNode> {
+	private abstract static class AbstractValueWithPath<JsonNode> implements ValueWithPath<JsonNode> {
 		private Path path;
 
-		public AbstractValueWithPath (Path path) {
+		AbstractValueWithPath (Path path) {
 			this.path = path;
 		}
 
@@ -69,7 +69,7 @@ public class Scope<JsonNode> {
 	private static class ValueSupplierImpl<JsonNode> extends AbstractValueWithPath<JsonNode> {
 		private Supplier<JsonNode> valueSupplier;
 
-		public ValueSupplierImpl(Supplier<JsonNode> valueSupplier, Path path) {
+		ValueSupplierImpl(Supplier<JsonNode> valueSupplier, Path path) {
 			super(path);
 			this.valueSupplier = valueSupplier;
 		}
@@ -83,7 +83,7 @@ public class Scope<JsonNode> {
 	private static class ValueWithPathImpl<JsonNode> extends AbstractValueWithPath<JsonNode> {
 		private JsonNode value;
 
-		public ValueWithPathImpl(JsonNode value, Path path) {
+		ValueWithPathImpl(JsonNode value, Path path) {
 			super(path);
 			this.value = value;
 

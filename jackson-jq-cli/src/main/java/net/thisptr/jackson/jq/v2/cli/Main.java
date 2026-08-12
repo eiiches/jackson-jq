@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.util.Arrays;
 import java.util.List;
@@ -113,7 +114,7 @@ public class Main {
 
 		@Var InputStream is = System.in;
 		if (command.hasOption(OPT_NULL_INPUT.getOpt())) {
-			is = new ByteArrayInputStream("null".getBytes());
+			is = new ByteArrayInputStream("null".getBytes(StandardCharsets.UTF_8));
 		}
 
 		Scope<JsonNode> scope = Scope.newEmptyScope(Jackson3JsonProviderImpl.getInstance());
@@ -125,7 +126,7 @@ public class Main {
 				new FileSystemModuleLoader(scope, version, FileSystems.getDefault().getPath("").toAbsolutePath()),
 		}));
 
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 			 MappingIterator<JsonNode> iter = MAPPER.readerFor(JsonNode.class).readValues(reader)) {
 			while (iter.hasNext()) {
 				JsonNode tree = iter.next();

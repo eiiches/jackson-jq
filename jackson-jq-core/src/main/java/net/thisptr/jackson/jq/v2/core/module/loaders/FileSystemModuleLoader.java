@@ -45,7 +45,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		this.version = version;
 	}
 
-	private static final Path resolveModulePath(Path searchPath, String path) {
+	private static Path resolveModulePath(Path searchPath, String path) {
 		Path modulePath = searchPath.getFileSystem().getPath(path);
 		if (modulePath.isAbsolute())
 			throw new RuntimeException("Import path must be relative");
@@ -87,7 +87,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		public Path modulePath;
 		public byte[] bytes;
 
-		public ModuleFile(Path searchPath, Path modulePath, byte[] bytes) {
+		ModuleFile(Path searchPath, Path modulePath, byte[] bytes) {
 			this.searchPath = searchPath;
 			this.modulePath = modulePath;
 			this.bytes = bytes;
@@ -102,7 +102,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		private Path modulePath;
 		private Path searchPath;
 
-		public FileSystemModule(Path searchPath, Path modulePath) {
+		FileSystemModule(Path searchPath, Path modulePath) {
 			this.modulePath = modulePath;
 			this.searchPath = searchPath;
 		}
@@ -138,7 +138,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 
 		@Var private boolean taskStarted;
 
-		public TryOnce() {
+		TryOnce() {
 			this.taskThread = Thread.currentThread();
 		}
 

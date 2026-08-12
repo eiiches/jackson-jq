@@ -62,7 +62,7 @@ public class CachedEvaluator implements AutoCloseable, Evaluator {
 		@JsonSerialize(using = ToStringSerializer.class)
 		private Version v;
 
-		public Key(String q, JsonNode in, Version v) {
+		Key(String q, JsonNode in, Version v) {
 			this.q = q;
 			this.in = in;
 			this.v = v;
