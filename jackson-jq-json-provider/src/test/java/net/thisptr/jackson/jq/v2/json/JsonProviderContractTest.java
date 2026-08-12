@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
+import com.google.errorprone.annotations.Var;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -118,7 +119,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testObjectSetAndGet() {
-		T obj = provider.createObject();
+		@Var T obj = provider.createObject();
 		T value = provider.createString("world");
 		obj = provider.set(obj, "hello", value);
 
@@ -132,7 +133,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testObjectMultipleFields() {
-		T obj = provider.createObject();
+		@Var T obj = provider.createObject();
 		obj = provider.set(obj, "a", provider.createInt(1));
 		obj = provider.set(obj, "b", provider.createInt(2));
 		obj = provider.set(obj, "c", provider.createInt(3));
@@ -145,7 +146,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testObjectFields() {
-		T obj = provider.createObject();
+		@Var T obj = provider.createObject();
 		obj = provider.set(obj, "x", provider.createInt(10));
 		obj = provider.set(obj, "y", provider.createInt(20));
 
@@ -164,7 +165,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testObjectFieldNames() {
-		T obj = provider.createObject();
+		@Var T obj = provider.createObject();
 		obj = provider.set(obj, "foo", provider.createNull());
 		obj = provider.set(obj, "bar", provider.createNull());
 
@@ -183,7 +184,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testArrayAddAndGet() {
-		T arr = provider.createArray();
+		@Var T arr = provider.createArray();
 		arr = provider.add(arr, provider.createInt(1));
 		arr = provider.add(arr, provider.createInt(2));
 		arr = provider.add(arr, provider.createInt(3));
@@ -200,7 +201,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testArraySet() {
-		T arr = provider.createArray();
+		@Var T arr = provider.createArray();
 		arr = provider.add(arr, provider.createInt(1));
 		arr = provider.add(arr, provider.createInt(2));
 		arr = provider.add(arr, provider.createInt(3));
@@ -214,7 +215,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testArrayElements() {
-		T arr = provider.createArray();
+		@Var T arr = provider.createArray();
 		arr = provider.add(arr, provider.createString("a"));
 		arr = provider.add(arr, provider.createString("b"));
 		arr = provider.add(arr, provider.createString("c"));
@@ -230,7 +231,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testArrayIterate() {
-		T arr = provider.createArray();
+		@Var T arr = provider.createArray();
 		arr = provider.add(arr, provider.createInt(10));
 		arr = provider.add(arr, provider.createInt(20));
 
@@ -248,7 +249,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testToString() {
-		T obj = provider.createObject();
+		@Var T obj = provider.createObject();
 		obj = provider.set(obj, "name", provider.createString("test"));
 		obj = provider.set(obj, "value", provider.createInt(42));
 
@@ -290,7 +291,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testDeepCopy() {
-		T original = provider.createObject();
+		@Var T original = provider.createObject();
 		original = provider.set(original, "nested", provider.createObject());
 		T nested = provider.get(original, "nested");
 		provider.set(nested, "value", provider.createInt(42));
@@ -363,15 +364,15 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testNestedStructures() throws Exception {
 		// Create nested object: {"outer": {"inner": [1, 2, 3]}}
-		T inner = provider.createArray();
+		@Var T inner = provider.createArray();
 		inner = provider.add(inner, provider.createInt(1));
 		inner = provider.add(inner, provider.createInt(2));
 		inner = provider.add(inner, provider.createInt(3));
 
-		T nested = provider.createObject();
+		@Var T nested = provider.createObject();
 		nested = provider.set(nested, "inner", inner);
 
-		T outer = provider.createObject();
+		@Var T outer = provider.createObject();
 		outer = provider.set(outer, "outer", nested);
 
 		// Verify structure
@@ -557,7 +558,7 @@ public abstract class JsonProviderContractTest<T> {
 	void testObjectElements() {
 		// elements() on an object should return an iterator over the field values
 		// This is important for jq functions like from_entries that iterate over object values
-		T obj = provider.createObject();
+		@Var T obj = provider.createObject();
 		obj = provider.set(obj, "a", provider.createInt(1));
 		obj = provider.set(obj, "b", provider.createInt(2));
 		obj = provider.set(obj, "c", provider.createInt(3));
@@ -574,7 +575,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testObjectIterate() {
 		// iterate() on an object should also work, returning field values
-		T obj = provider.createObject();
+		@Var T obj = provider.createObject();
 		obj = provider.set(obj, "x", provider.createString("foo"));
 		obj = provider.set(obj, "y", provider.createString("bar"));
 
@@ -604,7 +605,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testToStringObjectWithHtmlCharacters() {
 		// Verify HTML characters in object values are not escaped
-		T obj = provider.createObject();
+		@Var T obj = provider.createObject();
 		obj = provider.set(obj, "html", provider.createString("<tag>"));
 		String json = provider.toString(obj);
 		assertThat(json).contains("\"<tag>\"");

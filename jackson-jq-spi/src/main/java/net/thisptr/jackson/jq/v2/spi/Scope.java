@@ -31,8 +31,8 @@ public class Scope<JsonNode> {
 	}
 
 	private Map<String, String> debugFunctions() {
-		final Map<String, String> result = new TreeMap<>();
-		for (final Entry<String, Function> f : functions.entrySet())
+		Map<String, String> result = new TreeMap<>();
+		for (Entry<String, Function> f : functions.entrySet())
 			result.put(f.getKey(), f.getValue().toString());
 		return result;
 	}
@@ -54,7 +54,7 @@ public class Scope<JsonNode> {
 	}
 
 	private static abstract class AbstractValueWithPath<JsonNode> implements ValueWithPath<JsonNode> {
-		private final Path path;
+		private Path path;
 
 		public AbstractValueWithPath (Path path) {
 			this.path = path;
@@ -67,9 +67,9 @@ public class Scope<JsonNode> {
 	}
 
 	private static class ValueSupplierImpl<JsonNode> extends AbstractValueWithPath<JsonNode> {
-		private final Supplier<JsonNode> valueSupplier;
+		private Supplier<JsonNode> valueSupplier;
 
-		public ValueSupplierImpl(final Supplier<JsonNode> valueSupplier, final Path path) {
+		public ValueSupplierImpl(Supplier<JsonNode> valueSupplier, Path path) {
 			super(path);
 			this.valueSupplier = valueSupplier;
 		}
@@ -81,9 +81,9 @@ public class Scope<JsonNode> {
 	}
 
 	private static class ValueWithPathImpl<JsonNode> extends AbstractValueWithPath<JsonNode> {
-		private final JsonNode value;
+		private JsonNode value;
 
-		public ValueWithPathImpl(final JsonNode value, final Path path) {
+		public ValueWithPathImpl(JsonNode value, Path path) {
 			super(path);
 			this.value = value;
 
@@ -99,32 +99,32 @@ public class Scope<JsonNode> {
 
 	private Module currentModule;
 
-	private Scope(final Scope<JsonNode> parentScope) {
+	private Scope(Scope<JsonNode> parentScope) {
 		this.parentScope = parentScope;
 	}
 
 	public static <JsonNode> Scope<JsonNode> newEmptyScope(JsonProvider<JsonNode> jsonProvider) {
-		final Scope<JsonNode> scope = new Scope<>(null);
+		Scope<JsonNode> scope = new Scope<>(null);
 		scope.setJsonProvider(jsonProvider);
 		return scope;
 	}
 
-	public static <JsonNode> Scope<JsonNode> newChildScope(final Scope<JsonNode> scope) {
+	public static <JsonNode> Scope<JsonNode> newChildScope(Scope<JsonNode> scope) {
 		return new Scope<>(scope);
 	}
 
-	public void addFunction(final String name, final int n, final Function q) {
+	public void addFunction(String name, int n, Function q) {
 		addFunction(name + "/" + n, q);
 	}
 
-	public void addFunction(final String name, final Function q) {
+	public void addFunction(String name, Function q) {
 		if (functions == null)
 			functions = new HashMap<>();
 		functions.put(name, q);
 	}
 
-	public Function getFunction(final String name, final int nargs) {
-		final Function f = getFunctionRecursive(name + "/" + nargs);
+	public Function getFunction(String name, int nargs) {
+		Function f = getFunctionRecursive(name + "/" + nargs);
 		if (f != null)
 			return f;
 		return getFunctionRecursive(name);
@@ -140,9 +140,9 @@ public class Scope<JsonNode> {
 		return parentScope;
 	}
 
-	private Function getFunctionRecursive(final String name) {
+	private Function getFunctionRecursive(String name) {
 		if (functions != null) {
-			final Function q = functions.get(name);
+			Function q = functions.get(name);
 			if (q != null)
 				return q;
 		}
@@ -151,29 +151,29 @@ public class Scope<JsonNode> {
 		return parentScope.getFunctionRecursive(name);
 	}
 
-	public void setValue(final String name, final JsonNode value) {
+	public void setValue(String name, JsonNode value) {
 		setValueWithPath(name, value, null);
 	}
 
-	public void setValue (final String name, Supplier<JsonNode> supplier) {
+	public void setValue (String name, Supplier<JsonNode> supplier) {
 		setValueWithPath (name, supplier, null);
 	}
 
-	public void setValueWithPath(final String name, final JsonNode value, final Path path) {
+	public void setValueWithPath(String name, JsonNode value, Path path) {
 		if (values == null)
 			values = new HashMap<>();
 		values.put(name, new ValueWithPathImpl<>(value, path));
 	}
 
-	public  void setValueWithPath(final String name, final Supplier<JsonNode> value, final Path path) {
+	public  void setValueWithPath(String name, Supplier<JsonNode> value, Path path) {
 		if (values == null)
 			values = new HashMap<>();
 		values.put(name, new ValueSupplierImpl<>(value, path));
 	}
 
-	public ValueWithPath<JsonNode> getValueWithPath(final String name) {
+	public ValueWithPath<JsonNode> getValueWithPath(String name) {
 		if (values != null) {
-			final ValueWithPath<JsonNode> value = values.get(name);
+			ValueWithPath<JsonNode> value = values.get(name);
 			if (value != null)
 				return value;
 		}
@@ -182,22 +182,22 @@ public class Scope<JsonNode> {
 		return parentScope.getValueWithPath(name);
 	}
 
-	public JsonNode getValue(final String name) {
-		final ValueWithPath<JsonNode> value = getValueWithPath(name);
+	public JsonNode getValue(String name) {
+		ValueWithPath<JsonNode> value = getValueWithPath(name);
 		if (value == null)
 			return null;
 		return value.value();
 	}
 
-	public void setImportedData(final String name, final JsonNode data) {
+	public void setImportedData(String name, JsonNode data) {
 		if (importedData == null)
 			importedData = new HashMap<>();
 		importedData.put(name, data);
 	}
 
-	public JsonNode getImportedData(final String name) {
+	public JsonNode getImportedData(String name) {
 		if (importedData != null) {
-			final JsonNode data = importedData.get(name);
+			JsonNode data = importedData.get(name);
 			if (data != null)
 				return data;
 		}
@@ -206,21 +206,21 @@ public class Scope<JsonNode> {
 		return parentScope.getImportedData(name);
 	}
 
-	public void addImportedModule(final String name, final Module module) {
+	public void addImportedModule(String name, Module module) {
 		if (importedModules == null)
 			importedModules = new HashMap<>();
 		importedModules.computeIfAbsent(name, (dummy) -> new LinkedList<>()).addFirst(module);
 	}
 
-	public List<Module> getImportedModules(final String name) { // the last import comes first
-		final List<Module> modules = new ArrayList<>();
+	public List<Module> getImportedModules(String name) { // the last import comes first
+		List<Module> modules = new ArrayList<>();
 		getImportedModules(modules, name);
 		return modules;
 	}
 
-	private void getImportedModules(final List<Module> modules, final String name) {
+	private void getImportedModules(List<Module> modules, String name) {
 		if (importedModules != null) {
-			final List<Module> localModules = importedModules.get(name);
+			List<Module> localModules = importedModules.get(name);
 			if (localModules != null) {
 				modules.addAll(localModules);
 			}
@@ -230,7 +230,7 @@ public class Scope<JsonNode> {
 		parentScope.getImportedModules(modules, name);
 	}
 
-	public void setModuleLoader(final ModuleLoader<JsonNode> moduleLoader) {
+	public void setModuleLoader(ModuleLoader<JsonNode> moduleLoader) {
 		this.moduleLoader = moduleLoader;
 	}
 
@@ -250,7 +250,7 @@ public class Scope<JsonNode> {
 		return parentScope.getCurrentModule();
 	}
 
-	public void setCurrentModule(final Module module) {
+	public void setCurrentModule(Module module) {
 		this.currentModule = module;
 	}
 }

@@ -12,44 +12,44 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 
 public class Preconditions {
 
-	public static <JsonNode> void checkArgumentCount(final String fname, final List<Expression<JsonNode>> args, final int... nums) throws IllegalJsonArgumentException {
-		final int nargs = args.size();
-		for (final int num : nums)
+	public static <JsonNode> void checkArgumentCount(String fname, List<Expression<JsonNode>> args, int... nums) throws IllegalJsonArgumentException {
+		int nargs = args.size();
+		for (int num : nums)
 			if (nargs == num)
 				return;
 		throw new IllegalJsonArgumentException(String.format("%s takes %s arguments; got %s", fname, Arrays.toString(nums), nargs));
 	}
 
-	public static <JsonNode> void checkInputType(final JsonProvider<JsonNode> jsonProvider, final String fname, final JsonNode in, final JsonNodeType... types) throws IllegalJsonInputException {
-		final JsonNodeType t = jsonProvider.getNodeType(in);
-		for (final JsonNodeType type : types)
+	public static <JsonNode> void checkInputType(JsonProvider<JsonNode> jsonProvider, String fname, JsonNode in, JsonNodeType... types) throws IllegalJsonInputException {
+		JsonNodeType t = jsonProvider.getNodeType(in);
+		for (JsonNodeType type : types)
 			if (t == type)
 				return;
 		throw new IllegalJsonInputException(String.format("%s is not applicable to %s; expected one of %s", fname, jsonProvider.getNodeType(in), Arrays.toString(types)));
 	}
 
-	private static <JsonNode> void checkInputElementType(final JsonProvider<JsonNode> jsonProvider, final String fname, final JsonNode in, final JsonNodeType... types) throws IllegalJsonInputException {
-		final JsonNodeType t = jsonProvider.getNodeType(in);
-		for (final JsonNodeType type : types)
+	private static <JsonNode> void checkInputElementType(JsonProvider<JsonNode> jsonProvider, String fname, JsonNode in, JsonNodeType... types) throws IllegalJsonInputException {
+		JsonNodeType t = jsonProvider.getNodeType(in);
+		for (JsonNodeType type : types)
 			if (t == type)
 				return;
 		throw new IllegalJsonInputException(String.format("%s is not applicable to input which contains %s; expected one of %s", fname, jsonProvider.getNodeType(in), Arrays.toString(types)));
 	}
 
-	public static <JsonNode> void checkInputArrayType(final JsonProvider<JsonNode> jsonProvider, final String fname, final JsonNode in, final JsonNodeType... types) throws IllegalJsonInputException {
+	public static <JsonNode> void checkInputArrayType(JsonProvider<JsonNode> jsonProvider, String fname, JsonNode in, JsonNodeType... types) throws IllegalJsonInputException {
 		checkInputType(jsonProvider, fname, in, JsonNodeType.ARRAY);
-		final Iterator<JsonNode> iter = jsonProvider.elements(in);
+		Iterator<JsonNode> iter = jsonProvider.elements(in);
 		while (iter.hasNext())
 			checkInputElementType(jsonProvider, fname, iter.next(), types);
 	}
 
-	public static <JsonNode> void checkArgumentType(final JsonProvider<JsonNode> jsonProvider, final String fname, final int aindex, final JsonNode value, final JsonNodeType... types) throws IllegalJsonArgumentException {
-		final JsonNodeType t = jsonProvider.getNodeType(value);
-		for (final JsonNodeType type : types)
+	public static <JsonNode> void checkArgumentType(JsonProvider<JsonNode> jsonProvider, String fname, int aindex, JsonNode value, JsonNodeType... types) throws IllegalJsonArgumentException {
+		JsonNodeType t = jsonProvider.getNodeType(value);
+		for (JsonNodeType type : types)
 			if (t == type)
 				return;
 
-		final String indexText;
+		String indexText;
 		switch (aindex) {
 			case 1:
 				indexText = "1st";

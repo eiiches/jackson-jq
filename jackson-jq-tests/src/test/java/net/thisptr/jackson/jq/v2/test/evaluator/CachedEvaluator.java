@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.google.errorprone.annotations.Var;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
@@ -26,17 +27,17 @@ public class CachedEvaluator implements AutoCloseable, Evaluator {
 	private final RocksDB db;
 	private final Evaluator evaluator;
 
-	public CachedEvaluator(final Evaluator evaluator, final String path) {
+	public CachedEvaluator(Evaluator evaluator, String path) {
 		this(evaluator, new File(path));
 	}
 
-	public CachedEvaluator(final Evaluator evaluator, final File path) {
+	public CachedEvaluator(Evaluator evaluator, File path) {
 		this.evaluator = evaluator;
-		final Options options = new Options();
+		Options options = new Options();
 		options.setCreateIfMissing(true);
 		try {
 			this.db = RocksDB.open(options, path.getAbsolutePath());
-		} catch (final RocksDBException e) {
+		} catch (RocksDBException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -45,7 +46,7 @@ public class CachedEvaluator implements AutoCloseable, Evaluator {
 	public void close() {
 		try {
 			this.db.close();
-		} catch (final Exception e) {
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -61,7 +62,7 @@ public class CachedEvaluator implements AutoCloseable, Evaluator {
 		@JsonSerialize(using = ToStringSerializer.class)
 		private Version v;
 
-		public Key(final String q, final JsonNode in, final Version v) {
+		public Key(String q, JsonNode in, Version v) {
 			this.q = q;
 			this.in = in;
 			this.v = v;
@@ -78,10 +79,10 @@ public class CachedEvaluator implements AutoCloseable, Evaluator {
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
-	private void store(final String q, final JsonNode in, final Version v, final Result r) {
+	private void store(String q, JsonNode in, Version v, Result r) {
 		try {
-			final byte[] key = MAPPER.writeValueAsBytes(new Key(q, in, v));
-			final CachedEvaluator.Value value = new Value();
+			byte[] key = MAPPER.writeValueAsBytes(new Key(q, in, v));
+			CachedEvaluator.Value value = new Value();
 			value.out = r.values;
 			if (r.error != null) {
 				value.error = r.error.getMessage();
@@ -94,21 +95,21 @@ public class CachedEvaluator implements AutoCloseable, Evaluator {
 		}
 	}
 
-	private Result load(final String q, final JsonNode in, final Version v) {
+	private Result load(String q, JsonNode in, Version v) {
 		try {
-			final byte[] key = MAPPER.writeValueAsBytes(new Key(q, in, v));
-			final byte[] bytes = db.get(key);
+			byte[] key = MAPPER.writeValueAsBytes(new Key(q, in, v));
+			byte[] bytes = db.get(key);
 			if (bytes == null)
 				return null;
-			final CachedEvaluator.Value value = MAPPER.readValue(bytes, CachedEvaluator.Value.class);
+			CachedEvaluator.Value value = MAPPER.readValue(bytes, CachedEvaluator.Value.class);
 			return new Result(value.out, value.error != null ? new RuntimeException(value.error) : null);
-		} catch (final IOException | RocksDBException e) {
+		} catch (IOException | RocksDBException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private Result loadOrCompute(final String q, final JsonNode in, final Version v, final Supplier<Result> fn) {
-		Result r = load(q, in, v);
+	private Result loadOrCompute(String q, JsonNode in, Version v, Supplier<Result> fn) {
+		@Var Result r = load(q, in, v);
 		if (r != null)
 			return r;
 		r = fn.get();
@@ -117,11 +118,11 @@ public class CachedEvaluator implements AutoCloseable, Evaluator {
 	}
 
 	@Override
-	public Result evaluate(final String q, final JsonNode in, final Version v, final long timeout) throws Throwable {
+	public Result evaluate(String q, JsonNode in, Version v, long timeout) throws Throwable {
 		return loadOrCompute(q, in, v, () -> {
 			try {
 				return evaluator.evaluate(q, in, v, timeout);
-			} catch (final Throwable e) {
+			} catch (Throwable e) {
 				throw new RuntimeException(e);
 			}
 		});

@@ -16,15 +16,15 @@ public final class Java8SmokeTest {
 	private Java8SmokeTest() {
 	}
 
-	public static void main(final String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 		testWithJsonProvider(Jackson2JsonProviderImpl.getInstance());
 		testWithJsonProvider(GsonJsonProviderImpl.getInstance());
 		System.out.println("Java 8 compatibility test passed for Jackson 2, Gson, and all extension modules");
 	}
 
-	private static <JsonNode> void testWithJsonProvider(final JsonProvider<JsonNode> jsonProvider) throws Exception {
-		final Version version = Version.valueOf("1.6");
-		final Scope<JsonNode> scope = Scope.newEmptyScope(jsonProvider);
+	private static <JsonNode> void testWithJsonProvider(JsonProvider<JsonNode> jsonProvider) throws Exception {
+		Version version = Version.valueOf("1.6");
+		Scope<JsonNode> scope = Scope.newEmptyScope(jsonProvider);
 		BuiltinFunctionLoader.getInstance().loadFunctions(version, scope);
 		scope.setModuleLoader(new ClassPathModuleLoader<JsonNode>(Java8SmokeTest.class.getClassLoader()));
 		assertQuery(jsonProvider, scope, version, "length", "[1,2]", 2);
@@ -35,10 +35,10 @@ public final class Java8SmokeTest {
 		assertQuery(jsonProvider, scope, version, "import \"jackson-jq/uuid\" as uuid; uuid::uuid5(\"6ba7b810-9dad-11d1-80b4-00c04fd430c8\")", "\"example.com\"", "cfbff0d1-9375-5685-968c-48ce8b15ae17");
 	}
 
-	private static <JsonNode> void assertQuery(final JsonProvider<JsonNode> jsonProvider, final Scope<JsonNode> scope, final Version version, final String expression, final String inputJson, final Object expected) throws Exception {
-		final JsonQuery<JsonNode> query = JsonQuery.compile(expression, version);
-		final JsonNode input = jsonProvider.fromStringStrict(inputJson);
-		final List<JsonNode> output = new ArrayList<>();
+	private static <JsonNode> void assertQuery(JsonProvider<JsonNode> jsonProvider, Scope<JsonNode> scope, Version version, String expression, String inputJson, Object expected) throws Exception {
+		JsonQuery<JsonNode> query = JsonQuery.compile(expression, version);
+		JsonNode input = jsonProvider.fromStringStrict(inputJson);
+		List<JsonNode> output = new ArrayList<>();
 		query.apply(scope, input, output::add);
 		if (output.size() != 1 || !output.get(0).equals(jsonProvider.valueToTree(expected)))
 			throw new AssertionError("Expected [" + expected + "] but was " + output);

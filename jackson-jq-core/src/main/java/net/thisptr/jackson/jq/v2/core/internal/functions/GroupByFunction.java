@@ -26,22 +26,22 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("group_by/1")
 public class GroupByFunction implements Function {
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "group_by", in, JsonNodeType.ARRAY);
 
-		final JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
-		final TreeMap<JsonNode, List<JsonNode>> result = new TreeMap<>(comparator);
-		final Iterator<JsonNode> iter = jsonProvider.elements(in);
+		JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
+		TreeMap<JsonNode, List<JsonNode>> result = new TreeMap<>(comparator);
+		Iterator<JsonNode> iter = jsonProvider.elements(in);
 		while (iter.hasNext()) {
-			final JsonNode i = iter.next();
-			final JsonNode fx = JsonQueryUtils.applyToArrayNode(args.get(0), scope, i);
+			JsonNode i = iter.next();
+			JsonNode fx = JsonQueryUtils.applyToArrayNode(args.get(0), scope, i);
 			List<JsonNode> values = result.computeIfAbsent(fx, k -> new ArrayList<>());
 			values.add(i);
 		}
 
-		final List<JsonNode> groups = new ArrayList<>(result.size());
-		for (final List<JsonNode> values : result.values())
+		List<JsonNode> groups = new ArrayList<>(result.size());
+		for (List<JsonNode> values : result.values())
 			groups.add(JsonNodeUtils.asArrayNode(jsonProvider, values));
 		output.emit(JsonNodeUtils.asArrayNode(jsonProvider, groups), null);
 	}

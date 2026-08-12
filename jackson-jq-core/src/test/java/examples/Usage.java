@@ -93,7 +93,7 @@ public class Usage {
 
 		// Finally, JsonQuery#apply(...) executes the query with given input and produces 0, 1 or more JsonNode.
 		// The childScope will not be modified by this call because it internally creates a child scope as necessary.
-		final List<JsonNode> out = new ArrayList<>();
+		List<JsonNode> out = new ArrayList<>();
 		q.apply(childScope, in, out::add);
 		System.out.println(out); // => [84]
 	}

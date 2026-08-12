@@ -22,25 +22,25 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("to_entries/0")
 public class ToEntriesFunction implements Function {
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		final JsonNode out = jsonProvider.createArray();
-		final JsonNodeType inType = jsonProvider.getNodeType(in);
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		JsonNode out = jsonProvider.createArray();
+		JsonNodeType inType = jsonProvider.getNodeType(in);
 
 		if (inType == JsonNodeType.OBJECT) {
-			final Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(in);
+			Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(in);
 			while (iter.hasNext()) {
-				final Entry<String, JsonNode> entry = iter.next();
-				final JsonNode entryNode = jsonProvider.createObject();
+				Entry<String, JsonNode> entry = iter.next();
+				JsonNode entryNode = jsonProvider.createObject();
 				jsonProvider.set(entryNode, "key", jsonProvider.createString(entry.getKey()));
 				jsonProvider.set(entryNode, "value", entry.getValue());
 				jsonProvider.add(out, entryNode);
 			}
 		} else if (inType == JsonNodeType.ARRAY) {
-			final Iterator<JsonNode> iter = jsonProvider.elements(in);
+			Iterator<JsonNode> iter = jsonProvider.elements(in);
 			for (int i = 0; iter.hasNext(); ++i) {
-				final JsonNode value = iter.next();
-				final JsonNode entryNode = jsonProvider.createObject();
+				JsonNode value = iter.next();
+				JsonNode entryNode = jsonProvider.createObject();
 				jsonProvider.set(entryNode, "key", jsonProvider.createInt(i));
 				jsonProvider.set(entryNode, "value", value);
 				jsonProvider.add(out, entryNode);

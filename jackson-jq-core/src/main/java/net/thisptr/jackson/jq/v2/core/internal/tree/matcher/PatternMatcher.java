@@ -10,14 +10,14 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public interface PatternMatcher<JsonNode> {
-	void match(final Scope<JsonNode> scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException;
+	void match(Scope<JsonNode> scope, JsonNode in, Functional.Consumer<List<Pair<String, JsonNode>>> out, Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException;
 
 	public static class MatchWithPath<JsonNode> {
-		public final String name;
-		public final JsonNode value;
-		public final Path<JsonNode> path;
+		public String name;
+		public JsonNode value;
+		public Path<JsonNode> path;
 
-		public MatchWithPath(final String name, final JsonNode value, final Path<JsonNode> path) {
+		public MatchWithPath(String name, JsonNode value, Path<JsonNode> path) {
 			this.name = name;
 			this.value = value;
 			this.path = path;

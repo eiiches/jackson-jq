@@ -14,14 +14,14 @@ public class ArrayConstruction<JsonNode> implements Expression<JsonNode> {
 		this(null);
 	}
 
-	public ArrayConstruction(final Expression<JsonNode> q) {
+	public ArrayConstruction(Expression<JsonNode> q) {
 		this.q = q;
 	}
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		final JsonNode[] array = (JsonNode[]) new Object[] { jsonProvider.createArray() };
+	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		JsonNode[] array = (JsonNode[]) new Object[] { jsonProvider.createArray() };
 		if (q != null)
 			q.apply(scope, in, (out) -> array[0] = jsonProvider.add(array[0], out));
 		output.emit(array[0], null);

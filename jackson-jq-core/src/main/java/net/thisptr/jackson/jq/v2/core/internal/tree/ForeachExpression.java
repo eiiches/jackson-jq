@@ -18,7 +18,7 @@ public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
 	private Expression<JsonNode> extractExpr;
 	private PatternMatcher<JsonNode> matcher;
 
-	public ForeachExpression(final PatternMatcher<JsonNode> matcher, final Expression<JsonNode> initExpr, final Expression<JsonNode> updateExpr, final Expression<JsonNode> extractExpr, final Expression<JsonNode> iterExpr) {
+	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> updateExpr, Expression<JsonNode> extractExpr, Expression<JsonNode> iterExpr) {
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.updateExpr = updateExpr;
@@ -27,21 +27,21 @@ public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 
 		initExpr.apply(scope, in, ipath, (accumulator, accumulatorPath) -> {
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
-			final JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
-			final Path[] accumulatorPaths = new Path[] { accumulatorPath };
+			JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
+			Path[] accumulatorPaths = new Path[] { accumulatorPath };
 
-			final Scope<JsonNode> childScope = Scope.newChildScope(scope);
+			Scope<JsonNode> childScope = Scope.newChildScope(scope);
 
 			iterExpr.apply(scope, in, ipath, (item, itemPath) -> {
-				final Stack<MatchWithPath<JsonNode>> stack = new Stack<>();
-				matcher.matchWithPath(scope, item, itemPath, (final List<MatchWithPath<JsonNode>> vars) -> {
+				Stack<MatchWithPath<JsonNode>> stack = new Stack<>();
+				matcher.matchWithPath(scope, item, itemPath, (List<MatchWithPath<JsonNode>> vars) -> {
 					for (int i = vars.size() - 1; i >= 0; --i) {
-						final MatchWithPath<JsonNode> var = vars.get(i);
+						MatchWithPath<JsonNode> var = vars.get(i);
 						childScope.setValueWithPath(var.name, var.value, var.path);
 					}
 

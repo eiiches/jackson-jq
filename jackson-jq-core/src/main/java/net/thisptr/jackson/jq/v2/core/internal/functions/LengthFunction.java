@@ -22,13 +22,13 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("length/0")
 public class LengthFunction implements Function {
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		output.emit(length(jsonProvider, in), null);
 	}
 
-	public <JsonNode> JsonNode length(final JsonProvider<JsonNode> jsonProvider, final JsonNode in) throws JsonQueryException {
-		final JsonNodeType type = jsonProvider.getNodeType(in);
+	public <JsonNode> JsonNode length(JsonProvider<JsonNode> jsonProvider, JsonNode in) throws JsonQueryException {
+		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type == JsonNodeType.STRING) {
 			return jsonProvider.createInt(UnicodeUtils.lengthUtf32(jsonProvider.asText(in)));
 		} else if (type == JsonNodeType.ARRAY || type == JsonNodeType.OBJECT) {

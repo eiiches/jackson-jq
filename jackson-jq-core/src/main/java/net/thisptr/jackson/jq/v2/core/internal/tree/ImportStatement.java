@@ -13,14 +13,14 @@ public class ImportStatement<JsonNode> {
 	private JsonNode metadata;
 	private boolean metadataEvaluated = false;
 
-	public ImportStatement(final String path, final boolean dollarImport, final String name, final Expression<JsonNode> metadataExpr) {
+	public ImportStatement(String path, boolean dollarImport, String name, Expression<JsonNode> metadataExpr) {
 		this.path = path;
 		this.dollarImport = dollarImport;
 		this.name = name;
 		this.metadataExpr = metadataExpr;
 	}
 
-	public JsonNode getMetadata(final JsonProvider<JsonNode> jsonProvider) {
+	public JsonNode getMetadata(JsonProvider<JsonNode> jsonProvider) {
 		if (!metadataEvaluated) {
 			if (metadataExpr != null) {
 				this.metadata = ExpressionUtils.evaluateLiteralExpression(jsonProvider, metadataExpr);
@@ -36,15 +36,15 @@ public class ImportStatement<JsonNode> {
 		return metadata;
 	}
 
-	public String toString(final JsonProvider<JsonNode> jsonProvider) {
-		final StringBuilder s = new StringBuilder();
+	public String toString(JsonProvider<JsonNode> jsonProvider) {
+		StringBuilder s = new StringBuilder();
 		s.append("import ");
 		s.append(jsonProvider.createString(path).toString());
 		s.append(" as ");
 		if (dollarImport)
 			s.append('$');
 		s.append(name);
-		final JsonNode md = getMetadata(jsonProvider);
+		JsonNode md = getMetadata(jsonProvider);
 		if (md != null) {
 			s.append(' ');
 			s.append(md);
@@ -54,7 +54,7 @@ public class ImportStatement<JsonNode> {
 
 	@Override
 	public String toString() {
-		final StringBuilder s = new StringBuilder();
+		StringBuilder s = new StringBuilder();
 		s.append("import \"");
 		s.append(path);
 		s.append("\" as ");

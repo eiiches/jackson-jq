@@ -25,16 +25,16 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("sort_by/1")
 public class SortByFunction implements Function {
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode items, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode items, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "sort_by", items, JsonNodeType.ARRAY);
 
-		final JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
-		final List<Pair<JsonNode, JsonNode>> zipped = new ArrayList<>(jsonProvider.size(items));
-		final Iterator<JsonNode> iter = jsonProvider.elements(items);
+		JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
+		List<Pair<JsonNode, JsonNode>> zipped = new ArrayList<>(jsonProvider.size(items));
+		Iterator<JsonNode> iter = jsonProvider.elements(items);
 		while (iter.hasNext()) {
-			final JsonNode item = iter.next();
-			final JsonNode value = jsonProvider.createArray();
+			JsonNode item = iter.next();
+			JsonNode value = jsonProvider.createArray();
 			args.get(0).apply(scope, item, (v) -> jsonProvider.add(value, v));
 			zipped.add(Pair.of(item, value));
 		}

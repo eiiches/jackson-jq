@@ -21,16 +21,16 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("tonumber/0")
 public class ToNumberFunction implements Function {
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		final JsonNodeType inType = jsonProvider.getNodeType(in);
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		JsonNodeType inType = jsonProvider.getNodeType(in);
 		if (inType == JsonNodeType.NUMBER) {
 			output.emit(in, null);
 		} else if (inType == JsonNodeType.STRING) {
 			try {
-				final double value = Double.parseDouble(jsonProvider.asText(in));
+				double value = Double.parseDouble(jsonProvider.asText(in));
 				output.emit(JsonNodeUtils.asNumericNode(jsonProvider, value), null);
-			} catch (final NumberFormatException e) {
+			} catch (NumberFormatException e) {
 				throw new JsonQueryException(e);
 			}
 		} else {

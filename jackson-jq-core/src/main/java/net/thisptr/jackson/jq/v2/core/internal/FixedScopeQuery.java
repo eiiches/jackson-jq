@@ -10,7 +10,7 @@ public class FixedScopeQuery<JsonNode> implements Expression<JsonNode> {
 	public Scope<JsonNode> scope;
 	public Expression<JsonNode> query;
 
-	public FixedScopeQuery(final Scope<JsonNode> scope, final Expression<JsonNode> query) {
+	public FixedScopeQuery(Scope<JsonNode> scope, Expression<JsonNode> query) {
 		this.scope = scope;
 		this.query = query;
 	}

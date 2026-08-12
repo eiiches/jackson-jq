@@ -6,14 +6,14 @@ import java.util.List;
 
 public class Lists {
 
-	public static <T> List<T> newArrayList(final Iterator<T> iter) {
-		final List<T> result = new ArrayList<>();
+	public static <T> List<T> newArrayList(Iterator<T> iter) {
+		List<T> result = new ArrayList<>();
 		while (iter.hasNext())
 			result.add(iter.next());
 		return result;
 	}
 
-	public static <T> List<T> newArrayList(final Iterable<T> iter) {
+	public static <T> List<T> newArrayList(Iterable<T> iter) {
 		return newArrayList(iter.iterator());
 	}
 

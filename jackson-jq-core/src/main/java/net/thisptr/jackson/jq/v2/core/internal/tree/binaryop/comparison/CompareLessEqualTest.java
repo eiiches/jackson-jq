@@ -5,7 +5,7 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.SimpleBinaryOperato
 import net.thisptr.jackson.jq.v2.spi.Expression;
 
 public class CompareLessEqualTest<JsonNode> extends SimpleBinaryOperatorExpression<JsonNode> {
-	public CompareLessEqualTest(final Expression<JsonNode> lhs, final Expression<JsonNode> rhs) {
+	public CompareLessEqualTest(Expression<JsonNode> lhs, Expression<JsonNode> rhs) {
 		super(lhs, rhs, new LessEqualOperator<>());
 	}
 }

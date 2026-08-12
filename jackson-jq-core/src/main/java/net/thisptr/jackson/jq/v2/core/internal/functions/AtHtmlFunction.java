@@ -9,9 +9,9 @@ import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 @FunctionRegistration("@html/0")
 public class AtHtmlFunction extends AbstractAtFormattingFunction {
 	@Override
-	public String convert(final String text) {
-		final StringBuilder builder = new StringBuilder();
-		for (final char ch : text.toCharArray()) {
+	public String convert(String text) {
+		StringBuilder builder = new StringBuilder();
+		for (char ch : text.toCharArray()) {
 			switch (ch) {
 				case '<':
 					builder.append("&lt;");

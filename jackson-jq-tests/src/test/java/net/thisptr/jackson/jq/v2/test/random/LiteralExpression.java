@@ -11,12 +11,12 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class LiteralExpression implements Expression<JsonNode> {
 	private final JsonNode value;
 
-	public LiteralExpression(final JsonNode value) {
+	public LiteralExpression(JsonNode value) {
 		this.value = value;
 	}
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		output.emit(value, null);
 	}
 

@@ -1,9 +1,10 @@
 package net.thisptr.jackson.jq.v2.regex.impl.joni;
+import com.google.errorprone.annotations.Var;
 
 final class UnicodeUtils {
 	private UnicodeUtils() {}
 
-	static int utf8CharLength(final byte ch) {
+	static int utf8CharLength(byte ch) {
 		if ((ch & 0b10000000) == 0b00000000)
 			return 1;
 		if ((ch & 0b11100000) == 0b11000000)
@@ -23,12 +24,12 @@ final class UnicodeUtils {
 		throw new IllegalArgumentException(String.format("This is an unknown UTF-8 byte: %x", ch));
 	}
 
-	static int[] utf8CharIndex(final byte[] bytes) {
-		final int[] result = new int[bytes.length + 1];
-		int utf8Index = 0;
-		int codePointIndex = 0;
+	static int[] utf8CharIndex(byte[] bytes) {
+		int[] result = new int[bytes.length + 1];
+		@Var int utf8Index = 0;
+		@Var int codePointIndex = 0;
 		while (utf8Index < bytes.length) {
-			final int charLength = utf8CharLength(bytes[utf8Index]);
+			int charLength = utf8CharLength(bytes[utf8Index]);
 			for (int i = 0; i < charLength; ++i)
 				result[utf8Index + i] = codePointIndex;
 			++codePointIndex;

@@ -3,6 +3,8 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
 import java.util.List;
 import java.util.Stack;
 
+import com.google.errorprone.annotations.Var;
+
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Functional;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
@@ -19,7 +21,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	private List<FieldMatcher<JsonNode>> matchers;
 
-	public ObjectMatcher(final List<FieldMatcher<JsonNode>> matchers) {
+	public ObjectMatcher(List<FieldMatcher<JsonNode>> matchers) {
 		this.matchers = matchers;
 	}
 
@@ -29,11 +31,11 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		// {$x: [$a]} : dollar = true, name = "x", matcher = [$a]
 		// {x: [$a]} : dollar = false, name = "x", matcher = [$a]
 
-		private final boolean dollar;
-		private final Expression<JsonNode> name;
-		private final PatternMatcher<JsonNode> matcher;
+		private boolean dollar;
+		private Expression<JsonNode> name;
+		private PatternMatcher<JsonNode> matcher;
 
-		public FieldMatcher(final boolean dollar, final Expression<JsonNode> name, final PatternMatcher<JsonNode> matcher) {
+		public FieldMatcher(boolean dollar, Expression<JsonNode> name, PatternMatcher<JsonNode> matcher) {
 			if (dollar && !(name instanceof StringLiteral))
 				throw new IllegalArgumentException("BUG: name must be instance of StringLiteral when dollar = true");
 			if (!dollar && matcher == null)
@@ -45,7 +47,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 
 		@Override
 		public String toString() {
-			final StringBuilder sb = new StringBuilder();
+			StringBuilder sb = new StringBuilder();
 			if (dollar) {
 				sb.append("$");
 				sb.append(((StringLiteral<JsonNode>) name).value());
@@ -66,20 +68,20 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		}
 	}
 
-	private void recursive(final Scope<JsonNode> scope, final JsonProvider<JsonNode> jsonProvider, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate, int index) throws JsonQueryException {
+	private void recursive(Scope<JsonNode> scope, JsonProvider<JsonNode> jsonProvider, JsonNode in, Functional.Consumer<List<Pair<String, JsonNode>>> out, Stack<Pair<String, JsonNode>> accumulate, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
 			out.accept(accumulate);
 			return;
 		}
 
-		final FieldMatcher<JsonNode> fmatcher = matchers.get(index);
+		FieldMatcher<JsonNode> fmatcher = matchers.get(index);
 		fmatcher.name.apply(scope, in, (key) -> {
 			if (jsonProvider.getNodeType(key) != JsonNodeType.STRING)
 				throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with %s", jsonProvider.getNodeType(in), jsonProvider.getNodeType(key));
 
-			final JsonNode value = jsonProvider.get(in, jsonProvider.asText(key));
+			JsonNode value = jsonProvider.get(in, jsonProvider.asText(key));
 
-			final int size = accumulate.size();
+			int size = accumulate.size();
 			if (fmatcher.dollar)
 				accumulate.push(Pair.of(jsonProvider.asText(key), value));
 			fmatcher.matcher().match(scope, value != null ? value : jsonProvider.createNull(), (match) -> {
@@ -89,21 +91,21 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		});
 	}
 
-	private void recursiveWithPath(final Scope<JsonNode> scope, final JsonProvider<JsonNode> jsonProvider, final JsonNode in, final Path<JsonNode> inpath, final MatchOutput<JsonNode> output, final Stack<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
+	private void recursiveWithPath(Scope<JsonNode> scope, JsonProvider<JsonNode> jsonProvider, JsonNode in, Path<JsonNode> inpath, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
 			output.emit(accumulate);
 			return;
 		}
 
-		final FieldMatcher<JsonNode> fmatcher = matchers.get(index);
+		FieldMatcher<JsonNode> fmatcher = matchers.get(index);
 		fmatcher.name.apply(scope, in, (key) -> {
 			if (jsonProvider.getNodeType(key) != JsonNodeType.STRING)
 				throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with %s", jsonProvider.getNodeType(in), jsonProvider.getNodeType(key));
 
-			final JsonNode value = jsonProvider.get(in, jsonProvider.asText(key));
-			final Path<JsonNode> valuepath = ObjectFieldPath.chainIfNotNull(inpath, jsonProvider.asText(key));
+			JsonNode value = jsonProvider.get(in, jsonProvider.asText(key));
+			Path<JsonNode> valuepath = ObjectFieldPath.chainIfNotNull(inpath, jsonProvider.asText(key));
 
-			final int size = accumulate.size();
+			int size = accumulate.size();
 			if (fmatcher.dollar)
 				accumulate.push(new MatchWithPath<>(jsonProvider.asText(key), value, valuepath));
 			fmatcher.matcher().matchWithPath(scope, value != null ? value : jsonProvider.createNull(), valuepath, (match) -> {
@@ -114,9 +116,9 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public void match(final Scope<JsonNode> scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		final JsonNodeType type = jsonProvider.getNodeType(in);
+	public void match(Scope<JsonNode> scope, JsonNode in, Functional.Consumer<List<Pair<String, JsonNode>>> out, Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL)
 			throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with string", type);
 
@@ -125,8 +127,8 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 
 	@Override
 	public void matchWithPath(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		final JsonNodeType type = jsonProvider.getNodeType(in);
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL)
 			throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with string", type);
 
@@ -135,9 +137,9 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder("{");
-		String sep = "";
-		for (final FieldMatcher<JsonNode> entry : matchers) {
+		StringBuilder sb = new StringBuilder("{");
+		@Var String sep = "";
+		for (FieldMatcher<JsonNode> entry : matchers) {
 			sb.append(sep);
 			sb.append(entry.toString());
 			sep = ", ";

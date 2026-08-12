@@ -11,11 +11,11 @@ public class RandomGenerator implements Generator {
 	private final int minArgs;
 	private final int maxArgs;
 
-	public RandomGenerator(final int args, final java.util.function.Function<List<Expression>, Expression> fn) {
+	public RandomGenerator(int args, java.util.function.Function<List<Expression>, Expression> fn) {
 		this(args, args, fn);
 	}
 
-	public RandomGenerator(final int minArgs, final int maxArgs, final java.util.function.Function<List<Expression>, Expression> fn) {
+	public RandomGenerator(int minArgs, int maxArgs, java.util.function.Function<List<Expression>, Expression> fn) {
 		this.minArgs = minArgs;
 		this.maxArgs = maxArgs;
 		this.fn = fn;
@@ -27,7 +27,7 @@ public class RandomGenerator implements Generator {
 	}
 
 	@Override
-	public Expression generate(final List<Expression> expressions) {
+	public Expression generate(List<Expression> expressions) {
 		return fn.apply(expressions);
 	}
 }

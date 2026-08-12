@@ -18,7 +18,7 @@ public class JsonQueryFunction<JsonNode> implements Function {
 	private String name;
 	private Scope<JsonNode> closure;
 
-	public JsonQueryFunction(final String name, final List<String> params, final Expression<JsonNode> body, final Scope<JsonNode> closure) {
+	public JsonQueryFunction(String name, List<String> params, Expression<JsonNode> body, Scope<JsonNode> closure) {
 		this.name = name;
 		this.params = params;
 		this.body = body;
@@ -27,26 +27,26 @@ public class JsonQueryFunction<JsonNode> implements Function {
 
 	@Override
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public <N> void apply(final Scope<N> scope, final List<Expression<N>> args, final N in, final Path<N> path, final PathOutput<N> output, final Version version) throws JsonQueryException {
+	public <N> void apply(Scope<N> scope, List<Expression<N>> args, N in, Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
 		applyInternal((Scope) scope, (List) args, (JsonNode) in, (Path) path, (PathOutput) output, version);
 	}
 
-	private void applyInternal(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> path, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+	private void applyInternal(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		Preconditions.checkArgumentCount(name, args, params.size());
 
-		final Scope<JsonNode> fnScope = Scope.newChildScope(closure);
+		Scope<JsonNode> fnScope = Scope.newChildScope(closure);
 		fnScope.addFunction(name, params.size(), this);
 
 		pathRecursive(output, fnScope, scope, args, in, path, 0);
 	}
 
-	private void pathRecursive(final PathOutput<JsonNode> output, final Scope<JsonNode> fnScope, final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> path, final int i) throws JsonQueryException {
+	private void pathRecursive(PathOutput<JsonNode> output, Scope<JsonNode> fnScope, Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> path, int i) throws JsonQueryException {
 		if (i == params.size()) {
 			body.apply(fnScope, in, path, output, false);
 		} else {
-			final String param = params.get(i);
+			String param = params.get(i);
 			if (param.startsWith("$")) {
-				final String argname = param.substring(1);
+				String argname = param.substring(1);
 				args.get(i).apply(scope, in, path, (argvalue, argpath) -> {
 					fnScope.setValueWithPath(argname, argvalue, argpath);
 					pathRecursive(output, fnScope, scope, args, in, path, i + 1);

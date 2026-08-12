@@ -15,7 +15,7 @@ public class MaxByFunction extends AbstractMaxByFunction {
 	}
 
 	@Override
-	protected <JsonNode> boolean isLarger(final JsonProvider<JsonNode> jsonProvider, final JsonNode criteria, final JsonNode value) {
+	protected <JsonNode> boolean isLarger(JsonProvider<JsonNode> jsonProvider, JsonNode criteria, JsonNode value) {
 		return new JsonNodeComparator<>(jsonProvider).compare(criteria, value) > 0;
 	}
 }

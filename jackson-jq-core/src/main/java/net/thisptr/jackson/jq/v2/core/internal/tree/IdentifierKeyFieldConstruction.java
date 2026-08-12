@@ -9,17 +9,17 @@ public class IdentifierKeyFieldConstruction<JsonNode> implements FieldConstructi
 	public final String key;
 	public final Expression<JsonNode> value;
 
-	public IdentifierKeyFieldConstruction(final String key, final Expression<JsonNode> value) {
+	public IdentifierKeyFieldConstruction(String key, Expression<JsonNode> value) {
 		this.key = key;
 		this.value = value;
 	}
 
-	public IdentifierKeyFieldConstruction(final String key) {
+	public IdentifierKeyFieldConstruction(String key) {
 		this(key, null);
 	}
 
 	@Override
-	public void evaluate(final Scope<JsonNode> scope, final JsonNode in, final FieldConsumer<JsonNode> consumer) throws JsonQueryException {
+	public void evaluate(Scope<JsonNode> scope, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		if (value == null) {
 			consumer.accept(key, JsonNodeUtils.nullToNullNode(scope.jsonProvider(), scope.jsonProvider().get(in, key)));
 		} else {

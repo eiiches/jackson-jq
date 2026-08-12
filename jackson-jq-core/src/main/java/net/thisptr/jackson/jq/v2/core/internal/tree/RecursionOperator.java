@@ -13,12 +13,12 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class RecursionOperator<JsonNode> implements Expression<JsonNode> {
-	private static <JsonNode> void pathRecursive(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> path, final PathOutput<JsonNode> output) throws JsonQueryException {
+	private static <JsonNode> void pathRecursive(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
 		output.emit(in, path);
 		if (scope.jsonProvider().getNodeType(in) == JsonNodeType.OBJECT) {
-			final Iterator<Entry<String, JsonNode>> iter = scope.jsonProvider().fields(in);
+			Iterator<Entry<String, JsonNode>> iter = scope.jsonProvider().fields(in);
 			while (iter.hasNext()) {
-				final Entry<String, JsonNode> entry = iter.next();
+				Entry<String, JsonNode> entry = iter.next();
 				pathRecursive(scope, entry.getValue(), ObjectFieldPath.chainIfNotNull(path, entry.getKey()), output);
 			}
 		} else if (scope.jsonProvider().getNodeType(in) == JsonNodeType.ARRAY) {
@@ -28,7 +28,7 @@ public class RecursionOperator<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		pathRecursive(scope, in, path, output);
 	}
 

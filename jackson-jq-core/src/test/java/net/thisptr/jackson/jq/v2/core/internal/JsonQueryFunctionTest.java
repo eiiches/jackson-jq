@@ -24,9 +24,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class JsonQueryFunctionTest {
 	@Test
 	public void test() throws IOException {
-		final ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = new ObjectMapper();
 
-		final Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
+		Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
 		BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_5, scope);
 
 		scope.addFunction("inc", 1, new JsonQueryFunction<>("inc", Arrays.asList("x"), new IsolatedScopeQuery<>(ExpressionParser.compile("x + 1", Versions.JQ_1_5)), scope));
@@ -42,8 +42,8 @@ public class JsonQueryFunctionTest {
 		assertEquals(Arrays.asList(mapper.readTree("8")), eval(scope, "fib", IntNode.valueOf(6)));
 	}
 
-	public static List<JsonNode> eval(final Scope<JsonNode> scope, final String q, final JsonNode in) throws JsonQueryException {
-		final List<JsonNode> out = new ArrayList<>();
+	public static List<JsonNode> eval(Scope<JsonNode> scope, String q, JsonNode in) throws JsonQueryException {
+		List<JsonNode> out = new ArrayList<>();
 		JsonQuery.<JsonNode>compile(q, Versions.JQ_1_5).apply(scope, in, out::add);
 		return out;
 	}

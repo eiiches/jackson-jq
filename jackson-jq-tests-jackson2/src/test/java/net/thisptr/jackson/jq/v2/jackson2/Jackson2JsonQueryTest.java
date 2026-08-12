@@ -22,7 +22,7 @@ public class Jackson2JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 
 	@Override
 	protected Scope<JsonNode> createRootScope(Version version) {
-		final Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
+		Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
 		BuiltinFunctionLoader.getInstance().loadFunctions(version, scope);
 		return scope;
 	}
@@ -50,10 +50,10 @@ public class Jackson2JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 	 * and optional strict field ordering.
 	 */
 	private static class Jackson2JsonNodeComparator extends JsonNodeComparator<JsonNode> {
-		private static final long serialVersionUID = 1L;
+		private static long serialVersionUID = 1L;
 
-		private final boolean strictFieldOrder;
-		private final double numericalErrors;
+		private boolean strictFieldOrder;
+		private double numericalErrors;
 
 		public Jackson2JsonNodeComparator(boolean strictFieldOrder, double numericalErrors) {
 			super(Jackson2JsonProviderImpl.getInstance());
@@ -62,26 +62,26 @@ public class Jackson2JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 		}
 
 		@Override
-		protected int compareNumberNode(final JsonNode o1, final JsonNode o2) {
+		protected int compareNumberNode(JsonNode o1, JsonNode o2) {
 			if (Math.abs(o1.doubleValue() - o2.doubleValue()) < numericalErrors)
 				return 0;
 			return super.compareNumberNode(o1, o2);
 		}
 
 		@Override
-		protected int compareObjectNode(final JsonNode o1, final JsonNode o2) {
+		protected int compareObjectNode(JsonNode o1, JsonNode o2) {
 			if (strictFieldOrder) {
-				final Iterator<Entry<String, JsonNode>> it1 = o1.fields();
-				final Iterator<Entry<String, JsonNode>> it2 = o2.fields();
+				Iterator<Entry<String, JsonNode>> it1 = o1.fields();
+				Iterator<Entry<String, JsonNode>> it2 = o2.fields();
 				while (it1.hasNext() && it2.hasNext()) {
-					final Entry<String, JsonNode> entry1 = it1.next();
-					final Entry<String, JsonNode> entry2 = it2.next();
+					Entry<String, JsonNode> entry1 = it1.next();
+					Entry<String, JsonNode> entry2 = it2.next();
 
-					final int r0 = entry1.getKey().compareTo(entry2.getKey());
+					int r0 = entry1.getKey().compareTo(entry2.getKey());
 					if (r0 != 0)
 						return r0;
 
-					final int r1 = compare(entry1.getValue(), entry2.getValue());
+					int r1 = compare(entry1.getValue(), entry2.getValue());
 					if (r1 != 0)
 						return r1;
 				}

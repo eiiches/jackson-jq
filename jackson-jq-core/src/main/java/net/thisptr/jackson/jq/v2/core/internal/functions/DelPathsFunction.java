@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
+import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
@@ -27,27 +28,27 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class DelPathsFunction implements Function {
 
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		args.get(0).apply(scope, in, (paths) -> {
 			if (jsonProvider.getNodeType(paths) != JsonNodeType.ARRAY) {
 				throw new JsonQueryException("Paths must be specified as an array");
 			}
 
-			final List<JsonNode> sortedPaths = new ArrayList<>(jsonProvider.size(paths));
-			for (final JsonNode path : jsonProvider.iterate(paths)) {
+			List<JsonNode> sortedPaths = new ArrayList<>(jsonProvider.size(paths));
+			for (JsonNode path : jsonProvider.iterate(paths)) {
 				if (jsonProvider.getNodeType(path) != JsonNodeType.ARRAY)
 					throw new JsonQueryException("Path must be specified as array, not " + JsonNodeUtils.typeOf(jsonProvider, path));
 				sortedPaths.add(path);
 			}
 			sortedPaths.sort(new JsonNodeComparator<>(jsonProvider));
 
-			JsonNode out = in;
+			@Var JsonNode out = in;
 			for (int i = sortedPaths.size() - 1; i >= 0; --i) {
-				final Path<JsonNode> path = PathUtils.toPath(jsonProvider, sortedPaths.get(i));
+				Path<JsonNode> path = PathUtils.toPath(jsonProvider, sortedPaths.get(i));
 				out = path.mutate(jsonProvider, out, (oldval) -> {
 					if ((path instanceof ArrayRangeIndexPath) && jsonProvider.getNodeType(oldval) == JsonNodeType.ARRAY) {
-						JsonNode newval = jsonProvider.createArray();
+						@Var JsonNode newval = jsonProvider.createArray();
 						for (int j = 0; j < jsonProvider.size(oldval); ++j)
 							newval = jsonProvider.add(newval, jsonProvider.createMissing());
 						return newval;

@@ -10,18 +10,18 @@ public class TryCatch<JsonNode> implements Expression<JsonNode> {
 	protected Expression<JsonNode> tryExpr;
 	protected Expression<JsonNode> catchExpr;
 
-	public TryCatch(final Expression<JsonNode> tryExpr, final Expression<JsonNode> catchExpr) {
+	public TryCatch(Expression<JsonNode> tryExpr, Expression<JsonNode> catchExpr) {
 		this.tryExpr = tryExpr;
 		this.catchExpr = catchExpr;
 	}
 
-	public TryCatch(final Expression<JsonNode> tryExpr) {
+	public TryCatch(Expression<JsonNode> tryExpr) {
 		this(tryExpr, null);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> path, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		try {
 			tryExpr.apply(scope, in, path, output, requirePath);
 		} catch (JsonQueryException e) {

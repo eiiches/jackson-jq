@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import com.google.errorprone.annotations.Var;
+
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -20,23 +22,23 @@ public abstract class AbstractMaxByFunction implements Function {
 
 	private String fname;
 
-	public AbstractMaxByFunction(final String fname) {
+	public AbstractMaxByFunction(String fname) {
 		this.fname = fname;
 	}
 
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, fname, in, JsonNodeType.ARRAY);
 
-		JsonNode maxItem = jsonProvider.createNull();
-		JsonNode maxValue = null;
-		final Iterator<JsonNode> iter = jsonProvider.elements(in);
+		@Var JsonNode maxItem = jsonProvider.createNull();
+		@Var JsonNode maxValue = null;
+		Iterator<JsonNode> iter = jsonProvider.elements(in);
 		while (iter.hasNext()) {
-			final JsonNode i = iter.next();
-			final List<JsonNode> valueList = new ArrayList<>();
+			JsonNode i = iter.next();
+			List<JsonNode> valueList = new ArrayList<>();
 			args.get(0).apply(scope, i, valueList::add);
-			final JsonNode value = JsonNodeUtils.asArrayNode(jsonProvider, valueList);
+			JsonNode value = JsonNodeUtils.asArrayNode(jsonProvider, valueList);
 			if (maxValue == null || !isLarger(jsonProvider, maxValue, value)) {
 				maxValue = value;
 				maxItem = i;
@@ -46,5 +48,5 @@ public abstract class AbstractMaxByFunction implements Function {
 		output.emit(maxItem, null);
 	}
 
-	protected abstract <JsonNode> boolean isLarger(final JsonProvider<JsonNode> jsonProvider, final JsonNode criteria, final JsonNode value);
+	protected abstract <JsonNode> boolean isLarger(JsonProvider<JsonNode> jsonProvider, JsonNode criteria, JsonNode value);
 }

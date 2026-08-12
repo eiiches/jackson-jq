@@ -21,9 +21,9 @@ public class ClassPathModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 		return (ClassPathModuleLoader<JsonNode>) INSTANCE;
 	}
 
-	public ClassPathModuleLoader(final ClassLoader classLoader) {
-		for (final Module module : ServiceLoader.load(Module.class, classLoader)) {
-			final ModuleRegistration annotation = module.getClass().getAnnotation(ModuleRegistration.class);
+	public ClassPathModuleLoader(ClassLoader classLoader) {
+		for (Module module : ServiceLoader.load(Module.class, classLoader)) {
+			ModuleRegistration annotation = module.getClass().getAnnotation(ModuleRegistration.class);
 			if (annotation == null)
 				continue;
 			pathAndModules.put(annotation.path(), module);
@@ -31,14 +31,14 @@ public class ClassPathModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	}
 
 	@Override
-	public Module loadModule(final Module caller, final String path, final JsonNode metadata) throws JsonQueryException {
+	public Module loadModule(Module caller, String path, JsonNode metadata) throws JsonQueryException {
 		// Note: we can't get jsonProvider here without having access to scope
 		// For now, assume metadata checking for hasSearchPathOverride is handled by other loaders
 		return pathAndModules.get(path);
 	}
 
 	@Override
-	public JsonNode loadData(final Module caller, final String path, final JsonNode metadata) {
+	public JsonNode loadData(Module caller, String path, JsonNode metadata) {
 		return null;
 	}
 

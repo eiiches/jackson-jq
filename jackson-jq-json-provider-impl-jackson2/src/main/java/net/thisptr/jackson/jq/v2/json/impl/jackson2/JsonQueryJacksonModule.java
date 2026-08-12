@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.FloatNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.errorprone.annotations.Var;
 
 public class JsonQueryJacksonModule extends SimpleModule {
 	private static final long serialVersionUID = 1137650244815104623L;
@@ -31,7 +32,7 @@ public class JsonQueryJacksonModule extends SimpleModule {
 		addSerializer(ObjectNode.class, new ObjectNodeSerializer());
 	}
 
-	private static String format(double val) {
+	private static String format(@Var double val) {
 		if (Double.isNaN(val))
 			return "null";
 
@@ -50,9 +51,9 @@ public class JsonQueryJacksonModule extends SimpleModule {
 
 	private static class ArrayNodeSerializer extends JsonSerializer<ArrayNode> {
 		@Override
-		public void serialize(final ArrayNode value, final JsonGenerator gen, final SerializerProvider serializers) throws IOException {
+		public void serialize(ArrayNode value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
 			gen.writeStartArray();
-			for (final JsonNode element : value)
+			for (JsonNode element : value)
 				gen.writeObject(element);
 			gen.writeEndArray();
 		}
@@ -61,11 +62,11 @@ public class JsonQueryJacksonModule extends SimpleModule {
 	private static class ObjectNodeSerializer extends JsonSerializer<ObjectNode> {
 
 		@Override
-		public void serialize(final ObjectNode value, final JsonGenerator gen, final SerializerProvider serializers) throws IOException {
+		public void serialize(ObjectNode value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
 			gen.writeStartObject();
-			final Iterator<Entry<String, JsonNode>> iter = value.fields();
+			Iterator<Entry<String, JsonNode>> iter = value.fields();
 			while (iter.hasNext()) {
-				final Entry<String, JsonNode> entry = iter.next();
+				Entry<String, JsonNode> entry = iter.next();
 				gen.writeObjectField(entry.getKey(), entry.getValue());
 			}
 			gen.writeEndObject();

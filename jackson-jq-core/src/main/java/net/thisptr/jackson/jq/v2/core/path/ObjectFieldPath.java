@@ -3,6 +3,8 @@ package net.thisptr.jackson.jq.v2.core.path;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import com.google.errorprone.annotations.Var;
+
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -14,13 +16,13 @@ public class ObjectFieldPath<JsonNode> implements Path<JsonNode> {
 	public final String key;
 	private final Path<JsonNode> parent;
 
-	public static <JsonNode> ObjectFieldPath<JsonNode> chainIfNotNull(final Path<JsonNode> parent, final String key) {
+	public static <JsonNode> ObjectFieldPath<JsonNode> chainIfNotNull(Path<JsonNode> parent, String key) {
 		if (parent == null)
 			return null;
 		return new ObjectFieldPath<>(parent, key);
 	}
 
-	public ObjectFieldPath(final Path<JsonNode> parent, final String key) {
+	public ObjectFieldPath(Path<JsonNode> parent, String key) {
 		if (parent == null)
 			throw new NullPointerException("parent must not be null");
 		this.parent = parent;
@@ -28,39 +30,39 @@ public class ObjectFieldPath<JsonNode> implements Path<JsonNode> {
 	}
 
 	@Override
-	public void toJsonNode(final JsonProvider<JsonNode> jsonProvider, final JsonNode out) throws JsonQueryException {
+	public void toJsonNode(JsonProvider<JsonNode> jsonProvider, JsonNode out) throws JsonQueryException {
 		parent.toJsonNode(jsonProvider, out);
 		jsonProvider.add(out, jsonProvider.createString(key));
 	}
 
 	@Override
-	public void get(final JsonProvider<JsonNode> jsonProvider, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, boolean permissive) throws JsonQueryException {
+	public void get(JsonProvider<JsonNode> jsonProvider, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean permissive) throws JsonQueryException {
 		parent.get(jsonProvider, in, ipath, (parent, ppath) -> {
 			resolve(jsonProvider, parent, ppath, output, key, permissive);
 		}, permissive);
 	}
 
 	@Override
-	public JsonNode mutate(final JsonProvider<JsonNode> jsonProvider, final JsonNode in, final Mutation<JsonNode> mutation, final boolean makeParent) throws JsonQueryException {
+	public JsonNode mutate(JsonProvider<JsonNode> jsonProvider, JsonNode in, Mutation<JsonNode> mutation, boolean makeParent) throws JsonQueryException {
 		return parent.mutate(jsonProvider, in, (oldval) -> {
 			return mutate(jsonProvider, oldval, key, mutation, makeParent);
 		}, makeParent);
 	}
 
-	private static <JsonNode> JsonNode mutate(final JsonProvider<JsonNode> jsonProvider, JsonNode in, final String key, final Mutation<JsonNode> mutation, final boolean makeParent) throws JsonQueryException {
+	private static <JsonNode> JsonNode mutate(JsonProvider<JsonNode> jsonProvider, @Var JsonNode in, String key, Mutation<JsonNode> mutation, boolean makeParent) throws JsonQueryException {
 		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
 			if (!makeParent)
 				return in;
 			in = jsonProvider.createObject();
 		}
 		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
-			final JsonNode newobj = jsonProvider.createObject();
-			final Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(in);
+			JsonNode newobj = jsonProvider.createObject();
+			Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(in);
 			while (iter.hasNext()) {
-				final Entry<String, JsonNode> entry = iter.next();
+				Entry<String, JsonNode> entry = iter.next();
 				jsonProvider.set(newobj, entry.getKey(), entry.getValue());
 			}
-			final JsonNode newval = mutation.apply(jsonProvider.get(newobj, key));
+			JsonNode newval = mutation.apply(jsonProvider.get(newobj, key));
 			if (newval != null)
 				jsonProvider.set(newobj, key, newval);
 			return newobj;
@@ -69,11 +71,11 @@ public class ObjectFieldPath<JsonNode> implements Path<JsonNode> {
 		}
 	}
 
-	public static <JsonNode> void resolve(final JsonProvider<JsonNode> jsonProvider, JsonNode pobj, Path<JsonNode> ppath, PathOutput<JsonNode> output, String key, boolean permissive) throws JsonQueryException {
+	public static <JsonNode> void resolve(JsonProvider<JsonNode> jsonProvider, JsonNode pobj, Path<JsonNode> ppath, PathOutput<JsonNode> output, String key, boolean permissive) throws JsonQueryException {
 		if (jsonProvider.getNodeType(pobj) == JsonNodeType.NULL) {
 			output.emit(jsonProvider.createNull(), ObjectFieldPath.chainIfNotNull(ppath, key));
 		} else if (jsonProvider.getNodeType(pobj) == JsonNodeType.OBJECT) {
-			final JsonNode n = jsonProvider.get(pobj, key);
+			JsonNode n = jsonProvider.get(pobj, key);
 			output.emit(n == null ? jsonProvider.createNull() : n, ObjectFieldPath.chainIfNotNull(ppath, key));
 		} else {
 			if (!permissive)

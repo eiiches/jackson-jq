@@ -8,14 +8,14 @@ public class ChainedModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	private final ModuleLoader<JsonNode>[] loaders;
 
 	@SafeVarargs
-	public ChainedModuleLoader(final ModuleLoader<JsonNode>... loaders) {
+	public ChainedModuleLoader(ModuleLoader<JsonNode>... loaders) {
 		this.loaders = loaders;
 	}
 
 	@Override
-	public Module loadModule(final Module caller, final String path, final JsonNode metadata) throws JsonQueryException {
-		for (final ModuleLoader<JsonNode> loader : loaders) {
-			final Module module = loader.loadModule(caller, path, metadata);
+	public Module loadModule(Module caller, String path, JsonNode metadata) throws JsonQueryException {
+		for (ModuleLoader<JsonNode> loader : loaders) {
+			Module module = loader.loadModule(caller, path, metadata);
 			if (module != null)
 				return module;
 		}
@@ -23,9 +23,9 @@ public class ChainedModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	}
 
 	@Override
-	public JsonNode loadData(final Module caller, final String path, final JsonNode metadata) throws JsonQueryException {
-		for (final ModuleLoader<JsonNode> loader : loaders) {
-			final JsonNode data = loader.loadData(caller, path, metadata);
+	public JsonNode loadData(Module caller, String path, JsonNode metadata) throws JsonQueryException {
+		for (ModuleLoader<JsonNode> loader : loaders) {
+			JsonNode data = loader.loadData(caller, path, metadata);
 			if (data != null)
 				return data;
 		}

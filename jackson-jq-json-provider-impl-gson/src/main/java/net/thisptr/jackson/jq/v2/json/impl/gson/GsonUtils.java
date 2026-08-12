@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.json.impl.gson;
 
 import java.lang.reflect.Type;
 
+import com.google.errorprone.annotations.Var;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -55,7 +56,7 @@ public final class GsonUtils {
 	 * Normalizes the exponent notation in a number string.
 	 * Converts 'E' to 'e' and adds '+' after 'e' if not present.
 	 */
-	private static String normalizeExponent(String text) {
+	private static String normalizeExponent(@Var String text) {
 		// Normalize scientific notation: E -> e
 		text = text.replace("E", "e");
 		// Add + after e if not present

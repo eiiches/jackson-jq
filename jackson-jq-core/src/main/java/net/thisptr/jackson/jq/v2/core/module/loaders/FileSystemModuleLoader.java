@@ -14,6 +14,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.google.errorprone.annotations.Var;
+
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.module.SimpleModule;
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
@@ -31,9 +33,9 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	private final Version version;
 	private final Scope<JsonNode> parentScope;
 
-	public FileSystemModuleLoader(final Scope<JsonNode> parentScope, final Version version, final Path... searchPaths) {
-		final List<Path> absoluteSearchPaths = new ArrayList<>();
-		for (final Path searchPath : searchPaths) {
+	public FileSystemModuleLoader(Scope<JsonNode> parentScope, Version version, Path... searchPaths) {
+		List<Path> absoluteSearchPaths = new ArrayList<>();
+		for (Path searchPath : searchPaths) {
 			if (!searchPath.isAbsolute())
 				throw new RuntimeException("Search path must be absolute");
 			absoluteSearchPaths.add(searchPath);
@@ -43,35 +45,35 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		this.version = version;
 	}
 
-	private static final Path resolveModulePath(final Path searchPath, final String path) {
-		final Path modulePath = searchPath.getFileSystem().getPath(path);
+	private static final Path resolveModulePath(Path searchPath, String path) {
+		Path modulePath = searchPath.getFileSystem().getPath(path);
 		if (modulePath.isAbsolute())
 			throw new RuntimeException("Import path must be relative");
 
 		if (modulePath.getParent() != null && modulePath.getFileName().equals(modulePath.getParent().getFileName()))
 			throw new RuntimeException("module names must not have equal consecutive components: " + path);
 
-		final Path resolvedPath = searchPath.resolve(modulePath).normalize();
+		Path resolvedPath = searchPath.resolve(modulePath).normalize();
 		if (!resolvedPath.startsWith(searchPath))
 			throw new RuntimeException("Import path must be within the search path");
 
 		return resolvedPath;
 	}
 
-	private static ModuleFile loadModuleFile(final Path searchPath, final String path, final String ext) throws IOException {
-		final Path resolvedPath = resolveModulePath(searchPath, path);
+	private static ModuleFile loadModuleFile(Path searchPath, String path, String ext) throws IOException {
+		Path resolvedPath = resolveModulePath(searchPath, path);
 
-		final Path moduleFilePath = resolvedPath.resolveSibling(resolvedPath.getFileName() + "." + ext);
+		Path moduleFilePath = resolvedPath.resolveSibling(resolvedPath.getFileName() + "." + ext);
 		try {
-			final byte[] moduleBytes = Files.readAllBytes(moduleFilePath);
+			byte[] moduleBytes = Files.readAllBytes(moduleFilePath);
 			return new ModuleFile(searchPath, moduleFilePath, moduleBytes);
 		} catch (FileNotFoundException | NoSuchFileException e) {
 			/* continue */
 		}
 
-		final Path moduleFilePath2 = resolvedPath.resolve(resolvedPath.getFileName() + "." + ext);
+		Path moduleFilePath2 = resolvedPath.resolve(resolvedPath.getFileName() + "." + ext);
 		try {
-			final byte[] moduleBytes = Files.readAllBytes(moduleFilePath2);
+			byte[] moduleBytes = Files.readAllBytes(moduleFilePath2);
 			return new ModuleFile(searchPath, moduleFilePath2, moduleBytes);
 		} catch (FileNotFoundException | NoSuchFileException e) {
 			/* continue */
@@ -81,9 +83,9 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	}
 
 	private static final class ModuleFile {
-		public final Path searchPath;
-		public final Path modulePath;
-		public final byte[] bytes;
+		public Path searchPath;
+		public Path modulePath;
+		public byte[] bytes;
 
 		public ModuleFile(Path searchPath, Path modulePath, byte[] bytes) {
 			this.searchPath = searchPath;
@@ -97,10 +99,10 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	private final ConcurrentHashMap<Pair<Path /* searchPath */, String /* relativePath */>, TryOnce<JsonNode>> loadedData = new ConcurrentHashMap<>();
 
 	private final class FileSystemModule extends SimpleModule {
-		private final Path modulePath;
-		private final Path searchPath;
+		private Path modulePath;
+		private Path searchPath;
 
-		public FileSystemModule(final Path searchPath, final Path modulePath) {
+		public FileSystemModule(Path searchPath, Path modulePath) {
 			this.modulePath = modulePath;
 			this.searchPath = searchPath;
 		}
@@ -110,20 +112,20 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		}
 	}
 
-	private Module loadModuleActual(final Path searchPath, final String path) throws IOException {
-		final ModuleFile moduleFile = loadModuleFile(searchPath, path, "jq");
+	private Module loadModuleActual(Path searchPath, String path) throws IOException {
+		ModuleFile moduleFile = loadModuleFile(searchPath, path, "jq");
 		if (moduleFile == null)
 			return null;
 
-		final String moduleString = new String(moduleFile.bytes, StandardCharsets.UTF_8);
+		String moduleString = new String(moduleFile.bytes, StandardCharsets.UTF_8);
 
-		final FileSystemModule module = new FileSystemModule(moduleFile.searchPath, moduleFile.modulePath);
+		FileSystemModule module = new FileSystemModule(moduleFile.searchPath, moduleFile.modulePath);
 
-		final Scope<JsonNode> childScope = Scope.newChildScope(parentScope);
+		Scope<JsonNode> childScope = Scope.newChildScope(parentScope);
 		childScope.setCurrentModule(module);
 
 		// TODO: use different parser instead of adding null at the end
-		final Expression<JsonNode> expr = ExpressionParser.compile(moduleString + " null", version);
+		Expression<JsonNode> expr = ExpressionParser.compile(moduleString + " null", version);
 		expr.apply(childScope, parentScope.jsonProvider().createNull(), null, (o, p) -> {}, false);
 
 		module.addAllFunctions(childScope.getLocalFunctions());
@@ -131,17 +133,17 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	}
 
 	private static final class TryOnce<T> {
-		private final CompletableFuture<T> f = new CompletableFuture<>();
-		private final Thread taskThread;
+		private CompletableFuture<T> f = new CompletableFuture<>();
+		private Thread taskThread;
 
-		private boolean taskStarted;
+		@Var private boolean taskStarted;
 
 		public TryOnce() {
 			this.taskThread = Thread.currentThread();
 		}
 
-		private static final class RecursiveInvocationException extends IllegalStateException {
-			private static final long serialVersionUID = 1L;
+		private static class RecursiveInvocationException extends IllegalStateException {
+			private static long serialVersionUID = 1L;
 		}
 
 		public T tryOnce(Callable<T> task) throws CompletionException, RecursiveInvocationException {
@@ -169,20 +171,20 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		}
 	}
 
-	private Pair<List<Path>, String> resolvePathsFromImportDirective(final Module caller, final String path, final JsonNode metadata) throws JsonQueryException {
-		List<Path> searchPaths = this.searchPaths;
-		String relativePath = path;
+	private Pair<List<Path>, String> resolvePathsFromImportDirective(Module caller, String path, JsonNode metadata) throws JsonQueryException {
+		@Var List<Path> searchPaths = this.searchPaths;
+		@Var String relativePath = path;
 
-		FileSystemModule callerModule = null;
+		@Var FileSystemModule callerModule = null;
 		if (caller != null && caller.getClass() == FileSystemModule.class) {
 			callerModule = (FileSystemModule) caller;
 			if (callerModule.loader() != this) // Imports from a FileSystemModule should be handled by the same loader
 				return null;
 		}
 
-		final JsonProvider<JsonNode> jsonProvider = parentScope.jsonProvider();
+		JsonProvider<JsonNode> jsonProvider = parentScope.jsonProvider();
 		if (metadata != null) {
-			final JsonNode search = jsonProvider.get(metadata, "search");
+			JsonNode search = jsonProvider.get(metadata, "search");
 			if (search != null) {
 				// disallow search overrides from top-level unnamed expression, which doesn't have a module path.
 				// i.e. import "foo" as foo {search: ./}; doesn't make sense. where is ./ ?
@@ -193,14 +195,14 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 				if (jsonProvider.getNodeType(search) != JsonNodeType.STRING)
 					throw new JsonQueryException("search path overrides must be a string");
 
-				Path searchPathOverride = callerModule.modulePath.getFileSystem().getPath(jsonProvider.asText(search));
+				@Var Path searchPathOverride = callerModule.modulePath.getFileSystem().getPath(jsonProvider.asText(search));
 				searchPathOverride = callerModule.modulePath.getParent().resolve(searchPathOverride).normalize();
 
 				// still, the search path must be within the original search path
 				if (!searchPathOverride.startsWith(callerModule.searchPath))
 					throw new JsonQueryException("search path overrides from import metadata must stay within the original search path of the caller module");
 
-				final Path resolvedModulePath = resolveModulePath(searchPathOverride, path);
+				Path resolvedModulePath = resolveModulePath(searchPathOverride, path);
 
 				relativePath = callerModule.searchPath.relativize(resolvedModulePath).toString();
 				searchPaths = Collections.singletonList(callerModule.searchPath);
@@ -211,17 +213,17 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	}
 
 	@Override
-	public Module loadModule(final Module caller, final String path, final JsonNode metadata) throws JsonQueryException {
-		final Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
+	public Module loadModule(Module caller, String path, JsonNode metadata) throws JsonQueryException {
+		Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
 		if (paths == null)
 			return null;
-		final List<Path> searchPaths = paths._1;
-		final String relativePath = paths._2;
+		List<Path> searchPaths = paths._1;
+		String relativePath = paths._2;
 
-		for (final Path searchPath : searchPaths) {
-			final TryOnce<Module> tryOnce = loadedModules.computeIfAbsent(Pair.of(searchPath, relativePath), p -> new TryOnce<>());
+		for (Path searchPath : searchPaths) {
+			TryOnce<Module> tryOnce = loadedModules.computeIfAbsent(Pair.of(searchPath, relativePath), p -> new TryOnce<>());
 			try {
-				final Module module = tryOnce.tryOnce(() -> {
+				Module module = tryOnce.tryOnce(() -> {
 					return loadModuleActual(searchPath, relativePath);
 				});
 				if (module != null)
@@ -237,17 +239,17 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	}
 
 	@Override
-	public JsonNode loadData(final Module caller, final String path, final JsonNode metadata) throws JsonQueryException {
-		final Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
+	public JsonNode loadData(Module caller, String path, JsonNode metadata) throws JsonQueryException {
+		Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
 		if (paths == null)
 			return null;
-		final List<Path> searchPaths = paths._1;
-		final String relativePath = paths._2;
+		List<Path> searchPaths = paths._1;
+		String relativePath = paths._2;
 
-		for (final Path searchPath : searchPaths) {
-			final TryOnce<JsonNode> tryOnce = loadedData.computeIfAbsent(Pair.of(searchPath, relativePath), p -> new TryOnce<>());
+		for (Path searchPath : searchPaths) {
+			TryOnce<JsonNode> tryOnce = loadedData.computeIfAbsent(Pair.of(searchPath, relativePath), p -> new TryOnce<>());
 			try {
-				final JsonNode data = tryOnce.tryOnce(() -> {
+				JsonNode data = tryOnce.tryOnce(() -> {
 					return loadDataActual(searchPath, relativePath);
 				});
 				if (data != null)
@@ -260,16 +262,16 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		return null;
 	}
 
-	private JsonNode loadDataActual(final Path searchPath, final String path) throws Exception {
-		final ModuleFile moduleFile = loadModuleFile(searchPath, path, "json");
+	private JsonNode loadDataActual(Path searchPath, String path) throws Exception {
+		ModuleFile moduleFile = loadModuleFile(searchPath, path, "json");
 		if (moduleFile == null)
 			return null;
 
-		final JsonProvider<JsonNode> jsonProvider = parentScope.jsonProvider();
-		JsonNode data = jsonProvider.createArray();
+		JsonProvider<JsonNode> jsonProvider = parentScope.jsonProvider();
+		@Var JsonNode data = jsonProvider.createArray();
 
-		final List<JsonNode> values = jsonProvider.readMultipleValues(new String(moduleFile.bytes, StandardCharsets.UTF_8));
-		for (final JsonNode value : values) {
+		List<JsonNode> values = jsonProvider.readMultipleValues(new String(moduleFile.bytes, StandardCharsets.UTF_8));
+		for (JsonNode value : values) {
 			data = jsonProvider.add(data, value);
 		}
 

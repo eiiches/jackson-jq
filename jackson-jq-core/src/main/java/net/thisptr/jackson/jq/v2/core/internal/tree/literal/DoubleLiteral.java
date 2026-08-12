@@ -6,7 +6,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 public class DoubleLiteral<JsonNode> extends ValueLiteral<JsonNode> {
 	private double value;
 
-	public DoubleLiteral(final double value) {
+	public DoubleLiteral(double value) {
 		this.value = value;
 	}
 

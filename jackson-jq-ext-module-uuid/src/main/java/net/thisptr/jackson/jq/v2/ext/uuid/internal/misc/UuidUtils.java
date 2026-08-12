@@ -7,15 +7,15 @@ import java.util.UUID;
 
 public class UuidUtils {
 
-	public static UUID uuid3(final UUID namespace, final byte[] name) {
+	public static UUID uuid3(UUID namespace, byte[] name) {
 		return uuid3or5(namespace, name, 3);
 	}
 
-	public static UUID uuid5(final UUID namespace, final byte[] name) {
+	public static UUID uuid5(UUID namespace, byte[] name) {
 		return uuid3or5(namespace, name, 5);
 	}
 
-	public static UUID uuid3or5(final UUID namespace, final byte[] name, final int version) {
+	public static UUID uuid3or5(UUID namespace, byte[] name, int version) {
 		// https://datatracker.ietf.org/doc/html/rfc4122#section-4.3
 		MessageDigest md;
 		try {

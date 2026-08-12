@@ -10,17 +10,17 @@ public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<J
 	public final Expression<JsonNode> key;
 	public final Expression<JsonNode> value;
 
-	public StringKeyFieldConstruction(final Expression<JsonNode> key, final Expression<JsonNode> value) {
+	public StringKeyFieldConstruction(Expression<JsonNode> key, Expression<JsonNode> value) {
 		this.key = key;
 		this.value = value;
 	}
 
-	public StringKeyFieldConstruction(final Expression<JsonNode> key) {
+	public StringKeyFieldConstruction(Expression<JsonNode> key) {
 		this(key, null);
 	}
 
 	@Override
-	public void evaluate(final Scope<JsonNode> scope, final JsonNode in, final FieldConsumer<JsonNode> consumer) throws JsonQueryException {
+	public void evaluate(Scope<JsonNode> scope, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		key.apply(scope, in, (k) -> {
 			if (scope.jsonProvider().getNodeType(k) != JsonNodeType.STRING)
 				throw new JsonQueryException("key must evaluate to string");

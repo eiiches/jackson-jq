@@ -8,14 +8,14 @@ public class JsonQueryBreakException extends JsonQueryException {
 
 	private final String name;
 
-	public JsonQueryBreakException(final String name) {
+	public JsonQueryBreakException(String name) {
 		super("break");
 		this.name = name;
 	}
 
 	@Override
-	public <JsonNode> JsonNode getMessageAsJsonNode(final JsonProvider<JsonNode> jsonProvider) {
-		final JsonNode object = jsonProvider.createObject();
+	public <JsonNode> JsonNode getMessageAsJsonNode(JsonProvider<JsonNode> jsonProvider) {
+		JsonNode object = jsonProvider.createObject();
 		jsonProvider.set(object, "__jq", jsonProvider.createInt(0));
 		return object;
 	}

@@ -9,14 +9,14 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 public class ModuloOperator<JsonNode> implements BinaryOperator<JsonNode> {
 	@Override
 	public JsonNode apply(JsonProvider<JsonNode> jsonProvider, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
-		final JsonNodeType ltype = jsonProvider.getNodeType(lhs);
-		final JsonNodeType rtype = jsonProvider.getNodeType(rhs);
+		JsonNodeType ltype = jsonProvider.getNodeType(lhs);
+		JsonNodeType rtype = jsonProvider.getNodeType(rhs);
 		if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.NUMBER) {
-			final double lhsDouble = jsonProvider.asDouble(lhs);
-			final double rhsDouble = jsonProvider.asDouble(rhs);
+			double lhsDouble = jsonProvider.asDouble(lhs);
+			double rhsDouble = jsonProvider.asDouble(rhs);
 
 			// Handle Infinity: convert to long representation
-			final long dividend = Double.isNaN(lhsDouble) ? 0L
+			long dividend = Double.isNaN(lhsDouble) ? 0L
 				: Double.isInfinite(lhsDouble) ? (lhsDouble > 0 ? Long.MAX_VALUE : Long.MIN_VALUE)
 				: (long) lhsDouble;
 
@@ -24,7 +24,7 @@ public class ModuloOperator<JsonNode> implements BinaryOperator<JsonNode> {
 			if (Double.isNaN(rhsDouble))
 				return JsonNodeUtils.asNumericNode(jsonProvider, dividend);
 
-			final long divisor = Double.isInfinite(rhsDouble)
+			long divisor = Double.isInfinite(rhsDouble)
 				? (rhsDouble > 0 ? Long.MAX_VALUE : Long.MIN_VALUE)
 				: (long) rhsDouble;
 

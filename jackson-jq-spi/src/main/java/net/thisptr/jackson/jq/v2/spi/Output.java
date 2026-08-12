@@ -8,7 +8,7 @@ public interface Output<JsonNode> extends PathOutput<JsonNode> {
 	void emit(JsonNode out) throws JsonQueryException;
 
 	@Override
-	default void emit(final JsonNode out, final Path<JsonNode> opath) throws JsonQueryException {
+	default void emit(JsonNode out, Path<JsonNode> opath) throws JsonQueryException {
 		emit(out);
 	}
 }

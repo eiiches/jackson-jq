@@ -23,7 +23,7 @@ public class ModuleImpl implements Module {
 	}
 
 	@Override
-	public Function getFunction(final String fname, final int nargs) {
+	public Function getFunction(String fname, int nargs) {
 		return functions.get(fname + "/" + nargs);
 	}
 

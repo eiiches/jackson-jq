@@ -3,6 +3,8 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 import java.util.List;
 import java.util.Stack;
 
+import com.google.errorprone.annotations.Var;
+
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -16,36 +18,36 @@ public class StringInterpolation<JsonNode> implements Expression<JsonNode> {
 	private final String template;
 	private final Expression<JsonNode> formatter;
 
-	public StringInterpolation(final String template, final List<Pair<Integer, Expression<JsonNode>>> interpolations, final Expression<JsonNode> formatter) {
+	public StringInterpolation(String template, List<Pair<Integer, Expression<JsonNode>>> interpolations, Expression<JsonNode> formatter) {
 		this.template = template;
 		this.interpolations = interpolations;
 		this.formatter = formatter;
 	}
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
-		final Stack<Pair<Integer, JsonNode>> stack = new Stack<>();
+	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		Stack<Pair<Integer, JsonNode>> stack = new Stack<>();
 		recurse(scope, in, output, stack, interpolations);
 	}
 
-	private void recurse(final Scope<JsonNode> scope, final JsonNode in, final PathOutput<JsonNode> output, final Stack<Pair<Integer, JsonNode>> stack, final List<Pair<Integer, Expression<JsonNode>>> interpolations) throws JsonQueryException {
+	private void recurse(Scope<JsonNode> scope, JsonNode in, PathOutput<JsonNode> output, Stack<Pair<Integer, JsonNode>> stack, List<Pair<Integer, Expression<JsonNode>>> interpolations) throws JsonQueryException {
 		if (interpolations.isEmpty()) {
-			final StringBuilder builder = new StringBuilder();
-			int pos = 0;
+			StringBuilder builder = new StringBuilder();
+			@Var int pos = 0;
 			for (int index = stack.size() - 1; index >= 0; --index) {
-				final Pair<Integer, JsonNode> head = stack.get(index);
+				Pair<Integer, JsonNode> head = stack.get(index);
 				builder.append(template.substring(pos, head._1));
 				pos = head._1;
 
-				final JsonNodeType nodeType = scope.jsonProvider().getNodeType(head._2);
-				final boolean isValueNode = nodeType != JsonNodeType.ARRAY && nodeType != JsonNodeType.OBJECT;
+				JsonNodeType nodeType = scope.jsonProvider().getNodeType(head._2);
+				boolean isValueNode = nodeType != JsonNodeType.ARRAY && nodeType != JsonNodeType.OBJECT;
 				builder.append(isValueNode ? scope.jsonProvider().asText(head._2) : scope.jsonProvider().toString(head._2));
 			}
 			builder.append(template.substring(pos));
 			output.emit(scope.jsonProvider().createString(builder.toString()), null);
 		} else {
-			final Pair<Integer, Expression<JsonNode>> rhead = interpolations.get(interpolations.size() - 1);
-			final List<Pair<Integer, Expression<JsonNode>>> rtail = interpolations.subList(0, interpolations.size() - 1);
+			Pair<Integer, Expression<JsonNode>> rhead = interpolations.get(interpolations.size() - 1);
+			List<Pair<Integer, Expression<JsonNode>>> rtail = interpolations.subList(0, interpolations.size() - 1);
 			rhead._2.apply(scope, in, (interpolated) -> {
 				if (formatter != null) {
 					formatter.apply(scope, interpolated, (formatted) -> {
@@ -64,14 +66,14 @@ public class StringInterpolation<JsonNode> implements Expression<JsonNode> {
 
 	@Override
 	public String toString() {
-		int pos = 0;
-		final StringBuilder builder = new StringBuilder();
+		@Var int pos = 0;
+		StringBuilder builder = new StringBuilder();
 		if (formatter != null) {
 			builder.append(formatter);
 			builder.append(" ");
 		}
 		builder.append("\"");
-		for (final Pair<Integer, Expression<JsonNode>> interpolation : interpolations) {
+		for (Pair<Integer, Expression<JsonNode>> interpolation : interpolations) {
 			copyEscaped(builder, template, pos, interpolation._1);
 			pos = interpolation._1;
 			builder.append("\\(");
@@ -83,9 +85,9 @@ public class StringInterpolation<JsonNode> implements Expression<JsonNode> {
 		return builder.toString();
 	}
 
-	private static void copyEscaped(final StringBuilder builder, final String text, final int begin, final int end) {
+	private static void copyEscaped(StringBuilder builder, String text, int begin, int end) {
 		for (int i = begin; i < end; ++i) {
-			final char ch = text.charAt(i);
+			char ch = text.charAt(i);
 			switch (ch) {
 				case '\\':
 					builder.append("\\\\");

@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.ByteStreams;
+import com.google.errorprone.annotations.Var;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.Versions;
@@ -27,13 +28,13 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 public class TrueJqEvaluator implements Evaluator {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
-	public static String executable(final Version version) {
+	public static String executable(Version version) {
 		return "jq-" + version.toString();
 	}
 
-	public static boolean hasJq(final Version version) {
+	public static boolean hasJq(Version version) {
 		try {
-			final Process p = Runtime.getRuntime().exec(new String[] {
+			Process p = Runtime.getRuntime().exec(new String[] {
 					executable(version),
 					"--version"
 			});
@@ -45,11 +46,11 @@ public class TrueJqEvaluator implements Evaluator {
 	}
 
 	@Override
-	public Result evaluate(final String expr, final JsonNode in, final Version version, final long timeout) throws IOException, InterruptedException, TimeoutException {
-		final ProcessBuilder pb = new ProcessBuilder(executable(version), "-c", expr);
-		final Process p = pb.start();
+	public Result evaluate(String expr, JsonNode in, Version version, long timeout) throws IOException, InterruptedException, TimeoutException {
+		ProcessBuilder pb = new ProcessBuilder(executable(version), "-c", expr);
+		Process p = pb.start();
 
-		try (final OutputStream stdin = p.getOutputStream()) {
+		try (OutputStream stdin = p.getOutputStream()) {
 			stdin.write(in.toString().getBytes(StandardCharsets.UTF_8));
 		} catch (IOException e) {
 			// This can happen when the process exits before we write any input, probably due to a failure to compile the expression.
@@ -60,20 +61,20 @@ public class TrueJqEvaluator implements Evaluator {
 			throw new TimeoutException("timeout");
 		}
 
-		final List<JsonNode> values = new ArrayList<>();
-		try (final InputStream stdout = p.getInputStream()) {
-			final JsonParser parser = MAPPER.getFactory().createParser(ByteStreams.toByteArray(stdout));
-			final MappingIterator<JsonNode> iter = MAPPER.readValues(parser, JsonNode.class);
+		List<JsonNode> values = new ArrayList<>();
+		try (InputStream stdout = p.getInputStream()) {
+			JsonParser parser = MAPPER.getFactory().createParser(ByteStreams.toByteArray(stdout));
+			MappingIterator<JsonNode> iter = MAPPER.readValues(parser, JsonNode.class);
 			while (iter.hasNextValue()) {
 				values.add(iter.nextValue());
 			}
 		}
 
-		String error = null;
+		@Var String error = null;
 		if (p.exitValue() != 0) {
-			try (final InputStream stderr = p.getErrorStream()) {
-				final String message = new String(ByteStreams.toByteArray(stderr), StandardCharsets.UTF_8);
-				final String[] tokens = message.trim().split(": ", 3);
+			try (InputStream stderr = p.getErrorStream()) {
+				String message = new String(ByteStreams.toByteArray(stderr), StandardCharsets.UTF_8);
+				String[] tokens = message.trim().split(": ", 3);
 				if (tokens.length != 3)
 					throw new IllegalStateException("invalid jq error format: " + message);
 				error = tokens[2];
@@ -85,7 +86,7 @@ public class TrueJqEvaluator implements Evaluator {
 
 	@Test
 	void testJqCli() throws JsonQueryException, IOException, InterruptedException, TimeoutException {
-		final Result result = evaluate("{a: (. + 1), b: 10}", MAPPER.readTree("1"), Versions.JQ_1_5, 1000L);
+		Result result = evaluate("{a: (. + 1), b: 10}", MAPPER.readTree("1"), Versions.JQ_1_5, 1000L);
 		assertEquals(1, result.values.size());
 		assertEquals(MAPPER.readTree("{\"a\":2,\"b\":10}"), result.values.get(0));
 		assertNull(result.error);
@@ -93,7 +94,7 @@ public class TrueJqEvaluator implements Evaluator {
 
 	@Test
 	void testJqCliError() throws JsonQueryException, IOException, InterruptedException, TimeoutException {
-		final Result result = evaluate("null[]", MAPPER.readTree("null"), Versions.JQ_1_5, 1000L);
+		Result result = evaluate("null[]", MAPPER.readTree("null"), Versions.JQ_1_5, 1000L);
 		assertEquals(0, result.values.size());
 		assertNotNull(result.error);
 		assertEquals("Cannot iterate over null (null)", result.error.getMessage());

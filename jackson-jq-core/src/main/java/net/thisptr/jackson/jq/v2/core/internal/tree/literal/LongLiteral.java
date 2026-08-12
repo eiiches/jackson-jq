@@ -6,7 +6,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 public class LongLiteral<JsonNode> extends ValueLiteral<JsonNode> {
 	private long value;
 
-	public LongLiteral(final long value) {
+	public LongLiteral(long value) {
 		this.value = value;
 	}
 

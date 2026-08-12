@@ -9,7 +9,7 @@ public class JsonQueryUserException extends JsonQueryException {
 
 	private Object value;
 
-	public <JsonNode> JsonQueryUserException(final JsonProvider<JsonNode> jsonProvider, final JsonNode value) {
+	public <JsonNode> JsonQueryUserException(JsonProvider<JsonNode> jsonProvider, JsonNode value) {
 		super(jsonProvider.getNodeType(value) == JsonNodeType.STRING
 				? jsonProvider.asText(value)
 				: jsonProvider.toString(value));
@@ -18,7 +18,7 @@ public class JsonQueryUserException extends JsonQueryException {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <JsonNode> JsonNode getMessageAsJsonNode(final JsonProvider<JsonNode> jsonProvider) {
+	public <JsonNode> JsonNode getMessageAsJsonNode(JsonProvider<JsonNode> jsonProvider) {
 		return (JsonNode) value;
 	}
 }

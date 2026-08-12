@@ -13,13 +13,13 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class JsonNodeFunction<JsonNode> implements Function {
 	private JsonNode value;
 
-	public JsonNodeFunction(final JsonNode value) {
+	public JsonNodeFunction(JsonNode value) {
 		this.value = value;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <InputNode> void apply(final Scope<InputNode> scope, final List<Expression<InputNode>> args, final InputNode in, final Path<InputNode> ipath, final PathOutput<InputNode> output, final Version version) throws JsonQueryException {
+	public <InputNode> void apply(Scope<InputNode> scope, List<Expression<InputNode>> args, InputNode in, Path<InputNode> ipath, PathOutput<InputNode> output, Version version) throws JsonQueryException {
 		output.emit((InputNode) value, null);
 	}
 }

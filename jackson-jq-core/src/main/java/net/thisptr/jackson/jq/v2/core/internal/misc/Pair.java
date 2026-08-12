@@ -3,29 +3,31 @@ package net.thisptr.jackson.jq.v2.core.internal.misc;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.errorprone.annotations.Var;
+
 public class Pair<T, U> {
 	public final T _1;
 	public final U _2;
 
-	public Pair(final T _1, final U _2) {
+	public Pair(T _1, U _2) {
 		this._1 = _1;
 		this._2 = _2;
 	}
 
-	public static <T, U> Pair<T, U> of(final T _1, final U _2) {
+	public static <T, U> Pair<T, U> of(T _1, U _2) {
 		return new Pair<>(_1, _2);
 	}
 
-	public static <T, U> List<T> _1(final List<Pair<T, U>> items) {
-		final List<T> result = new ArrayList<>(items.size());
-		for (final Pair<T, ?> item : items)
+	public static <T, U> List<T> _1(List<Pair<T, U>> items) {
+		List<T> result = new ArrayList<>(items.size());
+		for (Pair<T, ?> item : items)
 			result.add(item._1);
 		return result;
 	}
 
-	public static <T, U> List<U> _2(final List<Pair<T, U>> items) {
-		final List<U> result = new ArrayList<>(items.size());
-		for (final Pair<?, U> item : items)
+	public static <T, U> List<U> _2(List<Pair<T, U>> items) {
+		List<U> result = new ArrayList<>(items.size());
+		for (Pair<?, U> item : items)
 			result.add(item._2);
 		return result;
 	}
@@ -37,15 +39,15 @@ public class Pair<T, U> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
+		int prime = 31;
+		@Var int result = 1;
 		result = prime * result + ((_1 == null) ? 0 : _1.hashCode());
 		result = prime * result + ((_2 == null) ? 0 : _2.hashCode());
 		return result;
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)
@@ -53,7 +55,7 @@ public class Pair<T, U> {
 		if (getClass() != obj.getClass())
 			return false;
 		@SuppressWarnings("rawtypes")
-		final Pair other = (Pair) obj;
+		Pair other = (Pair) obj;
 		if (_1 == null) {
 			if (other._1 != null)
 				return false;

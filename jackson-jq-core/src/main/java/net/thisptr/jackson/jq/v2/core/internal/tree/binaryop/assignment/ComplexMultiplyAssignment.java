@@ -4,7 +4,7 @@ import net.thisptr.jackson.jq.v2.core.internal.operators.MultiplyOperator;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 
 public class ComplexMultiplyAssignment extends ComplexAssignment {
-	public ComplexMultiplyAssignment(final Expression lhs, final Expression rhs) {
+	public ComplexMultiplyAssignment(Expression lhs, Expression rhs) {
 		super(lhs, rhs, new MultiplyOperator());
 	}
 }

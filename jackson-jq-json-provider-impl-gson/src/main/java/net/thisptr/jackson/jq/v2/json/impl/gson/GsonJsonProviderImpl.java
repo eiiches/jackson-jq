@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
+import com.google.errorprone.annotations.Var;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -22,7 +23,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 
 	private final Gson gson;
 
-	public GsonJsonProviderImpl(final Gson gson) {
+	public GsonJsonProviderImpl(Gson gson) {
 		this.gson = gson;
 	}
 
@@ -44,27 +45,27 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public JsonElement createString(final String value) {
+	public JsonElement createString(String value) {
 		return new JsonPrimitive(value);
 	}
 
 	@Override
-	public JsonElement createLong(final long value) {
+	public JsonElement createLong(long value) {
 		return new JsonPrimitive(value);
 	}
 
 	@Override
-	public JsonElement createInt(final int value) {
+	public JsonElement createInt(int value) {
 		return new JsonPrimitive(value);
 	}
 
 	@Override
-	public JsonElement createDouble(final double value) {
+	public JsonElement createDouble(double value) {
 		return new JsonPrimitive(value);
 	}
 
 	@Override
-	public JsonElement createBoolean(final boolean value) {
+	public JsonElement createBoolean(boolean value) {
 		return new JsonPrimitive(value);
 	}
 
@@ -79,7 +80,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public JsonNodeType getNodeType(final JsonElement node) {
+	public JsonNodeType getNodeType(JsonElement node) {
 		if (node instanceof GsonMissingNode) {
 			return JsonNodeType.MISSING;
 		}
@@ -93,7 +94,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 			return JsonNodeType.ARRAY;
 		}
 		if (node.isJsonPrimitive()) {
-			final JsonPrimitive primitive = node.getAsJsonPrimitive();
+			JsonPrimitive primitive = node.getAsJsonPrimitive();
 			if (primitive.isBoolean()) {
 				return JsonNodeType.BOOLEAN;
 			}
@@ -108,14 +109,14 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public boolean isMissingNode(final JsonElement node) {
+	public boolean isMissingNode(JsonElement node) {
 		return node instanceof GsonMissingNode;
 	}
 
 	@Override
-	public boolean asBoolean(final JsonElement node) {
+	public boolean asBoolean(JsonElement node) {
 		if (node.isJsonPrimitive()) {
-			final JsonPrimitive primitive = node.getAsJsonPrimitive();
+			JsonPrimitive primitive = node.getAsJsonPrimitive();
 			if (primitive.isBoolean()) {
 				return primitive.getAsBoolean();
 			}
@@ -128,9 +129,9 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public double asDouble(final JsonElement node) {
+	public double asDouble(JsonElement node) {
 		if (node.isJsonPrimitive()) {
-			final JsonPrimitive primitive = node.getAsJsonPrimitive();
+			JsonPrimitive primitive = node.getAsJsonPrimitive();
 			if (primitive.isNumber()) {
 				return primitive.getAsDouble();
 			}
@@ -146,7 +147,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public String asText(final JsonElement node) {
+	public String asText(JsonElement node) {
 		if (node instanceof GsonMissingNode) {
 			return "";
 		}
@@ -160,9 +161,9 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public long asLong(final JsonElement node) {
+	public long asLong(JsonElement node) {
 		if (node.isJsonPrimitive()) {
-			final JsonPrimitive primitive = node.getAsJsonPrimitive();
+			JsonPrimitive primitive = node.getAsJsonPrimitive();
 			if (primitive.isNumber()) {
 				double d = primitive.getAsDouble();
 				if (Double.isNaN(d)) {
@@ -185,9 +186,9 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public int asInt(final JsonElement node) {
+	public int asInt(JsonElement node) {
 		if (node.isJsonPrimitive()) {
-			final JsonPrimitive primitive = node.getAsJsonPrimitive();
+			JsonPrimitive primitive = node.getAsJsonPrimitive();
 			if (primitive.isNumber()) {
 				double d = primitive.getAsDouble();
 				if (Double.isNaN(d)) {
@@ -214,12 +215,12 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public byte[] asByteArray(final JsonElement node) {
+	public byte[] asByteArray(JsonElement node) {
 		throw new UnsupportedOperationException("Binary data is not supported by Gson provider");
 	}
 
 	@Override
-	public Iterator<Entry<String, JsonElement>> fields(final JsonElement node) {
+	public Iterator<Entry<String, JsonElement>> fields(JsonElement node) {
 		if (node.isJsonObject()) {
 			return node.getAsJsonObject().entrySet().iterator();
 		}
@@ -227,7 +228,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public Iterator<JsonElement> elements(final JsonElement node) {
+	public Iterator<JsonElement> elements(JsonElement node) {
 		if (node.isJsonArray()) {
 			return node.getAsJsonArray().iterator();
 		}
@@ -241,7 +242,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public Iterator<String> fieldNames(final JsonElement node) {
+	public Iterator<String> fieldNames(JsonElement node) {
 		if (node.isJsonObject()) {
 			return node.getAsJsonObject().keySet().iterator();
 		}
@@ -249,7 +250,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public JsonElement get(final JsonElement node, final String fieldName) {
+	public JsonElement get(JsonElement node, String fieldName) {
 		if (node.isJsonObject()) {
 			return node.getAsJsonObject().get(fieldName);
 		}
@@ -257,9 +258,9 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public JsonElement get(final JsonElement node, final int index) {
+	public JsonElement get(JsonElement node, int index) {
 		if (node.isJsonArray()) {
-			final JsonArray array = node.getAsJsonArray();
+			JsonArray array = node.getAsJsonArray();
 			if (index >= 0 && index < array.size()) {
 				return array.get(index);
 			}
@@ -268,25 +269,25 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public JsonElement set(final JsonElement node, final String fieldName, final JsonElement value) {
+	public JsonElement set(JsonElement node, String fieldName, JsonElement value) {
 		node.getAsJsonObject().add(fieldName, value);
 		return node;
 	}
 
 	@Override
-	public JsonElement add(final JsonElement node, final JsonElement value) {
+	public JsonElement add(JsonElement node, JsonElement value) {
 		node.getAsJsonArray().add(value);
 		return node;
 	}
 
 	@Override
-	public JsonElement set(final JsonElement node, final int index, final JsonElement value) {
+	public JsonElement set(JsonElement node, int index, JsonElement value) {
 		node.getAsJsonArray().set(index, value);
 		return node;
 	}
 
 	@Override
-	public int size(final JsonElement node) {
+	public int size(JsonElement node) {
 		if (node.isJsonArray()) {
 			return node.getAsJsonArray().size();
 		}
@@ -297,7 +298,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public boolean has(final JsonElement node, final String fieldName) {
+	public boolean has(JsonElement node, String fieldName) {
 		if (node.isJsonObject()) {
 			return node.getAsJsonObject().has(fieldName);
 		}
@@ -305,21 +306,21 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public boolean has(final JsonElement node, final int index) {
+	public boolean has(JsonElement node, int index) {
 		if (node.isJsonArray()) {
-			final JsonArray array = node.getAsJsonArray();
+			JsonArray array = node.getAsJsonArray();
 			return index >= 0 && index < array.size();
 		}
 		return false;
 	}
 
 	@Override
-	public JsonElement deepCopy(final JsonElement node) {
+	public JsonElement deepCopy(JsonElement node) {
 		return node.deepCopy();
 	}
 
 	@Override
-	public String toString(final JsonElement node) {
+	public String toString(JsonElement node) {
 		if (node instanceof GsonMissingNode) {
 			return "null";
 		}
@@ -330,12 +331,12 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	 * Converts a JsonElement to a jq-compatible JSON string.
 	 * Handles NaN, Infinity, and number formatting.
 	 */
-	private String toJqString(final JsonElement node) {
+	private String toJqString(JsonElement node) {
 		if (node == null || node.isJsonNull()) {
 			return "null";
 		}
 		if (node.isJsonPrimitive()) {
-			final JsonPrimitive primitive = node.getAsJsonPrimitive();
+			JsonPrimitive primitive = node.getAsJsonPrimitive();
 			if (primitive.isNumber()) {
 				double val = primitive.getAsDouble();
 				return GsonUtils.formatDouble(val);
@@ -349,10 +350,10 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 			}
 		}
 		if (node.isJsonArray()) {
-			final JsonArray array = node.getAsJsonArray();
-			final StringBuilder sb = new StringBuilder("[");
-			boolean first = true;
-			for (final JsonElement element : array) {
+			JsonArray array = node.getAsJsonArray();
+			StringBuilder sb = new StringBuilder("[");
+			@Var boolean first = true;
+			for (JsonElement element : array) {
 				if (!first) {
 					sb.append(",");
 				}
@@ -363,10 +364,10 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 			return sb.toString();
 		}
 		if (node.isJsonObject()) {
-			final JsonObject obj = node.getAsJsonObject();
-			final StringBuilder sb = new StringBuilder("{");
-			boolean first = true;
-			for (final Entry<String, JsonElement> entry : obj.entrySet()) {
+			JsonObject obj = node.getAsJsonObject();
+			StringBuilder sb = new StringBuilder("{");
+			@Var boolean first = true;
+			for (Entry<String, JsonElement> entry : obj.entrySet()) {
 				if (!first) {
 					sb.append(",");
 				}
@@ -382,20 +383,20 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public JsonElement fromString(final String json) throws Exception {
+	public JsonElement fromString(String json) throws Exception {
 		return JsonParser.parseString(json);
 	}
 
 	@Override
-	public JsonElement fromStringStrict(final String json) throws Exception {
+	public JsonElement fromStringStrict(String json) throws Exception {
 		if (json == null || json.isEmpty()) {
 			throw new IllegalArgumentException("empty input");
 		}
-		final JsonStreamParser parser = new JsonStreamParser(json);
+		JsonStreamParser parser = new JsonStreamParser(json);
 		if (!parser.hasNext()) {
 			throw new IllegalArgumentException("empty input");
 		}
-		final JsonElement result = parser.next();
+		JsonElement result = parser.next();
 		if (parser.hasNext()) {
 			throw new IllegalArgumentException("trailing content");
 		}
@@ -403,9 +404,9 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public List<JsonElement> readMultipleValues(final String json) throws Exception {
-		final List<JsonElement> result = new ArrayList<>();
-		final JsonStreamParser parser = new JsonStreamParser(json);
+	public List<JsonElement> readMultipleValues(String json) throws Exception {
+		List<JsonElement> result = new ArrayList<>();
+		JsonStreamParser parser = new JsonStreamParser(json);
 		while (parser.hasNext()) {
 			result.add(parser.next());
 		}
@@ -413,12 +414,12 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public JsonElement valueToTree(final Object value) {
+	public JsonElement valueToTree(Object value) {
 		return gson.toJsonTree(value);
 	}
 
 	@Override
-	public boolean isJsonNodeInstance(final Object arg) {
+	public boolean isJsonNodeInstance(Object arg) {
 		return arg instanceof JsonElement;
 	}
 }

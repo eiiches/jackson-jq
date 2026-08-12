@@ -20,7 +20,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 @FunctionRegistration("@uri/0")
 public class AtUriFunction extends AbstractAtFormattingFunction {
 	@Override
-	public String convert(final String text) throws JsonQueryException {
+	public String convert(String text) throws JsonQueryException {
 		try {
 			return URLEncoder.encode(text, "UTF-8")
 					.replaceAll("\\+", "%20")

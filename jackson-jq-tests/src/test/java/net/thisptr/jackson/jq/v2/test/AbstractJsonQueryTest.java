@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.google.errorprone.annotations.Var;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -120,8 +121,8 @@ public abstract class AbstractJsonQueryTest<T> {
 	 */
 	protected abstract Comparator<T> createComparator(boolean strictFieldOrder, double numericalErrors);
 
-	private static List<TestCase> loadTestCases(final String resourceName, final InputStream in, final boolean failing) throws IOException {
-		final TestCase[] result;
+	private static List<TestCase> loadTestCases(String resourceName, InputStream in, boolean failing) throws IOException {
+		TestCase[] result;
 		if (resourceName.endsWith(".yaml")) {
 			result = YAML_MAPPER.readValue(in, TestCase[].class);
 		} else if (resourceName.endsWith(".json")) {
@@ -129,7 +130,7 @@ public abstract class AbstractJsonQueryTest<T> {
 		} else {
 			throw new IllegalArgumentException("unsupported file format");
 		}
-		for (final TestCase tc : result) {
+		for (TestCase tc : result) {
 			if (tc.failing == null)
 				tc.failing = failing;
 			tc.file = resourceName;
@@ -137,16 +138,16 @@ public abstract class AbstractJsonQueryTest<T> {
 		return Arrays.asList(result);
 	}
 
-	protected static Stream<String> defaultTestCases(final ClassLoader classLoader) throws IOException {
-		final List<String> resourceNames = ClassLoaderUtils.listResources(classLoader, "tests").stream()
+	protected static Stream<String> defaultTestCases(ClassLoader classLoader) throws IOException {
+		List<String> resourceNames = ClassLoaderUtils.listResources(classLoader, "tests").stream()
 				.filter(name -> name.endsWith(".json") || name.endsWith(".yaml"))
 				.sorted()
 				.collect(Collectors.toList());
 		if (resourceNames.isEmpty())
 			throw new IllegalStateException("No test cases found under classpath resource tests/");
 
-		final List<TestCase> testCases = new ArrayList<>();
-		for (final String resourceName : resourceNames) {
+		List<TestCase> testCases = new ArrayList<>();
+		for (String resourceName : resourceNames) {
 			try (InputStream in = classLoader.getResourceAsStream(resourceName)) {
 				if (in == null)
 					throw new IOException("Failed to load " + resourceName);
@@ -157,7 +158,7 @@ public abstract class AbstractJsonQueryTest<T> {
 		return testCases.stream().map(tc -> {
 			try {
 				return JSON_MAPPER.writeValueAsString(tc);
-			} catch (final IOException e) {
+			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		});
@@ -178,9 +179,9 @@ public abstract class AbstractJsonQueryTest<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void test(final TestCase tc, final Version version) throws Throwable {
-		final Scope<T> scope = createRootScope(version);
-		final String command = String.format("%s '%s' <<< '%s'", TrueJqEvaluator.executable(version), tc.q, tc.in);
+	private void test(TestCase tc, Version version) throws Throwable {
+		Scope<T> scope = createRootScope(version);
+		String command = String.format("%s '%s' <<< '%s'", TrueJqEvaluator.executable(version), tc.q, tc.in);
 
 		if (!tc.shouldCompile) {
 			assertThrows(JsonQueryException.class, () -> JsonQuery.compile(tc.q, version));
@@ -188,16 +189,16 @@ public abstract class AbstractJsonQueryTest<T> {
 		}
 
 		// Convert test data from Jackson JsonNode to provider's type
-		final T input = parseTestNode(tc.in);
-		final List<T> expectedOut = new ArrayList<>();
+		T input = parseTestNode(tc.in);
+		List<T> expectedOut = new ArrayList<>();
 		for (JsonNode outNode : tc.out) {
 			expectedOut.add(parseTestNode(outNode));
 		}
 
-		final Comparator<T> comparator = createComparator(!tc.ignoreFieldOrder, tc.numericalErrors);
+		Comparator<T> comparator = createComparator(!tc.ignoreFieldOrder, tc.numericalErrors);
 
 		if (!tc.ignoreTrueJqBehavior && hasJqCache.computeIfAbsent(version, v -> TrueJqEvaluator.hasJq(v))) {
-			final Result result = cachedJqEvaluator.evaluate(tc.q, tc.in, version, 2000L);
+			Result result = cachedJqEvaluator.evaluate(tc.q, tc.in, version, 2000L);
 			try {
 				assertThat(result.error).as("%s", command).isNull();
 				// Compare with true jq output (which uses Jackson JsonNode)
@@ -213,28 +214,28 @@ public abstract class AbstractJsonQueryTest<T> {
 			}
 		}
 
-		boolean failed = false;
+		@Var boolean failed = false;
 		try {
-			final JsonQuery<T> q = JsonQuery.compile(tc.q, version);
-			final List<T> out = new ArrayList<>();
+			JsonQuery<T> q = JsonQuery.compile(tc.q, version);
+			List<T> out = new ArrayList<>();
 			q.apply(scope, input, out::add);
 			assertThat(out).as("%s", command)
 					.usingElementComparator(comparator)
 					.isEqualTo(expectedOut);
 
 			// JsonQuery.compile($.toString()).toString() === $.toString()
-			final String s1 = q.toString();
-			final String s2 = JsonQuery.<T>compile(s1, version).toString();
+			String s1 = q.toString();
+			String s2 = JsonQuery.<T>compile(s1, version).toString();
 			assertThat(s2).as("inconsistent tostring: %s", command).isEqualTo(s1);
 
 			// JsonQuery.compile($.toString()).apply(in) === $.apply(in)
-			final JsonQuery<T> q1 = JsonQuery.compile(s1, version);
-			final List<T> out1 = new ArrayList<>();
+			JsonQuery<T> q1 = JsonQuery.compile(s1, version);
+			List<T> out1 = new ArrayList<>();
 			q1.apply(scope, input, out1::add);
 			assertThat(out1).as("bad tostring: %s", command)
 					.usingElementComparator(comparator)
 					.isEqualTo(expectedOut);
-		} catch (final Throwable e) {
+		} catch (Throwable e) {
 			failed = true;
 			if (!tc.failing) {
 				if (e instanceof AssertionError)
@@ -250,9 +251,9 @@ public abstract class AbstractJsonQueryTest<T> {
 
 	@ParameterizedTest
 	@MethodSource("defaultTestCases")
-	public void test(final String tcText) throws Throwable {
-		final TestCase tc = JSON_MAPPER.readValue(tcText, TestCase.class);
-		for (final Version version : Versions.versions()) {
+	public void test(String tcText) throws Throwable {
+		TestCase tc = JSON_MAPPER.readValue(tcText, TestCase.class);
+		for (Version version : Versions.versions()) {
 			if (tc.version == null || tc.version.contains(version)) {
 				test(tc, version);
 			}

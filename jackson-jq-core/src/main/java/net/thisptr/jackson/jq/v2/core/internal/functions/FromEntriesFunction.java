@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
+import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -21,20 +22,20 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("from_entries/0")
 public class FromEntriesFunction implements Function {
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		final JsonNodeType inType = jsonProvider.getNodeType(in);
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		JsonNodeType inType = jsonProvider.getNodeType(in);
 		if (inType != JsonNodeType.ARRAY && inType != JsonNodeType.OBJECT)
 			throw new JsonQueryTypeException(jsonProvider, "Cannot iterate over %s", in);
 
-		final JsonNode out = jsonProvider.createObject();
-		final Iterator<JsonNode> iter = jsonProvider.elements(in);
+		JsonNode out = jsonProvider.createObject();
+		Iterator<JsonNode> iter = jsonProvider.elements(in);
 		while (iter.hasNext()) {
-			final JsonNode entry = iter.next();
+			JsonNode entry = iter.next();
 			if (jsonProvider.getNodeType(entry) != JsonNodeType.OBJECT)
 				throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with string \"key\"", jsonProvider.getNodeType(entry));
 
-			JsonNode key = jsonProvider.get(entry, "key");
+			@Var JsonNode key = jsonProvider.get(entry, "key");
 			if (key == null)
 				key = jsonProvider.get(entry, "Key");
 			if (key == null)
@@ -44,7 +45,7 @@ public class FromEntriesFunction implements Function {
 			if (key == null || jsonProvider.getNodeType(key) != JsonNodeType.STRING)
 				throw new JsonQueryTypeException(jsonProvider, "Cannot use %s as object key", key == null ? jsonProvider.createNull() : key);
 
-			JsonNode value = jsonProvider.get(entry, "value");
+			@Var JsonNode value = jsonProvider.get(entry, "value");
 			if (value == null)
 				value = jsonProvider.get(entry, "Value");
 

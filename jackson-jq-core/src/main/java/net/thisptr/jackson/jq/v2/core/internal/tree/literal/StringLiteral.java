@@ -5,7 +5,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 public class StringLiteral<JsonNode> extends ValueLiteral<JsonNode> {
 	private String text;
 
-	public StringLiteral(final String text) {
+	public StringLiteral(String text) {
 		this.text = text;
 	}
 
@@ -23,10 +23,10 @@ public class StringLiteral<JsonNode> extends ValueLiteral<JsonNode> {
 
 	@Override
 	public String toString() {
-		final StringBuilder builder = new StringBuilder();
+		StringBuilder builder = new StringBuilder();
 		builder.append('"');
 		for (int i = 0; i < text.length(); ++i) {
-			final char ch = text.charAt(i);
+			char ch = text.charAt(i);
 			switch (ch) {
 				case '\\':
 					builder.append("\\\\");

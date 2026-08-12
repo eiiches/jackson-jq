@@ -18,15 +18,15 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class StrPTimeFunction implements Function {
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "strptime", in, JsonNodeType.STRING);
 
 		try {
 			args.get(0).apply(scope, in, (fmt) -> {
 				if (jsonProvider.getNodeType(fmt) != JsonNodeType.STRING)
 					throw new JsonQueryException(String.format("Illegal argument type: %s", jsonProvider.getNodeType(fmt)));
-				final SimpleDateFormat sdf = new SimpleDateFormat(jsonProvider.asText(fmt));
+				SimpleDateFormat sdf = new SimpleDateFormat(jsonProvider.asText(fmt));
 				if (args.size() == 2) {
 					args.get(1).apply(scope, in, (tz) -> {
 						if (jsonProvider.getNodeType(tz) != JsonNodeType.STRING)

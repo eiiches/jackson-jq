@@ -13,9 +13,9 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 public class DefaultRootScope {
 	private static final Map<Version, Scope<JsonNode>> ROOT_SCOPES = new ConcurrentHashMap<>();
 
-	public static Scope<JsonNode> getInstance(final Version version) {
+	public static Scope<JsonNode> getInstance(Version version) {
 		return ROOT_SCOPES.computeIfAbsent(version, v -> {
-			final Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
+			Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
 			BuiltinFunctionLoader.getInstance().loadFunctions(v, scope);
 			return scope;
 		});

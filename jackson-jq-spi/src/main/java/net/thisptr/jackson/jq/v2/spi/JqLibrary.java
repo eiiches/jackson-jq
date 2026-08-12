@@ -8,12 +8,12 @@ import java.util.Objects;
 public interface JqLibrary {
 	// TODO: fix stringly-typed api
 	class JqFunc {
-		public final String name;
-		public final List<String> args;
-		public final String body;
-		public final String version;
+		public String name;
+		public List<String> args;
+		public String body;
+		public String version;
 
-		public JqFunc(final String name, final List<String> args, final String body, final String version) {
+		public JqFunc(String name, List<String> args, String body, String version) {
 			this.name = Objects.requireNonNull(name, "name");
 			this.args = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(args, "args")));
 			this.body = Objects.requireNonNull(body, "body");

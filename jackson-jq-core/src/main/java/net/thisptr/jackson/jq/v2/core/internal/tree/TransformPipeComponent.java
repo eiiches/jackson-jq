@@ -5,7 +5,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 public class TransformPipeComponent<JsonNode> implements PipeComponent<JsonNode> {
 	public final Expression<JsonNode> expr;
 
-	public TransformPipeComponent(final Expression<JsonNode> expr) {
+	public TransformPipeComponent(Expression<JsonNode> expr) {
 		this.expr = expr;
 	}
 

@@ -100,19 +100,19 @@ public class CoreJqLibrary implements JqLibrary {
 				jq("_modify", args("paths", "update"), "reduce path(paths) as $p (.; setpath($p; getpath($p) | update))", "[, 1.6)"),
 				jq("pick", args("pathexps"), ". as $in | reduce path(pathexps) as $a (null; setpath($a; $in|getpath($a)) )", "[1.7, )")));
 
-	private static JqFunc jq(final String name, final String body) {
+	private static JqFunc jq(String name, String body) {
 		return new JqFunc(name, Collections.emptyList(), body, null);
 	}
 
-	private static JqFunc jq(final String name, final List<String> args, final String body) {
+	private static JqFunc jq(String name, List<String> args, String body) {
 		return new JqFunc(name, args, body, null);
 	}
 
-	private static JqFunc jq(final String name, final List<String> args, final String body, final String version) {
+	private static JqFunc jq(String name, List<String> args, String body, String version) {
 		return new JqFunc(name, args, body, version);
 	}
 
-	private static List<String> args(final String... args) {
+	private static List<String> args(String... args) {
 		return Arrays.asList(args);
 	}
 

@@ -10,11 +10,11 @@ public class ModuleDirective<JsonNode> {
 	private JsonNode metadata;
 	private boolean metadataEvaluated = false;
 
-	public ModuleDirective(final Expression<JsonNode> metadataExpr) {
+	public ModuleDirective(Expression<JsonNode> metadataExpr) {
 		this.metadataExpr = metadataExpr;
 	}
 
-	public JsonNode getMetadata(final JsonProvider<JsonNode> jsonProvider) {
+	public JsonNode getMetadata(JsonProvider<JsonNode> jsonProvider) {
 		if (!metadataEvaluated) {
 			this.metadata = ExpressionUtils.evaluateLiteralExpression(jsonProvider, metadataExpr);
 			if (metadata == null)
@@ -28,7 +28,7 @@ public class ModuleDirective<JsonNode> {
 
 	@Override
 	public String toString() {
-		final StringBuilder s = new StringBuilder();
+		StringBuilder s = new StringBuilder();
 		s.append("module {...}");
 		return s.toString();
 	}

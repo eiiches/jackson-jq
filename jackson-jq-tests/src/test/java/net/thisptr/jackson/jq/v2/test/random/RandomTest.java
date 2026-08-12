@@ -106,13 +106,13 @@ public class RandomTest {
 		GENERATORS.add(new RandomGenerator(1, (exprs) -> new BracketExtractFieldAccess(exprs.get(0), true)));
 		GENERATORS.add(new RandomGenerator(1, (exprs) -> new BracketExtractFieldAccess(exprs.get(0), false)));
 
-		final Set<String> exclusions = EXCLUDED_FUNCTIONS.getOrDefault(VERSION, Collections.emptySet());
+		Set<String> exclusions = EXCLUDED_FUNCTIONS.getOrDefault(VERSION, Collections.emptySet());
 		BuiltinFunctionLoader.getInstance().listFunctions(Scope.class.getClassLoader(), VERSION, Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance())).forEach((signature, function) -> {
 			if (exclusions.contains(signature))
 				return;
 			if (signature.contains("/")) {
-				final int numArgs = Integer.parseInt(signature.split("/", 2)[1]);
-				final String name = signature.split("/", 2)[0];
+				int numArgs = Integer.parseInt(signature.split("/", 2)[1]);
+				String name = signature.split("/", 2)[0];
 				if (exclusions.contains(name))
 					return;
 				GENERATORS.add(new RandomGenerator(numArgs, (exprs) -> new FunctionCall(null, name, (List) exprs, VERSION)));
@@ -151,39 +151,39 @@ public class RandomTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	void testRandom() throws Throwable {
-		final List<JsonNode> values = new ArrayList<>();
-		final Set<JsonNode> uniqueValues = new TreeSet<>(new JsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance()));
+		List<JsonNode> values = new ArrayList<>();
+		Set<JsonNode> uniqueValues = new TreeSet<>(new JsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance()));
 
 		values.add(NullNode.getInstance());
 		uniqueValues.add(NullNode.getInstance());
 
-		final Random random = new Random();
+		Random random = new Random();
 
 		for (int i = 0; i < 10000; ++i) {
-			final Generator generator = GENERATORS.get(random.nextInt(GENERATORS.size()));
+			Generator generator = GENERATORS.get(random.nextInt(GENERATORS.size()));
 
-			final List<Expression<JsonNode>> args = new ArrayList<>();
+			List<Expression<JsonNode>> args = new ArrayList<>();
 			for (int j = 0; j < generator.args(); ++j)
 				args.add(expressions.get(random.nextInt(expressions.size())));
 
 			@SuppressWarnings({ "unchecked", "rawtypes" })
-			final Expression<JsonNode> expr = generator.generate((List) args);
+			Expression<JsonNode> expr = generator.generate((List) args);
 			// System.out.println(expr);
 
-			final JsonNode in = values.get(random.nextInt(values.size()));
+			JsonNode in = values.get(random.nextInt(values.size()));
 
-			final Result expected;
+			Result expected;
 			try {
 				expected = new TrueJqEvaluator().evaluate(expr.toString(), in, VERSION, 1000L);
-			} catch (final Throwable e) {
+			} catch (Throwable e) {
 				// System.err.printf("Cloud not evaluate jq '%s' <<< '%s'%n", expr, in);
 				continue;
 			}
 
-			final Result actual;
+			Result actual;
 			try {
 				actual = new JacksonJqEvaluator().evaluate(expr.toString(), in, VERSION, 1000L);
-			} catch (final Throwable e) {
+			} catch (Throwable e) {
 				// System.err.printf("Cloud not evaluate jackson-jq '%s' <<< '%s'%n", expr, in);
 				continue;
 			}
@@ -210,7 +210,7 @@ public class RandomTest {
 					expressions.add(expr);
 				}
 			} catch (Throwable th) {
-				final TestCase test = new TestCase();
+				TestCase test = new TestCase();
 				test.in = in;
 				test.version = new VersionRange(VERSION, true, VERSION, true);
 				if (expected.error != null) {
@@ -223,7 +223,7 @@ public class RandomTest {
 				}
 				System.err.println("# " + MAPPER.writeValueAsString(test));
 				System.err.printf("$ jq '%s' <<< '%s' # version = %s%n", expr, test.in, test.version != null ? test.version : "");
-				for (final JsonNode out : expected.values)
+				for (JsonNode out : expected.values)
 					System.err.printf("%s%n", out);
 				if (expected.error != null) {
 					if (!(expected.error instanceof JsonQueryException))
@@ -231,7 +231,7 @@ public class RandomTest {
 					System.err.printf("jq: error (at <unknown>): %s%n", expected.error.getMessage().replace("\n", "\\n"));
 				}
 				System.err.printf("$ jackson-jq '%s' <<< '%s' # version = %s%n", expr, test.in, test.version != null ? test.version : "");
-				for (final JsonNode out : actual.values)
+				for (JsonNode out : actual.values)
 					System.err.printf("%s%n", out);
 				if (actual.error != null) {
 					if (!(actual.error instanceof JsonQueryException))

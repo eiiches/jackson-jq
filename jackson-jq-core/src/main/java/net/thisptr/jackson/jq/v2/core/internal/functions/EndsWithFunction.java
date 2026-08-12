@@ -14,7 +14,7 @@ public class EndsWithFunction extends AbstractStartsEndsWithFunction {
 	}
 
 	@Override
-	protected boolean doCheck(final String text, final String needle) {
+	protected boolean doCheck(String text, String needle) {
 		return text.endsWith(needle);
 	}
 }

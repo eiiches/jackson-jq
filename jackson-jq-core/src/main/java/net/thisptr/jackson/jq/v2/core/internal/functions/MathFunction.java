@@ -18,13 +18,13 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public abstract class MathFunction implements Function {
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "mathfunc", in, JsonNodeType.NUMBER);
 		output.emit(jsonProvider.createDouble(f(jsonProvider.asDouble(in))), null);
 	}
 
-	protected abstract double f(final double f);
+	protected abstract double f(double f);
 
 	@AutoService(Function.class)
 	@FunctionRegistration("atan/0")
@@ -102,7 +102,7 @@ public abstract class MathFunction implements Function {
 	@FunctionRegistration(value = "round/0", version = "[1.6, )")
 	public static class RoundFunction extends MathFunction {
 		@Override
-		protected double f(final double v) {
+		protected double f(double v) {
 			return v >= 0 ? Math.round(v) : -Math.round(-v);
 		}
 	}
@@ -138,7 +138,7 @@ public abstract class MathFunction implements Function {
 	@FunctionRegistration("cbrt/0")
 	public static class CbrtFunction extends MathFunction {
 		@Override
-		protected double f(final double v) {
+		protected double f(double v) {
 			return Math.cbrt(v);
 		}
 	}
@@ -147,7 +147,7 @@ public abstract class MathFunction implements Function {
 	@FunctionRegistration("sqrt/0")
 	public static class SqrtFunction extends MathFunction {
 		@Override
-		protected double f(final double v) {
+		protected double f(double v) {
 			return Math.sqrt(v);
 		}
 	}
@@ -156,7 +156,7 @@ public abstract class MathFunction implements Function {
 	@FunctionRegistration("log2/0")
 	public static class Log2Function extends MathFunction {
 		@Override
-		protected double f(final double v) {
+		protected double f(double v) {
 			return Math.log10(v) / Math.log10(2);
 		}
 	}
@@ -165,7 +165,7 @@ public abstract class MathFunction implements Function {
 	@FunctionRegistration("log/0")
 	public static class LogFunction extends MathFunction {
 		@Override
-		protected double f(final double v) {
+		protected double f(double v) {
 			return Math.log(v);
 		}
 	}
@@ -174,7 +174,7 @@ public abstract class MathFunction implements Function {
 	@FunctionRegistration("log10/0")
 	public static class Log10Function extends MathFunction {
 		@Override
-		protected double f(final double v) {
+		protected double f(double v) {
 			return Math.log10(v);
 		}
 	}
@@ -183,7 +183,7 @@ public abstract class MathFunction implements Function {
 	@FunctionRegistration(value = "log1p/0", version = "[1.6, )")
 	public static class Log1pFunction extends MathFunction {
 		@Override
-		protected double f(final double v) {
+		protected double f(double v) {
 			return Math.log1p(v);
 		}
 	}
@@ -192,7 +192,7 @@ public abstract class MathFunction implements Function {
 	@FunctionRegistration("exp/0")
 	public static class ExpFunction extends MathFunction {
 		@Override
-		protected double f(final double v) {
+		protected double f(double v) {
 			return Math.exp(v);
 		}
 	}
@@ -201,7 +201,7 @@ public abstract class MathFunction implements Function {
 	@FunctionRegistration(value = "expm1/0", version = "[1.6, )")
 	public static class Expm1Function extends MathFunction {
 		@Override
-		protected double f(final double v) {
+		protected double f(double v) {
 			return Math.expm1(v);
 		}
 	}
@@ -210,7 +210,7 @@ public abstract class MathFunction implements Function {
 	@FunctionRegistration("exp2/0")
 	public static class Exp2Function extends MathFunction {
 		@Override
-		protected double f(final double v) {
+		protected double f(double v) {
 			return Math.pow(2, v);
 		}
 	}
@@ -219,7 +219,7 @@ public abstract class MathFunction implements Function {
 	@FunctionRegistration(value = "exp10/0", version = "[1.6, )")
 	public static class Exp10Function extends MathFunction {
 		@Override
-		protected double f(final double v) {
+		protected double f(double v) {
 			return Math.pow(10, v);
 		}
 	}

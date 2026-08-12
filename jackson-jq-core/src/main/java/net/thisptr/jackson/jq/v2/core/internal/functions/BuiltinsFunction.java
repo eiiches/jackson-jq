@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
+import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -21,17 +22,17 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class BuiltinsFunction implements Function {
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> path, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(@Var Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		// root scope
 		while (scope.getParentScope() != null)
 			scope = scope.getParentScope();
 
-		final List<String> builtins = new ArrayList<>(scope.getLocalFunctions().keySet());
+		List<String> builtins = new ArrayList<>(scope.getLocalFunctions().keySet());
 		Collections.sort(builtins);
 
-		final JsonNode result = jsonProvider.createArray();
-		for (final String builtin : builtins)
+		JsonNode result = jsonProvider.createArray();
+		for (String builtin : builtins)
 			jsonProvider.add(result, jsonProvider.createString(builtin));
 		output.emit(result, null);
 	}

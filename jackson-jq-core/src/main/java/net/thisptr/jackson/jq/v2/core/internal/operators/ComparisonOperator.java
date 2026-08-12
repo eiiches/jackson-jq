@@ -7,15 +7,15 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 public abstract class ComparisonOperator<JsonNode> implements BinaryOperator<JsonNode> {
 	private String image;
 
-	public ComparisonOperator(final String image) {
+	public ComparisonOperator(String image) {
 		this.image = image;
 	}
 
-	protected abstract boolean test(final int r);
+	protected abstract boolean test(int r);
 
 	@Override
 	public JsonNode apply(JsonProvider<JsonNode> jsonProvider, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
-		final int r = new JsonNodeComparator<>(jsonProvider).compare(lhs, rhs);
+		int r = new JsonNodeComparator<>(jsonProvider).compare(lhs, rhs);
 		return jsonProvider.createBoolean(test(r));
 	}
 

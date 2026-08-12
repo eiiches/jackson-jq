@@ -19,27 +19,27 @@ public class AbstractKeysFunction implements Function {
 	private final boolean sortKeys;
 	private final String name;
 
-	public AbstractKeysFunction(final String name, final boolean sortKeys) {
+	public AbstractKeysFunction(String name, boolean sortKeys) {
 		this.name = name;
 		this.sortKeys = sortKeys;
 	}
 
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, name, in, JsonNodeType.OBJECT, JsonNodeType.ARRAY);
 
 		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
-			final List<String> keys = Lists.newArrayList(jsonProvider.fieldNames(in));
+			List<String> keys = Lists.newArrayList(jsonProvider.fieldNames(in));
 			if (sortKeys)
 				Collections.sort(keys);
 
-			final JsonNode result = jsonProvider.createArray();
-			for (final String key : keys)
+			JsonNode result = jsonProvider.createArray();
+			for (String key : keys)
 				jsonProvider.add(result, jsonProvider.createString(key));
 			output.emit(result, null);
 		} else if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
-			final JsonNode result = jsonProvider.createArray();
+			JsonNode result = jsonProvider.createArray();
 			for (int i = 0; i < jsonProvider.size(in); ++i)
 				jsonProvider.add(result, jsonProvider.createInt(i));
 			output.emit(result, null);

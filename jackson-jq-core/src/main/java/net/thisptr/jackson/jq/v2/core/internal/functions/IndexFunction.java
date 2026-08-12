@@ -19,15 +19,15 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("index/1")
 public class IndexFunction implements Function {
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		if (jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
 			output.emit(jsonProvider.createNull(), null);
 			return;
 		}
 
 		args.get(0).apply(scope, in, (needle) -> {
-			final List<Integer> tmp = IndicesFunction.indices(jsonProvider, needle, in);
+			List<Integer> tmp = IndicesFunction.indices(jsonProvider, needle, in);
 			if (tmp.isEmpty()) {
 				output.emit(jsonProvider.createNull(), null);
 			} else {

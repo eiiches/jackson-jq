@@ -15,15 +15,15 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public abstract class AbstractStartsEndsWithFunction implements Function {
 	private final String fname;
 
-	public AbstractStartsEndsWithFunction(final String fname) {
+	public AbstractStartsEndsWithFunction(String fname) {
 		this.fname = fname;
 	}
 
-	protected abstract boolean doCheck(final String text, final String needle);
+	protected abstract boolean doCheck(String text, String needle);
 
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		args.get(0).apply(scope, in, (needle) -> {
 			if (jsonProvider.getNodeType(needle) != JsonNodeType.STRING || jsonProvider.getNodeType(in) != JsonNodeType.STRING)
 				throw new JsonQueryException(fname + "() requires string inputs");

@@ -4,7 +4,7 @@ import net.thisptr.jackson.jq.v2.core.internal.operators.AlternativeOperator;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 
 public class ComplexAlternativeAssignment extends ComplexAssignment {
-	public ComplexAlternativeAssignment(final Expression lhs, final Expression rhs) {
+	public ComplexAlternativeAssignment(Expression lhs, Expression rhs) {
 		super(lhs, rhs, new AlternativeOperator());
 	}
 }

@@ -22,8 +22,8 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("indices/1")
 public class IndicesFunction implements Function {
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "indices", in, JsonNodeType.STRING, JsonNodeType.ARRAY, JsonNodeType.NULL);
 
 		if (jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
@@ -32,28 +32,28 @@ public class IndicesFunction implements Function {
 		}
 
 		args.get(0).apply(scope, in, (needle) -> {
-			final JsonNode indices = jsonProvider.createArray();
-			for (final int index : indices(jsonProvider, needle, in))
+			JsonNode indices = jsonProvider.createArray();
+			for (int index : indices(jsonProvider, needle, in))
 				jsonProvider.add(indices, jsonProvider.createInt(index));
 			output.emit(indices, null);
 		});
 	}
 
-	public static <JsonNode> List<Integer> indices(final JsonProvider<JsonNode> jsonProvider, final JsonNode needle, final JsonNode haystack) throws JsonQueryException {
-		final JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
-		final List<Integer> result = new ArrayList<>();
-		final JsonNodeType needleType = jsonProvider.getNodeType(needle);
-		final JsonNodeType haystackType = jsonProvider.getNodeType(haystack);
+	public static <JsonNode> List<Integer> indices(JsonProvider<JsonNode> jsonProvider, JsonNode needle, JsonNode haystack) throws JsonQueryException {
+		JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
+		List<Integer> result = new ArrayList<>();
+		JsonNodeType needleType = jsonProvider.getNodeType(needle);
+		JsonNodeType haystackType = jsonProvider.getNodeType(haystack);
 		if (needleType == JsonNodeType.STRING && haystackType == JsonNodeType.STRING) {
-			final String haystackText = jsonProvider.asText(haystack);
-			final String needleText = jsonProvider.asText(needle);
+			String haystackText = jsonProvider.asText(haystack);
+			String needleText = jsonProvider.asText(needle);
 			if (!needleText.isEmpty()) {
 				for (int index = haystackText.indexOf(needleText); index >= 0; index = haystackText.indexOf(needleText, index + 1))
 					result.add(index);
 			}
 		} else if (needleType == JsonNodeType.ARRAY && haystackType == JsonNodeType.ARRAY) {
-			final int needleSize = jsonProvider.size(needle);
-			final int haystackSize = jsonProvider.size(haystack);
+			int needleSize = jsonProvider.size(needle);
+			int haystackSize = jsonProvider.size(haystack);
 			if (needleSize != 0) {
 				shift: for (int i = 0; i < haystackSize - needleSize + 1; ++i) {
 					for (int j = 0; j < needleSize; ++j)
@@ -63,7 +63,7 @@ public class IndicesFunction implements Function {
 				}
 			}
 		} else if (haystackType == JsonNodeType.ARRAY) {
-			final int haystackSize = jsonProvider.size(haystack);
+			int haystackSize = jsonProvider.size(haystack);
 			for (int i = 0; i < haystackSize; ++i)
 				if (comparator.compare(jsonProvider.get(haystack, i), needle) == 0)
 					result.add(i);

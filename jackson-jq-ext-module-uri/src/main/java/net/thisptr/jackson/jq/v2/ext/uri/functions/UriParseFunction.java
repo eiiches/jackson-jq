@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import com.google.errorprone.annotations.Var;
+
 import net.thisptr.jackson.jq.v2.ext.uri.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -26,22 +28,22 @@ public class UriParseFunction implements Function {
 	private static final Pattern AMPERSAND = Pattern.compile(Pattern.quote("&"));
 	private static final Pattern EQUAL = Pattern.compile(Pattern.quote("="));
 
-	private <JsonNode> Map<String, JsonNode> parseQueryObj(final Scope<JsonNode> scope, final String rawQuery) {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		final Map<String, List<String>> result = new HashMap<>();
+	private <JsonNode> Map<String, JsonNode> parseQueryObj(Scope<JsonNode> scope, String rawQuery) {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		Map<String, List<String>> result = new HashMap<>();
 		if (rawQuery == null)
 			return Collections.emptyMap();
-		for (final String kv : AMPERSAND.split(rawQuery, -1)) {
-			final String[] tuple = EQUAL.split(kv, -1);
+		for (String kv : AMPERSAND.split(rawQuery, -1)) {
+			String[] tuple = EQUAL.split(kv, -1);
 			if (tuple.length != 2)
 				continue;
-			final String keyEncoded = tuple[0];
-			final String valueEncoded = tuple[1];
+			String keyEncoded = tuple[0];
+			String valueEncoded = tuple[1];
 
 			try {
-				final String key = URLDecoder.decode(keyEncoded, "UTF-8");
-				final String value = URLDecoder.decode(valueEncoded, "UTF-8");
-				List<String> arr = result.get(key);
+				String key = URLDecoder.decode(keyEncoded, "UTF-8");
+				String value = URLDecoder.decode(valueEncoded, "UTF-8");
+				@Var List<String> arr = result.get(key);
 				if (arr == null) {
 					arr = new ArrayList<>(1);
 					result.put(key, arr);
@@ -51,11 +53,11 @@ public class UriParseFunction implements Function {
 				continue;
 			}
 		}
-		final Map<String, JsonNode> result2 = new HashMap<>();
-		for (final Map.Entry<String, List<String>> entry : result.entrySet()) {
+		Map<String, JsonNode> result2 = new HashMap<>();
+		for (Map.Entry<String, List<String>> entry : result.entrySet()) {
 			if (entry.getValue().size() > 1) {
-				JsonNode arr = jsonProvider.createArray();
-				for (final String value : entry.getValue())
+				@Var JsonNode arr = jsonProvider.createArray();
+				for (String value : entry.getValue())
 					arr = jsonProvider.add(arr, jsonProvider.createString(value));
 				result2.put(entry.getKey(), arr);
 			} else {
@@ -65,8 +67,8 @@ public class UriParseFunction implements Function {
 		return result2;
 	}
 
-	private <JsonNode> JsonNode buildResult(final JsonProvider<JsonNode> jsonProvider, final URI uri, final Map<String, JsonNode> queryObj) {
-		JsonNode result = jsonProvider.createObject();
+	private <JsonNode> JsonNode buildResult(JsonProvider<JsonNode> jsonProvider, URI uri, Map<String, JsonNode> queryObj) {
+		@Var JsonNode result = jsonProvider.createObject();
 		result = jsonProvider.set(result, "scheme", uri.getScheme() != null ? jsonProvider.createString(uri.getScheme()) : jsonProvider.createNull());
 		result = jsonProvider.set(result, "user_info", uri.getUserInfo() != null ? jsonProvider.createString(uri.getUserInfo()) : jsonProvider.createNull());
 		result = jsonProvider.set(result, "raw_user_info", uri.getRawUserInfo() != null ? jsonProvider.createString(uri.getRawUserInfo()) : jsonProvider.createNull());
@@ -79,8 +81,8 @@ public class UriParseFunction implements Function {
 		result = jsonProvider.set(result, "query", uri.getQuery() != null ? jsonProvider.createString(uri.getQuery()) : jsonProvider.createNull());
 		result = jsonProvider.set(result, "raw_query", uri.getRawQuery() != null ? jsonProvider.createString(uri.getRawQuery()) : jsonProvider.createNull());
 
-		JsonNode queryObjNode = jsonProvider.createObject();
-		for (final Map.Entry<String, JsonNode> entry : queryObj.entrySet()) {
+		@Var JsonNode queryObjNode = jsonProvider.createObject();
+		for (Map.Entry<String, JsonNode> entry : queryObj.entrySet()) {
 			queryObjNode = jsonProvider.set(queryObjNode, entry.getKey(), entry.getValue());
 		}
 		result = jsonProvider.set(result, "query_obj", queryObjNode);
@@ -91,13 +93,13 @@ public class UriParseFunction implements Function {
 	}
 
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "uriparse", in, JsonNodeType.STRING);
 
 		try {
-			final URI uri = new URI(jsonProvider.asText(in));
-			final Map<String, JsonNode> queryObj = parseQueryObj(scope, uri.getRawQuery());
+			URI uri = new URI(jsonProvider.asText(in));
+			Map<String, JsonNode> queryObj = parseQueryObj(scope, uri.getRawQuery());
 			output.emit(buildResult(jsonProvider, uri, queryObj), null);
 		} catch (URISyntaxException e) {
 			throw new JsonQueryException(e);

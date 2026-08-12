@@ -9,6 +9,7 @@ import java.nio.file.FileSystems;
 import java.util.Arrays;
 import java.util.List;
 
+import com.google.errorprone.annotations.Var;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -68,17 +69,17 @@ public class Main {
 			.build();
 
 	public static void main(String[] args) throws IOException, ParseException {
-		final Options options = new Options();
+		Options options = new Options();
 		options.addOption(OPT_COMPACT);
 		options.addOption(OPT_RAW_OUTPUT);
 		options.addOption(OPT_NULL_INPUT);
 		options.addOption(OPT_VERSION);
 		options.addOption(OPT_HELP);
 
-		final CommandLine command;
-		final List<String> rest;
+		CommandLine command;
+		List<String> rest;
 		try {
-			final CommandLineParser parser = new DefaultParser();
+			CommandLineParser parser = new DefaultParser();
 			command = parser.parse(options, args);
 			rest = command.getArgList();
 		} catch (ParseException e) {
@@ -87,7 +88,7 @@ public class Main {
 			throw e;
 		}
 
-		Version version = Versions.JQ_1_6;
+		@Var Version version = Versions.JQ_1_6;
 		if (command.hasOption(OPT_VERSION.getLongOpt())) {
 			version = Version.valueOf(command.getOptionValue(OPT_VERSION.getLongOpt()));
 			if (!Versions.versions().contains(version)) {
@@ -97,12 +98,12 @@ public class Main {
 		}
 
 		if (rest.isEmpty() || command.hasOption(OPT_HELP.getOpt())) {
-			final HelpFormatter help = new HelpFormatter();
+			HelpFormatter help = new HelpFormatter();
 			help.printHelp("jackson-jq [OPTIONS...] QUERY", options, false);
 			System.exit(0);
 		}
 
-		final JsonQuery<JsonNode> jq = JsonQuery.compile(rest.get(0), version);
+		JsonQuery<JsonNode> jq = JsonQuery.compile(rest.get(0), version);
 
 		if (!command.hasOption(OPT_COMPACT.getOpt())) {
 			MAPPER = MAPPER.rebuild()
@@ -110,12 +111,12 @@ public class Main {
 					.build();
 		}
 
-		InputStream is = System.in;
+		@Var InputStream is = System.in;
 		if (command.hasOption(OPT_NULL_INPUT.getOpt())) {
 			is = new ByteArrayInputStream("null".getBytes());
 		}
 
-		final Scope<JsonNode> scope = Scope.newEmptyScope(Jackson3JsonProviderImpl.getInstance());
+		Scope<JsonNode> scope = Scope.newEmptyScope(Jackson3JsonProviderImpl.getInstance());
 		BuiltinFunctionLoader.getInstance().loadFunctions(version, scope);
 		scope.addFunction("env", 0, new EnvFunction());
 
@@ -124,10 +125,10 @@ public class Main {
 				new FileSystemModuleLoader(scope, version, FileSystems.getDefault().getPath("").toAbsolutePath()),
 		}));
 
-		try (final BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-			 final MappingIterator<JsonNode> iter = MAPPER.readerFor(JsonNode.class).readValues(reader)) {
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+			 MappingIterator<JsonNode> iter = MAPPER.readerFor(JsonNode.class).readValues(reader)) {
 			while (iter.hasNext()) {
-				final JsonNode tree = iter.next();
+				JsonNode tree = iter.next();
 				try {
 					jq.apply(scope, tree, (JsonNode out) -> {
 						if (out.isTextual() && command.hasOption(OPT_RAW_OUTPUT.getOpt())) {

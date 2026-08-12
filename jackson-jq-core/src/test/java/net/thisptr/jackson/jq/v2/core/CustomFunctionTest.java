@@ -51,7 +51,7 @@ public class CustomFunctionTest {
 
         JsonQuery<JsonNode> query = JsonQuery.compile("{ \"a\": times100(.a) }", version);
 
-        final List<JsonNode> out = new ArrayList<>();
+        List<JsonNode> out = new ArrayList<>();
         query.apply(childScope, mapper.readTree(input), out::add);
         assertThat(out).hasSize(1);
         assertThat(out.get(0)).isInstanceOf(ObjectNode.class);

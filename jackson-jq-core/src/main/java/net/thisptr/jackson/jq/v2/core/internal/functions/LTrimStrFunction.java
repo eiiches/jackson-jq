@@ -9,7 +9,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 @FunctionRegistration("ltrimstr/1")
 public class LTrimStrFunction extends AbstractTrimStrFunction {
 	@Override
-	protected String doTrim(final String text, final String trim) {
+	protected String doTrim(String text, String trim) {
 		if (!text.startsWith(trim))
 			return text;
 		return text.substring(trim.length());

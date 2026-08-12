@@ -10,12 +10,12 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class BreakExpression<JsonNode> implements Expression<JsonNode> {
 	private final String name;
 
-	public BreakExpression(final String name) {
+	public BreakExpression(String name) {
 		this.name = name;
 	}
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		throw new JsonQueryBreakException(name);
 	}
 

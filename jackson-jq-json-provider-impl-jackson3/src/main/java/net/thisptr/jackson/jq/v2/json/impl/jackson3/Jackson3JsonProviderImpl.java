@@ -30,7 +30,7 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 
 	private final ObjectMapper mapper;
 
-	public Jackson3JsonProviderImpl(final ObjectMapper mapper) {
+	public Jackson3JsonProviderImpl(ObjectMapper mapper) {
 		this.mapper = mapper;
 	}
 
@@ -52,27 +52,27 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public JsonNode createString(final String value) {
+	public JsonNode createString(String value) {
 		return StringNode.valueOf(value);
 	}
 
 	@Override
-	public JsonNode createLong(final long value) {
+	public JsonNode createLong(long value) {
 		return LongNode.valueOf(value);
 	}
 
 	@Override
-	public JsonNode createInt(final int value) {
+	public JsonNode createInt(int value) {
 		return IntNode.valueOf(value);
 	}
 
 	@Override
-	public JsonNode createDouble(final double value) {
+	public JsonNode createDouble(double value) {
 		return DoubleNode.valueOf(value);
 	}
 
 	@Override
-	public JsonNode createBoolean(final boolean value) {
+	public JsonNode createBoolean(boolean value) {
 		return BooleanNode.valueOf(value);
 	}
 
@@ -87,7 +87,7 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public JsonNodeType getNodeType(final JsonNode node) {
+	public JsonNodeType getNodeType(JsonNode node) {
 		switch (node.getNodeType()) {
 			case ARRAY:
 				return JsonNodeType.ARRAY;
@@ -111,22 +111,22 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public boolean isMissingNode(final JsonNode node) {
+	public boolean isMissingNode(JsonNode node) {
 		return node.isMissingNode();
 	}
 
 	@Override
-	public boolean asBoolean(final JsonNode node) {
+	public boolean asBoolean(JsonNode node) {
 		return node.asBoolean();
 	}
 
 	@Override
-	public double asDouble(final JsonNode node) {
+	public double asDouble(JsonNode node) {
 		return node.asDouble();
 	}
 
 	@Override
-	public String asText(final JsonNode node) {
+	public String asText(JsonNode node) {
 		// Jackson3's NullNode.asString() returns "" but we need "null" to match Jackson2 behavior
 		if (node.isNull()) {
 			return "null";
@@ -135,85 +135,85 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public long asLong(final JsonNode node) {
+	public long asLong(JsonNode node) {
 		return node.asLong();
 	}
 
 	@Override
-	public int asInt(final JsonNode node) {
+	public int asInt(JsonNode node) {
 		return node.asInt();
 	}
 
 	@Override
-	public byte[] asByteArray(final JsonNode node) {
+	public byte[] asByteArray(JsonNode node) {
 		return node.binaryValue();
 	}
 
 	@Override
-	public Iterator<Entry<String, JsonNode>> fields(final JsonNode node) {
+	public Iterator<Entry<String, JsonNode>> fields(JsonNode node) {
 		return node.properties().iterator();
 	}
 
 	@Override
-	public Iterator<JsonNode> elements(final JsonNode node) {
+	public Iterator<JsonNode> elements(JsonNode node) {
 		return node.iterator();
 	}
 
 	@Override
-	public Iterator<String> fieldNames(final JsonNode node) {
+	public Iterator<String> fieldNames(JsonNode node) {
 		return node.propertyNames().iterator();
 	}
 
 	@Override
-	public JsonNode get(final JsonNode node, final String fieldName) {
+	public JsonNode get(JsonNode node, String fieldName) {
 		return node.get(fieldName);
 	}
 
 	@Override
-	public JsonNode get(final JsonNode node, final int index) {
+	public JsonNode get(JsonNode node, int index) {
 		return node.get(index);
 	}
 
 	@Override
-	public JsonNode set(final JsonNode node, final String fieldName, final JsonNode value) {
+	public JsonNode set(JsonNode node, String fieldName, JsonNode value) {
 		((ObjectNode) node).set(fieldName, value);
 		return node;
 	}
 
 	@Override
-	public JsonNode add(final JsonNode node, final JsonNode value) {
+	public JsonNode add(JsonNode node, JsonNode value) {
 		((ArrayNode) node).add(value);
 		return node;
 	}
 
 	@Override
-	public JsonNode set(final JsonNode node, final int index, final JsonNode value) {
+	public JsonNode set(JsonNode node, int index, JsonNode value) {
 		((ArrayNode) node).set(index, value);
 		return node;
 	}
 
 	@Override
-	public int size(final JsonNode node) {
+	public int size(JsonNode node) {
 		return node.size();
 	}
 
 	@Override
-	public boolean has(final JsonNode node, final String fieldName) {
+	public boolean has(JsonNode node, String fieldName) {
 		return node.has(fieldName);
 	}
 
 	@Override
-	public boolean has(final JsonNode node, final int index) {
+	public boolean has(JsonNode node, int index) {
 		return node.has(index);
 	}
 
 	@Override
-	public JsonNode deepCopy(final JsonNode node) {
+	public JsonNode deepCopy(JsonNode node) {
 		return node.deepCopy();
 	}
 
 	@Override
-	public String toString(final JsonNode node) {
+	public String toString(JsonNode node) {
 		try {
 			return mapper.writeValueAsString(node);
 		} catch (JacksonException e) {
@@ -222,7 +222,7 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public JsonNode fromString(final String json) throws IOException {
+	public JsonNode fromString(String json) throws IOException {
 		try {
 			return mapper.readTree(json);
 		} catch (JacksonException e) {
@@ -231,9 +231,9 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public JsonNode fromStringStrict(final String json) throws IOException {
-		try (final JsonParser parser = mapper.createParser(json)) {
-			final JsonNode tree = parser.readValueAsTree();
+	public JsonNode fromStringStrict(String json) throws IOException {
+		try (JsonParser parser = mapper.createParser(json)) {
+			JsonNode tree = parser.readValueAsTree();
 			if (tree == null)
 				throw new IOException("empty input");
 			if (parser.nextToken() != null)
@@ -245,9 +245,9 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public List<JsonNode> readMultipleValues(final String json) throws IOException {
-		final List<JsonNode> result = new ArrayList<>();
-		try (final MappingIterator<JsonNode> iter = mapper.readerFor(JsonNode.class).readValues(json)) {
+	public List<JsonNode> readMultipleValues(String json) throws IOException {
+		List<JsonNode> result = new ArrayList<>();
+		try (MappingIterator<JsonNode> iter = mapper.readerFor(JsonNode.class).readValues(json)) {
 			while (iter.hasNext()) {
 				result.add(iter.next());
 			}
@@ -258,12 +258,12 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public JsonNode valueToTree(final Object value) {
+	public JsonNode valueToTree(Object value) {
 		return mapper.valueToTree(value);
 	}
 
 	@Override
-	public boolean isJsonNodeInstance(final Object arg) {
+	public boolean isJsonNodeInstance(Object arg) {
 		return arg instanceof JsonNode;
 	}
 }

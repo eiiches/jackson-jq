@@ -13,18 +13,18 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class ValueMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	private String name;
 
-	public ValueMatcher(final String name) {
+	public ValueMatcher(String name) {
 		this.name = name;
 	}
 
 	@Override
-	public void match(final Scope<JsonNode> scope, final JsonNode in, final Functional.Consumer<List<Pair<String, JsonNode>>> out, final Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException {
+	public void match(Scope<JsonNode> scope, JsonNode in, Functional.Consumer<List<Pair<String, JsonNode>>> out, Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException {
 		accumulate.push(Pair.of(name, in));
 		out.accept(accumulate);
 	}
 
 	@Override
-	public void matchWithPath(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> path, final MatchOutput<JsonNode> output, final Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
+	public void matchWithPath(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
 		accumulate.push(new MatchWithPath<>(name, in, path));
 		output.emit(accumulate);
 	}

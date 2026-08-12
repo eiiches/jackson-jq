@@ -3,6 +3,8 @@ package net.thisptr.jackson.jq.v2.core;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.errorprone.annotations.Var;
+
 import net.thisptr.jackson.jq.v2.spi.Version;
 
 public class VersionRange {
@@ -11,22 +13,22 @@ public class VersionRange {
 	private final Version maxVersion;
 	private final boolean maxInclusive;
 
-	public VersionRange(final Version minVersion, final boolean minInclusive,
-						final Version maxVersion, final boolean maxInclusive) {
+	public VersionRange(Version minVersion, boolean minInclusive,
+						Version maxVersion, boolean maxInclusive) {
 		this.minVersion = minVersion;
 		this.minInclusive = minInclusive;
 		this.maxVersion = maxVersion;
 		this.maxInclusive = maxInclusive;
 	}
 
-	public boolean contains(final Version version) {
+	public boolean contains(Version version) {
 		if (minVersion != null) {
-			final int r = version.compareTo(minVersion);
+			int r = version.compareTo(minVersion);
 			if (r < 0 || (!minInclusive && r == 0))
 				return false;
 		}
 		if (maxVersion != null) {
-			final int r = maxVersion.compareTo(version);
+			int r = maxVersion.compareTo(version);
 			if (r < 0 || (!maxInclusive && r == 0))
 				return false;
 		}
@@ -35,8 +37,8 @@ public class VersionRange {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
+		int prime = 31;
+		@Var int result = 1;
 		result = prime * result + (maxInclusive ? 1231 : 1237);
 		result = prime * result + ((maxVersion == null) ? 0 : maxVersion.hashCode());
 		result = prime * result + (minInclusive ? 1231 : 1237);
@@ -72,15 +74,15 @@ public class VersionRange {
 
 	public static Pattern VERSION_RANGE_PATTERN = Pattern.compile("([\\[\\(])\\s*([0-9]\\.[0-9])?\\s*,\\s*([0-9]\\.[0-9])?([\\]\\)])");
 
-	public static VersionRange valueOf(final String text) {
-		final Matcher m = VERSION_RANGE_PATTERN.matcher(text);
+	public static VersionRange valueOf(String text) {
+		Matcher m = VERSION_RANGE_PATTERN.matcher(text);
 		if (!m.matches())
 			throw new IllegalArgumentException("Invalid VersionRange: " + text);
 
-		final String minInclusive = m.group(1);
-		final String minVersion = m.group(2);
-		final String maxVersion = m.group(3);
-		final String maxInclusive = m.group(4);
+		String minInclusive = m.group(1);
+		String minVersion = m.group(2);
+		String maxVersion = m.group(3);
+		String maxInclusive = m.group(4);
 
 		return new VersionRange(minVersion != null && !minVersion.isEmpty() ? Version.valueOf(minVersion) : null,
 				"[".equals(minInclusive),
@@ -90,7 +92,7 @@ public class VersionRange {
 
 	@Override
 	public String toString() {
-		final StringBuilder builder = new StringBuilder();
+		StringBuilder builder = new StringBuilder();
 		builder.append(minInclusive ? "[" : "(");
 		builder.append(minVersion != null ? minVersion : "");
 		builder.append(",");

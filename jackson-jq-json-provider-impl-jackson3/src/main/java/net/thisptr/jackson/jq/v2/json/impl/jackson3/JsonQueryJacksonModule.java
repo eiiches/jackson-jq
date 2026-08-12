@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.json.impl.jackson3;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import com.google.errorprone.annotations.Var;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.core.Version;
@@ -32,7 +33,7 @@ public class JsonQueryJacksonModule extends SimpleModule {
 		addSerializer(ObjectNode.class, new ObjectNodeSerializer());
 	}
 
-	private static String format(double val) {
+	private static String format(@Var double val) {
 		if (Double.isNaN(val))
 			return "null";
 
@@ -50,34 +51,34 @@ public class JsonQueryJacksonModule extends SimpleModule {
 	}
 
 	private static class ArrayNodeSerializer extends StdSerializer<ArrayNode> {
-		private static final long serialVersionUID = 1L;
+		private static long serialVersionUID = 1L;
 
 		public ArrayNodeSerializer() {
 			super(ArrayNode.class);
 		}
 
 		@Override
-		public void serialize(final ArrayNode value, final JsonGenerator gen, final SerializationContext serializers) throws JacksonException {
+		public void serialize(ArrayNode value, JsonGenerator gen, SerializationContext serializers) throws JacksonException {
 			gen.writeStartArray();
-			for (final JsonNode element : value)
+			for (JsonNode element : value)
 				gen.writePOJO(element);
 			gen.writeEndArray();
 		}
 	}
 
 	private static class ObjectNodeSerializer extends StdSerializer<ObjectNode> {
-		private static final long serialVersionUID = 1L;
+		private static long serialVersionUID = 1L;
 
 		public ObjectNodeSerializer() {
 			super(ObjectNode.class);
 		}
 
 		@Override
-		public void serialize(final ObjectNode value, final JsonGenerator gen, final SerializationContext serializers) throws JacksonException {
+		public void serialize(ObjectNode value, JsonGenerator gen, SerializationContext serializers) throws JacksonException {
 			gen.writeStartObject();
-			final Iterator<Entry<String, JsonNode>> iter = value.properties().iterator();
+			Iterator<Entry<String, JsonNode>> iter = value.properties().iterator();
 			while (iter.hasNext()) {
-				final Entry<String, JsonNode> entry = iter.next();
+				Entry<String, JsonNode> entry = iter.next();
 				gen.writeName(entry.getKey());
 				gen.writePOJO(entry.getValue());
 			}
@@ -86,7 +87,7 @@ public class JsonQueryJacksonModule extends SimpleModule {
 	}
 
 	private static class DoubleNodeSerializer extends StdSerializer<DoubleNode> {
-		private static final long serialVersionUID = 1L;
+		private static long serialVersionUID = 1L;
 
 		public DoubleNodeSerializer() {
 			super(DoubleNode.class);
@@ -99,7 +100,7 @@ public class JsonQueryJacksonModule extends SimpleModule {
 	}
 
 	private static class FloatNodeSerializer extends StdSerializer<FloatNode> {
-		private static final long serialVersionUID = 1L;
+		private static long serialVersionUID = 1L;
 
 		public FloatNodeSerializer() {
 			super(FloatNode.class);

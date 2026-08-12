@@ -20,17 +20,17 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("reverse/0")
 public class ReverseFunction implements Function {
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		final JsonNode out = jsonProvider.createArray();
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		JsonNode out = jsonProvider.createArray();
 
-		final JsonNodeType type = jsonProvider.getNodeType(in);
+		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type == JsonNodeType.NULL) {
 			output.emit(out, null);
 			return;
 		}
 		if (type == JsonNodeType.ARRAY) {
-			final int size = jsonProvider.size(in);
+			int size = jsonProvider.size(in);
 			for (int i = size - 1; i >= 0; --i)
 				jsonProvider.add(out, jsonProvider.get(in, i));
 			output.emit(out, null);

@@ -25,24 +25,24 @@ public final class ClassLoaderUtils {
 
 	private static FileSystem createNativeImageResourceFileSystem() {
 		try {
-			final FileSystem fileSystem = FileSystems.newFileSystem(
+			FileSystem fileSystem = FileSystems.newFileSystem(
 					URI.create("resource:/"),
 					Collections.singletonMap("create", "true"));
 			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 				try {
 					fileSystem.close();
-				} catch (final IOException e) {
+				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
 			}));
 			return fileSystem;
-		} catch (final Exception e) {
+		} catch (Exception e) {
 			return null;
 		}
 	}
 
-	public static List<String> listResources(final ClassLoader classLoader, final String basePath) throws IOException {
-		final URL resource = Objects.requireNonNull(classLoader.getResource(basePath), "Resource not found: " + basePath);
+	public static List<String> listResources(ClassLoader classLoader, String basePath) throws IOException {
+		URL resource = Objects.requireNonNull(classLoader.getResource(basePath), "Resource not found: " + basePath);
 		try {
 			if ("resource".equals(resource.getProtocol())) {
 				if (NATIVE_IMAGE_RESOURCE_FILE_SYSTEM == null)
@@ -54,25 +54,25 @@ public final class ClassLoaderUtils {
 			if ("jar".equals(resource.getProtocol()))
 				return listJarResources(resource, basePath);
 			throw new IOException("Unsupported resource protocol: " + resource.getProtocol());
-		} catch (final URISyntaxException e) {
+		} catch (URISyntaxException e) {
 			throw new IOException("Invalid resource URI: " + resource, e);
 		}
 	}
 
-	private static List<String> listJarResources(final URL resource, final String basePath) throws IOException, URISyntaxException {
-		final JarURLConnection connection = (JarURLConnection) resource.openConnection();
-		final URI fileSystemUri = URI.create("jar:" + connection.getJarFileURL().toURI());
+	private static List<String> listJarResources(URL resource, String basePath) throws IOException, URISyntaxException {
+		JarURLConnection connection = (JarURLConnection) resource.openConnection();
+		URI fileSystemUri = URI.create("jar:" + connection.getJarFileURL().toURI());
 		try {
 			try (FileSystem fileSystem = FileSystems.newFileSystem(fileSystemUri, Collections.emptyMap())) {
 				return listResources(fileSystem.getPath("/" + connection.getEntryName()), basePath);
 			}
-		} catch (final FileSystemAlreadyExistsException e) {
-			final FileSystem fileSystem = FileSystems.getFileSystem(fileSystemUri);
+		} catch (FileSystemAlreadyExistsException e) {
+			FileSystem fileSystem = FileSystems.getFileSystem(fileSystemUri);
 			return listResources(fileSystem.getPath("/" + connection.getEntryName()), basePath);
 		}
 	}
 
-	private static List<String> listResources(final Path root, final String basePath) throws IOException {
+	private static List<String> listResources(Path root, String basePath) throws IOException {
 		try (Stream<Path> paths = Files.walk(root)) {
 			return paths.filter(Files::isRegularFile)
 					.map(root::relativize)

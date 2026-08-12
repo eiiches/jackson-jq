@@ -5,7 +5,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 public class BooleanLiteral<JsonNode> extends ValueLiteral<JsonNode> {
 	private boolean value;
 
-	public BooleanLiteral(final boolean value) {
+	public BooleanLiteral(boolean value) {
 		this.value = value;
 	}
 

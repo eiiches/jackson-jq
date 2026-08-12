@@ -24,17 +24,17 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class PathsFunction<JsonNode> implements Function {
 	@Override
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public <N> void apply(final Scope<N> scope, final List<Expression<N>> args, final N in, final Path<N> ipath, final PathOutput<N> output, final Version version) throws JsonQueryException {
+	public <N> void apply(Scope<N> scope, List<Expression<N>> args, N in, Path<N> ipath, PathOutput<N> output, Version version) throws JsonQueryException {
 		applyInternal((Scope) scope, (List) args, (JsonNode) in, (Path) ipath, (PathOutput) output, version);
 	}
 
-	private void applyInternal(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		final Stack<JsonNode> stack = new Stack<>();
+	private void applyInternal(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		Stack<JsonNode> stack = new Stack<>();
 		applyRecursive(jsonProvider, scope, in, output, stack, args.get(0));
 	}
 
-	private void applyRecursive(final JsonProvider<JsonNode> jsonProvider, final Scope<JsonNode> scope, final JsonNode in, final PathOutput<JsonNode> output, final Stack<JsonNode> stack, final Expression<JsonNode> predicate) throws JsonQueryException {
+	private void applyRecursive(JsonProvider<JsonNode> jsonProvider, Scope<JsonNode> scope, JsonNode in, PathOutput<JsonNode> output, Stack<JsonNode> stack, Expression<JsonNode> predicate) throws JsonQueryException {
 		if (!stack.isEmpty()) {
 			predicate.apply(scope, in, (shouldInclude) -> {
 				if (JsonNodeUtils.asBoolean(jsonProvider, shouldInclude))
@@ -42,18 +42,18 @@ public class PathsFunction<JsonNode> implements Function {
 			});
 		}
 
-		final JsonNodeType inType = jsonProvider.getNodeType(in);
+		JsonNodeType inType = jsonProvider.getNodeType(in);
 		if (inType == JsonNodeType.ARRAY) {
-			final int size = jsonProvider.size(in);
+			int size = jsonProvider.size(in);
 			for (int i = 0; i < size; ++i) {
 				stack.push(jsonProvider.createInt(i));
 				applyRecursive(jsonProvider, scope, jsonProvider.get(in, i), output, stack, predicate);
 				stack.pop();
 			}
 		} else if (inType == JsonNodeType.OBJECT) {
-			final Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(in);
+			Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(in);
 			while (iter.hasNext()) {
-				final Entry<String, JsonNode> entry = iter.next();
+				Entry<String, JsonNode> entry = iter.next();
 				stack.push(jsonProvider.createString(entry.getKey()));
 				applyRecursive(jsonProvider, scope, entry.getValue(), output, stack, predicate);
 				stack.pop();

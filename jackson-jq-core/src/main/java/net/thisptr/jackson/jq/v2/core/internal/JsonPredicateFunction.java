@@ -14,13 +14,13 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class JsonPredicateFunction<JsonNode> implements Function {
 	private Predicate<JsonNode> predicate;
 
-	public JsonPredicateFunction(final Predicate<JsonNode> predicate) {
+	public JsonPredicateFunction(Predicate<JsonNode> predicate) {
 		this.predicate = predicate;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <InputNode> void apply(final Scope<InputNode> scope, final List<Expression<InputNode>> args, final InputNode in, final Path<InputNode> ipath, final PathOutput<InputNode> output, final Version version) throws JsonQueryException {
+	public <InputNode> void apply(Scope<InputNode> scope, List<Expression<InputNode>> args, InputNode in, Path<InputNode> ipath, PathOutput<InputNode> output, Version version) throws JsonQueryException {
 		output.emit(scope.jsonProvider().createBoolean(predicate.test((JsonNode) in)), null);
 	}
 }

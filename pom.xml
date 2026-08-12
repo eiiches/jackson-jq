@@ -139,6 +139,11 @@
 			<version>${com.google.auto.service-version}</version>
 			<optional>true</optional> <!-- unnecessary for runtime -->
 		</dependency>
+		<dependency>
+			<groupId>com.google.errorprone</groupId>
+			<artifactId>error_prone_annotations</artifactId>
+			<version>${com.google.errorprone-version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -370,7 +375,7 @@
 									<compilerArgs>
 										<arg>-XDcompilePolicy=simple</arg>
 										<arg>--should-stop=ifError=FLOW</arg>
-										<arg>-Xplugin:ErrorProne</arg>
+										<arg>-Xplugin:ErrorProne -Xep:Var:ERROR -Xep:UnnecessaryFinal:ERROR -XepExcludedPaths:.*/generated-sources/.*</arg>
 										<arg>-XDaddTypeAnnotationsToSymbol=true</arg>
 										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
 										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
@@ -392,7 +397,7 @@
 									<compilerArgs>
 										<arg>-XDcompilePolicy=simple</arg>
 										<arg>--should-stop=ifError=FLOW</arg>
-										<arg>-Xplugin:ErrorProne</arg>
+										<arg>-Xplugin:ErrorProne -Xep:Var:ERROR -Xep:UnnecessaryFinal:ERROR -XepExcludedPaths:.*/generated-sources/.*</arg>
 										<arg>-XDaddTypeAnnotationsToSymbol=true</arg>
 										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
 										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>

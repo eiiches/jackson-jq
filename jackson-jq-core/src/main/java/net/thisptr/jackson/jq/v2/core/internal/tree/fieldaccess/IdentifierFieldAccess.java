@@ -10,14 +10,14 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class IdentifierFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	private String field;
 
-	public IdentifierFieldAccess(final Expression<JsonNode> obj, final String field, final boolean permissive) {
+	public IdentifierFieldAccess(Expression<JsonNode> obj, String field, boolean permissive) {
 		super(obj, permissive);
 		this.field = field;
 	}
 
 	@Override
 	public String toString() {
-		final StringBuilder builder = new StringBuilder();
+		StringBuilder builder = new StringBuilder();
 		if (!(target instanceof ThisObject))
 			builder.append(target.toString());
 		builder.append(".");

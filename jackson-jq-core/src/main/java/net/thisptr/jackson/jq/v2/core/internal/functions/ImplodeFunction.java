@@ -21,16 +21,16 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("implode/0")
 public class ImplodeFunction implements Function {
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputArrayType(jsonProvider, "implode", in, JsonNodeType.NUMBER);
 
-		final StringBuilder builder = new StringBuilder();
-		final Iterator<JsonNode> iter = jsonProvider.elements(in);
+		StringBuilder builder = new StringBuilder();
+		Iterator<JsonNode> iter = jsonProvider.elements(in);
 		while (iter.hasNext()) {
-			final JsonNode ch = iter.next();
-			final int intVal = jsonProvider.asInt(ch);
-			final double doubleVal = jsonProvider.asDouble(ch);
+			JsonNode ch = iter.next();
+			int intVal = jsonProvider.asInt(ch);
+			double doubleVal = jsonProvider.asDouble(ch);
 			if (intVal == doubleVal) {
 				builder.append((char) intVal);
 			} else {

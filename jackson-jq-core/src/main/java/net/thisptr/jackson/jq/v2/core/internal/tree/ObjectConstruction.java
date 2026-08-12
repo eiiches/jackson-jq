@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.errorprone.annotations.Var;
+
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
@@ -18,21 +20,21 @@ public class ObjectConstruction<JsonNode> implements Expression<JsonNode> {
 
 	public ObjectConstruction() {}
 
-	public void add(final FieldConstruction<JsonNode> field) {
+	public void add(FieldConstruction<JsonNode> field) {
 		fields.add(field);
 	}
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
-		final Map<String, JsonNode> tmp = new LinkedHashMap<>(fields.size());
+	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		Map<String, JsonNode> tmp = new LinkedHashMap<>(fields.size());
 		applyRecursive(scope, in, output, fields, tmp);
 	}
 
-	private static <JsonNode> void applyRecursive(final Scope<JsonNode> scope, final JsonNode in, final PathOutput<JsonNode> output, final List<FieldConstruction<JsonNode>> fields, final Map<String, JsonNode> tmp) throws JsonQueryException {
+	private static <JsonNode> void applyRecursive(Scope<JsonNode> scope, JsonNode in, PathOutput<JsonNode> output, List<FieldConstruction<JsonNode>> fields, Map<String, JsonNode> tmp) throws JsonQueryException {
 		if (fields.isEmpty()) {
-			final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-			JsonNode obj = jsonProvider.createObject();
-			for (final Entry<String, JsonNode> e : tmp.entrySet())
+			JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+			@Var JsonNode obj = jsonProvider.createObject();
+			for (Entry<String, JsonNode> e : tmp.entrySet())
 				obj = jsonProvider.set(obj, e.getKey(), e.getValue());
 			output.emit(obj, null);
 			return;
@@ -46,9 +48,9 @@ public class ObjectConstruction<JsonNode> implements Expression<JsonNode> {
 
 	@Override
 	public String toString() {
-		final StringBuilder builder = new StringBuilder("{");
-		String sep = "";
-		for (final FieldConstruction<JsonNode> field : fields) {
+		StringBuilder builder = new StringBuilder("{");
+		@Var String sep = "";
+		for (FieldConstruction<JsonNode> field : fields) {
 			builder.append(sep);
 			builder.append(field);
 			sep = ",";

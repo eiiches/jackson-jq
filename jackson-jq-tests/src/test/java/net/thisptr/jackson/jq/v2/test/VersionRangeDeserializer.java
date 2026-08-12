@@ -17,8 +17,8 @@ public class VersionRangeDeserializer extends StdDeserializer<VersionRange> {
 	}
 
 	@Override
-	public VersionRange deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException, JsonProcessingException {
-		final String text = p.readValueAs(String.class);
+	public VersionRange deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+		String text = p.readValueAs(String.class);
 		if (text == null)
 			return null;
 		return VersionRange.valueOf(text);

@@ -7,7 +7,7 @@ public class AssignPipeComponent<JsonNode> implements PipeComponent<JsonNode> {
 	public final Expression<JsonNode> expr;
 	public final PatternMatcher<JsonNode> matcher;
 
-	public AssignPipeComponent(final Expression<JsonNode> expr, final PatternMatcher<JsonNode> matcher) {
+	public AssignPipeComponent(Expression<JsonNode> expr, PatternMatcher<JsonNode> matcher) {
 		this.expr = expr;
 		this.matcher = matcher;
 	}

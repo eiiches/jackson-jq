@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.functions;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
+import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
@@ -22,15 +23,16 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class PathFunction implements Function {
 
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		args.get(0).apply(scope, in, RootPath.getInstance(), (obj, path) -> {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		args.get(0).apply(scope, in, RootPath.getInstance(), (obj, path0) -> {
+			@Var Path<JsonNode> path = path0;
 			// `VALUE | path(VALUE) => []`
 			if (path == null && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, obj) == 0)
 				path = RootPath.getInstance();
 			if (path == null)
 				throw new JsonQueryException("Invalid path expression with result %s", JsonNodeUtils.toString(jsonProvider, obj));
-			final JsonNode out = jsonProvider.createArray();
+			JsonNode out = jsonProvider.createArray();
 			path.toJsonNode(jsonProvider, out);
 			output.emit(out, null);
 		}, true);

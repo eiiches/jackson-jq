@@ -8,12 +8,12 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class BooleanAndExpression<JsonNode> extends BinaryOperatorExpression<JsonNode> {
-	public BooleanAndExpression(final Expression<JsonNode> lhs, final Expression<JsonNode> rhs) {
+	public BooleanAndExpression(Expression<JsonNode> lhs, Expression<JsonNode> rhs) {
 		super(lhs, rhs, "and");
 	}
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		lhs.apply(scope, in, (l) -> {
 			if (!JsonNodeUtils.asBoolean(scope.jsonProvider(), l)) {
 				output.emit(scope.jsonProvider().createBoolean(false), null);

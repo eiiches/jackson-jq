@@ -19,10 +19,10 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class EnvFunction implements Function {
 
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		final JsonNode result = jsonProvider.createObject();
-		for (final Map.Entry<String, String> entry : System.getenv().entrySet()) {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		JsonNode result = jsonProvider.createObject();
+		for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
 			jsonProvider.set(result, entry.getKey(), jsonProvider.createString(entry.getValue()));
 		}
 		output.emit(result, null);

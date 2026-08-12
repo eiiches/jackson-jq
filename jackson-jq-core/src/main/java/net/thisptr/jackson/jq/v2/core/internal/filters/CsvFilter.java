@@ -9,10 +9,10 @@ import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 @FunctionRegistration("@csv/0")
 public class CsvFilter extends AbstractSvFilter {
 	@Override
-	protected void appendEscaped(final StringBuilder builder, final String text) {
+	protected void appendEscaped(StringBuilder builder, String text) {
 		builder.append('"');
 		for (int i = 0; i < text.length(); ++i) {
-			final char ch = text.charAt(i);
+			char ch = text.charAt(i);
 			switch (ch) {
 				case '"':
 					builder.append("\"\"");
@@ -28,7 +28,7 @@ public class CsvFilter extends AbstractSvFilter {
 	}
 
 	@Override
-	protected void appendSeparator(final StringBuilder builder) {
+	protected void appendSeparator(StringBuilder builder) {
 		builder.append(',');
 	}
 

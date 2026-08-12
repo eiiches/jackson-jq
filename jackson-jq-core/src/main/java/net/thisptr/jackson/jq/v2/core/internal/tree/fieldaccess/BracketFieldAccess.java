@@ -15,13 +15,13 @@ public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	private Expression<JsonNode> endExpr;
 	private boolean isRange;
 
-	public BracketFieldAccess(final Expression<JsonNode> src, final Expression<JsonNode> atExpr, final boolean permissive) {
+	public BracketFieldAccess(Expression<JsonNode> src, Expression<JsonNode> atExpr, boolean permissive) {
 		super(src, permissive);
 		this.startExpr = atExpr != null ? atExpr : new NullLiteral<>();
 		this.isRange = false;
 	}
 
-	public BracketFieldAccess(final Expression<JsonNode> src, final Expression<JsonNode> startExpr, final Expression<JsonNode> endExpr, final boolean permissive) {
+	public BracketFieldAccess(Expression<JsonNode> src, Expression<JsonNode> startExpr, Expression<JsonNode> endExpr, boolean permissive) {
 		super(src, permissive);
 		this.startExpr = startExpr != null ? startExpr : new NullLiteral<>();
 		this.endExpr = endExpr != null ? endExpr : new NullLiteral<>();
@@ -38,8 +38,8 @@ public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	}
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> path, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		if (isRange) {
 			startExpr.apply(scope, in, (start) -> {
 				endExpr.apply(scope, in, (end) -> {

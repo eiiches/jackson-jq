@@ -12,14 +12,14 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class StringFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	private Expression<JsonNode> field;
 
-	public StringFieldAccess(final Expression<JsonNode> obj, final Expression<JsonNode> field, final boolean permissive) {
+	public StringFieldAccess(Expression<JsonNode> obj, Expression<JsonNode> field, boolean permissive) {
 		super(obj, permissive);
 		this.field = field;
 	}
 
 	@Override
 	public String toString() {
-		final StringBuilder builder = new StringBuilder();
+		StringBuilder builder = new StringBuilder();
 		if (!(target instanceof ThisObject))
 			builder.append(target.toString());
 		builder.append(".");
@@ -30,8 +30,8 @@ public class StringFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	}
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> path, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		field.apply(scope, in, (key) -> {
 			target.apply(scope, in, path, (pobj, ppath) -> {
 				if (jsonProvider.getNodeType(key) != JsonNodeType.STRING && !permissive)

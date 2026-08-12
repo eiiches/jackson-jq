@@ -21,30 +21,30 @@ public class ExpressionUtils {
 	 * @return null if expr is not a constant
 	 */
 	@SuppressWarnings("unchecked")
-	public static <JsonNode> JsonNode evaluateLiteralExpression(final JsonProvider<JsonNode> jsonProvider, final Expression<JsonNode> expr) {
+	public static <JsonNode> JsonNode evaluateLiteralExpression(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> expr) {
 		if (expr instanceof ObjectConstruction) {
-			final JsonNode obj = jsonProvider.createObject();
+			JsonNode obj = jsonProvider.createObject();
 
-			for (final FieldConstruction<JsonNode> field : ((ObjectConstruction<JsonNode>) expr).fields) {
+			for (FieldConstruction<JsonNode> field : ((ObjectConstruction<JsonNode>) expr).fields) {
 				if (field instanceof IdentifierKeyFieldConstruction) {
-					final IdentifierKeyFieldConstruction<JsonNode> f = (IdentifierKeyFieldConstruction<JsonNode>) field;
-					final String k = f.key;
+					IdentifierKeyFieldConstruction<JsonNode> f = (IdentifierKeyFieldConstruction<JsonNode>) field;
+					String k = f.key;
 
 					if (f.value == null) // this field depends on input and is not a constant
 						return null;
 
-					final JsonNode v = evaluateLiteralExpression(jsonProvider, f.value);
+					JsonNode v = evaluateLiteralExpression(jsonProvider, f.value);
 					if (v == null)
 						return null;
 
 					jsonProvider.set(obj, k, v);
 				} else if (field instanceof StringKeyFieldConstruction) {
-					final StringKeyFieldConstruction<JsonNode> f = (StringKeyFieldConstruction<JsonNode>) field;
+					StringKeyFieldConstruction<JsonNode> f = (StringKeyFieldConstruction<JsonNode>) field;
 					if (!(f.key instanceof StringLiteral)) // then the key is string interpolation and not a constant
 						return null;
-					final String k = ((StringLiteral<JsonNode>) f.key).value();
+					String k = ((StringLiteral<JsonNode>) f.key).value();
 
-					final JsonNode v = evaluateLiteralExpression(jsonProvider, f.value);
+					JsonNode v = evaluateLiteralExpression(jsonProvider, f.value);
 					if (v == null)
 						return null;
 
@@ -56,16 +56,16 @@ public class ExpressionUtils {
 
 			return obj;
 		} else if (expr instanceof ArrayConstruction) {
-			final JsonNode array = jsonProvider.createArray();
+			JsonNode array = jsonProvider.createArray();
 
-			final Expression<JsonNode> tuple = ((ArrayConstruction<JsonNode>) expr).q;
+			Expression<JsonNode> tuple = ((ArrayConstruction<JsonNode>) expr).q;
 			if (tuple == null)
 				return array; // empty
 
 			if (tuple instanceof Tuple) {
-				final List<Expression<JsonNode>> values = ((Tuple<JsonNode>) tuple).qs;
-				for (final Expression<JsonNode> valueExpr : values) {
-					final JsonNode value = evaluateLiteralExpression(jsonProvider, valueExpr);
+				List<Expression<JsonNode>> values = ((Tuple<JsonNode>) tuple).qs;
+				for (Expression<JsonNode> valueExpr : values) {
+					JsonNode value = evaluateLiteralExpression(jsonProvider, valueExpr);
 					if (value == null)
 						return null;
 

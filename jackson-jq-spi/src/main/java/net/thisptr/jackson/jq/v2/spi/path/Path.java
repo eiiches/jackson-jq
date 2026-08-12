@@ -14,7 +14,7 @@ public interface Path<JsonNode> {
 		JsonNode apply(JsonNode node) throws JsonQueryException;
 	}
 
-	default JsonNode mutate(final JsonProvider<JsonNode> jsonProvider, final JsonNode in, final Mutation<JsonNode> mutation) throws JsonQueryException {
+	default JsonNode mutate(JsonProvider<JsonNode> jsonProvider, JsonNode in, Mutation<JsonNode> mutation) throws JsonQueryException {
 		return mutate(jsonProvider, in, mutation, true);
 	}
 

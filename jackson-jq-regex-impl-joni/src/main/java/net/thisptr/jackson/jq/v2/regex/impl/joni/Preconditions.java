@@ -9,21 +9,21 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 final class Preconditions {
 	private Preconditions() {}
 
-	static <JsonNode> void checkInputType(final JsonProvider<JsonNode> jsonProvider, final String fname, final JsonNode in, final JsonNodeType... types) throws JsonQueryException {
-		final JsonNodeType actual = jsonProvider.getNodeType(in);
-		for (final JsonNodeType type : types)
+	static <JsonNode> void checkInputType(JsonProvider<JsonNode> jsonProvider, String fname, JsonNode in, JsonNodeType... types) throws JsonQueryException {
+		JsonNodeType actual = jsonProvider.getNodeType(in);
+		for (JsonNodeType type : types)
 			if (actual == type)
 				return;
 		throw new JsonQueryException("%s is not applicable to %s; expected one of %s", fname, actual, Arrays.toString(types));
 	}
 
-	static <JsonNode> void checkArgumentType(final JsonProvider<JsonNode> jsonProvider, final String fname, final int argumentIndex, final JsonNode value, final JsonNodeType... types) throws JsonQueryException {
-		final JsonNodeType actual = jsonProvider.getNodeType(value);
-		for (final JsonNodeType type : types)
+	static <JsonNode> void checkArgumentType(JsonProvider<JsonNode> jsonProvider, String fname, int argumentIndex, JsonNode value, JsonNodeType... types) throws JsonQueryException {
+		JsonNodeType actual = jsonProvider.getNodeType(value);
+		for (JsonNodeType type : types)
 			if (actual == type)
 				return;
 
-		final String indexText;
+		String indexText;
 		switch (argumentIndex) {
 			case 1:
 				indexText = "1st";

@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -18,12 +19,12 @@ import net.thisptr.jackson.jq.v2.test.DefaultRootScope;
 
 public class JacksonJqEvaluator implements Evaluator {
 
-	private Result doEvaluate(final Expression<JsonNode> expr, final JsonNode in, final Version version) throws JsonQueryException {
-		final List<JsonNode> values = new ArrayList<>();
-		final Scope<JsonNode> scope = Scope.newChildScope(DefaultRootScope.getInstance(version));
+	private Result doEvaluate(Expression<JsonNode> expr, JsonNode in, Version version) throws JsonQueryException {
+		List<JsonNode> values = new ArrayList<>();
+		Scope<JsonNode> scope = Scope.newChildScope(DefaultRootScope.getInstance(version));
 		try {
 			expr.apply(scope, in, null, (out, opath) -> {
-				JsonNode value = out;
+				@Var JsonNode value = out;
 				if (out.isNumber() && Double.isNaN(out.asDouble()))
 					value = NullNode.getInstance();
 				if (out.isNumber() && Double.isInfinite(out.asDouble()))
@@ -31,27 +32,27 @@ public class JacksonJqEvaluator implements Evaluator {
 				values.add(value);
 			}, false);
 			return new Result(values, null);
-		} catch (final Throwable th) {
+		} catch (Throwable th) {
 			return new Result(values, th);
 		}
 	}
 
 	@SuppressWarnings("deprecation")
-	private static void terminateThread(final Thread thread) {
+	private static void terminateThread(Thread thread) {
 		thread.stop();
 	}
 
 	@Override
-	public Result evaluate(final String exprText, final JsonNode in, final Version version, final long timeout) throws Throwable {
-		final AtomicReference<Result> result = new AtomicReference<>();
-		final AtomicReference<Throwable> exception = new AtomicReference<>();
-		final Thread th = new Thread() {
+	public Result evaluate(String exprText, JsonNode in, Version version, long timeout) throws Throwable {
+		AtomicReference<Result> result = new AtomicReference<>();
+		AtomicReference<Throwable> exception = new AtomicReference<>();
+		Thread th = new Thread() {
 			@Override
 			public void run() {
 				try {
-					final Expression<JsonNode> expr = ExpressionParser.compile(exprText, version);
+					Expression<JsonNode> expr = ExpressionParser.compile(exprText, version);
 					result.set(doEvaluate(expr, in, version));
-				} catch (final Throwable e) {
+				} catch (Throwable e) {
 					exception.set(e);
 				}
 			}

@@ -18,7 +18,7 @@ public class ReduceExpression<JsonNode> implements Expression<JsonNode> {
 	private Expression<JsonNode> initExpr;
 	private PatternMatcher<JsonNode> matcher;
 
-	public ReduceExpression(final PatternMatcher<JsonNode> matcher, final Expression<JsonNode> initExpr, final Expression<JsonNode> reduceExpr, final Expression<JsonNode> iterExpr) {
+	public ReduceExpression(PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> reduceExpr, Expression<JsonNode> iterExpr) {
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.reduceExpr = reduceExpr;
@@ -28,23 +28,23 @@ public class ReduceExpression<JsonNode> implements Expression<JsonNode> {
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		initExpr.apply(scope, in, (accumulator) -> {
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
-			final JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
+			JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
 
-			final Scope<JsonNode> childScope = Scope.newChildScope(scope);
+			Scope<JsonNode> childScope = Scope.newChildScope(scope);
 			iterExpr.apply(scope, in, (item) -> {
-				final Stack<Pair<String, JsonNode>> stack = new Stack<>();
-				matcher.match(scope, item, (final List<Pair<String, JsonNode>> vars) -> {
+				Stack<Pair<String, JsonNode>> stack = new Stack<>();
+				matcher.match(scope, item, (List<Pair<String, JsonNode>> vars) -> {
 					for (int i = vars.size() - 1; i >= 0; --i) {
-						final Pair<String, JsonNode> var = vars.get(i);
+						Pair<String, JsonNode> var = vars.get(i);
 						childScope.setValue(var._1, var._2);
 					}
 
 					// We only use the last value from reduce expression.
-					final List<JsonNode> reduceResult = new ArrayList<>();
+					List<JsonNode> reduceResult = new ArrayList<>();
 					reduceExpr.apply(childScope, accumulators[0], reduceResult::add);
 					accumulators[0] = reduceResult.isEmpty() ? scope.jsonProvider().createNull() : reduceResult.get(reduceResult.size() - 1);
 				}, stack);

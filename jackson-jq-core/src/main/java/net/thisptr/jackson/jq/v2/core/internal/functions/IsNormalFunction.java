@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.functions;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
+import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -19,11 +20,11 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("isnormal/0")
 public class IsNormalFunction implements Function {
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		boolean result = false;
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		@Var boolean result = false;
 		if (jsonProvider.getNodeType(in) == JsonNodeType.NUMBER) {
-			final double v = jsonProvider.asDouble(in);
+			double v = jsonProvider.asDouble(in);
 			result = !Double.isInfinite(v) && (v <= -Double.MIN_NORMAL || Double.MIN_NORMAL <= v);
 		}
 		output.emit(jsonProvider.createBoolean(result), null);

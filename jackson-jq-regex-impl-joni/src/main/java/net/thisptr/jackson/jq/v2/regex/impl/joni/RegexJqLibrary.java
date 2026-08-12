@@ -56,11 +56,11 @@ public class RegexJqLibrary implements JqLibrary {
 				jq("gsub", args("$re", "s", "flags"), "_sub_impl($re; s; flags + \"g\")"),
 				jq("gsub", args("$re", "s"), "_sub_impl($re; s; \"g\")")));
 
-	private static JqFunc jq(final String name, final List<String> args, final String body) {
+	private static JqFunc jq(String name, List<String> args, String body) {
 		return new JqFunc(name, args, body, null);
 	}
 
-	private static List<String> args(final String... args) {
+	private static List<String> args(String... args) {
 		return Arrays.asList(args);
 	}
 

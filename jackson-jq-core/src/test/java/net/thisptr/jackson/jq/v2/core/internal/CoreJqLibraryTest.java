@@ -23,7 +23,7 @@ public class CoreJqLibraryTest {
 
 	@Test
 	public void appliesVersionRanges() {
-		final Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
+		Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
 
 		assertThat(BuiltinFunctionLoader.getInstance().loadFunctionsFromJqLibrary(getClass().getClassLoader(), Versions.JQ_1_5, scope))
 				.containsKeys("paths/0", "first/1")

@@ -11,7 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class Tuple<JsonNode> implements Expression<JsonNode> {
 	public final List<Expression<JsonNode>> qs;
 
-	public Tuple(final List<Expression<JsonNode>> qs) {
+	public Tuple(List<Expression<JsonNode>> qs) {
 		this.qs = qs;
 	}
 
@@ -21,8 +21,8 @@ public class Tuple<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> path, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
-		for (final Expression<JsonNode> q : qs) {
+	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		for (Expression<JsonNode> q : qs) {
 			q.apply(scope, in, path, output, requirePath);
 		}
 	}

@@ -3,6 +3,8 @@ package net.thisptr.jackson.jq.v2.spi;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.errorprone.annotations.Var;
+
 /**
  * Use {@code Versions} to get a {@link Version} instance.
  */
@@ -12,14 +14,14 @@ public class Version implements Comparable<Version> {
 
 	public static final Version LATEST = new Version(Integer.MAX_VALUE, Integer.MAX_VALUE);
 
-	Version(final int major, final int minor) {
+	Version(int major, int minor) {
 		this.major = major;
 		this.minor = minor;
 	}
 
 	@Override
-	public int compareTo(final Version o) {
-		final int r = Integer.compare(major, o.major);
+	public int compareTo(Version o) {
+		int r = Integer.compare(major, o.major);
 		if (r != 0)
 			return r;
 		return Integer.compare(minor, o.minor);
@@ -27,8 +29,8 @@ public class Version implements Comparable<Version> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
+		int prime = 31;
+		@Var int result = 1;
 		result = prime * result + major;
 		result = prime * result + minor;
 		return result;
@@ -60,13 +62,13 @@ public class Version implements Comparable<Version> {
 
 	public static Pattern VERSION_PATTERN = Pattern.compile("([0-9])\\.([0-9])");
 
-	public static Version valueOf(final String text) {
-		final Matcher m = VERSION_PATTERN.matcher(text);
+	public static Version valueOf(String text) {
+		Matcher m = VERSION_PATTERN.matcher(text);
 		if (!m.matches())
 			throw new IllegalArgumentException("Invalid Version: " + text);
 
-		final String majorVersion = m.group(1);
-		final String minorVersion = m.group(2);
+		String majorVersion = m.group(1);
+		String minorVersion = m.group(2);
 
 		return new Version(Integer.parseInt(majorVersion), Integer.parseInt(minorVersion));
 	}

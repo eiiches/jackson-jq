@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.functions;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
+import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
@@ -25,8 +26,8 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class RangeFunction implements Function {
 
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		if (args.size() == 1) {
 			args.get(0).apply(scope, in, (end) -> {
 				range1(jsonProvider, output, end);
@@ -35,7 +36,7 @@ public class RangeFunction implements Function {
 			args.get(0).apply(scope, in, (start) -> {
 				if (version.compareTo(Versions.JQ_1_5) <= 0) {
 					@SuppressWarnings("unchecked")
-					final Object[] cur = new Object[] { start }; // only reset when start changes [v1.5]
+					Object[] cur = new Object[] { start }; // only reset when start changes [v1.5]
 					args.get(1).apply(scope, in, (end) -> {
 						cur[0] = range2(jsonProvider, output, (JsonNode) cur[0], end);
 					});
@@ -56,28 +57,28 @@ public class RangeFunction implements Function {
 		}
 	}
 
-	private static <JsonNode> void range1(final JsonProvider<JsonNode> jsonProvider, final PathOutput<JsonNode> output, final JsonNode end) throws JsonQueryException {
+	private static <JsonNode> void range1(JsonProvider<JsonNode> jsonProvider, PathOutput<JsonNode> output, JsonNode end) throws JsonQueryException {
 		range2(jsonProvider, output, jsonProvider.createInt(0), end);
 	}
 
-	private static <JsonNode> JsonNode range2(final JsonProvider<JsonNode> jsonProvider, final PathOutput<JsonNode> output, final JsonNode start, final JsonNode end) throws JsonQueryException {
+	private static <JsonNode> JsonNode range2(JsonProvider<JsonNode> jsonProvider, PathOutput<JsonNode> output, JsonNode start, JsonNode end) throws JsonQueryException {
 		if (jsonProvider.getNodeType(start) != JsonNodeType.NUMBER || jsonProvider.getNodeType(end) != JsonNodeType.NUMBER)
 			throw new JsonQueryTypeException("Range bounds must be numeric");
-		final double _start = jsonProvider.asDouble(start);
-		final double _end = jsonProvider.asDouble(end);
-		double i;
+		double _start = jsonProvider.asDouble(start);
+		double _end = jsonProvider.asDouble(end);
+		@Var double i;
 		for (i = _start; i < _end; i += 1)
 			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, i), null);
 		return JsonNodeUtils.asNumericNode(jsonProvider, i);
 	}
 
-	private static <JsonNode> void range3(final JsonProvider<JsonNode> jsonProvider, final PathOutput<JsonNode> output, final JsonNode start, final JsonNode end, final JsonNode incr) throws JsonQueryException {
-		final JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
-		final PlusOperator<JsonNode> operator = new PlusOperator<>();
-		final int dir = Integer.signum(comparator.compare(jsonProvider.createInt(0), incr));
+	private static <JsonNode> void range3(JsonProvider<JsonNode> jsonProvider, PathOutput<JsonNode> output, JsonNode start, JsonNode end, JsonNode incr) throws JsonQueryException {
+		JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
+		PlusOperator<JsonNode> operator = new PlusOperator<>();
+		int dir = Integer.signum(comparator.compare(jsonProvider.createInt(0), incr));
 		if (dir == 0)
 			return;
-		JsonNode cur = start;
+		@Var JsonNode cur = start;
 		while (Integer.signum(comparator.compare(cur, end)) == dir) {
 			output.emit(cur, null);
 			cur = operator.apply(jsonProvider, cur, incr);

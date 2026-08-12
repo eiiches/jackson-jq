@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.path;
 
+import com.google.errorprone.annotations.Var;
+
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -12,13 +14,13 @@ public class ArrayIndexOfPath<JsonNode> implements Path<JsonNode> {
 	public final JsonNode subseq; // sub sequence to look for
 	private final Path<JsonNode> parent;
 
-	public static <JsonNode> ArrayIndexOfPath<JsonNode> chainIfNotNull(final Path<JsonNode> parent, final JsonNode subseq) {
+	public static <JsonNode> ArrayIndexOfPath<JsonNode> chainIfNotNull(Path<JsonNode> parent, JsonNode subseq) {
 		if (parent == null)
 			return null;
 		return new ArrayIndexOfPath<>(parent, subseq);
 	}
 
-	public ArrayIndexOfPath(final Path<JsonNode> parent, final JsonNode subseq) {
+	public ArrayIndexOfPath(Path<JsonNode> parent, JsonNode subseq) {
 		if (parent == null)
 			throw new NullPointerException("parent must not be null");
 		this.parent = parent;
@@ -29,28 +31,28 @@ public class ArrayIndexOfPath<JsonNode> implements Path<JsonNode> {
 	}
 
 	@Override
-	public void toJsonNode(final JsonProvider<JsonNode> jsonProvider, final JsonNode out) throws JsonQueryException {
+	public void toJsonNode(JsonProvider<JsonNode> jsonProvider, JsonNode out) throws JsonQueryException {
 		parent.toJsonNode(jsonProvider, out);
 		jsonProvider.add(out, subseq);
 	}
 
 	@Override
-	public void get(final JsonProvider<JsonNode> jsonProvider, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, boolean permissive) throws JsonQueryException {
+	public void get(JsonProvider<JsonNode> jsonProvider, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean permissive) throws JsonQueryException {
 		parent.get(jsonProvider, in, ipath, (parent, ppath) -> {
 			resolve(jsonProvider, parent, ppath, output, subseq, permissive);
 		}, permissive);
 	}
 
 	@Override
-	public JsonNode mutate(final JsonProvider<JsonNode> jsonProvider, final JsonNode in, final Mutation<JsonNode> mutation, final boolean makeParent) throws JsonQueryException {
+	public JsonNode mutate(JsonProvider<JsonNode> jsonProvider, JsonNode in, Mutation<JsonNode> mutation, boolean makeParent) throws JsonQueryException {
 		return parent.mutate(jsonProvider, in, (oldval) -> {
 			throw new JsonQueryException("Cannot update field at array index of array");
 		}, makeParent);
 	}
 
-	private static <JsonNode> JsonNode indexOfAll(final JsonProvider<JsonNode> jsonProvider, final JsonNode seq, final JsonNode subseq) {
-		final JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
-		JsonNode out = jsonProvider.createArray();
+	private static <JsonNode> JsonNode indexOfAll(JsonProvider<JsonNode> jsonProvider, JsonNode seq, JsonNode subseq) {
+		JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
+		@Var JsonNode out = jsonProvider.createArray();
 
 		if (jsonProvider.size(subseq) != 0) {
 			shift: for (int i = 0; i < jsonProvider.size(seq) - jsonProvider.size(subseq) + 1; ++i) {
@@ -64,10 +66,10 @@ public class ArrayIndexOfPath<JsonNode> implements Path<JsonNode> {
 		return out;
 	}
 
-	public static <JsonNode> void resolve(final JsonProvider<JsonNode> jsonProvider, final JsonNode pobj, final Path<JsonNode> ppath, final PathOutput<JsonNode> output, final JsonNode subseq, final boolean permissive) throws JsonQueryException {
+	public static <JsonNode> void resolve(JsonProvider<JsonNode> jsonProvider, JsonNode pobj, Path<JsonNode> ppath, PathOutput<JsonNode> output, JsonNode subseq, boolean permissive) throws JsonQueryException {
 		assert jsonProvider.getNodeType(subseq) == JsonNodeType.ARRAY;
 		if (jsonProvider.getNodeType(pobj) == JsonNodeType.ARRAY) {
-			final JsonNode indexList = indexOfAll(jsonProvider, pobj, subseq);
+			JsonNode indexList = indexOfAll(jsonProvider, pobj, subseq);
 			output.emit(indexList, ArrayIndexOfPath.chainIfNotNull(ppath, subseq));
 		} else {
 			if (!permissive)

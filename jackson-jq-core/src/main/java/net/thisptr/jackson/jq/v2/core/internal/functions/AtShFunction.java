@@ -23,15 +23,15 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("@sh/0")
 public class AtShFunction implements Function {
 	@Override
-	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		final JsonNodeType type = jsonProvider.getNodeType(in);
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type == JsonNodeType.ARRAY) {
-			final List<String> tokens = new ArrayList<>();
-			final Iterator<JsonNode> iter = jsonProvider.elements(in);
+			List<String> tokens = new ArrayList<>();
+			Iterator<JsonNode> iter = jsonProvider.elements(in);
 			while (iter.hasNext()) {
-				final JsonNode i = iter.next();
-				final JsonNodeType iType = jsonProvider.getNodeType(i);
+				JsonNode i = iter.next();
+				JsonNodeType iType = jsonProvider.getNodeType(i);
 				if (iType == JsonNodeType.STRING) {
 					tokens.add(escape(jsonProvider.asText(i)));
 				} else if (isValueNode(iType)) {
@@ -50,13 +50,13 @@ public class AtShFunction implements Function {
 		}
 	}
 
-	private static boolean isValueNode(final JsonNodeType type) {
+	private static boolean isValueNode(JsonNodeType type) {
 		return type == JsonNodeType.STRING || type == JsonNodeType.NUMBER || type == JsonNodeType.BOOLEAN || type == JsonNodeType.NULL;
 	}
 
-	public String escape(final String text) {
-		final StringBuilder builder = new StringBuilder("'");
-		for (final char ch : text.toCharArray()) {
+	public String escape(String text) {
+		StringBuilder builder = new StringBuilder("'");
+		for (char ch : text.toCharArray()) {
 			switch (ch) {
 			case '\'':
 				builder.append("'\\''");

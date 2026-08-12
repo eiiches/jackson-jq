@@ -9,9 +9,9 @@ import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 @FunctionRegistration("@tsv/0")
 public class TsvFilter extends AbstractSvFilter {
 	@Override
-	protected void appendEscaped(final StringBuilder builder, final String text) {
+	protected void appendEscaped(StringBuilder builder, String text) {
 		for (int i = 0; i < text.length(); ++i) {
-			final char ch = text.charAt(i);
+			char ch = text.charAt(i);
 			switch (ch) {
 				case '\t':
 					builder.append("\\t");
@@ -35,7 +35,7 @@ public class TsvFilter extends AbstractSvFilter {
 	}
 
 	@Override
-	protected void appendSeparator(final StringBuilder builder) {
+	protected void appendSeparator(StringBuilder builder) {
 		builder.append('\t');
 	}
 

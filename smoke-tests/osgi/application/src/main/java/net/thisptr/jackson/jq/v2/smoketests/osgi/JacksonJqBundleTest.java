@@ -35,13 +35,13 @@ public class JacksonJqBundleTest {
 		testWithJsonProvider(GsonJsonProviderImpl.getInstance());
 	}
 
-	private <JsonNode> void testWithJsonProvider(final JsonProvider<JsonNode> jsonProvider) throws Exception {
-		final Bundle bundle = FrameworkUtil.getBundle(getClass());
+	private <JsonNode> void testWithJsonProvider(JsonProvider<JsonNode> jsonProvider) throws Exception {
+		Bundle bundle = FrameworkUtil.getBundle(getClass());
 		assertNotNull(bundle, "The test must be loaded from an OSGi bundle");
 		assertEquals(Bundle.ACTIVE, bundle.getState());
 
-		final Version version = Version.valueOf("1.6");
-		final Scope<JsonNode> scope = Scope.newEmptyScope(jsonProvider);
+		Version version = Version.valueOf("1.6");
+		Scope<JsonNode> scope = Scope.newEmptyScope(jsonProvider);
 		BuiltinFunctionLoader.getInstance().loadFunctions(version, scope);
 		scope.setModuleLoader(new ClassPathModuleLoader<JsonNode>(getClass().getClassLoader()));
 
@@ -53,10 +53,10 @@ public class JacksonJqBundleTest {
 		assertQuery(jsonProvider, scope, version, "import \"jackson-jq/uuid\" as uuid; uuid::uuid5(\"6ba7b810-9dad-11d1-80b4-00c04fd430c8\")", "\"example.com\"", "cfbff0d1-9375-5685-968c-48ce8b15ae17");
 	}
 
-	private static <JsonNode> void assertQuery(final JsonProvider<JsonNode> jsonProvider, final Scope<JsonNode> scope, final Version version, final String expression, final String inputJson, final Object expected) throws Exception {
-		final JsonQuery<JsonNode> query = JsonQuery.compile(expression, version);
-		final JsonNode input = jsonProvider.fromStringStrict(inputJson);
-		final List<JsonNode> output = new ArrayList<>();
+	private static <JsonNode> void assertQuery(JsonProvider<JsonNode> jsonProvider, Scope<JsonNode> scope, Version version, String expression, String inputJson, Object expected) throws Exception {
+		JsonQuery<JsonNode> query = JsonQuery.compile(expression, version);
+		JsonNode input = jsonProvider.fromStringStrict(inputJson);
+		List<JsonNode> output = new ArrayList<>();
 		query.apply(scope, input, output::add);
 		assertEquals(java.util.Collections.singletonList(jsonProvider.valueToTree(expected)), output);
 	}
