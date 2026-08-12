@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
@@ -28,7 +29,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class DelPathsFunction implements Function {
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		args.get(0).apply(scope, in, (paths) -> {
 			if (jsonProvider.getNodeType(paths) != JsonNodeType.ARRAY) {
@@ -47,7 +48,7 @@ public class DelPathsFunction implements Function {
 			for (int i = sortedPaths.size() - 1; i >= 0; --i) {
 				Path<JsonNode> path = PathUtils.toPath(jsonProvider, sortedPaths.get(i));
 				out = path.mutate(jsonProvider, out, (oldval) -> {
-					if ((path instanceof ArrayRangeIndexPath) && jsonProvider.getNodeType(oldval) == JsonNodeType.ARRAY) {
+					if ((path instanceof ArrayRangeIndexPath) && oldval != null && jsonProvider.getNodeType(oldval) == JsonNodeType.ARRAY) {
 						@Var JsonNode newval = jsonProvider.createArray();
 						for (int j = 0; j < jsonProvider.size(oldval); ++j)
 							newval = jsonProvider.add(newval, jsonProvider.createMissing());

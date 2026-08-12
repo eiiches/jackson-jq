@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.internal.tree.ThisObject;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -30,7 +32,7 @@ public class StringFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		field.apply(scope, in, (key) -> {
 			target.apply(scope, in, path, (pobj, ppath) -> {

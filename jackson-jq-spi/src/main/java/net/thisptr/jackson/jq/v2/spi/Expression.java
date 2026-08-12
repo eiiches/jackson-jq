@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.spi;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -9,5 +11,5 @@ public interface Expression<JsonNode> {
 		apply(scope, in, null, output, false);
 	}
 
-	void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException;
+	void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException;
 }

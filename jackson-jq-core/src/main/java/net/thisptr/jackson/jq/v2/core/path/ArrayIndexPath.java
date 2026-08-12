@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.path;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -13,11 +14,11 @@ public class ArrayIndexPath<JsonNode> implements Path<JsonNode> {
 	public final JsonNode index;
 	private final Path<JsonNode> parent;
 
-	public static <JsonNode> ArrayIndexPath<JsonNode> chainIfNotNull(JsonProvider<JsonNode> jsonProvider, Path<JsonNode> parent, int index) {
+	public static <JsonNode> @Nullable ArrayIndexPath<JsonNode> chainIfNotNull(JsonProvider<JsonNode> jsonProvider, @Nullable Path<JsonNode> parent, int index) {
 		return chainIfNotNull(parent, jsonProvider.createNumber(index));
 	}
 
-	public static <JsonNode> ArrayIndexPath<JsonNode> chainIfNotNull(Path<JsonNode> parent, JsonNode index) {
+	public static <JsonNode> @Nullable ArrayIndexPath<JsonNode> chainIfNotNull(@Nullable Path<JsonNode> parent, JsonNode index) {
 		if (parent == null)
 			return null;
 		return new ArrayIndexPath<>(parent, index);
@@ -40,7 +41,7 @@ public class ArrayIndexPath<JsonNode> implements Path<JsonNode> {
 	}
 
 	@Override
-	public void get(JsonProvider<JsonNode> jsonProvider, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean permissive) throws JsonQueryException {
+	public void get(JsonProvider<JsonNode> jsonProvider, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean permissive) throws JsonQueryException {
 		parent.get(jsonProvider, in, ipath, (parent, ppath) -> {
 			resolve(jsonProvider, parent, ppath, output, index, permissive);
 		}, permissive);
@@ -53,7 +54,7 @@ public class ArrayIndexPath<JsonNode> implements Path<JsonNode> {
 		}, makeParent);
 	}
 
-	private static <JsonNode> JsonNode mutate(JsonProvider<JsonNode> jsonProvider, @Var JsonNode in, JsonNode index, Mutation<JsonNode> mutation, boolean makeParent, boolean deleteMode) throws JsonQueryException {
+	private static <JsonNode> @Nullable JsonNode mutate(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, JsonNode index, Mutation<JsonNode> mutation, boolean makeParent, boolean deleteMode) throws JsonQueryException {
 		assert jsonProvider.getNodeType(index) == JsonNodeType.NUMBER;
 		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
 			if (!makeParent)
@@ -72,13 +73,13 @@ public class ArrayIndexPath<JsonNode> implements Path<JsonNode> {
 			if (_index < 0)
 				throw new JsonQueryException("Out of bounds negative array index");
 
-			JsonNode newval = mutation.apply(_index < jsonProvider.size(in) ? jsonProvider.get(in, _index) : null);
+			JsonNode newval = mutation.apply(_index < jsonProvider.size(in) ? jsonProvider.requireGet(in, _index) : null);
 			if (newval == null)
 				return in;
 
 			JsonNode out = jsonProvider.createArray();
 			for (int i = 0; i < jsonProvider.size(in); ++i)
-				jsonProvider.add(out, jsonProvider.get(in, i));
+				jsonProvider.add(out, jsonProvider.requireGet(in, i));
 			for (int i = jsonProvider.size(in); i <= _index; ++i)
 				jsonProvider.add(out, jsonProvider.createNull());
 			jsonProvider.set(out, _index, newval);
@@ -88,7 +89,7 @@ public class ArrayIndexPath<JsonNode> implements Path<JsonNode> {
 		}
 	}
 
-	public static <JsonNode> void resolve(JsonProvider<JsonNode> jsonProvider, JsonNode pobj, Path<JsonNode> ppath, PathOutput<JsonNode> output, JsonNode index, boolean permissive) throws JsonQueryException {
+	public static <JsonNode> void resolve(JsonProvider<JsonNode> jsonProvider, JsonNode pobj, @Nullable Path<JsonNode> ppath, PathOutput<JsonNode> output, JsonNode index, boolean permissive) throws JsonQueryException {
 		assert jsonProvider.getNodeType(index) == JsonNodeType.NUMBER;
 		if (jsonProvider.getNodeType(pobj) == JsonNodeType.ARRAY) {
 			double indexAsDouble = jsonProvider.asDouble(index);
@@ -107,7 +108,7 @@ public class ArrayIndexPath<JsonNode> implements Path<JsonNode> {
 				output.emit(jsonProvider.createNull(), ArrayIndexPath.chainIfNotNull(ppath, index));
 				return;
 			}
-			output.emit(jsonProvider.get(pobj, indexResolved), ArrayIndexPath.chainIfNotNull(ppath, index));
+			output.emit(jsonProvider.requireGet(pobj, indexResolved), ArrayIndexPath.chainIfNotNull(ppath, index));
 		} else if (jsonProvider.getNodeType(pobj) == JsonNodeType.NULL) {
 			output.emit(jsonProvider.createNull(), ArrayIndexPath.chainIfNotNull(ppath, index));
 		} else {

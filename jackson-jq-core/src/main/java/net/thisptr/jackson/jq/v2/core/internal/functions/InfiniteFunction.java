@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.functions;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -17,7 +18,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("infinite/0")
 public class InfiniteFunction implements Function {
 	@Override
-	public <T> void apply(Scope<T> scope, List<Expression<T>> args, T in, Path<T> ipath, PathOutput<T> output, Version version) throws JsonQueryException {
+	public <T> void apply(Scope<T> scope, List<Expression<T>> args, T in, @Nullable Path<T> ipath, PathOutput<T> output, Version version) throws JsonQueryException {
 		output.emit(scope.jsonProvider().createDouble(Double.POSITIVE_INFINITY), null);
 	}
 }

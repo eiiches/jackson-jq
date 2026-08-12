@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.binaryop;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
@@ -13,7 +15,7 @@ public class BooleanAndExpression<JsonNode> extends BinaryOperatorExpression<Jso
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		lhs.apply(scope, in, (l) -> {
 			if (!JsonNodeUtils.asBoolean(scope.jsonProvider(), l)) {
 				output.emit(scope.jsonProvider().createBoolean(false), null);

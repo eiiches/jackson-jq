@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.spi.internal.module.loaders;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 
@@ -13,12 +15,12 @@ public class NullModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	}
 
 	@Override
-	public Module loadModule(Module caller, String path, JsonNode metadata) {
+	public @Nullable Module loadModule(@Nullable Module caller, String path, @Nullable JsonNode metadata) {
 		return null;
 	}
 
 	@Override
-	public JsonNode loadData(Module caller, String path, JsonNode metadata) {
+	public @Nullable JsonNode loadData(@Nullable Module caller, String path, @Nullable JsonNode metadata) {
 		return null;
 	}
 }

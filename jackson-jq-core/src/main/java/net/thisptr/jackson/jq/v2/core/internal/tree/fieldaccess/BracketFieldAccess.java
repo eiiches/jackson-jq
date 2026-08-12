@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -12,7 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	private Expression<JsonNode> startExpr;
-	private Expression<JsonNode> endExpr;
+	private Expression<JsonNode> endExpr = new NullLiteral<>();
 	private boolean isRange;
 
 	public BracketFieldAccess(Expression<JsonNode> src, Expression<JsonNode> atExpr, boolean permissive) {
@@ -38,7 +40,7 @@ public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		if (isRange) {
 			startExpr.apply(scope, in, (start) -> {

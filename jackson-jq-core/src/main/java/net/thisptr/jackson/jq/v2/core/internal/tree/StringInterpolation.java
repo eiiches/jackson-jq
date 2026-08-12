@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Stack;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -25,7 +26,7 @@ public class StringInterpolation<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Stack<Pair<Integer, JsonNode>> stack = new Stack<>();
 		recurse(scope, in, output, stack, interpolations);
 	}

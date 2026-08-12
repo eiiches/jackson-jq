@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Use {@code Versions} to get a {@link Version} instance.
@@ -37,7 +38,7 @@ public class Version implements Comparable<Version> {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)

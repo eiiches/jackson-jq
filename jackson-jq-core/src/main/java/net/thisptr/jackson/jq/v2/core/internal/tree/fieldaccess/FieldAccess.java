@@ -3,6 +3,8 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Strings;
@@ -26,7 +28,7 @@ public abstract class FieldAccess<JsonNode> implements Expression<JsonNode> {
 		this.permissive = permissive;
 	}
 
-	protected static <JsonNode> void emitAllPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode pobj, Path<JsonNode> ppath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	protected static <JsonNode> void emitAllPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode pobj, @Nullable Path<JsonNode> ppath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		if (requirePath && ppath == null)
 			throw new JsonQueryException("Invalid path expression near attempt to iterate through %s", JsonNodeUtils.toString(jsonProvider, pobj));
 		if (jsonProvider.getNodeType(pobj) == JsonNodeType.NULL) {
@@ -34,7 +36,7 @@ public abstract class FieldAccess<JsonNode> implements Expression<JsonNode> {
 				throw new JsonQueryException("Cannot iterate over null (null)");
 		} else if (jsonProvider.getNodeType(pobj) == JsonNodeType.ARRAY) {
 			for (int i = 0; i < jsonProvider.size(pobj); ++i)
-				output.emit(jsonProvider.get(pobj, i), ArrayIndexPath.chainIfNotNull(jsonProvider, ppath, i));
+				output.emit(jsonProvider.requireGet(pobj, i), ArrayIndexPath.chainIfNotNull(jsonProvider, ppath, i));
 		} else if (jsonProvider.getNodeType(pobj) == JsonNodeType.OBJECT) {
 			Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(pobj);
 			while (iter.hasNext()) {
@@ -47,27 +49,27 @@ public abstract class FieldAccess<JsonNode> implements Expression<JsonNode> {
 		}
 	}
 
-	protected static <JsonNode> void emitObjectFieldPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, String key, JsonNode pobj, Path<JsonNode> ppath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	protected static <JsonNode> void emitObjectFieldPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, String key, JsonNode pobj, @Nullable Path<JsonNode> ppath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		if (requirePath && ppath == null)
 			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(jsonProvider, jsonProvider.createString(key)), JsonNodeUtils.toString(jsonProvider, pobj));
 		ObjectFieldPath.resolve(jsonProvider, pobj, ppath, output, key, permissive);
 	}
 
-	protected static <JsonNode> void emitArrayIndexPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode index, JsonNode pobj, Path<JsonNode> ppath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	protected static <JsonNode> void emitArrayIndexPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode index, JsonNode pobj, @Nullable Path<JsonNode> ppath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		assert jsonProvider.getNodeType(index) == JsonNodeType.NUMBER;
 		if (requirePath && ppath == null)
 			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(jsonProvider, index), JsonNodeUtils.toString(jsonProvider, pobj));
 		ArrayIndexPath.resolve(jsonProvider, pobj, ppath, output, index, permissive);
 	}
 
-	protected static <JsonNode> void emitArrayIndexOfPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode subseqToLookFor, JsonNode pobj, Path<JsonNode> ppath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	protected static <JsonNode> void emitArrayIndexOfPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode subseqToLookFor, JsonNode pobj, @Nullable Path<JsonNode> ppath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		assert jsonProvider.getNodeType(subseqToLookFor) == JsonNodeType.ARRAY;
 		if (requirePath && ppath == null)
 			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(jsonProvider, subseqToLookFor), JsonNodeUtils.toString(jsonProvider, pobj));
 		ArrayIndexOfPath.resolve(jsonProvider, pobj, ppath, output, subseqToLookFor, permissive);
 	}
 
-	protected static <JsonNode> void emitArrayRangeIndexPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode start, JsonNode end, JsonNode pobj, Path<JsonNode> ppath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	protected static <JsonNode> void emitArrayRangeIndexPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode start, JsonNode end, JsonNode pobj, @Nullable Path<JsonNode> ppath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		JsonNodeType startType = jsonProvider.getNodeType(start);
 		JsonNodeType endType = jsonProvider.getNodeType(end);
 		assert startType == JsonNodeType.NULL || startType == JsonNodeType.NUMBER;

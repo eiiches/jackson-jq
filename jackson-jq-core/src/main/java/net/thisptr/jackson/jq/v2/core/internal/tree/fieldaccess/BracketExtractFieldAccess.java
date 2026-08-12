@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
@@ -17,7 +19,7 @@ public class BracketExtractFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		target.apply(scope, in, path, (pobj, ppath) -> {
 			emitAllPath(scope.jsonProvider(), permissive, pobj, ppath, output, requirePath);
 		}, requirePath);

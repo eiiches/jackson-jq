@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -25,7 +26,7 @@ public class ObjectConstruction<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Map<String, JsonNode> tmp = new LinkedHashMap<>(fields.size());
 		applyRecursive(scope, in, output, fields, tmp);
 	}

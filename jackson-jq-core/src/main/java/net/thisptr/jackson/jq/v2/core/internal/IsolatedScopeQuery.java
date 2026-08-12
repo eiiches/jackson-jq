@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
@@ -14,7 +16,7 @@ public class IsolatedScopeQuery<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Scope<JsonNode> isolatedScope = Scope.newChildScope(scope);
 		q.apply(isolatedScope, in, path, output, requirePath);
 	}

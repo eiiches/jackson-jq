@@ -6,10 +6,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.NullNode;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -32,13 +34,13 @@ public class FileSystemModuleLoaderTest {
 	private Scope<JsonNode> rootScope;
 
 	@TempDir
-	private Path tempDir;
+	private @Nullable Path tempDir;
 
 	@BeforeEach
 	public void beforeEach() throws IOException {
 		rootScope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
 
-		ModuleLoader<JsonNode> moduleLoader = setupModuleLoader(tempDir);
+		ModuleLoader<JsonNode> moduleLoader = setupModuleLoader(Objects.requireNonNull(tempDir));
 
 		rootScope.setModuleLoader(moduleLoader);
 	}

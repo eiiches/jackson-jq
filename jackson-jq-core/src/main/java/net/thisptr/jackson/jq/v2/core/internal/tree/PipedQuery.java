@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Stack;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryBreakException;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher.MatchWithPath;
@@ -21,11 +22,11 @@ public class PipedQuery<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		pathRecursive(scope, in, path, output, components, requirePath);
 	}
 
-	private static <JsonNode> void pathRecursive(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, List<PipeComponent<JsonNode>> components, boolean requirePath) throws JsonQueryException {
+	private static <JsonNode> void pathRecursive(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, List<PipeComponent<JsonNode>> components, boolean requirePath) throws JsonQueryException {
 		if (components.isEmpty()) {
 			output.emit(in, path);
 			return;

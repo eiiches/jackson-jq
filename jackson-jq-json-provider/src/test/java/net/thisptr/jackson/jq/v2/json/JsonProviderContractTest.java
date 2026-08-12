@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import com.google.errorprone.annotations.Var;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,14 @@ public abstract class JsonProviderContractTest<T> {
 	 * Create the JsonProvider instance to test.
 	 */
 	protected abstract JsonProvider<T> createProvider();
+
+	private T requireGet(T node, String fieldName) {
+		return Objects.requireNonNull(provider.get(node, fieldName));
+	}
+
+	private T requireGet(T node, int index) {
+		return Objects.requireNonNull(provider.get(node, index));
+	}
 
 	@BeforeEach
 	void setUp() {
@@ -127,7 +136,7 @@ public abstract class JsonProviderContractTest<T> {
 		assertThat(provider.has(obj, "nonexistent")).isFalse();
 		assertThat(provider.size(obj)).isEqualTo(1);
 
-		T retrieved = provider.get(obj, "hello");
+		T retrieved = requireGet(obj, "hello");
 		assertThat(provider.asText(retrieved)).isEqualTo("world");
 	}
 
@@ -139,9 +148,9 @@ public abstract class JsonProviderContractTest<T> {
 		obj = provider.set(obj, "c", provider.createInt(3));
 
 		assertThat(provider.size(obj)).isEqualTo(3);
-		assertThat(provider.asInt(provider.get(obj, "a"))).isEqualTo(1);
-		assertThat(provider.asInt(provider.get(obj, "b"))).isEqualTo(2);
-		assertThat(provider.asInt(provider.get(obj, "c"))).isEqualTo(3);
+		assertThat(provider.asInt(requireGet(obj, "a"))).isEqualTo(1);
+		assertThat(provider.asInt(requireGet(obj, "b"))).isEqualTo(2);
+		assertThat(provider.asInt(requireGet(obj, "c"))).isEqualTo(3);
 	}
 
 	@Test
@@ -194,9 +203,9 @@ public abstract class JsonProviderContractTest<T> {
 		assertThat(provider.has(arr, 2)).isTrue();
 		assertThat(provider.has(arr, 3)).isFalse();
 
-		assertThat(provider.asInt(provider.get(arr, 0))).isEqualTo(1);
-		assertThat(provider.asInt(provider.get(arr, 1))).isEqualTo(2);
-		assertThat(provider.asInt(provider.get(arr, 2))).isEqualTo(3);
+		assertThat(provider.asInt(requireGet(arr, 0))).isEqualTo(1);
+		assertThat(provider.asInt(requireGet(arr, 1))).isEqualTo(2);
+		assertThat(provider.asInt(requireGet(arr, 2))).isEqualTo(3);
 	}
 
 	@Test
@@ -208,9 +217,9 @@ public abstract class JsonProviderContractTest<T> {
 
 		arr = provider.set(arr, 1, provider.createInt(99));
 
-		assertThat(provider.asInt(provider.get(arr, 0))).isEqualTo(1);
-		assertThat(provider.asInt(provider.get(arr, 1))).isEqualTo(99);
-		assertThat(provider.asInt(provider.get(arr, 2))).isEqualTo(3);
+		assertThat(provider.asInt(requireGet(arr, 0))).isEqualTo(1);
+		assertThat(provider.asInt(requireGet(arr, 1))).isEqualTo(99);
+		assertThat(provider.asInt(requireGet(arr, 2))).isEqualTo(3);
 	}
 
 	@Test
@@ -265,8 +274,8 @@ public abstract class JsonProviderContractTest<T> {
 		T node = provider.fromString("{\"foo\": 123, \"bar\": true}");
 
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.OBJECT);
-		assertThat(provider.asInt(provider.get(node, "foo"))).isEqualTo(123);
-		assertThat(provider.asBoolean(provider.get(node, "bar"))).isTrue();
+		assertThat(provider.asInt(requireGet(node, "foo"))).isEqualTo(123);
+		assertThat(provider.asBoolean(requireGet(node, "bar"))).isTrue();
 	}
 
 	@Test
@@ -293,18 +302,18 @@ public abstract class JsonProviderContractTest<T> {
 	void testDeepCopy() {
 		@Var T original = provider.createObject();
 		original = provider.set(original, "nested", provider.createObject());
-		T nested = provider.get(original, "nested");
+		T nested = requireGet(original, "nested");
 		provider.set(nested, "value", provider.createInt(42));
 
 		T copy = provider.deepCopy(original);
 
 		// Modify the copy's nested object
-		T copiedNested = provider.get(copy, "nested");
+		T copiedNested = requireGet(copy, "nested");
 		provider.set(copiedNested, "value", provider.createInt(999));
 
 		// Original should be unchanged
-		T originalNested = provider.get(original, "nested");
-		assertThat(provider.asInt(provider.get(originalNested, "value"))).isEqualTo(42);
+		T originalNested = requireGet(original, "nested");
+		assertThat(provider.asInt(requireGet(originalNested, "value"))).isEqualTo(42);
 	}
 
 	// ===================
@@ -376,10 +385,10 @@ public abstract class JsonProviderContractTest<T> {
 		outer = provider.set(outer, "outer", nested);
 
 		// Verify structure
-		T retrievedNested = provider.get(outer, "outer");
-		T retrievedArray = provider.get(retrievedNested, "inner");
+		T retrievedNested = requireGet(outer, "outer");
+		T retrievedArray = requireGet(retrievedNested, "inner");
 		assertThat(provider.size(retrievedArray)).isEqualTo(3);
-		assertThat(provider.asInt(provider.get(retrievedArray, 1))).isEqualTo(2);
+		assertThat(provider.asInt(requireGet(retrievedArray, 1))).isEqualTo(2);
 	}
 
 	// ================================
@@ -547,7 +556,7 @@ public abstract class JsonProviderContractTest<T> {
 		// fromStringStrict with valid JSON should work
 		T node = provider.fromStringStrict("{\"key\": \"value\"}");
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.OBJECT);
-		assertThat(provider.asText(provider.get(node, "key"))).isEqualTo("value");
+		assertThat(provider.asText(requireGet(node, "key"))).isEqualTo("value");
 	}
 
 	// ================================

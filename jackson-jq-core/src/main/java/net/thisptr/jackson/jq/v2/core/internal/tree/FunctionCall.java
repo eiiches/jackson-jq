@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 import java.util.List;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -17,9 +18,9 @@ public class FunctionCall<JsonNode> implements Expression<JsonNode> {
 	private final String name;
 	private final List<Expression<JsonNode>> args;
 	private final Version version;
-	private final String moduleName;
+	private final @Nullable String moduleName;
 
-	public FunctionCall(String moduleName, String name, List<Expression<JsonNode>> args, Version version) {
+	public FunctionCall(@Nullable String moduleName, String name, List<Expression<JsonNode>> args, Version version) {
 		this.moduleName = moduleName;
 		this.name = name;
 		this.args = args;
@@ -51,7 +52,7 @@ public class FunctionCall<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Function f = lookupFunction(scope);
 		f.apply(scope, args, in, path, output, version);
 	}

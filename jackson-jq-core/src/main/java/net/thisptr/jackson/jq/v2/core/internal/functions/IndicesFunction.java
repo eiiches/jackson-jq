@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Preconditions;
@@ -22,7 +23,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("indices/1")
 public class IndicesFunction implements Function {
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "indices", in, JsonNodeType.STRING, JsonNodeType.ARRAY, JsonNodeType.NULL);
 
@@ -57,7 +58,7 @@ public class IndicesFunction implements Function {
 			if (needleSize != 0) {
 				shift: for (int i = 0; i < haystackSize - needleSize + 1; ++i) {
 					for (int j = 0; j < needleSize; ++j)
-						if (comparator.compare(jsonProvider.get(haystack, i + j), jsonProvider.get(needle, j)) != 0)
+						if (comparator.compare(jsonProvider.requireGet(haystack, i + j), jsonProvider.requireGet(needle, j)) != 0)
 							continue shift;
 					result.add(i);
 				}
@@ -65,7 +66,7 @@ public class IndicesFunction implements Function {
 		} else if (haystackType == JsonNodeType.ARRAY) {
 			int haystackSize = jsonProvider.size(haystack);
 			for (int i = 0; i < haystackSize; ++i)
-				if (comparator.compare(jsonProvider.get(haystack, i), needle) == 0)
+				if (comparator.compare(jsonProvider.requireGet(haystack, i), needle) == 0)
 					result.add(i);
 		} else {
 			throw new JsonQueryException("indices() is not applicable to " + haystackType);

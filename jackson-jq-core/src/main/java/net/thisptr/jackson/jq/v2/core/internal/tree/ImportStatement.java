@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -9,18 +11,18 @@ public class ImportStatement<JsonNode> {
 	public final String path;
 	public final boolean dollarImport;
 	public final String name;
-	private final Expression<JsonNode> metadataExpr;
-	private JsonNode metadata;
+	private final @Nullable Expression<JsonNode> metadataExpr;
+	private @Nullable JsonNode metadata;
 	private boolean metadataEvaluated = false;
 
-	public ImportStatement(String path, boolean dollarImport, String name, Expression<JsonNode> metadataExpr) {
+	public ImportStatement(String path, boolean dollarImport, String name, @Nullable Expression<JsonNode> metadataExpr) {
 		this.path = path;
 		this.dollarImport = dollarImport;
 		this.name = name;
 		this.metadataExpr = metadataExpr;
 	}
 
-	public JsonNode getMetadata(JsonProvider<JsonNode> jsonProvider) {
+	public @Nullable JsonNode getMetadata(JsonProvider<JsonNode> jsonProvider) {
 		if (!metadataEvaluated) {
 			if (metadataExpr != null) {
 				this.metadata = ExpressionUtils.evaluateLiteralExpression(jsonProvider, metadataExpr);

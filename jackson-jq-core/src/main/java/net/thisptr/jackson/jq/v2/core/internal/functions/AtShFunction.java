@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.IllegalJsonInputException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Strings;
@@ -23,7 +24,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("@sh/0")
 public class AtShFunction implements Function {
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type == JsonNodeType.ARRAY) {

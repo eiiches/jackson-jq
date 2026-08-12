@@ -17,13 +17,15 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
+
 public final class ClassLoaderUtils {
-	private static final FileSystem NATIVE_IMAGE_RESOURCE_FILE_SYSTEM = createNativeImageResourceFileSystem();
+	private static final @Nullable FileSystem NATIVE_IMAGE_RESOURCE_FILE_SYSTEM = createNativeImageResourceFileSystem();
 
 	private ClassLoaderUtils() {
 	}
 
-	private static FileSystem createNativeImageResourceFileSystem() {
+	private static @Nullable FileSystem createNativeImageResourceFileSystem() {
 		try {
 			FileSystem fileSystem = FileSystems.newFileSystem(
 					URI.create("resource:/"),

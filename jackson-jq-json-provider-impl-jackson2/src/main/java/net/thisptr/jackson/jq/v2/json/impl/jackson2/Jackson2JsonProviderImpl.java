@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.node.MissingNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -185,12 +186,12 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public JsonNode get(JsonNode node, String fieldName) {
+	public @Nullable JsonNode get(JsonNode node, String fieldName) {
 		return node.get(fieldName);
 	}
 
 	@Override
-	public JsonNode get(JsonNode node, int index) {
+	public @Nullable JsonNode get(JsonNode node, int index) {
 		return node.get(index);
 	}
 
@@ -270,12 +271,12 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public JsonNode valueToTree(Object value) {
+	public JsonNode valueToTree(@Nullable Object value) {
 		return mapper.valueToTree(value);
 	}
 
 	@Override
-	public boolean isJsonNodeInstance(Object arg) {
+	public boolean isJsonNodeInstance(@Nullable Object arg) {
 		return arg instanceof JsonNode;
 	}
 }

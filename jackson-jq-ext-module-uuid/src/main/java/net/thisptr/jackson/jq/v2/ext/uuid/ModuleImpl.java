@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.auto.service.AutoService;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.ext.uuid.functions.Uuid35Function;
 import net.thisptr.jackson.jq.v2.ext.uuid.functions.Uuid4Function;
@@ -24,7 +25,7 @@ public class ModuleImpl implements Module {
 	}
 
 	@Override
-	public Function getFunction(String fname, int nargs) {
+	public @Nullable Function getFunction(String fname, int nargs) {
 		return functions.get(fname + "/" + nargs);
 	}
 

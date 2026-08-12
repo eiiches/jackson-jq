@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.module.loaders;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
@@ -13,7 +15,7 @@ public class ChainedModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	}
 
 	@Override
-	public Module loadModule(Module caller, String path, JsonNode metadata) throws JsonQueryException {
+	public @Nullable Module loadModule(@Nullable Module caller, String path, @Nullable JsonNode metadata) throws JsonQueryException {
 		for (ModuleLoader<JsonNode> loader : loaders) {
 			Module module = loader.loadModule(caller, path, metadata);
 			if (module != null)
@@ -23,7 +25,7 @@ public class ChainedModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	}
 
 	@Override
-	public JsonNode loadData(Module caller, String path, JsonNode metadata) throws JsonQueryException {
+	public @Nullable JsonNode loadData(@Nullable Module caller, String path, @Nullable JsonNode metadata) throws JsonQueryException {
 		for (ModuleLoader<JsonNode> loader : loaders) {
 			JsonNode data = loader.loadData(caller, path, metadata);
 			if (data != null)

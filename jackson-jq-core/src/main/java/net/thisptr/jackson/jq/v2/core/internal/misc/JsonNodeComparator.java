@@ -62,7 +62,7 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 		int s2 = jsonProvider.size(o2);
 		int s = Math.min(s1, s2);
 		for (int i = 0; i < s; ++i) {
-			int rr = compare(jsonProvider.get(o1, i), jsonProvider.get(o2, i));
+			int rr = compare(jsonProvider.requireGet(o1, i), jsonProvider.requireGet(o2, i));
 			if (rr != 0)
 				return rr;
 		}
@@ -88,7 +88,7 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 
 		// compare by values (keys are sorted alphabetically)
 		for (String name : names1) {
-			int rrr = compare(jsonProvider.get(o1, name), jsonProvider.get(o2, name));
+			int rrr = compare(jsonProvider.requireGet(o1, name), jsonProvider.requireGet(o2, name));
 			if (rrr != 0)
 				return rrr;
 		}

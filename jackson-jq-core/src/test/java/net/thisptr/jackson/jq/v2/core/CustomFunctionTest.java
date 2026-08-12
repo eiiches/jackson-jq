@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
@@ -36,7 +37,7 @@ public class CustomFunctionTest {
         rootScope.addFunction("times100", 1, new Function() {
             @Override
             @SuppressWarnings("unchecked")
-            public <N> void apply(Scope<N> scope, List<Expression<N>> args, N in, Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
+            public <N> void apply(Scope<N> scope, List<Expression<N>> args, N in, @Nullable Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
                 args.get(0).apply(scope, in, (numberNode) -> {
                     JsonNode n = (JsonNode) numberNode;
                     assert (n.isIntegralNumber());

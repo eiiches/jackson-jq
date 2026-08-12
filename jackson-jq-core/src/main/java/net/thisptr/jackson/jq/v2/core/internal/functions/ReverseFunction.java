@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.functions;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -20,7 +21,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("reverse/0")
 public class ReverseFunction implements Function {
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		JsonNode out = jsonProvider.createArray();
 
@@ -32,7 +33,7 @@ public class ReverseFunction implements Function {
 		if (type == JsonNodeType.ARRAY) {
 			int size = jsonProvider.size(in);
 			for (int i = size - 1; i >= 0; --i)
-				jsonProvider.add(out, jsonProvider.get(in, i));
+				jsonProvider.add(out, jsonProvider.requireGet(in, i));
 			output.emit(out, null);
 			return;
 		}

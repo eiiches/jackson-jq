@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.VersionRange;
 
@@ -17,7 +18,7 @@ public class VersionRangeDeserializer extends StdDeserializer<VersionRange> {
 	}
 
 	@Override
-	public VersionRange deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+	public @Nullable VersionRange deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
 		String text = p.readValueAs(String.class);
 		if (text == null)
 			return null;

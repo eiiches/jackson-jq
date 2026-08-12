@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -228,7 +229,7 @@ public class RandomTest {
 				if (expected.error != null) {
 					if (!(expected.error instanceof JsonQueryException))
 						throw expected.error;
-					System.err.printf("jq: error (at <unknown>): %s%n", expected.error.getMessage().replace("\n", "\\n"));
+					System.err.printf("jq: error (at <unknown>): %s%n", String.valueOf(expected.error.getMessage()).replace("\n", "\\n"));
 				}
 				System.err.printf("$ jackson-jq '%s' <<< '%s' # version = %s%n", expr, test.in, test.version != null ? test.version : "");
 				for (JsonNode out : actual.values)
@@ -236,7 +237,7 @@ public class RandomTest {
 				if (actual.error != null) {
 					if (!(actual.error instanceof JsonQueryException))
 						throw actual.error;
-					System.err.printf("jq: error (at <unknown>): %s%n", actual.error.getMessage().replace("\n", "\\n"));
+					System.err.printf("jq: error (at <unknown>): %s%n", String.valueOf(actual.error.getMessage()).replace("\n", "\\n"));
 				}
 				System.err.printf("---%n");
 				// throw th;
@@ -247,17 +248,17 @@ public class RandomTest {
 	public static class TestCase {
 		@JsonProperty("v")
 		@JsonSerialize(using = ToStringSerializer.class)
-		public VersionRange version;
+		public @Nullable VersionRange version;
 
 		@JsonProperty("q")
 		@JsonSerialize(using = ToStringSerializer.class)
-		public Expression<JsonNode> expression;
+		public @Nullable Expression<JsonNode> expression;
 
 		@JsonProperty("in")
-		public JsonNode in;
+		public @Nullable JsonNode in;
 
 		@JsonProperty("out")
-		public List<JsonNode> out;
+		public @Nullable List<JsonNode> out;
 
 		@Override
 		public String toString() {

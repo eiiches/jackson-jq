@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +20,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -58,19 +61,19 @@ public abstract class AbstractJsonQueryTest<T> {
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class TestCase {
 		@JsonProperty("q")
-		public String q;
+		public String q = "";
 
 		@JsonProperty("in")
-		public JsonNode in;
+		public JsonNode in = NullNode.getInstance();
 
 		@JsonProperty("out")
-		public List<JsonNode> out;
+		public List<JsonNode> out = Collections.emptyList();
 
 		@JsonProperty("file")
-		public String file;
+		public String file = "";
 
 		@JsonProperty("failing")
-		public Boolean failing;
+		public @Nullable Boolean failing;
 
 		@JsonProperty("should_compile")
 		public boolean shouldCompile = true;
@@ -88,7 +91,7 @@ public abstract class AbstractJsonQueryTest<T> {
 		@JsonProperty("v")
 		@JsonDeserialize(using = VersionRangeDeserializer.class)
 		@JsonSerialize(using = ToStringSerializer.class)
-		public VersionRange version;
+		public @Nullable VersionRange version;
 
 		@Override
 		public String toString() {
@@ -237,7 +240,7 @@ public abstract class AbstractJsonQueryTest<T> {
 					.isEqualTo(expectedOut);
 		} catch (Throwable e) {
 			failed = true;
-			if (!tc.failing) {
+			if (!Boolean.TRUE.equals(tc.failing)) {
 				if (e instanceof AssertionError)
 					throw e;
 				e.addSuppressed(new RuntimeException("NOTE: " + command));
@@ -245,7 +248,7 @@ public abstract class AbstractJsonQueryTest<T> {
 			}
 		}
 
-		if (tc.failing)
+		if (Boolean.TRUE.equals(tc.failing))
 			assertThat(failed).describedAs("The test case is marked as failing but completed successfully").isTrue();
 	}
 

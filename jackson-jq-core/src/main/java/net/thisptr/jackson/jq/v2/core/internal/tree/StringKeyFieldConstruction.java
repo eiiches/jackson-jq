@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -8,9 +10,9 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
 	public final Expression<JsonNode> key;
-	public final Expression<JsonNode> value;
+	public final @Nullable Expression<JsonNode> value;
 
-	public StringKeyFieldConstruction(Expression<JsonNode> key, Expression<JsonNode> value) {
+	public StringKeyFieldConstruction(Expression<JsonNode> key, @Nullable Expression<JsonNode> value) {
 		this.key = key;
 		this.value = value;
 	}

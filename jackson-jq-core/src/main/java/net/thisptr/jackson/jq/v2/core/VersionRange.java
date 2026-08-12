@@ -4,17 +4,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Version;
 
 public class VersionRange {
-	private final Version minVersion;
+	private final @Nullable Version minVersion;
 	private final boolean minInclusive;
-	private final Version maxVersion;
+	private final @Nullable Version maxVersion;
 	private final boolean maxInclusive;
 
-	public VersionRange(Version minVersion, boolean minInclusive,
-						Version maxVersion, boolean maxInclusive) {
+	public VersionRange(@Nullable Version minVersion, boolean minInclusive,
+						@Nullable Version maxVersion, boolean maxInclusive) {
 		this.minVersion = minVersion;
 		this.minInclusive = minInclusive;
 		this.maxVersion = maxVersion;
@@ -47,7 +48,7 @@ public class VersionRange {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)

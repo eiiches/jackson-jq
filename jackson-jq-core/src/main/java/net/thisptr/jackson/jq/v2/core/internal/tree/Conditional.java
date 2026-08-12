@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 import java.util.List;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
@@ -21,7 +22,7 @@ public class Conditional<JsonNode> implements Expression<JsonNode> {
 		this.otherwise = otherwise;
 	}
 
-	private void pathRecursive(PathOutput<JsonNode> output, Scope<JsonNode> scope, List<Pair<Expression<JsonNode>, Expression<JsonNode>>> switches, JsonNode in, Path path) throws JsonQueryException {
+	private void pathRecursive(PathOutput<JsonNode> output, Scope<JsonNode> scope, List<Pair<Expression<JsonNode>, Expression<JsonNode>>> switches, JsonNode in, @Nullable Path path) throws JsonQueryException {
 		Pair<Expression<JsonNode>, Expression<JsonNode>> sw = switches.get(0);
 		sw._1.apply(scope, in, (r) -> {
 			if (JsonNodeUtils.asBoolean(scope.jsonProvider(), r)) {
@@ -37,7 +38,7 @@ public class Conditional<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		pathRecursive(output, scope, switches, in, path);
 	}
 

@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
@@ -47,7 +48,7 @@ public class Usage {
 		// You can also define a custom function. E.g.
 		rootScope.addFunction("repeat", 1, new Function() {
 			@Override
-			public <N> void apply(Scope<N> scope, List<Expression<N>> args, N in, Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
+			public <N> void apply(Scope<N> scope, List<Expression<N>> args, N in, @Nullable Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
 				args.get(0).apply(scope, in, (time) -> {
 					output.emit(scope.jsonProvider().createString(Strings.repeat(scope.jsonProvider().asText(in), scope.jsonProvider().asInt(time))), null);
 				});

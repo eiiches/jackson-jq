@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Stack;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Functional;
@@ -47,7 +48,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		recursive(scope, jsonProvider, in, out, accumulate, 0);
 	}
 
-	private void recursiveWithPath(Scope<JsonNode> scope, JsonProvider<JsonNode> jsonProvider, JsonNode in, Path<JsonNode> path, MatchOutput<JsonNode> out, Stack<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
+	private void recursiveWithPath(Scope<JsonNode> scope, JsonProvider<JsonNode> jsonProvider, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> out, Stack<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
 			out.emit(accumulate);
 			return;
@@ -64,7 +65,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public void matchWithPath(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, MatchOutput<JsonNode> out, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
+	public void matchWithPath(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> out, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.ARRAY && type != JsonNodeType.NULL)

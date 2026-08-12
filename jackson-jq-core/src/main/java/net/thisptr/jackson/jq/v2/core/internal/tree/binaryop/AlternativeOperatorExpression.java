@@ -2,6 +2,8 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.binaryop;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
@@ -15,7 +17,7 @@ public class AlternativeOperatorExpression<JsonNode> extends BinaryOperatorExpre
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		AtomicBoolean emitted = new AtomicBoolean();
 		lhs.apply(scope, in, path, (out, outpath) -> {
 			if (JsonNodeUtils.asBoolean(scope.jsonProvider(), out)) {

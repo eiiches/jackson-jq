@@ -5,6 +5,7 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Preconditions;
@@ -23,7 +24,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration({ "fromdateiso8601/0" })
 public class FromDateIso8601Function implements Function {
     @Override
-    public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+    public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
         JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
         Preconditions.checkInputType(jsonProvider, "fromdateiso8601", in, JsonNodeType.STRING);
         try {

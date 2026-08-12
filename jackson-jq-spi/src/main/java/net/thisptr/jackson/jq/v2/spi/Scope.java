@@ -9,6 +9,8 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.internal.module.loaders.NullModuleLoader;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
@@ -16,7 +18,7 @@ import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class Scope<JsonNode> {
-	private JsonProvider<JsonNode> jsonProvider;
+	private @Nullable JsonProvider<JsonNode> jsonProvider;
 
 	public JsonProvider<JsonNode> jsonProvider() {
 		if (jsonProvider != null)
@@ -32,36 +34,38 @@ public class Scope<JsonNode> {
 
 	private Map<String, String> debugFunctions() {
 		Map<String, String> result = new TreeMap<>();
+		if (functions == null)
+			return result;
 		for (Entry<String, Function> f : functions.entrySet())
 			result.put(f.getKey(), f.getValue().toString());
 		return result;
 	}
 
-	private Scope<JsonNode> parentScope;
+	private @Nullable Scope<JsonNode> parentScope;
 
-	private Map<String, Function> functions;
+	private @Nullable Map<String, Function> functions;
 
-	private Map<String, LinkedList<Module>> importedModules; // the last import comes first; the key is null when the module is loaded by an include statement.
+	private @Nullable Map<@Nullable String, LinkedList<Module>> importedModules; // the last import comes first; the key is null when the module is loaded by an include statement.
 
-	private Map<String, JsonNode> importedData; // the last import overwrites prior imports
+	private @Nullable Map<String, JsonNode> importedData; // the last import overwrites prior imports
 
-	private ModuleLoader<JsonNode> moduleLoader;
+	private @Nullable ModuleLoader<JsonNode> moduleLoader;
 
 	public interface ValueWithPath<JsonNode> {
 		JsonNode value();
 
-		Path path();
+		@Nullable Path<JsonNode> path();
 	}
 
 	private abstract static class AbstractValueWithPath<JsonNode> implements ValueWithPath<JsonNode> {
-		private Path path;
+		private final @Nullable Path<JsonNode> path;
 
-		AbstractValueWithPath (Path path) {
+		AbstractValueWithPath (@Nullable Path<JsonNode> path) {
 			this.path = path;
 		}
 
 		@Override
-		public Path path() {
+		public @Nullable Path<JsonNode> path() {
 			return path;
 		}
 	}
@@ -69,7 +73,7 @@ public class Scope<JsonNode> {
 	private static class ValueSupplierImpl<JsonNode> extends AbstractValueWithPath<JsonNode> {
 		private Supplier<JsonNode> valueSupplier;
 
-		ValueSupplierImpl(Supplier<JsonNode> valueSupplier, Path path) {
+		ValueSupplierImpl(Supplier<JsonNode> valueSupplier, @Nullable Path<JsonNode> path) {
 			super(path);
 			this.valueSupplier = valueSupplier;
 		}
@@ -83,7 +87,7 @@ public class Scope<JsonNode> {
 	private static class ValueWithPathImpl<JsonNode> extends AbstractValueWithPath<JsonNode> {
 		private JsonNode value;
 
-		ValueWithPathImpl(JsonNode value, Path path) {
+		ValueWithPathImpl(JsonNode value, @Nullable Path<JsonNode> path) {
 			super(path);
 			this.value = value;
 
@@ -95,11 +99,11 @@ public class Scope<JsonNode> {
 		}
 	}
 
-	private Map<String, ValueWithPath<JsonNode>> values;
+	private @Nullable Map<String, ValueWithPath<JsonNode>> values;
 
-	private Module currentModule;
+	private @Nullable Module currentModule;
 
-	private Scope(Scope<JsonNode> parentScope) {
+	private Scope(@Nullable Scope<JsonNode> parentScope) {
 		this.parentScope = parentScope;
 	}
 
@@ -123,7 +127,7 @@ public class Scope<JsonNode> {
 		functions.put(name, q);
 	}
 
-	public Function getFunction(String name, int nargs) {
+	public @Nullable Function getFunction(String name, int nargs) {
 		Function f = getFunctionRecursive(name + "/" + nargs);
 		if (f != null)
 			return f;
@@ -136,11 +140,11 @@ public class Scope<JsonNode> {
 		return new HashMap<>(functions);
 	}
 
-	public Scope<JsonNode> getParentScope() {
+	public @Nullable Scope<JsonNode> getParentScope() {
 		return parentScope;
 	}
 
-	private Function getFunctionRecursive(String name) {
+	private @Nullable Function getFunctionRecursive(String name) {
 		if (functions != null) {
 			Function q = functions.get(name);
 			if (q != null)
@@ -159,19 +163,19 @@ public class Scope<JsonNode> {
 		setValueWithPath (name, supplier, null);
 	}
 
-	public void setValueWithPath(String name, JsonNode value, Path path) {
+	public void setValueWithPath(String name, JsonNode value, @Nullable Path<JsonNode> path) {
 		if (values == null)
 			values = new HashMap<>();
 		values.put(name, new ValueWithPathImpl<>(value, path));
 	}
 
-	public  void setValueWithPath(String name, Supplier<JsonNode> value, Path path) {
+	public  void setValueWithPath(String name, Supplier<JsonNode> value, @Nullable Path<JsonNode> path) {
 		if (values == null)
 			values = new HashMap<>();
 		values.put(name, new ValueSupplierImpl<>(value, path));
 	}
 
-	public ValueWithPath<JsonNode> getValueWithPath(String name) {
+	public @Nullable ValueWithPath<JsonNode> getValueWithPath(String name) {
 		if (values != null) {
 			ValueWithPath<JsonNode> value = values.get(name);
 			if (value != null)
@@ -182,7 +186,7 @@ public class Scope<JsonNode> {
 		return parentScope.getValueWithPath(name);
 	}
 
-	public JsonNode getValue(String name) {
+	public @Nullable JsonNode getValue(String name) {
 		ValueWithPath<JsonNode> value = getValueWithPath(name);
 		if (value == null)
 			return null;
@@ -195,7 +199,7 @@ public class Scope<JsonNode> {
 		importedData.put(name, data);
 	}
 
-	public JsonNode getImportedData(String name) {
+	public @Nullable JsonNode getImportedData(String name) {
 		if (importedData != null) {
 			JsonNode data = importedData.get(name);
 			if (data != null)
@@ -206,19 +210,19 @@ public class Scope<JsonNode> {
 		return parentScope.getImportedData(name);
 	}
 
-	public void addImportedModule(String name, Module module) {
+	public void addImportedModule(@Nullable String name, Module module) {
 		if (importedModules == null)
 			importedModules = new HashMap<>();
 		importedModules.computeIfAbsent(name, (dummy) -> new LinkedList<>()).addFirst(module);
 	}
 
-	public List<Module> getImportedModules(String name) { // the last import comes first
+	public List<Module> getImportedModules(@Nullable String name) { // the last import comes first
 		List<Module> modules = new ArrayList<>();
 		getImportedModules(modules, name);
 		return modules;
 	}
 
-	private void getImportedModules(List<Module> modules, String name) {
+	private void getImportedModules(List<Module> modules, @Nullable String name) {
 		if (importedModules != null) {
 			List<Module> localModules = importedModules.get(name);
 			if (localModules != null) {
@@ -242,7 +246,7 @@ public class Scope<JsonNode> {
 		return parentScope.getModuleLoader();
 	}
 
-	public Module getCurrentModule() {
+	public @Nullable Module getCurrentModule() {
 		if (this.currentModule != null)
 			return this.currentModule;
 		if (parentScope == null)

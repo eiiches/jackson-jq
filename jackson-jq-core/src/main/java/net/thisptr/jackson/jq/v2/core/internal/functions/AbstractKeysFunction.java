@@ -3,6 +3,8 @@ package net.thisptr.jackson.jq.v2.core.internal.functions;
 import java.util.Collections;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.internal.misc.Lists;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -25,7 +27,7 @@ public class AbstractKeysFunction implements Function {
 	}
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, name, in, JsonNodeType.OBJECT, JsonNodeType.ARRAY);
 

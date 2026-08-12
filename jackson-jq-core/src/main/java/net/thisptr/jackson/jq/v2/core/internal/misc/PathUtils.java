@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.misc;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.path.ArrayIndexOfPath;
 import net.thisptr.jackson.jq.v2.core.path.ArrayIndexPath;
@@ -28,12 +29,12 @@ public class PathUtils {
 	public static <JsonNode> Path<JsonNode> toPath(JsonProvider<JsonNode> jsonProvider, JsonNode pathObj) throws JsonQueryException {
 		if (jsonProvider.getNodeType(pathObj) != JsonNodeType.ARRAY)
 			throw new JsonQueryException("Path must be specified as an array");
-		@Var Path<JsonNode> path = RootPath.getInstance();
+		@Var @Nullable Path<JsonNode> path = RootPath.getInstance();
 		for (JsonNode segObj : jsonProvider.iterate(pathObj)) {
 			JsonNodeType type = jsonProvider.getNodeType(segObj);
 			if (type == JsonNodeType.OBJECT) {
-				JsonNode start = parseArraySliceIndices(jsonProvider, jsonProvider.get(segObj, "start"));
-				JsonNode end = parseArraySliceIndices(jsonProvider, jsonProvider.get(segObj, "end"));
+				JsonNode start = parseArraySliceIndices(jsonProvider, jsonProvider.requireGet(segObj, "start"));
+				JsonNode end = parseArraySliceIndices(jsonProvider, jsonProvider.requireGet(segObj, "end"));
 				path = new ArrayRangeIndexPath<>(path, start, end);
 			} else if (type == JsonNodeType.NUMBER) {
 				path = new ArrayIndexPath<>(path, segObj);

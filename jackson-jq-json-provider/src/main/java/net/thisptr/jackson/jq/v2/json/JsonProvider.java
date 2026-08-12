@@ -3,6 +3,9 @@ package net.thisptr.jackson.jq.v2.json;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
+
+import org.jspecify.annotations.Nullable;
 
 public interface JsonProvider<JsonNode> {
 	JsonNode createObject();
@@ -73,8 +76,16 @@ public interface JsonProvider<JsonNode> {
 		return () -> elements(node);
 	}
 
-	JsonNode get(JsonNode node, String fieldName);
-	JsonNode get(JsonNode node, int index);
+	@Nullable JsonNode get(JsonNode node, String fieldName);
+	@Nullable JsonNode get(JsonNode node, int index);
+
+	default JsonNode requireGet(JsonNode node, String fieldName) {
+		return Objects.requireNonNull(get(node, fieldName));
+	}
+
+	default JsonNode requireGet(JsonNode node, int index) {
+		return Objects.requireNonNull(get(node, index));
+	}
 
 	/**
 	 * Sets a field on an object node. For mutable implementations, this modifies the node in place.
@@ -123,8 +134,8 @@ public interface JsonProvider<JsonNode> {
 	/**
 	 * Converts a Java object to a JSON node.
 	 */
-	JsonNode valueToTree(Object value);
+	JsonNode valueToTree(@Nullable Object value);
 
 	// TODO: We should instead add Class<JsonNode> getNodeClass().
-	boolean isJsonNodeInstance(Object arg);
+	boolean isJsonNodeInstance(@Nullable Object arg);
 }

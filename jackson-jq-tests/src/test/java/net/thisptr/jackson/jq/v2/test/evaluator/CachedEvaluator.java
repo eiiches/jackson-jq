@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
@@ -71,10 +72,10 @@ public class CachedEvaluator implements AutoCloseable, Evaluator {
 
 	private static class Value {
 		@JsonProperty("out")
-		private List<JsonNode> out;
+		private List<JsonNode> out = java.util.Collections.emptyList();
 
 		@JsonProperty("error")
-		private String error;
+		private @Nullable String error;
 	}
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -95,7 +96,7 @@ public class CachedEvaluator implements AutoCloseable, Evaluator {
 		}
 	}
 
-	private Result load(String q, JsonNode in, Version v) {
+	private @Nullable Result load(String q, JsonNode in, Version v) {
 		try {
 			byte[] key = MAPPER.writeValueAsBytes(new Key(q, in, v));
 			byte[] bytes = db.get(key);

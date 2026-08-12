@@ -9,6 +9,7 @@ import com.google.errorprone.annotations.Var;
 import org.joni.Matcher;
 import org.joni.Option;
 import org.joni.Region;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -25,7 +26,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("_match_impl/3")
 public class _MatchImplFunction implements Function {
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
 		byte[] ibytes = jsonProvider.asText(in).getBytes(StandardCharsets.UTF_8);
@@ -47,14 +48,14 @@ public class _MatchImplFunction implements Function {
 	private static class CaptureObject {
 		public int offset;
 		public int length;
-		public String string;
-		public String name;
+		public @Nullable String string;
+		public @Nullable String name;
 	}
 
 	/* package private */static class MatchObject {
 		public int offset;
 		public int length;
-		public String string;
+		public @Nullable String string;
 		public List<CaptureObject> captures = new ArrayList<>();
 	}
 
@@ -71,7 +72,7 @@ public class _MatchImplFunction implements Function {
 		@Var JsonNode node = jsonProvider.createObject();
 		node = jsonProvider.set(node, "offset", jsonProvider.createInt(obj.offset));
 		node = jsonProvider.set(node, "length", jsonProvider.createInt(obj.length));
-		node = jsonProvider.set(node, "string", jsonProvider.createString(obj.string));
+		node = jsonProvider.set(node, "string", obj.string == null ? jsonProvider.createNull() : jsonProvider.createString(obj.string));
 		@Var JsonNode capturesArray = jsonProvider.createArray();
 		for (CaptureObject capture : obj.captures) {
 			capturesArray = jsonProvider.add(capturesArray, captureToJson(jsonProvider, capture));

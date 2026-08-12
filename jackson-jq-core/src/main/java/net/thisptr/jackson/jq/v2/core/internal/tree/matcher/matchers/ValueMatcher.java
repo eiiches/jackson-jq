@@ -3,6 +3,8 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
 import java.util.List;
 import java.util.Stack;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.internal.misc.Functional;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
@@ -24,7 +26,7 @@ public class ValueMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public void matchWithPath(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
+	public void matchWithPath(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
 		accumulate.push(new MatchWithPath<>(name, in, path));
 		output.emit(accumulate);
 	}

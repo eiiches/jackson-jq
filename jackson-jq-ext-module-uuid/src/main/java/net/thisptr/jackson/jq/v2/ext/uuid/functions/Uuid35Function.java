@@ -4,6 +4,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.ext.uuid.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.ext.uuid.internal.misc.UuidUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -24,7 +26,7 @@ public class Uuid35Function implements Function {
 	}
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "uuid5", in, JsonNodeType.STRING, JsonNodeType.BINARY);
 

@@ -61,6 +61,8 @@
 		<org.slf4j-version>2.0.18</org.slf4j-version>
 		<com.google.auto.service-version>1.1.1</com.google.auto.service-version>
 		<com.google.errorprone-version>2.50.0</com.google.errorprone-version>
+		<com.uber.nullaway-version>0.13.8</com.uber.nullaway-version>
+		<org.jspecify-version>1.0.0</org.jspecify-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -140,6 +142,12 @@
 			<optional>true</optional> <!-- unnecessary for runtime -->
 		</dependency>
 		<dependency>
+			<groupId>org.jspecify</groupId>
+			<artifactId>jspecify</artifactId>
+			<version>${org.jspecify-version}</version>
+			<optional>true</optional> <!-- unnecessary for runtime -->
+		</dependency>
+		<dependency>
 			<groupId>com.google.errorprone</groupId>
 			<artifactId>error_prone_annotations</artifactId>
 			<version>${com.google.errorprone-version}</version>
@@ -177,7 +185,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
 					<release>8</release>
-					<compilerArgument>-Xlint:all,-processing</compilerArgument>
+					<compilerArgument>-Xlint:all,-processing,-options</compilerArgument>
 					<showWarnings>true</showWarnings>
 					<showDeprecation>true</showDeprecation>
 					<annotationProcessorPaths>
@@ -190,6 +198,11 @@
 							<groupId>com.google.errorprone</groupId>
 							<artifactId>error_prone_core</artifactId>
 							<version>${com.google.errorprone-version}</version>
+						</path>
+						<path>
+							<groupId>com.uber.nullaway</groupId>
+							<artifactId>nullaway</artifactId>
+							<version>${com.uber.nullaway-version}</version>
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
@@ -223,6 +236,11 @@
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
 				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Import-Package>org.jspecify.annotations;resolution:=optional,*</Import-Package>
+					</instructions>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -375,7 +393,7 @@
 									<compilerArgs>
 										<arg>-XDcompilePolicy=simple</arg>
 										<arg>--should-stop=ifError=FLOW</arg>
-										<arg>-Xplugin:ErrorProne -Xep:Var:ERROR -Xep:UnnecessaryFinal:ERROR -Xep:DefaultCharset:ERROR -Xep:DeprecatedVariable:ERROR -Xep:EmptyCatch:ERROR -Xep:FallThrough:ERROR -Xep:ImmutableEnumChecker:ERROR -Xep:IncorrectMainMethod:ERROR -Xep:InconsistentHashCode:ERROR -Xep:MissingOverride:ERROR -Xep:WildcardImport:ERROR -Xep:RemoveUnusedImports:ERROR -Xep:Finally:ERROR -Xep:BadInstanceof:ERROR -Xep:BadImport:ERROR -XepExcludedPaths:.*/generated-sources/.*</arg>
+										<arg>-Xplugin:ErrorProne -Xep:Var:ERROR -Xep:UnnecessaryFinal:ERROR -Xep:DefaultCharset:ERROR -Xep:DeprecatedVariable:ERROR -Xep:EmptyCatch:ERROR -Xep:FallThrough:ERROR -Xep:ImmutableEnumChecker:ERROR -Xep:IncorrectMainMethod:ERROR -Xep:InconsistentHashCode:ERROR -Xep:MissingOverride:ERROR -Xep:WildcardImport:ERROR -Xep:RemoveUnusedImports:ERROR -Xep:Finally:ERROR -Xep:BadInstanceof:ERROR -Xep:BadImport:ERROR -Xep:RedundantNullCheck:ERROR -XepExcludedPaths:.*/generated-sources/.* -Xep:NullAway:ERROR -XepOpt:NullAway:AnnotatedPackages=net.thisptr.jackson.jq -XepOpt:NullAway:TreatGeneratedAsUnannotated=true -Xep:VoidMissingNullable:ERROR -Xep:ReturnMissingNullable:ERROR -Xep:ParameterMissingNullable:ERROR -Xep:FieldMissingNullable:ERROR -Xep:EqualsMissingNullable:ERROR -Xep:NullableConstructor:ERROR -Xep:NullablePrimitive:ERROR -Xep:NullablePrimitiveArray:ERROR -Xep:NullableOnContainingClass:ERROR</arg>
 										<arg>-XDaddTypeAnnotationsToSymbol=true</arg>
 										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
 										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
@@ -397,7 +415,7 @@
 									<compilerArgs>
 										<arg>-XDcompilePolicy=simple</arg>
 										<arg>--should-stop=ifError=FLOW</arg>
-										<arg>-Xplugin:ErrorProne -Xep:Var:ERROR -Xep:UnnecessaryFinal:ERROR -Xep:DefaultCharset:ERROR -Xep:DeprecatedVariable:ERROR -Xep:EmptyCatch:ERROR -Xep:FallThrough:ERROR -Xep:ImmutableEnumChecker:ERROR -Xep:IncorrectMainMethod:ERROR -Xep:InconsistentHashCode:ERROR -Xep:MissingOverride:ERROR -Xep:WildcardImport:ERROR -Xep:RemoveUnusedImports:ERROR -Xep:Finally:ERROR -Xep:BadInstanceof:ERROR -Xep:BadImport:ERROR -XepExcludedPaths:.*/generated-sources/.*</arg>
+										<arg>-Xplugin:ErrorProne -Xep:Var:ERROR -Xep:UnnecessaryFinal:ERROR -Xep:DefaultCharset:ERROR -Xep:DeprecatedVariable:ERROR -Xep:EmptyCatch:ERROR -Xep:FallThrough:ERROR -Xep:ImmutableEnumChecker:ERROR -Xep:IncorrectMainMethod:ERROR -Xep:InconsistentHashCode:ERROR -Xep:MissingOverride:ERROR -Xep:WildcardImport:ERROR -Xep:RemoveUnusedImports:ERROR -Xep:Finally:ERROR -Xep:BadInstanceof:ERROR -Xep:BadImport:ERROR -Xep:RedundantNullCheck:ERROR -XepExcludedPaths:.*/generated-sources/.* -Xep:NullAway:ERROR -XepOpt:NullAway:AnnotatedPackages=net.thisptr.jackson.jq -XepOpt:NullAway:TreatGeneratedAsUnannotated=true -Xep:VoidMissingNullable:ERROR -Xep:ReturnMissingNullable:ERROR -Xep:ParameterMissingNullable:ERROR -Xep:FieldMissingNullable:ERROR -Xep:EqualsMissingNullable:ERROR -Xep:NullableConstructor:ERROR -Xep:NullablePrimitive:ERROR -Xep:NullablePrimitiveArray:ERROR -Xep:NullableOnContainingClass:ERROR</arg>
 										<arg>-XDaddTypeAnnotationsToSymbol=true</arg>
 										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
 										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>

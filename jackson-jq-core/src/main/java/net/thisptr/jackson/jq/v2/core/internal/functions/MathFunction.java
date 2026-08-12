@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.functions;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -18,7 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public abstract class MathFunction implements Function {
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "mathfunc", in, JsonNodeType.NUMBER);
 		output.emit(jsonProvider.createDouble(f(jsonProvider.asDouble(in))), null);

@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.jspecify.annotations.Nullable;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonParser;
 import tools.jackson.databind.JsonNode;
@@ -165,12 +166,12 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public JsonNode get(JsonNode node, String fieldName) {
+	public @Nullable JsonNode get(JsonNode node, String fieldName) {
 		return node.get(fieldName);
 	}
 
 	@Override
-	public JsonNode get(JsonNode node, int index) {
+	public @Nullable JsonNode get(JsonNode node, int index) {
 		return node.get(index);
 	}
 
@@ -258,12 +259,12 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public JsonNode valueToTree(Object value) {
+	public JsonNode valueToTree(@Nullable Object value) {
 		return mapper.valueToTree(value);
 	}
 
 	@Override
-	public boolean isJsonNodeInstance(Object arg) {
+	public boolean isJsonNodeInstance(@Nullable Object arg) {
 		return arg instanceof JsonNode;
 	}
 }

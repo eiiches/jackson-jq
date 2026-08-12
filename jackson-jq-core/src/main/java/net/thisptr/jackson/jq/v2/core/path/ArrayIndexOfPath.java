@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.path;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
@@ -14,7 +15,7 @@ public class ArrayIndexOfPath<JsonNode> implements Path<JsonNode> {
 	public final JsonNode subseq; // sub sequence to look for
 	private final Path<JsonNode> parent;
 
-	public static <JsonNode> ArrayIndexOfPath<JsonNode> chainIfNotNull(Path<JsonNode> parent, JsonNode subseq) {
+	public static <JsonNode> @Nullable ArrayIndexOfPath<JsonNode> chainIfNotNull(@Nullable Path<JsonNode> parent, JsonNode subseq) {
 		if (parent == null)
 			return null;
 		return new ArrayIndexOfPath<>(parent, subseq);
@@ -37,7 +38,7 @@ public class ArrayIndexOfPath<JsonNode> implements Path<JsonNode> {
 	}
 
 	@Override
-	public void get(JsonProvider<JsonNode> jsonProvider, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean permissive) throws JsonQueryException {
+	public void get(JsonProvider<JsonNode> jsonProvider, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean permissive) throws JsonQueryException {
 		parent.get(jsonProvider, in, ipath, (parent, ppath) -> {
 			resolve(jsonProvider, parent, ppath, output, subseq, permissive);
 		}, permissive);
@@ -57,7 +58,7 @@ public class ArrayIndexOfPath<JsonNode> implements Path<JsonNode> {
 		if (jsonProvider.size(subseq) != 0) {
 			shift: for (int i = 0; i < jsonProvider.size(seq) - jsonProvider.size(subseq) + 1; ++i) {
 				for (int j = 0; j < jsonProvider.size(subseq); ++j)
-					if (comparator.compare(jsonProvider.get(seq, i + j), jsonProvider.get(subseq, j)) != 0)
+					if (comparator.compare(jsonProvider.requireGet(seq, i + j), jsonProvider.requireGet(subseq, j)) != 0)
 						continue shift;
 				out = jsonProvider.add(out, jsonProvider.createNumber(i));
 			}
@@ -66,7 +67,7 @@ public class ArrayIndexOfPath<JsonNode> implements Path<JsonNode> {
 		return out;
 	}
 
-	public static <JsonNode> void resolve(JsonProvider<JsonNode> jsonProvider, JsonNode pobj, Path<JsonNode> ppath, PathOutput<JsonNode> output, JsonNode subseq, boolean permissive) throws JsonQueryException {
+	public static <JsonNode> void resolve(JsonProvider<JsonNode> jsonProvider, JsonNode pobj, @Nullable Path<JsonNode> ppath, PathOutput<JsonNode> output, JsonNode subseq, boolean permissive) throws JsonQueryException {
 		assert jsonProvider.getNodeType(subseq) == JsonNodeType.ARRAY;
 		if (jsonProvider.getNodeType(pobj) == JsonNodeType.ARRAY) {
 			JsonNode indexList = indexOfAll(jsonProvider, pobj, subseq);

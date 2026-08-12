@@ -3,6 +3,8 @@ package net.thisptr.jackson.jq.v2.core.internal;
 import java.util.Collections;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -27,11 +29,11 @@ public class JsonQueryFunction<JsonNode> implements Function {
 
 	@Override
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public <N> void apply(Scope<N> scope, List<Expression<N>> args, N in, Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
+	public <N> void apply(Scope<N> scope, List<Expression<N>> args, N in, @Nullable Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
 		applyInternal((Scope) scope, (List) args, (JsonNode) in, (Path) path, (PathOutput) output, version);
 	}
 
-	private void applyInternal(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	private void applyInternal(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		Preconditions.checkArgumentCount(name, args, params.size());
 
 		Scope<JsonNode> fnScope = Scope.newChildScope(closure);
@@ -40,7 +42,7 @@ public class JsonQueryFunction<JsonNode> implements Function {
 		pathRecursive(output, fnScope, scope, args, in, path, 0);
 	}
 
-	private void pathRecursive(PathOutput<JsonNode> output, Scope<JsonNode> fnScope, Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> path, int i) throws JsonQueryException {
+	private void pathRecursive(PathOutput<JsonNode> output, Scope<JsonNode> fnScope, Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> path, int i) throws JsonQueryException {
 		if (i == params.size()) {
 			body.apply(fnScope, in, path, output, false);
 		} else {

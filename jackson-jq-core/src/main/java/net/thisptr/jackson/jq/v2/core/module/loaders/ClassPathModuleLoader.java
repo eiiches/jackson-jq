@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
@@ -31,14 +33,14 @@ public class ClassPathModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	}
 
 	@Override
-	public Module loadModule(Module caller, String path, JsonNode metadata) throws JsonQueryException {
+	public @Nullable Module loadModule(@Nullable Module caller, String path, @Nullable JsonNode metadata) throws JsonQueryException {
 		// Note: we can't get jsonProvider here without having access to scope
 		// For now, assume metadata checking for hasSearchPathOverride is handled by other loaders
 		return pathAndModules.get(path);
 	}
 
 	@Override
-	public JsonNode loadData(Module caller, String path, JsonNode metadata) {
+	public @Nullable JsonNode loadData(@Nullable Module caller, String path, @Nullable JsonNode metadata) {
 		return null;
 	}
 

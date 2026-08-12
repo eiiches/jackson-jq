@@ -1,5 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import java.util.Objects;
+
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -7,7 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 
 public class ModuleDirective<JsonNode> {
 	private final Expression<JsonNode> metadataExpr;
-	private JsonNode metadata;
+	private @Nullable JsonNode metadata;
 	private boolean metadataEvaluated = false;
 
 	public ModuleDirective(Expression<JsonNode> metadataExpr) {
@@ -23,7 +27,7 @@ public class ModuleDirective<JsonNode> {
 				throw new IllegalArgumentException("Module metadata must be an object");
 			metadataEvaluated = true;
 		}
-		return metadata;
+		return Objects.requireNonNull(metadata);
 	}
 
 	@Override

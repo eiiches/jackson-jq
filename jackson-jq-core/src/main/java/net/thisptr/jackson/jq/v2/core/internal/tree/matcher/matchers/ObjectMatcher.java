@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Stack;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Functional;
@@ -83,7 +84,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 
 			int size = accumulate.size();
 			if (fmatcher.dollar)
-				accumulate.push(Pair.of(jsonProvider.asText(key), value));
+				accumulate.push(Pair.of(jsonProvider.asText(key), value != null ? value : jsonProvider.createNull()));
 			fmatcher.matcher().match(scope, value != null ? value : jsonProvider.createNull(), (match) -> {
 				recursive(scope, jsonProvider, in, out, accumulate, index + 1);
 			}, accumulate);
@@ -91,7 +92,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		});
 	}
 
-	private void recursiveWithPath(Scope<JsonNode> scope, JsonProvider<JsonNode> jsonProvider, JsonNode in, Path<JsonNode> inpath, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
+	private void recursiveWithPath(Scope<JsonNode> scope, JsonProvider<JsonNode> jsonProvider, JsonNode in, @Nullable Path<JsonNode> inpath, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
 			output.emit(accumulate);
 			return;
@@ -103,11 +104,11 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 				throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with %s", jsonProvider.getNodeType(in), jsonProvider.getNodeType(key));
 
 			JsonNode value = jsonProvider.get(in, jsonProvider.asText(key));
-			Path<JsonNode> valuepath = ObjectFieldPath.chainIfNotNull(inpath, jsonProvider.asText(key));
+			@Nullable Path<JsonNode> valuepath = ObjectFieldPath.chainIfNotNull(inpath, jsonProvider.asText(key));
 
 			int size = accumulate.size();
 			if (fmatcher.dollar)
-				accumulate.push(new MatchWithPath<>(jsonProvider.asText(key), value, valuepath));
+				accumulate.push(new MatchWithPath<>(jsonProvider.asText(key), value != null ? value : jsonProvider.createNull(), valuepath));
 			fmatcher.matcher().matchWithPath(scope, value != null ? value : jsonProvider.createNull(), valuepath, (match) -> {
 				recursiveWithPath(scope, jsonProvider, in, inpath, output, accumulate, index + 1);
 			}, accumulate);
@@ -126,7 +127,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public void matchWithPath(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
+	public void matchWithPath(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL)

@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.test.evaluator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -65,6 +66,6 @@ public class JacksonJqEvaluator implements Evaluator {
 		}
 		if (exception.get() != null)
 			throw exception.get();
-		return result.get();
+		return Objects.requireNonNull(result.get());
 	}
 }

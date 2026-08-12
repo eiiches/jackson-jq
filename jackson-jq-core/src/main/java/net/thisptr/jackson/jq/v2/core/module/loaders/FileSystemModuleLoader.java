@@ -9,12 +9,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.module.SimpleModule;
@@ -60,7 +62,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		return resolvedPath;
 	}
 
-	private static ModuleFile loadModuleFile(Path searchPath, String path, String ext) throws IOException {
+	private static @Nullable ModuleFile loadModuleFile(Path searchPath, String path, String ext) throws IOException {
 		Path resolvedPath = resolveModulePath(searchPath, path);
 
 		Path moduleFilePath = resolvedPath.resolveSibling(resolvedPath.getFileName() + "." + ext);
@@ -112,7 +114,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		}
 	}
 
-	private Module loadModuleActual(Path searchPath, String path) throws IOException {
+	private @Nullable Module loadModuleActual(Path searchPath, String path) throws IOException {
 		ModuleFile moduleFile = loadModuleFile(searchPath, path, "jq");
 		if (moduleFile == null)
 			return null;
@@ -171,7 +173,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		}
 	}
 
-	private Pair<List<Path>, String> resolvePathsFromImportDirective(Module caller, String path, JsonNode metadata) throws JsonQueryException {
+	private @Nullable Pair<List<Path>, String> resolvePathsFromImportDirective(@Nullable Module caller, String path, @Nullable JsonNode metadata) throws JsonQueryException {
 		@Var List<Path> searchPaths = this.searchPaths;
 		@Var String relativePath = path;
 
@@ -196,7 +198,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 					throw new JsonQueryException("search path overrides must be a string");
 
 				@Var Path searchPathOverride = callerModule.modulePath.getFileSystem().getPath(jsonProvider.asText(search));
-				searchPathOverride = callerModule.modulePath.getParent().resolve(searchPathOverride).normalize();
+				searchPathOverride = Objects.requireNonNull(callerModule.modulePath.getParent()).resolve(searchPathOverride).normalize();
 
 				// still, the search path must be within the original search path
 				if (!searchPathOverride.startsWith(callerModule.searchPath))
@@ -213,7 +215,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	}
 
 	@Override
-	public Module loadModule(Module caller, String path, JsonNode metadata) throws JsonQueryException {
+	public @Nullable Module loadModule(@Nullable Module caller, String path, @Nullable JsonNode metadata) throws JsonQueryException {
 		Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
 		if (paths == null)
 			return null;
@@ -231,7 +233,8 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 			} catch (TryOnce.RecursiveInvocationException e) {
 				throw new JsonQueryException("module %s is imported recursively", path);
 			} catch (CompletionException e) {
-				throw new JsonQueryException(String.format("failed to load module %s: %s", path, e.getCause().getMessage()), e);
+				Throwable cause = e.getCause();
+				throw new JsonQueryException(String.format("failed to load module %s: %s", path, cause == null ? e.getMessage() : cause.getMessage()), e);
 			}
 		}
 
@@ -239,7 +242,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	}
 
 	@Override
-	public JsonNode loadData(Module caller, String path, JsonNode metadata) throws JsonQueryException {
+	public @Nullable JsonNode loadData(@Nullable Module caller, String path, @Nullable JsonNode metadata) throws JsonQueryException {
 		Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
 		if (paths == null)
 			return null;
@@ -255,14 +258,15 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 				if (data != null)
 					return data;
 			} catch (CompletionException e) {
-				throw new JsonQueryException(String.format("failed to load data %s: %s", path, e.getCause().getMessage()), e);
+				Throwable cause = e.getCause();
+				throw new JsonQueryException(String.format("failed to load data %s: %s", path, cause == null ? e.getMessage() : cause.getMessage()), e);
 			}
 		}
 
 		return null;
 	}
 
-	private JsonNode loadDataActual(Path searchPath, String path) throws Exception {
+	private @Nullable JsonNode loadDataActual(Path searchPath, String path) throws Exception {
 		ModuleFile moduleFile = loadModuleFile(searchPath, path, "json");
 		if (moduleFile == null)
 			return null;

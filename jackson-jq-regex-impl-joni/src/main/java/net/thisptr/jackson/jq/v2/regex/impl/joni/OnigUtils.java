@@ -9,6 +9,7 @@ import org.joni.NameEntry;
 import org.joni.Option;
 import org.joni.Regex;
 import org.joni.Syntax;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -16,9 +17,9 @@ public class OnigUtils {
 	public static class Pattern {
 		public Regex regex;
 		public boolean global;
-		public String[] names;
+		public @Nullable String[] names;
 
-		public Pattern(String regexText, String flags) throws JsonQueryException {
+		public Pattern(String regexText, @Nullable String flags) throws JsonQueryException {
 			int modifiers = parseModifiers(flags) | Option.CAPTURE_GROUP;
 			byte[] regexBytes = regexText.getBytes(StandardCharsets.UTF_8);
 			this.regex = new Regex(regexBytes, 0, regexBytes.length, modifiers, UTF8Encoding.INSTANCE, Syntax.PerlNG);
@@ -26,7 +27,7 @@ public class OnigUtils {
 			this.names = names(regex);
 		}
 
-		private static String[] names(Regex regex) {
+		private static @Nullable String[] names(Regex regex) {
 			String[] names = new String[regex.numberOfCaptures() + 1];
 			if (regex.numberOfNames() == 0)
 				return names;
@@ -41,13 +42,13 @@ public class OnigUtils {
 		}
 	}
 
-	public static boolean isGlobal(String flags) {
+	public static boolean isGlobal(@Nullable String flags) {
 		if (flags == null)
 			return false;
 		return flags.contains("g");
 	}
 
-	public static int parseModifiers(String flags) throws JsonQueryException {
+	public static int parseModifiers(@Nullable String flags) throws JsonQueryException {
 		if (flags == null)
 			return Option.NONE;
 

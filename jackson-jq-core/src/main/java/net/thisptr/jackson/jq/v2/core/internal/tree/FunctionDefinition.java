@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 import java.util.List;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.JsonQueryFunction;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -23,7 +24,7 @@ public class FunctionDefinition<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		scope.addFunction(fname, args.size(), new JsonQueryFunction<>(fname, args, body, scope));
 	}
 

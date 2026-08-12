@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.ServiceLoader;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.IsolatedScopeQuery;
 import net.thisptr.jackson.jq.v2.core.internal.JsonQueryFunction;
@@ -52,7 +53,7 @@ public class BuiltinFunctionLoader {
 		listFunctions(classLoader, version, closureScope).forEach(closureScope::addFunction);
 	}
 
-	private static String[] extractFunctionNamesFromAnnotationIfVersionMatch(Function fn, Version version) {
+	private static String @Nullable [] extractFunctionNamesFromAnnotationIfVersionMatch(Function fn, Version version) {
 		FunctionRegistration annotation = fn.getClass().getAnnotation(FunctionRegistration.class);
 		if (annotation == null)
 			return null;
@@ -65,7 +66,7 @@ public class BuiltinFunctionLoader {
 	}
 
 	@SuppressWarnings("deprecation")
-	private static String[] extractFunctionNamesFromDeprecatedAnnotationIfVersionMatch(Function fn, Version version) {
+	private static String @Nullable [] extractFunctionNamesFromDeprecatedAnnotationIfVersionMatch(Function fn, Version version) {
 		net.thisptr.jackson.jq.v2.core.internal.BuiltinFunction annotation = fn.getClass().getAnnotation(net.thisptr.jackson.jq.v2.core.internal.BuiltinFunction.class);
 		if (annotation == null)
 			return null;

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
@@ -69,7 +71,7 @@ public class JsonNodeUtils {
 		}
 	}
 
-	public static <JsonNode> JsonNode nullToNullNode(JsonProvider<JsonNode> jsonProvider, JsonNode value) {
+	public static <JsonNode> JsonNode nullToNullNode(JsonProvider<JsonNode> jsonProvider, @Nullable JsonNode value) {
 		if (value == null)
 			return jsonProvider.createNull();
 		return value;

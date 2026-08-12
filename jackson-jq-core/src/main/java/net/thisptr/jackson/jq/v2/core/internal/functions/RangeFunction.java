@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
@@ -26,7 +27,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class RangeFunction implements Function {
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		if (args.size() == 1) {
 			args.get(0).apply(scope, in, (end) -> {

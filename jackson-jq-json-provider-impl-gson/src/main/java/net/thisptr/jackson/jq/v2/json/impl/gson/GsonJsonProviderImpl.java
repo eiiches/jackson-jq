@@ -14,6 +14,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonStreamParser;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -250,7 +251,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public JsonElement get(JsonElement node, String fieldName) {
+	public @Nullable JsonElement get(JsonElement node, String fieldName) {
 		if (node.isJsonObject()) {
 			return node.getAsJsonObject().get(fieldName);
 		}
@@ -258,7 +259,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public JsonElement get(JsonElement node, int index) {
+	public @Nullable JsonElement get(JsonElement node, int index) {
 		if (node.isJsonArray()) {
 			JsonArray array = node.getAsJsonArray();
 			if (index >= 0 && index < array.size()) {
@@ -414,12 +415,12 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public JsonElement valueToTree(Object value) {
+	public JsonElement valueToTree(@Nullable Object value) {
 		return gson.toJsonTree(value);
 	}
 
 	@Override
-	public boolean isJsonNodeInstance(Object arg) {
+	public boolean isJsonNodeInstance(@Nullable Object arg) {
 		return arg instanceof JsonElement;
 	}
 }

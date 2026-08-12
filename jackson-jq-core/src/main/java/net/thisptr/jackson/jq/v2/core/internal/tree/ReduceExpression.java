@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -28,7 +30,7 @@ public class ReduceExpression<JsonNode> implements Expression<JsonNode> {
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		initExpr.apply(scope, in, (accumulator) -> {
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")

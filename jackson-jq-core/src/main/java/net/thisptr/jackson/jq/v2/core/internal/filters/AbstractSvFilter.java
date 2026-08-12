@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -25,7 +26,7 @@ public abstract class AbstractSvFilter implements Function {
 	protected abstract void appendEscaped(StringBuilder builder, String text);
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		if (jsonProvider.getNodeType(in) != JsonNodeType.ARRAY)
 			throw new JsonQueryTypeException(jsonProvider, "%s cannot be %s-formatted, only array", in, name());

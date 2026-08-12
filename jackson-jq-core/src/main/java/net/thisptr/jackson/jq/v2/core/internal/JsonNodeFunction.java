@@ -2,6 +2,8 @@ package net.thisptr.jackson.jq.v2.core.internal;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
@@ -19,7 +21,7 @@ public class JsonNodeFunction<JsonNode> implements Function {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <InputNode> void apply(Scope<InputNode> scope, List<Expression<InputNode>> args, InputNode in, Path<InputNode> ipath, PathOutput<InputNode> output, Version version) throws JsonQueryException {
+	public <InputNode> void apply(Scope<InputNode> scope, List<Expression<InputNode>> args, InputNode in, @Nullable Path<InputNode> ipath, PathOutput<InputNode> output, Version version) throws JsonQueryException {
 		output.emit((InputNode) value, null);
 	}
 }

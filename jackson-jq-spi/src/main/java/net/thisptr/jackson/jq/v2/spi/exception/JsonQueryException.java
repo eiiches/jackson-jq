@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.spi.exception;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -28,7 +29,8 @@ public class JsonQueryException extends RuntimeException {
     }
 
     public <JsonNode> JsonNode getMessageAsJsonNode(JsonProvider<JsonNode> jsonProvider) {
-        return jsonProvider.createString(getMessage());
+		@Nullable String message = getMessage();
+		return message == null ? jsonProvider.createNull() : jsonProvider.createString(message);
     }
 
     public JsonQueryException(JsonProvider<?> jsonProvider, String format, Object... args) {
