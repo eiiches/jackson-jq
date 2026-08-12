@@ -16,10 +16,10 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 // @AutoService(Function.class)
 // 2022-06-29(eiiches): commented out @FunctionRegistration("env/0") to make sure some custom function loaders don't load `env/0` accidentally.
 // @FunctionRegistration("env/0")
-public class EnvFunction<JsonNode> implements Function<JsonNode> {
+public class EnvFunction implements Function {
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
 		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		final JsonNode result = jsonProvider.createObject();
 		for (final Map.Entry<String, String> entry : System.getenv().entrySet()) {

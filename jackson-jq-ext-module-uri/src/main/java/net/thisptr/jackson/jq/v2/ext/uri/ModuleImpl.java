@@ -12,24 +12,23 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleRegistration;
 
-@SuppressWarnings("rawtypes")
 @AutoService(Module.class)
 @ModuleRegistration(path = "jackson-jq/uri")
 public class ModuleImpl<JsonNode> implements Module<JsonNode> {
-	private final Map<String, Function<JsonNode>> functions = new HashMap<>();
+	private final Map<String, Function> functions = new HashMap<>();
 
 	public ModuleImpl() {
-		functions.put("uridecode/0", new UriDecodeFunction<>());
-		functions.put("uriparse/0", new UriParseFunction<>());
+		functions.put("uridecode/0", new UriDecodeFunction());
+		functions.put("uriparse/0", new UriParseFunction());
 	}
 
 	@Override
-	public Function<JsonNode> getFunction(final String fname, final int nargs) {
+	public Function getFunction(final String fname, final int nargs) {
 		return functions.get(fname + "/" + nargs);
 	}
 
 	@Override
-	public Map<String, Function<JsonNode>> getAllFunctions() {
+	public Map<String, Function> getAllFunctions() {
 		return Collections.unmodifiableMap(functions);
 	}
 }

@@ -21,7 +21,7 @@ public class FormattingFilter<JsonNode> implements Expression<JsonNode> {
 
 	@Override
 	public void apply(final Scope<JsonNode> scope, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
-		final Function<JsonNode> f = scope.getFunction("@" + name, 0);
+		final Function f = scope.getFunction("@" + name, 0);
 		if (f == null)
 			throw new JsonQueryException("Formatting operator @" + name + " does not exist");
 		f.apply(scope, Collections.emptyList(), in, ipath, output, version);

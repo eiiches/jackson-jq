@@ -19,10 +19,10 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
 @FunctionRegistration("split/1")
-public class SplitFunction<JsonNode> implements Function<JsonNode> {
+public class SplitFunction implements Function {
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
 		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		args.get(0).apply(scope, in, (sep) -> {
 			if (jsonProvider.getNodeType(in) != JsonNodeType.STRING || jsonProvider.getNodeType(sep) != JsonNodeType.STRING)

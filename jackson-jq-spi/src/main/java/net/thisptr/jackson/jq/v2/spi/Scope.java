@@ -32,14 +32,14 @@ public class Scope<JsonNode> {
 
 	private Map<String, String> debugFunctions() {
 		final Map<String, String> result = new TreeMap<>();
-		for (final Entry<String, Function<JsonNode>> f : functions.entrySet())
+		for (final Entry<String, Function> f : functions.entrySet())
 			result.put(f.getKey(), f.getValue().toString());
 		return result;
 	}
 
 	private Scope<JsonNode> parentScope;
 
-	private Map<String, Function<JsonNode>> functions;
+	private Map<String, Function> functions;
 
 	private Map<String, LinkedList<Module<JsonNode>>> importedModules; // the last import comes first; the key is null when the module is loaded by an include statement.
 
@@ -113,24 +113,24 @@ public class Scope<JsonNode> {
 		return new Scope<>(scope);
 	}
 
-	public void addFunction(final String name, final int n, final Function<JsonNode> q) {
+	public void addFunction(final String name, final int n, final Function q) {
 		addFunction(name + "/" + n, q);
 	}
 
-	public void addFunction(final String name, final Function<JsonNode> q) {
+	public void addFunction(final String name, final Function q) {
 		if (functions == null)
 			functions = new HashMap<>();
 		functions.put(name, q);
 	}
 
-	public Function<JsonNode> getFunction(final String name, final int nargs) {
-		final Function<JsonNode> f = getFunctionRecursive(name + "/" + nargs);
+	public Function getFunction(final String name, final int nargs) {
+		final Function f = getFunctionRecursive(name + "/" + nargs);
 		if (f != null)
 			return f;
 		return getFunctionRecursive(name);
 	}
 
-	public Map<String, Function<JsonNode>> getLocalFunctions() {
+	public Map<String, Function> getLocalFunctions() {
 		if (functions == null)
 			return new HashMap<>();
 		return new HashMap<>(functions);
@@ -140,9 +140,9 @@ public class Scope<JsonNode> {
 		return parentScope;
 	}
 
-	private Function<JsonNode> getFunctionRecursive(final String name) {
+	private Function getFunctionRecursive(final String name) {
 		if (functions != null) {
-			final Function<JsonNode> q = functions.get(name);
+			final Function q = functions.get(name);
 			if (q != null)
 				return q;
 		}

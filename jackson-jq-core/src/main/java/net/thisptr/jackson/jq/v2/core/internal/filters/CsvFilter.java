@@ -7,7 +7,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 
 @AutoService(Function.class)
 @FunctionRegistration("@csv/0")
-public class CsvFilter<JsonNode> extends AbstractSvFilter<JsonNode> {
+public class CsvFilter extends AbstractSvFilter {
 	@Override
 	protected void appendEscaped(final StringBuilder builder, final String text) {
 		builder.append('"');

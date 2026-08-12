@@ -19,10 +19,10 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
 @FunctionRegistration("path/1")
-public class PathFunction<JsonNode> implements Function<JsonNode> {
+public class PathFunction implements Function {
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
 		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		args.get(0).apply(scope, in, RootPath.getInstance(), (obj, path) -> {
 			// `VALUE | path(VALUE) => []`

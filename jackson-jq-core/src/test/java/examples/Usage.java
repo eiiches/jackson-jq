@@ -45,9 +45,9 @@ public class Usage {
 		BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, rootScope);
 
 		// You can also define a custom function. E.g.
-		rootScope.addFunction("repeat", 1, new Function<JsonNode>() {
+		rootScope.addFunction("repeat", 1, new Function() {
 			@Override
-			public void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+			public <N> void apply(Scope<N> scope, List<Expression<N>> args, N in, Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
 				args.get(0).apply(scope, in, (time) -> {
 					output.emit(scope.jsonProvider().createString(Strings.repeat(scope.jsonProvider().asText(in), scope.jsonProvider().asInt(time))), null);
 				});

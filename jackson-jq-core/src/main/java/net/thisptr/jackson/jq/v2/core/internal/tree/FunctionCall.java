@@ -24,22 +24,22 @@ public class FunctionCall<JsonNode> implements Expression<JsonNode> {
 		this.version = version;
 	}
 
-	private Function<JsonNode> lookupFunction(final Scope<JsonNode> scope) throws JsonQueryException {
+	private Function lookupFunction(final Scope<JsonNode> scope) throws JsonQueryException {
 		if (moduleName != null) {
 			for (final Module<JsonNode> module : scope.getImportedModules(moduleName)) {
-				final Function<JsonNode> f = module.getFunction(name, args.size());
+				final Function f = module.getFunction(name, args.size());
 				if (f != null)
 					return f;
 			}
 			throw new JsonQueryException(String.format("Function %s::%s/%s does not exist", moduleName, name, args.size()));
 		} else {
-			final Function<JsonNode> f = scope.getFunction(name, args.size());
+			final Function f = scope.getFunction(name, args.size());
 			if (f != null)
 				return f;
 
 			// search functions loaded by "include" statement
 			for (final Module<JsonNode> module : scope.getImportedModules(null)) {
-				final Function<JsonNode> g = module.getFunction(name, args.size());
+				final Function g = module.getFunction(name, args.size());
 				if (g != null)
 					return g;
 			}
@@ -50,7 +50,7 @@ public class FunctionCall<JsonNode> implements Expression<JsonNode> {
 
 	@Override
 	public void apply(Scope<JsonNode> scope, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, final boolean requirePath) throws JsonQueryException {
-		final Function<JsonNode> f = lookupFunction(scope);
+		final Function f = lookupFunction(scope);
 		f.apply(scope, args, in, path, output, version);
 	}
 

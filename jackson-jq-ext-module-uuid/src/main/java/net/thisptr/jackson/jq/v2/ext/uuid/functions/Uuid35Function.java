@@ -16,8 +16,7 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-@SuppressWarnings("rawtypes")
-public class Uuid35Function<JsonNode> implements Function<JsonNode> {
+public class Uuid35Function implements Function {
 	private final int uuidVersion;
 
 	public Uuid35Function(int uuidVersion) {
@@ -25,7 +24,7 @@ public class Uuid35Function<JsonNode> implements Function<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "uuid5", in, JsonNodeType.STRING, JsonNodeType.BINARY);
 

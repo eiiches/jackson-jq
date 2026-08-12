@@ -7,7 +7,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 
 @AutoService(Function.class)
 @FunctionRegistration("@html/0")
-public class AtHtmlFunction<JsonNode> extends AbstractAtFormattingFunction<JsonNode> {
+public class AtHtmlFunction extends AbstractAtFormattingFunction {
 	@Override
 	public String convert(final String text) {
 		final StringBuilder builder = new StringBuilder();

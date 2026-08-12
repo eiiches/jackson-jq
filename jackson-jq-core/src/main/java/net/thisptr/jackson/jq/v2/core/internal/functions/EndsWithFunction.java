@@ -7,7 +7,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 
 @AutoService(Function.class)
 @FunctionRegistration("endswith/1")
-public class EndsWithFunction<JsonNode> extends AbstractStartsEndsWithFunction<JsonNode> {
+public class EndsWithFunction extends AbstractStartsEndsWithFunction {
 
 	public EndsWithFunction() {
 		super("endswith");

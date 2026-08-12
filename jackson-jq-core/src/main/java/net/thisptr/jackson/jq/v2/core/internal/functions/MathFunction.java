@@ -16,9 +16,9 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
+public abstract class MathFunction implements Function {
 	@Override
-	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
 		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "mathfunc", in, JsonNodeType.NUMBER);
 		output.emit(jsonProvider.createDouble(f(jsonProvider.asDouble(in))), null);
@@ -28,7 +28,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("atan/0")
-	public static class AtanFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class AtanFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
 			return Math.atan(v);
@@ -37,7 +37,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("tan/0")
-	public static class TanFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class TanFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
 			return Math.tan(v);
@@ -46,7 +46,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("tanh/0")
-	public static class TanhFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class TanhFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
 			return Math.tanh(v);
@@ -55,7 +55,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("acos/0")
-	public static class AcosFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class AcosFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
 			return Math.acos(v);
@@ -64,7 +64,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("cos/0")
-	public static class CosFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class CosFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
 			return Math.cos(v);
@@ -73,7 +73,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("cosh/0")
-	public static class CoshFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class CoshFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
 			return Math.cosh(v);
@@ -82,7 +82,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("floor/0")
-	public static class FloorFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class FloorFunction extends MathFunction {
 		@Override
 		protected double f(double f) {
 			return Math.floor(f);
@@ -91,7 +91,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("ceil/0")
-	public static class CeilFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class CeilFunction extends MathFunction {
 		@Override
 		protected double f(double f) {
 			return Math.ceil(f);
@@ -100,7 +100,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration(value = "round/0", version = "[1.6, )")
-	public static class RoundFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class RoundFunction extends MathFunction {
 		@Override
 		protected double f(final double v) {
 			return v >= 0 ? Math.round(v) : -Math.round(-v);
@@ -109,7 +109,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("asin/0")
-	public static class AsinFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class AsinFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
 			return Math.asin(v);
@@ -118,7 +118,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("sin/0")
-	public static class SinFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class SinFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
 			return Math.sin(v);
@@ -127,7 +127,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("sinh/0")
-	public static class SinhFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class SinhFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
 			return Math.sinh(v);
@@ -136,7 +136,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("cbrt/0")
-	public static class CbrtFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class CbrtFunction extends MathFunction {
 		@Override
 		protected double f(final double v) {
 			return Math.cbrt(v);
@@ -145,7 +145,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("sqrt/0")
-	public static class SqrtFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class SqrtFunction extends MathFunction {
 		@Override
 		protected double f(final double v) {
 			return Math.sqrt(v);
@@ -154,7 +154,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("log2/0")
-	public static class Log2Function<JsonNode> extends MathFunction<JsonNode> {
+	public static class Log2Function extends MathFunction {
 		@Override
 		protected double f(final double v) {
 			return Math.log10(v) / Math.log10(2);
@@ -163,7 +163,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("log/0")
-	public static class LogFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class LogFunction extends MathFunction {
 		@Override
 		protected double f(final double v) {
 			return Math.log(v);
@@ -172,7 +172,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("log10/0")
-	public static class Log10Function<JsonNode> extends MathFunction<JsonNode> {
+	public static class Log10Function extends MathFunction {
 		@Override
 		protected double f(final double v) {
 			return Math.log10(v);
@@ -181,7 +181,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration(value = "log1p/0", version = "[1.6, )")
-	public static class Log1pFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class Log1pFunction extends MathFunction {
 		@Override
 		protected double f(final double v) {
 			return Math.log1p(v);
@@ -190,7 +190,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("exp/0")
-	public static class ExpFunction<JsonNode> extends MathFunction<JsonNode> {
+	public static class ExpFunction extends MathFunction {
 		@Override
 		protected double f(final double v) {
 			return Math.exp(v);
@@ -199,7 +199,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration(value = "expm1/0", version = "[1.6, )")
-	public static class Expm1Function<JsonNode> extends MathFunction<JsonNode> {
+	public static class Expm1Function extends MathFunction {
 		@Override
 		protected double f(final double v) {
 			return Math.expm1(v);
@@ -208,7 +208,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration("exp2/0")
-	public static class Exp2Function<JsonNode> extends MathFunction<JsonNode> {
+	public static class Exp2Function extends MathFunction {
 		@Override
 		protected double f(final double v) {
 			return Math.pow(2, v);
@@ -217,7 +217,7 @@ public abstract class MathFunction<JsonNode> implements Function<JsonNode> {
 
 	@AutoService(Function.class)
 	@FunctionRegistration(value = "exp10/0", version = "[1.6, )")
-	public static class Exp10Function<JsonNode> extends MathFunction<JsonNode> {
+	public static class Exp10Function extends MathFunction {
 		@Override
 		protected double f(final double v) {
 			return Math.pow(10, v);

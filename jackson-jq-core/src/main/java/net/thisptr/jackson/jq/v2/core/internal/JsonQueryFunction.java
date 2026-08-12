@@ -12,7 +12,7 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class JsonQueryFunction<JsonNode> implements Function<JsonNode> {
+public class JsonQueryFunction<JsonNode> implements Function {
 	private Expression<JsonNode> body;
 	private List<String> params;
 	private String name;
@@ -26,7 +26,12 @@ public class JsonQueryFunction<JsonNode> implements Function<JsonNode> {
 	}
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> path, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public <N> void apply(final Scope<N> scope, final List<Expression<N>> args, final N in, final Path<N> path, final PathOutput<N> output, final Version version) throws JsonQueryException {
+		applyInternal((Scope) scope, (List) args, (JsonNode) in, (Path) path, (PathOutput) output, version);
+	}
+
+	private void applyInternal(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> path, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
 		Preconditions.checkArgumentCount(name, args, params.size());
 
 		final Scope<JsonNode> fnScope = Scope.newChildScope(closure);

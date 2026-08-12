@@ -16,9 +16,9 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 @AutoService(Function.class)
 @FunctionRegistration("pow/2")
-public class PowFunction<JsonNode> extends JsonArgumentFunction<JsonNode> {
+public class PowFunction extends JsonArgumentFunction {
 	@Override
-	protected JsonNode fn(final Scope<JsonNode> scope, final List<JsonNode> args, final JsonNode in) throws JsonQueryException {
+	protected <JsonNode> JsonNode fn(final Scope<JsonNode> scope, final List<JsonNode> args, final JsonNode in) throws JsonQueryException {
 		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkArgumentType(jsonProvider, "pow/2", 0, args.get(0), JsonNodeType.NUMBER);
 		Preconditions.checkArgumentType(jsonProvider, "pow/2", 1, args.get(1), JsonNodeType.NUMBER);

@@ -14,12 +14,11 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-@SuppressWarnings("rawtypes")
 @AutoService(Function.class)
 @FunctionRegistration("type/0")
-public class TypeFunction<JsonNode> implements Function<JsonNode> {
+public class TypeFunction implements Function {
 	@Override
-	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
 		output.emit(scope.jsonProvider().createString(JsonNodeUtils.typeOf(scope.jsonProvider(), in)), null);
 	}
 }

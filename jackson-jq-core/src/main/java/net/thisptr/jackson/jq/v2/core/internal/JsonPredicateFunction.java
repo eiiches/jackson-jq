@@ -11,7 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class JsonPredicateFunction<JsonNode> implements Function<JsonNode> {
+public class JsonPredicateFunction<JsonNode> implements Function {
 	private Predicate<JsonNode> predicate;
 
 	public JsonPredicateFunction(final Predicate<JsonNode> predicate) {
@@ -19,7 +19,8 @@ public class JsonPredicateFunction<JsonNode> implements Function<JsonNode> {
 	}
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
-		output.emit(scope.jsonProvider().createBoolean(predicate.test(in)), null);
+	@SuppressWarnings("unchecked")
+	public <InputNode> void apply(final Scope<InputNode> scope, final List<Expression<InputNode>> args, final InputNode in, final Path<InputNode> ipath, final PathOutput<InputNode> output, final Version version) throws JsonQueryException {
+		output.emit(scope.jsonProvider().createBoolean(predicate.test((JsonNode) in)), null);
 	}
 }

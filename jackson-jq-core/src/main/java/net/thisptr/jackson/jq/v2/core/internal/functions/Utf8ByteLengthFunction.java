@@ -19,9 +19,9 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
 @FunctionRegistration(value = "utf8bytelength/0", version = "[1.6, )")
-public class Utf8ByteLengthFunction<JsonNode> implements Function<JsonNode> {
+public class Utf8ByteLengthFunction implements Function {
 	@Override
-	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
 		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		if (jsonProvider.getNodeType(in) != JsonNodeType.STRING)
 			throw new JsonQueryTypeException(jsonProvider, "%s only strings have UTF-8 byte length", in);

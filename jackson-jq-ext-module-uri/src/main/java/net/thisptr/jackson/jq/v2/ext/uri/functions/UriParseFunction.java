@@ -21,13 +21,12 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-@SuppressWarnings("rawtypes")
-public class UriParseFunction<JsonNode> implements Function<JsonNode> {
+public class UriParseFunction implements Function {
 
 	private static final Pattern AMPERSAND = Pattern.compile(Pattern.quote("&"));
 	private static final Pattern EQUAL = Pattern.compile(Pattern.quote("="));
 
-	private Map<String, JsonNode> parseQueryObj(final Scope<JsonNode> scope, final String rawQuery) {
+	private <JsonNode> Map<String, JsonNode> parseQueryObj(final Scope<JsonNode> scope, final String rawQuery) {
 		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		final Map<String, List<String>> result = new HashMap<>();
 		if (rawQuery == null)
@@ -66,7 +65,7 @@ public class UriParseFunction<JsonNode> implements Function<JsonNode> {
 		return result2;
 	}
 
-	private JsonNode buildResult(final JsonProvider<JsonNode> jsonProvider, final URI uri, final Map<String, JsonNode> queryObj) {
+	private <JsonNode> JsonNode buildResult(final JsonProvider<JsonNode> jsonProvider, final URI uri, final Map<String, JsonNode> queryObj) {
 		JsonNode result = jsonProvider.createObject();
 		result = jsonProvider.set(result, "scheme", uri.getScheme() != null ? jsonProvider.createString(uri.getScheme()) : jsonProvider.createNull());
 		result = jsonProvider.set(result, "user_info", uri.getUserInfo() != null ? jsonProvider.createString(uri.getUserInfo()) : jsonProvider.createNull());
@@ -92,7 +91,7 @@ public class UriParseFunction<JsonNode> implements Function<JsonNode> {
 	}
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
 		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "uriparse", in, JsonNodeType.STRING);
 

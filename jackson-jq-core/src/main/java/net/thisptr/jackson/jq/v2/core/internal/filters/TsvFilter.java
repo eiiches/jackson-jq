@@ -7,7 +7,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 
 @AutoService(Function.class)
 @FunctionRegistration("@tsv/0")
-public class TsvFilter<JsonNode> extends AbstractSvFilter<JsonNode> {
+public class TsvFilter extends AbstractSvFilter {
 	@Override
 	protected void appendEscaped(final StringBuilder builder, final String text) {
 		for (int i = 0; i < text.length(); ++i) {

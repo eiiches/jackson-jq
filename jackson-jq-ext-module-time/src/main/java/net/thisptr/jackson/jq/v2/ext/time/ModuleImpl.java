@@ -13,27 +13,26 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleRegistration;
 
-@SuppressWarnings("rawtypes")
 @AutoService(Module.class)
 @ModuleRegistration(path = "jackson-jq/time")
 public class ModuleImpl<JsonNode> implements Module<JsonNode> {
-	private final Map<String, Function<JsonNode>> functions = new HashMap<>();
+	private final Map<String, Function> functions = new HashMap<>();
 
 	public ModuleImpl() {
-		functions.put("strftime/1", new StrFTimeFunction<>());
-		functions.put("strftime/2", new StrFTimeFunction<>());
-		functions.put("strptime/1", new StrPTimeFunction<>());
-		functions.put("strptime/2", new StrPTimeFunction<>());
-		functions.put("timestamp/0", new TimestampFunction<>());
+		functions.put("strftime/1", new StrFTimeFunction());
+		functions.put("strftime/2", new StrFTimeFunction());
+		functions.put("strptime/1", new StrPTimeFunction());
+		functions.put("strptime/2", new StrPTimeFunction());
+		functions.put("timestamp/0", new TimestampFunction());
 	}
 
 	@Override
-	public Function<JsonNode> getFunction(final String fname, final int nargs) {
+	public Function getFunction(final String fname, final int nargs) {
 		return functions.get(fname + "/" + nargs);
 	}
 
 	@Override
-	public Map<String, Function<JsonNode>> getAllFunctions() {
+	public Map<String, Function> getAllFunctions() {
 		return Collections.unmodifiableMap(functions);
 	}
 }

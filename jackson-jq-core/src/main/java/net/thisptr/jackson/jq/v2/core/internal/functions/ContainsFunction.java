@@ -21,10 +21,15 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
 @FunctionRegistration("contains/1")
-public class ContainsFunction<JsonNode> implements Function<JsonNode> {
+public class ContainsFunction<JsonNode> implements Function {
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public <N> void apply(final Scope<N> scope, final List<Expression<N>> args, final N in, final Path<N> ipath, final PathOutput<N> output, final Version version) throws JsonQueryException {
+		applyInternal((Scope) scope, (List) args, (JsonNode) in, (Path) ipath, (PathOutput) output, version);
+	}
+
+	private void applyInternal(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
 		final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		args.get(0).apply(scope, in, (value) -> {
 			if (jsonProvider.getNodeType(in) != jsonProvider.getNodeType(value)

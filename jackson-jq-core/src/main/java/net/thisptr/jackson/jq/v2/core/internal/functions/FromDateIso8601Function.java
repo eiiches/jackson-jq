@@ -21,9 +21,9 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
 @FunctionRegistration({ "fromdateiso8601/0" })
-public class FromDateIso8601Function<JsonNode> implements Function<JsonNode> {
+public class FromDateIso8601Function implements Function {
     @Override
-    public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+    public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
         final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
         Preconditions.checkInputType(jsonProvider, "fromdateiso8601", in, JsonNodeType.STRING);
         try {

@@ -15,9 +15,9 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
 @FunctionRegistration("infinite/0")
-public class InfiniteFunction<T> implements Function<T> {
+public class InfiniteFunction implements Function {
 	@Override
-	public void apply(final Scope<T> scope, final List<Expression<T>> args, final T in, final Path<T> ipath, final PathOutput<T> output, final Version version) throws JsonQueryException {
+	public <T> void apply(final Scope<T> scope, final List<Expression<T>> args, final T in, final Path<T> ipath, final PathOutput<T> output, final Version version) throws JsonQueryException {
 		output.emit(scope.jsonProvider().createDouble(Double.POSITIVE_INFINITY), null);
 	}
 }

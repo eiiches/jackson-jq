@@ -20,9 +20,9 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
 @FunctionRegistration({ "todateiso8601/0" })
-public class ToDateIso8601Function<JsonNode> implements Function<JsonNode>  {
+public class ToDateIso8601Function implements Function  {
     @Override
-    public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+    public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
         final JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
         Preconditions.checkInputType(jsonProvider, "todateiso8601", in, JsonNodeType.NUMBER);
         final double epochDouble = jsonProvider.asDouble(in);

@@ -12,10 +12,10 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public abstract class JsonArgumentFunction<JsonNode> implements Function<JsonNode> {
-	protected abstract JsonNode fn(final Scope<JsonNode> scope, final List<JsonNode> args, final JsonNode in) throws JsonQueryException;
+public abstract class JsonArgumentFunction implements Function {
+	protected abstract <JsonNode> JsonNode fn(final Scope<JsonNode> scope, final List<JsonNode> args, final JsonNode in) throws JsonQueryException;
 
-	private void combinations(final Scope<JsonNode> scope, final PathOutput<JsonNode> output, final Stack<JsonNode> args, final int index, final List<List<JsonNode>> argmat, final JsonNode in) throws JsonQueryException {
+	private <JsonNode> void combinations(final Scope<JsonNode> scope, final PathOutput<JsonNode> output, final Stack<JsonNode> args, final int index, final List<List<JsonNode>> argmat, final JsonNode in) throws JsonQueryException {
 		if (index >= argmat.size()) {
 			output.emit(fn(scope, args, in), null);
 			return;
@@ -29,7 +29,7 @@ public abstract class JsonArgumentFunction<JsonNode> implements Function<JsonNod
 	}
 
 	@Override
-	public void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
+	public <JsonNode> void apply(final Scope<JsonNode> scope, final List<Expression<JsonNode>> args, final JsonNode in, final Path<JsonNode> ipath, final PathOutput<JsonNode> output, final Version version) throws JsonQueryException {
 		final List<List<JsonNode>> _args = new ArrayList<>(args.size());
 		for (final Expression<JsonNode> arg : args) {
 			final List<JsonNode> out = new ArrayList<>();

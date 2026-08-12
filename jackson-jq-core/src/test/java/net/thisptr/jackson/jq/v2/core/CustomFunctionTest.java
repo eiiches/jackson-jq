@@ -33,12 +33,14 @@ public class CustomFunctionTest {
 
         BuiltinFunctionLoader.getInstance().loadFunctions(version, rootScope);
 
-        rootScope.addFunction("times100", 1, new Function<JsonNode>() {
+        rootScope.addFunction("times100", 1, new Function() {
             @Override
-            public void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, Path<JsonNode> path, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+            @SuppressWarnings("unchecked")
+            public <N> void apply(Scope<N> scope, List<Expression<N>> args, N in, Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
                 args.get(0).apply(scope, in, (numberNode) -> {
-                    assert (numberNode.isIntegralNumber());
-                    output.emit(new IntNode(numberNode.asInt() * 100), null);
+                    JsonNode n = (JsonNode) numberNode;
+                    assert (n.isIntegralNumber());
+                    output.emit((N) new IntNode(n.asInt() * 100), null);
                 });
             }
         });
