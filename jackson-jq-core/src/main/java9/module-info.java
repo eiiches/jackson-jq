@@ -10,10 +10,10 @@ module net.thisptr.jackson.jq.v2.core {
 	exports net.thisptr.jackson.jq.v2.core.path;
 
 	uses net.thisptr.jackson.jq.v2.spi.Function;
-	uses net.thisptr.jackson.jq.v2.spi.internal.InternalJqLibrary;
+	uses net.thisptr.jackson.jq.v2.spi.JqLibrary;
 	uses net.thisptr.jackson.jq.v2.spi.module.Module;
 
-	provides net.thisptr.jackson.jq.v2.spi.internal.InternalJqLibrary with
+	provides net.thisptr.jackson.jq.v2.spi.JqLibrary with
 		net.thisptr.jackson.jq.v2.core.internal.CoreJqLibrary;
 
 	provides net.thisptr.jackson.jq.v2.spi.Function with

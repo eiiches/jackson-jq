@@ -8,15 +8,15 @@ import org.junit.jupiter.api.Test;
 import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 import net.thisptr.jackson.jq.v2.spi.Scope;
-import net.thisptr.jackson.jq.v2.spi.internal.InternalJqLibrary;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CoreJqLibraryTest {
 	@Test
 	public void discoverableThroughServiceLoader() {
-		assertThat(ServiceLoader.load(InternalJqLibrary.class, getClass().getClassLoader()))
+		assertThat(ServiceLoader.load(JqLibrary.class, getClass().getClassLoader()))
 				.anyMatch(CoreJqLibrary.class::isInstance);
 		assertThat(new CoreJqLibrary().getFunctions()).hasSize(61);
 	}

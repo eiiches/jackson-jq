@@ -64,7 +64,6 @@
 						<Export-Package>
 							net.thisptr.jackson.jq.v2.spi,
 							net.thisptr.jackson.jq.v2.spi.exception,
-							net.thisptr.jackson.jq.v2.spi.internal,
 							net.thisptr.jackson.jq.v2.spi.module,
 							net.thisptr.jackson.jq.v2.spi.path
 						</Export-Package>

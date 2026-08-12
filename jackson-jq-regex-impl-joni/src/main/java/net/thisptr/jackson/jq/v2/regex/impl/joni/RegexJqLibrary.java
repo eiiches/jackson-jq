@@ -33,10 +33,10 @@ import java.util.List;
 
 import com.google.auto.service.AutoService;
 
-import net.thisptr.jackson.jq.v2.spi.internal.InternalJqLibrary;
+import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 
-@AutoService(InternalJqLibrary.class)
-public class RegexJqLibrary implements InternalJqLibrary {
+@AutoService(JqLibrary.class)
+public class RegexJqLibrary implements JqLibrary {
 	private static final List<JqFunc> FUNCTIONS = Collections.unmodifiableList(Arrays.asList(
 				jq("match", args("re", "mode"), "_match_impl(re; mode; false)|.[]"),
 				jq("match", args("$val"), "($val|type) as $vt | if $vt == \"string\" then match($val; null) elif $vt == \"array\" and ($val | length) > 1 then match($val[0]; $val[1]) elif $vt == \"array\" and ($val | length) > 0 then match($val[0]; null) else error( $vt + \" not a string or array\") end"),

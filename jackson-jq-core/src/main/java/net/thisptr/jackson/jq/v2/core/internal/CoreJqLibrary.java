@@ -33,10 +33,10 @@ import java.util.List;
 
 import com.google.auto.service.AutoService;
 
-import net.thisptr.jackson.jq.v2.spi.internal.InternalJqLibrary;
+import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 
-@AutoService(InternalJqLibrary.class)
-public class CoreJqLibrary implements InternalJqLibrary {
+@AutoService(JqLibrary.class)
+public class CoreJqLibrary implements JqLibrary {
 	private static final List<JqFunc> FUNCTIONS = Collections.unmodifiableList(Arrays.asList(
 				jq("@text", "tostring"),
 				jq("@json", "tojson"),

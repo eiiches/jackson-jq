@@ -9,10 +9,10 @@ import net.thisptr.jackson.jq.v2.core.internal.JsonQueryFunction;
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.JqLibrary;
+import net.thisptr.jackson.jq.v2.spi.JqLibrary.JqFunc;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
-import net.thisptr.jackson.jq.v2.spi.internal.InternalJqLibrary;
-import net.thisptr.jackson.jq.v2.spi.internal.InternalJqLibrary.JqFunc;
 
 /**
  * Use {@code BuiltinFunctionLoader.getInstance()} to obtain the instance.
@@ -103,7 +103,7 @@ public class BuiltinFunctionLoader {
 	public Map<String, Function> loadFunctionsFromJqLibrary(final ClassLoader classLoader, final Version version, final Scope closureScope) {
 		try {
 			final Map<String, Function> functions = new HashMap<>();
-			for (final InternalJqLibrary library : ServiceLoader.load(InternalJqLibrary.class, classLoader)) {
+			for (final JqLibrary library : ServiceLoader.load(JqLibrary.class, classLoader)) {
 				for (final JqFunc def : library.getFunctions()) {
 					if (def.version != null && !VersionRange.valueOf(def.version).contains(version))
 						continue;

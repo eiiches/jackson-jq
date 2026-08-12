@@ -1,12 +1,11 @@
-package net.thisptr.jackson.jq.v2.spi.internal;
+package net.thisptr.jackson.jq.v2.spi;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-// TODO: move to exported package
-public interface InternalJqLibrary {
+public interface JqLibrary {
 	// TODO: fix stringly-typed api
 	class JqFunc {
 		public final String name;
