@@ -12,10 +12,6 @@
 		<version>2.0.0-SNAPSHOT</version>
 	</parent>
 
-	<properties>
-		<tools.jackson-version>3.0.0</tools.jackson-version>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
@@ -25,7 +21,6 @@
 		<dependency>
 			<groupId>tools.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>${tools.jackson-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>

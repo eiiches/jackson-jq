@@ -138,9 +138,8 @@
 							{maven-resources},
 							META-INF/services/net.thisptr.jackson.jq.v2.spi.Function=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.v2.spi.Function,
 							META-INF/services/net.thisptr.jackson.jq.v2.spi.JqLibrary=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.v2.spi.JqLibrary,
-							META-INF/jandex.idx=${project.build.outputDirectory}/META-INF/jandex.idx,
-							META-INF/native-image/resource-config.json=${project.build.outputDirectory}/META-INF/native-image/resource-config.json
-                        </Include-Resource>
+							META-INF/jandex.idx=${project.build.outputDirectory}/META-INF/jandex.idx
+						</Include-Resource>
 					</instructions>
 					<archive>
 						<manifestEntries>
