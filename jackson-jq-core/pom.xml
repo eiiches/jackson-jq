@@ -137,8 +137,7 @@
 						<Include-Resource>
 							{maven-resources},
 							META-INF/services/net.thisptr.jackson.jq.v2.spi.Function=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.v2.spi.Function,
-							META-INF/services/net.thisptr.jackson.jq.v2.spi.JqLibrary=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.v2.spi.JqLibrary,
-							META-INF/jandex.idx=${project.build.outputDirectory}/META-INF/jandex.idx
+							META-INF/services/net.thisptr.jackson.jq.v2.spi.JqLibrary=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.v2.spi.JqLibrary
 						</Include-Resource>
 					</instructions>
 					<archive>
@@ -147,34 +146,6 @@
 						</manifestEntries>
 					</archive>
 				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.jboss.jandex</groupId>
-				<artifactId>jandex-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>make-index</id>
-						<goals>
-							<goal>jandex</goal>
-						</goals>
-						<configuration>
-							<verbose>true</verbose>
-							<processDefaultFileSet>false</processDefaultFileSet>
-							<fileSets>
-								<fileSet>
-									<directory>${project.build.outputDirectory}</directory>
-									<includes>
-										<include>net/thisptr/jackson/jq/v2/internal/filters/**/*.class</include>
-										<include>net/thisptr/jackson/jq/v2/internal/functions/**/*.class</include>
-									</includes>
-									<excludes>
-										<exclude>net/thisptr/jackson/jq/v2/internal/functions/EnvFunction.class</exclude>
-									</excludes>
-								</fileSet>
-							</fileSets>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
 	</build>

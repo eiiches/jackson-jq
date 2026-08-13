@@ -64,7 +64,6 @@
 							{maven-resources},
 							META-INF/services/net.thisptr.jackson.jq.v2.spi.Function=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.v2.spi.Function,
 							META-INF/services/net.thisptr.jackson.jq.v2.spi.JqLibrary=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.v2.spi.JqLibrary,
-							META-INF/jandex.idx=${project.build.outputDirectory}/META-INF/jandex.idx,
 							META-INF/native-image/native-image.properties=${project.build.outputDirectory}/META-INF/native-image/native-image.properties
 						</Include-Resource>
 					</instructions>
@@ -81,30 +80,6 @@
 				<configuration>
 					<sourcepath>${project.basedir}/src/main/java</sourcepath>
 				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.jboss.jandex</groupId>
-				<artifactId>jandex-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>make-index</id>
-						<goals>
-							<goal>jandex</goal>
-						</goals>
-						<configuration>
-							<verbose>true</verbose>
-							<processDefaultFileSet>false</processDefaultFileSet>
-							<fileSets>
-								<fileSet>
-									<directory>${project.build.outputDirectory}</directory>
-									<includes>
-										<include>net/thisptr/jackson/jq/v2/regex/impl/joni/**/*.class</include>
-									</includes>
-								</fileSet>
-							</fileSets>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
 	</build>
