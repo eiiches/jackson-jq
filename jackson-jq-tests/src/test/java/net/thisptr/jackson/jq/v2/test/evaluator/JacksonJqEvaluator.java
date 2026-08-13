@@ -20,7 +20,7 @@ import net.thisptr.jackson.jq.v2.test.DefaultRootScope;
 
 public class JacksonJqEvaluator implements Evaluator {
 
-	private Result doEvaluate(Expression<JsonNode> expr, JsonNode in, Version version) throws JsonQueryException {
+	private Result doEvaluate(Expression expr, JsonNode in, Version version) throws JsonQueryException {
 		List<JsonNode> values = new ArrayList<>();
 		Scope<JsonNode> scope = Scope.newChildScope(DefaultRootScope.getInstance(version));
 		try {
@@ -51,7 +51,7 @@ public class JacksonJqEvaluator implements Evaluator {
 			@Override
 			public void run() {
 				try {
-					Expression<JsonNode> expr = ExpressionParser.compile(exprText, version);
+					Expression expr = ExpressionParser.compile(exprText, version);
 					result.set(doEvaluate(expr, in, version));
 				} catch (Throwable e) {
 					exception.set(e);

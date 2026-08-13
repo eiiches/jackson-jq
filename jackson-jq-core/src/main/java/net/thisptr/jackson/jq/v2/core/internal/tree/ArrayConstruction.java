@@ -9,19 +9,19 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ArrayConstruction<JsonNode> implements Expression<JsonNode> {
-	public final @Nullable Expression<JsonNode> q;
+public class ArrayConstruction implements Expression {
+	public final @Nullable Expression q;
 
 	public ArrayConstruction() {
 		this(null);
 	}
 
-	public ArrayConstruction(@Nullable Expression<JsonNode> q) {
+	public ArrayConstruction(@Nullable Expression q) {
 		this.q = q;
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		JsonNode[] array = (JsonNode[]) new Object[] { jsonProvider.createArray() };
 		if (q != null)

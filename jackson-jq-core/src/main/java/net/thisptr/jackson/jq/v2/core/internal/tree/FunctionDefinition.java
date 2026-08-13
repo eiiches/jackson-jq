@@ -12,19 +12,19 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class FunctionDefinition<JsonNode> implements Expression<JsonNode> {
-	private Expression<JsonNode> body;
+public class FunctionDefinition implements Expression {
+	private Expression body;
 	private String fname;
 	private List<String> args;
 
-	public FunctionDefinition(String fname, List<String> args, Expression<JsonNode> body) {
+	public FunctionDefinition(String fname, List<String> args, Expression body) {
 		this.fname = fname;
 		this.args = args;
 		this.body = body;
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		scope.addFunction(fname, args.size(), new JsonQueryFunction<>(fname, args, body, scope));
 	}
 

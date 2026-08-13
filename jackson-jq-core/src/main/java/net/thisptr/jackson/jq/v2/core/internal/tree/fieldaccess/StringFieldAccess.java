@@ -11,10 +11,10 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class StringFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
-	private Expression<JsonNode> field;
+public class StringFieldAccess extends FieldAccess {
+	private Expression field;
 
-	public StringFieldAccess(Expression<JsonNode> obj, Expression<JsonNode> field, boolean permissive) {
+	public StringFieldAccess(Expression obj, Expression field, boolean permissive) {
 		super(obj, permissive);
 		this.field = field;
 	}
@@ -32,7 +32,7 @@ public class StringFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		field.apply(scope, in, (key) -> {
 			target.apply(scope, in, path, (pobj, ppath) -> {

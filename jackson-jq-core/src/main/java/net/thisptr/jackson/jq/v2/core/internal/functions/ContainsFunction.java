@@ -27,11 +27,11 @@ public class ContainsFunction<JsonNode> implements Function {
 
 	@Override
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public <N> void apply(Scope<N> scope, List<Expression<N>> args, N in, @Nullable Path<N> ipath, PathOutput<N> output, Version version) throws JsonQueryException {
+	public <N> void apply(Scope<N> scope, List<Expression> args, N in, @Nullable Path<N> ipath, PathOutput<N> output, Version version) throws JsonQueryException {
 		applyInternal((Scope) scope, (List) args, (JsonNode) in, (Path) ipath, (PathOutput) output, version);
 	}
 
-	private void applyInternal(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	private void applyInternal(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		args.get(0).apply(scope, in, (value) -> {
 			if (jsonProvider.getNodeType(in) != jsonProvider.getNodeType(value)

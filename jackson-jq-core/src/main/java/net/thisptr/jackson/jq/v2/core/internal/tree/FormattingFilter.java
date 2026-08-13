@@ -12,7 +12,7 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class FormattingFilter<JsonNode> implements Expression<JsonNode> {
+public class FormattingFilter implements Expression {
 	private final String name;
 	private final Version version;
 
@@ -22,7 +22,7 @@ public class FormattingFilter<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Function f = scope.getFunction("@" + name, 0);
 		if (f == null)
 			throw new JsonQueryException("Formatting operator @" + name + " does not exist");

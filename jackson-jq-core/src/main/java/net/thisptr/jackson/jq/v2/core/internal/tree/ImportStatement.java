@@ -11,11 +11,11 @@ public class ImportStatement<JsonNode> {
 	public final String path;
 	public final boolean dollarImport;
 	public final String name;
-	private final @Nullable Expression<JsonNode> metadataExpr;
+	private final @Nullable Expression metadataExpr;
 	private @Nullable JsonNode metadata;
 	private boolean metadataEvaluated = false;
 
-	public ImportStatement(String path, boolean dollarImport, String name, @Nullable Expression<JsonNode> metadataExpr) {
+	public ImportStatement(String path, boolean dollarImport, String name, @Nullable Expression metadataExpr) {
 		this.path = path;
 		this.dollarImport = dollarImport;
 		this.name = name;

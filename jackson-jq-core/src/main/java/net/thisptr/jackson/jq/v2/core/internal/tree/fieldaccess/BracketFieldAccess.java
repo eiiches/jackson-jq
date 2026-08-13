@@ -12,21 +12,21 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
-	private Expression<JsonNode> startExpr;
-	private Expression<JsonNode> endExpr = new NullLiteral<>();
+public class BracketFieldAccess extends FieldAccess {
+	private Expression startExpr;
+	private Expression endExpr = new NullLiteral();
 	private boolean isRange;
 
-	public BracketFieldAccess(Expression<JsonNode> src, Expression<JsonNode> atExpr, boolean permissive) {
+	public BracketFieldAccess(Expression src, Expression atExpr, boolean permissive) {
 		super(src, permissive);
-		this.startExpr = atExpr != null ? atExpr : new NullLiteral<>();
+		this.startExpr = atExpr != null ? atExpr : new NullLiteral();
 		this.isRange = false;
 	}
 
-	public BracketFieldAccess(Expression<JsonNode> src, Expression<JsonNode> startExpr, Expression<JsonNode> endExpr, boolean permissive) {
+	public BracketFieldAccess(Expression src, Expression startExpr, Expression endExpr, boolean permissive) {
 		super(src, permissive);
-		this.startExpr = startExpr != null ? startExpr : new NullLiteral<>();
-		this.endExpr = endExpr != null ? endExpr : new NullLiteral<>();
+		this.startExpr = startExpr != null ? startExpr : new NullLiteral();
+		this.endExpr = endExpr != null ? endExpr : new NullLiteral();
 		this.isRange = true;
 	}
 
@@ -40,7 +40,7 @@ public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		if (isRange) {
 			startExpr.apply(scope, in, (start) -> {

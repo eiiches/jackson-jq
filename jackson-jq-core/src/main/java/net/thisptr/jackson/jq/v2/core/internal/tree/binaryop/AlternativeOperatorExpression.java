@@ -11,13 +11,13 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class AlternativeOperatorExpression<JsonNode> extends BinaryOperatorExpression<JsonNode> {
-	public AlternativeOperatorExpression(Expression<JsonNode> valueExpr, Expression<JsonNode> defaultExpr) {
+public class AlternativeOperatorExpression extends BinaryOperatorExpression {
+	public AlternativeOperatorExpression(Expression valueExpr, Expression defaultExpr) {
 		super(valueExpr, defaultExpr, "//");
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		AtomicBoolean emitted = new AtomicBoolean();
 		lhs.apply(scope, in, path, (out, outpath) -> {
 			if (JsonNodeUtils.asBoolean(scope.jsonProvider(), out)) {

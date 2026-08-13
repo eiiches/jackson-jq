@@ -8,22 +8,22 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class TryCatch<JsonNode> implements Expression<JsonNode> {
-	protected Expression<JsonNode> tryExpr;
-	protected @Nullable Expression<JsonNode> catchExpr;
+public class TryCatch implements Expression {
+	protected Expression tryExpr;
+	protected @Nullable Expression catchExpr;
 
-	public TryCatch(Expression<JsonNode> tryExpr, @Nullable Expression<JsonNode> catchExpr) {
+	public TryCatch(Expression tryExpr, @Nullable Expression catchExpr) {
 		this.tryExpr = tryExpr;
 		this.catchExpr = catchExpr;
 	}
 
-	public TryCatch(Expression<JsonNode> tryExpr) {
+	public TryCatch(Expression tryExpr) {
 		this(tryExpr, null);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		try {
 			tryExpr.apply(scope, in, path, output, requirePath);
 		} catch (JsonQueryException e) {
@@ -33,8 +33,8 @@ public class TryCatch<JsonNode> implements Expression<JsonNode> {
 		}
 	}
 
-	public static class Question<JsonNode> extends TryCatch<JsonNode> {
-		public Question(Expression<JsonNode> tryExpr) {
+	public static class Question extends TryCatch {
+		public Question(Expression tryExpr) {
 			super(tryExpr);
 		}
 

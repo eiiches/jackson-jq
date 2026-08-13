@@ -37,7 +37,7 @@ public class UriModuleTest {
 	private List<JsonNode> run(String expression) throws JsonQueryException {
 		Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
 		scope.setModuleLoader(new ClassPathModuleLoader<>(getClass().getClassLoader()));
-		JsonQuery<JsonNode> query = JsonQuery.compile("import \"jackson-jq/uri\" as ext; " + expression, Versions.JQ_1_6);
+		JsonQuery query = JsonQuery.compile("import \"jackson-jq/uri\" as ext; " + expression, Versions.JQ_1_6);
 		List<JsonNode> results = new ArrayList<>();
 		query.apply(scope, scope.jsonProvider().createNull(), results::add);
 		return results;

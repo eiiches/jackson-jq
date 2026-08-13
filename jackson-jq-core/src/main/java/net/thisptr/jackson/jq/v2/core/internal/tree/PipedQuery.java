@@ -14,7 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class PipedQuery<JsonNode> implements Expression<JsonNode> {
+public class PipedQuery<JsonNode> implements Expression {
 	private List<PipeComponent<JsonNode>> components;
 
 	public PipedQuery(List<PipeComponent<JsonNode>> components) {
@@ -22,7 +22,12 @@ public class PipedQuery<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public <N> void apply(Scope<N> scope, N in, @Nullable Path<N> path, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
+		applyInternal((Scope) scope, (JsonNode) in, (Path) path, (PathOutput) output, requirePath);
+	}
+
+	private void applyInternal(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		pathRecursive(scope, in, path, output, components, requirePath);
 	}
 

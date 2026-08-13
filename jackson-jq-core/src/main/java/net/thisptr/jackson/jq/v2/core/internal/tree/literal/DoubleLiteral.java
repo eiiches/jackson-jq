@@ -3,7 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.literal;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
-public class DoubleLiteral<JsonNode> extends ValueLiteral<JsonNode> {
+public class DoubleLiteral extends ValueLiteral {
 	private double value;
 
 	public DoubleLiteral(double value) {
@@ -11,7 +11,7 @@ public class DoubleLiteral<JsonNode> extends ValueLiteral<JsonNode> {
 	}
 
 	@Override
-	public JsonNode value(JsonProvider<JsonNode> jsonProvider) {
+	public <JsonNode> JsonNode value(JsonProvider<JsonNode> jsonProvider) {
 		return JsonNodeUtils.asNumericNode(jsonProvider, value);
 	}
 

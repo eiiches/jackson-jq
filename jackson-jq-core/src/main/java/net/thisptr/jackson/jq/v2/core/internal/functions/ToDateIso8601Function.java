@@ -23,7 +23,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration({ "todateiso8601/0" })
 public class ToDateIso8601Function implements Function  {
     @Override
-    public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+    public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
         JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
         Preconditions.checkInputType(jsonProvider, "todateiso8601", in, JsonNodeType.NUMBER);
         double epochDouble = jsonProvider.asDouble(in);

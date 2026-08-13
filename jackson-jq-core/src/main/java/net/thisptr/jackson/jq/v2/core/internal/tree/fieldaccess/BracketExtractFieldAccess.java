@@ -8,8 +8,8 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class BracketExtractFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
-	public BracketExtractFieldAccess(Expression<JsonNode> src, boolean permissive) {
+public class BracketExtractFieldAccess extends FieldAccess {
+	public BracketExtractFieldAccess(Expression src, boolean permissive) {
 		super(src, permissive);
 	}
 
@@ -19,7 +19,7 @@ public class BracketExtractFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		target.apply(scope, in, path, (pobj, ppath) -> {
 			emitAllPath(scope.jsonProvider(), permissive, pobj, ppath, output, requirePath);
 		}, requirePath);

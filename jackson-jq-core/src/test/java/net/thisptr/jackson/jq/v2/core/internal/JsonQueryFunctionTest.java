@@ -29,9 +29,9 @@ public class JsonQueryFunctionTest {
 		Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
 		BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_5, scope);
 
-		scope.addFunction("inc", 1, new JsonQueryFunction<>("inc", Arrays.asList("x"), new IsolatedScopeQuery<>(ExpressionParser.compile("x + 1", Versions.JQ_1_5)), scope));
-		scope.addFunction("fib", 1, new JsonQueryFunction<>("fib", Arrays.asList("x"), new IsolatedScopeQuery<>(ExpressionParser.compile("if x == 0 then 0 elif x == 1 then 1 else fib(x-1) + fib(x-2) end", Versions.JQ_1_5)), scope));
-		scope.addFunction("fib", 0, new JsonQueryFunction<>("fib", Arrays.<String>asList(), new IsolatedScopeQuery<>(ExpressionParser.compile("fib(.)", Versions.JQ_1_5)), scope));
+		scope.addFunction("inc", 1, new JsonQueryFunction<>("inc", Arrays.asList("x"), new IsolatedScopeQuery(ExpressionParser.compile("x + 1", Versions.JQ_1_5)), scope));
+		scope.addFunction("fib", 1, new JsonQueryFunction<>("fib", Arrays.asList("x"), new IsolatedScopeQuery(ExpressionParser.compile("if x == 0 then 0 elif x == 1 then 1 else fib(x-1) + fib(x-2) end", Versions.JQ_1_5)), scope));
+		scope.addFunction("fib", 0, new JsonQueryFunction<>("fib", Arrays.<String>asList(), new IsolatedScopeQuery(ExpressionParser.compile("fib(.)", Versions.JQ_1_5)), scope));
 
 		assertEquals(Arrays.asList(mapper.readTree("2")), eval(scope, "inc(1)", NullNode.getInstance()));
 		assertEquals(Arrays.asList(mapper.readTree("1")), eval(scope, "fib(1)", NullNode.getInstance()));
@@ -44,7 +44,7 @@ public class JsonQueryFunctionTest {
 
 	public static List<JsonNode> eval(Scope<JsonNode> scope, String q, JsonNode in) throws JsonQueryException {
 		List<JsonNode> out = new ArrayList<>();
-		JsonQuery.<JsonNode>compile(q, Versions.JQ_1_5).apply(scope, in, out::add);
+		JsonQuery.compile(q, Versions.JQ_1_5).apply(scope, in, out::add);
 		return out;
 	}
 }

@@ -104,7 +104,7 @@ public class Main {
 			System.exit(0);
 		}
 
-		JsonQuery<JsonNode> jq = JsonQuery.compile(rest.get(0), version);
+		JsonQuery jq = JsonQuery.compile(rest.get(0), version);
 
 		if (!command.hasOption(OPT_COMPACT.getOpt())) {
 			MAPPER = MAPPER.rebuild()

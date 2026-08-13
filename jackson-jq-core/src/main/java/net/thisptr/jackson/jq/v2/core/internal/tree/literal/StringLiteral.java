@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.literal;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
-public class StringLiteral<JsonNode> extends ValueLiteral<JsonNode> {
+public class StringLiteral extends ValueLiteral {
 	private String text;
 
 	public StringLiteral(String text) {
@@ -17,7 +17,7 @@ public class StringLiteral<JsonNode> extends ValueLiteral<JsonNode> {
 	}
 
 	@Override
-	public JsonNode value(JsonProvider<JsonNode> jsonProvider) {
+	public <JsonNode> JsonNode value(JsonProvider<JsonNode> jsonProvider) {
 		return jsonProvider.createString(text);
 	}
 

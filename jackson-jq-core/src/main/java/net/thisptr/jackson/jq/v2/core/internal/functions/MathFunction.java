@@ -19,7 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public abstract class MathFunction implements Function {
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "mathfunc", in, JsonNodeType.NUMBER);
 		output.emit(jsonProvider.createDouble(f(jsonProvider.asDouble(in))), null);

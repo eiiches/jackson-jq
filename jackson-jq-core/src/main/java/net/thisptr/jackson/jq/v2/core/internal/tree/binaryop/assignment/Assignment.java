@@ -17,13 +17,13 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class Assignment<JsonNode> extends BinaryOperatorExpression<JsonNode> {
-	public Assignment(Expression<JsonNode> lhs, Expression<JsonNode> rhs) {
+public class Assignment extends BinaryOperatorExpression {
+	public Assignment(Expression lhs, Expression rhs) {
 		super(lhs, rhs, "=");
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		rhs.apply(scope, in, (rval) -> {
 			List<Path<JsonNode>> lpaths = new ArrayList<>();

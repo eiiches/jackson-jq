@@ -11,18 +11,18 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class SemicolonOperator<JsonNode> implements Expression<JsonNode> {
-	private List<Expression<JsonNode>> qs;
+public class SemicolonOperator implements Expression {
+	private List<Expression> qs;
 
-	public SemicolonOperator(List<Expression<JsonNode>> qs) {
+	public SemicolonOperator(List<Expression> qs) {
 		this.qs = qs;
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		if (qs.isEmpty())
 			return;
-		for (Expression<JsonNode> q : qs.subList(0, qs.size() - 1))
+		for (Expression q : qs.subList(0, qs.size() - 1))
 			q.apply(scope, in, (out) -> {});
 		qs.get(qs.size() - 1).apply(scope, in, path, output, requirePath);
 	}
@@ -31,7 +31,7 @@ public class SemicolonOperator<JsonNode> implements Expression<JsonNode> {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		@Var String sep = "";
-		for (Expression<JsonNode> q : qs) {
+		for (Expression q : qs) {
 			builder.append(sep);
 			builder.append(q);
 			sep = "; ";

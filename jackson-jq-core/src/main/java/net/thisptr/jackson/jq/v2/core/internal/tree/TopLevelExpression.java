@@ -12,19 +12,24 @@ import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class TopLevelExpression<JsonNode> implements Expression<JsonNode> {
+public class TopLevelExpression<JsonNode> implements Expression {
 	private final List<ImportStatement<JsonNode>> imports;
-	private final Expression<JsonNode> expr;
+	private final Expression expr;
 	private final ModuleDirective<JsonNode> moduleDirective;
 
-	public TopLevelExpression(ModuleDirective<JsonNode> moduleDirective, List<ImportStatement<JsonNode>> imports, Expression<JsonNode> expr) {
+	public TopLevelExpression(ModuleDirective<JsonNode> moduleDirective, List<ImportStatement<JsonNode>> imports, Expression expr) {
 		this.moduleDirective = moduleDirective;
 		this.imports = imports;
 		this.expr = expr;
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public <N> void apply(Scope<N> scope, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
+		applyInternal((Scope) scope, (JsonNode) in, (Path) ipath, (PathOutput) output, requirePath);
+	}
+
+	private void applyInternal(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		ModuleLoader<JsonNode> moduleLoader = scope.getModuleLoader();
 
 		for (ImportStatement<JsonNode> imp : imports) {

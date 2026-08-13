@@ -37,7 +37,7 @@ public class CustomFunctionTest {
         rootScope.addFunction("times100", 1, new Function() {
             @Override
             @SuppressWarnings("unchecked")
-            public <N> void apply(Scope<N> scope, List<Expression<N>> args, N in, @Nullable Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
+            public <N> void apply(Scope<N> scope, List<Expression> args, N in, @Nullable Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
                 args.get(0).apply(scope, in, (numberNode) -> {
                     JsonNode n = (JsonNode) numberNode;
                     assert (n.isIntegralNumber());
@@ -50,7 +50,7 @@ public class CustomFunctionTest {
 
         Scope<JsonNode> childScope = Scope.newChildScope(rootScope);
 
-        JsonQuery<JsonNode> query = JsonQuery.compile("{ \"a\": times100(.a) }", version);
+        JsonQuery query = JsonQuery.compile("{ \"a\": times100(.a) }", version);
 
         List<JsonNode> out = new ArrayList<>();
         query.apply(childScope, mapper.readTree(input), out::add);

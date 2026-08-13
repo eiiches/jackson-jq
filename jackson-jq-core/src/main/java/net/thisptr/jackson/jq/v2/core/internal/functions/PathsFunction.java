@@ -25,17 +25,17 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class PathsFunction<JsonNode> implements Function {
 	@Override
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public <N> void apply(Scope<N> scope, List<Expression<N>> args, N in, @Nullable Path<N> ipath, PathOutput<N> output, Version version) throws JsonQueryException {
+	public <N> void apply(Scope<N> scope, List<Expression> args, N in, @Nullable Path<N> ipath, PathOutput<N> output, Version version) throws JsonQueryException {
 		applyInternal((Scope) scope, (List) args, (JsonNode) in, (Path) ipath, (PathOutput) output, version);
 	}
 
-	private void applyInternal(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	private void applyInternal(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Stack<JsonNode> stack = new Stack<>();
 		applyRecursive(jsonProvider, scope, in, output, stack, args.get(0));
 	}
 
-	private void applyRecursive(JsonProvider<JsonNode> jsonProvider, Scope<JsonNode> scope, JsonNode in, PathOutput<JsonNode> output, Stack<JsonNode> stack, Expression<JsonNode> predicate) throws JsonQueryException {
+	private void applyRecursive(JsonProvider<JsonNode> jsonProvider, Scope<JsonNode> scope, JsonNode in, PathOutput<JsonNode> output, Stack<JsonNode> stack, Expression predicate) throws JsonQueryException {
 		if (!stack.isEmpty()) {
 			predicate.apply(scope, in, (shouldInclude) -> {
 				if (JsonNodeUtils.asBoolean(jsonProvider, shouldInclude))

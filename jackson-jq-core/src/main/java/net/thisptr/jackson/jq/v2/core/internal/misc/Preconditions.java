@@ -12,7 +12,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 
 public class Preconditions {
 
-	public static <JsonNode> void checkArgumentCount(String fname, List<Expression<JsonNode>> args, int... nums) throws IllegalJsonArgumentException {
+	public static <JsonNode> void checkArgumentCount(String fname, List<Expression> args, int... nums) throws IllegalJsonArgumentException {
 		int nargs = args.size();
 		for (int num : nums)
 			if (nargs == num)

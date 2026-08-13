@@ -16,7 +16,7 @@ public class TestUtils {
 	public static List<JsonNode> runQuery(String queryText, JsonNode in, Version version) throws JsonQueryException {
 		Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
 		scope.setModuleLoader(new ClassPathModuleLoader<>(TestUtils.class.getClassLoader()));
-		JsonQuery<JsonNode> query = JsonQuery.compile("import \"jackson-jq/uuid\" as uuid; " + queryText, version);
+		JsonQuery query = JsonQuery.compile("import \"jackson-jq/uuid\" as uuid; " + queryText, version);
 		List<JsonNode> results = new ArrayList<>();
 		query.apply(scope, in, results::add);
 		return results;

@@ -21,7 +21,7 @@ public class JsonNodeFunction<JsonNode> implements Function {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <InputNode> void apply(Scope<InputNode> scope, List<Expression<InputNode>> args, InputNode in, @Nullable Path<InputNode> ipath, PathOutput<InputNode> output, Version version) throws JsonQueryException {
+	public <InputNode> void apply(Scope<InputNode> scope, List<Expression> args, InputNode in, @Nullable Path<InputNode> ipath, PathOutput<InputNode> output, Version version) throws JsonQueryException {
 		output.emit((InputNode) value, null);
 	}
 }

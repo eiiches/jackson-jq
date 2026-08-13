@@ -16,7 +16,7 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ObjectConstruction<JsonNode> implements Expression<JsonNode> {
+public class ObjectConstruction<JsonNode> implements Expression {
 	public final List<FieldConstruction<JsonNode>> fields = new ArrayList<>();
 
 	public ObjectConstruction() {}
@@ -26,7 +26,12 @@ public class ObjectConstruction<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public <N> void apply(Scope<N> scope, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
+		applyInternal((Scope) scope, (JsonNode) in, (PathOutput) output);
+	}
+
+	private void applyInternal(Scope<JsonNode> scope, JsonNode in, PathOutput<JsonNode> output) throws JsonQueryException {
 		Map<String, JsonNode> tmp = new LinkedHashMap<>(fields.size());
 		applyRecursive(scope, in, output, fields, tmp);
 	}

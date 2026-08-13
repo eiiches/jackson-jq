@@ -9,13 +9,13 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class BooleanAndExpression<JsonNode> extends BinaryOperatorExpression<JsonNode> {
-	public BooleanAndExpression(Expression<JsonNode> lhs, Expression<JsonNode> rhs) {
+public class BooleanAndExpression extends BinaryOperatorExpression {
+	public BooleanAndExpression(Expression lhs, Expression rhs) {
 		super(lhs, rhs, "and");
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		lhs.apply(scope, in, (l) -> {
 			if (!JsonNodeUtils.asBoolean(scope.jsonProvider(), l)) {
 				output.emit(scope.jsonProvider().createBoolean(false), null);

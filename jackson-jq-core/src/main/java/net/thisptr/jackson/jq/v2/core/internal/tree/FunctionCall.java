@@ -14,20 +14,20 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class FunctionCall<JsonNode> implements Expression<JsonNode> {
+public class FunctionCall implements Expression {
 	private final String name;
-	private final List<Expression<JsonNode>> args;
+	private final List<Expression> args;
 	private final Version version;
 	private final @Nullable String moduleName;
 
-	public FunctionCall(@Nullable String moduleName, String name, List<Expression<JsonNode>> args, Version version) {
+	public FunctionCall(@Nullable String moduleName, String name, List<Expression> args, Version version) {
 		this.moduleName = moduleName;
 		this.name = name;
 		this.args = args;
 		this.version = version;
 	}
 
-	private Function lookupFunction(Scope<JsonNode> scope) throws JsonQueryException {
+	private <JsonNode> Function lookupFunction(Scope<JsonNode> scope) throws JsonQueryException {
 		if (moduleName != null) {
 			for (Module module : scope.getImportedModules(moduleName)) {
 				Function f = module.getFunction(name, args.size());
@@ -52,7 +52,7 @@ public class FunctionCall<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Function f = lookupFunction(scope);
 		f.apply(scope, args, in, path, output, version);
 	}
@@ -68,7 +68,7 @@ public class FunctionCall<JsonNode> implements Expression<JsonNode> {
 		if (!args.isEmpty()) {
 			builder.append("(");
 			@Var String sep = "";
-			for (Expression<JsonNode> arg : args) {
+			for (Expression arg : args) {
 				builder.append(sep);
 				if (arg == null) {
 					builder.append("null");

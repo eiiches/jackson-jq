@@ -10,11 +10,11 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 
 public class ModuleDirective<JsonNode> {
-	private final Expression<JsonNode> metadataExpr;
+	private final Expression metadataExpr;
 	private @Nullable JsonNode metadata;
 	private boolean metadataEvaluated = false;
 
-	public ModuleDirective(Expression<JsonNode> metadataExpr) {
+	public ModuleDirective(Expression metadataExpr) {
 		this.metadataExpr = metadataExpr;
 	}
 

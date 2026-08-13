@@ -219,7 +219,7 @@ public abstract class AbstractJsonQueryTest<T> {
 
 		@Var boolean failed = false;
 		try {
-			JsonQuery<T> q = JsonQuery.compile(tc.q, version);
+			JsonQuery q = JsonQuery.compile(tc.q, version);
 			List<T> out = new ArrayList<>();
 			q.apply(scope, input, out::add);
 			assertThat(out).as("%s", command)
@@ -228,11 +228,11 @@ public abstract class AbstractJsonQueryTest<T> {
 
 			// JsonQuery.compile($.toString()).toString() === $.toString()
 			String s1 = q.toString();
-			String s2 = JsonQuery.<T>compile(s1, version).toString();
+			String s2 = JsonQuery.compile(s1, version).toString();
 			assertThat(s2).as("inconsistent tostring: %s", command).isEqualTo(s1);
 
 			// JsonQuery.compile($.toString()).apply(in) === $.apply(in)
-			JsonQuery<T> q1 = JsonQuery.compile(s1, version);
+			JsonQuery q1 = JsonQuery.compile(s1, version);
 			List<T> out1 = new ArrayList<>();
 			q1.apply(scope, input, out1::add);
 			assertThat(out1).as("bad tostring: %s", command)

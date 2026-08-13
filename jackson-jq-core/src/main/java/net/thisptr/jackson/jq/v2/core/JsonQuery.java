@@ -8,20 +8,19 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
-public class JsonQuery<JsonNode> {
-	private final Expression<JsonNode> expr;
+public class JsonQuery {
+	private final Expression expr;
 
-	private JsonQuery(Expression<JsonNode> expr) {
+	private JsonQuery(Expression expr) {
 		this.expr = expr;
 	}
 
-	public void apply(Scope<JsonNode> scope, JsonNode in, Output<JsonNode> output) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, Output<JsonNode> output) throws JsonQueryException {
 		expr.apply(scope, in, output);
 	}
 
-	@SuppressWarnings("unchecked")
-	public static <JsonNode> JsonQuery<JsonNode> compile(String path, Version version) throws JsonQueryException {
-		return new JsonQuery<>(new IsolatedScopeQuery<>((Expression<JsonNode>) ExpressionParser.compile(path, version)));
+	public static JsonQuery compile(String path, Version version) throws JsonQueryException {
+		return new JsonQuery(new IsolatedScopeQuery(ExpressionParser.compile(path, version)));
 	}
 
 	@Override

@@ -20,7 +20,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("has/1")
 public class HasFunction implements Function {
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		JsonNodeType inType = jsonProvider.getNodeType(in);
 		if (inType == JsonNodeType.NULL) {

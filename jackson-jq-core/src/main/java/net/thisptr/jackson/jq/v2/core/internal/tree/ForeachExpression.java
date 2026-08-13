@@ -13,14 +13,14 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
-	private Expression<JsonNode> iterExpr;
-	private Expression<JsonNode> updateExpr;
-	private Expression<JsonNode> initExpr;
-	private Expression<JsonNode> extractExpr;
+public class ForeachExpression<JsonNode> implements Expression {
+	private Expression iterExpr;
+	private Expression updateExpr;
+	private Expression initExpr;
+	private Expression extractExpr;
 	private PatternMatcher<JsonNode> matcher;
 
-	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> updateExpr, Expression<JsonNode> extractExpr, Expression<JsonNode> iterExpr) {
+	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression initExpr, Expression updateExpr, Expression extractExpr, Expression iterExpr) {
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.updateExpr = updateExpr;
@@ -29,7 +29,12 @@ public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public <N> void apply(Scope<N> scope, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
+		applyInternal((Scope) scope, (JsonNode) in, (Path) ipath, (PathOutput) output, requirePath);
+	}
+
+	private void applyInternal(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 
 		initExpr.apply(scope, in, ipath, (accumulator, accumulatorPath) -> {
 			// Wrap in array to allow mutation inside lambda

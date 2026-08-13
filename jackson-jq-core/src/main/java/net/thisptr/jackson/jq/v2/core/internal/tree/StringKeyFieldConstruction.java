@@ -9,15 +9,15 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
-	public final Expression<JsonNode> key;
-	public final @Nullable Expression<JsonNode> value;
+	public final Expression key;
+	public final @Nullable Expression value;
 
-	public StringKeyFieldConstruction(Expression<JsonNode> key, @Nullable Expression<JsonNode> value) {
+	public StringKeyFieldConstruction(Expression key, @Nullable Expression value) {
 		this.key = key;
 		this.value = value;
 	}
 
-	public StringKeyFieldConstruction(Expression<JsonNode> key) {
+	public StringKeyFieldConstruction(Expression key) {
 		this(key, null);
 	}
 

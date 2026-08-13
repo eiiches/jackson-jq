@@ -14,13 +14,13 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ReduceExpression<JsonNode> implements Expression<JsonNode> {
-	private Expression<JsonNode> iterExpr;
-	private Expression<JsonNode> reduceExpr;
-	private Expression<JsonNode> initExpr;
+public class ReduceExpression<JsonNode> implements Expression {
+	private Expression iterExpr;
+	private Expression reduceExpr;
+	private Expression initExpr;
 	private PatternMatcher<JsonNode> matcher;
 
-	public ReduceExpression(PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> reduceExpr, Expression<JsonNode> iterExpr) {
+	public ReduceExpression(PatternMatcher<JsonNode> matcher, Expression initExpr, Expression reduceExpr, Expression iterExpr) {
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.reduceExpr = reduceExpr;
@@ -30,7 +30,12 @@ public class ReduceExpression<JsonNode> implements Expression<JsonNode> {
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public <N> void apply(Scope<N> scope, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
+		applyInternal((Scope) scope, (JsonNode) in, (PathOutput) output);
+	}
+
+	private void applyInternal(Scope<JsonNode> scope, JsonNode in, PathOutput<JsonNode> output) throws JsonQueryException {
 		initExpr.apply(scope, in, (accumulator) -> {
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")

@@ -11,15 +11,15 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class NegativeExpression<JsonNode> implements Expression<JsonNode> {
-	private Expression<JsonNode> value;
+public class NegativeExpression implements Expression {
+	private Expression value;
 
-	public NegativeExpression(Expression<JsonNode> value) {
+	public NegativeExpression(Expression value) {
 		this.value = value;
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		value.apply(scope, in, (v) -> {
 			if (scope.jsonProvider().getNodeType(v) != JsonNodeType.NUMBER)
 				throw new JsonQueryTypeException(scope.jsonProvider(), "%s cannot be negated", v);

@@ -9,9 +9,9 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class IdentifierKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
 	public final String key;
-	public final @Nullable Expression<JsonNode> value;
+	public final @Nullable Expression value;
 
-	public IdentifierKeyFieldConstruction(String key, @Nullable Expression<JsonNode> value) {
+	public IdentifierKeyFieldConstruction(String key, @Nullable Expression value) {
 		this.key = key;
 		this.value = value;
 	}

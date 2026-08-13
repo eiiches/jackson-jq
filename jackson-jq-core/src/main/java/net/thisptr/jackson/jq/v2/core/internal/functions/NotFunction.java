@@ -20,7 +20,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("not/0")
 public class NotFunction implements Function {
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		output.emit(jsonProvider.createBoolean(!JsonNodeUtils.asBoolean(jsonProvider, in)), null);
 	}

@@ -7,10 +7,10 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class JsonQueryKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
-	private final Expression<JsonNode> key;
-	private final Expression<JsonNode> value;
+	private final Expression key;
+	private final Expression value;
 
-	public JsonQueryKeyFieldConstruction(Expression<JsonNode> key, Expression<JsonNode> value) {
+	public JsonQueryKeyFieldConstruction(Expression key, Expression value) {
 		this.key = key;
 		this.value = value;
 	}

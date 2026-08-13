@@ -26,7 +26,7 @@ public abstract class AbstractSvFilter implements Function {
 	protected abstract void appendEscaped(StringBuilder builder, String text);
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		if (jsonProvider.getNodeType(in) != JsonNodeType.ARRAY)
 			throw new JsonQueryTypeException(jsonProvider, "%s cannot be %s-formatted, only array", in, name());

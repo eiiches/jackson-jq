@@ -48,7 +48,7 @@ public class Usage {
 		// You can also define a custom function. E.g.
 		rootScope.addFunction("repeat", 1, new Function() {
 			@Override
-			public <N> void apply(Scope<N> scope, List<Expression<N>> args, N in, @Nullable Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
+			public <N> void apply(Scope<N> scope, List<Expression> args, N in, @Nullable Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
 				args.get(0).apply(scope, in, (time) -> {
 					output.emit(scope.jsonProvider().createString(Strings.repeat(scope.jsonProvider().asText(in), scope.jsonProvider().asInt(time))), null);
 				});
@@ -86,7 +86,7 @@ public class Usage {
 
 		// JsonQuery#compile(...) parses and compiles a given expression. The resulting JsonQuery instance
 		// is immutable and thread-safe. It should be reused as possible if you repeatedly use the same expression.
-		JsonQuery<JsonNode> q = JsonQuery.compile("$param * 2", Versions.JQ_1_6);
+		JsonQuery q = JsonQuery.compile("$param * 2", Versions.JQ_1_6);
 
 		// You need a JsonNode to use as an input to the JsonQuery. There are many ways you can grab a JsonNode.
 		// In this example, we just parse a JSON text into a JsonNode.

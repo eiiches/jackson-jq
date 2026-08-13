@@ -13,17 +13,17 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class Conditional<JsonNode> implements Expression<JsonNode> {
-	private Expression<JsonNode> otherwise;
-	private List<Pair<Expression<JsonNode>, Expression<JsonNode>>> switches;
+public class Conditional implements Expression {
+	private Expression otherwise;
+	private List<Pair<Expression, Expression>> switches;
 
-	public Conditional(List<Pair<Expression<JsonNode>, Expression<JsonNode>>> switches, Expression<JsonNode> otherwise) {
+	public Conditional(List<Pair<Expression, Expression>> switches, Expression otherwise) {
 		this.switches = switches;
 		this.otherwise = otherwise;
 	}
 
-	private void pathRecursive(PathOutput<JsonNode> output, Scope<JsonNode> scope, List<Pair<Expression<JsonNode>, Expression<JsonNode>>> switches, JsonNode in, @Nullable Path path) throws JsonQueryException {
-		Pair<Expression<JsonNode>, Expression<JsonNode>> sw = switches.get(0);
+	private <JsonNode> void pathRecursive(PathOutput<JsonNode> output, Scope<JsonNode> scope, List<Pair<Expression, Expression>> switches, JsonNode in, @Nullable Path path) throws JsonQueryException {
+		Pair<Expression, Expression> sw = switches.get(0);
 		sw._1.apply(scope, in, (r) -> {
 			if (JsonNodeUtils.asBoolean(scope.jsonProvider(), r)) {
 				sw._2.apply(scope, in, path, output, false);
@@ -38,7 +38,7 @@ public class Conditional<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		pathRecursive(output, scope, switches, in, path);
 	}
 
@@ -46,7 +46,7 @@ public class Conditional<JsonNode> implements Expression<JsonNode> {
 	public String toString() {
 		@Var String ifstr = "if";
 		StringBuilder builder = new StringBuilder();
-		for (Pair<Expression<JsonNode>, Expression<JsonNode>> sw : switches) {
+		for (Pair<Expression, Expression> sw : switches) {
 			builder.append(ifstr);
 			builder.append(" ");
 			builder.append(sw._1 != null ? sw._1 : "null");

@@ -20,16 +20,16 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class UpdateAssignment<JsonNode> extends BinaryOperatorExpression<JsonNode> {
+public class UpdateAssignment extends BinaryOperatorExpression {
 	private Version version;
 
-	public UpdateAssignment(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version) {
+	public UpdateAssignment(Expression lhs, Expression rhs, Version version) {
 		super(lhs, rhs, "|=");
 		this.version = version;
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		JsonNode[] out = (JsonNode[]) new Object[] { in };
 		lhs.apply(scope, in, RootPath.getInstance(), (lval, lpath0) -> {

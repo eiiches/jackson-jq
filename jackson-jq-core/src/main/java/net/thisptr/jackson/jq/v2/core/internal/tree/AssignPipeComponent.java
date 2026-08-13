@@ -4,10 +4,10 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 
 public class AssignPipeComponent<JsonNode> implements PipeComponent<JsonNode> {
-	public final Expression<JsonNode> expr;
+	public final Expression expr;
 	public final PatternMatcher<JsonNode> matcher;
 
-	public AssignPipeComponent(Expression<JsonNode> expr, PatternMatcher<JsonNode> matcher) {
+	public AssignPipeComponent(Expression expr, PatternMatcher<JsonNode> matcher) {
 		this.expr = expr;
 		this.matcher = matcher;
 	}

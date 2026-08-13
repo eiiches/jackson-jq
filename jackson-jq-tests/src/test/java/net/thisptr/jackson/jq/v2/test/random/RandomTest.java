@@ -84,7 +84,7 @@ public class RandomTest {
 
 	private static List<Generator> GENERATORS = new ArrayList<>();
 
-	private List<Expression<JsonNode>> expressions = new ArrayList<>();
+	private List<Expression> expressions = new ArrayList<>();
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@BeforeAll
@@ -125,28 +125,28 @@ public class RandomTest {
 
 	@BeforeEach
 	void beforeEach() {
-		expressions.add(new BooleanLiteral<>(true));
-		expressions.add(new BooleanLiteral<>(false));
-		expressions.add(new LongLiteral<>(-1));
-		expressions.add(new LongLiteral<>(0));
-		expressions.add(new LongLiteral<>(1));
-		expressions.add(new DoubleLiteral<>(-1.5));
-		expressions.add(new DoubleLiteral<>(-1.0));
-		expressions.add(new DoubleLiteral<>(-1.0));
-		expressions.add(new DoubleLiteral<>(-0.5));
-		expressions.add(new DoubleLiteral<>(0.0));
-		expressions.add(new DoubleLiteral<>(0.5));
-		expressions.add(new DoubleLiteral<>(1.0));
-		expressions.add(new DoubleLiteral<>(1.5));
-		expressions.add(new NullLiteral<>());
-		expressions.add(new StringLiteral<>("foo"));
-		expressions.add(new StringLiteral<>("bar"));
-		expressions.add(new StringLiteral<>("baz"));
+		expressions.add(new BooleanLiteral(true));
+		expressions.add(new BooleanLiteral(false));
+		expressions.add(new LongLiteral(-1));
+		expressions.add(new LongLiteral(0));
+		expressions.add(new LongLiteral(1));
+		expressions.add(new DoubleLiteral(-1.5));
+		expressions.add(new DoubleLiteral(-1.0));
+		expressions.add(new DoubleLiteral(-1.0));
+		expressions.add(new DoubleLiteral(-0.5));
+		expressions.add(new DoubleLiteral(0.0));
+		expressions.add(new DoubleLiteral(0.5));
+		expressions.add(new DoubleLiteral(1.0));
+		expressions.add(new DoubleLiteral(1.5));
+		expressions.add(new NullLiteral());
+		expressions.add(new StringLiteral("foo"));
+		expressions.add(new StringLiteral("bar"));
+		expressions.add(new StringLiteral("baz"));
 		expressions.add(new EmptyExpression());
-		expressions.add(new StringLiteral<>("\r"));
-		expressions.add(new StringLiteral<>("\n"));
-		expressions.add(new StringLiteral<>("\t"));
-		expressions.add(new StringLiteral<>("\0"));
+		expressions.add(new StringLiteral("\r"));
+		expressions.add(new StringLiteral("\n"));
+		expressions.add(new StringLiteral("\t"));
+		expressions.add(new StringLiteral("\0"));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -163,12 +163,12 @@ public class RandomTest {
 		for (int i = 0; i < 10000; ++i) {
 			Generator generator = GENERATORS.get(random.nextInt(GENERATORS.size()));
 
-			List<Expression<JsonNode>> args = new ArrayList<>();
+			List<Expression> args = new ArrayList<>();
 			for (int j = 0; j < generator.args(); ++j)
 				args.add(expressions.get(random.nextInt(expressions.size())));
 
 			@SuppressWarnings({ "unchecked", "rawtypes" })
-			Expression<JsonNode> expr = generator.generate((List) args);
+			Expression expr = generator.generate((List) args);
 			// System.out.println(expr);
 
 			JsonNode in = values.get(random.nextInt(values.size()));
@@ -215,7 +215,7 @@ public class RandomTest {
 				test.in = in;
 				test.version = new VersionRange(VERSION, true, VERSION, true);
 				if (expected.error != null) {
-					test.expression = new TryCatch<>(expr, new StringLiteral<>("__ERROR__"));
+					test.expression = new TryCatch(expr, new StringLiteral("__ERROR__"));
 					test.out = new ArrayList<>(expected.values);
 					test.out.add(TextNode.valueOf("__ERROR__"));
 				} else {
@@ -252,7 +252,7 @@ public class RandomTest {
 
 		@JsonProperty("q")
 		@JsonSerialize(using = ToStringSerializer.class)
-		public @Nullable Expression<JsonNode> expression;
+		public @Nullable Expression expression;
 
 		@JsonProperty("in")
 		public @Nullable JsonNode in;

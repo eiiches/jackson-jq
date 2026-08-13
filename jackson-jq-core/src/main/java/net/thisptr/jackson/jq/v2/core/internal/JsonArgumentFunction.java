@@ -31,9 +31,9 @@ public abstract class JsonArgumentFunction implements Function {
 	}
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		List<List<JsonNode>> _args = new ArrayList<>(args.size());
-		for (Expression<JsonNode> arg : args) {
+		for (Expression arg : args) {
 			List<JsonNode> out = new ArrayList<>();
 			arg.apply(scope, in, out::add);
 			_args.add(out);

@@ -38,7 +38,7 @@ public final class JacksonJqModuleSmokeTest {
 	}
 
 	private static <JsonNode> void assertQuery(JsonProvider<JsonNode> jsonProvider, Scope<JsonNode> scope, Version version, String expression, String inputJson, Object expected) throws Exception {
-		JsonQuery<JsonNode> query = JsonQuery.compile(expression, version);
+		JsonQuery query = JsonQuery.compile(expression, version);
 		JsonNode input = jsonProvider.fromStringStrict(inputJson);
 		List<JsonNode> output = new ArrayList<>();
 		query.apply(scope, input, output::add);

@@ -10,7 +10,7 @@ import net.thisptr.jackson.jq.v2.spi.Scope.ValueWithPath;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class VariableAccess<JsonNode> implements Expression<JsonNode> {
+public class VariableAccess implements Expression {
 	private final String name;
 	private final String moduleName;
 
@@ -20,7 +20,7 @@ public class VariableAccess<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		if (moduleName != null) {
 			@Var JsonNode data = null;
 			if (moduleName.equals(name))

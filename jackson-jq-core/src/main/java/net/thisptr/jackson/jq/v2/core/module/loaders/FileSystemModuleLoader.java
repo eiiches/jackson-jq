@@ -127,7 +127,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		childScope.setCurrentModule(module);
 
 		// TODO: use different parser instead of adding null at the end
-		Expression<JsonNode> expr = ExpressionParser.compile(moduleString + " null", version);
+		Expression expr = ExpressionParser.compile(moduleString + " null", version);
 		expr.apply(childScope, parentScope.jsonProvider().createNull(), null, (o, p) -> {}, false);
 
 		module.addAllFunctions(childScope.getLocalFunctions());

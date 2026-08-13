@@ -21,7 +21,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("fromjson/0")
 public class FromJsonFunction implements Function {
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		if (jsonProvider.getNodeType(in) != JsonNodeType.STRING)
 			throw new JsonQueryTypeException(jsonProvider, "%s only strings can be parsed", in);

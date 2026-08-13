@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.literal;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
-public class BooleanLiteral<JsonNode> extends ValueLiteral<JsonNode> {
+public class BooleanLiteral extends ValueLiteral {
 	private boolean value;
 
 	public BooleanLiteral(boolean value) {
@@ -10,7 +10,7 @@ public class BooleanLiteral<JsonNode> extends ValueLiteral<JsonNode> {
 	}
 
 	@Override
-	public JsonNode value(JsonProvider<JsonNode> jsonProvider) {
+	public <JsonNode> JsonNode value(JsonProvider<JsonNode> jsonProvider) {
 		return jsonProvider.createBoolean(value);
 	}
 

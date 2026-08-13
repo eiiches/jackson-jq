@@ -14,7 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class RecursionOperator<JsonNode> implements Expression<JsonNode> {
+public class RecursionOperator implements Expression {
 	private static <JsonNode> void pathRecursive(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
 		output.emit(in, path);
 		if (scope.jsonProvider().getNodeType(in) == JsonNodeType.OBJECT) {
@@ -30,7 +30,7 @@ public class RecursionOperator<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		pathRecursive(scope, in, path, output);
 	}
 

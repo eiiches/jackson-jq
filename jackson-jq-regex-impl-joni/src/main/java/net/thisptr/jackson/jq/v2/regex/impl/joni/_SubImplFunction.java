@@ -27,7 +27,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("_sub_impl/3")
 public class _SubImplFunction implements Function {
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "_sub_impl/3", in, JsonNodeType.STRING);
 
@@ -48,7 +48,7 @@ public class _SubImplFunction implements Function {
 		});
 	}
 
-	private <JsonNode> void replaceAndConcat(Scope<JsonNode> scope, JsonProvider<JsonNode> jsonProvider, Stack<String> stack, PathOutput<JsonNode> output, List<JsonNode> match, Expression<JsonNode> replaceExpr, JsonNode in, Expression<JsonNode> flags) throws JsonQueryException {
+	private <JsonNode> void replaceAndConcat(Scope<JsonNode> scope, JsonProvider<JsonNode> jsonProvider, Stack<String> stack, PathOutput<JsonNode> output, List<JsonNode> match, Expression replaceExpr, JsonNode in, Expression flags) throws JsonQueryException {
 		if (match.isEmpty()) {
 			StringBuilder sb = new StringBuilder();
 			for (int i = stack.size() - 1; i >= 0; --i) {

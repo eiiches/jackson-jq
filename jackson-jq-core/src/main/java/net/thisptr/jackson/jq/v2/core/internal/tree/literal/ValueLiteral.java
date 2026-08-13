@@ -9,12 +9,12 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public abstract class ValueLiteral<JsonNode> implements Expression<JsonNode> {
+public abstract class ValueLiteral implements Expression {
 
-	public abstract JsonNode value(JsonProvider<JsonNode> jsonProvider);
+	public abstract <JsonNode> JsonNode value(JsonProvider<JsonNode> jsonProvider);
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		output.emit(value(scope.jsonProvider()), null);
 	}
 }

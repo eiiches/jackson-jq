@@ -21,7 +21,7 @@ public class RandomModuleTest {
 	public void returnsAValueInTheExpectedRange() throws JsonQueryException {
 		Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
 		scope.setModuleLoader(new ClassPathModuleLoader<>(getClass().getClassLoader()));
-		JsonQuery<JsonNode> query = JsonQuery.compile("import \"jackson-jq/random\" as ext; ext::random", Versions.JQ_1_6);
+		JsonQuery query = JsonQuery.compile("import \"jackson-jq/random\" as ext; ext::random", Versions.JQ_1_6);
 		List<JsonNode> results = new ArrayList<>();
 		query.apply(scope, scope.jsonProvider().createNull(), results::add);
 		assertThat(results).hasSize(1);

@@ -26,7 +26,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionRegistration("_match_impl/3")
 public class _MatchImplFunction implements Function {
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression<JsonNode>> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
 		byte[] ibytes = jsonProvider.asText(in).getBytes(StandardCharsets.UTF_8);

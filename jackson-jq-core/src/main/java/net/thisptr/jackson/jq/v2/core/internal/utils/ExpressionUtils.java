@@ -23,7 +23,7 @@ public class ExpressionUtils {
 	 * @return null if expr is not a constant
 	 */
 	@SuppressWarnings("unchecked")
-	public static <JsonNode> @Nullable JsonNode evaluateLiteralExpression(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> expr) {
+	public static <JsonNode> @Nullable JsonNode evaluateLiteralExpression(JsonProvider<JsonNode> jsonProvider, Expression expr) {
 		if (expr instanceof ObjectConstruction) {
 			JsonNode obj = jsonProvider.createObject();
 
@@ -31,7 +31,7 @@ public class ExpressionUtils {
 				if (field instanceof IdentifierKeyFieldConstruction) {
 					IdentifierKeyFieldConstruction<JsonNode> f = (IdentifierKeyFieldConstruction<JsonNode>) field;
 					String k = f.key;
-					Expression<JsonNode> valueExpr = f.value;
+					Expression valueExpr = f.value;
 
 					if (valueExpr == null) // this field depends on input and is not a constant
 						return null;
@@ -43,12 +43,12 @@ public class ExpressionUtils {
 					jsonProvider.set(obj, k, v);
 				} else if (field instanceof StringKeyFieldConstruction) {
 					StringKeyFieldConstruction<JsonNode> f = (StringKeyFieldConstruction<JsonNode>) field;
-					Expression<JsonNode> valueExpr = f.value;
+					Expression valueExpr = f.value;
 					if (!(f.key instanceof StringLiteral)) // then the key is string interpolation and not a constant
 						return null;
 					if (valueExpr == null) // this field depends on input and is not a constant
 						return null;
-					String k = ((StringLiteral<JsonNode>) f.key).value();
+					String k = ((StringLiteral) f.key).value();
 
 					JsonNode v = evaluateLiteralExpression(jsonProvider, valueExpr);
 					if (v == null)
@@ -64,13 +64,13 @@ public class ExpressionUtils {
 		} else if (expr instanceof ArrayConstruction) {
 			JsonNode array = jsonProvider.createArray();
 
-			Expression<JsonNode> tuple = ((ArrayConstruction<JsonNode>) expr).q;
+			Expression tuple = ((ArrayConstruction) expr).q;
 			if (tuple == null)
 				return array; // empty
 
 			if (tuple instanceof Tuple) {
-				List<Expression<JsonNode>> values = ((Tuple<JsonNode>) tuple).qs;
-				for (Expression<JsonNode> valueExpr : values) {
+				List<Expression> values = ((Tuple) tuple).qs;
+				for (Expression valueExpr : values) {
 					JsonNode value = evaluateLiteralExpression(jsonProvider, valueExpr);
 					if (value == null)
 						return null;
@@ -86,7 +86,7 @@ public class ExpressionUtils {
 
 			return array;
 		} else if (expr instanceof ValueLiteral) {
-			return ((ValueLiteral<JsonNode>) expr).value(jsonProvider);
+			return ((ValueLiteral) expr).value(jsonProvider);
 		} else {
 			return null;
 		}

@@ -10,10 +10,10 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class Tuple<JsonNode> implements Expression<JsonNode> {
-	public final List<Expression<JsonNode>> qs;
+public class Tuple implements Expression {
+	public final List<Expression> qs;
 
-	public Tuple(List<Expression<JsonNode>> qs) {
+	public Tuple(List<Expression> qs) {
 		this.qs = qs;
 	}
 
@@ -23,8 +23,8 @@ public class Tuple<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		for (Expression<JsonNode> q : qs) {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		for (Expression q : qs) {
 			q.apply(scope, in, path, output, requirePath);
 		}
 	}

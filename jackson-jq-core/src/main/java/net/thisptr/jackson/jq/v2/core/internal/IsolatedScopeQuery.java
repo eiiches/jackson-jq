@@ -8,15 +8,15 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class IsolatedScopeQuery<JsonNode> implements Expression<JsonNode> {
-	private Expression<JsonNode> q;
+public class IsolatedScopeQuery implements Expression {
+	private Expression q;
 
-	public IsolatedScopeQuery(Expression<JsonNode> q) {
+	public IsolatedScopeQuery(Expression q) {
 		this.q = q;
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Scope<JsonNode> isolatedScope = Scope.newChildScope(scope);
 		q.apply(isolatedScope, in, path, output, requirePath);
 	}

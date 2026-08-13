@@ -18,16 +18,21 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ComplexAssignment<JsonNode> extends BinaryOperatorExpression<JsonNode> {
+public class ComplexAssignment<JsonNode> extends BinaryOperatorExpression {
 	private BinaryOperator<JsonNode> operator;
 
-	public ComplexAssignment(Expression<JsonNode> lhs, Expression<JsonNode> rhs, BinaryOperator<JsonNode> operator) {
+	public ComplexAssignment(Expression lhs, Expression rhs, BinaryOperator<JsonNode> operator) {
 		super(lhs, rhs, operator.image() + "=");
 		this.operator = operator;
 	}
 
 	@Override
-	public void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public <N> void apply(Scope<N> scope, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
+		applyInternal((Scope) scope, (JsonNode) in, (Path) ipath, (PathOutput) output, requirePath);
+	}
+
+	private void applyInternal(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		rhs.apply(scope, in, (rval) -> {
 			List<Path<JsonNode>> lpaths = new ArrayList<>();

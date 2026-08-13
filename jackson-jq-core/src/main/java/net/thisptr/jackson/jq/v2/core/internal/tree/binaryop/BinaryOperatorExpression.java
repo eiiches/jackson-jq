@@ -24,12 +24,12 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.comparison.CompareN
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Version;
 
-public abstract class BinaryOperatorExpression<JsonNode> implements Expression<JsonNode> {
-	protected Expression<JsonNode> lhs;
-	protected Expression<JsonNode> rhs;
+public abstract class BinaryOperatorExpression implements Expression {
+	protected Expression lhs;
+	protected Expression rhs;
 	private String image;
 
-	public BinaryOperatorExpression(Expression<JsonNode> lhs, Expression<JsonNode> rhs, String image) {
+	public BinaryOperatorExpression(Expression lhs, Expression rhs, String image) {
 		this.lhs = lhs;
 		this.rhs = rhs;
 		this.image = image;
@@ -188,7 +188,7 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<J
 		 * @param version the version providing contextual information for the expression creation
 		 * @return a new instance of {@link Expression} that represents the operation between the lhs and rhs expressions
 		 */
-		protected abstract <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version);
+		protected abstract Expression create(Expression lhs, Expression rhs, Version version);
 
 		public enum Associativity {
 			LEFT, RIGHT
@@ -213,7 +213,7 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<J
 				lookup.put(op.image, op);
 		}
 
-		public <JsonNode> Expression<JsonNode> buildTree(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version) {
+		public Expression buildTree(Expression lhs, Expression rhs, Version version) {
 			try {
 				return create(lhs, rhs, version);
 			} catch (Exception e) {
@@ -227,18 +227,18 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<J
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public static Expression buildTree(List exprs, List<Operator> operators, Version version) {
-		return buildTreeGeneric((List<Expression<Object>>) exprs, operators, version);
+		return buildTreeGeneric((List<Expression>) exprs, operators, version);
 	}
 
-	public static <JsonNode> Expression<JsonNode> buildTreeGeneric(List<Expression<JsonNode>> exprs, List<Operator> operators, Version version) {
+	public static Expression buildTreeGeneric(List<Expression> exprs, List<Operator> operators, Version version) {
 		if (exprs.size() != operators.size() + 1)
 			throw new IllegalArgumentException();
 
 		// shunting-yard algorithm
-		Stack<Expression<JsonNode>> stackExprs = new Stack<>();
+		Stack<Expression> stackExprs = new Stack<>();
 		Stack<Operator> stackOperators = new Stack<>();
 
-		Iterator<Expression<JsonNode>> iterExpr = exprs.iterator();
+		Iterator<Expression> iterExpr = exprs.iterator();
 		Iterator<Operator> iterOperator = operators.iterator();
 
 		stackExprs.push(iterExpr.next());
@@ -249,8 +249,8 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<J
 				if (op1.precedence > op2.precedence
 						|| op1.precedence == op2.precedence && op1.associativity == Associativity.LEFT) {
 					Operator op = stackOperators.pop();
-					Expression<JsonNode> rhs = stackExprs.pop();
-					Expression<JsonNode> lhs = stackExprs.pop();
+					Expression rhs = stackExprs.pop();
+					Expression lhs = stackExprs.pop();
 					stackExprs.push(op.buildTree(lhs, rhs, version));
 				} else {
 					break;
@@ -262,8 +262,8 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<J
 
 		while (!stackOperators.isEmpty()) {
 			Operator op = stackOperators.pop();
-			Expression<JsonNode> rhs = stackExprs.pop();
-			Expression<JsonNode> lhs = stackExprs.pop();
+			Expression rhs = stackExprs.pop();
+			Expression lhs = stackExprs.pop();
 			stackExprs.push(op.buildTree(lhs, rhs, version));
 		}
 
