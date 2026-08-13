@@ -90,6 +90,9 @@ jobs:
     - name: Test JPMS compatibility
       run: mvn -f smoke-tests/jpms/pom.xml clean verify
 
+    - name: Test Quarkus compatibility (JVM)
+      run: mvn -f smoke-tests/quarkus/pom.xml clean verify
+
     - name: Set up GraalVM 21
       uses: graalvm/setup-graalvm@v1
       with:
@@ -98,3 +101,6 @@ jobs:
 
     - name: Test GraalVM compatibility
       run: mvn -f smoke-tests/graalvm/pom.xml clean verify
+
+    - name: Test Quarkus compatibility (native)
+      run: mvn -f smoke-tests/quarkus/pom.xml clean verify -Pnative
