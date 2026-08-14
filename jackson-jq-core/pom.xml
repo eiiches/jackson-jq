@@ -30,44 +30,6 @@
 		</dependency>
 	</dependencies>
 
-	<profiles>
-		<profile>
-			<id>native</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.graalvm.buildtools</groupId>
-						<artifactId>native-maven-plugin</artifactId>
-						<version>1.1.8</version>
-						<extensions>true</extensions>
-						<executions>
-							<execution>
-								<id>test-native</id>
-								<goals>
-									<goal>generateTestResourceConfig</goal>
-									<goal>test</goal>
-								</goals>
-								<phase>test</phase>
-								<configuration>
-									<resourceIncludedPatterns>
-										<pattern>classpath_modules(/.*\.(jq|json))?</pattern>
-										<pattern>tests(/.*\.ya?ml)?</pattern>
-										<pattern>failing_tests(/.*\.ya?ml)?</pattern>
-										<pattern>jq-test-extra-ok.json</pattern>
-										<pattern>librocksdbjni-.*.(so|jnilib|dll)</pattern>
-									</resourceIncludedPatterns>
-								</configuration>
-							</execution>
-						</executions>
-						<configuration>
-							<fallback>false</fallback>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
-
 	<build>
 		<plugins>
 			<plugin>
