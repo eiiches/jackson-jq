@@ -47,6 +47,7 @@
 		<module>jackson-jq-ext-module-time</module>
 		<module>jackson-jq-ext-module-uri</module>
 		<module>jackson-jq-ext-module-random</module>
+		<module>jackson-jq-ext-module-debug</module>
 		<module>jackson-jq-cli</module>
 	</modules>
 

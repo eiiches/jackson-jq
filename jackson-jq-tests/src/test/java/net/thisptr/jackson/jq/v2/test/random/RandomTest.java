@@ -70,13 +70,11 @@ public class RandomTest {
 	static {
 		EXCLUDED_FUNCTIONS.computeIfAbsent(Versions.JQ_1_5, k -> {
 			return new HashSet<>(Arrays.asList(new String[] {
-					"debug_scope/0", // a debug function for jackson-jq
 					"log2/0", // log2 has slightly different precisions
 			}));
 		});
 		EXCLUDED_FUNCTIONS.computeIfAbsent(Versions.JQ_1_6, k -> {
 			return new HashSet<>(Arrays.asList(new String[] {
-					"debug_scope/0", // a debug function for jackson-jq
 					"log2/0", // log2 has slightly different precisions
 			}));
 		});

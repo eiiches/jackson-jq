@@ -6,7 +6,6 @@ module net.thisptr.jackson.jq.v2.core {
 
 	exports net.thisptr.jackson.jq.v2.core;
 	exports net.thisptr.jackson.jq.v2.core.exception;
-	exports net.thisptr.jackson.jq.v2.core.module;
 	exports net.thisptr.jackson.jq.v2.core.module.loaders;
 	exports net.thisptr.jackson.jq.v2.core.path;
 
@@ -27,7 +26,6 @@ module net.thisptr.jackson.jq.v2.core {
 		net.thisptr.jackson.jq.v2.core.internal.functions.AtUriFunction,
 		net.thisptr.jackson.jq.v2.core.internal.functions.BuiltinsFunction,
 		net.thisptr.jackson.jq.v2.core.internal.functions.ContainsFunction,
-		net.thisptr.jackson.jq.v2.core.internal.functions.debug.DebugScopeFunction,
 		net.thisptr.jackson.jq.v2.core.internal.functions.DelPathsFunction,
 		net.thisptr.jackson.jq.v2.core.internal.functions.EmptyFunction,
 		net.thisptr.jackson.jq.v2.core.internal.functions.EndsWithFunction,

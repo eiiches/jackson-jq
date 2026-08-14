@@ -39,6 +39,11 @@
 		</dependency>
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-debug</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
 			<artifactId>jackson-jq-regex-impl-joni</artifactId>
 			<version>${project.version}</version>
 		</dependency>
