@@ -15,7 +15,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
-@FunctionRegistration("now/0")
+@FunctionRegistration(name = "now", nargs = 0)
 public class NowFunction implements Function {
 
 	@Override

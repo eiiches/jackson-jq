@@ -28,7 +28,7 @@ public abstract class MathFunction implements Function {
 	protected abstract double f(double f);
 
 	@AutoService(Function.class)
-	@FunctionRegistration("atan/0")
+	@FunctionRegistration(name = "atan", nargs = 0)
 	public static class AtanFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -37,7 +37,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("tan/0")
+	@FunctionRegistration(name = "tan", nargs = 0)
 	public static class TanFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -46,7 +46,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("tanh/0")
+	@FunctionRegistration(name = "tanh", nargs = 0)
 	public static class TanhFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -55,7 +55,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("acos/0")
+	@FunctionRegistration(name = "acos", nargs = 0)
 	public static class AcosFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -64,7 +64,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("cos/0")
+	@FunctionRegistration(name = "cos", nargs = 0)
 	public static class CosFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -73,7 +73,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("cosh/0")
+	@FunctionRegistration(name = "cosh", nargs = 0)
 	public static class CoshFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -82,7 +82,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("floor/0")
+	@FunctionRegistration(name = "floor", nargs = 0)
 	public static class FloorFunction extends MathFunction {
 		@Override
 		protected double f(double f) {
@@ -91,7 +91,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("ceil/0")
+	@FunctionRegistration(name = "ceil", nargs = 0)
 	public static class CeilFunction extends MathFunction {
 		@Override
 		protected double f(double f) {
@@ -100,7 +100,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration(value = "round/0", version = "[1.6, )")
+	@FunctionRegistration(name = "round", nargs = 0, version = "[1.6, )")
 	public static class RoundFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -109,7 +109,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("asin/0")
+	@FunctionRegistration(name = "asin", nargs = 0)
 	public static class AsinFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -118,7 +118,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("sin/0")
+	@FunctionRegistration(name = "sin", nargs = 0)
 	public static class SinFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -127,7 +127,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("sinh/0")
+	@FunctionRegistration(name = "sinh", nargs = 0)
 	public static class SinhFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -136,7 +136,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("cbrt/0")
+	@FunctionRegistration(name = "cbrt", nargs = 0)
 	public static class CbrtFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -145,7 +145,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("sqrt/0")
+	@FunctionRegistration(name = "sqrt", nargs = 0)
 	public static class SqrtFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -154,7 +154,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("log2/0")
+	@FunctionRegistration(name = "log2", nargs = 0)
 	public static class Log2Function extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -163,7 +163,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("log/0")
+	@FunctionRegistration(name = "log", nargs = 0)
 	public static class LogFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -172,7 +172,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("log10/0")
+	@FunctionRegistration(name = "log10", nargs = 0)
 	public static class Log10Function extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -181,7 +181,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration(value = "log1p/0", version = "[1.6, )")
+	@FunctionRegistration(name = "log1p", nargs = 0, version = "[1.6, )")
 	public static class Log1pFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -190,7 +190,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("exp/0")
+	@FunctionRegistration(name = "exp", nargs = 0)
 	public static class ExpFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -199,7 +199,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration(value = "expm1/0", version = "[1.6, )")
+	@FunctionRegistration(name = "expm1", nargs = 0, version = "[1.6, )")
 	public static class Expm1Function extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -208,7 +208,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration("exp2/0")
+	@FunctionRegistration(name = "exp2", nargs = 0)
 	public static class Exp2Function extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -217,7 +217,7 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration(value = "exp10/0", version = "[1.6, )")
+	@FunctionRegistration(name = "exp10", nargs = 0, version = "[1.6, )")
 	public static class Exp10Function extends MathFunction {
 		@Override
 		protected double f(double v) {

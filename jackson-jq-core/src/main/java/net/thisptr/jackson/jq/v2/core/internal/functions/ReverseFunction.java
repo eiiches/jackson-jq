@@ -18,7 +18,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
-@FunctionRegistration("reverse/0")
+@FunctionRegistration(name = "reverse", nargs = 0)
 public class ReverseFunction implements Function {
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {

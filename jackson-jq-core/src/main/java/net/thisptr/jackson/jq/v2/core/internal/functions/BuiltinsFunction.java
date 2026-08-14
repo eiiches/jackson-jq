@@ -19,7 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
-@FunctionRegistration("builtins/0")
+@FunctionRegistration(name = "builtins", nargs = 0)
 public class BuiltinsFunction implements Function {
 
 	@Override

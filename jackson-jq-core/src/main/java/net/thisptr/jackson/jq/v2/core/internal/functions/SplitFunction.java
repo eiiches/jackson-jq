@@ -19,7 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
-@FunctionRegistration("split/1")
+@FunctionRegistration(name = "split", nargs = 1)
 public class SplitFunction implements Function {
 
 	@Override

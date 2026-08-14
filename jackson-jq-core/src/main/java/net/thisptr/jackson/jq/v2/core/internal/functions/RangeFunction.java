@@ -23,7 +23,9 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
-@FunctionRegistration({ "range/1", "range/2", "range/3" })
+@FunctionRegistration(name = "range", nargs = 1)
+@FunctionRegistration(name = "range", nargs = 2)
+@FunctionRegistration(name = "range", nargs = 3)
 public class RangeFunction implements Function {
 
 	@Override

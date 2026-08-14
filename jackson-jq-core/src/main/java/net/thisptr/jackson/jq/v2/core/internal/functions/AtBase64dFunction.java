@@ -10,7 +10,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 @AutoService(Function.class)
-@FunctionRegistration(value = "@base64d/0", version = "[1.6, )")
+@FunctionRegistration(name = "@base64d", nargs = 0, version = "[1.6, )")
 public class AtBase64dFunction extends AbstractAtFormattingFunction {
 	@Override
 	public String convert(String text) throws JsonQueryException {

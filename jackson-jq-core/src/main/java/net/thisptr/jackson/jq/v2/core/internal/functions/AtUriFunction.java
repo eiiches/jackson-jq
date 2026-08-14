@@ -17,7 +17,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
  * </ul>
  */
 @AutoService(Function.class)
-@FunctionRegistration("@uri/0")
+@FunctionRegistration(name = "@uri", nargs = 0)
 public class AtUriFunction extends AbstractAtFormattingFunction {
 	@Override
 	public String convert(String text) throws JsonQueryException {

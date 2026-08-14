@@ -21,7 +21,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
-@FunctionRegistration("paths/1")
+@FunctionRegistration(name = "paths", nargs = 1)
 public class PathsFunction<JsonNode> implements Function {
 	@Override
 	@SuppressWarnings({"unchecked", "rawtypes"})

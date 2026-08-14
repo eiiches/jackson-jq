@@ -18,7 +18,8 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
-@FunctionRegistration({ "error/0", "error/1" })
+@FunctionRegistration(name = "error", nargs = 0)
+@FunctionRegistration(name = "error", nargs = 1)
 public class ErrorFunction implements Function {
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {

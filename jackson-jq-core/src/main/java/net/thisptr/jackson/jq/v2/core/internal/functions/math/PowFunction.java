@@ -15,7 +15,7 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 @AutoService(Function.class)
-@FunctionRegistration("pow/2")
+@FunctionRegistration(name = "pow", nargs = 2)
 public class PowFunction extends JsonArgumentFunction {
 	@Override
 	protected <JsonNode> JsonNode fn(Scope<JsonNode> scope, List<JsonNode> args, JsonNode in) throws JsonQueryException {

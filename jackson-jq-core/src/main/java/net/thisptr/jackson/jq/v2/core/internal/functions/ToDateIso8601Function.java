@@ -20,7 +20,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
-@FunctionRegistration({ "todateiso8601/0" })
+@FunctionRegistration(name = "todateiso8601", nargs = 0)
 public class ToDateIso8601Function implements Function  {
     @Override
     public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {

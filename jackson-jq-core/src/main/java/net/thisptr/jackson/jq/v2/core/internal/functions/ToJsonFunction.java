@@ -16,7 +16,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
-@FunctionRegistration("tojson/0")
+@FunctionRegistration(name = "tojson", nargs = 0)
 public class ToJsonFunction implements Function {
 
 	@Override

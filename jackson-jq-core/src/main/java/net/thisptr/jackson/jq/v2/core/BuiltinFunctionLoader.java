@@ -1,6 +1,8 @@
 package net.thisptr.jackson.jq.v2.core;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 
@@ -54,15 +56,22 @@ public class BuiltinFunctionLoader {
 	}
 
 	private static String @Nullable [] extractFunctionNamesFromAnnotationIfVersionMatch(Function fn, Version version) {
-		FunctionRegistration annotation = fn.getClass().getAnnotation(FunctionRegistration.class);
-		if (annotation == null)
-			return null;
-		if (!annotation.version().isEmpty()) {
-			VersionRange range = VersionRange.valueOf(annotation.version());
-			if (!range.contains(version))
-				return new String[0];
+		FunctionRegistration[] annotations = fn.getClass().getAnnotationsByType(FunctionRegistration.class);
+		if (annotations.length == 0)
+			return null; // i.e. no annotations found
+
+		List<String> names = new ArrayList<>();
+		for (FunctionRegistration annotation : annotations) {
+			if (!annotation.version().isEmpty()) {
+				VersionRange range = VersionRange.valueOf(annotation.version());
+				if (!range.contains(version))
+					continue;
+			}
+			// negative nargs => variadic: register under the bare name, matching
+			// the fallback lookup in Scope#getFunction(name, nargs).
+			names.add(annotation.nargs() < 0 ? annotation.name() : annotation.name() + "/" + annotation.nargs());
 		}
-		return annotation.value();
+		return names.toArray(new String[0]);
 	}
 
 	private Map<String, Function> loadFunctionsFromServiceLoader(ClassLoader classLoader, Version version) {

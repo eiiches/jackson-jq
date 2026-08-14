@@ -23,7 +23,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
-@FunctionRegistration("sort_by/1")
+@FunctionRegistration(name = "sort_by", nargs = 1)
 public class SortByFunction implements Function {
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode items, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {

@@ -17,7 +17,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
-@FunctionRegistration("getpath/1")
+@FunctionRegistration(name = "getpath", nargs = 1)
 public class GetPathFunction implements Function {
 
 	@Override

@@ -6,7 +6,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 
 @AutoService(Function.class)
-@FunctionRegistration("ltrimstr/1")
+@FunctionRegistration(name = "ltrimstr", nargs = 1)
 public class LTrimStrFunction extends AbstractTrimStrFunction {
 	@Override
 	protected String doTrim(String text, String trim) {

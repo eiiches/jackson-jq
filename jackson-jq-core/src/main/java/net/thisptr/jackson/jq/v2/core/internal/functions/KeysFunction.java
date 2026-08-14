@@ -6,7 +6,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 
 @AutoService(Function.class)
-@FunctionRegistration("keys/0")
+@FunctionRegistration(name = "keys", nargs = 0)
 public class KeysFunction extends AbstractKeysFunction {
 	public KeysFunction() {
 		super("keys", true);

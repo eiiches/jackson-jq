@@ -22,7 +22,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
-@FunctionRegistration("contains/1")
+@FunctionRegistration(name = "contains", nargs = 1)
 public class ContainsFunction<JsonNode> implements Function {
 
 	@Override

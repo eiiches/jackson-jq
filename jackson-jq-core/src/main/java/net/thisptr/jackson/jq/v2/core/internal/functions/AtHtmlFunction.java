@@ -6,7 +6,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 
 @AutoService(Function.class)
-@FunctionRegistration("@html/0")
+@FunctionRegistration(name = "@html", nargs = 0)
 public class AtHtmlFunction extends AbstractAtFormattingFunction {
 	@Override
 	public String convert(String text) {

@@ -6,7 +6,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 
 @AutoService(Function.class)
-@FunctionRegistration("endswith/1")
+@FunctionRegistration(name = "endswith", nargs = 1)
 public class EndsWithFunction extends AbstractStartsEndsWithFunction {
 
 	public EndsWithFunction() {

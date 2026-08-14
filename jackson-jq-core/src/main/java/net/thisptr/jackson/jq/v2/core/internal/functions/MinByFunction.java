@@ -8,7 +8,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 
 @AutoService(Function.class)
-@FunctionRegistration("min_by/1")
+@FunctionRegistration(name = "min_by", nargs = 1)
 public class MinByFunction extends AbstractMaxByFunction {
 	public MinByFunction() {
 		super("min_by");

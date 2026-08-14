@@ -16,8 +16,8 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 // For security reasons, env/0 should not be loaded by default.
 // @AutoService(Function.class)
-// 2022-06-29(eiiches): commented out @FunctionRegistration("env/0") to make sure some custom function loaders don't load `env/0` accidentally.
-// @FunctionRegistration("env/0")
+// 2022-06-29(eiiches): commented out @FunctionRegistration(name = "env", nargs = 0) to make sure some custom function loaders don't load `env/0` accidentally.
+// @FunctionRegistration(name = "env", nargs = 0)
 public class EnvFunction implements Function {
 
 	@Override

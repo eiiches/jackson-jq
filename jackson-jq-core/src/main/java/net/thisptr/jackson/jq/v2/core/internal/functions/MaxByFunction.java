@@ -8,7 +8,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 
 @AutoService(Function.class)
-@FunctionRegistration("max_by/1")
+@FunctionRegistration(name = "max_by", nargs = 1)
 public class MaxByFunction extends AbstractMaxByFunction {
 	public MaxByFunction() {
 		super("max_by");

@@ -6,7 +6,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 
 @AutoService(Function.class)
-@FunctionRegistration("@csv/0")
+@FunctionRegistration(name = "@csv", nargs = 0)
 public class CsvFilter extends AbstractSvFilter {
 	@Override
 	protected void appendEscaped(StringBuilder builder, String text) {
