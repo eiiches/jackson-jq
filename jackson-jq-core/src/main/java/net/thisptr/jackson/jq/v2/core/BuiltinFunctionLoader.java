@@ -12,11 +12,11 @@ import net.thisptr.jackson.jq.v2.core.internal.IsolatedScopeQuery;
 import net.thisptr.jackson.jq.v2.core.internal.JsonQueryFunction;
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary.JqFunc;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 
 /**
  * Use {@code BuiltinFunctionLoader.getInstance()} to obtain the instance.

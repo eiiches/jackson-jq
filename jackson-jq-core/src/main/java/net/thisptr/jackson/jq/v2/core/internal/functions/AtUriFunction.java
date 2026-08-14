@@ -6,7 +6,7 @@ import java.net.URLEncoder;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 /**

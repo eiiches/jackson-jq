@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.v2.spi.module;
+package net.thisptr.jackson.jq.v2.spi.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,6 +7,6 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ModuleRegistration {
-	String path();
+public @interface FunctionRegistrations {
+	FunctionRegistration[] value();
 }
