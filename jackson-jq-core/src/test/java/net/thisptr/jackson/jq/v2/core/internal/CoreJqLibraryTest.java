@@ -23,12 +23,18 @@ public class CoreJqLibraryTest {
 
 	@Test
 	public void appliesVersionRanges() {
-		Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
+		Scope<JsonNode> scope15 = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
+		BuiltinFunctionLoader.getInstance().loadFunctions(getClass().getClassLoader(), Versions.JQ_1_5, scope15);
+		assertThat(scope15.getFunction("paths", 0)).isNotNull();
+		assertThat(scope15.getFunction("first", 1)).isNotNull();
+		assertThat(scope15.getFunction("walk", 1)).isNull();
+		assertThat(scope15.getFunction("pick", 1)).isNull();
 
-		assertThat(BuiltinFunctionLoader.getInstance().loadFunctionsFromJqLibrary(getClass().getClassLoader(), Versions.JQ_1_5, scope))
-				.containsKeys("paths/0", "first/1")
-				.doesNotContainKeys("walk/1", "pick/1");
-		assertThat(BuiltinFunctionLoader.getInstance().loadFunctionsFromJqLibrary(getClass().getClassLoader(), Versions.JQ_1_7, scope))
-				.containsKeys("paths/0", "first/1", "walk/1", "pick/1");
+		Scope<JsonNode> scope17 = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
+		BuiltinFunctionLoader.getInstance().loadFunctions(getClass().getClassLoader(), Versions.JQ_1_7, scope17);
+		assertThat(scope17.getFunction("paths", 0)).isNotNull();
+		assertThat(scope17.getFunction("first", 1)).isNotNull();
+		assertThat(scope17.getFunction("walk", 1)).isNotNull();
+		assertThat(scope17.getFunction("pick", 1)).isNotNull();
 	}
 }

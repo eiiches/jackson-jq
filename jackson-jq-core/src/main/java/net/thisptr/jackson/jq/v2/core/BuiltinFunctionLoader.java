@@ -27,7 +27,8 @@ public class BuiltinFunctionLoader {
 		return INSTANCE;
 	}
 
-	private BuiltinFunctionLoader() {}
+	private BuiltinFunctionLoader() {
+	}
 
 	/**
 	 * Load function definitions from the available providers
@@ -78,10 +79,7 @@ public class BuiltinFunctionLoader {
 		return annotation.value();
 	}
 
-	/**
-	 * Do not use this method. This method is only for Quarkus extension.
-	 */
-	public Map<String, Function> loadFunctionsFromServiceLoader(ClassLoader classLoader, Version version) {
+	private Map<String, Function> loadFunctionsFromServiceLoader(ClassLoader classLoader, Version version) {
 		Map<String, Function> functions = new HashMap<>();
 		for (Function fn : ServiceLoader.load(Function.class, classLoader)) {
 			@Var String[] names = extractFunctionNamesFromAnnotationIfVersionMatch(fn, version);
@@ -99,11 +97,8 @@ public class BuiltinFunctionLoader {
 		return functions;
 	}
 
-	/**
-	 * Do not use this method. This method is only for Quarkus extension.
-	 */
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	public Map<String, Function> loadFunctionsFromJqLibrary(ClassLoader classLoader, Version version, Scope closureScope) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private Map<String, Function> loadFunctionsFromJqLibrary(ClassLoader classLoader, Version version, Scope closureScope) {
 		try {
 			Map<String, Function> functions = new HashMap<>();
 			for (JqLibrary library : ServiceLoader.load(JqLibrary.class, classLoader)) {
@@ -117,15 +112,5 @@ public class BuiltinFunctionLoader {
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to load macros", e);
 		}
-	}
-
-	/**
-	 * Do not use this method. This method is only for Quarkus extension.
-	 *
-	 * @deprecated use {@link #loadFunctionsFromJqLibrary(ClassLoader, Version, Scope)}
-	 */
-	@Deprecated
-	public Map<String, Function> loadFunctionsFromJsonJq(ClassLoader classLoader, Version version, Scope closureScope) {
-		return loadFunctionsFromJqLibrary(classLoader, version, closureScope);
 	}
 }
