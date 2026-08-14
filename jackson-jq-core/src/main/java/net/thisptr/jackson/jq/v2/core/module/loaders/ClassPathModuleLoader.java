@@ -25,10 +25,9 @@ public class ClassPathModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 
 	public ClassPathModuleLoader(ClassLoader classLoader) {
 		for (Module module : ServiceLoader.load(Module.class, classLoader)) {
-			ModuleRegistration annotation = module.getClass().getAnnotation(ModuleRegistration.class);
-			if (annotation == null)
-				continue;
-			pathAndModules.put(annotation.path(), module);
+			for (ModuleRegistration annotation : module.getClass().getAnnotationsByType(ModuleRegistration.class)) {
+				pathAndModules.put(annotation.path(), module);
+			}
 		}
 	}
 
