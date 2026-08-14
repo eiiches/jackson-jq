@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.IsolatedScopeQuery;
@@ -66,28 +65,10 @@ public class BuiltinFunctionLoader {
 		return annotation.value();
 	}
 
-	@SuppressWarnings("deprecation")
-	private static String @Nullable [] extractFunctionNamesFromDeprecatedAnnotationIfVersionMatch(Function fn, Version version) {
-		net.thisptr.jackson.jq.v2.core.internal.BuiltinFunction annotation = fn.getClass().getAnnotation(net.thisptr.jackson.jq.v2.core.internal.BuiltinFunction.class);
-		if (annotation == null)
-			return null;
-		if (!annotation.version().isEmpty()) {
-			VersionRange range = VersionRange.valueOf(annotation.version());
-			if (!range.contains(version))
-				return new String[0];
-		}
-		return annotation.value();
-	}
-
 	private Map<String, Function> loadFunctionsFromServiceLoader(ClassLoader classLoader, Version version) {
 		Map<String, Function> functions = new HashMap<>();
 		for (Function fn : ServiceLoader.load(Function.class, classLoader)) {
-			@Var String[] names = extractFunctionNamesFromAnnotationIfVersionMatch(fn, version);
-			if (names == null) { // i.e. if annotation is missing,
-				// Look for deprecated annotation as well for compatibility reasons. TODO: Delete this in 1.0.0 release.
-				names = extractFunctionNamesFromDeprecatedAnnotationIfVersionMatch(fn, version);
-			}
-
+			String[] names = extractFunctionNamesFromAnnotationIfVersionMatch(fn, version);
 			if (names == null) // i.e. no annotations found
 				continue;
 
