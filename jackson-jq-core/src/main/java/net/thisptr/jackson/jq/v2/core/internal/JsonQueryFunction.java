@@ -30,7 +30,7 @@ public class JsonQueryFunction<JsonNode> implements Function {
 	@Override
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public <N> void apply(Scope<N> scope, List<Expression> args, N in, @Nullable Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
-		applyInternal((Scope) scope, (List) args, (JsonNode) in, (Path) path, (PathOutput) output, version);
+		applyInternal((Scope) scope, args, (JsonNode) in, (Path) path, (PathOutput) output, version);
 	}
 
 	private void applyInternal(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, Version version) throws JsonQueryException {

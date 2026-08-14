@@ -19,7 +19,7 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
-import net.thisptr.jackson.jq.v2.core.module.SimpleModule;
+import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;

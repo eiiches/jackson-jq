@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.v2.core.module;
+package net.thisptr.jackson.jq.v2.core.internal.module;
 
 import java.util.Collections;
 import java.util.HashMap;
