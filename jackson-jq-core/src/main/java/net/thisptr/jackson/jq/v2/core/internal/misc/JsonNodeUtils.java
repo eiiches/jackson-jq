@@ -11,7 +11,7 @@ public class JsonNodeUtils {
 	private JsonNodeUtils() {}
 
 	public static <JsonNode> boolean asBoolean(JsonProvider<JsonNode> jsonProvider, JsonNode n) {
-		if (n == null || jsonProvider.getNodeType(n) == JsonNodeType.NULL || jsonProvider.isMissingNode(n))
+		if (n == null || jsonProvider.getNodeType(n) == JsonNodeType.NULL)
 			return false;
 		if (jsonProvider.getNodeType(n) == JsonNodeType.BOOLEAN)
 			return jsonProvider.asBoolean(n);
@@ -53,8 +53,6 @@ public class JsonNodeUtils {
 				return "string";
 			case BOOLEAN:
 				return "boolean";
-			case MISSING:
-				return "null";
 			case NULL:
 				return "null";
 			case NUMBER:

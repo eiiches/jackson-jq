@@ -76,15 +76,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public JsonElement createMissing() {
-		return GsonMissingNode.INSTANCE;
-	}
-
-	@Override
 	public JsonNodeType getNodeType(JsonElement node) {
-		if (node instanceof GsonMissingNode) {
-			return JsonNodeType.MISSING;
-		}
 		if (node.isJsonNull()) {
 			return JsonNodeType.NULL;
 		}
@@ -110,11 +102,6 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public boolean isMissingNode(JsonElement node) {
-		return node instanceof GsonMissingNode;
-	}
-
-	@Override
 	public boolean asBoolean(JsonElement node) {
 		if (node.isJsonPrimitive()) {
 			JsonPrimitive primitive = node.getAsJsonPrimitive();
@@ -123,7 +110,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 			}
 		}
 		// jq semantics: null and false are falsy, everything else is truthy
-		if (node.isJsonNull() || node instanceof GsonMissingNode) {
+		if (node.isJsonNull()) {
 			return false;
 		}
 		return true;
@@ -149,9 +136,6 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 
 	@Override
 	public String asText(JsonElement node) {
-		if (node instanceof GsonMissingNode) {
-			return "";
-		}
 		if (node.isJsonNull()) {
 			return "null";
 		}
@@ -322,9 +306,6 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 
 	@Override
 	public String toString(JsonElement node) {
-		if (node instanceof GsonMissingNode) {
-			return "null";
-		}
 		return toJqString(node);
 	}
 

@@ -24,11 +24,7 @@ public interface JsonProvider<JsonNode> {
 
 	JsonNode createNull();
 
-	JsonNode createMissing();
-
 	JsonNodeType getNodeType(JsonNode node);
-
-	boolean isMissingNode(JsonNode node);
 
 	boolean asBoolean(JsonNode node);
 

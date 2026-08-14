@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.LongNode;
-import com.fasterxml.jackson.databind.node.MissingNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -81,11 +80,6 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public JsonNode createMissing() {
-		return MissingNode.getInstance();
-	}
-
-	@Override
 	public JsonNodeType getNodeType(JsonNode node) {
 		switch (node.getNodeType()) {
 			case ARRAY:
@@ -94,8 +88,6 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 				return JsonNodeType.BINARY;
 			case BOOLEAN:
 				return JsonNodeType.BOOLEAN;
-			case MISSING:
-				return JsonNodeType.MISSING;
 			case NULL:
 				return JsonNodeType.NULL;
 			case NUMBER:
@@ -107,11 +99,6 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 			default:
 				throw new IllegalStateException("Unknown JsonNodeType: " + node.getNodeType());
 		}
-	}
-
-	@Override
-	public boolean isMissingNode(JsonNode node) {
-		return node.isMissingNode();
 	}
 
 	@Override

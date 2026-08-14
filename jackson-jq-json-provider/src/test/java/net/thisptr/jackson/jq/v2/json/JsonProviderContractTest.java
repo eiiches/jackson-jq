@@ -49,14 +49,6 @@ public abstract class JsonProviderContractTest<T> {
 	void testCreateNull() {
 		T node = provider.createNull();
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.NULL);
-		assertThat(provider.isMissingNode(node)).isFalse();
-	}
-
-	@Test
-	void testCreateMissing() {
-		T node = provider.createMissing();
-		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.MISSING);
-		assertThat(provider.isMissingNode(node)).isTrue();
 	}
 
 	@Test

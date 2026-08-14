@@ -19,7 +19,7 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 	}
 
 	private static final JsonNodeType[][] ordering = new JsonNodeType[][] {
-			new JsonNodeType[] { JsonNodeType.NULL, JsonNodeType.MISSING },
+			new JsonNodeType[] { JsonNodeType.NULL },
 			new JsonNodeType[] { JsonNodeType.BOOLEAN },
 			new JsonNodeType[] { JsonNodeType.NUMBER },
 			new JsonNodeType[] { JsonNodeType.STRING, JsonNodeType.BINARY },
@@ -110,7 +110,7 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 			return r;
 
 		JsonNodeType type = o1 != null ? jsonProvider.getNodeType(o1) : null;
-		if (type == null || type == JsonNodeType.MISSING || type == JsonNodeType.NULL)
+		if (type == null || type == JsonNodeType.NULL)
 			return 0;
 
 		if (type == JsonNodeType.BOOLEAN)
