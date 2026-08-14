@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.v2.core;
+package net.thisptr.jackson.jq.v2.spi;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -6,7 +6,6 @@ import java.util.regex.Pattern;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
 
 public class VersionRange {

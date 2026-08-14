@@ -16,6 +16,7 @@ import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary.JqFunc;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.VersionRange;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 
 /**
@@ -90,7 +91,7 @@ public class BuiltinFunctionLoader {
 			Map<String, Function> functions = new HashMap<>();
 			for (JqLibrary library : ServiceLoader.load(JqLibrary.class, classLoader)) {
 				for (JqFunc def : library.getFunctions()) {
-					if (def.version != null && !VersionRange.valueOf(def.version).contains(version))
+					if (def.version != null && !def.version.contains(version))
 						continue;
 					functions.put(def.name + "/" + def.args.size(), new JsonQueryFunction(def.name, def.args, new IsolatedScopeQuery(ExpressionParser.compile(def.body, version)), closureScope));
 				}

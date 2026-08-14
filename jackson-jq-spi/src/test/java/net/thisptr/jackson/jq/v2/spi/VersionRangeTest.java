@@ -1,8 +1,6 @@
-package net.thisptr.jackson.jq.v2.core;
+package net.thisptr.jackson.jq.v2.spi;
 
 import org.junit.jupiter.api.Test;
-
-import net.thisptr.jackson.jq.v2.spi.Version;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;

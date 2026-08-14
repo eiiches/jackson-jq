@@ -25,7 +25,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
-import net.thisptr.jackson.jq.v2.core.VersionRange;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction;
@@ -52,6 +51,7 @@ import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.VersionRange;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.test.evaluator.Evaluator.Result;
 import net.thisptr.jackson.jq.v2.test.evaluator.JacksonJqEvaluator;

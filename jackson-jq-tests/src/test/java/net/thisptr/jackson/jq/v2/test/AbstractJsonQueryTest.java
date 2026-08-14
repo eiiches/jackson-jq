@@ -32,10 +32,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
-import net.thisptr.jackson.jq.v2.core.VersionRange;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.VersionRange;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.test.evaluator.CachedEvaluator;
 import net.thisptr.jackson.jq.v2.test.evaluator.Evaluator;

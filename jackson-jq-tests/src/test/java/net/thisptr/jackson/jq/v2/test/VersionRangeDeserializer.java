@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.VersionRange;
+import net.thisptr.jackson.jq.v2.spi.VersionRange;
 
 public class VersionRangeDeserializer extends StdDeserializer<VersionRange> {
 	private static final long serialVersionUID = -4054473248484615401L;

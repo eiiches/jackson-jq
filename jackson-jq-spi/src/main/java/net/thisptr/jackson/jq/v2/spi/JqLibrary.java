@@ -10,12 +10,12 @@ import org.jspecify.annotations.Nullable;
 public interface JqLibrary {
 	// TODO: fix stringly-typed api
 	class JqFunc {
-		public String name;
-		public List<String> args;
-		public String body;
-		public @Nullable String version;
+		public final String name;
+		public final List<String> args;
+		public final String body;
+		public final @Nullable VersionRange version;
 
-		public JqFunc(String name, List<String> args, String body, @Nullable String version) {
+		public JqFunc(String name, List<String> args, String body, @Nullable VersionRange version) {
 			this.name = Objects.requireNonNull(name, "name");
 			this.args = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(args, "args")));
 			this.body = Objects.requireNonNull(body, "body");
