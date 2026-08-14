@@ -6,26 +6,31 @@ import java.util.regex.Pattern;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
+
 /**
  * Use {@code Versions} to get a {@link Version} instance.
  */
 public class Version implements Comparable<Version> {
-	public final int major;
-	public final int minor;
+	private final int major;
+	private final int minor;
+	private final int patch;
 
-	public static final Version LATEST = new Version(Integer.MAX_VALUE, Integer.MAX_VALUE);
-
-	Version(int major, int minor) {
+	Version(int major, int minor, int patch) {
 		this.major = major;
 		this.minor = minor;
+		this.patch = patch;
 	}
 
 	@Override
 	public int compareTo(Version o) {
-		int r = Integer.compare(major, o.major);
+		@Var int r = Integer.compare(major, o.major);
 		if (r != 0)
 			return r;
-		return Integer.compare(minor, o.minor);
+		r = Integer.compare(minor, o.minor);
+		if (r != 0)
+			return r;
+		return Integer.compare(patch, o.patch);
 	}
 
 	@Override
@@ -34,6 +39,7 @@ public class Version implements Comparable<Version> {
 		@Var int result = 1;
 		result = prime * result + major;
 		result = prime * result + minor;
+		result = prime * result + patch;
 		return result;
 	}
 
@@ -50,18 +56,32 @@ public class Version implements Comparable<Version> {
 			return false;
 		if (minor != other.minor)
 			return false;
+		if (patch != other.patch)
+			return false;
 		return true;
 	}
 
-	public int majorVersion() {
+	public int major() {
 		return major;
 	}
 
-	public int minorVersion() {
+	public int minor() {
 		return minor;
 	}
 
-	public static Pattern VERSION_PATTERN = Pattern.compile("([0-9])\\.([0-9])");
+	public int patch() {
+		return patch;
+	}
+
+	public static Pattern VERSION_PATTERN = Pattern.compile("([0-9])\\.([0-9])(?:\\.([0-9]+))?");
+
+	public static Version valueOf(int major, int minor, int patch) {
+		return new Version(major, minor, patch);
+	}
+
+	public static Version valueOf(VersionSpec spec) {
+		return new Version(spec.major(), spec.minor(), spec.patch());
+	}
 
 	public static Version valueOf(String text) {
 		Matcher m = VERSION_PATTERN.matcher(text);
@@ -70,12 +90,13 @@ public class Version implements Comparable<Version> {
 
 		String majorVersion = m.group(1);
 		String minorVersion = m.group(2);
+		String patchVersion = m.group(3);
 
-		return new Version(Integer.parseInt(majorVersion), Integer.parseInt(minorVersion));
+		return new Version(Integer.parseInt(majorVersion), Integer.parseInt(minorVersion), patchVersion != null ? Integer.parseInt(patchVersion) : 0);
 	}
 
 	@Override
 	public String toString() {
-		return major + "." + minor;
+		return major + "." + minor + "." + patch;
 	}
 }

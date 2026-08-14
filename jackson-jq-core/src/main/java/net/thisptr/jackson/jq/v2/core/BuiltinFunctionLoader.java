@@ -62,11 +62,8 @@ public class BuiltinFunctionLoader {
 
 		List<String> names = new ArrayList<>();
 		for (FunctionRegistration annotation : annotations) {
-			if (!annotation.version().isEmpty()) {
-				VersionRange range = VersionRange.valueOf(annotation.version());
-				if (!range.contains(version))
-					continue;
-			}
+			if (!VersionRange.valueOf(annotation.version()).contains(version))
+				continue;
 			// negative nargs => variadic: register under the bare name, matching
 			// the fallback lookup in Scope#getFunction(name, nargs).
 			names.add(annotation.nargs() < 0 ? annotation.name() : annotation.name() + "/" + annotation.nargs());

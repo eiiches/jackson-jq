@@ -14,6 +14,8 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
+import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -100,7 +102,9 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration(name = "round", nargs = 0, version = "[1.6, )")
+	@FunctionRegistration(name = "round", nargs = 0, version = @VersionRangeSpec(
+			min = @VersionSpec(major = 1, minor = 6, patch = 0)
+	))
 	public static class RoundFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -181,7 +185,9 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration(name = "log1p", nargs = 0, version = "[1.6, )")
+	@FunctionRegistration(name = "log1p", nargs = 0, version = @VersionRangeSpec(
+			min = @VersionSpec(major = 1, minor = 6, patch = 0)
+	))
 	public static class Log1pFunction extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -199,7 +205,9 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration(name = "expm1", nargs = 0, version = "[1.6, )")
+	@FunctionRegistration(name = "expm1", nargs = 0, version = @VersionRangeSpec(
+			min = @VersionSpec(major = 1, minor = 6, patch = 0)
+	))
 	public static class Expm1Function extends MathFunction {
 		@Override
 		protected double f(double v) {
@@ -217,7 +225,9 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration(name = "exp10", nargs = 0, version = "[1.6, )")
+	@FunctionRegistration(name = "exp10", nargs = 0, version = @VersionRangeSpec(
+			min = @VersionSpec(major = 1, minor = 6, patch = 0)
+	))
 	public static class Exp10Function extends MathFunction {
 		@Override
 		protected double f(double v) {

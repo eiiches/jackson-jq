@@ -7,6 +7,7 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
 
 public class VersionRange {
 	private final @Nullable Version minVersion;
@@ -89,6 +90,11 @@ public class VersionRange {
 				"[".equals(minInclusive),
 				maxVersion != null && !maxVersion.isEmpty() ? Version.valueOf(maxVersion) : null,
 				"]".equals(maxInclusive));
+	}
+
+	public static VersionRange valueOf(VersionRangeSpec spec) {
+		return new VersionRange(Version.valueOf(spec.min()), spec.minInclusive(),
+				Version.valueOf(spec.max()), spec.maxInclusive());
 	}
 
 	@Override
