@@ -1,9 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.misc;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.function.Predicate;
 
 import org.jspecify.annotations.Nullable;
 
@@ -75,38 +72,6 @@ public class JsonNodeUtils {
 		if (value == null)
 			return jsonProvider.createNull();
 		return value;
-	}
-
-	private static <JsonNode> JsonNode filterInternal(JsonProvider<JsonNode> jsonProvider, JsonNode in, Predicate<JsonNode> pred) {
-		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
-			JsonNode out = jsonProvider.createObject();
-			Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(in);
-			while (iter.hasNext()) {
-				Entry<String, JsonNode> entry = iter.next();
-				if (!pred.test(entry.getValue()))
-					continue;
-				jsonProvider.set(out, entry.getKey(), filterInternal(jsonProvider, entry.getValue(), pred));
-			}
-			return out;
-		} else if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
-			JsonNode out = jsonProvider.createArray();
-			Iterator<JsonNode> iter = jsonProvider.elements(in);
-			while (iter.hasNext()) {
-				JsonNode val = iter.next();
-				if (!pred.test(val))
-					continue;
-				jsonProvider.add(out, filterInternal(jsonProvider, val, pred));
-			}
-			return out;
-		} else {
-			return in;
-		}
-	}
-
-	public static <JsonNode> JsonNode filter(JsonProvider<JsonNode> jsonProvider, JsonNode in, Predicate<JsonNode> pred) {
-		if (!pred.test(in))
-			return jsonProvider.createNull();
-		return filterInternal(jsonProvider, in, pred);
 	}
 
 	public static <JsonNode> String toString(JsonProvider<JsonNode> jsonProvider, JsonNode node) {

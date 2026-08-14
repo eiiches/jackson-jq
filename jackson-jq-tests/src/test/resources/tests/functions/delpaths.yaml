@@ -1,1 +1,4 @@
 - {"v":"[1.5,1.5]","q":"delpaths(empty)","in":true,"out":[]}
+- {"v":"[1.5,1.7]","q":"delpaths([[\"a\",{\"start\":0,\"end\":2}]])","in":{},"out":[{}]}
+- {"v":"[1.5,1.7]","q":"delpaths([[\"a\",[true]]])","in":{},"out":[{}]}
+- {"v":"[1.5,1.7]","q":"try delpaths([[true]]) catch .","in":{},"out":["Cannot index object with boolean"]}
