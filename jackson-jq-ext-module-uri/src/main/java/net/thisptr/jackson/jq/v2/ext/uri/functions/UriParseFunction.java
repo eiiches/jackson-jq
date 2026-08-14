@@ -74,7 +74,7 @@ public class UriParseFunction implements Function {
 		result = jsonProvider.set(result, "user_info", uri.getUserInfo() != null ? jsonProvider.createString(uri.getUserInfo()) : jsonProvider.createNull());
 		result = jsonProvider.set(result, "raw_user_info", uri.getRawUserInfo() != null ? jsonProvider.createString(uri.getRawUserInfo()) : jsonProvider.createNull());
 		result = jsonProvider.set(result, "host", uri.getHost() != null ? jsonProvider.createString(uri.getHost()) : jsonProvider.createNull());
-		result = jsonProvider.set(result, "port", jsonProvider.createInt(uri.getPort()));
+		result = jsonProvider.set(result, "port", jsonProvider.createNumber(uri.getPort()));
 		result = jsonProvider.set(result, "authority", uri.getAuthority() != null ? jsonProvider.createString(uri.getAuthority()) : jsonProvider.createNull());
 		result = jsonProvider.set(result, "raw_authority", uri.getRawAuthority() != null ? jsonProvider.createString(uri.getRawAuthority()) : jsonProvider.createNull());
 		result = jsonProvider.set(result, "path", uri.getPath() != null ? jsonProvider.createString(uri.getPath()) : jsonProvider.createNull());

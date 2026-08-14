@@ -82,7 +82,7 @@ public class Usage {
 
 		// Scope#setValue(...) sets a custom variable that can be used from jq expressions. This variable is local to the
 		// childScope and cannot be accessed from the rootScope. The rootScope will not be modified by this call.
-		childScope.setValue("param", jsonProvider.createInt(42));
+		childScope.setValue("param", jsonProvider.createNumber(42));
 
 		// JsonQuery#compile(...) parses and compiles a given expression. The resulting JsonQuery instance
 		// is immutable and thread-safe. It should be reused as possible if you repeatedly use the same expression.

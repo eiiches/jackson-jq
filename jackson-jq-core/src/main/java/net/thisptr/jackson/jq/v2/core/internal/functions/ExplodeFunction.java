@@ -27,7 +27,7 @@ public class ExplodeFunction implements Function {
 
 		JsonNode result = jsonProvider.createArray();
 		for (int ch : jsonProvider.asText(in).codePoints().toArray())
-			jsonProvider.add(result, jsonProvider.createInt(ch));
+			jsonProvider.add(result, jsonProvider.createNumber(ch));
 		output.emit(result, null);
 	}
 }

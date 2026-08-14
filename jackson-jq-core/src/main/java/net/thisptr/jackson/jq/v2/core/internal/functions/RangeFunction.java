@@ -59,7 +59,7 @@ public class RangeFunction implements Function {
 	}
 
 	private static <JsonNode> void range1(JsonProvider<JsonNode> jsonProvider, PathOutput<JsonNode> output, JsonNode end) throws JsonQueryException {
-		range2(jsonProvider, output, jsonProvider.createInt(0), end);
+		range2(jsonProvider, output, jsonProvider.createNumber(0), end);
 	}
 
 	private static <JsonNode> JsonNode range2(JsonProvider<JsonNode> jsonProvider, PathOutput<JsonNode> output, JsonNode start, JsonNode end) throws JsonQueryException {
@@ -76,7 +76,7 @@ public class RangeFunction implements Function {
 	private static <JsonNode> void range3(JsonProvider<JsonNode> jsonProvider, PathOutput<JsonNode> output, JsonNode start, JsonNode end, JsonNode incr) throws JsonQueryException {
 		JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
 		PlusOperator<JsonNode> operator = new PlusOperator<>();
-		int dir = Integer.signum(comparator.compare(jsonProvider.createInt(0), incr));
+		int dir = Integer.signum(comparator.compare(jsonProvider.createNumber(0), incr));
 		if (dir == 0)
 			return;
 		@Var JsonNode cur = start;

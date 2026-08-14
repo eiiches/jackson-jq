@@ -35,7 +35,7 @@ public class IndicesFunction implements Function {
 		args.get(0).apply(scope, in, (needle) -> {
 			JsonNode indices = jsonProvider.createArray();
 			for (int index : indices(jsonProvider, needle, in))
-				jsonProvider.add(indices, jsonProvider.createInt(index));
+				jsonProvider.add(indices, jsonProvider.createNumber(index));
 			output.emit(indices, null);
 		});
 	}

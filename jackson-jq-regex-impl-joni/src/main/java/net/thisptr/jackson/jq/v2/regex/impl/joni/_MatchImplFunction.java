@@ -61,8 +61,8 @@ public class _MatchImplFunction implements Function {
 
 	private static <JsonNode> JsonNode captureToJson(JsonProvider<JsonNode> jsonProvider, CaptureObject capture) {
 		@Var JsonNode node = jsonProvider.createObject();
-		node = jsonProvider.set(node, "offset", jsonProvider.createInt(capture.offset));
-		node = jsonProvider.set(node, "length", jsonProvider.createInt(capture.length));
+		node = jsonProvider.set(node, "offset", jsonProvider.createNumber(capture.offset));
+		node = jsonProvider.set(node, "length", jsonProvider.createNumber(capture.length));
 		node = jsonProvider.set(node, "string", capture.string == null ? jsonProvider.createNull() : jsonProvider.createString(capture.string));
 		node = jsonProvider.set(node, "name", capture.name == null ? jsonProvider.createNull() : jsonProvider.createString(capture.name));
 		return node;
@@ -70,8 +70,8 @@ public class _MatchImplFunction implements Function {
 
 	private static <JsonNode> JsonNode matchToJson(JsonProvider<JsonNode> jsonProvider, MatchObject obj) {
 		@Var JsonNode node = jsonProvider.createObject();
-		node = jsonProvider.set(node, "offset", jsonProvider.createInt(obj.offset));
-		node = jsonProvider.set(node, "length", jsonProvider.createInt(obj.length));
+		node = jsonProvider.set(node, "offset", jsonProvider.createNumber(obj.offset));
+		node = jsonProvider.set(node, "length", jsonProvider.createNumber(obj.length));
 		node = jsonProvider.set(node, "string", obj.string == null ? jsonProvider.createNull() : jsonProvider.createString(obj.string));
 		@Var JsonNode capturesArray = jsonProvider.createArray();
 		for (CaptureObject capture : obj.captures) {

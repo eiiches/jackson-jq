@@ -71,8 +71,8 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testCreateInt() {
-		T node = provider.createInt(42);
+	void testCreateNumberFromInt() {
+		T node = provider.createNumber(42);
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.NUMBER);
 		assertThat(provider.asInt(node)).isEqualTo(42);
 		assertThat(provider.asLong(node)).isEqualTo(42L);
@@ -80,16 +80,16 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testCreateLong() {
-		T node = provider.createLong(9999999999L);
+	void testCreateNumberFromLong() {
+		T node = provider.createNumber(9999999999L);
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.NUMBER);
 		assertThat(provider.asLong(node)).isEqualTo(9999999999L);
 		assertThat(provider.asDouble(node)).isEqualTo(9999999999.0);
 	}
 
 	@Test
-	void testCreateDouble() {
-		T node = provider.createDouble(3.14159);
+	void testCreateNumberFromDouble() {
+		T node = provider.createNumber(3.14159);
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.NUMBER);
 		assertThat(provider.asDouble(node)).isEqualTo(3.14159);
 	}
@@ -143,9 +143,9 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testObjectMultipleFields() {
 		@Var T obj = provider.createObject();
-		obj = provider.set(obj, "a", provider.createInt(1));
-		obj = provider.set(obj, "b", provider.createInt(2));
-		obj = provider.set(obj, "c", provider.createInt(3));
+		obj = provider.set(obj, "a", provider.createNumber(1));
+		obj = provider.set(obj, "b", provider.createNumber(2));
+		obj = provider.set(obj, "c", provider.createNumber(3));
 
 		assertThat(provider.size(obj)).isEqualTo(3);
 		assertThat(provider.asInt(requireGet(obj, "a"))).isEqualTo(1);
@@ -156,8 +156,8 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testObjectFields() {
 		@Var T obj = provider.createObject();
-		obj = provider.set(obj, "x", provider.createInt(10));
-		obj = provider.set(obj, "y", provider.createInt(20));
+		obj = provider.set(obj, "x", provider.createNumber(10));
+		obj = provider.set(obj, "y", provider.createNumber(20));
 
 		List<String> keys = new ArrayList<>();
 		List<Integer> values = new ArrayList<>();
@@ -194,9 +194,9 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testArrayAddAndGet() {
 		@Var T arr = provider.createArray();
-		arr = provider.add(arr, provider.createInt(1));
-		arr = provider.add(arr, provider.createInt(2));
-		arr = provider.add(arr, provider.createInt(3));
+		arr = provider.add(arr, provider.createNumber(1));
+		arr = provider.add(arr, provider.createNumber(2));
+		arr = provider.add(arr, provider.createNumber(3));
 
 		assertThat(provider.size(arr)).isEqualTo(3);
 		assertThat(provider.has(arr, 0)).isTrue();
@@ -211,11 +211,11 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testArraySet() {
 		@Var T arr = provider.createArray();
-		arr = provider.add(arr, provider.createInt(1));
-		arr = provider.add(arr, provider.createInt(2));
-		arr = provider.add(arr, provider.createInt(3));
+		arr = provider.add(arr, provider.createNumber(1));
+		arr = provider.add(arr, provider.createNumber(2));
+		arr = provider.add(arr, provider.createNumber(3));
 
-		arr = provider.set(arr, 1, provider.createInt(99));
+		arr = provider.set(arr, 1, provider.createNumber(99));
 
 		assertThat(provider.asInt(requireGet(arr, 0))).isEqualTo(1);
 		assertThat(provider.asInt(requireGet(arr, 1))).isEqualTo(99);
@@ -241,8 +241,8 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testArrayIterate() {
 		@Var T arr = provider.createArray();
-		arr = provider.add(arr, provider.createInt(10));
-		arr = provider.add(arr, provider.createInt(20));
+		arr = provider.add(arr, provider.createNumber(10));
+		arr = provider.add(arr, provider.createNumber(20));
 
 		List<Integer> values = new ArrayList<>();
 		for (T element : provider.iterate(arr)) {
@@ -260,7 +260,7 @@ public abstract class JsonProviderContractTest<T> {
 	void testToString() {
 		@Var T obj = provider.createObject();
 		obj = provider.set(obj, "name", provider.createString("test"));
-		obj = provider.set(obj, "value", provider.createInt(42));
+		obj = provider.set(obj, "value", provider.createNumber(42));
 
 		String json = provider.toString(obj);
 		assertThat(json).contains("\"name\"");
@@ -303,13 +303,13 @@ public abstract class JsonProviderContractTest<T> {
 		@Var T original = provider.createObject();
 		original = provider.set(original, "nested", provider.createObject());
 		T nested = requireGet(original, "nested");
-		provider.set(nested, "value", provider.createInt(42));
+		provider.set(nested, "value", provider.createNumber(42));
 
 		T copy = provider.deepCopy(original);
 
 		// Modify the copy's nested object
 		T copiedNested = requireGet(copy, "nested");
-		provider.set(copiedNested, "value", provider.createInt(999));
+		provider.set(copiedNested, "value", provider.createNumber(999));
 
 		// Original should be unchanged
 		T originalNested = requireGet(original, "nested");
@@ -347,13 +347,13 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testNegativeNumbers() {
-		T negInt = provider.createInt(-42);
+		T negInt = provider.createNumber(-42);
 		assertThat(provider.asInt(negInt)).isEqualTo(-42);
 
-		T negLong = provider.createLong(-9999999999L);
+		T negLong = provider.createNumber(-9999999999L);
 		assertThat(provider.asLong(negLong)).isEqualTo(-9999999999L);
 
-		T negDouble = provider.createDouble(-3.14);
+		T negDouble = provider.createNumber(-3.14);
 		assertThat(provider.asDouble(negDouble)).isEqualTo(-3.14);
 	}
 
@@ -374,9 +374,9 @@ public abstract class JsonProviderContractTest<T> {
 	void testNestedStructures() throws Exception {
 		// Create nested object: {"outer": {"inner": [1, 2, 3]}}
 		@Var T inner = provider.createArray();
-		inner = provider.add(inner, provider.createInt(1));
-		inner = provider.add(inner, provider.createInt(2));
-		inner = provider.add(inner, provider.createInt(3));
+		inner = provider.add(inner, provider.createNumber(1));
+		inner = provider.add(inner, provider.createNumber(2));
+		inner = provider.add(inner, provider.createNumber(3));
 
 		@Var T nested = provider.createObject();
 		nested = provider.set(nested, "inner", inner);
@@ -405,7 +405,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testAsIntOnNaNThrows() {
 		// asInt on NaN should throw exception (strict semantics)
-		T node = provider.createDouble(Double.NaN);
+		T node = provider.createNumber(Double.NaN);
 		assertThatThrownBy(() -> provider.asInt(node))
 			.isInstanceOf(RuntimeException.class);
 	}
@@ -413,7 +413,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testAsLongOnNaNThrows() {
 		// asLong on NaN should throw exception (strict semantics)
-		T node = provider.createDouble(Double.NaN);
+		T node = provider.createNumber(Double.NaN);
 		assertThatThrownBy(() -> provider.asLong(node))
 			.isInstanceOf(RuntimeException.class);
 	}
@@ -421,7 +421,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testAsIntOnPositiveInfinityThrows() {
 		// asInt on positive infinity should throw exception (strict semantics)
-		T node = provider.createDouble(Double.POSITIVE_INFINITY);
+		T node = provider.createNumber(Double.POSITIVE_INFINITY);
 		assertThatThrownBy(() -> provider.asInt(node))
 			.isInstanceOf(RuntimeException.class);
 	}
@@ -429,7 +429,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testAsIntOnNegativeInfinityThrows() {
 		// asInt on negative infinity should throw exception (strict semantics)
-		T node = provider.createDouble(Double.NEGATIVE_INFINITY);
+		T node = provider.createNumber(Double.NEGATIVE_INFINITY);
 		assertThatThrownBy(() -> provider.asInt(node))
 			.isInstanceOf(RuntimeException.class);
 	}
@@ -437,7 +437,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testAsLongOnPositiveInfinityThrows() {
 		// asLong on positive infinity should throw exception (strict semantics)
-		T node = provider.createDouble(Double.POSITIVE_INFINITY);
+		T node = provider.createNumber(Double.POSITIVE_INFINITY);
 		assertThatThrownBy(() -> provider.asLong(node))
 			.isInstanceOf(RuntimeException.class);
 	}
@@ -445,7 +445,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testAsLongOnNegativeInfinityThrows() {
 		// asLong on negative infinity should throw exception (strict semantics)
-		T node = provider.createDouble(Double.NEGATIVE_INFINITY);
+		T node = provider.createNumber(Double.NEGATIVE_INFINITY);
 		assertThatThrownBy(() -> provider.asLong(node))
 			.isInstanceOf(RuntimeException.class);
 	}
@@ -453,7 +453,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testAsIntOnLargeNumberThrows() {
 		// asInt on a number larger than Integer.MAX_VALUE should throw exception (strict semantics)
-		T node = provider.createLong(1_000_000_000_000_000_000L);
+		T node = provider.createNumber(1_000_000_000_000_000_000L);
 		assertThatThrownBy(() -> provider.asInt(node))
 			.isInstanceOf(RuntimeException.class);
 	}
@@ -461,7 +461,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testAsIntOnSmallNumberThrows() {
 		// asInt on a number smaller than Integer.MIN_VALUE should throw exception (strict semantics)
-		T node = provider.createLong(-1_000_000_000_000_000_000L);
+		T node = provider.createNumber(-1_000_000_000_000_000_000L);
 		assertThatThrownBy(() -> provider.asInt(node))
 			.isInstanceOf(RuntimeException.class);
 	}
@@ -469,7 +469,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testAsIntOnDoubleLargePositiveThrows() {
 		// asInt on a double larger than Integer.MAX_VALUE should throw exception
-		T node = provider.createDouble(1e15);
+		T node = provider.createNumber(1e15);
 		assertThatThrownBy(() -> provider.asInt(node))
 			.isInstanceOf(RuntimeException.class);
 	}
@@ -477,7 +477,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testAsIntOnDoubleLargeNegativeThrows() {
 		// asInt on a double smaller than Integer.MIN_VALUE should throw exception
-		T node = provider.createDouble(-1e15);
+		T node = provider.createNumber(-1e15);
 		assertThatThrownBy(() -> provider.asInt(node))
 			.isInstanceOf(RuntimeException.class);
 	}
@@ -489,7 +489,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testToStringOnNaN() {
 		// toString on NaN should return "null" (jq behavior)
-		T node = provider.createDouble(Double.NaN);
+		T node = provider.createNumber(Double.NaN);
 		String json = provider.toString(node);
 		assertThat(json).isEqualTo("null");
 	}
@@ -497,7 +497,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testToStringOnPositiveInfinity() {
 		// toString on positive infinity should return the max double value
-		T node = provider.createDouble(Double.POSITIVE_INFINITY);
+		T node = provider.createNumber(Double.POSITIVE_INFINITY);
 		String json = provider.toString(node);
 		assertThat(json).contains("1.7976931348623157e+308");
 	}
@@ -505,7 +505,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testToStringOnNegativeInfinity() {
 		// toString on negative infinity should return the negative max double value
-		T node = provider.createDouble(Double.NEGATIVE_INFINITY);
+		T node = provider.createNumber(Double.NEGATIVE_INFINITY);
 		String json = provider.toString(node);
 		assertThat(json).contains("-1.7976931348623157e+308");
 	}
@@ -513,7 +513,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testToStringOnWholeNumberDouble() {
 		// toString on a whole number double like 0.0 should serialize without decimal (jq behavior)
-		T node = provider.createDouble(0.0);
+		T node = provider.createNumber(0.0);
 		String json = provider.toString(node);
 		assertThat(json).isEqualTo("0");
 	}
@@ -521,7 +521,7 @@ public abstract class JsonProviderContractTest<T> {
 	@Test
 	void testToStringOnNegativeZero() {
 		// toString on -0.0 should serialize as "0" (jq behavior)
-		T node = provider.createDouble(-0.0);
+		T node = provider.createNumber(-0.0);
 		String json = provider.toString(node);
 		assertThat(json).isEqualTo("0");
 	}
@@ -568,9 +568,9 @@ public abstract class JsonProviderContractTest<T> {
 		// elements() on an object should return an iterator over the field values
 		// This is important for jq functions like from_entries that iterate over object values
 		@Var T obj = provider.createObject();
-		obj = provider.set(obj, "a", provider.createInt(1));
-		obj = provider.set(obj, "b", provider.createInt(2));
-		obj = provider.set(obj, "c", provider.createInt(3));
+		obj = provider.set(obj, "a", provider.createNumber(1));
+		obj = provider.set(obj, "b", provider.createNumber(2));
+		obj = provider.set(obj, "c", provider.createNumber(3));
 
 		List<Integer> values = new ArrayList<>();
 		Iterator<T> it = provider.elements(obj);

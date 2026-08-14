@@ -35,14 +35,14 @@ public class StrPTimeFunction implements Function {
 							throw new JsonQueryException("Timezone must be a string");
 						sdf.setTimeZone(TimeZone.getTimeZone(jsonProvider.asText(tz)));
 						try {
-							output.emit(jsonProvider.createLong(sdf.parse(jsonProvider.asText(in)).getTime()), null);
+							output.emit(jsonProvider.createNumber(sdf.parse(jsonProvider.asText(in)).getTime()), null);
 						} catch (ParseException e) {
 							throw new JsonQueryException(e);
 						}
 					});
 				} else {
 					try {
-						output.emit(jsonProvider.createLong(sdf.parse(jsonProvider.asText(in)).getTime()), null);
+						output.emit(jsonProvider.createNumber(sdf.parse(jsonProvider.asText(in)).getTime()), null);
 					} catch (ParseException e) {
 						throw new JsonQueryException(e);
 					}

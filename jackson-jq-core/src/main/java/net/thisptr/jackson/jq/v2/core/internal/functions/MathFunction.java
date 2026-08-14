@@ -22,7 +22,7 @@ public abstract class MathFunction implements Function {
 	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 		Preconditions.checkInputType(jsonProvider, "mathfunc", in, JsonNodeType.NUMBER);
-		output.emit(jsonProvider.createDouble(f(jsonProvider.asDouble(in))), null);
+		output.emit(jsonProvider.createNumber(f(jsonProvider.asDouble(in))), null);
 	}
 
 	protected abstract double f(double f);

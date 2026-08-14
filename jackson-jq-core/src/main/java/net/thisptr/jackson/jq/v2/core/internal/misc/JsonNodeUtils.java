@@ -23,16 +23,16 @@ public class JsonNodeUtils {
 
 	public static <JsonNode> JsonNode asNumericNode(JsonProvider<JsonNode> jsonProvider, long value) {
 		if (((int) value) == value)
-			return jsonProvider.createInt((int) value);
-		return jsonProvider.createLong(value);
+			return jsonProvider.createNumber((int) value);
+		return jsonProvider.createNumber(value);
 	}
 
 	public static <JsonNode> JsonNode asNumericNode(JsonProvider<JsonNode> jsonProvider, double value) {
 		if (((int) value) == value)
-			return jsonProvider.createInt((int) value);
+			return jsonProvider.createNumber((int) value);
 		if (((long) value) == value)
-			return jsonProvider.createLong((long) value);
-		return jsonProvider.createDouble(value);
+			return jsonProvider.createNumber((long) value);
+		return jsonProvider.createNumber(value);
 	}
 
 	public static <JsonNode> JsonNode asArrayNode(JsonProvider<JsonNode> jsonProvider, List<JsonNode> values) {

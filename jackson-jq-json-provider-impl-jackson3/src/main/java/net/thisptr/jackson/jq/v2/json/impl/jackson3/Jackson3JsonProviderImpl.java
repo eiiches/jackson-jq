@@ -58,17 +58,17 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public JsonNode createLong(long value) {
+	public JsonNode createNumber(long value) {
 		return LongNode.valueOf(value);
 	}
 
 	@Override
-	public JsonNode createInt(int value) {
+	public JsonNode createNumber(int value) {
 		return IntNode.valueOf(value);
 	}
 
 	@Override
-	public JsonNode createDouble(double value) {
+	public JsonNode createNumber(double value) {
 		return DoubleNode.valueOf(value);
 	}
 

@@ -31,11 +31,11 @@ public class LengthFunction implements Function {
 	public <JsonNode> JsonNode length(JsonProvider<JsonNode> jsonProvider, JsonNode in) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type == JsonNodeType.STRING) {
-			return jsonProvider.createInt(UnicodeUtils.lengthUtf32(jsonProvider.asText(in)));
+			return jsonProvider.createNumber(UnicodeUtils.lengthUtf32(jsonProvider.asText(in)));
 		} else if (type == JsonNodeType.ARRAY || type == JsonNodeType.OBJECT) {
-			return jsonProvider.createInt(jsonProvider.size(in));
+			return jsonProvider.createNumber(jsonProvider.size(in));
 		} else if (type == JsonNodeType.NULL) {
-			return jsonProvider.createInt(0);
+			return jsonProvider.createNumber(0);
 		} else if (type == JsonNodeType.NUMBER) {
 			return JsonNodeUtils.asNumericNode(jsonProvider, Math.abs(jsonProvider.asDouble(in)));
 		} else {

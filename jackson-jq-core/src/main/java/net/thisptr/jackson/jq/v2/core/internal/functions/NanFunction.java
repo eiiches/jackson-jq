@@ -19,6 +19,6 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class NanFunction implements Function {
 	@Override
 	public <T> void apply(Scope<T> scope, List<Expression> args, T in, @Nullable Path<T> ipath, PathOutput<T> output, Version version) throws JsonQueryException {
-		output.emit(scope.jsonProvider().createDouble(Double.NaN), null);
+		output.emit(scope.jsonProvider().createNumber(Double.NaN), null);
 	}
 }

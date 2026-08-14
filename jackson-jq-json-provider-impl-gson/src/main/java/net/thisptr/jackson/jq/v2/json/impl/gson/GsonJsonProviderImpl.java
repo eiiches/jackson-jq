@@ -51,17 +51,17 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public JsonElement createLong(long value) {
+	public JsonElement createNumber(long value) {
 		return new JsonPrimitive(value);
 	}
 
 	@Override
-	public JsonElement createInt(int value) {
+	public JsonElement createNumber(int value) {
 		return new JsonPrimitive(value);
 	}
 
 	@Override
-	public JsonElement createDouble(double value) {
+	public JsonElement createNumber(double value) {
 		return new JsonPrimitive(value);
 	}
 

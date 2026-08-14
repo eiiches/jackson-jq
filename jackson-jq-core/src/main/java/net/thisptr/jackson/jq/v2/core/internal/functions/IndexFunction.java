@@ -32,7 +32,7 @@ public class IndexFunction implements Function {
 			if (tmp.isEmpty()) {
 				output.emit(jsonProvider.createNull(), null);
 			} else {
-				output.emit(jsonProvider.createInt(tmp.get(0)), null);
+				output.emit(jsonProvider.createNumber(tmp.get(0)), null);
 			}
 		});
 	}

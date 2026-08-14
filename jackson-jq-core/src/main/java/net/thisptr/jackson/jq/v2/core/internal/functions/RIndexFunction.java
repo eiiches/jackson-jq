@@ -32,7 +32,7 @@ public class RIndexFunction implements Function {
 			if (tmp.isEmpty()) {
 				output.emit(jsonProvider.createNull(), null);
 			} else {
-				output.emit(jsonProvider.createInt(tmp.get(tmp.size() - 1)), null);
+				output.emit(jsonProvider.createNumber(tmp.get(tmp.size() - 1)), null);
 			}
 		});
 	}

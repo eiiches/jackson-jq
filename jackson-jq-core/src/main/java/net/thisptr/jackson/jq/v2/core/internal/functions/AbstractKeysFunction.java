@@ -43,7 +43,7 @@ public class AbstractKeysFunction implements Function {
 		} else if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
 			JsonNode result = jsonProvider.createArray();
 			for (int i = 0; i < jsonProvider.size(in); ++i)
-				jsonProvider.add(result, jsonProvider.createInt(i));
+				jsonProvider.add(result, jsonProvider.createNumber(i));
 			output.emit(result, null);
 		} else {
 			throw new IllegalStateException();

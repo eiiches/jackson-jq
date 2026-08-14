@@ -9,32 +9,31 @@ import org.jspecify.annotations.Nullable;
 
 public interface JsonProvider<JsonNode> {
 	JsonNode createObject();
+
 	JsonNode createArray();
+
 	JsonNode createString(String value);
-	JsonNode createLong(long value);
-	JsonNode createInt(int value);
-	JsonNode createDouble(double value);
+
+	JsonNode createNumber(long value);
+
+	JsonNode createNumber(int value);
+
+	JsonNode createNumber(double value);
+
 	JsonNode createBoolean(boolean value);
+
 	JsonNode createNull();
+
 	JsonNode createMissing();
 
-	default JsonNode createNumber(int value) {
-		return createInt(value);
-	}
-
-	default JsonNode createNumber(long value) {
-		return createLong(value);
-	}
-
-	default JsonNode createNumber(double value) {
-		return createDouble(value);
-	}
-
 	JsonNodeType getNodeType(JsonNode node);
+
 	boolean isMissingNode(JsonNode node);
 
 	boolean asBoolean(JsonNode node);
+
 	double asDouble(JsonNode node);
+
 	String asText(JsonNode node);
 
 	/**
@@ -46,7 +45,7 @@ public interface JsonProvider<JsonNode> {
 	 * @param node the JSON node
 	 * @return the long value
 	 * @throws IllegalArgumentException if the value is NaN, Infinity, or cannot be
-	 *         represented as a long
+	 *                                  represented as a long
 	 */
 	long asLong(JsonNode node);
 
@@ -59,14 +58,16 @@ public interface JsonProvider<JsonNode> {
 	 * @param node the JSON node
 	 * @return the int value
 	 * @throws IllegalArgumentException if the value is NaN, Infinity, or outside
-	 *         the range of int
+	 *                                  the range of int
 	 */
 	int asInt(JsonNode node);
 
 	byte[] asByteArray(JsonNode node);
 
 	Iterator<Entry<String, JsonNode>> fields(JsonNode node);
+
 	Iterator<JsonNode> elements(JsonNode node);
+
 	Iterator<String> fieldNames(JsonNode node);
 
 	/**
@@ -77,6 +78,7 @@ public interface JsonProvider<JsonNode> {
 	}
 
 	@Nullable JsonNode get(JsonNode node, String fieldName);
+
 	@Nullable JsonNode get(JsonNode node, int index);
 
 	default JsonNode requireGet(JsonNode node, String fieldName) {
@@ -90,6 +92,7 @@ public interface JsonProvider<JsonNode> {
 	/**
 	 * Sets a field on an object node. For mutable implementations, this modifies the node in place.
 	 * For immutable implementations, this returns a new node.
+	 *
 	 * @return the modified node (same as input for mutable implementations)
 	 */
 	JsonNode set(JsonNode node, String fieldName, JsonNode value);
@@ -97,22 +100,28 @@ public interface JsonProvider<JsonNode> {
 	/**
 	 * Adds a value to an array node. For mutable implementations, this modifies the node in place.
 	 * For immutable implementations, this returns a new node.
+	 *
 	 * @return the modified node (same as input for mutable implementations)
 	 */
 	JsonNode add(JsonNode node, JsonNode value);
 
 	/**
 	 * Sets an element at a specific index in an array node.
+	 *
 	 * @return the modified node (same as input for mutable implementations)
 	 */
 	JsonNode set(JsonNode node, int index, JsonNode value);
 
 	int size(JsonNode node);
+
 	boolean has(JsonNode node, String fieldName);
+
 	boolean has(JsonNode node, int index);
 
 	JsonNode deepCopy(JsonNode node);
+
 	String toString(JsonNode node);
+
 	JsonNode fromString(String json) throws Exception;
 
 	/**
@@ -123,6 +132,7 @@ public interface JsonProvider<JsonNode> {
 
 	/**
 	 * Parses a JSON string strictly, ensuring no trailing content exists.
+	 *
 	 * @param json The JSON string to parse
 	 * @return The parsed JSON node
 	 * @throws Exception if parsing fails or trailing content exists

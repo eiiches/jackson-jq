@@ -42,7 +42,7 @@ public class ToEntriesFunction implements Function {
 			for (int i = 0; iter.hasNext(); ++i) {
 				JsonNode value = iter.next();
 				JsonNode entryNode = jsonProvider.createObject();
-				jsonProvider.set(entryNode, "key", jsonProvider.createInt(i));
+				jsonProvider.set(entryNode, "key", jsonProvider.createNumber(i));
 				jsonProvider.set(entryNode, "value", value);
 				jsonProvider.add(out, entryNode);
 			}
