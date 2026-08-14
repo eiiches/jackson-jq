@@ -18,6 +18,8 @@ public interface JsonProvider<JsonNode> {
 
 	JsonNode createNumber(int value);
 
+	JsonNode createNumber(float value);
+
 	JsonNode createNumber(double value);
 
 	JsonNode createBoolean(boolean value);

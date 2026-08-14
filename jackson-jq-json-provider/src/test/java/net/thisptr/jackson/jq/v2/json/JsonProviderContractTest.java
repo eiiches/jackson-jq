@@ -80,6 +80,13 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
+	void testCreateNumberFromFloat() {
+		T node = provider.createNumber(3.14f);
+		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.NUMBER);
+		assertThat((float) provider.asDouble(node)).isEqualTo(3.14f);
+	}
+
+	@Test
 	void testCreateNumberFromDouble() {
 		T node = provider.createNumber(3.14159);
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.NUMBER);

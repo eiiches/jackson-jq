@@ -61,6 +61,11 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
+	public JsonElement createNumber(float value) {
+		return new JsonPrimitive(value);
+	}
+
+	@Override
 	public JsonElement createNumber(double value) {
 		return new JsonPrimitive(value);
 	}

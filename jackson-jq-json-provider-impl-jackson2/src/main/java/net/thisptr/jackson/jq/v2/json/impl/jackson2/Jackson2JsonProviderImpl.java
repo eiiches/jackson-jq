@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
+import com.fasterxml.jackson.databind.node.FloatNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -62,6 +63,11 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 	@Override
 	public JsonNode createNumber(int value) {
 		return new IntNode(value);
+	}
+
+	@Override
+	public JsonNode createNumber(float value) {
+		return new FloatNode(value);
 	}
 
 	@Override

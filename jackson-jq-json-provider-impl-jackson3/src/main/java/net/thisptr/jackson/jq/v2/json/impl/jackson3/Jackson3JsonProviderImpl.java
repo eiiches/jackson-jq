@@ -16,6 +16,7 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.BooleanNode;
 import tools.jackson.databind.node.DoubleNode;
+import tools.jackson.databind.node.FloatNode;
 import tools.jackson.databind.node.IntNode;
 import tools.jackson.databind.node.LongNode;
 import tools.jackson.databind.node.NullNode;
@@ -64,6 +65,11 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	@Override
 	public JsonNode createNumber(int value) {
 		return IntNode.valueOf(value);
+	}
+
+	@Override
+	public JsonNode createNumber(float value) {
+		return FloatNode.valueOf(value);
 	}
 
 	@Override
