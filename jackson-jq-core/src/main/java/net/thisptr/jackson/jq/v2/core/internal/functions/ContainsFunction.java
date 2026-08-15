@@ -6,7 +6,6 @@ import java.util.Map.Entry;
 
 import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
@@ -14,36 +13,28 @@ import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.LegacyFunction;
-import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
+import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
-import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-@AutoService(Function.class)
+@AutoService(FunctionFactory.class)
 @FunctionRegistration(name = "contains", nargs = 1)
-public class ContainsFunction<JsonNode> implements LegacyFunction {
+public class ContainsFunction implements FunctionFactory {
 
 	@Override
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public <N> void apply(Scope<N> scope, List<Expression> args, N in, @Nullable Path<N> ipath, PathOutput<N> output, Version version) throws JsonQueryException {
-		applyInternal((Scope) scope, args, (JsonNode) in, (Path) ipath, (PathOutput) output, version);
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+		return (scope, in, ipath, output) -> {
+			args.get(0).apply(scope, in, (value) -> {
+					if (jsonProvider.getNodeType(in) != jsonProvider.getNodeType(value)
+							|| (jsonProvider.getNodeType(in) == JsonNodeType.BOOLEAN && jsonProvider.asBoolean(in) != jsonProvider.asBoolean(value))) {
+						throw new JsonQueryTypeException(jsonProvider, "%s and %s cannot have their containment checked", in, value);
+					}
+					output.emit(jsonProvider.createBoolean(contains(jsonProvider, value, in)), null);
+				});
+	};
 	}
 
-	private void applyInternal(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
-		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		args.get(0).apply(scope, in, (value) -> {
-			if (jsonProvider.getNodeType(in) != jsonProvider.getNodeType(value)
-					|| (jsonProvider.getNodeType(in) == JsonNodeType.BOOLEAN && jsonProvider.asBoolean(in) != jsonProvider.asBoolean(value))) {
-				throw new JsonQueryTypeException(jsonProvider, "%s and %s cannot have their containment checked", in, value);
-			}
-			output.emit(jsonProvider.createBoolean(contains(jsonProvider, value, in)), null);
-		});
-	}
-
-	private boolean contains(JsonProvider<JsonNode> jsonProvider, JsonNode needle, JsonNode haystack) {
+	private static <JsonNode> boolean contains(JsonProvider<JsonNode> jsonProvider, JsonNode needle, JsonNode haystack) {
 		JsonNodeType hType = jsonProvider.getNodeType(haystack);
 		JsonNodeType nType = jsonProvider.getNodeType(needle);
 		if (hType == JsonNodeType.STRING && nType == JsonNodeType.STRING) {

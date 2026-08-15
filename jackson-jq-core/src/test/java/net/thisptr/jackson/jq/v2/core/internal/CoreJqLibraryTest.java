@@ -24,17 +24,17 @@ public class CoreJqLibraryTest {
 	@Test
 	public void appliesVersionRanges() {
 		Scope<JsonNode> scope15 = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
-		BuiltinFunctionLoader.getInstance().loadFunctions(getClass().getClassLoader(), Versions.JQ_1_5, scope15);
-		assertThat(scope15.getFunction("paths", 0)).isNotNull();
-		assertThat(scope15.getFunction("first", 1)).isNotNull();
-		assertThat(scope15.getFunction("walk", 1)).isNull();
-		assertThat(scope15.getFunction("pick", 1)).isNull();
+		BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_5, scope15);
+		assertThat(scope15.getFunctionFactory("paths", 0)).isNotNull();
+		assertThat(scope15.getFunctionFactory("first", 1)).isNotNull();
+		assertThat(scope15.getFunctionFactory("walk", 1)).isNull();
+		assertThat(scope15.getFunctionFactory("pick", 1)).isNull();
 
 		Scope<JsonNode> scope17 = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
-		BuiltinFunctionLoader.getInstance().loadFunctions(getClass().getClassLoader(), Versions.JQ_1_7, scope17);
-		assertThat(scope17.getFunction("paths", 0)).isNotNull();
-		assertThat(scope17.getFunction("first", 1)).isNotNull();
-		assertThat(scope17.getFunction("walk", 1)).isNotNull();
-		assertThat(scope17.getFunction("pick", 1)).isNotNull();
+		BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_7, scope17);
+		assertThat(scope17.getFunctionFactory("paths", 0)).isNotNull();
+		assertThat(scope17.getFunctionFactory("first", 1)).isNotNull();
+		assertThat(scope17.getFunctionFactory("walk", 1)).isNotNull();
+		assertThat(scope17.getFunctionFactory("pick", 1)).isNotNull();
 	}
 }

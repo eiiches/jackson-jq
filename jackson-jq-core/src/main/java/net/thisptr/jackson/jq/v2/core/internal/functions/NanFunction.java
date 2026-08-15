@@ -3,23 +3,22 @@ package net.thisptr.jackson.jq.v2.core.internal.functions;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
-import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.LegacyFunction;
-import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
+import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
-import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-@AutoService(Function.class)
+@AutoService(FunctionFactory.class)
 @FunctionRegistration(name = "nan", nargs = 0)
-public class NanFunction implements LegacyFunction {
+public class NanFunction implements FunctionFactory {
 	@Override
-	public <T> void apply(Scope<T> scope, List<Expression> args, T in, @Nullable Path<T> ipath, PathOutput<T> output, Version version) throws JsonQueryException {
-		output.emit(scope.jsonProvider().createNumber(Double.NaN), null);
-	}
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+		return (scope, in, ipath, output) -> {
+
+		output.emit(jsonProvider.createNumber(Double.NaN), null);
+		};
+}
 }

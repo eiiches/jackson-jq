@@ -11,26 +11,37 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.ext.uri.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.LegacyFunction;
-import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
+import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class UriParseFunction implements LegacyFunction {
+public class UriParseFunction implements FunctionFactory {
 
 	private static final Pattern AMPERSAND = Pattern.compile(Pattern.quote("&"));
 	private static final Pattern EQUAL = Pattern.compile(Pattern.quote("="));
 
-	private <JsonNode> Map<String, JsonNode> parseQueryObj(Scope<JsonNode> scope, String rawQuery) {
-		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	@Override
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+		return (scope, in, ipath, output) -> {
+			Preconditions.checkInputType(jsonProvider, "uriparse", in, JsonNodeType.STRING);
+
+			try {
+				URI uri = new URI(jsonProvider.asText(in));
+				Map<String, JsonNode> queryObj = parseQueryObj(jsonProvider, uri.getRawQuery());
+				output.emit(buildResult(jsonProvider, uri, queryObj), null);
+			} catch (URISyntaxException e) {
+				throw new JsonQueryException(e);
+			}
+		};
+	}
+
+	private <JsonNode> Map<String, JsonNode> parseQueryObj(JsonProvider<JsonNode> jsonProvider, String rawQuery) {
 		Map<String, List<String>> result = new HashMap<>();
 		if (rawQuery == null)
 			return Collections.emptyMap();
@@ -91,19 +102,5 @@ public class UriParseFunction implements LegacyFunction {
 		result = jsonProvider.set(result, "fragment", uri.getFragment() != null ? jsonProvider.createString(uri.getFragment()) : jsonProvider.createNull());
 		result = jsonProvider.set(result, "raw_fragment", uri.getRawFragment() != null ? jsonProvider.createString(uri.getRawFragment()) : jsonProvider.createNull());
 		return result;
-	}
-
-	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
-		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		Preconditions.checkInputType(jsonProvider, "uriparse", in, JsonNodeType.STRING);
-
-		try {
-			URI uri = new URI(jsonProvider.asText(in));
-			Map<String, JsonNode> queryObj = parseQueryObj(scope, uri.getRawQuery());
-			output.emit(buildResult(jsonProvider, uri, queryObj), null);
-		} catch (URISyntaxException e) {
-			throw new JsonQueryException(e);
-		}
 	}
 }

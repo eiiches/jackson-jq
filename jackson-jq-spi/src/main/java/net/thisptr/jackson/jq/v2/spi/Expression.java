@@ -12,8 +12,16 @@ public interface Expression {
 		return null;
 	}
 
+	default <JsonNode> void apply(JsonNode in, Output<JsonNode> output) throws JsonQueryException {
+		apply(in, null, output, false);
+	}
+
 	default <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, Output<JsonNode> output) throws JsonQueryException {
 		apply(scope, in, null, output, false);
+	}
+
+	default <JsonNode> void apply(JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		apply(Scope.newEmptyScope(null), in, ipath, output, requirePath);
 	}
 
 	<JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException;

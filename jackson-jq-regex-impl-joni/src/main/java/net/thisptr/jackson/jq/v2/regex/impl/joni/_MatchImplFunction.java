@@ -15,35 +15,36 @@ import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.LegacyFunction;
-import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
+import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
-import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-@AutoService(Function.class)
+@AutoService(FunctionFactory.class)
 @FunctionRegistration(name = "_match_impl", nargs = 3)
-public class _MatchImplFunction implements LegacyFunction {
+public class _MatchImplFunction implements FunctionFactory {
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
-		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
-		byte[] ibytes = jsonProvider.asText(in).getBytes(StandardCharsets.UTF_8);
-		int[] cindex = UnicodeUtils.utf8CharIndex(ibytes);
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+		Expression regexExpr = args.get(0);
+		Expression flagsExpr = args.get(1);
+		Expression testExpr = args.get(2);
 
-		args.get(2).apply(scope, in, (test) -> {
-			Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 3, test, JsonNodeType.BOOLEAN);
-			args.get(1).apply(scope, in, (flags) -> {
-				Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 2, flags, JsonNodeType.STRING, JsonNodeType.NULL);
-				args.get(0).apply(scope, in, (regex) -> {
-					Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 1, regex, JsonNodeType.STRING);
-					OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asText(regex), jsonProvider.getNodeType(flags) == JsonNodeType.NULL ? null : jsonProvider.asText(flags));
-					output.emit(match(jsonProvider, p, ibytes, cindex, jsonProvider.asBoolean(test)), null);
+		return (scope, in, ipath, output) -> {
+			Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
+			byte[] ibytes = jsonProvider.asText(in).getBytes(StandardCharsets.UTF_8);
+			int[] cindex = UnicodeUtils.utf8CharIndex(ibytes);
+
+			testExpr.apply(scope, in, (test) -> {
+				Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 3, test, JsonNodeType.BOOLEAN);
+				flagsExpr.apply(scope, in, (flags) -> {
+					Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 2, flags, JsonNodeType.STRING, JsonNodeType.NULL);
+					regexExpr.apply(scope, in, (regex) -> {
+						Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 1, regex, JsonNodeType.STRING);
+						OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asText(regex), jsonProvider.getNodeType(flags) == JsonNodeType.NULL ? null : jsonProvider.asText(flags));
+						output.emit(match(jsonProvider, p, ibytes, cindex, jsonProvider.asBoolean(test)), null);
+					});
 				});
 			});
-		});
+		};
 	}
 
 	private static class CaptureObject {

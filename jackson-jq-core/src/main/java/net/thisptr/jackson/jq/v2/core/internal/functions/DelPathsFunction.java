@@ -11,7 +11,6 @@ import java.util.Set;
 
 import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
@@ -21,43 +20,42 @@ import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.LegacyFunction;
-import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
+import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-@AutoService(Function.class)
+@AutoService(FunctionFactory.class)
 @FunctionRegistration(name = "delpaths", nargs = 1)
-public class DelPathsFunction implements LegacyFunction {
+public class DelPathsFunction implements FunctionFactory {
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
-		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		args.get(0).apply(scope, in, (paths) -> {
-			if (jsonProvider.getNodeType(paths) != JsonNodeType.ARRAY)
-				throw new JsonQueryException("Paths must be specified as an array");
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+		return (scope, in, ipath, output) -> {
+			args.get(0).apply(scope, in, (paths) -> {
+					if (jsonProvider.getNodeType(paths) != JsonNodeType.ARRAY)
+						throw new JsonQueryException("Paths must be specified as an array");
 
-			List<List<JsonNode>> pathList = new ArrayList<>(jsonProvider.size(paths));
-			for (JsonNode path : jsonProvider.iterate(paths)) {
-				if (jsonProvider.getNodeType(path) != JsonNodeType.ARRAY)
-					throw new JsonQueryException("Path must be specified as array, not " + JsonNodeUtils.typeOf(jsonProvider, path));
-				pathList.add(JsonNodeUtils.asArrayList(jsonProvider, path));
-			}
+					List<List<JsonNode>> pathList = new ArrayList<>(jsonProvider.size(paths));
+					for (JsonNode path : jsonProvider.iterate(paths)) {
+						if (jsonProvider.getNodeType(path) != JsonNodeType.ARRAY)
+							throw new JsonQueryException("Path must be specified as array, not " + JsonNodeUtils.typeOf(jsonProvider, path));
+						pathList.add(JsonNodeUtils.asArrayList(jsonProvider, path));
+					}
 
-			// delpaths([[]]) (e.g. del(.)): an empty path deletes the whole input, and wins over
-			// any sibling path in the same call, since there is no parent to omit it from.
-			for (List<JsonNode> path : pathList) {
-				if (path.isEmpty()) {
-					output.emit(jsonProvider.createNull(), null);
-					return;
-				}
-			}
+					// delpaths([[]]) (e.g. del(.)): an empty path deletes the whole input, and wins over
+					// any sibling path in the same call, since there is no parent to omit it from.
+					for (List<JsonNode> path : pathList) {
+						if (path.isEmpty()) {
+							output.emit(jsonProvider.createNull(), null);
+							return;
+						}
+					}
 
-			output.emit(delete(jsonProvider, in, pathList, 0, version), null);
-		});
+					output.emit(delete(jsonProvider, in, pathList, 0, version), null);
+				});
+	};
 	}
 
 	/**

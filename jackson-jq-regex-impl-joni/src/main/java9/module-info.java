@@ -8,7 +8,7 @@ module net.thisptr.jackson.jq.v2.regex.impl.joni {
 	provides net.thisptr.jackson.jq.v2.spi.JqLibrary with
 		net.thisptr.jackson.jq.v2.regex.impl.joni.RegexJqLibrary;
 
-	provides net.thisptr.jackson.jq.v2.spi.Function with
+	provides net.thisptr.jackson.jq.v2.spi.FunctionFactory with
 		net.thisptr.jackson.jq.v2.regex.impl.joni._MatchImplFunction,
 		net.thisptr.jackson.jq.v2.regex.impl.joni._SubImplFunction;
 }

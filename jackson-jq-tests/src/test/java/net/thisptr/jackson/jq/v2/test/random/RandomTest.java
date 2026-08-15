@@ -49,7 +49,6 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.VersionRange;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -106,7 +105,8 @@ public class RandomTest {
 		GENERATORS.add(new RandomGenerator(1, (exprs) -> new BracketExtractFieldAccess(exprs.get(0), false)));
 
 		Set<String> exclusions = EXCLUDED_FUNCTIONS.getOrDefault(VERSION, Collections.emptySet());
-		BuiltinFunctionLoader.getInstance().listFunctions(Scope.class.getClassLoader(), VERSION, Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance())).forEach((signature, function) -> {
+		BuiltinFunctionLoader.getInstance().listFunctionFactories(VERSION).forEach((nameAndArity, factory) -> {
+			String signature = nameAndArity.toString();
 			if (exclusions.contains(signature))
 				return;
 			if (signature.contains("/")) {

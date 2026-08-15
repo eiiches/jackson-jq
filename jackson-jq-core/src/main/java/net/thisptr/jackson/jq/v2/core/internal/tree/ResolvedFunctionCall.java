@@ -9,22 +9,23 @@ import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ResolvedFunctionCall implements Expression {
+public class ResolvedFunctionCall<JsonNode> implements Expression {
 	private final String name;
-	private final Function function;
+	private final Function<JsonNode> function;
 
-	public ResolvedFunctionCall(String name, Function function) {
+	public ResolvedFunctionCall(String name, Function<JsonNode> function) {
 		this.name = name;
 		this.function = function;
 	}
 
-	public Function function() {
+	public Function<JsonNode> function() {
 		return function;
 	}
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		function.apply(in, path, output);
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public <N> void apply(Scope<N> scope, N in, @Nullable Path<N> path, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
+		((Function) function).apply(scope, in, path, output);
 	}
 
 	@Override

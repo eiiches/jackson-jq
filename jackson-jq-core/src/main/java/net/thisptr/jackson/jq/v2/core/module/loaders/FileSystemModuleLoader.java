@@ -130,7 +130,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		Expression expr = ExpressionParser.compile(moduleString + " null", version);
 		expr.apply(childScope, parentScope.jsonProvider().createNull(), null, (o, p) -> {}, false);
 
-		module.addAllFunctions(childScope.getLocalFunctions());
+		module.addAllFunctions(childScope.getLocalFunctionFactories());
 		return module;
 	}
 

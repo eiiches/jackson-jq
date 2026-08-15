@@ -53,8 +53,8 @@ public class AstResolver {
 				throw new JsonQueryException(String.format("Function %s/%d does not exist", call.name(), compiledArgs.size()));
 			}
 
-			Function fn = factory.createFunction(compiledArgs, env.version());
-			return new ResolvedFunctionCall(call.name(), fn);
+			Function<JsonNode> fn = factory.createFunction(env.jsonProvider(), compiledArgs, env.version());
+			return new ResolvedFunctionCall<>(call.name(), fn);
 		}
 
 		if (expr instanceof VariableAccess) {

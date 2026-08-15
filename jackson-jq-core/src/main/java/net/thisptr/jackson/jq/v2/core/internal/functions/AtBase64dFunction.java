@@ -5,13 +5,13 @@ import java.util.Base64;
 
 import com.google.auto.service.AutoService;
 
-import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
-@AutoService(Function.class)
+@AutoService(FunctionFactory.class)
 @FunctionRegistration(name = "@base64d", nargs = 0, version = @VersionRangeSpec(
 		min = @VersionSpec(major = 1, minor = 6, patch = 0)
 ))

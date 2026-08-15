@@ -25,7 +25,7 @@ public class FunctionDefinition implements Expression {
 
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		scope.addFunction(fname, args.size(), new JsonQueryFunction<>(fname, args, body, scope));
+		scope.addFunctionFactory(fname, args.size(), new JsonQueryFunction<>(fname, args, body, scope));
 	}
 
 	@Override

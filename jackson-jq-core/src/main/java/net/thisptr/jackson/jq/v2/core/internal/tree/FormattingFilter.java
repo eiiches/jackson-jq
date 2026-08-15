@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -23,14 +24,16 @@ public class FormattingFilter implements Expression {
 
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		Function f = scope.getFunction("@" + name, 0);
-		if (f == null)
+		FunctionFactory factory = scope.getFunctionFactory("@" + name, 0);
+		if (factory == null)
 			throw new JsonQueryException("Formatting operator @" + name + " does not exist");
-		if (f instanceof net.thisptr.jackson.jq.v2.spi.LegacyFunction) {
-			((net.thisptr.jackson.jq.v2.spi.LegacyFunction) f).apply(scope, Collections.emptyList(), in, ipath, output, version);
-		} else {
-			f.apply(in, ipath, output);
-		}
+		Function<JsonNode> f = factory.createFunction(scope.jsonProvider(), Collections.emptyList(), version);
+		f.apply(scope, in, ipath, output);
+	}
+
+	@Override
+	public <JsonNode> void apply(JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		throw new UnsupportedOperationException("FormattingFilter requires symbol resolution");
 	}
 
 	@Override

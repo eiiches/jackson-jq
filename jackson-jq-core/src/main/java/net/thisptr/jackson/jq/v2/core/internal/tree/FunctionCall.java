@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -39,24 +40,24 @@ public class FunctionCall implements Expression {
 		return moduleName;
 	}
 
-	private <JsonNode> Function lookupFunction(Scope<JsonNode> scope) throws JsonQueryException {
+	private <JsonNode> Function<JsonNode> lookupFunction(Scope<JsonNode> scope) throws JsonQueryException {
 		if (moduleName != null) {
 			for (Module module : scope.getImportedModules(moduleName)) {
-				Function f = module.getFunction(name, args.size());
+				FunctionFactory f = module.getFunction(name, args.size());
 				if (f != null)
-					return f;
+					return f.createFunction(scope.jsonProvider(), args, version);
 			}
 			throw new JsonQueryException(String.format("Function %s::%s/%s does not exist", moduleName, name, args.size()));
 		} else {
-			Function f = scope.getFunction(name, args.size());
+			FunctionFactory f = scope.getFunctionFactory(name, args.size());
 			if (f != null)
-				return f;
+				return f.createFunction(scope.jsonProvider(), args, version);
 
 			// search functions loaded by "include" statement
 			for (Module module : scope.getImportedModules(null)) {
-				Function g = module.getFunction(name, args.size());
+				FunctionFactory g = module.getFunction(name, args.size());
 				if (g != null)
-					return g;
+					return g.createFunction(scope.jsonProvider(), args, version);
 			}
 
 			throw new JsonQueryException(String.format("Function %s/%s does not exist", name, args.size()));
@@ -65,12 +66,13 @@ public class FunctionCall implements Expression {
 
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		Function f = lookupFunction(scope);
-		if (f instanceof net.thisptr.jackson.jq.v2.spi.LegacyFunction) {
-			((net.thisptr.jackson.jq.v2.spi.LegacyFunction) f).apply(scope, args, in, path, output, version);
-		} else {
-			f.apply(in, path, output);
-		}
+		Function<JsonNode> f = lookupFunction(scope);
+		f.apply(scope, in, path, output);
+	}
+
+	@Override
+	public <JsonNode> void apply(JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		throw new UnsupportedOperationException("FunctionCall requires symbol resolution");
 	}
 
 	@Override

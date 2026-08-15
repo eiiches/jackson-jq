@@ -9,14 +9,14 @@ module net.thisptr.jackson.jq.v2.core {
 	exports net.thisptr.jackson.jq.v2.core.module.loaders;
 	exports net.thisptr.jackson.jq.v2.core.path;
 
-	uses net.thisptr.jackson.jq.v2.spi.Function;
+	uses net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 	uses net.thisptr.jackson.jq.v2.spi.JqLibrary;
 	uses net.thisptr.jackson.jq.v2.spi.module.Module;
 
 	provides net.thisptr.jackson.jq.v2.spi.JqLibrary with
 		net.thisptr.jackson.jq.v2.core.internal.CoreJqLibrary;
 
-	provides net.thisptr.jackson.jq.v2.spi.Function with
+	provides net.thisptr.jackson.jq.v2.spi.FunctionFactory with
 		net.thisptr.jackson.jq.v2.core.internal.filters.CsvFilter,
 		net.thisptr.jackson.jq.v2.core.internal.filters.TsvFilter,
 		net.thisptr.jackson.jq.v2.core.internal.functions.AtBase64dFunction,

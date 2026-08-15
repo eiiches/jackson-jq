@@ -11,6 +11,7 @@ import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -33,7 +34,6 @@ public class RandomModuleTest {
 		ClassPathModuleLoader<JsonNode> modules = new ClassPathModuleLoader<>(getClass().getClassLoader());
 		assertThat(modules.loadAllModules()).containsKey("jackson-jq/random");
 
-		Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
-		assertThat(BuiltinFunctionLoader.getInstance().listFunctions(Versions.JQ_1_6, scope)).doesNotContainKey("random/0");
+		assertThat(BuiltinFunctionLoader.getInstance().listFunctionFactories(Versions.JQ_1_6)).doesNotContainKey(FunctionNameAndArity.of("random", 0));
 	}
 }

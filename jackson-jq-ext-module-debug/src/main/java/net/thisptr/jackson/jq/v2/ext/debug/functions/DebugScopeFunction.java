@@ -3,34 +3,30 @@ package net.thisptr.jackson.jq.v2.ext.debug.functions;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.jspecify.annotations.Nullable;
+import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.LegacyFunction;
-import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
+import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.Version;
-import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class DebugScopeFunction implements LegacyFunction {
+public class DebugScopeFunction implements FunctionFactory {
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
-		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+		return (scope, in, ipath, output) -> {
+			@Var JsonNode functions = jsonProvider.createObject();
+			for (Entry<String, FunctionFactory> f : scope.getLocalFunctionFactories().entrySet())
+				functions = jsonProvider.set(functions, f.getKey(), jsonProvider.createString(f.getValue().toString()));
 
-		JsonNode functions = jsonProvider.createObject();
-		for (Entry<String, Function> f : scope.getLocalFunctions().entrySet())
-			jsonProvider.set(functions, f.getKey(), jsonProvider.createString(f.getValue().toString()));
+			@Var JsonNode scopeNode = jsonProvider.createObject();
+			scopeNode = jsonProvider.set(scopeNode, "functions", functions);
 
-		JsonNode scopeNode = jsonProvider.createObject();
-		jsonProvider.set(scopeNode, "functions", functions);
-
-		JsonNode info = jsonProvider.createObject();
-		jsonProvider.set(info, "scope", scopeNode);
-		jsonProvider.set(info, "input", in);
-		output.emit(info, null);
+			@Var JsonNode info = jsonProvider.createObject();
+			info = jsonProvider.set(info, "scope", scopeNode);
+			info = jsonProvider.set(info, "input", in);
+			output.emit(info, null);
+		};
 	}
 }

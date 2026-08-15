@@ -10,43 +10,46 @@ import com.google.errorprone.annotations.Var;
 import org.joni.Matcher;
 import org.joni.Option;
 import org.joni.Region;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.LegacyFunction;
+import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-@AutoService(Function.class)
+@AutoService(FunctionFactory.class)
 @FunctionRegistration(name = "_sub_impl", nargs = 3)
-public class _SubImplFunction implements LegacyFunction {
+public class _SubImplFunction implements FunctionFactory {
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
-		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
-		Preconditions.checkInputType(jsonProvider, "_sub_impl/3", in, JsonNodeType.STRING);
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+		Expression regexExpr = args.get(0);
+		Expression replaceExpr = args.get(1);
+		Expression flagsExpr = args.get(2);
 
-		args.get(0).apply(scope, in, (regexText) -> {
-			Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 1, regexText, JsonNodeType.STRING);
+		return (scope, in, ipath, output) -> {
+			Preconditions.checkInputType(jsonProvider, "_sub_impl/3", in, JsonNodeType.STRING);
 
-			args.get(2).apply(scope, in, (flagsText) -> {
-				Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 3, flagsText, JsonNodeType.STRING);
+			regexExpr.apply(scope, in, (regexText) -> {
+				Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 1, regexText, JsonNodeType.STRING);
 
-				OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asText(regexText), jsonProvider.asText(flagsText));
-				List<JsonNode> match = match(jsonProvider, p, jsonProvider.asText(in));
+				flagsExpr.apply(scope, in, (flagsText) -> {
+					Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 3, flagsText, JsonNodeType.STRING);
 
-				// This just repeats same emit()s the number of times as the number of flags. This is to emulate jq behavior (which is probably a bug).
-				args.get(2).apply(scope, in, (dummy) -> {
-					replaceAndConcat(scope, jsonProvider, new Stack<>(), output, match, args.get(1), in, args.get(2));
+					OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asText(regexText), jsonProvider.asText(flagsText));
+					List<JsonNode> match = match(jsonProvider, p, jsonProvider.asText(in));
+
+					// This just repeats same emit()s the number of times as the number of flags. This is to emulate jq behavior (which is probably a bug).
+					flagsExpr.apply(scope, in, (dummy) -> {
+						replaceAndConcat(scope, jsonProvider, new Stack<>(), output, match, replaceExpr, in, flagsExpr);
+					});
 				});
 			});
-		});
+		};
 	}
 
 	private <JsonNode> void replaceAndConcat(Scope<JsonNode> scope, JsonProvider<JsonNode> jsonProvider, Stack<String> stack, PathOutput<JsonNode> output, List<JsonNode> match, Expression replaceExpr, JsonNode in, Expression flags) throws JsonQueryException {

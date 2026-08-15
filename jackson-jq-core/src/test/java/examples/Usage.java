@@ -9,7 +9,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
@@ -18,14 +17,14 @@ import net.thisptr.jackson.jq.v2.core.internal.misc.Strings;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.PathOutput;
+import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
-import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
-import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class Usage {
 	/**
@@ -45,12 +44,14 @@ public class Usage {
 		BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, rootScope);
 
 		// You can also define a custom function. E.g.
-		rootScope.addFunction("repeat", 1, new net.thisptr.jackson.jq.v2.spi.LegacyFunction() {
+		rootScope.addFunctionFactory("repeat", 1, new FunctionFactory() {
 			@Override
-			public <N> void apply(Scope<N> scope, List<Expression> args, N in, @Nullable Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
-				args.get(0).apply(scope, in, (time) -> {
-					output.emit(scope.jsonProvider().createString(Strings.repeat(scope.jsonProvider().asText(in), scope.jsonProvider().asInt(time))), null);
-				});
+			public <N> Function<N> createFunction(JsonProvider<N> fprovider, List<Expression> fargs, Version ver) {
+				return (scope, in, path, output) -> {
+					fargs.get(0).apply(scope, in, (time) -> {
+						output.emit(fprovider.createString(Strings.repeat(fprovider.asText(in), fprovider.asInt(time))), null);
+					});
+				};
 			}
 		});
 

@@ -119,7 +119,7 @@ public class Main {
 
 		Scope<JsonNode> scope = Scope.newEmptyScope(Jackson3JsonProviderImpl.getInstance());
 		BuiltinFunctionLoader.getInstance().loadFunctions(version, scope);
-		scope.addFunction("env", 0, new EnvFunction());
+		scope.addFunctionFactory("env", 0, new EnvFunction());
 
 		scope.setModuleLoader(new ChainedModuleLoader<>(new ModuleLoader[] {
 				ClassPathModuleLoader.getInstance(),

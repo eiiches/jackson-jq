@@ -6,31 +6,31 @@ import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
 public class SimpleModule implements Module {
-	private final Map<String, Function> functions = new HashMap<>();
+	private final Map<String, FunctionFactory> functions = new HashMap<>();
 
-	public void addFunction(String fname, int nargs, Function f) {
+	public void addFunction(String fname, int nargs, FunctionFactory f) {
 		addFunction(fname + "/" + nargs, f);
 	}
 
-	public void addFunction(String fnameAndNarg, Function f) {
+	public void addFunction(String fnameAndNarg, FunctionFactory f) {
 		functions.put(fnameAndNarg, f);
 	}
 
-	public void addAllFunctions(Map<String, Function> functions) {
+	public void addAllFunctions(Map<String, FunctionFactory> functions) {
 		this.functions.putAll(functions);
 	}
 
 	@Override
-	public @Nullable Function getFunction(String fname, int nargs) {
+	public @Nullable FunctionFactory getFunction(String fname, int nargs) {
 		return functions.get(fname + "/" + nargs);
 	}
 
 	@Override
-	public Map<String, Function> getAllFunctions() {
+	public Map<String, FunctionFactory> getAllFunctions() {
 		return Collections.unmodifiableMap(functions);
 	}
 }

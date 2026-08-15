@@ -36,14 +36,14 @@ public class Scope<JsonNode> {
 		Map<String, String> result = new TreeMap<>();
 		if (functions == null)
 			return result;
-		for (Entry<String, Function> f : functions.entrySet())
+		for (Entry<String, FunctionFactory> f : functions.entrySet())
 			result.put(f.getKey(), f.getValue().toString());
 		return result;
 	}
 
 	private @Nullable Scope<JsonNode> parentScope;
 
-	private @Nullable Map<String, Function> functions;
+	private @Nullable Map<String, FunctionFactory> functions;
 
 	private @Nullable Map<@Nullable String, LinkedList<Module>> importedModules; // the last import comes first; the key is null when the module is loaded by an include statement.
 
@@ -118,24 +118,28 @@ public class Scope<JsonNode> {
 		return new Scope<>(scope);
 	}
 
-	public void addFunction(String name, int n, Function q) {
-		addFunction(name + "/" + n, q);
+	public void addFunctionFactory(FunctionNameAndArity nameAndArity, FunctionFactory q) {
+		addFunctionFactory(nameAndArity.toString(), q);
 	}
 
-	public void addFunction(String name, Function q) {
+	public void addFunctionFactory(String name, int n, FunctionFactory q) {
+		addFunctionFactory(name + "/" + n, q);
+	}
+
+	public void addFunctionFactory(String name, FunctionFactory q) {
 		if (functions == null)
 			functions = new HashMap<>();
 		functions.put(name, q);
 	}
 
-	public @Nullable Function getFunction(String name, int nargs) {
-		Function f = getFunctionRecursive(name + "/" + nargs);
+	public @Nullable FunctionFactory getFunctionFactory(String name, int nargs) {
+		FunctionFactory f = getFunctionFactoryRecursive(name + "/" + nargs);
 		if (f != null)
 			return f;
-		return getFunctionRecursive(name);
+		return getFunctionFactoryRecursive(name);
 	}
 
-	public Map<String, Function> getLocalFunctions() {
+	public Map<String, FunctionFactory> getLocalFunctionFactories() {
 		if (functions == null)
 			return new HashMap<>();
 		return new HashMap<>(functions);
@@ -145,15 +149,15 @@ public class Scope<JsonNode> {
 		return parentScope;
 	}
 
-	private @Nullable Function getFunctionRecursive(String name) {
+	private @Nullable FunctionFactory getFunctionFactoryRecursive(String name) {
 		if (functions != null) {
-			Function q = functions.get(name);
+			FunctionFactory q = functions.get(name);
 			if (q != null)
 				return q;
 		}
 		if (parentScope == null)
 			return null;
-		return parentScope.getFunctionRecursive(name);
+		return parentScope.getFunctionFactoryRecursive(name);
 	}
 
 	public void setValue(String name, JsonNode value) {

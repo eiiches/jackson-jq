@@ -7,16 +7,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.PathOutput;
+import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
-import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class CustomFunctionTest {
 
     @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testCustomFunction() throws Exception {
 
         ObjectMapper mapper = new ObjectMapper();
@@ -33,15 +33,16 @@ public class CustomFunctionTest {
 
         BuiltinFunctionLoader.getInstance().loadFunctions(version, rootScope);
 
-        rootScope.addFunction("times100", 1, new net.thisptr.jackson.jq.v2.spi.LegacyFunction() {
+        rootScope.addFunctionFactory("times100", 1, new FunctionFactory() {
             @Override
-            @SuppressWarnings("unchecked")
-            public <N> void apply(Scope<N> scope, List<Expression> args, N in, @Nullable Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
-                args.get(0).apply(scope, in, (numberNode) -> {
-                    JsonNode n = (JsonNode) numberNode;
-                    assert (n.isIntegralNumber());
-                    output.emit((N) new IntNode(n.asInt() * 100), null);
-                });
+            public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression> args, Version ver) {
+                return (scope, in, path, output) -> {
+                    args.get(0).apply(scope, in, (numberNode) -> {
+                        JsonNode n = (JsonNode) numberNode;
+                        assert (n.isIntegralNumber());
+                        output.emit((N) new IntNode(n.asInt() * 100), null);
+                    });
+                };
             }
         });
 

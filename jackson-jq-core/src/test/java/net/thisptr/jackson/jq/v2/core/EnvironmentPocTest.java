@@ -7,7 +7,6 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -17,7 +16,6 @@ import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -32,11 +30,13 @@ public class EnvironmentPocTest {
 	public void testAddFunctionAndExecute() throws Exception {
 		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_7);
 
-		env.addFunctionFactory(FunctionNameAndArity.of("examplefn", 1), (args, version) -> new net.thisptr.jackson.jq.v2.spi.Function() {
+		env.addFunctionFactory(FunctionNameAndArity.of("examplefn", 1), new FunctionFactory() {
 			@Override
-			public <N> void apply(N in, @Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output) throws JsonQueryException {
-				String text = jsonProvider.asText((JsonNode) in);
-				output.emit((N) jsonProvider.createString("hello:" + text), path);
+			public <N> net.thisptr.jackson.jq.v2.spi.Function<N> createFunction(JsonProvider<N> provider, List<Expression> args, Version version) {
+				return (scope, in, path, output) -> {
+					String text = provider.asText(in);
+					output.emit(provider.createString("hello:" + text), path);
+				};
 			}
 		});
 
@@ -69,21 +69,21 @@ public class EnvironmentPocTest {
 
 		AtomicBoolean preCompiled = new AtomicBoolean(false);
 
-		FunctionFactory testFactory = (List<Expression> args, Version ver) -> {
-			Expression patternExpr = args.get(0);
-			JsonNode constantVal = patternExpr.evaluateConstantExpr(jsonProvider);
-			if (constantVal != null) {
-				preCompiled.set(true);
-				Pattern pattern = Pattern.compile(jsonProvider.asText(constantVal));
-				return new net.thisptr.jackson.jq.v2.spi.Function() {
-					@Override
-					public <N> void apply(N in, @Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output) throws JsonQueryException {
-						boolean matches = pattern.matcher(jsonProvider.asText((JsonNode) in)).find();
-						output.emit((N) jsonProvider.createBoolean(matches), path);
-					}
-				};
-			} else {
-				throw new IllegalArgumentException("Expected constant pattern argument in PoC");
+		FunctionFactory testFactory = new FunctionFactory() {
+			@Override
+			public <N> net.thisptr.jackson.jq.v2.spi.Function<N> createFunction(JsonProvider<N> provider, List<Expression> args, Version ver) {
+				Expression patternExpr = args.get(0);
+				N constantVal = patternExpr.evaluateConstantExpr(provider);
+				if (constantVal != null) {
+					preCompiled.set(true);
+					Pattern pattern = Pattern.compile(provider.asText(constantVal));
+					return (scope, in, path, output) -> {
+						boolean matches = pattern.matcher(provider.asText(in)).find();
+						output.emit(provider.createBoolean(matches), path);
+					};
+				} else {
+					throw new IllegalArgumentException("Expected constant pattern argument in PoC");
+				}
 			}
 		};
 
