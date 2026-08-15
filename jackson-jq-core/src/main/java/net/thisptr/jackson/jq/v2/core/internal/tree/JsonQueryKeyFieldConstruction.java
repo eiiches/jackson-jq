@@ -15,6 +15,14 @@ public class JsonQueryKeyFieldConstruction<JsonNode> implements FieldConstructio
 		this.value = value;
 	}
 
+	public Expression key() {
+		return key;
+	}
+
+	public Expression value() {
+		return value;
+	}
+
 	@Override
 	public void evaluate(Scope<JsonNode> scope, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		key.apply(scope, in, (k) -> {

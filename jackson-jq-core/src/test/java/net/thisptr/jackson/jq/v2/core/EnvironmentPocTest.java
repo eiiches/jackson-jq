@@ -40,7 +40,7 @@ public class EnvironmentPocTest {
 			}
 		});
 
-		CompiledQuery<JsonNode> q = env.compile("examplefn(.)");
+		JsonQuery<JsonNode> q = env.compile("examplefn(.)");
 
 		List<JsonNode> out = new ArrayList<>();
 		q.apply(MAPPER.readTree("\"world\""), (outNode, path) -> out.add(outNode));
@@ -54,7 +54,7 @@ public class EnvironmentPocTest {
 		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_7);
 		env.addVariable("var", () -> jsonProvider.createNumber(42));
 
-		CompiledQuery<JsonNode> q = env.compile("$var");
+		JsonQuery<JsonNode> q = env.compile("$var");
 
 		List<JsonNode> out = new ArrayList<>();
 		q.apply(MAPPER.readTree("{}"), (outNode, path) -> out.add(outNode));
@@ -90,7 +90,7 @@ public class EnvironmentPocTest {
 		env.addFunctionFactory(FunctionNameAndArity.of("test", 1), testFactory);
 
 		// Compile query with constant pattern argument "foo.*bar"
-		CompiledQuery<JsonNode> q = env.compile("test(\"foo.*bar\")");
+		JsonQuery<JsonNode> q = env.compile("test(\"foo.*bar\")");
 
 		assertTrue(preCompiled.get(), "Regex pattern should be pre-compiled at query compile time!");
 
@@ -133,7 +133,7 @@ public class EnvironmentPocTest {
 	public void testLocalAstVariableResolution() throws Exception {
 		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_7);
 
-		CompiledQuery<JsonNode> q = env.compile(". as $x | $x");
+		JsonQuery<JsonNode> q = env.compile(". as $x | $x");
 
 		List<JsonNode> out = new ArrayList<>();
 		q.apply(MAPPER.readTree("123"), (outNode, path) -> out.add(outNode));

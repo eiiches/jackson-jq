@@ -35,6 +35,22 @@ public abstract class BinaryOperatorExpression implements Expression {
 		this.image = image;
 	}
 
+	public Expression lhs() {
+		return lhs;
+	}
+
+	public Expression rhs() {
+		return rhs;
+	}
+
+	public void lhs(Expression lhs) {
+		this.lhs = lhs;
+	}
+
+	public void rhs(Expression rhs) {
+		this.rhs = rhs;
+	}
+
 	@Override
 	public String toString() {
 		return String.format("(%s %s %s)", lhs, image, rhs);

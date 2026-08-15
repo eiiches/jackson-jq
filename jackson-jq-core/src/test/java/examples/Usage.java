@@ -10,7 +10,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Strings;
@@ -22,6 +22,7 @@ import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
@@ -37,14 +38,11 @@ public class Usage {
 		// You need a JsonProvider which is an abstraction of a JSON library (Jackson 2, Jackson 3, Gson, etc.)
 		Jackson2JsonProviderImpl jsonProvider = Jackson2JsonProviderImpl.getInstance();
 
-		// First of all, you have to prepare a Scope which is a container of built-in/user-defined functions and variables.
-		Scope<JsonNode> rootScope = Scope.newEmptyScope(jsonProvider);
+		// First of all, prepare an Environment container configured with JSON provider and JQ version.
+		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_6);
 
-		// Use BuiltinFunctionLoader to load built-in functions from the classpath.
-		BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, rootScope);
-
-		// You can also define a custom function. E.g.
-		rootScope.addFunctionFactory("repeat", 1, new FunctionFactory() {
+		// You can also define a custom function using FunctionFactory. E.g.
+		env.addFunctionFactory(FunctionNameAndArity.of("repeat", 1), new FunctionFactory() {
 			@Override
 			public <N> Function<N> createFunction(JsonProvider<N> fprovider, List<Expression> fargs, Version ver) {
 				return (scope, in, path, output) -> {
@@ -55,47 +53,26 @@ public class Usage {
 			}
 		});
 
-		// For import statements to work, you need to set ModuleLoader. ClassPathModuleLoader uses ServiceLoader mechanism to
-		// load Module implementations.
-		rootScope.setModuleLoader(ClassPathModuleLoader.getInstance());
-
-		// Alternatively, you can also use/combine FileSystemModuleLoader to load .jq/.json files from the file system.
-		rootScope.setModuleLoader(new ChainedModuleLoader<>(new ModuleLoader[] {
+		// For import statements to work, set ModuleLoader.
+		env.setModuleLoader(new ChainedModuleLoader<>(new ModuleLoader[] {
 				ClassPathModuleLoader.getInstance(),
-				new FileSystemModuleLoader(rootScope, Versions.JQ_1_6,
+				new FileSystemModuleLoader<>(Scope.newEmptyScope(jsonProvider), Versions.JQ_1_6,
 						FileSystems.getDefault().getPath("").toAbsolutePath(), // search modules in the actual file system
-						Paths.get(Scope.class.getClassLoader().getResource("classpath_modules").toURI())), // or in the classpath resources
+						Paths.get(Environment.class.getClassLoader().getResource("classpath_modules").toURI())), // or in the classpath resources
 		}));
 
-		// After this initial setup, rootScope should not be modified (via Scope#setValue(...),
-		// Scope#addFunction(...), etc.) so that it can be shared (in a read-only manner) across multiple threads
-		// because you want to avoid heavy lifting of loading built-in functions every time which involves
-		// file system operations and a lot of parsing.
+		// addVariable(...) sets a custom variable that can be used from jq expressions.
+		env.addVariable("param", jsonProvider.createNumber(42));
 
-		// Instead of modifying the rootScope directly, you can create a child Scope. This is especially useful when
-		// you want to use variables or functions that is only local to the specific execution context (such as
-		// a thread, request, etc).
-		// Creating a child Scope is a very light-weight operation that just allocates a Scope and sets
-		// one of its fields to point to the given parent scope. It's totally okay to create a child Scope
-		// per every apply() invocations if you need to do so.
-		Scope<JsonNode> childScope = Scope.newChildScope(rootScope);
+		// env.compile(...) parses, resolves symbols, and compiles a given expression.
+		JsonQuery<JsonNode> q = env.compile("$param * 2");
 
-		// Scope#setValue(...) sets a custom variable that can be used from jq expressions. This variable is local to the
-		// childScope and cannot be accessed from the rootScope. The rootScope will not be modified by this call.
-		childScope.setValue("param", jsonProvider.createNumber(42));
-
-		// JsonQuery#compile(...) parses and compiles a given expression. The resulting JsonQuery instance
-		// is immutable and thread-safe. It should be reused as possible if you repeatedly use the same expression.
-		JsonQuery q = JsonQuery.compile("$param * 2", Versions.JQ_1_6);
-
-		// You need a JsonNode to use as an input to the JsonQuery. There are many ways you can grab a JsonNode.
-		// In this example, we just parse a JSON text into a JsonNode.
+		// You need a JsonNode to use as an input to the JsonQuery.
 		JsonNode in = MAPPER.readTree("{\"ids\":\"12,15,23\",\"name\":\"jackson\",\"timestamp\":1418785331123}");
 
 		// Finally, JsonQuery#apply(...) executes the query with given input and produces 0, 1 or more JsonNode.
-		// The childScope will not be modified by this call because it internally creates a child scope as necessary.
 		List<JsonNode> out = new ArrayList<>();
-		q.apply(childScope, in, out::add);
+		q.apply(in, (outNode, path) -> out.add(outNode));
 		System.out.println(out); // => [84]
 	}
 }

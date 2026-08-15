@@ -22,6 +22,10 @@ public class FormattingFilter implements Expression {
 		this.version = version;
 	}
 
+	public String name() {
+		return name;
+	}
+
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		FunctionFactory factory = scope.getFunctionFactory("@" + name, 0);

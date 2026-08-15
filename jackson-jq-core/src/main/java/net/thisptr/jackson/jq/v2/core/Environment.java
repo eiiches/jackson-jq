@@ -11,6 +11,7 @@ import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.FunctionLoader;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -21,12 +22,15 @@ public class Environment<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final Version version;
 	private @Nullable ModuleLoader<JsonNode> moduleLoader;
+	private @Nullable FunctionLoader functionLoader;
 	private final Map<String, Supplier<JsonNode>> variables = new HashMap<>();
 	private final Map<FunctionNameAndArity, FunctionFactory> functionFactories = new HashMap<>();
 
 	public Environment(JsonProvider<JsonNode> jsonProvider, Version version) {
 		this.jsonProvider = jsonProvider;
 		this.version = version;
+		this.functionLoader = BuiltinFunctionLoader.getInstance();
+		this.functionFactories.putAll(this.functionLoader.listFunctionFactories(version));
 	}
 
 	public JsonProvider<JsonNode> jsonProvider() {
@@ -44,6 +48,18 @@ public class Environment<JsonNode> {
 
 	public @Nullable ModuleLoader<JsonNode> getModuleLoader() {
 		return moduleLoader;
+	}
+
+	public Environment<JsonNode> setFunctionLoader(FunctionLoader functionLoader) {
+		this.functionLoader = functionLoader;
+		if (functionLoader != null) {
+			this.functionFactories.putAll(functionLoader.listFunctionFactories(version));
+		}
+		return this;
+	}
+
+	public @Nullable FunctionLoader getFunctionLoader() {
+		return functionLoader;
 	}
 
 	public Environment<JsonNode> addVariable(String name, Supplier<JsonNode> supplier) {
@@ -71,9 +87,18 @@ public class Environment<JsonNode> {
 		return functionFactories.get(nameAndArity.withArity(null));
 	}
 
-	public CompiledQuery<JsonNode> compile(String expression) throws JsonQueryException {
+	public JsonQuery<JsonNode> compile(String expression) throws JsonQueryException {
 		Expression parsedExpr = ExpressionParser.compile(expression, version);
 		Expression resolvedExpr = AstResolver.resolve(this, parsedExpr);
-		return (in, output) -> resolvedExpr.apply(Scope.newEmptyScope(jsonProvider), in, null, output, false);
+		return (in, output) -> {
+			Scope<JsonNode> runtimeScope = Scope.newEmptyScope(jsonProvider);
+			for (Map.Entry<FunctionNameAndArity, FunctionFactory> entry : functionFactories.entrySet()) {
+				runtimeScope.addFunctionFactory(entry.getKey(), entry.getValue());
+			}
+			for (Map.Entry<String, Supplier<JsonNode>> entry : variables.entrySet()) {
+				runtimeScope.setValue(entry.getKey(), entry.getValue());
+			}
+			resolvedExpr.apply(runtimeScope, in, null, output, false);
+		};
 	}
 }

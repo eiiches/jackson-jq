@@ -8,11 +8,11 @@ import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,11 +35,11 @@ public class UriModuleTest {
 	}
 
 	private List<JsonNode> run(String expression) throws JsonQueryException {
-		Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
-		scope.setModuleLoader(new ClassPathModuleLoader<>(getClass().getClassLoader()));
-		JsonQuery query = JsonQuery.compile("import \"jackson-jq/uri\" as ext; " + expression, Versions.JQ_1_6);
+		Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
+		env.setModuleLoader(new ClassPathModuleLoader<>(getClass().getClassLoader()));
+		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/uri\" as ext; " + expression);
 		List<JsonNode> results = new ArrayList<>();
-		query.apply(scope, scope.jsonProvider().createNull(), results::add);
+		query.apply(env.jsonProvider().createNull(), (val, path) -> results.add(val));
 		return results;
 	}
 }

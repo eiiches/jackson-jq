@@ -20,7 +20,7 @@ public class ResolvedLocalVariableAccess implements Expression {
 	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		ValueWithPath<JsonNode> value = scope.getValueWithPath(name);
 		if (value != null) {
-			output.emit(value.value(), value.path());
+			output.emit(value.value(), null);
 			return;
 		}
 		throw new JsonQueryException(String.format("Local variable $%s is not set", name));

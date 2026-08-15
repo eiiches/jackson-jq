@@ -19,6 +19,10 @@ public class ValueMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		this.name = name;
 	}
 
+	public String name() {
+		return name;
+	}
+
 	@Override
 	public void match(Scope<JsonNode> scope, JsonNode in, Functional.Consumer<List<Pair<String, JsonNode>>> out, Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException {
 		accumulate.push(Pair.of(name, in));

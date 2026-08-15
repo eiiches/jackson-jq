@@ -49,15 +49,6 @@ public class VariableAccess implements Expression {
 				return;
 			}
 
-			if ("ENV".equals(name)) {
-				JsonNode envObj = scope.jsonProvider().createObject();
-				for (java.util.Map.Entry<String, String> entry : System.getenv().entrySet()) {
-					scope.jsonProvider().set(envObj, entry.getKey(), scope.jsonProvider().createString(entry.getValue()));
-				}
-				output.emit(envObj, null);
-				return;
-			}
-
 			throw new JsonQueryException(String.format("$%s is not defined", name));
 		}
 	}

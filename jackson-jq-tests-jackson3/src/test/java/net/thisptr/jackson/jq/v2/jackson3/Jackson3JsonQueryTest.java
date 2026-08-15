@@ -8,10 +8,9 @@ import java.util.stream.Stream;
 
 import tools.jackson.databind.JsonNode;
 
-import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.test.AbstractJsonQueryTest;
 
@@ -22,10 +21,8 @@ import net.thisptr.jackson.jq.v2.test.AbstractJsonQueryTest;
 public class Jackson3JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 
 	@Override
-	protected Scope<JsonNode> createRootScope(Version version) {
-		Scope<JsonNode> scope = Scope.newEmptyScope(Jackson3JsonProviderImpl.getInstance());
-		BuiltinFunctionLoader.getInstance().loadFunctions(version, scope);
-		return scope;
+	protected Environment<JsonNode> createEnvironment(Version version) {
+		return new Environment<>(Jackson3JsonProviderImpl.getInstance(), version);
 	}
 
 	@Override

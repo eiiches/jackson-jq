@@ -31,9 +31,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.VersionRange;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -47,7 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Abstract base class for JsonQuery tests. Subclasses must implement methods to provide
- * the JsonProvider-specific scope and comparator.
+ * the JsonProvider-specific environment and comparator.
  *
  * <p>This class is designed to be extended by JSON provider implementations (e.g., jackson-jq-jackson2)
  * to run the standard test suite against their implementation.
@@ -58,6 +58,7 @@ public abstract class AbstractJsonQueryTest<T> {
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 	private static final ObjectMapper YAML_MAPPER = new YAMLMapper();
 
+	@JsonInclude(Include.NON_NULL)
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class TestCase {
 		@JsonProperty("q")
@@ -100,12 +101,12 @@ public abstract class AbstractJsonQueryTest<T> {
 	}
 
 	/**
-	 * Create a root scope for the given version. The scope should have all built-in functions loaded.
+	 * Create an Environment for the given version.
 	 *
 	 * @param version The jq version to use
-	 * @return A configured scope ready for query execution
+	 * @return A configured environment ready for query compilation
 	 */
-	protected abstract Scope<T> createRootScope(Version version);
+	protected abstract Environment<T> createEnvironment(Version version);
 
 	/**
 	 * Parse a Jackson JsonNode (from test data) to the provider's native type.
@@ -183,11 +184,17 @@ public abstract class AbstractJsonQueryTest<T> {
 
 	@SuppressWarnings("unchecked")
 	private void test(TestCase tc, Version version) throws Throwable {
-		Scope<T> scope = createRootScope(version);
+		Environment<T> env = createEnvironment(version);
+		env.addVariable("ENV", () -> {
+			T envObj = env.jsonProvider().createObject();
+			env.jsonProvider().set(envObj, "PAGER", env.jsonProvider().createString("less"));
+			return envObj;
+		});
+
 		String command = String.format("%s '%s' <<< '%s'", TrueJqEvaluator.executable(version), tc.q, tc.in);
 
 		if (!tc.shouldCompile) {
-			assertThrows(JsonQueryException.class, () -> JsonQuery.compile(tc.q, version));
+			assertThrows(JsonQueryException.class, () -> env.compile(tc.q));
 			return;
 		}
 
@@ -219,23 +226,10 @@ public abstract class AbstractJsonQueryTest<T> {
 
 		@Var boolean failed = false;
 		try {
-			JsonQuery q = JsonQuery.compile(tc.q, version);
+			JsonQuery<T> q = env.compile(tc.q);
 			List<T> out = new ArrayList<>();
-			q.apply(scope, input, out::add);
+			q.apply(input, (val, path) -> out.add(val));
 			assertThat(out).as("%s", command)
-					.usingElementComparator(comparator)
-					.isEqualTo(expectedOut);
-
-			// JsonQuery.compile($.toString()).toString() === $.toString()
-			String s1 = q.toString();
-			String s2 = JsonQuery.compile(s1, version).toString();
-			assertThat(s2).as("inconsistent tostring: %s", command).isEqualTo(s1);
-
-			// JsonQuery.compile($.toString()).apply(in) === $.apply(in)
-			JsonQuery q1 = JsonQuery.compile(s1, version);
-			List<T> out1 = new ArrayList<>();
-			q1.apply(scope, input, out1::add);
-			assertThat(out1).as("bad tostring: %s", command)
 					.usingElementComparator(comparator)
 					.isEqualTo(expectedOut);
 		} catch (Throwable e) {

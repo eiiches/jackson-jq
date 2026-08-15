@@ -9,10 +9,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
-import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.test.AbstractJsonQueryTest;
 
@@ -23,10 +22,8 @@ import net.thisptr.jackson.jq.v2.test.AbstractJsonQueryTest;
 public class GsonJsonQueryTest extends AbstractJsonQueryTest<JsonElement> {
 
 	@Override
-	protected Scope<JsonElement> createRootScope(Version version) {
-		Scope<JsonElement> scope = Scope.newEmptyScope(GsonJsonProviderImpl.getInstance());
-		BuiltinFunctionLoader.getInstance().loadFunctions(version, scope);
-		return scope;
+	protected Environment<JsonElement> createEnvironment(Version version) {
+		return new Environment<>(GsonJsonProviderImpl.getInstance(), version);
 	}
 
 	@Override

@@ -26,6 +26,10 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		this.matchers = matchers;
 	}
 
+	public List<FieldMatcher<JsonNode>> matchers() {
+		return matchers;
+	}
+
 	public static class FieldMatcher<JsonNode> {
 		// e.g.
 		// {$x} : dollar = true, name = "x", matcher = null
@@ -44,6 +48,18 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			this.dollar = dollar;
 			this.name = name;
 			this.matcher = matcher;
+		}
+
+		public boolean dollar() {
+			return dollar;
+		}
+
+		public Expression name() {
+			return name;
+		}
+
+		public PatternMatcher<JsonNode> rawMatcher() {
+			return matcher;
 		}
 
 		@Override

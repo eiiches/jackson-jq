@@ -19,6 +19,10 @@ public class StringFieldAccess extends FieldAccess {
 		this.field = field;
 	}
 
+	public Expression key() {
+		return field;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();

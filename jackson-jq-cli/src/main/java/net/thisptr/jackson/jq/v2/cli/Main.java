@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import com.google.errorprone.annotations.Var;
 import org.apache.commons.cli.CommandLine;
@@ -24,15 +25,19 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 
-import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.Versions;
-import net.thisptr.jackson.jq.v2.core.internal.functions.EnvFunction;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.JsonQueryJacksonModule;
+import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -104,7 +109,26 @@ public class Main {
 			System.exit(0);
 		}
 
-		JsonQuery jq = JsonQuery.compile(rest.get(0), version);
+		Jackson3JsonProviderImpl jsonProvider = Jackson3JsonProviderImpl.getInstance();
+		Environment<JsonNode> env = new Environment<>(jsonProvider, version);
+		env.addFunctionFactory(FunctionNameAndArity.of("env", 0), new FunctionFactory() {
+			@Override
+			public <N> Function<N> createFunction(JsonProvider<N> jsonProv, List<Expression> fnArgs, Version ver) {
+				return (scope, in, path, output) -> {
+					N envObj = jsonProv.createObject();
+					for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+						jsonProv.set(envObj, entry.getKey(), jsonProv.createString(entry.getValue()));
+					}
+					output.emit(envObj, null);
+				};
+			}
+		});
+		env.setModuleLoader(new ChainedModuleLoader<>(new ModuleLoader[] {
+				ClassPathModuleLoader.getInstance(),
+				new FileSystemModuleLoader<>(Scope.newEmptyScope(jsonProvider), version, FileSystems.getDefault().getPath("").toAbsolutePath()),
+		}));
+
+		JsonQuery<JsonNode> jq = env.compile(rest.get(0));
 
 		if (!command.hasOption(OPT_COMPACT.getOpt())) {
 			MAPPER = MAPPER.rebuild()
@@ -117,21 +141,12 @@ public class Main {
 			is = new ByteArrayInputStream("null".getBytes(StandardCharsets.UTF_8));
 		}
 
-		Scope<JsonNode> scope = Scope.newEmptyScope(Jackson3JsonProviderImpl.getInstance());
-		BuiltinFunctionLoader.getInstance().loadFunctions(version, scope);
-		scope.addFunctionFactory("env", 0, new EnvFunction());
-
-		scope.setModuleLoader(new ChainedModuleLoader<>(new ModuleLoader[] {
-				ClassPathModuleLoader.getInstance(),
-				new FileSystemModuleLoader(scope, version, FileSystems.getDefault().getPath("").toAbsolutePath()),
-		}));
-
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 			 MappingIterator<JsonNode> iter = MAPPER.readerFor(JsonNode.class).readValues(reader)) {
 			while (iter.hasNext()) {
 				JsonNode tree = iter.next();
 				try {
-					jq.apply(scope, tree, (JsonNode out) -> {
+					jq.apply(tree, (out, path) -> {
 						if (out.isTextual() && command.hasOption(OPT_RAW_OUTPUT.getOpt())) {
 							System.out.println(out.asString());
 						} else {

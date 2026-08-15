@@ -21,6 +21,14 @@ public class TryCatch implements Expression {
 		this(tryExpr, null);
 	}
 
+	public Expression tryExpr() {
+		return tryExpr;
+	}
+
+	public @Nullable Expression catchExpr() {
+		return catchExpr;
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {

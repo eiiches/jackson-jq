@@ -23,6 +23,18 @@ public class FunctionDefinition implements Expression {
 		this.body = body;
 	}
 
+	public String fname() {
+		return fname;
+	}
+
+	public List<String> args() {
+		return args;
+	}
+
+	public Expression body() {
+		return body;
+	}
+
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		scope.addFunctionFactory(fname, args.size(), new JsonQueryFunction<>(fname, args, body, scope));

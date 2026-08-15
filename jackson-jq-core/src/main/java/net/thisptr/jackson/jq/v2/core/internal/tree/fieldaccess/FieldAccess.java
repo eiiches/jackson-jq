@@ -28,6 +28,14 @@ public abstract class FieldAccess implements Expression {
 		this.permissive = permissive;
 	}
 
+	public Expression target() {
+		return target;
+	}
+
+	public boolean permissive() {
+		return permissive;
+	}
+
 	protected static <JsonNode> void emitAllPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode pobj, @Nullable Path<JsonNode> ppath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		if (requirePath && ppath == null)
 			throw new JsonQueryException("Invalid path expression near attempt to iterate through %s", JsonNodeUtils.toString(jsonProvider, pobj));

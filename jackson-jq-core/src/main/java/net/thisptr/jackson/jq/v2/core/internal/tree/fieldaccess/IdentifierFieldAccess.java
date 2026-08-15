@@ -17,6 +17,10 @@ public class IdentifierFieldAccess extends FieldAccess {
 		this.field = field;
 	}
 
+	public String field() {
+		return field;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();

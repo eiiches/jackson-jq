@@ -24,6 +24,10 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		this.matchers = matchers;
 	}
 
+	public List<PatternMatcher<JsonNode>> matchers() {
+		return matchers;
+	}
+
 	private void recursive(Scope<JsonNode> scope, JsonProvider<JsonNode> jsonProvider, JsonNode in, Functional.Consumer<List<Pair<String, JsonNode>>> out, Stack<Pair<String, JsonNode>> accumulate, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
 			out.accept(accumulate);

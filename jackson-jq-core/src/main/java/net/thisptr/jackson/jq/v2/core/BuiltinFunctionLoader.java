@@ -8,6 +8,7 @@ import net.thisptr.jackson.jq.v2.core.internal.IsolatedScopeQuery;
 import net.thisptr.jackson.jq.v2.core.internal.JsonQueryFunction;
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.FunctionLoader;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary.JqFunc;
@@ -19,7 +20,7 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 /**
  * Use {@code BuiltinFunctionLoader.getInstance()} to obtain the instance.
  */
-public class BuiltinFunctionLoader {
+public class BuiltinFunctionLoader implements FunctionLoader {
 	private static final BuiltinFunctionLoader INSTANCE = new BuiltinFunctionLoader();
 
 	public static BuiltinFunctionLoader getInstance() {
@@ -31,6 +32,7 @@ public class BuiltinFunctionLoader {
 	 * from an arbitrary {@link ClassLoader}.
 	 * E.g. in an OSGi context this may be the Bundle's {@link ClassLoader}.
 	 */
+	@Override
 	public Map<FunctionNameAndArity, FunctionFactory> listFunctionFactories(Version version) {
 		Map<FunctionNameAndArity, FunctionFactory> result = new HashMap<>();
 

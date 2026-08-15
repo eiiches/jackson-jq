@@ -30,6 +30,18 @@ public class BracketFieldAccess extends FieldAccess {
 		this.isRange = true;
 	}
 
+	public Expression startExpr() {
+		return startExpr;
+	}
+
+	public Expression endExpr() {
+		return endExpr;
+	}
+
+	public boolean isRange() {
+		return isRange;
+	}
+
 	@Override
 	public String toString() {
 		if (isRange) {

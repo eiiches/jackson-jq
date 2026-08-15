@@ -22,6 +22,14 @@ public class Conditional implements Expression {
 		this.otherwise = otherwise;
 	}
 
+	public List<Pair<Expression, Expression>> switches() {
+		return switches;
+	}
+
+	public Expression otherwise() {
+		return otherwise;
+	}
+
 	private <JsonNode> void pathRecursive(PathOutput<JsonNode> output, Scope<JsonNode> scope, List<Pair<Expression, Expression>> switches, JsonNode in, @Nullable Path path) throws JsonQueryException {
 		Pair<Expression, Expression> sw = switches.get(0);
 		sw._1.apply(scope, in, (r) -> {
