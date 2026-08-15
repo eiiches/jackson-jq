@@ -99,7 +99,19 @@ public class Scope<JsonNode> {
 		}
 	}
 
-	private @Nullable Map<String, ValueWithPath<JsonNode>> values;
+	private @Nullable EvaluationFrame<JsonNode> evaluationFrame;
+
+	public @Nullable EvaluationFrame<JsonNode> getEvaluationFrame() {
+		if (evaluationFrame != null)
+			return evaluationFrame;
+		if (parentScope != null)
+			return parentScope.getEvaluationFrame();
+		return null;
+	}
+
+	public void setEvaluationFrame(EvaluationFrame<JsonNode> evaluationFrame) {
+		this.evaluationFrame = evaluationFrame;
+	}
 
 	private @Nullable Module currentModule;
 
@@ -160,42 +172,20 @@ public class Scope<JsonNode> {
 		return parentScope.getFunctionFactoryRecursive(name);
 	}
 
-	public void setValue(String name, JsonNode value) {
-		setValueWithPath(name, value, null);
+	public void setValue(int slot, JsonNode value) {
+		setValueWithPath(slot, value, null);
 	}
 
-	public void setValue (String name, Supplier<JsonNode> supplier) {
-		setValueWithPath (name, supplier, null);
-	}
-
-	public void setValueWithPath(String name, JsonNode value, @Nullable Path<JsonNode> path) {
-		if (values == null)
-			values = new HashMap<>();
-		values.put(name, new ValueWithPathImpl<>(value, path));
-	}
-
-	public  void setValueWithPath(String name, Supplier<JsonNode> value, @Nullable Path<JsonNode> path) {
-		if (values == null)
-			values = new HashMap<>();
-		values.put(name, new ValueSupplierImpl<>(value, path));
-	}
-
-	public @Nullable ValueWithPath<JsonNode> getValueWithPath(String name) {
-		if (values != null) {
-			ValueWithPath<JsonNode> value = values.get(name);
-			if (value != null)
-				return value;
+	public void setValueWithPath(int slot, JsonNode value, @Nullable Path<JsonNode> path) {
+		if (slot < 0)
+			return;
+		@com.google.errorprone.annotations.Var EvaluationFrame<JsonNode> frame = evaluationFrame;
+		if (frame == null) {
+			EvaluationFrame<JsonNode> parentFrame = parentScope != null ? parentScope.getEvaluationFrame() : null;
+			frame = new EvaluationFrame<>(parentFrame, Math.max(slot + 1, 64));
+			evaluationFrame = frame;
 		}
-		if (parentScope == null)
-			return null;
-		return parentScope.getValueWithPath(name);
-	}
-
-	public @Nullable JsonNode getValue(String name) {
-		ValueWithPath<JsonNode> value = getValueWithPath(name);
-		if (value == null)
-			return null;
-		return value.value();
+		frame.setValueWithPath(slot, value, path);
 	}
 
 	public void setImportedData(String name, JsonNode data) {

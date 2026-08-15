@@ -17,15 +17,32 @@ public class ForeachExpression<JsonNode> implements Expression {
 	private Expression iterExpr;
 	private Expression updateExpr;
 	private Expression initExpr;
-	private Expression extractExpr;
+	private @Nullable Expression extractExpr;
 	private PatternMatcher<JsonNode> matcher;
+	private java.util.Map<String, Integer> slots;
 
-	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression initExpr, Expression updateExpr, Expression extractExpr, Expression iterExpr) {
+	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression initExpr, Expression updateExpr, @Nullable Expression extractExpr, Expression iterExpr) {
+		this(matcher, initExpr, updateExpr, extractExpr, iterExpr, java.util.Collections.emptyMap());
+	}
+
+	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression initExpr, Expression updateExpr, @Nullable Expression extractExpr, Expression iterExpr, java.util.Map<String, Integer> slots) {
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.updateExpr = updateExpr;
 		this.extractExpr = extractExpr;
 		this.iterExpr = iterExpr;
+		this.slots = slots;
+	}
+
+	public PatternMatcher<JsonNode> matcher() { return matcher; }
+	public Expression initExpr() { return initExpr; }
+	public Expression updateExpr() { return updateExpr; }
+	public @Nullable Expression extractExpr() { return extractExpr; }
+	public Expression iterExpr() { return iterExpr; }
+
+	public int getSlot(String name) {
+		Integer slot = slots.get(name);
+		return slot != null ? slot.intValue() : -1;
 	}
 
 	@Override
@@ -49,7 +66,8 @@ public class ForeachExpression<JsonNode> implements Expression {
 				matcher.matchWithPath(scope, item, itemPath, (List<MatchWithPath<JsonNode>> vars) -> {
 					for (int i = vars.size() - 1; i >= 0; --i) {
 						MatchWithPath<JsonNode> var = vars.get(i);
-						childScope.setValueWithPath(var.name, var.value, var.path);
+						int slot = getSlot(var.name);
+						childScope.setValueWithPath(slot, var.value, var.path);
 					}
 
 					updateExpr.apply(childScope, accumulators[0], accumulatorPaths[0], (newaccumulator, newaccumulatorPath) -> {

@@ -1,24 +1,23 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.spi.EvaluationFrame;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
-public class VariableKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
+public class ResolvedVariableKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
 	private final String name;
+	private final int slot;
 
-	public VariableKeyFieldConstruction(String name) {
+	public ResolvedVariableKeyFieldConstruction(String name, int slot) {
 		this.name = name;
-	}
-
-	public String name() {
-		return name;
+		this.slot = slot;
 	}
 
 	@Override
 	public void evaluate(Scope<JsonNode> scope, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
-		net.thisptr.jackson.jq.v2.spi.EvaluationFrame<JsonNode> frame = scope.getEvaluationFrame();
-		JsonNode value = frame != null ? frame.getValue(0) : null;
+		EvaluationFrame<JsonNode> frame = scope.getEvaluationFrame();
+		JsonNode value = frame != null ? frame.getValue(slot) : null;
 		consumer.accept(name, JsonNodeUtils.nullToNullNode(scope.jsonProvider(), value));
 	}
 

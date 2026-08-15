@@ -6,7 +6,6 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
-import net.thisptr.jackson.jq.v2.spi.Scope.ValueWithPath;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -37,12 +36,6 @@ public class VariableAccess implements Expression {
 				throw new JsonQueryException(String.format("$%s::%s is not defined", moduleName, name));
 			output.emit(data, null);
 		} else {
-			ValueWithPath<JsonNode> value = scope.getValueWithPath(name);
-			if (value != null) {
-				output.emit(value.value(), null);
-				return;
-			}
-
 			JsonNode data = scope.getImportedData(name);
 			if (data != null) {
 				output.emit(data, null);

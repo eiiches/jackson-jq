@@ -19,12 +19,28 @@ public class ReduceExpression<JsonNode> implements Expression {
 	private Expression reduceExpr;
 	private Expression initExpr;
 	private PatternMatcher<JsonNode> matcher;
+	private java.util.Map<String, Integer> slots;
 
 	public ReduceExpression(PatternMatcher<JsonNode> matcher, Expression initExpr, Expression reduceExpr, Expression iterExpr) {
+		this(matcher, initExpr, reduceExpr, iterExpr, java.util.Collections.emptyMap());
+	}
+
+	public ReduceExpression(PatternMatcher<JsonNode> matcher, Expression initExpr, Expression reduceExpr, Expression iterExpr, java.util.Map<String, Integer> slots) {
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.reduceExpr = reduceExpr;
 		this.iterExpr = iterExpr;
+		this.slots = slots;
+	}
+
+	public PatternMatcher<JsonNode> matcher() { return matcher; }
+	public Expression initExpr() { return initExpr; }
+	public Expression reduceExpr() { return reduceExpr; }
+	public Expression iterExpr() { return iterExpr; }
+
+	public int getSlot(String name) {
+		Integer slot = slots.get(name);
+		return slot != null ? slot.intValue() : -1;
 	}
 
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
@@ -47,7 +63,8 @@ public class ReduceExpression<JsonNode> implements Expression {
 				matcher.match(scope, item, (List<Pair<String, JsonNode>> vars) -> {
 					for (int i = vars.size() - 1; i >= 0; --i) {
 						Pair<String, JsonNode> var = vars.get(i);
-						childScope.setValue(var._1, var._2);
+						int slot = getSlot(var._1);
+						childScope.setValue(slot, var._2);
 					}
 
 					// We only use the last value from reduce expression.

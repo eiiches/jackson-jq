@@ -1,12 +1,15 @@
 package net.thisptr.jackson.jq.v2.core;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-import net.thisptr.jackson.jq.v2.core.internal.IsolatedScopeQuery;
-import net.thisptr.jackson.jq.v2.core.internal.JsonQueryFunction;
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
+import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionLoader;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
@@ -64,6 +67,79 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 	}
 
 	private FunctionFactory createJqFunctionFactory(JqFunc def, Version version) {
-		return new JsonQueryFunction<>(def.name, def.args, new IsolatedScopeQuery(ExpressionParser.compile(def.body, version)), null);
+		Expression parsedBody = ExpressionParser.compile(def.body, version);
+		return new FunctionFactory() {
+			private @Nullable Expression resolvedBody;
+
+			@SuppressWarnings({"unchecked", "rawtypes"})
+			private synchronized Expression getResolvedBody(Scope<?> scope) {
+				if (resolvedBody != null)
+					return resolvedBody;
+				try {
+					net.thisptr.jackson.jq.v2.core.internal.compile.CompileContext context = new net.thisptr.jackson.jq.v2.core.internal.compile.CompileContext();
+					context.pushScope();
+					for (String arg : def.args) {
+						if (arg.startsWith("$")) {
+							context.addLocalVariable(arg.substring(1));
+						} else {
+							context.addLocalFunction(arg, 0);
+						}
+					}
+					Environment env = new Environment((net.thisptr.jackson.jq.v2.json.JsonProvider) scope.jsonProvider(), version);
+					resolvedBody = net.thisptr.jackson.jq.v2.core.internal.compile.AstResolver.resolveNonNull(env, context, parsedBody);
+				} catch (Exception e) {
+					resolvedBody = parsedBody;
+				}
+				return resolvedBody;
+			}
+
+			@Override
+			public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression> args, Version v) {
+				return (scope, in, path, output) -> {
+					Expression body = getResolvedBody(scope);
+					Scope<N> fnScope = Scope.newChildScope(scope);
+					bindAndApply(scope, fnScope, def.args, args, 0, in, path, output, (execScope) -> {
+						body.apply(execScope, in, path, output, false);
+					});
+				};
+			}
+		};
+	}
+
+	private <N> void bindAndApply(Scope<N> scope, Scope<N> currentScope, List<String> paramNames, List<Expression> args, int index, N in, net.thisptr.jackson.jq.v2.spi.path.@org.jspecify.annotations.Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException {
+		for (int i = 0; i < paramNames.size(); i++) {
+			String pName = paramNames.get(i);
+			Expression pExpr = args.get(i);
+			if (!pName.startsWith("$")) {
+				currentScope.addFunctionFactory(pName, 0, new FunctionFactory() {
+					@Override
+					@SuppressWarnings({"unchecked", "rawtypes"})
+					public <N1> Function<N1> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N1> jp, List<Expression> emptyArgs, Version ver) {
+						return (s, inVal, pVal, outVal) -> pExpr.apply((Scope) scope, inVal, pVal, outVal, false);
+					}
+				});
+			}
+		}
+		bindValueParams(scope, currentScope, paramNames, args, 0, in, path, output, bodyTask);
+	}
+
+	private <N> void bindValueParams(Scope<N> callerScope, Scope<N> currentScope, List<String> paramNames, List<Expression> args, int index, N in, net.thisptr.jackson.jq.v2.spi.path.@org.jspecify.annotations.Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException {
+		if (index >= paramNames.size()) {
+			bodyTask.accept(currentScope);
+			return;
+		}
+		String argName = paramNames.get(index);
+		Expression argExpr = args.get(index);
+		if (argName.startsWith("$")) {
+			String varName = argName.substring(1);
+			int slot = index;
+			argExpr.apply(callerScope, in, path, (val, p) -> {
+				Scope<N> valScope = Scope.newChildScope(currentScope);
+				valScope.setValue(slot, val);
+				bindValueParams(callerScope, valScope, paramNames, args, index + 1, in, path, output, bodyTask);
+			}, false);
+		} else {
+			bindValueParams(callerScope, currentScope, paramNames, args, index + 1, in, path, output, bodyTask);
+		}
 	}
 }

@@ -20,5 +20,3 @@
   - [0]
   - [1]
   - [2]
-  failing: true
-  justification: "The jq documentation explicitly states `$var.foo is not a valid or useful path expression in .`"

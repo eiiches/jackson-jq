@@ -25,12 +25,16 @@ public class Environment<JsonNode> {
 	private @Nullable FunctionLoader functionLoader;
 	private final Map<String, Supplier<JsonNode>> variables = new HashMap<>();
 	private final Map<FunctionNameAndArity, FunctionFactory> functionFactories = new HashMap<>();
+	private final Scope<JsonNode> rootScope;
 
 	public Environment(JsonProvider<JsonNode> jsonProvider, Version version) {
 		this.jsonProvider = jsonProvider;
 		this.version = version;
+		this.rootScope = Scope.newEmptyScope(jsonProvider);
 		this.functionLoader = BuiltinFunctionLoader.getInstance();
-		this.functionFactories.putAll(this.functionLoader.listFunctionFactories(version));
+		Map<FunctionNameAndArity, FunctionFactory> builtins = this.functionLoader.listFunctionFactories(version);
+		this.functionFactories.putAll(builtins);
+		builtins.forEach((key, factory) -> rootScope.addFunctionFactory(key, factory));
 	}
 
 	public JsonProvider<JsonNode> jsonProvider() {
@@ -43,6 +47,7 @@ public class Environment<JsonNode> {
 
 	public Environment<JsonNode> setModuleLoader(ModuleLoader<JsonNode> moduleLoader) {
 		this.moduleLoader = moduleLoader;
+		this.rootScope.setModuleLoader(moduleLoader);
 		return this;
 	}
 
@@ -52,9 +57,9 @@ public class Environment<JsonNode> {
 
 	public Environment<JsonNode> setFunctionLoader(FunctionLoader functionLoader) {
 		this.functionLoader = functionLoader;
-		if (functionLoader != null) {
-			this.functionFactories.putAll(functionLoader.listFunctionFactories(version));
-		}
+		Map<FunctionNameAndArity, FunctionFactory> factories = functionLoader.listFunctionFactories(version);
+		this.functionFactories.putAll(factories);
+		factories.forEach((key, factory) -> rootScope.addFunctionFactory(key, factory));
 		return this;
 	}
 
@@ -77,6 +82,7 @@ public class Environment<JsonNode> {
 
 	public Environment<JsonNode> addFunctionFactory(FunctionNameAndArity nameAndArity, FunctionFactory functionFactory) {
 		functionFactories.put(nameAndArity, functionFactory);
+		rootScope.addFunctionFactory(nameAndArity, functionFactory);
 		return this;
 	}
 
@@ -90,15 +96,6 @@ public class Environment<JsonNode> {
 	public JsonQuery<JsonNode> compile(String expression) throws JsonQueryException {
 		Expression parsedExpr = ExpressionParser.compile(expression, version);
 		Expression resolvedExpr = AstResolver.resolve(this, parsedExpr);
-		return (in, output) -> {
-			Scope<JsonNode> runtimeScope = Scope.newEmptyScope(jsonProvider);
-			for (Map.Entry<FunctionNameAndArity, FunctionFactory> entry : functionFactories.entrySet()) {
-				runtimeScope.addFunctionFactory(entry.getKey(), entry.getValue());
-			}
-			for (Map.Entry<String, Supplier<JsonNode>> entry : variables.entrySet()) {
-				runtimeScope.setValue(entry.getKey(), entry.getValue());
-			}
-			resolvedExpr.apply(runtimeScope, in, null, output, false);
-		};
+		return (in, output) -> resolvedExpr.apply(rootScope, in, null, output, false);
 	}
 }

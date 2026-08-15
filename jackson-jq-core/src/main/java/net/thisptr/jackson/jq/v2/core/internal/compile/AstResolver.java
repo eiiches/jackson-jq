@@ -2,8 +2,10 @@ package net.thisptr.jackson.jq.v2.core.internal.compile;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -12,12 +14,12 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
-import net.thisptr.jackson.jq.v2.core.internal.JsonQueryFunction;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.AssignPipeComponent;
 import net.thisptr.jackson.jq.v2.core.internal.tree.Conditional;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FieldConstruction;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ForeachExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FormattingFilter;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FunctionCall;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FunctionDefinition;
@@ -28,6 +30,7 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.NegativeExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ObjectConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.PipeComponent;
 import net.thisptr.jackson.jq.v2.core.internal.tree.PipedQuery;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ReduceExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionCall;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableAccess;
@@ -52,6 +55,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
@@ -97,7 +101,8 @@ public class AstResolver {
 			String varName = varAccess.name();
 
 			if (context.isLocalVariable(varName)) {
-				return new ResolvedLocalVariableAccess(varName);
+				int slot = context.getSlot(varName);
+				return new ResolvedLocalVariableAccess(varName, slot);
 			}
 
 			Supplier<JsonNode> supplier = env.getVariable(varName);
@@ -153,11 +158,13 @@ public class AstResolver {
 
 						Set<String> varNames = new HashSet<>();
 						collectVariableNames(assign.matcher, varNames);
+						java.util.Map<String, Integer> slots = new java.util.HashMap<>();
 						for (String varName : varNames) {
 							context.addLocalVariable(varName);
+							slots.put(varName, context.getSlot(varName));
 						}
 
-						newComponents.add(new AssignPipeComponent<>(resolvedExpr, assign.matcher));
+						newComponents.add(new AssignPipeComponent<>(resolvedExpr, assign.matcher, slots));
 					} else if (comp instanceof TransformPipeComponent) {
 						TransformPipeComponent<JsonNode> transform = (TransformPipeComponent<JsonNode>) comp;
 						Expression resolvedExpr = resolveNonNull(env, context, transform.expr);
@@ -200,6 +207,10 @@ public class AstResolver {
 					Expression key = resolveNonNull(env, context, sk.key);
 					Expression val = resolve(env, context, sk.value);
 					res.add(new StringKeyFieldConstruction<>(key, val));
+				} else if (fc instanceof net.thisptr.jackson.jq.v2.core.internal.tree.VariableKeyFieldConstruction) {
+					net.thisptr.jackson.jq.v2.core.internal.tree.VariableKeyFieldConstruction<JsonNode> vk = (net.thisptr.jackson.jq.v2.core.internal.tree.VariableKeyFieldConstruction<JsonNode>) fc;
+					int slot = context.getSlot(vk.name());
+					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedVariableKeyFieldConstruction<>(vk.name(), slot));
 				} else {
 					res.add(fc);
 				}
@@ -253,6 +264,49 @@ public class AstResolver {
 				newQs.add(resolveNonNull(env, context, q));
 			}
 			return new Tuple(newQs);
+		}
+
+		if (expr instanceof ReduceExpression) {
+			ReduceExpression<JsonNode> red = (ReduceExpression<JsonNode>) expr;
+			Expression resolvedIter = resolveNonNull(env, context, red.iterExpr());
+			Expression resolvedInit = resolveNonNull(env, context, red.initExpr());
+
+			Set<String> varNames = new HashSet<>();
+			collectVariableNames(red.matcher(), varNames);
+			Map<String, Integer> slots = new HashMap<>();
+			context.pushScope();
+			try {
+				for (String varName : varNames) {
+					context.addLocalVariable(varName);
+					slots.put(varName, context.getSlot(varName));
+				}
+				Expression resolvedReduce = resolveNonNull(env, context, red.reduceExpr());
+				return new ReduceExpression<>(red.matcher(), resolvedInit, resolvedReduce, resolvedIter, slots);
+			} finally {
+				context.popScope();
+			}
+		}
+
+		if (expr instanceof ForeachExpression) {
+			ForeachExpression<JsonNode> fe = (ForeachExpression<JsonNode>) expr;
+			Expression resolvedIter = resolveNonNull(env, context, fe.iterExpr());
+			Expression resolvedInit = resolveNonNull(env, context, fe.initExpr());
+
+			Set<String> varNames = new HashSet<>();
+			collectVariableNames(fe.matcher(), varNames);
+			Map<String, Integer> slots = new HashMap<>();
+			context.pushScope();
+			try {
+				for (String varName : varNames) {
+					context.addLocalVariable(varName);
+					slots.put(varName, context.getSlot(varName));
+				}
+				Expression resolvedUpdate = resolveNonNull(env, context, fe.updateExpr());
+				Expression resolvedExtract = fe.extractExpr() != null ? resolve(env, context, fe.extractExpr()) : null;
+				return new ForeachExpression<>(fe.matcher(), resolvedInit, resolvedUpdate, resolvedExtract, resolvedIter, slots);
+			} finally {
+				context.popScope();
+			}
 		}
 
 		if (expr instanceof FormattingFilter) {
@@ -316,13 +370,59 @@ public class AstResolver {
 					fnContext.addLocalFunction(arg, 0);
 				}
 			}
-			env.addFunctionFactory(key, new JsonQueryFunction<>(fd.fname(), fd.args(), fd.body(), null));
 			Expression resolvedBody = resolveNonNull(env, fnContext, fd.body());
-			env.addFunctionFactory(key, new JsonQueryFunction<>(fd.fname(), fd.args(), resolvedBody, null));
+			env.addFunctionFactory(key, new FunctionFactory() {
+				@Override
+				public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression> fnArgs, net.thisptr.jackson.jq.v2.spi.Version version) {
+					return (runtimeScope, input, path, output) -> {
+						Scope<N> fnScope = Scope.newChildScope(runtimeScope);
+						bindAndApply(runtimeScope, fnScope, fd.args(), fnArgs, 0, input, path, output, (execScope) -> {
+							resolvedBody.apply(execScope, input, path, output, false);
+						});
+					};
+				}
+			});
 			return new FunctionDefinition(fd.fname(), fd.args(), resolvedBody);
 		}
 
 		return expr;
+	}
+
+	private static <N> void bindAndApply(Scope<N> callerScope, Scope<N> currentScope, List<String> paramNames, List<Expression> fnArgs, int index, N in, net.thisptr.jackson.jq.v2.spi.path.@org.jspecify.annotations.Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws JsonQueryException {
+		for (int i = 0; i < paramNames.size(); i++) {
+			String pName = paramNames.get(i);
+			Expression pExpr = fnArgs.get(i);
+			if (!pName.startsWith("$")) {
+				currentScope.addFunctionFactory(pName, 0, new FunctionFactory() {
+					@Override
+					@SuppressWarnings({"unchecked", "rawtypes"})
+					public <N1> Function<N1> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N1> jp, List<Expression> emptyArgs, net.thisptr.jackson.jq.v2.spi.Version v) {
+						return (s, inVal, pVal, outVal) -> pExpr.apply((Scope) callerScope, inVal, pVal, outVal, false);
+					}
+				});
+			}
+		}
+		bindValueParams(callerScope, currentScope, paramNames, fnArgs, 0, in, path, output, bodyTask);
+	}
+
+	private static <N> void bindValueParams(Scope<N> callerScope, Scope<N> currentScope, List<String> paramNames, List<Expression> fnArgs, int index, N in, net.thisptr.jackson.jq.v2.spi.path.@org.jspecify.annotations.Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws JsonQueryException {
+		if (index >= paramNames.size()) {
+			bodyTask.accept(currentScope);
+			return;
+		}
+		String argName = paramNames.get(index);
+		Expression argExpr = fnArgs.get(index);
+		if (argName.startsWith("$")) {
+			String varName = argName.substring(1);
+			int slot = index;
+			argExpr.apply(callerScope, in, path, (val, p) -> {
+				Scope<N> valScope = Scope.newChildScope(currentScope);
+				valScope.setValue(slot, val);
+				bindValueParams(callerScope, valScope, paramNames, fnArgs, index + 1, in, path, output, bodyTask);
+			}, false);
+		} else {
+			bindValueParams(callerScope, currentScope, paramNames, fnArgs, index + 1, in, path, output, bodyTask);
+		}
 	}
 
 	private static void collectVariableNames(PatternMatcher<?> matcher, Set<String> out) {
@@ -344,7 +444,7 @@ public class AstResolver {
 		}
 	}
 
-	private static <JsonNode> Expression resolveNonNull(Environment<JsonNode> env, CompileContext context, Expression expr) throws JsonQueryException {
+	public static <JsonNode> Expression resolveNonNull(Environment<JsonNode> env, CompileContext context, Expression expr) throws JsonQueryException {
 		Expression resolved = resolve(env, context, expr);
 		if (resolved == null)
 			throw new JsonQueryException("Cannot resolve null expression");
