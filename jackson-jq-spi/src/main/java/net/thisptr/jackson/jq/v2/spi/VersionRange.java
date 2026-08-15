@@ -73,7 +73,7 @@ public class VersionRange {
 		return true;
 	}
 
-	public static Pattern VERSION_RANGE_PATTERN = Pattern.compile("([\\[\\(])\\s*([0-9]\\.[0-9])?\\s*,\\s*([0-9]\\.[0-9])?([\\]\\)])");
+	public static Pattern VERSION_RANGE_PATTERN = Pattern.compile("([\\[\\(])\\s*([0-9]+(?:\\.[0-9]+)*)?\\s*,\\s*([0-9]+(?:\\.[0-9]+)*)?([\\]\\)])");
 
 	public static VersionRange valueOf(String text) {
 		Matcher m = VERSION_RANGE_PATTERN.matcher(text);

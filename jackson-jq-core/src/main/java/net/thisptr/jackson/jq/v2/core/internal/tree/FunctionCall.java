@@ -27,6 +27,18 @@ public class FunctionCall implements Expression {
 		this.version = version;
 	}
 
+	public String name() {
+		return name;
+	}
+
+	public List<Expression> args() {
+		return args;
+	}
+
+	public @Nullable String moduleName() {
+		return moduleName;
+	}
+
 	private <JsonNode> Function lookupFunction(Scope<JsonNode> scope) throws JsonQueryException {
 		if (moduleName != null) {
 			for (Module module : scope.getImportedModules(moduleName)) {
@@ -54,7 +66,11 @@ public class FunctionCall implements Expression {
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Function f = lookupFunction(scope);
-		f.apply(scope, args, in, path, output, version);
+		if (f instanceof net.thisptr.jackson.jq.v2.spi.LegacyFunction) {
+			((net.thisptr.jackson.jq.v2.spi.LegacyFunction) f).apply(scope, args, in, path, output, version);
+		} else {
+			f.apply(in, path, output);
+		}
 	}
 
 	@Override

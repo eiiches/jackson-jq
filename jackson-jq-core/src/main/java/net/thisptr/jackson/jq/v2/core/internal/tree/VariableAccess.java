@@ -19,6 +19,14 @@ public class VariableAccess implements Expression {
 		this.name = name;
 	}
 
+	public String name() {
+		return name;
+	}
+
+	public String moduleName() {
+		return moduleName;
+	}
+
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		if (moduleName != null) {
@@ -38,6 +46,15 @@ public class VariableAccess implements Expression {
 			JsonNode data = scope.getImportedData(name);
 			if (data != null) {
 				output.emit(data, null);
+				return;
+			}
+
+			if ("ENV".equals(name)) {
+				JsonNode envObj = scope.jsonProvider().createObject();
+				for (java.util.Map.Entry<String, String> entry : System.getenv().entrySet()) {
+					scope.jsonProvider().set(envObj, entry.getKey(), scope.jsonProvider().createString(entry.getValue()));
+				}
+				output.emit(envObj, null);
 				return;
 			}
 

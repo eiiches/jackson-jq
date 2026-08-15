@@ -9,6 +9,7 @@ import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.LegacyFunction;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -18,7 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "not", nargs = 0)
-public class NotFunction implements Function {
+public class NotFunction implements LegacyFunction {
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, Version version) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();

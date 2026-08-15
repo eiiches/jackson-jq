@@ -20,7 +20,6 @@ import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -46,7 +45,7 @@ public class Usage {
 		BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, rootScope);
 
 		// You can also define a custom function. E.g.
-		rootScope.addFunction("repeat", 1, new Function() {
+		rootScope.addFunction("repeat", 1, new net.thisptr.jackson.jq.v2.spi.LegacyFunction() {
 			@Override
 			public <N> void apply(Scope<N> scope, List<Expression> args, N in, @Nullable Path<N> path, PathOutput<N> output, Version version) throws JsonQueryException {
 				args.get(0).apply(scope, in, (time) -> {

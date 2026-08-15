@@ -14,6 +14,11 @@ public abstract class ValueLiteral implements Expression {
 	public abstract <JsonNode> JsonNode value(JsonProvider<JsonNode> jsonProvider);
 
 	@Override
+	public <JsonNode> @Nullable JsonNode evaluateConstantExpr(JsonProvider<JsonNode> jsonProvider) {
+		return value(jsonProvider);
+	}
+
+	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		output.emit(value(scope.jsonProvider()), null);
 	}

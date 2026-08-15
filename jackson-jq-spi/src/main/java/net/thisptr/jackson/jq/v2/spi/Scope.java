@@ -107,9 +107,10 @@ public class Scope<JsonNode> {
 		this.parentScope = parentScope;
 	}
 
-	public static <JsonNode> Scope<JsonNode> newEmptyScope(JsonProvider<JsonNode> jsonProvider) {
+	public static <JsonNode> Scope<JsonNode> newEmptyScope(@Nullable JsonProvider<JsonNode> jsonProvider) {
 		Scope<JsonNode> scope = new Scope<>(null);
-		scope.setJsonProvider(jsonProvider);
+		if (jsonProvider != null)
+			scope.setJsonProvider(jsonProvider);
 		return scope;
 	}
 

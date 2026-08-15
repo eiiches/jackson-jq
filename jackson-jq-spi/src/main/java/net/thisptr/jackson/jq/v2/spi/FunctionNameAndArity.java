@@ -32,6 +32,7 @@ public class FunctionNameAndArity {
 		return Objects.hash(name, arity);
 	}
 
+	@Override
 	public String toString() {
 		return name + (arity != null ? "/" + arity : "");
 	}

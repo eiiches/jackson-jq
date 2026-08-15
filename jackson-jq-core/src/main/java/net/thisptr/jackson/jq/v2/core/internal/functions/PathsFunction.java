@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.LegacyFunction;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -22,7 +23,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "paths", nargs = 1)
-public class PathsFunction<JsonNode> implements Function {
+public class PathsFunction<JsonNode> implements LegacyFunction {
 	@Override
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public <N> void apply(Scope<N> scope, List<Expression> args, N in, @Nullable Path<N> ipath, PathOutput<N> output, Version version) throws JsonQueryException {

@@ -23,6 +23,18 @@ public class TopLevelExpression<JsonNode> implements Expression {
 		this.expr = expr;
 	}
 
+	public ModuleDirective<JsonNode> moduleDirective() {
+		return moduleDirective;
+	}
+
+	public List<ImportStatement<JsonNode>> imports() {
+		return imports;
+	}
+
+	public Expression expr() {
+		return expr;
+	}
+
 	@Override
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public <N> void apply(Scope<N> scope, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {

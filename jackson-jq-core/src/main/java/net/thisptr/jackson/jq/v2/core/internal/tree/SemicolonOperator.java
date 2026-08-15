@@ -18,6 +18,10 @@ public class SemicolonOperator implements Expression {
 		this.qs = qs;
 	}
 
+	public List<Expression> expressions() {
+		return qs;
+	}
+
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		if (qs.isEmpty())

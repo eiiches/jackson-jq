@@ -11,14 +11,14 @@ import net.thisptr.jackson.jq.v2.ext.uuid.internal.misc.UuidUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.LegacyFunction;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class Uuid35Function implements Function {
+public class Uuid35Function implements LegacyFunction {
 	private final int uuidVersion;
 
 	public Uuid35Function(int uuidVersion) {

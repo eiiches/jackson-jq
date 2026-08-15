@@ -21,6 +21,10 @@ public class PipedQuery<JsonNode> implements Expression {
 		this.components = components;
 	}
 
+	public List<PipeComponent<JsonNode>> components() {
+		return components;
+	}
+
 	@Override
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public <N> void apply(Scope<N> scope, N in, @Nullable Path<N> path, PathOutput<N> output, boolean requirePath) throws JsonQueryException {

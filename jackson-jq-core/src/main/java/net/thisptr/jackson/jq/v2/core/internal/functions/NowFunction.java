@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.LegacyFunction;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -16,7 +17,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "now", nargs = 0)
-public class NowFunction implements Function {
+public class NowFunction implements LegacyFunction {
 
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, List<Expression> args, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, Version version) throws JsonQueryException {

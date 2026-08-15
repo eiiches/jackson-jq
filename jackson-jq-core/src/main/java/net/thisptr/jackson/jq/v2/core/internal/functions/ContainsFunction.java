@@ -14,6 +14,7 @@ import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.LegacyFunction;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -23,7 +24,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "contains", nargs = 1)
-public class ContainsFunction<JsonNode> implements Function {
+public class ContainsFunction<JsonNode> implements LegacyFunction {
 
 	@Override
 	@SuppressWarnings({"unchecked", "rawtypes"})

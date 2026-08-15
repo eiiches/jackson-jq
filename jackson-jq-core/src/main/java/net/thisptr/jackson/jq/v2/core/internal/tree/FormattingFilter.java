@@ -26,7 +26,11 @@ public class FormattingFilter implements Expression {
 		Function f = scope.getFunction("@" + name, 0);
 		if (f == null)
 			throw new JsonQueryException("Formatting operator @" + name + " does not exist");
-		f.apply(scope, Collections.emptyList(), in, ipath, output, version);
+		if (f instanceof net.thisptr.jackson.jq.v2.spi.LegacyFunction) {
+			((net.thisptr.jackson.jq.v2.spi.LegacyFunction) f).apply(scope, Collections.emptyList(), in, ipath, output, version);
+		} else {
+			f.apply(in, ipath, output);
+		}
 	}
 
 	@Override

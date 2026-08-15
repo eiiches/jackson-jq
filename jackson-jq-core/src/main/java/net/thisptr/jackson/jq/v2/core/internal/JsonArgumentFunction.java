@@ -7,14 +7,14 @@ import java.util.Stack;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.LegacyFunction;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public abstract class JsonArgumentFunction implements Function {
+public abstract class JsonArgumentFunction implements LegacyFunction {
 	protected abstract <JsonNode> JsonNode fn(Scope<JsonNode> scope, List<JsonNode> args, JsonNode in) throws JsonQueryException;
 
 	private <JsonNode> void combinations(Scope<JsonNode> scope, PathOutput<JsonNode> output, Stack<JsonNode> args, int index, List<List<JsonNode>> argmat, JsonNode in) throws JsonQueryException {
