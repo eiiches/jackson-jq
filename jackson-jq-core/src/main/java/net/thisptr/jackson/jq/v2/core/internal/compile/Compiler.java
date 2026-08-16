@@ -89,7 +89,6 @@ public class Compiler {
 		return compile(env, context, (Module) null, ast);
 	}
 
-	@SuppressWarnings({"unchecked", "rawtypes"})
 	public static <JsonNode> @Nullable Expression<JsonNode> compile(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, @Nullable AstNode ast) throws JsonQueryException {
 		if (ast == null)
 			return null;
@@ -127,6 +126,7 @@ public class Compiler {
 		}
 
 		if (ast instanceof TopLevelAstNode) {
+			@SuppressWarnings("unchecked")
 			TopLevelAstNode<JsonNode> top = (TopLevelAstNode<JsonNode>) ast;
 			for (TopLevelAstNode.ImportStatement<JsonNode> imp : top.imports()) {
 				if (env.getModuleLoader() == null) {

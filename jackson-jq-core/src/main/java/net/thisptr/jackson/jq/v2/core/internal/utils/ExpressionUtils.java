@@ -19,7 +19,6 @@ public class ExpressionUtils {
 	 * @param expr the AST node to evaluate
 	 * @return null if expr is not a constant
 	 */
-	@SuppressWarnings("unchecked")
 	public static <JsonNode> @Nullable JsonNode evaluateLiteralExpression(JsonProvider<JsonNode> jsonProvider, AstNode expr) {
 		if (expr instanceof ObjectConstructionAstNode) {
 			JsonNode obj = jsonProvider.createObject();

@@ -24,7 +24,6 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Version;
-import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 
 public class Usage {
 	/**
@@ -32,7 +31,6 @@ public class Usage {
 	 */
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
-	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws IOException, URISyntaxException {
 		// You need a JsonProvider which is an abstraction of a JSON library (Jackson 2, Jackson 3, Gson, etc.)
 		Jackson2JsonProviderImpl jsonProvider = Jackson2JsonProviderImpl.getInstance();
@@ -53,12 +51,12 @@ public class Usage {
 		});
 
 		// For import statements to work, set ModuleLoader.
-		env.setModuleLoader(new ChainedModuleLoader<>(new ModuleLoader[] {
+		env.setModuleLoader(new ChainedModuleLoader<>(
 				ClassPathModuleLoader.getInstance(),
 				new FileSystemModuleLoader<>(jsonProvider, Versions.JQ_1_6,
 						FileSystems.getDefault().getPath("").toAbsolutePath(), // search modules in the actual file system
-						Paths.get(Environment.class.getClassLoader().getResource("classpath_modules").toURI())), // or in the classpath resources
-		}));
+						Paths.get(Environment.class.getClassLoader().getResource("classpath_modules").toURI())) // or in the classpath resources
+		));
 
 		// addVariable(...) sets a custom variable that can be used from jq expressions.
 		env.addVariable("param", jsonProvider.createNumber(42));

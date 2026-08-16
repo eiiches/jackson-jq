@@ -15,8 +15,7 @@ import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 public class ClassPathModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	private final Map<String, Module> pathAndModules = new HashMap<>();
 
-	@SuppressWarnings({ "rawtypes" })
-	private static final ClassPathModuleLoader INSTANCE = new ClassPathModuleLoader(Module.class.getClassLoader());
+	private static final ClassPathModuleLoader<?> INSTANCE = new ClassPathModuleLoader<>(Module.class.getClassLoader());
 
 	@SuppressWarnings("unchecked")
 	public static <JsonNode> ClassPathModuleLoader<JsonNode> getInstance() {

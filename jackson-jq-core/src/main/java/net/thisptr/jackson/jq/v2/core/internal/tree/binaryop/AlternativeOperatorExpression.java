@@ -21,19 +21,16 @@ public class AlternativeOperatorExpression<JsonNode> extends BinaryOperatorExpre
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		Expression<JsonNode> typedLhs = lhs;
-		Expression<JsonNode> typedRhs = rhs;
 		AtomicBoolean emitted = new AtomicBoolean();
-		typedLhs.apply(frame, in, path, (out, outpath) -> {
+		lhs.apply(frame, in, path, (out, outpath) -> {
 			if (JsonNodeUtils.asBoolean(jsonProvider, out)) {
 				output.emit(out, outpath);
 				emitted.set(true);
 			}
 		}, requirePath);
 		if (!emitted.get()) {
-			typedRhs.apply(frame, in, path, output, requirePath);
+			rhs.apply(frame, in, path, output, requirePath);
 		}
 	}
 }

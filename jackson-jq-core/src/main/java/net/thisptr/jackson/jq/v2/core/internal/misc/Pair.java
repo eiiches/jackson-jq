@@ -55,8 +55,7 @@ public class Pair<T, U> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		@SuppressWarnings("rawtypes")
-		Pair other = (Pair) obj;
+		Pair<?, ?> other = (Pair<?, ?>) obj;
 		if (_1 == null) {
 			if (other._1 != null)
 				return false;

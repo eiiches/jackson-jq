@@ -31,12 +31,10 @@ public class UpdateAssignment<JsonNode> extends BinaryOperatorExpression<JsonNod
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		Expression<JsonNode> typedLhs = lhs;
-		Expression<JsonNode> typedRhs = rhs;
+		@SuppressWarnings("unchecked")
 		JsonNode[] out = (JsonNode[]) new Object[] { in };
-		typedLhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
+		lhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
 			@Var Path<JsonNode> lpath = lpath0;
 			// `VALUE | path(VALUE) => []`
 			if (lpath == null && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)
@@ -46,7 +44,7 @@ public class UpdateAssignment<JsonNode> extends BinaryOperatorExpression<JsonNod
 
 			out[0] = lpath.mutate(jsonProvider, out[0], (lval_) -> {
 				List<JsonNode> rvals = new ArrayList<>();
-				typedRhs.apply(frame, lval_ == null ? jsonProvider.createNull() : lval_, rvals::add);
+				rhs.apply(frame, lval_ == null ? jsonProvider.createNull() : lval_, rvals::add);
 				if (rvals.isEmpty())
 					throw new JsonQueryUndefinedBehaviorException("`|= empty` is undefined. See https://github.com/stedolan/jq/issues/897");
 				if (version.compareTo(Versions.JQ_1_6) >= 0) {

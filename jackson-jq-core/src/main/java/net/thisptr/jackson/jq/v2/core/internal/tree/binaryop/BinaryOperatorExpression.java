@@ -224,12 +224,8 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<J
 		}
 	}
 
-	/**
-	 * Raw types version for JavaCC compatibility.
-	 */
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public static AstNode buildTree(List exprs, List<Operator> operators) {
-		return buildTreeGeneric((List<AstNode>) exprs, operators);
+	public static AstNode buildTree(List<AstNode> exprs, List<Operator> operators) {
+		return buildTreeGeneric(exprs, operators);
 	}
 
 	public static AstNode buildTreeGeneric(List<AstNode> exprs, List<Operator> operators) {

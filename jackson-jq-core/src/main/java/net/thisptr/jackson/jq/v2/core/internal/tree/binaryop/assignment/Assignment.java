@@ -26,13 +26,10 @@ public class Assignment<JsonNode> extends BinaryOperatorExpression<JsonNode> {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		Expression<JsonNode> typedLhs = lhs;
-		Expression<JsonNode> typedRhs = rhs;
-		typedRhs.apply(frame, in, (rval) -> {
+		rhs.apply(frame, in, (rval) -> {
 			List<Path<JsonNode>> lpaths = new ArrayList<>();
-			typedLhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
+			lhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
 				@Var Path<JsonNode> lpath = lpath0;
 				// `VALUE | path(VALUE) => []`
 				if (lpath == null && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)

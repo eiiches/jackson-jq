@@ -14,7 +14,6 @@ public abstract class SimpleBinaryOperatorExpression<JsonNode> extends BinaryOpe
 	private final JsonProvider<JsonNode> jsonProvider;
 	private BinaryOperator<JsonNode> operator;
 
-	@SuppressWarnings("unchecked")
 	public SimpleBinaryOperatorExpression(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> lhs, Expression<JsonNode> rhs, BinaryOperator<JsonNode> operator) {
 		super(lhs, rhs, operator.image());
 		this.jsonProvider = jsonProvider;
@@ -22,12 +21,9 @@ public abstract class SimpleBinaryOperatorExpression<JsonNode> extends BinaryOpe
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		Expression<JsonNode> typedRhs = rhs;
-		Expression<JsonNode> typedLhs = lhs;
-		typedRhs.apply(frame, in, (r) -> {
-			typedLhs.apply(frame, in, (l) -> {
+		rhs.apply(frame, in, (r) -> {
+			lhs.apply(frame, in, (l) -> {
 				output.emit(operator.apply(jsonProvider, l, r), null);
 			});
 		});

@@ -19,16 +19,13 @@ public class BooleanAndExpression<JsonNode> extends BinaryOperatorExpression<Jso
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		Expression<JsonNode> typedLhs = lhs;
-		Expression<JsonNode> typedRhs = rhs;
-		typedLhs.apply(frame, in, (l) -> {
+		lhs.apply(frame, in, (l) -> {
 			if (!JsonNodeUtils.asBoolean(jsonProvider, l)) {
 				output.emit(jsonProvider.createBoolean(false), null);
 				return;
 			}
-			typedRhs.apply(frame, in, (r) -> {
+			rhs.apply(frame, in, (r) -> {
 				output.emit(jsonProvider.createBoolean(JsonNodeUtils.asBoolean(jsonProvider, r)), null);
 			});
 		});

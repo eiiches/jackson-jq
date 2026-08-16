@@ -10,8 +10,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class RootPath<JsonNode> implements Path<JsonNode> {
-	@SuppressWarnings("rawtypes")
-	private static final RootPath INSTANCE = new RootPath<>();
+	private static final RootPath<?> INSTANCE = new RootPath<>();
 
 	@SuppressWarnings("unchecked")
 	public static <JsonNode> RootPath<JsonNode> getInstance() {

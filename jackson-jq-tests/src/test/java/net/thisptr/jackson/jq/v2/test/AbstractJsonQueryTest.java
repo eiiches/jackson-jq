@@ -182,7 +182,6 @@ public abstract class AbstractJsonQueryTest<T> {
 			((AutoCloseable) cachedJqEvaluator).close();
 	}
 
-	@SuppressWarnings("unchecked")
 	private void test(TestCase tc, Version version) throws Throwable {
 		Environment<T> env = createEnvironment(version);
 		env.addVariable("ENV", () -> {

@@ -148,7 +148,6 @@ public class ExecutionStack<JsonNode> {
 			return pv != null ? pv.getPath() : null;
 		}
 
-		@SuppressWarnings("unchecked")
 		public @Nullable FunctionFactory getFunctionFactory(int index) {
 			Object raw = get(index);
 			if (raw instanceof FunctionFactory) {

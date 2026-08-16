@@ -7,7 +7,7 @@ import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 
 public class NullModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 
-	private static final NullModuleLoader<Object> INSTANCE = new NullModuleLoader<>();
+	private static final NullModuleLoader<?> INSTANCE = new NullModuleLoader<>();
 
 	@SuppressWarnings("unchecked")
 	public static <JsonNode> NullModuleLoader<JsonNode> getInstance() {
