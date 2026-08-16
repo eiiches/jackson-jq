@@ -17,21 +17,14 @@ PARSER_BEGIN(ExpressionParser)
 	import net.thisptr.jackson.jq.v2.spi.Version;
 	import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.*;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.binaryop.*;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.literal.*;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.*;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.matchers.*;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.ThisObject;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.RecursionOperator;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.BreakExpression;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.LabelPipeComponent;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.PipedQueryAstNode.LabelPipeComponent;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode.ImportStatement;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode.ModuleDirective;
 	import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.literal.BooleanLiteral;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.literal.DoubleLiteral;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.literal.LongLiteral;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatcher;
 	import net.thisptr.jackson.jq.v2.internal.javacc.TokenMgrError;
 	import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -299,9 +292,9 @@ ImportStatement ImportStatement():
 	<KEYWORD_IMPORT>
 	pathExpr = StringInterpolation()
 	{
-		if (!(pathExpr instanceof StringLiteral))
+		if (!(pathExpr instanceof StringLiteralAstNode))
 			throw new IllegalStateException("Import path must be constant");
-		path = ((StringLiteral) pathExpr).value();
+		path = ((StringLiteralAstNode) pathExpr).value();
 	}
 	<KEYWORD_AS>
 	(
@@ -327,9 +320,9 @@ ImportStatement IncludeStatement():
 	<KEYWORD_INCLUDE>
 	pathExpr = StringInterpolation()
 	{
-		if (!(pathExpr instanceof StringLiteral))
+		if (!(pathExpr instanceof StringLiteralAstNode))
 			throw new IllegalStateException("Include path must be constant");
-		path = ((StringLiteral) pathExpr).value();
+		path = ((StringLiteralAstNode) pathExpr).value();
 	}
 	(
 		metadata = Expression()
@@ -363,14 +356,14 @@ AstNode Start():
 	{
 		if (moduleDirective == null && imports.isEmpty())
 			return expr;
-		return new TopLevelExpression(moduleDirective, imports, expr);
+		return new TopLevelAstNode(moduleDirective, imports, expr);
 	}
 }
 
 AstNode Expression():
 {
-	PipeComponentAst component;
-	List<PipeComponentAst> components = new ArrayList<PipeComponentAst>();
+	PipedQueryAstNode.PipeComponent component;
+	List<PipedQueryAstNode.PipeComponent> components = new ArrayList<PipedQueryAstNode.PipeComponent>();
 }
 {
 	component = PipeComponent()
@@ -388,16 +381,16 @@ AstNode Expression():
 				throw new IllegalStateException("Assignment or label must be followed by pipes: " + component);
 			}
 		}
-		if (components.size() == 1 && (component instanceof TransformPipeComponentAst))
-			return ((TransformPipeComponentAst) component).expr;
-		return new PipedQuery(components);
+		if (components.size() == 1 && (component instanceof PipedQueryAstNode.TransformPipeComponent))
+			return ((PipedQueryAstNode.TransformPipeComponent) component).expr;
+		return new PipedQueryAstNode(components);
 	}
 }
 
 AstNode JsonQueryWithoutComma():
 {
-	PipeComponentAst component;
-	List<PipeComponentAst> components = new ArrayList<PipeComponentAst>();
+	PipedQueryAstNode.PipeComponent component;
+	List<PipedQueryAstNode.PipeComponent> components = new ArrayList<PipedQueryAstNode.PipeComponent>();
 }
 {
 	component = PipeComponentWithoutComma()
@@ -415,17 +408,17 @@ AstNode JsonQueryWithoutComma():
 				throw new IllegalStateException("Assignment or label must be followed by pipes: " + component);
 			}
 		}
-		if (components.size() == 1 && (component instanceof TransformPipeComponentAst))
-			return ((TransformPipeComponentAst) component).expr;
-		return new PipedQuery(components);
+		if (components.size() == 1 && (component instanceof PipedQueryAstNode.TransformPipeComponent))
+			return ((PipedQueryAstNode.TransformPipeComponent) component).expr;
+		return new PipedQueryAstNode(components);
 	}
 }
 
-PipeComponentAst PipeComponent():
+PipedQueryAstNode.PipeComponent PipeComponent():
 {
 	String name;
 	AstNode expr;
-	PatternMatcherAst matcher;
+	PatternMatcherAstNode matcher;
 }
 {
 	(
@@ -438,18 +431,18 @@ PipeComponentAst PipeComponent():
 		(
 			<KEYWORD_AS>
 			matcher = Matcher()
-			{ return new AssignPipeComponentAst(expr, matcher); }
+			{ return new PipedQueryAstNode.AssignPipeComponent(expr, matcher); }
 		|
-			{ return new TransformPipeComponentAst(expr); }
+			{ return new PipedQueryAstNode.TransformPipeComponent(expr); }
 		)
 	)
 }
 
-PipeComponentAst PipeComponentWithoutComma():
+PipedQueryAstNode.PipeComponent PipeComponentWithoutComma():
 {
 	String name;
 	AstNode expr;
-	PatternMatcherAst matcher;
+	PatternMatcherAstNode matcher;
 }
 {
 	(
@@ -462,9 +455,9 @@ PipeComponentAst PipeComponentWithoutComma():
 		(
 			<KEYWORD_AS>
 			matcher = Matcher()
-			{ return new AssignPipeComponentAst(expr, matcher); }
+			{ return new PipedQueryAstNode.AssignPipeComponent(expr, matcher); }
 		|
-			{ return new TransformPipeComponentAst(expr); }
+			{ return new PipedQueryAstNode.TransformPipeComponent(expr); }
 		)
 	)
 }
@@ -485,7 +478,7 @@ AstNode TupleExpression():
 	{
 		if (qs.size() == 1)
 			return qs.get(0);
-		return new Tuple(qs);
+		return new TupleAstNode(qs);
 	}
 }
 
@@ -576,7 +569,7 @@ AstNode FunctionDefinition():
 	<COLON>
 	body = Expression()
 	<SEMICOLON>
-	{ return new FunctionDefinition(fname.image, args, body); }
+	{ return new FunctionDefinitionAstNode(fname.image, args, body); }
 }
 
 String FunctionDefinitionParam():
@@ -608,7 +601,7 @@ AstNode PrimaryExpression():
 		tmp = ThisObjectAccess()
 		(
 			<QUESTION>
-			{ tmp = new TryCatch.Question(tmp); }
+			{ tmp = new TryCatchAstNode.Question(tmp); }
 		)*
 	|
 		tmp = VariableAccess()
@@ -617,7 +610,7 @@ AstNode PrimaryExpression():
 		)?
 		(
 			<QUESTION>
-			{ tmp = new TryCatch.Question(tmp); }
+			{ tmp = new TryCatchAstNode.Question(tmp); }
 		)*
 	|
 		(
@@ -640,7 +633,7 @@ AstNode PrimaryExpression():
 		)?
 		(
 			<QUESTION>
-			{ tmp = new TryCatch.Question(tmp); }
+			{ tmp = new TryCatchAstNode.Question(tmp); }
 		)*
 	|
 		<OPEN_PAR>
@@ -651,12 +644,12 @@ AstNode PrimaryExpression():
 		)?
 		(
 			<QUESTION>
-			{ tmp = new TryCatch.Question(tmp); }
+			{ tmp = new TryCatchAstNode.Question(tmp); }
 		)*
 	|
 		<MINUS>
 		tmp = PrimaryExpression()
-		{ tmp = new NegativeExpression(tmp); }
+		{ tmp = new NegativeExpressionAstNode(tmp); }
 	|
 		tmp = ConditionalExpression()
 	|
@@ -674,7 +667,7 @@ AstNode PrimaryExpression():
 		exprs.add(tmp);
 		if (exprs.size() == 1)
 			return exprs.get(0);
-		return new SemicolonOperator(exprs);
+		return new SemicolonOperatorAstNode(exprs);
 	}
 }
 
@@ -683,7 +676,7 @@ AstNode RecursionOperator():
 }
 {
 	<RECURSION>
-	{ return new RecursionOperator(); }
+	{ return new RecursionOperatorAstNode(); }
 }
 
 AstNode FormattingFilter():
@@ -693,7 +686,7 @@ AstNode FormattingFilter():
 {
 	<ATSIGN>
 	t = <IDENTIFIER>
-	{ return new FormattingFilter(t.image, version); }
+	{ return new FormattingFilterAstNode(t.image, version); }
 }
 
 AstNode TryCatchExpression():
@@ -707,7 +700,7 @@ AstNode TryCatchExpression():
 		<KEYWORD_CATCH>
 		catchExpr = PrimaryExpression()
 	)?
-	{ return new TryCatch(tryExpr, catchExpr); }
+	{ return new TryCatchAstNode(tryExpr, catchExpr); }
 }
 
 AstNode BreakExpression():
@@ -718,12 +711,12 @@ AstNode BreakExpression():
 	<KEYWORD_BREAK>
 	<DOLLAR>
 	name = IdentifierAsString()
-	{ return new BreakExpression(name); }
+	{ return new BreakExpressionAstNode(name); }
 }
 
 AstNode ForeachExpression():
 {
-	PatternMatcherAst matcher;
+	PatternMatcherAstNode matcher;
 	AstNode initExpr, updateExpr, extractExpr = null, iterExpr;
 }
 {
@@ -741,12 +734,12 @@ AstNode ForeachExpression():
 		extractExpr = Expression()
 	)?
 	<CLOSE_PAR>
-	{ return new ForeachExpression(matcher, initExpr, updateExpr, extractExpr, iterExpr); }
+	{ return new ForeachExpressionAstNode(matcher, initExpr, updateExpr, extractExpr, iterExpr); }
 }
 
 AstNode ReduceExpression():
 {
-	PatternMatcherAst matcher;
+	PatternMatcherAstNode matcher;
 	AstNode tmpIterExpr, tmpInitExpr, tmpReduceExpr;
 }
 {
@@ -759,7 +752,7 @@ AstNode ReduceExpression():
 	<SEMICOLON>
 	tmpReduceExpr = Expression()
 	<CLOSE_PAR>
-	{ return new ReduceExpression(matcher, tmpInitExpr, tmpReduceExpr, tmpIterExpr); }
+	{ return new ReduceExpressionAstNode(matcher, tmpInitExpr, tmpReduceExpr, tmpIterExpr); }
 }
 
 AstNode VariableAccess():
@@ -776,7 +769,7 @@ AstNode VariableAccess():
 		<DOUBLE_COLON>
 	)?
 	t = <IDENTIFIER>
-	{ return new VariableAccess(moduleName, t.image); }
+	{ return new VariableAccessAstNode(moduleName, t.image); }
 }
 
 AstNode ConditionalExpression():
@@ -803,13 +796,13 @@ AstNode ConditionalExpression():
 	otherwise = Expression()
 	<KEYWORD_END>
 	{
-		return new Conditional(switches, otherwise);
+		return new ConditionalAstNode(switches, otherwise);
 	}
 }
 
 AstNode ObjectConstruction():
 {
-	final ObjectConstruction obj = new ObjectConstruction();
+	final ObjectConstructionAstNode obj = new ObjectConstructionAstNode();
 }
 {
 	<OPEN_BRACE>
@@ -824,7 +817,7 @@ AstNode ObjectConstruction():
 	{ return obj; }
 }
 
-void ObjectField(final ObjectConstruction obj):
+void ObjectField(final ObjectConstructionAstNode obj):
 {
 	String name;
 	AstNode value = null;
@@ -841,7 +834,7 @@ void ObjectField(final ObjectConstruction obj):
 		// {$name}
 		<DOLLAR>
 		name = KeywordOrIdentifier()
-		{ obj.add(new VariableKeyFieldConstruction(name)); }
+		{ obj.add(new ObjectConstructionAstNode.VariableKeyFieldConstruction(name)); }
 	|
 		// {name}, {name: value}
 		name = KeywordOrIdentifier()
@@ -849,7 +842,7 @@ void ObjectField(final ObjectConstruction obj):
 			<COLON>
 			value = ObjectFieldValue()
 		)?
-		{ obj.add(new IdentifierKeyFieldConstructionAst(name, value)); }
+		{ obj.add(new ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst(name, value)); }
 	|
 		// {"name"}, {"name": value}
 		key = StringInterpolation()
@@ -857,7 +850,7 @@ void ObjectField(final ObjectConstruction obj):
 			<COLON>
 			value = ObjectFieldValue()
 		)?
-		{ obj.add(new StringKeyFieldConstructionAst(key, value)); }
+		{ obj.add(new ObjectConstructionAstNode.StringKeyFieldConstructionAst(key, value)); }
 	|
 		// {(keyexpr): value}
 		<OPEN_PAR>
@@ -865,7 +858,7 @@ void ObjectField(final ObjectConstruction obj):
 		<CLOSE_PAR>
 		<COLON>
 		value = ObjectFieldValue()
-		{ obj.add(new JsonQueryKeyFieldConstructionAst(key, value)); }
+		{ obj.add(new ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst(key, value)); }
 	)
 }
 
@@ -878,12 +871,12 @@ AstNode ObjectFieldName():
 {
 	(
 		keywordAsString = KeywordAsString()
-		{ expr = new StringLiteral(keywordAsString); }
+		{ expr = new StringLiteralAstNode(keywordAsString); }
 	|
 		expr = StringInterpolation()
 	|
 		token = <IDENTIFIER>
-		{ expr = new StringLiteral(token.image); }
+		{ expr = new StringLiteralAstNode(token.image); }
 	|
 		<OPEN_PAR>
 		expr = Expression()
@@ -919,8 +912,8 @@ AstNode ArrayConstruction():
 	<CLOSE_BRACKET>
 	{
 		if (tmp == null)
-			return new ArrayConstruction();
-		return new ArrayConstruction(tmp);
+			return new ArrayConstructionAstNode();
+		return new ArrayConstructionAstNode(tmp);
 	}
 }
 
@@ -933,19 +926,19 @@ AstNode ValueLiteral():
 {
 	(
 		token = <INTEGER_LITERAL>
-		{ tmp = new LongLiteral(Long.parseLong(token.image)); }
+		{ tmp = new LongLiteralAstNode(Long.parseLong(token.image)); }
 	|
 		token = <FLOAT_LITERAL>
-		{ tmp = new DoubleLiteral(Double.parseDouble(token.image)); }
+		{ tmp = new DoubleLiteralAstNode(Double.parseDouble(token.image)); }
 	|
 		<NULL_LITERAL>
-		{ tmp = new NullLiteral(); }
+		{ tmp = new NullLiteralAstNode(); }
 	|
 		<BOOLEAN_LITERAL_TRUE>
-		{ tmp = new BooleanLiteral(true); }
+		{ tmp = new BooleanLiteralAstNode(true); }
 	|
 		<BOOLEAN_LITERAL_FALSE>
-		{ tmp = new BooleanLiteral(false); }
+		{ tmp = new BooleanLiteralAstNode(false); }
 	)
 	{ return tmp; }
 }
@@ -977,7 +970,7 @@ AstNode FunctionCall():
 		)?
 		<CLOSE_PAR>
 	)?
-	{ return new FunctionCall(moduleName, fname.image, fargs, version); }
+	{ return new FunctionCallAstNode(moduleName, fname.image, fargs, version); }
 }
 
 AstNode FieldAccessor(AstNode obj):
@@ -1001,7 +994,7 @@ AstNode ThisObjectAccess():
 {
 	Token identifier;
 	boolean permissive;
-	AstNode tmp = new ThisObject();
+	AstNode tmp = new ThisObjectAstNode();
 }
 {
 	<DOT>
@@ -1031,7 +1024,7 @@ AstNode IdentifierFieldAccessor(AstNode obj):
 		<QUESTION>
 		{ permissive = true; }
 	)?
-	{ return new IdentifierFieldAccess(obj, identifier.image, permissive); }
+	{ return new IdentifierFieldAccessAstNode(obj, identifier.image, permissive); }
 }
 
 AstNode StringFieldAccessor(AstNode obj):
@@ -1045,7 +1038,7 @@ AstNode StringFieldAccessor(AstNode obj):
 		<QUESTION>
 		{ permissive = true; }
 	)?
-	{ return new StringFieldAccess(obj, fieldName, permissive); }
+	{ return new StringFieldAccessAstNode(obj, fieldName, permissive); }
 }
 
 AstNode BracketFieldAccessor(AstNode obj):
@@ -1082,10 +1075,10 @@ AstNode BracketFieldAccessor(AstNode obj):
 	{
 		if (rangeAccess) {
 			if (begin == null && end == null)
-				return new BracketExtractFieldAccess(obj, permissive);
-			return new BracketFieldAccess(obj, begin, end, permissive);
+				return new BracketExtractFieldAccessAstNode(obj, permissive);
+			return new BracketFieldAccessAstNode(obj, begin, end, permissive);
 		} else {
-			return new BracketFieldAccess(obj, begin, permissive);
+			return new BracketFieldAccessAstNode(obj, begin, permissive);
 		}
 	}
 }
@@ -1143,16 +1136,16 @@ AstNode StringInterpolation():
 	<ENDQUOTE>
 	{
 		if (interpolations.isEmpty() && formatter == null) {
-			return new StringLiteral(builder.toString());
+			return new StringLiteralAstNode(builder.toString());
 		} else {
-			return new StringInterpolation(builder.toString(), interpolations, formatter);
+			return new StringInterpolationAstNode(builder.toString(), interpolations, formatter);
 		}
 	}
 }
 
-PatternMatcherAst Matcher():
+PatternMatcherAstNode Matcher():
 {
-	PatternMatcherAst matcher;
+	PatternMatcherAstNode matcher;
 }
 {
 	(
@@ -1165,10 +1158,10 @@ PatternMatcherAst Matcher():
 	{ return matcher; }
 }
 
-PatternMatcherAst ArrayMatcher():
+PatternMatcherAstNode ArrayMatcher():
 {
-	PatternMatcherAst matcher;
-	final List<PatternMatcherAst> matchers = new ArrayList<PatternMatcherAst>();
+	PatternMatcherAstNode matcher;
+	final List<PatternMatcherAstNode> matchers = new ArrayList<PatternMatcherAstNode>();
 }
 {
 	<OPEN_BRACKET>
@@ -1180,13 +1173,13 @@ PatternMatcherAst ArrayMatcher():
 		{ matchers.add(matcher); }
 	)*
 	<CLOSE_BRACKET>
-	{ return new ArrayMatcherAst(matchers); }
+	{ return new ArrayMatcherAstNode(matchers); }
 }
 
-PatternMatcherAst ObjectMatcher():
+PatternMatcherAstNode ObjectMatcher():
 {
-	ObjectMatcherAst.FieldMatcher fmatcher;
-	final List<ObjectMatcherAst.FieldMatcher> matchers = new ArrayList<ObjectMatcherAst.FieldMatcher>();
+	ObjectMatcherAstNode.FieldMatcher fmatcher;
+	final List<ObjectMatcherAstNode.FieldMatcher> matchers = new ArrayList<ObjectMatcherAstNode.FieldMatcher>();
 }
 {
 	<OPEN_BRACE>
@@ -1198,14 +1191,14 @@ PatternMatcherAst ObjectMatcher():
 		{ matchers.add(fmatcher); }
 	)*
 	<CLOSE_BRACE>
-	{ return new ObjectMatcherAst(matchers); }
+	{ return new ObjectMatcherAstNode(matchers); }
 }
 
-ObjectMatcherAst.FieldMatcher ObjectMatcherField():
+ObjectMatcherAstNode.FieldMatcher ObjectMatcherField():
 {
 	AstNode nameExpr = null;
 	String name;
-	PatternMatcherAst matcher = null;
+	PatternMatcherAstNode matcher = null;
 	boolean dollar = false; // true if {$x} or {$x:...}; false if {x:...}
 }
 {
@@ -1213,7 +1206,7 @@ ObjectMatcherAst.FieldMatcher ObjectMatcherField():
 		<DOLLAR>
 		{ dollar = true; }
 		name = KeywordOrIdentifier()
-		{ nameExpr = new StringLiteral(name); }
+		{ nameExpr = new StringLiteralAstNode(name); }
 		(
 			<COLON>
 			matcher = Matcher()
@@ -1223,15 +1216,15 @@ ObjectMatcherAst.FieldMatcher ObjectMatcherField():
 		<COLON>
 		matcher = Matcher()
 	)
-	{ return new ObjectMatcherAst.FieldMatcher(dollar, nameExpr, matcher); }
+	{ return new ObjectMatcherAstNode.FieldMatcher(dollar, nameExpr, matcher); }
 }
 
-PatternMatcherAst ValueMatcher():
+PatternMatcherAstNode ValueMatcher():
 {
 	Token token;
 }
 {
 	<DOLLAR>
 	token = <IDENTIFIER>
-	{ return new ValueMatcher(token.image); }
+	{ return new ValueMatcherAstNode(token.image); }
 }

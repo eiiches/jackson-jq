@@ -26,22 +26,22 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.Versions;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstruction;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.FunctionCall;
-import net.thisptr.jackson.jq.v2.core.internal.ast.TryCatch;
-import net.thisptr.jackson.jq.v2.core.internal.ast.Tuple;
-import net.thisptr.jackson.jq.v2.core.internal.ast.binaryop.BinaryOpNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.BracketExtractFieldAccess;
-import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.BracketFieldAccess;
+import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.FunctionCallAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ThisObjectAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.TryCatchAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.TupleAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.BracketExtractFieldAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.BracketFieldAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.literal.BooleanLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.literal.DoubleLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.literal.LongLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.literal.NullLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.literal.StringLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ThisObject;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression.Operator;
-import net.thisptr.jackson.jq.v2.core.internal.tree.literal.BooleanLiteral;
-import net.thisptr.jackson.jq.v2.core.internal.tree.literal.DoubleLiteral;
-import net.thisptr.jackson.jq.v2.core.internal.tree.literal.LongLiteral;
-import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral;
-import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.VersionRange;
@@ -79,23 +79,23 @@ public class RandomTest {
 
 	@BeforeAll
 	static void beforeAll() {
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.PLUS, exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.MINUS, exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.MODULO, exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.AND, exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.OR, exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.DEFAULT, exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(3, (exprs) -> new Tuple(exprs)));
-		GENERATORS.add(new RandomGenerator(1, (exprs) -> new ArrayConstruction(exprs.get(0))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.TIMES, exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.DIVIDE, exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(0, (exprs) -> new ThisObject()));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BracketFieldAccess(exprs.get(0), exprs.get(1), true)));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BracketFieldAccess(exprs.get(0), exprs.get(1), false)));
-		GENERATORS.add(new RandomGenerator(3, (exprs) -> new BracketFieldAccess(exprs.get(0), exprs.get(1), exprs.get(2), true)));
-		GENERATORS.add(new RandomGenerator(3, (exprs) -> new BracketFieldAccess(exprs.get(0), exprs.get(1), exprs.get(2), false)));
-		GENERATORS.add(new RandomGenerator(1, (exprs) -> new BracketExtractFieldAccess(exprs.get(0), true)));
-		GENERATORS.add(new RandomGenerator(1, (exprs) -> new BracketExtractFieldAccess(exprs.get(0), false)));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.PLUS, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.MINUS, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.MODULO, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.AND, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.OR, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.DEFAULT, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(3, (exprs) -> new TupleAstNode(exprs)));
+		GENERATORS.add(new RandomGenerator(1, (exprs) -> new ArrayConstructionAstNode(exprs.get(0))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.TIMES, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.DIVIDE, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(0, (exprs) -> new ThisObjectAstNode()));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BracketFieldAccessAstNode(exprs.get(0), exprs.get(1), true)));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BracketFieldAccessAstNode(exprs.get(0), exprs.get(1), false)));
+		GENERATORS.add(new RandomGenerator(3, (exprs) -> new BracketFieldAccessAstNode(exprs.get(0), exprs.get(1), exprs.get(2), true)));
+		GENERATORS.add(new RandomGenerator(3, (exprs) -> new BracketFieldAccessAstNode(exprs.get(0), exprs.get(1), exprs.get(2), false)));
+		GENERATORS.add(new RandomGenerator(1, (exprs) -> new BracketExtractFieldAccessAstNode(exprs.get(0), true)));
+		GENERATORS.add(new RandomGenerator(1, (exprs) -> new BracketExtractFieldAccessAstNode(exprs.get(0), false)));
 
 		Set<String> exclusions = EXCLUDED_FUNCTIONS.getOrDefault(VERSION, Collections.emptySet());
 		BuiltinFunctionLoader.getInstance().listFunctionFactories(VERSION).forEach((nameAndArity, factory) -> {
@@ -107,37 +107,37 @@ public class RandomTest {
 				String name = signature.split("/", 2)[0];
 				if (exclusions.contains(name))
 					return;
-				GENERATORS.add(new RandomGenerator(numArgs, (exprs) -> new FunctionCall(null, name, exprs, VERSION)));
+				GENERATORS.add(new RandomGenerator(numArgs, (exprs) -> new FunctionCallAstNode(null, name, exprs, VERSION)));
 			} else {
-				GENERATORS.add(new RandomGenerator(0, 10, (exprs) -> new FunctionCall(null, signature, exprs, VERSION)));
+				GENERATORS.add(new RandomGenerator(0, 10, (exprs) -> new FunctionCallAstNode(null, signature, exprs, VERSION)));
 			}
 		});
 	}
 
 	@BeforeEach
 	void beforeEach() {
-		expressions.add(new BooleanLiteral(true));
-		expressions.add(new BooleanLiteral(false));
-		expressions.add(new LongLiteral(-1));
-		expressions.add(new LongLiteral(0));
-		expressions.add(new LongLiteral(1));
-		expressions.add(new DoubleLiteral(-1.5));
-		expressions.add(new DoubleLiteral(-1.0));
-		expressions.add(new DoubleLiteral(-1.0));
-		expressions.add(new DoubleLiteral(-0.5));
-		expressions.add(new DoubleLiteral(0.0));
-		expressions.add(new DoubleLiteral(0.5));
-		expressions.add(new DoubleLiteral(1.0));
-		expressions.add(new DoubleLiteral(1.5));
-		expressions.add(new NullLiteral());
-		expressions.add(new StringLiteral("foo"));
-		expressions.add(new StringLiteral("bar"));
-		expressions.add(new StringLiteral("baz"));
-		expressions.add(new FunctionCall(null, "empty", Collections.emptyList(), VERSION));
-		expressions.add(new StringLiteral("\r"));
-		expressions.add(new StringLiteral("\n"));
-		expressions.add(new StringLiteral("\t"));
-		expressions.add(new StringLiteral("\0"));
+		expressions.add(new BooleanLiteralAstNode(true));
+		expressions.add(new BooleanLiteralAstNode(false));
+		expressions.add(new LongLiteralAstNode(-1));
+		expressions.add(new LongLiteralAstNode(0));
+		expressions.add(new LongLiteralAstNode(1));
+		expressions.add(new DoubleLiteralAstNode(-1.5));
+		expressions.add(new DoubleLiteralAstNode(-1.0));
+		expressions.add(new DoubleLiteralAstNode(-1.0));
+		expressions.add(new DoubleLiteralAstNode(-0.5));
+		expressions.add(new DoubleLiteralAstNode(0.0));
+		expressions.add(new DoubleLiteralAstNode(0.5));
+		expressions.add(new DoubleLiteralAstNode(1.0));
+		expressions.add(new DoubleLiteralAstNode(1.5));
+		expressions.add(new NullLiteralAstNode());
+		expressions.add(new StringLiteralAstNode("foo"));
+		expressions.add(new StringLiteralAstNode("bar"));
+		expressions.add(new StringLiteralAstNode("baz"));
+		expressions.add(new FunctionCallAstNode(null, "empty", Collections.emptyList(), VERSION));
+		expressions.add(new StringLiteralAstNode("\r"));
+		expressions.add(new StringLiteralAstNode("\n"));
+		expressions.add(new StringLiteralAstNode("\t"));
+		expressions.add(new StringLiteralAstNode("\0"));
 	}
 
 	@Test
@@ -204,7 +204,7 @@ public class RandomTest {
 				test.in = in;
 				test.version = new VersionRange(VERSION, true, VERSION, true);
 				if (expected.error != null) {
-					test.expression = new TryCatch(expr, new StringLiteral("__ERROR__"));
+					test.expression = new TryCatchAstNode(expr, new StringLiteralAstNode("__ERROR__"));
 					test.out = new ArrayList<>(expected.values);
 					test.out.add(TextNode.valueOf("__ERROR__"));
 				} else {

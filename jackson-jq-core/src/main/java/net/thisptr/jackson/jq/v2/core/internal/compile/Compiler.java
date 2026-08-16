@@ -15,41 +15,45 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstruction;
-import net.thisptr.jackson.jq.v2.core.internal.ast.AssignPipeComponentAst;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.Conditional;
-import net.thisptr.jackson.jq.v2.core.internal.ast.FieldConstructionAst;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ForeachExpression;
-import net.thisptr.jackson.jq.v2.core.internal.ast.FormattingFilter;
-import net.thisptr.jackson.jq.v2.core.internal.ast.FunctionCall;
-import net.thisptr.jackson.jq.v2.core.internal.ast.FunctionDefinition;
-import net.thisptr.jackson.jq.v2.core.internal.ast.IdentifierKeyFieldConstructionAst;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ImportStatement;
-import net.thisptr.jackson.jq.v2.core.internal.ast.JsonQueryKeyFieldConstructionAst;
-import net.thisptr.jackson.jq.v2.core.internal.ast.NegativeExpression;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstruction;
-import net.thisptr.jackson.jq.v2.core.internal.ast.PipeComponentAst;
-import net.thisptr.jackson.jq.v2.core.internal.ast.PipedQuery;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ReduceExpression;
-import net.thisptr.jackson.jq.v2.core.internal.ast.SemicolonOperator;
-import net.thisptr.jackson.jq.v2.core.internal.ast.StringInterpolation;
-import net.thisptr.jackson.jq.v2.core.internal.ast.StringKeyFieldConstructionAst;
-import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelExpression;
-import net.thisptr.jackson.jq.v2.core.internal.ast.TransformPipeComponentAst;
-import net.thisptr.jackson.jq.v2.core.internal.ast.TryCatch;
-import net.thisptr.jackson.jq.v2.core.internal.ast.Tuple;
-import net.thisptr.jackson.jq.v2.core.internal.ast.VariableAccess;
-import net.thisptr.jackson.jq.v2.core.internal.ast.VariableKeyFieldConstruction;
-import net.thisptr.jackson.jq.v2.core.internal.ast.binaryop.BinaryOpNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.BracketExtractFieldAccess;
-import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.BracketFieldAccess;
-import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.IdentifierFieldAccess;
-import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.StringFieldAccess;
-import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.PatternMatcherAst;
-import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.matchers.ArrayMatcherAst;
-import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.matchers.ObjectMatcherAst;
+import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.BreakExpressionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ConditionalAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ForeachExpressionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.FormattingFilterAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.FunctionCallAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.FunctionDefinitionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.NegativeExpressionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstructionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.PipedQueryAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.RecursionOperatorAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ReduceExpressionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.SemicolonOperatorAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.StringInterpolationAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ThisObjectAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.TryCatchAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.TupleAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.VariableAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.BracketExtractFieldAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.BracketFieldAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.IdentifierFieldAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.StringFieldAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.literal.BooleanLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.literal.DoubleLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.literal.LongLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.literal.NullLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.literal.StringLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.PatternMatcherAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.matchers.ArrayMatcherAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.matchers.ObjectMatcherAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.matchers.ValueMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
+import net.thisptr.jackson.jq.v2.core.internal.tree.literal.BooleanLiteral;
+import net.thisptr.jackson.jq.v2.core.internal.tree.literal.DoubleLiteral;
+import net.thisptr.jackson.jq.v2.core.internal.tree.literal.LongLiteral;
+import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ArrayMatcher;
@@ -90,8 +94,8 @@ public class Compiler {
 		if (ast == null)
 			return null;
 
-		if (ast instanceof FunctionCall) {
-			FunctionCall call = (FunctionCall) ast;
+		if (ast instanceof FunctionCallAstNode) {
+			FunctionCallAstNode call = (FunctionCallAstNode) ast;
 			List<Expression> compiledArgs = new ArrayList<>();
 			for (AstNode arg : call.args()) {
 				compiledArgs.add(compile(env, context, currentModule, arg));
@@ -117,14 +121,14 @@ public class Compiler {
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionCall<>(fullName, fn);
 		}
 
-		if (ast instanceof VariableAccess) {
-			VariableAccess varAccess = (VariableAccess) ast;
+		if (ast instanceof VariableAccessAstNode) {
+			VariableAccessAstNode varAccess = (VariableAccessAstNode) ast;
 			return compileVariableRef(env, context, varAccess.moduleName(), varAccess.name());
 		}
 
-		if (ast instanceof TopLevelExpression) {
-			TopLevelExpression<JsonNode> top = (TopLevelExpression<JsonNode>) ast;
-			for (ImportStatement<JsonNode> imp : top.imports()) {
+		if (ast instanceof TopLevelAstNode) {
+			TopLevelAstNode<JsonNode> top = (TopLevelAstNode<JsonNode>) ast;
+			for (TopLevelAstNode.ImportStatement<JsonNode> imp : top.imports()) {
 				if (env.getModuleLoader() == null) {
 					throw new JsonQueryException(String.format("module not found: %s", imp.path));
 				}
@@ -154,15 +158,15 @@ public class Compiler {
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.TopLevelExpression<>(top.moduleDirective(), Collections.emptyList(), compiledInner);
 		}
 
-		if (ast instanceof PipedQuery) {
-			PipedQuery piped = (PipedQuery) ast;
+		if (ast instanceof PipedQueryAstNode) {
+			PipedQueryAstNode piped = (PipedQueryAstNode) ast;
 			List<net.thisptr.jackson.jq.v2.core.internal.tree.PipeComponent<JsonNode>> newComponents = new ArrayList<>();
 
 			@Var int pushedScopes = 0;
 			try {
-				for (PipeComponentAst comp : piped.components()) {
-					if (comp instanceof AssignPipeComponentAst) {
-						AssignPipeComponentAst assign = (AssignPipeComponentAst) comp;
+				for (PipedQueryAstNode.PipeComponent comp : piped.components()) {
+					if (comp instanceof PipedQueryAstNode.AssignPipeComponent) {
+						PipedQueryAstNode.AssignPipeComponent assign = (PipedQueryAstNode.AssignPipeComponent) comp;
 						Expression compiledExpr = compileNonNull(env, context, assign.expr);
 						PatternMatcher<JsonNode> compiledMatcher = compileMatcher(env, context, assign.matcher);
 
@@ -178,12 +182,15 @@ public class Compiler {
 						}
 
 						newComponents.add(new net.thisptr.jackson.jq.v2.core.internal.tree.AssignPipeComponent<>(compiledExpr, compiledMatcher, slots));
-					} else if (comp instanceof TransformPipeComponentAst) {
-						TransformPipeComponentAst transform = (TransformPipeComponentAst) comp;
+					} else if (comp instanceof PipedQueryAstNode.TransformPipeComponent) {
+						PipedQueryAstNode.TransformPipeComponent transform = (PipedQueryAstNode.TransformPipeComponent) comp;
 						Expression compiledExpr = compileNonNull(env, context, transform.expr);
 						newComponents.add(new net.thisptr.jackson.jq.v2.core.internal.tree.TransformPipeComponent<>(compiledExpr));
+					} else if (comp instanceof PipedQueryAstNode.LabelPipeComponent) {
+						PipedQueryAstNode.LabelPipeComponent label = (PipedQueryAstNode.LabelPipeComponent) comp;
+						newComponents.add(new net.thisptr.jackson.jq.v2.core.internal.tree.LabelPipeComponent<>(label.name));
 					} else {
-						newComponents.add((net.thisptr.jackson.jq.v2.core.internal.tree.PipeComponent) comp);
+						throw new IllegalStateException("Unknown pipe component: " + comp.getClass());
 					}
 				}
 			} finally {
@@ -195,8 +202,8 @@ public class Compiler {
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.PipedQuery<>(newComponents);
 		}
 
-		if (ast instanceof SemicolonOperator) {
-			SemicolonOperator semi = (SemicolonOperator) ast;
+		if (ast instanceof SemicolonOperatorAstNode) {
+			SemicolonOperatorAstNode semi = (SemicolonOperatorAstNode) ast;
 			List<Expression> newExpressions = new ArrayList<>();
 			for (AstNode q : semi.expressions()) {
 				newExpressions.add(compileNonNull(env, context, q));
@@ -204,27 +211,27 @@ public class Compiler {
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.SemicolonOperator(newExpressions);
 		}
 
-		if (ast instanceof ObjectConstruction) {
-			ObjectConstruction obj = (ObjectConstruction) ast;
+		if (ast instanceof ObjectConstructionAstNode) {
+			ObjectConstructionAstNode obj = (ObjectConstructionAstNode) ast;
 			net.thisptr.jackson.jq.v2.core.internal.tree.ObjectConstruction<JsonNode> res = new net.thisptr.jackson.jq.v2.core.internal.tree.ObjectConstruction<>();
-			for (FieldConstructionAst fc : obj.fields) {
-				if (fc instanceof IdentifierKeyFieldConstructionAst) {
-					IdentifierKeyFieldConstructionAst ik = (IdentifierKeyFieldConstructionAst) fc;
+			for (ObjectConstructionAstNode.FieldConstructionAst fc : obj.fields) {
+				if (fc instanceof ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst) {
+					ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst ik = (ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst) fc;
 					Expression val = compile(env, context, ik.value);
 					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.IdentifierKeyFieldConstruction<>(ik.key, val));
-				} else if (fc instanceof JsonQueryKeyFieldConstructionAst) {
-					JsonQueryKeyFieldConstructionAst jq = (JsonQueryKeyFieldConstructionAst) fc;
+				} else if (fc instanceof ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst) {
+					ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst jq = (ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst) fc;
 					Expression key = compileNonNull(env, context, jq.key());
 					Expression val = compileNonNull(env, context, jq.value());
 					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.JsonQueryKeyFieldConstruction<>(key, val));
-				} else if (fc instanceof StringKeyFieldConstructionAst) {
-					StringKeyFieldConstructionAst sk = (StringKeyFieldConstructionAst) fc;
+				} else if (fc instanceof ObjectConstructionAstNode.StringKeyFieldConstructionAst) {
+					ObjectConstructionAstNode.StringKeyFieldConstructionAst sk = (ObjectConstructionAstNode.StringKeyFieldConstructionAst) fc;
 					Expression key = compileNonNull(env, context, sk.key);
 					Expression val = compile(env, context, sk.value);
 					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.StringKeyFieldConstruction<>(key, val));
-				} else if (fc instanceof VariableKeyFieldConstruction) {
+				} else if (fc instanceof ObjectConstructionAstNode.VariableKeyFieldConstruction) {
 					// desugar `{ $x }` into the same shape as `{ x: $x }` -- no dedicated resolved class needed.
-					VariableKeyFieldConstruction vk = (VariableKeyFieldConstruction) fc;
+					ObjectConstructionAstNode.VariableKeyFieldConstruction vk = (ObjectConstructionAstNode.VariableKeyFieldConstruction) fc;
 					Expression compiledValue = compileVariableRef(env, context, null, vk.name());
 					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.IdentifierKeyFieldConstruction<>(vk.name(), compiledValue));
 				} else {
@@ -234,25 +241,25 @@ public class Compiler {
 			return res;
 		}
 
-		if (ast instanceof ArrayConstruction) {
-			ArrayConstruction arr = (ArrayConstruction) ast;
+		if (ast instanceof ArrayConstructionAstNode) {
+			ArrayConstructionAstNode arr = (ArrayConstructionAstNode) ast;
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction(compile(env, context, arr.q));
 		}
 
-		if (ast instanceof BinaryOpNode) {
-			BinaryOpNode bin = (BinaryOpNode) ast;
+		if (ast instanceof BinaryOpAstNode) {
+			BinaryOpAstNode bin = (BinaryOpAstNode) ast;
 			Expression lhs = compileNonNull(env, context, bin.lhs);
 			Expression rhs = compileNonNull(env, context, bin.rhs);
 			return bin.operator.create(lhs, rhs, env.version());
 		}
 
-		if (ast instanceof NegativeExpression) {
-			NegativeExpression neg = (NegativeExpression) ast;
+		if (ast instanceof NegativeExpressionAstNode) {
+			NegativeExpressionAstNode neg = (NegativeExpressionAstNode) ast;
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.NegativeExpression(compileNonNull(env, context, neg.value()));
 		}
 
-		if (ast instanceof Conditional) {
-			Conditional cond = (Conditional) ast;
+		if (ast instanceof ConditionalAstNode) {
+			ConditionalAstNode cond = (ConditionalAstNode) ast;
 			List<Pair<Expression, Expression>> newSwitches = new ArrayList<>();
 			for (Pair<AstNode, AstNode> sw : cond.switches()) {
 				Expression newIf = compileNonNull(env, context, sw._1);
@@ -263,18 +270,18 @@ public class Compiler {
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.Conditional(newSwitches, newElse);
 		}
 
-		if (ast instanceof TryCatch) {
-			TryCatch tc = (TryCatch) ast;
+		if (ast instanceof TryCatchAstNode) {
+			TryCatchAstNode tc = (TryCatchAstNode) ast;
 			Expression newTry = compileNonNull(env, context, tc.tryExpr());
 			Expression newCatch = compile(env, context, tc.catchExpr());
-			if (tc instanceof TryCatch.Question) {
+			if (tc instanceof TryCatchAstNode.Question) {
 				return new net.thisptr.jackson.jq.v2.core.internal.tree.TryCatch.Question(newTry);
 			}
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.TryCatch(newTry, newCatch);
 		}
 
-		if (ast instanceof Tuple) {
-			Tuple tuple = (Tuple) ast;
+		if (ast instanceof TupleAstNode) {
+			TupleAstNode tuple = (TupleAstNode) ast;
 			List<Expression> newQs = new ArrayList<>();
 			for (AstNode q : tuple.qs) {
 				newQs.add(compileNonNull(env, context, q));
@@ -282,8 +289,8 @@ public class Compiler {
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.Tuple(newQs);
 		}
 
-		if (ast instanceof ReduceExpression) {
-			ReduceExpression red = (ReduceExpression) ast;
+		if (ast instanceof ReduceExpressionAstNode) {
+			ReduceExpressionAstNode red = (ReduceExpressionAstNode) ast;
 			Expression compiledIter = compileNonNull(env, context, red.iterExpr());
 			Expression compiledInit = compileNonNull(env, context, red.initExpr());
 			PatternMatcher<JsonNode> compiledMatcher = compileMatcher(env, context, red.matcher());
@@ -304,8 +311,8 @@ public class Compiler {
 			}
 		}
 
-		if (ast instanceof ForeachExpression) {
-			ForeachExpression fe = (ForeachExpression) ast;
+		if (ast instanceof ForeachExpressionAstNode) {
+			ForeachExpressionAstNode fe = (ForeachExpressionAstNode) ast;
 			Expression compiledIter = compileNonNull(env, context, fe.iterExpr());
 			Expression compiledInit = compileNonNull(env, context, fe.initExpr());
 			PatternMatcher<JsonNode> compiledMatcher = compileMatcher(env, context, fe.matcher());
@@ -327,8 +334,8 @@ public class Compiler {
 			}
 		}
 
-		if (ast instanceof FormattingFilter) {
-			FormattingFilter ff = (FormattingFilter) ast;
+		if (ast instanceof FormattingFilterAstNode) {
+			FormattingFilterAstNode ff = (FormattingFilterAstNode) ast;
 			String fname = ff.name().startsWith("@") ? ff.name() : "@" + ff.name();
 			FunctionNameAndArity key = FunctionNameAndArity.of(fname, 0);
 			FunctionFactory factory = env.getFunctionFactory(key);
@@ -339,8 +346,8 @@ public class Compiler {
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionCall<>(fname, fn);
 		}
 
-		if (ast instanceof StringInterpolation) {
-			StringInterpolation si = (StringInterpolation) ast;
+		if (ast instanceof StringInterpolationAstNode) {
+			StringInterpolationAstNode si = (StringInterpolationAstNode) ast;
 			List<Pair<Integer, Expression>> compiledInterpolations = new ArrayList<>();
 			for (Pair<Integer, AstNode> pair : si.interpolations()) {
 				Expression resExpr = compileNonNull(env, context, pair._2);
@@ -350,8 +357,8 @@ public class Compiler {
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.StringInterpolation(si.template(), compiledInterpolations, compiledFormatter);
 		}
 
-		if (ast instanceof BracketFieldAccess) {
-			BracketFieldAccess bfa = (BracketFieldAccess) ast;
+		if (ast instanceof BracketFieldAccessAstNode) {
+			BracketFieldAccessAstNode bfa = (BracketFieldAccessAstNode) ast;
 			Expression target = compileNonNull(env, context, bfa.target());
 			@Var Expression start = compile(env, context, bfa.startExpr());
 			@Var Expression end = compile(env, context, bfa.endExpr());
@@ -366,27 +373,59 @@ public class Compiler {
 			}
 		}
 
-		if (ast instanceof IdentifierFieldAccess) {
-			IdentifierFieldAccess ifa = (IdentifierFieldAccess) ast;
+		if (ast instanceof IdentifierFieldAccessAstNode) {
+			IdentifierFieldAccessAstNode ifa = (IdentifierFieldAccessAstNode) ast;
 			Expression target = compileNonNull(env, context, ifa.target());
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.IdentifierFieldAccess(target, ifa.field(), ifa.permissive());
 		}
 
-		if (ast instanceof StringFieldAccess) {
-			StringFieldAccess sfa = (StringFieldAccess) ast;
+		if (ast instanceof StringFieldAccessAstNode) {
+			StringFieldAccessAstNode sfa = (StringFieldAccessAstNode) ast;
 			Expression target = compileNonNull(env, context, sfa.target());
 			Expression key = compileNonNull(env, context, sfa.key());
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.StringFieldAccess(target, key, sfa.permissive());
 		}
 
-		if (ast instanceof BracketExtractFieldAccess) {
-			BracketExtractFieldAccess befa = (BracketExtractFieldAccess) ast;
+		if (ast instanceof BracketExtractFieldAccessAstNode) {
+			BracketExtractFieldAccessAstNode befa = (BracketExtractFieldAccessAstNode) ast;
 			Expression target = compileNonNull(env, context, befa.target());
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketExtractFieldAccess(target, befa.permissive());
 		}
 
-		if (ast instanceof FunctionDefinition) {
-			FunctionDefinition fd = (FunctionDefinition) ast;
+		if (ast instanceof BooleanLiteralAstNode) {
+			return new BooleanLiteral(((BooleanLiteralAstNode) ast).value());
+		}
+
+		if (ast instanceof LongLiteralAstNode) {
+			return new LongLiteral(((LongLiteralAstNode) ast).value());
+		}
+
+		if (ast instanceof DoubleLiteralAstNode) {
+			return new DoubleLiteral(((DoubleLiteralAstNode) ast).value());
+		}
+
+		if (ast instanceof NullLiteralAstNode) {
+			return new NullLiteral();
+		}
+
+		if (ast instanceof StringLiteralAstNode) {
+			return new StringLiteral(((StringLiteralAstNode) ast).value());
+		}
+
+		if (ast instanceof ThisObjectAstNode) {
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.ThisObject();
+		}
+
+		if (ast instanceof RecursionOperatorAstNode) {
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.RecursionOperator();
+		}
+
+		if (ast instanceof BreakExpressionAstNode) {
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.BreakExpression(((BreakExpressionAstNode) ast).name());
+		}
+
+		if (ast instanceof FunctionDefinitionAstNode) {
+			FunctionDefinitionAstNode fd = (FunctionDefinitionAstNode) ast;
 			context.addLocalFunction(fd.fname(), fd.args().size());
 
 			CompileContext fnContext = context.copy();
@@ -431,7 +470,7 @@ public class Compiler {
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionDefinition(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody);
 		}
 
-		return (Expression) ast;
+		throw new IllegalStateException("Unknown AST node: " + ast.getClass());
 	}
 
 	private static <N> Expression compileVariableRef(Environment<N> env, CompileContext context, @Nullable String moduleName, String varName) throws JsonQueryException {
@@ -474,23 +513,22 @@ public class Compiler {
 		throw new JsonQueryException(String.format("Variable $%s is not defined", varName));
 	}
 
-	@SuppressWarnings("unchecked")
-	private static <N> PatternMatcher<N> compileMatcher(Environment<N> env, CompileContext context, PatternMatcherAst matcher) throws JsonQueryException {
-		if (matcher instanceof ValueMatcher) {
-			return (ValueMatcher<N>) matcher;
+	private static <N> PatternMatcher<N> compileMatcher(Environment<N> env, CompileContext context, PatternMatcherAstNode matcher) throws JsonQueryException {
+		if (matcher instanceof ValueMatcherAstNode) {
+			return new ValueMatcher<>(((ValueMatcherAstNode) matcher).name());
 		}
-		if (matcher instanceof ArrayMatcherAst) {
-			ArrayMatcherAst am = (ArrayMatcherAst) matcher;
+		if (matcher instanceof ArrayMatcherAstNode) {
+			ArrayMatcherAstNode am = (ArrayMatcherAstNode) matcher;
 			List<PatternMatcher<N>> compiled = new ArrayList<>();
-			for (PatternMatcherAst m : am.matchers()) {
+			for (PatternMatcherAstNode m : am.matchers()) {
 				compiled.add(compileMatcher(env, context, m));
 			}
 			return new ArrayMatcher<>(compiled);
 		}
-		if (matcher instanceof ObjectMatcherAst) {
-			ObjectMatcherAst om = (ObjectMatcherAst) matcher;
+		if (matcher instanceof ObjectMatcherAstNode) {
+			ObjectMatcherAstNode om = (ObjectMatcherAstNode) matcher;
 			List<ObjectMatcher.FieldMatcher<N>> compiled = new ArrayList<>();
-			for (ObjectMatcherAst.FieldMatcher fm : om.matchers()) {
+			for (ObjectMatcherAstNode.FieldMatcher fm : om.matchers()) {
 				Expression name = compileNonNull(env, context, fm.name());
 				PatternMatcher<N> sub = fm.rawMatcher() != null ? compileMatcher(env, context, fm.rawMatcher()) : null;
 				compiled.add(new ObjectMatcher.FieldMatcher<>(fm.dollar(), name, sub));
@@ -536,17 +574,17 @@ public class Compiler {
 		}
 	}
 
-	private static void collectVariableNames(PatternMatcherAst matcher, Set<String> out) {
-		if (matcher instanceof ValueMatcher) {
-			out.add(((ValueMatcher<?>) matcher).name());
-		} else if (matcher instanceof ArrayMatcherAst) {
-			for (PatternMatcherAst m : ((ArrayMatcherAst) matcher).matchers()) {
+	private static void collectVariableNames(PatternMatcherAstNode matcher, Set<String> out) {
+		if (matcher instanceof ValueMatcherAstNode) {
+			out.add(((ValueMatcherAstNode) matcher).name());
+		} else if (matcher instanceof ArrayMatcherAstNode) {
+			for (PatternMatcherAstNode m : ((ArrayMatcherAstNode) matcher).matchers()) {
 				collectVariableNames(m, out);
 			}
-		} else if (matcher instanceof ObjectMatcherAst) {
-			for (ObjectMatcherAst.FieldMatcher fm : ((ObjectMatcherAst) matcher).matchers()) {
-				if (fm.dollar() && fm.name() instanceof StringLiteral) {
-					out.add(((StringLiteral) fm.name()).value());
+		} else if (matcher instanceof ObjectMatcherAstNode) {
+			for (ObjectMatcherAstNode.FieldMatcher fm : ((ObjectMatcherAstNode) matcher).matchers()) {
+				if (fm.dollar() && fm.name() instanceof StringLiteralAstNode) {
+					out.add(((StringLiteralAstNode) fm.name()).value());
 				}
 				if (fm.rawMatcher() != null) {
 					collectVariableNames(fm.rawMatcher(), out);

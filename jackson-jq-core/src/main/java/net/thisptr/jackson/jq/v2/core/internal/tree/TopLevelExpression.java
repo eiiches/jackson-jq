@@ -4,8 +4,7 @@ import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.ast.ImportStatement;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ModuleDirective;
+import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -14,21 +13,21 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class TopLevelExpression<JsonNode> implements Expression {
-	private final List<ImportStatement<JsonNode>> imports;
+	private final List<TopLevelAstNode.ImportStatement<JsonNode>> imports;
 	private final Expression expr;
-	private final ModuleDirective<JsonNode> moduleDirective;
+	private final TopLevelAstNode.ModuleDirective<JsonNode> moduleDirective;
 
-	public TopLevelExpression(ModuleDirective<JsonNode> moduleDirective, List<ImportStatement<JsonNode>> imports, Expression expr) {
+	public TopLevelExpression(TopLevelAstNode.ModuleDirective<JsonNode> moduleDirective, List<TopLevelAstNode.ImportStatement<JsonNode>> imports, Expression expr) {
 		this.moduleDirective = moduleDirective;
 		this.imports = imports;
 		this.expr = expr;
 	}
 
-	public ModuleDirective<JsonNode> moduleDirective() {
+	public TopLevelAstNode.ModuleDirective<JsonNode> moduleDirective() {
 		return moduleDirective;
 	}
 
-	public List<ImportStatement<JsonNode>> imports() {
+	public List<TopLevelAstNode.ImportStatement<JsonNode>> imports() {
 		return imports;
 	}
 
@@ -53,7 +52,7 @@ public class TopLevelExpression<JsonNode> implements Expression {
 			s.append(moduleDirective);
 			s.append("; ");
 		}
-		for (ImportStatement<JsonNode> imp : imports) {
+		for (TopLevelAstNode.ImportStatement<JsonNode> imp : imports) {
 			s.append(imp);
 			s.append("; ");
 		}

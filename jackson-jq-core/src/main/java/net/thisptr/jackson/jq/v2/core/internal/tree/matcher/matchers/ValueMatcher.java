@@ -5,7 +5,6 @@ import java.util.Stack;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.PatternMatcherAst;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Functional;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
@@ -14,7 +13,7 @@ import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ValueMatcher<JsonNode> implements PatternMatcher<JsonNode>, PatternMatcherAst {
+public class ValueMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	private String name;
 
 	public ValueMatcher(String name) {

@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.binaryop.BinaryOpNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression.Operator.Associativity;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment.Assignment;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment.ComplexAlternativeAssignment;
@@ -253,7 +253,7 @@ public abstract class BinaryOperatorExpression implements Expression {
 					Operator op = stackOperators.pop();
 					AstNode rhs = stackExprs.pop();
 					AstNode lhs = stackExprs.pop();
-					stackExprs.push(new BinaryOpNode(op, lhs, rhs));
+					stackExprs.push(new BinaryOpAstNode(op, lhs, rhs));
 				} else {
 					break;
 				}
@@ -266,7 +266,7 @@ public abstract class BinaryOperatorExpression implements Expression {
 			Operator op = stackOperators.pop();
 			AstNode rhs = stackExprs.pop();
 			AstNode lhs = stackExprs.pop();
-			stackExprs.push(new BinaryOpNode(op, lhs, rhs));
+			stackExprs.push(new BinaryOpAstNode(op, lhs, rhs));
 		}
 
 		return stackExprs.get(0);
