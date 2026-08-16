@@ -41,7 +41,6 @@ public class FileSystemModuleLoaderTest {
 
 		ModuleLoader<JsonNode> moduleLoader = setupModuleLoader(Objects.requireNonNull(tempDir));
 
-		rootScope.setModuleLoader(moduleLoader);
 		env.setModuleLoader(moduleLoader);
 	}
 

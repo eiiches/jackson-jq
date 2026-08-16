@@ -1,18 +1,9 @@
 package net.thisptr.jackson.jq.v2.spi;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.internal.module.loaders.NullModuleLoader;
-import net.thisptr.jackson.jq.v2.spi.module.Module;
-import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class Scope<JsonNode> {
@@ -32,12 +23,6 @@ public class Scope<JsonNode> {
 
 	private @Nullable Scope<JsonNode> parentScope;
 
-	private @Nullable Map<@Nullable String, LinkedList<Module>> importedModules; // the last import comes first; the key is null when the module is loaded by an include statement.
-
-	private @Nullable Map<String, JsonNode> importedData; // the last import overwrites prior imports
-
-	private @Nullable ModuleLoader<JsonNode> moduleLoader;
-
 	public interface ValueWithPath<JsonNode> {
 		@Nullable JsonNode value();
 
@@ -53,8 +38,6 @@ public class Scope<JsonNode> {
 			return parentScope.getExecutionFrame();
 		return null;
 	}
-
-	private @Nullable Module currentModule;
 
 	private Scope(@Nullable Scope<JsonNode> parentScope) {
 		this.parentScope = parentScope;
@@ -164,71 +147,5 @@ public class Scope<JsonNode> {
 		}
 		frame.set(slot, factory);
 	}
-
-
-
-	public void setImportedData(String name, JsonNode data) {
-		if (importedData == null)
-			importedData = new HashMap<>();
-		importedData.put(name, data);
-	}
-
-	public @Nullable JsonNode getImportedData(String name) {
-		if (importedData != null) {
-			JsonNode data = importedData.get(name);
-			if (data != null)
-				return data;
-		}
-		if (parentScope == null)
-			return null;
-		return parentScope.getImportedData(name);
-	}
-
-	public void addImportedModule(@Nullable String name, Module module) {
-		if (importedModules == null)
-			importedModules = new HashMap<>();
-		importedModules.computeIfAbsent(name, (dummy) -> new LinkedList<>()).addFirst(module);
-	}
-
-	public List<Module> getImportedModules(@Nullable String name) { // the last import comes first
-		List<Module> modules = new ArrayList<>();
-		getImportedModules(modules, name);
-		return modules;
-	}
-
-	private void getImportedModules(List<Module> modules, @Nullable String name) {
-		if (importedModules != null) {
-			List<Module> localModules = importedModules.get(name);
-			if (localModules != null) {
-				modules.addAll(localModules);
-			}
-		}
-		if (parentScope == null)
-			return;
-		parentScope.getImportedModules(modules, name);
-	}
-
-	public void setModuleLoader(ModuleLoader<JsonNode> moduleLoader) {
-		this.moduleLoader = moduleLoader;
-	}
-
-	public ModuleLoader<JsonNode> getModuleLoader() {
-		if (this.moduleLoader != null)
-			return this.moduleLoader;
-		if (parentScope == null)
-			return NullModuleLoader.getInstance();
-		return parentScope.getModuleLoader();
-	}
-
-	public @Nullable Module getCurrentModule() {
-		if (this.currentModule != null)
-			return this.currentModule;
-		if (parentScope == null)
-			return null;
-		return parentScope.getCurrentModule();
-	}
-
-	public void setCurrentModule(Module module) {
-		this.currentModule = module;
-	}
 }
+

@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
-import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -28,22 +27,12 @@ public class VariableAccess implements Expression {
 
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		if (moduleName != null) {
-			@Var JsonNode data = null;
-			if (moduleName.equals(name))
-				data = scope.getImportedData(name);
-			if (data == null)
-				throw new JsonQueryException(String.format("$%s::%s is not defined", moduleName, name));
-			output.emit(data, null);
-		} else {
-			JsonNode data = scope.getImportedData(name);
-			if (data != null) {
-				output.emit(data, null);
-				return;
-			}
+		throw new UnsupportedOperationException("VariableAccess requires symbol resolution");
+	}
 
-			throw new JsonQueryException(String.format("$%s is not defined", name));
-		}
+	@Override
+	public <JsonNode> void apply(JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		throw new UnsupportedOperationException("VariableAccess requires symbol resolution");
 	}
 
 	@Override

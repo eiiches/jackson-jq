@@ -16,6 +16,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 
 public class Environment<JsonNode> {
@@ -50,7 +51,6 @@ public class Environment<JsonNode> {
 
 	public Environment<JsonNode> setModuleLoader(ModuleLoader<JsonNode> moduleLoader) {
 		this.moduleLoader = moduleLoader;
-		this.rootScope.setModuleLoader(moduleLoader);
 		return this;
 	}
 
@@ -99,8 +99,12 @@ public class Environment<JsonNode> {
 	}
 
 	public JsonQuery<JsonNode> compile(String expression) throws JsonQueryException {
+		return compile(expression, null);
+	}
+
+	public JsonQuery<JsonNode> compile(String expression, @Nullable Module currentModule) throws JsonQueryException {
 		Expression parsedExpr = ExpressionParser.compile(expression, version);
-		Expression resolvedExpr = AstResolver.resolve(this, parsedExpr);
+		Expression resolvedExpr = AstResolver.resolve(this, currentModule, parsedExpr);
 		return (in, output) -> resolvedExpr.apply(rootScope, in, null, output, false);
 	}
 }

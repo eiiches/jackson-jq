@@ -33,9 +33,14 @@ import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	private final List<Path> searchPaths;
 	private final Version version;
-	private final Scope<JsonNode> parentScope;
+	private final JsonProvider<JsonNode> jsonProvider;
+	private final @Nullable ModuleLoader<JsonNode> parentModuleLoader;
 
-	public FileSystemModuleLoader(Scope<JsonNode> parentScope, Version version, Path... searchPaths) {
+	public FileSystemModuleLoader(JsonProvider<JsonNode> jsonProvider, Version version, Path... searchPaths) {
+		this(jsonProvider, null, version, searchPaths);
+	}
+
+	public FileSystemModuleLoader(JsonProvider<JsonNode> jsonProvider, @Nullable ModuleLoader<JsonNode> parentModuleLoader, Version version, Path... searchPaths) {
 		List<Path> absoluteSearchPaths = new ArrayList<>();
 		for (Path searchPath : searchPaths) {
 			if (!searchPath.isAbsolute())
@@ -43,8 +48,13 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 			absoluteSearchPaths.add(searchPath);
 		}
 		this.searchPaths = absoluteSearchPaths;
-		this.parentScope = parentScope;
+		this.jsonProvider = jsonProvider;
+		this.parentModuleLoader = parentModuleLoader;
 		this.version = version;
+	}
+
+	public FileSystemModuleLoader(Scope<JsonNode> parentScope, Version version, Path... searchPaths) {
+		this(parentScope.jsonProvider(), null, version, searchPaths);
 	}
 
 	private static Path resolveModulePath(Path searchPath, String path) {
@@ -123,11 +133,10 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 
 		FileSystemModule module = new FileSystemModule(moduleFile.searchPath, moduleFile.modulePath);
 
-		net.thisptr.jackson.jq.v2.core.Environment<JsonNode> moduleEnv = new net.thisptr.jackson.jq.v2.core.Environment<>(parentScope.jsonProvider(), version);
-		moduleEnv.setModuleLoader(parentScope.getModuleLoader());
-		moduleEnv.rootScope().setCurrentModule(module);
+		net.thisptr.jackson.jq.v2.core.Environment<JsonNode> moduleEnv = new net.thisptr.jackson.jq.v2.core.Environment<>(jsonProvider, version);
+		moduleEnv.setModuleLoader(parentModuleLoader != null ? parentModuleLoader : this);
 		Expression expr = ExpressionParser.compile(moduleString + " null", version);
-		net.thisptr.jackson.jq.v2.core.internal.compile.AstResolver.resolve(moduleEnv, expr);
+		net.thisptr.jackson.jq.v2.core.internal.compile.AstResolver.resolve(moduleEnv, module, expr);
 
 		moduleEnv.functionFactories().forEach((key, factory) -> {
 			if (key.arity() != null)
@@ -186,7 +195,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 				return null;
 		}
 
-		JsonProvider<JsonNode> jsonProvider = parentScope.jsonProvider();
+		JsonProvider<JsonNode> jsonProvider = this.jsonProvider;
 		if (metadata != null) {
 			JsonNode search = jsonProvider.get(metadata, "search");
 			if (search != null) {
@@ -273,7 +282,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		if (moduleFile == null)
 			return null;
 
-		JsonProvider<JsonNode> jsonProvider = parentScope.jsonProvider();
+		JsonProvider<JsonNode> jsonProvider = this.jsonProvider;
 		@Var JsonNode data = jsonProvider.createArray();
 
 		List<JsonNode> values = jsonProvider.readMultipleValues(new String(moduleFile.bytes, StandardCharsets.UTF_8));

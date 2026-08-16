@@ -66,15 +66,23 @@ import net.thisptr.jackson.jq.v2.spi.module.Module;
 public class AstResolver {
 
 	public static <JsonNode> Expression resolve(Environment<JsonNode> env, Expression expr) throws JsonQueryException {
+		return resolve(env, (Module) null, expr);
+	}
+
+	public static <JsonNode> Expression resolve(Environment<JsonNode> env, @Nullable Module currentModule, Expression expr) throws JsonQueryException {
 		CompileContext context = new CompileContext();
-		Expression resolved = resolve(env, context, expr);
+		Expression resolved = resolve(env, context, currentModule, expr);
 		if (resolved == null)
 			throw new JsonQueryException("Cannot resolve null expression");
 		return new net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression<>(context.getSlotCount(), resolved);
 	}
 
-	@SuppressWarnings({"unchecked", "rawtypes"})
 	public static <JsonNode> @Nullable Expression resolve(Environment<JsonNode> env, CompileContext context, @Nullable Expression expr) throws JsonQueryException {
+		return resolve(env, context, (Module) null, expr);
+	}
+
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public static <JsonNode> @Nullable Expression resolve(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, @Nullable Expression expr) throws JsonQueryException {
 		if (expr == null)
 			return null;
 
@@ -82,7 +90,7 @@ public class AstResolver {
 			FunctionCall call = (FunctionCall) expr;
 			List<Expression> compiledArgs = new ArrayList<>();
 			for (Expression arg : call.args()) {
-				compiledArgs.add(resolve(env, context, arg));
+				compiledArgs.add(resolve(env, context, currentModule, arg));
 			}
 
 			String fullName = call.moduleName() != null ? call.moduleName() + "::" + call.name() : call.name();
@@ -109,6 +117,28 @@ public class AstResolver {
 			VariableAccess varAccess = (VariableAccess) expr;
 			String varName = varAccess.name();
 
+			if (varAccess.moduleName() != null) {
+				String fullName = varAccess.moduleName() + "::" + varName;
+				if (context.isLocalVariable(fullName)) {
+					SymbolLocation loc = context.getVariableLocation(fullName);
+					int slot = loc != null ? loc.slot : 0;
+					if (loc != null && !loc.isLocal) {
+						return new ResolvedCapturedVariableAccess(fullName, slot);
+					}
+					return new ResolvedLocalVariableAccess(fullName, slot);
+				}
+
+				@Var Supplier<JsonNode> supplier = env.getVariable(fullName);
+				if (supplier == null && varAccess.moduleName().equals(varName)) {
+					supplier = env.getVariable(varName);
+				}
+				if (supplier != null) {
+					return new ResolvedGlobalVariableAccess<>(fullName, supplier);
+				}
+
+				throw new JsonQueryException(String.format("Variable $%s::%s is not defined", varAccess.moduleName(), varName));
+			}
+
 			if (context.isLocalVariable(varName)) {
 				SymbolLocation loc = context.getVariableLocation(varName);
 				int slot = loc != null ? loc.slot : 0;
@@ -134,7 +164,7 @@ public class AstResolver {
 				}
 				JsonNode metadata = imp.getMetadata(env.jsonProvider());
 				if (imp.dollarImport) {
-					JsonNode data = env.getModuleLoader().loadData(env.rootScope().getCurrentModule(), imp.path, metadata);
+					JsonNode data = env.getModuleLoader().loadData(currentModule, imp.path, metadata);
 					if (data == null) {
 						throw new JsonQueryException(String.format("module not found: %s", imp.path));
 					}
@@ -142,7 +172,7 @@ public class AstResolver {
 						env.addVariable(imp.name, data);
 					}
 				} else {
-					Module mod = env.getModuleLoader().loadModule(env.rootScope().getCurrentModule(), imp.path, metadata);
+					Module mod = env.getModuleLoader().loadModule(currentModule, imp.path, metadata);
 					if (mod == null) {
 						throw new JsonQueryException(String.format("module not found: %s", imp.path));
 					}
@@ -154,7 +184,7 @@ public class AstResolver {
 					}
 				}
 			}
-			Expression resolvedInner = resolveNonNull(env, context, top.expr());
+			Expression resolvedInner = resolveNonNull(env, context, currentModule, top.expr());
 			return new TopLevelExpression<>(top.moduleDirective(), Collections.emptyList(), resolvedInner);
 		}
 
@@ -494,7 +524,11 @@ public class AstResolver {
 	}
 
 	public static <JsonNode> Expression resolveNonNull(Environment<JsonNode> env, CompileContext context, Expression expr) throws JsonQueryException {
-		Expression resolved = resolve(env, context, expr);
+		return resolveNonNull(env, context, (Module) null, expr);
+	}
+
+	public static <JsonNode> Expression resolveNonNull(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, Expression expr) throws JsonQueryException {
+		Expression resolved = resolve(env, context, currentModule, expr);
 		if (resolved == null)
 			throw new JsonQueryException("Cannot resolve null expression");
 		return resolved;

@@ -8,8 +8,6 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.module.Module;
-import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class TopLevelExpression<JsonNode> implements Expression {
@@ -42,22 +40,6 @@ public class TopLevelExpression<JsonNode> implements Expression {
 	}
 
 	private void applyInternal(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		ModuleLoader<JsonNode> moduleLoader = scope.getModuleLoader();
-
-		for (ImportStatement<JsonNode> imp : imports) {
-			if (!imp.dollarImport) {
-				Module module = moduleLoader.loadModule(scope.getCurrentModule(), imp.path, imp.getMetadata(scope.jsonProvider()));
-				if (module == null)
-					throw new JsonQueryException("module not found: " + imp.path);
-				scope.addImportedModule(imp.name, module);
-			} else {
-				JsonNode data = moduleLoader.loadData(scope.getCurrentModule(), imp.path, imp.getMetadata(scope.jsonProvider()));
-				if (data == null)
-					throw new JsonQueryException("module not found: " + imp.path);
-				scope.setImportedData(imp.name, data);
-			}
-		}
-
 		expr.apply(scope, in, ipath, output, requirePath);
 	}
 

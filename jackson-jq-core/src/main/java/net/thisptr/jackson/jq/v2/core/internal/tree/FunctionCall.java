@@ -6,13 +6,10 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class FunctionCall implements Expression {
@@ -40,30 +37,9 @@ public class FunctionCall implements Expression {
 		return moduleName;
 	}
 
-	private <JsonNode> Function<JsonNode> lookupFunction(Scope<JsonNode> scope) throws JsonQueryException {
-		if (moduleName != null) {
-			for (Module module : scope.getImportedModules(moduleName)) {
-				FunctionFactory f = module.getFunction(name, args.size());
-				if (f != null)
-					return f.createFunction(scope.jsonProvider(), args, version);
-			}
-			throw new JsonQueryException(String.format("Function %s::%s/%s does not exist", moduleName, name, args.size()));
-		} else {
-			// search functions loaded by "include" statement
-			for (Module module : scope.getImportedModules(null)) {
-				FunctionFactory g = module.getFunction(name, args.size());
-				if (g != null)
-					return g.createFunction(scope.jsonProvider(), args, version);
-			}
-
-			throw new JsonQueryException(String.format("Function %s/%s does not exist", name, args.size()));
-		}
-	}
-
 	@Override
 	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		Function<JsonNode> f = lookupFunction(scope);
-		f.apply(scope, in, path, output);
+		throw new UnsupportedOperationException("FunctionCall requires symbol resolution");
 	}
 
 	@Override

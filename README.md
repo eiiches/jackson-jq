@@ -506,7 +506,7 @@ The functions are discovered automatically through `ServiceLoader`. The command-
 Using extension modules
 -----------------------
 
-Functions that do not exist in jq are provided by separate extension modules. Add only the dependencies your application needs and configure the scope with `ClassPathModuleLoader` (see [jackson-jq-core/src/test/java/examples/Usage.java](jackson-jq-core/src/test/java/examples/Usage.java)).
+Functions that do not exist in jq are provided by separate extension modules. Add only the dependencies your application needs and configure the environment with `ClassPathModuleLoader` (see [jackson-jq-core/src/test/java/examples/Usage.java](jackson-jq-core/src/test/java/examples/Usage.java)).
 
 | Maven artifact | jq module | Functions |
 | --- | --- | --- |
