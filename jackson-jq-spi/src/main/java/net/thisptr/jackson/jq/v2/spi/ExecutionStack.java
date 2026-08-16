@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -20,10 +19,6 @@ public class ExecutionStack<JsonNode> {
 		Frame frame = new Frame(offset, size, parent);
 		frames.add(frame);
 		return frame;
-	}
-
-	public Frame pushFrame(int size) {
-		return pushFrame(null, size);
 	}
 
 	public void popFrame() {
@@ -86,26 +81,6 @@ public class ExecutionStack<JsonNode> {
 			return ExecutionStack.this;
 		}
 
-		public int size() {
-			return size;
-		}
-
-		public int offset() {
-			return offset;
-		}
-
-		public @Nullable Frame parent() {
-			return parent;
-		}
-
-		public @Nullable Frame hopParent(int depthDelta) {
-			@Var Frame f = this;
-			for (int i = 0; i < depthDelta && f != null; i++) {
-				f = f.parent;
-			}
-			return f;
-		}
-
 		private @Nullable Object get(int index) {
 			if (index < 0 || index >= size)
 				return null;
@@ -143,20 +118,10 @@ public class ExecutionStack<JsonNode> {
 			return null;
 		}
 
-		public @Nullable JsonNode getValueNode(int index) {
-			PathAndValue<JsonNode> pv = getValue(index);
-			return pv != null ? pv.getValue() : null;
-		}
-
 		@SuppressWarnings("unchecked")
 		public @Nullable Supplier<JsonNode> getValueSupplier(int index) {
 			Object raw = get(index);
 			return raw instanceof Supplier ? (Supplier<JsonNode>) raw : null;
-		}
-
-		public @Nullable Path<JsonNode> getPath(int index) {
-			PathAndValue<JsonNode> pv = getValue(index);
-			return pv != null ? pv.getPath() : null;
 		}
 
 		public @Nullable FunctionFactory getFunctionFactory(int index) {
@@ -167,25 +132,12 @@ public class ExecutionStack<JsonNode> {
 			return null;
 		}
 
-		@SuppressWarnings("unchecked")
-		public @Nullable Function<JsonNode> getFunction(int index) {
-			Object raw = get(index);
-			if (raw instanceof Function) {
-				return (Function<JsonNode>) raw;
-			}
-			return null;
-		}
-
 		public void set(int index, @Nullable Path<JsonNode> path, @Nullable JsonNode value) {
 			if (path != null) {
 				setRaw(index, new PathAndValue<>(path, value));
 			} else {
 				setRaw(index, value);
 			}
-		}
-
-		public void set(int index, PathAndValue<JsonNode> value) {
-			setRaw(index, value);
 		}
 
 		public void set(int index, @Nullable JsonNode value) {
@@ -200,8 +152,5 @@ public class ExecutionStack<JsonNode> {
 			setRaw(index, factory);
 		}
 
-		public void set(int index, Function<JsonNode> function) {
-			setRaw(index, function);
-		}
 	}
 }
