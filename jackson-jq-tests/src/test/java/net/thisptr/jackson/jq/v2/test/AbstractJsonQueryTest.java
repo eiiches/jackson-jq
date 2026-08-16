@@ -242,7 +242,7 @@ public abstract class AbstractJsonQueryTest<T> {
 		}
 
 		if (Boolean.TRUE.equals(tc.failing))
-			assertThat(failed).describedAs("The test case is marked as failing but completed successfully").isTrue();
+			assertThat(failed).describedAs("The test case is marked as failing but completed successfully: %s", command).isTrue();
 	}
 
 	@ParameterizedTest

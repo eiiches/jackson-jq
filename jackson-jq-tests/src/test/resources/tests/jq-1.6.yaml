@@ -726,7 +726,6 @@
   out:
   - [33, 101]
   v: '[1.6, 1.6]'
-  failing: true
 - q: 'def id(x):x; 2000 as $x | def f(x):1 as $x | id([$x, x, x]); def g(x): 100 as $x | f($x,$x+x); g($x)'
   in: "more testing"
   out:

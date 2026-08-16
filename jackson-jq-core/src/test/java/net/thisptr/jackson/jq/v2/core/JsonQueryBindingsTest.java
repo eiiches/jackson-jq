@@ -21,9 +21,9 @@ import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JsonQueryBindingsTest {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -89,7 +89,7 @@ public class JsonQueryBindingsTest {
 				.build();
 
 		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(env.compile("$value"), bindings));
-		assertTrue(error.getMessage().contains("evaluated to null"));
+		assertThat(error).hasMessageContaining("evaluated to null");
 	}
 
 	@Test
@@ -117,13 +117,13 @@ public class JsonQueryBindingsTest {
 
 		JsonQueryException variableError = assertThrows(JsonQueryException.class,
 				() -> run(query, bindingsWithVariable("unknown", 1)));
-		assertTrue(variableError.getMessage().contains("$unknown"));
+		assertThat(variableError).hasMessageContaining("$unknown");
 
 		JsonQueryBindings<JsonNode> functionBindings = JsonQueryBindings.<JsonNode>builder()
 				.addFunctionFactory(FunctionNameAndArity.of("unknown", 0), constantFunction("unused"))
 				.build();
 		JsonQueryException functionError = assertThrows(JsonQueryException.class, () -> run(query, functionBindings));
-		assertTrue(functionError.getMessage().contains("unknown/0"));
+		assertThat(functionError).hasMessageContaining("unknown/0");
 	}
 
 	@Test
