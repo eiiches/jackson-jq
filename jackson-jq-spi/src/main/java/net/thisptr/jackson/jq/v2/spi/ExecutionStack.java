@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.spi;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
@@ -114,6 +115,10 @@ public class ExecutionStack<JsonNode> {
 			return memory.get(realIdx);
 		}
 
+		public @Nullable Object getRawValue(int index) {
+			return get(index);
+		}
+
 		private void setRaw(int index, @Nullable Object value) {
 			if (index < 0)
 				return;
@@ -141,6 +146,12 @@ public class ExecutionStack<JsonNode> {
 		public @Nullable JsonNode getValueNode(int index) {
 			PathAndValue<JsonNode> pv = getValue(index);
 			return pv != null ? pv.getValue() : null;
+		}
+
+		@SuppressWarnings("unchecked")
+		public @Nullable Supplier<JsonNode> getValueSupplier(int index) {
+			Object raw = get(index);
+			return raw instanceof Supplier ? (Supplier<JsonNode>) raw : null;
 		}
 
 		public @Nullable Path<JsonNode> getPath(int index) {
@@ -179,6 +190,10 @@ public class ExecutionStack<JsonNode> {
 
 		public void set(int index, @Nullable JsonNode value) {
 			setRaw(index, value);
+		}
+
+		public void set(int index, Supplier<JsonNode> supplier) {
+			setRaw(index, supplier);
 		}
 
 		public void set(int index, FunctionFactory factory) {

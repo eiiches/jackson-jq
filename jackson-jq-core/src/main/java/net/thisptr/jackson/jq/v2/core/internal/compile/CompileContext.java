@@ -18,14 +18,17 @@ public class CompileContext {
 		final boolean isFunctionBoundary;
 		final Set<String> variables = new HashSet<>();
 		final Set<FunctionNameAndArity> functions = new HashSet<>();
-		final Map<String, Integer> symbolSlots = new HashMap<>();
+		final Map<String, Integer> variableSlots = new HashMap<>();
+		final Map<FunctionNameAndArity, Integer> functionSlots = new HashMap<>();
 		int nextSlot;
 
 		final List<ClosureSpec.CapturedVariableRef> capturedVariables = new ArrayList<>();
 		final Map<String, Integer> capturedVarSlots = new HashMap<>();
+		final Set<String> capturedGlobalVariables = new HashSet<>();
 
 		final List<ClosureSpec.CapturedFunctionRef> capturedFunctions = new ArrayList<>();
 		final Map<FunctionNameAndArity, Integer> capturedFnSlots = new HashMap<>();
+		final Set<FunctionNameAndArity> capturedGlobalFunctions = new HashSet<>();
 
 		ScopeFrame(boolean isFunctionBoundary, int initialSlot) {
 			this.isFunctionBoundary = isFunctionBoundary;
@@ -36,31 +39,52 @@ public class CompileContext {
 			ScopeFrame sf = new ScopeFrame(this.isFunctionBoundary, this.nextSlot);
 			sf.variables.addAll(this.variables);
 			sf.functions.addAll(this.functions);
-			sf.symbolSlots.putAll(this.symbolSlots);
+			sf.variableSlots.putAll(this.variableSlots);
+			sf.functionSlots.putAll(this.functionSlots);
 			sf.capturedVariables.addAll(this.capturedVariables);
 			sf.capturedVarSlots.putAll(this.capturedVarSlots);
+			sf.capturedGlobalVariables.addAll(this.capturedGlobalVariables);
 			sf.capturedFunctions.addAll(this.capturedFunctions);
 			sf.capturedFnSlots.putAll(this.capturedFnSlots);
+			sf.capturedGlobalFunctions.addAll(this.capturedGlobalFunctions);
 			return sf;
 		}
 	}
 
 	private final List<ScopeFrame> scopes;
+	private final Map<String, List<Integer>> globalVariableSlots;
+	private final Map<FunctionNameAndArity, List<Integer>> globalFunctionSlots;
+	private final Set<String> globalVariables;
+	private final Set<FunctionNameAndArity> globalFunctions;
+	private final Set<Integer> globalVariableRootSlots;
+	private final Set<Integer> globalFunctionRootSlots;
 
 	public CompileContext() {
 		this.scopes = new ArrayList<>();
 		this.scopes.add(new ScopeFrame(true, 0));
+		this.globalVariableSlots = new HashMap<>();
+		this.globalFunctionSlots = new HashMap<>();
+		this.globalVariables = new HashSet<>();
+		this.globalFunctions = new HashSet<>();
+		this.globalVariableRootSlots = new HashSet<>();
+		this.globalFunctionRootSlots = new HashSet<>();
 	}
 
-	private CompileContext(List<ScopeFrame> scopes) {
+	private CompileContext(List<ScopeFrame> scopes, Map<String, List<Integer>> globalVariableSlots, Map<FunctionNameAndArity, List<Integer>> globalFunctionSlots, Set<String> globalVariables, Set<FunctionNameAndArity> globalFunctions, Set<Integer> globalVariableRootSlots, Set<Integer> globalFunctionRootSlots) {
 		this.scopes = new ArrayList<>();
 		for (ScopeFrame sf : scopes) {
 			this.scopes.add(sf.copy());
 		}
+		this.globalVariableSlots = globalVariableSlots;
+		this.globalFunctionSlots = globalFunctionSlots;
+		this.globalVariables = globalVariables;
+		this.globalFunctions = globalFunctions;
+		this.globalVariableRootSlots = globalVariableRootSlots;
+		this.globalFunctionRootSlots = globalFunctionRootSlots;
 	}
 
 	public CompileContext copy() {
-		return new CompileContext(scopes);
+		return new CompileContext(scopes, globalVariableSlots, globalFunctionSlots, globalVariables, globalFunctions, globalVariableRootSlots, globalFunctionRootSlots);
 	}
 
 	public void pushLocalScope() {
@@ -102,25 +126,86 @@ public class CompileContext {
 			pushFunctionScope();
 		ScopeFrame top = scopes.get(scopes.size() - 1);
 		top.variables.add(name);
-		getOrAssignSlotInTop(name);
+		getOrAssignVariableSlotInTop(name);
 	}
 
 	public void addLocalFunction(String name, int arity) {
 		if (scopes.isEmpty())
 			pushFunctionScope();
 		ScopeFrame top = scopes.get(scopes.size() - 1);
-		top.functions.add(FunctionNameAndArity.of(name, arity));
-		getOrAssignSlotInTop(name);
+		FunctionNameAndArity key = FunctionNameAndArity.of(name, arity);
+		top.functions.add(key);
+		if (top == scopes.get(0) && globalFunctionRootSlots.contains(top.functionSlots.get(key))) {
+			top.functionSlots.put(key, top.nextSlot++);
+		} else {
+			getOrAssignFunctionSlotInTop(key);
+		}
 	}
 
-	public int getOrAssignSlotInTop(String name) {
+	private int getOrAssignVariableSlotInTop(String name) {
 		ScopeFrame top = scopes.get(scopes.size() - 1);
-		Integer slot = top.symbolSlots.get(name);
+		Integer slot = top.variableSlots.get(name);
 		if (slot != null)
 			return slot;
 		int assigned = top.nextSlot++;
-		top.symbolSlots.put(name, assigned);
+		top.variableSlots.put(name, assigned);
 		return assigned;
+	}
+
+	private int getOrAssignFunctionSlotInTop(FunctionNameAndArity key) {
+		ScopeFrame top = scopes.get(scopes.size() - 1);
+		Integer slot = top.functionSlots.get(key);
+		if (slot != null)
+			return slot;
+		int assigned = top.nextSlot++;
+		top.functionSlots.put(key, assigned);
+		return assigned;
+	}
+
+	public void addGlobalVariable(String symbolName, String bindingName) {
+		ScopeFrame root = scopes.get(0);
+		root.variables.add(symbolName);
+		@Var Integer slot = root.variableSlots.get(symbolName);
+		if (slot == null) {
+			slot = root.nextSlot++;
+			root.variableSlots.put(symbolName, slot);
+		}
+		globalVariables.add(bindingName);
+		globalVariableRootSlots.add(slot);
+		List<Integer> slots = globalVariableSlots.computeIfAbsent(bindingName, ignored -> new ArrayList<>());
+		if (!slots.contains(slot))
+			slots.add(slot);
+	}
+
+	public void addGlobalFunction(FunctionNameAndArity key) {
+		ScopeFrame root = scopes.get(0);
+		root.functions.add(key);
+		@Var Integer slot = root.functionSlots.get(key);
+		if (slot == null) {
+			slot = root.nextSlot++;
+			root.functionSlots.put(key, slot);
+		}
+		globalFunctions.add(key);
+		globalFunctionRootSlots.add(slot);
+		List<Integer> slots = globalFunctionSlots.computeIfAbsent(key, ignored -> new ArrayList<>());
+		if (!slots.contains(slot))
+			slots.add(slot);
+	}
+
+	public Map<String, List<Integer>> globalVariableSlots() {
+		return globalVariableSlots;
+	}
+
+	public Map<FunctionNameAndArity, List<Integer>> globalFunctionSlots() {
+		return globalFunctionSlots;
+	}
+
+	public Set<String> globalVariables() {
+		return globalVariables;
+	}
+
+	public Set<FunctionNameAndArity> globalFunctions() {
+		return globalFunctions;
 	}
 
 	public boolean isLocalVariable(String name) {
@@ -131,11 +216,15 @@ public class CompileContext {
 		return getFunctionLocation(name, arity) != null;
 	}
 
-	public int getSlot(String name) {
-		@Var SymbolLocation loc = getVariableLocation(name);
+	public int getVariableSlot(String name) {
+		SymbolLocation loc = getVariableLocation(name);
 		if (loc != null)
 			return loc.slot;
-		loc = getFunctionLocation(name, 0);
+		return 0;
+	}
+
+	public int getFunctionSlot(String name, int arity) {
+		SymbolLocation loc = getFunctionLocation(name, arity);
 		if (loc != null)
 			return loc.slot;
 		return 0;
@@ -146,9 +235,10 @@ public class CompileContext {
 		ScopeFrame current = scopes.get(currentDepth);
 
 		if (current.variables.contains(name)) {
-			Integer slot = current.symbolSlots.get(name);
+			Integer slot = current.variableSlots.get(name);
 			if (slot != null) {
-				return SymbolLocation.local(slot);
+				return currentDepth == 0 && globalVariableRootSlots.contains(slot)
+						? SymbolLocation.global(slot) : SymbolLocation.local(slot);
 			}
 		}
 
@@ -160,11 +250,13 @@ public class CompileContext {
 			}
 
 			if (outer.variables.contains(name)) {
-				Integer localSlot = outer.symbolSlots.get(name);
+				Integer localSlot = outer.variableSlots.get(name);
 				if (localSlot != null) {
 					if (!crossedFunctionBoundary) {
-						return SymbolLocation.local(localSlot);
+						return i == 0 && globalVariableRootSlots.contains(localSlot)
+								? SymbolLocation.global(localSlot) : SymbolLocation.local(localSlot);
 					}
+					boolean global = i == 0 && globalVariableRootSlots.contains(localSlot);
 					@Var int targetSlot = localSlot;
 					@Var boolean isLocalInParent = true;
 					for (int k = i + 1; k <= currentDepth; k++) {
@@ -176,15 +268,18 @@ public class CompileContext {
 							closureSlot = targetFrame.capturedVariables.size();
 							targetFrame.capturedVariables.add(new ClosureSpec.CapturedVariableRef(isLocalInParent, targetSlot));
 							targetFrame.capturedVarSlots.put(name, closureSlot);
+							if (global)
+								targetFrame.capturedGlobalVariables.add(name);
 						}
 						targetSlot = closureSlot;
 						isLocalInParent = false;
 					}
-					return SymbolLocation.captured(targetSlot);
+					return global ? SymbolLocation.capturedGlobal(targetSlot) : SymbolLocation.captured(targetSlot);
 				}
 			}
 			Integer existingClosureSlot = outer.capturedVarSlots.get(name);
 			if (existingClosureSlot != null && crossedFunctionBoundary) {
+				boolean global = outer.capturedGlobalVariables.contains(name);
 				@Var int targetSlot = existingClosureSlot;
 				@Var boolean isLocalInParent = false;
 				for (int k = i + 1; k <= currentDepth; k++) {
@@ -196,11 +291,13 @@ public class CompileContext {
 						closureSlot = targetFrame.capturedVariables.size();
 						targetFrame.capturedVariables.add(new ClosureSpec.CapturedVariableRef(isLocalInParent, targetSlot));
 						targetFrame.capturedVarSlots.put(name, closureSlot);
+						if (global)
+							targetFrame.capturedGlobalVariables.add(name);
 					}
 					targetSlot = closureSlot;
 					isLocalInParent = false;
 				}
-				return SymbolLocation.captured(targetSlot);
+				return global ? SymbolLocation.capturedGlobal(targetSlot) : SymbolLocation.captured(targetSlot);
 			}
 		}
 
@@ -212,10 +309,12 @@ public class CompileContext {
 		int currentDepth = scopes.size() - 1;
 		ScopeFrame current = scopes.get(currentDepth);
 
-		if (current.functions.contains(key)) {
-			Integer slot = current.symbolSlots.get(name);
+		FunctionNameAndArity currentKey = resolveFunctionKey(current, key);
+		if (currentKey != null) {
+			Integer slot = current.functionSlots.get(currentKey);
 			if (slot != null) {
-				return SymbolLocation.local(slot);
+				return currentDepth == 0 && globalFunctionRootSlots.contains(slot)
+						? SymbolLocation.global(slot) : SymbolLocation.local(slot);
 			}
 		}
 
@@ -226,51 +325,67 @@ public class CompileContext {
 				crossedFunctionBoundary = true;
 			}
 
-			if (outer.functions.contains(key)) {
-				Integer localSlot = outer.symbolSlots.get(name);
+			FunctionNameAndArity outerKey = resolveFunctionKey(outer, key);
+			if (outerKey != null) {
+				Integer localSlot = outer.functionSlots.get(outerKey);
 				if (localSlot != null) {
 					if (!crossedFunctionBoundary) {
-						return SymbolLocation.local(localSlot);
+						return i == 0 && globalFunctionRootSlots.contains(localSlot)
+								? SymbolLocation.global(localSlot) : SymbolLocation.local(localSlot);
 					}
+					boolean global = i == 0 && globalFunctionRootSlots.contains(localSlot);
 					@Var int targetSlot = localSlot;
 					@Var boolean isLocalInParent = true;
 					for (int k = i + 1; k <= currentDepth; k++) {
 						ScopeFrame targetFrame = scopes.get(k);
 						if (!targetFrame.isFunctionBoundary)
 							continue;
-						@Var Integer closureSlot = targetFrame.capturedFnSlots.get(key);
+						@Var Integer closureSlot = targetFrame.capturedFnSlots.get(outerKey);
 						if (closureSlot == null) {
 							closureSlot = targetFrame.capturedFunctions.size();
 							targetFrame.capturedFunctions.add(new ClosureSpec.CapturedFunctionRef(isLocalInParent, targetSlot));
-							targetFrame.capturedFnSlots.put(key, closureSlot);
+							targetFrame.capturedFnSlots.put(outerKey, closureSlot);
+							if (global)
+								targetFrame.capturedGlobalFunctions.add(outerKey);
 						}
 						targetSlot = closureSlot;
 						isLocalInParent = false;
 					}
-					return SymbolLocation.captured(targetSlot);
+					return global ? SymbolLocation.capturedGlobal(targetSlot) : SymbolLocation.captured(targetSlot);
 				}
 			}
-			Integer existingClosureSlot = outer.capturedFnSlots.get(key);
+			FunctionNameAndArity existingKey = outer.capturedFnSlots.containsKey(key) ? key : key.withArity(null);
+			Integer existingClosureSlot = outer.capturedFnSlots.get(existingKey);
 			if (existingClosureSlot != null && crossedFunctionBoundary) {
+				boolean global = outer.capturedGlobalFunctions.contains(existingKey);
 				@Var int targetSlot = existingClosureSlot;
 				@Var boolean isLocalInParent = false;
 				for (int k = i + 1; k <= currentDepth; k++) {
 					ScopeFrame targetFrame = scopes.get(k);
 					if (!targetFrame.isFunctionBoundary)
 						continue;
-					@Var Integer closureSlot = targetFrame.capturedFnSlots.get(key);
+					@Var Integer closureSlot = targetFrame.capturedFnSlots.get(existingKey);
 					if (closureSlot == null) {
 						closureSlot = targetFrame.capturedFunctions.size();
 						targetFrame.capturedFunctions.add(new ClosureSpec.CapturedFunctionRef(isLocalInParent, targetSlot));
-						targetFrame.capturedFnSlots.put(key, closureSlot);
+						targetFrame.capturedFnSlots.put(existingKey, closureSlot);
+						if (global)
+							targetFrame.capturedGlobalFunctions.add(existingKey);
 					}
 					targetSlot = closureSlot;
 					isLocalInParent = false;
 				}
-				return SymbolLocation.captured(targetSlot);
+				return global ? SymbolLocation.capturedGlobal(targetSlot) : SymbolLocation.captured(targetSlot);
 			}
 		}
 
 		return null;
+	}
+
+	private static @Nullable FunctionNameAndArity resolveFunctionKey(ScopeFrame frame, FunctionNameAndArity key) {
+		if (frame.functions.contains(key))
+			return key;
+		FunctionNameAndArity variadicKey = key.withArity(null);
+		return frame.functions.contains(variadicKey) ? variadicKey : null;
 	}
 }

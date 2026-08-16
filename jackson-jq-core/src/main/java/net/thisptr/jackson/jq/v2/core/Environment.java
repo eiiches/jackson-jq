@@ -75,6 +75,10 @@ public class Environment<JsonNode> {
 		return variables.get(name);
 	}
 
+	public Map<String, Supplier<JsonNode>> variables() {
+		return java.util.Collections.unmodifiableMap(variables);
+	}
+
 	public Environment<JsonNode> addFunctionFactory(FunctionNameAndArity nameAndArity, FunctionFactory functionFactory) {
 		functionFactories.put(nameAndArity, functionFactory);
 		return this;
@@ -98,6 +102,11 @@ public class Environment<JsonNode> {
 	public JsonQuery<JsonNode> compile(String expression, @Nullable Module currentModule) throws JsonQueryException {
 		AstNode parsedAst = ExpressionParser.compile(expression, version);
 		Expression<JsonNode> compiledExpr = Compiler.compile(this, currentModule, parsedAst);
-		return (in, output) -> compiledExpr.apply(null, in, null, output, false);
+		if (!(compiledExpr instanceof net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression))
+			throw new IllegalStateException("Compiler did not produce a root expression");
+		@SuppressWarnings("unchecked")
+		net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression<JsonNode> rootExpr =
+				(net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression<JsonNode>) compiledExpr;
+		return rootExpr::apply;
 	}
 }

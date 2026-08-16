@@ -79,10 +79,22 @@ public class Compiler {
 
 	public static <JsonNode> Expression<JsonNode> compile(Environment<JsonNode> env, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
 		CompileContext context = new CompileContext();
+		registerEnvironmentGlobals(env, context);
 		Expression<JsonNode> compiled = compile(env, context, currentModule, ast);
 		if (compiled == null)
 			throw new JsonQueryException("Cannot resolve null expression");
-		return new net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression<>(context.getSlotCount(), compiled);
+		return new net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression<>(context.getSlotCount(), compiled,
+				env.variables(), env.functionFactories(), context.globalVariableSlots(), context.globalFunctionSlots(),
+				context.globalVariables(), context.globalFunctions());
+	}
+
+	public static <JsonNode> void registerEnvironmentGlobals(Environment<JsonNode> env, CompileContext context) {
+		for (String name : env.variables().keySet()) {
+			context.addGlobalVariable(name, name);
+			context.addGlobalVariable(name + "::" + name, name);
+		}
+		for (FunctionNameAndArity key : env.functionFactories().keySet())
+			context.addGlobalFunction(key);
 	}
 
 	public static <JsonNode> @Nullable Expression<JsonNode> compile(Environment<JsonNode> env, CompileContext context, @Nullable AstNode ast) throws JsonQueryException {
@@ -101,13 +113,20 @@ public class Compiler {
 			}
 
 			String fullName = call.moduleName() != null ? call.moduleName() + "::" + call.name() : call.name();
-			if (call.moduleName() == null && context.isLocalFunction(call.name(), compiledArgs.size())) {
-				SymbolLocation loc = context.getFunctionLocation(call.name(), compiledArgs.size());
+			if (context.isLocalFunction(fullName, compiledArgs.size())) {
+				SymbolLocation loc = context.getFunctionLocation(fullName, compiledArgs.size());
 				int slot = loc != null ? loc.slot : 0;
-				if (loc != null && !loc.isLocal) {
-					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionAccess<>(env.jsonProvider(), call.name(), slot, compiledArgs);
+				@Var FunctionFactory defaultFactory = null;
+				@Var Function<JsonNode> defaultFunction = null;
+				if (loc != null && loc.isGlobal) {
+					defaultFactory = env.getFunctionFactory(FunctionNameAndArity.of(fullName, compiledArgs.size()));
+					if (defaultFactory != null)
+						defaultFunction = defaultFactory.createFunction(env.jsonProvider(), compiledArgs, env.version());
 				}
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionAccess<>(env.jsonProvider(), call.name(), slot, compiledArgs);
+				if (loc != null && !loc.isLocal) {
+					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionAccess<>(env.jsonProvider(), env.version(), fullName, slot, compiledArgs, defaultFactory, defaultFunction);
+				}
+				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionAccess<>(env.jsonProvider(), env.version(), fullName, slot, compiledArgs, defaultFactory, defaultFunction);
 			}
 
 			FunctionNameAndArity key = FunctionNameAndArity.of(fullName, compiledArgs.size());
@@ -140,6 +159,8 @@ public class Compiler {
 					}
 					if (imp.name != null) {
 						env.addVariable(imp.name, data);
+						context.addGlobalVariable(imp.name, imp.name);
+						context.addGlobalVariable(imp.name + "::" + imp.name, imp.name);
 					}
 				} else {
 					Module mod = env.getModuleLoader().loadModule(currentModule, imp.path, metadata);
@@ -150,7 +171,9 @@ public class Compiler {
 						String[] parts = entry.getKey().split("/", 2);
 						int arity = Integer.parseInt(parts[1]);
 						String fnName = imp.name != null ? imp.name + "::" + parts[0] : parts[0];
-						env.addFunctionFactory(FunctionNameAndArity.of(fnName, arity), entry.getValue());
+						FunctionNameAndArity key = FunctionNameAndArity.of(fnName, arity);
+						env.addFunctionFactory(key, entry.getValue());
+						context.addGlobalFunction(key);
 					}
 				}
 			}
@@ -178,7 +201,7 @@ public class Compiler {
 						Map<String, Integer> slots = new HashMap<>();
 						for (String varName : varNames) {
 							context.addLocalVariable(varName);
-							slots.put(varName, context.getSlot(varName));
+							slots.put(varName, context.getVariableSlot(varName));
 						}
 
 						newComponents.add(new net.thisptr.jackson.jq.v2.core.internal.tree.AssignPipeComponent<>(compiledExpr, compiledMatcher, slots));
@@ -302,7 +325,7 @@ public class Compiler {
 			try {
 				for (String varName : varNames) {
 					context.addLocalVariable(varName);
-					slots.put(varName, context.getSlot(varName));
+					slots.put(varName, context.getVariableSlot(varName));
 				}
 				Expression<JsonNode> compiledReduce = compileNonNull(env, context, red.reduceExpr());
 				return new net.thisptr.jackson.jq.v2.core.internal.tree.ReduceExpression<>(env.jsonProvider(), compiledMatcher, compiledInit, compiledReduce, compiledIter, slots);
@@ -324,7 +347,7 @@ public class Compiler {
 			try {
 				for (String varName : varNames) {
 					context.addLocalVariable(varName);
-					slots.put(varName, context.getSlot(varName));
+					slots.put(varName, context.getVariableSlot(varName));
 				}
 				Expression<JsonNode> compiledUpdate = compileNonNull(env, context, fe.updateExpr());
 				Expression<JsonNode> compiledExtract = fe.extractExpr() != null ? compile(env, context, fe.extractExpr()) : null;
@@ -337,13 +360,15 @@ public class Compiler {
 		if (ast instanceof FormattingFilterAstNode) {
 			FormattingFilterAstNode ff = (FormattingFilterAstNode) ast;
 			String fname = ff.name().startsWith("@") ? ff.name() : "@" + ff.name();
-			FunctionNameAndArity key = FunctionNameAndArity.of(fname, 0);
-			FunctionFactory factory = env.getFunctionFactory(key);
-			if (factory == null) {
+			SymbolLocation loc = context.getFunctionLocation(fname, 0);
+			if (loc == null) {
 				throw new JsonQueryException(String.format("Formatting operator %s does not exist", fname));
 			}
-			Function<JsonNode> fn = factory.createFunction(env.jsonProvider(), Collections.emptyList(), env.version());
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionCall<>(fname, fn);
+			FunctionFactory defaultFactory = loc.isGlobal ? env.getFunctionFactory(FunctionNameAndArity.of(fname, 0)) : null;
+			Function<JsonNode> defaultFunction = defaultFactory != null ? defaultFactory.createFunction(env.jsonProvider(), Collections.emptyList(), env.version()) : null;
+			if (!loc.isLocal)
+				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionAccess<>(env.jsonProvider(), env.version(), fname, loc.slot, Collections.emptyList(), defaultFactory, defaultFunction);
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionAccess<>(env.jsonProvider(), env.version(), fname, loc.slot, Collections.emptyList(), defaultFactory, defaultFunction);
 		}
 
 		if (ast instanceof StringInterpolationAstNode) {
@@ -434,10 +459,10 @@ public class Compiler {
 			for (String arg : fd.args()) {
 				if (arg.startsWith("$")) {
 					fnContext.addLocalVariable(arg.substring(1));
-					paramSlots.add(fnContext.getSlot(arg.substring(1)));
+					paramSlots.add(fnContext.getVariableSlot(arg.substring(1)));
 				} else {
 					fnContext.addLocalFunction(arg, 0);
-					paramSlots.add(fnContext.getSlot(arg));
+					paramSlots.add(fnContext.getFunctionSlot(arg, 0));
 				}
 			}
 			int fnSize = fnContext.getSlotCount();
@@ -480,18 +505,18 @@ public class Compiler {
 			if (context.isLocalVariable(fullName)) {
 				SymbolLocation loc = context.getVariableLocation(fullName);
 				int slot = loc != null ? loc.slot : 0;
+				if (loc != null && loc.isGlobal) {
+					@Var Supplier<N> supplier = env.getVariable(fullName);
+					if (supplier == null && moduleName.equals(varName))
+						supplier = env.getVariable(varName);
+					if (supplier == null)
+						throw new JsonQueryException(String.format("Variable $%s::%s is not defined", moduleName, varName));
+					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess<>(fullName, slot, !loc.isLocal, supplier);
+				}
 				if (loc != null && !loc.isLocal) {
 					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess<>(fullName, slot);
 				}
 				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableAccess<>(fullName, slot);
-			}
-
-			@Var Supplier<N> supplier = env.getVariable(fullName);
-			if (supplier == null && moduleName.equals(varName)) {
-				supplier = env.getVariable(varName);
-			}
-			if (supplier != null) {
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess<>(fullName, supplier);
 			}
 
 			throw new JsonQueryException(String.format("Variable $%s::%s is not defined", moduleName, varName));
@@ -500,15 +525,16 @@ public class Compiler {
 		if (context.isLocalVariable(varName)) {
 			SymbolLocation loc = context.getVariableLocation(varName);
 			int slot = loc != null ? loc.slot : 0;
+			if (loc != null && loc.isGlobal) {
+				Supplier<N> supplier = env.getVariable(varName);
+				if (supplier == null)
+					throw new JsonQueryException(String.format("Variable $%s is not defined", varName));
+				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess<>(varName, slot, !loc.isLocal, supplier);
+			}
 			if (loc != null && !loc.isLocal) {
 				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess<>(varName, slot);
 			}
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableAccess<>(varName, slot);
-		}
-
-		Supplier<N> supplier = env.getVariable(varName);
-		if (supplier != null) {
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess<>(varName, supplier);
 		}
 
 		throw new JsonQueryException(String.format("Variable $%s is not defined", varName));

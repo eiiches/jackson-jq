@@ -51,7 +51,7 @@ public class ClosureSpec {
 		for (int i = 0; i < capturedVariables.size(); i++) {
 			CapturedVariableRef ref = capturedVariables.get(i);
 			if (ref.isLocalInParent) {
-				vars[i] = currentFrame != null ? currentFrame.getValue(ref.parentSlot) : null;
+				vars[i] = currentFrame != null ? currentFrame.getRawValue(ref.parentSlot) : null;
 			} else {
 				vars[i] = parentClosure != null ? parentClosure.getVariable(ref.parentSlot) : null;
 			}

@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.JsonQueryBindings;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Strings;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
@@ -71,5 +72,13 @@ public class Usage {
 		List<JsonNode> out = new ArrayList<>();
 		q.apply(in, (outNode, path) -> out.add(outNode));
 		System.out.println(out); // => [84]
+
+		// A compiled query can be reused with different variable and function bindings for each invocation.
+		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+				.addVariable("param", jsonProvider.createNumber(7))
+				.build();
+		List<JsonNode> overriddenOut = new ArrayList<>();
+		q.apply(in, bindings, (outNode, path) -> overriddenOut.add(outNode));
+		System.out.println(overriddenOut); // => [14]
 	}
 }
