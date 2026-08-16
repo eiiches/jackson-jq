@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.v2.core.internal.tree;
+package net.thisptr.jackson.jq.v2.core.internal.ast;
 
 import java.util.Objects;
 
@@ -7,14 +7,13 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 
 public class ModuleDirective<JsonNode> {
-	private final Expression metadataExpr;
+	private final AstNode metadataExpr;
 	private @Nullable JsonNode metadata;
 	private boolean metadataEvaluated = false;
 
-	public ModuleDirective(Expression metadataExpr) {
+	public ModuleDirective(AstNode metadataExpr) {
 		this.metadataExpr = metadataExpr;
 	}
 

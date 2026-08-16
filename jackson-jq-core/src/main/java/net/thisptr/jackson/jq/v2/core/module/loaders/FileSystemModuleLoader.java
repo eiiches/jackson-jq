@@ -18,12 +18,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
+import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
@@ -130,8 +131,8 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 
 		net.thisptr.jackson.jq.v2.core.Environment<JsonNode> moduleEnv = new net.thisptr.jackson.jq.v2.core.Environment<>(jsonProvider, version);
 		moduleEnv.setModuleLoader(parentModuleLoader != null ? parentModuleLoader : this);
-		Expression expr = ExpressionParser.compile(moduleString + " null", version);
-		net.thisptr.jackson.jq.v2.core.internal.compile.AstResolver.resolve(moduleEnv, module, expr);
+		AstNode ast = ExpressionParser.compile(moduleString + " null", version);
+		Compiler.compile(moduleEnv, module, ast);
 
 		moduleEnv.functionFactories().forEach((key, factory) -> {
 			if (key.arity() != null)

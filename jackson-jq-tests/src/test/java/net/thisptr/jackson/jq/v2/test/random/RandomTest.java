@@ -26,29 +26,23 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.Versions;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstruction;
+import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.FunctionCall;
+import net.thisptr.jackson.jq.v2.core.internal.ast.TryCatch;
+import net.thisptr.jackson.jq.v2.core.internal.ast.Tuple;
+import net.thisptr.jackson.jq.v2.core.internal.ast.binaryop.BinaryOpNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.BracketExtractFieldAccess;
+import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.BracketFieldAccess;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction;
-import net.thisptr.jackson.jq.v2.core.internal.tree.FunctionCall;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ThisObject;
-import net.thisptr.jackson.jq.v2.core.internal.tree.TryCatch;
-import net.thisptr.jackson.jq.v2.core.internal.tree.Tuple;
-import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.AlternativeOperatorExpression;
-import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BooleanAndExpression;
-import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BooleanOrExpression;
-import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.DivideExpression;
-import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.MinusExpression;
-import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.ModuloExpression;
-import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.MultiplyExpression;
-import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.PlusExpression;
-import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketExtractFieldAccess;
-import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketFieldAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression.Operator;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.BooleanLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.DoubleLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.LongLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.VersionRange;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -81,21 +75,20 @@ public class RandomTest {
 
 	private static List<Generator> GENERATORS = new ArrayList<>();
 
-	private List<Expression> expressions = new ArrayList<>();
+	private List<AstNode> expressions = new ArrayList<>();
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@BeforeAll
 	static void beforeAll() {
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new PlusExpression(exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new MinusExpression(exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new ModuloExpression(exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BooleanAndExpression(exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BooleanOrExpression(exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new AlternativeOperatorExpression(exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.PLUS, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.MINUS, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.MODULO, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.AND, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.OR, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.DEFAULT, exprs.get(0), exprs.get(1))));
 		GENERATORS.add(new RandomGenerator(3, (exprs) -> new Tuple(exprs)));
 		GENERATORS.add(new RandomGenerator(1, (exprs) -> new ArrayConstruction(exprs.get(0))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new MultiplyExpression(exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new DivideExpression(exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.TIMES, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpNode(Operator.DIVIDE, exprs.get(0), exprs.get(1))));
 		GENERATORS.add(new RandomGenerator(0, (exprs) -> new ThisObject()));
 		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BracketFieldAccess(exprs.get(0), exprs.get(1), true)));
 		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BracketFieldAccess(exprs.get(0), exprs.get(1), false)));
@@ -114,9 +107,9 @@ public class RandomTest {
 				String name = signature.split("/", 2)[0];
 				if (exclusions.contains(name))
 					return;
-				GENERATORS.add(new RandomGenerator(numArgs, (exprs) -> new FunctionCall(null, name, (List) exprs, VERSION)));
+				GENERATORS.add(new RandomGenerator(numArgs, (exprs) -> new FunctionCall(null, name, exprs, VERSION)));
 			} else {
-				GENERATORS.add(new RandomGenerator(0, 10, (exprs) -> new FunctionCall(null, signature, (List) exprs, VERSION)));
+				GENERATORS.add(new RandomGenerator(0, 10, (exprs) -> new FunctionCall(null, signature, exprs, VERSION)));
 			}
 		});
 	}
@@ -140,14 +133,13 @@ public class RandomTest {
 		expressions.add(new StringLiteral("foo"));
 		expressions.add(new StringLiteral("bar"));
 		expressions.add(new StringLiteral("baz"));
-		expressions.add(new EmptyExpression());
+		expressions.add(new FunctionCall(null, "empty", Collections.emptyList(), VERSION));
 		expressions.add(new StringLiteral("\r"));
 		expressions.add(new StringLiteral("\n"));
 		expressions.add(new StringLiteral("\t"));
 		expressions.add(new StringLiteral("\0"));
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	void testRandom() throws Throwable {
 		List<JsonNode> values = new ArrayList<>();
@@ -161,12 +153,11 @@ public class RandomTest {
 		for (int i = 0; i < 10000; ++i) {
 			Generator generator = GENERATORS.get(random.nextInt(GENERATORS.size()));
 
-			List<Expression> args = new ArrayList<>();
+			List<AstNode> args = new ArrayList<>();
 			for (int j = 0; j < generator.args(); ++j)
 				args.add(expressions.get(random.nextInt(expressions.size())));
 
-			@SuppressWarnings({ "unchecked", "rawtypes" })
-			Expression expr = generator.generate((List) args);
+			AstNode expr = generator.generate(args);
 			// System.out.println(expr);
 
 			JsonNode in = values.get(random.nextInt(values.size()));
@@ -202,7 +193,7 @@ public class RandomTest {
 					actual.values.forEach(v -> {
 						if (uniqueValues.add(v)) {
 							values.add(v);
-							expressions.add(new LiteralExpression(v));
+							expressions.add(new RawJsonValue(v));
 							// System.out.printf("Added %s%n", v);
 						}
 					});
@@ -243,6 +234,24 @@ public class RandomTest {
 		}
 	}
 
+	/**
+	 * Wraps a previously-computed constant value (e.g. an object or array) so it can be re-fed into
+	 * later generators, formatted the same way {@link com.fasterxml.jackson.databind.JsonNode#toString()}
+	 * already renders it -- which happens to be valid jq literal syntax.
+	 */
+	private static class RawJsonValue implements AstNode {
+		private final JsonNode value;
+
+		RawJsonValue(JsonNode value) {
+			this.value = value;
+		}
+
+		@Override
+		public String toString() {
+			return value.toString();
+		}
+	}
+
 	public static class TestCase {
 		@JsonProperty("v")
 		@JsonSerialize(using = ToStringSerializer.class)
@@ -250,7 +259,7 @@ public class RandomTest {
 
 		@JsonProperty("q")
 		@JsonSerialize(using = ToStringSerializer.class)
-		public @Nullable Expression expression;
+		public @Nullable AstNode expression;
 
 		@JsonProperty("in")
 		public @Nullable JsonNode in;

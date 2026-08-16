@@ -8,8 +8,9 @@ import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.compile.AstResolver;
+import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.CompileContext;
+import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
@@ -69,31 +70,26 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 	}
 
 	private FunctionFactory createJqFunctionFactory(JqFunc def, Version version) {
-		Expression parsedBody = ExpressionParser.compile(def.body, version);
+		AstNode parsedAst = ExpressionParser.compile(def.body, version);
 		return new FunctionFactory() {
 			private @Nullable Expression resolvedBody;
 
 			@SuppressWarnings({"unchecked", "rawtypes"})
-			private synchronized Expression getResolvedBody(JsonProvider<?> jsonProvider) {
+			private synchronized Expression getResolvedBody(JsonProvider<?> jsonProvider) throws JsonQueryException {
 				if (resolvedBody != null)
 					return resolvedBody;
-				try {
-					CompileContext context = new CompileContext();
-					context.pushFunctionScope();
-					for (String arg : def.args) {
-						if (arg.startsWith("$")) {
-							context.addLocalVariable(arg.substring(1));
-						} else {
-							context.addLocalFunction(arg, 0);
-						}
+				CompileContext context = new CompileContext();
+				context.pushFunctionScope();
+				for (String arg : def.args) {
+					if (arg.startsWith("$")) {
+						context.addLocalVariable(arg.substring(1));
+					} else {
+						context.addLocalFunction(arg, 0);
 					}
-					Environment env = new Environment((JsonProvider) jsonProvider, version);
-					listFunctionFactories(version).forEach(env::addFunctionFactory);
-					resolvedBody = AstResolver.resolveNonNull(env, context, parsedBody);
-				} catch (Exception e) {
-					e.printStackTrace();
-					resolvedBody = parsedBody;
 				}
+				Environment env = new Environment((JsonProvider) jsonProvider, version);
+				listFunctionFactories(version).forEach(env::addFunctionFactory);
+				resolvedBody = Compiler.compileNonNull(env, context, parsedAst);
 				return resolvedBody;
 			}
 

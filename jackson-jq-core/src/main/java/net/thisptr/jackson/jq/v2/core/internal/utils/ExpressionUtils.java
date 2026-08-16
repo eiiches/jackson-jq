@@ -4,34 +4,34 @@ import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction;
-import net.thisptr.jackson.jq.v2.core.internal.tree.FieldConstruction;
-import net.thisptr.jackson.jq.v2.core.internal.tree.IdentifierKeyFieldConstruction;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ObjectConstruction;
-import net.thisptr.jackson.jq.v2.core.internal.tree.StringKeyFieldConstruction;
-import net.thisptr.jackson.jq.v2.core.internal.tree.Tuple;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstruction;
+import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.FieldConstructionAst;
+import net.thisptr.jackson.jq.v2.core.internal.ast.IdentifierKeyFieldConstructionAst;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstruction;
+import net.thisptr.jackson.jq.v2.core.internal.ast.StringKeyFieldConstructionAst;
+import net.thisptr.jackson.jq.v2.core.internal.ast.Tuple;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.ValueLiteral;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 
 public class ExpressionUtils {
 
 	/**
 	 * @param jsonProvider the JSON provider
-	 * @param expr the expression to evaluate
+	 * @param expr the AST node to evaluate
 	 * @return null if expr is not a constant
 	 */
 	@SuppressWarnings("unchecked")
-	public static <JsonNode> @Nullable JsonNode evaluateLiteralExpression(JsonProvider<JsonNode> jsonProvider, Expression expr) {
+	public static <JsonNode> @Nullable JsonNode evaluateLiteralExpression(JsonProvider<JsonNode> jsonProvider, AstNode expr) {
 		if (expr instanceof ObjectConstruction) {
 			JsonNode obj = jsonProvider.createObject();
 
-			for (FieldConstruction<JsonNode> field : ((ObjectConstruction<JsonNode>) expr).fields) {
-				if (field instanceof IdentifierKeyFieldConstruction) {
-					IdentifierKeyFieldConstruction<JsonNode> f = (IdentifierKeyFieldConstruction<JsonNode>) field;
+			for (FieldConstructionAst field : ((ObjectConstruction) expr).fields) {
+				if (field instanceof IdentifierKeyFieldConstructionAst) {
+					IdentifierKeyFieldConstructionAst f = (IdentifierKeyFieldConstructionAst) field;
 					String k = f.key;
-					Expression valueExpr = f.value;
+					AstNode valueExpr = f.value;
 
 					if (valueExpr == null) // this field depends on input and is not a constant
 						return null;
@@ -41,9 +41,9 @@ public class ExpressionUtils {
 						return null;
 
 					jsonProvider.set(obj, k, v);
-				} else if (field instanceof StringKeyFieldConstruction) {
-					StringKeyFieldConstruction<JsonNode> f = (StringKeyFieldConstruction<JsonNode>) field;
-					Expression valueExpr = f.value;
+				} else if (field instanceof StringKeyFieldConstructionAst) {
+					StringKeyFieldConstructionAst f = (StringKeyFieldConstructionAst) field;
+					AstNode valueExpr = f.value;
 					if (!(f.key instanceof StringLiteral)) // then the key is string interpolation and not a constant
 						return null;
 					if (valueExpr == null) // this field depends on input and is not a constant
@@ -64,13 +64,13 @@ public class ExpressionUtils {
 		} else if (expr instanceof ArrayConstruction) {
 			JsonNode array = jsonProvider.createArray();
 
-			Expression tuple = ((ArrayConstruction) expr).q;
+			AstNode tuple = ((ArrayConstruction) expr).q;
 			if (tuple == null)
 				return array; // empty
 
 			if (tuple instanceof Tuple) {
-				List<Expression> values = ((Tuple) tuple).qs;
-				for (Expression valueExpr : values) {
+				List<AstNode> values = ((Tuple) tuple).qs;
+				for (AstNode valueExpr : values) {
 					JsonNode value = evaluateLiteralExpression(jsonProvider, valueExpr);
 					if (value == null)
 						return null;

@@ -6,7 +6,8 @@ import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.compile.AstResolver;
+import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
+import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -95,8 +96,8 @@ public class Environment<JsonNode> {
 	}
 
 	public JsonQuery<JsonNode> compile(String expression, @Nullable Module currentModule) throws JsonQueryException {
-		Expression parsedExpr = ExpressionParser.compile(expression, version);
-		Expression resolvedExpr = AstResolver.resolve(this, currentModule, parsedExpr);
-		return (in, output) -> resolvedExpr.apply(jsonProvider, null, in, null, output, false);
+		AstNode parsedAst = ExpressionParser.compile(expression, version);
+		Expression compiledExpr = Compiler.compile(this, currentModule, parsedAst);
+		return (in, output) -> compiledExpr.apply(jsonProvider, null, in, null, output, false);
 	}
 }

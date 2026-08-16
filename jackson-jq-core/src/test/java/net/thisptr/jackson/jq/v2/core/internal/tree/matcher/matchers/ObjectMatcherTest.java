@@ -10,10 +10,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.IntNode;
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
-import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
+import net.thisptr.jackson.jq.v2.core.internal.tree.Tuple;
+import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.spi.Expression;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -23,9 +24,9 @@ public class ObjectMatcherTest {
 	void test1() throws Exception {
 		JsonNode in = new ObjectMapper().readTree("{\"outer\":{\"a\": 1, \"b\": 2}, \"c\": 3}");
 		ObjectMatcher<JsonNode> matcher = new ObjectMatcher<>(Arrays.asList(
-				new ObjectMatcher.FieldMatcher<>(false, ExpressionParser.compile("\"outer\"", Versions.JQ_1_6), new ObjectMatcher<>(Arrays.asList(
-						new ObjectMatcher.FieldMatcher<>(false, ExpressionParser.compile("(\"a\",\"b\")", Versions.JQ_1_6), new ValueMatcher<>("x"))))),
-				new ObjectMatcher.FieldMatcher<>(false, ExpressionParser.compile("\"c\"", Versions.JQ_1_6), new ValueMatcher<>("y"))));
+				new ObjectMatcher.FieldMatcher<>(false, new StringLiteral("outer"), new ObjectMatcher<>(Arrays.asList(
+						new ObjectMatcher.FieldMatcher<>(false, new Tuple(Arrays.<Expression>asList(new StringLiteral("a"), new StringLiteral("b"))), new ValueMatcher<>("x"))))),
+				new ObjectMatcher.FieldMatcher<>(false, new StringLiteral("c"), new ValueMatcher<>("y"))));
 
 		List<List<Pair<String, JsonNode>>> matches = new ArrayList<>();
 
@@ -43,9 +44,9 @@ public class ObjectMatcherTest {
 	void test2() throws Exception {
 		JsonNode in = new ObjectMapper().readTree("{\"outer\":{\"a\": 1}, \"b\": 2, \"c\": 3}");
 		ObjectMatcher<JsonNode> matcher = new ObjectMatcher<>(Arrays.asList(
-				new ObjectMatcher.FieldMatcher<>(false, ExpressionParser.compile("\"outer\"", Versions.JQ_1_6), new ObjectMatcher<>(Arrays.asList(
-						new ObjectMatcher.FieldMatcher<>(false, ExpressionParser.compile("\"a\"", Versions.JQ_1_6), new ValueMatcher<>("x"))))),
-				new ObjectMatcher.FieldMatcher<>(false, ExpressionParser.compile("(\"b\",\"c\")", Versions.JQ_1_6), new ValueMatcher<>("y"))));
+				new ObjectMatcher.FieldMatcher<>(false, new StringLiteral("outer"), new ObjectMatcher<>(Arrays.asList(
+						new ObjectMatcher.FieldMatcher<>(false, new StringLiteral("a"), new ValueMatcher<>("x"))))),
+				new ObjectMatcher.FieldMatcher<>(false, new Tuple(Arrays.<Expression>asList(new StringLiteral("b"), new StringLiteral("c"))), new ValueMatcher<>("y"))));
 
 		List<List<Pair<String, JsonNode>>> matches = new ArrayList<>();
 

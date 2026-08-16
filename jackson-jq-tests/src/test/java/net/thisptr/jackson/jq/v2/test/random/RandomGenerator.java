@@ -4,18 +4,18 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
-import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 
 public class RandomGenerator implements Generator {
-	private final Function<List<Expression>, Expression> fn;
+	private final Function<List<AstNode>, AstNode> fn;
 	private final int minArgs;
 	private final int maxArgs;
 
-	public RandomGenerator(int args, java.util.function.Function<List<Expression>, Expression> fn) {
+	public RandomGenerator(int args, java.util.function.Function<List<AstNode>, AstNode> fn) {
 		this(args, args, fn);
 	}
 
-	public RandomGenerator(int minArgs, int maxArgs, java.util.function.Function<List<Expression>, Expression> fn) {
+	public RandomGenerator(int minArgs, int maxArgs, java.util.function.Function<List<AstNode>, AstNode> fn) {
 		this.minArgs = minArgs;
 		this.maxArgs = maxArgs;
 		this.fn = fn;
@@ -27,7 +27,7 @@ public class RandomGenerator implements Generator {
 	}
 
 	@Override
-	public Expression generate(List<Expression> expressions) {
+	public AstNode generate(List<AstNode> expressions) {
 		return fn.apply(expressions);
 	}
 }

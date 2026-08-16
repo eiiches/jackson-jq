@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.compile.AstResolver;
 import net.thisptr.jackson.jq.v2.core.internal.compile.ClosureSpec;
+import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Closure;
 import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
@@ -73,7 +73,7 @@ public class ResolvedFunctionDefinition implements Expression {
 							: new ExecutionStack<N>().pushFrame(null, fnSize);
 					fnFrame.setClosure(effectiveClosure);
 					try {
-						AstResolver.bindAndApply(jp, callerFrame, fnFrame, paramNames, paramSlots, fnArgs, input, path, out, (execFrame) -> {
+						Compiler.bindAndApply(jp, callerFrame, fnFrame, paramNames, paramSlots, fnArgs, input, path, out, (execFrame) -> {
 							resolvedBody.apply(jp, execFrame, input, path, out, false);
 						});
 					} finally {

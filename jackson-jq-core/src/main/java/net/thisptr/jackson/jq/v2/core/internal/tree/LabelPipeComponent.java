@@ -1,6 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
-public class LabelPipeComponent<JsonNode> implements PipeComponent<JsonNode> {
+import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.PipeComponentAst;
+
+public class LabelPipeComponent<JsonNode> implements PipeComponent<JsonNode>, PipeComponentAst, AstNode {
 	public final String name;
 
 	public LabelPipeComponent(String name) {

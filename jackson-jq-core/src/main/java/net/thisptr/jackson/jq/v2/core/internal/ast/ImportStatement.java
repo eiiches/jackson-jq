@@ -1,21 +1,20 @@
-package net.thisptr.jackson.jq.v2.core.internal.tree;
+package net.thisptr.jackson.jq.v2.core.internal.ast;
 
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 
 public class ImportStatement<JsonNode> {
 	public final String path;
 	public final boolean dollarImport;
 	public final String name;
-	private final @Nullable Expression metadataExpr;
+	private final @Nullable AstNode metadataExpr;
 	private @Nullable JsonNode metadata;
 	private boolean metadataEvaluated = false;
 
-	public ImportStatement(String path, boolean dollarImport, String name, @Nullable Expression metadataExpr) {
+	public ImportStatement(String path, boolean dollarImport, String name, @Nullable AstNode metadataExpr) {
 		this.path = path;
 		this.dollarImport = dollarImport;
 		this.name = name;

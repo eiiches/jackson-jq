@@ -5,6 +5,7 @@ import java.util.Map.Entry;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.path.ArrayIndexPath;
 import net.thisptr.jackson.jq.v2.core.path.ObjectFieldPath;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -15,7 +16,7 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class RecursionOperator implements Expression {
+public class RecursionOperator implements Expression, AstNode {
 	private static <JsonNode> void pathRecursive(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
 		output.emit(in, path);
 		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {

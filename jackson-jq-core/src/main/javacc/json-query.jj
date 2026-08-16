@@ -14,15 +14,24 @@ PARSER_BEGIN(ExpressionParser)
 	import java.util.Stack;
 	import java.util.ArrayList;
 
-	import net.thisptr.jackson.jq.v2.spi.Expression;
 	import net.thisptr.jackson.jq.v2.spi.Version;
 	import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.*;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.*;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.literal.*;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.*;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.*;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.binaryop.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.matchers.*;
+	import net.thisptr.jackson.jq.v2.core.internal.tree.ThisObject;
+	import net.thisptr.jackson.jq.v2.core.internal.tree.RecursionOperator;
+	import net.thisptr.jackson.jq.v2.core.internal.tree.BreakExpression;
+	import net.thisptr.jackson.jq.v2.core.internal.tree.LabelPipeComponent;
+	import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression;
+	import net.thisptr.jackson.jq.v2.core.internal.tree.literal.BooleanLiteral;
+	import net.thisptr.jackson.jq.v2.core.internal.tree.literal.DoubleLiteral;
+	import net.thisptr.jackson.jq.v2.core.internal.tree.literal.LongLiteral;
+	import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral;
+	import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
+	import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatcher;
 	import net.thisptr.jackson.jq.v2.internal.javacc.TokenMgrError;
 	import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -30,7 +39,7 @@ PARSER_BEGIN(ExpressionParser)
 	public class ExpressionParser {
 		private Version version;
 
-		public static Expression compile(final String line, final Version version) throws JsonQueryException {
+		public static AstNode compile(final String line, final Version version) throws JsonQueryException {
 			try {
 				final ExpressionParser parser = new ExpressionParser(new StringReader(line));
 				parser.version = version;
@@ -268,7 +277,7 @@ String KeywordOrIdentifier():
 
 ModuleDirective ModuleDirective():
 {
-	Expression metadata;
+	AstNode metadata;
 }
 {
 	<KEYWORD_MODULE>
@@ -280,10 +289,10 @@ ModuleDirective ModuleDirective():
 
 ImportStatement ImportStatement():
 {
-	Expression pathExpr;
+	AstNode pathExpr;
 	String path;
 	String name;
-	Expression metadata = null;
+	AstNode metadata = null;
 	boolean dollarImport = false;
 }
 {
@@ -310,9 +319,9 @@ ImportStatement ImportStatement():
 
 ImportStatement IncludeStatement():
 {
-	Expression pathExpr;
+	AstNode pathExpr;
 	String path;
-	Expression metadata = null;
+	AstNode metadata = null;
 }
 {
 	<KEYWORD_INCLUDE>
@@ -328,12 +337,12 @@ ImportStatement IncludeStatement():
 	{ return new ImportStatement(path, false, null, metadata); }
 }
 
-Expression Start():
+AstNode Start():
 {
 	ImportStatement imp;
 	ModuleDirective moduleDirective = null;
 	final List<ImportStatement> imports = new ArrayList<ImportStatement>();
-	Expression expr;
+	AstNode expr;
 }
 {
 	(
@@ -358,10 +367,10 @@ Expression Start():
 	}
 }
 
-Expression Expression():
+AstNode Expression():
 {
-	PipeComponent component;
-	List<PipeComponent> components = new ArrayList<PipeComponent>();
+	PipeComponentAst component;
+	List<PipeComponentAst> components = new ArrayList<PipeComponentAst>();
 }
 {
 	component = PipeComponent()
@@ -379,16 +388,16 @@ Expression Expression():
 				throw new IllegalStateException("Assignment or label must be followed by pipes: " + component);
 			}
 		}
-		if (components.size() == 1 && (component instanceof TransformPipeComponent))
-			return ((TransformPipeComponent) component).expr;
+		if (components.size() == 1 && (component instanceof TransformPipeComponentAst))
+			return ((TransformPipeComponentAst) component).expr;
 		return new PipedQuery(components);
 	}
 }
 
-Expression JsonQueryWithoutComma():
+AstNode JsonQueryWithoutComma():
 {
-	PipeComponent component;
-	List<PipeComponent> components = new ArrayList<PipeComponent>();
+	PipeComponentAst component;
+	List<PipeComponentAst> components = new ArrayList<PipeComponentAst>();
 }
 {
 	component = PipeComponentWithoutComma()
@@ -406,17 +415,17 @@ Expression JsonQueryWithoutComma():
 				throw new IllegalStateException("Assignment or label must be followed by pipes: " + component);
 			}
 		}
-		if (components.size() == 1 && (component instanceof TransformPipeComponent))
-			return ((TransformPipeComponent) component).expr;
+		if (components.size() == 1 && (component instanceof TransformPipeComponentAst))
+			return ((TransformPipeComponentAst) component).expr;
 		return new PipedQuery(components);
 	}
 }
 
-PipeComponent PipeComponent():
+PipeComponentAst PipeComponent():
 {
 	String name;
-	Expression expr;
-	PatternMatcher matcher;
+	AstNode expr;
+	PatternMatcherAst matcher;
 }
 {
 	(
@@ -429,18 +438,18 @@ PipeComponent PipeComponent():
 		(
 			<KEYWORD_AS>
 			matcher = Matcher()
-			{ return new AssignPipeComponent(expr, matcher); }
+			{ return new AssignPipeComponentAst(expr, matcher); }
 		|
-			{ return new TransformPipeComponent(expr); }
+			{ return new TransformPipeComponentAst(expr); }
 		)
 	)
 }
 
-PipeComponent PipeComponentWithoutComma():
+PipeComponentAst PipeComponentWithoutComma():
 {
 	String name;
-	Expression expr;
-	PatternMatcher matcher;
+	AstNode expr;
+	PatternMatcherAst matcher;
 }
 {
 	(
@@ -453,17 +462,17 @@ PipeComponent PipeComponentWithoutComma():
 		(
 			<KEYWORD_AS>
 			matcher = Matcher()
-			{ return new AssignPipeComponent(expr, matcher); }
+			{ return new AssignPipeComponentAst(expr, matcher); }
 		|
-			{ return new TransformPipeComponent(expr); }
+			{ return new TransformPipeComponentAst(expr); }
 		)
 	)
 }
 
-Expression TupleExpression():
+AstNode TupleExpression():
 {
-	Expression tmp;
-	final List<Expression> qs = new ArrayList<Expression>();
+	AstNode tmp;
+	final List<AstNode> qs = new ArrayList<AstNode>();
 }
 {
 	tmp = BinaryOperatorExpression()
@@ -480,11 +489,11 @@ Expression TupleExpression():
 	}
 }
 
-Expression BinaryOperatorExpression():
+AstNode BinaryOperatorExpression():
 {
 	Token t;
-	Expression expr;
-	List<Expression> exprs = new ArrayList<Expression>();
+	AstNode expr;
+	List<AstNode> exprs = new ArrayList<AstNode>();
 	List<BinaryOperatorExpression.Operator> operators = new ArrayList<BinaryOperatorExpression.Operator>();
 }
 {
@@ -540,15 +549,15 @@ Expression BinaryOperatorExpression():
 		expr = PrimaryExpression()
 		{ exprs.add(expr); }
 	)*
-	{ return BinaryOperatorExpression.buildTree(exprs, operators, version); }
+	{ return BinaryOperatorExpression.buildTree(exprs, operators); }
 }
 
-Expression FunctionDefinition():
+AstNode FunctionDefinition():
 {
 	final List<String> args = new ArrayList<String>();
 	Token fname;
 	String tmp;
-	Expression body;
+	AstNode body;
 }
 {
 	<KEYWORD_DEF>
@@ -584,11 +593,11 @@ String FunctionDefinitionParam():
 	{ return (isvar ? "$" : "") + param.image; }
 }
 
-Expression PrimaryExpression():
+AstNode PrimaryExpression():
 {
 	Token t;
-	Expression tmp;
-	List<Expression> exprs = new ArrayList<Expression>();
+	AstNode tmp;
+	List<AstNode> exprs = new ArrayList<AstNode>();
 }
 {
 	(
@@ -669,7 +678,7 @@ Expression PrimaryExpression():
 	}
 }
 
-Expression RecursionOperator():
+AstNode RecursionOperator():
 {
 }
 {
@@ -677,7 +686,7 @@ Expression RecursionOperator():
 	{ return new RecursionOperator(); }
 }
 
-Expression FormattingFilter():
+AstNode FormattingFilter():
 {
 	Token t;
 }
@@ -687,9 +696,9 @@ Expression FormattingFilter():
 	{ return new FormattingFilter(t.image, version); }
 }
 
-Expression TryCatchExpression():
+AstNode TryCatchExpression():
 {
-	Expression tryExpr, catchExpr = null;
+	AstNode tryExpr, catchExpr = null;
 }
 {
 	<KEYWORD_TRY>
@@ -701,7 +710,7 @@ Expression TryCatchExpression():
 	{ return new TryCatch(tryExpr, catchExpr); }
 }
 
-Expression BreakExpression():
+AstNode BreakExpression():
 {
 	String name;
 }
@@ -712,10 +721,10 @@ Expression BreakExpression():
 	{ return new BreakExpression(name); }
 }
 
-Expression ForeachExpression():
+AstNode ForeachExpression():
 {
-	PatternMatcher matcher;
-	Expression initExpr, updateExpr, extractExpr = null, iterExpr;
+	PatternMatcherAst matcher;
+	AstNode initExpr, updateExpr, extractExpr = null, iterExpr;
 }
 {
 	<KEYWORD_FOREACH>
@@ -735,10 +744,10 @@ Expression ForeachExpression():
 	{ return new ForeachExpression(matcher, initExpr, updateExpr, extractExpr, iterExpr); }
 }
 
-Expression ReduceExpression():
+AstNode ReduceExpression():
 {
-	PatternMatcher matcher;
-	Expression tmpIterExpr, tmpInitExpr, tmpReduceExpr;
+	PatternMatcherAst matcher;
+	AstNode tmpIterExpr, tmpInitExpr, tmpReduceExpr;
 }
 {
 	<KEYWORD_REDUCE>
@@ -753,10 +762,10 @@ Expression ReduceExpression():
 	{ return new ReduceExpression(matcher, tmpInitExpr, tmpReduceExpr, tmpIterExpr); }
 }
 
-Expression VariableAccess():
+AstNode VariableAccess():
 {
 	Token t;
-	Expression tmp;
+	AstNode tmp;
 	String moduleName = null;
 }
 {
@@ -770,12 +779,12 @@ Expression VariableAccess():
 	{ return new VariableAccess(moduleName, t.image); }
 }
 
-Expression ConditionalExpression():
+AstNode ConditionalExpression():
 {
-	Expression tmpPred;
-	Expression tmpExpr;
-	final List<Pair<Expression, Expression>> switches = new ArrayList<Pair<Expression, Expression>>();
-	final Expression otherwise;
+	AstNode tmpPred;
+	AstNode tmpExpr;
+	final List<Pair<AstNode, AstNode>> switches = new ArrayList<Pair<AstNode, AstNode>>();
+	final AstNode otherwise;
 }
 {
 	<KEYWORD_IF>
@@ -798,7 +807,7 @@ Expression ConditionalExpression():
 	}
 }
 
-Expression ObjectConstruction():
+AstNode ObjectConstruction():
 {
 	final ObjectConstruction obj = new ObjectConstruction();
 }
@@ -818,8 +827,8 @@ Expression ObjectConstruction():
 void ObjectField(final ObjectConstruction obj):
 {
 	String name;
-	Expression value = null;
-	Expression key = null;
+	AstNode value = null;
+	AstNode key = null;
 }
 {
 	// - {$a}               -- VariableKeyFieldConstruction
@@ -840,7 +849,7 @@ void ObjectField(final ObjectConstruction obj):
 			<COLON>
 			value = ObjectFieldValue()
 		)?
-		{ obj.add(new IdentifierKeyFieldConstruction(name, value)); }
+		{ obj.add(new IdentifierKeyFieldConstructionAst(name, value)); }
 	|
 		// {"name"}, {"name": value}
 		key = StringInterpolation()
@@ -848,7 +857,7 @@ void ObjectField(final ObjectConstruction obj):
 			<COLON>
 			value = ObjectFieldValue()
 		)?
-		{ obj.add(new StringKeyFieldConstruction(key, value)); }
+		{ obj.add(new StringKeyFieldConstructionAst(key, value)); }
 	|
 		// {(keyexpr): value}
 		<OPEN_PAR>
@@ -856,14 +865,14 @@ void ObjectField(final ObjectConstruction obj):
 		<CLOSE_PAR>
 		<COLON>
 		value = ObjectFieldValue()
-		{ obj.add(new JsonQueryKeyFieldConstruction(key, value)); }
+		{ obj.add(new JsonQueryKeyFieldConstructionAst(key, value)); }
 	)
 }
 
-Expression ObjectFieldName():
+AstNode ObjectFieldName():
 {
 	Token token;
-	Expression expr;
+	AstNode expr;
 	String keywordAsString;
 }
 {
@@ -883,9 +892,9 @@ Expression ObjectFieldName():
 	{ return expr; }
 }
 
-Expression ObjectFieldValue():
+AstNode ObjectFieldValue():
 {
-	Expression expr;
+	AstNode expr;
 }
 {
 	(
@@ -898,9 +907,9 @@ Expression ObjectFieldValue():
 	{ return expr; }
 }
 
-Expression ArrayConstruction():
+AstNode ArrayConstruction():
 {
-	Expression tmp = null;
+	AstNode tmp = null;
 }
 {
 	<OPEN_BRACKET>
@@ -915,11 +924,11 @@ Expression ArrayConstruction():
 	}
 }
 
-Expression ValueLiteral():
+AstNode ValueLiteral():
 {
 	Token token;
 	String text;
-	Expression tmp;
+	AstNode tmp;
 }
 {
 	(
@@ -941,11 +950,11 @@ Expression ValueLiteral():
 	{ return tmp; }
 }
 
-Expression FunctionCall():
+AstNode FunctionCall():
 {
-	Expression tmp;
+	AstNode tmp;
 	final Token fname;
-	final List<Expression> fargs = new ArrayList<Expression>();
+	final List<AstNode> fargs = new ArrayList<AstNode>();
 	String moduleName = null;
 }
 {
@@ -971,7 +980,7 @@ Expression FunctionCall():
 	{ return new FunctionCall(moduleName, fname.image, fargs, version); }
 }
 
-Expression FieldAccessor(Expression obj):
+AstNode FieldAccessor(AstNode obj):
 {
 }
 {
@@ -988,11 +997,11 @@ Expression FieldAccessor(Expression obj):
 	{ return obj; }
 }
 
-Expression ThisObjectAccess():
+AstNode ThisObjectAccess():
 {
 	Token identifier;
 	boolean permissive;
-	Expression tmp = new ThisObject();
+	AstNode tmp = new ThisObject();
 }
 {
 	<DOT>
@@ -1011,7 +1020,7 @@ Expression ThisObjectAccess():
 	{ return tmp; }
 }
 
-Expression IdentifierFieldAccessor(Expression obj):
+AstNode IdentifierFieldAccessor(AstNode obj):
 {
 	Token identifier;
 	boolean permissive = false;
@@ -1025,9 +1034,9 @@ Expression IdentifierFieldAccessor(Expression obj):
 	{ return new IdentifierFieldAccess(obj, identifier.image, permissive); }
 }
 
-Expression StringFieldAccessor(Expression obj):
+AstNode StringFieldAccessor(AstNode obj):
 {
-	Expression fieldName;
+	AstNode fieldName;
 	boolean permissive = false;
 }
 {
@@ -1039,9 +1048,9 @@ Expression StringFieldAccessor(Expression obj):
 	{ return new StringFieldAccess(obj, fieldName, permissive); }
 }
 
-Expression BracketFieldAccessor(Expression obj):
+AstNode BracketFieldAccessor(AstNode obj):
 {
-	Expression begin = null, end = null;
+	AstNode begin = null, end = null;
 	boolean rangeAccess = true;
 	boolean permissive = false;
 }
@@ -1081,13 +1090,13 @@ Expression BracketFieldAccessor(Expression obj):
 	}
 }
 
-Expression StringInterpolation():
+AstNode StringInterpolation():
 {
 	Token t;
 	final StringBuilder builder = new StringBuilder();
-	final List<Pair<Integer, Expression>> interpolations = new ArrayList<Pair<Integer, Expression>>();
-	Expression tmp;
-	Expression formatter = null;
+	final List<Pair<Integer, AstNode>> interpolations = new ArrayList<Pair<Integer, AstNode>>();
+	AstNode tmp;
+	AstNode formatter = null;
 }
 {
 	(
@@ -1141,9 +1150,9 @@ Expression StringInterpolation():
 	}
 }
 
-PatternMatcher Matcher():
+PatternMatcherAst Matcher():
 {
-	PatternMatcher matcher;
+	PatternMatcherAst matcher;
 }
 {
 	(
@@ -1156,10 +1165,10 @@ PatternMatcher Matcher():
 	{ return matcher; }
 }
 
-PatternMatcher ArrayMatcher():
+PatternMatcherAst ArrayMatcher():
 {
-	PatternMatcher matcher;
-	final List<PatternMatcher> matchers = new ArrayList<PatternMatcher>();
+	PatternMatcherAst matcher;
+	final List<PatternMatcherAst> matchers = new ArrayList<PatternMatcherAst>();
 }
 {
 	<OPEN_BRACKET>
@@ -1171,13 +1180,13 @@ PatternMatcher ArrayMatcher():
 		{ matchers.add(matcher); }
 	)*
 	<CLOSE_BRACKET>
-	{ return new ArrayMatcher(matchers); }
+	{ return new ArrayMatcherAst(matchers); }
 }
 
-PatternMatcher ObjectMatcher():
+PatternMatcherAst ObjectMatcher():
 {
-	ObjectMatcher.FieldMatcher fmatcher;
-	final List<ObjectMatcher.FieldMatcher> matchers = new ArrayList<ObjectMatcher.FieldMatcher>();
+	ObjectMatcherAst.FieldMatcher fmatcher;
+	final List<ObjectMatcherAst.FieldMatcher> matchers = new ArrayList<ObjectMatcherAst.FieldMatcher>();
 }
 {
 	<OPEN_BRACE>
@@ -1189,14 +1198,14 @@ PatternMatcher ObjectMatcher():
 		{ matchers.add(fmatcher); }
 	)*
 	<CLOSE_BRACE>
-	{ return new ObjectMatcher(matchers); }
+	{ return new ObjectMatcherAst(matchers); }
 }
 
-ObjectMatcher.FieldMatcher ObjectMatcherField():
+ObjectMatcherAst.FieldMatcher ObjectMatcherField():
 {
-	Expression nameExpr = null;
+	AstNode nameExpr = null;
 	String name;
-	PatternMatcher matcher = null;
+	PatternMatcherAst matcher = null;
 	boolean dollar = false; // true if {$x} or {$x:...}; false if {x:...}
 }
 {
@@ -1214,10 +1223,10 @@ ObjectMatcher.FieldMatcher ObjectMatcherField():
 		<COLON>
 		matcher = Matcher()
 	)
-	{ return new ObjectMatcher.FieldMatcher(dollar, nameExpr, matcher); }
+	{ return new ObjectMatcherAst.FieldMatcher(dollar, nameExpr, matcher); }
 }
 
-PatternMatcher ValueMatcher():
+PatternMatcherAst ValueMatcher():
 {
 	Token token;
 }

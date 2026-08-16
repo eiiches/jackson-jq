@@ -38,9 +38,9 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 
 		private boolean dollar;
 		private Expression name;
-		private PatternMatcher<JsonNode> matcher;
+		private @Nullable PatternMatcher<JsonNode> matcher;
 
-		public FieldMatcher(boolean dollar, Expression name, PatternMatcher<JsonNode> matcher) {
+		public FieldMatcher(boolean dollar, Expression name, @Nullable PatternMatcher<JsonNode> matcher) {
 			if (dollar && !(name instanceof StringLiteral))
 				throw new IllegalArgumentException("BUG: name must be instance of StringLiteral when dollar = true");
 			if (!dollar && matcher == null)
@@ -58,7 +58,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			return name;
 		}
 
-		public PatternMatcher<JsonNode> rawMatcher() {
+		public @Nullable PatternMatcher<JsonNode> rawMatcher() {
 			return matcher;
 		}
 

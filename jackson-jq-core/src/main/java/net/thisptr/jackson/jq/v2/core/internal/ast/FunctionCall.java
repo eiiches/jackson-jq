@@ -1,25 +1,19 @@
-package net.thisptr.jackson.jq.v2.core.internal.tree;
+package net.thisptr.jackson.jq.v2.core.internal.ast;
 
 import java.util.List;
 
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
-import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Version;
-import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class FunctionCall implements Expression {
+public class FunctionCall implements AstNode {
 	private final String name;
-	private final List<Expression> args;
+	private final List<AstNode> args;
 	private final Version version;
 	private final @Nullable String moduleName;
 
-	public FunctionCall(@Nullable String moduleName, String name, List<Expression> args, Version version) {
+	public FunctionCall(@Nullable String moduleName, String name, List<AstNode> args, Version version) {
 		this.moduleName = moduleName;
 		this.name = name;
 		this.args = args;
@@ -30,17 +24,12 @@ public class FunctionCall implements Expression {
 		return name;
 	}
 
-	public List<Expression> args() {
+	public List<AstNode> args() {
 		return args;
 	}
 
 	public @Nullable String moduleName() {
 		return moduleName;
-	}
-
-	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		throw new UnsupportedOperationException("FunctionCall requires symbol resolution");
 	}
 
 	@Override
@@ -54,7 +43,7 @@ public class FunctionCall implements Expression {
 		if (!args.isEmpty()) {
 			builder.append("(");
 			@Var String sep = "";
-			for (Expression arg : args) {
+			for (AstNode arg : args) {
 				builder.append(sep);
 				if (arg == null) {
 					builder.append("null");

@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.ast.ImportStatement;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ModuleDirective;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
