@@ -12,16 +12,8 @@ public interface Expression {
 		return null;
 	}
 
-	default <JsonNode> void apply(JsonNode in, Output<JsonNode> output) throws JsonQueryException {
-		throw new UnsupportedOperationException("Expression.apply requires a JsonProvider");
-	}
-
 	default <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, Output<JsonNode> output) throws JsonQueryException {
 		apply(jsonProvider, frame, in, null, output, false);
-	}
-
-	default <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		apply(jsonProvider, null, in, ipath, output, requirePath);
 	}
 
 	<JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException;
