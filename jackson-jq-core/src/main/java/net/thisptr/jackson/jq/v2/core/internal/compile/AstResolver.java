@@ -54,7 +54,6 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ArrayMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ObjectMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatcher;
-import net.thisptr.jackson.jq.v2.spi.Closure;
 import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -390,7 +389,6 @@ public class AstResolver {
 
 		if (expr instanceof FunctionDefinition) {
 			FunctionDefinition fd = (FunctionDefinition) expr;
-			FunctionNameAndArity key = FunctionNameAndArity.of(fd.fname(), fd.args().size());
 			context.addLocalFunction(fd.fname(), fd.args().size());
 
 			CompileContext fnContext = context.copy();
@@ -409,21 +407,16 @@ public class AstResolver {
 			Expression resolvedBody = resolveNonNull(env, fnContext, fd.body());
 			ClosureSpec closureSpec = fnContext.getClosureSpec();
 
+			FunctionNameAndArity key = FunctionNameAndArity.of(fd.fname(), fd.args().size());
 			FunctionFactory envFactory = new FunctionFactory() {
 				@Override
-				public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression> fnArgs, net.thisptr.jackson.jq.v2.spi.Version version) {
-					return createFunction(jsonProvider, (Closure<N>) null, fnArgs, version);
-				}
-
-				@Override
 				@SuppressWarnings({"unchecked", "rawtypes"})
-				public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, @Nullable Closure<N> callingClosure, List<Expression> fnArgs, net.thisptr.jackson.jq.v2.spi.Version version) {
+				public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression> fnArgs, net.thisptr.jackson.jq.v2.spi.Version version) {
 					return (runtimeScope, input, path, output) -> {
 						ExecutionStack<N>.Frame parentFrame = runtimeScope.getExecutionFrame();
 						ExecutionStack<N>.Frame fnFrame = parentFrame != null
 								? parentFrame.getStack().pushFrame(parentFrame, fnSize)
 								: new ExecutionStack<N>().pushFrame(parentFrame, fnSize);
-						fnFrame.setClosure((Closure) callingClosure);
 						Scope<N> fnScope = Scope.newChildScopeWithFrame(runtimeScope, fnFrame);
 						try {
 							bindAndApply(runtimeScope, fnScope, fd.args(), paramSlots, fnArgs, input, path, output, (execScope) -> {

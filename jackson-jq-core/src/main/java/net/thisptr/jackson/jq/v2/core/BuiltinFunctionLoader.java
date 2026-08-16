@@ -8,7 +8,6 @@ import java.util.ServiceLoader;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
-import net.thisptr.jackson.jq.v2.spi.Closure;
 import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -97,13 +96,8 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 			}
 
 			@Override
-			public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression> args, Version v) {
-				return createFunction(jsonProvider, (Closure<N>) null, args, v);
-			}
-
-			@Override
 			@SuppressWarnings({"unchecked", "rawtypes"})
-			public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, @Nullable Closure<N> closure, List<Expression> args, Version v) {
+			public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression> args, Version v) {
 				return (runtimeScope, in, path, output) -> {
 					Expression body = getResolvedBody(runtimeScope);
 					int fnSize = def.args.size();
@@ -111,7 +105,6 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 					ExecutionStack<N>.Frame fnFrame = parentFrame != null
 							? parentFrame.getStack().pushFrame(parentFrame, fnSize)
 							: new ExecutionStack<N>().pushFrame(parentFrame, fnSize);
-					fnFrame.setClosure((Closure) closure);
 					Scope<N> fnScope = Scope.newChildScopeWithFrame(runtimeScope, fnFrame);
 					try {
 						bindAndApply(runtimeScope, fnScope, def.args, args, 0, in, path, output, (execScope) -> {

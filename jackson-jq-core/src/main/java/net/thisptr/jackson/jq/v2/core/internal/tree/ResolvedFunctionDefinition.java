@@ -64,15 +64,10 @@ public class ResolvedFunctionDefinition implements Expression {
 		Closure<JsonNode>[] closureHolder = new Closure[1];
 		FunctionFactory factory = new FunctionFactory() {
 			@Override
-			public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression> fnArgs, Version version) {
-				return createFunction(jsonProvider, (Closure<N>) closureHolder[0], fnArgs, version);
-			}
-
-			@Override
 			@SuppressWarnings({"unchecked", "rawtypes"})
-			public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, @Nullable Closure<N> callingClosure, List<Expression> fnArgs, Version version) {
+			public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression> fnArgs, Version version) {
 				return (runtimeScope, input, path, out) -> {
-					Closure<N> effectiveClosure = callingClosure != null ? callingClosure : (Closure<N>) closureHolder[0];
+					Closure<N> effectiveClosure = (Closure<N>) closureHolder[0];
 					ExecutionStack<N>.Frame fnFrame = runtimeScope.getExecutionFrame() != null
 							? runtimeScope.getExecutionFrame().getStack().pushFrame(runtimeScope.getExecutionFrame(), fnSize)
 							: new ExecutionStack<N>().pushFrame(null, fnSize);
