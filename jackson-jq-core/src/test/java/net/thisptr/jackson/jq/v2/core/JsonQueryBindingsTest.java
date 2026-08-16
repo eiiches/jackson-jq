@@ -50,6 +50,49 @@ public class JsonQueryBindingsTest {
 	}
 
 	@Test
+	public void evaluatesOverrideSupplierForEveryReferenceAndThroughClosure() throws Exception {
+		AtomicInteger defaultCounter = new AtomicInteger();
+		AtomicInteger overrideCounter = new AtomicInteger();
+		Environment<JsonNode> env = new Environment<>(JSON_PROVIDER, Versions.JQ_1_7);
+		env.addVariable("value", () -> JSON_PROVIDER.createNumber(defaultCounter.incrementAndGet()));
+		JsonQuery<JsonNode> query = env.compile("def values: [$value, $value]; values");
+		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+				.addVariable("value", () -> JSON_PROVIDER.createNumber(overrideCounter.incrementAndGet()))
+				.build();
+
+		assertEquals(0, defaultCounter.get());
+		assertEquals(0, overrideCounter.get());
+		assertEquals(Arrays.asList(MAPPER.readTree("[1,2]")), run(query, bindings));
+		assertEquals(0, defaultCounter.get());
+		assertEquals(2, overrideCounter.get());
+	}
+
+	@Test
+	public void doesNotEvaluateUnusedOverrideSupplier() throws Exception {
+		AtomicInteger counter = new AtomicInteger();
+		Environment<JsonNode> env = new Environment<>(JSON_PROVIDER, Versions.JQ_1_7);
+		env.addVariable("value", JSON_PROVIDER.createNumber(1));
+		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+				.addVariable("value", () -> JSON_PROVIDER.createNumber(counter.incrementAndGet()))
+				.build();
+
+		run(env.compile("."), bindings);
+		assertEquals(0, counter.get());
+	}
+
+	@Test
+	public void reportsNullValueFromOverrideSupplier() throws Exception {
+		Environment<JsonNode> env = new Environment<>(JSON_PROVIDER, Versions.JQ_1_7);
+		env.addVariable("value", JSON_PROVIDER.createNumber(1));
+		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+				.addVariable("value", () -> null)
+				.build();
+
+		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(env.compile("$value"), bindings));
+		assertTrue(error.getMessage().contains("evaluated to null"));
+	}
+
+	@Test
 	public void overridesFunctionFactoryPerInvocationAndThroughClosure() throws Exception {
 		FunctionNameAndArity key = FunctionNameAndArity.of("custom", 0);
 		Environment<JsonNode> env = new Environment<>(JSON_PROVIDER, Versions.JQ_1_7);

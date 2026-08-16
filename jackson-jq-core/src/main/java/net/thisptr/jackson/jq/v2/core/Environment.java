@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
@@ -63,7 +64,7 @@ public class Environment<JsonNode> {
 	}
 
 	public Environment<JsonNode> addVariable(String name, Supplier<JsonNode> supplier) {
-		variables.put(name, supplier);
+		variables.put(Objects.requireNonNull(name, "name"), Objects.requireNonNull(supplier, "supplier"));
 		return this;
 	}
 

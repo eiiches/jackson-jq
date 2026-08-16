@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
@@ -14,10 +15,10 @@ import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 public final class JsonQueryBindings<JsonNode> {
 	private static final JsonQueryBindings<?> EMPTY = new JsonQueryBindings<>(Collections.emptyMap(), Collections.emptyMap());
 
-	private final Map<String, JsonNode> variables;
+	private final Map<String, Supplier<JsonNode>> variables;
 	private final Map<FunctionNameAndArity, FunctionFactory> functionFactories;
 
-	private JsonQueryBindings(Map<String, JsonNode> variables, Map<FunctionNameAndArity, FunctionFactory> functionFactories) {
+	private JsonQueryBindings(Map<String, Supplier<JsonNode>> variables, Map<FunctionNameAndArity, FunctionFactory> functionFactories) {
 		this.variables = Collections.unmodifiableMap(new HashMap<>(variables));
 		this.functionFactories = Collections.unmodifiableMap(new HashMap<>(functionFactories));
 	}
@@ -31,7 +32,7 @@ public final class JsonQueryBindings<JsonNode> {
 		return new Builder<>();
 	}
 
-	public Map<String, JsonNode> variables() {
+	public Map<String, Supplier<JsonNode>> variables() {
 		return variables;
 	}
 
@@ -40,11 +41,19 @@ public final class JsonQueryBindings<JsonNode> {
 	}
 
 	public static final class Builder<JsonNode> {
-		private final Map<String, JsonNode> variables = new HashMap<>();
+		private final Map<String, Supplier<JsonNode>> variables = new HashMap<>();
 		private final Map<FunctionNameAndArity, FunctionFactory> functionFactories = new HashMap<>();
 
 		public Builder<JsonNode> addVariable(String name, JsonNode value) {
-			variables.put(Objects.requireNonNull(name, "name"), Objects.requireNonNull(value, "value"));
+			Objects.requireNonNull(value, "value");
+			return addVariable(name, () -> value);
+		}
+
+		/**
+		 * Adds a variable whose supplier is evaluated whenever the variable is referenced.
+		 */
+		public Builder<JsonNode> addVariable(String name, Supplier<JsonNode> supplier) {
+			variables.put(Objects.requireNonNull(name, "name"), Objects.requireNonNull(supplier, "supplier"));
 			return this;
 		}
 

@@ -102,13 +102,9 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 	private void initializeFrame(ExecutionStack<JsonNode>.Frame frame, JsonQueryBindings<JsonNode> bindings) {
 		for (Map.Entry<String, List<Integer>> entry : variableSlots.entrySet()) {
 			String name = entry.getKey();
-			Supplier<JsonNode> supplier;
-			if (bindings.variables().containsKey(name)) {
-				JsonNode value = bindings.variables().get(name);
-				supplier = () -> value;
-			} else {
-				supplier = defaultVariables.get(name);
-			}
+			Supplier<JsonNode> supplier = bindings.variables().containsKey(name)
+					? bindings.variables().get(name)
+					: defaultVariables.get(name);
 			if (supplier != null) {
 				for (int slot : entry.getValue())
 					frame.set(slot, supplier);

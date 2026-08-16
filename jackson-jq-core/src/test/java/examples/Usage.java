@@ -75,7 +75,7 @@ public class Usage {
 
 		// A compiled query can be reused with different variable and function bindings for each invocation.
 		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
-				.addVariable("param", jsonProvider.createNumber(7))
+				.addVariable("param", () -> jsonProvider.createNumber(7)) // suppliers are evaluated on each reference
 				.build();
 		List<JsonNode> overriddenOut = new ArrayList<>();
 		q.apply(in, bindings, (outNode, path) -> overriddenOut.add(outNode));
