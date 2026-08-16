@@ -9,17 +9,22 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public abstract class ValueLiteral implements Expression {
+public abstract class ValueLiteral<JsonNode> implements Expression<JsonNode> {
+	protected final JsonProvider<JsonNode> jsonProvider;
 
-	public abstract <JsonNode> JsonNode value(JsonProvider<JsonNode> jsonProvider);
+	protected ValueLiteral(JsonProvider<JsonNode> jsonProvider) {
+		this.jsonProvider = jsonProvider;
+	}
+
+	public abstract JsonNode value();
 
 	@Override
-	public <JsonNode> @Nullable JsonNode evaluateConstantExpr(JsonProvider<JsonNode> jsonProvider) {
-		return value(jsonProvider);
+	public @Nullable JsonNode evaluateConstantExpr() {
+		return value();
 	}
 
 	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		output.emit(value(jsonProvider), null);
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		output.emit(value(), null);
 	}
 }

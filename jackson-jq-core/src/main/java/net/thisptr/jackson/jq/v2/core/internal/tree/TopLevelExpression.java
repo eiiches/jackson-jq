@@ -5,19 +5,18 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode;
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class TopLevelExpression<JsonNode> implements Expression {
+public class TopLevelExpression<JsonNode> implements Expression<JsonNode> {
 	private final List<TopLevelAstNode.ImportStatement<JsonNode>> imports;
-	private final Expression expr;
+	private final Expression<JsonNode> expr;
 	private final TopLevelAstNode.ModuleDirective<JsonNode> moduleDirective;
 
-	public TopLevelExpression(TopLevelAstNode.ModuleDirective<JsonNode> moduleDirective, List<TopLevelAstNode.ImportStatement<JsonNode>> imports, Expression expr) {
+	public TopLevelExpression(TopLevelAstNode.ModuleDirective<JsonNode> moduleDirective, List<TopLevelAstNode.ImportStatement<JsonNode>> imports, Expression<JsonNode> expr) {
 		this.moduleDirective = moduleDirective;
 		this.imports = imports;
 		this.expr = expr;
@@ -31,18 +30,13 @@ public class TopLevelExpression<JsonNode> implements Expression {
 		return imports;
 	}
 
-	public Expression expr() {
+	public Expression<JsonNode> expr() {
 		return expr;
 	}
 
 	@Override
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public <N> void apply(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame frame, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
-		applyInternal((JsonProvider) jsonProvider, (ExecutionStack.Frame) frame, (JsonNode) in, (Path) ipath, (PathOutput) output, requirePath);
-	}
-
-	private void applyInternal(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		expr.apply(jsonProvider, frame, in, ipath, output, requirePath);
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		expr.apply(frame, in, ipath, output, requirePath);
 	}
 
 	@Override

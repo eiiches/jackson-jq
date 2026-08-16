@@ -17,15 +17,15 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ResolvedFunctionDefinition implements Expression {
+public class ResolvedFunctionDefinition<JsonNode> implements Expression<JsonNode> {
 	private final int slot;
 	private final ClosureSpec closureSpec;
 	private final int fnSize;
 	private final List<String> paramNames;
 	private final List<Integer> paramSlots;
-	private final Expression resolvedBody;
+	private final Expression<JsonNode> resolvedBody;
 
-	public ResolvedFunctionDefinition(int slot, ClosureSpec closureSpec, int fnSize, List<String> paramNames, List<Integer> paramSlots, Expression resolvedBody) {
+	public ResolvedFunctionDefinition(int slot, ClosureSpec closureSpec, int fnSize, List<String> paramNames, List<Integer> paramSlots, Expression<JsonNode> resolvedBody) {
 		this.slot = slot;
 		this.closureSpec = closureSpec;
 		this.fnSize = fnSize;
@@ -54,18 +54,19 @@ public class ResolvedFunctionDefinition implements Expression {
 		return paramSlots;
 	}
 
-	public Expression resolvedBody() {
+	public Expression<JsonNode> resolvedBody() {
 		return resolvedBody;
 	}
 
 	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		@SuppressWarnings("unchecked")
-		Closure<JsonNode>[] closureHolder = new Closure[1];
+		Closure<JsonNode>[] closureHolder = (Closure<JsonNode>[]) new Closure<?>[1];
 		FunctionFactory factory = new FunctionFactory() {
 			@Override
-			@SuppressWarnings({"unchecked", "rawtypes"})
-			public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jp, List<Expression> fnArgs, Version version) {
+			@SuppressWarnings("unchecked")
+			public <N> Function<N> createFunction(JsonProvider<N> jp, List<Expression<N>> fnArgs, Version version) {
+				Expression<N> effectiveBody = (Expression<N>) resolvedBody;
 				return (callerFrame, input, path, out) -> {
 					Closure<N> effectiveClosure = (Closure<N>) closureHolder[0];
 					ExecutionStack<N>.Frame fnFrame = callerFrame != null
@@ -73,8 +74,8 @@ public class ResolvedFunctionDefinition implements Expression {
 							: new ExecutionStack<N>().pushFrame(null, fnSize);
 					fnFrame.setClosure(effectiveClosure);
 					try {
-						Compiler.bindAndApply(jp, callerFrame, fnFrame, paramNames, paramSlots, fnArgs, input, path, out, (execFrame) -> {
-							resolvedBody.apply(jp, execFrame, input, path, out, false);
+						Compiler.bindAndApply(callerFrame, fnFrame, paramNames, paramSlots, fnArgs, input, path, out, (execFrame) -> {
+							effectiveBody.apply(execFrame, input, path, out, false);
 						});
 					} finally {
 						fnFrame.getStack().popFrame();

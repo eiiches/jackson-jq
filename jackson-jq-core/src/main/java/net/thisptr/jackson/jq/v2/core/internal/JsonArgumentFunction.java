@@ -29,12 +29,12 @@ public abstract class JsonArgumentFunction implements FunctionFactory {
 	}
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
 			List<List<JsonNode>> _args = new ArrayList<>(args.size());
-			for (Expression arg : args) {
+			for (Expression<JsonNode> arg : args) {
 				List<JsonNode> out = new ArrayList<>();
-				arg.apply(jsonProvider, frame, in, out::add);
+				arg.apply(frame, in, out::add);
 				_args.add(out);
 			}
 

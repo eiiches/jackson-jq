@@ -22,7 +22,7 @@ import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
 ))
 public class Utf8ByteLengthFunction implements FunctionFactory {
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (scope, in, ipath, output) -> {
 
 				if (jsonProvider.getNodeType(in) != JsonNodeType.STRING)

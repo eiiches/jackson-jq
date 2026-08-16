@@ -112,7 +112,7 @@ public class Main {
 		Environment<JsonNode> env = new Environment<>(jsonProvider, version);
 		env.addFunctionFactory(FunctionNameAndArity.of("env", 0), new FunctionFactory() {
 			@Override
-			public <N> Function<N> createFunction(JsonProvider<N> jsonProv, List<Expression> fnArgs, Version ver) {
+			public <N> Function<N> createFunction(JsonProvider<N> jsonProv, List<Expression<N>> fnArgs, Version ver) {
 				return (frame, in, path, output) -> {
 					N envObj = jsonProv.createObject();
 					for (Map.Entry<String, String> entry : System.getenv().entrySet()) {

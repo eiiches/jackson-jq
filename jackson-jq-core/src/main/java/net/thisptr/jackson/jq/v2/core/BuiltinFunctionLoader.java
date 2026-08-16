@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core;
 
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -72,12 +73,13 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 	private FunctionFactory createJqFunctionFactory(JqFunc def, Version version) {
 		AstNode parsedAst = ExpressionParser.compile(def.body, version);
 		return new FunctionFactory() {
-			private @Nullable Expression resolvedBody;
+			private final IdentityHashMap<JsonProvider<?>, Expression<?>> resolvedBodies = new IdentityHashMap<>();
 
-			@SuppressWarnings({"unchecked", "rawtypes"})
-			private synchronized Expression getResolvedBody(JsonProvider<?> jsonProvider) throws JsonQueryException {
-				if (resolvedBody != null)
-					return resolvedBody;
+			@SuppressWarnings("unchecked")
+			private synchronized <N> Expression<N> getResolvedBody(JsonProvider<N> jsonProvider) throws JsonQueryException {
+				Expression<N> cachedBody = (Expression<N>) resolvedBodies.get(jsonProvider);
+				if (cachedBody != null)
+					return cachedBody;
 				CompileContext context = new CompileContext();
 				context.pushFunctionScope();
 				for (String arg : def.args) {
@@ -87,24 +89,24 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 						context.addLocalFunction(arg, 0);
 					}
 				}
-				Environment env = new Environment((JsonProvider) jsonProvider, version);
+				Environment<N> env = new Environment<>(jsonProvider, version);
 				listFunctionFactories(version).forEach(env::addFunctionFactory);
-				resolvedBody = Compiler.compileNonNull(env, context, parsedAst);
+				Expression<N> resolvedBody = Compiler.compileNonNull(env, context, parsedAst);
+				resolvedBodies.put(jsonProvider, resolvedBody);
 				return resolvedBody;
 			}
 
 			@Override
-			@SuppressWarnings({"unchecked", "rawtypes"})
-			public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression> args, Version v) {
+			public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version v) {
 				return (callerFrame, in, path, output) -> {
-					Expression body = getResolvedBody(jsonProvider);
+					Expression<N> body = getResolvedBody(jsonProvider);
 					int fnSize = def.args.size();
 					ExecutionStack<N>.Frame fnFrame = callerFrame != null
 							? callerFrame.getStack().pushFrame(callerFrame, fnSize)
 							: new ExecutionStack<N>().pushFrame(callerFrame, fnSize);
 					try {
-						bindAndApply(jsonProvider, callerFrame, fnFrame, def.args, args, 0, in, path, output, (execFrame) -> {
-							body.apply(jsonProvider, execFrame, in, path, output, false);
+						bindAndApply(callerFrame, fnFrame, def.args, args, in, path, output, (execFrame) -> {
+							body.apply(execFrame, in, path, output, false);
 						});
 					} finally {
 						fnFrame.getStack().popFrame();
@@ -114,38 +116,40 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 		};
 	}
 
-	private <N> void bindAndApply(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Expression> args, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
+	private <N> void bindAndApply(ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Expression<N>> args, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
 		for (int i = 0; i < paramNames.size(); i++) {
 			String pName = paramNames.get(i);
-			Expression pExpr = args.get(i);
+			Expression<N> pExpr = args.get(i);
 			if (!pName.startsWith("$")) {
 				currentFrame.set(i, new FunctionFactory() {
 					@Override
-					@SuppressWarnings({"unchecked", "rawtypes"})
-					public <N1> Function<N1> createFunction(JsonProvider<N1> jp, List<Expression> emptyArgs, Version ver) {
-						return (sFrame, inVal, pVal, outVal) -> pExpr.apply(jp, (ExecutionStack.Frame) callerFrame, inVal, pVal, outVal, false);
+					@SuppressWarnings("unchecked")
+					public <N1> Function<N1> createFunction(JsonProvider<N1> jp, List<Expression<N1>> emptyArgs, Version ver) {
+						Expression<N1> effectiveExpr = (Expression<N1>) (Expression<?>) pExpr;
+						ExecutionStack<N1>.Frame effectiveCallerFrame = (ExecutionStack<N1>.Frame) (Object) callerFrame;
+						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal, false);
 					}
 				});
 			}
 		}
-		bindValueParams(jsonProvider, callerFrame, currentFrame, paramNames, args, 0, in, path, output, bodyTask);
+		bindValueParams(callerFrame, currentFrame, paramNames, args, 0, in, path, output, bodyTask);
 	}
 
-	private <N> void bindValueParams(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Expression> args, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
+	private <N> void bindValueParams(ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Expression<N>> args, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
 		if (index >= paramNames.size()) {
 			bodyTask.accept(currentFrame);
 			return;
 		}
 		String argName = paramNames.get(index);
-		Expression argExpr = args.get(index);
+		Expression<N> argExpr = args.get(index);
 		if (argName.startsWith("$")) {
 			int slot = index;
-			argExpr.apply(jsonProvider, callerFrame, in, path, (val, p) -> {
+			argExpr.apply(callerFrame, in, path, (val, p) -> {
 				currentFrame.set(slot, val);
-				bindValueParams(jsonProvider, callerFrame, currentFrame, paramNames, args, index + 1, in, path, output, bodyTask);
+				bindValueParams(callerFrame, currentFrame, paramNames, args, index + 1, in, path, output, bodyTask);
 			}, false);
 		} else {
-			bindValueParams(jsonProvider, callerFrame, currentFrame, paramNames, args, index + 1, in, path, output, bodyTask);
+			bindValueParams(callerFrame, currentFrame, paramNames, args, index + 1, in, path, output, bodyTask);
 		}
 	}
 }

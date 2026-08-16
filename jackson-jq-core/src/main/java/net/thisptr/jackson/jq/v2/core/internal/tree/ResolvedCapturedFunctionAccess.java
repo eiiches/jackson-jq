@@ -15,12 +15,14 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ResolvedCapturedFunctionAccess implements Expression {
+public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<JsonNode> {
+	private final JsonProvider<JsonNode> jsonProvider;
 	private final String name;
 	private final int closureSlot;
-	private final List<Expression> args;
+	private final List<Expression<JsonNode>> args;
 
-	public ResolvedCapturedFunctionAccess(String name, int closureSlot, List<Expression> args) {
+	public ResolvedCapturedFunctionAccess(JsonProvider<JsonNode> jsonProvider, String name, int closureSlot, List<Expression<JsonNode>> args) {
+		this.jsonProvider = jsonProvider;
 		this.name = name;
 		this.closureSlot = closureSlot;
 		this.args = args;
@@ -34,13 +36,12 @@ public class ResolvedCapturedFunctionAccess implements Expression {
 		return closureSlot;
 	}
 
-	public List<Expression> args() {
+	public List<Expression<JsonNode>> args() {
 		return args;
 	}
 
 	@Override
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Closure<JsonNode> closure = frame != null ? frame.getClosure() : null;
 		FunctionFactory factory = closure != null ? closure.getFunctionFactory(closureSlot) : null;
 		if (factory == null) {

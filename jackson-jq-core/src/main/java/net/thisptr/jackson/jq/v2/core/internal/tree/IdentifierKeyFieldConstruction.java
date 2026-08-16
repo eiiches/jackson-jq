@@ -9,24 +9,26 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class IdentifierKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
+	private final JsonProvider<JsonNode> jsonProvider;
 	public final String key;
-	public final @Nullable Expression value;
+	public final @Nullable Expression<JsonNode> value;
 
-	public IdentifierKeyFieldConstruction(String key, @Nullable Expression value) {
+	public IdentifierKeyFieldConstruction(JsonProvider<JsonNode> jsonProvider, String key, @Nullable Expression<JsonNode> value) {
+		this.jsonProvider = jsonProvider;
 		this.key = key;
 		this.value = value;
 	}
 
-	public IdentifierKeyFieldConstruction(String key) {
-		this(key, null);
+	public IdentifierKeyFieldConstruction(JsonProvider<JsonNode> jsonProvider, String key) {
+		this(jsonProvider, key, null);
 	}
 
 	@Override
-	public void evaluate(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
+	public void evaluate(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		if (value == null) {
 			consumer.accept(key, JsonNodeUtils.nullToNullNode(jsonProvider, jsonProvider.get(in, key)));
 		} else {
-			value.apply(jsonProvider, frame, in, (v) -> consumer.accept(key, v));
+			value.apply(frame, in, (v) -> consumer.accept(key, v));
 		}
 	}
 

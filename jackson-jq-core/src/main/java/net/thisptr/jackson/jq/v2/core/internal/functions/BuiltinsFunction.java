@@ -19,7 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 @FunctionRegistration(name = "builtins", nargs = 0)
 public class BuiltinsFunction implements FunctionFactory {
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		List<String> builtins = new ArrayList<>();
 		for (FunctionNameAndArity fn : BuiltinFunctionLoader.getInstance().listFunctionFactories(version).keySet()) {
 			builtins.add(fn.toString());

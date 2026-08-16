@@ -17,14 +17,14 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 @FunctionRegistration(name = "has", nargs = 1)
 public class HasFunction implements FunctionFactory {
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
 			JsonNodeType inType = jsonProvider.getNodeType(in);
 			if (inType == JsonNodeType.NULL) {
 				output.emit(jsonProvider.createBoolean(false), null);
 				return;
 			}
-			args.get(0).apply(jsonProvider, frame, in, (keyName) -> {
+			args.get(0).apply(frame, in, (keyName) -> {
 				JsonNodeType keyType = jsonProvider.getNodeType(keyName);
 				if (inType == JsonNodeType.OBJECT) {
 					if (keyType != JsonNodeType.STRING)

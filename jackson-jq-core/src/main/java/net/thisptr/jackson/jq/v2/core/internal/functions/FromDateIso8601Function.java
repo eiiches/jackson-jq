@@ -21,7 +21,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 @FunctionRegistration(name = "fromdateiso8601", nargs = 0)
 public class FromDateIso8601Function implements FunctionFactory {
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (scope, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "fromdateiso8601", in, JsonNodeType.STRING);
 			try {

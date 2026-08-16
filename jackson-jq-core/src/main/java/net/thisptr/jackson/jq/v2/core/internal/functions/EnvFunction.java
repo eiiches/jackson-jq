@@ -15,7 +15,7 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 // @FunctionRegistration(name = "env", nargs = 0)
 public class EnvFunction implements FunctionFactory {
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (scope, in, ipath, output) -> {
 			JsonNode result = jsonProvider.createObject();
 			for (Map.Entry<String, String> entry : System.getenv().entrySet()) {

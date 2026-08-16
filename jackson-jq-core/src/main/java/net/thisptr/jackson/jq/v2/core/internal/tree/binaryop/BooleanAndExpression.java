@@ -10,19 +10,25 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class BooleanAndExpression extends BinaryOperatorExpression {
-	public BooleanAndExpression(Expression lhs, Expression rhs) {
+public class BooleanAndExpression<JsonNode> extends BinaryOperatorExpression<JsonNode> {
+	private final JsonProvider<JsonNode> jsonProvider;
+
+	public BooleanAndExpression(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> lhs, Expression<JsonNode> rhs) {
 		super(lhs, rhs, "and");
+		this.jsonProvider = jsonProvider;
 	}
 
 	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		lhs.apply(jsonProvider, frame, in, (l) -> {
+	@SuppressWarnings("unchecked")
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		Expression<JsonNode> typedLhs = lhs;
+		Expression<JsonNode> typedRhs = rhs;
+		typedLhs.apply(frame, in, (l) -> {
 			if (!JsonNodeUtils.asBoolean(jsonProvider, l)) {
 				output.emit(jsonProvider.createBoolean(false), null);
 				return;
 			}
-			rhs.apply(jsonProvider, frame, in, (r) -> {
+			typedRhs.apply(frame, in, (r) -> {
 				output.emit(jsonProvider.createBoolean(JsonNodeUtils.asBoolean(jsonProvider, r)), null);
 			});
 		});

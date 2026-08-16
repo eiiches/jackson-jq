@@ -12,20 +12,22 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class NegativeExpression implements Expression {
-	private Expression value;
+public class NegativeExpression<JsonNode> implements Expression<JsonNode> {
+	private final JsonProvider<JsonNode> jsonProvider;
+	private Expression<JsonNode> value;
 
-	public NegativeExpression(Expression value) {
+	public NegativeExpression(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> value) {
+		this.jsonProvider = jsonProvider;
 		this.value = value;
 	}
 
-	public Expression value() {
+	public Expression<JsonNode> value() {
 		return value;
 	}
 
 	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		value.apply(jsonProvider, frame, in, (v) -> {
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		value.apply(frame, in, (v) -> {
 			if (jsonProvider.getNodeType(v) != JsonNodeType.NUMBER)
 				throw new JsonQueryTypeException(jsonProvider, "%s cannot be negated", v);
 			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, -jsonProvider.asDouble(v)), null);

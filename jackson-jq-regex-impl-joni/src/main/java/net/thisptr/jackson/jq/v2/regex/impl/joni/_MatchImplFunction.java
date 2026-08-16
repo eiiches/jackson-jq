@@ -23,21 +23,21 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 @FunctionRegistration(name = "_match_impl", nargs = 3)
 public class _MatchImplFunction implements FunctionFactory {
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		Expression regexExpr = args.get(0);
-		Expression flagsExpr = args.get(1);
-		Expression testExpr = args.get(2);
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
+		Expression<JsonNode> regexExpr = args.get(0);
+		Expression<JsonNode> flagsExpr = args.get(1);
+		Expression<JsonNode> testExpr = args.get(2);
 
 		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
 			byte[] ibytes = jsonProvider.asText(in).getBytes(StandardCharsets.UTF_8);
 			int[] cindex = UnicodeUtils.utf8CharIndex(ibytes);
 
-			testExpr.apply(jsonProvider, frame, in, (test) -> {
+			testExpr.apply(frame, in, (test) -> {
 				Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 3, test, JsonNodeType.BOOLEAN);
-				flagsExpr.apply(jsonProvider, frame, in, (flags) -> {
+				flagsExpr.apply(frame, in, (flags) -> {
 					Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 2, flags, JsonNodeType.STRING, JsonNodeType.NULL);
-					regexExpr.apply(jsonProvider, frame, in, (regex) -> {
+					regexExpr.apply(frame, in, (regex) -> {
 						Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 1, regex, JsonNodeType.STRING);
 						OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asText(regex), jsonProvider.getNodeType(flags) == JsonNodeType.NULL ? null : jsonProvider.asText(flags));
 						output.emit(match(jsonProvider, p, ibytes, cindex, jsonProvider.asBoolean(test)), null);

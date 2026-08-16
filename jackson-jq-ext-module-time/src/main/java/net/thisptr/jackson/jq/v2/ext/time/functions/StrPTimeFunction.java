@@ -16,17 +16,17 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class StrPTimeFunction implements FunctionFactory {
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "strptime", in, JsonNodeType.STRING);
 
 			try {
-				args.get(0).apply(jsonProvider, frame, in, (fmt) -> {
+				args.get(0).apply(frame, in, (fmt) -> {
 					if (jsonProvider.getNodeType(fmt) != JsonNodeType.STRING)
 						throw new JsonQueryException(String.format("Illegal argument type: %s", jsonProvider.getNodeType(fmt)));
 					SimpleDateFormat sdf = new SimpleDateFormat(jsonProvider.asText(fmt));
 					if (args.size() == 2) {
-						args.get(1).apply(jsonProvider, frame, in, (tz) -> {
+						args.get(1).apply(frame, in, (tz) -> {
 							if (jsonProvider.getNodeType(tz) != JsonNodeType.STRING)
 								throw new JsonQueryException("Timezone must be a string");
 							sdf.setTimeZone(TimeZone.getTimeZone(jsonProvider.asText(tz)));

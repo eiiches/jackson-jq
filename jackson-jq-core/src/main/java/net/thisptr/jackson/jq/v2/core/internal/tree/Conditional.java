@@ -14,44 +14,46 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class Conditional implements Expression {
-	private Expression otherwise;
-	private List<Pair<Expression, Expression>> switches;
+public class Conditional<JsonNode> implements Expression<JsonNode> {
+	private final JsonProvider<JsonNode> jsonProvider;
+	private Expression<JsonNode> otherwise;
+	private List<Pair<Expression<JsonNode>, Expression<JsonNode>>> switches;
 
-	public Conditional(List<Pair<Expression, Expression>> switches, Expression otherwise) {
+	public Conditional(JsonProvider<JsonNode> jsonProvider, List<Pair<Expression<JsonNode>, Expression<JsonNode>>> switches, Expression<JsonNode> otherwise) {
+		this.jsonProvider = jsonProvider;
 		this.switches = switches;
 		this.otherwise = otherwise;
 	}
 
-	public List<Pair<Expression, Expression>> switches() {
+	public List<Pair<Expression<JsonNode>, Expression<JsonNode>>> switches() {
 		return switches;
 	}
 
-	public Expression otherwise() {
+	public Expression<JsonNode> otherwise() {
 		return otherwise;
 	}
 
 	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		applyBranch(jsonProvider, frame, in, path, output, 0);
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		applyBranch(frame, in, path, output, 0);
 	}
 
-	private <JsonNode> void applyBranch(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, int switchIndex) throws JsonQueryException {
+	private void applyBranch(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, int switchIndex) throws JsonQueryException {
 		if (switchIndex >= switches.size()) {
 			if (otherwise != null) {
-				otherwise.apply(jsonProvider, frame, in, path, output, false);
+				otherwise.apply(frame, in, path, output, false);
 			}
 			return;
 		}
-		Pair<Expression, Expression> sw = switches.get(switchIndex);
+		Pair<Expression<JsonNode>, Expression<JsonNode>> sw = switches.get(switchIndex);
 		java.util.List<JsonNode> condValues = new java.util.ArrayList<>();
-		sw._1.apply(jsonProvider, frame, in, (r) -> condValues.add(r));
+		sw._1.apply(frame, in, (r) -> condValues.add(r));
 
 		for (JsonNode r : condValues) {
 			if (JsonNodeUtils.asBoolean(jsonProvider, r)) {
-				sw._2.apply(jsonProvider, frame, in, path, output, false);
+				sw._2.apply(frame, in, path, output, false);
 			} else {
-				applyBranch(jsonProvider, frame, in, path, output, switchIndex + 1);
+				applyBranch(frame, in, path, output, switchIndex + 1);
 			}
 		}
 	}
@@ -60,7 +62,7 @@ public class Conditional implements Expression {
 	public String toString() {
 		@Var String ifstr = "if";
 		StringBuilder builder = new StringBuilder();
-		for (Pair<Expression, Expression> sw : switches) {
+		for (Pair<Expression<JsonNode>, Expression<JsonNode>> sw : switches) {
 			builder.append(ifstr);
 			builder.append(" ");
 			builder.append(sw._1 != null ? sw._1 : "null");

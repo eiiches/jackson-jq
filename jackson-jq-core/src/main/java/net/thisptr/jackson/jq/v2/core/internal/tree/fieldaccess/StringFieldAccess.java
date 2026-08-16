@@ -11,15 +11,15 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class StringFieldAccess extends FieldAccess {
-	private Expression field;
+public class StringFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
+	private Expression<JsonNode> field;
 
-	public StringFieldAccess(Expression obj, Expression field, boolean permissive) {
-		super(obj, permissive);
+	public StringFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> obj, Expression<JsonNode> field, boolean permissive) {
+		super(jsonProvider, obj, permissive);
 		this.field = field;
 	}
 
-	public Expression key() {
+	public Expression<JsonNode> key() {
 		return field;
 	}
 
@@ -36,9 +36,9 @@ public class StringFieldAccess extends FieldAccess {
 	}
 
 	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		field.apply(jsonProvider, frame, in, (key) -> {
-			target.apply(jsonProvider, frame, in, path, (pobj, ppath) -> {
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		field.apply(frame, in, (key) -> {
+			target.apply(frame, in, path, (pobj, ppath) -> {
 				if (jsonProvider.getNodeType(key) != JsonNodeType.STRING && !permissive)
 					throw new IllegalStateException(); // FIXME: exception type
 				emitObjectFieldPath(jsonProvider, permissive, jsonProvider.asText(key), pobj, ppath, output, requirePath);

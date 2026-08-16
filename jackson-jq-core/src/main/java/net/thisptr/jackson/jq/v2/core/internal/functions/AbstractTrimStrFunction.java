@@ -12,9 +12,9 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 public abstract class AbstractTrimStrFunction implements FunctionFactory {
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
-			args.get(0).apply(jsonProvider, frame, in, (trimText) -> {
+			args.get(0).apply(frame, in, (trimText) -> {
 				if (jsonProvider.getNodeType(in) != JsonNodeType.STRING || jsonProvider.getNodeType(trimText) != JsonNodeType.STRING) {
 					output.emit(in, ipath);
 					return;

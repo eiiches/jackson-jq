@@ -16,22 +16,20 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ObjectConstruction<JsonNode> implements Expression {
+public class ObjectConstruction<JsonNode> implements Expression<JsonNode> {
+	private final JsonProvider<JsonNode> jsonProvider;
 	public final List<FieldConstruction<JsonNode>> fields = new ArrayList<>();
 
-	public ObjectConstruction() {}
+	public ObjectConstruction(JsonProvider<JsonNode> jsonProvider) {
+		this.jsonProvider = jsonProvider;
+	}
 
 	public void add(FieldConstruction<JsonNode> field) {
 		fields.add(field);
 	}
 
 	@Override
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public <N> void apply(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame frame, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
-		applyInternal((JsonProvider) jsonProvider, (ExecutionStack.Frame) frame, (JsonNode) in, (PathOutput) output);
-	}
-
-	private void applyInternal(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, PathOutput<JsonNode> output) throws JsonQueryException {
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Map<String, JsonNode> tmp = new LinkedHashMap<>(fields.size());
 		applyRecursive(jsonProvider, frame, in, output, fields, tmp);
 	}
@@ -44,7 +42,7 @@ public class ObjectConstruction<JsonNode> implements Expression {
 			output.emit(obj, null);
 			return;
 		}
-		fields.get(0).evaluate(jsonProvider, frame, in, (k, v) -> {
+		fields.get(0).evaluate(frame, in, (k, v) -> {
 			tmp.put(k, v);
 			applyRecursive(jsonProvider, frame, in, output, fields.subList(1, fields.size()), tmp);
 			tmp.remove(k);

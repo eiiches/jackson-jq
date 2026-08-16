@@ -20,18 +20,23 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class UpdateAssignment extends BinaryOperatorExpression {
+public class UpdateAssignment<JsonNode> extends BinaryOperatorExpression<JsonNode> {
+	private final JsonProvider<JsonNode> jsonProvider;
 	private Version version;
 
-	public UpdateAssignment(Expression lhs, Expression rhs, Version version) {
+	public UpdateAssignment(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version) {
 		super(lhs, rhs, "|=");
+		this.jsonProvider = jsonProvider;
 		this.version = version;
 	}
 
 	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	@SuppressWarnings("unchecked")
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		Expression<JsonNode> typedLhs = lhs;
+		Expression<JsonNode> typedRhs = rhs;
 		JsonNode[] out = (JsonNode[]) new Object[] { in };
-		lhs.apply(jsonProvider, frame, in, RootPath.getInstance(), (lval, lpath0) -> {
+		typedLhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
 			@Var Path<JsonNode> lpath = lpath0;
 			// `VALUE | path(VALUE) => []`
 			if (lpath == null && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)
@@ -41,7 +46,7 @@ public class UpdateAssignment extends BinaryOperatorExpression {
 
 			out[0] = lpath.mutate(jsonProvider, out[0], (lval_) -> {
 				List<JsonNode> rvals = new ArrayList<>();
-				rhs.apply(jsonProvider, frame, lval_ == null ? jsonProvider.createNull() : lval_, rvals::add);
+				typedRhs.apply(frame, lval_ == null ? jsonProvider.createNull() : lval_, rvals::add);
 				if (rvals.isEmpty())
 					throw new JsonQueryUndefinedBehaviorException("`|= empty` is undefined. See https://github.com/stedolan/jq/issues/897");
 				if (version.compareTo(Versions.JQ_1_6) >= 0) {

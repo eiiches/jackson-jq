@@ -24,16 +24,16 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 @FunctionRegistration(name = "paths", nargs = 1)
 public class PathsFunction implements FunctionFactory {
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
 			Stack<JsonNode> stack = new Stack<>();
 			applyRecursive(frame, jsonProvider, in, output, stack, args.get(0));
 		};
 	}
 
-	private static <JsonNode> void applyRecursive(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonProvider<JsonNode> jsonProvider, JsonNode in, PathOutput<JsonNode> output, Stack<JsonNode> stack, Expression predicate) throws JsonQueryException {
+	private static <JsonNode> void applyRecursive(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonProvider<JsonNode> jsonProvider, JsonNode in, PathOutput<JsonNode> output, Stack<JsonNode> stack, Expression<JsonNode> predicate) throws JsonQueryException {
 		if (!stack.isEmpty()) {
-			predicate.apply(jsonProvider, frame, in, (shouldInclude) -> {
+			predicate.apply(frame, in, (shouldInclude) -> {
 				if (JsonNodeUtils.asBoolean(jsonProvider, shouldInclude))
 					output.emit(JsonNodeUtils.asArrayNode(jsonProvider, stack), null);
 			});

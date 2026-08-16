@@ -16,14 +16,14 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 @FunctionRegistration(name = "rindex", nargs = 1)
 public class RIndexFunction implements FunctionFactory {
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
 			if (jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
 				output.emit(jsonProvider.createNull(), null);
 				return;
 			}
 
-			args.get(0).apply(jsonProvider, frame, in, (needle) -> {
+			args.get(0).apply(frame, in, (needle) -> {
 				List<Integer> tmp = IndicesFunction.indices(jsonProvider, needle, in);
 				if (tmp.isEmpty()) {
 					output.emit(jsonProvider.createNull(), null);

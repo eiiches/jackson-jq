@@ -9,42 +9,43 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class TryCatch implements Expression {
-	protected Expression tryExpr;
-	protected @Nullable Expression catchExpr;
+public class TryCatch<JsonNode> implements Expression<JsonNode> {
+	private final JsonProvider<JsonNode> jsonProvider;
+	protected Expression<JsonNode> tryExpr;
+	protected @Nullable Expression<JsonNode> catchExpr;
 
-	public TryCatch(Expression tryExpr, @Nullable Expression catchExpr) {
+	public TryCatch(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> tryExpr, @Nullable Expression<JsonNode> catchExpr) {
+		this.jsonProvider = jsonProvider;
 		this.tryExpr = tryExpr;
 		this.catchExpr = catchExpr;
 	}
 
-	public TryCatch(Expression tryExpr) {
-		this(tryExpr, null);
+	public TryCatch(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> tryExpr) {
+		this(jsonProvider, tryExpr, null);
 	}
 
-	public Expression tryExpr() {
+	public Expression<JsonNode> tryExpr() {
 		return tryExpr;
 	}
 
-	public @Nullable Expression catchExpr() {
+	public @Nullable Expression<JsonNode> catchExpr() {
 		return catchExpr;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		try {
-			tryExpr.apply(jsonProvider, frame, in, path, output, requirePath);
+			tryExpr.apply(frame, in, path, output, requirePath);
 		} catch (JsonQueryException e) {
 			if (catchExpr != null) {
-				catchExpr.apply(jsonProvider, frame, (JsonNode) e.getMessageAsJsonNode(jsonProvider), null, output, requirePath);
+				catchExpr.apply(frame, e.getMessageAsJsonNode(jsonProvider), null, output, requirePath);
 			}
 		}
 	}
 
-	public static class Question extends TryCatch {
-		public Question(Expression tryExpr) {
-			super(tryExpr);
+	public static class Question<JsonNode> extends TryCatch<JsonNode> {
+		public Question(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> tryExpr) {
+			super(jsonProvider, tryExpr);
 		}
 
 		@Override

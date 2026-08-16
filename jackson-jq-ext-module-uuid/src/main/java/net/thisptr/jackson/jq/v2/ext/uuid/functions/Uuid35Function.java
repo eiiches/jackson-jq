@@ -22,12 +22,12 @@ public class Uuid35Function implements FunctionFactory {
 	}
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		Expression namespaceExpr = args.get(0);
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
+		Expression<JsonNode> namespaceExpr = args.get(0);
 		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "uuid5", in, JsonNodeType.STRING, JsonNodeType.BINARY);
 
-			namespaceExpr.apply(jsonProvider, frame, in, (namespaceArg) -> {
+			namespaceExpr.apply(frame, in, (namespaceArg) -> {
 				if (jsonProvider.getNodeType(namespaceArg) != JsonNodeType.STRING)
 					throw new JsonQueryException(String.format("namespace must be string, but got: %s", jsonProvider.getNodeType(namespaceArg)));
 				UUID namespace;

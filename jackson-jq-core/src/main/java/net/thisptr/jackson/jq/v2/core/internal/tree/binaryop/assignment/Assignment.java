@@ -17,16 +17,22 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class Assignment extends BinaryOperatorExpression {
-	public Assignment(Expression lhs, Expression rhs) {
+public class Assignment<JsonNode> extends BinaryOperatorExpression<JsonNode> {
+	private final JsonProvider<JsonNode> jsonProvider;
+
+	public Assignment(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> lhs, Expression<JsonNode> rhs) {
 		super(lhs, rhs, "=");
+		this.jsonProvider = jsonProvider;
 	}
 
 	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		rhs.apply(jsonProvider, frame, in, (rval) -> {
+	@SuppressWarnings("unchecked")
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		Expression<JsonNode> typedLhs = lhs;
+		Expression<JsonNode> typedRhs = rhs;
+		typedRhs.apply(frame, in, (rval) -> {
 			List<Path<JsonNode>> lpaths = new ArrayList<>();
-			lhs.apply(jsonProvider, frame, in, RootPath.getInstance(), (lval, lpath0) -> {
+			typedLhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
 				@Var Path<JsonNode> lpath = lpath0;
 				// `VALUE | path(VALUE) => []`
 				if (lpath == null && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)

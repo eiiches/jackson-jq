@@ -14,12 +14,14 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ResolvedLocalFunctionAccess implements Expression {
+public class ResolvedLocalFunctionAccess<JsonNode> implements Expression<JsonNode> {
+	private final JsonProvider<JsonNode> jsonProvider;
 	private final String name;
 	private final int slot;
-	private final List<Expression> args;
+	private final List<Expression<JsonNode>> args;
 
-	public ResolvedLocalFunctionAccess(String name, int slot, List<Expression> args) {
+	public ResolvedLocalFunctionAccess(JsonProvider<JsonNode> jsonProvider, String name, int slot, List<Expression<JsonNode>> args) {
+		this.jsonProvider = jsonProvider;
 		this.name = name;
 		this.slot = slot;
 		this.args = args;
@@ -33,12 +35,12 @@ public class ResolvedLocalFunctionAccess implements Expression {
 		return slot;
 	}
 
-	public List<Expression> args() {
+	public List<Expression<JsonNode>> args() {
 		return args;
 	}
 
 	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		FunctionFactory factory = frame != null ? frame.getFunctionFactory(slot) : null;
 		if (factory == null)
 			throw new JsonQueryException("Function " + name + " is not defined");

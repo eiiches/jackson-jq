@@ -12,22 +12,28 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class AlternativeOperatorExpression extends BinaryOperatorExpression {
-	public AlternativeOperatorExpression(Expression valueExpr, Expression defaultExpr) {
+public class AlternativeOperatorExpression<JsonNode> extends BinaryOperatorExpression<JsonNode> {
+	private final JsonProvider<JsonNode> jsonProvider;
+
+	public AlternativeOperatorExpression(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> valueExpr, Expression<JsonNode> defaultExpr) {
 		super(valueExpr, defaultExpr, "//");
+		this.jsonProvider = jsonProvider;
 	}
 
 	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	@SuppressWarnings("unchecked")
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		Expression<JsonNode> typedLhs = lhs;
+		Expression<JsonNode> typedRhs = rhs;
 		AtomicBoolean emitted = new AtomicBoolean();
-		lhs.apply(jsonProvider, frame, in, path, (out, outpath) -> {
+		typedLhs.apply(frame, in, path, (out, outpath) -> {
 			if (JsonNodeUtils.asBoolean(jsonProvider, out)) {
 				output.emit(out, outpath);
 				emitted.set(true);
 			}
 		}, requirePath);
 		if (!emitted.get()) {
-			rhs.apply(jsonProvider, frame, in, path, output, requirePath);
+			typedRhs.apply(frame, in, path, output, requirePath);
 		}
 	}
 }

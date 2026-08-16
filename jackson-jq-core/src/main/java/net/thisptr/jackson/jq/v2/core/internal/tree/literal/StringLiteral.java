@@ -2,22 +2,23 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.literal;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
-public class StringLiteral extends ValueLiteral {
-	private String text;
+public class StringLiteral<JsonNode> extends ValueLiteral<JsonNode> {
+	private final String text;
 
-	public StringLiteral(String text) {
+	public StringLiteral(JsonProvider<JsonNode> jsonProvider, String text) {
+		super(jsonProvider);
 		this.text = text;
 	}
 
 	/**
 	 * Returns the raw string value (not as a JsonNode).
 	 */
-	public String value() {
+	public String text() {
 		return text;
 	}
 
 	@Override
-	public <JsonNode> JsonNode value(JsonProvider<JsonNode> jsonProvider) {
+	public JsonNode value() {
 		return jsonProvider.createString(text);
 	}
 

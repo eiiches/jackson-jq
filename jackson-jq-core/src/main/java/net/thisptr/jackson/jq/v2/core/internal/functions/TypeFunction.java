@@ -17,7 +17,7 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 public class TypeFunction implements FunctionFactory {
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (scope, in, ipath, output) -> {
 
 				output.emit(jsonProvider.createString(JsonNodeUtils.typeOf(jsonProvider, in)), null);

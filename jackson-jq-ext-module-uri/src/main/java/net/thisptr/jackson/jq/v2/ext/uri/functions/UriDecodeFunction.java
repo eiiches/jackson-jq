@@ -15,7 +15,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class UriDecodeFunction implements FunctionFactory {
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "urldecode", in, JsonNodeType.STRING);
 

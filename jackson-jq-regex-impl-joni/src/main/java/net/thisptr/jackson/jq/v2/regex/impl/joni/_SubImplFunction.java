@@ -27,25 +27,25 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 @FunctionRegistration(name = "_sub_impl", nargs = 3)
 public class _SubImplFunction implements FunctionFactory {
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		Expression regexExpr = args.get(0);
-		Expression replaceExpr = args.get(1);
-		Expression flagsExpr = args.get(2);
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
+		Expression<JsonNode> regexExpr = args.get(0);
+		Expression<JsonNode> replaceExpr = args.get(1);
+		Expression<JsonNode> flagsExpr = args.get(2);
 
 		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "_sub_impl/3", in, JsonNodeType.STRING);
 
-			regexExpr.apply(jsonProvider, frame, in, (regexText) -> {
+			regexExpr.apply(frame, in, (regexText) -> {
 				Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 1, regexText, JsonNodeType.STRING);
 
-				flagsExpr.apply(jsonProvider, frame, in, (flagsText) -> {
+				flagsExpr.apply(frame, in, (flagsText) -> {
 					Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 3, flagsText, JsonNodeType.STRING);
 
 					OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asText(regexText), jsonProvider.asText(flagsText));
 					List<JsonNode> match = match(jsonProvider, p, jsonProvider.asText(in));
 
 					// This just repeats same emit()s the number of times as the number of flags. This is to emulate jq behavior (which is probably a bug).
-					flagsExpr.apply(jsonProvider, frame, in, (dummy) -> {
+					flagsExpr.apply(frame, in, (dummy) -> {
 						replaceAndConcat(jsonProvider, frame, new Stack<>(), output, match, replaceExpr, in, flagsExpr);
 					});
 				});
@@ -53,7 +53,7 @@ public class _SubImplFunction implements FunctionFactory {
 		};
 	}
 
-	private <JsonNode> void replaceAndConcat(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, Stack<String> stack, PathOutput<JsonNode> output, List<JsonNode> match, Expression replaceExpr, JsonNode in, Expression flags) throws JsonQueryException {
+	private <JsonNode> void replaceAndConcat(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, Stack<String> stack, PathOutput<JsonNode> output, List<JsonNode> match, Expression<JsonNode> replaceExpr, JsonNode in, Expression<JsonNode> flags) throws JsonQueryException {
 		if (match.isEmpty()) {
 			StringBuilder sb = new StringBuilder();
 			for (int i = stack.size() - 1; i >= 0; --i) {
@@ -71,7 +71,7 @@ public class _SubImplFunction implements FunctionFactory {
 			replaceAndConcat(jsonProvider, frame, stack, output, rtail, replaceExpr, in, flags);
 			stack.pop();
 		} else {
-			replaceExpr.apply(jsonProvider, frame, rhead, (replacement) -> {
+			replaceExpr.apply(frame, rhead, (replacement) -> {
 				stack.push(jsonProvider.asText(replacement));
 				replaceAndConcat(jsonProvider, frame, stack, output, rtail, replaceExpr, in, flags);
 				stack.pop();

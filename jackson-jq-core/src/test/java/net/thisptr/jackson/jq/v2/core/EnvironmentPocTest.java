@@ -32,7 +32,7 @@ public class EnvironmentPocTest {
 
 		env.addFunctionFactory(FunctionNameAndArity.of("examplefn", 1), new FunctionFactory() {
 			@Override
-			public <N> net.thisptr.jackson.jq.v2.spi.Function<N> createFunction(JsonProvider<N> provider, List<Expression> args, Version version) {
+			public <N> net.thisptr.jackson.jq.v2.spi.Function<N> createFunction(JsonProvider<N> provider, List<Expression<N>> args, Version version) {
 				return (scope, in, path, output) -> {
 					String text = provider.asText(in);
 					output.emit(provider.createString("hello:" + text), path);
@@ -71,9 +71,9 @@ public class EnvironmentPocTest {
 
 		FunctionFactory testFactory = new FunctionFactory() {
 			@Override
-			public <N> net.thisptr.jackson.jq.v2.spi.Function<N> createFunction(JsonProvider<N> provider, List<Expression> args, Version ver) {
-				Expression patternExpr = args.get(0);
-				N constantVal = patternExpr.evaluateConstantExpr(provider);
+			public <N> net.thisptr.jackson.jq.v2.spi.Function<N> createFunction(JsonProvider<N> provider, List<Expression<N>> args, Version ver) {
+				Expression<N> patternExpr = args.get(0);
+				N constantVal = patternExpr.evaluateConstantExpr();
 				if (constantVal != null) {
 					preCompiled.set(true);
 					Pattern pattern = Pattern.compile(provider.asText(constantVal));

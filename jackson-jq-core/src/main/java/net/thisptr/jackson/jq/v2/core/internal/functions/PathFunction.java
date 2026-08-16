@@ -23,9 +23,9 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class PathFunction implements FunctionFactory {
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
-			args.get(0).apply(jsonProvider, frame, in, RootPath.getInstance(), (obj, path0) -> {
+			args.get(0).apply(frame, in, RootPath.getInstance(), (obj, path0) -> {
 				@Var @Nullable Path<JsonNode> path = path0;
 				// `VALUE | path(VALUE) => []`
 				if (path == null && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, obj) == 0)

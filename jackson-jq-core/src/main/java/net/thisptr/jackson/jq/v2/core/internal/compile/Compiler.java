@@ -73,30 +73,30 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class Compiler {
 
-	public static <JsonNode> Expression compile(Environment<JsonNode> env, AstNode ast) throws JsonQueryException {
+	public static <JsonNode> Expression<JsonNode> compile(Environment<JsonNode> env, AstNode ast) throws JsonQueryException {
 		return compile(env, (Module) null, ast);
 	}
 
-	public static <JsonNode> Expression compile(Environment<JsonNode> env, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
+	public static <JsonNode> Expression<JsonNode> compile(Environment<JsonNode> env, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
 		CompileContext context = new CompileContext();
-		Expression compiled = compile(env, context, currentModule, ast);
+		Expression<JsonNode> compiled = compile(env, context, currentModule, ast);
 		if (compiled == null)
 			throw new JsonQueryException("Cannot resolve null expression");
 		return new net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression<>(context.getSlotCount(), compiled);
 	}
 
-	public static <JsonNode> @Nullable Expression compile(Environment<JsonNode> env, CompileContext context, @Nullable AstNode ast) throws JsonQueryException {
+	public static <JsonNode> @Nullable Expression<JsonNode> compile(Environment<JsonNode> env, CompileContext context, @Nullable AstNode ast) throws JsonQueryException {
 		return compile(env, context, (Module) null, ast);
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public static <JsonNode> @Nullable Expression compile(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, @Nullable AstNode ast) throws JsonQueryException {
+	public static <JsonNode> @Nullable Expression<JsonNode> compile(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, @Nullable AstNode ast) throws JsonQueryException {
 		if (ast == null)
 			return null;
 
 		if (ast instanceof FunctionCallAstNode) {
 			FunctionCallAstNode call = (FunctionCallAstNode) ast;
-			List<Expression> compiledArgs = new ArrayList<>();
+			List<Expression<JsonNode>> compiledArgs = new ArrayList<>();
 			for (AstNode arg : call.args()) {
 				compiledArgs.add(compile(env, context, currentModule, arg));
 			}
@@ -106,9 +106,9 @@ public class Compiler {
 				SymbolLocation loc = context.getFunctionLocation(call.name(), compiledArgs.size());
 				int slot = loc != null ? loc.slot : 0;
 				if (loc != null && !loc.isLocal) {
-					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionAccess(call.name(), slot, compiledArgs);
+					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionAccess<>(env.jsonProvider(), call.name(), slot, compiledArgs);
 				}
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionAccess(call.name(), slot, compiledArgs);
+				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionAccess<>(env.jsonProvider(), call.name(), slot, compiledArgs);
 			}
 
 			FunctionNameAndArity key = FunctionNameAndArity.of(fullName, compiledArgs.size());
@@ -154,7 +154,7 @@ public class Compiler {
 					}
 				}
 			}
-			Expression compiledInner = compileNonNull(env, context, currentModule, top.expr());
+			Expression<JsonNode> compiledInner = compileNonNull(env, context, currentModule, top.expr());
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.TopLevelExpression<>(top.moduleDirective(), Collections.emptyList(), compiledInner);
 		}
 
@@ -167,7 +167,7 @@ public class Compiler {
 				for (PipedQueryAstNode.PipeComponent comp : piped.components()) {
 					if (comp instanceof PipedQueryAstNode.AssignPipeComponent) {
 						PipedQueryAstNode.AssignPipeComponent assign = (PipedQueryAstNode.AssignPipeComponent) comp;
-						Expression compiledExpr = compileNonNull(env, context, assign.expr);
+						Expression<JsonNode> compiledExpr = compileNonNull(env, context, assign.expr);
 						PatternMatcher<JsonNode> compiledMatcher = compileMatcher(env, context, assign.matcher);
 
 						context.pushLocalScope();
@@ -184,7 +184,7 @@ public class Compiler {
 						newComponents.add(new net.thisptr.jackson.jq.v2.core.internal.tree.AssignPipeComponent<>(compiledExpr, compiledMatcher, slots));
 					} else if (comp instanceof PipedQueryAstNode.TransformPipeComponent) {
 						PipedQueryAstNode.TransformPipeComponent transform = (PipedQueryAstNode.TransformPipeComponent) comp;
-						Expression compiledExpr = compileNonNull(env, context, transform.expr);
+						Expression<JsonNode> compiledExpr = compileNonNull(env, context, transform.expr);
 						newComponents.add(new net.thisptr.jackson.jq.v2.core.internal.tree.TransformPipeComponent<>(compiledExpr));
 					} else if (comp instanceof PipedQueryAstNode.LabelPipeComponent) {
 						PipedQueryAstNode.LabelPipeComponent label = (PipedQueryAstNode.LabelPipeComponent) comp;
@@ -204,36 +204,36 @@ public class Compiler {
 
 		if (ast instanceof SemicolonOperatorAstNode) {
 			SemicolonOperatorAstNode semi = (SemicolonOperatorAstNode) ast;
-			List<Expression> newExpressions = new ArrayList<>();
+			List<Expression<JsonNode>> newExpressions = new ArrayList<>();
 			for (AstNode q : semi.expressions()) {
 				newExpressions.add(compileNonNull(env, context, q));
 			}
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.SemicolonOperator(newExpressions);
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.SemicolonOperator<>(newExpressions);
 		}
 
 		if (ast instanceof ObjectConstructionAstNode) {
 			ObjectConstructionAstNode obj = (ObjectConstructionAstNode) ast;
-			net.thisptr.jackson.jq.v2.core.internal.tree.ObjectConstruction<JsonNode> res = new net.thisptr.jackson.jq.v2.core.internal.tree.ObjectConstruction<>();
+			net.thisptr.jackson.jq.v2.core.internal.tree.ObjectConstruction<JsonNode> res = new net.thisptr.jackson.jq.v2.core.internal.tree.ObjectConstruction<>(env.jsonProvider());
 			for (ObjectConstructionAstNode.FieldConstructionAst fc : obj.fields) {
 				if (fc instanceof ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst ik = (ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst) fc;
-					Expression val = compile(env, context, ik.value);
-					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.IdentifierKeyFieldConstruction<>(ik.key, val));
+					Expression<JsonNode> val = compile(env, context, ik.value);
+					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.IdentifierKeyFieldConstruction<>(env.jsonProvider(), ik.key, val));
 				} else if (fc instanceof ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst jq = (ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst) fc;
-					Expression key = compileNonNull(env, context, jq.key());
-					Expression val = compileNonNull(env, context, jq.value());
-					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.JsonQueryKeyFieldConstruction<>(key, val));
+					Expression<JsonNode> key = compileNonNull(env, context, jq.key());
+					Expression<JsonNode> val = compileNonNull(env, context, jq.value());
+					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.JsonQueryKeyFieldConstruction<>(env.jsonProvider(), key, val));
 				} else if (fc instanceof ObjectConstructionAstNode.StringKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.StringKeyFieldConstructionAst sk = (ObjectConstructionAstNode.StringKeyFieldConstructionAst) fc;
-					Expression key = compileNonNull(env, context, sk.key);
-					Expression val = compile(env, context, sk.value);
-					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.StringKeyFieldConstruction<>(key, val));
+					Expression<JsonNode> key = compileNonNull(env, context, sk.key);
+					Expression<JsonNode> val = compile(env, context, sk.value);
+					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.StringKeyFieldConstruction<>(env.jsonProvider(), key, val));
 				} else if (fc instanceof ObjectConstructionAstNode.VariableKeyFieldConstruction) {
 					// desugar `{ $x }` into the same shape as `{ x: $x }` -- no dedicated resolved class needed.
 					ObjectConstructionAstNode.VariableKeyFieldConstruction vk = (ObjectConstructionAstNode.VariableKeyFieldConstruction) fc;
-					Expression compiledValue = compileVariableRef(env, context, null, vk.name());
-					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.IdentifierKeyFieldConstruction<>(vk.name(), compiledValue));
+					Expression<JsonNode> compiledValue = compileVariableRef(env, context, null, vk.name());
+					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.IdentifierKeyFieldConstruction<>(env.jsonProvider(), vk.name(), compiledValue));
 				} else {
 					throw new IllegalStateException("Unknown field construction: " + fc.getClass());
 				}
@@ -243,56 +243,56 @@ public class Compiler {
 
 		if (ast instanceof ArrayConstructionAstNode) {
 			ArrayConstructionAstNode arr = (ArrayConstructionAstNode) ast;
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction(compile(env, context, arr.q));
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction<>(env.jsonProvider(), compile(env, context, arr.q));
 		}
 
 		if (ast instanceof BinaryOpAstNode) {
 			BinaryOpAstNode bin = (BinaryOpAstNode) ast;
-			Expression lhs = compileNonNull(env, context, bin.lhs);
-			Expression rhs = compileNonNull(env, context, bin.rhs);
-			return bin.operator.create(lhs, rhs, env.version());
+			Expression<JsonNode> lhs = compileNonNull(env, context, bin.lhs);
+			Expression<JsonNode> rhs = compileNonNull(env, context, bin.rhs);
+			return bin.operator.create(lhs, rhs, env.version(), env.jsonProvider());
 		}
 
 		if (ast instanceof NegativeExpressionAstNode) {
 			NegativeExpressionAstNode neg = (NegativeExpressionAstNode) ast;
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.NegativeExpression(compileNonNull(env, context, neg.value()));
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.NegativeExpression<>(env.jsonProvider(), compileNonNull(env, context, neg.value()));
 		}
 
 		if (ast instanceof ConditionalAstNode) {
 			ConditionalAstNode cond = (ConditionalAstNode) ast;
-			List<Pair<Expression, Expression>> newSwitches = new ArrayList<>();
+			List<Pair<Expression<JsonNode>, Expression<JsonNode>>> newSwitches = new ArrayList<>();
 			for (Pair<AstNode, AstNode> sw : cond.switches()) {
-				Expression newIf = compileNonNull(env, context, sw._1);
-				Expression newThen = compileNonNull(env, context, sw._2);
+				Expression<JsonNode> newIf = compileNonNull(env, context, sw._1);
+				Expression<JsonNode> newThen = compileNonNull(env, context, sw._2);
 				newSwitches.add(Pair.of(newIf, newThen));
 			}
-			Expression newElse = compileNonNull(env, context, cond.otherwise());
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.Conditional(newSwitches, newElse);
+			Expression<JsonNode> newElse = compileNonNull(env, context, cond.otherwise());
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.Conditional<>(env.jsonProvider(), newSwitches, newElse);
 		}
 
 		if (ast instanceof TryCatchAstNode) {
 			TryCatchAstNode tc = (TryCatchAstNode) ast;
-			Expression newTry = compileNonNull(env, context, tc.tryExpr());
-			Expression newCatch = compile(env, context, tc.catchExpr());
+			Expression<JsonNode> newTry = compileNonNull(env, context, tc.tryExpr());
+			Expression<JsonNode> newCatch = compile(env, context, tc.catchExpr());
 			if (tc instanceof TryCatchAstNode.Question) {
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.TryCatch.Question(newTry);
+				return new net.thisptr.jackson.jq.v2.core.internal.tree.TryCatch.Question<>(env.jsonProvider(), newTry);
 			}
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.TryCatch(newTry, newCatch);
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.TryCatch<>(env.jsonProvider(), newTry, newCatch);
 		}
 
 		if (ast instanceof TupleAstNode) {
 			TupleAstNode tuple = (TupleAstNode) ast;
-			List<Expression> newQs = new ArrayList<>();
+			List<Expression<JsonNode>> newQs = new ArrayList<>();
 			for (AstNode q : tuple.qs) {
 				newQs.add(compileNonNull(env, context, q));
 			}
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.Tuple(newQs);
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.Tuple<>(newQs);
 		}
 
 		if (ast instanceof ReduceExpressionAstNode) {
 			ReduceExpressionAstNode red = (ReduceExpressionAstNode) ast;
-			Expression compiledIter = compileNonNull(env, context, red.iterExpr());
-			Expression compiledInit = compileNonNull(env, context, red.initExpr());
+			Expression<JsonNode> compiledIter = compileNonNull(env, context, red.iterExpr());
+			Expression<JsonNode> compiledInit = compileNonNull(env, context, red.initExpr());
 			PatternMatcher<JsonNode> compiledMatcher = compileMatcher(env, context, red.matcher());
 
 			Set<String> varNames = new HashSet<>();
@@ -304,8 +304,8 @@ public class Compiler {
 					context.addLocalVariable(varName);
 					slots.put(varName, context.getSlot(varName));
 				}
-				Expression compiledReduce = compileNonNull(env, context, red.reduceExpr());
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ReduceExpression<>(compiledMatcher, compiledInit, compiledReduce, compiledIter, slots);
+				Expression<JsonNode> compiledReduce = compileNonNull(env, context, red.reduceExpr());
+				return new net.thisptr.jackson.jq.v2.core.internal.tree.ReduceExpression<>(env.jsonProvider(), compiledMatcher, compiledInit, compiledReduce, compiledIter, slots);
 			} finally {
 				context.popScope();
 			}
@@ -313,8 +313,8 @@ public class Compiler {
 
 		if (ast instanceof ForeachExpressionAstNode) {
 			ForeachExpressionAstNode fe = (ForeachExpressionAstNode) ast;
-			Expression compiledIter = compileNonNull(env, context, fe.iterExpr());
-			Expression compiledInit = compileNonNull(env, context, fe.initExpr());
+			Expression<JsonNode> compiledIter = compileNonNull(env, context, fe.iterExpr());
+			Expression<JsonNode> compiledInit = compileNonNull(env, context, fe.initExpr());
 			PatternMatcher<JsonNode> compiledMatcher = compileMatcher(env, context, fe.matcher());
 
 			Set<String> varNames = new HashSet<>();
@@ -326,8 +326,8 @@ public class Compiler {
 					context.addLocalVariable(varName);
 					slots.put(varName, context.getSlot(varName));
 				}
-				Expression compiledUpdate = compileNonNull(env, context, fe.updateExpr());
-				Expression compiledExtract = fe.extractExpr() != null ? compile(env, context, fe.extractExpr()) : null;
+				Expression<JsonNode> compiledUpdate = compileNonNull(env, context, fe.updateExpr());
+				Expression<JsonNode> compiledExtract = fe.extractExpr() != null ? compile(env, context, fe.extractExpr()) : null;
 				return new net.thisptr.jackson.jq.v2.core.internal.tree.ForeachExpression<>(compiledMatcher, compiledInit, compiledUpdate, compiledExtract, compiledIter, slots);
 			} finally {
 				context.popScope();
@@ -348,68 +348,68 @@ public class Compiler {
 
 		if (ast instanceof StringInterpolationAstNode) {
 			StringInterpolationAstNode si = (StringInterpolationAstNode) ast;
-			List<Pair<Integer, Expression>> compiledInterpolations = new ArrayList<>();
+			List<Pair<Integer, Expression<JsonNode>>> compiledInterpolations = new ArrayList<>();
 			for (Pair<Integer, AstNode> pair : si.interpolations()) {
-				Expression resExpr = compileNonNull(env, context, pair._2);
+				Expression<JsonNode> resExpr = compileNonNull(env, context, pair._2);
 				compiledInterpolations.add(Pair.of(pair._1, resExpr));
 			}
-			Expression compiledFormatter = compile(env, context, si.formatter());
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.StringInterpolation(si.template(), compiledInterpolations, compiledFormatter);
+			Expression<JsonNode> compiledFormatter = compile(env, context, si.formatter());
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.StringInterpolation<>(env.jsonProvider(), si.template(), compiledInterpolations, compiledFormatter);
 		}
 
 		if (ast instanceof BracketFieldAccessAstNode) {
 			BracketFieldAccessAstNode bfa = (BracketFieldAccessAstNode) ast;
-			Expression target = compileNonNull(env, context, bfa.target());
-			@Var Expression start = compile(env, context, bfa.startExpr());
-			@Var Expression end = compile(env, context, bfa.endExpr());
+			Expression<JsonNode> target = compileNonNull(env, context, bfa.target());
+			@Var Expression<JsonNode> start = compile(env, context, bfa.startExpr());
+			@Var Expression<JsonNode> end = compile(env, context, bfa.endExpr());
 			if (start == null)
-				start = new net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral();
+				start = new net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral<>(env.jsonProvider());
 			if (end == null)
-				end = new net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral();
+				end = new net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral<>(env.jsonProvider());
 			if (bfa.isRange()) {
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketFieldAccess(target, start, end, bfa.permissive());
+				return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketFieldAccess<>(env.jsonProvider(), target, start, end, bfa.permissive());
 			} else {
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketFieldAccess(target, start, bfa.permissive());
+				return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketFieldAccess<>(env.jsonProvider(), target, start, bfa.permissive());
 			}
 		}
 
 		if (ast instanceof IdentifierFieldAccessAstNode) {
 			IdentifierFieldAccessAstNode ifa = (IdentifierFieldAccessAstNode) ast;
-			Expression target = compileNonNull(env, context, ifa.target());
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.IdentifierFieldAccess(target, ifa.field(), ifa.permissive());
+			Expression<JsonNode> target = compileNonNull(env, context, ifa.target());
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.IdentifierFieldAccess<>(env.jsonProvider(), target, ifa.field(), ifa.permissive());
 		}
 
 		if (ast instanceof StringFieldAccessAstNode) {
 			StringFieldAccessAstNode sfa = (StringFieldAccessAstNode) ast;
-			Expression target = compileNonNull(env, context, sfa.target());
-			Expression key = compileNonNull(env, context, sfa.key());
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.StringFieldAccess(target, key, sfa.permissive());
+			Expression<JsonNode> target = compileNonNull(env, context, sfa.target());
+			Expression<JsonNode> key = compileNonNull(env, context, sfa.key());
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.StringFieldAccess<>(env.jsonProvider(), target, key, sfa.permissive());
 		}
 
 		if (ast instanceof BracketExtractFieldAccessAstNode) {
 			BracketExtractFieldAccessAstNode befa = (BracketExtractFieldAccessAstNode) ast;
-			Expression target = compileNonNull(env, context, befa.target());
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketExtractFieldAccess(target, befa.permissive());
+			Expression<JsonNode> target = compileNonNull(env, context, befa.target());
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketExtractFieldAccess<>(env.jsonProvider(), target, befa.permissive());
 		}
 
 		if (ast instanceof BooleanLiteralAstNode) {
-			return new BooleanLiteral(((BooleanLiteralAstNode) ast).value());
+			return new BooleanLiteral<>(env.jsonProvider(), ((BooleanLiteralAstNode) ast).value());
 		}
 
 		if (ast instanceof LongLiteralAstNode) {
-			return new LongLiteral(((LongLiteralAstNode) ast).value());
+			return new LongLiteral<>(env.jsonProvider(), ((LongLiteralAstNode) ast).value());
 		}
 
 		if (ast instanceof DoubleLiteralAstNode) {
-			return new DoubleLiteral(((DoubleLiteralAstNode) ast).value());
+			return new DoubleLiteral<>(env.jsonProvider(), ((DoubleLiteralAstNode) ast).value());
 		}
 
 		if (ast instanceof NullLiteralAstNode) {
-			return new NullLiteral();
+			return new NullLiteral<>(env.jsonProvider());
 		}
 
 		if (ast instanceof StringLiteralAstNode) {
-			return new StringLiteral(((StringLiteralAstNode) ast).value());
+			return new StringLiteral<>(env.jsonProvider(), ((StringLiteralAstNode) ast).value());
 		}
 
 		if (ast instanceof ThisObjectAstNode) {
@@ -417,7 +417,7 @@ public class Compiler {
 		}
 
 		if (ast instanceof RecursionOperatorAstNode) {
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.RecursionOperator();
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.RecursionOperator<>(env.jsonProvider());
 		}
 
 		if (ast instanceof BreakExpressionAstNode) {
@@ -441,21 +441,22 @@ public class Compiler {
 				}
 			}
 			int fnSize = fnContext.getSlotCount();
-			Expression compiledBody = compileNonNull(env, fnContext, fd.body());
+			Expression<JsonNode> compiledBody = compileNonNull(env, fnContext, fd.body());
 			ClosureSpec closureSpec = fnContext.getClosureSpec();
 
 			FunctionNameAndArity key = FunctionNameAndArity.of(fd.fname(), fd.args().size());
 			FunctionFactory envFactory = new FunctionFactory() {
 				@Override
-				@SuppressWarnings({"unchecked", "rawtypes"})
-				public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression> fnArgs, Version version) {
+				@SuppressWarnings("unchecked")
+				public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> fnArgs, Version version) {
+					Expression<N> effectiveBody = (Expression<N>) (Expression<?>) compiledBody;
 					return (callerFrame, input, path, output) -> {
 						ExecutionStack<N>.Frame fnFrame = callerFrame != null
 								? callerFrame.getStack().pushFrame(callerFrame, fnSize)
 								: new ExecutionStack<N>().pushFrame(callerFrame, fnSize);
 						try {
-							bindAndApply(jsonProvider, callerFrame, fnFrame, fd.args(), paramSlots, fnArgs, input, path, output, (execFrame) -> {
-								compiledBody.apply(jsonProvider, execFrame, input, path, output, false);
+							bindAndApply(callerFrame, fnFrame, fd.args(), paramSlots, fnArgs, input, path, output, (execFrame) -> {
+								effectiveBody.apply(execFrame, input, path, output, false);
 							});
 						} finally {
 							fnFrame.getStack().popFrame();
@@ -473,16 +474,16 @@ public class Compiler {
 		throw new IllegalStateException("Unknown AST node: " + ast.getClass());
 	}
 
-	private static <N> Expression compileVariableRef(Environment<N> env, CompileContext context, @Nullable String moduleName, String varName) throws JsonQueryException {
+	private static <N> Expression<N> compileVariableRef(Environment<N> env, CompileContext context, @Nullable String moduleName, String varName) throws JsonQueryException {
 		if (moduleName != null) {
 			String fullName = moduleName + "::" + varName;
 			if (context.isLocalVariable(fullName)) {
 				SymbolLocation loc = context.getVariableLocation(fullName);
 				int slot = loc != null ? loc.slot : 0;
 				if (loc != null && !loc.isLocal) {
-					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess(fullName, slot);
+					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess<>(fullName, slot);
 				}
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableAccess(fullName, slot);
+				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableAccess<>(fullName, slot);
 			}
 
 			@Var Supplier<N> supplier = env.getVariable(fullName);
@@ -500,9 +501,9 @@ public class Compiler {
 			SymbolLocation loc = context.getVariableLocation(varName);
 			int slot = loc != null ? loc.slot : 0;
 			if (loc != null && !loc.isLocal) {
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess(varName, slot);
+				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess<>(varName, slot);
 			}
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableAccess(varName, slot);
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableAccess<>(varName, slot);
 		}
 
 		Supplier<N> supplier = env.getVariable(varName);
@@ -523,54 +524,56 @@ public class Compiler {
 			for (PatternMatcherAstNode m : am.matchers()) {
 				compiled.add(compileMatcher(env, context, m));
 			}
-			return new ArrayMatcher<>(compiled);
+			return new ArrayMatcher<>(env.jsonProvider(), compiled);
 		}
 		if (matcher instanceof ObjectMatcherAstNode) {
 			ObjectMatcherAstNode om = (ObjectMatcherAstNode) matcher;
 			List<ObjectMatcher.FieldMatcher<N>> compiled = new ArrayList<>();
 			for (ObjectMatcherAstNode.FieldMatcher fm : om.matchers()) {
-				Expression name = compileNonNull(env, context, fm.name());
+				Expression<N> name = compileNonNull(env, context, fm.name());
 				PatternMatcher<N> sub = fm.rawMatcher() != null ? compileMatcher(env, context, fm.rawMatcher()) : null;
 				compiled.add(new ObjectMatcher.FieldMatcher<>(fm.dollar(), name, sub));
 			}
-			return new ObjectMatcher<>(compiled);
+			return new ObjectMatcher<>(env.jsonProvider(), compiled);
 		}
 		throw new IllegalStateException("Unknown matcher type: " + matcher.getClass());
 	}
 
-	public static <N> void bindAndApply(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression> fnArgs, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
+	public static <N> void bindAndApply(ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<N>> fnArgs, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
 		for (int i = 0; i < paramNames.size(); i++) {
 			String pName = paramNames.get(i);
 			int slot = paramSlots.get(i);
-			Expression pExpr = fnArgs.get(i);
+			Expression<N> pExpr = fnArgs.get(i);
 			if (!pName.startsWith("$")) {
 				currentFrame.set(slot, new FunctionFactory() {
 					@Override
-					@SuppressWarnings({"unchecked", "rawtypes"})
-					public <N1> Function<N1> createFunction(JsonProvider<N1> jp, List<Expression> emptyArgs, Version v) {
-						return (sFrame, inVal, pVal, outVal) -> pExpr.apply(jp, (ExecutionStack.Frame) callerFrame, inVal, pVal, outVal, false);
+					@SuppressWarnings("unchecked")
+					public <N1> Function<N1> createFunction(JsonProvider<N1> jp, List<Expression<N1>> emptyArgs, Version v) {
+						Expression<N1> effectiveExpr = (Expression<N1>) (Expression<?>) pExpr;
+						ExecutionStack<N1>.Frame effectiveCallerFrame = (ExecutionStack<N1>.Frame) (Object) callerFrame;
+						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal, false);
 					}
 				});
 			}
 		}
-		bindValueParams(jsonProvider, callerFrame, currentFrame, paramNames, paramSlots, fnArgs, 0, in, path, output, bodyTask);
+		bindValueParams(callerFrame, currentFrame, paramNames, paramSlots, fnArgs, 0, in, path, output, bodyTask);
 	}
 
-	private static <N> void bindValueParams(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression> fnArgs, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
+	private static <N> void bindValueParams(ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<N>> fnArgs, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
 		if (index >= paramNames.size()) {
 			bodyTask.accept(currentFrame);
 			return;
 		}
 		String argName = paramNames.get(index);
-		Expression argExpr = fnArgs.get(index);
+		Expression<N> argExpr = fnArgs.get(index);
 		int slot = paramSlots.get(index);
 		if (argName.startsWith("$")) {
-			argExpr.apply(jsonProvider, callerFrame, in, path, (val, p) -> {
+			argExpr.apply(callerFrame, in, path, (val, p) -> {
 				currentFrame.set(slot, val);
-				bindValueParams(jsonProvider, callerFrame, currentFrame, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
+				bindValueParams(callerFrame, currentFrame, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
 			}, false);
 		} else {
-			bindValueParams(jsonProvider, callerFrame, currentFrame, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
+			bindValueParams(callerFrame, currentFrame, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
 		}
 	}
 
@@ -593,12 +596,12 @@ public class Compiler {
 		}
 	}
 
-	public static <JsonNode> Expression compileNonNull(Environment<JsonNode> env, CompileContext context, AstNode ast) throws JsonQueryException {
+	public static <JsonNode> Expression<JsonNode> compileNonNull(Environment<JsonNode> env, CompileContext context, AstNode ast) throws JsonQueryException {
 		return compileNonNull(env, context, (Module) null, ast);
 	}
 
-	public static <JsonNode> Expression compileNonNull(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
-		Expression compiled = compile(env, context, currentModule, ast);
+	public static <JsonNode> Expression<JsonNode> compileNonNull(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
+		Expression<JsonNode> compiled = compile(env, context, currentModule, ast);
 		if (compiled == null)
 			throw new JsonQueryException("Cannot resolve null expression");
 		return compiled;

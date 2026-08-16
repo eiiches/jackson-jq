@@ -19,16 +19,18 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public abstract class FieldAccess implements Expression {
-	protected final Expression target;
+public abstract class FieldAccess<JsonNode> implements Expression<JsonNode> {
+	protected final JsonProvider<JsonNode> jsonProvider;
+	protected final Expression<JsonNode> target;
 	protected final boolean permissive;
 
-	public FieldAccess(Expression target, boolean permissive) {
+	public FieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> target, boolean permissive) {
+		this.jsonProvider = jsonProvider;
 		this.target = target;
 		this.permissive = permissive;
 	}
 
-	public Expression target() {
+	public Expression<JsonNode> target() {
 		return target;
 	}
 

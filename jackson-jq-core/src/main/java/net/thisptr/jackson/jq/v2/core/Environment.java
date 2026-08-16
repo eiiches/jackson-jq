@@ -97,7 +97,7 @@ public class Environment<JsonNode> {
 
 	public JsonQuery<JsonNode> compile(String expression, @Nullable Module currentModule) throws JsonQueryException {
 		AstNode parsedAst = ExpressionParser.compile(expression, version);
-		Expression compiledExpr = Compiler.compile(this, currentModule, parsedAst);
-		return (in, output) -> compiledExpr.apply(jsonProvider, null, in, null, output, false);
+		Expression<JsonNode> compiledExpr = Compiler.compile(this, currentModule, parsedAst);
+		return (in, output) -> compiledExpr.apply(null, in, null, output, false);
 	}
 }

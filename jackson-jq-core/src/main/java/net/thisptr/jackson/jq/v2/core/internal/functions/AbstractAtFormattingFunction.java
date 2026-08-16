@@ -13,7 +13,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 public abstract class AbstractAtFormattingFunction implements FunctionFactory {
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (scope, in, ipath, output) -> {
 			String text = jsonProvider.getNodeType(in) == JsonNodeType.STRING
 					? jsonProvider.asText(in)

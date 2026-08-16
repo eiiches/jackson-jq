@@ -9,9 +9,9 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class BracketExtractFieldAccess extends FieldAccess {
-	public BracketExtractFieldAccess(Expression src, boolean permissive) {
-		super(src, permissive);
+public class BracketExtractFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
+	public BracketExtractFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> src, boolean permissive) {
+		super(jsonProvider, src, permissive);
 	}
 
 	@Override
@@ -20,8 +20,8 @@ public class BracketExtractFieldAccess extends FieldAccess {
 	}
 
 	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		target.apply(jsonProvider, frame, in, path, (pobj, ppath) -> {
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		target.apply(frame, in, path, (pobj, ppath) -> {
 			emitAllPath(jsonProvider, permissive, pobj, ppath, output, requirePath);
 		}, requirePath);
 	}

@@ -18,9 +18,9 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class GetPathFunction implements FunctionFactory {
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
-			args.get(0).apply(jsonProvider, frame, in, (argpath) -> {
+			args.get(0).apply(frame, in, (argpath) -> {
 				Path<JsonNode> subpath = PathUtils.toPath(jsonProvider, argpath);
 				subpath.get(jsonProvider, in, ipath, output, false);
 			});

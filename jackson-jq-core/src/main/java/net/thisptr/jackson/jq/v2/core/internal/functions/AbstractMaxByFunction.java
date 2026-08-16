@@ -24,7 +24,7 @@ public abstract class AbstractMaxByFunction implements FunctionFactory {
 	}
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, fname, in, JsonNodeType.ARRAY);
 
@@ -34,7 +34,7 @@ public abstract class AbstractMaxByFunction implements FunctionFactory {
 			while (iter.hasNext()) {
 				JsonNode i = iter.next();
 				List<JsonNode> valueList = new ArrayList<>();
-				args.get(0).apply(jsonProvider, frame, i, valueList::add);
+				args.get(0).apply(frame, i, valueList::add);
 				JsonNode value = JsonNodeUtils.asArrayNode(jsonProvider, valueList);
 				if (maxValue == null || !isLarger(jsonProvider, maxValue, value)) {
 					maxValue = value;

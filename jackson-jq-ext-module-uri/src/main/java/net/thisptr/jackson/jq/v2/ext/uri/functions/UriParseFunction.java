@@ -27,7 +27,7 @@ public class UriParseFunction implements FunctionFactory {
 	private static final Pattern EQUAL = Pattern.compile(Pattern.quote("="));
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "uriparse", in, JsonNodeType.STRING);
 

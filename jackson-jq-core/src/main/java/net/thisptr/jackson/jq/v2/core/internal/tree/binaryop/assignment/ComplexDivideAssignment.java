@@ -1,10 +1,11 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment;
 
 import net.thisptr.jackson.jq.v2.core.internal.operators.DivideOperator;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 
-public class ComplexDivideAssignment extends ComplexAssignment {
-	public ComplexDivideAssignment(Expression lhs, Expression rhs) {
-		super(lhs, rhs, new DivideOperator());
+public class ComplexDivideAssignment<JsonNode> extends ComplexAssignment<JsonNode> {
+	public ComplexDivideAssignment(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> lhs, Expression<JsonNode> rhs) {
+		super(jsonProvider, lhs, rhs, new DivideOperator<>());
 	}
 }

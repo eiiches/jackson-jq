@@ -15,24 +15,30 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class RecursionOperator implements Expression {
-	private static <JsonNode> void pathRecursive(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
+public class RecursionOperator<JsonNode> implements Expression<JsonNode> {
+	private final JsonProvider<JsonNode> jsonProvider;
+
+	public RecursionOperator(JsonProvider<JsonNode> jsonProvider) {
+		this.jsonProvider = jsonProvider;
+	}
+
+	private void pathRecursive(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
 		output.emit(in, path);
 		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
 			Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(in);
 			while (iter.hasNext()) {
 				Entry<String, JsonNode> entry = iter.next();
-				pathRecursive(jsonProvider, frame, entry.getValue(), ObjectFieldPath.chainIfNotNull(path, entry.getKey()), output);
+				pathRecursive(frame, entry.getValue(), ObjectFieldPath.chainIfNotNull(path, entry.getKey()), output);
 			}
 		} else if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
 			for (int i = 0; i < jsonProvider.size(in); ++i)
-				pathRecursive(jsonProvider, frame, jsonProvider.requireGet(in, i), ArrayIndexPath.chainIfNotNull(jsonProvider, path, i), output);
+				pathRecursive(frame, jsonProvider.requireGet(in, i), ArrayIndexPath.chainIfNotNull(jsonProvider, path, i), output);
 		}
 	}
 
 	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		pathRecursive(jsonProvider, frame, in, path, output);
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		pathRecursive(frame, in, path, output);
 	}
 
 	@Override

@@ -10,27 +10,29 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
-	public final Expression key;
-	public final @Nullable Expression value;
+	private final JsonProvider<JsonNode> jsonProvider;
+	public final Expression<JsonNode> key;
+	public final @Nullable Expression<JsonNode> value;
 
-	public StringKeyFieldConstruction(Expression key, @Nullable Expression value) {
+	public StringKeyFieldConstruction(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> key, @Nullable Expression<JsonNode> value) {
+		this.jsonProvider = jsonProvider;
 		this.key = key;
 		this.value = value;
 	}
 
-	public StringKeyFieldConstruction(Expression key) {
-		this(key, null);
+	public StringKeyFieldConstruction(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> key) {
+		this(jsonProvider, key, null);
 	}
 
 	@Override
-	public void evaluate(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
-		key.apply(jsonProvider, frame, in, (k) -> {
+	public void evaluate(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
+		key.apply(frame, in, (k) -> {
 			if (jsonProvider.getNodeType(k) != JsonNodeType.STRING)
 				throw new JsonQueryException("key must evaluate to string");
 			if (value == null) {
 				consumer.accept(jsonProvider.asText(k), JsonNodeUtils.nullToNullNode(jsonProvider, jsonProvider.get(in, jsonProvider.asText(k))));
 			} else {
-				value.apply(jsonProvider, frame, in, (v) -> consumer.accept(jsonProvider.asText(k), v));
+				value.apply(frame, in, (v) -> consumer.accept(jsonProvider.asText(k), v));
 			}
 		});
 	}

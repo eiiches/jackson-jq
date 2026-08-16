@@ -2,18 +2,17 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class RootExpression<JsonNode> implements Expression {
+public class RootExpression<JsonNode> implements Expression<JsonNode> {
 	private final int frameSize;
-	private final Expression inner;
+	private final Expression<JsonNode> inner;
 
-	public RootExpression(int frameSize, Expression inner) {
+	public RootExpression(int frameSize, Expression<JsonNode> inner) {
 		this.frameSize = frameSize;
 		this.inner = inner;
 	}
@@ -22,17 +21,17 @@ public class RootExpression<JsonNode> implements Expression {
 		return frameSize;
 	}
 
-	public Expression inner() {
+	public Expression<JsonNode> inner() {
 		return inner;
 	}
 
 	@Override
-	public <N> void apply(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame parentFrame, N in, @Nullable Path<N> path, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
-		ExecutionStack<N>.Frame rootFrame = parentFrame != null
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		ExecutionStack<JsonNode>.Frame rootFrame = parentFrame != null
 				? parentFrame.getStack().pushFrame(parentFrame, frameSize)
-				: new ExecutionStack<N>().pushFrame(null, frameSize);
+				: new ExecutionStack<JsonNode>().pushFrame(null, frameSize);
 		try {
-			inner.apply(jsonProvider, rootFrame, in, path, output, requirePath);
+			inner.apply(rootFrame, in, path, output, requirePath);
 		} finally {
 			rootFrame.getStack().popFrame();
 		}

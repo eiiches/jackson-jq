@@ -20,9 +20,9 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 @FunctionRegistration(name = "join", nargs = 1)
 public class JoinFunction implements FunctionFactory {
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
-			args.get(0).apply(jsonProvider, frame, in, (sep) -> {
+			args.get(0).apply(frame, in, (sep) -> {
 				JsonNodeType inType = jsonProvider.getNodeType(in);
 				if (inType != JsonNodeType.ARRAY && inType != JsonNodeType.OBJECT)
 					throw new JsonQueryTypeException(jsonProvider, "Cannot iterate over %s", in);

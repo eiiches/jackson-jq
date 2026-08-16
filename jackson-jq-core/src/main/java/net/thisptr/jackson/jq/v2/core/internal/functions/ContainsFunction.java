@@ -22,9 +22,9 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 public class ContainsFunction implements FunctionFactory {
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
-			args.get(0).apply(jsonProvider, frame, in, (value) -> {
+			args.get(0).apply(frame, in, (value) -> {
 					if (jsonProvider.getNodeType(in) != jsonProvider.getNodeType(value)
 							|| (jsonProvider.getNodeType(in) == JsonNodeType.BOOLEAN && jsonProvider.asBoolean(in) != jsonProvider.asBoolean(value))) {
 						throw new JsonQueryTypeException(jsonProvider, "%s and %s cannot have their containment checked", in, value);

@@ -43,9 +43,9 @@ public class Usage {
 		// You can also define a custom function using FunctionFactory. E.g.
 		env.addFunctionFactory(FunctionNameAndArity.of("repeat", 1), new FunctionFactory() {
 			@Override
-			public <N> Function<N> createFunction(JsonProvider<N> fprovider, List<Expression> fargs, Version ver) {
+			public <N> Function<N> createFunction(JsonProvider<N> fprovider, List<Expression<N>> fargs, Version ver) {
 				return (frame, in, path, output) -> {
-					fargs.get(0).apply(fprovider, frame, in, (time) -> {
+					fargs.get(0).apply(frame, in, (time) -> {
 						output.emit(fprovider.createString(Strings.repeat(fprovider.asText(in), fprovider.asInt(time))), null);
 					});
 				};

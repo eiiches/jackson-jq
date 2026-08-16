@@ -13,7 +13,7 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 public class DebugScopeFunction implements FunctionFactory {
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
 			JsonNode functions = jsonProvider.createObject();
 

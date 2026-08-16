@@ -20,9 +20,9 @@ public abstract class AbstractStartsEndsWithFunction implements FunctionFactory 
 	protected abstract boolean doCheck(String text, String needle);
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
-			args.get(0).apply(jsonProvider, frame, in, (needle) -> {
+			args.get(0).apply(frame, in, (needle) -> {
 				if (jsonProvider.getNodeType(needle) != JsonNodeType.STRING || jsonProvider.getNodeType(in) != JsonNodeType.STRING)
 					throw new JsonQueryException(fname + "() requires string inputs");
 				output.emit(jsonProvider.createBoolean(doCheck(jsonProvider.asText(in), jsonProvider.asText(needle))), null);

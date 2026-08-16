@@ -22,10 +22,10 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class JacksonJqEvaluator implements Evaluator {
 
-	private Result doEvaluate(Expression expr, JsonNode in, Version version) throws JsonQueryException {
+	private Result doEvaluate(Expression<JsonNode> expr, JsonNode in) throws JsonQueryException {
 		List<JsonNode> values = new ArrayList<>();
 		try {
-			expr.apply(Jackson2JsonProviderImpl.getInstance(), null, in, null, (out, opath) -> {
+			expr.apply(null, in, null, (out, opath) -> {
 				@Var JsonNode value = out;
 				if (out.isNumber() && Double.isNaN(out.asDouble()))
 					value = NullNode.getInstance();
@@ -54,8 +54,8 @@ public class JacksonJqEvaluator implements Evaluator {
 				try {
 					AstNode ast = ExpressionParser.compile(exprText, version);
 					Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), version);
-					Expression expr = Compiler.compile(env, ast);
-					result.set(doEvaluate(expr, in, version));
+					Expression<JsonNode> expr = Compiler.compile(env, ast);
+					result.set(doEvaluate(expr, in));
 				} catch (Throwable e) {
 					exception.set(e);
 				}

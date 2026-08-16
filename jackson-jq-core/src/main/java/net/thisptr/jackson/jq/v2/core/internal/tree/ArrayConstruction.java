@@ -9,22 +9,24 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ArrayConstruction implements Expression {
-	public final @Nullable Expression q;
+public class ArrayConstruction<JsonNode> implements Expression<JsonNode> {
+	private final JsonProvider<JsonNode> jsonProvider;
+	public final @Nullable Expression<JsonNode> q;
 
-	public ArrayConstruction() {
-		this(null);
+	public ArrayConstruction(JsonProvider<JsonNode> jsonProvider) {
+		this(jsonProvider, null);
 	}
 
-	public ArrayConstruction(@Nullable Expression q) {
+	public ArrayConstruction(JsonProvider<JsonNode> jsonProvider, @Nullable Expression<JsonNode> q) {
+		this.jsonProvider = jsonProvider;
 		this.q = q;
 	}
 
 	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		JsonNode[] array = (JsonNode[]) new Object[] { jsonProvider.createArray() };
 		if (q != null)
-			q.apply(jsonProvider, frame, in, (out) -> array[0] = jsonProvider.add(array[0], out));
+			q.apply(frame, in, (out) -> array[0] = jsonProvider.add(array[0], out));
 		output.emit(array[0], null);
 	}
 

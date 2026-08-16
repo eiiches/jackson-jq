@@ -4,14 +4,13 @@ import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ResolvedGlobalVariableAccess<JsonNode> implements Expression {
+public class ResolvedGlobalVariableAccess<JsonNode> implements Expression<JsonNode> {
 	private final String name;
 	private final Supplier<JsonNode> valueSupplier;
 
@@ -21,9 +20,8 @@ public class ResolvedGlobalVariableAccess<JsonNode> implements Expression {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public <N> void apply(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame frame, N in, @Nullable Path<N> path, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
-		N val = (N) valueSupplier.get();
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		JsonNode val = valueSupplier.get();
 		if (val == null)
 			throw new JsonQueryException(String.format("Variable $%s evaluated to null", name));
 		output.emit(val, null);

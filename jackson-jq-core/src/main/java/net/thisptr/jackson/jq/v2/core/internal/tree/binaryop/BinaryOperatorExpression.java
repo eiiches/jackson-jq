@@ -23,25 +23,26 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.comparison.CompareG
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.comparison.CompareLessEqualTest;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.comparison.CompareLessTest;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.comparison.CompareNotEqualTest;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Version;
 
-public abstract class BinaryOperatorExpression implements Expression {
-	protected final Expression lhs;
-	protected final Expression rhs;
+public abstract class BinaryOperatorExpression<JsonNode> implements Expression<JsonNode> {
+	protected final Expression<JsonNode> lhs;
+	protected final Expression<JsonNode> rhs;
 	private final String image;
 
-	public BinaryOperatorExpression(Expression lhs, Expression rhs, String image) {
+	public BinaryOperatorExpression(Expression<JsonNode> lhs, Expression<JsonNode> rhs, String image) {
 		this.lhs = lhs;
 		this.rhs = rhs;
 		this.image = image;
 	}
 
-	public Expression lhs() {
+	public Expression<JsonNode> lhs() {
 		return lhs;
 	}
 
-	public Expression rhs() {
+	public Expression<JsonNode> rhs() {
 		return rhs;
 	}
 
@@ -50,138 +51,137 @@ public abstract class BinaryOperatorExpression implements Expression {
 		return String.format("(%s %s %s)", lhs, image, rhs);
 	}
 
-	@SuppressWarnings({"unchecked", "rawtypes"})
 	public enum Operator {
 		ASSIGN("=", 6, Associativity.RIGHT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new Assignment(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new Assignment<>(jsonProvider, lhs, rhs);
 			}
 		},
 		UDPATE("|=", 6, Associativity.RIGHT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new UpdateAssignment(lhs, rhs, version);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new UpdateAssignment<>(jsonProvider, lhs, rhs, version);
 			}
 		},
 		DEFAULT_EQUAL("//=", 6, Associativity.RIGHT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new ComplexAlternativeAssignment(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new ComplexAlternativeAssignment<>(jsonProvider, lhs, rhs);
 			}
 		},
 		PLUS_EQUAL("+=", 6, Associativity.RIGHT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new ComplexPlusAssignment(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new ComplexPlusAssignment<>(jsonProvider, lhs, rhs);
 			}
 		},
 		MINUS_EQUAL("-=", 6, Associativity.RIGHT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new ComplexMinusAssignment(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new ComplexMinusAssignment<>(jsonProvider, lhs, rhs);
 			}
 		},
 		TIMES_EQUAL("*=", 6, Associativity.RIGHT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new ComplexMultiplyAssignment(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new ComplexMultiplyAssignment<>(jsonProvider, lhs, rhs);
 			}
 		},
 		DIVIDE_EQUAL("/=", 6, Associativity.RIGHT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new ComplexDivideAssignment(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new ComplexDivideAssignment<>(jsonProvider, lhs, rhs);
 			}
 		},
 		MODULO_EQUAL("%=", 6, Associativity.RIGHT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new ComplexModuloAssignment(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new ComplexModuloAssignment<>(jsonProvider, lhs, rhs);
 			}
 		},
 		DEFAULT("//", 5, Associativity.LEFT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new AlternativeOperatorExpression(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new AlternativeOperatorExpression<>(jsonProvider, lhs, rhs);
 			}
 		},
 		OR("or", 4, Associativity.LEFT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new BooleanOrExpression(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new BooleanOrExpression<>(jsonProvider, lhs, rhs);
 			}
 		},
 		AND("and", 4, Associativity.LEFT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new BooleanAndExpression(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new BooleanAndExpression<>(jsonProvider, lhs, rhs);
 			}
 		},
 		LESS_EQUAL("<=", 3, Associativity.LEFT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new CompareLessEqualTest(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new CompareLessEqualTest<>(jsonProvider, lhs, rhs);
 			}
 		},
 		LESS("<", 3, Associativity.LEFT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new CompareLessTest(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new CompareLessTest<>(jsonProvider, lhs, rhs);
 			}
 		},
 		GREATER_EQUAL(">=", 3, Associativity.LEFT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new CompareGreaterEqualTest(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new CompareGreaterEqualTest<>(jsonProvider, lhs, rhs);
 			}
 		},
 		GREATER(">", 3, Associativity.LEFT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new CompareGreaterTest(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new CompareGreaterTest<>(jsonProvider, lhs, rhs);
 			}
 		},
 		EQUAL("==", 3, Associativity.LEFT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new CompareEqualTest(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new CompareEqualTest<>(jsonProvider, lhs, rhs);
 			}
 		},
 		NOT_EQUAL("!=", 3, Associativity.LEFT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new CompareNotEqualTest(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new CompareNotEqualTest<>(jsonProvider, lhs, rhs);
 			}
 		},
 		PLUS("+", 2, Associativity.LEFT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new PlusExpression(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new PlusExpression<>(jsonProvider, lhs, rhs);
 			}
 		},
 		MINUS("-", 2, Associativity.LEFT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new MinusExpression(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new MinusExpression<>(jsonProvider, lhs, rhs);
 			}
 		},
 		MODULO("%", 1, Associativity.LEFT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new ModuloExpression(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new ModuloExpression<>(jsonProvider, lhs, rhs);
 			}
 		},
 		DIVIDE("/", 1, Associativity.LEFT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new DivideExpression(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new DivideExpression<>(jsonProvider, lhs, rhs);
 			}
 		},
 		TIMES("*", 1, Associativity.LEFT) {
 			@Override
-			public Expression create(Expression lhs, Expression rhs, Version version) {
-				return new MultiplyExpression(lhs, rhs);
+			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
+				return new MultiplyExpression<>(jsonProvider, lhs, rhs);
 			}
 		};
 
@@ -198,7 +198,7 @@ public abstract class BinaryOperatorExpression implements Expression {
 		 * @param version the version providing contextual information for the expression creation
 		 * @return a new instance of {@link Expression} that represents the operation between the lhs and rhs expressions
 		 */
-		public abstract Expression create(Expression lhs, Expression rhs, Version version);
+		public abstract <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider);
 
 		public enum Associativity {
 			LEFT, RIGHT

@@ -10,28 +10,30 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class JsonQueryKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
-	private final Expression key;
-	private final Expression value;
+	private final JsonProvider<JsonNode> jsonProvider;
+	private final Expression<JsonNode> key;
+	private final Expression<JsonNode> value;
 
-	public JsonQueryKeyFieldConstruction(Expression key, Expression value) {
+	public JsonQueryKeyFieldConstruction(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> key, Expression<JsonNode> value) {
+		this.jsonProvider = jsonProvider;
 		this.key = key;
 		this.value = value;
 	}
 
-	public Expression key() {
+	public Expression<JsonNode> key() {
 		return key;
 	}
 
-	public Expression value() {
+	public Expression<JsonNode> value() {
 		return value;
 	}
 
 	@Override
-	public void evaluate(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
-		key.apply(jsonProvider, frame, in, (k) -> {
+	public void evaluate(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
+		key.apply(frame, in, (k) -> {
 			if (jsonProvider.getNodeType(k) != JsonNodeType.STRING)
 				throw new JsonQueryTypeException(jsonProvider, "Cannot use %s as object key", k);
-			value.apply(jsonProvider, frame, in, (v) -> consumer.accept(jsonProvider.asText(k), v));
+			value.apply(frame, in, (v) -> consumer.accept(jsonProvider.asText(k), v));
 		});
 	}
 

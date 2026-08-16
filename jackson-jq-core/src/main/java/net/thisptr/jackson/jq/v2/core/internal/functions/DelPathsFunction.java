@@ -31,9 +31,9 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class DelPathsFunction implements FunctionFactory {
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
+	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
-			args.get(0).apply(jsonProvider, frame, in, (paths) -> {
+			args.get(0).apply(frame, in, (paths) -> {
 					if (jsonProvider.getNodeType(paths) != JsonNodeType.ARRAY)
 						throw new JsonQueryException("Paths must be specified as an array");
 

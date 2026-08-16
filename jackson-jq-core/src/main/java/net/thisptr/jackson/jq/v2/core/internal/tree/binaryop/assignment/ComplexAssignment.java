@@ -18,26 +18,25 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ComplexAssignment<JsonNode> extends BinaryOperatorExpression {
+public class ComplexAssignment<JsonNode> extends BinaryOperatorExpression<JsonNode> {
+	private final JsonProvider<JsonNode> jsonProvider;
 	private BinaryOperator<JsonNode> operator;
 
-	public ComplexAssignment(Expression lhs, Expression rhs, BinaryOperator<JsonNode> operator) {
+	public ComplexAssignment(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> lhs, Expression<JsonNode> rhs, BinaryOperator<JsonNode> operator) {
 		super(lhs, rhs, operator.image() + "=");
+		this.jsonProvider = jsonProvider;
 		this.operator = operator;
 	}
 
 	@Override
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public <N> void apply(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame frame, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
-		applyInternal((JsonProvider) jsonProvider, (ExecutionStack.Frame) frame, (JsonNode) in, (Path) ipath, (PathOutput) output, requirePath);
-	}
-
-	private void applyInternal(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		rhs.apply(jsonProvider, frame, in, (rval) -> {
+	@SuppressWarnings("unchecked")
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		Expression<JsonNode> typedLhs = lhs;
+		Expression<JsonNode> typedRhs = rhs;
+		typedRhs.apply(frame, in, (rval) -> {
 			List<Path<JsonNode>> lpaths = new ArrayList<>();
-			lhs.apply(jsonProvider, frame, in, RootPath.getInstance(), (lval, lpath0) -> {
+			typedLhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
 				@Var Path<JsonNode> lpath = lpath0;
-				// `VALUE | path(VALUE) => []`
 				if (lpath == null && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)
 					lpath = RootPath.getInstance();
 				if (lpath == null)

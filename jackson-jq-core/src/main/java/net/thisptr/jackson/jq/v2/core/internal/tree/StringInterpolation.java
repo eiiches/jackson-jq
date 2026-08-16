@@ -15,12 +15,14 @@ import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class StringInterpolation implements Expression {
-	private final List<Pair<Integer, Expression>> interpolations;
+public class StringInterpolation<JsonNode> implements Expression<JsonNode> {
+	private final JsonProvider<JsonNode> jsonProvider;
+	private final List<Pair<Integer, Expression<JsonNode>>> interpolations;
 	private final String template;
-	private final @Nullable Expression formatter;
+	private final @Nullable Expression<JsonNode> formatter;
 
-	public StringInterpolation(String template, List<Pair<Integer, Expression>> interpolations, @Nullable Expression formatter) {
+	public StringInterpolation(JsonProvider<JsonNode> jsonProvider, String template, List<Pair<Integer, Expression<JsonNode>>> interpolations, @Nullable Expression<JsonNode> formatter) {
+		this.jsonProvider = jsonProvider;
 		this.template = template;
 		this.interpolations = interpolations;
 		this.formatter = formatter;
@@ -30,21 +32,21 @@ public class StringInterpolation implements Expression {
 		return template;
 	}
 
-	public List<Pair<Integer, Expression>> interpolations() {
+	public List<Pair<Integer, Expression<JsonNode>>> interpolations() {
 		return interpolations;
 	}
 
-	public @Nullable Expression formatter() {
+	public @Nullable Expression<JsonNode> formatter() {
 		return formatter;
 	}
 
 	@Override
-	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Stack<Pair<Integer, JsonNode>> stack = new Stack<>();
-		recurse(jsonProvider, frame, in, output, stack, interpolations);
+		recurse(frame, in, output, stack, interpolations);
 	}
 
-	private <JsonNode> void recurse(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, PathOutput<JsonNode> output, Stack<Pair<Integer, JsonNode>> stack, List<Pair<Integer, Expression>> interpolations) throws JsonQueryException {
+	private void recurse(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, PathOutput<JsonNode> output, Stack<Pair<Integer, JsonNode>> stack, List<Pair<Integer, Expression<JsonNode>>> interpolations) throws JsonQueryException {
 		if (interpolations.isEmpty()) {
 			StringBuilder builder = new StringBuilder();
 			@Var int pos = 0;
@@ -60,18 +62,18 @@ public class StringInterpolation implements Expression {
 			builder.append(template.substring(pos));
 			output.emit(jsonProvider.createString(builder.toString()), null);
 		} else {
-			Pair<Integer, Expression> rhead = interpolations.get(interpolations.size() - 1);
-			List<Pair<Integer, Expression>> rtail = interpolations.subList(0, interpolations.size() - 1);
-			rhead._2.apply(jsonProvider, frame, in, (interpolated) -> {
+			Pair<Integer, Expression<JsonNode>> rhead = interpolations.get(interpolations.size() - 1);
+			List<Pair<Integer, Expression<JsonNode>>> rtail = interpolations.subList(0, interpolations.size() - 1);
+			rhead._2.apply(frame, in, (interpolated) -> {
 				if (formatter != null) {
-					formatter.apply(jsonProvider, frame, interpolated, (formatted) -> {
+					formatter.apply(frame, interpolated, (formatted) -> {
 						stack.push(Pair.of(rhead._1, formatted));
-						recurse(jsonProvider, frame, in, output, stack, rtail);
+						recurse(frame, in, output, stack, rtail);
 						stack.pop();
 					});
 				} else {
 					stack.push(Pair.of(rhead._1, interpolated));
-					recurse(jsonProvider, frame, in, output, stack, rtail);
+					recurse(frame, in, output, stack, rtail);
 					stack.pop();
 				}
 			});
@@ -87,7 +89,7 @@ public class StringInterpolation implements Expression {
 			builder.append(" ");
 		}
 		builder.append("\"");
-		for (Pair<Integer, Expression> interpolation : interpolations) {
+		for (Pair<Integer, Expression<JsonNode>> interpolation : interpolations) {
 			copyEscaped(builder, template, pos, interpolation._1);
 			pos = interpolation._1;
 			builder.append("\\(");
