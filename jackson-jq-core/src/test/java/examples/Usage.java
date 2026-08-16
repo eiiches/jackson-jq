@@ -23,7 +23,6 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 
@@ -45,8 +44,8 @@ public class Usage {
 		env.addFunctionFactory(FunctionNameAndArity.of("repeat", 1), new FunctionFactory() {
 			@Override
 			public <N> Function<N> createFunction(JsonProvider<N> fprovider, List<Expression> fargs, Version ver) {
-				return (scope, in, path, output) -> {
-					fargs.get(0).apply(scope, in, (time) -> {
+				return (frame, in, path, output) -> {
+					fargs.get(0).apply(fprovider, frame, in, (time) -> {
 						output.emit(fprovider.createString(Strings.repeat(fprovider.asText(in), fprovider.asInt(time))), null);
 					});
 				};
@@ -56,7 +55,7 @@ public class Usage {
 		// For import statements to work, set ModuleLoader.
 		env.setModuleLoader(new ChainedModuleLoader<>(new ModuleLoader[] {
 				ClassPathModuleLoader.getInstance(),
-				new FileSystemModuleLoader<>(Scope.newEmptyScope(jsonProvider), Versions.JQ_1_6,
+				new FileSystemModuleLoader<>(jsonProvider, Versions.JQ_1_6,
 						FileSystems.getDefault().getPath("").toAbsolutePath(), // search modules in the actual file system
 						Paths.get(Environment.class.getClassLoader().getResource("classpath_modules").toURI())), // or in the classpath resources
 		}));

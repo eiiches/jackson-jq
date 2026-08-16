@@ -14,7 +14,6 @@ import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -31,7 +30,7 @@ public class ObjectMatcherTest {
 		List<List<Pair<String, JsonNode>>> matches = new ArrayList<>();
 
 		Stack<Pair<String, JsonNode>> accumulator = new Stack<>();
-		matcher.match(Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance()), in, (match) -> {
+		matcher.match(Jackson2JsonProviderImpl.getInstance(), null, in, (match) -> {
 			matches.add(new ArrayList<>(match));
 		}, accumulator);
 
@@ -51,7 +50,7 @@ public class ObjectMatcherTest {
 		List<List<Pair<String, JsonNode>>> matches = new ArrayList<>();
 
 		Stack<Pair<String, JsonNode>> accumulator = new Stack<>();
-		matcher.match(Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance()), in, (match) -> {
+		matcher.match(Jackson2JsonProviderImpl.getInstance(), null, in, (match) -> {
 			matches.add(new ArrayList<>(match));
 		}, accumulator);
 

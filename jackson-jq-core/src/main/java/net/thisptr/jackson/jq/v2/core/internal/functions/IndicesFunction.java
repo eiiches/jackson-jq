@@ -21,7 +21,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 public class IndicesFunction implements FunctionFactory {
 	@Override
 	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		return (scope, in, ipath, output) -> {
+		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "indices", in, JsonNodeType.STRING, JsonNodeType.ARRAY, JsonNodeType.NULL);
 
 			if (jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
@@ -29,7 +29,7 @@ public class IndicesFunction implements FunctionFactory {
 				return;
 			}
 
-			args.get(0).apply(scope, in, (needle) -> {
+			args.get(0).apply(jsonProvider, frame, in, (needle) -> {
 					JsonNode indices = jsonProvider.createArray();
 					for (int index : indices(jsonProvider, needle, in))
 						jsonProvider.add(indices, jsonProvider.createNumber(index));

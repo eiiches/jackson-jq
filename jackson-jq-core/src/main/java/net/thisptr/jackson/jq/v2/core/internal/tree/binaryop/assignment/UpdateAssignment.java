@@ -13,9 +13,9 @@ import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression;
 import net.thisptr.jackson.jq.v2.core.path.RootPath;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -29,10 +29,9 @@ public class UpdateAssignment extends BinaryOperatorExpression {
 	}
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		JsonNode[] out = (JsonNode[]) new Object[] { in };
-		lhs.apply(scope, in, RootPath.getInstance(), (lval, lpath0) -> {
+		lhs.apply(jsonProvider, frame, in, RootPath.getInstance(), (lval, lpath0) -> {
 			@Var Path<JsonNode> lpath = lpath0;
 			// `VALUE | path(VALUE) => []`
 			if (lpath == null && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)
@@ -42,7 +41,7 @@ public class UpdateAssignment extends BinaryOperatorExpression {
 
 			out[0] = lpath.mutate(jsonProvider, out[0], (lval_) -> {
 				List<JsonNode> rvals = new ArrayList<>();
-				rhs.apply(scope, lval_ == null ? jsonProvider.createNull() : lval_, rvals::add);
+				rhs.apply(jsonProvider, frame, lval_ == null ? jsonProvider.createNull() : lval_, rvals::add);
 				if (rvals.isEmpty())
 					throw new JsonQueryUndefinedBehaviorException("`|= empty` is undefined. See https://github.com/stedolan/jq/issues/897");
 				if (version.compareTo(Versions.JQ_1_6) >= 0) {

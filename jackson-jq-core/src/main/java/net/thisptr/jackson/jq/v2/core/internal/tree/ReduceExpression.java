@@ -8,9 +8,10 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -46,31 +47,31 @@ public class ReduceExpression<JsonNode> implements Expression {
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
 
 	@Override
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public <N> void apply(Scope<N> scope, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
-		applyInternal((Scope) scope, (JsonNode) in, (PathOutput) output);
+	public <N> void apply(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame frame, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
+		applyInternal((JsonProvider) jsonProvider, (ExecutionStack.Frame) frame, (JsonNode) in, (PathOutput) output);
 	}
 
-	private void applyInternal(Scope<JsonNode> scope, JsonNode in, PathOutput<JsonNode> output) throws JsonQueryException {
-		initExpr.apply(scope, in, (accumulator) -> {
+	private void applyInternal(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, PathOutput<JsonNode> output) throws JsonQueryException {
+		initExpr.apply(jsonProvider, frame, in, (accumulator) -> {
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
 			JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
 
-			Scope<JsonNode> childScope = Scope.newChildScope(scope);
-			iterExpr.apply(scope, in, (item) -> {
+			iterExpr.apply(jsonProvider, frame, in, (item) -> {
 				Stack<Pair<String, JsonNode>> stack = new Stack<>();
-				matcher.match(scope, item, (List<Pair<String, JsonNode>> vars) -> {
+				matcher.match(jsonProvider, frame, item, (List<Pair<String, JsonNode>> vars) -> {
 					for (int i = vars.size() - 1; i >= 0; --i) {
 						Pair<String, JsonNode> var = vars.get(i);
 						int slot = getSlot(var._1);
-						childScope.setValue(slot, var._2, slots.size());
+						if (frame != null && slot >= 0) {
+							frame.set(slot, var._2);
+						}
 					}
 
 					// We only use the last value from reduce expression.
 					List<JsonNode> reduceResult = new ArrayList<>();
-					reduceExpr.apply(childScope, accumulators[0], reduceResult::add);
-					accumulators[0] = reduceResult.isEmpty() ? scope.jsonProvider().createNull() : reduceResult.get(reduceResult.size() - 1);
+					reduceExpr.apply(jsonProvider, frame, accumulators[0], reduceResult::add);
+					accumulators[0] = reduceResult.isEmpty() ? jsonProvider.createNull() : reduceResult.get(reduceResult.size() - 1);
 				}, stack);
 			});
 

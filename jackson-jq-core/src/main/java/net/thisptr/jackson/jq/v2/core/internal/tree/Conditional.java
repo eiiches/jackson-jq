@@ -7,9 +7,10 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -31,26 +32,26 @@ public class Conditional implements Expression {
 	}
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		applyBranch(scope, in, path, output, 0);
+	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		applyBranch(jsonProvider, frame, in, path, output, 0);
 	}
 
-	private <JsonNode> void applyBranch(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, int switchIndex) throws JsonQueryException {
+	private <JsonNode> void applyBranch(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, int switchIndex) throws JsonQueryException {
 		if (switchIndex >= switches.size()) {
 			if (otherwise != null) {
-				otherwise.apply(scope, in, path, output, false);
+				otherwise.apply(jsonProvider, frame, in, path, output, false);
 			}
 			return;
 		}
 		Pair<Expression, Expression> sw = switches.get(switchIndex);
 		java.util.List<JsonNode> condValues = new java.util.ArrayList<>();
-		sw._1.apply(scope, in, (r) -> condValues.add(r));
+		sw._1.apply(jsonProvider, frame, in, (r) -> condValues.add(r));
 
 		for (JsonNode r : condValues) {
-			if (JsonNodeUtils.asBoolean(scope.jsonProvider(), r)) {
-				sw._2.apply(scope, in, path, output, false);
+			if (JsonNodeUtils.asBoolean(jsonProvider, r)) {
+				sw._2.apply(jsonProvider, frame, in, path, output, false);
 			} else {
-				applyBranch(scope, in, path, output, switchIndex + 1);
+				applyBranch(jsonProvider, frame, in, path, output, switchIndex + 1);
 			}
 		}
 	}

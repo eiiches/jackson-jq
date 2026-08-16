@@ -32,8 +32,8 @@ public class DelPathsFunction implements FunctionFactory {
 
 	@Override
 	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		return (scope, in, ipath, output) -> {
-			args.get(0).apply(scope, in, (paths) -> {
+		return (frame, in, ipath, output) -> {
+			args.get(0).apply(jsonProvider, frame, in, (paths) -> {
 					if (jsonProvider.getNodeType(paths) != JsonNodeType.ARRAY)
 						throw new JsonQueryException("Paths must be specified as an array");
 

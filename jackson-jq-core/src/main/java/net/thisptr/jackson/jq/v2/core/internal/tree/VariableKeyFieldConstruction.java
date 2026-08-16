@@ -1,7 +1,10 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
-import net.thisptr.jackson.jq.v2.spi.Scope;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class VariableKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
@@ -16,10 +19,9 @@ public class VariableKeyFieldConstruction<JsonNode> implements FieldConstruction
 	}
 
 	@Override
-	public void evaluate(Scope<JsonNode> scope, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
-		net.thisptr.jackson.jq.v2.spi.ExecutionStack<JsonNode>.Frame frame = scope.getExecutionFrame();
+	public void evaluate(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		JsonNode value = frame != null ? frame.getValueNode(0) : null;
-		consumer.accept(name, JsonNodeUtils.nullToNullNode(scope.jsonProvider(), value));
+		consumer.accept(name, JsonNodeUtils.nullToNullNode(jsonProvider, value));
 	}
 
 	@Override

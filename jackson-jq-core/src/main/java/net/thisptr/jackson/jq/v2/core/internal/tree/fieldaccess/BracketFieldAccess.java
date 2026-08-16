@@ -6,9 +6,9 @@ import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -52,12 +52,11 @@ public class BracketFieldAccess extends FieldAccess {
 	}
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		if (isRange) {
-			startExpr.apply(scope, in, (start) -> {
-				endExpr.apply(scope, in, (end) -> {
-					target.apply(scope, in, path, (pobj, ppath) -> {
+			startExpr.apply(jsonProvider, frame, in, (start) -> {
+				endExpr.apply(jsonProvider, frame, in, (end) -> {
+					target.apply(jsonProvider, frame, in, path, (pobj, ppath) -> {
 						JsonNodeType startType = jsonProvider.getNodeType(start);
 						JsonNodeType endType = jsonProvider.getNodeType(end);
 						if ((startType == JsonNodeType.NUMBER || startType == JsonNodeType.NULL) && (endType == JsonNodeType.NUMBER || endType == JsonNodeType.NULL)) {
@@ -70,8 +69,8 @@ public class BracketFieldAccess extends FieldAccess {
 				});
 			});
 		} else { // isRange == false
-			startExpr.apply(scope, in, (accessor) -> {
-				target.apply(scope, in, path, (pobj, ppath) -> {
+			startExpr.apply(jsonProvider, frame, in, (accessor) -> {
+				target.apply(jsonProvider, frame, in, path, (pobj, ppath) -> {
 					JsonNodeType accessorType = jsonProvider.getNodeType(accessor);
 					if (accessorType == JsonNodeType.NUMBER) {
 						emitArrayIndexPath(jsonProvider, permissive, accessor, pobj, ppath, output, requirePath);

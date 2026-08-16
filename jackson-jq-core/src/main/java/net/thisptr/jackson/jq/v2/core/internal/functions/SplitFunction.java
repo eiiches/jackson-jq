@@ -19,8 +19,8 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 public class SplitFunction implements FunctionFactory {
 	@Override
 	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		return (scope, in, ipath, output) -> {
-			args.get(0).apply(scope, in, (sep) -> {
+		return (frame, in, ipath, output) -> {
+			args.get(0).apply(jsonProvider, frame, in, (sep) -> {
 				if (jsonProvider.getNodeType(in) != JsonNodeType.STRING || jsonProvider.getNodeType(sep) != JsonNodeType.STRING)
 					throw new JsonQueryTypeException("split input and separator must be strings");
 

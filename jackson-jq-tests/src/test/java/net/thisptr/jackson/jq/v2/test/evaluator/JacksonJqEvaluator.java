@@ -12,19 +12,17 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.test.DefaultRootScope;
 
 public class JacksonJqEvaluator implements Evaluator {
 
 	private Result doEvaluate(Expression expr, JsonNode in, Version version) throws JsonQueryException {
 		List<JsonNode> values = new ArrayList<>();
-		Scope<JsonNode> scope = Scope.newChildScope(DefaultRootScope.getInstance(version));
 		try {
-			expr.apply(scope, in, null, (out, opath) -> {
+			expr.apply(Jackson2JsonProviderImpl.getInstance(), null, in, null, (out, opath) -> {
 				@Var JsonNode value = out;
 				if (out.isNumber() && Double.isNaN(out.asDouble()))
 					value = NullNode.getInstance();

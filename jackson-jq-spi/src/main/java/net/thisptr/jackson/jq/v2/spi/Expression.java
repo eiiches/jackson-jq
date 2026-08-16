@@ -13,16 +13,16 @@ public interface Expression {
 	}
 
 	default <JsonNode> void apply(JsonNode in, Output<JsonNode> output) throws JsonQueryException {
-		apply(in, null, output, false);
+		throw new UnsupportedOperationException("Expression.apply requires a JsonProvider");
 	}
 
-	default <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, Output<JsonNode> output) throws JsonQueryException {
-		apply(scope, in, null, output, false);
+	default <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, Output<JsonNode> output) throws JsonQueryException {
+		apply(jsonProvider, frame, in, null, output, false);
 	}
 
-	default <JsonNode> void apply(JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		apply(Scope.newEmptyScope(null), in, ipath, output, requirePath);
+	default <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		apply(jsonProvider, null, in, ipath, output, requirePath);
 	}
 
-	<JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException;
+	<JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException;
 }

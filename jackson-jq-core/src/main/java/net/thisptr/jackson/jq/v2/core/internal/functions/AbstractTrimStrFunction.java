@@ -13,8 +13,8 @@ public abstract class AbstractTrimStrFunction implements FunctionFactory {
 
 	@Override
 	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		return (scope, in, ipath, output) -> {
-			args.get(0).apply(scope, in, (trimText) -> {
+		return (frame, in, ipath, output) -> {
+			args.get(0).apply(jsonProvider, frame, in, (trimText) -> {
 				if (jsonProvider.getNodeType(in) != JsonNodeType.STRING || jsonProvider.getNodeType(trimText) != JsonNodeType.STRING) {
 					output.emit(in, ipath);
 					return;

@@ -1,6 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
-import net.thisptr.jackson.jq.v2.spi.Scope;
+import org.jspecify.annotations.Nullable;
+
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public interface FieldConstruction<JsonNode> {
@@ -9,5 +12,5 @@ public interface FieldConstruction<JsonNode> {
 		void accept(String name, JsonNode value) throws JsonQueryException;
 	}
 
-	void evaluate(Scope<JsonNode> scope, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException;
+	void evaluate(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException;
 }

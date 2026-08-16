@@ -8,5 +8,5 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 @FunctionalInterface
 public interface Function<JsonNode> {
 
-	void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException;
+	void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException;
 }

@@ -28,7 +28,7 @@ public class UriParseFunction implements FunctionFactory {
 
 	@Override
 	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		return (scope, in, ipath, output) -> {
+		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "uriparse", in, JsonNodeType.STRING);
 
 			try {

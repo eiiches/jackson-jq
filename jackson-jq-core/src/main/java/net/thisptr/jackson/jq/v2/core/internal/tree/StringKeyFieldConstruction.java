@@ -4,8 +4,9 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
@@ -22,14 +23,14 @@ public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<J
 	}
 
 	@Override
-	public void evaluate(Scope<JsonNode> scope, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
-		key.apply(scope, in, (k) -> {
-			if (scope.jsonProvider().getNodeType(k) != JsonNodeType.STRING)
+	public void evaluate(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
+		key.apply(jsonProvider, frame, in, (k) -> {
+			if (jsonProvider.getNodeType(k) != JsonNodeType.STRING)
 				throw new JsonQueryException("key must evaluate to string");
 			if (value == null) {
-				consumer.accept(scope.jsonProvider().asText(k), JsonNodeUtils.nullToNullNode(scope.jsonProvider(), scope.jsonProvider().get(in, scope.jsonProvider().asText(k))));
+				consumer.accept(jsonProvider.asText(k), JsonNodeUtils.nullToNullNode(jsonProvider, jsonProvider.get(in, jsonProvider.asText(k))));
 			} else {
-				value.apply(scope, in, (v) -> consumer.accept(scope.jsonProvider().asText(k), v));
+				value.apply(jsonProvider, frame, in, (v) -> consumer.accept(jsonProvider.asText(k), v));
 			}
 		});
 	}

@@ -21,8 +21,8 @@ public abstract class AbstractStartsEndsWithFunction implements FunctionFactory 
 
 	@Override
 	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		return (scope, in, ipath, output) -> {
-			args.get(0).apply(scope, in, (needle) -> {
+		return (frame, in, ipath, output) -> {
+			args.get(0).apply(jsonProvider, frame, in, (needle) -> {
 				if (jsonProvider.getNodeType(needle) != JsonNodeType.STRING || jsonProvider.getNodeType(in) != JsonNodeType.STRING)
 					throw new JsonQueryException(fname + "() requires string inputs");
 				output.emit(jsonProvider.createBoolean(doCheck(jsonProvider.asText(in), jsonProvider.asText(needle))), null);

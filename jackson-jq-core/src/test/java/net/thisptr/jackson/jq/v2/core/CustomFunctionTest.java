@@ -32,8 +32,8 @@ public class CustomFunctionTest {
 		env.addFunctionFactory(FunctionNameAndArity.of("times100", 1), new FunctionFactory() {
 			@Override
 			public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression> args, Version ver) {
-				return (scope, in, path, output) -> {
-					args.get(0).apply(scope, in, (numberNode) -> {
+				return (frame, in, path, output) -> {
+					args.get(0).apply(jsonProvider, frame, in, (numberNode) -> {
 						int n = jsonProvider.asInt(numberNode);
 						output.emit(jsonProvider.createNumber(n * 100), null);
 					});

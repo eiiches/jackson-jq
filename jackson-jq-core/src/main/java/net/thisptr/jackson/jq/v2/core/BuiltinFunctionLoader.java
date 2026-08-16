@@ -4,10 +4,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.compile.AstResolver;
+import net.thisptr.jackson.jq.v2.core.internal.compile.CompileContext;
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -16,10 +20,12 @@ import net.thisptr.jackson.jq.v2.spi.FunctionLoader;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary.JqFunc;
-import net.thisptr.jackson.jq.v2.spi.Scope;
+import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.VersionRange;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 /**
  * Use {@code BuiltinFunctionLoader.getInstance()} to obtain the instance.
@@ -62,21 +68,17 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 		return result;
 	}
 
-	@Deprecated
-	public void loadFunctions(Version version, Scope<?> scope) {
-	}
-
 	private FunctionFactory createJqFunctionFactory(JqFunc def, Version version) {
 		Expression parsedBody = ExpressionParser.compile(def.body, version);
 		return new FunctionFactory() {
 			private @Nullable Expression resolvedBody;
 
 			@SuppressWarnings({"unchecked", "rawtypes"})
-			private synchronized Expression getResolvedBody(Scope<?> scope) {
+			private synchronized Expression getResolvedBody(JsonProvider<?> jsonProvider) {
 				if (resolvedBody != null)
 					return resolvedBody;
 				try {
-					net.thisptr.jackson.jq.v2.core.internal.compile.CompileContext context = new net.thisptr.jackson.jq.v2.core.internal.compile.CompileContext();
+					CompileContext context = new CompileContext();
 					context.pushFunctionScope();
 					for (String arg : def.args) {
 						if (arg.startsWith("$")) {
@@ -85,9 +87,9 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 							context.addLocalFunction(arg, 0);
 						}
 					}
-					Environment env = new Environment((net.thisptr.jackson.jq.v2.json.JsonProvider) scope.jsonProvider(), version);
+					Environment env = new Environment((JsonProvider) jsonProvider, version);
 					listFunctionFactories(version).forEach(env::addFunctionFactory);
-					resolvedBody = net.thisptr.jackson.jq.v2.core.internal.compile.AstResolver.resolveNonNull(env, context, parsedBody);
+					resolvedBody = AstResolver.resolveNonNull(env, context, parsedBody);
 				} catch (Exception e) {
 					e.printStackTrace();
 					resolvedBody = parsedBody;
@@ -97,18 +99,16 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 
 			@Override
 			@SuppressWarnings({"unchecked", "rawtypes"})
-			public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression> args, Version v) {
-				return (runtimeScope, in, path, output) -> {
-					Expression body = getResolvedBody(runtimeScope);
+			public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression> args, Version v) {
+				return (callerFrame, in, path, output) -> {
+					Expression body = getResolvedBody(jsonProvider);
 					int fnSize = def.args.size();
-					ExecutionStack<N>.Frame parentFrame = runtimeScope.getExecutionFrame();
-					ExecutionStack<N>.Frame fnFrame = parentFrame != null
-							? parentFrame.getStack().pushFrame(parentFrame, fnSize)
-							: new ExecutionStack<N>().pushFrame(parentFrame, fnSize);
-					Scope<N> fnScope = Scope.newChildScopeWithFrame(runtimeScope, fnFrame);
+					ExecutionStack<N>.Frame fnFrame = callerFrame != null
+							? callerFrame.getStack().pushFrame(callerFrame, fnSize)
+							: new ExecutionStack<N>().pushFrame(callerFrame, fnSize);
 					try {
-						bindAndApply(runtimeScope, fnScope, def.args, args, 0, in, path, output, (execScope) -> {
-							body.apply(execScope, in, path, output, false);
+						bindAndApply(jsonProvider, callerFrame, fnFrame, def.args, args, 0, in, path, output, (execFrame) -> {
+							body.apply(jsonProvider, execFrame, in, path, output, false);
 						});
 					} finally {
 						fnFrame.getStack().popFrame();
@@ -118,38 +118,38 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 		};
 	}
 
-	private <N> void bindAndApply(Scope<N> scope, Scope<N> currentScope, List<String> paramNames, List<Expression> args, int index, N in, net.thisptr.jackson.jq.v2.spi.path.@Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException {
+	private <N> void bindAndApply(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Expression> args, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
 		for (int i = 0; i < paramNames.size(); i++) {
 			String pName = paramNames.get(i);
 			Expression pExpr = args.get(i);
 			if (!pName.startsWith("$")) {
-				currentScope.setFunctionFactory(i, new FunctionFactory() {
+				currentFrame.set(i, new FunctionFactory() {
 					@Override
 					@SuppressWarnings({"unchecked", "rawtypes"})
-					public <N1> Function<N1> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N1> jp, List<Expression> emptyArgs, Version ver) {
-						return (s, inVal, pVal, outVal) -> pExpr.apply((Scope) scope, inVal, pVal, outVal, false);
+					public <N1> Function<N1> createFunction(JsonProvider<N1> jp, List<Expression> emptyArgs, Version ver) {
+						return (sFrame, inVal, pVal, outVal) -> pExpr.apply(jp, (ExecutionStack.Frame) callerFrame, inVal, pVal, outVal, false);
 					}
 				});
 			}
 		}
-		bindValueParams(scope, currentScope, paramNames, args, 0, in, path, output, bodyTask);
+		bindValueParams(jsonProvider, callerFrame, currentFrame, paramNames, args, 0, in, path, output, bodyTask);
 	}
 
-	private <N> void bindValueParams(Scope<N> callerScope, Scope<N> currentScope, List<String> paramNames, List<Expression> args, int index, N in, net.thisptr.jackson.jq.v2.spi.path.@Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException {
+	private <N> void bindValueParams(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Expression> args, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
 		if (index >= paramNames.size()) {
-			bodyTask.accept(currentScope);
+			bodyTask.accept(currentFrame);
 			return;
 		}
 		String argName = paramNames.get(index);
 		Expression argExpr = args.get(index);
 		if (argName.startsWith("$")) {
 			int slot = index;
-			argExpr.apply(callerScope, in, path, (val, p) -> {
-				currentScope.setValue(slot, val, paramNames.size());
-				bindValueParams(callerScope, currentScope, paramNames, args, index + 1, in, path, output, bodyTask);
+			argExpr.apply(jsonProvider, callerFrame, in, path, (val, p) -> {
+				currentFrame.set(slot, val);
+				bindValueParams(jsonProvider, callerFrame, currentFrame, paramNames, args, index + 1, in, path, output, bodyTask);
 			}, false);
 		} else {
-			bindValueParams(callerScope, currentScope, paramNames, args, index + 1, in, path, output, bodyTask);
+			bindValueParams(jsonProvider, callerFrame, currentFrame, paramNames, args, index + 1, in, path, output, bodyTask);
 		}
 	}
 }

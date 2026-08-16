@@ -12,7 +12,7 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 public class Uuid4Function implements FunctionFactory {
 	@Override
 	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		return (scope, in, ipath, output) -> {
+		return (frame, in, ipath, output) -> {
 			output.emit(jsonProvider.createString(UUID.randomUUID().toString()), null);
 		};
 	}

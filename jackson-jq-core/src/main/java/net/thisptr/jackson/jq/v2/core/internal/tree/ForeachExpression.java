@@ -7,9 +7,10 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher.MatchWithPath;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -46,33 +47,32 @@ public class ForeachExpression<JsonNode> implements Expression {
 	}
 
 	@Override
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public <N> void apply(Scope<N> scope, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
-		applyInternal((Scope) scope, (JsonNode) in, (Path) ipath, (PathOutput) output, requirePath);
+	public <N> void apply(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame frame, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
+		applyInternal((JsonProvider) jsonProvider, (ExecutionStack.Frame) frame, (JsonNode) in, (Path) ipath, (PathOutput) output, requirePath);
 	}
 
-	private void applyInternal(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	private void applyInternal(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 
-		initExpr.apply(scope, in, ipath, (accumulator, accumulatorPath) -> {
+		initExpr.apply(jsonProvider, frame, in, ipath, (accumulator, accumulatorPath) -> {
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
 			JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
 			Path[] accumulatorPaths = new Path[] { accumulatorPath };
 
-			Scope<JsonNode> childScope = Scope.newChildScope(scope);
-
-			iterExpr.apply(scope, in, ipath, (item, itemPath) -> {
+			iterExpr.apply(jsonProvider, frame, in, ipath, (item, itemPath) -> {
 				Stack<MatchWithPath<JsonNode>> stack = new Stack<>();
-				matcher.matchWithPath(scope, item, itemPath, (List<MatchWithPath<JsonNode>> vars) -> {
+				matcher.matchWithPath(jsonProvider, frame, item, itemPath, (List<MatchWithPath<JsonNode>> vars) -> {
 					for (int i = vars.size() - 1; i >= 0; --i) {
 						MatchWithPath<JsonNode> var = vars.get(i);
 						int slot = getSlot(var.name);
-						childScope.setValueWithPath(slot, var.value, var.path, slots.size());
+						if (frame != null && slot >= 0) {
+							frame.set(slot, var.path, var.value);
+						}
 					}
 
-					updateExpr.apply(childScope, accumulators[0], accumulatorPaths[0], (newaccumulator, newaccumulatorPath) -> {
+					updateExpr.apply(jsonProvider, frame, accumulators[0], accumulatorPaths[0], (newaccumulator, newaccumulatorPath) -> {
 						if (extractExpr != null) {
-							extractExpr.apply(childScope, newaccumulator, newaccumulatorPath, output, requirePath);
+							extractExpr.apply(jsonProvider, frame, newaccumulator, newaccumulatorPath, output, requirePath);
 						} else {
 							output.emit(newaccumulator, newaccumulatorPath);
 						}

@@ -1,9 +1,12 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class JsonQueryKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
@@ -24,11 +27,11 @@ public class JsonQueryKeyFieldConstruction<JsonNode> implements FieldConstructio
 	}
 
 	@Override
-	public void evaluate(Scope<JsonNode> scope, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
-		key.apply(scope, in, (k) -> {
-			if (scope.jsonProvider().getNodeType(k) != JsonNodeType.STRING)
-				throw new JsonQueryTypeException(scope.jsonProvider(), "Cannot use %s as object key", k);
-			value.apply(scope, in, (v) -> consumer.accept(scope.jsonProvider().asText(k), v));
+	public void evaluate(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
+		key.apply(jsonProvider, frame, in, (k) -> {
+			if (jsonProvider.getNodeType(k) != JsonNodeType.STRING)
+				throw new JsonQueryTypeException(jsonProvider, "Cannot use %s as object key", k);
+			value.apply(jsonProvider, frame, in, (v) -> consumer.accept(jsonProvider.asText(k), v));
 		});
 	}
 

@@ -20,9 +20,9 @@ public class SetPathFunction implements FunctionFactory {
 
 	@Override
 	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		return (scope, in, ipath, output) -> {
-			args.get(1).apply(scope, in, (newvalnode) -> {
-				args.get(0).apply(scope, in, (pathnode) -> {
+		return (frame, in, ipath, output) -> {
+			args.get(1).apply(jsonProvider, frame, in, (newvalnode) -> {
+				args.get(0).apply(jsonProvider, frame, in, (pathnode) -> {
 					@Nullable Path<JsonNode> path = PathUtils.toPath(jsonProvider, pathnode);
 					JsonNode out = path.mutate(jsonProvider, in, (dummy) -> newvalnode);
 					output.emit(out, path);

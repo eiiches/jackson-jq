@@ -4,11 +4,12 @@ import java.util.Collections;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -29,9 +30,9 @@ public class ResolvedFormattingFilter implements Expression {
 	}
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		Function<JsonNode> f = factory.createFunction(scope.jsonProvider(), Collections.emptyList(), version);
-		f.apply(scope, in, ipath, output);
+	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		Function<JsonNode> f = factory.createFunction(jsonProvider, Collections.emptyList(), version);
+		f.apply(frame, in, ipath, output);
 	}
 
 	@Override

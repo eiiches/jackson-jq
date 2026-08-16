@@ -10,14 +10,15 @@ import com.google.errorprone.annotations.Var;
 import org.joni.Matcher;
 import org.joni.Option;
 import org.joni.Region;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -31,28 +32,28 @@ public class _SubImplFunction implements FunctionFactory {
 		Expression replaceExpr = args.get(1);
 		Expression flagsExpr = args.get(2);
 
-		return (scope, in, ipath, output) -> {
+		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "_sub_impl/3", in, JsonNodeType.STRING);
 
-			regexExpr.apply(scope, in, (regexText) -> {
+			regexExpr.apply(jsonProvider, frame, in, (regexText) -> {
 				Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 1, regexText, JsonNodeType.STRING);
 
-				flagsExpr.apply(scope, in, (flagsText) -> {
+				flagsExpr.apply(jsonProvider, frame, in, (flagsText) -> {
 					Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 3, flagsText, JsonNodeType.STRING);
 
 					OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asText(regexText), jsonProvider.asText(flagsText));
 					List<JsonNode> match = match(jsonProvider, p, jsonProvider.asText(in));
 
 					// This just repeats same emit()s the number of times as the number of flags. This is to emulate jq behavior (which is probably a bug).
-					flagsExpr.apply(scope, in, (dummy) -> {
-						replaceAndConcat(scope, jsonProvider, new Stack<>(), output, match, replaceExpr, in, flagsExpr);
+					flagsExpr.apply(jsonProvider, frame, in, (dummy) -> {
+						replaceAndConcat(jsonProvider, frame, new Stack<>(), output, match, replaceExpr, in, flagsExpr);
 					});
 				});
 			});
 		};
 	}
 
-	private <JsonNode> void replaceAndConcat(Scope<JsonNode> scope, JsonProvider<JsonNode> jsonProvider, Stack<String> stack, PathOutput<JsonNode> output, List<JsonNode> match, Expression replaceExpr, JsonNode in, Expression flags) throws JsonQueryException {
+	private <JsonNode> void replaceAndConcat(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, Stack<String> stack, PathOutput<JsonNode> output, List<JsonNode> match, Expression replaceExpr, JsonNode in, Expression flags) throws JsonQueryException {
 		if (match.isEmpty()) {
 			StringBuilder sb = new StringBuilder();
 			for (int i = stack.size() - 1; i >= 0; --i) {
@@ -67,12 +68,12 @@ public class _SubImplFunction implements FunctionFactory {
 
 		if (jsonProvider.getNodeType(rhead) == JsonNodeType.STRING) {
 			stack.push(jsonProvider.asText(rhead));
-			replaceAndConcat(scope, jsonProvider, stack, output, rtail, replaceExpr, in, flags);
+			replaceAndConcat(jsonProvider, frame, stack, output, rtail, replaceExpr, in, flags);
 			stack.pop();
 		} else {
-			replaceExpr.apply(scope, rhead, (replacement) -> {
+			replaceExpr.apply(jsonProvider, frame, rhead, (replacement) -> {
 				stack.push(jsonProvider.asText(replacement));
-				replaceAndConcat(scope, jsonProvider, stack, output, rtail, replaceExpr, in, flags);
+				replaceAndConcat(jsonProvider, frame, stack, output, rtail, replaceExpr, in, flags);
 				stack.pop();
 			});
 		}

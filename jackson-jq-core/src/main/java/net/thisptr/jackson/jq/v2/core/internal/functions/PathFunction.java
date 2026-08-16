@@ -24,8 +24,8 @@ public class PathFunction implements FunctionFactory {
 
 	@Override
 	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		return (scope, in, ipath, output) -> {
-			args.get(0).apply(scope, in, RootPath.getInstance(), (obj, path0) -> {
+		return (frame, in, ipath, output) -> {
+			args.get(0).apply(jsonProvider, frame, in, RootPath.getInstance(), (obj, path0) -> {
 				@Var @Nullable Path<JsonNode> path = path0;
 				// `VALUE | path(VALUE) => []`
 				if (path == null && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, obj) == 0)

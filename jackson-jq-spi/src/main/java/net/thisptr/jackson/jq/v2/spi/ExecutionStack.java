@@ -166,6 +166,14 @@ public class ExecutionStack<JsonNode> {
 			return null;
 		}
 
+		public void set(int index, @Nullable Path<JsonNode> path, @Nullable JsonNode value) {
+			if (path != null) {
+				setRaw(index, new PathAndValue<>(path, value));
+			} else {
+				setRaw(index, value);
+			}
+		}
+
 		public void set(int index, PathAndValue<JsonNode> value) {
 			setRaw(index, value);
 		}

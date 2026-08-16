@@ -20,7 +20,7 @@ public class MapFunction implements FunctionFactory {
 	@Override
 	public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression> args, Version version) {
 		Expression f = args.get(0);
-		return (scope, in, path, output) -> {
+		return (frame, in, path, output) -> {
 			if (jsonProvider.getNodeType(in) != JsonNodeType.ARRAY) {
 				throw new JsonQueryException("Cannot map over " + JsonNodeUtils.typeOf(jsonProvider, in));
 			}
@@ -29,7 +29,7 @@ public class MapFunction implements FunctionFactory {
 			for (int i = 0; i < size; i++) {
 				N rawElem = jsonProvider.get(in, i);
 				N elem = rawElem != null ? rawElem : jsonProvider.createNull();
-				f.apply(scope, elem, null, (res, p) -> {
+				f.apply(jsonProvider, frame, elem, null, (res, p) -> {
 					jsonProvider.add(outArr, res);
 				}, false);
 			}

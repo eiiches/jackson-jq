@@ -18,8 +18,8 @@ public class SelectFunction implements FunctionFactory {
 	@Override
 	public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression> args, Version version) {
 		Expression pred = args.get(0);
-		return (scope, in, path, output) -> {
-			pred.apply(scope, in, path, (val, p) -> {
+		return (frame, in, path, output) -> {
+			pred.apply(jsonProvider, frame, in, path, (val, p) -> {
 				if (JsonNodeUtils.asBoolean(jsonProvider, val)) {
 					output.emit(in, path);
 				}

@@ -24,7 +24,6 @@ import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
@@ -51,10 +50,6 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		this.jsonProvider = jsonProvider;
 		this.parentModuleLoader = parentModuleLoader;
 		this.version = version;
-	}
-
-	public FileSystemModuleLoader(Scope<JsonNode> parentScope, Version version, Path... searchPaths) {
-		this(parentScope.jsonProvider(), null, version, searchPaths);
 	}
 
 	private static Path resolveModulePath(Path searchPath, String path) {

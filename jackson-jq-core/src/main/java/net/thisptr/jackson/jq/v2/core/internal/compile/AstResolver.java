@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import com.google.errorprone.annotations.Var;
@@ -54,14 +55,17 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ArrayMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ObjectMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatcher;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
-import net.thisptr.jackson.jq.v2.spi.Scope;
+import net.thisptr.jackson.jq.v2.spi.PathOutput;
+import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
+import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class AstResolver {
 
@@ -441,16 +445,14 @@ public class AstResolver {
 			FunctionFactory envFactory = new FunctionFactory() {
 				@Override
 				@SuppressWarnings({"unchecked", "rawtypes"})
-				public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression> fnArgs, net.thisptr.jackson.jq.v2.spi.Version version) {
-					return (runtimeScope, input, path, output) -> {
-						ExecutionStack<N>.Frame parentFrame = runtimeScope.getExecutionFrame();
-						ExecutionStack<N>.Frame fnFrame = parentFrame != null
-								? parentFrame.getStack().pushFrame(parentFrame, fnSize)
-								: new ExecutionStack<N>().pushFrame(parentFrame, fnSize);
-						Scope<N> fnScope = Scope.newChildScopeWithFrame(runtimeScope, fnFrame);
+				public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression> fnArgs, Version version) {
+					return (callerFrame, input, path, output) -> {
+						ExecutionStack<N>.Frame fnFrame = callerFrame != null
+								? callerFrame.getStack().pushFrame(callerFrame, fnSize)
+								: new ExecutionStack<N>().pushFrame(callerFrame, fnSize);
 						try {
-							bindAndApply(runtimeScope, fnScope, fd.args(), paramSlots, fnArgs, input, path, output, (execScope) -> {
-								resolvedBody.apply(execScope, input, path, output, false);
+							bindAndApply(jsonProvider, callerFrame, fnFrame, fd.args(), paramSlots, fnArgs, input, path, output, (execFrame) -> {
+								resolvedBody.apply(jsonProvider, execFrame, input, path, output, false);
 							});
 						} finally {
 							fnFrame.getStack().popFrame();
@@ -468,39 +470,39 @@ public class AstResolver {
 		return expr;
 	}
 
-	public static <N> void bindAndApply(Scope<N> callerScope, Scope<N> currentScope, List<String> paramNames, List<Integer> paramSlots, List<Expression> fnArgs, N in, net.thisptr.jackson.jq.v2.spi.path.@org.jspecify.annotations.Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws JsonQueryException {
+	public static <N> void bindAndApply(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression> fnArgs, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
 		for (int i = 0; i < paramNames.size(); i++) {
 			String pName = paramNames.get(i);
 			int slot = paramSlots.get(i);
 			Expression pExpr = fnArgs.get(i);
 			if (!pName.startsWith("$")) {
-				currentScope.setFunctionFactory(slot, new FunctionFactory() {
+				currentFrame.set(slot, new FunctionFactory() {
 					@Override
 					@SuppressWarnings({"unchecked", "rawtypes"})
-					public <N1> Function<N1> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N1> jp, List<Expression> emptyArgs, net.thisptr.jackson.jq.v2.spi.Version v) {
-						return (s, inVal, pVal, outVal) -> pExpr.apply((Scope) callerScope, inVal, pVal, outVal, false);
+					public <N1> Function<N1> createFunction(JsonProvider<N1> jp, List<Expression> emptyArgs, Version v) {
+						return (sFrame, inVal, pVal, outVal) -> pExpr.apply(jp, (ExecutionStack.Frame) callerFrame, inVal, pVal, outVal, false);
 					}
 				});
 			}
 		}
-		bindValueParams(callerScope, currentScope, paramNames, paramSlots, fnArgs, 0, in, path, output, bodyTask);
+		bindValueParams(jsonProvider, callerFrame, currentFrame, paramNames, paramSlots, fnArgs, 0, in, path, output, bodyTask);
 	}
 
-	private static <N> void bindValueParams(Scope<N> callerScope, Scope<N> currentScope, List<String> paramNames, List<Integer> paramSlots, List<Expression> fnArgs, int index, N in, net.thisptr.jackson.jq.v2.spi.path.@org.jspecify.annotations.Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws JsonQueryException {
+	private static <N> void bindValueParams(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression> fnArgs, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
 		if (index >= paramNames.size()) {
-			bodyTask.accept(currentScope);
+			bodyTask.accept(currentFrame);
 			return;
 		}
 		String argName = paramNames.get(index);
 		Expression argExpr = fnArgs.get(index);
 		int slot = paramSlots.get(index);
 		if (argName.startsWith("$")) {
-			argExpr.apply(callerScope, in, path, (val, p) -> {
-				currentScope.setValue(slot, val);
-				bindValueParams(callerScope, currentScope, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
+			argExpr.apply(jsonProvider, callerFrame, in, path, (val, p) -> {
+				currentFrame.set(slot, val);
+				bindValueParams(jsonProvider, callerFrame, currentFrame, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
 			}, false);
 		} else {
-			bindValueParams(callerScope, currentScope, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
+			bindValueParams(jsonProvider, callerFrame, currentFrame, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
 		}
 	}
 

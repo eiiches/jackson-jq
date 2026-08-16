@@ -23,7 +23,7 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 public class SortByFunction implements FunctionFactory {
 	@Override
 	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		return (scope, items, ipath, output) -> {
+		return (frame, items, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "sort_by", items, JsonNodeType.ARRAY);
 
 			JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
@@ -32,7 +32,7 @@ public class SortByFunction implements FunctionFactory {
 			while (iter.hasNext()) {
 				JsonNode item = iter.next();
 				JsonNode value = jsonProvider.createArray();
-				args.get(0).apply(scope, item, (v) -> jsonProvider.add(value, v));
+				args.get(0).apply(jsonProvider, frame, item, (v) -> jsonProvider.add(value, v));
 				zipped.add(Pair.of(item, value));
 			}
 

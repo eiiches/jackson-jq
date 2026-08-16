@@ -19,8 +19,8 @@ public class GetPathFunction implements FunctionFactory {
 
 	@Override
 	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		return (scope, in, ipath, output) -> {
-			args.get(0).apply(scope, in, (argpath) -> {
+		return (frame, in, ipath, output) -> {
+			args.get(0).apply(jsonProvider, frame, in, (argpath) -> {
 				Path<JsonNode> subpath = PathUtils.toPath(jsonProvider, argpath);
 				subpath.get(jsonProvider, in, ipath, output, false);
 			});

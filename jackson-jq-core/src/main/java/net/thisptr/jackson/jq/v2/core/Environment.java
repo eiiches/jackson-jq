@@ -13,12 +13,10 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionLoader;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
-
 public class Environment<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final Version version;
@@ -26,12 +24,10 @@ public class Environment<JsonNode> {
 	private @Nullable FunctionLoader functionLoader;
 	private final Map<String, Supplier<JsonNode>> variables = new HashMap<>();
 	private final Map<FunctionNameAndArity, FunctionFactory> functionFactories = new HashMap<>();
-	private final Scope<JsonNode> rootScope;
 
 	public Environment(JsonProvider<JsonNode> jsonProvider, Version version) {
 		this.jsonProvider = jsonProvider;
 		this.version = version;
-		this.rootScope = Scope.newEmptyScope(jsonProvider);
 		this.functionLoader = BuiltinFunctionLoader.getInstance();
 		Map<FunctionNameAndArity, FunctionFactory> builtins = this.functionLoader.listFunctionFactories(version);
 		this.functionFactories.putAll(builtins);
@@ -43,10 +39,6 @@ public class Environment<JsonNode> {
 
 	public Version version() {
 		return version;
-	}
-
-	public Scope<JsonNode> rootScope() {
-		return rootScope;
 	}
 
 	public Environment<JsonNode> setModuleLoader(ModuleLoader<JsonNode> moduleLoader) {
@@ -105,6 +97,6 @@ public class Environment<JsonNode> {
 	public JsonQuery<JsonNode> compile(String expression, @Nullable Module currentModule) throws JsonQueryException {
 		Expression parsedExpr = ExpressionParser.compile(expression, version);
 		Expression resolvedExpr = AstResolver.resolve(this, currentModule, parsedExpr);
-		return (in, output) -> resolvedExpr.apply(rootScope, in, null, output, false);
+		return (in, output) -> resolvedExpr.apply(jsonProvider, null, in, null, output, false);
 	}
 }

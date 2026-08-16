@@ -21,14 +21,12 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class FileSystemModuleLoaderTest {
-	private Scope<JsonNode> rootScope;
 	private Environment<JsonNode> env;
 
 	@TempDir
@@ -36,7 +34,6 @@ public class FileSystemModuleLoaderTest {
 
 	@BeforeEach
 	public void beforeEach() throws IOException {
-		rootScope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
 		env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
 
 		ModuleLoader<JsonNode> moduleLoader = setupModuleLoader(Objects.requireNonNull(tempDir));
@@ -64,7 +61,7 @@ public class FileSystemModuleLoaderTest {
 				throw new RuntimeException(e);
 			}
 		});
-		return new FileSystemModuleLoader<>(rootScope, Versions.JQ_1_6, tempDir);
+		return new FileSystemModuleLoader<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6, tempDir);
 	}
 
 	@Test

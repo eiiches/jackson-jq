@@ -38,7 +38,6 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
@@ -114,7 +113,7 @@ public class Main {
 		env.addFunctionFactory(FunctionNameAndArity.of("env", 0), new FunctionFactory() {
 			@Override
 			public <N> Function<N> createFunction(JsonProvider<N> jsonProv, List<Expression> fnArgs, Version ver) {
-				return (scope, in, path, output) -> {
+				return (frame, in, path, output) -> {
 					N envObj = jsonProv.createObject();
 					for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
 						jsonProv.set(envObj, entry.getKey(), jsonProv.createString(entry.getValue()));
@@ -125,7 +124,7 @@ public class Main {
 		});
 		env.setModuleLoader(new ChainedModuleLoader<>(new ModuleLoader[] {
 				ClassPathModuleLoader.getInstance(),
-				new FileSystemModuleLoader<>(Scope.newEmptyScope(jsonProvider), version, FileSystems.getDefault().getPath("").toAbsolutePath()),
+				new FileSystemModuleLoader<>(jsonProvider, version, FileSystems.getDefault().getPath("").toAbsolutePath()),
 		}));
 
 		JsonQuery<JsonNode> jq = env.compile(rest.get(0));

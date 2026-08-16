@@ -13,7 +13,7 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.path.ArrayIndexPath;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Scope;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -28,7 +28,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		return matchers;
 	}
 
-	private void recursive(Scope<JsonNode> scope, JsonProvider<JsonNode> jsonProvider, JsonNode in, Functional.Consumer<List<Pair<String, JsonNode>>> out, Stack<Pair<String, JsonNode>> accumulate, int index) throws JsonQueryException {
+	private void recursive(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, Functional.Consumer<List<Pair<String, JsonNode>>> out, Stack<Pair<String, JsonNode>> accumulate, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
 			out.accept(accumulate);
 			return;
@@ -38,21 +38,20 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		PatternMatcher<JsonNode> matcher = matchers.get(rindex);
 		JsonNode value = jsonProvider.get(in, rindex);
 
-		matcher.match(scope, value != null ? value : jsonProvider.createNull(), (match) -> {
-			recursive(scope, jsonProvider, in, out, accumulate, index + 1);
+		matcher.match(jsonProvider, frame, value != null ? value : jsonProvider.createNull(), (match) -> {
+			recursive(jsonProvider, frame, in, out, accumulate, index + 1);
 		}, accumulate);
 	}
 
 	@Override
-	public void match(Scope<JsonNode> scope, JsonNode in, Functional.Consumer<List<Pair<String, JsonNode>>> out, Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException {
-		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public void match(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, Functional.Consumer<List<Pair<String, JsonNode>>> out, Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.ARRAY && type != JsonNodeType.NULL)
 			throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with number", type);
-		recursive(scope, jsonProvider, in, out, accumulate, 0);
+		recursive(jsonProvider, frame, in, out, accumulate, 0);
 	}
 
-	private void recursiveWithPath(Scope<JsonNode> scope, JsonProvider<JsonNode> jsonProvider, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> out, Stack<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
+	private void recursiveWithPath(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> out, Stack<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
 			out.emit(accumulate);
 			return;
@@ -63,18 +62,17 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		JsonNode value = jsonProvider.get(in, rindex);
 		ArrayIndexPath<JsonNode> valuePath = ArrayIndexPath.chainIfNotNull(jsonProvider, path, rindex);
 
-		matcher.matchWithPath(scope, value != null ? value : jsonProvider.createNull(), valuePath, (match) -> {
-			recursiveWithPath(scope, jsonProvider, in, path, out, accumulate, index + 1);
+		matcher.matchWithPath(jsonProvider, frame, value != null ? value : jsonProvider.createNull(), valuePath, (match) -> {
+			recursiveWithPath(jsonProvider, frame, in, path, out, accumulate, index + 1);
 		}, accumulate);
 	}
 
 	@Override
-	public void matchWithPath(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> out, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
-		JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
+	public void matchWithPath(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> out, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.ARRAY && type != JsonNodeType.NULL)
 			throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with number", type);
-		recursiveWithPath(scope, jsonProvider, in, path, out, accumulate, 0);
+		recursiveWithPath(jsonProvider, frame, in, path, out, accumulate, 0);
 	}
 
 	@Override

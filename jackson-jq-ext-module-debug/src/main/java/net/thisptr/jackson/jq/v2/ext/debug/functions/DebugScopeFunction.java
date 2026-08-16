@@ -14,7 +14,7 @@ public class DebugScopeFunction implements FunctionFactory {
 
 	@Override
 	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		return (scope, in, ipath, output) -> {
+		return (frame, in, ipath, output) -> {
 			JsonNode functions = jsonProvider.createObject();
 
 			@Var JsonNode scopeNode = jsonProvider.createObject();

@@ -28,16 +28,16 @@ public class _MatchImplFunction implements FunctionFactory {
 		Expression flagsExpr = args.get(1);
 		Expression testExpr = args.get(2);
 
-		return (scope, in, ipath, output) -> {
+		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
 			byte[] ibytes = jsonProvider.asText(in).getBytes(StandardCharsets.UTF_8);
 			int[] cindex = UnicodeUtils.utf8CharIndex(ibytes);
 
-			testExpr.apply(scope, in, (test) -> {
+			testExpr.apply(jsonProvider, frame, in, (test) -> {
 				Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 3, test, JsonNodeType.BOOLEAN);
-				flagsExpr.apply(scope, in, (flags) -> {
+				flagsExpr.apply(jsonProvider, frame, in, (flags) -> {
 					Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 2, flags, JsonNodeType.STRING, JsonNodeType.NULL);
-					regexExpr.apply(scope, in, (regex) -> {
+					regexExpr.apply(jsonProvider, frame, in, (regex) -> {
 						Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 1, regex, JsonNodeType.STRING);
 						OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asText(regex), jsonProvider.getNodeType(flags) == JsonNodeType.NULL ? null : jsonProvider.asText(flags));
 						output.emit(match(jsonProvider, p, ibytes, cindex, jsonProvider.asBoolean(test)), null);

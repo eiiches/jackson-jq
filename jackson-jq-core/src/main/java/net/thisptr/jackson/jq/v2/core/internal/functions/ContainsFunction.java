@@ -23,8 +23,8 @@ public class ContainsFunction implements FunctionFactory {
 
 	@Override
 	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		return (scope, in, ipath, output) -> {
-			args.get(0).apply(scope, in, (value) -> {
+		return (frame, in, ipath, output) -> {
+			args.get(0).apply(jsonProvider, frame, in, (value) -> {
 					if (jsonProvider.getNodeType(in) != jsonProvider.getNodeType(value)
 							|| (jsonProvider.getNodeType(in) == JsonNodeType.BOOLEAN && jsonProvider.asBoolean(in) != jsonProvider.asBoolean(value))) {
 						throw new JsonQueryTypeException(jsonProvider, "%s and %s cannot have their containment checked", in, value);

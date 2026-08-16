@@ -10,9 +10,9 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -27,27 +27,26 @@ public class ObjectConstruction<JsonNode> implements Expression {
 
 	@Override
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public <N> void apply(Scope<N> scope, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
-		applyInternal((Scope) scope, (JsonNode) in, (PathOutput) output);
+	public <N> void apply(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame frame, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
+		applyInternal((JsonProvider) jsonProvider, (ExecutionStack.Frame) frame, (JsonNode) in, (PathOutput) output);
 	}
 
-	private void applyInternal(Scope<JsonNode> scope, JsonNode in, PathOutput<JsonNode> output) throws JsonQueryException {
+	private void applyInternal(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, PathOutput<JsonNode> output) throws JsonQueryException {
 		Map<String, JsonNode> tmp = new LinkedHashMap<>(fields.size());
-		applyRecursive(scope, in, output, fields, tmp);
+		applyRecursive(jsonProvider, frame, in, output, fields, tmp);
 	}
 
-	private static <JsonNode> void applyRecursive(Scope<JsonNode> scope, JsonNode in, PathOutput<JsonNode> output, List<FieldConstruction<JsonNode>> fields, Map<String, JsonNode> tmp) throws JsonQueryException {
+	private static <JsonNode> void applyRecursive(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, PathOutput<JsonNode> output, List<FieldConstruction<JsonNode>> fields, Map<String, JsonNode> tmp) throws JsonQueryException {
 		if (fields.isEmpty()) {
-			JsonProvider<JsonNode> jsonProvider = scope.jsonProvider();
 			@Var JsonNode obj = jsonProvider.createObject();
 			for (Entry<String, JsonNode> e : tmp.entrySet())
 				obj = jsonProvider.set(obj, e.getKey(), e.getValue());
 			output.emit(obj, null);
 			return;
 		}
-		fields.get(0).evaluate(scope, in, (k, v) -> {
+		fields.get(0).evaluate(jsonProvider, frame, in, (k, v) -> {
 			tmp.put(k, v);
-			applyRecursive(scope, in, output, fields.subList(1, fields.size()), tmp);
+			applyRecursive(jsonProvider, frame, in, output, fields.subList(1, fields.size()), tmp);
 			tmp.remove(k);
 		});
 	}

@@ -14,10 +14,9 @@ public @interface FunctionRegistration {
 
 	/**
 	 * The number of arguments this function takes. A negative value registers
-	 * the function as variadic: it is bound under {@code name} alone (no
-	 * {@code /nargs} suffix), matching the arity-agnostic fallback in
-	 * {@code Scope#getFunction(String, int)}, which looks up {@code name/nargs}
-	 * first and falls back to bare {@code name} for any arity.
+	 * the function as variadic: it is bound under {@code name} alone (no {@code /nargs} suffix), matching the arity-agnostic
+	 * fallback which looks up {@code name/nargs} first and falls back to bare
+	 * {@code name} for any arity.
 	 */
 	int nargs();
 

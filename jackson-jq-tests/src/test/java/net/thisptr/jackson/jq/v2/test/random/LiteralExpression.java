@@ -3,9 +3,10 @@ package net.thisptr.jackson.jq.v2.test.random;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -18,7 +19,7 @@ public class LiteralExpression implements Expression {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <N> void apply(Scope<N> scope, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
+	public <N> void apply(JsonProvider<N> jsonProvider, ExecutionStack<N>.@Nullable Frame frame, N in, @Nullable Path<N> ipath, PathOutput<N> output, boolean requirePath) throws JsonQueryException {
 		output.emit((N) value, null);
 	}
 

@@ -23,7 +23,7 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 public class GroupByFunction implements FunctionFactory {
 	@Override
 	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		return (scope, in, ipath, output) -> {
+		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "group_by", in, JsonNodeType.ARRAY);
 
 			JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
@@ -32,7 +32,7 @@ public class GroupByFunction implements FunctionFactory {
 			while (iter.hasNext()) {
 				JsonNode i = iter.next();
 				List<JsonNode> fxList = new ArrayList<>();
-				args.get(0).apply(scope, i, fxList::add);
+				args.get(0).apply(jsonProvider, frame, i, fxList::add);
 				JsonNode fx = JsonNodeUtils.asArrayNode(jsonProvider, fxList);
 				List<JsonNode> values = result.computeIfAbsent(fx, k -> new ArrayList<>());
 				values.add(i);

@@ -28,29 +28,29 @@ public class RangeFunction implements FunctionFactory {
 
 	@Override
 	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression> args, Version version) {
-		return (scope, in, ipath, output) -> {
+		return (frame, in, ipath, output) -> {
 								if (args.size() == 1) {
-					args.get(0).apply(scope, in, (end) -> {
+					args.get(0).apply(jsonProvider, frame, in, (end) -> {
 						range1(jsonProvider, output, end);
 					});
 				} else if (args.size() == 2) {
-					args.get(0).apply(scope, in, (start) -> {
+					args.get(0).apply(jsonProvider, frame, in, (start) -> {
 						if (version.compareTo(Versions.JQ_1_5) <= 0) {
 							@SuppressWarnings("unchecked")
 							Object[] cur = new Object[] { start }; // only reset when start changes [v1.5]
-							args.get(1).apply(scope, in, (end) -> {
+							args.get(1).apply(jsonProvider, frame, in, (end) -> {
 								cur[0] = range2(jsonProvider, output, (JsonNode) cur[0], end);
 							});
 						} else {
-							args.get(1).apply(scope, in, (end) -> {
+							args.get(1).apply(jsonProvider, frame, in, (end) -> {
 								range2(jsonProvider, output, start, end);
 							});
 						}
 					});
 				} else {
-					args.get(0).apply(scope, in, (start) -> {
-						args.get(1).apply(scope, in, (end) -> {
-							args.get(2).apply(scope, in, (incr) -> {
+					args.get(0).apply(jsonProvider, frame, in, (start) -> {
+						args.get(1).apply(jsonProvider, frame, in, (end) -> {
+							args.get(2).apply(jsonProvider, frame, in, (incr) -> {
 								range3(jsonProvider, output, start, end, incr);
 							});
 						});

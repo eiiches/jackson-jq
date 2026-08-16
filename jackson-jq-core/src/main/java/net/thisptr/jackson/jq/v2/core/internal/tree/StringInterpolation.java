@@ -8,9 +8,10 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
-import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -38,12 +39,12 @@ public class StringInterpolation implements Expression {
 	}
 
 	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public <JsonNode> void apply(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Stack<Pair<Integer, JsonNode>> stack = new Stack<>();
-		recurse(scope, in, output, stack, interpolations);
+		recurse(jsonProvider, frame, in, output, stack, interpolations);
 	}
 
-	private <JsonNode> void recurse(Scope<JsonNode> scope, JsonNode in, PathOutput<JsonNode> output, Stack<Pair<Integer, JsonNode>> stack, List<Pair<Integer, Expression>> interpolations) throws JsonQueryException {
+	private <JsonNode> void recurse(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, PathOutput<JsonNode> output, Stack<Pair<Integer, JsonNode>> stack, List<Pair<Integer, Expression>> interpolations) throws JsonQueryException {
 		if (interpolations.isEmpty()) {
 			StringBuilder builder = new StringBuilder();
 			@Var int pos = 0;
@@ -52,25 +53,25 @@ public class StringInterpolation implements Expression {
 				builder.append(template.substring(pos, head._1));
 				pos = head._1;
 
-				JsonNodeType nodeType = scope.jsonProvider().getNodeType(head._2);
+				JsonNodeType nodeType = jsonProvider.getNodeType(head._2);
 				boolean isValueNode = nodeType != JsonNodeType.ARRAY && nodeType != JsonNodeType.OBJECT;
-				builder.append(isValueNode ? scope.jsonProvider().asText(head._2) : scope.jsonProvider().toString(head._2));
+				builder.append(isValueNode ? jsonProvider.asText(head._2) : jsonProvider.toString(head._2));
 			}
 			builder.append(template.substring(pos));
-			output.emit(scope.jsonProvider().createString(builder.toString()), null);
+			output.emit(jsonProvider.createString(builder.toString()), null);
 		} else {
 			Pair<Integer, Expression> rhead = interpolations.get(interpolations.size() - 1);
 			List<Pair<Integer, Expression>> rtail = interpolations.subList(0, interpolations.size() - 1);
-			rhead._2.apply(scope, in, (interpolated) -> {
+			rhead._2.apply(jsonProvider, frame, in, (interpolated) -> {
 				if (formatter != null) {
-					formatter.apply(scope, interpolated, (formatted) -> {
+					formatter.apply(jsonProvider, frame, interpolated, (formatted) -> {
 						stack.push(Pair.of(rhead._1, formatted));
-						recurse(scope, in, output, stack, rtail);
+						recurse(jsonProvider, frame, in, output, stack, rtail);
 						stack.pop();
 					});
 				} else {
 					stack.push(Pair.of(rhead._1, interpolated));
-					recurse(scope, in, output, stack, rtail);
+					recurse(jsonProvider, frame, in, output, stack, rtail);
 					stack.pop();
 				}
 			});
