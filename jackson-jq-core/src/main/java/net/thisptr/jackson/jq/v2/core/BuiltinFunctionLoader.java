@@ -63,7 +63,6 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 
 	@Deprecated
 	public void loadFunctions(Version version, Scope<?> scope) {
-		listFunctionFactories(version).forEach((nameAndArity, factory) -> scope.addFunctionFactory(nameAndArity, factory));
 	}
 
 	private FunctionFactory createJqFunctionFactory(JqFunc def, Version version) {
@@ -111,7 +110,7 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 			String pName = paramNames.get(i);
 			Expression pExpr = args.get(i);
 			if (!pName.startsWith("$")) {
-				currentScope.addFunctionFactory(pName, 0, new FunctionFactory() {
+				currentScope.setFunctionFactory(i, new FunctionFactory() {
 					@Override
 					@SuppressWarnings({"unchecked", "rawtypes"})
 					public <N1> Function<N1> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N1> jp, List<Expression> emptyArgs, Version ver) {

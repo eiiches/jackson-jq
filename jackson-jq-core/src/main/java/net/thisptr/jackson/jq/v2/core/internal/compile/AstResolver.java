@@ -33,6 +33,7 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.PipedQuery;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ReduceExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionCall;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.SemicolonOperator;
 import net.thisptr.jackson.jq.v2.core.internal.tree.StringKeyFieldConstruction;
@@ -83,7 +84,8 @@ public class AstResolver {
 
 			String fullName = call.moduleName() != null ? call.moduleName() + "::" + call.name() : call.name();
 			if (call.moduleName() == null && context.isLocalFunction(call.name(), compiledArgs.size())) {
-				return new FunctionCall(call.moduleName(), call.name(), compiledArgs, env.version());
+				int slot = context.getSlot(call.name());
+				return new ResolvedLocalFunctionAccess(call.name(), slot, compiledArgs);
 			}
 
 			FunctionNameAndArity key = FunctionNameAndArity.of(fullName, compiledArgs.size());
@@ -121,7 +123,7 @@ public class AstResolver {
 				}
 				JsonNode metadata = imp.getMetadata(env.jsonProvider());
 				if (imp.dollarImport) {
-					JsonNode data = env.getModuleLoader().loadData(null, imp.path, metadata);
+					JsonNode data = env.getModuleLoader().loadData(env.rootScope().getCurrentModule(), imp.path, metadata);
 					if (data == null) {
 						throw new JsonQueryException(String.format("module not found: %s", imp.path));
 					}
@@ -129,7 +131,7 @@ public class AstResolver {
 						env.addVariable(imp.name, data);
 					}
 				} else {
-					Module mod = env.getModuleLoader().loadModule(null, imp.path, metadata);
+					Module mod = env.getModuleLoader().loadModule(env.rootScope().getCurrentModule(), imp.path, metadata);
 					if (mod == null) {
 						throw new JsonQueryException(String.format("module not found: %s", imp.path));
 					}
@@ -311,13 +313,25 @@ public class AstResolver {
 
 		if (expr instanceof FormattingFilter) {
 			FormattingFilter ff = (FormattingFilter) expr;
-			FunctionNameAndArity key = FunctionNameAndArity.of("@" + ff.name(), 0);
+			String fname = ff.name().startsWith("@") ? ff.name() : "@" + ff.name();
+			FunctionNameAndArity key = FunctionNameAndArity.of(fname, 0);
 			FunctionFactory factory = env.getFunctionFactory(key);
 			if (factory == null) {
-				throw new JsonQueryException(String.format("Formatting operator @%s does not exist", ff.name()));
+				throw new JsonQueryException(String.format("Formatting operator %s does not exist", fname));
 			}
 			Function<JsonNode> fn = factory.createFunction(env.jsonProvider(), Collections.emptyList(), env.version());
-			return new ResolvedFunctionCall<>("@" + ff.name(), fn);
+			return new ResolvedFunctionCall<>(fname, fn);
+		}
+
+		if (expr instanceof net.thisptr.jackson.jq.v2.core.internal.tree.StringInterpolation) {
+			net.thisptr.jackson.jq.v2.core.internal.tree.StringInterpolation si = (net.thisptr.jackson.jq.v2.core.internal.tree.StringInterpolation) expr;
+			List<Pair<Integer, Expression>> resolvedInterpolations = new ArrayList<>();
+			for (Pair<Integer, Expression> pair : si.interpolations()) {
+				Expression resExpr = resolveNonNull(env, context, pair._2);
+				resolvedInterpolations.add(Pair.of(pair._1, resExpr));
+			}
+			Expression resolvedFormatter = resolve(env, context, si.formatter());
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.StringInterpolation(si.template(), resolvedInterpolations, resolvedFormatter);
 		}
 
 		if (expr instanceof BracketFieldAccess) {
@@ -363,37 +377,44 @@ public class AstResolver {
 			CompileContext fnContext = context.copy();
 			fnContext.pushScope();
 			fnContext.addLocalFunction(fd.fname(), fd.args().size());
+			List<Integer> paramSlots = new ArrayList<>();
 			for (String arg : fd.args()) {
 				if (arg.startsWith("$")) {
 					fnContext.addLocalVariable(arg.substring(1));
+					paramSlots.add(fnContext.getSlot(arg.substring(1)));
 				} else {
 					fnContext.addLocalFunction(arg, 0);
+					paramSlots.add(fnContext.getSlot(arg));
 				}
 			}
 			Expression resolvedBody = resolveNonNull(env, fnContext, fd.body());
-			env.addFunctionFactory(key, new FunctionFactory() {
+			FunctionFactory factory = new FunctionFactory() {
 				@Override
 				public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression> fnArgs, net.thisptr.jackson.jq.v2.spi.Version version) {
 					return (runtimeScope, input, path, output) -> {
 						Scope<N> fnScope = Scope.newChildScope(runtimeScope);
-						bindAndApply(runtimeScope, fnScope, fd.args(), fnArgs, 0, input, path, output, (execScope) -> {
+						bindAndApply(runtimeScope, fnScope, fd.args(), paramSlots, fnArgs, input, path, output, (execScope) -> {
 							resolvedBody.apply(execScope, input, path, output, false);
 						});
 					};
 				}
-			});
-			return new FunctionDefinition(fd.fname(), fd.args(), resolvedBody);
+			};
+			env.addFunctionFactory(key, factory);
+			context.addLocalFunction(fd.fname(), fd.args().size());
+			int slot = context.getSlot(fd.fname());
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionDefinition(slot, factory);
 		}
 
 		return expr;
 	}
 
-	private static <N> void bindAndApply(Scope<N> callerScope, Scope<N> currentScope, List<String> paramNames, List<Expression> fnArgs, int index, N in, net.thisptr.jackson.jq.v2.spi.path.@org.jspecify.annotations.Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws JsonQueryException {
+	private static <N> void bindAndApply(Scope<N> callerScope, Scope<N> currentScope, List<String> paramNames, List<Integer> paramSlots, List<Expression> fnArgs, N in, net.thisptr.jackson.jq.v2.spi.path.@org.jspecify.annotations.Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws JsonQueryException {
 		for (int i = 0; i < paramNames.size(); i++) {
 			String pName = paramNames.get(i);
+			int slot = paramSlots.get(i);
 			Expression pExpr = fnArgs.get(i);
 			if (!pName.startsWith("$")) {
-				currentScope.addFunctionFactory(pName, 0, new FunctionFactory() {
+				currentScope.setFunctionFactory(slot, new FunctionFactory() {
 					@Override
 					@SuppressWarnings({"unchecked", "rawtypes"})
 					public <N1> Function<N1> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N1> jp, List<Expression> emptyArgs, net.thisptr.jackson.jq.v2.spi.Version v) {
@@ -402,26 +423,25 @@ public class AstResolver {
 				});
 			}
 		}
-		bindValueParams(callerScope, currentScope, paramNames, fnArgs, 0, in, path, output, bodyTask);
+		bindValueParams(callerScope, currentScope, paramNames, paramSlots, fnArgs, 0, in, path, output, bodyTask);
 	}
 
-	private static <N> void bindValueParams(Scope<N> callerScope, Scope<N> currentScope, List<String> paramNames, List<Expression> fnArgs, int index, N in, net.thisptr.jackson.jq.v2.spi.path.@org.jspecify.annotations.Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws JsonQueryException {
+	private static <N> void bindValueParams(Scope<N> callerScope, Scope<N> currentScope, List<String> paramNames, List<Integer> paramSlots, List<Expression> fnArgs, int index, N in, net.thisptr.jackson.jq.v2.spi.path.@org.jspecify.annotations.Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws JsonQueryException {
 		if (index >= paramNames.size()) {
 			bodyTask.accept(currentScope);
 			return;
 		}
 		String argName = paramNames.get(index);
 		Expression argExpr = fnArgs.get(index);
+		int slot = paramSlots.get(index);
 		if (argName.startsWith("$")) {
-			String varName = argName.substring(1);
-			int slot = index;
 			argExpr.apply(callerScope, in, path, (val, p) -> {
 				Scope<N> valScope = Scope.newChildScope(currentScope);
 				valScope.setValue(slot, val);
-				bindValueParams(callerScope, valScope, paramNames, fnArgs, index + 1, in, path, output, bodyTask);
+				bindValueParams(callerScope, valScope, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
 			}, false);
 		} else {
-			bindValueParams(callerScope, currentScope, paramNames, fnArgs, index + 1, in, path, output, bodyTask);
+			bindValueParams(callerScope, currentScope, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
 		}
 	}
 

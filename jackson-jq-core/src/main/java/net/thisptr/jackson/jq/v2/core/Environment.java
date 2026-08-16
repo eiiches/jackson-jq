@@ -34,7 +34,6 @@ public class Environment<JsonNode> {
 		this.functionLoader = BuiltinFunctionLoader.getInstance();
 		Map<FunctionNameAndArity, FunctionFactory> builtins = this.functionLoader.listFunctionFactories(version);
 		this.functionFactories.putAll(builtins);
-		builtins.forEach((key, factory) -> rootScope.addFunctionFactory(key, factory));
 	}
 
 	public JsonProvider<JsonNode> jsonProvider() {
@@ -43,6 +42,10 @@ public class Environment<JsonNode> {
 
 	public Version version() {
 		return version;
+	}
+
+	public Scope<JsonNode> rootScope() {
+		return rootScope;
 	}
 
 	public Environment<JsonNode> setModuleLoader(ModuleLoader<JsonNode> moduleLoader) {
@@ -59,7 +62,6 @@ public class Environment<JsonNode> {
 		this.functionLoader = functionLoader;
 		Map<FunctionNameAndArity, FunctionFactory> factories = functionLoader.listFunctionFactories(version);
 		this.functionFactories.putAll(factories);
-		factories.forEach((key, factory) -> rootScope.addFunctionFactory(key, factory));
 		return this;
 	}
 
@@ -82,8 +84,11 @@ public class Environment<JsonNode> {
 
 	public Environment<JsonNode> addFunctionFactory(FunctionNameAndArity nameAndArity, FunctionFactory functionFactory) {
 		functionFactories.put(nameAndArity, functionFactory);
-		rootScope.addFunctionFactory(nameAndArity, functionFactory);
 		return this;
+	}
+
+	public Map<FunctionNameAndArity, FunctionFactory> functionFactories() {
+		return java.util.Collections.unmodifiableMap(functionFactories);
 	}
 
 	public @Nullable FunctionFactory getFunctionFactory(FunctionNameAndArity nameAndArity) {

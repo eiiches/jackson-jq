@@ -65,6 +65,29 @@ public class EvaluationFrame<JsonNode> {
 		}
 	}
 
+	private @Nullable FunctionFactory @Nullable [] functions = null;
+
+	public @Nullable FunctionFactory getFunctionFactory(int slot) {
+		if (functions != null && slot >= 0 && slot < functions.length) {
+			FunctionFactory f = functions[slot];
+			if (f != null)
+				return f;
+		}
+		if (parent != null)
+			return parent.getFunctionFactory(slot);
+		return null;
+	}
+
+	public void setFunctionFactory(int slot, FunctionFactory factory) {
+		if (slot >= 0) {
+			if (functions == null || slot >= functions.length) {
+				int newLen = Math.max(slot + 1, functions != null ? functions.length * 2 : 4);
+				functions = functions != null ? java.util.Arrays.copyOf(functions, newLen) : new FunctionFactory[newLen];
+			}
+			functions[slot] = factory;
+		}
+	}
+
 	public @Nullable Path<JsonNode> getPath(int slot) {
 		if (slot >= 0) {
 			Path<JsonNode> p = stack.getPath(bp + slot);
@@ -77,14 +100,15 @@ public class EvaluationFrame<JsonNode> {
 	}
 
 	public @Nullable ValueWithPath<JsonNode> getValueWithPath(int slot) {
-		JsonNode val = getValue(slot);
+		Object val = getValue(slot);
 		if (val == null)
 			return null;
 		Path<JsonNode> p = getPath(slot);
 		return new ValueWithPath<JsonNode>() {
 			@Override
+			@SuppressWarnings("unchecked")
 			public JsonNode value() {
-				return val;
+				return (JsonNode) val;
 			}
 
 			@Override

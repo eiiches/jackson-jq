@@ -123,14 +123,16 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 
 		FileSystemModule module = new FileSystemModule(moduleFile.searchPath, moduleFile.modulePath);
 
-		Scope<JsonNode> childScope = Scope.newChildScope(parentScope);
-		childScope.setCurrentModule(module);
-
-		// TODO: use different parser instead of adding null at the end
+		net.thisptr.jackson.jq.v2.core.Environment<JsonNode> moduleEnv = new net.thisptr.jackson.jq.v2.core.Environment<>(parentScope.jsonProvider(), version);
+		moduleEnv.setModuleLoader(parentScope.getModuleLoader());
+		moduleEnv.rootScope().setCurrentModule(module);
 		Expression expr = ExpressionParser.compile(moduleString + " null", version);
-		expr.apply(childScope, parentScope.jsonProvider().createNull(), null, (o, p) -> {}, false);
+		net.thisptr.jackson.jq.v2.core.internal.compile.AstResolver.resolve(moduleEnv, expr);
 
-		module.addAllFunctions(childScope.getLocalFunctionFactories());
+		moduleEnv.functionFactories().forEach((key, factory) -> {
+			if (key.arity() != null)
+				module.addFunction(key.name(), key.arity(), factory);
+		});
 		return module;
 	}
 

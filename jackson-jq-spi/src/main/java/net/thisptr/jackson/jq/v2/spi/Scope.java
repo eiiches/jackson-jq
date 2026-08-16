@@ -32,8 +32,6 @@ public class Scope<JsonNode> {
 
 	private @Nullable Scope<JsonNode> parentScope;
 
-	private @Nullable Map<String, FunctionFactory> functions;
-
 	private @Nullable Map<@Nullable String, LinkedList<Module>> importedModules; // the last import comes first; the key is null when the module is loaded by an include statement.
 
 	private @Nullable Map<String, JsonNode> importedData; // the last import overwrites prior imports
@@ -73,42 +71,28 @@ public class Scope<JsonNode> {
 		return new Scope<>(scope);
 	}
 
-	public void addFunctionFactory(FunctionNameAndArity nameAndArity, FunctionFactory q) {
-		addFunctionFactory(nameAndArity.toString(), q);
-	}
-
-	public void addFunctionFactory(String name, int n, FunctionFactory q) {
-		addFunctionFactory(name + "/" + n, q);
-	}
-
-	public void addFunctionFactory(String name, FunctionFactory q) {
-		if (functions == null)
-			functions = new HashMap<>();
-		functions.put(name, q);
-	}
-
-	public @Nullable FunctionFactory getFunctionFactory(String name, int nargs) {
-		FunctionFactory f = getFunctionFactoryRecursive(name + "/" + nargs);
-		if (f != null)
-			return f;
-		return getFunctionFactoryRecursive(name);
-	}
-
-	public Map<String, FunctionFactory> getLocalFunctionFactories() {
-		if (functions == null)
-			return new HashMap<>();
-		return new HashMap<>(functions);
-	}
-
-	private @Nullable FunctionFactory getFunctionFactoryRecursive(String name) {
-		if (functions != null) {
-			FunctionFactory q = functions.get(name);
-			if (q != null)
-				return q;
+	public @Nullable JsonNode getValue(int slot) {
+		EvaluationFrame<JsonNode> frame = getEvaluationFrame();
+		if (frame != null) {
+			JsonNode v = frame.getValue(slot);
+			if (v != null)
+				return v;
 		}
-		if (parentScope == null)
-			return null;
-		return parentScope.getFunctionFactoryRecursive(name);
+		if (parentScope != null)
+			return parentScope.getValue(slot);
+		return null;
+	}
+
+	public @Nullable ValueWithPath<JsonNode> getValueWithPath(int slot) {
+		EvaluationFrame<JsonNode> frame = getEvaluationFrame();
+		if (frame != null) {
+			ValueWithPath<JsonNode> v = frame.getValueWithPath(slot);
+			if (v != null)
+				return v;
+		}
+		if (parentScope != null)
+			return parentScope.getValueWithPath(slot);
+		return null;
 	}
 
 	public void setValue(int slot, JsonNode value) {
@@ -135,6 +119,30 @@ public class Scope<JsonNode> {
 		}
 		frame.setValueWithPath(slot, value, path);
 	}
+
+	public @Nullable FunctionFactory getFunctionFactory(int slot) {
+		EvaluationFrame<JsonNode> frame = getEvaluationFrame();
+		if (frame != null) {
+			FunctionFactory f = frame.getFunctionFactory(slot);
+			if (f != null)
+				return f;
+		}
+		if (parentScope != null)
+			return parentScope.getFunctionFactory(slot);
+		return null;
+	}
+
+	public void setFunctionFactory(int slot, FunctionFactory factory) {
+		@Var EvaluationFrame<JsonNode> frame = evaluationFrame;
+		if (frame == null) {
+			EvaluationFrame<JsonNode> parentFrame = parentScope != null ? parentScope.getEvaluationFrame() : null;
+			frame = new EvaluationFrame<>(parentFrame, slot + 1);
+			evaluationFrame = frame;
+		}
+		frame.setFunctionFactory(slot, factory);
+	}
+
+
 
 	public void setImportedData(String name, JsonNode data) {
 		if (importedData == null)

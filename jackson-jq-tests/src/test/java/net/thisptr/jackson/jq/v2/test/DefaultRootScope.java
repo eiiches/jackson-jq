@@ -5,7 +5,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -15,9 +14,7 @@ public class DefaultRootScope {
 
 	public static Scope<JsonNode> getInstance(Version version) {
 		return ROOT_SCOPES.computeIfAbsent(version, v -> {
-			Scope<JsonNode> scope = Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
-			BuiltinFunctionLoader.getInstance().loadFunctions(v, scope);
-			return scope;
+			return Scope.newEmptyScope(Jackson2JsonProviderImpl.getInstance());
 		});
 	}
 }

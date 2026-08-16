@@ -49,10 +49,6 @@ public class FunctionCall implements Expression {
 			}
 			throw new JsonQueryException(String.format("Function %s::%s/%s does not exist", moduleName, name, args.size()));
 		} else {
-			FunctionFactory f = scope.getFunctionFactory(name, args.size());
-			if (f != null)
-				return f.createFunction(scope.jsonProvider(), args, version);
-
 			// search functions loaded by "include" statement
 			for (Module module : scope.getImportedModules(null)) {
 				FunctionFactory g = module.getFunction(name, args.size());

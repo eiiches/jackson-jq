@@ -20,6 +20,14 @@ public class FunctionNameAndArity {
 		return new FunctionNameAndArity(name, arity);
 	}
 
+	public String name() {
+		return name;
+	}
+
+	public @Nullable Integer arity() {
+		return arity;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (o == null || getClass() != o.getClass()) return false;

@@ -17,12 +17,24 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class StringInterpolation implements Expression {
 	private final List<Pair<Integer, Expression>> interpolations;
 	private final String template;
-	private final Expression formatter;
+	private final @Nullable Expression formatter;
 
-	public StringInterpolation(String template, List<Pair<Integer, Expression>> interpolations, Expression formatter) {
+	public StringInterpolation(String template, List<Pair<Integer, Expression>> interpolations, @Nullable Expression formatter) {
 		this.template = template;
 		this.interpolations = interpolations;
 		this.formatter = formatter;
+	}
+
+	public String template() {
+		return template;
+	}
+
+	public List<Pair<Integer, Expression>> interpolations() {
+		return interpolations;
+	}
+
+	public @Nullable Expression formatter() {
+		return formatter;
 	}
 
 	@Override

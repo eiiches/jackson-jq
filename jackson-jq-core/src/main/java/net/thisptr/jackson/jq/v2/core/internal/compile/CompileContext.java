@@ -86,6 +86,7 @@ public class CompileContext {
 		if (localFunctionsStack.isEmpty())
 			pushScope();
 		localFunctionsStack.peek().add(FunctionNameAndArity.of(name, arity));
+		getOrAssignSlot(name);
 	}
 
 	public boolean isLocalFunction(String name, int arity) {
