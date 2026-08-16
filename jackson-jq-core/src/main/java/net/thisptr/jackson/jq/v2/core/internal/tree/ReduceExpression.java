@@ -64,7 +64,7 @@ public class ReduceExpression<JsonNode> implements Expression {
 					for (int i = vars.size() - 1; i >= 0; --i) {
 						Pair<String, JsonNode> var = vars.get(i);
 						int slot = getSlot(var._1);
-						childScope.setValue(slot, var._2);
+						childScope.setValue(slot, var._2, slots.size());
 					}
 
 					// We only use the last value from reduce expression.

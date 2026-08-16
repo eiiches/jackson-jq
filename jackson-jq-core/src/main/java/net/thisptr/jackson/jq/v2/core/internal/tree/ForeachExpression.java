@@ -67,7 +67,7 @@ public class ForeachExpression<JsonNode> implements Expression {
 					for (int i = vars.size() - 1; i >= 0; --i) {
 						MatchWithPath<JsonNode> var = vars.get(i);
 						int slot = getSlot(var.name);
-						childScope.setValueWithPath(slot, var.value, var.path);
+						childScope.setValueWithPath(slot, var.value, var.path, slots.size());
 					}
 
 					updateExpr.apply(childScope, accumulators[0], accumulatorPaths[0], (newaccumulator, newaccumulatorPath) -> {

@@ -135,7 +135,7 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 			int slot = index;
 			argExpr.apply(callerScope, in, path, (val, p) -> {
 				Scope<N> valScope = Scope.newChildScope(currentScope);
-				valScope.setValue(slot, val);
+				valScope.setValue(slot, val, paramNames.size());
 				bindValueParams(callerScope, valScope, paramNames, args, index + 1, in, path, output, bodyTask);
 			}, false);
 		} else {

@@ -1,38 +1,52 @@
 package net.thisptr.jackson.jq.v2.spi;
 
-import java.util.Arrays;
-
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Scope.ValueWithPath;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 /**
- * An array-backed evaluation frame representing local variable slots allocated at compile time.
- * Provides O(1) indexed variable access without hash map overhead during query evaluation.
+ * Represents a stack frame offset (defined by Base Pointer 'bp' and size)
+ * over a contiguous EvaluationStack.
  */
 public class EvaluationFrame<JsonNode> {
-	private final @Nullable EvaluationFrame<JsonNode> parent;
-	private final Object[] values;
-	private final Path<JsonNode>[] paths;
+	private final EvaluationStack<JsonNode> stack;
+	private final int bp; // Base Pointer offset
+	private final @Nullable EvaluationFrame<JsonNode> parent; // Static link / lexical parent scope
+	private int size;
 
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public EvaluationFrame(@Nullable EvaluationFrame<JsonNode> parent, int slots) {
+	public EvaluationFrame(EvaluationStack<JsonNode> stack, int bp, @Nullable EvaluationFrame<JsonNode> parent, int size) {
+		this.stack = stack;
+		this.bp = bp;
 		this.parent = parent;
-		this.values = new Object[slots];
-		this.paths = (Path<JsonNode>[]) new Path[slots];
+		this.size = size;
+	}
+
+	public EvaluationFrame(@Nullable EvaluationFrame<JsonNode> parent, int size) {
+		this(parent != null ? parent.getStack() : new EvaluationStack<>(), parent != null ? parent.getStack().pushFrame(size) : 0, parent, size);
+	}
+
+	public EvaluationStack<JsonNode> getStack() {
+		return stack;
+	}
+
+	public int bp() {
+		return bp;
+	}
+
+	public int size() {
+		return size;
 	}
 
 	public @Nullable EvaluationFrame<JsonNode> getParent() {
 		return parent;
 	}
 
-	@SuppressWarnings("unchecked")
 	public @Nullable JsonNode getValue(int slot) {
-		if (slot >= 0 && slot < values.length) {
-			Object val = values[slot];
+		if (slot >= 0) {
+			JsonNode val = stack.getValue(bp + slot);
 			if (val != null)
-				return (JsonNode) val;
+				return val;
 		}
 		if (parent != null)
 			return parent.getValue(slot);
@@ -44,16 +58,16 @@ public class EvaluationFrame<JsonNode> {
 	}
 
 	public void setValueWithPath(int slot, JsonNode value, @Nullable Path<JsonNode> path) {
-		if (slot >= 0 && slot < values.length) {
-			values[slot] = value;
-			paths[slot] = path;
+		if (slot >= 0) {
+			stack.setValueWithPath(bp + slot, value, path);
+			if (slot >= size)
+				size = slot + 1;
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public @Nullable Path<JsonNode> getPath(int slot) {
-		if (slot >= 0 && slot < paths.length) {
-			Path<JsonNode> p = paths[slot];
+		if (slot >= 0) {
+			Path<JsonNode> p = stack.getPath(bp + slot);
 			if (p != null)
 				return p;
 		}
@@ -80,8 +94,12 @@ public class EvaluationFrame<JsonNode> {
 		};
 	}
 
+	public void pop() {
+		stack.popFrame(bp);
+	}
+
 	@Override
 	public String toString() {
-		return "EvaluationFrame[values=" + Arrays.toString(values) + "]";
+		return "EvaluationFrame[bp=" + bp + ", size=" + size + "]";
 	}
 }

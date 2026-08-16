@@ -5,10 +5,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-import java.util.function.Supplier;
 
+import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -32,15 +30,6 @@ public class Scope<JsonNode> {
 		this.jsonProvider = jsonProvider;
 	}
 
-	private Map<String, String> debugFunctions() {
-		Map<String, String> result = new TreeMap<>();
-		if (functions == null)
-			return result;
-		for (Entry<String, FunctionFactory> f : functions.entrySet())
-			result.put(f.getKey(), f.getValue().toString());
-		return result;
-	}
-
 	private @Nullable Scope<JsonNode> parentScope;
 
 	private @Nullable Map<String, FunctionFactory> functions;
@@ -57,48 +46,6 @@ public class Scope<JsonNode> {
 		@Nullable Path<JsonNode> path();
 	}
 
-	private abstract static class AbstractValueWithPath<JsonNode> implements ValueWithPath<JsonNode> {
-		private final @Nullable Path<JsonNode> path;
-
-		AbstractValueWithPath (@Nullable Path<JsonNode> path) {
-			this.path = path;
-		}
-
-		@Override
-		public @Nullable Path<JsonNode> path() {
-			return path;
-		}
-	}
-
-	private static class ValueSupplierImpl<JsonNode> extends AbstractValueWithPath<JsonNode> {
-		private Supplier<JsonNode> valueSupplier;
-
-		ValueSupplierImpl(Supplier<JsonNode> valueSupplier, @Nullable Path<JsonNode> path) {
-			super(path);
-			this.valueSupplier = valueSupplier;
-		}
-
-		@Override
-		public JsonNode value() {
-			return valueSupplier.get();
-		}
-	}
-
-	private static class ValueWithPathImpl<JsonNode> extends AbstractValueWithPath<JsonNode> {
-		private JsonNode value;
-
-		ValueWithPathImpl(JsonNode value, @Nullable Path<JsonNode> path) {
-			super(path);
-			this.value = value;
-
-		}
-
-		@Override
-		public JsonNode value() {
-			return value;
-		}
-	}
-
 	private @Nullable EvaluationFrame<JsonNode> evaluationFrame;
 
 	public @Nullable EvaluationFrame<JsonNode> getEvaluationFrame() {
@@ -107,10 +54,6 @@ public class Scope<JsonNode> {
 		if (parentScope != null)
 			return parentScope.getEvaluationFrame();
 		return null;
-	}
-
-	public void setEvaluationFrame(EvaluationFrame<JsonNode> evaluationFrame) {
-		this.evaluationFrame = evaluationFrame;
 	}
 
 	private @Nullable Module currentModule;
@@ -157,10 +100,6 @@ public class Scope<JsonNode> {
 		return new HashMap<>(functions);
 	}
 
-	public @Nullable Scope<JsonNode> getParentScope() {
-		return parentScope;
-	}
-
 	private @Nullable FunctionFactory getFunctionFactoryRecursive(String name) {
 		if (functions != null) {
 			FunctionFactory q = functions.get(name);
@@ -173,16 +112,25 @@ public class Scope<JsonNode> {
 	}
 
 	public void setValue(int slot, JsonNode value) {
-		setValueWithPath(slot, value, null);
+		setValueWithPath(slot, value, null, 0);
+	}
+
+	public void setValue(int slot, JsonNode value, int frameSize) {
+		setValueWithPath(slot, value, null, frameSize);
 	}
 
 	public void setValueWithPath(int slot, JsonNode value, @Nullable Path<JsonNode> path) {
+		setValueWithPath(slot, value, path, 0);
+	}
+
+	public void setValueWithPath(int slot, JsonNode value, @Nullable Path<JsonNode> path, int frameSize) {
 		if (slot < 0)
 			return;
-		@com.google.errorprone.annotations.Var EvaluationFrame<JsonNode> frame = evaluationFrame;
+		@Var EvaluationFrame<JsonNode> frame = evaluationFrame;
 		if (frame == null) {
 			EvaluationFrame<JsonNode> parentFrame = parentScope != null ? parentScope.getEvaluationFrame() : null;
-			frame = new EvaluationFrame<>(parentFrame, Math.max(slot + 1, 64));
+			int size = Math.max(slot + 1, frameSize);
+			frame = new EvaluationFrame<>(parentFrame, size);
 			evaluationFrame = frame;
 		}
 		frame.setValueWithPath(slot, value, path);
