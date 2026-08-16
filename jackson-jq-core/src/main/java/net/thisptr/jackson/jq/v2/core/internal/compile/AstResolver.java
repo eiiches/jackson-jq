@@ -31,6 +31,8 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.ObjectConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.PipeComponent;
 import net.thisptr.jackson.jq.v2.core.internal.tree.PipedQuery;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ReduceExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionCall;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionAccess;
@@ -52,6 +54,8 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ArrayMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ObjectMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatcher;
+import net.thisptr.jackson.jq.v2.spi.Closure;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
@@ -67,7 +71,7 @@ public class AstResolver {
 		Expression resolved = resolve(env, context, expr);
 		if (resolved == null)
 			throw new JsonQueryException("Cannot resolve null expression");
-		return resolved;
+		return new net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression<>(context.getSlotCount(), resolved);
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
@@ -84,7 +88,11 @@ public class AstResolver {
 
 			String fullName = call.moduleName() != null ? call.moduleName() + "::" + call.name() : call.name();
 			if (call.moduleName() == null && context.isLocalFunction(call.name(), compiledArgs.size())) {
-				int slot = context.getSlot(call.name());
+				SymbolLocation loc = context.getFunctionLocation(call.name(), compiledArgs.size());
+				int slot = loc != null ? loc.slot : 0;
+				if (loc != null && !loc.isLocal) {
+					return new ResolvedCapturedFunctionAccess(call.name(), slot, compiledArgs);
+				}
 				return new ResolvedLocalFunctionAccess(call.name(), slot, compiledArgs);
 			}
 
@@ -103,7 +111,11 @@ public class AstResolver {
 			String varName = varAccess.name();
 
 			if (context.isLocalVariable(varName)) {
-				int slot = context.getSlot(varName);
+				SymbolLocation loc = context.getVariableLocation(varName);
+				int slot = loc != null ? loc.slot : 0;
+				if (loc != null && !loc.isLocal) {
+					return new ResolvedCapturedVariableAccess(varName, slot);
+				}
 				return new ResolvedLocalVariableAccess(varName, slot);
 			}
 
@@ -151,12 +163,15 @@ public class AstResolver {
 			PipedQuery<JsonNode> piped = (PipedQuery<JsonNode>) expr;
 			List<PipeComponent<JsonNode>> newComponents = new ArrayList<>();
 
-			context.pushScope();
+			@Var int pushedScopes = 0;
 			try {
 				for (PipeComponent<JsonNode> comp : piped.components()) {
 					if (comp instanceof AssignPipeComponent) {
 						AssignPipeComponent<JsonNode> assign = (AssignPipeComponent<JsonNode>) comp;
 						Expression resolvedExpr = resolveNonNull(env, context, assign.expr);
+
+						context.pushLocalScope();
+						pushedScopes++;
 
 						Set<String> varNames = new HashSet<>();
 						collectVariableNames(assign.matcher, varNames);
@@ -176,7 +191,9 @@ public class AstResolver {
 					}
 				}
 			} finally {
-				context.popScope();
+				for (int i = 0; i < pushedScopes; i++) {
+					context.popScope();
+				}
 			}
 
 			return new PipedQuery<>(newComponents);
@@ -211,8 +228,10 @@ public class AstResolver {
 					res.add(new StringKeyFieldConstruction<>(key, val));
 				} else if (fc instanceof net.thisptr.jackson.jq.v2.core.internal.tree.VariableKeyFieldConstruction) {
 					net.thisptr.jackson.jq.v2.core.internal.tree.VariableKeyFieldConstruction<JsonNode> vk = (net.thisptr.jackson.jq.v2.core.internal.tree.VariableKeyFieldConstruction<JsonNode>) fc;
-					int slot = context.getSlot(vk.name());
-					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedVariableKeyFieldConstruction<>(vk.name(), slot));
+					SymbolLocation loc = context.getVariableLocation(vk.name());
+					boolean isLocal = loc != null ? loc.isLocal : true;
+					int slot = loc != null ? loc.slot : 0;
+					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedVariableKeyFieldConstruction<>(vk.name(), isLocal, slot));
 				} else {
 					res.add(fc);
 				}
@@ -276,7 +295,7 @@ public class AstResolver {
 			Set<String> varNames = new HashSet<>();
 			collectVariableNames(red.matcher(), varNames);
 			Map<String, Integer> slots = new HashMap<>();
-			context.pushScope();
+			context.pushLocalScope();
 			try {
 				for (String varName : varNames) {
 					context.addLocalVariable(varName);
@@ -297,7 +316,7 @@ public class AstResolver {
 			Set<String> varNames = new HashSet<>();
 			collectVariableNames(fe.matcher(), varNames);
 			Map<String, Integer> slots = new HashMap<>();
-			context.pushScope();
+			context.pushLocalScope();
 			try {
 				for (String varName : varNames) {
 					context.addLocalVariable(varName);
@@ -375,8 +394,7 @@ public class AstResolver {
 			context.addLocalFunction(fd.fname(), fd.args().size());
 
 			CompileContext fnContext = context.copy();
-			fnContext.pushScope();
-			fnContext.addLocalFunction(fd.fname(), fd.args().size());
+			fnContext.pushFunctionScope();
 			List<Integer> paramSlots = new ArrayList<>();
 			for (String arg : fd.args()) {
 				if (arg.startsWith("$")) {
@@ -387,28 +405,47 @@ public class AstResolver {
 					paramSlots.add(fnContext.getSlot(arg));
 				}
 			}
+			int fnSize = fnContext.getSlotCount();
 			Expression resolvedBody = resolveNonNull(env, fnContext, fd.body());
-			FunctionFactory factory = new FunctionFactory() {
+			ClosureSpec closureSpec = fnContext.getClosureSpec();
+
+			FunctionFactory envFactory = new FunctionFactory() {
 				@Override
 				public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression> fnArgs, net.thisptr.jackson.jq.v2.spi.Version version) {
+					return createFunction(jsonProvider, (Closure<N>) null, fnArgs, version);
+				}
+
+				@Override
+				@SuppressWarnings({"unchecked", "rawtypes"})
+				public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, @Nullable Closure<N> callingClosure, List<Expression> fnArgs, net.thisptr.jackson.jq.v2.spi.Version version) {
 					return (runtimeScope, input, path, output) -> {
-						Scope<N> fnScope = Scope.newChildScope(runtimeScope);
-						bindAndApply(runtimeScope, fnScope, fd.args(), paramSlots, fnArgs, input, path, output, (execScope) -> {
-							resolvedBody.apply(execScope, input, path, output, false);
-						});
+						ExecutionStack<N>.Frame parentFrame = runtimeScope.getExecutionFrame();
+						ExecutionStack<N>.Frame fnFrame = parentFrame != null
+								? parentFrame.getStack().pushFrame(parentFrame, fnSize)
+								: new ExecutionStack<N>().pushFrame(parentFrame, fnSize);
+						fnFrame.setClosure((Closure) callingClosure);
+						Scope<N> fnScope = Scope.newChildScopeWithFrame(runtimeScope, fnFrame);
+						try {
+							bindAndApply(runtimeScope, fnScope, fd.args(), paramSlots, fnArgs, input, path, output, (execScope) -> {
+								resolvedBody.apply(execScope, input, path, output, false);
+							});
+						} finally {
+							fnFrame.getStack().popFrame();
+						}
 					};
 				}
 			};
-			env.addFunctionFactory(key, factory);
-			context.addLocalFunction(fd.fname(), fd.args().size());
-			int slot = context.getSlot(fd.fname());
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionDefinition(slot, factory);
+			env.addFunctionFactory(key, envFactory);
+
+			SymbolLocation loc = context.getFunctionLocation(fd.fname(), fd.args().size());
+			int slot = loc != null ? loc.slot : 0;
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionDefinition(slot, closureSpec, fnSize, fd.args(), paramSlots, resolvedBody);
 		}
 
 		return expr;
 	}
 
-	private static <N> void bindAndApply(Scope<N> callerScope, Scope<N> currentScope, List<String> paramNames, List<Integer> paramSlots, List<Expression> fnArgs, N in, net.thisptr.jackson.jq.v2.spi.path.@org.jspecify.annotations.Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws JsonQueryException {
+	public static <N> void bindAndApply(Scope<N> callerScope, Scope<N> currentScope, List<String> paramNames, List<Integer> paramSlots, List<Expression> fnArgs, N in, net.thisptr.jackson.jq.v2.spi.path.@org.jspecify.annotations.Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws JsonQueryException {
 		for (int i = 0; i < paramNames.size(); i++) {
 			String pName = paramNames.get(i);
 			int slot = paramSlots.get(i);
@@ -436,9 +473,8 @@ public class AstResolver {
 		int slot = paramSlots.get(index);
 		if (argName.startsWith("$")) {
 			argExpr.apply(callerScope, in, path, (val, p) -> {
-				Scope<N> valScope = Scope.newChildScope(currentScope);
-				valScope.setValue(slot, val);
-				bindValueParams(callerScope, valScope, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
+				currentScope.setValue(slot, val);
+				bindValueParams(callerScope, currentScope, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
 			}, false);
 		} else {
 			bindValueParams(callerScope, currentScope, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);

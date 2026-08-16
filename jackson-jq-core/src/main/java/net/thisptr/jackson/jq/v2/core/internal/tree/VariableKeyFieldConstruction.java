@@ -17,8 +17,8 @@ public class VariableKeyFieldConstruction<JsonNode> implements FieldConstruction
 
 	@Override
 	public void evaluate(Scope<JsonNode> scope, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
-		net.thisptr.jackson.jq.v2.spi.EvaluationFrame<JsonNode> frame = scope.getEvaluationFrame();
-		JsonNode value = frame != null ? frame.getValue(0) : null;
+		net.thisptr.jackson.jq.v2.spi.ExecutionStack<JsonNode>.Frame frame = scope.getExecutionFrame();
+		JsonNode value = frame != null ? frame.getValueNode(0) : null;
 		consumer.accept(name, JsonNodeUtils.nullToNullNode(scope.jsonProvider(), value));
 	}
 

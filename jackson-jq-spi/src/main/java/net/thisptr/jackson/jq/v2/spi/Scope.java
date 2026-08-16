@@ -39,18 +39,18 @@ public class Scope<JsonNode> {
 	private @Nullable ModuleLoader<JsonNode> moduleLoader;
 
 	public interface ValueWithPath<JsonNode> {
-		JsonNode value();
+		@Nullable JsonNode value();
 
 		@Nullable Path<JsonNode> path();
 	}
 
-	private @Nullable EvaluationFrame<JsonNode> evaluationFrame;
+	private ExecutionStack<JsonNode>.@Nullable Frame executionFrame;
 
-	public @Nullable EvaluationFrame<JsonNode> getEvaluationFrame() {
-		if (evaluationFrame != null)
-			return evaluationFrame;
+	public ExecutionStack<JsonNode>.@Nullable Frame getExecutionFrame() {
+		if (executionFrame != null)
+			return executionFrame;
 		if (parentScope != null)
-			return parentScope.getEvaluationFrame();
+			return parentScope.getExecutionFrame();
 		return null;
 	}
 
@@ -71,10 +71,16 @@ public class Scope<JsonNode> {
 		return new Scope<>(scope);
 	}
 
+	public static <JsonNode> Scope<JsonNode> newChildScopeWithFrame(Scope<JsonNode> scope, ExecutionStack<JsonNode>.Frame frame) {
+		Scope<JsonNode> child = new Scope<>(scope);
+		child.executionFrame = frame;
+		return child;
+	}
+
 	public @Nullable JsonNode getValue(int slot) {
-		EvaluationFrame<JsonNode> frame = getEvaluationFrame();
+		ExecutionStack<JsonNode>.Frame frame = getExecutionFrame();
 		if (frame != null) {
-			JsonNode v = frame.getValue(slot);
+			JsonNode v = frame.getValueNode(slot);
 			if (v != null)
 				return v;
 		}
@@ -84,11 +90,22 @@ public class Scope<JsonNode> {
 	}
 
 	public @Nullable ValueWithPath<JsonNode> getValueWithPath(int slot) {
-		EvaluationFrame<JsonNode> frame = getEvaluationFrame();
+		ExecutionStack<JsonNode>.Frame frame = getExecutionFrame();
 		if (frame != null) {
-			ValueWithPath<JsonNode> v = frame.getValueWithPath(slot);
-			if (v != null)
-				return v;
+			ExecutionStack.PathAndValue<JsonNode> pv = frame.getValue(slot);
+			if (pv != null) {
+				return new ValueWithPath<JsonNode>() {
+					@Override
+					public @Nullable JsonNode value() {
+						return pv.getValue();
+					}
+
+					@Override
+					public @Nullable Path<JsonNode> path() {
+						return pv.getPath();
+					}
+				};
+			}
 		}
 		if (parentScope != null)
 			return parentScope.getValueWithPath(slot);
@@ -110,18 +127,22 @@ public class Scope<JsonNode> {
 	public void setValueWithPath(int slot, JsonNode value, @Nullable Path<JsonNode> path, int frameSize) {
 		if (slot < 0)
 			return;
-		@Var EvaluationFrame<JsonNode> frame = evaluationFrame;
+		@Var ExecutionStack<JsonNode>.Frame frame = getExecutionFrame();
 		if (frame == null) {
-			EvaluationFrame<JsonNode> parentFrame = parentScope != null ? parentScope.getEvaluationFrame() : null;
+			ExecutionStack<JsonNode> stack = new ExecutionStack<>();
 			int size = Math.max(slot + 1, frameSize);
-			frame = new EvaluationFrame<>(parentFrame, size);
-			evaluationFrame = frame;
+			executionFrame = stack.pushFrame(null, size);
+			frame = executionFrame;
 		}
-		frame.setValueWithPath(slot, value, path);
+		if (path != null) {
+			frame.set(slot, new ExecutionStack.PathAndValue<>(path, value));
+		} else {
+			frame.set(slot, value);
+		}
 	}
 
 	public @Nullable FunctionFactory getFunctionFactory(int slot) {
-		EvaluationFrame<JsonNode> frame = getEvaluationFrame();
+		ExecutionStack<JsonNode>.Frame frame = getExecutionFrame();
 		if (frame != null) {
 			FunctionFactory f = frame.getFunctionFactory(slot);
 			if (f != null)
@@ -133,13 +154,15 @@ public class Scope<JsonNode> {
 	}
 
 	public void setFunctionFactory(int slot, FunctionFactory factory) {
-		@Var EvaluationFrame<JsonNode> frame = evaluationFrame;
+		if (slot < 0)
+			return;
+		@Var ExecutionStack<JsonNode>.Frame frame = getExecutionFrame();
 		if (frame == null) {
-			EvaluationFrame<JsonNode> parentFrame = parentScope != null ? parentScope.getEvaluationFrame() : null;
-			frame = new EvaluationFrame<>(parentFrame, slot + 1);
-			evaluationFrame = frame;
+			ExecutionStack<JsonNode> stack = new ExecutionStack<>();
+			executionFrame = stack.pushFrame(null, slot + 1);
+			frame = executionFrame;
 		}
-		frame.setFunctionFactory(slot, factory);
+		frame.set(slot, factory);
 	}
 
 

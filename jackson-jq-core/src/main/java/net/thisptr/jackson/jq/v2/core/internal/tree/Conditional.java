@@ -30,24 +30,29 @@ public class Conditional implements Expression {
 		return otherwise;
 	}
 
-	private <JsonNode> void pathRecursive(PathOutput<JsonNode> output, Scope<JsonNode> scope, List<Pair<Expression, Expression>> switches, JsonNode in, @Nullable Path path) throws JsonQueryException {
-		Pair<Expression, Expression> sw = switches.get(0);
-		sw._1.apply(scope, in, (r) -> {
+	@Override
+	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		applyBranch(scope, in, path, output, 0);
+	}
+
+	private <JsonNode> void applyBranch(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, int switchIndex) throws JsonQueryException {
+		if (switchIndex >= switches.size()) {
+			if (otherwise != null) {
+				otherwise.apply(scope, in, path, output, false);
+			}
+			return;
+		}
+		Pair<Expression, Expression> sw = switches.get(switchIndex);
+		java.util.List<JsonNode> condValues = new java.util.ArrayList<>();
+		sw._1.apply(scope, in, (r) -> condValues.add(r));
+
+		for (JsonNode r : condValues) {
 			if (JsonNodeUtils.asBoolean(scope.jsonProvider(), r)) {
 				sw._2.apply(scope, in, path, output, false);
 			} else {
-				if (switches.size() > 1) {
-					pathRecursive(output, scope, switches.subList(1, switches.size()), in, path);
-				} else {
-					otherwise.apply(scope, in, path, output, false);
-				}
+				applyBranch(scope, in, path, output, switchIndex + 1);
 			}
-		});
-	}
-
-	@Override
-	public <JsonNode> void apply(Scope<JsonNode> scope, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		pathRecursive(output, scope, switches, in, path);
+		}
 	}
 
 	@Override

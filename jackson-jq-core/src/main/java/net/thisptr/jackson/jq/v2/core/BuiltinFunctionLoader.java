@@ -8,6 +8,8 @@ import java.util.ServiceLoader;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
+import net.thisptr.jackson.jq.v2.spi.Closure;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
@@ -76,7 +78,7 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 					return resolvedBody;
 				try {
 					net.thisptr.jackson.jq.v2.core.internal.compile.CompileContext context = new net.thisptr.jackson.jq.v2.core.internal.compile.CompileContext();
-					context.pushScope();
+					context.pushFunctionScope();
 					for (String arg : def.args) {
 						if (arg.startsWith("$")) {
 							context.addLocalVariable(arg.substring(1));
@@ -85,8 +87,10 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 						}
 					}
 					Environment env = new Environment((net.thisptr.jackson.jq.v2.json.JsonProvider) scope.jsonProvider(), version);
+					listFunctionFactories(version).forEach(env::addFunctionFactory);
 					resolvedBody = net.thisptr.jackson.jq.v2.core.internal.compile.AstResolver.resolveNonNull(env, context, parsedBody);
 				} catch (Exception e) {
+					e.printStackTrace();
 					resolvedBody = parsedBody;
 				}
 				return resolvedBody;
@@ -94,18 +98,34 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 
 			@Override
 			public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression> args, Version v) {
-				return (scope, in, path, output) -> {
-					Expression body = getResolvedBody(scope);
-					Scope<N> fnScope = Scope.newChildScope(scope);
-					bindAndApply(scope, fnScope, def.args, args, 0, in, path, output, (execScope) -> {
-						body.apply(execScope, in, path, output, false);
-					});
+				return createFunction(jsonProvider, (Closure<N>) null, args, v);
+			}
+
+			@Override
+			@SuppressWarnings({"unchecked", "rawtypes"})
+			public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, @Nullable Closure<N> closure, List<Expression> args, Version v) {
+				return (runtimeScope, in, path, output) -> {
+					Expression body = getResolvedBody(runtimeScope);
+					int fnSize = def.args.size();
+					ExecutionStack<N>.Frame parentFrame = runtimeScope.getExecutionFrame();
+					ExecutionStack<N>.Frame fnFrame = parentFrame != null
+							? parentFrame.getStack().pushFrame(parentFrame, fnSize)
+							: new ExecutionStack<N>().pushFrame(parentFrame, fnSize);
+					fnFrame.setClosure((Closure) closure);
+					Scope<N> fnScope = Scope.newChildScopeWithFrame(runtimeScope, fnFrame);
+					try {
+						bindAndApply(runtimeScope, fnScope, def.args, args, 0, in, path, output, (execScope) -> {
+							body.apply(execScope, in, path, output, false);
+						});
+					} finally {
+						fnFrame.getStack().popFrame();
+					}
 				};
 			}
 		};
 	}
 
-	private <N> void bindAndApply(Scope<N> scope, Scope<N> currentScope, List<String> paramNames, List<Expression> args, int index, N in, net.thisptr.jackson.jq.v2.spi.path.@org.jspecify.annotations.Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException {
+	private <N> void bindAndApply(Scope<N> scope, Scope<N> currentScope, List<String> paramNames, List<Expression> args, int index, N in, net.thisptr.jackson.jq.v2.spi.path.@Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException {
 		for (int i = 0; i < paramNames.size(); i++) {
 			String pName = paramNames.get(i);
 			Expression pExpr = args.get(i);
@@ -122,7 +142,7 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 		bindValueParams(scope, currentScope, paramNames, args, 0, in, path, output, bodyTask);
 	}
 
-	private <N> void bindValueParams(Scope<N> callerScope, Scope<N> currentScope, List<String> paramNames, List<Expression> args, int index, N in, net.thisptr.jackson.jq.v2.spi.path.@org.jspecify.annotations.Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException {
+	private <N> void bindValueParams(Scope<N> callerScope, Scope<N> currentScope, List<String> paramNames, List<Expression> args, int index, N in, net.thisptr.jackson.jq.v2.spi.path.@Nullable Path<N> path, net.thisptr.jackson.jq.v2.spi.PathOutput<N> output, java.util.function.Consumer<Scope<N>> bodyTask) throws net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException {
 		if (index >= paramNames.size()) {
 			bodyTask.accept(currentScope);
 			return;
@@ -130,12 +150,10 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 		String argName = paramNames.get(index);
 		Expression argExpr = args.get(index);
 		if (argName.startsWith("$")) {
-			String varName = argName.substring(1);
 			int slot = index;
 			argExpr.apply(callerScope, in, path, (val, p) -> {
-				Scope<N> valScope = Scope.newChildScope(currentScope);
-				valScope.setValue(slot, val, paramNames.size());
-				bindValueParams(callerScope, valScope, paramNames, args, index + 1, in, path, output, bodyTask);
+				currentScope.setValue(slot, val, paramNames.size());
+				bindValueParams(callerScope, currentScope, paramNames, args, index + 1, in, path, output, bodyTask);
 			}, false);
 		} else {
 			bindValueParams(callerScope, currentScope, paramNames, args, index + 1, in, path, output, bodyTask);

@@ -1,23 +1,44 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import com.google.errorprone.annotations.Var;
+
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
-import net.thisptr.jackson.jq.v2.spi.EvaluationFrame;
+import net.thisptr.jackson.jq.v2.spi.Closure;
+import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Scope;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class ResolvedVariableKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
 	private final String name;
+	private final boolean isLocal;
 	private final int slot;
 
-	public ResolvedVariableKeyFieldConstruction(String name, int slot) {
+	public ResolvedVariableKeyFieldConstruction(String name, boolean isLocal, int slot) {
 		this.name = name;
+		this.isLocal = isLocal;
 		this.slot = slot;
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void evaluate(Scope<JsonNode> scope, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
-		EvaluationFrame<JsonNode> frame = scope.getEvaluationFrame();
-		JsonNode value = frame != null ? frame.getValue(slot) : null;
+		ExecutionStack<JsonNode>.Frame frame = scope.getExecutionFrame();
+		@Var JsonNode value = null;
+		if (frame != null) {
+			if (isLocal) {
+				value = frame.getValueNode(slot);
+			} else {
+				Closure<JsonNode> closure = frame.getClosure();
+				if (closure != null) {
+					Object raw = closure.getVariable(slot);
+					if (raw instanceof ExecutionStack.PathAndValue) {
+						value = ((ExecutionStack.PathAndValue<JsonNode>) raw).getValue();
+					} else {
+						value = (JsonNode) raw;
+					}
+				}
+			}
+		}
 		consumer.accept(name, JsonNodeUtils.nullToNullNode(scope.jsonProvider(), value));
 	}
 
