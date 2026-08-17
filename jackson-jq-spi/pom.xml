@@ -63,6 +63,7 @@
 					<instructions>
 						<Export-Package>
 							net.thisptr.jackson.jq.v2.spi,
+							net.thisptr.jackson.jq.v2.spi.annotations,
 							net.thisptr.jackson.jq.v2.spi.exception,
 							net.thisptr.jackson.jq.v2.spi.module,
 							net.thisptr.jackson.jq.v2.spi.path
