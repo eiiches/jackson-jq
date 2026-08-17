@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -9,6 +10,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
+import net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -77,7 +79,7 @@ public class Environment<JsonNode> {
 	}
 
 	public Map<String, Supplier<JsonNode>> variables() {
-		return java.util.Collections.unmodifiableMap(variables);
+		return Collections.unmodifiableMap(variables);
 	}
 
 	public Environment<JsonNode> addFunctionFactory(FunctionNameAndArity nameAndArity, FunctionFactory functionFactory) {
@@ -86,7 +88,7 @@ public class Environment<JsonNode> {
 	}
 
 	public Map<FunctionNameAndArity, FunctionFactory> functionFactories() {
-		return java.util.Collections.unmodifiableMap(functionFactories);
+		return Collections.unmodifiableMap(functionFactories);
 	}
 
 	public @Nullable FunctionFactory getFunctionFactory(FunctionNameAndArity nameAndArity) {
@@ -103,11 +105,9 @@ public class Environment<JsonNode> {
 	public JsonQuery<JsonNode> compile(String expression, @Nullable Module currentModule) throws JsonQueryException {
 		AstNode parsedAst = AstParser.parse(expression, version);
 		Expression<JsonNode> compiledExpr = Compiler.compile(this, currentModule, parsedAst);
-		if (!(compiledExpr instanceof net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression))
+		if (!(compiledExpr instanceof RootExpression))
 			throw new IllegalStateException("Compiler did not produce a root expression");
-		@SuppressWarnings("unchecked")
-		net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression<JsonNode> rootExpr =
-				(net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression<JsonNode>) compiledExpr;
+		RootExpression<JsonNode> rootExpr = (RootExpression<JsonNode>) compiledExpr;
 		return rootExpr::apply;
 	}
 }

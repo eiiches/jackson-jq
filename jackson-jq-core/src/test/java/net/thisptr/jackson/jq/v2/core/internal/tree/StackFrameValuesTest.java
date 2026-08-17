@@ -1,9 +1,13 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.internal.utils.PathAndValue;
 import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -39,7 +43,7 @@ public class StackFrameValuesTest {
 	void returnsNullForFunctionFactoryRawValue() {
 		FunctionFactory factory = new FunctionFactory() {
 			@Override
-			public <N> Function<N> createFunction(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, java.util.List<net.thisptr.jackson.jq.v2.spi.Expression<N>> args, Version version) {
+			public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version version) {
 				throw new UnsupportedOperationException();
 			}
 		};

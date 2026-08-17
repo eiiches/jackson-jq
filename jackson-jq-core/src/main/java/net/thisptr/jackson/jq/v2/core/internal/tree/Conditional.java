@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.errorprone.annotations.Var;
@@ -46,7 +47,7 @@ public class Conditional<JsonNode> implements Expression<JsonNode> {
 			return;
 		}
 		Pair<Expression<JsonNode>, Expression<JsonNode>> sw = switches.get(switchIndex);
-		java.util.List<JsonNode> condValues = new java.util.ArrayList<>();
+		List<JsonNode> condValues = new ArrayList<>();
 		sw._1.apply(frame, in, (r) -> condValues.add(r));
 
 		for (JsonNode r : condValues) {

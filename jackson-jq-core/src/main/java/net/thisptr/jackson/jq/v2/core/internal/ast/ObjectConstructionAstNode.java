@@ -6,6 +6,8 @@ import java.util.List;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.tree.FieldConstruction;
+
 public class ObjectConstructionAstNode implements AstNode {
 	public final List<FieldConstructionAst> fields = new ArrayList<>();
 
@@ -30,7 +32,7 @@ public class ObjectConstructionAstNode implements AstNode {
 	}
 
 	/**
-	 * AST-side counterpart of {@link net.thisptr.jackson.jq.v2.core.internal.tree.FieldConstruction}.
+	 * AST-side counterpart of {@link FieldConstruction}.
 	 */
 	public interface FieldConstructionAst extends AstNode {
 	}

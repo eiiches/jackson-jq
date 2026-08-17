@@ -11,11 +11,11 @@ public class RandomGenerator implements Generator {
 	private final int minArgs;
 	private final int maxArgs;
 
-	public RandomGenerator(int args, java.util.function.Function<List<AstNode>, AstNode> fn) {
+	public RandomGenerator(int args, Function<List<AstNode>, AstNode> fn) {
 		this(args, args, fn);
 	}
 
-	public RandomGenerator(int minArgs, int maxArgs, java.util.function.Function<List<AstNode>, AstNode> fn) {
+	public RandomGenerator(int minArgs, int maxArgs, Function<List<AstNode>, AstNode> fn) {
 		this.minArgs = minArgs;
 		this.maxArgs = maxArgs;
 		this.fn = fn;

@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.test.evaluator;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -72,7 +73,7 @@ public class CachedEvaluator implements AutoCloseable, Evaluator {
 
 	private static class Value {
 		@JsonProperty("out")
-		private List<JsonNode> out = java.util.Collections.emptyList();
+		private List<JsonNode> out = Collections.emptyList();
 
 		@JsonProperty("error")
 		private @Nullable String error;

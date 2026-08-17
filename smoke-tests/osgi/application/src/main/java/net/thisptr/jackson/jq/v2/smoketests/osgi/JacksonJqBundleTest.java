@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
@@ -56,6 +57,6 @@ public class JacksonJqBundleTest {
 		JsonNode input = jsonProvider.fromStringStrict(inputJson);
 		List<JsonNode> output = new ArrayList<>();
 		query.apply(input, (val, path) -> output.add(val));
-		assertEquals(java.util.Collections.singletonList(jsonProvider.valueToTree(expected)), output);
+		assertEquals(Collections.singletonList(jsonProvider.valueToTree(expected)), output);
 	}
 }

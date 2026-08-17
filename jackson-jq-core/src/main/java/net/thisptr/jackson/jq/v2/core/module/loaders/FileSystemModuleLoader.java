@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
@@ -129,7 +130,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 
 		FileSystemModule module = new FileSystemModule(moduleFile.searchPath, moduleFile.modulePath);
 
-		net.thisptr.jackson.jq.v2.core.Environment<JsonNode> moduleEnv = new net.thisptr.jackson.jq.v2.core.Environment<>(jsonProvider, version);
+		Environment<JsonNode> moduleEnv = new Environment<>(jsonProvider, version);
 		moduleEnv.setModuleLoader(parentModuleLoader != null ? parentModuleLoader : this);
 		AstNode ast = AstParser.parse(moduleString + " null", version);
 		Compiler.compile(moduleEnv, module, ast);

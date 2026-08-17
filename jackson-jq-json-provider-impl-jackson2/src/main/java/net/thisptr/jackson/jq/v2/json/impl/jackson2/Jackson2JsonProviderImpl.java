@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
@@ -242,7 +243,7 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 
 	@Override
 	public JsonNode fromStringStrict(String json) throws IOException {
-		try (com.fasterxml.jackson.core.JsonParser parser = mapper.getFactory().createParser(json)) {
+		try (JsonParser parser = mapper.getFactory().createParser(json)) {
 			JsonNode tree = parser.readValueAsTree();
 			if (tree == null)
 				throw new IOException("empty input");

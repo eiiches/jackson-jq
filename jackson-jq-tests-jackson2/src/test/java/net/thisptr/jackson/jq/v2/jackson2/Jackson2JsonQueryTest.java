@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.jackson2;
 
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
@@ -38,7 +39,7 @@ public class Jackson2JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 	/**
 	 * Provide test cases for JUnit parameterized tests.
 	 */
-	protected static Stream<String> defaultTestCases() throws java.io.IOException {
+	protected static Stream<String> defaultTestCases() throws IOException {
 		return AbstractJsonQueryTest.defaultTestCases(Jackson2JsonQueryTest.class.getClassLoader());
 	}
 

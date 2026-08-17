@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.json.impl.gson;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -214,7 +215,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 		if (node.isJsonObject()) {
 			return node.getAsJsonObject().entrySet().iterator();
 		}
-		return java.util.Collections.emptyIterator();
+		return Collections.emptyIterator();
 	}
 
 	@Override
@@ -228,7 +229,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 					.map(Map.Entry::getValue)
 					.iterator();
 		}
-		return java.util.Collections.emptyIterator();
+		return Collections.emptyIterator();
 	}
 
 	@Override
@@ -236,7 +237,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 		if (node.isJsonObject()) {
 			return node.getAsJsonObject().keySet().iterator();
 		}
-		return java.util.Collections.emptyIterator();
+		return Collections.emptyIterator();
 	}
 
 	@Override

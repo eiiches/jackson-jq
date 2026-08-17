@@ -1,6 +1,8 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 import org.jspecify.annotations.Nullable;
@@ -19,13 +21,13 @@ public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
 	private Expression<JsonNode> initExpr;
 	private @Nullable Expression<JsonNode> extractExpr;
 	private PatternMatcher<JsonNode> matcher;
-	private java.util.Map<String, Integer> slots;
+	private Map<String, Integer> slots;
 
 	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> updateExpr, @Nullable Expression<JsonNode> extractExpr, Expression<JsonNode> iterExpr) {
-		this(matcher, initExpr, updateExpr, extractExpr, iterExpr, java.util.Collections.emptyMap());
+		this(matcher, initExpr, updateExpr, extractExpr, iterExpr, Collections.emptyMap());
 	}
 
-	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> updateExpr, @Nullable Expression<JsonNode> extractExpr, Expression<JsonNode> iterExpr, java.util.Map<String, Integer> slots) {
+	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> updateExpr, @Nullable Expression<JsonNode> extractExpr, Expression<JsonNode> iterExpr, Map<String, Integer> slots) {
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.updateExpr = updateExpr;

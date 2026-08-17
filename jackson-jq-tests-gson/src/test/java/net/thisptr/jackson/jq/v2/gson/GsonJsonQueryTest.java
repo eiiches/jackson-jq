@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.gson;
 
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
@@ -40,7 +41,7 @@ public class GsonJsonQueryTest extends AbstractJsonQueryTest<JsonElement> {
 	/**
 	 * Provide test cases for JUnit parameterized tests.
 	 */
-	protected static Stream<String> defaultTestCases() throws java.io.IOException {
+	protected static Stream<String> defaultTestCases() throws IOException {
 		return AbstractJsonQueryTest.defaultTestCases(GsonJsonQueryTest.class.getClassLoader());
 	}
 

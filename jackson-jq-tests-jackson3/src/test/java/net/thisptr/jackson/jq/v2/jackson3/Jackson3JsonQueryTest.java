@@ -43,7 +43,7 @@ public class Jackson3JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 	/**
 	 * Provide test cases for JUnit parameterized tests.
 	 */
-	protected static Stream<String> defaultTestCases() throws java.io.IOException {
+	protected static Stream<String> defaultTestCases() throws IOException {
 		return AbstractJsonQueryTest.defaultTestCases(Jackson3JsonQueryTest.class.getClassLoader());
 	}
 

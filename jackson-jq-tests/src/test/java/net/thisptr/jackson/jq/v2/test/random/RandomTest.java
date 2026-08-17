@@ -236,7 +236,7 @@ public class RandomTest {
 
 	/**
 	 * Wraps a previously-computed constant value (e.g. an object or array) so it can be re-fed into
-	 * later generators, formatted the same way {@link com.fasterxml.jackson.databind.JsonNode#toString()}
+	 * later generators, formatted the same way {@link JsonNode#toString()}
 	 * already renders it -- which happens to be valid jq literal syntax.
 	 */
 	private static class RawJsonValue implements AstNode {

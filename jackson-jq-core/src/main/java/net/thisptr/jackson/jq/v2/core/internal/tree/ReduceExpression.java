@@ -1,7 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 import org.jspecify.annotations.Nullable;
@@ -21,13 +23,13 @@ public class ReduceExpression<JsonNode> implements Expression<JsonNode> {
 	private Expression<JsonNode> reduceExpr;
 	private Expression<JsonNode> initExpr;
 	private PatternMatcher<JsonNode> matcher;
-	private java.util.Map<String, Integer> slots;
+	private Map<String, Integer> slots;
 
 	public ReduceExpression(JsonProvider<JsonNode> jsonProvider, PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> reduceExpr, Expression<JsonNode> iterExpr) {
-		this(jsonProvider, matcher, initExpr, reduceExpr, iterExpr, java.util.Collections.emptyMap());
+		this(jsonProvider, matcher, initExpr, reduceExpr, iterExpr, Collections.emptyMap());
 	}
 
-	public ReduceExpression(JsonProvider<JsonNode> jsonProvider, PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> reduceExpr, Expression<JsonNode> iterExpr, java.util.Map<String, Integer> slots) {
+	public ReduceExpression(JsonProvider<JsonNode> jsonProvider, PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> reduceExpr, Expression<JsonNode> iterExpr, Map<String, Integer> slots) {
 		this.jsonProvider = jsonProvider;
 		this.matcher = matcher;
 		this.initExpr = initExpr;

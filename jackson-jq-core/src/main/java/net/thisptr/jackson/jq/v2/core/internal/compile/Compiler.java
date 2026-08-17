@@ -49,6 +49,40 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.matchers.ArrayMatcher
 import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.matchers.ObjectMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.matchers.ValueMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction;
+import net.thisptr.jackson.jq.v2.core.internal.tree.AssignPipeComponent;
+import net.thisptr.jackson.jq.v2.core.internal.tree.BreakExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.Conditional;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ForeachExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.IdentifierKeyFieldConstruction;
+import net.thisptr.jackson.jq.v2.core.internal.tree.JsonQueryKeyFieldConstruction;
+import net.thisptr.jackson.jq.v2.core.internal.tree.LabelPipeComponent;
+import net.thisptr.jackson.jq.v2.core.internal.tree.NegativeExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ObjectConstruction;
+import net.thisptr.jackson.jq.v2.core.internal.tree.PipeComponent;
+import net.thisptr.jackson.jq.v2.core.internal.tree.PipedQuery;
+import net.thisptr.jackson.jq.v2.core.internal.tree.RecursionOperator;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ReduceExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionCall;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionDefinition;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.SemicolonOperator;
+import net.thisptr.jackson.jq.v2.core.internal.tree.StringInterpolation;
+import net.thisptr.jackson.jq.v2.core.internal.tree.StringKeyFieldConstruction;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ThisObject;
+import net.thisptr.jackson.jq.v2.core.internal.tree.TopLevelExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.TransformPipeComponent;
+import net.thisptr.jackson.jq.v2.core.internal.tree.TryCatch;
+import net.thisptr.jackson.jq.v2.core.internal.tree.Tuple;
+import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketExtractFieldAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketFieldAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.IdentifierFieldAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.StringFieldAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.BooleanLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.DoubleLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.LongLiteral;
@@ -83,7 +117,7 @@ public class Compiler {
 		Expression<JsonNode> compiled = compile(env, context, currentModule, ast);
 		if (compiled == null)
 			throw new JsonQueryException("Cannot resolve null expression");
-		return new net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression<>(context.getSlotCount(), compiled,
+		return new RootExpression<>(context.getSlotCount(), compiled,
 				env.variables(), env.functionFactories(), context.globalVariableSlots(), context.globalFunctionSlots(),
 				context.globalVariables(), context.globalFunctions());
 	}
@@ -124,9 +158,9 @@ public class Compiler {
 						defaultFunction = defaultFactory.createFunction(env.jsonProvider(), compiledArgs, env.version());
 				}
 				if (loc != null && !loc.isLocal) {
-					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionAccess<>(env.jsonProvider(), env.version(), fullName, slot, context.getCurrentFunctionClosureSlot(), compiledArgs, defaultFactory, defaultFunction);
+					return new ResolvedCapturedFunctionAccess<>(env.jsonProvider(), env.version(), fullName, slot, context.getCurrentFunctionClosureSlot(), compiledArgs, defaultFactory, defaultFunction);
 				}
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionAccess<>(env.jsonProvider(), env.version(), fullName, slot, compiledArgs, defaultFactory, defaultFunction);
+				return new ResolvedLocalFunctionAccess<>(env.jsonProvider(), env.version(), fullName, slot, compiledArgs, defaultFactory, defaultFunction);
 			}
 
 			FunctionNameAndArity key = FunctionNameAndArity.of(fullName, compiledArgs.size());
@@ -136,7 +170,7 @@ public class Compiler {
 			}
 
 			Function<JsonNode> fn = factory.createFunction(env.jsonProvider(), compiledArgs, env.version());
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionCall<>(fullName, fn);
+			return new ResolvedFunctionCall<>(fullName, fn);
 		}
 
 		if (ast instanceof VariableAccessAstNode) {
@@ -178,12 +212,12 @@ public class Compiler {
 				}
 			}
 			Expression<JsonNode> compiledInner = compileNonNull(env, context, currentModule, top.expr());
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.TopLevelExpression<>(top.moduleDirective(), Collections.emptyList(), compiledInner);
+			return new TopLevelExpression<>(top.moduleDirective(), Collections.emptyList(), compiledInner);
 		}
 
 		if (ast instanceof PipedQueryAstNode) {
 			PipedQueryAstNode piped = (PipedQueryAstNode) ast;
-			List<net.thisptr.jackson.jq.v2.core.internal.tree.PipeComponent<JsonNode>> newComponents = new ArrayList<>();
+			List<PipeComponent<JsonNode>> newComponents = new ArrayList<>();
 
 			@Var int pushedScopes = 0;
 			try {
@@ -204,14 +238,14 @@ public class Compiler {
 							slots.put(varName, context.getVariableSlot(varName));
 						}
 
-						newComponents.add(new net.thisptr.jackson.jq.v2.core.internal.tree.AssignPipeComponent<>(compiledExpr, compiledMatcher, slots));
+						newComponents.add(new AssignPipeComponent<>(compiledExpr, compiledMatcher, slots));
 					} else if (comp instanceof PipedQueryAstNode.TransformPipeComponent) {
 						PipedQueryAstNode.TransformPipeComponent transform = (PipedQueryAstNode.TransformPipeComponent) comp;
 						Expression<JsonNode> compiledExpr = compileNonNull(env, context, transform.expr);
-						newComponents.add(new net.thisptr.jackson.jq.v2.core.internal.tree.TransformPipeComponent<>(compiledExpr));
+						newComponents.add(new TransformPipeComponent<>(compiledExpr));
 					} else if (comp instanceof PipedQueryAstNode.LabelPipeComponent) {
 						PipedQueryAstNode.LabelPipeComponent label = (PipedQueryAstNode.LabelPipeComponent) comp;
-						newComponents.add(new net.thisptr.jackson.jq.v2.core.internal.tree.LabelPipeComponent<>(label.name));
+						newComponents.add(new LabelPipeComponent<>(label.name));
 					} else {
 						throw new IllegalStateException("Unknown pipe component: " + comp.getClass());
 					}
@@ -222,7 +256,7 @@ public class Compiler {
 				}
 			}
 
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.PipedQuery<>(newComponents);
+			return new PipedQuery<>(newComponents);
 		}
 
 		if (ast instanceof SemicolonOperatorAstNode) {
@@ -231,32 +265,32 @@ public class Compiler {
 			for (AstNode q : semi.expressions()) {
 				newExpressions.add(compileNonNull(env, context, q));
 			}
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.SemicolonOperator<>(newExpressions);
+			return new SemicolonOperator<>(newExpressions);
 		}
 
 		if (ast instanceof ObjectConstructionAstNode) {
 			ObjectConstructionAstNode obj = (ObjectConstructionAstNode) ast;
-			net.thisptr.jackson.jq.v2.core.internal.tree.ObjectConstruction<JsonNode> res = new net.thisptr.jackson.jq.v2.core.internal.tree.ObjectConstruction<>(env.jsonProvider());
+			ObjectConstruction<JsonNode> res = new ObjectConstruction<>(env.jsonProvider());
 			for (ObjectConstructionAstNode.FieldConstructionAst fc : obj.fields) {
 				if (fc instanceof ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst ik = (ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst) fc;
 					Expression<JsonNode> val = compile(env, context, ik.value);
-					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.IdentifierKeyFieldConstruction<>(env.jsonProvider(), ik.key, val));
+					res.add(new IdentifierKeyFieldConstruction<>(env.jsonProvider(), ik.key, val));
 				} else if (fc instanceof ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst jq = (ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst) fc;
 					Expression<JsonNode> key = compileNonNull(env, context, jq.key());
 					Expression<JsonNode> val = compileNonNull(env, context, jq.value());
-					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.JsonQueryKeyFieldConstruction<>(env.jsonProvider(), key, val));
+					res.add(new JsonQueryKeyFieldConstruction<>(env.jsonProvider(), key, val));
 				} else if (fc instanceof ObjectConstructionAstNode.StringKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.StringKeyFieldConstructionAst sk = (ObjectConstructionAstNode.StringKeyFieldConstructionAst) fc;
 					Expression<JsonNode> key = compileNonNull(env, context, sk.key);
 					Expression<JsonNode> val = compile(env, context, sk.value);
-					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.StringKeyFieldConstruction<>(env.jsonProvider(), key, val));
+					res.add(new StringKeyFieldConstruction<>(env.jsonProvider(), key, val));
 				} else if (fc instanceof ObjectConstructionAstNode.VariableKeyFieldConstruction) {
 					// desugar `{ $x }` into the same shape as `{ x: $x }` -- no dedicated resolved class needed.
 					ObjectConstructionAstNode.VariableKeyFieldConstruction vk = (ObjectConstructionAstNode.VariableKeyFieldConstruction) fc;
 					Expression<JsonNode> compiledValue = compileVariableRef(env, context, null, vk.name());
-					res.add(new net.thisptr.jackson.jq.v2.core.internal.tree.IdentifierKeyFieldConstruction<>(env.jsonProvider(), vk.name(), compiledValue));
+					res.add(new IdentifierKeyFieldConstruction<>(env.jsonProvider(), vk.name(), compiledValue));
 				} else {
 					throw new IllegalStateException("Unknown field construction: " + fc.getClass());
 				}
@@ -266,7 +300,7 @@ public class Compiler {
 
 		if (ast instanceof ArrayConstructionAstNode) {
 			ArrayConstructionAstNode arr = (ArrayConstructionAstNode) ast;
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction<>(env.jsonProvider(), compile(env, context, arr.q));
+			return new ArrayConstruction<>(env.jsonProvider(), compile(env, context, arr.q));
 		}
 
 		if (ast instanceof BinaryOpAstNode) {
@@ -278,7 +312,7 @@ public class Compiler {
 
 		if (ast instanceof NegativeExpressionAstNode) {
 			NegativeExpressionAstNode neg = (NegativeExpressionAstNode) ast;
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.NegativeExpression<>(env.jsonProvider(), compileNonNull(env, context, neg.value()));
+			return new NegativeExpression<>(env.jsonProvider(), compileNonNull(env, context, neg.value()));
 		}
 
 		if (ast instanceof ConditionalAstNode) {
@@ -290,7 +324,7 @@ public class Compiler {
 				newSwitches.add(Pair.of(newIf, newThen));
 			}
 			Expression<JsonNode> newElse = compileNonNull(env, context, cond.otherwise());
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.Conditional<>(env.jsonProvider(), newSwitches, newElse);
+			return new Conditional<>(env.jsonProvider(), newSwitches, newElse);
 		}
 
 		if (ast instanceof TryCatchAstNode) {
@@ -298,9 +332,9 @@ public class Compiler {
 			Expression<JsonNode> newTry = compileNonNull(env, context, tc.tryExpr());
 			Expression<JsonNode> newCatch = compile(env, context, tc.catchExpr());
 			if (tc instanceof TryCatchAstNode.Question) {
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.TryCatch.Question<>(env.jsonProvider(), newTry);
+				return new TryCatch.Question<>(env.jsonProvider(), newTry);
 			}
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.TryCatch<>(env.jsonProvider(), newTry, newCatch);
+			return new TryCatch<>(env.jsonProvider(), newTry, newCatch);
 		}
 
 		if (ast instanceof TupleAstNode) {
@@ -309,7 +343,7 @@ public class Compiler {
 			for (AstNode q : tuple.qs) {
 				newQs.add(compileNonNull(env, context, q));
 			}
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.Tuple<>(newQs);
+			return new Tuple<>(newQs);
 		}
 
 		if (ast instanceof ReduceExpressionAstNode) {
@@ -328,7 +362,7 @@ public class Compiler {
 					slots.put(varName, context.getVariableSlot(varName));
 				}
 				Expression<JsonNode> compiledReduce = compileNonNull(env, context, red.reduceExpr());
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ReduceExpression<>(env.jsonProvider(), compiledMatcher, compiledInit, compiledReduce, compiledIter, slots);
+				return new ReduceExpression<>(env.jsonProvider(), compiledMatcher, compiledInit, compiledReduce, compiledIter, slots);
 			} finally {
 				context.popScope();
 			}
@@ -351,7 +385,7 @@ public class Compiler {
 				}
 				Expression<JsonNode> compiledUpdate = compileNonNull(env, context, fe.updateExpr());
 				Expression<JsonNode> compiledExtract = fe.extractExpr() != null ? compile(env, context, fe.extractExpr()) : null;
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ForeachExpression<>(compiledMatcher, compiledInit, compiledUpdate, compiledExtract, compiledIter, slots);
+				return new ForeachExpression<>(compiledMatcher, compiledInit, compiledUpdate, compiledExtract, compiledIter, slots);
 			} finally {
 				context.popScope();
 			}
@@ -367,8 +401,8 @@ public class Compiler {
 			FunctionFactory defaultFactory = loc.isGlobal ? env.getFunctionFactory(FunctionNameAndArity.of(fname, 0)) : null;
 			Function<JsonNode> defaultFunction = defaultFactory != null ? defaultFactory.createFunction(env.jsonProvider(), Collections.emptyList(), env.version()) : null;
 			if (!loc.isLocal)
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionAccess<>(env.jsonProvider(), env.version(), fname, loc.slot, context.getCurrentFunctionClosureSlot(), Collections.emptyList(), defaultFactory, defaultFunction);
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionAccess<>(env.jsonProvider(), env.version(), fname, loc.slot, Collections.emptyList(), defaultFactory, defaultFunction);
+				return new ResolvedCapturedFunctionAccess<>(env.jsonProvider(), env.version(), fname, loc.slot, context.getCurrentFunctionClosureSlot(), Collections.emptyList(), defaultFactory, defaultFunction);
+			return new ResolvedLocalFunctionAccess<>(env.jsonProvider(), env.version(), fname, loc.slot, Collections.emptyList(), defaultFactory, defaultFunction);
 		}
 
 		if (ast instanceof StringInterpolationAstNode) {
@@ -379,7 +413,7 @@ public class Compiler {
 				compiledInterpolations.add(Pair.of(pair._1, resExpr));
 			}
 			Expression<JsonNode> compiledFormatter = compile(env, context, si.formatter());
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.StringInterpolation<>(env.jsonProvider(), si.template(), compiledInterpolations, compiledFormatter);
+			return new StringInterpolation<>(env.jsonProvider(), si.template(), compiledInterpolations, compiledFormatter);
 		}
 
 		if (ast instanceof BracketFieldAccessAstNode) {
@@ -388,33 +422,33 @@ public class Compiler {
 			@Var Expression<JsonNode> start = compile(env, context, bfa.startExpr());
 			@Var Expression<JsonNode> end = compile(env, context, bfa.endExpr());
 			if (start == null)
-				start = new net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral<>(env.jsonProvider());
+				start = new NullLiteral<>(env.jsonProvider());
 			if (end == null)
-				end = new net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral<>(env.jsonProvider());
+				end = new NullLiteral<>(env.jsonProvider());
 			if (bfa.isRange()) {
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketFieldAccess<>(env.jsonProvider(), target, start, end, bfa.permissive());
+				return new BracketFieldAccess<>(env.jsonProvider(), target, start, end, bfa.permissive());
 			} else {
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketFieldAccess<>(env.jsonProvider(), target, start, bfa.permissive());
+				return new BracketFieldAccess<>(env.jsonProvider(), target, start, bfa.permissive());
 			}
 		}
 
 		if (ast instanceof IdentifierFieldAccessAstNode) {
 			IdentifierFieldAccessAstNode ifa = (IdentifierFieldAccessAstNode) ast;
 			Expression<JsonNode> target = compileNonNull(env, context, ifa.target());
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.IdentifierFieldAccess<>(env.jsonProvider(), target, ifa.field(), ifa.permissive());
+			return new IdentifierFieldAccess<>(env.jsonProvider(), target, ifa.field(), ifa.permissive());
 		}
 
 		if (ast instanceof StringFieldAccessAstNode) {
 			StringFieldAccessAstNode sfa = (StringFieldAccessAstNode) ast;
 			Expression<JsonNode> target = compileNonNull(env, context, sfa.target());
 			Expression<JsonNode> key = compileNonNull(env, context, sfa.key());
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.StringFieldAccess<>(env.jsonProvider(), target, key, sfa.permissive());
+			return new StringFieldAccess<>(env.jsonProvider(), target, key, sfa.permissive());
 		}
 
 		if (ast instanceof BracketExtractFieldAccessAstNode) {
 			BracketExtractFieldAccessAstNode befa = (BracketExtractFieldAccessAstNode) ast;
 			Expression<JsonNode> target = compileNonNull(env, context, befa.target());
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketExtractFieldAccess<>(env.jsonProvider(), target, befa.permissive());
+			return new BracketExtractFieldAccess<>(env.jsonProvider(), target, befa.permissive());
 		}
 
 		if (ast instanceof BooleanLiteralAstNode) {
@@ -438,15 +472,15 @@ public class Compiler {
 		}
 
 		if (ast instanceof ThisObjectAstNode) {
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.ThisObject();
+			return new ThisObject();
 		}
 
 		if (ast instanceof RecursionOperatorAstNode) {
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.RecursionOperator<>(env.jsonProvider());
+			return new RecursionOperator<>(env.jsonProvider());
 		}
 
 		if (ast instanceof BreakExpressionAstNode) {
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.BreakExpression(((BreakExpressionAstNode) ast).name());
+			return new BreakExpression(((BreakExpressionAstNode) ast).name());
 		}
 
 		if (ast instanceof FunctionDefinitionAstNode) {
@@ -502,7 +536,7 @@ public class Compiler {
 
 			SymbolLocation loc = context.getFunctionLocation(fd.fname(), fd.args().size());
 			int slot = loc != null ? loc.slot : 0;
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionDefinition(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody, ownClosureSlot, definerClosureSlot);
+			return new ResolvedFunctionDefinition(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody, ownClosureSlot, definerClosureSlot);
 		}
 
 		throw new IllegalStateException("Unknown AST node: " + ast.getClass());
@@ -520,12 +554,12 @@ public class Compiler {
 						supplier = env.getVariable(varName);
 					if (supplier == null)
 						throw new JsonQueryException(String.format("Variable $%s::%s is not defined", moduleName, varName));
-					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess<>(fullName, slot, !loc.isLocal, context.getCurrentFunctionClosureSlot(), supplier);
+					return new ResolvedGlobalVariableAccess<>(fullName, slot, !loc.isLocal, context.getCurrentFunctionClosureSlot(), supplier);
 				}
 				if (loc != null && !loc.isLocal) {
-					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess<>(fullName, slot, context.getCurrentFunctionClosureSlot());
+					return new ResolvedCapturedVariableAccess<>(fullName, slot, context.getCurrentFunctionClosureSlot());
 				}
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableAccess<>(fullName, slot);
+				return new ResolvedLocalVariableAccess<>(fullName, slot);
 			}
 
 			throw new JsonQueryException(String.format("Variable $%s::%s is not defined", moduleName, varName));
@@ -538,12 +572,12 @@ public class Compiler {
 				Supplier<N> supplier = env.getVariable(varName);
 				if (supplier == null)
 					throw new JsonQueryException(String.format("Variable $%s is not defined", varName));
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess<>(varName, slot, !loc.isLocal, context.getCurrentFunctionClosureSlot(), supplier);
+				return new ResolvedGlobalVariableAccess<>(varName, slot, !loc.isLocal, context.getCurrentFunctionClosureSlot(), supplier);
 			}
 			if (loc != null && !loc.isLocal) {
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess<>(varName, slot, context.getCurrentFunctionClosureSlot());
+				return new ResolvedCapturedVariableAccess<>(varName, slot, context.getCurrentFunctionClosureSlot());
 			}
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableAccess<>(varName, slot);
+			return new ResolvedLocalVariableAccess<>(varName, slot);
 		}
 
 		throw new JsonQueryException(String.format("Variable $%s is not defined", varName));

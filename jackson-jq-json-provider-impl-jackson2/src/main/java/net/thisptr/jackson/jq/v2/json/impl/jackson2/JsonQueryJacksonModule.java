@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -25,7 +26,7 @@ public class JsonQueryJacksonModule extends SimpleModule {
 	}
 
 	private JsonQueryJacksonModule() {
-		super("JsonQuery", new com.fasterxml.jackson.core.Version(1, 0, 0, null, "net.thisptr", "jackson-jq"));
+		super("JsonQuery", new Version(1, 0, 0, null, "net.thisptr", "jackson-jq"));
 		addSerializer(DoubleNode.class, new DoubleNodeSerializer());
 		addSerializer(FloatNode.class, new FloatNodeSerializer());
 		addSerializer(ArrayNode.class, new ArrayNodeSerializer());
