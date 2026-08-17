@@ -36,7 +36,6 @@ public class RangeFunction implements FunctionFactory {
 				} else if (args.size() == 2) {
 					args.get(0).apply(frame, in, (start) -> {
 						if (version.compareTo(Versions.JQ_1_5) <= 0) {
-							@SuppressWarnings("unchecked")
 							Object[] cur = new Object[] { start }; // only reset when start changes [v1.5]
 							args.get(1).apply(frame, in, (end) -> {
 								cur[0] = range2(jsonProvider, output, (JsonNode) cur[0], end);

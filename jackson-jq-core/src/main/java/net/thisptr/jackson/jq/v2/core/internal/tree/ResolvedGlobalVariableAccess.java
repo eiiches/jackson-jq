@@ -28,7 +28,6 @@ public class ResolvedGlobalVariableAccess<JsonNode> implements Expression<JsonNo
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		@Var Supplier<JsonNode> valueSupplier = null;
 		if (captured) {

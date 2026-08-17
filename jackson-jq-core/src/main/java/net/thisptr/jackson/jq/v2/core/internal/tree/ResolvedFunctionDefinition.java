@@ -73,8 +73,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<JsonNode
 
 	@Override
 	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		@SuppressWarnings("unchecked")
-		Closure[] closureHolder = (Closure[]) new Closure[1];
+		Closure[] closureHolder = new Closure[1];
 		FunctionFactory factory = new FunctionFactory() {
 			@Override
 			@SuppressWarnings("unchecked")
