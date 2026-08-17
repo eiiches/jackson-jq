@@ -15,7 +15,7 @@ public class StackFrameTest {
 	void keepsAnExplicitReferenceToItsExecutionStack() {
 		ExecutionStack<String> stack = new ExecutionStack<>();
 
-		StackFrame<String> frame = stack.pushFrame(null, 1);
+		StackFrame<String> frame = stack.pushFrame(1);
 
 		assertSame(stack, frame.getStack());
 		assertSame(frame, stack.frames.get(0));
@@ -24,7 +24,7 @@ public class StackFrameTest {
 	@Test
 	void readsAndWritesFrameSlots() {
 		ExecutionStack<String> stack = new ExecutionStack<>();
-		StackFrame<String> frame = stack.pushFrame(null, 1);
+		StackFrame<String> frame = stack.pushFrame(1);
 		Supplier<String> supplier = () -> "supplied";
 
 		frame.set(0, "value");
@@ -37,23 +37,23 @@ public class StackFrameTest {
 	}
 
 	@Test
-	void inheritsClosureFromItsParent() {
+	void doesNotInheritAnAmbientClosure() {
 		ExecutionStack<String> stack = new ExecutionStack<>();
-		StackFrame<String> parent = stack.pushFrame(null, 0);
+		StackFrame<String> parent = stack.pushFrame(0);
 		Closure<String> closure = new Closure<>(0, 0);
 		parent.setClosure(closure);
 
-		StackFrame<String> child = stack.pushFrame(parent, 0);
+		StackFrame<String> child = stack.pushFrame(0);
 
-		assertSame(closure, child.getClosure());
+		assertNull(child.getClosure());
 	}
 
 	@Test
 	void poppingAFramePreservesEarlierFrames() {
 		ExecutionStack<String> stack = new ExecutionStack<>();
-		StackFrame<String> parent = stack.pushFrame(null, 1);
+		StackFrame<String> parent = stack.pushFrame(1);
 		parent.set(0, "parent");
-		StackFrame<String> child = stack.pushFrame(parent, 2);
+		StackFrame<String> child = stack.pushFrame(2);
 		child.set(0, "child");
 
 		stack.popFrame();

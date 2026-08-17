@@ -102,8 +102,8 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 					Expression<N> body = getResolvedBody(jsonProvider);
 					int fnSize = def.args.size();
 					StackFrame<N> fnFrame = callerFrame != null
-							? callerFrame.getStack().pushFrame(callerFrame, fnSize)
-							: new ExecutionStack<N>().pushFrame(callerFrame, fnSize);
+							? callerFrame.getStack().pushFrame(fnSize)
+							: new ExecutionStack<N>().pushFrame(fnSize);
 					try {
 						bindAndApply(callerFrame, fnFrame, def.args, args, in, path, output, (execFrame) -> {
 							body.apply(execFrame, in, path, output, false);

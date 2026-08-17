@@ -477,8 +477,8 @@ public class Compiler {
 					Expression<N> effectiveBody = (Expression<N>) (Expression<?>) compiledBody;
 					return (callerFrame, input, path, output) -> {
 						StackFrame<N> fnFrame = callerFrame != null
-								? callerFrame.getStack().pushFrame(callerFrame, fnSize)
-								: new ExecutionStack<N>().pushFrame(callerFrame, fnSize);
+								? callerFrame.getStack().pushFrame(fnSize)
+								: new ExecutionStack<N>().pushFrame(fnSize);
 						try {
 							bindAndApply(callerFrame, fnFrame, fd.args(), paramSlots, fnArgs, input, path, output, (execFrame) -> {
 								effectiveBody.apply(execFrame, input, path, output, false);

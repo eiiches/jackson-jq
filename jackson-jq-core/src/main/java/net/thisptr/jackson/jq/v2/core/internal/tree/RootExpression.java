@@ -79,8 +79,8 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 	private void apply(@Nullable StackFrame<JsonNode> parentFrame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath, JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {
 		validateBindings(bindings);
 		StackFrame<JsonNode> rootFrame = parentFrame != null
-				? parentFrame.getStack().pushFrame(parentFrame, frameSize)
-				: new ExecutionStack<JsonNode>().pushFrame(null, frameSize);
+				? parentFrame.getStack().pushFrame(frameSize)
+				: new ExecutionStack<JsonNode>().pushFrame(frameSize);
 		try {
 			initializeFrame(rootFrame, bindings);
 			inner.apply(rootFrame, in, path, output, requirePath);

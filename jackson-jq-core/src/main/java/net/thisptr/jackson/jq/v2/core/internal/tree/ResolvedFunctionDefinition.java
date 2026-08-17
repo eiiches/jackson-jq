@@ -71,8 +71,8 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<JsonNode
 				return (callerFrame, input, path, out) -> {
 					Closure<N> effectiveClosure = (Closure<N>) closureHolder[0];
 					StackFrame<N> fnFrame = callerFrame != null
-							? callerFrame.getStack().pushFrame(callerFrame, fnSize)
-							: new ExecutionStack<N>().pushFrame(null, fnSize);
+							? callerFrame.getStack().pushFrame(fnSize)
+							: new ExecutionStack<N>().pushFrame(fnSize);
 					fnFrame.setClosure(effectiveClosure);
 					try {
 						Compiler.bindAndApply(callerFrame, fnFrame, paramNames, paramSlots, fnArgs, input, path, out, (execFrame) -> {

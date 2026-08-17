@@ -11,11 +11,11 @@ public class ExecutionStack<JsonNode> {
 	public List<Object> memory = new ArrayList<>();
 	public List<StackFrame<JsonNode>> frames = new ArrayList<>();
 
-	public StackFrame<JsonNode> pushFrame(@Nullable StackFrame<JsonNode> parent, int size) {
+	public StackFrame<JsonNode> pushFrame(int size) {
 		int offset = memory.size();
 		for (int i = 0; i < size; ++i)
 			memory.add(null);
-		StackFrame<JsonNode> frame = new StackFrame<>(this, offset, size, parent);
+		StackFrame<JsonNode> frame = new StackFrame<>(this, offset, size);
 		frames.add(frame);
 		return frame;
 	}

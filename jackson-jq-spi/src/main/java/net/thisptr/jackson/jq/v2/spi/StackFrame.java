@@ -11,14 +11,12 @@ public class StackFrame<JsonNode> {
 	private final ExecutionStack<JsonNode> stack;
 	private int size;
 	private final int offset;
-	private final @Nullable StackFrame<JsonNode> parent;
 	private @Nullable Closure<JsonNode> closure;
 
-	StackFrame(ExecutionStack<JsonNode> stack, int offset, int size, @Nullable StackFrame<JsonNode> parent) {
+	StackFrame(ExecutionStack<JsonNode> stack, int offset, int size) {
 		this.stack = stack;
 		this.offset = offset;
 		this.size = size;
-		this.parent = parent;
 	}
 
 	int getSize() {
@@ -30,11 +28,7 @@ public class StackFrame<JsonNode> {
 	}
 
 	public @Nullable Closure<JsonNode> getClosure() {
-		if (closure != null)
-			return closure;
-		if (parent != null)
-			return parent.getClosure();
-		return null;
+		return closure;
 	}
 
 	public void setClosure(@Nullable Closure<JsonNode> closure) {
