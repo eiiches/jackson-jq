@@ -6,6 +6,7 @@ import net.thisptr.jackson.jq.v2.spi.Closure;
 import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
+import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -28,7 +29,7 @@ public class ResolvedCapturedVariableAccess<JsonNode> implements Expression<Json
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Closure<JsonNode> closure = frame != null ? frame.getClosure() : null;
 		if (closure == null) {
 			throw new JsonQueryException("Variable $" + name + " is not defined (no closure)");

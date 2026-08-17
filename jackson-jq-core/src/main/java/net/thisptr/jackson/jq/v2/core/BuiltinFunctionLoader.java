@@ -23,6 +23,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary.JqFunc;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
+import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.VersionRange;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
@@ -101,7 +102,7 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 				return (callerFrame, in, path, output) -> {
 					Expression<N> body = getResolvedBody(jsonProvider);
 					int fnSize = def.args.size();
-					ExecutionStack<N>.Frame fnFrame = callerFrame != null
+					StackFrame<N> fnFrame = callerFrame != null
 							? callerFrame.getStack().pushFrame(callerFrame, fnSize)
 							: new ExecutionStack<N>().pushFrame(callerFrame, fnSize);
 					try {
@@ -116,7 +117,7 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 		};
 	}
 
-	private <N> void bindAndApply(ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Expression<N>> args, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
+	private <N> void bindAndApply(@Nullable StackFrame<N> callerFrame, StackFrame<N> currentFrame, List<String> paramNames, List<Expression<N>> args, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<StackFrame<N>> bodyTask) throws JsonQueryException {
 		for (int i = 0; i < paramNames.size(); i++) {
 			String pName = paramNames.get(i);
 			Expression<N> pExpr = args.get(i);
@@ -126,7 +127,7 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 					@SuppressWarnings("unchecked")
 					public <N1> Function<N1> createFunction(JsonProvider<N1> jp, List<Expression<N1>> emptyArgs, Version ver) {
 						Expression<N1> effectiveExpr = (Expression<N1>) (Expression<?>) pExpr;
-						ExecutionStack<N1>.Frame effectiveCallerFrame = (ExecutionStack<N1>.Frame) (Object) callerFrame;
+						StackFrame<N1> effectiveCallerFrame = (StackFrame<N1>) (Object) callerFrame;
 						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal, false);
 					}
 				});
@@ -135,7 +136,7 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 		bindValueParams(callerFrame, currentFrame, paramNames, args, 0, in, path, output, bodyTask);
 	}
 
-	private <N> void bindValueParams(ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Expression<N>> args, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
+	private <N> void bindValueParams(@Nullable StackFrame<N> callerFrame, StackFrame<N> currentFrame, List<String> paramNames, List<Expression<N>> args, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<StackFrame<N>> bodyTask) throws JsonQueryException {
 		if (index >= paramNames.size()) {
 			bodyTask.accept(currentFrame);
 			return;

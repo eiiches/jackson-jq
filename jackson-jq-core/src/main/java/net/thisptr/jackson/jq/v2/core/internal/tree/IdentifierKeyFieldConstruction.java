@@ -4,8 +4,8 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class IdentifierKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
@@ -24,7 +24,7 @@ public class IdentifierKeyFieldConstruction<JsonNode> implements FieldConstructi
 	}
 
 	@Override
-	public void evaluate(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
+	public void evaluate(@Nullable StackFrame<JsonNode> frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		if (value == null) {
 			consumer.accept(key, JsonNodeUtils.nullToNullNode(jsonProvider, jsonProvider.get(in, key)));
 		} else {

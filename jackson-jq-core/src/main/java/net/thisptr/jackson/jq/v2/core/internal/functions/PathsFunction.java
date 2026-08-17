@@ -11,11 +11,11 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
+import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -31,7 +31,7 @@ public class PathsFunction implements FunctionFactory {
 		};
 	}
 
-	private static <JsonNode> void applyRecursive(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonProvider<JsonNode> jsonProvider, JsonNode in, PathOutput<JsonNode> output, Stack<JsonNode> stack, Expression<JsonNode> predicate) throws JsonQueryException {
+	private static <JsonNode> void applyRecursive(@Nullable StackFrame<JsonNode> frame, JsonProvider<JsonNode> jsonProvider, JsonNode in, PathOutput<JsonNode> output, Stack<JsonNode> stack, Expression<JsonNode> predicate) throws JsonQueryException {
 		if (!stack.isEmpty()) {
 			predicate.apply(frame, in, (shouldInclude) -> {
 				if (JsonNodeUtils.asBoolean(jsonProvider, shouldInclude))

@@ -66,6 +66,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
+import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
@@ -476,7 +477,7 @@ public class Compiler {
 				public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> fnArgs, Version version) {
 					Expression<N> effectiveBody = (Expression<N>) (Expression<?>) compiledBody;
 					return (callerFrame, input, path, output) -> {
-						ExecutionStack<N>.Frame fnFrame = callerFrame != null
+						StackFrame<N> fnFrame = callerFrame != null
 								? callerFrame.getStack().pushFrame(callerFrame, fnSize)
 								: new ExecutionStack<N>().pushFrame(callerFrame, fnSize);
 						try {
@@ -565,7 +566,7 @@ public class Compiler {
 		throw new IllegalStateException("Unknown matcher type: " + matcher.getClass());
 	}
 
-	public static <N> void bindAndApply(ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<N>> fnArgs, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
+	public static <N> void bindAndApply(@Nullable StackFrame<N> callerFrame, StackFrame<N> currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<N>> fnArgs, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<StackFrame<N>> bodyTask) throws JsonQueryException {
 		for (int i = 0; i < paramNames.size(); i++) {
 			String pName = paramNames.get(i);
 			int slot = paramSlots.get(i);
@@ -576,7 +577,7 @@ public class Compiler {
 					@SuppressWarnings("unchecked")
 					public <N1> Function<N1> createFunction(JsonProvider<N1> jp, List<Expression<N1>> emptyArgs, Version v) {
 						Expression<N1> effectiveExpr = (Expression<N1>) (Expression<?>) pExpr;
-						ExecutionStack<N1>.Frame effectiveCallerFrame = (ExecutionStack<N1>.Frame) (Object) callerFrame;
+						StackFrame<N1> effectiveCallerFrame = (StackFrame<N1>) (Object) callerFrame;
 						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal, false);
 					}
 				});
@@ -585,7 +586,7 @@ public class Compiler {
 		bindValueParams(callerFrame, currentFrame, paramNames, paramSlots, fnArgs, 0, in, path, output, bodyTask);
 	}
 
-	private static <N> void bindValueParams(ExecutionStack<N>.@Nullable Frame callerFrame, ExecutionStack<N>.Frame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<N>> fnArgs, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<ExecutionStack<N>.Frame> bodyTask) throws JsonQueryException {
+	private static <N> void bindValueParams(@Nullable StackFrame<N> callerFrame, StackFrame<N> currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<N>> fnArgs, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<StackFrame<N>> bodyTask) throws JsonQueryException {
 		if (index >= paramNames.size()) {
 			bodyTask.accept(currentFrame);
 			return;

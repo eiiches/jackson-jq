@@ -5,8 +5,8 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Closure;
-import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.StackFrame;
 
 public class ClosureSpec {
 	public static class CapturedVariableRef {
@@ -45,7 +45,7 @@ public class ClosureSpec {
 		return capturedFunctions;
 	}
 
-	public <JsonNode> Closure<JsonNode> buildClosure(ExecutionStack<JsonNode>.@Nullable Frame currentFrame) {
+	public <JsonNode> Closure<JsonNode> buildClosure(@Nullable StackFrame<JsonNode> currentFrame) {
 		Closure<JsonNode> parentClosure = currentFrame != null ? currentFrame.getClosure() : null;
 		Object[] vars = new Object[capturedVariables.size()];
 		for (int i = 0; i < capturedVariables.size(); i++) {

@@ -5,8 +5,8 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
@@ -25,7 +25,7 @@ public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<J
 	}
 
 	@Override
-	public void evaluate(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
+	public void evaluate(@Nullable StackFrame<JsonNode> frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		key.apply(frame, in, (k) -> {
 			if (jsonProvider.getNodeType(k) != JsonNodeType.STRING)
 				throw new JsonQueryException("key must evaluate to string");

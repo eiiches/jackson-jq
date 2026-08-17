@@ -10,9 +10,9 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
+import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -29,12 +29,12 @@ public class ObjectConstruction<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Map<String, JsonNode> tmp = new LinkedHashMap<>(fields.size());
 		applyRecursive(jsonProvider, frame, in, output, fields, tmp);
 	}
 
-	private static <JsonNode> void applyRecursive(JsonProvider<JsonNode> jsonProvider, ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, PathOutput<JsonNode> output, List<FieldConstruction<JsonNode>> fields, Map<String, JsonNode> tmp) throws JsonQueryException {
+	private static <JsonNode> void applyRecursive(JsonProvider<JsonNode> jsonProvider, @Nullable StackFrame<JsonNode> frame, JsonNode in, PathOutput<JsonNode> output, List<FieldConstruction<JsonNode>> fields, Map<String, JsonNode> tmp) throws JsonQueryException {
 		if (fields.isEmpty()) {
 			@Var JsonNode obj = jsonProvider.createObject();
 			for (Entry<String, JsonNode> e : tmp.entrySet())

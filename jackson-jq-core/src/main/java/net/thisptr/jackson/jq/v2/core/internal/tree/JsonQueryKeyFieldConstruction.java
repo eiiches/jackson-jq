@@ -5,8 +5,8 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class JsonQueryKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
@@ -29,7 +29,7 @@ public class JsonQueryKeyFieldConstruction<JsonNode> implements FieldConstructio
 	}
 
 	@Override
-	public void evaluate(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
+	public void evaluate(@Nullable StackFrame<JsonNode> frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		key.apply(frame, in, (k) -> {
 			if (jsonProvider.getNodeType(k) != JsonNodeType.STRING)
 				throw new JsonQueryTypeException(jsonProvider, "Cannot use %s as object key", k);

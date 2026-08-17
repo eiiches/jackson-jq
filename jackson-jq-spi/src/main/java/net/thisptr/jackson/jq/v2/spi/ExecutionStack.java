@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.v2.spi;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
 
@@ -10,13 +9,13 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class ExecutionStack<JsonNode> {
 	public List<Object> memory = new ArrayList<>();
-	public List<Frame> frames = new ArrayList<>();
+	public List<StackFrame<JsonNode>> frames = new ArrayList<>();
 
-	public Frame pushFrame(@Nullable Frame parent, int size) {
+	public StackFrame<JsonNode> pushFrame(@Nullable StackFrame<JsonNode> parent, int size) {
 		int offset = memory.size();
 		for (int i = 0; i < size; ++i)
 			memory.add(null);
-		Frame frame = new Frame(offset, size, parent);
+		StackFrame<JsonNode> frame = new StackFrame<>(this, offset, size, parent);
 		frames.add(frame);
 		return frame;
 	}
@@ -24,9 +23,9 @@ public class ExecutionStack<JsonNode> {
 	public void popFrame() {
 		if (frames.isEmpty())
 			return;
-		Frame frame = frames.remove(frames.size() - 1);
-		for (int i = 0; i < frame.size; i++) {
-			int idx = frame.offset + i;
+		StackFrame<JsonNode> frame = frames.remove(frames.size() - 1);
+		for (int i = 0; i < frame.getSize(); i++) {
+			int idx = frame.getOffset() + i;
 			if (idx < memory.size())
 				memory.set(idx, null);
 		}
@@ -51,106 +50,5 @@ public class ExecutionStack<JsonNode> {
 		public @Nullable JsonNode getValue() {
 			return value;
 		}
-	}
-
-	public class Frame {
-		private int size;
-		private final int offset;
-		private final @Nullable Frame parent;
-		private @Nullable Closure<JsonNode> closure;
-
-		private Frame(int offset, int size, @Nullable Frame parent) {
-			this.offset = offset;
-			this.size = size;
-			this.parent = parent;
-		}
-
-		public @Nullable Closure<JsonNode> getClosure() {
-			if (closure != null)
-				return closure;
-			if (parent != null)
-				return parent.getClosure();
-			return null;
-		}
-
-		public void setClosure(@Nullable Closure<JsonNode> closure) {
-			this.closure = closure;
-		}
-
-		public ExecutionStack<JsonNode> getStack() {
-			return ExecutionStack.this;
-		}
-
-		private @Nullable Object get(int index) {
-			if (index < 0 || index >= size)
-				return null;
-			int realIdx = offset + index;
-			if (realIdx >= memory.size())
-				return null;
-			return memory.get(realIdx);
-		}
-
-		public @Nullable Object getRawValue(int index) {
-			return get(index);
-		}
-
-		private void setRaw(int index, @Nullable Object value) {
-			if (index < 0)
-				return;
-			int realIdx = offset + index;
-			while (memory.size() <= realIdx) {
-				memory.add(null);
-			}
-			if (index >= size) {
-				size = index + 1;
-			}
-			memory.set(realIdx, value);
-		}
-
-		@SuppressWarnings("unchecked")
-		public @Nullable PathAndValue<JsonNode> getValue(int index) {
-			Object raw = get(index);
-			if (raw instanceof PathAndValue) {
-				return (PathAndValue<JsonNode>) raw;
-			} else if (raw != null && !(raw instanceof FunctionFactory) && !(raw instanceof Function)) {
-				return new PathAndValue<>(null, (JsonNode) raw);
-			}
-			return null;
-		}
-
-		@SuppressWarnings("unchecked")
-		public @Nullable Supplier<JsonNode> getValueSupplier(int index) {
-			Object raw = get(index);
-			return raw instanceof Supplier ? (Supplier<JsonNode>) raw : null;
-		}
-
-		public @Nullable FunctionFactory getFunctionFactory(int index) {
-			Object raw = get(index);
-			if (raw instanceof FunctionFactory) {
-				return (FunctionFactory) raw;
-			}
-			return null;
-		}
-
-		public void set(int index, @Nullable Path<JsonNode> path, @Nullable JsonNode value) {
-			if (path != null) {
-				setRaw(index, new PathAndValue<>(path, value));
-			} else {
-				setRaw(index, value);
-			}
-		}
-
-		public void set(int index, @Nullable JsonNode value) {
-			setRaw(index, value);
-		}
-
-		public void set(int index, Supplier<JsonNode> supplier) {
-			setRaw(index, supplier);
-		}
-
-		public void set(int index, FunctionFactory factory) {
-			setRaw(index, factory);
-		}
-
 	}
 }

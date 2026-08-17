@@ -11,9 +11,9 @@ public interface Expression<JsonNode> {
 		return null;
 	}
 
-	default void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, Output<JsonNode> output) throws JsonQueryException {
+	default void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, Output<JsonNode> output) throws JsonQueryException {
 		apply(frame, in, null, output, false);
 	}
 
-	void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException;
+	void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException;
 }

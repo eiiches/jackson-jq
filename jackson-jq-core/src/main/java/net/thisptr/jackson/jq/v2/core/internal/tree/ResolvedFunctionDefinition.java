@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
+import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -59,7 +60,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<JsonNode
 	}
 
 	@Override
-	public void apply(ExecutionStack<JsonNode>.@Nullable Frame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		@SuppressWarnings("unchecked")
 		Closure<JsonNode>[] closureHolder = (Closure<JsonNode>[]) new Closure<?>[1];
 		FunctionFactory factory = new FunctionFactory() {
@@ -69,7 +70,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<JsonNode
 				Expression<N> effectiveBody = (Expression<N>) resolvedBody;
 				return (callerFrame, input, path, out) -> {
 					Closure<N> effectiveClosure = (Closure<N>) closureHolder[0];
-					ExecutionStack<N>.Frame fnFrame = callerFrame != null
+					StackFrame<N> fnFrame = callerFrame != null
 							? callerFrame.getStack().pushFrame(callerFrame, fnSize)
 							: new ExecutionStack<N>().pushFrame(null, fnSize);
 					fnFrame.setClosure(effectiveClosure);
