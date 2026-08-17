@@ -59,13 +59,13 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ArrayMatche
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ObjectMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatcher;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
+import net.thisptr.jackson.jq.v2.spi.StackMemory;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
@@ -485,15 +485,15 @@ public class Compiler {
 				public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> fnArgs, Version version) {
 					Expression<N> effectiveBody = (Expression<N>) (Expression<?>) compiledBody;
 					return (callerFrame, input, path, output) -> {
-						StackFrame<N> fnFrame = callerFrame != null
-								? callerFrame.getStack().pushFrame(fnSize)
-								: new ExecutionStack<N>().pushFrame(fnSize);
+						StackFrame fnFrame = callerFrame != null
+								? callerFrame.getEnclosingMemory().pushFrame(fnSize)
+								: new StackMemory().pushFrame(fnSize);
 						try {
 							bindAndApply(callerFrame, fnFrame, fd.args(), paramSlots, fnArgs, input, path, output, (execFrame) -> {
 								effectiveBody.apply(execFrame, input, path, output, false);
 							});
 						} finally {
-							fnFrame.getStack().popFrame();
+							fnFrame.getEnclosingMemory().popFrame();
 						}
 					};
 				}
@@ -574,7 +574,7 @@ public class Compiler {
 		throw new IllegalStateException("Unknown matcher type: " + matcher.getClass());
 	}
 
-	public static <N> void bindAndApply(@Nullable StackFrame<N> callerFrame, StackFrame<N> currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<N>> fnArgs, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<StackFrame<N>> bodyTask) throws JsonQueryException {
+	public static <N> void bindAndApply(@Nullable StackFrame callerFrame, StackFrame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<N>> fnArgs, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
 		for (int i = 0; i < paramNames.size(); i++) {
 			String pName = paramNames.get(i);
 			int slot = paramSlots.get(i);
@@ -585,7 +585,7 @@ public class Compiler {
 					@SuppressWarnings("unchecked")
 					public <N1> Function<N1> createFunction(JsonProvider<N1> jp, List<Expression<N1>> emptyArgs, Version v) {
 						Expression<N1> effectiveExpr = (Expression<N1>) (Expression<?>) pExpr;
-						StackFrame<N1> effectiveCallerFrame = (StackFrame<N1>) (Object) callerFrame;
+						StackFrame effectiveCallerFrame = (StackFrame) (Object) callerFrame;
 						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal, false);
 					}
 				});
@@ -594,7 +594,7 @@ public class Compiler {
 		bindValueParams(callerFrame, currentFrame, paramNames, paramSlots, fnArgs, 0, in, path, output, bodyTask);
 	}
 
-	private static <N> void bindValueParams(@Nullable StackFrame<N> callerFrame, StackFrame<N> currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<N>> fnArgs, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<StackFrame<N>> bodyTask) throws JsonQueryException {
+	private static <N> void bindValueParams(@Nullable StackFrame callerFrame, StackFrame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<N>> fnArgs, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
 		if (index >= paramNames.size()) {
 			bodyTask.accept(currentFrame);
 			return;

@@ -1,96 +1,35 @@
 package net.thisptr.jackson.jq.v2.spi;
 
-import java.util.function.Supplier;
-
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.spi.path.Path;
-
-public class StackFrame<JsonNode> {
-	private final ExecutionStack<JsonNode> stack;
-	private int size;
+public class StackFrame {
+	private final StackMemory stack;
+	private final int size;
 	private final int offset;
 
-	StackFrame(ExecutionStack<JsonNode> stack, int offset, int size) {
+	StackFrame(StackMemory stack, int offset, int size) {
 		this.stack = stack;
 		this.offset = offset;
 		this.size = size;
 	}
 
-	int getSize() {
+	public int size() {
 		return size;
 	}
 
-	int getOffset() {
-		return offset;
-	}
-
-	public ExecutionStack<JsonNode> getStack() {
+	public StackMemory getEnclosingMemory() {
 		return stack;
 	}
 
-	private @Nullable Object get(int index) {
+	public @Nullable Object get(int index) {
 		if (index < 0 || index >= size)
 			throw new IndexOutOfBoundsException("slot " + index + " out of bounds for frame size " + size);
 		return stack.memory.get(offset + index);
 	}
 
-	public @Nullable Object getRawValue(int index) {
-		return get(index);
-	}
-
-	public void setRawValue(int index, @Nullable Object value) {
-		setRaw(index, value);
-	}
-
-	private void setRaw(int index, @Nullable Object value) {
+	public void set(int index, @Nullable Object value) {
 		if (index < 0 || index >= size)
 			throw new IndexOutOfBoundsException("slot " + index + " out of bounds for frame size " + size);
 		stack.memory.set(offset + index, value);
-	}
-
-	@SuppressWarnings("unchecked")
-	public ExecutionStack.@Nullable PathAndValue<JsonNode> getValue(int index) {
-		Object raw = get(index);
-		if (raw instanceof ExecutionStack.PathAndValue) {
-			return (ExecutionStack.PathAndValue<JsonNode>) raw;
-		} else if (raw != null && !(raw instanceof FunctionFactory) && !(raw instanceof Function)) {
-			return new ExecutionStack.PathAndValue<>(null, (JsonNode) raw);
-		}
-		return null;
-	}
-
-	@SuppressWarnings("unchecked")
-	public @Nullable Supplier<JsonNode> getValueSupplier(int index) {
-		Object raw = get(index);
-		return raw instanceof Supplier ? (Supplier<JsonNode>) raw : null;
-	}
-
-	public @Nullable FunctionFactory getFunctionFactory(int index) {
-		Object raw = get(index);
-		if (raw instanceof FunctionFactory) {
-			return (FunctionFactory) raw;
-		}
-		return null;
-	}
-
-	public void set(int index, @Nullable Path<JsonNode> path, @Nullable JsonNode value) {
-		if (path != null) {
-			setRaw(index, new ExecutionStack.PathAndValue<>(path, value));
-		} else {
-			setRaw(index, value);
-		}
-	}
-
-	public void set(int index, @Nullable JsonNode value) {
-		setRaw(index, value);
-	}
-
-	public void set(int index, Supplier<JsonNode> supplier) {
-		setRaw(index, supplier);
-	}
-
-	public void set(int index, FunctionFactory factory) {
-		setRaw(index, factory);
 	}
 }

@@ -28,12 +28,12 @@ public class ObjectConstruction<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Map<String, JsonNode> tmp = new LinkedHashMap<>(fields.size());
 		applyRecursive(jsonProvider, frame, in, output, fields, tmp);
 	}
 
-	private static <JsonNode> void applyRecursive(JsonProvider<JsonNode> jsonProvider, @Nullable StackFrame<JsonNode> frame, JsonNode in, PathOutput<JsonNode> output, List<FieldConstruction<JsonNode>> fields, Map<String, JsonNode> tmp) throws JsonQueryException {
+	private static <JsonNode> void applyRecursive(JsonProvider<JsonNode> jsonProvider, @Nullable StackFrame frame, JsonNode in, PathOutput<JsonNode> output, List<FieldConstruction<JsonNode>> fields, Map<String, JsonNode> tmp) throws JsonQueryException {
 		if (fields.isEmpty()) {
 			@Var JsonNode obj = jsonProvider.createObject();
 			for (Map.Entry<String, JsonNode> e : tmp.entrySet())

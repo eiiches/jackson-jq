@@ -8,6 +8,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryBreakException;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
+import net.thisptr.jackson.jq.v2.core.internal.utils.PathAndValue;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
@@ -26,11 +27,11 @@ public class PipedQuery<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		pathRecursive(frame, in, path, output, components, requirePath);
 	}
 
-	private static <JsonNode> void pathRecursive(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, List<PipeComponent<JsonNode>> components, boolean requirePath) throws JsonQueryException {
+	private static <JsonNode> void pathRecursive(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, List<PipeComponent<JsonNode>> components, boolean requirePath) throws JsonQueryException {
 		if (components.isEmpty()) {
 			output.emit(in, path);
 			return;
@@ -49,7 +50,7 @@ public class PipedQuery<JsonNode> implements Expression<JsonNode> {
 						PatternMatcher.MatchWithPath<JsonNode> var = vars.get(i);
 						int slot = ((AssignPipeComponent<JsonNode>) head).getSlot(var.name);
 						if (frame != null && slot >= 0) {
-							frame.set(slot, var.path, var.value);
+							frame.set(slot, var.path != null ? new PathAndValue<>(var.path, var.value) : var.value);
 						}
 					}
 					pathRecursive(frame, in, path, output, tail, requirePath);

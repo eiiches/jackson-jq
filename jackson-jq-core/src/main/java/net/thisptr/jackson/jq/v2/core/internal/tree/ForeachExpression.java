@@ -6,6 +6,7 @@ import java.util.Stack;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
+import net.thisptr.jackson.jq.v2.core.internal.utils.PathAndValue;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
@@ -45,7 +46,7 @@ public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		initExpr.apply(frame, in, ipath, (accumulator, accumulatorPath) -> {
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
@@ -60,7 +61,7 @@ public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
 						PatternMatcher.MatchWithPath<JsonNode> var = vars.get(i);
 						int slot = getSlot(var.name);
 						if (frame != null && slot >= 0) {
-							frame.set(slot, var.path, var.value);
+							frame.set(slot, var.path != null ? new PathAndValue<>(var.path, var.value) : var.value);
 						}
 					}
 

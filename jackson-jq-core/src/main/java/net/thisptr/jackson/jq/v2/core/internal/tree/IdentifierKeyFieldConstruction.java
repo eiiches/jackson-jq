@@ -24,7 +24,7 @@ public class IdentifierKeyFieldConstruction<JsonNode> implements FieldConstructi
 	}
 
 	@Override
-	public void evaluate(@Nullable StackFrame<JsonNode> frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
+	public void evaluate(@Nullable StackFrame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		if (value == null) {
 			consumer.accept(key, JsonNodeUtils.nullToNullNode(jsonProvider, jsonProvider.get(in, key)));
 		} else {

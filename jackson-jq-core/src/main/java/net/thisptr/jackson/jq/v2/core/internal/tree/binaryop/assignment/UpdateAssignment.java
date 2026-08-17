@@ -31,7 +31,7 @@ public class UpdateAssignment<JsonNode> extends BinaryOperatorExpression<JsonNod
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		@SuppressWarnings("unchecked")
 		JsonNode[] out = (JsonNode[]) new Object[] { in };
 		lhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {

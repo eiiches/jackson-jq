@@ -21,7 +21,7 @@ public class AlternativeOperatorExpression<JsonNode> extends BinaryOperatorExpre
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		AtomicBoolean emitted = new AtomicBoolean();
 		lhs.apply(frame, in, path, (out, outpath) -> {
 			if (JsonNodeUtils.asBoolean(jsonProvider, out)) {

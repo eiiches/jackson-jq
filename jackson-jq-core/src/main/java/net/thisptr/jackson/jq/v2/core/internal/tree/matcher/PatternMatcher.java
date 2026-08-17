@@ -12,7 +12,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public interface PatternMatcher<JsonNode> {
-	void match(@Nullable StackFrame<JsonNode> frame, JsonNode in, Functional.Consumer<List<Pair<String, JsonNode>>> out, Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException;
+	void match(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<List<Pair<String, JsonNode>>> out, Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException;
 
 	class MatchWithPath<JsonNode> {
 		public String name;
@@ -30,5 +30,5 @@ public interface PatternMatcher<JsonNode> {
 		void emit(List<MatchWithPath<JsonNode>> vars) throws JsonQueryException;
 	}
 
-	void matchWithPath(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException;
+	void matchWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException;
 }

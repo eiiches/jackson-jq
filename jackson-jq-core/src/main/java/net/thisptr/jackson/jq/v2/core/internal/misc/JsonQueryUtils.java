@@ -11,13 +11,13 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class JsonQueryUtils {
 
-	public static <JsonNode> ArrayList<JsonNode> applyToArrayList(Expression<JsonNode> expr, JsonProvider<JsonNode> jsonProvider, @Nullable StackFrame<JsonNode> frame, JsonNode in) throws JsonQueryException {
+	public static <JsonNode> ArrayList<JsonNode> applyToArrayList(Expression<JsonNode> expr, JsonProvider<JsonNode> jsonProvider, @Nullable StackFrame frame, JsonNode in) throws JsonQueryException {
 		ArrayList<JsonNode> output = new ArrayList<>();
 		expr.apply(frame, in, output::add);
 		return output;
 	}
 
-	public static <JsonNode> JsonNode applyToArrayNode(Expression<JsonNode> expr, JsonProvider<JsonNode> jsonProvider, @Nullable StackFrame<JsonNode> frame, JsonNode in) throws JsonQueryException {
+	public static <JsonNode> JsonNode applyToArrayNode(Expression<JsonNode> expr, JsonProvider<JsonNode> jsonProvider, @Nullable StackFrame frame, JsonNode in) throws JsonQueryException {
 		return JsonNodeUtils.asArrayNode(jsonProvider, applyToArrayList(expr, jsonProvider, frame, in));
 	}
 }

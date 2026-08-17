@@ -31,7 +31,7 @@ public class PathsFunction implements FunctionFactory {
 		};
 	}
 
-	private static <JsonNode> void applyRecursive(@Nullable StackFrame<JsonNode> frame, JsonProvider<JsonNode> jsonProvider, JsonNode in, PathOutput<JsonNode> output, Stack<JsonNode> stack, Expression<JsonNode> predicate) throws JsonQueryException {
+	private static <JsonNode> void applyRecursive(@Nullable StackFrame frame, JsonProvider<JsonNode> jsonProvider, JsonNode in, PathOutput<JsonNode> output, Stack<JsonNode> stack, Expression<JsonNode> predicate) throws JsonQueryException {
 		if (!stack.isEmpty()) {
 			predicate.apply(frame, in, (shouldInclude) -> {
 				if (JsonNodeUtils.asBoolean(jsonProvider, shouldInclude))

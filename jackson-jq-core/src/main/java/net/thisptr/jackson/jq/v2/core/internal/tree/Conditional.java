@@ -34,11 +34,11 @@ public class Conditional<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		applyBranch(frame, in, path, output, 0);
 	}
 
-	private void applyBranch(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, int switchIndex) throws JsonQueryException {
+	private void applyBranch(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, int switchIndex) throws JsonQueryException {
 		if (switchIndex >= switches.size()) {
 			if (otherwise != null) {
 				otherwise.apply(frame, in, path, output, false);

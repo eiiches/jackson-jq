@@ -11,5 +11,5 @@ public interface FieldConstruction<JsonNode> {
 		void accept(String name, JsonNode value) throws JsonQueryException;
 	}
 
-	void evaluate(@Nullable StackFrame<JsonNode> frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException;
+	void evaluate(@Nullable StackFrame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException;
 }

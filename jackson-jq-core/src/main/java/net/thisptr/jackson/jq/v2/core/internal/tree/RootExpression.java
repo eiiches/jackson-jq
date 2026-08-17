@@ -12,12 +12,12 @@ import java.util.function.Supplier;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.JsonQueryBindings;
-import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
+import net.thisptr.jackson.jq.v2.spi.StackMemory;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -68,7 +68,7 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame<JsonNode> parentFrame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		apply(parentFrame, in, path, output, requirePath, JsonQueryBindings.empty());
 	}
 
@@ -76,16 +76,16 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 		apply(null, in, null, output, false, bindings);
 	}
 
-	private void apply(@Nullable StackFrame<JsonNode> parentFrame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath, JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {
+	private void apply(@Nullable StackFrame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath, JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {
 		validateBindings(bindings);
-		StackFrame<JsonNode> rootFrame = parentFrame != null
-				? parentFrame.getStack().pushFrame(frameSize)
-				: new ExecutionStack<JsonNode>().pushFrame(frameSize);
+		StackFrame rootFrame = parentFrame != null
+				? parentFrame.getEnclosingMemory().pushFrame(frameSize)
+				: new StackMemory().pushFrame(frameSize);
 		try {
 			initializeFrame(rootFrame, bindings);
 			inner.apply(rootFrame, in, path, output, requirePath);
 		} finally {
-			rootFrame.getStack().popFrame();
+			rootFrame.getEnclosingMemory().popFrame();
 		}
 	}
 
@@ -100,7 +100,7 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 		}
 	}
 
-	private void initializeFrame(StackFrame<JsonNode> frame, JsonQueryBindings<JsonNode> bindings) {
+	private void initializeFrame(StackFrame frame, JsonQueryBindings<JsonNode> bindings) {
 		for (Map.Entry<String, List<Integer>> entry : variableSlots.entrySet()) {
 			String name = entry.getKey();
 			Supplier<JsonNode> supplier = bindings.variables().containsKey(name)

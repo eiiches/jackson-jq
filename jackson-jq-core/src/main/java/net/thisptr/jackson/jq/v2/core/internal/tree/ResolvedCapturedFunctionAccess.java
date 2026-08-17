@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.compile.Closure;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Closure;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
@@ -50,9 +50,9 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<Json
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		Closure closure = frame != null ? (Closure) frame.getRawValue(frameClosureSlot) : null;
-		FunctionFactory factory = closure != null ? (FunctionFactory) closure.getRawValue(closureSlot) : null;
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		Closure closure = frame != null ? (Closure) frame.get(frameClosureSlot) : null;
+		FunctionFactory factory = closure != null ? (FunctionFactory) closure.get(closureSlot) : null;
 		if (factory == null && defaultFunction != null) {
 			defaultFunction.apply(frame, in, path, output);
 			return;

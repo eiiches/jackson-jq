@@ -58,6 +58,16 @@ public class JsonQueryFunctionTest {
 				eval(env, "def outer: def fact: if . <= 1 then 1 else . * ((. - 1) | fact) end; 5 | fact; outer", NullNode.getInstance()));
 	}
 
+	@Test
+	public void writingAFrameSlotAfterAnUnrelatedNestedCallPops() throws IOException {
+		ObjectMapper mapper = new ObjectMapper();
+		Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_5);
+		BuiltinFunctionLoader.getInstance().listFunctionFactories(Versions.JQ_1_5).forEach(env::addFunctionFactory);
+
+		assertEquals(Arrays.asList(mapper.readTree("5"), mapper.readTree("2")),
+				eval(env, "def outer($a): def inner: $a; inner, (2 as $b | $b); outer(5)", NullNode.getInstance()));
+	}
+
 	public static List<JsonNode> eval(Environment<JsonNode> env, String q, JsonNode in) throws JsonQueryException {
 		List<JsonNode> out = new ArrayList<>();
 		env.compile(q).apply(in, (outNode, path) -> out.add(outNode));

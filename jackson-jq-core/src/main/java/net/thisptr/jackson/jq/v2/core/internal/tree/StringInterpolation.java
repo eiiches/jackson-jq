@@ -41,12 +41,12 @@ public class StringInterpolation<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Stack<Pair<Integer, JsonNode>> stack = new Stack<>();
 		recurse(frame, in, output, stack, interpolations);
 	}
 
-	private void recurse(@Nullable StackFrame<JsonNode> frame, JsonNode in, PathOutput<JsonNode> output, Stack<Pair<Integer, JsonNode>> stack, List<Pair<Integer, Expression<JsonNode>>> interpolations) throws JsonQueryException {
+	private void recurse(@Nullable StackFrame frame, JsonNode in, PathOutput<JsonNode> output, Stack<Pair<Integer, JsonNode>> stack, List<Pair<Integer, Expression<JsonNode>>> interpolations) throws JsonQueryException {
 		if (interpolations.isEmpty()) {
 			StringBuilder builder = new StringBuilder();
 			@Var int pos = 0;

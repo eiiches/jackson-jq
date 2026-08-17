@@ -14,7 +14,6 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.CompileContext;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
@@ -23,6 +22,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
+import net.thisptr.jackson.jq.v2.spi.StackMemory;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.VersionRange;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
@@ -114,22 +114,22 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 			public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version v) {
 				return (callerFrame, in, path, output) -> {
 					ResolvedFunction<N> resolved = getResolvedFunction(jsonProvider);
-					StackFrame<N> fnFrame = callerFrame != null
-							? callerFrame.getStack().pushFrame(resolved.fnSize)
-							: new ExecutionStack<N>().pushFrame(resolved.fnSize);
+					StackFrame fnFrame = callerFrame != null
+							? callerFrame.getEnclosingMemory().pushFrame(resolved.fnSize)
+							: new StackMemory().pushFrame(resolved.fnSize);
 					try {
 						bindAndApply(callerFrame, fnFrame, def.args, args, in, path, output, (execFrame) -> {
 							resolved.body.apply(execFrame, in, path, output, false);
 						});
 					} finally {
-						fnFrame.getStack().popFrame();
+						fnFrame.getEnclosingMemory().popFrame();
 					}
 				};
 			}
 		};
 	}
 
-	private <N> void bindAndApply(@Nullable StackFrame<N> callerFrame, StackFrame<N> currentFrame, List<String> paramNames, List<Expression<N>> args, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<StackFrame<N>> bodyTask) throws JsonQueryException {
+	private <N> void bindAndApply(@Nullable StackFrame callerFrame, StackFrame currentFrame, List<String> paramNames, List<Expression<N>> args, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
 		for (int i = 0; i < paramNames.size(); i++) {
 			String pName = paramNames.get(i);
 			Expression<N> pExpr = args.get(i);
@@ -139,7 +139,7 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 					@SuppressWarnings("unchecked")
 					public <N1> Function<N1> createFunction(JsonProvider<N1> jp, List<Expression<N1>> emptyArgs, Version ver) {
 						Expression<N1> effectiveExpr = (Expression<N1>) (Expression<?>) pExpr;
-						StackFrame<N1> effectiveCallerFrame = (StackFrame<N1>) (Object) callerFrame;
+						StackFrame effectiveCallerFrame = (StackFrame) (Object) callerFrame;
 						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal, false);
 					}
 				});
@@ -148,7 +148,7 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 		bindValueParams(callerFrame, currentFrame, paramNames, args, 0, in, path, output, bodyTask);
 	}
 
-	private <N> void bindValueParams(@Nullable StackFrame<N> callerFrame, StackFrame<N> currentFrame, List<String> paramNames, List<Expression<N>> args, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<StackFrame<N>> bodyTask) throws JsonQueryException {
+	private <N> void bindValueParams(@Nullable StackFrame callerFrame, StackFrame currentFrame, List<String> paramNames, List<Expression<N>> args, int index, N in, @Nullable Path<N> path, PathOutput<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
 		if (index >= paramNames.size()) {
 			bodyTask.accept(currentFrame);
 			return;

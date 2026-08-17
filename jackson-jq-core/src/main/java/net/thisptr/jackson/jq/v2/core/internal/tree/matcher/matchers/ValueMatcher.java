@@ -24,13 +24,13 @@ public class ValueMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public void match(@Nullable StackFrame<JsonNode> frame, JsonNode in, Functional.Consumer<List<Pair<String, JsonNode>>> out, Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException {
+	public void match(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<List<Pair<String, JsonNode>>> out, Stack<Pair<String, JsonNode>> accumulate) throws JsonQueryException {
 		accumulate.push(Pair.of(name, in));
 		out.accept(accumulate);
 	}
 
 	@Override
-	public void matchWithPath(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
+	public void matchWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
 		accumulate.push(new MatchWithPath<>(name, in, path));
 		output.emit(accumulate);
 	}

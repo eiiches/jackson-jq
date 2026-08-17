@@ -2,8 +2,8 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.spi.Closure;
-import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
+import net.thisptr.jackson.jq.v2.core.internal.compile.Closure;
+import net.thisptr.jackson.jq.v2.core.internal.utils.PathAndValue;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
@@ -31,17 +31,17 @@ public class ResolvedCapturedVariableAccess<JsonNode> implements Expression<Json
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		Closure closure = frame != null ? (Closure) frame.getRawValue(frameClosureSlot) : null;
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		Closure closure = frame != null ? (Closure) frame.get(frameClosureSlot) : null;
 		if (closure == null) {
 			throw new JsonQueryException("Variable $" + name + " is not defined (no closure)");
 		}
-		Object raw = closure.getRawValue(closureSlot);
+		Object raw = closure.get(closureSlot);
 		if (raw == null) {
 			throw new JsonQueryException("Variable $" + name + " is not defined");
 		}
-		if (raw instanceof ExecutionStack.PathAndValue) {
-			ExecutionStack.PathAndValue<JsonNode> pv = (ExecutionStack.PathAndValue<JsonNode>) raw;
+		if (raw instanceof PathAndValue) {
+			PathAndValue<JsonNode> pv = (PathAndValue<JsonNode>) raw;
 			if (pv.getValue() != null) {
 				output.emit(pv.getValue(), pv.getPath());
 			}

@@ -26,7 +26,7 @@ public class Assignment<JsonNode> extends BinaryOperatorExpression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		rhs.apply(frame, in, (rval) -> {
 			List<Path<JsonNode>> lpaths = new ArrayList<>();
 			lhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {

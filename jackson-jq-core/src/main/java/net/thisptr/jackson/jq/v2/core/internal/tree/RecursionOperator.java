@@ -22,7 +22,7 @@ public class RecursionOperator<JsonNode> implements Expression<JsonNode> {
 		this.jsonProvider = jsonProvider;
 	}
 
-	private void pathRecursive(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
+	private void pathRecursive(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
 		output.emit(in, path);
 		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
 			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(in);
@@ -37,7 +37,7 @@ public class RecursionOperator<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		pathRecursive(frame, in, path, output);
 	}
 

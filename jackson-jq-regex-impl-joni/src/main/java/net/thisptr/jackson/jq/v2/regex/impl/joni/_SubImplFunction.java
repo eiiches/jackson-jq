@@ -53,7 +53,7 @@ public class _SubImplFunction implements FunctionFactory {
 		};
 	}
 
-	private <JsonNode> void replaceAndConcat(JsonProvider<JsonNode> jsonProvider, @Nullable StackFrame<JsonNode> frame, Stack<String> stack, PathOutput<JsonNode> output, List<JsonNode> match, Expression<JsonNode> replaceExpr, JsonNode in, Expression<JsonNode> flags) throws JsonQueryException {
+	private <JsonNode> void replaceAndConcat(JsonProvider<JsonNode> jsonProvider, @Nullable StackFrame frame, Stack<String> stack, PathOutput<JsonNode> output, List<JsonNode> match, Expression<JsonNode> replaceExpr, JsonNode in, Expression<JsonNode> flags) throws JsonQueryException {
 		if (match.isEmpty()) {
 			StringBuilder sb = new StringBuilder();
 			for (int i = stack.size() - 1; i >= 0; --i) {

@@ -21,7 +21,7 @@ public abstract class SimpleBinaryOperatorExpression<JsonNode> extends BinaryOpe
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		rhs.apply(frame, in, (r) -> {
 			lhs.apply(frame, in, (l) -> {
 				output.emit(operator.apply(jsonProvider, l, r), null);

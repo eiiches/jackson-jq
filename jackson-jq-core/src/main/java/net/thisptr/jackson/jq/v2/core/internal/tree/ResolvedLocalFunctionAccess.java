@@ -46,8 +46,8 @@ public class ResolvedLocalFunctionAccess<JsonNode> implements Expression<JsonNod
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		FunctionFactory factory = frame != null ? frame.getFunctionFactory(slot) : null;
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+		FunctionFactory factory = frame != null ? (FunctionFactory) frame.get(slot) : null;
 		if (factory == null && defaultFunction != null) {
 			defaultFunction.apply(frame, in, ipath, output);
 			return;

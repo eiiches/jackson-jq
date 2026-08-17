@@ -2,7 +2,8 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.spi.ExecutionStack;
+import net.thisptr.jackson.jq.v2.core.internal.utils.PathAndValue;
+import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
@@ -27,9 +28,9 @@ public class ResolvedLocalVariableAccess<JsonNode> implements Expression<JsonNod
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		if (frame != null) {
-			ExecutionStack.PathAndValue<JsonNode> val = frame.getValue(slot);
+			PathAndValue<JsonNode> val = StackFrameValues.asPathAndValue(frame.get(slot));
 			if (val != null && val.getValue() != null) {
 				output.emit(val.getValue(), requirePath ? val.getPath() : null);
 				return;

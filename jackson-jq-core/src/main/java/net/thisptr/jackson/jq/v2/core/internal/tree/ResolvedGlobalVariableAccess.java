@@ -5,7 +5,7 @@ import java.util.function.Supplier;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.spi.Closure;
+import net.thisptr.jackson.jq.v2.core.internal.compile.Closure;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
@@ -29,18 +29,23 @@ public class ResolvedGlobalVariableAccess<JsonNode> implements Expression<JsonNo
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		@Var Supplier<JsonNode> valueSupplier = null;
 		if (captured) {
-			Closure closure = frame != null ? (Closure) frame.getRawValue(frameClosureSlot) : null;
-			Object raw = closure != null ? closure.getRawValue(slot) : null;
+			Closure closure = frame != null ? (Closure) frame.get(frameClosureSlot) : null;
+			Object raw = closure != null ? closure.get(slot) : null;
 			if (raw instanceof Supplier) {
 				@SuppressWarnings("unchecked")
 				Supplier<JsonNode> effectiveSupplier = (Supplier<JsonNode>) raw;
 				valueSupplier = effectiveSupplier;
 			}
 		} else if (frame != null) {
-			valueSupplier = frame.getValueSupplier(slot);
+			Object raw = frame.get(slot);
+			if (raw instanceof Supplier) {
+				@SuppressWarnings("unchecked")
+				Supplier<JsonNode> effectiveSupplier = (Supplier<JsonNode>) raw;
+				valueSupplier = effectiveSupplier;
+			}
 		}
 		if (valueSupplier == null)
 			valueSupplier = defaultSupplier;

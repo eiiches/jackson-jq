@@ -19,7 +19,7 @@ public class BooleanAndExpression<JsonNode> extends BinaryOperatorExpression<Jso
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		lhs.apply(frame, in, (l) -> {
 			if (!JsonNodeUtils.asBoolean(jsonProvider, l)) {
 				output.emit(jsonProvider.createBoolean(false), null);
