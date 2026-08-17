@@ -9,7 +9,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
-import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
+import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
@@ -101,7 +101,7 @@ public class Environment<JsonNode> {
 	}
 
 	public JsonQuery<JsonNode> compile(String expression, @Nullable Module currentModule) throws JsonQueryException {
-		AstNode parsedAst = ExpressionParser.compile(expression, version);
+		AstNode parsedAst = AstParser.parse(expression, version);
 		Expression<JsonNode> compiledExpr = Compiler.compile(this, currentModule, parsedAst);
 		if (!(compiledExpr instanceof net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression))
 			throw new IllegalStateException("Compiler did not produce a root expression");

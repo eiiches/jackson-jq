@@ -14,7 +14,7 @@ import com.google.errorprone.annotations.Var;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
-import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
+import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -52,7 +52,7 @@ public class JacksonJqEvaluator implements Evaluator {
 			@Override
 			public void run() {
 				try {
-					AstNode ast = ExpressionParser.compile(exprText, version);
+					AstNode ast = AstParser.parse(exprText, version);
 					Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), version);
 					Expression<JsonNode> expr = Compiler.compile(env, ast);
 					result.set(doEvaluate(expr, in));

@@ -12,7 +12,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.CompileContext;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
-import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
+import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -81,7 +81,7 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 	}
 
 	private FunctionFactory createJqFunctionFactory(JqLibrary.JqFunc def, Version version) {
-		AstNode parsedAst = ExpressionParser.compile(def.body, version);
+		AstNode parsedAst = AstParser.parse(def.body, version);
 		return new FunctionFactory() {
 			private final IdentityHashMap<JsonProvider<?>, ResolvedFunction<?>> resolvedFunctions = new IdentityHashMap<>();
 

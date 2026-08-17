@@ -22,7 +22,7 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
-import net.thisptr.jackson.jq.v2.internal.javacc.ExpressionParser;
+import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -131,7 +131,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 
 		net.thisptr.jackson.jq.v2.core.Environment<JsonNode> moduleEnv = new net.thisptr.jackson.jq.v2.core.Environment<>(jsonProvider, version);
 		moduleEnv.setModuleLoader(parentModuleLoader != null ? parentModuleLoader : this);
-		AstNode ast = ExpressionParser.compile(moduleString + " null", version);
+		AstNode ast = AstParser.parse(moduleString + " null", version);
 		Compiler.compile(moduleEnv, module, ast);
 
 		moduleEnv.functionFactories().forEach((key, factory) -> {

@@ -6,7 +6,7 @@ options {
 	JDK_VERSION = "1.7";
 }
 
-PARSER_BEGIN(ExpressionParser)
+PARSER_BEGIN(AstParser)
 	package net.thisptr.jackson.jq.v2.internal.javacc;
 
 	import java.io.StringReader;
@@ -29,22 +29,22 @@ PARSER_BEGIN(ExpressionParser)
 	import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 	@SuppressWarnings("unused")
-	public class ExpressionParser {
+	public class AstParser {
 		private Version version;
 
-		public static AstNode compile(final String line, final Version version) throws JsonQueryException {
+		public static AstNode parse(final String line, final Version version) throws JsonQueryException {
 			try {
-				final ExpressionParser parser = new ExpressionParser(new StringReader(line));
+				final AstParser parser = new AstParser(new StringReader(line));
 				parser.version = version;
 				return parser.Start();
 			} catch (TokenMgrError e) {
-				throw new JsonQueryException("Cannot compile query: " + line, e);
+				throw new JsonQueryException("Cannot parse query: " + line, e);
 			} catch (Exception e) {
-				throw new JsonQueryException("Cannot compile query: " + line, e);
+				throw new JsonQueryException("Cannot parse query: " + line, e);
 			}
 		}
 	}
-PARSER_END(ExpressionParser)
+PARSER_END(AstParser)
 
 TOKEN_MGR_DECLS:
 {
