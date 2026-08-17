@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.v2.spi;
 
-import java.util.List;
 import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
@@ -32,12 +31,8 @@ public class StackFrame<JsonNode> {
 
 	private @Nullable Object get(int index) {
 		if (index < 0 || index >= size)
-			return null;
-		int realIdx = offset + index;
-		List<Object> memory = stack.memory;
-		if (realIdx >= memory.size())
-			return null;
-		return memory.get(realIdx);
+			throw new IndexOutOfBoundsException("slot " + index + " out of bounds for frame size " + size);
+		return stack.memory.get(offset + index);
 	}
 
 	public @Nullable Object getRawValue(int index) {
@@ -49,17 +44,9 @@ public class StackFrame<JsonNode> {
 	}
 
 	private void setRaw(int index, @Nullable Object value) {
-		if (index < 0)
-			return;
-		int realIdx = offset + index;
-		List<Object> memory = stack.memory;
-		while (memory.size() <= realIdx) {
-			memory.add(null);
-		}
-		if (index >= size) {
-			size = index + 1;
-		}
-		memory.set(realIdx, value);
+		if (index < 0 || index >= size)
+			throw new IndexOutOfBoundsException("slot " + index + " out of bounds for frame size " + size);
+		stack.memory.set(offset + index, value);
 	}
 
 	@SuppressWarnings("unchecked")

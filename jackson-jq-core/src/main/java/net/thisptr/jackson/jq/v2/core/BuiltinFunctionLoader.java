@@ -70,16 +70,26 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 		return result;
 	}
 
+	private static final class ResolvedFunction<N> {
+		final Expression<N> body;
+		final int fnSize;
+
+		ResolvedFunction(Expression<N> body, int fnSize) {
+			this.body = body;
+			this.fnSize = fnSize;
+		}
+	}
+
 	private FunctionFactory createJqFunctionFactory(JqLibrary.JqFunc def, Version version) {
 		AstNode parsedAst = ExpressionParser.compile(def.body, version);
 		return new FunctionFactory() {
-			private final IdentityHashMap<JsonProvider<?>, Expression<?>> resolvedBodies = new IdentityHashMap<>();
+			private final IdentityHashMap<JsonProvider<?>, ResolvedFunction<?>> resolvedFunctions = new IdentityHashMap<>();
 
 			@SuppressWarnings("unchecked")
-			private synchronized <N> Expression<N> getResolvedBody(JsonProvider<N> jsonProvider) throws JsonQueryException {
-				Expression<N> cachedBody = (Expression<N>) resolvedBodies.get(jsonProvider);
-				if (cachedBody != null)
-					return cachedBody;
+			private synchronized <N> ResolvedFunction<N> getResolvedFunction(JsonProvider<N> jsonProvider) throws JsonQueryException {
+				ResolvedFunction<N> cached = (ResolvedFunction<N>) resolvedFunctions.get(jsonProvider);
+				if (cached != null)
+					return cached;
 				CompileContext context = new CompileContext();
 				context.pushFunctionScope();
 				for (String arg : def.args) {
@@ -92,21 +102,24 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 				Environment<N> env = new Environment<>(jsonProvider, version);
 				listFunctionFactories(version).forEach(env::addFunctionFactory);
 				Expression<N> resolvedBody = Compiler.compileNonNull(env, context, parsedAst);
-				resolvedBodies.put(jsonProvider, resolvedBody);
-				return resolvedBody;
+				// fnSize must be read after the body is compiled, not before -- otherwise it misses any
+				// locals (`as`/`reduce`/`foreach` bindings, nested `def`s) the body itself introduces.
+				int fnSize = context.getSlotCount();
+				ResolvedFunction<N> resolved = new ResolvedFunction<>(resolvedBody, fnSize);
+				resolvedFunctions.put(jsonProvider, resolved);
+				return resolved;
 			}
 
 			@Override
 			public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version v) {
 				return (callerFrame, in, path, output) -> {
-					Expression<N> body = getResolvedBody(jsonProvider);
-					int fnSize = def.args.size();
+					ResolvedFunction<N> resolved = getResolvedFunction(jsonProvider);
 					StackFrame<N> fnFrame = callerFrame != null
-							? callerFrame.getStack().pushFrame(fnSize)
-							: new ExecutionStack<N>().pushFrame(fnSize);
+							? callerFrame.getStack().pushFrame(resolved.fnSize)
+							: new ExecutionStack<N>().pushFrame(resolved.fnSize);
 					try {
 						bindAndApply(callerFrame, fnFrame, def.args, args, in, path, output, (execFrame) -> {
-							body.apply(execFrame, in, path, output, false);
+							resolved.body.apply(execFrame, in, path, output, false);
 						});
 					} finally {
 						fnFrame.getStack().popFrame();

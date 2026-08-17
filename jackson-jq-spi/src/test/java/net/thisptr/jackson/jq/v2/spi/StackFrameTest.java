@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class StackFrameTest {
 
@@ -24,7 +25,7 @@ public class StackFrameTest {
 	@Test
 	void readsAndWritesFrameSlots() {
 		ExecutionStack<String> stack = new ExecutionStack<>();
-		StackFrame<String> frame = stack.pushFrame(1);
+		StackFrame<String> frame = stack.pushFrame(3);
 		Supplier<String> supplier = () -> "supplied";
 
 		frame.set(0, "value");
@@ -33,7 +34,31 @@ public class StackFrameTest {
 		assertEquals("value", Objects.requireNonNull(frame.getValue(0)).getValue());
 		assertNull(frame.getRawValue(1));
 		assertSame(supplier, frame.getValueSupplier(2));
-		assertNull(frame.getRawValue(-1));
+	}
+
+	@Test
+	void throwsWhenWritingAtOrBeyondFrameSize() {
+		ExecutionStack<String> stack = new ExecutionStack<>();
+		StackFrame<String> frame = stack.pushFrame(1);
+
+		assertThrows(IndexOutOfBoundsException.class, () -> frame.set(1, "value"));
+	}
+
+	@Test
+	void throwsWhenReadingAtOrBeyondFrameSize() {
+		ExecutionStack<String> stack = new ExecutionStack<>();
+		StackFrame<String> frame = stack.pushFrame(1);
+
+		assertThrows(IndexOutOfBoundsException.class, () -> frame.getRawValue(1));
+	}
+
+	@Test
+	void throwsForNegativeSlotIndices() {
+		ExecutionStack<String> stack = new ExecutionStack<>();
+		StackFrame<String> frame = stack.pushFrame(1);
+
+		assertThrows(IndexOutOfBoundsException.class, () -> frame.getRawValue(-1));
+		assertThrows(IndexOutOfBoundsException.class, () -> frame.setRawValue(-1, "value"));
 	}
 
 	@Test
