@@ -40,7 +40,7 @@ public class StackFrameTest {
 	void setRawValueRoundTripsArbitraryObjects() {
 		ExecutionStack<String> stack = new ExecutionStack<>();
 		StackFrame<String> frame = stack.pushFrame(1);
-		Closure<String> closure = new Closure<>(0);
+		Closure closure = new Closure(0);
 
 		frame.setRawValue(0, closure);
 

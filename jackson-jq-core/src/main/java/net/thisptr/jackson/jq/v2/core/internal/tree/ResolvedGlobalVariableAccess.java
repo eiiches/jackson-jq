@@ -32,7 +32,7 @@ public class ResolvedGlobalVariableAccess<JsonNode> implements Expression<JsonNo
 	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		@Var Supplier<JsonNode> valueSupplier = null;
 		if (captured) {
-			Closure<JsonNode> closure = frame != null ? (Closure<JsonNode>) frame.getRawValue(frameClosureSlot) : null;
+			Closure closure = frame != null ? (Closure) frame.getRawValue(frameClosureSlot) : null;
 			Object raw = closure != null ? closure.getRawValue(slot) : null;
 			if (raw instanceof Supplier) {
 				@SuppressWarnings("unchecked")

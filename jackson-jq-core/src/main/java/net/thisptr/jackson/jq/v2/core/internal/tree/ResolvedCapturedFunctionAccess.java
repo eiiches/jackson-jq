@@ -51,7 +51,7 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<Json
 	@Override
 	@SuppressWarnings("unchecked")
 	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		Closure<JsonNode> closure = frame != null ? (Closure<JsonNode>) frame.getRawValue(frameClosureSlot) : null;
+		Closure closure = frame != null ? (Closure) frame.getRawValue(frameClosureSlot) : null;
 		FunctionFactory factory = closure != null ? (FunctionFactory) closure.getRawValue(closureSlot) : null;
 		if (factory == null && defaultFunction != null) {
 			defaultFunction.apply(frame, in, path, output);

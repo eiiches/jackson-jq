@@ -32,7 +32,7 @@ public class ResolvedCapturedVariableAccess<JsonNode> implements Expression<Json
 	@Override
 	@SuppressWarnings("unchecked")
 	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		Closure<JsonNode> closure = frame != null ? (Closure<JsonNode>) frame.getRawValue(frameClosureSlot) : null;
+		Closure closure = frame != null ? (Closure) frame.getRawValue(frameClosureSlot) : null;
 		if (closure == null) {
 			throw new JsonQueryException("Variable $" + name + " is not defined (no closure)");
 		}

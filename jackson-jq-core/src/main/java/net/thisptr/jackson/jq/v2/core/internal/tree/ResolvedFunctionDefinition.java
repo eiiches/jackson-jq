@@ -74,14 +74,14 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<JsonNode
 	@Override
 	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		@SuppressWarnings("unchecked")
-		Closure<JsonNode>[] closureHolder = (Closure<JsonNode>[]) new Closure<?>[1];
+		Closure[] closureHolder = (Closure[]) new Closure[1];
 		FunctionFactory factory = new FunctionFactory() {
 			@Override
 			@SuppressWarnings("unchecked")
 			public <N> Function<N> createFunction(JsonProvider<N> jp, List<Expression<N>> fnArgs, Version version) {
 				Expression<N> effectiveBody = (Expression<N>) resolvedBody;
 				return (callerFrame, input, path, out) -> {
-					Closure<N> effectiveClosure = (Closure<N>) closureHolder[0];
+					Closure effectiveClosure = (Closure) closureHolder[0];
 					StackFrame<N> fnFrame = callerFrame != null
 							? callerFrame.getStack().pushFrame(fnSize)
 							: new ExecutionStack<N>().pushFrame(fnSize);

@@ -55,10 +55,9 @@ public class ClosureSpec {
 	 * off that frame. A hop-2+ entry reads instead from {@code currentFrame}'s own Closure, found at
 	 * {@code definerClosureSlot} of that same frame (the immediately-enclosing function's own reserved slot).
 	 */
-	@SuppressWarnings("unchecked")
-	public <JsonNode> Closure<JsonNode> buildClosure(@Nullable StackFrame<JsonNode> currentFrame, int definerClosureSlot) {
-		Closure<JsonNode> closure = new Closure<>(capturedVariables.size() + capturedFunctions.size());
-		@Var @Nullable Closure<JsonNode> parentClosure = null;
+	public <JsonNode> Closure buildClosure(@Nullable StackFrame<JsonNode> currentFrame, int definerClosureSlot) {
+		Closure closure = new Closure(capturedVariables.size() + capturedFunctions.size());
+		@Var @Nullable Closure parentClosure = null;
 		@Var boolean parentClosureFetched = false;
 		for (CapturedVariableRef ref : capturedVariables) {
 			Object value;
@@ -66,7 +65,7 @@ public class ClosureSpec {
 				value = currentFrame != null ? currentFrame.getRawValue(ref.parentSlot) : null;
 			} else {
 				if (!parentClosureFetched) {
-					parentClosure = currentFrame != null ? (Closure<JsonNode>) currentFrame.getRawValue(definerClosureSlot) : null;
+					parentClosure = currentFrame != null ? (Closure) currentFrame.getRawValue(definerClosureSlot) : null;
 					parentClosureFetched = true;
 				}
 				value = parentClosure != null ? parentClosure.getRawValue(ref.parentSlot) : null;
@@ -79,7 +78,7 @@ public class ClosureSpec {
 				value = currentFrame != null ? currentFrame.getFunctionFactory(ref.parentSlot) : null;
 			} else {
 				if (!parentClosureFetched) {
-					parentClosure = currentFrame != null ? (Closure<JsonNode>) currentFrame.getRawValue(definerClosureSlot) : null;
+					parentClosure = currentFrame != null ? (Closure) currentFrame.getRawValue(definerClosureSlot) : null;
 					parentClosureFetched = true;
 				}
 				value = parentClosure != null ? parentClosure.getRawValue(ref.parentSlot) : null;

@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.v2.spi;
 
 import org.jspecify.annotations.Nullable;
 
-public class Closure<JsonNode> {
+public class Closure {
 	private final Object[] slots;
 
 	public Closure(int size) {
