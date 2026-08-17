@@ -32,10 +32,10 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 /**
  * Use {@code BuiltinFunctionLoader.getInstance()} to obtain the instance.
  */
-public class BuiltinFunctionLoader implements FunctionLoader {
-	private static final BuiltinFunctionLoader INSTANCE = new BuiltinFunctionLoader();
+public class ClassPathFunctionLoader implements FunctionLoader {
+	private static final ClassPathFunctionLoader INSTANCE = new ClassPathFunctionLoader();
 
-	public static BuiltinFunctionLoader getInstance() {
+	public static ClassPathFunctionLoader getInstance() {
 		return INSTANCE;
 	}
 
@@ -48,7 +48,7 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 	public Map<FunctionNameAndArity, FunctionFactory> listFunctionFactories(Version version) {
 		Map<FunctionNameAndArity, FunctionFactory> result = new HashMap<>();
 
-		for (FunctionFactory factory : ServiceLoader.load(FunctionFactory.class, BuiltinFunctionLoader.class.getClassLoader())) {
+		for (FunctionFactory factory : ServiceLoader.load(FunctionFactory.class, ClassPathFunctionLoader.class.getClassLoader())) {
 			FunctionRegistration[] regs = factory.getClass().getAnnotationsByType(FunctionRegistration.class);
 			for (FunctionRegistration reg : regs) {
 				VersionRange versionRange = VersionRange.valueOf(reg.version());
@@ -59,7 +59,7 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 			}
 		}
 
-		for (JqLibrary library : ServiceLoader.load(JqLibrary.class, BuiltinFunctionLoader.class.getClassLoader())) {
+		for (JqLibrary library : ServiceLoader.load(JqLibrary.class, ClassPathFunctionLoader.class.getClassLoader())) {
 			for (JqLibrary.JqFunc def : library.getFunctions()) {
 				if (def.version != null && !def.version.contains(version))
 					continue;

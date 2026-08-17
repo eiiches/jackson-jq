@@ -30,7 +30,7 @@ public class Environment<JsonNode> {
 	public Environment(JsonProvider<JsonNode> jsonProvider, Version version) {
 		this.jsonProvider = jsonProvider;
 		this.version = version;
-		this.functionLoader = BuiltinFunctionLoader.getInstance();
+		this.functionLoader = ClassPathFunctionLoader.getInstance();
 		Map<FunctionNameAndArity, FunctionFactory> builtins = this.functionLoader.listFunctionFactories(version);
 		this.functionFactories.putAll(builtins);
 	}

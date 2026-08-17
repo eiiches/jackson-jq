@@ -24,7 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
-import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.ClassPathFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
@@ -98,7 +98,7 @@ public class RandomTest {
 		GENERATORS.add(new RandomGenerator(1, (exprs) -> new BracketExtractFieldAccessAstNode(exprs.get(0), false)));
 
 		Set<String> exclusions = EXCLUDED_FUNCTIONS.getOrDefault(VERSION, Collections.emptySet());
-		BuiltinFunctionLoader.getInstance().listFunctionFactories(VERSION).forEach((nameAndArity, factory) -> {
+		ClassPathFunctionLoader.getInstance().listFunctionFactories(VERSION).forEach((nameAndArity, factory) -> {
 			String signature = nameAndArity.toString();
 			if (exclusions.contains(signature))
 				return;

@@ -6,7 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.ClassPathFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
@@ -45,7 +45,7 @@ public class TimeModuleTest {
 		ClassPathModuleLoader<JsonNode> modules = new ClassPathModuleLoader<>(getClass().getClassLoader());
 		assertThat(modules.loadAllModules()).containsKey("jackson-jq/time");
 
-		assertThat(BuiltinFunctionLoader.getInstance().listFunctionFactories(Versions.JQ_1_6))
+		assertThat(ClassPathFunctionLoader.getInstance().listFunctionFactories(Versions.JQ_1_6))
 				.doesNotContainKeys(FunctionNameAndArity.of("timestamp", 0), FunctionNameAndArity.of("strftime", 1), FunctionNameAndArity.of("strftime", 2), FunctionNameAndArity.of("strptime", 1), FunctionNameAndArity.of("strptime", 2));
 	}
 

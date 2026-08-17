@@ -6,7 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.ClassPathFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
@@ -31,7 +31,7 @@ public class UriModuleTest {
 		ClassPathModuleLoader<JsonNode> modules = new ClassPathModuleLoader<>(getClass().getClassLoader());
 		assertThat(modules.loadAllModules()).containsKey("jackson-jq/uri");
 
-		assertThat(BuiltinFunctionLoader.getInstance().listFunctionFactories(Versions.JQ_1_6)).doesNotContainKeys(FunctionNameAndArity.of("uriparse", 0), FunctionNameAndArity.of("uridecode", 0));
+		assertThat(ClassPathFunctionLoader.getInstance().listFunctionFactories(Versions.JQ_1_6)).doesNotContainKeys(FunctionNameAndArity.of("uriparse", 0), FunctionNameAndArity.of("uridecode", 0));
 	}
 
 	private List<JsonNode> run(String expression) throws JsonQueryException {

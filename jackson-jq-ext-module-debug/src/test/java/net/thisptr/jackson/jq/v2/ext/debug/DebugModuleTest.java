@@ -6,7 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.core.BuiltinFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.ClassPathFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
@@ -36,6 +36,6 @@ public class DebugModuleTest {
 		ClassPathModuleLoader<JsonNode> modules = new ClassPathModuleLoader<>(getClass().getClassLoader());
 		assertThat(modules.loadAllModules()).containsKey("jackson-jq/debug");
 
-		assertThat(BuiltinFunctionLoader.getInstance().listFunctionFactories(Versions.JQ_1_6)).doesNotContainKey(FunctionNameAndArity.of("debug_scope", 0));
+		assertThat(ClassPathFunctionLoader.getInstance().listFunctionFactories(Versions.JQ_1_6)).doesNotContainKey(FunctionNameAndArity.of("debug_scope", 0));
 	}
 }
