@@ -16,21 +16,24 @@ public class ResolvedGlobalVariableAccess<JsonNode> implements Expression<JsonNo
 	private final String name;
 	private final int slot;
 	private final boolean captured;
+	private final int frameClosureSlot;
 	private final Supplier<JsonNode> defaultSupplier;
 
-	public ResolvedGlobalVariableAccess(String name, int slot, boolean captured, Supplier<JsonNode> defaultSupplier) {
+	public ResolvedGlobalVariableAccess(String name, int slot, boolean captured, int frameClosureSlot, Supplier<JsonNode> defaultSupplier) {
 		this.name = name;
 		this.slot = slot;
 		this.captured = captured;
+		this.frameClosureSlot = frameClosureSlot;
 		this.defaultSupplier = defaultSupplier;
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		@Var Supplier<JsonNode> valueSupplier = null;
 		if (captured) {
-			Closure<JsonNode> closure = frame != null ? frame.getClosure() : null;
-			Object raw = closure != null ? closure.getVariable(slot) : null;
+			Closure<JsonNode> closure = frame != null ? (Closure<JsonNode>) frame.getRawValue(frameClosureSlot) : null;
+			Object raw = closure != null ? closure.getRawValue(slot) : null;
 			if (raw instanceof Supplier) {
 				@SuppressWarnings("unchecked")
 				Supplier<JsonNode> effectiveSupplier = (Supplier<JsonNode>) raw;

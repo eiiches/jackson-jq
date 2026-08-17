@@ -20,15 +20,17 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<Json
 	private final Version version;
 	private final String name;
 	private final int closureSlot;
+	private final int frameClosureSlot;
 	private final List<Expression<JsonNode>> args;
 	private final @Nullable FunctionFactory defaultFactory;
 	private final @Nullable Function<JsonNode> defaultFunction;
 
-	public ResolvedCapturedFunctionAccess(JsonProvider<JsonNode> jsonProvider, Version version, String name, int closureSlot, List<Expression<JsonNode>> args, @Nullable FunctionFactory defaultFactory, @Nullable Function<JsonNode> defaultFunction) {
+	public ResolvedCapturedFunctionAccess(JsonProvider<JsonNode> jsonProvider, Version version, String name, int closureSlot, int frameClosureSlot, List<Expression<JsonNode>> args, @Nullable FunctionFactory defaultFactory, @Nullable Function<JsonNode> defaultFunction) {
 		this.jsonProvider = jsonProvider;
 		this.version = version;
 		this.name = name;
 		this.closureSlot = closureSlot;
+		this.frameClosureSlot = frameClosureSlot;
 		this.args = args;
 		this.defaultFactory = defaultFactory;
 		this.defaultFunction = defaultFunction;
@@ -47,9 +49,10 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<Json
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		Closure<JsonNode> closure = frame != null ? frame.getClosure() : null;
-		FunctionFactory factory = closure != null ? closure.getFunctionFactory(closureSlot) : null;
+		Closure<JsonNode> closure = frame != null ? (Closure<JsonNode>) frame.getRawValue(frameClosureSlot) : null;
+		FunctionFactory factory = closure != null ? (FunctionFactory) closure.getRawValue(closureSlot) : null;
 		if (factory == null && defaultFunction != null) {
 			defaultFunction.apply(frame, in, path, output);
 			return;

@@ -11,7 +11,6 @@ public class StackFrame<JsonNode> {
 	private final ExecutionStack<JsonNode> stack;
 	private int size;
 	private final int offset;
-	private @Nullable Closure<JsonNode> closure;
 
 	StackFrame(ExecutionStack<JsonNode> stack, int offset, int size) {
 		this.stack = stack;
@@ -25,14 +24,6 @@ public class StackFrame<JsonNode> {
 
 	int getOffset() {
 		return offset;
-	}
-
-	public @Nullable Closure<JsonNode> getClosure() {
-		return closure;
-	}
-
-	public void setClosure(@Nullable Closure<JsonNode> closure) {
-		this.closure = closure;
 	}
 
 	public ExecutionStack<JsonNode> getStack() {
@@ -51,6 +42,10 @@ public class StackFrame<JsonNode> {
 
 	public @Nullable Object getRawValue(int index) {
 		return get(index);
+	}
+
+	public void setRawValue(int index, @Nullable Object value) {
+		setRaw(index, value);
 	}
 
 	private void setRaw(int index, @Nullable Object value) {

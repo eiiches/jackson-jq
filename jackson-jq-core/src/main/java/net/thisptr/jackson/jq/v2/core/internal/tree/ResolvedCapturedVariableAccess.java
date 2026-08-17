@@ -13,10 +13,12 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class ResolvedCapturedVariableAccess<JsonNode> implements Expression<JsonNode> {
 	private final String name;
 	private final int closureSlot;
+	private final int frameClosureSlot;
 
-	public ResolvedCapturedVariableAccess(String name, int closureSlot) {
+	public ResolvedCapturedVariableAccess(String name, int closureSlot, int frameClosureSlot) {
 		this.name = name;
 		this.closureSlot = closureSlot;
+		this.frameClosureSlot = frameClosureSlot;
 	}
 
 	public String name() {
@@ -30,11 +32,11 @@ public class ResolvedCapturedVariableAccess<JsonNode> implements Expression<Json
 	@Override
 	@SuppressWarnings("unchecked")
 	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		Closure<JsonNode> closure = frame != null ? frame.getClosure() : null;
+		Closure<JsonNode> closure = frame != null ? (Closure<JsonNode>) frame.getRawValue(frameClosureSlot) : null;
 		if (closure == null) {
 			throw new JsonQueryException("Variable $" + name + " is not defined (no closure)");
 		}
-		Object raw = closure.getVariable(closureSlot);
+		Object raw = closure.getRawValue(closureSlot);
 		if (raw == null) {
 			throw new JsonQueryException("Variable $" + name + " is not defined");
 		}

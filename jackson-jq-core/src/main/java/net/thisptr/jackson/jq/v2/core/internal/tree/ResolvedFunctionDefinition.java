@@ -25,14 +25,18 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<JsonNode
 	private final List<String> paramNames;
 	private final List<Integer> paramSlots;
 	private final Expression<JsonNode> resolvedBody;
+	private final int ownClosureSlot;
+	private final int definerClosureSlot;
 
-	public ResolvedFunctionDefinition(int slot, ClosureSpec closureSpec, int fnSize, List<String> paramNames, List<Integer> paramSlots, Expression<JsonNode> resolvedBody) {
+	public ResolvedFunctionDefinition(int slot, ClosureSpec closureSpec, int fnSize, List<String> paramNames, List<Integer> paramSlots, Expression<JsonNode> resolvedBody, int ownClosureSlot, int definerClosureSlot) {
 		this.slot = slot;
 		this.closureSpec = closureSpec;
 		this.fnSize = fnSize;
 		this.paramNames = paramNames;
 		this.paramSlots = paramSlots;
 		this.resolvedBody = resolvedBody;
+		this.ownClosureSlot = ownClosureSlot;
+		this.definerClosureSlot = definerClosureSlot;
 	}
 
 	public int slot() {
@@ -59,6 +63,14 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<JsonNode
 		return resolvedBody;
 	}
 
+	public int ownClosureSlot() {
+		return ownClosureSlot;
+	}
+
+	public int definerClosureSlot() {
+		return definerClosureSlot;
+	}
+
 	@Override
 	public void apply(@Nullable StackFrame<JsonNode> frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		@SuppressWarnings("unchecked")
@@ -73,7 +85,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<JsonNode
 					StackFrame<N> fnFrame = callerFrame != null
 							? callerFrame.getStack().pushFrame(fnSize)
 							: new ExecutionStack<N>().pushFrame(fnSize);
-					fnFrame.setClosure(effectiveClosure);
+					fnFrame.setRawValue(ownClosureSlot, effectiveClosure);
 					try {
 						Compiler.bindAndApply(callerFrame, fnFrame, paramNames, paramSlots, fnArgs, input, path, out, (execFrame) -> {
 							effectiveBody.apply(execFrame, input, path, out, false);
@@ -86,6 +98,6 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<JsonNode
 		};
 		if (frame != null)
 			frame.set(slot, factory);
-		closureHolder[0] = closureSpec.buildClosure(frame);
+		closureHolder[0] = closureSpec.buildClosure(frame, definerClosureSlot);
 	}
 }

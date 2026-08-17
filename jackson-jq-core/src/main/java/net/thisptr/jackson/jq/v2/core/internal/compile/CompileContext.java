@@ -22,6 +22,18 @@ public class CompileContext {
 		final Map<FunctionNameAndArity, Integer> functionSlots = new HashMap<>();
 		int nextSlot;
 
+		// Reserved slot (within this function's own frame) that will hold this function's own Closure at
+		// runtime -- the "static link" slot. Set once, right after params, before the body is compiled, so
+		// that nested defs compiled while this scope is on top can reference it as a fixed, known-in-advance
+		// constant. -1 until reserveClosureSlot() is called; never called for scopes that aren't the subject
+		// of a `def` (the implicit root scope, or a local scope).
+		int closureSlot = -1;
+
+		// Shared index space for names captured into this function's own Closure -- one flat numbering for
+		// both captured variables and captured functions, mirroring how nextSlot is already shared between
+		// locals of both kinds.
+		int nextClosureSlot;
+
 		final List<ClosureSpec.CapturedVariableRef> capturedVariables = new ArrayList<>();
 		final Map<String, Integer> capturedVarSlots = new HashMap<>();
 		final Set<String> capturedGlobalVariables = new HashSet<>();
@@ -33,21 +45,6 @@ public class CompileContext {
 		ScopeFrame(boolean isFunctionBoundary, int initialSlot) {
 			this.isFunctionBoundary = isFunctionBoundary;
 			this.nextSlot = initialSlot;
-		}
-
-		ScopeFrame copy() {
-			ScopeFrame sf = new ScopeFrame(this.isFunctionBoundary, this.nextSlot);
-			sf.variables.addAll(this.variables);
-			sf.functions.addAll(this.functions);
-			sf.variableSlots.putAll(this.variableSlots);
-			sf.functionSlots.putAll(this.functionSlots);
-			sf.capturedVariables.addAll(this.capturedVariables);
-			sf.capturedVarSlots.putAll(this.capturedVarSlots);
-			sf.capturedGlobalVariables.addAll(this.capturedGlobalVariables);
-			sf.capturedFunctions.addAll(this.capturedFunctions);
-			sf.capturedFnSlots.putAll(this.capturedFnSlots);
-			sf.capturedGlobalFunctions.addAll(this.capturedGlobalFunctions);
-			return sf;
 		}
 	}
 
@@ -70,22 +67,6 @@ public class CompileContext {
 		this.globalFunctionRootSlots = new HashSet<>();
 	}
 
-	private CompileContext(List<ScopeFrame> scopes, Map<String, List<Integer>> globalVariableSlots, Map<FunctionNameAndArity, List<Integer>> globalFunctionSlots, Set<String> globalVariables, Set<FunctionNameAndArity> globalFunctions, Set<Integer> globalVariableRootSlots, Set<Integer> globalFunctionRootSlots) {
-		this.scopes = new ArrayList<>();
-		for (ScopeFrame sf : scopes) {
-			this.scopes.add(sf.copy());
-		}
-		this.globalVariableSlots = globalVariableSlots;
-		this.globalFunctionSlots = globalFunctionSlots;
-		this.globalVariables = globalVariables;
-		this.globalFunctions = globalFunctions;
-		this.globalVariableRootSlots = globalVariableRootSlots;
-		this.globalFunctionRootSlots = globalFunctionRootSlots;
-	}
-
-	public CompileContext copy() {
-		return new CompileContext(scopes, globalVariableSlots, globalFunctionSlots, globalVariables, globalFunctions, globalVariableRootSlots, globalFunctionRootSlots);
-	}
 
 	public void pushLocalScope() {
 		int currentSlot = scopes.isEmpty() ? 0 : scopes.get(scopes.size() - 1).nextSlot;
@@ -119,6 +100,37 @@ public class CompileContext {
 			return new ClosureSpec(Collections.emptyList(), Collections.emptyList());
 		ScopeFrame top = scopes.get(scopes.size() - 1);
 		return new ClosureSpec(new ArrayList<>(top.capturedVariables), new ArrayList<>(top.capturedFunctions));
+	}
+
+	/**
+	 * Reserves the "static link" slot for the current (top) function scope: the fixed slot, within this
+	 * function's own frame, that will hold this function's own Closure at runtime. Must be called on a
+	 * function-boundary scope exactly once, immediately after its parameter slots are assigned and before
+	 * its body is compiled, so that nested defs compiled while this scope is on top can reference the slot
+	 * as a fixed, already-known constant (a capture crossing 2+ boundaries needs to know this number while
+	 * the intermediate function's own frame layout is still being decided).
+	 */
+	public int reserveClosureSlot() {
+		ScopeFrame top = scopes.get(scopes.size() - 1);
+		int slot = top.nextSlot++;
+		top.closureSlot = slot;
+		return slot;
+	}
+
+	/**
+	 * The closure slot (see {@link #reserveClosureSlot()}) of the nearest enclosing function-boundary scope --
+	 * i.e. where, in the frame that's live while code at the current compile position is executing, that
+	 * function's own Closure will be found at runtime. Returns -1 if no enclosing scope ever reserved one
+	 * (the implicit root scope), which is harmless: a top-level def's captures never need to read through it,
+	 * since there is nothing beyond root to capture from.
+	 */
+	public int getCurrentFunctionClosureSlot() {
+		for (int i = scopes.size() - 1; i >= 0; i--) {
+			ScopeFrame frame = scopes.get(i);
+			if (frame.isFunctionBoundary)
+				return frame.closureSlot;
+		}
+		return -1;
 	}
 
 	public void addLocalVariable(String name) {
@@ -265,8 +277,8 @@ public class CompileContext {
 							continue;
 						@Var Integer closureSlot = targetFrame.capturedVarSlots.get(name);
 						if (closureSlot == null) {
-							closureSlot = targetFrame.capturedVariables.size();
-							targetFrame.capturedVariables.add(new ClosureSpec.CapturedVariableRef(isLocalInParent, targetSlot));
+							closureSlot = targetFrame.nextClosureSlot++;
+							targetFrame.capturedVariables.add(new ClosureSpec.CapturedVariableRef(isLocalInParent, targetSlot, closureSlot));
 							targetFrame.capturedVarSlots.put(name, closureSlot);
 							if (global)
 								targetFrame.capturedGlobalVariables.add(name);
@@ -288,8 +300,8 @@ public class CompileContext {
 						continue;
 					@Var Integer closureSlot = targetFrame.capturedVarSlots.get(name);
 					if (closureSlot == null) {
-						closureSlot = targetFrame.capturedVariables.size();
-						targetFrame.capturedVariables.add(new ClosureSpec.CapturedVariableRef(isLocalInParent, targetSlot));
+						closureSlot = targetFrame.nextClosureSlot++;
+						targetFrame.capturedVariables.add(new ClosureSpec.CapturedVariableRef(isLocalInParent, targetSlot, closureSlot));
 						targetFrame.capturedVarSlots.put(name, closureSlot);
 						if (global)
 							targetFrame.capturedGlobalVariables.add(name);
@@ -342,8 +354,8 @@ public class CompileContext {
 							continue;
 						@Var Integer closureSlot = targetFrame.capturedFnSlots.get(outerKey);
 						if (closureSlot == null) {
-							closureSlot = targetFrame.capturedFunctions.size();
-							targetFrame.capturedFunctions.add(new ClosureSpec.CapturedFunctionRef(isLocalInParent, targetSlot));
+							closureSlot = targetFrame.nextClosureSlot++;
+							targetFrame.capturedFunctions.add(new ClosureSpec.CapturedFunctionRef(isLocalInParent, targetSlot, closureSlot));
 							targetFrame.capturedFnSlots.put(outerKey, closureSlot);
 							if (global)
 								targetFrame.capturedGlobalFunctions.add(outerKey);
@@ -366,8 +378,8 @@ public class CompileContext {
 						continue;
 					@Var Integer closureSlot = targetFrame.capturedFnSlots.get(existingKey);
 					if (closureSlot == null) {
-						closureSlot = targetFrame.capturedFunctions.size();
-						targetFrame.capturedFunctions.add(new ClosureSpec.CapturedFunctionRef(isLocalInParent, targetSlot));
+						closureSlot = targetFrame.nextClosureSlot++;
+						targetFrame.capturedFunctions.add(new ClosureSpec.CapturedFunctionRef(isLocalInParent, targetSlot, closureSlot));
 						targetFrame.capturedFnSlots.put(existingKey, closureSlot);
 						if (global)
 							targetFrame.capturedGlobalFunctions.add(existingKey);

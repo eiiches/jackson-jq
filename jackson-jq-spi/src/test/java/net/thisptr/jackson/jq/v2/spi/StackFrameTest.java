@@ -37,15 +37,25 @@ public class StackFrameTest {
 	}
 
 	@Test
-	void doesNotInheritAnAmbientClosure() {
+	void setRawValueRoundTripsArbitraryObjects() {
 		ExecutionStack<String> stack = new ExecutionStack<>();
-		StackFrame<String> parent = stack.pushFrame(0);
-		Closure<String> closure = new Closure<>(0, 0);
-		parent.setClosure(closure);
+		StackFrame<String> frame = stack.pushFrame(1);
+		Closure<String> closure = new Closure<>(0);
 
-		StackFrame<String> child = stack.pushFrame(0);
+		frame.setRawValue(0, closure);
 
-		assertNull(child.getClosure());
+		assertSame(closure, frame.getRawValue(0));
+	}
+
+	@Test
+	void framesDoNotShareRawValues() {
+		ExecutionStack<String> stack = new ExecutionStack<>();
+		StackFrame<String> parent = stack.pushFrame(1);
+		parent.setRawValue(0, "parent-value");
+
+		StackFrame<String> child = stack.pushFrame(1);
+
+		assertNull(child.getRawValue(0));
 	}
 
 	@Test

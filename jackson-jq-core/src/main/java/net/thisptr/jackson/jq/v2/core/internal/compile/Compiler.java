@@ -124,7 +124,7 @@ public class Compiler {
 						defaultFunction = defaultFactory.createFunction(env.jsonProvider(), compiledArgs, env.version());
 				}
 				if (loc != null && !loc.isLocal) {
-					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionAccess<>(env.jsonProvider(), env.version(), fullName, slot, compiledArgs, defaultFactory, defaultFunction);
+					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionAccess<>(env.jsonProvider(), env.version(), fullName, slot, context.getCurrentFunctionClosureSlot(), compiledArgs, defaultFactory, defaultFunction);
 				}
 				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionAccess<>(env.jsonProvider(), env.version(), fullName, slot, compiledArgs, defaultFactory, defaultFunction);
 			}
@@ -367,7 +367,7 @@ public class Compiler {
 			FunctionFactory defaultFactory = loc.isGlobal ? env.getFunctionFactory(FunctionNameAndArity.of(fname, 0)) : null;
 			Function<JsonNode> defaultFunction = defaultFactory != null ? defaultFactory.createFunction(env.jsonProvider(), Collections.emptyList(), env.version()) : null;
 			if (!loc.isLocal)
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionAccess<>(env.jsonProvider(), env.version(), fname, loc.slot, Collections.emptyList(), defaultFactory, defaultFunction);
+				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionAccess<>(env.jsonProvider(), env.version(), fname, loc.slot, context.getCurrentFunctionClosureSlot(), Collections.emptyList(), defaultFactory, defaultFunction);
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionAccess<>(env.jsonProvider(), env.version(), fname, loc.slot, Collections.emptyList(), defaultFactory, defaultFunction);
 		}
 
@@ -453,21 +453,30 @@ public class Compiler {
 			FunctionDefinitionAstNode fd = (FunctionDefinitionAstNode) ast;
 			context.addLocalFunction(fd.fname(), fd.args().size());
 
-			CompileContext fnContext = context.copy();
-			fnContext.pushFunctionScope();
 			List<Integer> paramSlots = new ArrayList<>();
-			for (String arg : fd.args()) {
-				if (arg.startsWith("$")) {
-					fnContext.addLocalVariable(arg.substring(1));
-					paramSlots.add(fnContext.getVariableSlot(arg.substring(1)));
-				} else {
-					fnContext.addLocalFunction(arg, 0);
-					paramSlots.add(fnContext.getFunctionSlot(arg, 0));
+			int fnSize;
+			int ownClosureSlot;
+			Expression<JsonNode> compiledBody;
+			ClosureSpec closureSpec;
+			context.pushFunctionScope();
+			try {
+				for (String arg : fd.args()) {
+					if (arg.startsWith("$")) {
+						context.addLocalVariable(arg.substring(1));
+						paramSlots.add(context.getVariableSlot(arg.substring(1)));
+					} else {
+						context.addLocalFunction(arg, 0);
+						paramSlots.add(context.getFunctionSlot(arg, 0));
+					}
 				}
+				ownClosureSlot = context.reserveClosureSlot();
+				compiledBody = compileNonNull(env, context, fd.body());
+				fnSize = context.getSlotCount();
+				closureSpec = context.getClosureSpec();
+			} finally {
+				context.popScope();
 			}
-			int fnSize = fnContext.getSlotCount();
-			Expression<JsonNode> compiledBody = compileNonNull(env, fnContext, fd.body());
-			ClosureSpec closureSpec = fnContext.getClosureSpec();
+			int definerClosureSlot = context.getCurrentFunctionClosureSlot();
 
 			FunctionNameAndArity key = FunctionNameAndArity.of(fd.fname(), fd.args().size());
 			FunctionFactory envFactory = new FunctionFactory() {
@@ -493,7 +502,7 @@ public class Compiler {
 
 			SymbolLocation loc = context.getFunctionLocation(fd.fname(), fd.args().size());
 			int slot = loc != null ? loc.slot : 0;
-			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionDefinition(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody);
+			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionDefinition(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody, ownClosureSlot, definerClosureSlot);
 		}
 
 		throw new IllegalStateException("Unknown AST node: " + ast.getClass());
@@ -511,10 +520,10 @@ public class Compiler {
 						supplier = env.getVariable(varName);
 					if (supplier == null)
 						throw new JsonQueryException(String.format("Variable $%s::%s is not defined", moduleName, varName));
-					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess<>(fullName, slot, !loc.isLocal, supplier);
+					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess<>(fullName, slot, !loc.isLocal, context.getCurrentFunctionClosureSlot(), supplier);
 				}
 				if (loc != null && !loc.isLocal) {
-					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess<>(fullName, slot);
+					return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess<>(fullName, slot, context.getCurrentFunctionClosureSlot());
 				}
 				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableAccess<>(fullName, slot);
 			}
@@ -529,10 +538,10 @@ public class Compiler {
 				Supplier<N> supplier = env.getVariable(varName);
 				if (supplier == null)
 					throw new JsonQueryException(String.format("Variable $%s is not defined", varName));
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess<>(varName, slot, !loc.isLocal, supplier);
+				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess<>(varName, slot, !loc.isLocal, context.getCurrentFunctionClosureSlot(), supplier);
 			}
 			if (loc != null && !loc.isLocal) {
-				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess<>(varName, slot);
+				return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess<>(varName, slot, context.getCurrentFunctionClosureSlot());
 			}
 			return new net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableAccess<>(varName, slot);
 		}
