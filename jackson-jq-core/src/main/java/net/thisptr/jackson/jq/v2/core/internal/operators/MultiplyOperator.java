@@ -1,7 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.operators;
 
 import java.util.Iterator;
-import java.util.Map.Entry;
+import java.util.Map;
 
 import com.google.errorprone.annotations.Var;
 
@@ -48,15 +48,15 @@ public class MultiplyOperator<JsonNode> implements BinaryOperator<JsonNode> {
 	private static <JsonNode> JsonNode mergeRecursive(JsonProvider<JsonNode> jsonProvider, JsonNode lhs, JsonNode rhs) {
 		JsonNode result = jsonProvider.createObject();
 
-		Iterator<Entry<String, JsonNode>> liter = jsonProvider.fields(lhs);
+		Iterator<Map.Entry<String, JsonNode>> liter = jsonProvider.fields(lhs);
 		while (liter.hasNext()) {
-			Entry<String, JsonNode> e = liter.next();
+			Map.Entry<String, JsonNode> e = liter.next();
 			jsonProvider.set(result, e.getKey(), e.getValue());
 		}
 
-		Iterator<Entry<String, JsonNode>> riter = jsonProvider.fields(rhs);
+		Iterator<Map.Entry<String, JsonNode>> riter = jsonProvider.fields(rhs);
 		while (riter.hasNext()) {
-			Entry<String, JsonNode> e = riter.next();
+			Map.Entry<String, JsonNode> e = riter.next();
 			JsonNode l = jsonProvider.get(result, e.getKey());
 			JsonNode r = e.getValue();
 

@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.v2.json.impl.jackson2;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Map.Entry;
+import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -64,9 +64,9 @@ public class JsonQueryJacksonModule extends SimpleModule {
 		@Override
 		public void serialize(ObjectNode value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
 			gen.writeStartObject();
-			Iterator<Entry<String, JsonNode>> iter = value.fields();
+			Iterator<Map.Entry<String, JsonNode>> iter = value.fields();
 			while (iter.hasNext()) {
-				Entry<String, JsonNode> entry = iter.next();
+				Map.Entry<String, JsonNode> entry = iter.next();
 				gen.writeObjectField(entry.getKey(), entry.getValue());
 			}
 			gen.writeEndObject();

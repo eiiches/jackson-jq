@@ -41,12 +41,12 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.literal.LongLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.literal.NullLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.literal.StringLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
-import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression.Operator;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.VersionRange;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.test.evaluator.Evaluator.Result;
+import net.thisptr.jackson.jq.v2.test.evaluator.Evaluator;
 import net.thisptr.jackson.jq.v2.test.evaluator.JacksonJqEvaluator;
 import net.thisptr.jackson.jq.v2.test.evaluator.TrueJqEvaluator;
 
@@ -79,16 +79,16 @@ public class RandomTest {
 
 	@BeforeAll
 	static void beforeAll() {
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.PLUS, exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.MINUS, exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.MODULO, exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.AND, exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.OR, exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.DEFAULT, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.PLUS, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.MINUS, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.MODULO, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.AND, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.OR, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.DEFAULT, exprs.get(0), exprs.get(1))));
 		GENERATORS.add(new RandomGenerator(3, (exprs) -> new TupleAstNode(exprs)));
 		GENERATORS.add(new RandomGenerator(1, (exprs) -> new ArrayConstructionAstNode(exprs.get(0))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.TIMES, exprs.get(0), exprs.get(1))));
-		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(Operator.DIVIDE, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.TIMES, exprs.get(0), exprs.get(1))));
+		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.DIVIDE, exprs.get(0), exprs.get(1))));
 		GENERATORS.add(new RandomGenerator(0, (exprs) -> new ThisObjectAstNode()));
 		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BracketFieldAccessAstNode(exprs.get(0), exprs.get(1), true)));
 		GENERATORS.add(new RandomGenerator(2, (exprs) -> new BracketFieldAccessAstNode(exprs.get(0), exprs.get(1), false)));
@@ -162,7 +162,7 @@ public class RandomTest {
 
 			JsonNode in = values.get(random.nextInt(values.size()));
 
-			Result expected;
+			Evaluator.Result expected;
 			try {
 				expected = new TrueJqEvaluator().evaluate(expr.toString(), in, VERSION, 1000L);
 			} catch (Throwable e) {
@@ -170,7 +170,7 @@ public class RandomTest {
 				continue;
 			}
 
-			Result actual;
+			Evaluator.Result actual;
 			try {
 				actual = new JacksonJqEvaluator().evaluate(expr.toString(), in, VERSION, 1000L);
 			} catch (Throwable e) {

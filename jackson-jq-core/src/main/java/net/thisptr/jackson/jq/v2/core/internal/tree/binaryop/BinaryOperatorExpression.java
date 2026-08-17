@@ -8,7 +8,6 @@ import java.util.Stack;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression.Operator.Associativity;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment.Assignment;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment.ComplexAlternativeAssignment;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment.ComplexDivideAssignment;
@@ -245,7 +244,7 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<J
 			while (!stackOperators.isEmpty()) {
 				Operator op2 = stackOperators.peek();
 				if (op1.precedence > op2.precedence
-						|| op1.precedence == op2.precedence && op1.associativity == Associativity.LEFT) {
+						|| op1.precedence == op2.precedence && op1.associativity == Operator.Associativity.LEFT) {
 					Operator op = stackOperators.pop();
 					AstNode rhs = stackExprs.pop();
 					AstNode lhs = stackExprs.pop();

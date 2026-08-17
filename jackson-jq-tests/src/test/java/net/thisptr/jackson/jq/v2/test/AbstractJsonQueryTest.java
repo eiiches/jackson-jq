@@ -14,7 +14,6 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,7 +38,6 @@ import net.thisptr.jackson.jq.v2.spi.VersionRange;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.test.evaluator.CachedEvaluator;
 import net.thisptr.jackson.jq.v2.test.evaluator.Evaluator;
-import net.thisptr.jackson.jq.v2.test.evaluator.Evaluator.Result;
 import net.thisptr.jackson.jq.v2.test.evaluator.TrueJqEvaluator;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,7 +56,7 @@ public abstract class AbstractJsonQueryTest<T> {
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 	private static final ObjectMapper YAML_MAPPER = new YAMLMapper();
 
-	@JsonInclude(Include.NON_NULL)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class TestCase {
 		@JsonProperty("q")
@@ -88,7 +86,7 @@ public abstract class AbstractJsonQueryTest<T> {
 		@JsonProperty("ignore_field_order")
 		public boolean ignoreFieldOrder = false;
 
-		@JsonInclude(Include.NON_NULL)
+		@JsonInclude(JsonInclude.Include.NON_NULL)
 		@JsonProperty("v")
 		@JsonDeserialize(using = VersionRangeDeserializer.class)
 		@JsonSerialize(using = ToStringSerializer.class)
@@ -207,7 +205,7 @@ public abstract class AbstractJsonQueryTest<T> {
 		Comparator<T> comparator = createComparator(!tc.ignoreFieldOrder, tc.numericalErrors);
 
 		if (!tc.ignoreTrueJqBehavior && hasJqCache.computeIfAbsent(version, v -> TrueJqEvaluator.hasJq(v))) {
-			Result result = cachedJqEvaluator.evaluate(tc.q, tc.in, version, 2000L);
+			Evaluator.Result result = cachedJqEvaluator.evaluate(tc.q, tc.in, version, 2000L);
 			try {
 				assertThat(result.error).as("%s", command).isNull();
 				// Compare with true jq output (which uses Jackson JsonNode)

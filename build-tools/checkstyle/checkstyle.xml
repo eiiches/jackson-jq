@@ -17,6 +17,14 @@
 			<property name="excludes"
 				value="org.junit.jupiter.api.Assertions.*, org.assertj.core.api.Assertions.*"/>
 		</module>
+		<module name="IllegalImport">
+			<property name="regexp" value="true"/>
+			<property name="illegalPkgs" value="sun"/>
+			<property name="illegalClasses"
+				value=".*\.[A-Z][A-Za-z0-9_$]*\.[A-Z][A-Za-z0-9_$]*"/>
+			<message key="import.illegal"
+				value="Nested types must be referenced through their enclosing type instead of imported: {0}"/>
+		</module>
 		<module name="RedundantImport"/>
 		<module name="UnusedImports"/>
 

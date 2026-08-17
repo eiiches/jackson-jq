@@ -3,7 +3,7 @@ package net.thisptr.jackson.jq.v2.json.impl.gson;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 
 import com.google.errorprone.annotations.Var;
 import com.google.gson.Gson;
@@ -210,7 +210,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public Iterator<Entry<String, JsonElement>> fields(JsonElement node) {
+	public Iterator<Map.Entry<String, JsonElement>> fields(JsonElement node) {
 		if (node.isJsonObject()) {
 			return node.getAsJsonObject().entrySet().iterator();
 		}
@@ -225,7 +225,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 		if (node.isJsonObject()) {
 			// For objects, return an iterator over the values (like Jackson does)
 			return node.getAsJsonObject().entrySet().stream()
-					.map(Entry::getValue)
+					.map(Map.Entry::getValue)
 					.iterator();
 		}
 		return java.util.Collections.emptyIterator();
@@ -354,7 +354,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 			JsonObject obj = node.getAsJsonObject();
 			StringBuilder sb = new StringBuilder("{");
 			@Var boolean first = true;
-			for (Entry<String, JsonElement> entry : obj.entrySet()) {
+			for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
 				if (!first) {
 					sb.append(",");
 				}

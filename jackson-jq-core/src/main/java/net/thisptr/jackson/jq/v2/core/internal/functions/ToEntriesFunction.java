@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.functions;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 
 import com.google.auto.service.AutoService;
 
@@ -26,9 +26,9 @@ public class ToEntriesFunction implements FunctionFactory {
 		JsonNodeType inType = jsonProvider.getNodeType(in);
 
 		if (inType == JsonNodeType.OBJECT) {
-			Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(in);
+			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(in);
 			while (iter.hasNext()) {
-				Entry<String, JsonNode> entry = iter.next();
+				Map.Entry<String, JsonNode> entry = iter.next();
 				JsonNode entryNode = jsonProvider.createObject();
 				jsonProvider.set(entryNode, "key", jsonProvider.createString(entry.getKey()));
 				jsonProvider.set(entryNode, "value", entry.getValue());

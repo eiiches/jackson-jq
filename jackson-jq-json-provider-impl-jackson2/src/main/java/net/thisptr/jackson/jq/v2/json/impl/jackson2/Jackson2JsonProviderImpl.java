@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -164,7 +164,7 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public Iterator<Entry<String, JsonNode>> fields(JsonNode node) {
+	public Iterator<Map.Entry<String, JsonNode>> fields(JsonNode node) {
 		return node.fields();
 	}
 

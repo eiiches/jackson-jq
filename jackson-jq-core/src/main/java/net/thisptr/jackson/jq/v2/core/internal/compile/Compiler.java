@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -168,7 +167,7 @@ public class Compiler {
 					if (mod == null) {
 						throw new JsonQueryException(String.format("module not found: %s", imp.path));
 					}
-					for (Entry<String, FunctionFactory> entry : mod.getAllFunctions().entrySet()) {
+					for (Map.Entry<String, FunctionFactory> entry : mod.getAllFunctions().entrySet()) {
 						String[] parts = entry.getKey().split("/", 2);
 						int arity = Integer.parseInt(parts[1]);
 						String fnName = imp.name != null ? imp.name + "::" + parts[0] : parts[0];

@@ -3,7 +3,7 @@ package net.thisptr.jackson.jq.v2.json;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.Objects;
 
 import com.google.errorprone.annotations.Var;
@@ -160,9 +160,9 @@ public abstract class JsonProviderContractTest<T> {
 
 		List<String> keys = new ArrayList<>();
 		List<Integer> values = new ArrayList<>();
-		Iterator<Entry<String, T>> it = provider.fields(obj);
+		Iterator<Map.Entry<String, T>> it = provider.fields(obj);
 		while (it.hasNext()) {
-			Entry<String, T> entry = it.next();
+			Map.Entry<String, T> entry = it.next();
 			keys.add(entry.getKey());
 			values.add(provider.asInt(entry.getValue()));
 		}

@@ -1,7 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 
 import java.util.Iterator;
-import java.util.Map.Entry;
+import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
@@ -48,9 +48,9 @@ public abstract class FieldAccess<JsonNode> implements Expression<JsonNode> {
 			for (int i = 0; i < jsonProvider.size(pobj); ++i)
 				output.emit(jsonProvider.requireGet(pobj, i), ArrayIndexPath.chainIfNotNull(jsonProvider, ppath, i));
 		} else if (jsonProvider.getNodeType(pobj) == JsonNodeType.OBJECT) {
-			Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(pobj);
+			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(pobj);
 			while (iter.hasNext()) {
-				Entry<String, JsonNode> entry = iter.next();
+				Map.Entry<String, JsonNode> entry = iter.next();
 				output.emit(entry.getValue(), ObjectFieldPath.chainIfNotNull(ppath, entry.getKey()));
 			}
 		} else {

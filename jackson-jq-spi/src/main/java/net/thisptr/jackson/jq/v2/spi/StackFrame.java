@@ -5,7 +5,6 @@ import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.spi.ExecutionStack.PathAndValue;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class StackFrame<JsonNode> {
@@ -75,12 +74,12 @@ public class StackFrame<JsonNode> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public @Nullable PathAndValue<JsonNode> getValue(int index) {
+	public ExecutionStack.@Nullable PathAndValue<JsonNode> getValue(int index) {
 		Object raw = get(index);
-		if (raw instanceof PathAndValue) {
-			return (PathAndValue<JsonNode>) raw;
+		if (raw instanceof ExecutionStack.PathAndValue) {
+			return (ExecutionStack.PathAndValue<JsonNode>) raw;
 		} else if (raw != null && !(raw instanceof FunctionFactory) && !(raw instanceof Function)) {
-			return new PathAndValue<>(null, (JsonNode) raw);
+			return new ExecutionStack.PathAndValue<>(null, (JsonNode) raw);
 		}
 		return null;
 	}
@@ -101,7 +100,7 @@ public class StackFrame<JsonNode> {
 
 	public void set(int index, @Nullable Path<JsonNode> path, @Nullable JsonNode value) {
 		if (path != null) {
-			setRaw(index, new PathAndValue<>(path, value));
+			setRaw(index, new ExecutionStack.PathAndValue<>(path, value));
 		} else {
 			setRaw(index, value);
 		}

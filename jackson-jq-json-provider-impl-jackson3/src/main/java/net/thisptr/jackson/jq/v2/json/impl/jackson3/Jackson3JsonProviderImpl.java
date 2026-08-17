@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 import tools.jackson.core.JacksonException;
@@ -144,7 +144,7 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public Iterator<Entry<String, JsonNode>> fields(JsonNode node) {
+	public Iterator<Map.Entry<String, JsonNode>> fields(JsonNode node) {
 		return node.properties().iterator();
 	}
 

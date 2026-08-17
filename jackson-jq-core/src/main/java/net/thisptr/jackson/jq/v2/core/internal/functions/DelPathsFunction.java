@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.auto.service.AutoService;
@@ -122,9 +121,9 @@ public class DelPathsFunction implements FunctionFactory {
 		}
 
 		@Var JsonNode out = jsonProvider.createObject();
-		Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(in);
+		Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(in);
 		while (iter.hasNext()) {
-			Entry<String, JsonNode> entry = iter.next();
+			Map.Entry<String, JsonNode> entry = iter.next();
 			String key = entry.getKey();
 			if (deleteKeys.contains(key))
 				continue;

@@ -7,7 +7,7 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryBreakException;
-import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher.MatchWithPath;
+import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
@@ -41,12 +41,12 @@ public class PipedQuery<JsonNode> implements Expression<JsonNode> {
 
 		if (head instanceof AssignPipeComponent) {
 			((AssignPipeComponent<JsonNode>) head).expr.apply(frame, in, (o) -> {
-				Stack<MatchWithPath<JsonNode>> accumulate = new Stack<>();
-				((AssignPipeComponent<JsonNode>) head).matcher.matchWithPath(frame, o, path, (List<MatchWithPath<JsonNode>> vars) -> {
+				Stack<PatternMatcher.MatchWithPath<JsonNode>> accumulate = new Stack<>();
+				((AssignPipeComponent<JsonNode>) head).matcher.matchWithPath(frame, o, path, (List<PatternMatcher.MatchWithPath<JsonNode>> vars) -> {
 					// Set values in reverse order since if there is the variable name crash,
 					// jq only uses the first match.
 					for (int i = vars.size() - 1; i >= 0; --i) {
-						MatchWithPath<JsonNode> var = vars.get(i);
+						PatternMatcher.MatchWithPath<JsonNode> var = vars.get(i);
 						int slot = ((AssignPipeComponent<JsonNode>) head).getSlot(var.name);
 						if (frame != null && slot >= 0) {
 							frame.set(slot, var.path, var.value);

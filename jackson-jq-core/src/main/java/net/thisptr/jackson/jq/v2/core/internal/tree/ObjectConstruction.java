@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
@@ -37,7 +36,7 @@ public class ObjectConstruction<JsonNode> implements Expression<JsonNode> {
 	private static <JsonNode> void applyRecursive(JsonProvider<JsonNode> jsonProvider, @Nullable StackFrame<JsonNode> frame, JsonNode in, PathOutput<JsonNode> output, List<FieldConstruction<JsonNode>> fields, Map<String, JsonNode> tmp) throws JsonQueryException {
 		if (fields.isEmpty()) {
 			@Var JsonNode obj = jsonProvider.createObject();
-			for (Entry<String, JsonNode> e : tmp.entrySet())
+			for (Map.Entry<String, JsonNode> e : tmp.entrySet())
 				obj = jsonProvider.set(obj, e.getKey(), e.getValue());
 			output.emit(obj, null);
 			return;

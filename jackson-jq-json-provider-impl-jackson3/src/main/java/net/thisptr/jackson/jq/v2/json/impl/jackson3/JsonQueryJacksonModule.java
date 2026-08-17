@@ -1,7 +1,7 @@
 package net.thisptr.jackson.jq.v2.json.impl.jackson3;
 
 import java.util.Iterator;
-import java.util.Map.Entry;
+import java.util.Map;
 
 import com.google.errorprone.annotations.Var;
 import tools.jackson.core.JacksonException;
@@ -76,9 +76,9 @@ public class JsonQueryJacksonModule extends SimpleModule {
 		@Override
 		public void serialize(ObjectNode value, JsonGenerator gen, SerializationContext serializers) throws JacksonException {
 			gen.writeStartObject();
-			Iterator<Entry<String, JsonNode>> iter = value.properties().iterator();
+			Iterator<Map.Entry<String, JsonNode>> iter = value.properties().iterator();
 			while (iter.hasNext()) {
-				Entry<String, JsonNode> entry = iter.next();
+				Map.Entry<String, JsonNode> entry = iter.next();
 				gen.writeName(entry.getKey());
 				gen.writePOJO(entry.getValue());
 			}

@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.v2.jackson2;
 
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -68,11 +68,11 @@ public class Jackson2JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 		@Override
 		protected int compareObjectNode(JsonNode o1, JsonNode o2) {
 			if (strictFieldOrder) {
-				Iterator<Entry<String, JsonNode>> it1 = o1.fields();
-				Iterator<Entry<String, JsonNode>> it2 = o2.fields();
+				Iterator<Map.Entry<String, JsonNode>> it1 = o1.fields();
+				Iterator<Map.Entry<String, JsonNode>> it2 = o2.fields();
 				while (it1.hasNext() && it2.hasNext()) {
-					Entry<String, JsonNode> entry1 = it1.next();
-					Entry<String, JsonNode> entry2 = it2.next();
+					Map.Entry<String, JsonNode> entry1 = it1.next();
+					Map.Entry<String, JsonNode> entry2 = it2.next();
 
 					int r0 = entry1.getKey().compareTo(entry2.getKey());
 					if (r0 != 0)

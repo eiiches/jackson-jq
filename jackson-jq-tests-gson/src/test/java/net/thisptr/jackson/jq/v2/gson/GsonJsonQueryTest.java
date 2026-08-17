@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.v2.gson;
 
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -70,11 +70,11 @@ public class GsonJsonQueryTest extends AbstractJsonQueryTest<JsonElement> {
 		@Override
 		protected int compareObjectNode(JsonElement o1, JsonElement o2) {
 			if (strictFieldOrder) {
-				Iterator<Entry<String, JsonElement>> it1 = o1.getAsJsonObject().entrySet().iterator();
-				Iterator<Entry<String, JsonElement>> it2 = o2.getAsJsonObject().entrySet().iterator();
+				Iterator<Map.Entry<String, JsonElement>> it1 = o1.getAsJsonObject().entrySet().iterator();
+				Iterator<Map.Entry<String, JsonElement>> it2 = o2.getAsJsonObject().entrySet().iterator();
 				while (it1.hasNext() && it2.hasNext()) {
-					Entry<String, JsonElement> entry1 = it1.next();
-					Entry<String, JsonElement> entry2 = it2.next();
+					Map.Entry<String, JsonElement> entry1 = it1.next();
+					Map.Entry<String, JsonElement> entry2 = it2.next();
 
 					int r0 = entry1.getKey().compareTo(entry2.getKey());
 					if (r0 != 0)

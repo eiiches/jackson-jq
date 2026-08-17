@@ -1,7 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.operators;
 
 import java.util.Iterator;
-import java.util.Map.Entry;
+import java.util.Map;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
@@ -37,14 +37,14 @@ public class PlusOperator<JsonNode> implements BinaryOperator<JsonNode> {
 			return jsonProvider.createString(jsonProvider.asText(lhs) + jsonProvider.asText(rhs));
 		} else if (ltype == JsonNodeType.OBJECT && rtype == JsonNodeType.OBJECT) {
 			JsonNode result = jsonProvider.createObject();
-			Iterator<Entry<String, JsonNode>> liter = jsonProvider.fields(lhs);
+			Iterator<Map.Entry<String, JsonNode>> liter = jsonProvider.fields(lhs);
 			while (liter.hasNext()) {
-				Entry<String, JsonNode> e = liter.next();
+				Map.Entry<String, JsonNode> e = liter.next();
 				jsonProvider.set(result, e.getKey(), e.getValue());
 			}
-			Iterator<Entry<String, JsonNode>> riter = jsonProvider.fields(rhs);
+			Iterator<Map.Entry<String, JsonNode>> riter = jsonProvider.fields(rhs);
 			while (riter.hasNext()) {
-				Entry<String, JsonNode> e = riter.next();
+				Map.Entry<String, JsonNode> e = riter.next();
 				jsonProvider.set(result, e.getKey(), e.getValue());
 			}
 			return result;

@@ -6,7 +6,6 @@ import java.util.Stack;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
-import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher.MatchWithPath;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
@@ -55,10 +54,10 @@ public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
 			Path<JsonNode>[] accumulatorPaths = (Path<JsonNode>[]) new Path<?>[] { accumulatorPath };
 
 			iterExpr.apply(frame, in, ipath, (item, itemPath) -> {
-				Stack<MatchWithPath<JsonNode>> stack = new Stack<>();
-				matcher.matchWithPath(frame, item, itemPath, (List<MatchWithPath<JsonNode>> vars) -> {
+				Stack<PatternMatcher.MatchWithPath<JsonNode>> stack = new Stack<>();
+				matcher.matchWithPath(frame, item, itemPath, (List<PatternMatcher.MatchWithPath<JsonNode>> vars) -> {
 					for (int i = vars.size() - 1; i >= 0; --i) {
-						MatchWithPath<JsonNode> var = vars.get(i);
+						PatternMatcher.MatchWithPath<JsonNode> var = vars.get(i);
 						int slot = getSlot(var.name);
 						if (frame != null && slot >= 0) {
 							frame.set(slot, var.path, var.value);

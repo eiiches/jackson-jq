@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.functions;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.Stack;
 
 import com.google.auto.service.AutoService;
@@ -48,9 +48,9 @@ public class PathsFunction implements FunctionFactory {
 				stack.pop();
 			}
 		} else if (inType == JsonNodeType.OBJECT) {
-			Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(in);
+			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(in);
 			while (iter.hasNext()) {
-				Entry<String, JsonNode> entry = iter.next();
+				Map.Entry<String, JsonNode> entry = iter.next();
 				stack.push(jsonProvider.createString(entry.getKey()));
 				applyRecursive(frame, jsonProvider, entry.getValue(), output, stack, predicate);
 				stack.pop();

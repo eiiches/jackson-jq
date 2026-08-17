@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.functions;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 
 import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
@@ -57,9 +57,9 @@ public class ContainsFunction implements FunctionFactory {
 			}
 			return true;
 		} else if (hType == JsonNodeType.OBJECT && nType == JsonNodeType.OBJECT) {
-			Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(needle);
+			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(needle);
 			while (iter.hasNext()) {
-				Entry<String, JsonNode> field = iter.next();
+				Map.Entry<String, JsonNode> field = iter.next();
 				JsonNode tmp = jsonProvider.get(haystack, field.getKey());
 				if (tmp == null)
 					return false;

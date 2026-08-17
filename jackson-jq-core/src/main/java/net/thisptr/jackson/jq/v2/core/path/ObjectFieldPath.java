@@ -1,7 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.path;
 
 import java.util.Iterator;
-import java.util.Map.Entry;
+import java.util.Map;
 
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
@@ -58,9 +58,9 @@ public class ObjectFieldPath<JsonNode> implements Path<JsonNode> {
 		}
 		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
 			JsonNode newobj = jsonProvider.createObject();
-			Iterator<Entry<String, JsonNode>> iter = jsonProvider.fields(in);
+			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(in);
 			while (iter.hasNext()) {
-				Entry<String, JsonNode> entry = iter.next();
+				Map.Entry<String, JsonNode> entry = iter.next();
 				jsonProvider.set(newobj, entry.getKey(), entry.getValue());
 			}
 			JsonNode newval = mutation.apply(jsonProvider.get(newobj, key));

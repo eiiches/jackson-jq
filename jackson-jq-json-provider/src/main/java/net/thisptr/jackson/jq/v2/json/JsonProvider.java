@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.v2.json;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
@@ -62,7 +62,7 @@ public interface JsonProvider<JsonNode> {
 
 	byte[] asByteArray(JsonNode node);
 
-	Iterator<Entry<String, JsonNode>> fields(JsonNode node);
+	Iterator<Map.Entry<String, JsonNode>> fields(JsonNode node);
 
 	Iterator<JsonNode> elements(JsonNode node);
 

@@ -21,7 +21,6 @@ import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionLoader;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
-import net.thisptr.jackson.jq.v2.spi.JqLibrary.JqFunc;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -61,7 +60,7 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 		}
 
 		for (JqLibrary library : ServiceLoader.load(JqLibrary.class, BuiltinFunctionLoader.class.getClassLoader())) {
-			for (JqFunc def : library.getFunctions()) {
+			for (JqLibrary.JqFunc def : library.getFunctions()) {
 				if (def.version != null && !def.version.contains(version))
 					continue;
 				result.put(FunctionNameAndArity.of(def.name, def.args.size()), createJqFunctionFactory(def, version));
@@ -71,7 +70,7 @@ public class BuiltinFunctionLoader implements FunctionLoader {
 		return result;
 	}
 
-	private FunctionFactory createJqFunctionFactory(JqFunc def, Version version) {
+	private FunctionFactory createJqFunctionFactory(JqLibrary.JqFunc def, Version version) {
 		AstNode parsedAst = ExpressionParser.compile(def.body, version);
 		return new FunctionFactory() {
 			private final IdentityHashMap<JsonProvider<?>, Expression<?>> resolvedBodies = new IdentityHashMap<>();
