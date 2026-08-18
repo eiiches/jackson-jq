@@ -15,7 +15,6 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionLoader;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
@@ -111,8 +110,8 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 			}
 
 			@Override
-			public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version v) {
-				return (callerFrame, in, path, output) -> {
+			public <N> Expression<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version v) {
+				return (callerFrame, in, path, output, ignoredRequirePath) -> {
 					ResolvedFunction<N> resolved = getResolvedFunction(jsonProvider);
 					StackFrame fnFrame = callerFrame != null
 							? callerFrame.getEnclosingMemory().pushFrame(resolved.fnSize)
@@ -137,10 +136,10 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 				currentFrame.set(i, new FunctionFactory() {
 					@Override
 					@SuppressWarnings("unchecked")
-					public <N1> Function<N1> createFunction(JsonProvider<N1> jp, List<Expression<N1>> emptyArgs, Version ver) {
+					public <N1> Expression<N1> createFunction(JsonProvider<N1> jp, List<Expression<N1>> emptyArgs, Version ver) {
 						Expression<N1> effectiveExpr = (Expression<N1>) (Expression<?>) pExpr;
 						StackFrame effectiveCallerFrame = (StackFrame) (Object) callerFrame;
-						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal, false);
+						return (sFrame, inVal, pVal, outVal, ignoredRequirePath) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal, false);
 					}
 				});
 			}

@@ -6,7 +6,6 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
@@ -21,9 +20,9 @@ public class ResolvedLocalFunctionAccess<JsonNode> implements Expression<JsonNod
 	private final int slot;
 	private final List<Expression<JsonNode>> args;
 	private final @Nullable FunctionFactory defaultFactory;
-	private final @Nullable Function<JsonNode> defaultFunction;
+	private final @Nullable Expression<JsonNode> defaultFunction;
 
-	public ResolvedLocalFunctionAccess(JsonProvider<JsonNode> jsonProvider, Version version, String name, int slot, List<Expression<JsonNode>> args, @Nullable FunctionFactory defaultFactory, @Nullable Function<JsonNode> defaultFunction) {
+	public ResolvedLocalFunctionAccess(JsonProvider<JsonNode> jsonProvider, Version version, String name, int slot, List<Expression<JsonNode>> args, @Nullable FunctionFactory defaultFactory, @Nullable Expression<JsonNode> defaultFunction) {
 		this.jsonProvider = jsonProvider;
 		this.version = version;
 		this.name = name;
@@ -49,14 +48,14 @@ public class ResolvedLocalFunctionAccess<JsonNode> implements Expression<JsonNod
 	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		FunctionFactory factory = frame != null ? (FunctionFactory) frame.get(slot) : null;
 		if (factory == null && defaultFunction != null) {
-			defaultFunction.apply(frame, in, ipath, output);
+			defaultFunction.apply(frame, in, ipath, output, false);
 			return;
 		}
 		if (factory == null)
 			throw new JsonQueryException("Function " + name + " is not defined");
-		Function<JsonNode> fn = factory == defaultFactory && defaultFunction != null
+		Expression<JsonNode> fn = factory == defaultFactory && defaultFunction != null
 				? defaultFunction : factory.createFunction(jsonProvider, args, version);
-		fn.apply(frame, in, ipath, output);
+		fn.apply(frame, in, ipath, output, false);
 	}
 
 	@Override

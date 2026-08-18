@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -189,8 +188,8 @@ public class JsonQueryBindingsTest {
 	private static FunctionFactory constantFunction(String value) {
 		return new FunctionFactory() {
 			@Override
-			public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version version) {
-				return (frame, in, path, output) -> output.emit(jsonProvider.createString(value), null);
+			public <N> Expression<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version version) {
+				return (frame, in, path, output, ignoredRequirePath) -> output.emit(jsonProvider.createString(value), null);
 			}
 		};
 	}

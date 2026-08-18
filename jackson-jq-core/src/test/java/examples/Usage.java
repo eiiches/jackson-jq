@@ -21,7 +21,6 @@ import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -42,8 +41,8 @@ public class Usage {
 		// You can also define a custom function using FunctionFactory. E.g.
 		env.addFunctionFactory(FunctionNameAndArity.of("repeat", 1), new FunctionFactory() {
 			@Override
-			public <N> Function<N> createFunction(JsonProvider<N> fprovider, List<Expression<N>> fargs, Version ver) {
-				return (frame, in, path, output) -> {
+			public <N> Expression<N> createFunction(JsonProvider<N> fprovider, List<Expression<N>> fargs, Version ver) {
+				return (frame, in, path, output, ignoredRequirePath) -> {
 					fargs.get(0).apply(frame, in, (time) -> {
 						output.emit(fprovider.createString(Strings.repeat(fprovider.asText(in), fprovider.asInt(time))), null);
 					});

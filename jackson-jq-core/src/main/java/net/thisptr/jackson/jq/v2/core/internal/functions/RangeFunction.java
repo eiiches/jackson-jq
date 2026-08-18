@@ -13,7 +13,6 @@ import net.thisptr.jackson.jq.v2.core.internal.operators.PlusOperator;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -27,8 +26,8 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 public class RangeFunction implements FunctionFactory {
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output) -> {
+	public <JsonNode> Expression<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
+		return (frame, in, ipath, output, ignoredRequirePath) -> {
 								if (args.size() == 1) {
 					args.get(0).apply(frame, in, (end) -> {
 						range1(jsonProvider, output, end);

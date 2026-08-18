@@ -9,7 +9,6 @@ import net.thisptr.jackson.jq.v2.ext.uuid.internal.misc.UuidUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -22,9 +21,9 @@ public class Uuid35Function implements FunctionFactory {
 	}
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
+	public <JsonNode> Expression<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		Expression<JsonNode> namespaceExpr = args.get(0);
-		return (frame, in, ipath, output) -> {
+		return (frame, in, ipath, output, ignoredRequirePath) -> {
 			Preconditions.checkInputType(jsonProvider, "uuid5", in, JsonNodeType.STRING, JsonNodeType.BINARY);
 
 			namespaceExpr.apply(frame, in, (namespaceArg) -> {

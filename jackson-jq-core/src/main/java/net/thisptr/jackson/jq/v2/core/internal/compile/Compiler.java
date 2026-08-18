@@ -94,7 +94,6 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ObjectMatch
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatcher;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
@@ -151,7 +150,7 @@ public class Compiler {
 				SymbolLocation loc = context.getFunctionLocation(fullName, compiledArgs.size());
 				int slot = loc != null ? loc.slot : 0;
 				@Var FunctionFactory defaultFactory = null;
-				@Var Function<JsonNode> defaultFunction = null;
+				@Var Expression<JsonNode> defaultFunction = null;
 				if (loc != null && loc.isGlobal) {
 					defaultFactory = env.getFunctionFactory(FunctionNameAndArity.of(fullName, compiledArgs.size()));
 					if (defaultFactory != null)
@@ -169,7 +168,7 @@ public class Compiler {
 				throw new JsonQueryException(String.format("Function %s/%d does not exist", fullName, compiledArgs.size()));
 			}
 
-			Function<JsonNode> fn = factory.createFunction(env.jsonProvider(), compiledArgs, env.version());
+			Expression<JsonNode> fn = factory.createFunction(env.jsonProvider(), compiledArgs, env.version());
 			return new ResolvedFunctionCall<>(fullName, fn);
 		}
 
@@ -399,7 +398,7 @@ public class Compiler {
 				throw new JsonQueryException(String.format("Formatting operator %s does not exist", fname));
 			}
 			FunctionFactory defaultFactory = loc.isGlobal ? env.getFunctionFactory(FunctionNameAndArity.of(fname, 0)) : null;
-			Function<JsonNode> defaultFunction = defaultFactory != null ? defaultFactory.createFunction(env.jsonProvider(), Collections.emptyList(), env.version()) : null;
+			Expression<JsonNode> defaultFunction = defaultFactory != null ? defaultFactory.createFunction(env.jsonProvider(), Collections.emptyList(), env.version()) : null;
 			if (!loc.isLocal)
 				return new ResolvedCapturedFunctionAccess<>(env.jsonProvider(), env.version(), fname, loc.slot, context.getCurrentFunctionClosureSlot(), Collections.emptyList(), defaultFactory, defaultFunction);
 			return new ResolvedLocalFunctionAccess<>(env.jsonProvider(), env.version(), fname, loc.slot, Collections.emptyList(), defaultFactory, defaultFunction);
@@ -516,9 +515,9 @@ public class Compiler {
 			FunctionFactory envFactory = new FunctionFactory() {
 				@Override
 				@SuppressWarnings("unchecked")
-				public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> fnArgs, Version version) {
+				public <N> Expression<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> fnArgs, Version version) {
 					Expression<N> effectiveBody = (Expression<N>) (Expression<?>) compiledBody;
-					return (callerFrame, input, path, output) -> {
+					return (callerFrame, input, path, output, ignoredRequirePath) -> {
 						StackFrame fnFrame = callerFrame != null
 								? callerFrame.getEnclosingMemory().pushFrame(fnSize)
 								: new StackMemory().pushFrame(fnSize);
@@ -617,10 +616,10 @@ public class Compiler {
 				currentFrame.set(slot, new FunctionFactory() {
 					@Override
 					@SuppressWarnings("unchecked")
-					public <N1> Function<N1> createFunction(JsonProvider<N1> jp, List<Expression<N1>> emptyArgs, Version v) {
+					public <N1> Expression<N1> createFunction(JsonProvider<N1> jp, List<Expression<N1>> emptyArgs, Version v) {
 						Expression<N1> effectiveExpr = (Expression<N1>) (Expression<?>) pExpr;
 						StackFrame effectiveCallerFrame = (StackFrame) (Object) callerFrame;
-						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal, false);
+						return (sFrame, inVal, pVal, outVal, ignoredRequirePath) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal, false);
 					}
 				});
 			}

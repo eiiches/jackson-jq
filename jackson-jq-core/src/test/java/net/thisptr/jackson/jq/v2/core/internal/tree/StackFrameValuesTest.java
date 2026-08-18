@@ -8,7 +8,6 @@ import net.thisptr.jackson.jq.v2.core.internal.utils.PathAndValue;
 import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.Version;
 
@@ -43,7 +42,7 @@ public class StackFrameValuesTest {
 	void returnsNullForFunctionFactoryRawValue() {
 		FunctionFactory factory = new FunctionFactory() {
 			@Override
-			public <N> Function<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version version) {
+			public <N> Expression<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version version) {
 				throw new UnsupportedOperationException();
 			}
 		};
@@ -52,11 +51,11 @@ public class StackFrameValuesTest {
 	}
 
 	@Test
-	void returnsNullForFunctionRawValue() {
-		Function<String> function = (frame, in, path, output) -> {
+	void returnsNullForExpressionRawValue() {
+		Expression<String> expression = (frame, in, path, output, requirePath) -> {
 			throw new UnsupportedOperationException();
 		};
 
-		assertNull(StackFrameValues.asPathAndValue(function));
+		assertNull(StackFrameValues.asPathAndValue(expression));
 	}
 }

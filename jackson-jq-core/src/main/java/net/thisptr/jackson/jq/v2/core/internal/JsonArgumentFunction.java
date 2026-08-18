@@ -6,7 +6,6 @@ import java.util.Stack;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -29,8 +28,8 @@ public abstract class JsonArgumentFunction implements FunctionFactory {
 	}
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output) -> {
+	public <JsonNode> Expression<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
+		return (frame, in, ipath, output, ignoredRequirePath) -> {
 			List<List<JsonNode>> _args = new ArrayList<>(args.size());
 			for (Expression<JsonNode> arg : args) {
 				List<JsonNode> out = new ArrayList<>();

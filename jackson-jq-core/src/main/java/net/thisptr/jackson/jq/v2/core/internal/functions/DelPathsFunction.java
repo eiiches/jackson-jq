@@ -18,7 +18,6 @@ import net.thisptr.jackson.jq.v2.core.internal.misc.Range;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
@@ -30,8 +29,8 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class DelPathsFunction implements FunctionFactory {
 
 	@Override
-	public <JsonNode> Function<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output) -> {
+	public <JsonNode> Expression<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
+		return (frame, in, ipath, output, ignoredRequirePath) -> {
 			args.get(0).apply(frame, in, (paths) -> {
 					if (jsonProvider.getNodeType(paths) != JsonNodeType.ARRAY)
 						throw new JsonQueryException("Paths must be specified as an array");

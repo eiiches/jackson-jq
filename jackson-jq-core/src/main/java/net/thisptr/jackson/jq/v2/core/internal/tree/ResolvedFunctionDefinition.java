@@ -9,7 +9,6 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.ClosureSpec;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
@@ -77,9 +76,9 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<JsonNode
 		FunctionFactory factory = new FunctionFactory() {
 			@Override
 			@SuppressWarnings("unchecked")
-			public <N> Function<N> createFunction(JsonProvider<N> jp, List<Expression<N>> fnArgs, Version version) {
+			public <N> Expression<N> createFunction(JsonProvider<N> jp, List<Expression<N>> fnArgs, Version version) {
 				Expression<N> effectiveBody = (Expression<N>) resolvedBody;
-				return (callerFrame, input, path, out) -> {
+				return (callerFrame, input, path, out, ignoredRequirePath) -> {
 					Closure effectiveClosure = (Closure) closureHolder[0];
 					StackFrame fnFrame = callerFrame != null
 							? callerFrame.getEnclosingMemory().pushFrame(fnSize)
