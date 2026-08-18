@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 
 /**
@@ -16,11 +16,11 @@ public final class JsonQueryBindings<JsonNode> {
 	private static final JsonQueryBindings<?> EMPTY = new JsonQueryBindings<>(Collections.emptyMap(), Collections.emptyMap());
 
 	private final Map<String, Supplier<JsonNode>> variables;
-	private final Map<FunctionNameAndArity, FunctionFactory> functionFactories;
+	private final Map<FunctionNameAndArity, Function> functions;
 
-	private JsonQueryBindings(Map<String, Supplier<JsonNode>> variables, Map<FunctionNameAndArity, FunctionFactory> functionFactories) {
+	private JsonQueryBindings(Map<String, Supplier<JsonNode>> variables, Map<FunctionNameAndArity, Function> functions) {
 		this.variables = Collections.unmodifiableMap(new HashMap<>(variables));
-		this.functionFactories = Collections.unmodifiableMap(new HashMap<>(functionFactories));
+		this.functions = Collections.unmodifiableMap(new HashMap<>(functions));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -36,13 +36,13 @@ public final class JsonQueryBindings<JsonNode> {
 		return variables;
 	}
 
-	public Map<FunctionNameAndArity, FunctionFactory> functionFactories() {
-		return functionFactories;
+	public Map<FunctionNameAndArity, Function> functions() {
+		return functions;
 	}
 
 	public static final class Builder<JsonNode> {
 		private final Map<String, Supplier<JsonNode>> variables = new HashMap<>();
-		private final Map<FunctionNameAndArity, FunctionFactory> functionFactories = new HashMap<>();
+		private final Map<FunctionNameAndArity, Function> functions = new HashMap<>();
 
 		public Builder<JsonNode> addVariable(String name, JsonNode value) {
 			Objects.requireNonNull(value, "value");
@@ -57,15 +57,15 @@ public final class JsonQueryBindings<JsonNode> {
 			return this;
 		}
 
-		public Builder<JsonNode> addFunctionFactory(FunctionNameAndArity nameAndArity, FunctionFactory functionFactory) {
-			functionFactories.put(Objects.requireNonNull(nameAndArity, "nameAndArity"), Objects.requireNonNull(functionFactory, "functionFactory"));
+		public Builder<JsonNode> addFunction(FunctionNameAndArity nameAndArity, Function function) {
+			functions.put(Objects.requireNonNull(nameAndArity, "nameAndArity"), Objects.requireNonNull(function, "function"));
 			return this;
 		}
 
 		public JsonQueryBindings<JsonNode> build() {
-			if (variables.isEmpty() && functionFactories.isEmpty())
+			if (variables.isEmpty() && functions.isEmpty())
 				return JsonQueryBindings.empty();
-			return new JsonQueryBindings<>(variables, functionFactories);
+			return new JsonQueryBindings<>(variables, functions);
 		}
 	}
 }

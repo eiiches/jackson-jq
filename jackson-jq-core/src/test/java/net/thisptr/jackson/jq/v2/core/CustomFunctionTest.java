@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Version;
 
@@ -28,9 +28,9 @@ public class CustomFunctionTest {
 
 		Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), version);
 
-		env.addFunctionFactory(FunctionNameAndArity.of("times100", 1), new FunctionFactory() {
+		env.addFunction(FunctionNameAndArity.of("times100", 1), new Function() {
 			@Override
-			public <N> Expression<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version ver) {
+			public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version ver) {
 				return (frame, in, path, output, ignoredRequirePath) -> {
 					args.get(0).apply(frame, in, (numberNode) -> {
 						int n = jsonProvider.asInt(numberNode);

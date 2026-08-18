@@ -5,16 +5,15 @@ import java.util.Map;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 
 // For security reasons, env/0 should not be loaded by default.
-// @AutoService(FunctionFactory.class)
-// 2022-06-29(eiiches): commented out @FunctionRegistration(name = "env", nargs = 0) to make sure some custom function loaders don't load `env/0` accidentally.
+// @AutoService(Function.class)
 // @FunctionRegistration(name = "env", nargs = 0)
-public class EnvFunction implements FunctionFactory {
+public class EnvFunction implements Function {
 	@Override
-	public <JsonNode> Expression<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
+	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (scope, in, ipath, output, ignoredRequirePath) -> {
 			JsonNode result = jsonProvider.createObject();
 			for (Map.Entry<String, String> entry : System.getenv().entrySet()) {

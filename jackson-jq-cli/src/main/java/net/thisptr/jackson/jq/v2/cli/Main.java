@@ -35,7 +35,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.JsonQueryJacksonModule;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -109,9 +109,9 @@ public class Main {
 
 		Jackson3JsonProviderImpl jsonProvider = Jackson3JsonProviderImpl.getInstance();
 		Environment<JsonNode> env = new Environment<>(jsonProvider, version);
-		env.addFunctionFactory(FunctionNameAndArity.of("env", 0), new FunctionFactory() {
+		env.addFunction(FunctionNameAndArity.of("env", 0), new Function() {
 			@Override
-			public <N> Expression<N> createFunction(JsonProvider<N> jsonProv, List<Expression<N>> fnArgs, Version ver) {
+			public <N> Expression<N> bindArguments(JsonProvider<N> jsonProv, List<Expression<N>> fnArgs, Version ver) {
 				return (frame, in, path, output, ignoredRequirePath) -> {
 					N envObj = jsonProv.createObject();
 					for (Map.Entry<String, String> entry : System.getenv().entrySet()) {

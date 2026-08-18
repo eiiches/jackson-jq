@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.JsonQueryBindings;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
@@ -25,7 +25,7 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 	private final int frameSize;
 	private final Expression<JsonNode> inner;
 	private final Map<String, Supplier<JsonNode>> defaultVariables;
-	private final Map<FunctionNameAndArity, FunctionFactory> defaultFunctionFactories;
+	private final Map<FunctionNameAndArity, Function> defaultFunctions;
 	private final Map<String, List<Integer>> variableSlots;
 	private final Map<FunctionNameAndArity, List<Integer>> functionSlots;
 	private final Set<String> validVariables;
@@ -37,7 +37,7 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 
 	public RootExpression(int frameSize, Expression<JsonNode> inner,
 			Map<String, Supplier<JsonNode>> defaultVariables,
-			Map<FunctionNameAndArity, FunctionFactory> defaultFunctionFactories,
+			Map<FunctionNameAndArity, Function> defaultFunctions,
 			Map<String, List<Integer>> variableSlots,
 			Map<FunctionNameAndArity, List<Integer>> functionSlots,
 			Set<String> validVariables,
@@ -45,7 +45,7 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 		this.frameSize = frameSize;
 		this.inner = inner;
 		this.defaultVariables = Collections.unmodifiableMap(new HashMap<>(defaultVariables));
-		this.defaultFunctionFactories = Collections.unmodifiableMap(new HashMap<>(defaultFunctionFactories));
+		this.defaultFunctions = Collections.unmodifiableMap(new HashMap<>(defaultFunctions));
 		this.variableSlots = copySlotMap(variableSlots);
 		this.functionSlots = copySlotMap(functionSlots);
 		this.validVariables = Collections.unmodifiableSet(new HashSet<>(validVariables));
@@ -94,7 +94,7 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 			if (!validVariables.contains(name))
 				throw new JsonQueryException("Variable $" + name + " cannot be overridden because it was not defined when the query was compiled");
 		}
-		for (FunctionNameAndArity key : bindings.functionFactories().keySet()) {
+		for (FunctionNameAndArity key : bindings.functions().keySet()) {
 			if (!validFunctions.contains(key))
 				throw new JsonQueryException("Function " + key + " cannot be overridden because it was not defined when the query was compiled");
 		}
@@ -112,9 +112,9 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 			}
 		}
 		for (Map.Entry<FunctionNameAndArity, List<Integer>> entry : functionSlots.entrySet()) {
-			FunctionFactory factory = bindings.functionFactories().containsKey(entry.getKey())
-					? bindings.functionFactories().get(entry.getKey())
-					: defaultFunctionFactories.get(entry.getKey());
+			Function factory = bindings.functions().containsKey(entry.getKey())
+					? bindings.functions().get(entry.getKey())
+					: defaultFunctions.get(entry.getKey());
 			if (factory != null) {
 				for (int slot : entry.getValue())
 					frame.set(slot, factory);

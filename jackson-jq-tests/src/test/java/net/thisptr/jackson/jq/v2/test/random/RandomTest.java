@@ -98,7 +98,7 @@ public class RandomTest {
 		GENERATORS.add(new RandomGenerator(1, (exprs) -> new BracketExtractFieldAccessAstNode(exprs.get(0), false)));
 
 		Set<String> exclusions = EXCLUDED_FUNCTIONS.getOrDefault(VERSION, Collections.emptySet());
-		ClassPathFunctionLoader.getInstance().listFunctionFactories(VERSION).forEach((nameAndArity, factory) -> {
+		ClassPathFunctionLoader.getInstance().listFunctions(VERSION).forEach((nameAndArity, factory) -> {
 			String signature = nameAndArity.toString();
 			if (exclusions.contains(signature))
 				return;

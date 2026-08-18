@@ -9,18 +9,18 @@ import com.google.auto.service.AutoService;
 import net.thisptr.jackson.jq.v2.core.ClassPathFunctionLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 
-@AutoService(FunctionFactory.class)
+@AutoService(Function.class)
 @FunctionRegistration(name = "builtins", nargs = 0)
-public class BuiltinsFunction implements FunctionFactory {
+public class BuiltinsFunction implements Function {
 	@Override
-	public <JsonNode> Expression<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
+	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		List<String> builtins = new ArrayList<>();
-		for (FunctionNameAndArity fn : ClassPathFunctionLoader.getInstance().listFunctionFactories(version).keySet()) {
+		for (FunctionNameAndArity fn : ClassPathFunctionLoader.getInstance().listFunctions(version).keySet()) {
 			builtins.add(fn.toString());
 		}
 		Collections.sort(builtins);

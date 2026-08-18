@@ -14,7 +14,7 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionLoader;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -27,14 +27,14 @@ public class Environment<JsonNode> {
 	private @Nullable ModuleLoader<JsonNode> moduleLoader;
 	private @Nullable FunctionLoader functionLoader;
 	private final Map<String, Supplier<JsonNode>> variables = new HashMap<>();
-	private final Map<FunctionNameAndArity, FunctionFactory> functionFactories = new HashMap<>();
+	private final Map<FunctionNameAndArity, Function> functions = new HashMap<>();
 
 	public Environment(JsonProvider<JsonNode> jsonProvider, Version version) {
 		this.jsonProvider = jsonProvider;
 		this.version = version;
 		this.functionLoader = ClassPathFunctionLoader.getInstance();
-		Map<FunctionNameAndArity, FunctionFactory> builtins = this.functionLoader.listFunctionFactories(version);
-		this.functionFactories.putAll(builtins);
+		Map<FunctionNameAndArity, Function> builtins = this.functionLoader.listFunctions(version);
+		this.functions.putAll(builtins);
 	}
 
 	public JsonProvider<JsonNode> jsonProvider() {
@@ -56,8 +56,8 @@ public class Environment<JsonNode> {
 
 	public Environment<JsonNode> setFunctionLoader(FunctionLoader functionLoader) {
 		this.functionLoader = functionLoader;
-		Map<FunctionNameAndArity, FunctionFactory> factories = functionLoader.listFunctionFactories(version);
-		this.functionFactories.putAll(factories);
+		Map<FunctionNameAndArity, Function> factories = functionLoader.listFunctions(version);
+		this.functions.putAll(factories);
 		return this;
 	}
 
@@ -82,20 +82,20 @@ public class Environment<JsonNode> {
 		return Collections.unmodifiableMap(variables);
 	}
 
-	public Environment<JsonNode> addFunctionFactory(FunctionNameAndArity nameAndArity, FunctionFactory functionFactory) {
-		functionFactories.put(nameAndArity, functionFactory);
+	public Environment<JsonNode> addFunction(FunctionNameAndArity nameAndArity, Function function) {
+		functions.put(nameAndArity, function);
 		return this;
 	}
 
-	public Map<FunctionNameAndArity, FunctionFactory> functionFactories() {
-		return Collections.unmodifiableMap(functionFactories);
+	public Map<FunctionNameAndArity, Function> functions() {
+		return Collections.unmodifiableMap(functions);
 	}
 
-	public @Nullable FunctionFactory getFunctionFactory(FunctionNameAndArity nameAndArity) {
-		FunctionFactory factory = functionFactories.get(nameAndArity);
+	public @Nullable Function getFunction(FunctionNameAndArity nameAndArity) {
+		Function factory = functions.get(nameAndArity);
 		if (factory != null)
 			return factory;
-		return functionFactories.get(nameAndArity.withArity(null));
+		return functions.get(nameAndArity.withArity(null));
 	}
 
 	public JsonQuery<JsonNode> compile(String expression) throws JsonQueryException {

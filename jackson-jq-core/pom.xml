@@ -86,11 +86,11 @@
 				<configuration>
 					<instructions>
 						<Provide-Capability>
-							osgi.serviceloader;osgi.serviceloader=net.thisptr.jackson.jq.v2.spi.FunctionFactory;uses:="net.thisptr.jackson.jq.v2.spi",
+							osgi.serviceloader;osgi.serviceloader=net.thisptr.jackson.jq.v2.spi.Function;uses:="net.thisptr.jackson.jq.v2.spi",
 							osgi.serviceloader;osgi.serviceloader=net.thisptr.jackson.jq.v2.spi.JqLibrary;uses:="net.thisptr.jackson.jq.v2.spi"
 						</Provide-Capability>
 						<Require-Capability>
-							osgi.serviceloader;filter:="(osgi.serviceloader=net.thisptr.jackson.jq.v2.spi.FunctionFactory)";cardinality:=multiple,
+							osgi.serviceloader;filter:="(osgi.serviceloader=net.thisptr.jackson.jq.v2.spi.Function)";cardinality:=multiple,
 							osgi.serviceloader;filter:="(osgi.serviceloader=net.thisptr.jackson.jq.v2.spi.JqLibrary)";cardinality:=multiple,
 							osgi.serviceloader;filter:="(osgi.serviceloader=net.thisptr.jackson.jq.v2.spi.module.Module)";cardinality:=multiple;resolution:=optional,
 							osgi.extender;filter:="(&amp;(osgi.extender=osgi.serviceloader.processor)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))",
@@ -98,7 +98,7 @@
 						</Require-Capability>
 						<Include-Resource>
 							{maven-resources},
-							META-INF/services/net.thisptr.jackson.jq.v2.spi.FunctionFactory=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.v2.spi.FunctionFactory,
+							META-INF/services/net.thisptr.jackson.jq.v2.spi.Function=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.v2.spi.Function,
 							META-INF/services/net.thisptr.jackson.jq.v2.spi.JqLibrary=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.v2.spi.JqLibrary
 						</Include-Resource>
 					</instructions>

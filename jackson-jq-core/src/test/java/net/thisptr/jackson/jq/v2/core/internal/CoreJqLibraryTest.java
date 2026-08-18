@@ -24,15 +24,15 @@ public class CoreJqLibraryTest {
 	@Test
 	public void appliesVersionRanges() {
 		Environment<JsonNode> env15 = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_5);
-		assertThat(env15.getFunctionFactory(FunctionNameAndArity.of("paths", 0))).isNotNull();
-		assertThat(env15.getFunctionFactory(FunctionNameAndArity.of("first", 1))).isNotNull();
-		assertThat(env15.getFunctionFactory(FunctionNameAndArity.of("walk", 1))).isNull();
-		assertThat(env15.getFunctionFactory(FunctionNameAndArity.of("pick", 1))).isNull();
+		assertThat(env15.getFunction(FunctionNameAndArity.of("paths", 0))).isNotNull();
+		assertThat(env15.getFunction(FunctionNameAndArity.of("first", 1))).isNotNull();
+		assertThat(env15.getFunction(FunctionNameAndArity.of("walk", 1))).isNull();
+		assertThat(env15.getFunction(FunctionNameAndArity.of("pick", 1))).isNull();
 
 		Environment<JsonNode> env17 = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_7);
-		assertThat(env17.getFunctionFactory(FunctionNameAndArity.of("paths", 0))).isNotNull();
-		assertThat(env17.getFunctionFactory(FunctionNameAndArity.of("first", 1))).isNotNull();
-		assertThat(env17.getFunctionFactory(FunctionNameAndArity.of("walk", 1))).isNotNull();
-		assertThat(env17.getFunctionFactory(FunctionNameAndArity.of("pick", 1))).isNotNull();
+		assertThat(env17.getFunction(FunctionNameAndArity.of("paths", 0))).isNotNull();
+		assertThat(env17.getFunction(FunctionNameAndArity.of("first", 1))).isNotNull();
+		assertThat(env17.getFunction(FunctionNameAndArity.of("walk", 1))).isNotNull();
+		assertThat(env17.getFunction(FunctionNameAndArity.of("pick", 1))).isNotNull();
 	}
 }

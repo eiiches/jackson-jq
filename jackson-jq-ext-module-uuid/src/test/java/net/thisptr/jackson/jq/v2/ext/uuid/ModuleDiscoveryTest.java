@@ -16,7 +16,7 @@ public class ModuleDiscoveryTest {
 		ClassPathModuleLoader<JsonNode> modules = new ClassPathModuleLoader<>(getClass().getClassLoader());
 		assertThat(modules.loadAllModules()).containsKey("jackson-jq/uuid").doesNotContainKey("jackson-jq/extras");
 
-		assertThat(ClassPathFunctionLoader.getInstance().listFunctionFactories(Versions.JQ_1_6))
+		assertThat(ClassPathFunctionLoader.getInstance().listFunctions(Versions.JQ_1_6))
 				.doesNotContainKeys(FunctionNameAndArity.of("uuid3", 1), FunctionNameAndArity.of("uuid4", 0), FunctionNameAndArity.of("uuid5", 1));
 	}
 }

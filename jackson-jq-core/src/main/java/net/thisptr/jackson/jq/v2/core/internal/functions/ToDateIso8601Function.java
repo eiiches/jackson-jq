@@ -10,17 +10,17 @@ import net.thisptr.jackson.jq.v2.core.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
-@AutoService(FunctionFactory.class)
+@AutoService(Function.class)
 @FunctionRegistration(name = "todateiso8601", nargs = 0)
-public class ToDateIso8601Function implements FunctionFactory {
+public class ToDateIso8601Function implements Function {
 
 	@Override
-	public <JsonNode> Expression<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
+	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (scope, in, ipath, output, ignoredRequirePath) -> {
 
 				Preconditions.checkInputType(jsonProvider, "todateiso8601", in, JsonNodeType.NUMBER);

@@ -1,3 +1,5 @@
+import net.thisptr.jackson.jq.v2.spi.Function;
+
 module net.thisptr.jackson.jq.v2.core {
 	requires static com.google.auto.service;
 	requires transitive net.thisptr.jackson.jq.v2.json;
@@ -9,14 +11,14 @@ module net.thisptr.jackson.jq.v2.core {
 	exports net.thisptr.jackson.jq.v2.core.module.loaders;
 	exports net.thisptr.jackson.jq.v2.core.path;
 
-	uses net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+	uses Function;
 	uses net.thisptr.jackson.jq.v2.spi.JqLibrary;
 	uses net.thisptr.jackson.jq.v2.spi.module.Module;
 
 	provides net.thisptr.jackson.jq.v2.spi.JqLibrary with
 		net.thisptr.jackson.jq.v2.core.internal.CoreJqLibrary;
 
-	provides net.thisptr.jackson.jq.v2.spi.FunctionFactory with
+	provides Function with
 		net.thisptr.jackson.jq.v2.core.internal.filters.CsvFilter,
 		net.thisptr.jackson.jq.v2.core.internal.filters.TsvFilter,
 		net.thisptr.jackson.jq.v2.core.internal.functions.AtBase64dFunction,

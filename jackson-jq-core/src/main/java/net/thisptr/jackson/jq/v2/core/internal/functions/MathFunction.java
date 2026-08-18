@@ -8,16 +8,16 @@ import net.thisptr.jackson.jq.v2.core.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
 
-public abstract class MathFunction implements FunctionFactory {
+public abstract class MathFunction implements Function {
 
 	@Override
-	public <JsonNode> Expression<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
+	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (scope, in, ipath, output, ignoredRequirePath) -> {
 			Preconditions.checkInputType(jsonProvider, "mathfunc", in, JsonNodeType.NUMBER);
 			output.emit(jsonProvider.createNumber(f(jsonProvider.asDouble(in))), null);
@@ -26,7 +26,7 @@ public abstract class MathFunction implements FunctionFactory {
 
 	protected abstract double f(double f);
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "atan", nargs = 0)
 	public static class AtanFunction extends MathFunction {
 		@Override
@@ -35,7 +35,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "tan", nargs = 0)
 	public static class TanFunction extends MathFunction {
 		@Override
@@ -44,7 +44,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "tanh", nargs = 0)
 	public static class TanhFunction extends MathFunction {
 		@Override
@@ -53,7 +53,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "acos", nargs = 0)
 	public static class AcosFunction extends MathFunction {
 		@Override
@@ -62,7 +62,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "cos", nargs = 0)
 	public static class CosFunction extends MathFunction {
 		@Override
@@ -71,7 +71,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "cosh", nargs = 0)
 	public static class CoshFunction extends MathFunction {
 		@Override
@@ -80,7 +80,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "floor", nargs = 0)
 	public static class FloorFunction extends MathFunction {
 		@Override
@@ -89,7 +89,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "ceil", nargs = 0)
 	public static class CeilFunction extends MathFunction {
 		@Override
@@ -98,7 +98,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "round", nargs = 0, version = @VersionRangeSpec(
 			min = @VersionSpec(major = 1, minor = 6, patch = 0)
 	))
@@ -109,7 +109,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "asin", nargs = 0)
 	public static class AsinFunction extends MathFunction {
 		@Override
@@ -118,7 +118,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "sin", nargs = 0)
 	public static class SinFunction extends MathFunction {
 		@Override
@@ -127,7 +127,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "sinh", nargs = 0)
 	public static class SinhFunction extends MathFunction {
 		@Override
@@ -136,7 +136,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "cbrt", nargs = 0)
 	public static class CbrtFunction extends MathFunction {
 		@Override
@@ -145,7 +145,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "sqrt", nargs = 0)
 	public static class SqrtFunction extends MathFunction {
 		@Override
@@ -154,7 +154,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "log2", nargs = 0)
 	public static class Log2Function extends MathFunction {
 		@Override
@@ -163,7 +163,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "log", nargs = 0)
 	public static class LogFunction extends MathFunction {
 		@Override
@@ -172,7 +172,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "log10", nargs = 0)
 	public static class Log10Function extends MathFunction {
 		@Override
@@ -181,7 +181,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "log1p", nargs = 0, version = @VersionRangeSpec(
 			min = @VersionSpec(major = 1, minor = 6, patch = 0)
 	))
@@ -192,7 +192,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "exp", nargs = 0)
 	public static class ExpFunction extends MathFunction {
 		@Override
@@ -201,7 +201,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "expm1", nargs = 0, version = @VersionRangeSpec(
 			min = @VersionSpec(major = 1, minor = 6, patch = 0)
 	))
@@ -212,7 +212,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "exp2", nargs = 0)
 	public static class Exp2Function extends MathFunction {
 		@Override
@@ -221,7 +221,7 @@ public abstract class MathFunction implements FunctionFactory {
 		}
 	}
 
-	@AutoService(FunctionFactory.class)
+	@AutoService(Function.class)
 	@FunctionRegistration(name = "exp10", nargs = 0, version = @VersionRangeSpec(
 			min = @VersionSpec(major = 1, minor = 6, patch = 0)
 	))

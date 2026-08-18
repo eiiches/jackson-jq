@@ -14,7 +14,7 @@ import net.thisptr.jackson.jq.v2.core.path.RootPath;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.StackMemory;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -40,7 +40,7 @@ public class FunctionRequirePathTest {
 
 	private boolean invokeLocalFunctionCall() {
 		AtomicBoolean requirePath = new AtomicBoolean(true);
-		FunctionFactory factory = recordingFactory(requirePath);
+		Function factory = recordingFactory(requirePath);
 		StackFrame frame = new StackMemory().pushFrame(1);
 		frame.set(0, factory);
 		ResolvedLocalFunctionAccess<JsonNode> call = new ResolvedLocalFunctionAccess<>(
@@ -65,10 +65,10 @@ public class FunctionRequirePathTest {
 		return requirePath.get();
 	}
 
-	private FunctionFactory recordingFactory(AtomicBoolean requirePath) {
-		return new FunctionFactory() {
+	private Function recordingFactory(AtomicBoolean requirePath) {
+		return new Function() {
 			@Override
-			public <N> Expression<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version version) {
+			public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version version) {
 				return recordingExpression(requirePath);
 			}
 		};

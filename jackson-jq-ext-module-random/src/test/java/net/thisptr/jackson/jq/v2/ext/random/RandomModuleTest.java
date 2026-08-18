@@ -35,6 +35,6 @@ public class RandomModuleTest {
 		ClassPathModuleLoader<JsonNode> modules = new ClassPathModuleLoader<>(getClass().getClassLoader());
 		assertThat(modules.loadAllModules()).containsKey("jackson-jq/random");
 
-		assertThat(ClassPathFunctionLoader.getInstance().listFunctionFactories(Versions.JQ_1_6)).doesNotContainKey(FunctionNameAndArity.of("random", 0));
+		assertThat(ClassPathFunctionLoader.getInstance().listFunctions(Versions.JQ_1_6)).doesNotContainKey(FunctionNameAndArity.of("random", 0));
 	}
 }

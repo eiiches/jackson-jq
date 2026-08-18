@@ -15,7 +15,7 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionLoader;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
@@ -44,10 +44,10 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 	 * E.g. in an OSGi context this may be the Bundle's {@link ClassLoader}.
 	 */
 	@Override
-	public Map<FunctionNameAndArity, FunctionFactory> listFunctionFactories(Version version) {
-		Map<FunctionNameAndArity, FunctionFactory> result = new HashMap<>();
+	public Map<FunctionNameAndArity, Function> listFunctions(Version version) {
+		Map<FunctionNameAndArity, Function> result = new HashMap<>();
 
-		for (FunctionFactory factory : ServiceLoader.load(FunctionFactory.class, ClassPathFunctionLoader.class.getClassLoader())) {
+		for (Function factory : ServiceLoader.load(Function.class, ClassPathFunctionLoader.class.getClassLoader())) {
 			FunctionRegistration[] regs = factory.getClass().getAnnotationsByType(FunctionRegistration.class);
 			for (FunctionRegistration reg : regs) {
 				VersionRange versionRange = VersionRange.valueOf(reg.version());
@@ -62,7 +62,7 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 			for (JqLibrary.JqFunc def : library.getFunctions()) {
 				if (def.version != null && !def.version.contains(version))
 					continue;
-				result.put(FunctionNameAndArity.of(def.name, def.args.size()), createJqFunctionFactory(def, version));
+				result.put(FunctionNameAndArity.of(def.name, def.args.size()), createJqFunction(def, version));
 			}
 		}
 
@@ -79,9 +79,9 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 		}
 	}
 
-	private FunctionFactory createJqFunctionFactory(JqLibrary.JqFunc def, Version version) {
+	private Function createJqFunction(JqLibrary.JqFunc def, Version version) {
 		AstNode parsedAst = AstParser.parse(def.body, version);
-		return new FunctionFactory() {
+		return new Function() {
 			private final IdentityHashMap<JsonProvider<?>, ResolvedFunction<?>> resolvedFunctions = new IdentityHashMap<>();
 
 			@SuppressWarnings("unchecked")
@@ -99,7 +99,7 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 					}
 				}
 				Environment<N> env = new Environment<>(jsonProvider, version);
-				listFunctionFactories(version).forEach(env::addFunctionFactory);
+				listFunctions(version).forEach(env::addFunction);
 				Expression<N> resolvedBody = Compiler.compileNonNull(env, context, parsedAst);
 				// fnSize must be read after the body is compiled, not before -- otherwise it misses any
 				// locals (`as`/`reduce`/`foreach` bindings, nested `def`s) the body itself introduces.
@@ -110,7 +110,7 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 			}
 
 			@Override
-			public <N> Expression<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version v) {
+			public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version v) {
 				return (callerFrame, in, path, output, ignoredRequirePath) -> {
 					ResolvedFunction<N> resolved = getResolvedFunction(jsonProvider);
 					StackFrame fnFrame = callerFrame != null
@@ -133,10 +133,10 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 			String pName = paramNames.get(i);
 			Expression<N> pExpr = args.get(i);
 			if (!pName.startsWith("$")) {
-				currentFrame.set(i, new FunctionFactory() {
+				currentFrame.set(i, new Function() {
 					@Override
 					@SuppressWarnings("unchecked")
-					public <N1> Expression<N1> createFunction(JsonProvider<N1> jp, List<Expression<N1>> emptyArgs, Version ver) {
+					public <N1> Expression<N1> bindArguments(JsonProvider<N1> jp, List<Expression<N1>> emptyArgs, Version ver) {
 						Expression<N1> effectiveExpr = (Expression<N1>) (Expression<?>) pExpr;
 						StackFrame effectiveCallerFrame = (StackFrame) (Object) callerFrame;
 						return (sFrame, inVal, pVal, outVal, ignoredRequirePath) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal, false);

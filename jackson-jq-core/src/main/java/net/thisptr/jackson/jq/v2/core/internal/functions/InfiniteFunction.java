@@ -6,15 +6,15 @@ import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 
-@AutoService(FunctionFactory.class)
+@AutoService(Function.class)
 @FunctionRegistration(name = "infinite", nargs = 0)
-public class InfiniteFunction implements FunctionFactory {
+public class InfiniteFunction implements Function {
 	@Override
-	public <JsonNode> Expression<JsonNode> createFunction(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
+	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (scope, in, ipath, output, ignoredRequirePath) -> {
 
 		output.emit(jsonProvider.createNumber(Double.POSITIVE_INFINITY), null);

@@ -9,7 +9,7 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.ClosureSpec;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.StackMemory;
@@ -73,10 +73,10 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<JsonNode
 	@Override
 	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
 		Closure[] closureHolder = new Closure[1];
-		FunctionFactory factory = new FunctionFactory() {
+		Function factory = new Function() {
 			@Override
 			@SuppressWarnings("unchecked")
-			public <N> Expression<N> createFunction(JsonProvider<N> jp, List<Expression<N>> fnArgs, Version version) {
+			public <N> Expression<N> bindArguments(JsonProvider<N> jp, List<Expression<N>> fnArgs, Version version) {
 				Expression<N> effectiveBody = (Expression<N>) resolvedBody;
 				return (callerFrame, input, path, out, ignoredRequirePath) -> {
 					Closure effectiveClosure = (Closure) closureHolder[0];

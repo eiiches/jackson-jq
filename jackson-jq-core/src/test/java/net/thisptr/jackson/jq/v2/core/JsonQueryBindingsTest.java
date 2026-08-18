@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.FunctionFactory;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -92,16 +92,16 @@ public class JsonQueryBindingsTest {
 	}
 
 	@Test
-	public void overridesFunctionFactoryPerInvocationAndThroughClosure() throws Exception {
+	public void overridesFunctionPerInvocationAndThroughClosure() throws Exception {
 		FunctionNameAndArity key = FunctionNameAndArity.of("custom", 0);
 		Environment<JsonNode> env = new Environment<>(JSON_PROVIDER, Versions.JQ_1_7);
 		env.addVariable("value", JSON_PROVIDER.createString("default-variable"));
-		env.addFunctionFactory(key, constantFunction("default-function"));
+		env.addFunction(key, constantFunction("default-function"));
 		JsonQuery<JsonNode> query = env.compile("def wrapper: [$value, custom]; wrapper");
 
 		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
 				.addVariable("value", JSON_PROVIDER.createString("override-variable"))
-				.addFunctionFactory(key, constantFunction("override-function"))
+				.addFunction(key, constantFunction("override-function"))
 				.build();
 
 		assertEquals(Arrays.asList(MAPPER.readTree("[\"default-variable\",\"default-function\"]")), run(query, JsonQueryBindings.empty()));
@@ -119,7 +119,7 @@ public class JsonQueryBindingsTest {
 		assertThat(variableError).hasMessageContaining("$unknown");
 
 		JsonQueryBindings<JsonNode> functionBindings = JsonQueryBindings.<JsonNode>builder()
-				.addFunctionFactory(FunctionNameAndArity.of("unknown", 0), constantFunction("unused"))
+				.addFunction(FunctionNameAndArity.of("unknown", 0), constantFunction("unused"))
 				.build();
 		JsonQueryException functionError = assertThrows(JsonQueryException.class, () -> run(query, functionBindings));
 		assertThat(functionError).hasMessageContaining("unknown/0");
@@ -139,11 +139,11 @@ public class JsonQueryBindingsTest {
 		FunctionNameAndArity zeroArg = FunctionNameAndArity.of("custom", 0);
 		FunctionNameAndArity oneArg = FunctionNameAndArity.of("custom", 1);
 		Environment<JsonNode> env = new Environment<>(JSON_PROVIDER, Versions.JQ_1_7);
-		env.addFunctionFactory(zeroArg, constantFunction("zero"));
-		env.addFunctionFactory(oneArg, constantFunction("one"));
+		env.addFunction(zeroArg, constantFunction("zero"));
+		env.addFunction(oneArg, constantFunction("one"));
 		JsonQuery<JsonNode> query = env.compile("[custom, custom(.)]");
 		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
-				.addFunctionFactory(zeroArg, constantFunction("override"))
+				.addFunction(zeroArg, constantFunction("override"))
 				.build();
 
 		assertEquals(Arrays.asList(MAPPER.readTree("[\"override\",\"one\"]")), run(query, bindings));
@@ -153,10 +153,10 @@ public class JsonQueryBindingsTest {
 	public void overridesVariadicFunctionUsingRegisteredSignature() throws Exception {
 		FunctionNameAndArity variadic = FunctionNameAndArity.of("custom", 0).withArity(null);
 		Environment<JsonNode> env = new Environment<>(JSON_PROVIDER, Versions.JQ_1_7);
-		env.addFunctionFactory(variadic, constantFunction("default"));
+		env.addFunction(variadic, constantFunction("default"));
 		JsonQuery<JsonNode> query = env.compile("[custom, custom(.)]");
 		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
-				.addFunctionFactory(variadic, constantFunction("override"))
+				.addFunction(variadic, constantFunction("override"))
 				.build();
 
 		assertEquals(Arrays.asList(MAPPER.readTree("[\"override\",\"override\"]")), run(query, bindings));
@@ -185,10 +185,10 @@ public class JsonQueryBindingsTest {
 		return JsonQueryBindings.<JsonNode>builder().addVariable(name, JSON_PROVIDER.createNumber(value)).build();
 	}
 
-	private static FunctionFactory constantFunction(String value) {
-		return new FunctionFactory() {
+	private static Function constantFunction(String value) {
+		return new Function() {
 			@Override
-			public <N> Expression<N> createFunction(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version version) {
+			public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version version) {
 				return (frame, in, path, output, ignoredRequirePath) -> output.emit(jsonProvider.createString(value), null);
 			}
 		};

@@ -135,7 +135,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		AstNode ast = AstParser.parse(moduleString + " null", version);
 		Compiler.compile(moduleEnv, module, ast);
 
-		moduleEnv.functionFactories().forEach((key, factory) -> {
+		moduleEnv.functions().forEach((key, factory) -> {
 			if (key.arity() != null)
 				module.addFunction(key.name(), key.arity(), factory);
 		});

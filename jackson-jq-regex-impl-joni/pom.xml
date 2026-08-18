@@ -56,13 +56,13 @@
 				<configuration>
 					<instructions>
 						<Provide-Capability>
-							osgi.serviceloader;osgi.serviceloader=net.thisptr.jackson.jq.v2.spi.FunctionFactory;uses:="net.thisptr.jackson.jq.v2.spi",
+							osgi.serviceloader;osgi.serviceloader=net.thisptr.jackson.jq.v2.spi.Function;uses:="net.thisptr.jackson.jq.v2.spi",
 							osgi.serviceloader;osgi.serviceloader=net.thisptr.jackson.jq.v2.spi.JqLibrary;uses:="net.thisptr.jackson.jq.v2.spi"
 						</Provide-Capability>
 						<Require-Capability>osgi.extender;filter:="(&amp;(osgi.extender=osgi.serviceloader.registrar)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"</Require-Capability>
 						<Include-Resource>
 							{maven-resources},
-							META-INF/services/net.thisptr.jackson.jq.v2.spi.FunctionFactory=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.v2.spi.FunctionFactory,
+							META-INF/services/net.thisptr.jackson.jq.v2.spi.Function=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.v2.spi.Function,
 							META-INF/services/net.thisptr.jackson.jq.v2.spi.JqLibrary=${project.build.outputDirectory}/META-INF/services/net.thisptr.jackson.jq.v2.spi.JqLibrary,
 							META-INF/native-image/native-image.properties=${project.build.outputDirectory}/META-INF/native-image/native-image.properties
 						</Include-Resource>
