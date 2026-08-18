@@ -68,6 +68,28 @@ public class JsonQueryFunctionTest {
 				eval(env, "def outer($a): def inner: $a; inner, (2 as $b | $b); outer(5)", NullNode.getInstance()));
 	}
 
+	@Test
+	public void computedPatternKeyUsesOuterScopeBeforeShadowingBinding() throws IOException {
+		ObjectMapper mapper = new ObjectMapper();
+		Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_5);
+		ClassPathFunctionLoader.getInstance().listFunctions(Versions.JQ_1_5).forEach(env::addFunction);
+
+		assertEquals(Arrays.asList(mapper.readTree("1")),
+				eval(env, "\"a\" as $x | {\"a\": 1} as {($x): $x} | $x", NullNode.getInstance()));
+	}
+
+	@Test
+	public void reduceAndForeachUseResolvedPatternSlots() throws IOException {
+		ObjectMapper mapper = new ObjectMapper();
+		Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_5);
+		ClassPathFunctionLoader.getInstance().listFunctions(Versions.JQ_1_5).forEach(env::addFunction);
+
+		assertEquals(Arrays.asList(mapper.readTree("10")),
+				eval(env, "reduce [[1,2],[3,4]][] as [$a,$b] (0; . + $a + $b)", NullNode.getInstance()));
+		assertEquals(Arrays.asList(mapper.readTree("[3,10]")),
+				eval(env, "[foreach [[1,2],[3,4]][] as [$a,$b] (0; . + $a + $b)]", NullNode.getInstance()));
+	}
+
 	public static List<JsonNode> eval(Environment<JsonNode> env, String q, JsonNode in) throws JsonQueryException {
 		List<JsonNode> out = new ArrayList<>();
 		env.compile(q).apply(in, (outNode, path) -> out.add(outNode));

@@ -224,7 +224,7 @@ public class Compiler {
 					if (comp instanceof PipedQueryAstNode.AssignPipeComponent) {
 						PipedQueryAstNode.AssignPipeComponent assign = (PipedQueryAstNode.AssignPipeComponent) comp;
 						Expression<JsonNode> compiledExpr = compileNonNull(env, context, assign.expr);
-						PatternMatcher<JsonNode> compiledMatcher = compileMatcher(env, context, assign.matcher);
+						@Var PatternMatcher<JsonNode> compiledMatcher = compileMatcher(env, context, assign.matcher);
 
 						context.pushLocalScope();
 						pushedScopes++;
@@ -236,8 +236,9 @@ public class Compiler {
 							context.addLocalVariable(varName);
 							slots.put(varName, context.getVariableSlot(varName));
 						}
+						compiledMatcher = compiledMatcher.resolveSlots(slots);
 
-						newComponents.add(new AssignPipeComponent<>(compiledExpr, compiledMatcher, slots));
+						newComponents.add(new AssignPipeComponent<>(compiledExpr, compiledMatcher));
 					} else if (comp instanceof PipedQueryAstNode.TransformPipeComponent) {
 						PipedQueryAstNode.TransformPipeComponent transform = (PipedQueryAstNode.TransformPipeComponent) comp;
 						Expression<JsonNode> compiledExpr = compileNonNull(env, context, transform.expr);
@@ -349,7 +350,7 @@ public class Compiler {
 			ReduceExpressionAstNode red = (ReduceExpressionAstNode) ast;
 			Expression<JsonNode> compiledIter = compileNonNull(env, context, red.iterExpr());
 			Expression<JsonNode> compiledInit = compileNonNull(env, context, red.initExpr());
-			PatternMatcher<JsonNode> compiledMatcher = compileMatcher(env, context, red.matcher());
+			@Var PatternMatcher<JsonNode> compiledMatcher = compileMatcher(env, context, red.matcher());
 
 			Set<String> varNames = new HashSet<>();
 			collectVariableNames(red.matcher(), varNames);
@@ -360,8 +361,9 @@ public class Compiler {
 					context.addLocalVariable(varName);
 					slots.put(varName, context.getVariableSlot(varName));
 				}
+				compiledMatcher = compiledMatcher.resolveSlots(slots);
 				Expression<JsonNode> compiledReduce = compileNonNull(env, context, red.reduceExpr());
-				return new ReduceExpression<>(env.jsonProvider(), compiledMatcher, compiledInit, compiledReduce, compiledIter, slots);
+				return new ReduceExpression<>(env.jsonProvider(), compiledMatcher, compiledInit, compiledReduce, compiledIter);
 			} finally {
 				context.popScope();
 			}
@@ -371,7 +373,7 @@ public class Compiler {
 			ForeachExpressionAstNode fe = (ForeachExpressionAstNode) ast;
 			Expression<JsonNode> compiledIter = compileNonNull(env, context, fe.iterExpr());
 			Expression<JsonNode> compiledInit = compileNonNull(env, context, fe.initExpr());
-			PatternMatcher<JsonNode> compiledMatcher = compileMatcher(env, context, fe.matcher());
+			@Var PatternMatcher<JsonNode> compiledMatcher = compileMatcher(env, context, fe.matcher());
 
 			Set<String> varNames = new HashSet<>();
 			collectVariableNames(fe.matcher(), varNames);
@@ -382,9 +384,10 @@ public class Compiler {
 					context.addLocalVariable(varName);
 					slots.put(varName, context.getVariableSlot(varName));
 				}
+				compiledMatcher = compiledMatcher.resolveSlots(slots);
 				Expression<JsonNode> compiledUpdate = compileNonNull(env, context, fe.updateExpr());
 				Expression<JsonNode> compiledExtract = fe.extractExpr() != null ? compile(env, context, fe.extractExpr()) : null;
-				return new ForeachExpression<>(compiledMatcher, compiledInit, compiledUpdate, compiledExtract, compiledIter, slots);
+				return new ForeachExpression<>(compiledMatcher, compiledInit, compiledUpdate, compiledExtract, compiledIter);
 			} finally {
 				context.popScope();
 			}

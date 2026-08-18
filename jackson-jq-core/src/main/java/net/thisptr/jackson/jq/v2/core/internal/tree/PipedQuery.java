@@ -48,9 +48,8 @@ public class PipedQuery<JsonNode> implements Expression<JsonNode> {
 					// jq only uses the first match.
 					for (int i = vars.size() - 1; i >= 0; --i) {
 						PatternMatcher.MatchWithPath<JsonNode> var = vars.get(i);
-						int slot = ((AssignPipeComponent<JsonNode>) head).getSlot(var.name);
-						if (frame != null && slot >= 0) {
-							frame.set(slot, var.path != null ? new PathAndValue<>(var.path, var.value) : var.value);
+						if (frame != null && var.slot >= 0) {
+							frame.set(var.slot, var.path != null ? new PathAndValue<>(var.path, var.value) : var.value);
 						}
 					}
 					pathRecursive(frame, in, path, output, tail, requirePath);

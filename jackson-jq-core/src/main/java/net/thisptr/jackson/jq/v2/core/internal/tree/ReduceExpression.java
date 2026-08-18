@@ -1,14 +1,11 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Stack;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -23,30 +20,19 @@ public class ReduceExpression<JsonNode> implements Expression<JsonNode> {
 	private Expression<JsonNode> reduceExpr;
 	private Expression<JsonNode> initExpr;
 	private PatternMatcher<JsonNode> matcher;
-	private Map<String, Integer> slots;
 
 	public ReduceExpression(JsonProvider<JsonNode> jsonProvider, PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> reduceExpr, Expression<JsonNode> iterExpr) {
-		this(jsonProvider, matcher, initExpr, reduceExpr, iterExpr, Collections.emptyMap());
-	}
-
-	public ReduceExpression(JsonProvider<JsonNode> jsonProvider, PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> reduceExpr, Expression<JsonNode> iterExpr, Map<String, Integer> slots) {
 		this.jsonProvider = jsonProvider;
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.reduceExpr = reduceExpr;
 		this.iterExpr = iterExpr;
-		this.slots = slots;
 	}
 
 	public PatternMatcher<JsonNode> matcher() { return matcher; }
 	public Expression<JsonNode> initExpr() { return initExpr; }
 	public Expression<JsonNode> reduceExpr() { return reduceExpr; }
 	public Expression<JsonNode> iterExpr() { return iterExpr; }
-
-	public int getSlot(String name) {
-		Integer slot = slots.get(name);
-		return slot != null ? slot.intValue() : -1;
-	}
 
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
 
@@ -58,13 +44,12 @@ public class ReduceExpression<JsonNode> implements Expression<JsonNode> {
 			JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
 
 			iterExpr.apply(frame, in, (item) -> {
-				Stack<Pair<String, JsonNode>> stack = new Stack<>();
-				matcher.match(frame, item, (List<Pair<String, JsonNode>> vars) -> {
+				Stack<PatternMatcher.Match<JsonNode>> stack = new Stack<>();
+				matcher.match(frame, item, (List<PatternMatcher.Match<JsonNode>> vars) -> {
 					for (int i = vars.size() - 1; i >= 0; --i) {
-						Pair<String, JsonNode> var = vars.get(i);
-						int slot = getSlot(var._1);
-						if (frame != null && slot >= 0) {
-							frame.set(slot, var._2);
+						PatternMatcher.Match<JsonNode> var = vars.get(i);
+						if (frame != null && var.slot >= 0) {
+							frame.set(var.slot, var.value);
 						}
 					}
 

@@ -1,8 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Stack;
 
 import org.jspecify.annotations.Nullable;
@@ -21,19 +19,13 @@ public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
 	private Expression<JsonNode> initExpr;
 	private @Nullable Expression<JsonNode> extractExpr;
 	private PatternMatcher<JsonNode> matcher;
-	private Map<String, Integer> slots;
 
 	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> updateExpr, @Nullable Expression<JsonNode> extractExpr, Expression<JsonNode> iterExpr) {
-		this(matcher, initExpr, updateExpr, extractExpr, iterExpr, Collections.emptyMap());
-	}
-
-	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> updateExpr, @Nullable Expression<JsonNode> extractExpr, Expression<JsonNode> iterExpr, Map<String, Integer> slots) {
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.updateExpr = updateExpr;
 		this.extractExpr = extractExpr;
 		this.iterExpr = iterExpr;
-		this.slots = slots;
 	}
 
 	public PatternMatcher<JsonNode> matcher() { return matcher; }
@@ -41,11 +33,6 @@ public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
 	public Expression<JsonNode> updateExpr() { return updateExpr; }
 	public @Nullable Expression<JsonNode> extractExpr() { return extractExpr; }
 	public Expression<JsonNode> iterExpr() { return iterExpr; }
-
-	public int getSlot(String name) {
-		Integer slot = slots.get(name);
-		return slot != null ? slot.intValue() : -1;
-	}
 
 	@Override
 	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
@@ -61,9 +48,8 @@ public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
 				matcher.matchWithPath(frame, item, itemPath, (List<PatternMatcher.MatchWithPath<JsonNode>> vars) -> {
 					for (int i = vars.size() - 1; i >= 0; --i) {
 						PatternMatcher.MatchWithPath<JsonNode> var = vars.get(i);
-						int slot = getSlot(var.name);
-						if (frame != null && slot >= 0) {
-							frame.set(slot, var.path != null ? new PathAndValue<>(var.path, var.value) : var.value);
+						if (frame != null && var.slot >= 0) {
+							frame.set(var.slot, var.path != null ? new PathAndValue<>(var.path, var.value) : var.value);
 						}
 					}
 
