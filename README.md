@@ -182,7 +182,7 @@ This table illustrates which features (picked from jq-1.5 manual) are supported 
 | [Advanced features](https://stedolan.github.io/jq/manual/v1.5/#Advancedfeatures)                                                                                                                                                                                                                                                   | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Variables](https://stedolan.github.io/jq/manual/v1.5/#Variables)                                                                                                                                                                                                                                   | ○<sup>*11</sup> |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Destructuring Alternative Operator: ?//](https://stedolan.github.io/jq/manual/v1.6/#DestructuringAlternativeOperator:?//)                                                                                                                                                                          | ✕ (#44)    |
-| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Defining Functions](https://stedolan.github.io/jq/manual/v1.5/#DefiningFunctions)                                                                                                                                                                                                                  | ○<sup>*3</sup> |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Defining Functions](https://stedolan.github.io/jq/manual/v1.5/#DefiningFunctions)                                                                                                                                                                                                                  | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Reduce](https://stedolan.github.io/jq/manual/v1.5/#Reduce)                                                                                                                                                                                                                                         | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`limit(n; exp)`](https://stedolan.github.io/jq/manual/v1.5/#limit&#40;n&#59;exp&#41;)                                                                                                                                                                                                              | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`first(expr)`, `last(expr)`, `nth(n; expr)`](https://stedolan.github.io/jq/manual/v1.5/#first&#40;expr&#41;&#44;last&#40;expr&#41;&#44;nth&#40;n&#59;expr&#41;)                                                                                                                                    | ○          |
@@ -258,34 +258,6 @@ Use explicit parentheses.
 ##### Links
 
 * [jackson-jq#72](https://github.com/eiiches/jackson-jq/issues/72)
-
-</details>
-
-
-<details>
-<summary>(*3) Multiple functions with the same name in the same scope</summary>
-
-##### Description
-
-If the function with the same is defined more than once at the same scope, jackson-jq uses the last one.
-
-##### Examples
-
-```console
-$ jq -n 'def f: 1; def g: f; def f: 2; g'
-1
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar -n 'def f: 1; def g: f; def f: 2; g'
-2
-```
-
-##### Workaround
-
-Avoid using the duplicate function name.
-
-```console
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar -n 'def f1: 1; def g: f1; def f2: 2; g'
-1
-```
 
 </details>
 
