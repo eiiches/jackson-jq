@@ -28,9 +28,9 @@ public class ForeachExpressionAstNode implements AstNode {
 	@Override
 	public String toString() {
 		if (extractExpr == null) {
-			return String.format("(foreach %s as %s (%s; %s))", iterExpr, matcher, initExpr, updateExpr);
+			return String.format("foreach %s as %s (%s; %s)", iterExpr, matcher, initExpr, updateExpr);
 		} else {
-			return String.format("(foreach %s as %s (%s; %s; %s))", iterExpr, matcher, initExpr, updateExpr, extractExpr);
+			return String.format("foreach %s as %s (%s; %s; %s)", iterExpr, matcher, initExpr, updateExpr, extractExpr);
 		}
 	}
 }

@@ -30,16 +30,16 @@ public class TryCatchAstNode implements AstNode {
 
 		@Override
 		public String toString() {
-			return String.format("(%s)?", tryExpr);
+			return tryExpr + "?";
 		}
 	}
 
 	@Override
 	public String toString() {
 		if (catchExpr != null) {
-			return String.format("(try (%s) catch (%s))", tryExpr, catchExpr);
+			return String.format("try %s catch %s", tryExpr, catchExpr);
 		} else {
-			return String.format("(try (%s))", tryExpr);
+			return String.format("try %s", tryExpr);
 		}
 	}
 }

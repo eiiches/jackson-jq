@@ -15,6 +15,6 @@ public class BinaryOpAstNode implements AstNode {
 
 	@Override
 	public String toString() {
-		return String.format("(%s %s %s)", lhs, operator.image, rhs);
+		return String.format("%s %s %s", lhs, operator.image, rhs);
 	}
 }

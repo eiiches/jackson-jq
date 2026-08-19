@@ -22,6 +22,6 @@ public class ReduceExpressionAstNode implements AstNode {
 
 	@Override
 	public String toString() {
-		return String.format("(reduce %s as %s (%s; %s))", iterExpr, matcher, initExpr, reduceExpr);
+		return String.format("reduce %s as %s (%s; %s)", iterExpr, matcher, initExpr, reduceExpr);
 	}
 }

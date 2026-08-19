@@ -1,9 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
-public class NegativeExpressionAstNode implements AstNode {
-	private AstNode value;
+public class ParenAstNode implements AstNode {
+	private final AstNode value;
 
-	public NegativeExpressionAstNode(AstNode value) {
+	public ParenAstNode(AstNode value) {
 		this.value = value;
 	}
 
@@ -13,6 +13,6 @@ public class NegativeExpressionAstNode implements AstNode {
 
 	@Override
 	public String toString() {
-		return "-" + value;
+		return "(" + value + ")";
 	}
 }

@@ -19,14 +19,13 @@ public class PipedQueryAstNode implements AstNode {
 
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder("(");
+		StringBuilder builder = new StringBuilder();
 		@Var String sep = "";
 		for (PipeComponent component : components) {
 			builder.append(sep);
 			builder.append(component.toString());
 			sep = " | ";
 		}
-		builder.append(")");
 		return builder.toString();
 	}
 

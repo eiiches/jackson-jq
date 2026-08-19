@@ -639,6 +639,7 @@ AstNode PrimaryExpression():
 		<OPEN_PAR>
 		tmp = Expression()
 		<CLOSE_PAR>
+		{ tmp = new ParenAstNode(tmp); }
 		(
 			tmp = FieldAccessor(tmp)
 		)?
@@ -862,11 +863,12 @@ void ObjectField(final ObjectConstructionAstNode obj):
 	)
 }
 
-AstNode ObjectFieldName():
+Pair<AstNode, Boolean> ObjectFieldName():
 {
 	Token token;
 	AstNode expr;
 	String keywordAsString;
+	boolean parenthesized = false;
 }
 {
 	(
@@ -881,8 +883,9 @@ AstNode ObjectFieldName():
 		<OPEN_PAR>
 		expr = Expression()
 		<CLOSE_PAR>
+		{ parenthesized = true; }
 	)
-	{ return expr; }
+	{ return Pair.of(expr, parenthesized); }
 }
 
 AstNode ObjectFieldValue():
@@ -894,6 +897,7 @@ AstNode ObjectFieldValue():
 		<OPEN_PAR>
 		expr = Expression()
 		<CLOSE_PAR>
+		{ expr = new ParenAstNode(expr); }
 	|
 		expr = JsonQueryWithoutComma()
 	)
@@ -1197,9 +1201,11 @@ PatternMatcherAstNode ObjectMatcher():
 ObjectMatcherAstNode.FieldMatcher ObjectMatcherField():
 {
 	AstNode nameExpr = null;
+	Pair<AstNode, Boolean> fieldName;
 	String name;
 	PatternMatcherAstNode matcher = null;
 	boolean dollar = false; // true if {$x} or {$x:...}; false if {x:...}
+	boolean parenthesizedName = false;
 }
 {
 	(
@@ -1212,11 +1218,12 @@ ObjectMatcherAstNode.FieldMatcher ObjectMatcherField():
 			matcher = Matcher()
 		)?
 	|
-		nameExpr = ObjectFieldName()
+		fieldName = ObjectFieldName()
+		{ nameExpr = fieldName._1; parenthesizedName = fieldName._2; }
 		<COLON>
 		matcher = Matcher()
 	)
-	{ return new ObjectMatcherAstNode.FieldMatcher(dollar, nameExpr, matcher); }
+	{ return new ObjectMatcherAstNode.FieldMatcher(dollar, nameExpr, matcher, parenthesizedName); }
 }
 
 PatternMatcherAstNode ValueMatcher():

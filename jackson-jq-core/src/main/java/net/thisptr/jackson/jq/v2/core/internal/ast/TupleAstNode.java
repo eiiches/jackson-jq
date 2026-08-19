@@ -2,6 +2,8 @@ package net.thisptr.jackson.jq.v2.core.internal.ast;
 
 import java.util.List;
 
+import com.google.errorprone.annotations.Var;
+
 public class TupleAstNode implements AstNode {
 	public final List<AstNode> qs;
 
@@ -11,6 +13,13 @@ public class TupleAstNode implements AstNode {
 
 	@Override
 	public String toString() {
-		return qs.toString().replaceAll("^\\[", "(").replaceAll("\\]$", ")");
+		StringBuilder builder = new StringBuilder();
+		@Var String separator = "";
+		for (AstNode q : qs) {
+			builder.append(separator);
+			builder.append(q);
+			separator = ", ";
+		}
+		return builder.toString();
 	}
 }

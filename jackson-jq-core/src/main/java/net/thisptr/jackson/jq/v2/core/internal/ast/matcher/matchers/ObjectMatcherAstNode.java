@@ -29,8 +29,13 @@ public class ObjectMatcherAstNode implements PatternMatcherAstNode {
 		private boolean dollar;
 		private AstNode name;
 		private @Nullable PatternMatcherAstNode matcher;
+		private boolean parenthesizedName;
 
 		public FieldMatcher(boolean dollar, AstNode name, @Nullable PatternMatcherAstNode matcher) {
+			this(dollar, name, matcher, false);
+		}
+
+		public FieldMatcher(boolean dollar, AstNode name, @Nullable PatternMatcherAstNode matcher, boolean parenthesizedName) {
 			if (dollar && !(name instanceof StringLiteralAstNode))
 				throw new IllegalArgumentException("BUG: name must be instance of StringLiteralAstNode when dollar = true");
 			if (!dollar && matcher == null)
@@ -38,6 +43,7 @@ public class ObjectMatcherAstNode implements PatternMatcherAstNode {
 			this.dollar = dollar;
 			this.name = name;
 			this.matcher = matcher;
+			this.parenthesizedName = parenthesizedName;
 		}
 
 		public boolean dollar() {
@@ -55,7 +61,11 @@ public class ObjectMatcherAstNode implements PatternMatcherAstNode {
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
+			if (parenthesizedName)
+				sb.append('(');
 			sb.append(name);
+			if (parenthesizedName)
+				sb.append(')');
 			if (matcher != null) {
 				sb.append(": ");
 				sb.append(matcher);

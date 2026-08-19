@@ -25,6 +25,7 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.FunctionCallAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.FunctionDefinitionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.NegativeExpressionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstructionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ParenAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.PipedQueryAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.RecursionOperatorAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ReduceExpressionAstNode;
@@ -152,6 +153,11 @@ public class Compiler {
 	public static <JsonNode> @Nullable Expression<JsonNode> compile(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, @Nullable AstNode ast) throws JsonQueryException {
 		if (ast == null)
 			return null;
+
+		if (ast instanceof ParenAstNode) {
+			ParenAstNode paren = (ParenAstNode) ast;
+			return compile(env, context, currentModule, paren.value());
+		}
 
 		if (ast instanceof FunctionCallAstNode) {
 			FunctionCallAstNode call = (FunctionCallAstNode) ast;

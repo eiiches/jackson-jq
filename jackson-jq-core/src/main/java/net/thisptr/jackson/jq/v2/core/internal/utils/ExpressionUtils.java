@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstructionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ParenAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.TupleAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.literal.StringLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.literal.ValueLiteralAstNode;
@@ -20,7 +21,9 @@ public class ExpressionUtils {
 	 * @return null if expr is not a constant
 	 */
 	public static <JsonNode> @Nullable JsonNode evaluateLiteralExpression(JsonProvider<JsonNode> jsonProvider, AstNode expr) {
-		if (expr instanceof ObjectConstructionAstNode) {
+		if (expr instanceof ParenAstNode) {
+			return evaluateLiteralExpression(jsonProvider, ((ParenAstNode) expr).value());
+		} else if (expr instanceof ObjectConstructionAstNode) {
 			JsonNode obj = jsonProvider.createObject();
 
 			for (ObjectConstructionAstNode.FieldConstructionAst field : ((ObjectConstructionAstNode) expr).fields) {
