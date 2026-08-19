@@ -1,16 +1,10 @@
-# Implementation Status
+# Implementation status
 
-jackson-jq aims to be a compatible jq implementation. However, not every feature is available; some are intentionally omitted because thay are not relevant as a Java library; some may be incomplete, have bugs or are yet to be implemented.
+jackson-jq aims to be compatible with jq. However, not every jq feature is available. Some features are intentionally omitted because they are not relevant to a Java library, while others are incomplete, contain bugs, or have not yet been implemented.
 
-### List of Features
-
-<details>
-<summary>Click to see the list</summary>
-<br />
-
-This table illustrates which features (picked from jq-1.5 manual) are supported and which are not in jackson-jq. We try to keep this list accurate and up to date. If you find something is missing or wrong, please file an issue.
+The following table shows which features from the jq 1.5 manual are supported by jackson-jq. We try to keep this list accurate and up to date. If you find an omission or error, please file an issue.
   
-| Language Features / Functions                                                                                                                                                                                                                                                                                                      | jackson-jq |
+| Language features / functions                                                                                                                                                                                                                                                                                                      | jackson-jq |
 |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|
 | [Basic filters](https://stedolan.github.io/jq/manual/v1.5/#Basicfilters)                                                                                                                                                                                                                                                           | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`.`](https://stedolan.github.io/jq/manual/v1.5/#&#46;)                                                                                                                                                                                                                                             | ○          |
@@ -135,18 +129,16 @@ This table illustrates which features (picked from jq-1.5 manual) are supported 
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`module <metadata>;`](https://stedolan.github.io/jq/manual/v1.5/#module&#60;metadata&#62;&#59;)                                                                                                                                                                                                    | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`modulemeta`](https://stedolan.github.io/jq/manual/v1.5/#modulemeta)                                                                                                                                                                                                                               | ×          |
 
-</details>
+### Known compatibility issues and differences
 
-### Known Compatibility Issues / Differences
-
-#### Category: BUG
+#### Category: Bug
 
 <details>
-<summary>(*11) Operator Precedences in <code>1 + 3 as $a | ($a * 2)</code></summary>
+<summary>(*11) Operator precedence in <code>1 + 3 as $a | ($a * 2)</code></summary>
   
 ##### Description
 
-The presence of `as $a` affects precedence of `|` and other operators in jq:
+In jq, the presence of `as $a` affects the precedence of `|` and other operators:
 
 ```console
 $ jq -n '1 + 3 | (. * 2)' # interpreted as (1 + 3) | (. * 2)
@@ -155,7 +147,7 @@ $ jq -n '1 + 3 as $a | ($a * 2)' # interpreted as 1 + (3 as $a | ($a * 2))
 7
 ```
 
-whereas jackson-jq consistently interprets them as `(1 + 3)` whether `as $a` is used or not:
+jackson-jq, however, consistently interprets `1 + 3` as `(1 + 3)`, regardless of whether `as $a` is present:
 
 ```console
 $ java -jar jackson-jq-cli-2.0.0-alpha1.jar -n '1 + 3 | (. * 2)' # interpreted as (1 + 3) | (. * 2)
@@ -184,18 +176,18 @@ Use explicit parentheses.
 </details>
 
 
-#### Category: BY DESIGN
+#### Category: By design
 
 <details>
-<summary>(*1) Error Message Wording</summary>
+<summary>(*1) Error message wording</summary>
 
 ##### Description
 
-Error messages differ between jq and jackson-jq and they also tend to change between versions.
+Error messages differ between jq and jackson-jq and may also change between versions.
 
 ##### Workaround
 
-None. This is by design and will not be fixed.
+None. jackson-jq does not aim to match jq's error messages.
 
 </details>
 
@@ -204,28 +196,28 @@ None. This is by design and will not be fixed.
 
 ##### Description
 
-`env/0` is not available by default for security reasons and must be added manually to the scope.
+For security reasons, `env/0` is not available by default. It must be registered explicitly with the `Environment`.
 
 ##### Workaround
 
-Add `env/0` manually into the scope:
+Register `env/0` with the `Environment`:
 
 ```java
-SCOPE.addFunction("env", 0, new EnvFunction())
+env.addFunction(FunctionNameAndArity.of("env", 0), new EnvFunction());
 ```
 
 </details>
 
 <details>
-<summary>(*4) Field Ordering in JSON Object</summary>
+<summary>(*4) Field order in JSON objects</summary>
 
 ##### Description
   
-The order of the keys in JSON is not preserved. It was a design decision but we are slowly trying to fix this in order to improve the compatibility with jq.
+jackson-jq does not preserve the order of keys in JSON objects. This was an intentional design choice, but we are gradually changing the behavior to improve compatibility with jq.
 
 ##### Workaround
 
-None. Use array if the order is important.
+Use an array if the order is important.
 
 </details>
   
@@ -234,7 +226,7 @@ None. Use array if the order is important.
 
 ##### Description
 
-jq evaluates `0 / 0`, if hard-coded, to NaN without any errors, whereas `0 | 0 / .` results in a zero-division error. jackson-jq always raises an error in both cases.
+jq evaluates a literal `0 / 0` as NaN without reporting an error, whereas `0 | 0 / .` produces a division-by-zero error. jackson-jq reports an error in both cases.
 
 ##### Examples
 
@@ -262,7 +254,7 @@ If you need NaN, use `nan` instead of `0 / 0`.
 
 ##### Description
 
-`.foo |= empty` always throws an error in jackson-jq instead of producing an unexpected result. jq-1.5 and jq-1.6 respectively produces a different and incorrect result for `[1,2,3] | ((.[] | select(. > 1)) |= empty)`. [jq#897](https://github.com/stedolan/jq/issues/897) says "empty in the RHS is undefined". You can still use `_modify/2` directly if you really want to emulate the exact jq-1.5 or jq-1.6 behavior.
+jackson-jq always reports an error for `.foo |= empty` rather than producing an unexpected result. jq 1.5 and jq 1.6 produce different, incorrect results for `[1,2,3] | ((.[] | select(. > 1)) |= empty)`. [jq#897](https://github.com/stedolan/jq/issues/897) states that using `empty` on the right-hand side is undefined. You can call `_modify/2` directly to reproduce the exact behavior of jq 1.5 or jq 1.6.
 
 ##### Examples
 
@@ -288,7 +280,7 @@ jq: error: `|= empty` is undefined. See https://github.com/stedolan/jq/issues/89
 
 ##### Workaround
 
-You can use `_modify/2` if you really want to the original behavior.
+Use `_modify/2` to reproduce the original behavior.
 
 ```console
 $ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.6 -n '[1,2,3] | _modify((.[] | select(. > 1)); empty)'
@@ -300,11 +292,11 @@ null
 </details>
   
 <details>
-<summary>(*7) Variables don't carry path information even in jq 1.5 compat mode.</summary>
+<summary>(*7) Variables do not carry path information, even in jq 1.5 compatibility mode.</summary>
 
 ##### Description
   
-`path(.foo as $a | $a)` always throws an error as $variables in jackson-jq do not carry path information like jq-1.5 accidentally? did. The behavior is fixed in jq-1.6 whose [documentation](https://stedolan.github.io/jq/manual/v1.6/#Assignment) explicitly states them as "not a valid or useful path expression". So, I dicided not to implement it even in jq-1.5 compatible mode.
+`path(.foo as $a | $a)` always reports an error because variables in jackson-jq do not carry path information. jq 1.5 preserved this information unintentionally, but jq 1.6 corrected the behavior. The [jq 1.6 documentation](https://stedolan.github.io/jq/manual/v1.6/#Assignment) explicitly describes such expressions as "not a valid or useful path expression." For this reason, jackson-jq does not reproduce the jq 1.5 behavior, even in jq 1.5 compatibility mode.
 
 ##### Examples
   
@@ -328,7 +320,7 @@ jq: error: Invalid path expression with result 1
 
 ##### Workaround
 
-None
+None.
 
 </details>
 
@@ -337,7 +329,7 @@ None
 
 ##### Description
 
-<code>try (break $label) catch .</code> always produces <code>{"__jq": 0}</code> in jackson-jq, while `__jq` should contain the index of the label the `break` statement jumps to.
+In jackson-jq, <code>try (break $label) catch .</code> always produces <code>{"__jq": 0}</code>. However, `__jq` should contain the index of the label targeted by the `break` statement.
 
 ##### Examples
 
@@ -354,25 +346,25 @@ $ java -jar jackson-jq-cli-2.0.0-alpha1.jar -n 'label $a | label $b | try (break
 
 ##### Workaround
 
-None. Tell us your use case if you need this feature.
+None. If this limitation affects you, please tell us about your use case.
 
 </details>
 
-#### Category: BUGFIX
+#### Category: Upstream bug fix
 
 <details>
 <summary>(*9) <code>indices("")</code> returns <code>[]</code> (empty array) in jackson-jq.</summary>
 
 ##### Description
 
-`indices/1` implementation in jq-1.5 and jq-1.6 had a bug that caused `indices("")` to end up in infinite loop which eventually leads to OOM. The bug is [fixed](https://github.com/stedolan/jq/commit/2660b04a731568c54eb4b91fe811d81cbbf3470b) and likely to be in jq-1.7 (not released yet). jackson-jq chose not to simulate this bug.
+The jq 1.5 and jq 1.6 implementations of `indices/1` contained a bug that caused `indices("")` to enter an infinite loop and eventually exhaust available memory. The bug was later [fixed upstream](https://github.com/stedolan/jq/commit/2660b04a731568c54eb4b91fe811d81cbbf3470b). jackson-jq does not reproduce this bug.
 
 ##### Examples
   
 ```console
-$ jq-1.5 -n '"x" | indices("")' # stuck in infinite loop
+$ jq-1.5 -n '"x" | indices("")' # hangs in an infinite loop
 ^C
-$ jq-1.6 -n '"x" | indices("")' # stuck in infinite loop
+$ jq-1.6 -n '"x" | indices("")' # hangs in an infinite loop
 ^C
 $ jq-1.6-83-gb52fc10 -n '"x" | indices("")'
 []

@@ -1,12 +1,12 @@
 # Branches and versioning
 
-There are currently two development branches.
+The project currently maintains two development branches:
 
-* `develop/1.x`: This branch (you are viewing), which is currently under development for the future 1.0 release. You can find preview releases at [Releases](https://github.com/eiiches/jackson-jq/releases) page (tags: `1.0.0-preview.yyyyMMdd`). Although the API is not stable yet, I recommend new users to use these releases insetad of 0.x versions, because these releases have more features, better compatibility, and better performance.
-* `develop/0.x`: The development branch for 0.x versions. Features that need breaking API changes will no longer be added. Go to [Releases](https://github.com/eiiches/jackson-jq/releases) and find the latest 0.x.y version.
+* `develop/2.x`: The active development branch for the 2.x series. Preview releases are available on the [Releases](https://github.com/eiiches/jackson-jq/releases) page.
+* `develop/1.x`: The maintenance branch for the 1.x series. New features that require breaking API changes are added only to `develop/2.x`.
 
-PRs can be sent to any of the develop/\* branches. The patch will be ported to the other branch(es) if necessary.
+The `develop/0.x` branch is no longer maintained.
 
-We use [Semantic Versioning 2.0.0](https://semver.org/) for Java API versioning, 1.0.0 onwards. A jq behavior fix (even if it may possibly affect users) will not be considered a major change if the fix is to make the bahavior compatible with ./jq; these kind of incompatible changes are documented in the release note.
+Pull requests may target either development branch. The maintainers will port changes to the other branch when necessary.
 
-If you get different results between ./jq and jackson-jq, please [file an issue](https://github.com/eiiches/jackson-jq/issues). That is a bug on jackson-jq side.
+Starting with version 1.0.0, the Java API follows [Semantic Versioning 2.0.0](https://semver.org/). A correction that brings jackson-jq behavior into alignment with jq may be released without a major version bump when its impact on existing users is limited. Changes that affect many users require a major version bump. Such compatibility changes are documented in the release notes.

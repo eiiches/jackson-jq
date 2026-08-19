@@ -29,14 +29,15 @@ update_scm_tag() {
 	mvn "${versions_maven_plugin}:set-scm-tag" -DnewTag="$tag" -DgenerateBackupPoms=false
 }
 
-update_readme_version_refs() {
+update_documentation_version_refs() {
 	local release_version="$1"
+	local documentation_files=(README.md docs/*.md)
 
-	sed -i "s;<version>[0-9A-Za-z.-]*</version>;<version>$release_version</version>;" README.md
-	sed -i "s;https://search.maven.org/artifact/net.thisptr.jackson.jq.v2/jackson-jq/[0-9A-Za-z.-]*/;https://search.maven.org/artifact/net.thisptr.jackson.jq.v2/jackson-jq/$release_version/;" README.md
-	sed -i "s;jackson-jq-cli-[0-9A-Za-z.-]*.jar;jackson-jq-cli-$release_version.jar;" README.md
-	sed -i "s;https://repo1.maven.org/maven2/net/thisptr/jackson/jq/v2/jackson-jq-cli/[0-9A-Za-z.-]*/;https://repo1.maven.org/maven2/net/thisptr/jackson/jq/v2/jackson-jq-cli/$release_version/;" README.md
-	sed -i "s;*You are currently viewing the .* branch. Some of the features may not be released yet.*;;" README.md
+	sed -i "s;<version>[0-9A-Za-z.-]*</version>;<version>$release_version</version>;" "${documentation_files[@]}"
+	sed -i "s;https://search.maven.org/artifact/net.thisptr.jackson.jq.v2/jackson-jq/[0-9A-Za-z.-]*/;https://search.maven.org/artifact/net.thisptr.jackson.jq.v2/jackson-jq/$release_version/;" "${documentation_files[@]}"
+	sed -i "s;jackson-jq-cli-[0-9A-Za-z.-]*.jar;jackson-jq-cli-$release_version.jar;" "${documentation_files[@]}"
+	sed -i "s;https://repo1.maven.org/maven2/net/thisptr/jackson/jq/v2/jackson-jq-cli/[0-9A-Za-z.-]*/;https://repo1.maven.org/maven2/net/thisptr/jackson/jq/v2/jackson-jq-cli/$release_version/;" "${documentation_files[@]}"
+	sed -i "s;*You are currently viewing the .* branch. Some of the features may not be released yet.*;;" "${documentation_files[@]}"
 }
 
 case "$mode" in
@@ -44,7 +45,7 @@ prepare-release)
 	release_version="$2"
 	update_project_version_refs "$release_version"
 	update_scm_tag "$release_version"
-	update_readme_version_refs "$release_version"
+	update_documentation_version_refs "$release_version"
 	;;
 prepare-next-development-iteration)
 	next_development_version="$2"
