@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -23,9 +24,13 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
+import net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
@@ -133,9 +138,12 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		Environment<JsonNode> moduleEnv = new Environment<>(jsonProvider, version);
 		moduleEnv.setModuleLoader(parentModuleLoader != null ? parentModuleLoader : this);
 		AstNode ast = AstParser.parse(moduleString + " null", version);
-		Compiler.compile(moduleEnv, module, ast);
+		Expression<JsonNode> compiled = Compiler.compileModule(moduleEnv, module, ast);
+		if (!(compiled instanceof RootExpression))
+			throw new IllegalStateException("Compiler did not produce a root expression");
 
-		moduleEnv.functions().forEach((key, factory) -> {
+		Map<FunctionNameAndArity, Function> exportedFunctions = ((RootExpression<JsonNode>) compiled).applyForModuleExports(jsonProvider.createNull());
+		exportedFunctions.forEach((key, factory) -> {
 			if (key.arity() != null)
 				module.addFunction(key.name(), key.arity(), factory);
 		});

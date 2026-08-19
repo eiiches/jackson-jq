@@ -98,7 +98,6 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
-import net.thisptr.jackson.jq.v2.spi.StackMemory;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
@@ -111,14 +110,30 @@ public class Compiler {
 	}
 
 	public static <JsonNode> Expression<JsonNode> compile(Environment<JsonNode> env, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
-		CompileContext context = new CompileContext();
+		return compileRoot(env, currentModule, ast, false);
+	}
+
+	/**
+	 * Compiles a module's own defining source. Unlike {@link #compile(Environment, Module, AstNode)}, this
+	 * tracks the module's genuinely top-level {@code def}s (see {@link CompileContext#exportsTopLevelFunctions()}
+	 * / {@link CompileContext#isRootScope()}) so {@link RootExpression#applyForModuleExports} can harvest their
+	 * real, correctly closure-bound {@link Function} values after running the module body once. This is how
+	 * {@code FileSystemModuleLoader.loadModuleActual} populates a file-based module's exported functions.
+	 * Ordinary query compilation must never do this -- use {@link #compile(Environment, Module, AstNode)}.
+	 */
+	public static <JsonNode> Expression<JsonNode> compileModule(Environment<JsonNode> env, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
+		return compileRoot(env, currentModule, ast, true);
+	}
+
+	private static <JsonNode> Expression<JsonNode> compileRoot(Environment<JsonNode> env, @Nullable Module currentModule, AstNode ast, boolean exportTopLevelFunctions) throws JsonQueryException {
+		CompileContext context = new CompileContext(exportTopLevelFunctions);
 		registerEnvironmentGlobals(env, context);
 		Expression<JsonNode> compiled = compile(env, context, currentModule, ast);
 		if (compiled == null)
 			throw new JsonQueryException("Cannot resolve null expression");
 		return new RootExpression<>(context.getSlotCount(), compiled,
 				env.variables(), env.functions(), context.globalVariableSlots(), context.globalFunctionSlots(),
-				context.globalVariables(), context.globalFunctions());
+				context.globalVariables(), context.globalFunctions(), context.rootFunctionSlots());
 	}
 
 	public static <JsonNode> void registerEnvironmentGlobals(Environment<JsonNode> env, CompileContext context) {
@@ -487,6 +502,7 @@ public class Compiler {
 
 		if (ast instanceof FunctionDefinitionAstNode) {
 			FunctionDefinitionAstNode fd = (FunctionDefinitionAstNode) ast;
+			boolean isTopLevelDefinition = context.isRootScope();
 			context.addLocalFunction(fd.fname(), fd.args().size());
 
 			List<Integer> paramSlots = new ArrayList<>();
@@ -514,30 +530,11 @@ public class Compiler {
 			}
 			int definerClosureSlot = context.getCurrentFunctionClosureSlot();
 
-			FunctionNameAndArity key = FunctionNameAndArity.of(fd.fname(), fd.args().size());
-			Function envFactory = new Function() {
-				@Override
-				@SuppressWarnings("unchecked")
-				public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> fnArgs, Version version) {
-					Expression<N> effectiveBody = (Expression<N>) (Expression<?>) compiledBody;
-					return (callerFrame, input, path, output, ignoredRequirePath) -> {
-						StackFrame fnFrame = callerFrame != null
-								? callerFrame.getEnclosingMemory().pushFrame(fnSize)
-								: new StackMemory().pushFrame(fnSize);
-						try {
-							bindAndApply(callerFrame, fnFrame, fd.args(), paramSlots, fnArgs, input, path, output, (execFrame) -> {
-								effectiveBody.apply(execFrame, input, path, output, false);
-							});
-						} finally {
-							fnFrame.getEnclosingMemory().popFrame();
-						}
-					};
-				}
-			};
-			env.addFunction(key, envFactory);
-
 			SymbolLocation loc = context.getFunctionLocation(fd.fname(), fd.args().size());
 			int slot = loc != null ? loc.slot : 0;
+			if (context.exportsTopLevelFunctions() && isTopLevelDefinition) {
+				context.recordRootFunctionSlot(FunctionNameAndArity.of(fd.fname(), fd.args().size()), slot);
+			}
 			return new ResolvedFunctionDefinition(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody, ownClosureSlot, definerClosureSlot);
 		}
 

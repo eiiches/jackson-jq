@@ -55,8 +55,14 @@ public class CompileContext {
 	private final Set<FunctionNameAndArity> globalFunctions;
 	private final Set<Integer> globalVariableRootSlots;
 	private final Set<Integer> globalFunctionRootSlots;
+	private final boolean exportTopLevelFunctions;
+	private final Map<FunctionNameAndArity, Integer> rootFunctionSlots;
 
 	public CompileContext() {
+		this(false);
+	}
+
+	public CompileContext(boolean exportTopLevelFunctions) {
 		this.scopes = new ArrayList<>();
 		this.scopes.add(new ScopeFrame(true, 0));
 		this.globalVariableSlots = new HashMap<>();
@@ -65,6 +71,35 @@ public class CompileContext {
 		this.globalFunctions = new HashSet<>();
 		this.globalVariableRootSlots = new HashSet<>();
 		this.globalFunctionRootSlots = new HashSet<>();
+		this.exportTopLevelFunctions = exportTopLevelFunctions;
+		this.rootFunctionSlots = new HashMap<>();
+	}
+
+	/**
+	 * Whether top-level {@code def}s compiled in this context should be tracked (via
+	 * {@link #recordRootFunctionSlot}) for later harvesting into a module's exported functions
+	 * ({@link Compiler#compileModule}). False for ordinary query compilation.
+	 */
+	public boolean exportsTopLevelFunctions() {
+		return exportTopLevelFunctions;
+	}
+
+	/**
+	 * Whether the current compile position is at the root scope -- i.e. not nested inside any {@code def},
+	 * {@code as}, {@code reduce}, or {@code foreach} binding. Used to restrict
+	 * {@link #exportsTopLevelFunctions()} tracking to a module's genuinely top-level {@code def}s, matching
+	 * real jq module semantics (nested defs are private, not importable).
+	 */
+	public boolean isRootScope() {
+		return scopes.size() == 1;
+	}
+
+	public void recordRootFunctionSlot(FunctionNameAndArity key, int slot) {
+		rootFunctionSlots.put(key, slot);
+	}
+
+	public Map<FunctionNameAndArity, Integer> rootFunctionSlots() {
+		return rootFunctionSlots;
 	}
 
 

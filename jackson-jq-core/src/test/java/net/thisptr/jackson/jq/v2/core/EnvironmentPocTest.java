@@ -130,6 +130,39 @@ public class EnvironmentPocTest {
 	}
 
 	@Test
+	public void testLocalDefDoesNotLeakIntoGlobalFunctionTable() throws Exception {
+		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_7);
+
+		// First compile: defines and immediately uses a local `foo` -- must work.
+		JsonQuery<JsonNode> q1 = env.compile("def foo: 1; foo");
+		List<JsonNode> out = new ArrayList<>();
+		q1.apply(MAPPER.readTree("null"), (outNode, path) -> out.add(outNode));
+		assertEquals(1, out.size());
+		assertEquals(1, out.get(0).asInt());
+
+		// Second, independent compile on the SAME Environment: `foo` was never re-defined here, and must
+		// not have been globally registered as a side effect of the first compile.
+		JsonQueryException ex = assertThrows(JsonQueryException.class, () -> {
+			env.compile("foo");
+		});
+		assertNotNull(ex.getMessage());
+		assertTrue(ex.getMessage().contains("foo/0 does not exist"));
+	}
+
+	@Test
+	public void testLocalDefWithCaptureDoesNotLeakEitherAndFailsCleanlyAfterwards() throws Exception {
+		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_7);
+
+		env.compile("1 as $x | def bar: $x; bar");
+
+		JsonQueryException ex = assertThrows(JsonQueryException.class, () -> {
+			env.compile("bar");
+		});
+		assertNotNull(ex.getMessage());
+		assertTrue(ex.getMessage().contains("bar/0 does not exist"));
+	}
+
+	@Test
 	public void testLocalAstVariableResolution() throws Exception {
 		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_7);
 

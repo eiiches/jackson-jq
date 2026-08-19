@@ -30,9 +30,10 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 	private final Map<FunctionNameAndArity, List<Integer>> functionSlots;
 	private final Set<String> validVariables;
 	private final Set<FunctionNameAndArity> validFunctions;
+	private final Map<FunctionNameAndArity, Integer> rootFunctionSlots;
 
 	public RootExpression(int frameSize, Expression<JsonNode> inner) {
-		this(frameSize, inner, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet(), Collections.emptySet());
+		this(frameSize, inner, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
 	}
 
 	public RootExpression(int frameSize, Expression<JsonNode> inner,
@@ -41,7 +42,8 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 			Map<String, List<Integer>> variableSlots,
 			Map<FunctionNameAndArity, List<Integer>> functionSlots,
 			Set<String> validVariables,
-			Set<FunctionNameAndArity> validFunctions) {
+			Set<FunctionNameAndArity> validFunctions,
+			Map<FunctionNameAndArity, Integer> rootFunctionSlots) {
 		this.frameSize = frameSize;
 		this.inner = inner;
 		this.defaultVariables = Collections.unmodifiableMap(new HashMap<>(defaultVariables));
@@ -50,6 +52,7 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 		this.functionSlots = copySlotMap(functionSlots);
 		this.validVariables = Collections.unmodifiableSet(new HashSet<>(validVariables));
 		this.validFunctions = Collections.unmodifiableSet(new HashSet<>(validFunctions));
+		this.rootFunctionSlots = Collections.unmodifiableMap(new HashMap<>(rootFunctionSlots));
 	}
 
 	private static <K> Map<K, List<Integer>> copySlotMap(Map<K, List<Integer>> source) {
@@ -84,6 +87,33 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 		try {
 			initializeFrame(rootFrame, bindings);
 			inner.apply(rootFrame, in, path, output, requirePath);
+		} finally {
+			rootFrame.getEnclosingMemory().popFrame();
+		}
+	}
+
+	/**
+	 * Runs this module's own defining top-level statements once (each {@code def} builds and registers its
+	 * own, correctly closure-bound {@link Function} into a fresh root frame -- exactly as an ordinary,
+	 * non-exported call to {@link net.thisptr.jackson.jq.v2.core.internal.compile.Compiler#compile} would),
+	 * and returns the resulting {@link Function} for every module-level {@code def} this was compiled with
+	 * {@link net.thisptr.jackson.jq.v2.core.internal.compile.Compiler#compileModule}. Used by
+	 * {@code FileSystemModuleLoader} to harvest a file-based module's exported functions; ordinary
+	 * (non-module) compiles carry an empty {@code rootFunctionSlots} map and this always returns empty.
+	 */
+	public Map<FunctionNameAndArity, Function> applyForModuleExports(JsonNode in) throws JsonQueryException {
+		StackFrame rootFrame = new StackMemory().pushFrame(frameSize);
+		try {
+			initializeFrame(rootFrame, JsonQueryBindings.empty());
+			inner.apply(rootFrame, in, null, (v, p) -> { }, false);
+			Map<FunctionNameAndArity, Function> result = new HashMap<>();
+			for (Map.Entry<FunctionNameAndArity, Integer> entry : rootFunctionSlots.entrySet()) {
+				Object raw = rootFrame.get(entry.getValue());
+				if (raw instanceof Function) {
+					result.put(entry.getKey(), (Function) raw);
+				}
+			}
+			return result;
 		} finally {
 			rootFrame.getEnclosingMemory().popFrame();
 		}

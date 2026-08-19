@@ -73,6 +73,14 @@ public class FileSystemModuleLoaderTest {
 	}
 
 	@Test
+	public void testSiblingDefCallWithinModule() throws Exception {
+		JsonQuery<JsonNode> expr = env.compile("import \"sibling_defs\" as m; m::exported_foo");
+		List<JsonNode> actual = new ArrayList<>();
+		expr.apply(NullNode.getInstance(), (val, path) -> actual.add(val));
+		assertThat(actual).isEqualTo(Arrays.asList(IntNode.valueOf(11)));
+	}
+
+	@Test
 	public void testRecursiveImports() throws Exception {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"recursive_imports/a\" as a; a::one");
