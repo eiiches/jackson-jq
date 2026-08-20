@@ -49,14 +49,14 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 	 * E.g. in an OSGi context this may be the Bundle's {@link ClassLoader}.
 	 */
 	@Override
-	public Map<FunctionSignature, Function> getFunctions(Version version) {
+	public Map<FunctionSignature, Function> getFunctions(Version jqVersion) {
 		Map<FunctionSignature, Function> result = new HashMap<>();
 
 		for (Function factory : ServiceLoader.load(Function.class, classLoader)) {
 			FunctionRegistration[] regs = factory.getClass().getAnnotationsByType(FunctionRegistration.class);
 			for (FunctionRegistration reg : regs) {
 				VersionRange versionRange = VersionRange.valueOf(reg.version());
-				if (!versionRange.contains(version))
+				if (!versionRange.contains(jqVersion))
 					continue;
 
 				result.put(FunctionSignature.of(reg.name(), reg.nargs()), factory);
@@ -65,9 +65,9 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 
 		for (JqLibrary library : ServiceLoader.load(JqLibrary.class, classLoader)) {
 			for (JqLibrary.JqFunc def : library.getFunctions()) {
-				if (def.version != null && !def.version.contains(version))
+				if (def.version != null && !def.version.contains(jqVersion))
 					continue;
-				result.put(FunctionSignature.of(def.name, def.args.size()), createJqFunction(def, version));
+				result.put(FunctionSignature.of(def.name, def.args.size()), createJqFunction(def, jqVersion));
 			}
 		}
 

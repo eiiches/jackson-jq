@@ -21,7 +21,7 @@ public class CachedFunctionLoader implements FunctionLoader {
 	}
 
 	@Override
-	public Map<FunctionSignature, Function> getFunctions(Version version) {
-		return cache.computeIfAbsent(version, delegate::getFunctions);
+	public Map<FunctionSignature, Function> getFunctions(Version jqVersion) {
+		return cache.computeIfAbsent(jqVersion, delegate::getFunctions);
 	}
 }

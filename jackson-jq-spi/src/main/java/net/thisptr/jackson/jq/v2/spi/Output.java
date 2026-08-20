@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
+// TODO: remove or move to core
 public interface Output<JsonNode> extends PathOutput<JsonNode> {
 
 	void emit(JsonNode out) throws JsonQueryException;

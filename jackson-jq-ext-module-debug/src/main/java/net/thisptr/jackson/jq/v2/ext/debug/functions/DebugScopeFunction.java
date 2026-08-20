@@ -9,6 +9,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 
+// TODO: make this useful or remove
 public class DebugScopeFunction implements Function {
 
 	@Override

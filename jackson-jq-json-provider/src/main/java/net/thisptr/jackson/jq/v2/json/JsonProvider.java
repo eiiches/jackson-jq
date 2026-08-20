@@ -7,6 +7,7 @@ import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
 
+// FIXME: too many methods
 public interface JsonProvider<JsonNode> {
 	JsonNode createObject();
 

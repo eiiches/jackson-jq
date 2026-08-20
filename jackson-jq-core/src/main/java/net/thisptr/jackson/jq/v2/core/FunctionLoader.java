@@ -8,5 +8,5 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 
 @FunctionalInterface
 public interface FunctionLoader {
-	Map<FunctionSignature, Function> getFunctions(Version version);
+	Map<FunctionSignature, Function> getFunctions(Version jqVersion);
 }
