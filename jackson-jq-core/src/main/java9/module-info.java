@@ -31,7 +31,6 @@ module net.thisptr.jackson.jq.v2.core {
 		net.thisptr.jackson.jq.v2.core.internal.functions.DelPathsFunction,
 		net.thisptr.jackson.jq.v2.core.internal.functions.EmptyFunction,
 		net.thisptr.jackson.jq.v2.core.internal.functions.EndsWithFunction,
-		net.thisptr.jackson.jq.v2.core.internal.functions.EnvFunction,
 		net.thisptr.jackson.jq.v2.core.internal.functions.ErrorFunction,
 		net.thisptr.jackson.jq.v2.core.internal.functions.ExplodeFunction,
 		net.thisptr.jackson.jq.v2.core.internal.functions.FromDateIso8601Function,

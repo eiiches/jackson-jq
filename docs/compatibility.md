@@ -192,18 +192,29 @@ None. jackson-jq does not aim to match jq's error messages.
 </details>
 
 <details>
-<summary>(*6) <code>env/0</code> is not available by default.</summary>
+<summary>(*6) <code>env/0</code> is not provided.</summary>
 
 ##### Description
 
-For security reasons, `env/0` is not available by default. It must be registered explicitly with the `Environment`.
+For security reasons, jackson-jq does not provide an implementation of `env/0`. If you need it, implement it yourself and register it with the `EnvironmentBuilder`.
 
 ##### Workaround
 
-Register `env/0` with the `Environment`:
+Register a custom `env/0` implementation with the `EnvironmentBuilder`:
 
 ```java
-env.addFunction(FunctionNameAndArity.of("env", 0), new EnvFunction());
+builder.addFunction(FunctionSignature.of("env", 0), new Function() {
+	@Override
+	public <T> Expression<T> bindArguments(JsonProvider<T> jsonProvider, List<Expression<T>> args, Version version) {
+		return (scope, in, ipath, output, ignoredRequirePath) -> {
+			T result = jsonProvider.createObject();
+			for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+				jsonProvider.set(result, entry.getKey(), jsonProvider.createString(entry.getValue()));
+			}
+			output.emit(result, null);
+		};
+	}
+});
 ```
 
 </details>
