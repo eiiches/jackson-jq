@@ -38,4 +38,11 @@ public class DebugModuleTest {
 
 		assertThat(ClassPathFunctionLoader.getInstance().listFunctions(Versions.JQ_1_6)).doesNotContainKey(FunctionSignature.of("debug_scope", 0));
 	}
+
+	@Test
+	public void exposesDefinitionsViaModuleMeta() {
+		ModuleImpl module = new ModuleImpl();
+		assertThat(module.getModuleMeta().getDefinitions()).containsExactlyInAnyOrder(
+				FunctionSignature.of("debug_scope", 0));
+	}
 }

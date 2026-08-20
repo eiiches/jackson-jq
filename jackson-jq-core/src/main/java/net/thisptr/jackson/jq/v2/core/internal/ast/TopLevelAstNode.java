@@ -62,6 +62,10 @@ public class TopLevelAstNode<JsonNode> implements AstNode {
 			this.metadataExpr = metadataExpr;
 		}
 
+		public @Nullable AstNode metadataExpr() {
+			return metadataExpr;
+		}
+
 		public @Nullable JsonNode getMetadata(JsonProvider<JsonNode> jsonProvider) {
 			if (!metadataEvaluated) {
 				if (metadataExpr != null) {
@@ -115,6 +119,10 @@ public class TopLevelAstNode<JsonNode> implements AstNode {
 
 		public ModuleDirective(AstNode metadataExpr) {
 			this.metadataExpr = metadataExpr;
+		}
+
+		public AstNode metadataExpr() {
+			return metadataExpr;
 		}
 
 		public JsonNode getMetadata(JsonProvider<JsonNode> jsonProvider) {

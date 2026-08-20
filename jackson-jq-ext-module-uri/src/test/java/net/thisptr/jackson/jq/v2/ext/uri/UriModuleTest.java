@@ -34,6 +34,14 @@ public class UriModuleTest {
 		assertThat(ClassPathFunctionLoader.getInstance().listFunctions(Versions.JQ_1_6)).doesNotContainKeys(FunctionSignature.of("uriparse", 0), FunctionSignature.of("uridecode", 0));
 	}
 
+	@Test
+	public void exposesDefinitionsViaModuleMeta() {
+		ModuleImpl module = new ModuleImpl();
+		assertThat(module.getModuleMeta().getDefinitions()).containsExactlyInAnyOrder(
+				FunctionSignature.of("uridecode", 0),
+				FunctionSignature.of("uriparse", 0));
+	}
+
 	private List<JsonNode> run(String expression) throws JsonQueryException {
 		Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
 		env.setModuleLoader(new ClassPathModuleLoader<>(getClass().getClassLoader()));

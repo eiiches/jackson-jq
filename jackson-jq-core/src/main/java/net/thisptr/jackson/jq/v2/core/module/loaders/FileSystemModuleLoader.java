@@ -24,6 +24,7 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
+import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModuleMeta;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
@@ -147,6 +148,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 			if (key.arity() != null)
 				module.addFunction(key, factory);
 		});
+		module.setModuleMeta(SimpleModuleMeta.fromAst(ast, module::getDefinitions));
 		return module;
 	}
 

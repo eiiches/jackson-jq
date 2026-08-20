@@ -19,4 +19,13 @@ public class ModuleDiscoveryTest {
 		assertThat(ClassPathFunctionLoader.getInstance().listFunctions(Versions.JQ_1_6))
 				.doesNotContainKeys(FunctionSignature.of("uuid3", 1), FunctionSignature.of("uuid4", 0), FunctionSignature.of("uuid5", 1));
 	}
+
+	@Test
+	public void exposesDefinitionsViaModuleMeta() {
+		ModuleImpl module = new ModuleImpl();
+		assertThat(module.getModuleMeta().getDefinitions()).containsExactlyInAnyOrder(
+				FunctionSignature.of("uuid4", 0),
+				FunctionSignature.of("uuid3", 1),
+				FunctionSignature.of("uuid5", 1));
+	}
 }

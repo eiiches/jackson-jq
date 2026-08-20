@@ -11,6 +11,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
+import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModuleMeta;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
@@ -21,6 +22,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
+
 public class Environment<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final Version version;
@@ -122,6 +124,7 @@ public class Environment<JsonNode> {
 			if (key.arity() != null)
 				module.addFunction(key, factory);
 		});
+		module.setModuleMeta(SimpleModuleMeta.fromAst(parsedAst, module::getDefinitions));
 		return module;
 	}
 }

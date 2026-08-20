@@ -49,6 +49,17 @@ public class TimeModuleTest {
 				.doesNotContainKeys(FunctionSignature.of("timestamp", 0), FunctionSignature.of("strftime", 1), FunctionSignature.of("strftime", 2), FunctionSignature.of("strptime", 1), FunctionSignature.of("strptime", 2));
 	}
 
+	@Test
+	public void exposesDefinitionsViaModuleMeta() {
+		ModuleImpl module = new ModuleImpl();
+		assertThat(module.getModuleMeta().getDefinitions()).containsExactlyInAnyOrder(
+				FunctionSignature.of("strftime", 1),
+				FunctionSignature.of("strftime", 2),
+				FunctionSignature.of("strptime", 1),
+				FunctionSignature.of("strptime", 2),
+				FunctionSignature.of("timestamp", 0));
+	}
+
 	private List<JsonNode> run(String expression) throws JsonQueryException {
 		Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
 		env.setModuleLoader(new ClassPathModuleLoader<>(getClass().getClassLoader()));
