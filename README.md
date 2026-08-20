@@ -44,7 +44,7 @@ If you use Maven, add `jackson-jq-core` and the appropriate JSON provider to the
 </dependency>
 ```
 
-See [jackson-jq/src/test/java/examples/Usage.java](jackson-jq/src/test/java/examples/Usage.java) for an example of using the API.
+See [jackson-jq-core/src/test/java/examples/Usage.java](jackson-jq-core/src/test/java/examples/Usage.java) for an example of using the API.
 
 Command-line interface
 ----------------------
