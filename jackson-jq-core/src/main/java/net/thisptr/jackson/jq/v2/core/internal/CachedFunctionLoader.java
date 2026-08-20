@@ -1,9 +1,10 @@
-package net.thisptr.jackson.jq.v2.core;
+package net.thisptr.jackson.jq.v2.core.internal;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.thisptr.jackson.jq.v2.core.FunctionLoader;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;

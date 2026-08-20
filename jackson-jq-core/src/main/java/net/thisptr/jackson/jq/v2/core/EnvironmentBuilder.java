@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import net.thisptr.jackson.jq.v2.core.internal.CachedFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.env.EnvironmentImpl;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
