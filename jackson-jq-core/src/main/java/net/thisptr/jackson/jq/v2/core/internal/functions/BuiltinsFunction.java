@@ -20,7 +20,7 @@ public class BuiltinsFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		List<String> builtins = new ArrayList<>();
-		for (FunctionSignature fn : ClassPathFunctionLoader.getInstance().listFunctions(version).keySet()) {
+		for (FunctionSignature fn : ClassPathFunctionLoader.getInstance().getFunctions(version).keySet()) {
 			builtins.add(fn.toString());
 		}
 		Collections.sort(builtins);

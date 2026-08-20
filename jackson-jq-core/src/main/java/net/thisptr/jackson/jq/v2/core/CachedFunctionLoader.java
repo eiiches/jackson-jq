@@ -9,7 +9,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
 
 /**
- * A {@link FunctionLoader} that memoizes {@link #listFunctions(Version)} results per {@link Version},
+ * A {@link FunctionLoader} that memoizes {@link #getFunctions(Version)} results per {@link Version},
  * so a delegate that does expensive work (e.g. classpath scanning) only pays that cost once.
  */
 public class CachedFunctionLoader implements FunctionLoader {
@@ -21,7 +21,7 @@ public class CachedFunctionLoader implements FunctionLoader {
 	}
 
 	@Override
-	public Map<FunctionSignature, Function> listFunctions(Version version) {
-		return cache.computeIfAbsent(version, delegate::listFunctions);
+	public Map<FunctionSignature, Function> getFunctions(Version version) {
+		return cache.computeIfAbsent(version, delegate::getFunctions);
 	}
 }

@@ -49,7 +49,7 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 	 * E.g. in an OSGi context this may be the Bundle's {@link ClassLoader}.
 	 */
 	@Override
-	public Map<FunctionSignature, Function> listFunctions(Version version) {
+	public Map<FunctionSignature, Function> getFunctions(Version version) {
 		Map<FunctionSignature, Function> result = new HashMap<>();
 
 		for (Function factory : ServiceLoader.load(Function.class, classLoader)) {

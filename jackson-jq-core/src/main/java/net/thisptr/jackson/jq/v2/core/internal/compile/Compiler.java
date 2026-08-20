@@ -591,7 +591,7 @@ public class Compiler {
 		Function factory = lookupFunction(env.getFunctions(), fname, nargs);
 		if (factory != null)
 			return factory;
-		return lookupFunction(env.getFunctionLoader().listFunctions(env.getJqVersion()), fname, nargs);
+		return lookupFunction(env.getFunctionLoader().getFunctions(env.getJqVersion()), fname, nargs);
 	}
 
 	/**
