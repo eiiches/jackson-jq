@@ -18,6 +18,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import net.thisptr.jackson.jq.v2.core.ClassLoaderUtils;
 import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
@@ -34,11 +35,11 @@ public class FileSystemModuleLoaderTest {
 
 	@BeforeEach
 	public void beforeEach() throws IOException {
-		env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
-
 		ModuleLoader<JsonNode> moduleLoader = setupModuleLoader(Objects.requireNonNull(tempDir));
 
-		env.setModuleLoader(moduleLoader);
+		env = new EnvironmentBuilder<JsonNode>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+				.setModuleLoader(moduleLoader)
+				.build();
 	}
 
 	/**

@@ -31,10 +31,16 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
  * Use {@code BuiltinFunctionLoader.getInstance()} to obtain the instance.
  */
 public class ClassPathFunctionLoader implements FunctionLoader {
-	private static final ClassPathFunctionLoader INSTANCE = new ClassPathFunctionLoader();
+	private static final ClassPathFunctionLoader INSTANCE = new ClassPathFunctionLoader(ClassPathFunctionLoader.class.getClassLoader());
+
+	private final ClassLoader classLoader;
 
 	public static ClassPathFunctionLoader getInstance() {
 		return INSTANCE;
+	}
+
+	public ClassPathFunctionLoader(ClassLoader classLoader) {
+		this.classLoader = classLoader;
 	}
 
 	/**
@@ -46,7 +52,7 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 	public Map<FunctionSignature, Function> listFunctions(Version version) {
 		Map<FunctionSignature, Function> result = new HashMap<>();
 
-		for (Function factory : ServiceLoader.load(Function.class, ClassPathFunctionLoader.class.getClassLoader())) {
+		for (Function factory : ServiceLoader.load(Function.class, classLoader)) {
 			FunctionRegistration[] regs = factory.getClass().getAnnotationsByType(FunctionRegistration.class);
 			for (FunctionRegistration reg : regs) {
 				VersionRange versionRange = VersionRange.valueOf(reg.version());
@@ -57,7 +63,7 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 			}
 		}
 
-		for (JqLibrary library : ServiceLoader.load(JqLibrary.class, ClassPathFunctionLoader.class.getClassLoader())) {
+		for (JqLibrary library : ServiceLoader.load(JqLibrary.class, classLoader)) {
 			for (JqLibrary.JqFunc def : library.getFunctions()) {
 				if (def.version != null && !def.version.contains(version))
 					continue;
@@ -97,8 +103,9 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 						context.addLocalFunction(arg, 0);
 					}
 				}
-				Environment<N> env = new Environment<>(jsonProvider, version);
-				listFunctions(version).forEach(env::addFunction);
+				Environment<N> env = new EnvironmentBuilder<>(jsonProvider, version)
+						.setFunctionLoader(ClassPathFunctionLoader.this)
+						.build();
 				Expression<N> resolvedBody = Compiler.compileNonNull(env, context, parsedAst);
 				// fnSize must be read after the body is compiled, not before -- otherwise it misses any
 				// locals (`as`/`reduce`/`foreach` bindings, nested `def`s) the body itself introduces.

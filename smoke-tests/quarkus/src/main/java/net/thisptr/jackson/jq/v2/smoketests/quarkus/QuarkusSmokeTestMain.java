@@ -7,6 +7,7 @@ import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
@@ -27,8 +28,9 @@ public class QuarkusSmokeTestMain implements QuarkusApplication {
 
 	private static <JsonNode> void testWithJsonProvider(JsonProvider<JsonNode> jsonProvider) throws Exception {
 		Version version = Version.valueOf("1.6");
-		Environment<JsonNode> env = new Environment<>(jsonProvider, version);
-		env.setModuleLoader(new ClassPathModuleLoader<JsonNode>(QuarkusSmokeTestMain.class.getClassLoader()));
+		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, version)
+				.setModuleLoader(new ClassPathModuleLoader<JsonNode>(QuarkusSmokeTestMain.class.getClassLoader()))
+				.build();
 
 		assertQuery(jsonProvider, env, "length", "[1,2]", 2);
 		assertQuery(jsonProvider, env, "test(\"a.c\")", "\"abc\"", true);

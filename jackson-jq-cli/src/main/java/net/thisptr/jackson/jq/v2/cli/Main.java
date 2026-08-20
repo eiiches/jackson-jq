@@ -26,6 +26,7 @@ import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
@@ -108,23 +109,24 @@ public class Main {
 		}
 
 		Jackson3JsonProviderImpl jsonProvider = Jackson3JsonProviderImpl.getInstance();
-		Environment<JsonNode> env = new Environment<>(jsonProvider, version);
-		env.addFunction(FunctionSignature.of("env", 0), new Function() {
-			@Override
-			public <N> Expression<N> bindArguments(JsonProvider<N> jsonProv, List<Expression<N>> fnArgs, Version ver) {
-				return (frame, in, path, output, ignoredRequirePath) -> {
-					N envObj = jsonProv.createObject();
-					for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
-						jsonProv.set(envObj, entry.getKey(), jsonProv.createString(entry.getValue()));
+		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, version)
+				.addFunction(FunctionSignature.of("env", 0), new Function() {
+					@Override
+					public <N> Expression<N> bindArguments(JsonProvider<N> jsonProv, List<Expression<N>> fnArgs, Version ver) {
+						return (frame, in, path, output, ignoredRequirePath) -> {
+							N envObj = jsonProv.createObject();
+							for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+								jsonProv.set(envObj, entry.getKey(), jsonProv.createString(entry.getValue()));
+							}
+							output.emit(envObj, null);
+						};
 					}
-					output.emit(envObj, null);
-				};
-			}
-		});
-		env.setModuleLoader(new ChainedModuleLoader<>(new ModuleLoader[] {
-				ClassPathModuleLoader.getInstance(),
-				new FileSystemModuleLoader<>(jsonProvider, version, FileSystems.getDefault().getPath("").toAbsolutePath()),
-		}));
+				})
+				.setModuleLoader(new ChainedModuleLoader<>(new ModuleLoader[] {
+						ClassPathModuleLoader.getInstance(),
+						new FileSystemModuleLoader<>(jsonProvider, version, FileSystems.getDefault().getPath("").toAbsolutePath()),
+				}))
+				.build();
 
 		JsonQuery<JsonNode> jq = env.compile(rest.get(0));
 

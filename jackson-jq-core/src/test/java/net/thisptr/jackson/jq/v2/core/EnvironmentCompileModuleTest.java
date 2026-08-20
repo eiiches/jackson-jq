@@ -12,8 +12,10 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
@@ -29,10 +31,12 @@ public class EnvironmentCompileModuleTest {
 	private static final class InMemoryModuleLoader implements ModuleLoader<JsonNode> {
 		private final Map<String, String> sources = new HashMap<>();
 		private final Map<String, JsonNode> datas = new HashMap<>();
-		private final Environment<JsonNode> jsonProviderEnv;
+		private final JsonProvider<JsonNode> jsonProvider;
+		private final Version jqVersion;
 
-		InMemoryModuleLoader(Environment<JsonNode> jsonProviderEnv) {
-			this.jsonProviderEnv = jsonProviderEnv;
+		InMemoryModuleLoader(JsonProvider<JsonNode> jsonProvider, Version jqVersion) {
+			this.jsonProvider = jsonProvider;
+			this.jqVersion = jqVersion;
 		}
 
 		void put(String path, String source) {
@@ -48,8 +52,9 @@ public class EnvironmentCompileModuleTest {
 			String source = sources.get(path);
 			if (source == null)
 				return null;
-			Environment<JsonNode> moduleEnv = new Environment<>(jsonProviderEnv.jsonProvider(), jsonProviderEnv.version());
-			moduleEnv.setModuleLoader(this);
+			Environment<JsonNode> moduleEnv = new EnvironmentBuilder<>(jsonProvider, jqVersion)
+					.setModuleLoader(this)
+					.build();
 			return moduleEnv.compileModule(source);
 		}
 
@@ -61,11 +66,11 @@ public class EnvironmentCompileModuleTest {
 
 	@Test
 	public void testCustomModuleLoaderUsingCompileModule() throws Exception {
-		Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
-
-		InMemoryModuleLoader moduleLoader = new InMemoryModuleLoader(env);
+		InMemoryModuleLoader moduleLoader = new InMemoryModuleLoader(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
 		moduleLoader.put("foo", "def bar: 42;");
-		env.setModuleLoader(moduleLoader);
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+				.setModuleLoader(moduleLoader)
+				.build();
 
 		JsonQuery<JsonNode> expr = env.compile("import \"foo\" as foo; foo::bar");
 		List<JsonNode> actual = new ArrayList<>();
@@ -77,7 +82,7 @@ public class EnvironmentCompileModuleTest {
 
 	@Test
 	public void testCompileModuleExposesAllTopLevelDefs() throws Exception {
-		Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
 
 		Module module = env.compileModule("def one: 1; def two: 2; def three($x): $x;");
 
@@ -89,11 +94,11 @@ public class EnvironmentCompileModuleTest {
 
 	@Test
 	public void testCompileModuleExposesMetadata() throws Exception {
-		Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
 
 		Module module = env.compileModule("module { \"author\": \"Alice\", \"version\": 1 }; def one: 1;");
 
-		Map<String, JsonNode> metadata = module.getModuleMeta().getMetadata(env.jsonProvider());
+		Map<String, JsonNode> metadata = module.getModuleMeta().getMetadata(env.getJsonProvider());
 		assertThat(metadata).containsKey("author");
 		assertThat(Objects.requireNonNull(metadata.get("author")).asText()).isEqualTo("Alice");
 		assertThat(metadata).containsKey("version");
@@ -102,12 +107,13 @@ public class EnvironmentCompileModuleTest {
 
 	@Test
 	public void testCompileModuleExposesDependencies() throws Exception {
-		Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
-		InMemoryModuleLoader moduleLoader = new InMemoryModuleLoader(env);
+		InMemoryModuleLoader moduleLoader = new InMemoryModuleLoader(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
 		moduleLoader.put("foo/bar", "def bar: 1;");
 		moduleLoader.put("helpers", "def helper: 1;");
-		moduleLoader.putData("data/nums", env.jsonProvider().createArray());
-		env.setModuleLoader(moduleLoader);
+		moduleLoader.putData("data/nums", Jackson2JsonProviderImpl.getInstance().createArray());
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+				.setModuleLoader(moduleLoader)
+				.build();
 
 		Module module = env.compileModule("import \"foo/bar\" as bar; import \"data/nums\" as $nums { \"search\": \"./data\" }; include \"helpers\"; def test: 1;");
 
@@ -117,18 +123,18 @@ public class EnvironmentCompileModuleTest {
 		assertThat(deps.get(0).getRelpath()).isEqualTo("foo/bar");
 		assertThat(deps.get(0).isData()).isFalse();
 		assertThat(deps.get(0).getAlias()).isEqualTo("bar");
-		assertThat(deps.get(0).getImportMetadata(env.jsonProvider())).isEmpty();
+		assertThat(deps.get(0).getImportMetadata(env.getJsonProvider())).isEmpty();
 
 		assertThat(deps.get(1).getRelpath()).isEqualTo("data/nums");
 		assertThat(deps.get(1).isData()).isTrue();
 		assertThat(deps.get(1).getAlias()).isEqualTo("nums");
-		Map<String, JsonNode> dep1Meta = deps.get(1).getImportMetadata(env.jsonProvider());
+		Map<String, JsonNode> dep1Meta = deps.get(1).getImportMetadata(env.getJsonProvider());
 		assertThat(dep1Meta).containsKey("search");
 		assertThat(Objects.requireNonNull(dep1Meta.get("search")).asText()).isEqualTo("./data");
 
 		assertThat(deps.get(2).getRelpath()).isEqualTo("helpers");
 		assertThat(deps.get(2).isData()).isFalse();
 		assertThat(deps.get(2).getAlias()).isNull();
-		assertThat(deps.get(2).getImportMetadata(env.jsonProvider())).isEmpty();
+		assertThat(deps.get(2).getImportMetadata(env.getJsonProvider())).isEmpty();
 	}
 }

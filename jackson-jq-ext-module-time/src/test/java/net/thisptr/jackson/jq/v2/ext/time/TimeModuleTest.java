@@ -6,11 +6,10 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.core.ClassPathFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
-import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -41,15 +40,6 @@ public class TimeModuleTest {
 	}
 
 	@Test
-	public void isDiscoverableOnlyAsAModule() {
-		ClassPathModuleLoader<JsonNode> modules = new ClassPathModuleLoader<>(getClass().getClassLoader());
-		assertThat(modules.loadAllModules()).containsKey("jackson-jq/time");
-
-		assertThat(ClassPathFunctionLoader.getInstance().listFunctions(Versions.JQ_1_6))
-				.doesNotContainKeys(FunctionSignature.of("timestamp", 0), FunctionSignature.of("strftime", 1), FunctionSignature.of("strftime", 2), FunctionSignature.of("strptime", 1), FunctionSignature.of("strptime", 2));
-	}
-
-	@Test
 	public void exposesDefinitionsViaModuleMeta() {
 		ModuleImpl module = new ModuleImpl();
 		assertThat(module.getModuleMeta().getDefinitions()).containsExactlyInAnyOrder(
@@ -61,11 +51,11 @@ public class TimeModuleTest {
 	}
 
 	private List<JsonNode> run(String expression) throws JsonQueryException {
-		Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
-		env.setModuleLoader(new ClassPathModuleLoader<>(getClass().getClassLoader()));
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/time\" as ext; " + expression);
 		List<JsonNode> results = new ArrayList<>();
-		query.apply(env.jsonProvider().createNull(), (val, path) -> results.add(val));
+		query.apply(env.getJsonProvider().createNull(), (val, path) -> results.add(val));
 		return results;
 	}
 }

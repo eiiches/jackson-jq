@@ -26,19 +26,19 @@ public class CustomFunctionTest {
 		ObjectMapper mapper = new ObjectMapper();
 		Version version = Versions.JQ_1_6;
 
-		Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), version);
-
-		env.addFunction(FunctionSignature.of("times100", 1), new Function() {
-			@Override
-			public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version ver) {
-				return (frame, in, path, output, ignoredRequirePath) -> {
-					args.get(0).apply(frame, in, (numberNode) -> {
-						int n = jsonProvider.asInt(numberNode);
-						output.emit(jsonProvider.createNumber(n * 100), null);
-					});
-				};
-			}
-		});
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), version)
+				.addFunction(FunctionSignature.of("times100", 1), new Function() {
+					@Override
+					public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version ver) {
+						return (frame, in, path, output, ignoredRequirePath) -> {
+							args.get(0).apply(frame, in, (numberNode) -> {
+								int n = jsonProvider.asInt(numberNode);
+								output.emit(jsonProvider.createNumber(n * 100), null);
+							});
+						};
+					}
+				})
+				.build();
 
 		String input = "{ \"a\": 5 }";
 

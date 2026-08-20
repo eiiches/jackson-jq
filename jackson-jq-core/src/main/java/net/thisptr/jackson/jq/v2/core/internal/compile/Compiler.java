@@ -14,6 +14,7 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.FunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
@@ -133,16 +134,31 @@ public class Compiler {
 		if (compiled == null)
 			throw new JsonQueryException("Cannot resolve null expression");
 		return new RootExpression<>(context.getSlotCount(), compiled,
-				env.variables(), env.functions(), context.globalVariableSlots(), context.globalFunctionSlots(),
+				defaultVariables(env, context), env.getFunctions(), context.globalVariableSlots(), context.globalFunctionSlots(),
 				context.globalVariables(), context.globalFunctions(), context.rootFunctionSlots());
 	}
 
+	/**
+	 * {@code env.getVariables()} plus any {@code $}-style data imports resolved during this compile (see
+	 * {@link CompileContext#addImportedVariableDefault}) -- kept separate from {@code Environment} itself
+	 * since the compiler must not mutate it.
+	 */
+	private static <JsonNode> Map<String, Supplier<JsonNode>> defaultVariables(Environment<JsonNode> env, CompileContext context) {
+		Map<String, Supplier<JsonNode>> result = new HashMap<>(env.getVariables());
+		for (Map.Entry<String, Object> entry : context.importedVariableDefaults().entrySet()) {
+			@SuppressWarnings("unchecked")
+			JsonNode value = (JsonNode) entry.getValue();
+			result.put(entry.getKey(), () -> value);
+		}
+		return result;
+	}
+
 	public static <JsonNode> void registerEnvironmentGlobals(Environment<JsonNode> env, CompileContext context) {
-		for (String name : env.variables().keySet()) {
+		for (String name : env.getVariables().keySet()) {
 			context.addGlobalVariable(name, name);
 			context.addGlobalVariable(name + "::" + name, name);
 		}
-		for (FunctionSignature key : env.functions().keySet())
+		for (FunctionSignature key : env.getFunctions().keySet())
 			context.addGlobalFunction(key);
 	}
 
@@ -167,12 +183,14 @@ public class Compiler {
 			}
 
 			if (call.moduleName() != null) {
-				Module mod = context.getImportedModule(call.moduleName());
+				@Var Module mod = context.getImportedModule(call.moduleName());
+				if (mod == null)
+					mod = env.getImportedModules().get(call.moduleName());
 				Function factory = mod != null ? mod.resolveFunction(call.name(), compiledArgs.size()) : null;
 				if (factory == null) {
 					throw new JsonQueryException(String.format("Function %s::%s/%d does not exist", call.moduleName(), call.name(), compiledArgs.size()));
 				}
-				Expression<JsonNode> fn = factory.bindArguments(env.jsonProvider(), compiledArgs, env.version());
+				Expression<JsonNode> fn = factory.bindArguments(env.getJsonProvider(), compiledArgs, env.getJqVersion());
 				return new ResolvedFunctionCall<>(call.moduleName() + "::" + call.name(), fn);
 			}
 
@@ -183,22 +201,22 @@ public class Compiler {
 				@Var Function defaultFactory = null;
 				@Var Expression<JsonNode> defaultFunction = null;
 				if (loc != null && loc.isGlobal) {
-					defaultFactory = env.resolveFunction(fullName, compiledArgs.size());
+					defaultFactory = resolveFunction(env, fullName, compiledArgs.size());
 					if (defaultFactory != null)
-						defaultFunction = defaultFactory.bindArguments(env.jsonProvider(), compiledArgs, env.version());
+						defaultFunction = defaultFactory.bindArguments(env.getJsonProvider(), compiledArgs, env.getJqVersion());
 				}
 				if (loc != null && !loc.isLocal) {
-					return new ResolvedCapturedFunctionAccess<>(env.jsonProvider(), env.version(), fullName, slot, context.getCurrentFunctionClosureSlot(), compiledArgs, defaultFactory, defaultFunction);
+					return new ResolvedCapturedFunctionAccess<>(env.getJsonProvider(), env.getJqVersion(), fullName, slot, context.getCurrentFunctionClosureSlot(), compiledArgs, defaultFactory, defaultFunction);
 				}
-				return new ResolvedLocalFunctionAccess<>(env.jsonProvider(), env.version(), fullName, slot, compiledArgs, defaultFactory, defaultFunction);
+				return new ResolvedLocalFunctionAccess<>(env.getJsonProvider(), env.getJqVersion(), fullName, slot, compiledArgs, defaultFactory, defaultFunction);
 			}
 
-			Function factory = env.resolveFunction(fullName, compiledArgs.size());
+			Function factory = resolveFunction(env, fullName, compiledArgs.size());
 			if (factory == null) {
 				throw new JsonQueryException(String.format("Function %s/%d does not exist", fullName, compiledArgs.size()));
 			}
 
-			Expression<JsonNode> fn = factory.bindArguments(env.jsonProvider(), compiledArgs, env.version());
+			Expression<JsonNode> fn = factory.bindArguments(env.getJsonProvider(), compiledArgs, env.getJqVersion());
 			return new ResolvedFunctionCall<>(fullName, fn);
 		}
 
@@ -211,17 +229,14 @@ public class Compiler {
 			@SuppressWarnings("unchecked")
 			TopLevelAstNode<JsonNode> top = (TopLevelAstNode<JsonNode>) ast;
 			for (TopLevelAstNode.ImportStatement<JsonNode> imp : top.imports()) {
-				if (env.getModuleLoader() == null) {
-					throw new JsonQueryException(String.format("module not found: %s", imp.path));
-				}
-				JsonNode metadata = imp.getMetadata(env.jsonProvider());
+				JsonNode metadata = imp.getMetadata(env.getJsonProvider());
 				if (imp.dollarImport) {
 					JsonNode data = env.getModuleLoader().loadData(currentModule, imp.path, metadata);
 					if (data == null) {
 						throw new JsonQueryException(String.format("module not found: %s", imp.path));
 					}
 					if (imp.name != null) {
-						env.addVariable(imp.name, data);
+						context.addImportedVariableDefault(imp.name, data);
 						context.addGlobalVariable(imp.name, imp.name);
 						context.addGlobalVariable(imp.name + "::" + imp.name, imp.name);
 					}
@@ -295,27 +310,27 @@ public class Compiler {
 
 		if (ast instanceof ObjectConstructionAstNode) {
 			ObjectConstructionAstNode obj = (ObjectConstructionAstNode) ast;
-			ObjectConstruction<JsonNode> res = new ObjectConstruction<>(env.jsonProvider());
+			ObjectConstruction<JsonNode> res = new ObjectConstruction<>(env.getJsonProvider());
 			for (ObjectConstructionAstNode.FieldConstructionAst fc : obj.fields) {
 				if (fc instanceof ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst ik = (ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst) fc;
 					Expression<JsonNode> val = compile(env, context, ik.value);
-					res.add(new IdentifierKeyFieldConstruction<>(env.jsonProvider(), ik.key, val));
+					res.add(new IdentifierKeyFieldConstruction<>(env.getJsonProvider(), ik.key, val));
 				} else if (fc instanceof ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst jq = (ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst) fc;
 					Expression<JsonNode> key = compileNonNull(env, context, jq.key());
 					Expression<JsonNode> val = compileNonNull(env, context, jq.value());
-					res.add(new JsonQueryKeyFieldConstruction<>(env.jsonProvider(), key, val));
+					res.add(new JsonQueryKeyFieldConstruction<>(env.getJsonProvider(), key, val));
 				} else if (fc instanceof ObjectConstructionAstNode.StringKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.StringKeyFieldConstructionAst sk = (ObjectConstructionAstNode.StringKeyFieldConstructionAst) fc;
 					Expression<JsonNode> key = compileNonNull(env, context, sk.key);
 					Expression<JsonNode> val = compile(env, context, sk.value);
-					res.add(new StringKeyFieldConstruction<>(env.jsonProvider(), key, val));
+					res.add(new StringKeyFieldConstruction<>(env.getJsonProvider(), key, val));
 				} else if (fc instanceof ObjectConstructionAstNode.VariableKeyFieldConstruction) {
 					// desugar `{ $x }` into the same shape as `{ x: $x }` -- no dedicated resolved class needed.
 					ObjectConstructionAstNode.VariableKeyFieldConstruction vk = (ObjectConstructionAstNode.VariableKeyFieldConstruction) fc;
 					Expression<JsonNode> compiledValue = compileVariableRef(env, context, null, vk.name());
-					res.add(new IdentifierKeyFieldConstruction<>(env.jsonProvider(), vk.name(), compiledValue));
+					res.add(new IdentifierKeyFieldConstruction<>(env.getJsonProvider(), vk.name(), compiledValue));
 				} else {
 					throw new IllegalStateException("Unknown field construction: " + fc.getClass());
 				}
@@ -325,19 +340,19 @@ public class Compiler {
 
 		if (ast instanceof ArrayConstructionAstNode) {
 			ArrayConstructionAstNode arr = (ArrayConstructionAstNode) ast;
-			return new ArrayConstruction<>(env.jsonProvider(), compile(env, context, arr.q));
+			return new ArrayConstruction<>(env.getJsonProvider(), compile(env, context, arr.q));
 		}
 
 		if (ast instanceof BinaryOpAstNode) {
 			BinaryOpAstNode bin = (BinaryOpAstNode) ast;
 			Expression<JsonNode> lhs = compileNonNull(env, context, bin.lhs);
 			Expression<JsonNode> rhs = compileNonNull(env, context, bin.rhs);
-			return bin.operator.create(lhs, rhs, env.version(), env.jsonProvider());
+			return bin.operator.create(lhs, rhs, env.getJqVersion(), env.getJsonProvider());
 		}
 
 		if (ast instanceof NegativeExpressionAstNode) {
 			NegativeExpressionAstNode neg = (NegativeExpressionAstNode) ast;
-			return new NegativeExpression<>(env.jsonProvider(), compileNonNull(env, context, neg.value()));
+			return new NegativeExpression<>(env.getJsonProvider(), compileNonNull(env, context, neg.value()));
 		}
 
 		if (ast instanceof ConditionalAstNode) {
@@ -349,7 +364,7 @@ public class Compiler {
 				newSwitches.add(Pair.of(newIf, newThen));
 			}
 			Expression<JsonNode> newElse = compileNonNull(env, context, cond.otherwise());
-			return new Conditional<>(env.jsonProvider(), newSwitches, newElse);
+			return new Conditional<>(env.getJsonProvider(), newSwitches, newElse);
 		}
 
 		if (ast instanceof TryCatchAstNode) {
@@ -357,9 +372,9 @@ public class Compiler {
 			Expression<JsonNode> newTry = compileNonNull(env, context, tc.tryExpr());
 			Expression<JsonNode> newCatch = compile(env, context, tc.catchExpr());
 			if (tc instanceof TryCatchAstNode.Question) {
-				return new TryCatch.Question<>(env.jsonProvider(), newTry);
+				return new TryCatch.Question<>(env.getJsonProvider(), newTry);
 			}
-			return new TryCatch<>(env.jsonProvider(), newTry, newCatch);
+			return new TryCatch<>(env.getJsonProvider(), newTry, newCatch);
 		}
 
 		if (ast instanceof TupleAstNode) {
@@ -388,7 +403,7 @@ public class Compiler {
 				}
 				compiledMatcher = compiledMatcher.resolveSlots(slots);
 				Expression<JsonNode> compiledReduce = compileNonNull(env, context, red.reduceExpr());
-				return new ReduceExpression<>(env.jsonProvider(), compiledMatcher, compiledInit, compiledReduce, compiledIter);
+				return new ReduceExpression<>(env.getJsonProvider(), compiledMatcher, compiledInit, compiledReduce, compiledIter);
 			} finally {
 				context.popScope();
 			}
@@ -423,13 +438,18 @@ public class Compiler {
 			String fname = ff.name().startsWith("@") ? ff.name() : "@" + ff.name();
 			SymbolLocation loc = context.getFunctionLocation(fname, 0);
 			if (loc == null) {
-				throw new JsonQueryException(String.format("Formatting operator %s does not exist", fname));
+				Function factory = resolveFunction(env, fname, 0);
+				if (factory == null) {
+					throw new JsonQueryException(String.format("Formatting operator %s does not exist", fname));
+				}
+				Expression<JsonNode> fn = factory.bindArguments(env.getJsonProvider(), Collections.emptyList(), env.getJqVersion());
+				return new ResolvedFunctionCall<>(fname, fn);
 			}
-			Function defaultFactory = loc.isGlobal ? env.resolveFunction(fname, 0) : null;
-			Expression<JsonNode> defaultFunction = defaultFactory != null ? defaultFactory.bindArguments(env.jsonProvider(), Collections.emptyList(), env.version()) : null;
+			Function defaultFactory = loc.isGlobal ? resolveFunction(env, fname, 0) : null;
+			Expression<JsonNode> defaultFunction = defaultFactory != null ? defaultFactory.bindArguments(env.getJsonProvider(), Collections.emptyList(), env.getJqVersion()) : null;
 			if (!loc.isLocal)
-				return new ResolvedCapturedFunctionAccess<>(env.jsonProvider(), env.version(), fname, loc.slot, context.getCurrentFunctionClosureSlot(), Collections.emptyList(), defaultFactory, defaultFunction);
-			return new ResolvedLocalFunctionAccess<>(env.jsonProvider(), env.version(), fname, loc.slot, Collections.emptyList(), defaultFactory, defaultFunction);
+				return new ResolvedCapturedFunctionAccess<>(env.getJsonProvider(), env.getJqVersion(), fname, loc.slot, context.getCurrentFunctionClosureSlot(), Collections.emptyList(), defaultFactory, defaultFunction);
+			return new ResolvedLocalFunctionAccess<>(env.getJsonProvider(), env.getJqVersion(), fname, loc.slot, Collections.emptyList(), defaultFactory, defaultFunction);
 		}
 
 		if (ast instanceof StringInterpolationAstNode) {
@@ -440,7 +460,7 @@ public class Compiler {
 				compiledInterpolations.add(Pair.of(pair._1, resExpr));
 			}
 			Expression<JsonNode> compiledFormatter = compile(env, context, si.formatter());
-			return new StringInterpolation<>(env.jsonProvider(), si.template(), compiledInterpolations, compiledFormatter);
+			return new StringInterpolation<>(env.getJsonProvider(), si.template(), compiledInterpolations, compiledFormatter);
 		}
 
 		if (ast instanceof BracketFieldAccessAstNode) {
@@ -449,53 +469,53 @@ public class Compiler {
 			@Var Expression<JsonNode> start = compile(env, context, bfa.startExpr());
 			@Var Expression<JsonNode> end = compile(env, context, bfa.endExpr());
 			if (start == null)
-				start = new NullLiteral<>(env.jsonProvider());
+				start = new NullLiteral<>(env.getJsonProvider());
 			if (end == null)
-				end = new NullLiteral<>(env.jsonProvider());
+				end = new NullLiteral<>(env.getJsonProvider());
 			if (bfa.isRange()) {
-				return new BracketFieldAccess<>(env.jsonProvider(), target, start, end, bfa.permissive());
+				return new BracketFieldAccess<>(env.getJsonProvider(), target, start, end, bfa.permissive());
 			} else {
-				return new BracketFieldAccess<>(env.jsonProvider(), target, start, bfa.permissive());
+				return new BracketFieldAccess<>(env.getJsonProvider(), target, start, bfa.permissive());
 			}
 		}
 
 		if (ast instanceof IdentifierFieldAccessAstNode) {
 			IdentifierFieldAccessAstNode ifa = (IdentifierFieldAccessAstNode) ast;
 			Expression<JsonNode> target = compileNonNull(env, context, ifa.target());
-			return new IdentifierFieldAccess<>(env.jsonProvider(), target, ifa.field(), ifa.permissive());
+			return new IdentifierFieldAccess<>(env.getJsonProvider(), target, ifa.field(), ifa.permissive());
 		}
 
 		if (ast instanceof StringFieldAccessAstNode) {
 			StringFieldAccessAstNode sfa = (StringFieldAccessAstNode) ast;
 			Expression<JsonNode> target = compileNonNull(env, context, sfa.target());
 			Expression<JsonNode> key = compileNonNull(env, context, sfa.key());
-			return new StringFieldAccess<>(env.jsonProvider(), target, key, sfa.permissive());
+			return new StringFieldAccess<>(env.getJsonProvider(), target, key, sfa.permissive());
 		}
 
 		if (ast instanceof BracketExtractFieldAccessAstNode) {
 			BracketExtractFieldAccessAstNode befa = (BracketExtractFieldAccessAstNode) ast;
 			Expression<JsonNode> target = compileNonNull(env, context, befa.target());
-			return new BracketExtractFieldAccess<>(env.jsonProvider(), target, befa.permissive());
+			return new BracketExtractFieldAccess<>(env.getJsonProvider(), target, befa.permissive());
 		}
 
 		if (ast instanceof BooleanLiteralAstNode) {
-			return new BooleanLiteral<>(env.jsonProvider(), ((BooleanLiteralAstNode) ast).value());
+			return new BooleanLiteral<>(env.getJsonProvider(), ((BooleanLiteralAstNode) ast).value());
 		}
 
 		if (ast instanceof LongLiteralAstNode) {
-			return new LongLiteral<>(env.jsonProvider(), ((LongLiteralAstNode) ast).value());
+			return new LongLiteral<>(env.getJsonProvider(), ((LongLiteralAstNode) ast).value());
 		}
 
 		if (ast instanceof DoubleLiteralAstNode) {
-			return new DoubleLiteral<>(env.jsonProvider(), ((DoubleLiteralAstNode) ast).value());
+			return new DoubleLiteral<>(env.getJsonProvider(), ((DoubleLiteralAstNode) ast).value());
 		}
 
 		if (ast instanceof NullLiteralAstNode) {
-			return new NullLiteral<>(env.jsonProvider());
+			return new NullLiteral<>(env.getJsonProvider());
 		}
 
 		if (ast instanceof StringLiteralAstNode) {
-			return new StringLiteral<>(env.jsonProvider(), ((StringLiteralAstNode) ast).value());
+			return new StringLiteral<>(env.getJsonProvider(), ((StringLiteralAstNode) ast).value());
 		}
 
 		if (ast instanceof ThisObjectAstNode) {
@@ -503,7 +523,7 @@ public class Compiler {
 		}
 
 		if (ast instanceof RecursionOperatorAstNode) {
-			return new RecursionOperator<>(env.jsonProvider());
+			return new RecursionOperator<>(env.getJsonProvider());
 		}
 
 		if (ast instanceof BreakExpressionAstNode) {
@@ -551,6 +571,43 @@ public class Compiler {
 		throw new IllegalStateException("Unknown AST node: " + ast.getClass());
 	}
 
+	/**
+	 * Resolves a plain (non-module-qualified) function by name/arity: exact-arity match first, then
+	 * variadic-arity fallback -- checked against builder-registered functions before falling back to
+	 * the version-gated {@link FunctionLoader}.
+	 */
+	private static <N> @Nullable Function resolveFunction(Environment<N> env, String fname, int nargs) {
+		FunctionSignature key = FunctionSignature.of(fname, nargs);
+		@Var Function factory = env.getFunctions().get(key);
+		if (factory != null)
+			return factory;
+		FunctionSignature variadicKey = key.withArity(null);
+		factory = env.getFunctions().get(variadicKey);
+		if (factory != null)
+			return factory;
+		Map<FunctionSignature, Function> loaded = env.getFunctionLoader().listFunctions(env.getJqVersion());
+		factory = loaded.get(key);
+		if (factory != null)
+			return factory;
+		return loaded.get(variadicKey);
+	}
+
+	/**
+	 * A variable's default supplier, whether registered on the {@code Environment} or (for {@code $}-style
+	 * data imports, which the compiler must not register on {@code Environment} itself) collected on
+	 * {@code context} via {@link CompileContext#addImportedVariableDefault}.
+	 */
+	private static <N> @Nullable Supplier<N> resolveVariableSupplier(Environment<N> env, CompileContext context, String name) {
+		Supplier<N> supplier = env.getVariables().get(name);
+		if (supplier != null)
+			return supplier;
+		if (!context.importedVariableDefaults().containsKey(name))
+			return null;
+		@SuppressWarnings("unchecked")
+		N value = (N) context.importedVariableDefaults().get(name);
+		return () -> value;
+	}
+
 	private static <N> Expression<N> compileVariableRef(Environment<N> env, CompileContext context, @Nullable String moduleName, String varName) throws JsonQueryException {
 		if (moduleName != null) {
 			String fullName = moduleName + "::" + varName;
@@ -558,9 +615,9 @@ public class Compiler {
 				SymbolLocation loc = context.getVariableLocation(fullName);
 				int slot = loc != null ? loc.slot : 0;
 				if (loc != null && loc.isGlobal) {
-					@Var Supplier<N> supplier = env.getVariable(fullName);
+					@Var Supplier<N> supplier = resolveVariableSupplier(env, context, fullName);
 					if (supplier == null && moduleName.equals(varName))
-						supplier = env.getVariable(varName);
+						supplier = resolveVariableSupplier(env, context, varName);
 					if (supplier == null)
 						throw new JsonQueryException(String.format("Variable $%s::%s is not defined", moduleName, varName));
 					return new ResolvedGlobalVariableAccess<>(fullName, slot, !loc.isLocal, context.getCurrentFunctionClosureSlot(), supplier);
@@ -578,7 +635,7 @@ public class Compiler {
 			SymbolLocation loc = context.getVariableLocation(varName);
 			int slot = loc != null ? loc.slot : 0;
 			if (loc != null && loc.isGlobal) {
-				Supplier<N> supplier = env.getVariable(varName);
+				Supplier<N> supplier = resolveVariableSupplier(env, context, varName);
 				if (supplier == null)
 					throw new JsonQueryException(String.format("Variable $%s is not defined", varName));
 				return new ResolvedGlobalVariableAccess<>(varName, slot, !loc.isLocal, context.getCurrentFunctionClosureSlot(), supplier);
@@ -602,7 +659,7 @@ public class Compiler {
 			for (PatternMatcherAstNode m : am.matchers()) {
 				compiled.add(compileMatcher(env, context, m));
 			}
-			return new ArrayMatcher<>(env.jsonProvider(), compiled);
+			return new ArrayMatcher<>(env.getJsonProvider(), compiled);
 		}
 		if (matcher instanceof ObjectMatcherAstNode) {
 			ObjectMatcherAstNode om = (ObjectMatcherAstNode) matcher;
@@ -612,7 +669,7 @@ public class Compiler {
 				PatternMatcher<N> sub = fm.rawMatcher() != null ? compileMatcher(env, context, fm.rawMatcher()) : null;
 				compiled.add(new ObjectMatcher.FieldMatcher<>(fm.dollar(), name, sub));
 			}
-			return new ObjectMatcher<>(env.jsonProvider(), compiled);
+			return new ObjectMatcher<>(env.getJsonProvider(), compiled);
 		}
 		throw new IllegalStateException("Unknown matcher type: " + matcher.getClass());
 	}

@@ -28,17 +28,17 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testAddFunctionAndExecute() throws Exception {
-		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_7);
-
-		env.addFunction(FunctionSignature.of("examplefn", 1), new Function() {
-			@Override
-			public <N> Expression<N> bindArguments(JsonProvider<N> provider, List<Expression<N>> args, Version version) {
-				return (scope, in, path, output, ignoredRequirePath) -> {
-					String text = provider.asText(in);
-					output.emit(provider.createString("hello:" + text), path);
-				};
-			}
-		});
+		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
+				.addFunction(FunctionSignature.of("examplefn", 1), new Function() {
+					@Override
+					public <N> Expression<N> bindArguments(JsonProvider<N> provider, List<Expression<N>> args, Version version) {
+						return (scope, in, path, output, ignoredRequirePath) -> {
+							String text = provider.asText(in);
+							output.emit(provider.createString("hello:" + text), path);
+						};
+					}
+				})
+				.build();
 
 		JsonQuery<JsonNode> q = env.compile("examplefn(.)");
 
@@ -51,8 +51,9 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testAddVariableAndExecute() throws Exception {
-		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_7);
-		env.addVariable("var", () -> jsonProvider.createNumber(42));
+		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
+				.addVariable("var", () -> jsonProvider.createNumber(42))
+				.build();
 
 		JsonQuery<JsonNode> q = env.compile("$var");
 
@@ -65,8 +66,6 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testFunctionWithConstantPreEvaluation() throws Exception {
-		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_7);
-
 		AtomicBoolean preCompiled = new AtomicBoolean(false);
 
 		Function testFactory = new Function() {
@@ -87,7 +86,9 @@ public class EnvironmentPocTest {
 			}
 		};
 
-		env.addFunction(FunctionSignature.of("test", 1), testFactory);
+		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
+				.addFunction(FunctionSignature.of("test", 1), testFactory)
+				.build();
 
 		// Compile query with constant pattern argument "foo.*bar"
 		JsonQuery<JsonNode> q = env.compile("test(\"foo.*bar\")");
@@ -107,7 +108,7 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testUndefinedFunctionThrowsAtCompileTime() {
-		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_7);
+		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7).build();
 
 		JsonQueryException ex = assertThrows(JsonQueryException.class, () -> {
 			env.compile("nonExistentFunc(.)");
@@ -119,7 +120,7 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testUndefinedVariableThrowsAtCompileTime() {
-		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_7);
+		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7).build();
 
 		JsonQueryException ex = assertThrows(JsonQueryException.class, () -> {
 			env.compile("$undefinedVar");
@@ -131,7 +132,7 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testLocalDefDoesNotLeakIntoGlobalFunctionTable() throws Exception {
-		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_7);
+		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7).build();
 
 		// First compile: defines and immediately uses a local `foo` -- must work.
 		JsonQuery<JsonNode> q1 = env.compile("def foo: 1; foo");
@@ -151,7 +152,7 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testLocalDefWithCaptureDoesNotLeakEitherAndFailsCleanlyAfterwards() throws Exception {
-		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_7);
+		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7).build();
 
 		env.compile("1 as $x | def bar: $x; bar");
 
@@ -164,7 +165,7 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testLocalAstVariableResolution() throws Exception {
-		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_7);
+		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7).build();
 
 		JsonQuery<JsonNode> q = env.compile(". as $x | $x");
 

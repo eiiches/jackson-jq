@@ -31,6 +31,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -99,12 +100,13 @@ public abstract class AbstractJsonQueryTest<T> {
 	}
 
 	/**
-	 * Create an Environment for the given version.
+	 * Create an EnvironmentBuilder for the given version, ready for any additional configuration
+	 * (e.g. the {@code ENV} variable added in {@link #test}) before {@code build()}.
 	 *
 	 * @param version The jq version to use
-	 * @return A configured environment ready for query compilation
+	 * @return A configured builder ready for query compilation
 	 */
-	protected abstract Environment<T> createEnvironment(Version version);
+	protected abstract EnvironmentBuilder<T> createEnvironment(Version version);
 
 	/**
 	 * Parse a Jackson JsonNode (from test data) to the provider's native type.
@@ -181,12 +183,14 @@ public abstract class AbstractJsonQueryTest<T> {
 	}
 
 	private void test(TestCase tc, Version version) throws Throwable {
-		Environment<T> env = createEnvironment(version);
-		env.addVariable("ENV", () -> {
-			T envObj = env.jsonProvider().createObject();
-			env.jsonProvider().set(envObj, "PAGER", env.jsonProvider().createString("less"));
-			return envObj;
-		});
+		EnvironmentBuilder<T> envBuilder = createEnvironment(version);
+		Environment<T> env = envBuilder
+				.addVariable("ENV", () -> {
+					T envObj = envBuilder.getJsonProvider().createObject();
+					envBuilder.getJsonProvider().set(envObj, "PAGER", envBuilder.getJsonProvider().createString("less"));
+					return envObj;
+				})
+				.build();
 
 		String command = String.format("%s '%s' <<< '%s'", TrueJqEvaluator.executable(version), tc.q, tc.in);
 

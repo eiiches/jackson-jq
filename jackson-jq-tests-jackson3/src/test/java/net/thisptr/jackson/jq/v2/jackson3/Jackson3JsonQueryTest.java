@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 import tools.jackson.databind.JsonNode;
 
-import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -21,8 +21,8 @@ import net.thisptr.jackson.jq.v2.test.AbstractJsonQueryTest;
 public class Jackson3JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 
 	@Override
-	protected Environment<JsonNode> createEnvironment(Version version) {
-		return new Environment<>(Jackson3JsonProviderImpl.getInstance(), version);
+	protected EnvironmentBuilder<JsonNode> createEnvironment(Version version) {
+		return new EnvironmentBuilder<>(Jackson3JsonProviderImpl.getInstance(), version);
 	}
 
 	@Override

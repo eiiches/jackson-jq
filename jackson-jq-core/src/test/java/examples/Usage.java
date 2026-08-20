@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.JsonQueryBindings;
 import net.thisptr.jackson.jq.v2.core.Versions;
@@ -35,31 +35,31 @@ public class Usage {
 		// You need a JsonProvider which is an abstraction of a JSON library (Jackson 2, Jackson 3, Gson, etc.)
 		Jackson2JsonProviderImpl jsonProvider = Jackson2JsonProviderImpl.getInstance();
 
-		// First of all, prepare an Environment container configured with JSON provider and JQ version.
-		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_6);
-
-		// You can also define a custom function. E.g.
-		env.addFunction(FunctionSignature.of("repeat", 1), new Function() {
-			@Override
-			public <N> Expression<N> bindArguments(JsonProvider<N> fprovider, List<Expression<N>> fargs, Version ver) {
-				return (frame, in, path, output, ignoredRequirePath) -> {
-					fargs.get(0).apply(frame, in, (time) -> {
-						output.emit(fprovider.createString(Strings.repeat(fprovider.asText(in), fprovider.asInt(time))), null);
-					});
-				};
-			}
-		});
-
-		// For import statements to work, set ModuleLoader.
-		env.setModuleLoader(new ChainedModuleLoader<>(
-				ClassPathModuleLoader.getInstance(),
-				new FileSystemModuleLoader<>(jsonProvider, Versions.JQ_1_6,
-						FileSystems.getDefault().getPath("").toAbsolutePath(), // search modules in the actual file system
-						Paths.get(Environment.class.getClassLoader().getResource("classpath_modules").toURI())) // or in the classpath resources
-		));
-
-		// addVariable(...) sets a custom variable that can be used from jq expressions.
-		env.addVariable("param", jsonProvider.createNumber(42));
+		// First of all, prepare an Environment via EnvironmentBuilder, configured with JSON provider and JQ version.
+		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
+				// You can also define a custom function. E.g.
+				.addFunction(FunctionSignature.of("repeat", 1), new Function() {
+					@Override
+					public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version jqVersion) {
+						return (frame, in, path, output, ignoredRequirePath) -> {
+							args.get(0).apply(frame, in, (time) -> {
+								output.emit(jsonProvider.createString(Strings.repeat(jsonProvider.asText(in), jsonProvider.asInt(time))), null);
+							});
+						};
+					}
+				})
+				// ClassPathModuleLoader is used by default, so import statements already work out of the box.
+				// Here we additionally chain in a FileSystemModuleLoader so imports can also resolve to
+				// modules on disk (or classpath resources), not just ServiceLoader-registered modules.
+				.setModuleLoader(new ChainedModuleLoader<>(
+						ClassPathModuleLoader.getInstance(),
+						new FileSystemModuleLoader<>(jsonProvider, Versions.JQ_1_7,
+								FileSystems.getDefault().getPath("").toAbsolutePath(), // search modules in the actual file system
+								Paths.get(Usage.class.getClassLoader().getResource("classpath_modules").toURI())) // or in the classpath resources
+				))
+				// addVariable(...) sets a custom variable that can be used from jq expressions.
+				.addVariable("param", jsonProvider.createNumber(42))
+				.build();
 
 		// env.compile(...) parses, resolves symbols, and compiles a given expression.
 		JsonQuery<JsonNode> q = env.compile("$param * 2");
@@ -68,16 +68,12 @@ public class Usage {
 		JsonNode in = MAPPER.readTree("{\"ids\":\"12,15,23\",\"name\":\"jackson\",\"timestamp\":1418785331123}");
 
 		// Finally, JsonQuery#apply(...) executes the query with given input and produces 0, 1 or more JsonNode.
-		List<JsonNode> out = new ArrayList<>();
-		q.apply(in, (outNode, path) -> out.add(outNode));
-		System.out.println(out); // => [84]
+		q.apply(in, (out, path) -> System.out.println(out)); // => 84
 
 		// A compiled query can be reused with different variable and function bindings for each invocation.
 		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
 				.addVariable("param", () -> jsonProvider.createNumber(7)) // suppliers are evaluated on each reference
 				.build();
-		List<JsonNode> overriddenOut = new ArrayList<>();
-		q.apply(in, bindings, (outNode, path) -> overriddenOut.add(outNode));
-		System.out.println(overriddenOut); // => [14]
+		q.apply(in, bindings, (out, path) -> System.out.println(out)); // => 14
 	}
 }

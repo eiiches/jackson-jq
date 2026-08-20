@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
@@ -53,7 +54,7 @@ public class JacksonJqEvaluator implements Evaluator {
 			public void run() {
 				try {
 					AstNode ast = AstParser.parse(exprText, version);
-					Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), version);
+					Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), version).build();
 					Expression<JsonNode> expr = Compiler.compile(env, ast);
 					result.set(doEvaluate(expr, in));
 				} catch (Throwable e) {

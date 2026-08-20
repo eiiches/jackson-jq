@@ -8,7 +8,6 @@ import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 public interface JqLibrary {
-	// TODO: fix stringly-typed api
 	class JqFunc {
 		public final String name;
 		public final List<String> args;

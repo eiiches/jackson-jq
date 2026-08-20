@@ -20,6 +20,7 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
@@ -136,8 +137,9 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 
 		FileSystemModule module = new FileSystemModule(moduleFile.searchPath, moduleFile.modulePath);
 
-		Environment<JsonNode> moduleEnv = new Environment<>(jsonProvider, version);
-		moduleEnv.setModuleLoader(parentModuleLoader != null ? parentModuleLoader : this);
+		Environment<JsonNode> moduleEnv = new EnvironmentBuilder<>(jsonProvider, version)
+				.setModuleLoader(parentModuleLoader != null ? parentModuleLoader : this)
+				.build();
 		AstNode ast = AstParser.parse(moduleString + " null", version);
 		Expression<JsonNode> compiled = Compiler.compileModule(moduleEnv, module, ast);
 		if (!(compiled instanceof RootExpression))

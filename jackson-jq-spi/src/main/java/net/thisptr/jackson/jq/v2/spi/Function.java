@@ -13,5 +13,5 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
  */
 @FunctionalInterface
 public interface Function {
-	<JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version);
+	<JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version jqVersion);
 }

@@ -59,6 +59,7 @@ public class CompileContext {
 	private final boolean exportTopLevelFunctions;
 	private final Map<FunctionSignature, Integer> rootFunctionSlots;
 	private final Map<String, Module> importedModules;
+	private final Map<String, Object> importedVariableDefaults;
 
 	public CompileContext() {
 		this(false);
@@ -76,6 +77,7 @@ public class CompileContext {
 		this.exportTopLevelFunctions = exportTopLevelFunctions;
 		this.rootFunctionSlots = new HashMap<>();
 		this.importedModules = new HashMap<>();
+		this.importedVariableDefaults = new HashMap<>();
 	}
 
 	public void addImportedModule(String alias, Module module) {
@@ -84,6 +86,20 @@ public class CompileContext {
 
 	public @Nullable Module getImportedModule(String alias) {
 		return importedModules.get(alias);
+	}
+
+	/**
+	 * Records the resolved value of a {@code $}-style data import (e.g. {@code import "data" as $name})
+	 * as that variable's compile-time default -- collected here (not on the Environment, which the
+	 * compiler must not mutate) and merged into the environment's variable defaults once compilation of
+	 * the root expression finishes.
+	 */
+	public void addImportedVariableDefault(String name, Object value) {
+		importedVariableDefaults.put(name, value);
+	}
+
+	public Map<String, Object> importedVariableDefaults() {
+		return importedVariableDefaults;
 	}
 
 	/**

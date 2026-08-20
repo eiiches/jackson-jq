@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
@@ -58,7 +59,7 @@ class ParenAstNodeTest {
 
 	@Test
 	void parenthesizedExpressionsCompileTransparently() throws JsonQueryException {
-		Environment<JsonNode> environment = new Environment<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
+		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
 		JsonQuery<JsonNode> query = environment.compile("((1 + 2))");
 		List<JsonNode> output = new ArrayList<>();
 		query.apply(NullNode.getInstance(), (value, path) -> output.add(value));
