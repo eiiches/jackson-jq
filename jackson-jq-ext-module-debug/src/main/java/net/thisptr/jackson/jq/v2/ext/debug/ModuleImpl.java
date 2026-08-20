@@ -1,12 +1,10 @@
 package net.thisptr.jackson.jq.v2.ext.debug;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.google.auto.service.AutoService;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.ext.debug.functions.DebugScopeFunction;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -23,12 +21,12 @@ public class ModuleImpl implements Module {
 
 	public ModuleImpl() {
 		functions.put(FunctionSignature.of("debug_scope", 0), new DebugScopeFunction());
-		this.moduleMeta = () -> Collections.unmodifiableList(new ArrayList<>(functions.keySet()));
+		this.moduleMeta = new ModuleMeta() {};
 	}
 
 	@Override
-	public @Nullable Function resolveFunction(String fname, int nargs) {
-		return functions.get(FunctionSignature.of(fname, nargs));
+	public Map<FunctionSignature, Function> getFunctions() {
+		return Collections.unmodifiableMap(functions);
 	}
 
 	@Override

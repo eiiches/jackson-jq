@@ -150,7 +150,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 			if (key.arity() != null)
 				module.addFunction(key, factory);
 		});
-		module.setModuleMeta(SimpleModuleMeta.fromAst(ast, module::getDefinitions));
+		module.setModuleMeta(SimpleModuleMeta.fromAst(ast));
 		return module;
 	}
 

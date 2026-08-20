@@ -186,7 +186,7 @@ public class Compiler {
 				@Var Module mod = context.getImportedModule(call.moduleName());
 				if (mod == null)
 					mod = env.getImportedModules().get(call.moduleName());
-				Function factory = mod != null ? mod.resolveFunction(call.name(), compiledArgs.size()) : null;
+				Function factory = mod != null ? mod.getFunctions().get(FunctionSignature.of(call.name(), compiledArgs.size())) : null;
 				if (factory == null) {
 					throw new JsonQueryException(String.format("Function %s::%s/%d does not exist", call.moduleName(), call.name(), compiledArgs.size()));
 				}

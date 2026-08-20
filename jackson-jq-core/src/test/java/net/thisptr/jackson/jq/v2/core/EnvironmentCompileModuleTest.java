@@ -86,10 +86,27 @@ public class EnvironmentCompileModuleTest {
 
 		Module module = env.compileModule("def one: 1; def two: 2; def three($x): $x;");
 
-		assertThat(module.getModuleMeta().getDefinitions()).containsExactlyInAnyOrder(
+		assertThat(module.getFunctions().keySet()).containsExactlyInAnyOrder(
 				FunctionSignature.of("one", 0),
 				FunctionSignature.of("two", 0),
 				FunctionSignature.of("three", 1));
+	}
+
+	@Test
+	public void testCompileModuleExposesUsableFunctions() throws Exception {
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
+
+		Module module = env.compileModule("def one: 1; def two: 2; def three($x): $x;");
+
+		Environment<JsonNode> queryEnv = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+				.addImportedModule("m", module)
+				.build();
+		JsonQuery<JsonNode> expr = queryEnv.compile("m::three(41) + 1");
+		List<JsonNode> actual = new ArrayList<>();
+		expr.apply(NullNode.getInstance(), (val, path) -> actual.add(val));
+
+		assertThat(actual).hasSize(1);
+		assertThat(actual.get(0).asInt()).isEqualTo(42);
 	}
 
 	@Test

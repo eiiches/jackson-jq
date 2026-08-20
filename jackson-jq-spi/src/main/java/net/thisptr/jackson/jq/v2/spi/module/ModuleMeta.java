@@ -7,11 +7,10 @@ import java.util.Map;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 
 /**
- * Metadata associated with a jq module, including module directives,
- * declared dependencies (imports and includes), and function definitions.
+ * Metadata associated with a jq module, including module directives
+ * and declared dependencies (imports and includes).
  */
 public interface ModuleMeta {
 
@@ -74,11 +73,4 @@ public interface ModuleMeta {
 			return Collections.emptyMap();
 		}
 	}
-
-	/**
-	 * Returns the list of function signatures defined/exported by this module.
-	 *
-	 * @return the list of function signatures
-	 */
-	List<FunctionSignature> getDefinitions();
 }

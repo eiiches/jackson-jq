@@ -1,13 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.module;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
@@ -19,7 +15,7 @@ public class SimpleModule implements Module {
 	private ModuleMeta moduleMeta;
 
 	public SimpleModule() {
-		this.moduleMeta = new SimpleModuleMeta(this::getDefinitions);
+		this.moduleMeta = new SimpleModuleMeta();
 	}
 
 	public SimpleModule(ModuleMeta moduleMeta) {
@@ -42,13 +38,9 @@ public class SimpleModule implements Module {
 		this.functions.putAll(functions);
 	}
 
-	public List<FunctionSignature> getDefinitions() {
-		return Collections.unmodifiableList(new ArrayList<>(functions.keySet()));
-	}
-
 	@Override
-	public @Nullable Function resolveFunction(String fname, int nargs) {
-		return functions.get(FunctionSignature.of(fname, nargs));
+	public Map<FunctionSignature, Function> getFunctions() {
+		return Collections.unmodifiableMap(functions);
 	}
 
 	@Override

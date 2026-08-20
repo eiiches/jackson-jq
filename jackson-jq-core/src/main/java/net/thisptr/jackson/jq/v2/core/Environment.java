@@ -62,7 +62,7 @@ public interface Environment<JsonNode> {
 			if (key.arity() != null)
 				module.addFunction(key, factory);
 		});
-		module.setModuleMeta(SimpleModuleMeta.fromAst(parsedAst, module::getDefinitions));
+		module.setModuleMeta(SimpleModuleMeta.fromAst(parsedAst));
 		return module;
 	}
 }

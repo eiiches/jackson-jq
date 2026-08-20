@@ -31,9 +31,9 @@ public class DebugModuleTest {
 	}
 
 	@Test
-	public void exposesDefinitionsViaModuleMeta() {
+	public void exposesFunctions() {
 		ModuleImpl module = new ModuleImpl();
-		assertThat(module.getModuleMeta().getDefinitions()).containsExactlyInAnyOrder(
+		assertThat(module.getFunctions().keySet()).containsExactlyInAnyOrder(
 				FunctionSignature.of("debug_scope", 0));
 	}
 }

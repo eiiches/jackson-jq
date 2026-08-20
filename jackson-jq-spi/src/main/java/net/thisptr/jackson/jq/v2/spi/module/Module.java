@@ -1,8 +1,9 @@
 package net.thisptr.jackson.jq.v2.spi.module;
 
-import org.jspecify.annotations.Nullable;
+import java.util.Map;
 
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 
 /**
  * Represents a jq module that provides functions and metadata.
@@ -10,13 +11,11 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 public interface Module {
 
 	/**
-	 * Resolves an exported function by name and arity.
+	 * Returns all functions exported by this module, keyed by name and arity.
 	 *
-	 * @param fname the function name
-	 * @param nargs the number of arguments (arity)
-	 * @return the resolved {@link Function}, or {@code null} if not found in this module
+	 * @return an unmodifiable map of function signatures to their factories
 	 */
-	@Nullable Function resolveFunction(String fname, int nargs);
+	Map<FunctionSignature, Function> getFunctions();
 
 	/**
 	 * Returns the metadata associated with this module, such as dependencies,

@@ -9,9 +9,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ModuleDiscoveryTest {
 
 	@Test
-	public void exposesDefinitionsViaModuleMeta() {
+	public void exposesFunctions() {
 		ModuleImpl module = new ModuleImpl();
-		assertThat(module.getModuleMeta().getDefinitions()).containsExactlyInAnyOrder(
+		assertThat(module.getFunctions().keySet()).containsExactlyInAnyOrder(
 				FunctionSignature.of("uuid4", 0),
 				FunctionSignature.of("uuid3", 1),
 				FunctionSignature.of("uuid5", 1));

@@ -1,12 +1,10 @@
 package net.thisptr.jackson.jq.v2.ext.time;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.google.auto.service.AutoService;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.ext.time.functions.StrFTimeFunction;
 import net.thisptr.jackson.jq.v2.ext.time.functions.StrPTimeFunction;
@@ -29,12 +27,12 @@ public class ModuleImpl implements Module {
 		functions.put(FunctionSignature.of("strptime", 1), new StrPTimeFunction());
 		functions.put(FunctionSignature.of("strptime", 2), new StrPTimeFunction());
 		functions.put(FunctionSignature.of("timestamp", 0), new TimestampFunction());
-		this.moduleMeta = () -> Collections.unmodifiableList(new ArrayList<>(functions.keySet()));
+		this.moduleMeta = new ModuleMeta() {};
 	}
 
 	@Override
-	public @Nullable Function resolveFunction(String fname, int nargs) {
-		return functions.get(FunctionSignature.of(fname, nargs));
+	public Map<FunctionSignature, Function> getFunctions() {
+		return Collections.unmodifiableMap(functions);
 	}
 
 	@Override

@@ -7,7 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
@@ -17,25 +16,22 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleMeta;
 
 public class SimpleModuleMeta implements ModuleMeta {
 	private final @Nullable AstNode metadataExpr;
 	private final List<Dependency> dependencies;
-	private final Supplier<List<FunctionSignature>> definitionsSupplier;
 
-	public SimpleModuleMeta(Supplier<List<FunctionSignature>> definitionsSupplier) {
-		this(null, Collections.emptyList(), definitionsSupplier);
+	public SimpleModuleMeta() {
+		this(null, Collections.emptyList());
 	}
 
-	public SimpleModuleMeta(@Nullable AstNode metadataExpr, List<Dependency> dependencies, Supplier<List<FunctionSignature>> definitionsSupplier) {
+	public SimpleModuleMeta(@Nullable AstNode metadataExpr, List<Dependency> dependencies) {
 		this.metadataExpr = metadataExpr;
 		this.dependencies = Collections.unmodifiableList(new ArrayList<>(dependencies));
-		this.definitionsSupplier = Objects.requireNonNull(definitionsSupplier);
 	}
 
-	public static SimpleModuleMeta fromAst(@Nullable AstNode ast, Supplier<List<FunctionSignature>> definitionsSupplier) {
+	public static SimpleModuleMeta fromAst(@Nullable AstNode ast) {
 		@Var AstNode metadataExpr = null;
 		List<Dependency> dependencies = new ArrayList<>();
 		if (ast instanceof TopLevelAstNode) {
@@ -45,7 +41,7 @@ public class SimpleModuleMeta implements ModuleMeta {
 			for (TopLevelAstNode.ImportStatement<?> imp : top.imports())
 				dependencies.add(new SimpleDependency(imp.path, imp.dollarImport, imp.name, imp.metadataExpr()));
 		}
-		return new SimpleModuleMeta(metadataExpr, dependencies, definitionsSupplier);
+		return new SimpleModuleMeta(metadataExpr, dependencies);
 	}
 
 	@Override
@@ -56,11 +52,6 @@ public class SimpleModuleMeta implements ModuleMeta {
 	@Override
 	public List<Dependency> getDependencies() {
 		return dependencies;
-	}
-
-	@Override
-	public List<FunctionSignature> getDefinitions() {
-		return Collections.unmodifiableList(new ArrayList<>(definitionsSupplier.get()));
 	}
 
 	static <JsonNode> Map<String, JsonNode> evaluateMetadata(JsonProvider<JsonNode> jsonProvider, @Nullable AstNode expr) {

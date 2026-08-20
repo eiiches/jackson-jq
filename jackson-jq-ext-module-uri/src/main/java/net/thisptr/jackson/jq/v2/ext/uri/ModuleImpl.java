@@ -1,12 +1,10 @@
 package net.thisptr.jackson.jq.v2.ext.uri;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.google.auto.service.AutoService;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.ext.uri.functions.UriDecodeFunction;
 import net.thisptr.jackson.jq.v2.ext.uri.functions.UriParseFunction;
@@ -25,12 +23,12 @@ public class ModuleImpl implements Module {
 	public ModuleImpl() {
 		functions.put(FunctionSignature.of("uridecode", 0), new UriDecodeFunction());
 		functions.put(FunctionSignature.of("uriparse", 0), new UriParseFunction());
-		this.moduleMeta = () -> Collections.unmodifiableList(new ArrayList<>(functions.keySet()));
+		this.moduleMeta = new ModuleMeta() {};
 	}
 
 	@Override
-	public @Nullable Function resolveFunction(String fname, int nargs) {
-		return functions.get(FunctionSignature.of(fname, nargs));
+	public Map<FunctionSignature, Function> getFunctions() {
+		return Collections.unmodifiableMap(functions);
 	}
 
 	@Override

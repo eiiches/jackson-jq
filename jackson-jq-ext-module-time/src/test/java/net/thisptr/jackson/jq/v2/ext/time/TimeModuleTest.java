@@ -40,9 +40,9 @@ public class TimeModuleTest {
 	}
 
 	@Test
-	public void exposesDefinitionsViaModuleMeta() {
+	public void exposesFunctions() {
 		ModuleImpl module = new ModuleImpl();
-		assertThat(module.getModuleMeta().getDefinitions()).containsExactlyInAnyOrder(
+		assertThat(module.getFunctions().keySet()).containsExactlyInAnyOrder(
 				FunctionSignature.of("strftime", 1),
 				FunctionSignature.of("strftime", 2),
 				FunctionSignature.of("strptime", 1),

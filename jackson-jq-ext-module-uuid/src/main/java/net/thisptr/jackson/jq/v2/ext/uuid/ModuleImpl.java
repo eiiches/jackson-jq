@@ -1,12 +1,10 @@
 package net.thisptr.jackson.jq.v2.ext.uuid;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.google.auto.service.AutoService;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.ext.uuid.functions.Uuid35Function;
 import net.thisptr.jackson.jq.v2.ext.uuid.functions.Uuid4Function;
@@ -26,12 +24,12 @@ public class ModuleImpl implements Module {
 		functions.put(FunctionSignature.of("uuid4", 0), new Uuid4Function());
 		functions.put(FunctionSignature.of("uuid3", 1), new Uuid35Function(3));
 		functions.put(FunctionSignature.of("uuid5", 1), new Uuid35Function(5));
-		this.moduleMeta = () -> Collections.unmodifiableList(new ArrayList<>(functions.keySet()));
+		this.moduleMeta = new ModuleMeta() {};
 	}
 
 	@Override
-	public @Nullable Function resolveFunction(String fname, int nargs) {
-		return functions.get(FunctionSignature.of(fname, nargs));
+	public Map<FunctionSignature, Function> getFunctions() {
+		return Collections.unmodifiableMap(functions);
 	}
 
 	@Override
