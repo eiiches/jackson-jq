@@ -20,7 +20,6 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
-import net.thisptr.jackson.jq.v2.spi.module.ModuleMeta;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -100,11 +99,6 @@ public class EnvironmentAddImportedModuleTest {
 			@Override
 			public Map<FunctionSignature, Function> getFunctions() {
 				return Collections.singletonMap(FunctionSignature.of("greet", null), countArgs);
-			}
-
-			@Override
-			public ModuleMeta getModuleMeta() {
-				return new ModuleMeta() {};
 			}
 		};
 

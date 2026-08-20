@@ -23,5 +23,8 @@ public interface Module {
 	 *
 	 * @return the {@link ModuleMeta} of this module
 	 */
-	ModuleMeta getModuleMeta();
+	default ModuleMeta getModuleMeta() {
+		return new ModuleMeta() {
+		};
+	}
 }

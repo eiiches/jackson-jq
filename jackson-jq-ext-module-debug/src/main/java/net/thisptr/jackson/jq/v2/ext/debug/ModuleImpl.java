@@ -11,26 +11,18 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
-import net.thisptr.jackson.jq.v2.spi.module.ModuleMeta;
 
 @AutoService(Module.class)
 @ModuleRegistration(path = "jackson-jq/debug")
 public class ModuleImpl implements Module {
 	private final Map<FunctionSignature, Function> functions = new HashMap<>();
-	private final ModuleMeta moduleMeta;
 
 	public ModuleImpl() {
 		functions.put(FunctionSignature.of("debug_scope", 0), new DebugScopeFunction());
-		this.moduleMeta = new ModuleMeta() {};
 	}
 
 	@Override
 	public Map<FunctionSignature, Function> getFunctions() {
 		return Collections.unmodifiableMap(functions);
-	}
-
-	@Override
-	public ModuleMeta getModuleMeta() {
-		return moduleMeta;
 	}
 }
