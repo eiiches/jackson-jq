@@ -10,7 +10,7 @@ import net.thisptr.jackson.jq.v2.core.ClassPathFunctionLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 
@@ -20,7 +20,7 @@ public class BuiltinsFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		List<String> builtins = new ArrayList<>();
-		for (FunctionNameAndArity fn : ClassPathFunctionLoader.getInstance().listFunctions(version).keySet()) {
+		for (FunctionSignature fn : ClassPathFunctionLoader.getInstance().listFunctions(version).keySet()) {
 			builtins.add(fn.toString());
 		}
 		Collections.sort(builtins);

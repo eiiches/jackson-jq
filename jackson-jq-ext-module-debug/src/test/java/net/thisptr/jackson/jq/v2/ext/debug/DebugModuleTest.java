@@ -12,7 +12,7 @@ import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,6 +36,6 @@ public class DebugModuleTest {
 		ClassPathModuleLoader<JsonNode> modules = new ClassPathModuleLoader<>(getClass().getClassLoader());
 		assertThat(modules.loadAllModules()).containsKey("jackson-jq/debug");
 
-		assertThat(ClassPathFunctionLoader.getInstance().listFunctions(Versions.JQ_1_6)).doesNotContainKey(FunctionNameAndArity.of("debug_scope", 0));
+		assertThat(ClassPathFunctionLoader.getInstance().listFunctions(Versions.JQ_1_6)).doesNotContainKey(FunctionSignature.of("debug_scope", 0));
 	}
 }

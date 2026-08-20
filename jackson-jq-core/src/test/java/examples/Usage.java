@@ -22,7 +22,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
 
 public class Usage {
@@ -39,7 +39,7 @@ public class Usage {
 		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_6);
 
 		// You can also define a custom function. E.g.
-		env.addFunction(FunctionNameAndArity.of("repeat", 1), new Function() {
+		env.addFunction(FunctionSignature.of("repeat", 1), new Function() {
 			@Override
 			public <N> Expression<N> bindArguments(JsonProvider<N> fprovider, List<Expression<N>> fargs, Version ver) {
 				return (frame, in, path, output, ignoredRequirePath) -> {

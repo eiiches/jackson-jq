@@ -2,9 +2,9 @@ package net.thisptr.jackson.jq.v2.core.module.loaders;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
-import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 
 public class ChainedModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	private final ModuleLoader<JsonNode>[] loaders;

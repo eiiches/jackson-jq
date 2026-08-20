@@ -1,8 +1,9 @@
-package net.thisptr.jackson.jq.v2.spi.module;
+package net.thisptr.jackson.jq.v2.core.module;
 
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.module.Module;
 
 public interface ModuleLoader<JsonNode> {
 	// import path as NAME

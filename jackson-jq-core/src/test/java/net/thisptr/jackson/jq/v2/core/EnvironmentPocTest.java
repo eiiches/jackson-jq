@@ -13,7 +13,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -30,7 +30,7 @@ public class EnvironmentPocTest {
 	public void testAddFunctionAndExecute() throws Exception {
 		Environment<JsonNode> env = new Environment<>(jsonProvider, Versions.JQ_1_7);
 
-		env.addFunction(FunctionNameAndArity.of("examplefn", 1), new Function() {
+		env.addFunction(FunctionSignature.of("examplefn", 1), new Function() {
 			@Override
 			public <N> Expression<N> bindArguments(JsonProvider<N> provider, List<Expression<N>> args, Version version) {
 				return (scope, in, path, output, ignoredRequirePath) -> {
@@ -87,7 +87,7 @@ public class EnvironmentPocTest {
 			}
 		};
 
-		env.addFunction(FunctionNameAndArity.of("test", 1), testFactory);
+		env.addFunction(FunctionSignature.of("test", 1), testFactory);
 
 		// Compile query with constant pattern argument "foo.*bar"
 		JsonQuery<JsonNode> q = env.compile("test(\"foo.*bar\")");

@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 
 /**
  * Per-invocation overrides for variables and functions registered in an {@link Environment}.
@@ -16,9 +16,9 @@ public final class JsonQueryBindings<JsonNode> {
 	private static final JsonQueryBindings<?> EMPTY = new JsonQueryBindings<>(Collections.emptyMap(), Collections.emptyMap());
 
 	private final Map<String, Supplier<JsonNode>> variables;
-	private final Map<FunctionNameAndArity, Function> functions;
+	private final Map<FunctionSignature, Function> functions;
 
-	private JsonQueryBindings(Map<String, Supplier<JsonNode>> variables, Map<FunctionNameAndArity, Function> functions) {
+	private JsonQueryBindings(Map<String, Supplier<JsonNode>> variables, Map<FunctionSignature, Function> functions) {
 		this.variables = Collections.unmodifiableMap(new HashMap<>(variables));
 		this.functions = Collections.unmodifiableMap(new HashMap<>(functions));
 	}
@@ -36,13 +36,13 @@ public final class JsonQueryBindings<JsonNode> {
 		return variables;
 	}
 
-	public Map<FunctionNameAndArity, Function> functions() {
+	public Map<FunctionSignature, Function> functions() {
 		return functions;
 	}
 
 	public static final class Builder<JsonNode> {
 		private final Map<String, Supplier<JsonNode>> variables = new HashMap<>();
-		private final Map<FunctionNameAndArity, Function> functions = new HashMap<>();
+		private final Map<FunctionSignature, Function> functions = new HashMap<>();
 
 		public Builder<JsonNode> addVariable(String name, JsonNode value) {
 			Objects.requireNonNull(value, "value");
@@ -57,7 +57,7 @@ public final class JsonQueryBindings<JsonNode> {
 			return this;
 		}
 
-		public Builder<JsonNode> addFunction(FunctionNameAndArity nameAndArity, Function function) {
+		public Builder<JsonNode> addFunction(FunctionSignature nameAndArity, Function function) {
 			functions.put(Objects.requireNonNull(nameAndArity, "nameAndArity"), Objects.requireNonNull(function, "function"));
 			return this;
 		}

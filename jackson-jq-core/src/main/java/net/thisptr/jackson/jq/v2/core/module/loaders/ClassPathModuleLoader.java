@@ -6,10 +6,10 @@ import java.util.ServiceLoader;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
-import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 
 // ClassPathModuleLoader uses ServiceLoader to load Module implementations from classpath
 public class ClassPathModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {

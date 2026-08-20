@@ -12,7 +12,7 @@ import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,7 +46,7 @@ public class TimeModuleTest {
 		assertThat(modules.loadAllModules()).containsKey("jackson-jq/time");
 
 		assertThat(ClassPathFunctionLoader.getInstance().listFunctions(Versions.JQ_1_6))
-				.doesNotContainKeys(FunctionNameAndArity.of("timestamp", 0), FunctionNameAndArity.of("strftime", 1), FunctionNameAndArity.of("strftime", 2), FunctionNameAndArity.of("strptime", 1), FunctionNameAndArity.of("strptime", 2));
+				.doesNotContainKeys(FunctionSignature.of("timestamp", 0), FunctionSignature.of("strftime", 1), FunctionSignature.of("strftime", 2), FunctionSignature.of("strptime", 1), FunctionSignature.of("strptime", 2));
 	}
 
 	private List<JsonNode> run(String expression) throws JsonQueryException {

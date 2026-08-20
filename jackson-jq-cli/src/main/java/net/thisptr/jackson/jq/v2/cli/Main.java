@@ -28,6 +28,7 @@ import tools.jackson.databind.json.JsonMapper;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
+import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
@@ -36,10 +37,9 @@ import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.JsonQueryJacksonModule;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 
 public class Main {
 	private static ObjectMapper MAPPER = JsonMapper.builder()
@@ -109,7 +109,7 @@ public class Main {
 
 		Jackson3JsonProviderImpl jsonProvider = Jackson3JsonProviderImpl.getInstance();
 		Environment<JsonNode> env = new Environment<>(jsonProvider, version);
-		env.addFunction(FunctionNameAndArity.of("env", 0), new Function() {
+		env.addFunction(FunctionSignature.of("env", 0), new Function() {
 			@Override
 			public <N> Expression<N> bindArguments(JsonProvider<N> jsonProv, List<Expression<N>> fnArgs, Version ver) {
 				return (frame, in, path, output, ignoredRequirePath) -> {

@@ -96,7 +96,7 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatche
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -142,7 +142,7 @@ public class Compiler {
 			context.addGlobalVariable(name, name);
 			context.addGlobalVariable(name + "::" + name, name);
 		}
-		for (FunctionNameAndArity key : env.functions().keySet())
+		for (FunctionSignature key : env.functions().keySet())
 			context.addGlobalFunction(key);
 	}
 
@@ -166,14 +166,24 @@ public class Compiler {
 				compiledArgs.add(compile(env, context, currentModule, arg));
 			}
 
-			String fullName = call.moduleName() != null ? call.moduleName() + "::" + call.name() : call.name();
+			if (call.moduleName() != null) {
+				Module mod = context.getImportedModule(call.moduleName());
+				Function factory = mod != null ? mod.resolveFunction(call.name(), compiledArgs.size()) : null;
+				if (factory == null) {
+					throw new JsonQueryException(String.format("Function %s::%s/%d does not exist", call.moduleName(), call.name(), compiledArgs.size()));
+				}
+				Expression<JsonNode> fn = factory.bindArguments(env.jsonProvider(), compiledArgs, env.version());
+				return new ResolvedFunctionCall<>(call.moduleName() + "::" + call.name(), fn);
+			}
+
+			String fullName = call.name();
 			if (context.isLocalFunction(fullName, compiledArgs.size())) {
 				SymbolLocation loc = context.getFunctionLocation(fullName, compiledArgs.size());
 				int slot = loc != null ? loc.slot : 0;
 				@Var Function defaultFactory = null;
 				@Var Expression<JsonNode> defaultFunction = null;
 				if (loc != null && loc.isGlobal) {
-					defaultFactory = env.getFunction(FunctionNameAndArity.of(fullName, compiledArgs.size()));
+					defaultFactory = env.resolveFunction(fullName, compiledArgs.size());
 					if (defaultFactory != null)
 						defaultFunction = defaultFactory.bindArguments(env.jsonProvider(), compiledArgs, env.version());
 				}
@@ -183,8 +193,7 @@ public class Compiler {
 				return new ResolvedLocalFunctionAccess<>(env.jsonProvider(), env.version(), fullName, slot, compiledArgs, defaultFactory, defaultFunction);
 			}
 
-			FunctionNameAndArity key = FunctionNameAndArity.of(fullName, compiledArgs.size());
-			Function factory = env.getFunction(key);
+			Function factory = env.resolveFunction(fullName, compiledArgs.size());
 			if (factory == null) {
 				throw new JsonQueryException(String.format("Function %s/%d does not exist", fullName, compiledArgs.size()));
 			}
@@ -221,13 +230,8 @@ public class Compiler {
 					if (mod == null) {
 						throw new JsonQueryException(String.format("module not found: %s", imp.path));
 					}
-					for (Map.Entry<String, Function> entry : mod.getAllFunctions().entrySet()) {
-						String[] parts = entry.getKey().split("/", 2);
-						int arity = Integer.parseInt(parts[1]);
-						String fnName = imp.name != null ? imp.name + "::" + parts[0] : parts[0];
-						FunctionNameAndArity key = FunctionNameAndArity.of(fnName, arity);
-						env.addFunction(key, entry.getValue());
-						context.addGlobalFunction(key);
+					if (imp.name != null) {
+						context.addImportedModule(imp.name, mod);
 					}
 				}
 			}
@@ -421,7 +425,7 @@ public class Compiler {
 			if (loc == null) {
 				throw new JsonQueryException(String.format("Formatting operator %s does not exist", fname));
 			}
-			Function defaultFactory = loc.isGlobal ? env.getFunction(FunctionNameAndArity.of(fname, 0)) : null;
+			Function defaultFactory = loc.isGlobal ? env.resolveFunction(fname, 0) : null;
 			Expression<JsonNode> defaultFunction = defaultFactory != null ? defaultFactory.bindArguments(env.jsonProvider(), Collections.emptyList(), env.version()) : null;
 			if (!loc.isLocal)
 				return new ResolvedCapturedFunctionAccess<>(env.jsonProvider(), env.version(), fname, loc.slot, context.getCurrentFunctionClosureSlot(), Collections.emptyList(), defaultFactory, defaultFunction);
@@ -539,7 +543,7 @@ public class Compiler {
 			SymbolLocation loc = context.getFunctionLocation(fd.fname(), fd.args().size());
 			int slot = loc != null ? loc.slot : 0;
 			if (context.exportsTopLevelFunctions() && isTopLevelDefinition) {
-				context.recordRootFunctionSlot(FunctionNameAndArity.of(fd.fname(), fd.args().size()), slot);
+				context.recordRootFunctionSlot(FunctionSignature.of(fd.fname(), fd.args().size()), slot);
 			}
 			return new ResolvedFunctionDefinition(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody, ownClosureSlot, definerClosureSlot);
 		}

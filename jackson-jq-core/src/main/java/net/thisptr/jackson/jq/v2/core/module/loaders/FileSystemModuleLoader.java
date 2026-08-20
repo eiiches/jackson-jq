@@ -25,16 +25,16 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression;
+import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
-import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 
 public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	private final List<Path> searchPaths;
@@ -142,10 +142,10 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		if (!(compiled instanceof RootExpression))
 			throw new IllegalStateException("Compiler did not produce a root expression");
 
-		Map<FunctionNameAndArity, Function> exportedFunctions = ((RootExpression<JsonNode>) compiled).applyForModuleExports(jsonProvider.createNull());
+		Map<FunctionSignature, Function> exportedFunctions = ((RootExpression<JsonNode>) compiled).applyForModuleExports(jsonProvider.createNull());
 		exportedFunctions.forEach((key, factory) -> {
 			if (key.arity() != null)
-				module.addFunction(key.name(), key.arity(), factory);
+				module.addFunction(key, factory);
 		});
 		return module;
 	}

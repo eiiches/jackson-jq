@@ -12,7 +12,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,7 +28,7 @@ public class CustomFunctionTest {
 
 		Environment<JsonNode> env = new Environment<>(Jackson2JsonProviderImpl.getInstance(), version);
 
-		env.addFunction(FunctionNameAndArity.of("times100", 1), new Function() {
+		env.addFunction(FunctionSignature.of("times100", 1), new Function() {
 			@Override
 			public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version ver) {
 				return (frame, in, path, output, ignoredRequirePath) -> {

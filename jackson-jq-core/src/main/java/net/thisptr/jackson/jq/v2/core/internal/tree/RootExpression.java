@@ -14,7 +14,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.JsonQueryBindings;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.StackMemory;
@@ -25,12 +25,12 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 	private final int frameSize;
 	private final Expression<JsonNode> inner;
 	private final Map<String, Supplier<JsonNode>> defaultVariables;
-	private final Map<FunctionNameAndArity, Function> defaultFunctions;
+	private final Map<FunctionSignature, Function> defaultFunctions;
 	private final Map<String, List<Integer>> variableSlots;
-	private final Map<FunctionNameAndArity, List<Integer>> functionSlots;
+	private final Map<FunctionSignature, List<Integer>> functionSlots;
 	private final Set<String> validVariables;
-	private final Set<FunctionNameAndArity> validFunctions;
-	private final Map<FunctionNameAndArity, Integer> rootFunctionSlots;
+	private final Set<FunctionSignature> validFunctions;
+	private final Map<FunctionSignature, Integer> rootFunctionSlots;
 
 	public RootExpression(int frameSize, Expression<JsonNode> inner) {
 		this(frameSize, inner, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
@@ -38,12 +38,12 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 
 	public RootExpression(int frameSize, Expression<JsonNode> inner,
 			Map<String, Supplier<JsonNode>> defaultVariables,
-			Map<FunctionNameAndArity, Function> defaultFunctions,
+			Map<FunctionSignature, Function> defaultFunctions,
 			Map<String, List<Integer>> variableSlots,
-			Map<FunctionNameAndArity, List<Integer>> functionSlots,
+			Map<FunctionSignature, List<Integer>> functionSlots,
 			Set<String> validVariables,
-			Set<FunctionNameAndArity> validFunctions,
-			Map<FunctionNameAndArity, Integer> rootFunctionSlots) {
+			Set<FunctionSignature> validFunctions,
+			Map<FunctionSignature, Integer> rootFunctionSlots) {
 		this.frameSize = frameSize;
 		this.inner = inner;
 		this.defaultVariables = Collections.unmodifiableMap(new HashMap<>(defaultVariables));
@@ -101,13 +101,13 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 	 * {@code FileSystemModuleLoader} to harvest a file-based module's exported functions; ordinary
 	 * (non-module) compiles carry an empty {@code rootFunctionSlots} map and this always returns empty.
 	 */
-	public Map<FunctionNameAndArity, Function> applyForModuleExports(JsonNode in) throws JsonQueryException {
+	public Map<FunctionSignature, Function> applyForModuleExports(JsonNode in) throws JsonQueryException {
 		StackFrame rootFrame = new StackMemory().pushFrame(frameSize);
 		try {
 			initializeFrame(rootFrame, JsonQueryBindings.empty());
 			inner.apply(rootFrame, in, null, (v, p) -> { }, false);
-			Map<FunctionNameAndArity, Function> result = new HashMap<>();
-			for (Map.Entry<FunctionNameAndArity, Integer> entry : rootFunctionSlots.entrySet()) {
+			Map<FunctionSignature, Function> result = new HashMap<>();
+			for (Map.Entry<FunctionSignature, Integer> entry : rootFunctionSlots.entrySet()) {
 				Object raw = rootFrame.get(entry.getValue());
 				if (raw instanceof Function) {
 					result.put(entry.getKey(), (Function) raw);
@@ -124,7 +124,7 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 			if (!validVariables.contains(name))
 				throw new JsonQueryException("Variable $" + name + " cannot be overridden because it was not defined when the query was compiled");
 		}
-		for (FunctionNameAndArity key : bindings.functions().keySet()) {
+		for (FunctionSignature key : bindings.functions().keySet()) {
 			if (!validFunctions.contains(key))
 				throw new JsonQueryException("Function " + key + " cannot be overridden because it was not defined when the query was compiled");
 		}
@@ -141,7 +141,7 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 					frame.set(slot, supplier);
 			}
 		}
-		for (Map.Entry<FunctionNameAndArity, List<Integer>> entry : functionSlots.entrySet()) {
+		for (Map.Entry<FunctionSignature, List<Integer>> entry : functionSlots.entrySet()) {
 			Function factory = bindings.functions().containsKey(entry.getKey())
 					? bindings.functions().get(entry.getKey())
 					: defaultFunctions.get(entry.getKey());

@@ -10,30 +10,30 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
+import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression;
+import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionLoader;
-import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
-import net.thisptr.jackson.jq.v2.spi.module.ModuleLoader;
 public class Environment<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final Version version;
 	private @Nullable ModuleLoader<JsonNode> moduleLoader;
 	private @Nullable FunctionLoader functionLoader;
 	private final Map<String, Supplier<JsonNode>> variables = new HashMap<>();
-	private final Map<FunctionNameAndArity, Function> functions = new HashMap<>();
+	private final Map<FunctionSignature, Function> functions = new HashMap<>();
 
 	public Environment(JsonProvider<JsonNode> jsonProvider, Version version) {
 		this.jsonProvider = jsonProvider;
 		this.version = version;
 		this.functionLoader = ClassPathFunctionLoader.getInstance();
-		Map<FunctionNameAndArity, Function> builtins = this.functionLoader.listFunctions(version);
+		Map<FunctionSignature, Function> builtins = this.functionLoader.listFunctions(version);
 		this.functions.putAll(builtins);
 	}
 
@@ -56,7 +56,7 @@ public class Environment<JsonNode> {
 
 	public Environment<JsonNode> setFunctionLoader(FunctionLoader functionLoader) {
 		this.functionLoader = functionLoader;
-		Map<FunctionNameAndArity, Function> factories = functionLoader.listFunctions(version);
+		Map<FunctionSignature, Function> factories = functionLoader.listFunctions(version);
 		this.functions.putAll(factories);
 		return this;
 	}
@@ -82,20 +82,20 @@ public class Environment<JsonNode> {
 		return Collections.unmodifiableMap(variables);
 	}
 
-	public Environment<JsonNode> addFunction(FunctionNameAndArity nameAndArity, Function function) {
+	public Environment<JsonNode> addFunction(FunctionSignature nameAndArity, Function function) {
 		functions.put(nameAndArity, function);
 		return this;
 	}
 
-	public Map<FunctionNameAndArity, Function> functions() {
+	public Map<FunctionSignature, Function> functions() {
 		return Collections.unmodifiableMap(functions);
 	}
 
-	public @Nullable Function getFunction(FunctionNameAndArity nameAndArity) {
-		Function factory = functions.get(nameAndArity);
+	public @Nullable Function resolveFunction(String fname, int nargs) {
+		Function factory = functions.get(FunctionSignature.of(fname, nargs));
 		if (factory != null)
 			return factory;
-		return functions.get(nameAndArity.withArity(null));
+		return functions.get(FunctionSignature.of(fname, nargs).withArity(null));
 	}
 
 	public JsonQuery<JsonNode> compile(String expression) throws JsonQueryException {
@@ -109,5 +109,19 @@ public class Environment<JsonNode> {
 			throw new IllegalStateException("Compiler did not produce a root expression");
 		RootExpression<JsonNode> rootExpr = (RootExpression<JsonNode>) compiledExpr;
 		return rootExpr::apply;
+	}
+
+	public Module compileModule(String source) throws JsonQueryException {
+		AstNode parsedAst = AstParser.parse(source + " null", version);
+		SimpleModule module = new SimpleModule();
+		Expression<JsonNode> compiled = Compiler.compileModule(this, module, parsedAst);
+		if (!(compiled instanceof RootExpression))
+			throw new IllegalStateException("Compiler did not produce a root expression");
+		Map<FunctionSignature, Function> exportedFunctions = ((RootExpression<JsonNode>) compiled).applyForModuleExports(jsonProvider.createNull());
+		exportedFunctions.forEach((key, factory) -> {
+			if (key.arity() != null)
+				module.addFunction(key, factory);
+		});
+		return module;
 	}
 }

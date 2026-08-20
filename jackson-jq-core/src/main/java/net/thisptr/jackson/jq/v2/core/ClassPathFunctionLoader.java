@@ -16,8 +16,7 @@ import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionLoader;
-import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
@@ -44,8 +43,8 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 	 * E.g. in an OSGi context this may be the Bundle's {@link ClassLoader}.
 	 */
 	@Override
-	public Map<FunctionNameAndArity, Function> listFunctions(Version version) {
-		Map<FunctionNameAndArity, Function> result = new HashMap<>();
+	public Map<FunctionSignature, Function> listFunctions(Version version) {
+		Map<FunctionSignature, Function> result = new HashMap<>();
 
 		for (Function factory : ServiceLoader.load(Function.class, ClassPathFunctionLoader.class.getClassLoader())) {
 			FunctionRegistration[] regs = factory.getClass().getAnnotationsByType(FunctionRegistration.class);
@@ -54,7 +53,7 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 				if (!versionRange.contains(version))
 					continue;
 
-				result.put(FunctionNameAndArity.of(reg.name(), reg.nargs()), factory);
+				result.put(FunctionSignature.of(reg.name(), reg.nargs()), factory);
 			}
 		}
 
@@ -62,7 +61,7 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 			for (JqLibrary.JqFunc def : library.getFunctions()) {
 				if (def.version != null && !def.version.contains(version))
 					continue;
-				result.put(FunctionNameAndArity.of(def.name, def.args.size()), createJqFunction(def, version));
+				result.put(FunctionSignature.of(def.name, def.args.size()), createJqFunction(def, version));
 			}
 		}
 

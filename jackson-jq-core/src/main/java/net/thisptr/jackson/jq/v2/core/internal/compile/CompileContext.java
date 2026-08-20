@@ -11,15 +11,16 @@ import java.util.Set;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+import net.thisptr.jackson.jq.v2.spi.module.Module;
 
 public class CompileContext {
 	private static class ScopeFrame {
 		final boolean isFunctionBoundary;
 		final Set<String> variables = new HashSet<>();
-		final Set<FunctionNameAndArity> functions = new HashSet<>();
+		final Set<FunctionSignature> functions = new HashSet<>();
 		final Map<String, Integer> variableSlots = new HashMap<>();
-		final Map<FunctionNameAndArity, Integer> functionSlots = new HashMap<>();
+		final Map<FunctionSignature, Integer> functionSlots = new HashMap<>();
 		int nextSlot;
 
 		// Reserved slot (within this function's own frame) that will hold this function's own Closure at
@@ -39,8 +40,8 @@ public class CompileContext {
 		final Set<String> capturedGlobalVariables = new HashSet<>();
 
 		final List<ClosureSpec.CapturedFunctionRef> capturedFunctions = new ArrayList<>();
-		final Map<FunctionNameAndArity, Integer> capturedFnSlots = new HashMap<>();
-		final Set<FunctionNameAndArity> capturedGlobalFunctions = new HashSet<>();
+		final Map<FunctionSignature, Integer> capturedFnSlots = new HashMap<>();
+		final Set<FunctionSignature> capturedGlobalFunctions = new HashSet<>();
 
 		ScopeFrame(boolean isFunctionBoundary, int initialSlot) {
 			this.isFunctionBoundary = isFunctionBoundary;
@@ -50,13 +51,14 @@ public class CompileContext {
 
 	private final List<ScopeFrame> scopes;
 	private final Map<String, List<Integer>> globalVariableSlots;
-	private final Map<FunctionNameAndArity, List<Integer>> globalFunctionSlots;
+	private final Map<FunctionSignature, List<Integer>> globalFunctionSlots;
 	private final Set<String> globalVariables;
-	private final Set<FunctionNameAndArity> globalFunctions;
+	private final Set<FunctionSignature> globalFunctions;
 	private final Set<Integer> globalVariableRootSlots;
 	private final Set<Integer> globalFunctionRootSlots;
 	private final boolean exportTopLevelFunctions;
-	private final Map<FunctionNameAndArity, Integer> rootFunctionSlots;
+	private final Map<FunctionSignature, Integer> rootFunctionSlots;
+	private final Map<String, Module> importedModules;
 
 	public CompileContext() {
 		this(false);
@@ -73,6 +75,15 @@ public class CompileContext {
 		this.globalFunctionRootSlots = new HashSet<>();
 		this.exportTopLevelFunctions = exportTopLevelFunctions;
 		this.rootFunctionSlots = new HashMap<>();
+		this.importedModules = new HashMap<>();
+	}
+
+	public void addImportedModule(String alias, Module module) {
+		importedModules.put(alias, module);
+	}
+
+	public @Nullable Module getImportedModule(String alias) {
+		return importedModules.get(alias);
 	}
 
 	/**
@@ -94,11 +105,11 @@ public class CompileContext {
 		return scopes.size() == 1;
 	}
 
-	public void recordRootFunctionSlot(FunctionNameAndArity key, int slot) {
+	public void recordRootFunctionSlot(FunctionSignature key, int slot) {
 		rootFunctionSlots.put(key, slot);
 	}
 
-	public Map<FunctionNameAndArity, Integer> rootFunctionSlots() {
+	public Map<FunctionSignature, Integer> rootFunctionSlots() {
 		return rootFunctionSlots;
 	}
 
@@ -180,7 +191,7 @@ public class CompileContext {
 		if (scopes.isEmpty())
 			pushFunctionScope();
 		ScopeFrame top = scopes.get(scopes.size() - 1);
-		FunctionNameAndArity key = FunctionNameAndArity.of(name, arity);
+		FunctionSignature key = FunctionSignature.of(name, arity);
 		top.functions.add(key);
 		if (top == scopes.get(0) && globalFunctionRootSlots.contains(top.functionSlots.get(key))) {
 			top.functionSlots.put(key, top.nextSlot++);
@@ -199,7 +210,7 @@ public class CompileContext {
 		return assigned;
 	}
 
-	private int getOrAssignFunctionSlotInTop(FunctionNameAndArity key) {
+	private int getOrAssignFunctionSlotInTop(FunctionSignature key) {
 		ScopeFrame top = scopes.get(scopes.size() - 1);
 		Integer slot = top.functionSlots.get(key);
 		if (slot != null)
@@ -224,7 +235,7 @@ public class CompileContext {
 			slots.add(slot);
 	}
 
-	public void addGlobalFunction(FunctionNameAndArity key) {
+	public void addGlobalFunction(FunctionSignature key) {
 		ScopeFrame root = scopes.get(0);
 		root.functions.add(key);
 		@Var Integer slot = root.functionSlots.get(key);
@@ -243,7 +254,7 @@ public class CompileContext {
 		return globalVariableSlots;
 	}
 
-	public Map<FunctionNameAndArity, List<Integer>> globalFunctionSlots() {
+	public Map<FunctionSignature, List<Integer>> globalFunctionSlots() {
 		return globalFunctionSlots;
 	}
 
@@ -251,7 +262,7 @@ public class CompileContext {
 		return globalVariables;
 	}
 
-	public Set<FunctionNameAndArity> globalFunctions() {
+	public Set<FunctionSignature> globalFunctions() {
 		return globalFunctions;
 	}
 
@@ -352,11 +363,11 @@ public class CompileContext {
 	}
 
 	public @Nullable SymbolLocation getFunctionLocation(String name, int arity) {
-		FunctionNameAndArity key = FunctionNameAndArity.of(name, arity);
+		FunctionSignature key = FunctionSignature.of(name, arity);
 		int currentDepth = scopes.size() - 1;
 		ScopeFrame current = scopes.get(currentDepth);
 
-		FunctionNameAndArity currentKey = resolveFunctionKey(current, key);
+		FunctionSignature currentKey = resolveFunctionKey(current, key);
 		if (currentKey != null) {
 			Integer slot = current.functionSlots.get(currentKey);
 			if (slot != null) {
@@ -372,7 +383,7 @@ public class CompileContext {
 				crossedFunctionBoundary = true;
 			}
 
-			FunctionNameAndArity outerKey = resolveFunctionKey(outer, key);
+			FunctionSignature outerKey = resolveFunctionKey(outer, key);
 			if (outerKey != null) {
 				Integer localSlot = outer.functionSlots.get(outerKey);
 				if (localSlot != null) {
@@ -401,7 +412,7 @@ public class CompileContext {
 					return global ? SymbolLocation.capturedGlobal(targetSlot) : SymbolLocation.captured(targetSlot);
 				}
 			}
-			FunctionNameAndArity existingKey = outer.capturedFnSlots.containsKey(key) ? key : key.withArity(null);
+			FunctionSignature existingKey = outer.capturedFnSlots.containsKey(key) ? key : key.withArity(null);
 			Integer existingClosureSlot = outer.capturedFnSlots.get(existingKey);
 			if (existingClosureSlot != null && crossedFunctionBoundary) {
 				boolean global = outer.capturedGlobalFunctions.contains(existingKey);
@@ -429,10 +440,10 @@ public class CompileContext {
 		return null;
 	}
 
-	private static @Nullable FunctionNameAndArity resolveFunctionKey(ScopeFrame frame, FunctionNameAndArity key) {
+	private static @Nullable FunctionSignature resolveFunctionKey(ScopeFrame frame, FunctionSignature key) {
 		if (frame.functions.contains(key))
 			return key;
-		FunctionNameAndArity variadicKey = key.withArity(null);
+		FunctionSignature variadicKey = key.withArity(null);
 		return frame.functions.contains(variadicKey) ? variadicKey : null;
 	}
 }

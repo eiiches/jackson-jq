@@ -4,20 +4,20 @@ import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
 
-public class FunctionNameAndArity {
+public class FunctionSignature {
 	private final String name;
 
 	// null arity means that the function is variadic
 	private final @Nullable Integer arity;
 
-	private FunctionNameAndArity(String name, @Nullable Integer arity) {
+	private FunctionSignature(String name, @Nullable Integer arity) {
 		this.name = name;
 		this.arity = arity;
 	}
 
-	public static FunctionNameAndArity of(String name, int arity) {
+	public static FunctionSignature of(String name, int arity) {
 		// TODO: validate name here
-		return new FunctionNameAndArity(name, arity);
+		return new FunctionSignature(name, arity);
 	}
 
 	public String name() {
@@ -31,7 +31,7 @@ public class FunctionNameAndArity {
 	@Override
 	public boolean equals(Object o) {
 		if (o == null || getClass() != o.getClass()) return false;
-		FunctionNameAndArity that = (FunctionNameAndArity) o;
+		FunctionSignature that = (FunctionSignature) o;
 		return Objects.equals(name, that.name) && Objects.equals(arity, that.arity);
 	}
 
@@ -45,7 +45,7 @@ public class FunctionNameAndArity {
 		return name + (arity != null ? "/" + arity : "");
 	}
 
-	public FunctionNameAndArity withArity(@Nullable Integer arity) {
-		return new FunctionNameAndArity(name, arity);
+	public FunctionSignature withArity(@Nullable Integer arity) {
+		return new FunctionSignature(name, arity);
 	}
 }

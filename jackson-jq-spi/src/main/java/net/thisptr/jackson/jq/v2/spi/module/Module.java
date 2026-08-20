@@ -5,9 +5,10 @@ import java.util.Map;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 
 public interface Module {
-	@Nullable Function getFunction(String fname, int nargs);
+	@Nullable Function resolveFunction(String fname, int nargs);
 
-	Map<String, Function> getAllFunctions();
+	Map<FunctionSignature, Function> getAllFunctions();
 }

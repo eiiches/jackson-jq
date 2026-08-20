@@ -16,7 +16,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionNameAndArity;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -93,7 +93,7 @@ public class JsonQueryBindingsTest {
 
 	@Test
 	public void overridesFunctionPerInvocationAndThroughClosure() throws Exception {
-		FunctionNameAndArity key = FunctionNameAndArity.of("custom", 0);
+		FunctionSignature key = FunctionSignature.of("custom", 0);
 		Environment<JsonNode> env = new Environment<>(JSON_PROVIDER, Versions.JQ_1_7);
 		env.addVariable("value", JSON_PROVIDER.createString("default-variable"));
 		env.addFunction(key, constantFunction("default-function"));
@@ -119,7 +119,7 @@ public class JsonQueryBindingsTest {
 		assertThat(variableError).hasMessageContaining("$unknown");
 
 		JsonQueryBindings<JsonNode> functionBindings = JsonQueryBindings.<JsonNode>builder()
-				.addFunction(FunctionNameAndArity.of("unknown", 0), constantFunction("unused"))
+				.addFunction(FunctionSignature.of("unknown", 0), constantFunction("unused"))
 				.build();
 		JsonQueryException functionError = assertThrows(JsonQueryException.class, () -> run(query, functionBindings));
 		assertThat(functionError).hasMessageContaining("unknown/0");
@@ -136,8 +136,8 @@ public class JsonQueryBindingsTest {
 
 	@Test
 	public void overridesOnlyTheMatchingFunctionSignature() throws Exception {
-		FunctionNameAndArity zeroArg = FunctionNameAndArity.of("custom", 0);
-		FunctionNameAndArity oneArg = FunctionNameAndArity.of("custom", 1);
+		FunctionSignature zeroArg = FunctionSignature.of("custom", 0);
+		FunctionSignature oneArg = FunctionSignature.of("custom", 1);
 		Environment<JsonNode> env = new Environment<>(JSON_PROVIDER, Versions.JQ_1_7);
 		env.addFunction(zeroArg, constantFunction("zero"));
 		env.addFunction(oneArg, constantFunction("one"));
@@ -151,7 +151,7 @@ public class JsonQueryBindingsTest {
 
 	@Test
 	public void overridesVariadicFunctionUsingRegisteredSignature() throws Exception {
-		FunctionNameAndArity variadic = FunctionNameAndArity.of("custom", 0).withArity(null);
+		FunctionSignature variadic = FunctionSignature.of("custom", 0).withArity(null);
 		Environment<JsonNode> env = new Environment<>(JSON_PROVIDER, Versions.JQ_1_7);
 		env.addFunction(variadic, constantFunction("default"));
 		JsonQuery<JsonNode> query = env.compile("[custom, custom(.)]");
