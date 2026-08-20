@@ -186,7 +186,7 @@ public class Compiler {
 				@Var Module mod = context.getImportedModule(call.moduleName());
 				if (mod == null)
 					mod = env.getImportedModules().get(call.moduleName());
-				Function factory = mod != null ? mod.getFunctions().get(FunctionSignature.of(call.name(), compiledArgs.size())) : null;
+				Function factory = mod != null ? lookupFunction(mod.getFunctions(), call.name(), compiledArgs.size()) : null;
 				if (factory == null) {
 					throw new JsonQueryException(String.format("Function %s::%s/%d does not exist", call.moduleName(), call.name(), compiledArgs.size()));
 				}
@@ -572,24 +572,26 @@ public class Compiler {
 	}
 
 	/**
-	 * Resolves a plain (non-module-qualified) function by name/arity: exact-arity match first, then
-	 * variadic-arity fallback -- checked against builder-registered functions before falling back to
-	 * the version-gated {@link FunctionLoader}.
+	 * Looks up a function by name/arity in a single map: exact-arity match first, then variadic-arity
+	 * fallback (a registration accepting any arity).
+	 */
+	private static @Nullable Function lookupFunction(Map<FunctionSignature, Function> functions, String fname, int nargs) {
+		FunctionSignature key = FunctionSignature.of(fname, nargs);
+		Function factory = functions.get(key);
+		if (factory != null)
+			return factory;
+		return functions.get(key.withArity(null));
+	}
+
+	/**
+	 * Resolves a plain (non-module-qualified) function by name/arity: checked against builder-registered
+	 * functions before falling back to the version-gated {@link FunctionLoader}.
 	 */
 	private static <N> @Nullable Function resolveFunction(Environment<N> env, String fname, int nargs) {
-		FunctionSignature key = FunctionSignature.of(fname, nargs);
-		@Var Function factory = env.getFunctions().get(key);
+		Function factory = lookupFunction(env.getFunctions(), fname, nargs);
 		if (factory != null)
 			return factory;
-		FunctionSignature variadicKey = key.withArity(null);
-		factory = env.getFunctions().get(variadicKey);
-		if (factory != null)
-			return factory;
-		Map<FunctionSignature, Function> loaded = env.getFunctionLoader().listFunctions(env.getJqVersion());
-		factory = loaded.get(key);
-		if (factory != null)
-			return factory;
-		return loaded.get(variadicKey);
+		return lookupFunction(env.getFunctionLoader().listFunctions(env.getJqVersion()), fname, nargs);
 	}
 
 	/**

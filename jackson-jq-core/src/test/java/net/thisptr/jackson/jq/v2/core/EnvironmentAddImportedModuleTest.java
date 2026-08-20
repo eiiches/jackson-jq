@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,9 +12,15 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
+import net.thisptr.jackson.jq.v2.spi.module.ModuleMeta;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -79,6 +86,38 @@ public class EnvironmentAddImportedModuleTest {
 
 		assertThat(actual).hasSize(1);
 		assertThat(actual.get(0).asInt()).isEqualTo(2);
+	}
+
+	@Test
+	public void testModuleQualifiedCallFallsBackToVariadicFunction() throws Exception {
+		Function countArgs = new Function() {
+			@Override
+			public <N> Expression<N> bindArguments(JsonProvider<N> fprovider, List<Expression<N>> fargs, Version ver) {
+				return (frame, in, path, output, ignoredRequirePath) -> output.emit(fprovider.createNumber(fargs.size()), null);
+			}
+		};
+		Module variadicModule = new Module() {
+			@Override
+			public Map<FunctionSignature, Function> getFunctions() {
+				return Collections.singletonMap(FunctionSignature.of("greet", null), countArgs);
+			}
+
+			@Override
+			public ModuleMeta getModuleMeta() {
+				return new ModuleMeta() {};
+			}
+		};
+
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+				.addImportedModule("m", variadicModule)
+				.build();
+
+		JsonQuery<JsonNode> expr = env.compile("m::greet(1; 2; 3)");
+		List<JsonNode> actual = new ArrayList<>();
+		expr.apply(NullNode.getInstance(), (val, path) -> actual.add(val));
+
+		assertThat(actual).hasSize(1);
+		assertThat(actual.get(0).asInt()).isEqualTo(3);
 	}
 
 	@Test

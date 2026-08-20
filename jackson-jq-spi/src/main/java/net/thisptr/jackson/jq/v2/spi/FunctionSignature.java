@@ -31,7 +31,7 @@ public class FunctionSignature {
 			throw new IllegalArgumentException("Invalid arity (must be non-negative): " + arity);
 	}
 
-	public static FunctionSignature of(String name, int arity) {
+	public static FunctionSignature of(String name, @Nullable Integer arity) {
 		return new FunctionSignature(name, arity);
 	}
 
