@@ -5,6 +5,7 @@ import java.util.List;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -42,21 +43,21 @@ public class ReverseFunction implements Function {
 				output.emit(out, null);
 				return;
 			}
-			throw new JsonQueryException(net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
+			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
 		}
 		if (type == JsonNodeType.NUMBER) {
 			if (jsonProvider.asDouble(in) == 0.0) {
 				output.emit(out, null);
 				return;
 			}
-			throw new JsonQueryException(net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
+			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
 		}
 		if (type == JsonNodeType.OBJECT) {
 			if (jsonProvider.size(in) == 0) {
 				output.emit(out, null);
 				return;
 			}
-			throw new JsonQueryException(net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
+			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
 		}
 		if (type == JsonNodeType.BOOLEAN) {
 			throw new JsonQueryTypeException(jsonProvider, version, "%s has no length", in);

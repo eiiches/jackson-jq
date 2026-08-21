@@ -7,6 +7,7 @@ import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -30,7 +31,7 @@ public class FromEntriesFunction implements Function {
 			while (iter.hasNext()) {
 				JsonNode entry = iter.next();
 				if (jsonProvider.getNodeType(entry) != JsonNodeType.OBJECT)
-					throw new JsonQueryException(net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils.cannotIndex(jsonProvider, version, entry, jsonProvider.createString("key")));
+					throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, entry, jsonProvider.createString("key")));
 
 				@Var JsonNode key = jsonProvider.get(entry, "key");
 				if (key == null)

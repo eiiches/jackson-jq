@@ -18,6 +18,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
+import net.thisptr.jackson.jq.v2.spi.module.ModuleMeta;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -134,7 +135,7 @@ public class EnvironmentCompileModuleTest {
 
 		Module module = env.compileModule("import \"foo/bar\" as bar; import \"data/nums\" as $nums { \"search\": \"./data\" }; include \"helpers\"; def test: 1;");
 
-		List<net.thisptr.jackson.jq.v2.spi.module.ModuleMeta.Dependency> deps = module.getModuleMeta().getDependencies();
+		List<ModuleMeta.Dependency> deps = module.getModuleMeta().getDependencies();
 		assertThat(deps).hasSize(3);
 
 		assertThat(deps.get(0).getRelpath()).isEqualTo("foo/bar");
