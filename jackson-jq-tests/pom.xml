@@ -37,13 +37,6 @@
 			<artifactId>jackson-dataformat-yaml</artifactId>
 		</dependency>
 
-		<!-- RocksDB for CachedEvaluator -->
-		<dependency>
-			<groupId>org.rocksdb</groupId>
-			<artifactId>rocksdbjni</artifactId>
-			<version>7.10.2</version>
-		</dependency>
-
 		<!-- Guava for ByteStreams in TrueJqEvaluator -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
