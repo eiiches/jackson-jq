@@ -22,7 +22,7 @@ import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
 public class Utf8ByteLengthFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (scope, in, ipath, output, ignoredRequirePath) -> {
+		return (scope, in, ipath, output) -> {
 
 				if (jsonProvider.getNodeType(in) != JsonNodeType.STRING)
 			throw new JsonQueryTypeException(jsonProvider, "%s only strings have UTF-8 byte length", in);

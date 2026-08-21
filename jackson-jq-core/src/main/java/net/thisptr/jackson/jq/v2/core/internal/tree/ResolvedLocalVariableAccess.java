@@ -28,11 +28,11 @@ public class ResolvedLocalVariableAccess<JsonNode> implements Expression<JsonNod
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
 		if (frame != null) {
 			PathAndValue<JsonNode> val = StackFrameValues.asPathAndValue(frame.get(slot));
 			if (val != null && val.getValue() != null) {
-				output.emit(val.getValue(), requirePath ? val.getPath() : null);
+				output.emit(val.getValue(), path != null ? val.getPath() : null);
 				return;
 			}
 		}

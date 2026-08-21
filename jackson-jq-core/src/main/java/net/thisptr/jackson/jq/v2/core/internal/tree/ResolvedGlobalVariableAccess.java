@@ -28,7 +28,7 @@ public class ResolvedGlobalVariableAccess<JsonNode> implements Expression<JsonNo
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
 		@Var Supplier<JsonNode> valueSupplier = null;
 		if (captured) {
 			Closure closure = frame != null ? (Closure) frame.get(frameClosureSlot) : null;

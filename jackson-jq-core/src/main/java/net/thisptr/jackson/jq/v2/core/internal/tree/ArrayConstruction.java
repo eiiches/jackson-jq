@@ -23,7 +23,7 @@ public class ArrayConstruction<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output) throws JsonQueryException {
 		JsonNode[] array = (JsonNode[]) new Object[] { jsonProvider.createArray() };
 		if (q != null)
 			q.apply(frame, in, (out) -> array[0] = jsonProvider.add(array[0], out));

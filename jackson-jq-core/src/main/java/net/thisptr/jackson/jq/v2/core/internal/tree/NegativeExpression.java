@@ -26,7 +26,7 @@ public class NegativeExpression<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output) throws JsonQueryException {
 		value.apply(frame, in, (v) -> {
 			if (jsonProvider.getNodeType(v) != JsonNodeType.NUMBER)
 				throw new JsonQueryTypeException(jsonProvider, "%s cannot be negated", v);

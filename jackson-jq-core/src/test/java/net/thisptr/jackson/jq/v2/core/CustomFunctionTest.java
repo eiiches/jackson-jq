@@ -30,7 +30,7 @@ public class CustomFunctionTest {
 				.addFunction(FunctionSignature.of("times100", 1), new Function() {
 					@Override
 					public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version ver) {
-						return (frame, in, path, output, ignoredRequirePath) -> {
+						return (frame, in, path, output) -> {
 							args.get(0).apply(frame, in, (numberNode) -> {
 								int n = jsonProvider.asInt(numberNode);
 								output.emit(jsonProvider.createNumber(n * 100), null);

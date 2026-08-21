@@ -16,7 +16,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 public class StrPTimeFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output, ignoredRequirePath) -> {
+		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "strptime", in, JsonNodeType.STRING);
 
 			try {

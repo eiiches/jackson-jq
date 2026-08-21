@@ -14,9 +14,8 @@ public interface Expression<JsonNode> {
 
 	// TODO: reduce the number of interface methods
 	default void apply(@Nullable StackFrame frame, JsonNode in, Output<JsonNode> output) throws JsonQueryException {
-		apply(frame, in, null, output, false);
+		apply(frame, in, null, output);
 	}
 
-	// TODO: remove requirePath
-	void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException;
+	void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output) throws JsonQueryException;
 }

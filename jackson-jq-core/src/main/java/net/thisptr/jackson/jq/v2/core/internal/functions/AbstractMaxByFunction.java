@@ -24,7 +24,7 @@ public abstract class AbstractMaxByFunction implements Function {
 
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output, ignoredRequirePath) -> {
+		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, fname, in, JsonNodeType.ARRAY);
 
 			@Var JsonNode maxItem = jsonProvider.createNull();

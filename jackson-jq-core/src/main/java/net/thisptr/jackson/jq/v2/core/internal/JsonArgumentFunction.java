@@ -29,7 +29,7 @@ public abstract class JsonArgumentFunction implements Function {
 
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output, ignoredRequirePath) -> {
+		return (frame, in, ipath, output) -> {
 			List<List<JsonNode>> _args = new ArrayList<>(args.size());
 			for (Expression<JsonNode> arg : args) {
 				List<JsonNode> out = new ArrayList<>();

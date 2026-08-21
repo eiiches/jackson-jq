@@ -113,7 +113,7 @@ public class Main {
 				.addFunction(FunctionSignature.of("env", 0), new Function() {
 					@Override
 					public <N> Expression<N> bindArguments(JsonProvider<N> jsonProv, List<Expression<N>> fnArgs, Version ver) {
-						return (frame, in, path, output, ignoredRequirePath) -> {
+						return (frame, in, path, output) -> {
 							N envObj = jsonProv.createObject();
 							for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
 								jsonProv.set(envObj, entry.getKey(), jsonProv.createString(entry.getValue()));

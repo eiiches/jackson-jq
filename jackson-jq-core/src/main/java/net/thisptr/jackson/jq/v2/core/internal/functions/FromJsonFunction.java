@@ -18,7 +18,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 public class FromJsonFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (scope, in, ipath, output, ignoredRequirePath) -> {
+		return (scope, in, ipath, output) -> {
 
 				if (jsonProvider.getNodeType(in) != JsonNodeType.STRING)
 			throw new JsonQueryTypeException(jsonProvider, "%s only strings can be parsed", in);

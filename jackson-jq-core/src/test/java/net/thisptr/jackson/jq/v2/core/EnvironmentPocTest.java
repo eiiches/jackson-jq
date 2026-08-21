@@ -32,7 +32,7 @@ public class EnvironmentPocTest {
 				.addFunction(FunctionSignature.of("examplefn", 1), new Function() {
 					@Override
 					public <N> Expression<N> bindArguments(JsonProvider<N> provider, List<Expression<N>> args, Version version) {
-						return (scope, in, path, output, ignoredRequirePath) -> {
+						return (scope, in, path, output) -> {
 							String text = provider.asText(in);
 							output.emit(provider.createString("hello:" + text), path);
 						};
@@ -76,7 +76,7 @@ public class EnvironmentPocTest {
 				if (constantVal != null) {
 					preCompiled.set(true);
 					Pattern pattern = Pattern.compile(provider.asText(constantVal));
-					return (scope, in, path, output, ignoredRequirePath) -> {
+					return (scope, in, path, output) -> {
 						boolean matches = pattern.matcher(provider.asText(in)).find();
 						output.emit(provider.createBoolean(matches), path);
 					};

@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
@@ -33,12 +34,12 @@ public class TryCatch<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
 		try {
-			tryExpr.apply(frame, in, path, output, requirePath);
+			tryExpr.apply(frame, in, path, output);
 		} catch (JsonQueryException e) {
 			if (catchExpr != null) {
-				catchExpr.apply(frame, e.getMessageAsJsonNode(jsonProvider), null, output, requirePath);
+				catchExpr.apply(frame, e.getMessageAsJsonNode(jsonProvider), path != null ? UnrepresentablePath.getInstance() : null, output);
 			}
 		}
 	}

@@ -19,7 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 public class ToEntriesFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (scope, in, ipath, output, ignoredRequirePath) -> {
+		return (scope, in, ipath, output) -> {
 
 				JsonNode out = jsonProvider.createArray();
 		JsonNodeType inType = jsonProvider.getNodeType(in);

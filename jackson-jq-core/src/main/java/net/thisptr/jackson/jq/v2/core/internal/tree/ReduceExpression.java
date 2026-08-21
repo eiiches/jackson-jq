@@ -37,7 +37,7 @@ public class ReduceExpression<JsonNode> implements Expression<JsonNode> {
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output) throws JsonQueryException {
 		initExpr.apply(frame, in, (accumulator) -> {
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")

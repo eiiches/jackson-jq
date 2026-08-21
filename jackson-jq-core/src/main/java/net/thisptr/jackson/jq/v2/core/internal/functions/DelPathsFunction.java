@@ -30,7 +30,7 @@ public class DelPathsFunction implements Function {
 
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output, ignoredRequirePath) -> {
+		return (frame, in, ipath, output) -> {
 			args.get(0).apply(frame, in, (paths) -> {
 					if (jsonProvider.getNodeType(paths) != JsonNodeType.ARRAY)
 						throw new JsonQueryException("Paths must be specified as an array");

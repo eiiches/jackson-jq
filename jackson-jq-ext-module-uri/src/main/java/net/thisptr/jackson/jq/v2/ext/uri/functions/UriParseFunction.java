@@ -27,7 +27,7 @@ public class UriParseFunction implements Function {
 
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output, ignoredRequirePath) -> {
+		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "uriparse", in, JsonNodeType.STRING);
 
 			try {

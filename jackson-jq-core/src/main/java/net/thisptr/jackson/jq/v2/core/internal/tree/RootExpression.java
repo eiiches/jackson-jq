@@ -71,22 +71,22 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		apply(parentFrame, in, path, output, requirePath, JsonQueryBindings.empty());
+	public void apply(@Nullable StackFrame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
+		apply(parentFrame, in, path, output, JsonQueryBindings.empty());
 	}
 
 	public void apply(JsonNode in, JsonQueryBindings<JsonNode> bindings, PathOutput<JsonNode> output) throws JsonQueryException {
-		apply(null, in, null, output, false, bindings);
+		apply(null, in, null, output, bindings);
 	}
 
-	private void apply(@Nullable StackFrame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath, JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {
+	private void apply(@Nullable StackFrame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {
 		validateBindings(bindings);
 		StackFrame rootFrame = parentFrame != null
 				? parentFrame.getEnclosingMemory().pushFrame(frameSize)
 				: new StackMemory().pushFrame(frameSize);
 		try {
 			initializeFrame(rootFrame, bindings);
-			inner.apply(rootFrame, in, path, output, requirePath);
+			inner.apply(rootFrame, in, path, output);
 		} finally {
 			rootFrame.getEnclosingMemory().popFrame();
 		}
@@ -105,7 +105,7 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 		StackFrame rootFrame = new StackMemory().pushFrame(frameSize);
 		try {
 			initializeFrame(rootFrame, JsonQueryBindings.empty());
-			inner.apply(rootFrame, in, null, (v, p) -> { }, false);
+			inner.apply(rootFrame, in, null, (v, p) -> { });
 			Map<FunctionSignature, Function> result = new HashMap<>();
 			for (Map.Entry<FunctionSignature, Integer> entry : rootFunctionSlots.entrySet()) {
 				Object raw = rootFrame.get(entry.getValue());

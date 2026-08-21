@@ -92,7 +92,7 @@ public class EnvironmentAddImportedModuleTest {
 		Function countArgs = new Function() {
 			@Override
 			public <N> Expression<N> bindArguments(JsonProvider<N> fprovider, List<Expression<N>> fargs, Version ver) {
-				return (frame, in, path, output, ignoredRequirePath) -> output.emit(fprovider.createNumber(fargs.size()), null);
+				return (frame, in, path, output) -> output.emit(fprovider.createNumber(fargs.size()), null);
 			}
 		};
 		Module variadicModule = new Module() {

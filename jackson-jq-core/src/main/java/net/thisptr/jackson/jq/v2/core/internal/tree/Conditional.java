@@ -35,14 +35,14 @@ public class Conditional<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
 		applyBranch(frame, in, path, output, 0);
 	}
 
 	private void applyBranch(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, int switchIndex) throws JsonQueryException {
 		if (switchIndex >= switches.size()) {
 			if (otherwise != null) {
-				otherwise.apply(frame, in, path, output, false);
+				otherwise.apply(frame, in, path, output);
 			}
 			return;
 		}
@@ -52,7 +52,7 @@ public class Conditional<JsonNode> implements Expression<JsonNode> {
 
 		for (JsonNode r : condValues) {
 			if (JsonNodeUtils.asBoolean(jsonProvider, r)) {
-				sw._2.apply(frame, in, path, output, false);
+				sw._2.apply(frame, in, path, output);
 			} else {
 				applyBranch(frame, in, path, output, switchIndex + 1);
 			}

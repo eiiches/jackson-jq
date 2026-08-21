@@ -25,7 +25,7 @@ public class BuiltinsFunction implements Function {
 		}
 		Collections.sort(builtins);
 
-		return (scope, in, path, output, ignoredRequirePath) -> {
+		return (scope, in, path, output) -> {
 			JsonNode result = jsonProvider.createArray();
 			for (String builtin : builtins)
 				jsonProvider.add(result, jsonProvider.createString(builtin));

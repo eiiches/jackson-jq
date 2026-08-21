@@ -33,7 +33,7 @@ public class JacksonJqEvaluator implements Evaluator {
 				if (out.isNumber() && Double.isInfinite(out.asDouble()))
 					value = DoubleNode.valueOf(out.asDouble() > 0 ? Double.MAX_VALUE : -Double.MAX_VALUE);
 				values.add(value);
-			}, false);
+			});
 			return new Result(values, null);
 		} catch (Throwable th) {
 			return new Result(values, th);

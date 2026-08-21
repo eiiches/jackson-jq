@@ -117,14 +117,14 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 
 			@Override
 			public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version v) {
-				return (callerFrame, in, path, output, ignoredRequirePath) -> {
+				return (callerFrame, in, path, output) -> {
 					ResolvedFunction<N> resolved = getResolvedFunction(jsonProvider);
 					StackFrame fnFrame = callerFrame != null
 							? callerFrame.getEnclosingMemory().pushFrame(resolved.fnSize)
 							: new StackMemory().pushFrame(resolved.fnSize);
 					try {
 						bindAndApply(callerFrame, fnFrame, def.args, args, in, path, output, (execFrame) -> {
-							resolved.body.apply(execFrame, in, path, output, false);
+							resolved.body.apply(execFrame, in, path, output);
 						});
 					} finally {
 						fnFrame.getEnclosingMemory().popFrame();
@@ -145,7 +145,7 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 					public <N1> Expression<N1> bindArguments(JsonProvider<N1> jp, List<Expression<N1>> emptyArgs, Version ver) {
 						Expression<N1> effectiveExpr = (Expression<N1>) (Expression<?>) pExpr;
 						StackFrame effectiveCallerFrame = (StackFrame) (Object) callerFrame;
-						return (sFrame, inVal, pVal, outVal, ignoredRequirePath) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal, false);
+						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal);
 					}
 				});
 			}
@@ -165,7 +165,7 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 			argExpr.apply(callerFrame, in, path, (val, p) -> {
 				currentFrame.set(slot, val);
 				bindValueParams(callerFrame, currentFrame, paramNames, args, index + 1, in, path, output, bodyTask);
-			}, false);
+			});
 		} else {
 			bindValueParams(callerFrame, currentFrame, paramNames, args, index + 1, in, path, output, bodyTask);
 		}

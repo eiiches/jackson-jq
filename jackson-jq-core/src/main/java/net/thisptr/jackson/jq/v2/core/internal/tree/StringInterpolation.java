@@ -41,7 +41,7 @@ public class StringInterpolation<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output) throws JsonQueryException {
 		Stack<Pair<Integer, JsonNode>> stack = new Stack<>();
 		recurse(frame, in, output, stack, interpolations);
 	}

@@ -22,7 +22,7 @@ public class ContainsFunction implements Function {
 
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output, ignoredRequirePath) -> {
+		return (frame, in, ipath, output) -> {
 			args.get(0).apply(frame, in, (value) -> {
 					if (jsonProvider.getNodeType(in) != jsonProvider.getNodeType(value)
 							|| (jsonProvider.getNodeType(in) == JsonNodeType.BOOLEAN && jsonProvider.asBoolean(in) != jsonProvider.asBoolean(value))) {

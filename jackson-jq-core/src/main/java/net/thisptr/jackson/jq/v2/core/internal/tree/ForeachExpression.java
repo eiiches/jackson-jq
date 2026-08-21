@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.utils.PathAndValue;
+import net.thisptr.jackson.jq.v2.core.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
@@ -35,7 +36,7 @@ public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
 	public Expression<JsonNode> iterExpr() { return iterExpr; }
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output) throws JsonQueryException {
 		initExpr.apply(frame, in, ipath, (accumulator, accumulatorPath) -> {
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
@@ -53,18 +54,20 @@ public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
 						}
 					}
 
-					updateExpr.apply(frame, accumulators[0], accumulatorPaths[0], (newaccumulator, newaccumulatorPath) -> {
+					updateExpr.apply(frame, accumulators[0], extractExpr != null ? null : accumulatorPaths[0], (newaccumulator, newaccumulatorPath) -> {
 						if (extractExpr != null) {
-							extractExpr.apply(frame, newaccumulator, newaccumulatorPath, output, requirePath);
+							extractExpr.apply(frame, newaccumulator, ipath != null && newaccumulatorPath == null ? UnrepresentablePath.getInstance() : newaccumulatorPath, output);
 						} else {
 							output.emit(newaccumulator, newaccumulatorPath);
 						}
 						accumulators[0] = newaccumulator;
-						accumulatorPaths[0] = newaccumulatorPath;
-					}, extractExpr != null ? false : requirePath);
+						accumulatorPaths[0] = ipath != null && newaccumulatorPath == null
+								? UnrepresentablePath.getInstance()
+								: newaccumulatorPath;
+					});
 				}, stack);
-			}, requirePath);
-		}, false);
+			});
+		});
 	}
 
 	@Override

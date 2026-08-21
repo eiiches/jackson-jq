@@ -12,6 +12,7 @@ import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression;
 import net.thisptr.jackson.jq.v2.core.path.RootPath;
+import net.thisptr.jackson.jq.v2.core.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
@@ -31,15 +32,15 @@ public class UpdateAssignment<JsonNode> extends BinaryOperatorExpression<JsonNod
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output) throws JsonQueryException {
 		@SuppressWarnings("unchecked")
 		JsonNode[] out = (JsonNode[]) new Object[] { in };
 		lhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
 			@Var Path<JsonNode> lpath = lpath0;
 			// `VALUE | path(VALUE) => []`
-			if (lpath == null && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)
+			if (UnrepresentablePath.isLost(lpath) && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)
 				lpath = RootPath.getInstance();
-			if (lpath == null)
+			if (lpath == null || lpath instanceof UnrepresentablePath)
 				throw new JsonQueryException("Invalid path expression with result %s", JsonNodeUtils.toString(jsonProvider, lval));
 
 			out[0] = lpath.mutate(jsonProvider, out[0], (lval_) -> {
@@ -53,7 +54,7 @@ public class UpdateAssignment<JsonNode> extends BinaryOperatorExpression<JsonNod
 					return rvals.get(rvals.size() - 1);
 				}
 			});
-		}, true);
+		});
 		output.emit(out[0], null);
 	}
 }

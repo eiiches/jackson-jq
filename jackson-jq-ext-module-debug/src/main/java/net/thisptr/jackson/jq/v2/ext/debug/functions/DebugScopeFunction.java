@@ -14,7 +14,7 @@ public class DebugScopeFunction implements Function {
 
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output, ignoredRequirePath) -> {
+		return (frame, in, ipath, output) -> {
 			JsonNode functions = jsonProvider.createObject();
 
 			@Var JsonNode scopeNode = jsonProvider.createObject();

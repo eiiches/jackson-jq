@@ -27,7 +27,7 @@ public class RangeFunction implements Function {
 
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output, ignoredRequirePath) -> {
+		return (frame, in, ipath, output) -> {
 								if (args.size() == 1) {
 					args.get(0).apply(frame, in, (end) -> {
 						range1(jsonProvider, output, end);

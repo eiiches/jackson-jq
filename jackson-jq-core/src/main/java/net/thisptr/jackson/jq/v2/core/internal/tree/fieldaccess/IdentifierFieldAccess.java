@@ -35,9 +35,9 @@ public class IdentifierFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
 		target.apply(frame, in, path, (pobj, ppath) -> {
-			emitObjectFieldPath(jsonProvider, permissive, field, pobj, ppath, output, requirePath);
-		}, requirePath);
+			emitObjectFieldPath(jsonProvider, permissive, field, pobj, ppath, output, path != null);
+		});
 	}
 }

@@ -18,7 +18,7 @@ public abstract class MathFunction implements Function {
 
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (scope, in, ipath, output, ignoredRequirePath) -> {
+		return (scope, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "mathfunc", in, JsonNodeType.NUMBER);
 			output.emit(jsonProvider.createNumber(f(jsonProvider.asDouble(in))), null);
 		};

@@ -53,7 +53,7 @@ public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
 		if (isRange) {
 			startExpr.apply(frame, in, (start) -> {
 				endExpr.apply(frame, in, (end) -> {
@@ -61,12 +61,12 @@ public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 						JsonNodeType startType = jsonProvider.getNodeType(start);
 						JsonNodeType endType = jsonProvider.getNodeType(end);
 						if ((startType == JsonNodeType.NUMBER || startType == JsonNodeType.NULL) && (endType == JsonNodeType.NUMBER || endType == JsonNodeType.NULL)) {
-							emitArrayRangeIndexPath(jsonProvider, permissive, start, end, pobj, ppath, output, requirePath);
+							emitArrayRangeIndexPath(jsonProvider, permissive, start, end, pobj, ppath, output, path != null);
 						} else {
 							if (!permissive)
 								throw new JsonQueryTypeException(jsonProvider, "Start and end indices of an %s slice must be numbers", jsonProvider.getNodeType(pobj));
 						}
-					}, requirePath);
+					});
 				});
 			});
 		} else { // isRange == false
@@ -74,16 +74,16 @@ public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 				target.apply(frame, in, path, (pobj, ppath) -> {
 					JsonNodeType accessorType = jsonProvider.getNodeType(accessor);
 					if (accessorType == JsonNodeType.NUMBER) {
-						emitArrayIndexPath(jsonProvider, permissive, accessor, pobj, ppath, output, requirePath);
+						emitArrayIndexPath(jsonProvider, permissive, accessor, pobj, ppath, output, path != null);
 					} else if (accessorType == JsonNodeType.STRING) {
-						emitObjectFieldPath(jsonProvider, permissive, jsonProvider.asText(accessor), pobj, ppath, output, requirePath);
+						emitObjectFieldPath(jsonProvider, permissive, jsonProvider.asText(accessor), pobj, ppath, output, path != null);
 					} else if (accessorType == JsonNodeType.ARRAY) {
-						emitArrayIndexOfPath(jsonProvider, permissive, accessor, pobj, ppath, output, requirePath);
+						emitArrayIndexOfPath(jsonProvider, permissive, accessor, pobj, ppath, output, path != null);
 					} else {
 						if (!permissive)
 							throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with %s", jsonProvider.getNodeType(pobj), accessorType);
 					}
-				}, requirePath);
+				});
 			});
 		}
 	}

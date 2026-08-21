@@ -31,7 +31,7 @@ public class _SubImplFunction implements Function {
 		Expression<JsonNode> replaceExpr = args.get(1);
 		Expression<JsonNode> flagsExpr = args.get(2);
 
-		return (frame, in, ipath, output, ignoredRequirePath) -> {
+		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "_sub_impl/3", in, JsonNodeType.STRING);
 
 			regexExpr.apply(frame, in, (regexText) -> {

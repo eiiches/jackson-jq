@@ -17,7 +17,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 public class HasFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output, ignoredRequirePath) -> {
+		return (frame, in, ipath, output) -> {
 			JsonNodeType inType = jsonProvider.getNodeType(in);
 			if (inType == JsonNodeType.NULL) {
 				output.emit(jsonProvider.createBoolean(false), null);

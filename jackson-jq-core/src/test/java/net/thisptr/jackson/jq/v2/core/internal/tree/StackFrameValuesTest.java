@@ -52,7 +52,7 @@ public class StackFrameValuesTest {
 
 	@Test
 	void returnsNullForExpressionRawValue() {
-		Expression<String> expression = (frame, in, path, output, requirePath) -> {
+		Expression<String> expression = (frame, in, path, output) -> {
 			throw new UnsupportedOperationException();
 		};
 

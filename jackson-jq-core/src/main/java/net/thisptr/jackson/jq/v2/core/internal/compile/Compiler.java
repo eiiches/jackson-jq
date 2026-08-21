@@ -688,7 +688,7 @@ public class Compiler {
 					public <N1> Expression<N1> bindArguments(JsonProvider<N1> jp, List<Expression<N1>> emptyArgs, Version v) {
 						Expression<N1> effectiveExpr = (Expression<N1>) (Expression<?>) pExpr;
 						StackFrame effectiveCallerFrame = (StackFrame) (Object) callerFrame;
-						return (sFrame, inVal, pVal, outVal, ignoredRequirePath) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal, false);
+						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal);
 					}
 				});
 			}
@@ -708,7 +708,7 @@ public class Compiler {
 			argExpr.apply(callerFrame, in, path, (val, p) -> {
 				currentFrame.set(slot, val);
 				bindValueParams(callerFrame, currentFrame, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
-			}, false);
+			});
 		} else {
 			bindValueParams(callerFrame, currentFrame, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
 		}

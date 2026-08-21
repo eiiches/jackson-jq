@@ -200,7 +200,7 @@ public class JsonQueryBindingsTest {
 		return new Function() {
 			@Override
 			public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version version) {
-				return (frame, in, path, output, ignoredRequirePath) -> output.emit(jsonProvider.createString(value), null);
+				return (frame, in, path, output) -> output.emit(jsonProvider.createString(value), null);
 			}
 		};
 	}

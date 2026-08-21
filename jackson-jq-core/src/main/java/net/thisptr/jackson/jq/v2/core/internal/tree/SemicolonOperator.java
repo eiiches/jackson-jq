@@ -23,12 +23,12 @@ public class SemicolonOperator<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
 		if (qs.isEmpty())
 			return;
 		for (Expression<JsonNode> q : qs.subList(0, qs.size() - 1))
 			q.apply(frame, in, (out) -> {});
-		qs.get(qs.size() - 1).apply(frame, in, path, output, requirePath);
+		qs.get(qs.size() - 1).apply(frame, in, path, output);
 	}
 
 	@Override

@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryBreakException;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.utils.PathAndValue;
+import net.thisptr.jackson.jq.v2.core.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
@@ -27,11 +28,11 @@ public class PipedQuery<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
-		pathRecursive(frame, in, path, output, components, requirePath);
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
+		pathRecursive(frame, in, path, output, components);
 	}
 
-	private static <JsonNode> void pathRecursive(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, List<PipeComponent<JsonNode>> components, boolean requirePath) throws JsonQueryException {
+	private static <JsonNode> void pathRecursive(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, List<PipeComponent<JsonNode>> components) throws JsonQueryException {
 		if (components.isEmpty()) {
 			output.emit(in, path);
 			return;
@@ -52,16 +53,16 @@ public class PipedQuery<JsonNode> implements Expression<JsonNode> {
 							frame.set(var.slot, var.path != null ? new PathAndValue<>(var.path, var.value) : var.value);
 						}
 					}
-					pathRecursive(frame, in, path, output, tail, requirePath);
+					pathRecursive(frame, in, path, output, tail);
 				}, accumulate);
 			});
 		} else if (head instanceof TransformPipeComponent) {
 			((TransformPipeComponent<JsonNode>) head).expr.apply(frame, in, path, (pobj, ppath) -> {
-				pathRecursive(frame, pobj, ppath, output, tail, requirePath);
-			}, requirePath);
+				pathRecursive(frame, pobj, path != null && ppath == null ? UnrepresentablePath.getInstance() : ppath, output, tail);
+			});
 		} else if (head instanceof LabelPipeComponent) {
 			try {
-				pathRecursive(frame, in, path, output, tail, requirePath);
+				pathRecursive(frame, in, path, output, tail);
 			} catch (JsonQueryBreakException e) {
 				if (((LabelPipeComponent<JsonNode>) head).name.equals(e.name()))
 					return;

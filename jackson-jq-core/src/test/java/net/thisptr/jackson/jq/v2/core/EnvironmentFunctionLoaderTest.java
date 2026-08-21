@@ -23,7 +23,7 @@ public class EnvironmentFunctionLoaderTest {
 		return new Function() {
 			@Override
 			public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version version) {
-				return (frame, in, path, output, ignoredRequirePath) -> output.emit(jsonProvider.createString(text), null);
+				return (frame, in, path, output) -> output.emit(jsonProvider.createString(text), null);
 			}
 		};
 	}

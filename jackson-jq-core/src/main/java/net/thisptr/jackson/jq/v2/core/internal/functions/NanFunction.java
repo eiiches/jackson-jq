@@ -15,7 +15,7 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 public class NanFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (scope, in, ipath, output, ignoredRequirePath) -> {
+		return (scope, in, ipath, output) -> {
 
 		output.emit(jsonProvider.createNumber(Double.NaN), null);
 		};

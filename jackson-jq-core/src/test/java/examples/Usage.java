@@ -41,7 +41,7 @@ public class Usage {
 				.addFunction(FunctionSignature.of("repeat", 1), new Function() {
 					@Override
 					public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version jqVersion) {
-						return (frame, in, path, output, ignoredRequirePath) -> {
+						return (frame, in, path, output) -> {
 							args.get(0).apply(frame, in, (time) -> {
 								output.emit(jsonProvider.createString(Strings.repeat(jsonProvider.asText(in), jsonProvider.asInt(time))), null);
 							});

@@ -27,7 +27,7 @@ public class _MatchImplFunction implements Function {
 		Expression<JsonNode> flagsExpr = args.get(1);
 		Expression<JsonNode> testExpr = args.get(2);
 
-		return (frame, in, ipath, output, ignoredRequirePath) -> {
+		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
 			byte[] ibytes = jsonProvider.asText(in).getBytes(StandardCharsets.UTF_8);
 			int[] cindex = UnicodeUtils.utf8CharIndex(ibytes);

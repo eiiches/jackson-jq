@@ -16,7 +16,7 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 public class IndexFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output, ignoredRequirePath) -> {
+		return (frame, in, ipath, output) -> {
 			if (jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
 				output.emit(jsonProvider.createNull(), null);
 				return;

@@ -22,7 +22,7 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 public class SortByFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, items, ipath, output, ignoredRequirePath) -> {
+		return (frame, items, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "sort_by", items, JsonNodeType.ARRAY);
 
 			JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);

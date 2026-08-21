@@ -24,7 +24,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 public class PathsFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output, ignoredRequirePath) -> {
+		return (frame, in, ipath, output) -> {
 			Stack<JsonNode> stack = new Stack<>();
 			applyRecursive(frame, jsonProvider, in, output, stack, args.get(0));
 		};

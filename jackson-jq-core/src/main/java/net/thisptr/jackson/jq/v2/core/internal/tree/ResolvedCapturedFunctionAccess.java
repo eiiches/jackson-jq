@@ -48,11 +48,11 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<Json
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
 		Closure closure = frame != null ? (Closure) frame.get(frameClosureSlot) : null;
 		Function factory = closure != null ? (Function) closure.get(closureSlot) : null;
 		if (factory == null && defaultFunction != null) {
-			defaultFunction.apply(frame, in, path, output, false);
+			defaultFunction.apply(frame, in, path, output);
 			return;
 		}
 		if (factory == null) {
@@ -60,7 +60,7 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<Json
 		}
 		Expression<JsonNode> fn = factory == defaultFactory && defaultFunction != null
 				? defaultFunction : factory.bindArguments(jsonProvider, args, version);
-		fn.apply(frame, in, path, output, false);
+		fn.apply(frame, in, path, output);
 	}
 
 	@Override

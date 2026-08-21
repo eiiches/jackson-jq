@@ -18,7 +18,7 @@ public class GetPathFunction implements Function {
 
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output, ignoredRequirePath) -> {
+		return (frame, in, ipath, output) -> {
 			args.get(0).apply(frame, in, (argpath) -> {
 				Path<JsonNode> subpath = PathUtils.toPath(jsonProvider, argpath);
 				subpath.get(jsonProvider, in, ipath, output, false);

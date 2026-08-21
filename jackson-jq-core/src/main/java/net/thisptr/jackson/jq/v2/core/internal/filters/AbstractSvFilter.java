@@ -22,7 +22,7 @@ public abstract class AbstractSvFilter implements Function {
 
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (scope, in, ipath, output, ignoredRequirePath) -> {
+		return (scope, in, ipath, output) -> {
 			if (jsonProvider.getNodeType(in) != JsonNodeType.ARRAY)
 				throw new JsonQueryTypeException(jsonProvider, "%s cannot be %s-formatted, only array", in, name());
 

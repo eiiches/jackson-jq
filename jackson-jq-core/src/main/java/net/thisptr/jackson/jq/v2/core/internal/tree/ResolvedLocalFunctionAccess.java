@@ -45,17 +45,17 @@ public class ResolvedLocalFunctionAccess<JsonNode> implements Expression<JsonNod
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output) throws JsonQueryException {
 		Function factory = frame != null ? (Function) frame.get(slot) : null;
 		if (factory == null && defaultFunction != null) {
-			defaultFunction.apply(frame, in, ipath, output, false);
+			defaultFunction.apply(frame, in, ipath, output);
 			return;
 		}
 		if (factory == null)
 			throw new JsonQueryException("Function " + name + " is not defined");
 		Expression<JsonNode> fn = factory == defaultFactory && defaultFunction != null
 				? defaultFunction : factory.bindArguments(jsonProvider, args, version);
-		fn.apply(frame, in, ipath, output, false);
+		fn.apply(frame, in, ipath, output);
 	}
 
 	@Override

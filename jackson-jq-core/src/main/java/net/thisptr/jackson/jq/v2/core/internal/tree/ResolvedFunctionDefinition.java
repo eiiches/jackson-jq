@@ -71,14 +71,14 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<JsonNode
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output) throws JsonQueryException {
 		Closure[] closureHolder = new Closure[1];
 		Function factory = new Function() {
 			@Override
 			@SuppressWarnings("unchecked")
 			public <N> Expression<N> bindArguments(JsonProvider<N> jp, List<Expression<N>> fnArgs, Version version) {
 				Expression<N> effectiveBody = (Expression<N>) resolvedBody;
-				return (callerFrame, input, path, out, ignoredRequirePath) -> {
+				return (callerFrame, input, path, out) -> {
 					Closure effectiveClosure = (Closure) closureHolder[0];
 					StackFrame fnFrame = callerFrame != null
 							? callerFrame.getEnclosingMemory().pushFrame(fnSize)
@@ -86,7 +86,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<JsonNode
 					fnFrame.set(ownClosureSlot, effectiveClosure);
 					try {
 						Compiler.bindAndApply(callerFrame, fnFrame, paramNames, paramSlots, fnArgs, input, path, out, (execFrame) -> {
-							effectiveBody.apply(execFrame, input, path, out, false);
+							effectiveBody.apply(execFrame, input, path, out);
 						});
 					} finally {
 						fnFrame.getEnclosingMemory().popFrame();

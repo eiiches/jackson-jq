@@ -20,9 +20,9 @@ public class BracketExtractFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, boolean requirePath) throws JsonQueryException {
+	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
 		target.apply(frame, in, path, (pobj, ppath) -> {
-			emitAllPath(jsonProvider, permissive, pobj, ppath, output, requirePath);
-		}, requirePath);
+			emitAllPath(jsonProvider, permissive, pobj, ppath, output, path != null);
+		});
 	}
 }
