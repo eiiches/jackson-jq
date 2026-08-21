@@ -1,32 +1,16 @@
 package net.thisptr.jackson.jq.v2.test;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -34,12 +18,11 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
+import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
+import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
+import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.spi.Version;
-import net.thisptr.jackson.jq.v2.spi.VersionRange;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.test.evaluator.CachedEvaluator;
-import net.thisptr.jackson.jq.v2.test.evaluator.Evaluator;
-import net.thisptr.jackson.jq.v2.test.evaluator.TrueJqEvaluator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -55,49 +38,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 public abstract class AbstractJsonQueryTest<T> {
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-	private static final ObjectMapper YAML_MAPPER = new YAMLMapper();
-
-	@JsonInclude(JsonInclude.Include.NON_NULL)
-	@JsonIgnoreProperties(ignoreUnknown = true)
-	public static class TestCase {
-		@JsonProperty("q")
-		public String q = "";
-
-		@JsonProperty("in")
-		public JsonNode in = NullNode.getInstance();
-
-		@JsonProperty("out")
-		public List<JsonNode> out = Collections.emptyList();
-
-		@JsonProperty("file")
-		public String file = "";
-
-		@JsonProperty("failing")
-		public @Nullable Boolean failing;
-
-		@JsonProperty("should_compile")
-		public boolean shouldCompile = true;
-
-		@JsonProperty("ignore_true_jq_behavior")
-		public boolean ignoreTrueJqBehavior = false;
-
-		@JsonProperty("numerical_errors")
-		public double numericalErrors = 0;
-
-		@JsonProperty("ignore_field_order")
-		public boolean ignoreFieldOrder = false;
-
-		@JsonInclude(JsonInclude.Include.NON_NULL)
-		@JsonProperty("v")
-		@JsonDeserialize(using = VersionRangeDeserializer.class)
-		@JsonSerialize(using = ToStringSerializer.class)
-		public @Nullable VersionRange version;
-
-		@Override
-		public String toString() {
-			return String.format("jq '%s' <<< '%s' # should be %s, version = %s.", q, in, out, version != null ? version : "any");
-		}
-	}
 
 	/**
 	 * Create an EnvironmentBuilder for the given version, ready for any additional configuration
@@ -120,70 +60,18 @@ public abstract class AbstractJsonQueryTest<T> {
 	 * Create a comparator for comparing output nodes.
 	 *
 	 * @param strictFieldOrder Whether to enforce strict field ordering in objects
-	 * @param numericalErrors Allowed numerical error tolerance
+	 * @param numericalErrors  Allowed numerical error tolerance
 	 * @return A comparator for the provider's node type
 	 */
 	protected abstract Comparator<T> createComparator(boolean strictFieldOrder, double numericalErrors);
 
-	private static List<TestCase> loadTestCases(String resourceName, InputStream in, boolean failing) throws IOException {
-		TestCase[] result;
-		if (resourceName.endsWith(".yaml")) {
-			result = YAML_MAPPER.readValue(in, TestCase[].class);
-		} else if (resourceName.endsWith(".json")) {
-			result = JSON_MAPPER.readValue(in, TestCase[].class);
-		} else {
-			throw new IllegalArgumentException("unsupported file format");
-		}
-		for (TestCase tc : result) {
-			if (tc.failing == null)
-				tc.failing = failing;
-			tc.file = resourceName;
-		}
-		return Arrays.asList(result);
-	}
-
-	protected static Stream<String> defaultTestCases(ClassLoader classLoader) throws IOException {
-		List<String> resourceNames = ClassLoaderUtils.listResources(classLoader, "tests").stream()
-				.filter(name -> name.endsWith(".json") || name.endsWith(".yaml"))
-				.sorted()
-				.collect(Collectors.toList());
-		if (resourceNames.isEmpty())
-			throw new IllegalStateException("No test cases found under classpath resource tests/");
-
-		List<TestCase> testCases = new ArrayList<>();
-		for (String resourceName : resourceNames) {
-			try (InputStream in = classLoader.getResourceAsStream(resourceName)) {
-				if (in == null)
-					throw new IOException("Failed to load " + resourceName);
-				testCases.addAll(loadTestCases(resourceName, in, false));
-			}
-		}
-
-		return testCases.stream().map(tc -> {
-			try {
-				return JSON_MAPPER.writeValueAsString(tc);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		});
-	}
-
-	private static Map<Version, Boolean> hasJqCache = new ConcurrentHashMap<>();
-	private static Evaluator cachedJqEvaluator;
-
-	@BeforeAll
-	static void beforeAll() {
-		cachedJqEvaluator = new CachedEvaluator(new TrueJqEvaluator(), "/tmp/jackson-jq-test.cache");
-	}
-
-	@AfterAll
-	static void afterAll() throws Exception {
-		if (cachedJqEvaluator instanceof AutoCloseable)
-			((AutoCloseable) cachedJqEvaluator).close();
-	}
-
-	private void test(TestCase tc, Version version) throws Throwable {
+	private void test(TestCase tc, Version version, @Nullable Path moduleSearchPath) throws Throwable {
 		EnvironmentBuilder<T> envBuilder = createEnvironment(version);
+		if (moduleSearchPath != null) {
+			envBuilder.setModuleLoader(new ChainedModuleLoader<>(
+					new FileSystemModuleLoader<>(envBuilder.getJsonProvider(), version, moduleSearchPath),
+					ClassPathModuleLoader.getInstance()));
+		}
 		Environment<T> env = envBuilder
 				.addVariable("ENV", () -> {
 					T envObj = envBuilder.getJsonProvider().createObject();
@@ -192,7 +80,7 @@ public abstract class AbstractJsonQueryTest<T> {
 				})
 				.build();
 
-		String command = String.format("%s '%s' <<< '%s'", TrueJqEvaluator.executable(version), tc.q, tc.in);
+		String command = String.format("jq (v%s) '%s' <<< '%s'", version, tc.q, tc.in);
 
 		if (!tc.shouldCompile) {
 			assertThrows(JsonQueryException.class, () -> env.compile(tc.q));
@@ -207,23 +95,6 @@ public abstract class AbstractJsonQueryTest<T> {
 		}
 
 		Comparator<T> comparator = createComparator(!tc.ignoreFieldOrder, tc.numericalErrors);
-
-		if (!tc.ignoreTrueJqBehavior && hasJqCache.computeIfAbsent(version, v -> TrueJqEvaluator.hasJq(v))) {
-			Evaluator.Result result = cachedJqEvaluator.evaluate(tc.q, tc.in, version, 2000L);
-			try {
-				assertThat(result.error).as("%s", command).isNull();
-				// Compare with true jq output (which uses Jackson JsonNode)
-				List<T> trueJqOut = new ArrayList<>();
-				for (JsonNode outNode : result.values) {
-					trueJqOut.add(parseTestNode(outNode));
-				}
-				assertThat(expectedOut).as("%s", command)
-					.usingElementComparator(comparator)
-					.isEqualTo(trueJqOut);
-			} catch (AssertionError e) {
-				Assumptions.abort(String.format("Assumption failed: %s %s", command, e));
-			}
-		}
 
 		@Var boolean failed = false;
 		try {
@@ -249,12 +120,42 @@ public abstract class AbstractJsonQueryTest<T> {
 
 	@ParameterizedTest
 	@MethodSource("defaultTestCases")
-	public void test(String tcText) throws Throwable {
+	public void testJq1_5(String tcText) throws Throwable {
+		testVersion(tcText, Versions.JQ_1_5);
+	}
+
+	@ParameterizedTest
+	@MethodSource("defaultTestCases")
+	public void testJq1_6(String tcText) throws Throwable {
+		testVersion(tcText, Versions.JQ_1_6);
+	}
+
+	@ParameterizedTest
+	@MethodSource("defaultTestCases")
+	public void testJq1_7(String tcText) throws Throwable {
+		testVersion(tcText, Versions.JQ_1_7);
+	}
+
+	@ParameterizedTest
+	@MethodSource("defaultTestCases")
+	public void testJq1_7_1(String tcText) throws Throwable {
+		testVersion(tcText, Versions.JQ_1_7_1);
+	}
+
+	protected static Stream<String> defaultTestCases() throws IOException {
+		return TestCaseLoader.loadAllTestCasesAsJsonStrings();
+	}
+
+	private void testVersion(String tcText, Version jqVersion) throws Throwable {
 		TestCase tc = JSON_MAPPER.readValue(tcText, TestCase.class);
-		for (Version version : Versions.versions()) {
-			if (tc.version == null || tc.version.contains(version)) {
-				test(tc, version);
+		Path moduleSearchPath = tc.modules.isEmpty() ? null : ModuleFixtures.materialize(tc.modules);
+		try {
+			if (tc.version == null || tc.version.contains(jqVersion)) {
+				test(tc, jqVersion, moduleSearchPath);
 			}
+		} finally {
+			if (moduleSearchPath != null)
+				ModuleFixtures.cleanup(moduleSearchPath);
 		}
 	}
 }

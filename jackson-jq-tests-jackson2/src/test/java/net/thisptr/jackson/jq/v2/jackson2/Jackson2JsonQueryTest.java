@@ -1,10 +1,8 @@
 package net.thisptr.jackson.jq.v2.jackson2;
 
-import java.io.IOException;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -34,13 +32,6 @@ public class Jackson2JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 	@Override
 	protected Comparator<JsonNode> createComparator(boolean strictFieldOrder, double numericalErrors) {
 		return new Jackson2JsonNodeComparator(strictFieldOrder, numericalErrors);
-	}
-
-	/**
-	 * Provide test cases for JUnit parameterized tests.
-	 */
-	protected static Stream<String> defaultTestCases() throws IOException {
-		return AbstractJsonQueryTest.defaultTestCases(Jackson2JsonQueryTest.class.getClassLoader());
 	}
 
 	/**

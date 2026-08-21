@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.test.random;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,8 +48,9 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.VersionRange;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.test.evaluator.Evaluator;
-import net.thisptr.jackson.jq.v2.test.evaluator.JacksonJqEvaluator;
-import net.thisptr.jackson.jq.v2.test.evaluator.TrueJqEvaluator;
+import net.thisptr.jackson.jq.v2.test.evaluator.JacksonJqRunner;
+import net.thisptr.jackson.jq.v2.test.evaluator.JqExecutables;
+import net.thisptr.jackson.jq.v2.test.evaluator.JqRunner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -164,7 +166,7 @@ public class RandomTest {
 
 			Evaluator.Result expected;
 			try {
-				expected = new TrueJqEvaluator().evaluate(expr.toString(), in, VERSION, 1000L);
+				expected = new JqRunner(JqExecutables.executableFor(VERSION)).evaluate(expr.toString(), in, Duration.ofMillis(1000L));
 			} catch (Throwable e) {
 				// System.err.printf("Cloud not evaluate jq '%s' <<< '%s'%n", expr, in);
 				continue;
@@ -172,7 +174,7 @@ public class RandomTest {
 
 			Evaluator.Result actual;
 			try {
-				actual = new JacksonJqEvaluator().evaluate(expr.toString(), in, VERSION, 1000L);
+				actual = new JacksonJqRunner(VERSION).evaluate(expr.toString(), in, Duration.ofMillis(1000L));
 			} catch (Throwable e) {
 				// System.err.printf("Cloud not evaluate jackson-jq '%s' <<< '%s'%n", expr, in);
 				continue;

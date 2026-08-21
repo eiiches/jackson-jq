@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -15,29 +17,33 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.ByteStreams;
 import com.google.errorprone.annotations.Var;
-import org.junit.jupiter.api.Test;
+import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.Versions;
-import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-
-public class TrueJqEvaluator implements Evaluator {
+/**
+ * {@link Evaluator} backed by a specific real {@code jq} binary. An instance is bound to one
+ * executable (and thus, implicitly, one jq version) supplied by the caller; see
+ * {@link JqExecutables} for the canonical list of executables this test suite knows about.
+ */
+public class JqRunner implements Evaluator {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
-	public static String executable(Version version) {
-		return "jq-" + version.toString();
+	private final String executable;
+	private final @Nullable Path moduleSearchPath;
+
+	public JqRunner(String executable) {
+		this(executable, null);
 	}
 
-	public static boolean hasJq(Version version) {
+	public JqRunner(String executable, @Nullable Path moduleSearchPath) {
+		this.executable = executable;
+		this.moduleSearchPath = moduleSearchPath;
+	}
+
+	public static boolean hasJq(String executable) {
 		try {
-			Process p = Runtime.getRuntime().exec(new String[] {
-					executable(version),
-					"--version"
-			});
+			Process p = new ProcessBuilder(executable, "--version").start();
 			p.waitFor();
 			return p.exitValue() == 0;
 		} catch (Throwable th) {
@@ -46,8 +52,20 @@ public class TrueJqEvaluator implements Evaluator {
 	}
 
 	@Override
-	public Result evaluate(String expr, JsonNode in, Version version, long timeout) throws IOException, InterruptedException, TimeoutException {
-		ProcessBuilder pb = new ProcessBuilder(executable(version), "-c", expr);
+	public Result evaluate(String expression, JsonNode in, Duration timeout) throws IOException, InterruptedException, TimeoutException {
+		List<String> args = new ArrayList<>();
+		args.add(executable);
+		if (moduleSearchPath != null) {
+			args.add("-L");
+			args.add(moduleSearchPath.toString());
+		}
+		args.add("-c");
+		args.add(expression);
+		ProcessBuilder pb = new ProcessBuilder(args);
+		// Matches the ENV.PAGER jq variable AbstractJsonQueryTest sets up for the library's own
+		// implementation, so `env.PAGER`/`$ENV.PAGER` test cases agree between the two.
+		pb.environment().put("PAGER", "less");
+
 		Process p = pb.start();
 
 		try (OutputStream stdin = p.getOutputStream()) {
@@ -56,7 +74,7 @@ public class TrueJqEvaluator implements Evaluator {
 			// This can happen when the process exits before we write any input, probably due to a failure to compile the expression.
 		}
 
-		if (!p.waitFor(timeout, TimeUnit.MILLISECONDS)) {
+		if (!p.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
 			p.destroyForcibly();
 			throw new TimeoutException("timeout");
 		}
@@ -82,21 +100,5 @@ public class TrueJqEvaluator implements Evaluator {
 		}
 
 		return new Result(values, error != null ? new JsonQueryException(error) : null);
-	}
-
-	@Test
-	void testJqCli() throws JsonQueryException, IOException, InterruptedException, TimeoutException {
-		Result result = evaluate("{a: (. + 1), b: 10}", MAPPER.readTree("1"), Versions.JQ_1_5, 1000L);
-		assertEquals(1, result.values.size());
-		assertEquals(MAPPER.readTree("{\"a\":2,\"b\":10}"), result.values.get(0));
-		assertNull(result.error);
-	}
-
-	@Test
-	void testJqCliError() throws JsonQueryException, IOException, InterruptedException, TimeoutException {
-		Result result = evaluate("null[]", MAPPER.readTree("null"), Versions.JQ_1_5, 1000L);
-		assertEquals(0, result.values.size());
-		assertNotNull(result.error);
-		assertEquals("Cannot iterate over null (null)", result.error.getMessage());
 	}
 }

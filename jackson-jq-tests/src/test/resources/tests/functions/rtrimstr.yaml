@@ -1,6 +1,7 @@
 - q: 'rtrimstr(., .[0:1], [1,2,3])'
-  in: foo
+  in: "foo"
   out:
-  - ''
-  - 'foo'
-  - 'foo'
+  - ""
+  - "foo"
+  - "foo"
+  v: '[1.5, 1.8.0)'

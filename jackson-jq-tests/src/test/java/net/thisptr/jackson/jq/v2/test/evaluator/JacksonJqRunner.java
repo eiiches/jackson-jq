@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.test.evaluator;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -13,20 +14,18 @@ import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
-import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
-import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
+import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
-public class JacksonJqEvaluator implements Evaluator {
+public class JacksonJqRunner implements Evaluator {
+	private final Version jqVersion;
 
-	private Result doEvaluate(Expression<JsonNode> expr, JsonNode in) throws JsonQueryException {
+	private Result doEvaluate(JsonQuery<JsonNode> expr, JsonNode in) throws JsonQueryException {
 		List<JsonNode> values = new ArrayList<>();
 		try {
-			expr.apply(null, in, null, (out, opath) -> {
+			expr.apply(in, (out, opath) -> {
 				@Var JsonNode value = out;
 				if (out.isNumber() && Double.isNaN(out.asDouble()))
 					value = NullNode.getInstance();
@@ -45,25 +44,28 @@ public class JacksonJqEvaluator implements Evaluator {
 		thread.stop();
 	}
 
+	public JacksonJqRunner(Version jqVersion) {
+		this.jqVersion = jqVersion;
+	}
+
 	@Override
-	public Result evaluate(String exprText, JsonNode in, Version version, long timeout) throws Throwable {
+	public Result evaluate(String exprText, JsonNode in, Duration timeout) throws Throwable {
 		AtomicReference<Result> result = new AtomicReference<>();
 		AtomicReference<Throwable> exception = new AtomicReference<>();
 		Thread th = new Thread() {
 			@Override
 			public void run() {
 				try {
-					AstNode ast = AstParser.parse(exprText, version);
-					Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), version).build();
-					Expression<JsonNode> expr = Compiler.compile(env, ast);
-					result.set(doEvaluate(expr, in));
+					Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), jqVersion).build();
+					JsonQuery<JsonNode> jq = env.compile(exprText);
+					result.set(doEvaluate(jq, in));
 				} catch (Throwable e) {
 					exception.set(e);
 				}
 			}
 		};
 		th.start();
-		th.join(timeout);
+		th.join(timeout.toMillis());
 		if (th.isAlive()) {
 			terminateThread(th);
 			throw new TimeoutException("timeout");

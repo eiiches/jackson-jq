@@ -1,16 +1,31 @@
-- {"v":"[1.5,1.5]","q":"from_entries","in":{},"out":[{}]}
+- q: 'from_entries'
+  in: {}
+  out:
+  - {}
+  v: '[1.5, )'
+
 - q: 'try from_entries catch .'
   in: 1
   out:
-  - 'Cannot iterate over number (1)'
+  - "Cannot iterate over number (1)"
+
 - q: 'try from_entries catch .'
   in: [{"key": "a", "value": 1}, 1]
   out:
-  - 'Cannot index number with string "key"'
+  - "Cannot index number with string \"key\""
+  v: '[1.5, 1.8.2)'
+
+- q: 'try from_entries catch .'
+  in: [{"key": "a", "value": 1}, 1]
+  out:
+  - "Cannot index number with string (\"key\")"
+  v: '[1.8.2, )'
+
 - q: '{a: {key: "a", value: 1}} | from_entries'
   out:
-  - {a: 1}
+  - {"a": 1}
+
 - q: 'try from_entries catch .'
   in: [{}]
   out:
-  - 'Cannot use null (null) as object key'
+  - "Cannot use null (null) as object key"

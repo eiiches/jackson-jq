@@ -1,10 +1,23 @@
 - q: 'try ({"foo": [1,2,3,4,4,5,5,6]} | contains("foo")) catch .'
   out:
-  - 'object ({"foo":[1,2...) and string ("foo") cannot have their containment checked'
+  - "object ({\"foo\":[1,2...) and string (\"foo\") cannot have their containment checked"
+  v: '[1.5, 1.8.2)'
+
+- q: 'try ({"foo": [1,2,3,4,4,5,5,6]} | contains("foo")) catch .'
+  out:
+  - "object ({\"foo\":[1,2,3,4,4,5,5,6]}) and string (\"foo\") cannot have their containment checked"
+  v: '[1.8.2, )'
 
 - q: 'contains("\u0000 jq ignores any string after \\0, but we do differently")'
   in: "anystring"
   out:
   - true
+  v: '[1.5, 1.7)'
   failing: true
-  justification: "This is more safe."
+  justification: This is more safe.
+
+- q: 'contains("\u0000 jq ignores any string after \\0, but we do differently")'
+  in: "anystring"
+  out:
+  - false
+  v: '[1.7, )'

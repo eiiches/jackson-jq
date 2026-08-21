@@ -1,11 +1,10 @@
 package net.thisptr.jackson.jq.v2.test.evaluator;
 
+import java.time.Duration;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.jspecify.annotations.Nullable;
-
-import net.thisptr.jackson.jq.v2.spi.Version;
 
 public interface Evaluator {
 	class Result {
@@ -18,5 +17,5 @@ public interface Evaluator {
 		}
 	}
 
-	Result evaluate(String expr, JsonNode in, Version version, long timeout) throws Throwable;
+	Result evaluate(String expr, JsonNode in, Duration timeout) throws Throwable;
 }

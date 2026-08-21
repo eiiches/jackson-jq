@@ -1,23 +1,33 @@
 - q: '"foo" / "o"'
   out:
-  - ['f', '', '']
-- {"v":"[1.5,1.5]","q":"((\"foo\" // 1) / \"foo\")","in":"foo","out":[["",""]]}
+  - ["f", "", ""]
+
+- q: '(("foo" // 1) / "foo")'
+  in: "foo"
+  out:
+  - ["", ""]
+  v: '[1.5, )'
+
 - q: '"" / ""'
   out:
   - []
+
 - q: '"foo" / ""'
   out:
-  - ['f', 'o', 'o']
+  - ["f", "o", "o"]
+
 - q: '"" / "foo"'
   out:
   - []
 
-# rhs is evaluated first
 - q: 'error("foo") / empty'
   out: []
+  comment: 'rhs is evaluated first'
+
 - q: 'try (empty / error("foo")) catch .'
   out:
-  - foo
+  - "foo"
+
 - q: 'try (./nan) catch .'
   out:
   - "null (null) and number (null) cannot be divided"

@@ -1,10 +1,8 @@
 package net.thisptr.jackson.jq.v2.gson;
 
-import java.io.IOException;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.JsonElement;
@@ -36,13 +34,6 @@ public class GsonJsonQueryTest extends AbstractJsonQueryTest<JsonElement> {
 	@Override
 	protected Comparator<JsonElement> createComparator(boolean strictFieldOrder, double numericalErrors) {
 		return new GsonJsonNodeComparator(strictFieldOrder, numericalErrors);
-	}
-
-	/**
-	 * Provide test cases for JUnit parameterized tests.
-	 */
-	protected static Stream<String> defaultTestCases() throws IOException {
-		return AbstractJsonQueryTest.defaultTestCases(GsonJsonQueryTest.class.getClassLoader());
 	}
 
 	/**

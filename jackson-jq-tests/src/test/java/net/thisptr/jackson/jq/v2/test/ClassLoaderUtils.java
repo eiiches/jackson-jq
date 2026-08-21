@@ -61,7 +61,10 @@ public final class ClassLoaderUtils {
 		}
 	}
 
-	private static List<String> listJarResources(URL resource, String basePath) throws IOException, URISyntaxException {
+	// Synchronized to prevent a race condition during parallel test execution: without synchronization,
+	// one thread may close the ZipFileSystem upon exiting try-with-resources while another thread
+	// is concurrently reading from it, causing ClosedFileSystemException.
+	private static synchronized List<String> listJarResources(URL resource, String basePath) throws IOException, URISyntaxException {
 		JarURLConnection connection = (JarURLConnection) resource.openConnection();
 		URI fileSystemUri = URI.create("jar:" + connection.getJarFileURL().toURI());
 		try {

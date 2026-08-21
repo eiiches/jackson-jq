@@ -1,4 +1,4 @@
 - q: 'try tonumber catch ("__ERROR__")'
-  in: foo
+  in: "foo"
   out:
-  - __ERROR__
+  - "__ERROR__"

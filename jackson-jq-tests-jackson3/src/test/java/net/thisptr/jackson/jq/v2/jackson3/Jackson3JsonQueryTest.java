@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import tools.jackson.databind.JsonNode;
 
@@ -38,13 +37,6 @@ public class Jackson3JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 	@Override
 	protected Comparator<JsonNode> createComparator(boolean strictFieldOrder, double numericalErrors) {
 		return new Jackson3JsonNodeComparator(strictFieldOrder, numericalErrors);
-	}
-
-	/**
-	 * Provide test cases for JUnit parameterized tests.
-	 */
-	protected static Stream<String> defaultTestCases() throws IOException {
-		return AbstractJsonQueryTest.defaultTestCases(Jackson3JsonQueryTest.class.getClassLoader());
 	}
 
 	/**

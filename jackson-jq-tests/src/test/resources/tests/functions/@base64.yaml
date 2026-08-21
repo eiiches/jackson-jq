@@ -2,3 +2,11 @@
   in: 0.0
   out:
   - "MA=="
+  v: '[1.5, 1.7)'
+
+- q: '@base64'
+  in: 0.0
+  out:
+  - "MC4w"
+  v: '[1.7, )'
+  failing: true

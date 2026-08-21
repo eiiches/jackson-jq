@@ -1,11 +1,24 @@
 - q: 'getpath([])'
-  in: foo
+  in: "foo"
   out:
-  - foo
+  - "foo"
 
 - q: 'try (getpath([false, []])) catch .'
   out:
   - "Cannot index null with boolean"
+  v: '[1.5, 1.8.2)'
+
+- q: 'try (getpath([false, []])) catch .'
+  out:
+  - "Cannot index null with boolean (false)"
+  v: '[1.8.2, )'
+
 - q: 'try (setpath([false, []]; null)) catch .'
   out:
   - "Cannot index null with boolean"
+  v: '[1.5, 1.8.2)'
+
+- q: 'try (setpath([false, []]; null)) catch .'
+  out:
+  - "Cannot index null with boolean (false)"
+  v: '[1.8.2, )'

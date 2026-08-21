@@ -5,6 +5,7 @@
   - true
   - false
   - true
+
 - q: '0 == nan, 0 > nan, 0 < nan, nan > 0, nan < 0'
   out:
   - false
@@ -12,6 +13,7 @@
   - false
   - false
   - true
+
 - q: '0 == nan, 0 >= nan, 0 <= nan, nan >= 0, nan <= 0'
   out:
   - false

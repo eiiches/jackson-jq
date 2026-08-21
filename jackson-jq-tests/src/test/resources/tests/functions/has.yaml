@@ -1,1 +1,5 @@
-- {"v":"[1.5,1.5]","q":"has(\"baz\")","in":null,"out":[false]}
+- q: 'has("baz")'
+  in: null
+  out:
+  - false
+  v: '[1.5, )'
