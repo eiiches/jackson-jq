@@ -12,7 +12,6 @@ import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.Versions;
-import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Range;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -85,22 +84,20 @@ public class DelPathsFunction implements Function {
 				case ARRAY:
 					throw new JsonQueryException("Cannot update field at array index of array");
 				default:
-					throw new JsonQueryException(String.format("Cannot index %s with %s",
-							inType.toString().toLowerCase(), jsonProvider.getNodeType(pathSegment).toString().toLowerCase()));
+					throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, inType, pathSegment));
 			}
 		}
 
 		if (!stringPathSegments.isEmpty() && inType != JsonNodeType.OBJECT)
-			throw new JsonQueryException(String.format("Cannot index %s with string \"%s\"",
-					JsonNodeUtils.typeOf(jsonProvider, in), jsonProvider.asText(stringPathSegments.get(0).get(depth))));
+			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, inType, stringPathSegments.get(0).get(depth)));
 
 		if (!numberPathSegments.isEmpty() && inType != JsonNodeType.ARRAY)
-			throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with number", inType);
+			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, inType, numberPathSegments.get(0).get(depth)));
 
 		if (!rangePathSegments.isEmpty() && inType != JsonNodeType.ARRAY) {
 			if (inType == JsonNodeType.STRING)
 				throw new JsonQueryException("Cannot update field at object index of string");
-			throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with object", inType);
+			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, inType, rangePathSegments.get(0).get(depth)));
 		}
 
 		if (!stringPathSegments.isEmpty())

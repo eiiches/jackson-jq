@@ -320,7 +320,7 @@ public class Compiler {
 					ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst jq = (ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst) fc;
 					Expression<JsonNode> key = compileNonNull(env, context, jq.key());
 					Expression<JsonNode> val = compileNonNull(env, context, jq.value());
-					res.add(new JsonQueryKeyFieldConstruction<>(env.getJsonProvider(), key, val));
+					res.add(new JsonQueryKeyFieldConstruction<>(env.getJsonProvider(), key, val, env.getJqVersion()));
 				} else if (fc instanceof ObjectConstructionAstNode.StringKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.StringKeyFieldConstructionAst sk = (ObjectConstructionAstNode.StringKeyFieldConstructionAst) fc;
 					Expression<JsonNode> key = compileNonNull(env, context, sk.key);
@@ -352,7 +352,7 @@ public class Compiler {
 
 		if (ast instanceof NegativeExpressionAstNode) {
 			NegativeExpressionAstNode neg = (NegativeExpressionAstNode) ast;
-			return new NegativeExpression<>(env.getJsonProvider(), compileNonNull(env, context, neg.value()));
+			return new NegativeExpression<>(env.getJsonProvider(), compileNonNull(env, context, neg.value()), env.getJqVersion());
 		}
 
 		if (ast instanceof ConditionalAstNode) {
@@ -473,29 +473,29 @@ public class Compiler {
 			if (end == null)
 				end = new NullLiteral<>(env.getJsonProvider());
 			if (bfa.isRange()) {
-				return new BracketFieldAccess<>(env.getJsonProvider(), target, start, end, bfa.permissive());
+				return new BracketFieldAccess<>(env.getJsonProvider(), target, start, end, bfa.permissive(), env.getJqVersion());
 			} else {
-				return new BracketFieldAccess<>(env.getJsonProvider(), target, start, bfa.permissive());
+				return new BracketFieldAccess<>(env.getJsonProvider(), target, start, bfa.permissive(), env.getJqVersion());
 			}
 		}
 
 		if (ast instanceof IdentifierFieldAccessAstNode) {
 			IdentifierFieldAccessAstNode ifa = (IdentifierFieldAccessAstNode) ast;
 			Expression<JsonNode> target = compileNonNull(env, context, ifa.target());
-			return new IdentifierFieldAccess<>(env.getJsonProvider(), target, ifa.field(), ifa.permissive());
+			return new IdentifierFieldAccess<>(env.getJsonProvider(), target, ifa.field(), ifa.permissive(), env.getJqVersion());
 		}
 
 		if (ast instanceof StringFieldAccessAstNode) {
 			StringFieldAccessAstNode sfa = (StringFieldAccessAstNode) ast;
 			Expression<JsonNode> target = compileNonNull(env, context, sfa.target());
 			Expression<JsonNode> key = compileNonNull(env, context, sfa.key());
-			return new StringFieldAccess<>(env.getJsonProvider(), target, key, sfa.permissive());
+			return new StringFieldAccess<>(env.getJsonProvider(), target, key, sfa.permissive(), env.getJqVersion());
 		}
 
 		if (ast instanceof BracketExtractFieldAccessAstNode) {
 			BracketExtractFieldAccessAstNode befa = (BracketExtractFieldAccessAstNode) ast;
 			Expression<JsonNode> target = compileNonNull(env, context, befa.target());
-			return new BracketExtractFieldAccess<>(env.getJsonProvider(), target, befa.permissive());
+			return new BracketExtractFieldAccess<>(env.getJsonProvider(), target, befa.permissive(), env.getJqVersion());
 		}
 
 		if (ast instanceof BooleanLiteralAstNode) {
@@ -661,7 +661,7 @@ public class Compiler {
 			for (PatternMatcherAstNode m : am.matchers()) {
 				compiled.add(compileMatcher(env, context, m));
 			}
-			return new ArrayMatcher<>(env.getJsonProvider(), compiled);
+			return new ArrayMatcher<>(env.getJsonProvider(), compiled, env.getJqVersion());
 		}
 		if (matcher instanceof ObjectMatcherAstNode) {
 			ObjectMatcherAstNode om = (ObjectMatcherAstNode) matcher;
@@ -671,7 +671,7 @@ public class Compiler {
 				PatternMatcher<N> sub = fm.rawMatcher() != null ? compileMatcher(env, context, fm.rawMatcher()) : null;
 				compiled.add(new ObjectMatcher.FieldMatcher<>(fm.dollar(), name, sub));
 			}
-			return new ObjectMatcher<>(env.getJsonProvider(), compiled);
+			return new ObjectMatcher<>(env.getJsonProvider(), compiled, env.getJqVersion());
 		}
 		throw new IllegalStateException("Unknown matcher type: " + matcher.getClass());
 	}

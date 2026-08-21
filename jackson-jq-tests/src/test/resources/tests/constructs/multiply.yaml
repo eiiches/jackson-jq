@@ -56,5 +56,3 @@
   out:
   - null
   v: '[1.8.0, )'
-  failing: true
-  justification: jq interprets this as -(1.5 * baz) while jackson-jq as (-1.5) * baz. Defer resolution to future versions.

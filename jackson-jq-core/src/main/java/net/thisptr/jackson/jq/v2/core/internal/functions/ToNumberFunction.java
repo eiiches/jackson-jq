@@ -32,7 +32,7 @@ public class ToNumberFunction implements Function {
 				throw new JsonQueryException(e);
 			}
 		} else {
-			throw new JsonQueryTypeException(jsonProvider, "%s cannot be parsed as a number", in);
+			throw new JsonQueryTypeException(jsonProvider, version, "%s cannot be parsed as a number", in);
 		}
 		};
 }

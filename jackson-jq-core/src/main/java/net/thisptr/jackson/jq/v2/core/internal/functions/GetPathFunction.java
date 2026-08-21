@@ -20,7 +20,7 @@ public class GetPathFunction implements Function {
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
 			args.get(0).apply(frame, in, (argpath) -> {
-				Path<JsonNode> subpath = PathUtils.toPath(jsonProvider, argpath);
+				Path<JsonNode> subpath = PathUtils.toPath(jsonProvider, argpath, version);
 				subpath.get(jsonProvider, in, ipath, output, false);
 			});
 		};

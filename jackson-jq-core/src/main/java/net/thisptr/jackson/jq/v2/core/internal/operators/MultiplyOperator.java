@@ -4,15 +4,27 @@ import java.util.Iterator;
 import java.util.Map;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Strings;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class MultiplyOperator<JsonNode> implements BinaryOperator<JsonNode> {
+	private final @Nullable Version version;
+
+	public MultiplyOperator() {
+		this(null);
+	}
+
+	public MultiplyOperator(@Nullable Version version) {
+		this.version = version;
+	}
+
 	@Override
 	public JsonNode apply(JsonProvider<JsonNode> jsonProvider, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
 		JsonNodeType ltype = jsonProvider.getNodeType(lhs);
@@ -41,7 +53,7 @@ public class MultiplyOperator<JsonNode> implements BinaryOperator<JsonNode> {
 		} else if (ltype == JsonNodeType.OBJECT && rtype == JsonNodeType.OBJECT) {
 			return mergeRecursive(jsonProvider, lhs, rhs);
 		} else {
-			throw new JsonQueryTypeException(jsonProvider, "%s and %s cannot be multiplied", lhs, rhs);
+			throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot be multiplied", lhs, rhs);
 		}
 	}
 

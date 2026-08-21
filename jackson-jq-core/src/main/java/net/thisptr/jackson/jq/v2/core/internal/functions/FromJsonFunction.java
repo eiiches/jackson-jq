@@ -21,7 +21,7 @@ public class FromJsonFunction implements Function {
 		return (scope, in, ipath, output) -> {
 
 				if (jsonProvider.getNodeType(in) != JsonNodeType.STRING)
-			throw new JsonQueryTypeException(jsonProvider, "%s only strings can be parsed", in);
+			throw new JsonQueryTypeException(jsonProvider, version, "%s only strings can be parsed", in);
 
 		JsonNode tree;
 		try {

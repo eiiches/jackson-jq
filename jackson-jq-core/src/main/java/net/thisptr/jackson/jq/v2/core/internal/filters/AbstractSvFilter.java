@@ -24,7 +24,7 @@ public abstract class AbstractSvFilter implements Function {
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (scope, in, ipath, output) -> {
 			if (jsonProvider.getNodeType(in) != JsonNodeType.ARRAY)
-				throw new JsonQueryTypeException(jsonProvider, "%s cannot be %s-formatted, only array", in, name());
+				throw new JsonQueryTypeException(jsonProvider, version, "%s cannot be %s-formatted, only array", in, name());
 
 			@Var boolean heading = true;
 			StringBuilder row = new StringBuilder();
@@ -42,7 +42,7 @@ public abstract class AbstractSvFilter implements Function {
 				} else if (colType == JsonNodeType.BOOLEAN || colType == JsonNodeType.NUMBER) {
 					row.append(jsonProvider.toString(col));
 				} else {
-					throw new JsonQueryTypeException(jsonProvider, "%s is not valid in a csv row", col);
+					throw new JsonQueryTypeException(jsonProvider, version, "%s is not valid in a csv row", col);
 				}
 
 				heading = false;

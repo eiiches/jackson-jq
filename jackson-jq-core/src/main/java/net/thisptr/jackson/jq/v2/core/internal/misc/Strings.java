@@ -5,6 +5,10 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
+
+import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class Strings {
 
@@ -49,5 +53,9 @@ public class Strings {
 		if (text.length() <= len)
 			return text;
 		return text.substring(0, len - 3) + "...";
+	}
+
+	public static String truncate(String text, @Nullable Version version) {
+		return JsonQueryException.truncate(text, version);
 	}
 }

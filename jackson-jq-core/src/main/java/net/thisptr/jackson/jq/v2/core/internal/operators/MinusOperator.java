@@ -3,14 +3,27 @@ package net.thisptr.jackson.jq.v2.core.internal.operators;
 import java.util.Iterator;
 import java.util.TreeSet;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class MinusOperator<JsonNode> implements BinaryOperator<JsonNode> {
+	private final @Nullable Version version;
+
+	public MinusOperator() {
+		this(null);
+	}
+
+	public MinusOperator(@Nullable Version version) {
+		this.version = version;
+	}
+
 	@Override
 	public JsonNode apply(JsonProvider<JsonNode> jsonProvider, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
 		JsonNodeType ltype = jsonProvider.getNodeType(lhs);
@@ -36,7 +49,7 @@ public class MinusOperator<JsonNode> implements BinaryOperator<JsonNode> {
 			}
 			return result;
 		} else {
-			throw new JsonQueryTypeException(jsonProvider, "%s and %s cannot be subtracted", lhs, rhs);
+			throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot be subtracted", lhs, rhs);
 		}
 	}
 

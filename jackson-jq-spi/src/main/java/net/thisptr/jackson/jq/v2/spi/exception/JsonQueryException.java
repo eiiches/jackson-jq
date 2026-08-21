@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Version;
 
 public class JsonQueryException extends RuntimeException {
     private static final long serialVersionUID = -7241258446595502920L;
@@ -34,19 +35,21 @@ public class JsonQueryException extends RuntimeException {
     }
 
     public JsonQueryException(JsonProvider<?> jsonProvider, String format, Object... args) {
-        this(format(jsonProvider, format, args));
+        this(format(jsonProvider, null, format, args));
     }
 
-    private static final int MAX_JSON_STRING_LENGTH = 14;
+    public JsonQueryException(JsonProvider<?> jsonProvider, @Nullable Version version, String format, Object... args) {
+        this(format(jsonProvider, version, format, args));
+    }
 
-    private static <JsonNode> String format(JsonProvider<JsonNode> jsonProvider, String format, Object... args) {
+    private static <JsonNode> String format(JsonProvider<JsonNode> jsonProvider, @Nullable Version version, String format, Object... args) {
         Object[] formattedArguments = new Object[args.length];
         for (int i = 0; i < args.length; ++i) {
             if (jsonProvider.isJsonNodeInstance(args[i])) {
                 @SuppressWarnings("unchecked") JsonNode node = (JsonNode) args[i];
                 @Var String json;
                 try {
-                    json = truncate(jsonProvider.toString(node), MAX_JSON_STRING_LENGTH);
+                    json = truncate(jsonProvider.toString(node), version);
                 } catch (Exception e) {
                     json = "<failed to format json>";
                 }
@@ -61,9 +64,20 @@ public class JsonQueryException extends RuntimeException {
         return String.format(format, formattedArguments);
     }
 
-    private static String truncate(String text, int length) {
-        if (text.length() <= length)
-            return text;
-        return text.substring(0, length - 3) + "...";
+    public static String truncate(String text, @Nullable Version version) {
+        if (version != null && version.compareTo(Version.valueOf(1, 8, 2)) >= 0) {
+            if (text.length() <= 29)
+                return text;
+            @Var char delim = 0;
+            if (text.startsWith("\"")) delim = '"';
+            else if (text.startsWith("[")) delim = ']';
+            else if (text.startsWith("{")) delim = '}';
+            int l = delim != 0 ? 25 : 26;
+            return text.substring(0, l) + "..." + (delim != 0 ? delim : "");
+        } else {
+            if (text.length() <= 14)
+                return text;
+            return text.substring(0, 11) + "...";
+        }
     }
 }

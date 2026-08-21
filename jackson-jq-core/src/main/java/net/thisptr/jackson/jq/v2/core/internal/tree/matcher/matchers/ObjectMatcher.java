@@ -10,6 +10,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Functional;
+import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.path.ObjectFieldPath;
@@ -17,16 +18,23 @@ import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
+import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private List<FieldMatcher<JsonNode>> matchers;
+	private final @Nullable Version version;
 
 	public ObjectMatcher(JsonProvider<JsonNode> jsonProvider, List<FieldMatcher<JsonNode>> matchers) {
+		this(jsonProvider, matchers, null);
+	}
+
+	public ObjectMatcher(JsonProvider<JsonNode> jsonProvider, List<FieldMatcher<JsonNode>> matchers, @Nullable Version version) {
 		this.jsonProvider = jsonProvider;
 		this.matchers = matchers;
+		this.version = version;
 	}
 
 	public List<FieldMatcher<JsonNode>> matchers() {
@@ -115,7 +123,9 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		FieldMatcher<JsonNode> fmatcher = matchers.get(index);
 		fmatcher.name.apply(frame, in, (key) -> {
 			if (jsonProvider.getNodeType(key) != JsonNodeType.STRING)
-				throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with %s", jsonProvider.getNodeType(in), jsonProvider.getNodeType(key));
+				throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, key));
+			if (jsonProvider.getNodeType(in) != JsonNodeType.OBJECT && jsonProvider.getNodeType(in) != JsonNodeType.NULL)
+				throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, key));
 
 			JsonNode value = jsonProvider.get(in, jsonProvider.asText(key));
 
@@ -138,10 +148,12 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		FieldMatcher<JsonNode> fmatcher = matchers.get(index);
 		fmatcher.name.apply(frame, in, (key) -> {
 			if (jsonProvider.getNodeType(key) != JsonNodeType.STRING)
-				throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with %s", jsonProvider.getNodeType(in), jsonProvider.getNodeType(key));
+				throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, key));
+			if (jsonProvider.getNodeType(in) != JsonNodeType.OBJECT && jsonProvider.getNodeType(in) != JsonNodeType.NULL)
+				throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, key));
 
 			JsonNode value = jsonProvider.get(in, jsonProvider.asText(key));
-			@Nullable Path<JsonNode> valuepath = ObjectFieldPath.chainIfNotNull(inpath, jsonProvider.asText(key));
+			@Nullable Path<JsonNode> valuepath = ObjectFieldPath.chainIfNotNull(inpath, jsonProvider.asText(key), version);
 
 			int size = accumulate.size();
 			if (fmatcher.dollar)
@@ -156,8 +168,10 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	@Override
 	public void match(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<List<Match<JsonNode>>> out, Stack<Match<JsonNode>> accumulate) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
-		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL)
-			throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with string", type);
+		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL) {
+			if (matchers.isEmpty())
+				throw new JsonQueryTypeException(jsonProvider, version, "Cannot index %s with string", type);
+		}
 
 		recursive(frame, in, out, accumulate, 0);
 	}
@@ -165,8 +179,10 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	@Override
 	public void matchWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
-		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL)
-			throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with string", type);
+		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL) {
+			if (matchers.isEmpty())
+				throw new JsonQueryTypeException(jsonProvider, version, "Cannot index %s with string", type);
+		}
 
 		recursiveWithPath(frame, in, path, output, accumulate, 0);
 	}
@@ -176,7 +192,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		List<FieldMatcher<JsonNode>> resolved = new ArrayList<>(matchers.size());
 		for (FieldMatcher<JsonNode> matcher : matchers)
 			resolved.add(matcher.resolveSlots(slots));
-		return new ObjectMatcher<>(jsonProvider, resolved);
+		return new ObjectMatcher<>(jsonProvider, resolved, version);
 	}
 
 	@Override

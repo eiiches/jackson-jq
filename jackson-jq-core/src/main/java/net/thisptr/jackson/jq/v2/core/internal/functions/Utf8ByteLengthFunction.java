@@ -25,7 +25,7 @@ public class Utf8ByteLengthFunction implements Function {
 		return (scope, in, ipath, output) -> {
 
 				if (jsonProvider.getNodeType(in) != JsonNodeType.STRING)
-			throw new JsonQueryTypeException(jsonProvider, "%s only strings have UTF-8 byte length", in);
+			throw new JsonQueryTypeException(jsonProvider, version, "%s only strings have UTF-8 byte length", in);
 		output.emit(jsonProvider.createNumber(UnicodeUtils.lengthUtf8(jsonProvider.asText(in))), null);
 		};
 }

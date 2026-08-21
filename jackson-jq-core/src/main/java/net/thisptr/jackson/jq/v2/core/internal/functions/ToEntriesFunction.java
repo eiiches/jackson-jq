@@ -43,7 +43,7 @@ public class ToEntriesFunction implements Function {
 				jsonProvider.add(out, entryNode);
 			}
 		} else {
-			throw new JsonQueryTypeException(jsonProvider, "%s has no keys", in);
+			throw new JsonQueryTypeException(jsonProvider, version, "%s has no keys", in);
 		}
 
 		output.emit(out, null);

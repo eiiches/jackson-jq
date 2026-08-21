@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Version;
 
 public class JsonNodeUtils {
 	private JsonNodeUtils() {}
@@ -28,7 +29,7 @@ public class JsonNodeUtils {
 		if (((int) value) == value)
 			return jsonProvider.createNumber((int) value);
 		if (((long) value) == value)
-			return jsonProvider.createNumber((long) value);
+			return asNumericNode(jsonProvider, (long) value);
 		return jsonProvider.createNumber(value);
 	}
 
@@ -44,26 +45,46 @@ public class JsonNodeUtils {
 	}
 
 	public static <JsonNode> String typeOf(JsonProvider<JsonNode> jsonProvider, JsonNode in) {
-		if (in == null)
-			return "null";
-		switch (jsonProvider.getNodeType(in)) {
-			case ARRAY:
-				return "array";
-			case BINARY:
-				return "string";
-			case BOOLEAN:
-				return "boolean";
+		return jsonProvider.getNodeType(in).toString().toLowerCase();
+	}
+
+	public static <JsonNode> String formatType(JsonProvider<JsonNode> jsonProvider, JsonNode in) {
+		JsonNodeType type = jsonProvider.getNodeType(in);
+		switch (type) {
 			case NULL:
 				return "null";
+			case BOOLEAN:
+				return jsonProvider.asBoolean(in) ? "true" : "false";
 			case NUMBER:
-				return "number";
+				return jsonProvider.toString(in);
+			case STRING:
+				return String.format("\"%s\"", jsonProvider.asText(in));
+			case ARRAY:
+				return "array";
 			case OBJECT:
 				return "object";
-			case STRING:
-				return "string";
 			default:
-				throw new IllegalArgumentException("Unknown JsonNodeType: " + jsonProvider.getNodeType(in));
+				throw new IllegalStateException("Unknown type: " + type);
 		}
+	}
+
+	public static <JsonNode> String formatTypes(JsonProvider<JsonNode> jsonProvider, List<JsonNode> in) {
+		StringBuilder sb = new StringBuilder();
+		for (JsonNode n : in) {
+			if (sb.length() > 0)
+				sb.append(", ");
+			sb.append(formatType(jsonProvider, n));
+		}
+		return sb.toString();
+	}
+
+	public static <JsonNode> String print(JsonProvider<JsonNode> jsonProvider, JsonNode in) {
+		return jsonProvider.toString(in);
+	}
+
+	public static <JsonNode> boolean isIterable(JsonProvider<JsonNode> jsonProvider, JsonNode in) {
+		JsonNodeType type = jsonProvider.getNodeType(in);
+		return type == JsonNodeType.ARRAY || type == JsonNodeType.OBJECT;
 	}
 
 	public static <JsonNode> JsonNode nullToNullNode(JsonProvider<JsonNode> jsonProvider, @Nullable JsonNode value) {
@@ -82,5 +103,28 @@ public class JsonNodeUtils {
 	public static <JsonNode> boolean isValueNode(JsonProvider<JsonNode> jsonProvider, JsonNode node) {
 		JsonNodeType type = jsonProvider.getNodeType(node);
 		return type != JsonNodeType.ARRAY && type != JsonNodeType.OBJECT;
+	}
+
+	public static <JsonNode> String cannotIndex(JsonProvider<JsonNode> jsonProvider, @Nullable Version version, JsonNode in, JsonNode accessor) {
+		String inType = jsonProvider.getNodeType(in).toString().toLowerCase();
+		return cannotIndex(jsonProvider, version, inType, accessor);
+	}
+
+	public static <JsonNode> String cannotIndex(JsonProvider<JsonNode> jsonProvider, @Nullable Version version, JsonNodeType inType, JsonNode accessor) {
+		return cannotIndex(jsonProvider, version, inType.toString().toLowerCase(), accessor);
+	}
+
+	public static <JsonNode> String cannotIndex(JsonProvider<JsonNode> jsonProvider, @Nullable Version version, String inType, JsonNode accessor) {
+		JsonNodeType accessorType = jsonProvider.getNodeType(accessor);
+		if (version != null && version.compareTo(Version.valueOf(1, 8, 2)) >= 0) {
+			String formatted = Strings.truncate(jsonProvider.toString(accessor), version);
+			return String.format("Cannot index %s with %s (%s)", inType, accessorType.toString().toLowerCase(), formatted);
+		} else {
+			if (accessorType == JsonNodeType.STRING) {
+				return String.format("Cannot index %s with string \"%s\"", inType, jsonProvider.asText(accessor));
+			} else {
+				return String.format("Cannot index %s with %s", inType, accessorType.toString().toLowerCase());
+			}
+		}
 	}
 }

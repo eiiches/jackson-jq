@@ -1,6 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.exception;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class JsonQueryTypeException extends JsonQueryException {
@@ -19,5 +22,9 @@ public class JsonQueryTypeException extends JsonQueryException {
 
 	public JsonQueryTypeException(JsonProvider<?> jsonProvider, String format, Object... args) {
 		super(jsonProvider, format, args);
+	}
+
+	public JsonQueryTypeException(JsonProvider<?> jsonProvider, @Nullable Version version, String format, Object... args) {
+		super(jsonProvider, version, format, args);
 	}
 }

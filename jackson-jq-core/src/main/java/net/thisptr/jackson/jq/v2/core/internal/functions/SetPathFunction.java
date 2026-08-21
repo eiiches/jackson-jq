@@ -22,7 +22,7 @@ public class SetPathFunction implements Function {
 		return (frame, in, ipath, output) -> {
 			args.get(1).apply(frame, in, (newvalnode) -> {
 				args.get(0).apply(frame, in, (pathnode) -> {
-					@Nullable Path<JsonNode> path = PathUtils.toPath(jsonProvider, pathnode);
+					@Nullable Path<JsonNode> path = PathUtils.toPath(jsonProvider, pathnode, version);
 					JsonNode out = path.mutate(jsonProvider, in, (dummy) -> newvalnode);
 					output.emit(out, path);
 				});

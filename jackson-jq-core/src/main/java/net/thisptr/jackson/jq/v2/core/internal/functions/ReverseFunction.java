@@ -11,6 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "reverse", nargs = 0)
@@ -41,26 +42,26 @@ public class ReverseFunction implements Function {
 				output.emit(out, null);
 				return;
 			}
-			throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with number", in);
+			throw new JsonQueryException(net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
 		}
 		if (type == JsonNodeType.NUMBER) {
 			if (jsonProvider.asDouble(in) == 0.0) {
 				output.emit(out, null);
 				return;
 			}
-			throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with number", in);
+			throw new JsonQueryException(net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
 		}
 		if (type == JsonNodeType.OBJECT) {
 			if (jsonProvider.size(in) == 0) {
 				output.emit(out, null);
 				return;
 			}
-			throw new JsonQueryTypeException(jsonProvider, "Cannot index %s with number", in);
+			throw new JsonQueryException(net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
 		}
 		if (type == JsonNodeType.BOOLEAN) {
-			throw new JsonQueryTypeException(jsonProvider, "%s has no length", in);
+			throw new JsonQueryTypeException(jsonProvider, version, "%s has no length", in);
 		}
-		throw new JsonQueryTypeException(jsonProvider, "%s cannot be reversed", in);
+		throw new JsonQueryTypeException(jsonProvider, version, "%s cannot be reversed", in);
 		};
 }
 }

@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.functions;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
@@ -22,11 +23,15 @@ public class LengthFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (scope, in, ipath, output) -> {
-			output.emit(length(jsonProvider, in), null);
+			output.emit(length(jsonProvider, in, version), null);
 		};
 	}
 
 	public <JsonNode> JsonNode length(JsonProvider<JsonNode> jsonProvider, JsonNode in) throws JsonQueryException {
+		return length(jsonProvider, in, null);
+	}
+
+	public <JsonNode> JsonNode length(JsonProvider<JsonNode> jsonProvider, JsonNode in, @Nullable Version version) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type == JsonNodeType.STRING) {
 			return jsonProvider.createNumber(UnicodeUtils.lengthUtf32(jsonProvider.asText(in)));
@@ -37,7 +42,7 @@ public class LengthFunction implements Function {
 		} else if (type == JsonNodeType.NUMBER) {
 			return JsonNodeUtils.asNumericNode(jsonProvider, Math.abs(jsonProvider.asDouble(in)));
 		} else {
-			throw new JsonQueryTypeException(jsonProvider, "%s has no length", in);
+			throw new JsonQueryTypeException(jsonProvider, version, "%s has no length", in);
 		}
 	}
 }

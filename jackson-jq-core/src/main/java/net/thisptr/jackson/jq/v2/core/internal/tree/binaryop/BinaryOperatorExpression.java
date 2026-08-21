@@ -156,31 +156,31 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<J
 		PLUS("+", 2, Associativity.LEFT) {
 			@Override
 			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
-				return new PlusExpression<>(jsonProvider, lhs, rhs);
+				return new PlusExpression<>(jsonProvider, lhs, rhs, version);
 			}
 		},
 		MINUS("-", 2, Associativity.LEFT) {
 			@Override
 			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
-				return new MinusExpression<>(jsonProvider, lhs, rhs);
+				return new MinusExpression<>(jsonProvider, lhs, rhs, version);
 			}
 		},
 		MODULO("%", 1, Associativity.LEFT) {
 			@Override
 			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
-				return new ModuloExpression<>(jsonProvider, lhs, rhs);
+				return new ModuloExpression<>(jsonProvider, lhs, rhs, version);
 			}
 		},
 		DIVIDE("/", 1, Associativity.LEFT) {
 			@Override
 			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
-				return new DivideExpression<>(jsonProvider, lhs, rhs);
+				return new DivideExpression<>(jsonProvider, lhs, rhs, version);
 			}
 		},
 		TIMES("*", 1, Associativity.LEFT) {
 			@Override
 			public <JsonNode> Expression<JsonNode> create(Expression<JsonNode> lhs, Expression<JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider) {
-				return new MultiplyExpression<>(jsonProvider, lhs, rhs);
+				return new MultiplyExpression<>(jsonProvider, lhs, rhs, version);
 			}
 		};
 

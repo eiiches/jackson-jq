@@ -142,6 +142,24 @@ public abstract class AbstractJsonQueryTest<T> {
 		testVersion(tcText, Versions.JQ_1_7_1);
 	}
 
+	@ParameterizedTest
+	@MethodSource("defaultTestCases")
+	public void testJq1_8_0(String tcText) throws Throwable {
+		testVersion(tcText, Versions.JQ_1_8_0);
+	}
+
+	@ParameterizedTest
+	@MethodSource("defaultTestCases")
+	public void testJq1_8_1(String tcText) throws Throwable {
+		testVersion(tcText, Versions.JQ_1_8_1);
+	}
+
+	@ParameterizedTest
+	@MethodSource("defaultTestCases")
+	public void testJq1_8_2(String tcText) throws Throwable {
+		testVersion(tcText, Versions.JQ_1_8_2);
+	}
+
 	protected static Stream<String> defaultTestCases() throws IOException {
 		return TestCaseLoader.loadAllTestCasesAsJsonStrings();
 	}

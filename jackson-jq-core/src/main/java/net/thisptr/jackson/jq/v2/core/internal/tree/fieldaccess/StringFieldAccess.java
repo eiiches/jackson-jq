@@ -8,6 +8,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.PathOutput;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
+import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -15,7 +16,11 @@ public class StringFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	private Expression<JsonNode> field;
 
 	public StringFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> obj, Expression<JsonNode> field, boolean permissive) {
-		super(jsonProvider, obj, permissive);
+		this(jsonProvider, obj, field, permissive, null);
+	}
+
+	public StringFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> obj, Expression<JsonNode> field, boolean permissive, @Nullable Version version) {
+		super(jsonProvider, obj, permissive, version);
 		this.field = field;
 	}
 
@@ -41,7 +46,7 @@ public class StringFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 			target.apply(frame, in, path, (pobj, ppath) -> {
 				if (jsonProvider.getNodeType(key) != JsonNodeType.STRING && !permissive)
 					throw new IllegalStateException(); // FIXME: exception type
-				emitObjectFieldPath(jsonProvider, permissive, jsonProvider.asText(key), pobj, ppath, output, path != null);
+				emitObjectFieldPath(jsonProvider, permissive, jsonProvider.asText(key), pobj, ppath, output, path != null, version);
 			});
 		});
 	}
