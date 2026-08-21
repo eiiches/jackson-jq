@@ -70,7 +70,7 @@ The following table shows which features from the jq 1.5 manual are supported by
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`until(cond; next)`](https://stedolan.github.io/jq/manual/v1.5/#until&#40;cond&#59;next&#41;)                                                                                                                                                                                                      | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`recurse(f)`, `recurse`, `recurse(f; condition)`, `recurse_down`](https://stedolan.github.io/jq/manual/v1.5/#recurse&#40;f&#41;&#44;recurse&#44;recurse&#40;f&#59;condition&#41;&#44;recurse&#95;down)                                                                                             | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`..`](https://stedolan.github.io/jq/manual/v1.5/#&#46;&#46;)                                                                                                                                                                                                                                       | ○          |
-| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`env`](https://stedolan.github.io/jq/manual/v1.5/#env)                                                                                                                                                                                                                                             | ○<sup>*6</sup> |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`env`](https://stedolan.github.io/jq/manual/v1.5/#env)                                                                                                                                                                                                                                             | ✕<sup>*6</sup> |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`transpose`](https://stedolan.github.io/jq/manual/v1.5/#transpose)                                                                                                                                                                                                                                 | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`bsearch(x)`](https://stedolan.github.io/jq/manual/v1.5/#bsearch&#40;x&#41;)                                                                                                                                                                                                                       | ×          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [String interpolation &#45; `\(foo)`](https://stedolan.github.io/jq/manual/v1.5/#Stringinterpolation&#45;&#92;&#40;foo&#41;)                                                                                                                                                                        | ○          |
@@ -130,51 +130,6 @@ The following table shows which features from the jq 1.5 manual are supported by
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`modulemeta`](https://stedolan.github.io/jq/manual/v1.5/#modulemeta)                                                                                                                                                                                                                               | ×          |
 
 ### Known compatibility issues and differences
-
-#### Category: Bug
-
-<details>
-<summary>(*11) Operator precedence in <code>1 + 3 as $a | ($a * 2)</code></summary>
-  
-##### Description
-
-In jq, the presence of `as $a` affects the precedence of `|` and other operators:
-
-```console
-$ jq -n '1 + 3 | (. * 2)' # interpreted as (1 + 3) | (. * 2)
-8
-$ jq -n '1 + 3 as $a | ($a * 2)' # interpreted as 1 + (3 as $a | ($a * 2))
-7
-```
-
-jackson-jq, however, consistently interprets `1 + 3` as `(1 + 3)`, regardless of whether `as $a` is present:
-
-```console
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar -n '1 + 3 | (. * 2)' # interpreted as (1 + 3) | (. * 2)
-8
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
-8
-```
-
-##### Examples
-
-```console
-$ jq -n '1 + 3 as $a | ($a * 2)' # interpreted as 1 + (3 as $a | ($a * 2))
-7
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
-8
-```
-
-##### Workaround
-
-Use explicit parentheses.
-
-##### Links
-
-* [jackson-jq#72](https://github.com/eiiches/jackson-jq/issues/72)
-
-</details>
-
 
 #### Category: By design
 
@@ -382,5 +337,50 @@ $ jq-1.6-83-gb52fc10 -n '"x" | indices("")'
 $ java -jar jackson-jq-cli-2.0.0-alpha1.jar -n '"x" | indices("")'
 [ ]
 ```
+
+</details>
+
+<details>
+<summary>(*11) Operator precedence in <code>1 + 3 as $a | ($a * 2)</code></summary>
+
+##### Description
+
+In jq < 1.8, the presence of `as $a` affected the precedence of `|` and other operators:
+
+```console
+$ jq-1.7 -n '1 + 3 | (. * 2)' # interpreted as (1 + 3) | (. * 2)
+8
+$ jq-1.7 -n '1 + 3 as $a | ($a * 2)' # interpreted as 1 + (3 as $a | ($a * 2))
+7
+```
+
+This bug was fixed upstream in jq 1.8 ([jqlang/jq#1928](https://github.com/jqlang/jq/issues/1928)). jackson-jq consistently interprets `1 + 3` as `(1 + 3)` (matching jq >= 1.8), even in jq 1.7 compatibility mode:
+
+```console
+$ jq-1.8 -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
+8
+$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.7 -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
+8
+```
+
+##### Examples
+
+```console
+$ jq-1.7 -n '1 + 3 as $a | ($a * 2)' # interpreted as 1 + (3 as $a | ($a * 2))
+7
+$ jq-1.8 -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
+8
+$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.7 -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
+8
+```
+
+##### Workaround
+
+Use explicit parentheses.
+
+##### Links
+
+* [jackson-jq#72](https://github.com/eiiches/jackson-jq/issues/72)
+* [jqlang/jq#1928](https://github.com/jqlang/jq/issues/1928)
 
 </details>
