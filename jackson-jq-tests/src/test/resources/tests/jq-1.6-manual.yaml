@@ -279,7 +279,7 @@
   v: '[1.5, )'
 
 - q: 'utf8bytelength'
-  in: "μ"
+  in: "\u03BC"
   out:
   - 2
   v: '[1.6, )'

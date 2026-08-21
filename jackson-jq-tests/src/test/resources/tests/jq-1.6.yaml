@@ -84,13 +84,13 @@
 - q: '"Aa\r\n\t\b\f\u03bc"'
   in: null
   out:
-  - "Aa\r\n\t\b\fμ"
+  - "Aa\r\n\t\b\f\u03BC"
   v: '[1.5, )'
 
 - q: '.'
-  in: "Aa\r\n\t\b\fμ"
+  in: "Aa\r\n\t\b\f\u03BC"
   out:
-  - "Aa\r\n\t\b\fμ"
+  - "Aa\r\n\t\b\f\u03BC"
   v: '[1.5, )'
 
 - q: '"inter\("pol" + "ation")"'
@@ -114,7 +114,7 @@
   v: '[1.6, 1.7)'
 
 - q: '@base64'
-  in: "foóbar\n"
+  in: "fo\xF3bar\n"
   out:
   - "Zm/Ds2Jhcgo="
   v: '[1.5, )'
@@ -122,11 +122,11 @@
 - q: '@base64d'
   in: "Zm/Ds2Jhcgo="
   out:
-  - "foóbar\n"
+  - "fo\xF3bar\n"
   v: '[1.6, )'
 
 - q: '@uri'
-  in: "μ"
+  in: "\u03BC"
   out:
   - "%CE%BC"
   v: '[1.5, )'
@@ -708,13 +708,13 @@
   v: '[1.5, )'
 
 - q: '[.[] | length]'
-  in: [[], {}, [1, 2], {"a": 42}, "asdf", "μ"]
+  in: [[], {}, [1, 2], {"a": 42}, "asdf", "\u03BC"]
   out:
   - [0, 0, 2, 1, 4, 1]
   v: '[1.5, )'
 
 - q: 'utf8bytelength'
-  in: "asdfμ"
+  in: "asdf\u03BC"
   out:
   - 6
   v: '[1.6, )'
@@ -1814,9 +1814,9 @@
   v: '[1.5, )'
 
 - q: 'ascii_upcase'
-  in: "useful but not for é"
+  in: "useful but not for \xE9"
   out:
-  - "USEFUL BUT NOT FOR é"
+  - "USEFUL BUT NOT FOR \xE9"
   v: '[1.5, )'
 
 - q: 'bsearch(4)'

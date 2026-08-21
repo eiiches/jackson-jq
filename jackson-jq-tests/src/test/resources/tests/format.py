@@ -127,7 +127,7 @@ def format_file(filepath):
         return
 
     parts = [
-        yaml.dump([FormattedTestCase(c)], width=2**32, allow_unicode=True).strip()
+        yaml.dump([FormattedTestCase(c)], width=2**32, allow_unicode=False).strip()
         for c in data
     ]
     yaml_text = "\n\n".join(parts) + "\n" if parts else "[]\n"
