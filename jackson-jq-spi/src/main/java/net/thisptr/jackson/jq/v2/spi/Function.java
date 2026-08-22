@@ -13,5 +13,6 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
  */
 @FunctionalInterface
 public interface Function {
+	// TODO: throws JsonQueryException?
 	<JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version jqVersion);
 }
