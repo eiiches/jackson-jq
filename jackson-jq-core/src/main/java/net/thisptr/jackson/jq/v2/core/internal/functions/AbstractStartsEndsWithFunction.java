@@ -21,7 +21,7 @@ public abstract class AbstractStartsEndsWithFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
-			args.get(0).apply(frame, in, (needle) -> {
+			args.get(0).apply(frame, in, null, (needle, opath) -> {
 				if (jsonProvider.getNodeType(needle) != JsonNodeType.STRING || jsonProvider.getNodeType(in) != JsonNodeType.STRING)
 					throw new JsonQueryException(fname + "() requires string inputs");
 				output.emit(jsonProvider.createBoolean(doCheck(jsonProvider.asText(in), jsonProvider.asText(needle))), null);

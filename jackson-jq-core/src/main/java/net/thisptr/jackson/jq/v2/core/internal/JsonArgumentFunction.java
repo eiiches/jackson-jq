@@ -32,7 +32,7 @@ public abstract class JsonArgumentFunction implements Function {
 			List<List<JsonNode>> _args = new ArrayList<>(args.size());
 			for (Expression<JsonNode> arg : args) {
 				List<JsonNode> out = new ArrayList<>();
-				arg.apply(frame, in, out::add);
+				arg.apply(frame, in, null, (v, opath) -> out.add(v));
 				_args.add(out);
 			}
 

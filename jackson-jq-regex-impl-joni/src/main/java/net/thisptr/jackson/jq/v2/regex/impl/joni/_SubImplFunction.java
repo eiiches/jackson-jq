@@ -35,17 +35,17 @@ public class _SubImplFunction implements Function {
 		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "_sub_impl/3", in, JsonNodeType.STRING);
 
-			regexExpr.apply(frame, in, (regexText) -> {
+			regexExpr.apply(frame, in, null, (regexText, opath) -> {
 				Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 1, regexText, JsonNodeType.STRING);
 
-				flagsExpr.apply(frame, in, (flagsText) -> {
+				flagsExpr.apply(frame, in, null, (flagsText, opath2) -> {
 					Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 3, flagsText, JsonNodeType.STRING);
 
 					OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asText(regexText), jsonProvider.asText(flagsText));
 					List<JsonNode> match = match(jsonProvider, p, jsonProvider.asText(in));
 
 					// This just repeats same emit()s the number of times as the number of flags. This is to emulate jq behavior (which is probably a bug).
-					flagsExpr.apply(frame, in, (dummy) -> {
+					flagsExpr.apply(frame, in, null, (dummy, opath3) -> {
 						replaceAndConcat(jsonProvider, frame, new ArrayDeque<>(), output, match, replaceExpr, in, flagsExpr);
 					});
 				});
@@ -71,7 +71,7 @@ public class _SubImplFunction implements Function {
 			replaceAndConcat(jsonProvider, frame, stack, output, rtail, replaceExpr, in, flags);
 			stack.pop();
 		} else {
-			replaceExpr.apply(frame, rhead, (replacement) -> {
+			replaceExpr.apply(frame, rhead, null, (replacement, opath) -> {
 				stack.push(jsonProvider.asText(replacement));
 				replaceAndConcat(jsonProvider, frame, stack, output, rtail, replaceExpr, in, flags);
 				stack.pop();

@@ -22,7 +22,7 @@ public class IndexFunction implements Function {
 				return;
 			}
 
-			args.get(0).apply(frame, in, (needle) -> {
+			args.get(0).apply(frame, in, null, (needle, opath) -> {
 				List<Integer> tmp = IndicesFunction.indices(jsonProvider, needle, in);
 				if (tmp.isEmpty()) {
 					output.emit(jsonProvider.createNull(), null);

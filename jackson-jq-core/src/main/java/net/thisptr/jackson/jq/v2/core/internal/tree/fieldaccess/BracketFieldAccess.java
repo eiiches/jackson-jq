@@ -65,8 +65,8 @@ public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	@Override
 	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
 		if (isRange) {
-			startExpr.apply(frame, in, (start) -> {
-				endExpr.apply(frame, in, (end) -> {
+			startExpr.apply(frame, in, null, (start, opath) -> {
+				endExpr.apply(frame, in, null, (end, opath2) -> {
 					target.apply(frame, in, path, (pobj, ppath) -> {
 						JsonNodeType startType = jsonProvider.getNodeType(start);
 						JsonNodeType endType = jsonProvider.getNodeType(end);
@@ -80,7 +80,7 @@ public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 				});
 			});
 		} else { // isRange == false
-			startExpr.apply(frame, in, (accessor) -> {
+			startExpr.apply(frame, in, null, (accessor, opath) -> {
 				target.apply(frame, in, path, (pobj, ppath) -> {
 					JsonNodeType accessorType = jsonProvider.getNodeType(accessor);
 					if (accessorType == JsonNodeType.NUMBER) {

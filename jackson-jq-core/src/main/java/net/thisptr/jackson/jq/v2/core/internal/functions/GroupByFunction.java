@@ -31,7 +31,7 @@ public class GroupByFunction implements Function {
 			while (iter.hasNext()) {
 				JsonNode i = iter.next();
 				List<JsonNode> fxList = new ArrayList<>();
-				args.get(0).apply(frame, i, fxList::add);
+				args.get(0).apply(frame, i, null, (v, opath) -> fxList.add(v));
 				JsonNode fx = JsonNodeUtils.asArrayNode(jsonProvider, fxList);
 				List<JsonNode> values = result.computeIfAbsent(fx, k -> new ArrayList<>());
 				values.add(i);

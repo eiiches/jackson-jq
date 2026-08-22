@@ -40,12 +40,12 @@ public class ReduceExpression<JsonNode> implements Expression<JsonNode> {
 
 	@Override
 	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output) throws JsonQueryException {
-		initExpr.apply(frame, in, (accumulator) -> {
+		initExpr.apply(frame, in, null, (accumulator, opath) -> {
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
 			JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
 
-			iterExpr.apply(frame, in, (item) -> {
+			iterExpr.apply(frame, in, null, (item, opath2) -> {
 				Deque<PatternMatcher.Match<JsonNode>> stack = new ArrayDeque<>();
 				matcher.match(frame, item, (Deque<PatternMatcher.Match<JsonNode>> vars) -> {
 					for (Iterator<PatternMatcher.Match<JsonNode>> it = vars.descendingIterator(); it.hasNext();) {
@@ -57,7 +57,7 @@ public class ReduceExpression<JsonNode> implements Expression<JsonNode> {
 
 					// We only use the last value from reduce expression.
 					List<JsonNode> reduceResult = new ArrayList<>();
-					reduceExpr.apply(frame, accumulators[0], reduceResult::add);
+					reduceExpr.apply(frame, accumulators[0], null, (v, opath3) -> reduceResult.add(v));
 					accumulators[0] = reduceResult.isEmpty() ? jsonProvider.createNull() : reduceResult.get(reduceResult.size() - 1);
 				}, stack);
 			});

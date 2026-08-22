@@ -27,7 +27,7 @@ public class SemicolonOperator<JsonNode> implements Expression<JsonNode> {
 		if (qs.isEmpty())
 			return;
 		for (Expression<JsonNode> q : qs.subList(0, qs.size() - 1))
-			q.apply(frame, in, (out) -> {});
+			q.apply(frame, in, null, (out, opath) -> {});
 		qs.get(qs.size() - 1).apply(frame, in, path, output);
 	}
 

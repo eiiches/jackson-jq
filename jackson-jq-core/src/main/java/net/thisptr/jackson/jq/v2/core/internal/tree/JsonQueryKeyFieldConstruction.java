@@ -37,10 +37,10 @@ public class JsonQueryKeyFieldConstruction<JsonNode> implements FieldConstructio
 
 	@Override
 	public void evaluate(@Nullable StackFrame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
-		key.apply(frame, in, (k) -> {
+		key.apply(frame, in, null, (k, opath) -> {
 			if (jsonProvider.getNodeType(k) != JsonNodeType.STRING)
 				throw new JsonQueryTypeException(jsonProvider, version, "Cannot use %s as object key", k);
-			value.apply(frame, in, (v) -> consumer.accept(jsonProvider.asText(k), v));
+			value.apply(frame, in, null, (v, opath2) -> consumer.accept(jsonProvider.asText(k), v));
 		});
 	}
 

@@ -24,7 +24,7 @@ public class ErrorFunction implements Function {
 						return;
 					throw new JsonQueryUserException(jsonProvider, in);
 				} else {
-					args.get(0).apply(frame, in, (out) -> {
+					args.get(0).apply(frame, in, null, (out, opath) -> {
 						if (jsonProvider.getNodeType(out) == JsonNodeType.NULL)
 							return;
 						throw new JsonQueryUserException(jsonProvider, out);

@@ -31,7 +31,7 @@ public class ComplexAssignment<JsonNode> extends BinaryOperatorExpression<JsonNo
 
 	@Override
 	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output) throws JsonQueryException {
-		rhs.apply(frame, in, (rval) -> {
+		rhs.apply(frame, in, null, (rval, opath) -> {
 			List<Path<JsonNode>> lpaths = new ArrayList<>();
 			lhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
 				@Var Path<JsonNode> lpath = lpath0;

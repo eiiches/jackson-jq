@@ -20,8 +20,8 @@ public class SetPathFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
-			args.get(1).apply(frame, in, (newvalnode) -> {
-				args.get(0).apply(frame, in, (pathnode) -> {
+			args.get(1).apply(frame, in, null, (newvalnode, opath) -> {
+				args.get(0).apply(frame, in, null, (pathnode, opath2) -> {
 					@Nullable Path<JsonNode> path = PathUtils.toPath(jsonProvider, pathnode, version);
 					JsonNode out = path.mutate(jsonProvider, in, (dummy) -> newvalnode);
 					output.emit(out, path);

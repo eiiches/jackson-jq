@@ -31,7 +31,7 @@ public class CustomFunctionTest {
 					@Override
 					public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version ver) {
 						return (frame, in, path, output) -> {
-							args.get(0).apply(frame, in, (numberNode) -> {
+							args.get(0).apply(frame, in, null, (numberNode, opath) -> {
 								int n = jsonProvider.asInt(numberNode);
 								output.emit(jsonProvider.createNumber(n * 100), null);
 							});

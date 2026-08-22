@@ -32,7 +32,7 @@ public class PathsFunction implements Function {
 
 	private static <JsonNode> void applyRecursive(@Nullable StackFrame frame, JsonProvider<JsonNode> jsonProvider, JsonNode in, PathOutput<JsonNode> output, List<JsonNode> stack, Expression<JsonNode> predicate) throws JsonQueryException {
 		if (!stack.isEmpty()) {
-			predicate.apply(frame, in, (shouldInclude) -> {
+			predicate.apply(frame, in, null, (shouldInclude, opath) -> {
 				if (JsonNodeUtils.asBoolean(jsonProvider, shouldInclude))
 					output.emit(JsonNodeUtils.asArrayNode(jsonProvider, stack), null);
 			});

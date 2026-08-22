@@ -21,7 +21,7 @@ public class JoinFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
-			args.get(0).apply(frame, in, (sep) -> {
+			args.get(0).apply(frame, in, null, (sep, opath) -> {
 				JsonNodeType inType = jsonProvider.getNodeType(in);
 				if (inType != JsonNodeType.ARRAY && inType != JsonNodeType.OBJECT)
 					throw new JsonQueryTypeException(jsonProvider, version, "Cannot iterate over %s", in);

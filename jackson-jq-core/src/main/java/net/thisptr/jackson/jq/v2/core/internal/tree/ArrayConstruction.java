@@ -26,7 +26,7 @@ public class ArrayConstruction<JsonNode> implements Expression<JsonNode> {
 	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output) throws JsonQueryException {
 		JsonNode[] array = (JsonNode[]) new Object[] { jsonProvider.createArray() };
 		if (q != null)
-			q.apply(frame, in, (out) -> array[0] = jsonProvider.add(array[0], out));
+			q.apply(frame, in, null, (out, opath) -> array[0] = jsonProvider.add(array[0], out));
 		output.emit(array[0], null);
 	}
 

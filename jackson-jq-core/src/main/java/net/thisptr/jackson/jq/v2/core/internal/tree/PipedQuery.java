@@ -44,7 +44,7 @@ public class PipedQuery<JsonNode> implements Expression<JsonNode> {
 		List<PipeComponent<JsonNode>> tail = components.subList(1, components.size());
 
 		if (head instanceof AssignPipeComponent) {
-			((AssignPipeComponent<JsonNode>) head).expr.apply(frame, in, (o) -> {
+			((AssignPipeComponent<JsonNode>) head).expr.apply(frame, in, null, (o, opath) -> {
 				Deque<PatternMatcher.MatchWithPath<JsonNode>> accumulate = new ArrayDeque<>();
 				((AssignPipeComponent<JsonNode>) head).matcher.matchWithPath(frame, o, path, (Deque<PatternMatcher.MatchWithPath<JsonNode>> vars) -> {
 					// Set values in reverse order since if there is the variable name crash,

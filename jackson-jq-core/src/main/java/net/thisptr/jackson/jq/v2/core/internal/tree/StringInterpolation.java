@@ -64,9 +64,9 @@ public class StringInterpolation<JsonNode> implements Expression<JsonNode> {
 		} else {
 			Pair<Integer, Expression<JsonNode>> rhead = interpolations.get(interpolations.size() - 1);
 			List<Pair<Integer, Expression<JsonNode>>> rtail = interpolations.subList(0, interpolations.size() - 1);
-			rhead._2.apply(frame, in, (interpolated) -> {
+			rhead._2.apply(frame, in, null, (interpolated, opath) -> {
 				if (formatter != null) {
-					formatter.apply(frame, interpolated, (formatted) -> {
+					formatter.apply(frame, interpolated, null, (formatted, opath2) -> {
 						stack.push(Pair.of(rhead._1, formatted));
 						recurse(frame, in, output, stack, rtail);
 						stack.pop();

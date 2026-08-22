@@ -121,7 +121,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		}
 
 		FieldMatcher<JsonNode> fmatcher = matchers.get(index);
-		fmatcher.name.apply(frame, in, (key) -> {
+		fmatcher.name.apply(frame, in, null, (key, opath) -> {
 			if (jsonProvider.getNodeType(key) != JsonNodeType.STRING)
 				throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, key));
 			if (jsonProvider.getNodeType(in) != JsonNodeType.OBJECT && jsonProvider.getNodeType(in) != JsonNodeType.NULL)
@@ -146,7 +146,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		}
 
 		FieldMatcher<JsonNode> fmatcher = matchers.get(index);
-		fmatcher.name.apply(frame, in, (key) -> {
+		fmatcher.name.apply(frame, in, null, (key, opath) -> {
 			if (jsonProvider.getNodeType(key) != JsonNodeType.STRING)
 				throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, key));
 			if (jsonProvider.getNodeType(in) != JsonNodeType.OBJECT && jsonProvider.getNodeType(in) != JsonNodeType.NULL)

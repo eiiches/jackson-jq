@@ -42,7 +42,7 @@ public class StringFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 
 	@Override
 	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
-		field.apply(frame, in, (key) -> {
+		field.apply(frame, in, null, (key, opath) -> {
 			target.apply(frame, in, path, (pobj, ppath) -> {
 				if (jsonProvider.getNodeType(key) != JsonNodeType.STRING && !permissive)
 					throw new IllegalStateException(); // FIXME: exception type

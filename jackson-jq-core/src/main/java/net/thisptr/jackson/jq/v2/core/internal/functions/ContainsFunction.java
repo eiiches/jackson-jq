@@ -23,7 +23,7 @@ public class ContainsFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
-			args.get(0).apply(frame, in, (value) -> {
+			args.get(0).apply(frame, in, null, (value, opath) -> {
 					if (jsonProvider.getNodeType(in) != jsonProvider.getNodeType(value)
 							|| (jsonProvider.getNodeType(in) == JsonNodeType.BOOLEAN && jsonProvider.asBoolean(in) != jsonProvider.asBoolean(value))) {
 						throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot have their containment checked", in, value);

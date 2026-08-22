@@ -33,7 +33,7 @@ public abstract class AbstractMaxByFunction implements Function {
 			while (iter.hasNext()) {
 				JsonNode i = iter.next();
 				List<JsonNode> valueList = new ArrayList<>();
-				args.get(0).apply(frame, i, valueList::add);
+				args.get(0).apply(frame, i, null, (v, opath) -> valueList.add(v));
 				JsonNode value = JsonNodeUtils.asArrayNode(jsonProvider, valueList);
 				if (maxValue == null || !isLarger(jsonProvider, maxValue, value)) {
 					maxValue = value;

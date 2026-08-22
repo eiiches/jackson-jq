@@ -48,7 +48,7 @@ public class Conditional<JsonNode> implements Expression<JsonNode> {
 		}
 		Pair<Expression<JsonNode>, Expression<JsonNode>> sw = switches.get(switchIndex);
 		List<JsonNode> condValues = new ArrayList<>();
-		sw._1.apply(frame, in, (r) -> condValues.add(r));
+		sw._1.apply(frame, in, null, (r, opath) -> condValues.add(r));
 
 		for (JsonNode r : condValues) {
 			if (JsonNodeUtils.asBoolean(jsonProvider, r)) {

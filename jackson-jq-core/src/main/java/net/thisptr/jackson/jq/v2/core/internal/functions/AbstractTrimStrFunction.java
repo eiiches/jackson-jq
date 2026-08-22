@@ -13,7 +13,7 @@ public abstract class AbstractTrimStrFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
-			args.get(0).apply(frame, in, (trimText) -> {
+			args.get(0).apply(frame, in, null, (trimText, opath) -> {
 				if (jsonProvider.getNodeType(in) != JsonNodeType.STRING || jsonProvider.getNodeType(trimText) != JsonNodeType.STRING) {
 					output.emit(in, ipath);
 					return;

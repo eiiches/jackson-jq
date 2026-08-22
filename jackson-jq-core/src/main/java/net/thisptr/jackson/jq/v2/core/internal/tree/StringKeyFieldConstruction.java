@@ -26,13 +26,13 @@ public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<J
 
 	@Override
 	public void evaluate(@Nullable StackFrame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
-		key.apply(frame, in, (k) -> {
+		key.apply(frame, in, null, (k, opath) -> {
 			if (jsonProvider.getNodeType(k) != JsonNodeType.STRING)
 				throw new JsonQueryException("key must evaluate to string");
 			if (value == null) {
 				consumer.accept(jsonProvider.asText(k), JsonNodeUtils.nullToNullNode(jsonProvider, jsonProvider.get(in, jsonProvider.asText(k))));
 			} else {
-				value.apply(frame, in, (v) -> consumer.accept(jsonProvider.asText(k), v));
+				value.apply(frame, in, null, (v, opath2) -> consumer.accept(jsonProvider.asText(k), v));
 			}
 		});
 	}

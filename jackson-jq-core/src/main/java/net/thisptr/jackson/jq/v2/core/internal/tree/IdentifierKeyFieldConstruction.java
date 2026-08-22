@@ -28,7 +28,7 @@ public class IdentifierKeyFieldConstruction<JsonNode> implements FieldConstructi
 		if (value == null) {
 			consumer.accept(key, JsonNodeUtils.nullToNullNode(jsonProvider, jsonProvider.get(in, key)));
 		} else {
-			value.apply(frame, in, (v) -> consumer.accept(key, v));
+			value.apply(frame, in, null, (v, opath) -> consumer.accept(key, v));
 		}
 	}
 

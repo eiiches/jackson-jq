@@ -28,7 +28,7 @@ public class IndicesFunction implements Function {
 				return;
 			}
 
-			args.get(0).apply(frame, in, (needle) -> {
+			args.get(0).apply(frame, in, null, (needle, opath) -> {
 					JsonNode indices = jsonProvider.createArray();
 					for (int index : indices(jsonProvider, needle, in))
 						jsonProvider.add(indices, jsonProvider.createNumber(index));

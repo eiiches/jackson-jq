@@ -26,7 +26,7 @@ public class Uuid35Function implements Function {
 		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "uuid5", in, JsonNodeType.STRING, JsonNodeType.BINARY);
 
-			namespaceExpr.apply(frame, in, (namespaceArg) -> {
+			namespaceExpr.apply(frame, in, null, (namespaceArg, opath) -> {
 				if (jsonProvider.getNodeType(namespaceArg) != JsonNodeType.STRING)
 					throw new JsonQueryException(String.format("namespace must be string, but got: %s", jsonProvider.getNodeType(namespaceArg)));
 				UUID namespace;

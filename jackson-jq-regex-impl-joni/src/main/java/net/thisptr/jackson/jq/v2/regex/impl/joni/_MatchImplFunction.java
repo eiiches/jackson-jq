@@ -32,11 +32,11 @@ public class _MatchImplFunction implements Function {
 			byte[] ibytes = jsonProvider.asText(in).getBytes(StandardCharsets.UTF_8);
 			int[] cindex = UnicodeUtils.utf8CharIndex(ibytes);
 
-			testExpr.apply(frame, in, (test) -> {
+			testExpr.apply(frame, in, null, (test, opath) -> {
 				Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 3, test, JsonNodeType.BOOLEAN);
-				flagsExpr.apply(frame, in, (flags) -> {
+				flagsExpr.apply(frame, in, null, (flags, opath2) -> {
 					Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 2, flags, JsonNodeType.STRING, JsonNodeType.NULL);
-					regexExpr.apply(frame, in, (regex) -> {
+					regexExpr.apply(frame, in, null, (regex, opath3) -> {
 						Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 1, regex, JsonNodeType.STRING);
 						OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asText(regex), jsonProvider.getNodeType(flags) == JsonNodeType.NULL ? null : jsonProvider.asText(flags));
 						output.emit(match(jsonProvider, p, ibytes, cindex, jsonProvider.asBoolean(test)), null);

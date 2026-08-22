@@ -42,7 +42,7 @@ public class Usage {
 					@Override
 					public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version jqVersion) {
 						return (frame, in, path, output) -> {
-							args.get(0).apply(frame, in, (time) -> {
+							args.get(0).apply(frame, in, null, (time, opath) -> {
 								output.emit(jsonProvider.createString(Strings.repeat(jsonProvider.asText(in), jsonProvider.asInt(time))), null);
 							});
 						};

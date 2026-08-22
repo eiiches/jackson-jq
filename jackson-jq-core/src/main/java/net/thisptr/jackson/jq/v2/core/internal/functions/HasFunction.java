@@ -23,7 +23,7 @@ public class HasFunction implements Function {
 				output.emit(jsonProvider.createBoolean(false), null);
 				return;
 			}
-			args.get(0).apply(frame, in, (keyName) -> {
+			args.get(0).apply(frame, in, null, (keyName, opath) -> {
 				JsonNodeType keyType = jsonProvider.getNodeType(keyName);
 				if (inType == JsonNodeType.OBJECT) {
 					if (keyType != JsonNodeType.STRING)
