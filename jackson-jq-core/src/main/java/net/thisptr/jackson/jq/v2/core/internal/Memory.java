@@ -1,14 +1,41 @@
-package net.thisptr.jackson.jq.v2.spi;
+package net.thisptr.jackson.jq.v2.core.internal;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class StackMemory {
+import org.jspecify.annotations.Nullable;
+
+public class Memory {
 	// Visible for StackFrame
 	final List<Object> memory = new ArrayList<>();
 
 	// @VisibleForTesting
 	final List<StackFrame> frames = new ArrayList<>();
+
+	// Flat, frame-independent storage for one top-level apply() call's declared-global values -- unlike
+	// `memory`, never grows/shrinks with pushFrame/popFrame. Reachable from any frame at any def-nesting
+	// depth via StackFrame#getEnclosingMemory(), since exactly one StackMemory backs one top-level call.
+	private final Object[] globals;
+
+	public Memory() {
+		this(0);
+	}
+
+	public Memory(int globalCount) {
+		this.globals = new Object[globalCount];
+	}
+
+	public @Nullable Object getGlobal(int index) {
+		if (index < 0 || index >= globals.length)
+			throw new IndexOutOfBoundsException("global " + index + " out of bounds for global count " + globals.length);
+		return globals[index];
+	}
+
+	public void setGlobal(int index, @Nullable Object value) {
+		if (index < 0 || index >= globals.length)
+			throw new IndexOutOfBoundsException("global " + index + " out of bounds for global count " + globals.length);
+		globals[index] = value;
+	}
 
 	public StackFrame pushFrame(int size) {
 		int offset = memory.size();

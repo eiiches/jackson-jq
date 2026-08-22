@@ -30,16 +30,16 @@ public class ModuloOperator<JsonNode> implements BinaryOperator<JsonNode> {
 
 			// Handle Infinity: convert to long representation
 			long dividend = Double.isNaN(lhsDouble) ? 0L
-				: Double.isInfinite(lhsDouble) ? (lhsDouble > 0 ? Long.MAX_VALUE : Long.MIN_VALUE)
-				: (long) lhsDouble;
+					: Double.isInfinite(lhsDouble) ? (lhsDouble > 0 ? Long.MAX_VALUE : Long.MIN_VALUE)
+					: (long) lhsDouble;
 
 			// If divisor is NaN, return the dividend (jq 1.5 behavior)
 			if (Double.isNaN(rhsDouble))
 				return JsonNodeUtils.asNumericNode(jsonProvider, dividend);
 
 			long divisor = Double.isInfinite(rhsDouble)
-				? (rhsDouble > 0 ? Long.MAX_VALUE : Long.MIN_VALUE)
-				: (long) rhsDouble;
+					? (rhsDouble > 0 ? Long.MAX_VALUE : Long.MIN_VALUE)
+					: (long) rhsDouble;
 
 			if (divisor == 0L)
 				throw new JsonQueryException(jsonProvider, version, "%s and %s cannot be divided (remainder) because the divisor is zero", lhs, rhs);

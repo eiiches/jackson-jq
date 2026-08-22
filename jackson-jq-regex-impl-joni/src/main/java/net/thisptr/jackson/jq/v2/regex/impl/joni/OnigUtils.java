@@ -31,7 +31,7 @@ public class OnigUtils {
 			String[] names = new String[regex.numberOfCaptures() + 1];
 			if (regex.numberOfNames() == 0)
 				return names;
-			for (Iterator<NameEntry> iter = regex.namedBackrefIterator(); iter.hasNext();) {
+			for (Iterator<NameEntry> iter = regex.namedBackrefIterator(); iter.hasNext(); ) {
 				NameEntry backref = iter.next();
 				String name = new String(backref.name, backref.nameP, backref.nameEnd - backref.nameP, StandardCharsets.UTF_8);
 				for (int index : backref.getBackRefs()) {

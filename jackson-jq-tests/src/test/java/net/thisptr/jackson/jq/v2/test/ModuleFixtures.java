@@ -36,5 +36,6 @@ public final class ModuleFixtures {
 		}
 	}
 
-	private ModuleFixtures() {}
+	private ModuleFixtures() {
+	}
 }

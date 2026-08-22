@@ -13,6 +13,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.regex.impl.joni.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -22,12 +23,27 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 @FunctionRegistration(name = "_match_impl", nargs = 3)
 public class _MatchImplFunction implements Function {
 	@Override
-	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		Expression<JsonNode> regexExpr = args.get(0);
-		Expression<JsonNode> flagsExpr = args.get(1);
-		Expression<JsonNode> testExpr = args.get(2);
+	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+		Expression<Context, JsonNode> regexExpr = args.get(0);
+		Expression<Context, JsonNode> flagsExpr = args.get(1);
+		Expression<Context, JsonNode> testExpr = args.get(2);
+		PrecompiledPatternPlan precompiled = PrecompiledPatternPlan.flagsThenRegex(jsonProvider, regexExpr, flagsExpr, true);
 
-		return (frame, in, ipath, output) -> {
+		if (precompiled != null) {
+			return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
+				Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
+				byte[] ibytes = jsonProvider.asText(in).getBytes(StandardCharsets.UTF_8);
+				int[] cindex = UnicodeUtils.utf8CharIndex(ibytes);
+
+				testExpr.apply(frame, in, null, (test, opath) -> {
+					Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 3, test, JsonNodeType.BOOLEAN);
+					for (OnigUtils.Pattern pattern : precompiled.patterns())
+						output.emit(match(jsonProvider, pattern, ibytes, cindex, jsonProvider.asBoolean(test)), null);
+				});
+			});
+		}
+
+		return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
 			byte[] ibytes = jsonProvider.asText(in).getBytes(StandardCharsets.UTF_8);
 			int[] cindex = UnicodeUtils.utf8CharIndex(ibytes);
@@ -43,7 +59,7 @@ public class _MatchImplFunction implements Function {
 					});
 				});
 			});
-		};
+		});
 	}
 
 	static class CaptureObject {

@@ -1,43 +1,105 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.utils.PathAndValue;
 import net.thisptr.jackson.jq.v2.core.path.UnrepresentablePath;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
-	private Expression<JsonNode> iterExpr;
-	private Expression<JsonNode> updateExpr;
-	private Expression<JsonNode> initExpr;
-	private @Nullable Expression<JsonNode> extractExpr;
+public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+	private Expression<StackFrame, JsonNode> iterExpr;
+	private Expression<StackFrame, JsonNode> updateExpr;
+	private Expression<StackFrame, JsonNode> initExpr;
+	private @Nullable Expression<StackFrame, JsonNode> extractExpr;
 	private PatternMatcher<JsonNode> matcher;
 
-	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> updateExpr, @Nullable Expression<JsonNode> extractExpr, Expression<JsonNode> iterExpr) {
+	@Override
+	public Cardinality getCardinality() {
+		return extractExpr != null
+				? CardinalityUtils.multiply(initExpr.getCardinality(), iterExpr.getCardinality(), updateExpr.getCardinality(), extractExpr.getCardinality())
+				: CardinalityUtils.multiply(initExpr.getCardinality(), iterExpr.getCardinality(), updateExpr.getCardinality());
+	}
+
+	private final boolean dependsOnInput;
+	private final boolean dependsOnExternalState;
+	private final Set<Integer> freeLocalSlots;
+	private final boolean hasOpaqueVariableReference;
+
+	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression<StackFrame, JsonNode> initExpr, Expression<StackFrame, JsonNode> updateExpr, @Nullable Expression<StackFrame, JsonNode> extractExpr, Expression<StackFrame, JsonNode> iterExpr, Set<Integer> matcherSlots) {
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.updateExpr = updateExpr;
 		this.extractExpr = extractExpr;
 		this.iterExpr = iterExpr;
+		// updateExpr/extractExpr are already compiled under the correct shielded context (see
+		// Compiler's ForeachExpressionAstNode handling), so dependsOnInput/dependsOnExternalState are
+		// a flat OR, same as everywhere else. The matcher's bound slot(s) are only "closed" for
+		// updateExpr/extractExpr -- they're not yet bound while initExpr/iterExpr run.
+		this.dependsOnInput = initExpr.dependsOnInput() || iterExpr.dependsOnInput() || updateExpr.dependsOnInput()
+				|| (extractExpr != null && extractExpr.dependsOnInput());
+		this.dependsOnExternalState = initExpr.dependsOnExternalState() || iterExpr.dependsOnExternalState() || updateExpr.dependsOnExternalState()
+				|| (extractExpr != null && extractExpr.dependsOnExternalState());
+		this.hasOpaqueVariableReference = FreeVariables.anyOpaque(initExpr, iterExpr, updateExpr, extractExpr);
+		this.freeLocalSlots = FreeVariables.minus(
+				FreeVariables.union(initExpr, iterExpr, updateExpr, extractExpr),
+				new ArrayList<>(matcherSlots));
 	}
 
-	public PatternMatcher<JsonNode> matcher() { return matcher; }
-	public Expression<JsonNode> initExpr() { return initExpr; }
-	public Expression<JsonNode> updateExpr() { return updateExpr; }
-	public @Nullable Expression<JsonNode> extractExpr() { return extractExpr; }
-	public Expression<JsonNode> iterExpr() { return iterExpr; }
+	public PatternMatcher<JsonNode> matcher() {
+		return matcher;
+	}
+
+	public Expression<StackFrame, JsonNode> initExpr() {
+		return initExpr;
+	}
+
+	public Expression<StackFrame, JsonNode> updateExpr() {
+		return updateExpr;
+	}
+
+	public @Nullable Expression<StackFrame, JsonNode> extractExpr() {
+		return extractExpr;
+	}
+
+	public Expression<StackFrame, JsonNode> iterExpr() {
+		return iterExpr;
+	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+	public boolean dependsOnInput() {
+		return dependsOnInput;
+	}
+
+	@Override
+	public boolean dependsOnExternalState() {
+		return dependsOnExternalState;
+	}
+
+	@Override
+	public Set<Integer> freeLocalSlots() {
+		return freeLocalSlots;
+	}
+
+	@Override
+	public boolean hasOpaqueVariableReference() {
+		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		initExpr.apply(frame, in, ipath, (accumulator, accumulatorPath) -> {
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
@@ -48,9 +110,9 @@ public class ForeachExpression<JsonNode> implements Expression<JsonNode> {
 			iterExpr.apply(frame, in, ipath, (item, itemPath) -> {
 				Deque<PatternMatcher.MatchWithPath<JsonNode>> stack = new ArrayDeque<>();
 				matcher.matchWithPath(frame, item, itemPath, (Deque<PatternMatcher.MatchWithPath<JsonNode>> vars) -> {
-					for (Iterator<PatternMatcher.MatchWithPath<JsonNode>> it = vars.descendingIterator(); it.hasNext();) {
+					for (Iterator<PatternMatcher.MatchWithPath<JsonNode>> it = vars.descendingIterator(); it.hasNext(); ) {
 						PatternMatcher.MatchWithPath<JsonNode> var = it.next();
-						if (frame != null && var.slot >= 0) {
+						if (var.slot >= 0) {
 							frame.set(var.slot, var.path != null ? new PathAndValue<>(var.path, var.value) : var.value);
 						}
 					}

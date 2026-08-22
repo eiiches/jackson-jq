@@ -21,6 +21,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
+import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
@@ -141,7 +142,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 				.setModuleLoader(parentModuleLoader != null ? parentModuleLoader : this)
 				.build();
 		AstNode ast = AstParser.parse(moduleString + " null", version);
-		Expression<JsonNode> compiled = Compiler.compileModule(moduleEnv, module, ast);
+		Expression<StackFrame, JsonNode> compiled = Compiler.compileModule(moduleEnv, module, ast);
 		if (!(compiled instanceof RootExpression))
 			throw new IllegalStateException("Compiler did not produce a root expression");
 
@@ -158,7 +159,8 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		private CompletableFuture<T> f = new CompletableFuture<>();
 		private Thread taskThread;
 
-		@Var private boolean taskStarted;
+		@Var
+		private boolean taskStarted;
 
 		TryOnce() {
 			this.taskThread = Thread.currentThread();

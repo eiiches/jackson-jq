@@ -27,9 +27,9 @@ public class CustomFunctionTest {
 		Version version = Versions.JQ_1_6;
 
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), version)
-				.addFunction(FunctionSignature.of("times100", 1), new Function() {
+				.defineFunction(FunctionSignature.of("times100", 1), new Function() {
 					@Override
-					public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version ver) {
+					public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version ver) {
 						return (frame, in, path, output) -> {
 							args.get(0).apply(frame, in, null, (numberNode, opath) -> {
 								int n = jsonProvider.asInt(numberNode);

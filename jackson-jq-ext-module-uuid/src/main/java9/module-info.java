@@ -5,5 +5,5 @@ module net.thisptr.jackson.jq.v2.ext.module.uuid {
 	requires net.thisptr.jackson.jq.v2.json;
 
 	provides net.thisptr.jackson.jq.v2.spi.module.Module with
-		net.thisptr.jackson.jq.v2.ext.uuid.ModuleImpl;
+			net.thisptr.jackson.jq.v2.ext.uuid.ModuleImpl;
 }

@@ -27,7 +27,7 @@ public class UuidUtilsTest {
 
 	@Test
 	public void testToBytesAndFromBytes() {
-		byte[] namespaceDnsBytes = new byte[]{
+		byte[] namespaceDnsBytes = new byte[] {
 				0x6b, (byte) 0xa7, (byte) 0xb8, 0x10,
 				(byte) 0x9d, (byte) 0xad,
 				0x11, (byte) 0xd1,

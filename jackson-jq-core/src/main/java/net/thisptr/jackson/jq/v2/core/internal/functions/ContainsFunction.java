@@ -8,6 +8,7 @@ import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -21,16 +22,16 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 public class ContainsFunction implements Function {
 
 	@Override
-	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output) -> {
+	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+		return FunctionBody.builder(args).usesInput(true).cardinality(args.get(0).getCardinality()).build((frame, in, ipath, output) -> {
 			args.get(0).apply(frame, in, null, (value, opath) -> {
-					if (jsonProvider.getNodeType(in) != jsonProvider.getNodeType(value)
-							|| (jsonProvider.getNodeType(in) == JsonNodeType.BOOLEAN && jsonProvider.asBoolean(in) != jsonProvider.asBoolean(value))) {
-						throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot have their containment checked", in, value);
-					}
-					output.emit(jsonProvider.createBoolean(contains(jsonProvider, value, in)), null);
-				});
-	};
+				if (jsonProvider.getNodeType(in) != jsonProvider.getNodeType(value)
+						|| (jsonProvider.getNodeType(in) == JsonNodeType.BOOLEAN && jsonProvider.asBoolean(in) != jsonProvider.asBoolean(value))) {
+					throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot have their containment checked", in, value);
+				}
+				output.emit(jsonProvider.createBoolean(contains(jsonProvider, value, in)), null);
+			});
+		});
 	}
 
 	private static <JsonNode> boolean contains(JsonProvider<JsonNode> jsonProvider, JsonNode needle, JsonNode haystack) {

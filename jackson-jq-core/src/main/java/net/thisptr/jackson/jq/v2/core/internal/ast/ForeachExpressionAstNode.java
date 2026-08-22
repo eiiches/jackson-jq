@@ -19,11 +19,25 @@ public class ForeachExpressionAstNode implements AstNode {
 		this.iterExpr = iterExpr;
 	}
 
-	public PatternMatcherAstNode matcher() { return matcher; }
-	public AstNode initExpr() { return initExpr; }
-	public AstNode updateExpr() { return updateExpr; }
-	public @Nullable AstNode extractExpr() { return extractExpr; }
-	public AstNode iterExpr() { return iterExpr; }
+	public PatternMatcherAstNode matcher() {
+		return matcher;
+	}
+
+	public AstNode initExpr() {
+		return initExpr;
+	}
+
+	public AstNode updateExpr() {
+		return updateExpr;
+	}
+
+	public @Nullable AstNode extractExpr() {
+		return extractExpr;
+	}
+
+	public AstNode iterExpr() {
+		return iterExpr;
+	}
 
 	@Override
 	public String toString() {

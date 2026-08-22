@@ -12,6 +12,7 @@ import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.Versions;
+import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Range;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -28,31 +29,31 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class DelPathsFunction implements Function {
 
 	@Override
-	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output) -> {
+	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+		return FunctionBody.builder(args).usesInput(true).cardinality(args.get(0).getCardinality()).build((frame, in, ipath, output) -> {
 			args.get(0).apply(frame, in, null, (paths, opath) -> {
-					if (jsonProvider.getNodeType(paths) != JsonNodeType.ARRAY)
-						throw new JsonQueryException("Paths must be specified as an array");
+				if (jsonProvider.getNodeType(paths) != JsonNodeType.ARRAY)
+					throw new JsonQueryException("Paths must be specified as an array");
 
-					List<List<JsonNode>> pathList = new ArrayList<>(jsonProvider.size(paths));
-					for (JsonNode path : jsonProvider.iterate(paths)) {
-						if (jsonProvider.getNodeType(path) != JsonNodeType.ARRAY)
-							throw new JsonQueryException("Path must be specified as array, not " + JsonNodeUtils.typeOf(jsonProvider, path));
-						pathList.add(JsonNodeUtils.asArrayList(jsonProvider, path));
+				List<List<JsonNode>> pathList = new ArrayList<>(jsonProvider.size(paths));
+				for (JsonNode path : jsonProvider.iterate(paths)) {
+					if (jsonProvider.getNodeType(path) != JsonNodeType.ARRAY)
+						throw new JsonQueryException("Path must be specified as array, not " + JsonNodeUtils.typeOf(jsonProvider, path));
+					pathList.add(JsonNodeUtils.asArrayList(jsonProvider, path));
+				}
+
+				// delpaths([[]]) (e.g. del(.)): an empty path deletes the whole input, and wins over
+				// any sibling path in the same call, since there is no parent to omit it from.
+				for (List<JsonNode> path : pathList) {
+					if (path.isEmpty()) {
+						output.emit(jsonProvider.createNull(), null);
+						return;
 					}
+				}
 
-					// delpaths([[]]) (e.g. del(.)): an empty path deletes the whole input, and wins over
-					// any sibling path in the same call, since there is no parent to omit it from.
-					for (List<JsonNode> path : pathList) {
-						if (path.isEmpty()) {
-							output.emit(jsonProvider.createNull(), null);
-							return;
-						}
-					}
-
-					output.emit(delete(jsonProvider, in, pathList, 0, version), null);
-				});
-	};
+				output.emit(delete(jsonProvider, in, pathList, 0, version), null);
+			});
+		});
 	}
 
 	/**

@@ -6,6 +6,7 @@ import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.path.RootPath;
@@ -23,8 +24,8 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class PathFunction implements Function {
 
 	@Override
-	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output) -> {
+	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+		return FunctionBody.builder(args).usesInput(true).cardinality(args.get(0).getCardinality()).build((frame, in, ipath, output) -> {
 			args.get(0).apply(frame, in, RootPath.getInstance(), (obj, path0) -> {
 				@Var @Nullable Path<JsonNode> path = path0;
 				// `VALUE | path(VALUE) => []`
@@ -36,6 +37,6 @@ public class PathFunction implements Function {
 				path.toJsonNode(jsonProvider, out);
 				output.emit(out, null);
 			});
-		};
+		});
 	}
 }

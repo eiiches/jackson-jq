@@ -5,41 +5,94 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ReduceExpression<JsonNode> implements Expression<JsonNode> {
+public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
-	private Expression<JsonNode> iterExpr;
-	private Expression<JsonNode> reduceExpr;
-	private Expression<JsonNode> initExpr;
+	private Expression<StackFrame, JsonNode> iterExpr;
+	private Expression<StackFrame, JsonNode> reduceExpr;
+	private Expression<StackFrame, JsonNode> initExpr;
 	private PatternMatcher<JsonNode> matcher;
 
-	public ReduceExpression(JsonProvider<JsonNode> jsonProvider, PatternMatcher<JsonNode> matcher, Expression<JsonNode> initExpr, Expression<JsonNode> reduceExpr, Expression<JsonNode> iterExpr) {
+	@Override
+	public Cardinality getCardinality() {
+		return initExpr.getCardinality();
+	}
+
+	private final boolean dependsOnInput;
+	private final boolean dependsOnExternalState;
+	private final Set<Integer> freeLocalSlots;
+	private final boolean hasOpaqueVariableReference;
+
+	public ReduceExpression(JsonProvider<JsonNode> jsonProvider, PatternMatcher<JsonNode> matcher, Expression<StackFrame, JsonNode> initExpr, Expression<StackFrame, JsonNode> reduceExpr, Expression<StackFrame, JsonNode> iterExpr, Set<Integer> matcherSlots) {
 		this.jsonProvider = jsonProvider;
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.reduceExpr = reduceExpr;
 		this.iterExpr = iterExpr;
+		// reduceExpr is already compiled under the correct shielded context (see Compiler's
+		// ReduceExpressionAstNode handling), so dependsOnInput/dependsOnExternalState are a flat OR,
+		// same as everywhere else. The matcher's bound slot(s) are only "closed" for reduceExpr --
+		// they're not yet bound while initExpr/iterExpr run.
+		this.dependsOnInput = initExpr.dependsOnInput() || iterExpr.dependsOnInput() || reduceExpr.dependsOnInput();
+		this.dependsOnExternalState = initExpr.dependsOnExternalState() || iterExpr.dependsOnExternalState() || reduceExpr.dependsOnExternalState();
+		this.hasOpaqueVariableReference = FreeVariables.anyOpaque(initExpr, iterExpr, reduceExpr);
+		this.freeLocalSlots = FreeVariables.minus(
+				FreeVariables.union(initExpr, iterExpr, reduceExpr),
+				new ArrayList<>(matcherSlots));
 	}
 
-	public PatternMatcher<JsonNode> matcher() { return matcher; }
-	public Expression<JsonNode> initExpr() { return initExpr; }
-	public Expression<JsonNode> reduceExpr() { return reduceExpr; }
-	public Expression<JsonNode> iterExpr() { return iterExpr; }
+	public PatternMatcher<JsonNode> matcher() {
+		return matcher;
+	}
+
+	public Expression<StackFrame, JsonNode> initExpr() {
+		return initExpr;
+	}
+
+	public Expression<StackFrame, JsonNode> reduceExpr() {
+		return reduceExpr;
+	}
+
+	public Expression<StackFrame, JsonNode> iterExpr() {
+		return iterExpr;
+	}
 
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+	public boolean dependsOnInput() {
+		return dependsOnInput;
+	}
+
+	@Override
+	public boolean dependsOnExternalState() {
+		return dependsOnExternalState;
+	}
+
+	@Override
+	public Set<Integer> freeLocalSlots() {
+		return freeLocalSlots;
+	}
+
+	@Override
+	public boolean hasOpaqueVariableReference() {
+		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		initExpr.apply(frame, in, null, (accumulator, opath) -> {
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
@@ -48,9 +101,9 @@ public class ReduceExpression<JsonNode> implements Expression<JsonNode> {
 			iterExpr.apply(frame, in, null, (item, opath2) -> {
 				Deque<PatternMatcher.Match<JsonNode>> stack = new ArrayDeque<>();
 				matcher.match(frame, item, (Deque<PatternMatcher.Match<JsonNode>> vars) -> {
-					for (Iterator<PatternMatcher.Match<JsonNode>> it = vars.descendingIterator(); it.hasNext();) {
+					for (Iterator<PatternMatcher.Match<JsonNode>> it = vars.descendingIterator(); it.hasNext(); ) {
 						PatternMatcher.Match<JsonNode> var = it.next();
-						if (frame != null && var.slot >= 0) {
+						if (var.slot >= 0) {
 							frame.set(var.slot, var.value);
 						}
 					}

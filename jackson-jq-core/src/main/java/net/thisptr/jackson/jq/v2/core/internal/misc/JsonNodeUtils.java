@@ -10,7 +10,8 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Version;
 
 public class JsonNodeUtils {
-	private JsonNodeUtils() {}
+	private JsonNodeUtils() {
+	}
 
 	public static <JsonNode> boolean asBoolean(JsonProvider<JsonNode> jsonProvider, JsonNode n) {
 		if (n == null || jsonProvider.getNodeType(n) == JsonNodeType.NULL)

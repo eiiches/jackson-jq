@@ -17,7 +17,8 @@ public class RootPath<JsonNode> implements Path<JsonNode> {
 		return (RootPath<JsonNode>) INSTANCE;
 	}
 
-	private RootPath() {}
+	private RootPath() {
+	}
 
 	@Override
 	public void toJsonNode(JsonProvider<JsonNode> jsonProvider, JsonNode out) throws JsonQueryException {

@@ -73,7 +73,7 @@ public abstract class AbstractJsonQueryTest<T> {
 					ClassPathModuleLoader.getInstance()));
 		}
 		Environment<T> env = envBuilder
-				.addVariable("ENV", () -> {
+				.defineVariable("ENV", () -> {
 					T envObj = envBuilder.getJsonProvider().createObject();
 					envBuilder.getJsonProvider().set(envObj, "PAGER", envBuilder.getJsonProvider().createString("less"));
 					return envObj;

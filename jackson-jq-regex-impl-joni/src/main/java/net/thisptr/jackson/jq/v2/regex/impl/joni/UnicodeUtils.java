@@ -1,8 +1,10 @@
 package net.thisptr.jackson.jq.v2.regex.impl.joni;
+
 import com.google.errorprone.annotations.Var;
 
 final class UnicodeUtils {
-	private UnicodeUtils() {}
+	private UnicodeUtils() {
+	}
 
 	static int utf8CharLength(byte ch) {
 		if ((ch & 0b10000000) == 0b00000000)

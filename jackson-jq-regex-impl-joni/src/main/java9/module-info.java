@@ -8,9 +8,9 @@ module net.thisptr.jackson.jq.v2.regex.impl.joni {
 	requires static org.jspecify;
 
 	provides net.thisptr.jackson.jq.v2.spi.JqLibrary with
-		net.thisptr.jackson.jq.v2.regex.impl.joni.RegexJqLibrary;
+			net.thisptr.jackson.jq.v2.regex.impl.joni.RegexJqLibrary;
 
 	provides Function with
-		net.thisptr.jackson.jq.v2.regex.impl.joni._MatchImplFunction,
-		net.thisptr.jackson.jq.v2.regex.impl.joni._SubImplFunction;
+			net.thisptr.jackson.jq.v2.regex.impl.joni._MatchImplFunction,
+			net.thisptr.jackson.jq.v2.regex.impl.joni._SubImplFunction;
 }

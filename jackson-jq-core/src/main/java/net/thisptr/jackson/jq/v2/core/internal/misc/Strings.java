@@ -36,7 +36,7 @@ public class Strings {
 		if (sep.isEmpty()) {
 			List<String> result = new ArrayList<>();
 			int length = in.length();
-			for (int offset = 0; offset < length;) {
+			for (int offset = 0; offset < length; ) {
 				int codepoint = in.codePointAt(offset);
 				result.add(new String(Character.toChars(codepoint)));
 				offset += Character.charCount(codepoint);

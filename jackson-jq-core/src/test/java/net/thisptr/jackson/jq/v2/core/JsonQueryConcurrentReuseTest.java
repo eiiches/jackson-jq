@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * captured argument as a generator/closure. This exercises the per-call frame-slot allocation and
  * closure-capture machinery that a real cross-thread frame-sharing bug would corrupt.
  *
- * <p>The query is parameterized by a {@code $seed} variable overridden per invocation via
+ * <p>The query is parameterized by a declared {@code $seed} variable, supplied per invocation via
  * {@link JsonQueryBindings}, alternating between two distinguishable values. A single fixed input would be
  * a blind spot: if one thread's frame leaked into another's, both would still expect the same result. With
  * two distinguishable patterns, a leak would surface as one pattern's call producing the other pattern's
@@ -37,10 +37,10 @@ public class JsonQueryConcurrentReuseTest {
 
 	private static final String QUERY =
 			"def id(x): x; " +
-			"$seed as $x | " +
-			"def f(x): 1 as $x | id([$x, x, x]); " +
-			"def g(x): 100 as $x | f($x, $x+x); " +
-			"range(0; 1) as $_ | g($x)";
+					"$seed as $x | " +
+					"def f(x): 1 as $x | id([$x, x, x]); " +
+					"def g(x): 100 as $x | f($x, $x+x); " +
+					"range(0; 1) as $_ | g($x)";
 
 	private static final int SEED_A = 2000;
 	private static final int SEED_B = -13000;
@@ -51,7 +51,7 @@ public class JsonQueryConcurrentReuseTest {
 	@Test
 	public void producesResultsMatchingTheirOwnBindingsWhenReusedConcurrently() throws Exception {
 		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
-				.addVariable("seed", JSON_PROVIDER.createNumber(0))
+				.declareVariable("seed")
 				.build();
 		JsonQuery<JsonNode> query = env.compile(QUERY);
 
@@ -91,7 +91,7 @@ public class JsonQueryConcurrentReuseTest {
 
 	private static List<JsonNode> run(JsonQuery<JsonNode> query, int seed) throws JsonQueryException {
 		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
-				.addVariable("seed", JSON_PROVIDER.createNumber(seed))
+				.setVariable("seed", JSON_PROVIDER.createNumber(seed))
 				.build();
 		List<JsonNode> result = new ArrayList<>();
 		query.apply(JSON_PROVIDER.createNull(), bindings, (value, path) -> result.add(value));

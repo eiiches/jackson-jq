@@ -406,7 +406,7 @@ public abstract class JsonProviderContractTest<T> {
 		// asInt on NaN should throw exception (strict semantics)
 		T node = provider.createNumber(Double.NaN);
 		assertThatThrownBy(() -> provider.asInt(node))
-			.isInstanceOf(RuntimeException.class);
+				.isInstanceOf(RuntimeException.class);
 	}
 
 	@Test
@@ -414,7 +414,7 @@ public abstract class JsonProviderContractTest<T> {
 		// asLong on NaN should throw exception (strict semantics)
 		T node = provider.createNumber(Double.NaN);
 		assertThatThrownBy(() -> provider.asLong(node))
-			.isInstanceOf(RuntimeException.class);
+				.isInstanceOf(RuntimeException.class);
 	}
 
 	@Test
@@ -422,7 +422,7 @@ public abstract class JsonProviderContractTest<T> {
 		// asInt on positive infinity should throw exception (strict semantics)
 		T node = provider.createNumber(Double.POSITIVE_INFINITY);
 		assertThatThrownBy(() -> provider.asInt(node))
-			.isInstanceOf(RuntimeException.class);
+				.isInstanceOf(RuntimeException.class);
 	}
 
 	@Test
@@ -430,7 +430,7 @@ public abstract class JsonProviderContractTest<T> {
 		// asInt on negative infinity should throw exception (strict semantics)
 		T node = provider.createNumber(Double.NEGATIVE_INFINITY);
 		assertThatThrownBy(() -> provider.asInt(node))
-			.isInstanceOf(RuntimeException.class);
+				.isInstanceOf(RuntimeException.class);
 	}
 
 	@Test
@@ -438,7 +438,7 @@ public abstract class JsonProviderContractTest<T> {
 		// asLong on positive infinity should throw exception (strict semantics)
 		T node = provider.createNumber(Double.POSITIVE_INFINITY);
 		assertThatThrownBy(() -> provider.asLong(node))
-			.isInstanceOf(RuntimeException.class);
+				.isInstanceOf(RuntimeException.class);
 	}
 
 	@Test
@@ -446,7 +446,7 @@ public abstract class JsonProviderContractTest<T> {
 		// asLong on negative infinity should throw exception (strict semantics)
 		T node = provider.createNumber(Double.NEGATIVE_INFINITY);
 		assertThatThrownBy(() -> provider.asLong(node))
-			.isInstanceOf(RuntimeException.class);
+				.isInstanceOf(RuntimeException.class);
 	}
 
 	@Test
@@ -454,7 +454,7 @@ public abstract class JsonProviderContractTest<T> {
 		// asInt on a number larger than Integer.MAX_VALUE should throw exception (strict semantics)
 		T node = provider.createNumber(1_000_000_000_000_000_000L);
 		assertThatThrownBy(() -> provider.asInt(node))
-			.isInstanceOf(RuntimeException.class);
+				.isInstanceOf(RuntimeException.class);
 	}
 
 	@Test
@@ -462,7 +462,7 @@ public abstract class JsonProviderContractTest<T> {
 		// asInt on a number smaller than Integer.MIN_VALUE should throw exception (strict semantics)
 		T node = provider.createNumber(-1_000_000_000_000_000_000L);
 		assertThatThrownBy(() -> provider.asInt(node))
-			.isInstanceOf(RuntimeException.class);
+				.isInstanceOf(RuntimeException.class);
 	}
 
 	@Test
@@ -470,7 +470,7 @@ public abstract class JsonProviderContractTest<T> {
 		// asInt on a double larger than Integer.MAX_VALUE should throw exception
 		T node = provider.createNumber(1e15);
 		assertThatThrownBy(() -> provider.asInt(node))
-			.isInstanceOf(RuntimeException.class);
+				.isInstanceOf(RuntimeException.class);
 	}
 
 	@Test
@@ -478,7 +478,7 @@ public abstract class JsonProviderContractTest<T> {
 		// asInt on a double smaller than Integer.MIN_VALUE should throw exception
 		T node = provider.createNumber(-1e15);
 		assertThatThrownBy(() -> provider.asInt(node))
-			.isInstanceOf(RuntimeException.class);
+				.isInstanceOf(RuntimeException.class);
 	}
 
 	// ================================
@@ -533,21 +533,21 @@ public abstract class JsonProviderContractTest<T> {
 	void testFromStringStrictWithEmptyString() {
 		// fromStringStrict on empty string should throw exception
 		assertThatThrownBy(() -> provider.fromStringStrict(""))
-			.isInstanceOf(Exception.class);
+				.isInstanceOf(Exception.class);
 	}
 
 	@Test
 	void testFromStringStrictWithTrailingContent() {
 		// fromStringStrict with trailing content should throw exception
 		assertThatThrownBy(() -> provider.fromStringStrict("123 456"))
-			.isInstanceOf(Exception.class);
+				.isInstanceOf(Exception.class);
 	}
 
 	@Test
 	void testFromStringStrictWithWhitespaceOnly() {
 		// fromStringStrict on whitespace-only string should throw exception
 		assertThatThrownBy(() -> provider.fromStringStrict("   "))
-			.isInstanceOf(Exception.class);
+				.isInstanceOf(Exception.class);
 	}
 
 	@Test

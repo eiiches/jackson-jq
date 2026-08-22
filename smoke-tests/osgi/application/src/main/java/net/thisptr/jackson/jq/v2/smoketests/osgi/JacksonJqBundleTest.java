@@ -1,24 +1,25 @@
 package net.thisptr.jackson.jq.v2.smoketests.osgi;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import org.junit.jupiter.api.Test;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
+
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
+import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Version;
-import org.junit.jupiter.api.Test;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class JacksonJqBundleTest {
 	@Test

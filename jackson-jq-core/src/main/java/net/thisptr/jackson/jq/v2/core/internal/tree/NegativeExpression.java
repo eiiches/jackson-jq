@@ -1,39 +1,67 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import java.util.Set;
+
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class NegativeExpression<JsonNode> implements Expression<JsonNode> {
+public class NegativeExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
-	private Expression<JsonNode> value;
+	private Expression<StackFrame, JsonNode> value;
 	private final @Nullable Version version;
 
-	public NegativeExpression(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> value) {
+	@Override
+	public Cardinality getCardinality() {
+		return value.getCardinality();
+	}
+
+	public NegativeExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> value) {
 		this(jsonProvider, value, null);
 	}
 
-	public NegativeExpression(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> value, @Nullable Version version) {
+	public NegativeExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> value, @Nullable Version version) {
 		this.jsonProvider = jsonProvider;
 		this.value = value;
 		this.version = version;
 	}
 
-	public Expression<JsonNode> value() {
+	public Expression<StackFrame, JsonNode> value() {
 		return value;
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+	public boolean dependsOnInput() {
+		return value.dependsOnInput();
+	}
+
+	@Override
+	public boolean dependsOnExternalState() {
+		return value.dependsOnExternalState();
+	}
+
+	@Override
+	public Set<Integer> freeLocalSlots() {
+		return FreeVariables.union(value);
+	}
+
+	@Override
+	public boolean hasOpaqueVariableReference() {
+		return FreeVariables.anyOpaque(value);
+	}
+
+	@Override
+	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		value.apply(frame, in, null, (v, opath) -> {
 			if (jsonProvider.getNodeType(v) != JsonNodeType.NUMBER)
 				throw new JsonQueryTypeException(jsonProvider, version, "%s cannot be negated", v);

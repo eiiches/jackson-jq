@@ -7,7 +7,8 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 final class Preconditions {
-	private Preconditions() {}
+	private Preconditions() {
+	}
 
 	static <JsonNode> void checkInputType(JsonProvider<JsonNode> jsonProvider, String fname, JsonNode in, JsonNodeType... types) throws JsonQueryException {
 		JsonNodeType actual = jsonProvider.getNodeType(in);

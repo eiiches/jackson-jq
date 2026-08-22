@@ -91,7 +91,7 @@ public class EnvironmentAddImportedModuleTest {
 	public void testModuleQualifiedCallFallsBackToVariadicFunction() throws Exception {
 		Function countArgs = new Function() {
 			@Override
-			public <N> Expression<N> bindArguments(JsonProvider<N> fprovider, List<Expression<N>> fargs, Version ver) {
+			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> fprovider, List<Expression<Context, N>> fargs, Version ver) {
 				return (frame, in, path, output) -> output.emit(fprovider.createNumber(fargs.size()), null);
 			}
 		};

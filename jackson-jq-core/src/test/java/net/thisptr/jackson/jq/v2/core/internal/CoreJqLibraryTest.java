@@ -21,7 +21,7 @@ public class CoreJqLibraryTest {
 	public void discoverableThroughServiceLoader() {
 		assertThat(ServiceLoader.load(JqLibrary.class, getClass().getClassLoader()))
 				.anyMatch(CoreJqLibrary.class::isInstance);
-		assertThat(new CoreJqLibrary().getFunctions()).hasSize(61);
+		assertThat(new CoreJqLibrary().getJqFunctions()).hasSize(61);
 	}
 
 	@Test

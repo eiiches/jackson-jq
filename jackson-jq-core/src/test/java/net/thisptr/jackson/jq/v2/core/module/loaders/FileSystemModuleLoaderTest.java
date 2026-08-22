@@ -85,7 +85,8 @@ public class FileSystemModuleLoaderTest {
 	public void testRecursiveImports() throws Exception {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"recursive_imports/a\" as a; a::one");
-			expr.apply(NullNode.getInstance(), (value, path) -> {});
+			expr.apply(NullNode.getInstance(), (value, path) -> {
+			});
 		}).hasMessageContaining("imported recursively");
 	}
 
@@ -106,7 +107,8 @@ public class FileSystemModuleLoaderTest {
 
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr2 = env.compile("import \"repeated_path_components/repeated_path_components\" as a; a::one");
-			expr2.apply(NullNode.getInstance(), (value, path) -> {});
+			expr2.apply(NullNode.getInstance(), (value, path) -> {
+			});
 		}).hasMessageContaining("must not have equal consecutive components");
 	}
 
@@ -122,7 +124,8 @@ public class FileSystemModuleLoaderTest {
 	public void testBrokenDataImports() throws Exception {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"broken_data_imports/a\" as $a; $a::a");
-			expr.apply(NullNode.getInstance(), (value, path) -> {});
+			expr.apply(NullNode.getInstance(), (value, path) -> {
+			});
 		});
 	}
 
@@ -130,12 +133,14 @@ public class FileSystemModuleLoaderTest {
 	public void testModuleNotFound() throws Exception {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"module_not_exist\" as a; a::one");
-			expr.apply(NullNode.getInstance(), (value, path) -> {});
+			expr.apply(NullNode.getInstance(), (value, path) -> {
+			});
 		}).hasMessageContaining("module not found");
 
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"module_not_exist\" as $a; $a::a");
-			expr.apply(NullNode.getInstance(), (value, path) -> {});
+			expr.apply(NullNode.getInstance(), (value, path) -> {
+			});
 		}).hasMessageContaining("module not found");
 	}
 
@@ -143,7 +148,8 @@ public class FileSystemModuleLoaderTest {
 	public void testIllegalSearchPathOverrides() throws Exception {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"illegal_search_path_overrides\" as a; a::one");
-			expr.apply(NullNode.getInstance(), (value, path) -> {});
+			expr.apply(NullNode.getInstance(), (value, path) -> {
+			});
 		}).hasMessageContaining("must stay within the original search path");
 	}
 
@@ -151,7 +157,8 @@ public class FileSystemModuleLoaderTest {
 	public void testImportWithAbsolutePath() throws Exception {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"/foo\" as foo; foo::foo");
-			expr.apply(NullNode.getInstance(), (value, path) -> {});
+			expr.apply(NullNode.getInstance(), (value, path) -> {
+			});
 		}).hasMessageContaining("must be relative");
 	}
 
@@ -159,7 +166,8 @@ public class FileSystemModuleLoaderTest {
 	public void testDirectoryTraversal() throws Exception {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"../foo\" as foo; foo::foo");
-			expr.apply(NullNode.getInstance(), (value, path) -> {});
+			expr.apply(NullNode.getInstance(), (value, path) -> {
+			});
 		}).hasMessageContaining("must be within the search path");
 	}
 }

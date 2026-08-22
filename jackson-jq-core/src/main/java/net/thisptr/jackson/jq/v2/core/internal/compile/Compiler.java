@@ -14,7 +14,8 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
-import net.thisptr.jackson.jq.v2.core.FunctionLoader;
+import net.thisptr.jackson.jq.v2.core.internal.Memory;
+import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
@@ -55,7 +56,9 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.AssignPipeComponent;
 import net.thisptr.jackson.jq.v2.core.internal.tree.BreakExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.Conditional;
+import net.thisptr.jackson.jq.v2.core.internal.tree.FixedInputExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ForeachExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.tree.IdentifierKeyFieldConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.JsonQueryKeyFieldConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.LabelPipeComponent;
@@ -63,15 +66,22 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.NegativeExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ObjectConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.PipeComponent;
 import net.thisptr.jackson.jq.v2.core.internal.tree.PipedQuery;
+import net.thisptr.jackson.jq.v2.core.internal.tree.PrecomputedConstantExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RecursionOperator;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ReduceExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionBoundArgumentAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableBoundArgumentAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFixedVariableAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionCall;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionDefinition;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalFunctionAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionBoundArgumentAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableAccess;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableBoundArgumentAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.SemicolonOperator;
 import net.thisptr.jackson.jq.v2.core.internal.tree.StringInterpolation;
@@ -81,6 +91,7 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.TopLevelExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.TransformPipeComponent;
 import net.thisptr.jackson.jq.v2.core.internal.tree.TryCatch;
 import net.thisptr.jackson.jq.v2.core.internal.tree.Tuple;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketExtractFieldAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketFieldAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.IdentifierFieldAccess;
@@ -95,23 +106,75 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ArrayMatche
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ObjectMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatcher;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class Compiler {
+	private static final int MAX_PRECOMPUTED_RESULTS = 256;
 
-	public static <JsonNode> Expression<JsonNode> compile(Environment<JsonNode> env, AstNode ast) throws JsonQueryException {
+	private static final class TooManyConstantResultsException extends JsonQueryException {
+		private static final long serialVersionUID = 1L;
+
+		TooManyConstantResultsException() {
+			super("constant expression produced more than %d values", MAX_PRECOMPUTED_RESULTS);
+		}
+	}
+
+	private static <N> List<Expression<StackFrame, N>> precomputeConstantArguments(Environment<N> env, CompileContext context, List<Expression<StackFrame, N>> args) {
+		List<Expression<StackFrame, N>> result = new ArrayList<>(args.size());
+		for (Expression<StackFrame, N> arg : args)
+			result.add(precomputeConstantArgument(env, context, arg));
+		return result;
+	}
+
+	private static <N> Expression<StackFrame, N> precomputeConstantArgument(Environment<N> env, CompileContext context, Expression<StackFrame, N> expression) {
+		if (expression instanceof ConstantExpression<?, ?> || expression.dependsOnInput() || expression.dependsOnExternalState() || FreeVariables.dependsOnVariables(expression))
+			return expression;
+
+		Memory memory = new Memory(context.getGlobalCount());
+		StackFrame frame = memory.pushFrame(context.getSlotCount());
+		List<N> results = new ArrayList<>();
+		try {
+			expression.apply(frame, env.getJsonProvider().createNull(), null, (value, path) -> {
+				if (results.size() == MAX_PRECOMPUTED_RESULTS)
+					throw new TooManyConstantResultsException();
+				results.add(value);
+			});
+		} catch (TooManyConstantResultsException ignored) {
+			return expression;
+		} catch (JsonQueryException ignored) {
+			// Preserve jq's lazy error behavior. The expression may be unreachable or evaluated
+			// under try/catch at runtime, so a failed speculative evaluation is not foldable.
+			return expression;
+		} finally {
+			memory.popFrame();
+		}
+		return new PrecomputedConstantExpression<>(env.getJsonProvider(), expression, results);
+	}
+
+	private static <N> Expression<StackFrame, N> restoreFixedInput(Expression<StackFrame, N> expression, boolean inputFixed) {
+		return inputFixed && expression.dependsOnInput() ? new FixedInputExpression<>(expression) : expression;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <N> @Nullable Expression<StackFrame, N> precomputedBoundArgument(BoundArgumentInfo info) {
+		Expression<?, ?> expression = info.precomputedExpression();
+		return expression == null ? null : (Expression<StackFrame, N>) expression;
+	}
+
+	public static <JsonNode> Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, AstNode ast) throws JsonQueryException {
 		return compile(env, (Module) null, ast);
 	}
 
-	public static <JsonNode> Expression<JsonNode> compile(Environment<JsonNode> env, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
+	public static <JsonNode> Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
 		return compileRoot(env, currentModule, ast, false);
 	}
 
@@ -123,50 +186,31 @@ public class Compiler {
 	 * {@code FileSystemModuleLoader.loadModuleActual} populates a file-based module's exported functions.
 	 * Ordinary query compilation must never do this -- use {@link #compile(Environment, Module, AstNode)}.
 	 */
-	public static <JsonNode> Expression<JsonNode> compileModule(Environment<JsonNode> env, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
+	public static <JsonNode> Expression<StackFrame, JsonNode> compileModule(Environment<JsonNode> env, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
 		return compileRoot(env, currentModule, ast, true);
 	}
 
-	private static <JsonNode> Expression<JsonNode> compileRoot(Environment<JsonNode> env, @Nullable Module currentModule, AstNode ast, boolean exportTopLevelFunctions) throws JsonQueryException {
+	private static <JsonNode> Expression<StackFrame, JsonNode> compileRoot(Environment<JsonNode> env, @Nullable Module currentModule, AstNode ast, boolean exportTopLevelFunctions) throws JsonQueryException {
 		CompileContext context = new CompileContext(exportTopLevelFunctions);
-		registerEnvironmentGlobals(env, context);
-		Expression<JsonNode> compiled = compile(env, context, currentModule, ast);
+		Expression<StackFrame, JsonNode> compiled = compile(env, context, currentModule, ast);
 		if (compiled == null)
 			throw new JsonQueryException("Cannot resolve null expression");
-		return new RootExpression<>(context.getSlotCount(), compiled,
-				defaultVariables(env, context), env.getFunctions(), context.globalVariableSlots(), context.globalFunctionSlots(),
-				context.globalVariables(), context.globalFunctions(), context.rootFunctionSlots());
+		Set<String> definedVariables = new HashSet<>(env.getVariables().keySet());
+		definedVariables.addAll(env.getConstants().keySet());
+		definedVariables.addAll(context.importedVariableDefaults().keySet());
+		Set<FunctionSignature> definedFunctions = new HashSet<>(env.getFunctions().keySet());
+		definedFunctions.addAll(env.getJqFunctions().keySet());
+		return new RootExpression<>(context.getSlotCount(), context.getGlobalCount(), compiled,
+				definedVariables, definedFunctions,
+				context.globalVariableIndices(), context.globalFunctionIndices(),
+				env.getDeclaredVariables(), env.getDeclaredFunctions(), context.rootFunctionSlots());
 	}
 
-	/**
-	 * {@code env.getVariables()} plus any {@code $}-style data imports resolved during this compile (see
-	 * {@link CompileContext#addImportedVariableDefault}) -- kept separate from {@code Environment} itself
-	 * since the compiler must not mutate it.
-	 */
-	private static <JsonNode> Map<String, Supplier<JsonNode>> defaultVariables(Environment<JsonNode> env, CompileContext context) {
-		Map<String, Supplier<JsonNode>> result = new HashMap<>(env.getVariables());
-		for (Map.Entry<String, Object> entry : context.importedVariableDefaults().entrySet()) {
-			@SuppressWarnings("unchecked")
-			JsonNode value = (JsonNode) entry.getValue();
-			result.put(entry.getKey(), () -> value);
-		}
-		return result;
-	}
-
-	public static <JsonNode> void registerEnvironmentGlobals(Environment<JsonNode> env, CompileContext context) {
-		for (String name : env.getVariables().keySet()) {
-			context.addGlobalVariable(name, name);
-			context.addGlobalVariable(name + "::" + name, name);
-		}
-		for (FunctionSignature key : env.getFunctions().keySet())
-			context.addGlobalFunction(key);
-	}
-
-	public static <JsonNode> @Nullable Expression<JsonNode> compile(Environment<JsonNode> env, CompileContext context, @Nullable AstNode ast) throws JsonQueryException {
+	public static <JsonNode> @Nullable Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileContext context, @Nullable AstNode ast) throws JsonQueryException {
 		return compile(env, context, (Module) null, ast);
 	}
 
-	public static <JsonNode> @Nullable Expression<JsonNode> compile(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, @Nullable AstNode ast) throws JsonQueryException {
+	public static <JsonNode> @Nullable Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, @Nullable AstNode ast) throws JsonQueryException {
 		if (ast == null)
 			return null;
 
@@ -177,10 +221,17 @@ public class Compiler {
 
 		if (ast instanceof FunctionCallAstNode) {
 			FunctionCallAstNode call = (FunctionCallAstNode) ast;
-			List<Expression<JsonNode>> compiledArgs = new ArrayList<>();
-			for (AstNode arg : call.args()) {
-				compiledArgs.add(compile(env, context, currentModule, arg));
+			boolean inputFixed = context.isInputFixed();
+			@Var List<Expression<StackFrame, JsonNode>> compiledArgs = new ArrayList<>();
+			context.setInputFixed(false);
+			try {
+				for (AstNode arg : call.args()) {
+					compiledArgs.add(compile(env, context, currentModule, arg));
+				}
+			} finally {
+				context.setInputFixed(inputFixed);
 			}
+			compiledArgs = precomputeConstantArguments(env, context, compiledArgs);
 
 			if (call.moduleName() != null) {
 				@Var Module mod = context.getImportedModule(call.moduleName());
@@ -190,34 +241,12 @@ public class Compiler {
 				if (factory == null) {
 					throw new JsonQueryException(String.format("Function %s::%s/%d does not exist", call.moduleName(), call.name(), compiledArgs.size()));
 				}
-				Expression<JsonNode> fn = factory.bindArguments(env.getJsonProvider(), compiledArgs, env.getJqVersion());
-				return new ResolvedFunctionCall<>(call.moduleName() + "::" + call.name(), fn);
+				Expression<StackFrame, JsonNode> fn = factory.bindArguments(env.getJsonProvider(), compiledArgs, env.getJqVersion());
+				Expression<StackFrame, JsonNode> result = new ResolvedFunctionCall<>(call.moduleName() + "::" + call.name(), fn, fn.dependsOnExternalState(), fn.dependsOnInput(), inputFixed, compiledArgs);
+				return restoreFixedInput(result, inputFixed);
 			}
 
-			String fullName = call.name();
-			if (context.isLocalFunction(fullName, compiledArgs.size())) {
-				SymbolLocation loc = context.getFunctionLocation(fullName, compiledArgs.size());
-				int slot = loc != null ? loc.slot : 0;
-				@Var Function defaultFactory = null;
-				@Var Expression<JsonNode> defaultFunction = null;
-				if (loc != null && loc.isGlobal) {
-					defaultFactory = resolveFunction(env, fullName, compiledArgs.size());
-					if (defaultFactory != null)
-						defaultFunction = defaultFactory.bindArguments(env.getJsonProvider(), compiledArgs, env.getJqVersion());
-				}
-				if (loc != null && !loc.isLocal) {
-					return new ResolvedCapturedFunctionAccess<>(env.getJsonProvider(), env.getJqVersion(), fullName, slot, context.getCurrentFunctionClosureSlot(), compiledArgs, defaultFactory, defaultFunction);
-				}
-				return new ResolvedLocalFunctionAccess<>(env.getJsonProvider(), env.getJqVersion(), fullName, slot, compiledArgs, defaultFactory, defaultFunction);
-			}
-
-			Function factory = resolveFunction(env, fullName, compiledArgs.size());
-			if (factory == null) {
-				throw new JsonQueryException(String.format("Function %s/%d does not exist", fullName, compiledArgs.size()));
-			}
-
-			Expression<JsonNode> fn = factory.bindArguments(env.getJsonProvider(), compiledArgs, env.getJqVersion());
-			return new ResolvedFunctionCall<>(fullName, fn);
+			return restoreFixedInput(compileFunctionCall(env, context, call.name(), compiledArgs), inputFixed);
 		}
 
 		if (ast instanceof VariableAccessAstNode) {
@@ -237,8 +266,6 @@ public class Compiler {
 					}
 					if (imp.name != null) {
 						context.addImportedVariableDefault(imp.name, data);
-						context.addGlobalVariable(imp.name, imp.name);
-						context.addGlobalVariable(imp.name + "::" + imp.name, imp.name);
 					}
 				} else {
 					Module mod = env.getModuleLoader().loadModule(currentModule, imp.path, metadata);
@@ -250,7 +277,7 @@ public class Compiler {
 					}
 				}
 			}
-			Expression<JsonNode> compiledInner = compileNonNull(env, context, currentModule, top.expr());
+			Expression<StackFrame, JsonNode> compiledInner = compileNonNull(env, context, currentModule, top.expr());
 			return new TopLevelExpression<>(top.moduleDirective(), Collections.emptyList(), compiledInner);
 		}
 
@@ -259,11 +286,14 @@ public class Compiler {
 			List<PipeComponent<JsonNode>> newComponents = new ArrayList<>();
 
 			@Var int pushedScopes = 0;
+			boolean savedInputFixed = context.isInputFixed();
+			@Var boolean fixed = savedInputFixed;
 			try {
 				for (PipedQueryAstNode.PipeComponent comp : piped.components()) {
 					if (comp instanceof PipedQueryAstNode.AssignPipeComponent) {
 						PipedQueryAstNode.AssignPipeComponent assign = (PipedQueryAstNode.AssignPipeComponent) comp;
-						Expression<JsonNode> compiledExpr = compileNonNull(env, context, assign.expr);
+						context.setInputFixed(fixed);
+						Expression<StackFrame, JsonNode> compiledExpr = compileNonNull(env, context, assign.expr);
 						@Var PatternMatcher<JsonNode> compiledMatcher = compileMatcher(env, context, assign.matcher);
 
 						context.pushLocalScope();
@@ -278,19 +308,27 @@ public class Compiler {
 						}
 						compiledMatcher = compiledMatcher.resolveSlots(slots);
 
-						newComponents.add(new AssignPipeComponent<>(compiledExpr, compiledMatcher));
+						newComponents.add(new AssignPipeComponent<>(compiledExpr, compiledMatcher, new HashSet<>(slots.values())));
+						// `.` doesn't change across an `as` binding -- `fixed` passes through unchanged.
+						// (Whether the bound variable itself is "free" is handled separately, by
+						// PipedQuery's free-variable analysis closing over the bound slots.)
 					} else if (comp instanceof PipedQueryAstNode.TransformPipeComponent) {
 						PipedQueryAstNode.TransformPipeComponent transform = (PipedQueryAstNode.TransformPipeComponent) comp;
-						Expression<JsonNode> compiledExpr = compileNonNull(env, context, transform.expr);
+						context.setInputFixed(fixed);
+						Expression<StackFrame, JsonNode> compiledExpr = compileNonNull(env, context, transform.expr);
 						newComponents.add(new TransformPipeComponent<>(compiledExpr));
+						// This stage's output, now known, is the next stage's input.
+						fixed = !compiledExpr.dependsOnInput();
 					} else if (comp instanceof PipedQueryAstNode.LabelPipeComponent) {
 						PipedQueryAstNode.LabelPipeComponent label = (PipedQueryAstNode.LabelPipeComponent) comp;
 						newComponents.add(new LabelPipeComponent<>(label.name));
+						// `label $out | ...` doesn't rebind `.` -- `fixed` passes through unchanged.
 					} else {
 						throw new IllegalStateException("Unknown pipe component: " + comp.getClass());
 					}
 				}
 			} finally {
+				context.setInputFixed(savedInputFixed);
 				for (int i = 0; i < pushedScopes; i++) {
 					context.popScope();
 				}
@@ -301,7 +339,7 @@ public class Compiler {
 
 		if (ast instanceof SemicolonOperatorAstNode) {
 			SemicolonOperatorAstNode semi = (SemicolonOperatorAstNode) ast;
-			List<Expression<JsonNode>> newExpressions = new ArrayList<>();
+			List<Expression<StackFrame, JsonNode>> newExpressions = new ArrayList<>();
 			for (AstNode q : semi.expressions()) {
 				newExpressions.add(compileNonNull(env, context, q));
 			}
@@ -314,22 +352,22 @@ public class Compiler {
 			for (ObjectConstructionAstNode.FieldConstructionAst fc : obj.fields) {
 				if (fc instanceof ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst ik = (ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst) fc;
-					Expression<JsonNode> val = compile(env, context, ik.value);
+					Expression<StackFrame, JsonNode> val = compile(env, context, ik.value);
 					res.add(new IdentifierKeyFieldConstruction<>(env.getJsonProvider(), ik.key, val));
 				} else if (fc instanceof ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst jq = (ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst) fc;
-					Expression<JsonNode> key = compileNonNull(env, context, jq.key());
-					Expression<JsonNode> val = compileNonNull(env, context, jq.value());
+					Expression<StackFrame, JsonNode> key = compileNonNull(env, context, jq.key());
+					Expression<StackFrame, JsonNode> val = compileNonNull(env, context, jq.value());
 					res.add(new JsonQueryKeyFieldConstruction<>(env.getJsonProvider(), key, val, env.getJqVersion()));
 				} else if (fc instanceof ObjectConstructionAstNode.StringKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.StringKeyFieldConstructionAst sk = (ObjectConstructionAstNode.StringKeyFieldConstructionAst) fc;
-					Expression<JsonNode> key = compileNonNull(env, context, sk.key);
-					Expression<JsonNode> val = compile(env, context, sk.value);
+					Expression<StackFrame, JsonNode> key = compileNonNull(env, context, sk.key);
+					Expression<StackFrame, JsonNode> val = compile(env, context, sk.value);
 					res.add(new StringKeyFieldConstruction<>(env.getJsonProvider(), key, val));
 				} else if (fc instanceof ObjectConstructionAstNode.VariableKeyFieldConstruction) {
 					// desugar `{ $x }` into the same shape as `{ x: $x }` -- no dedicated resolved class needed.
 					ObjectConstructionAstNode.VariableKeyFieldConstruction vk = (ObjectConstructionAstNode.VariableKeyFieldConstruction) fc;
-					Expression<JsonNode> compiledValue = compileVariableRef(env, context, null, vk.name());
+					Expression<StackFrame, JsonNode> compiledValue = compileVariableRef(env, context, null, vk.name());
 					res.add(new IdentifierKeyFieldConstruction<>(env.getJsonProvider(), vk.name(), compiledValue));
 				} else {
 					throw new IllegalStateException("Unknown field construction: " + fc.getClass());
@@ -345,9 +383,19 @@ public class Compiler {
 
 		if (ast instanceof BinaryOpAstNode) {
 			BinaryOpAstNode bin = (BinaryOpAstNode) ast;
-			Expression<JsonNode> lhs = compileNonNull(env, context, bin.lhs);
-			Expression<JsonNode> rhs = compileNonNull(env, context, bin.rhs);
-			return bin.operator.create(lhs, rhs, env.getJqVersion(), env.getJsonProvider());
+			Expression<StackFrame, JsonNode> lhs = compileNonNull(env, context, bin.lhs);
+			boolean savedInputFixed = context.isInputFixed();
+			if (bin.operator == BinaryOperatorExpression.Operator.UDPATE) {
+				// `|=`'s rhs is rebound to the value at the resolved path, not `.`.
+				context.setInputFixed(savedInputFixed && !lhs.dependsOnInput());
+			}
+			Expression<StackFrame, JsonNode> rhs;
+			try {
+				rhs = compileNonNull(env, context, bin.rhs);
+			} finally {
+				context.setInputFixed(savedInputFixed);
+			}
+			return bin.operator.create(lhs, rhs, env.getJqVersion(), env.getJsonProvider(), savedInputFixed);
 		}
 
 		if (ast instanceof NegativeExpressionAstNode) {
@@ -357,29 +405,37 @@ public class Compiler {
 
 		if (ast instanceof ConditionalAstNode) {
 			ConditionalAstNode cond = (ConditionalAstNode) ast;
-			List<Pair<Expression<JsonNode>, Expression<JsonNode>>> newSwitches = new ArrayList<>();
+			List<Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>>> newSwitches = new ArrayList<>();
 			for (Pair<AstNode, AstNode> sw : cond.switches()) {
-				Expression<JsonNode> newIf = compileNonNull(env, context, sw._1);
-				Expression<JsonNode> newThen = compileNonNull(env, context, sw._2);
+				Expression<StackFrame, JsonNode> newIf = compileNonNull(env, context, sw._1);
+				Expression<StackFrame, JsonNode> newThen = compileNonNull(env, context, sw._2);
 				newSwitches.add(Pair.of(newIf, newThen));
 			}
-			Expression<JsonNode> newElse = compileNonNull(env, context, cond.otherwise());
+			Expression<StackFrame, JsonNode> newElse = compileNonNull(env, context, cond.otherwise());
 			return new Conditional<>(env.getJsonProvider(), newSwitches, newElse);
 		}
 
 		if (ast instanceof TryCatchAstNode) {
 			TryCatchAstNode tc = (TryCatchAstNode) ast;
-			Expression<JsonNode> newTry = compileNonNull(env, context, tc.tryExpr());
-			Expression<JsonNode> newCatch = compile(env, context, tc.catchExpr());
+			Expression<StackFrame, JsonNode> newTry = compileNonNull(env, context, tc.tryExpr());
 			if (tc instanceof TryCatchAstNode.Question) {
 				return new TryCatch.Question<>(env.getJsonProvider(), newTry);
+			}
+			// catchExpr sees the caught error message, not `.` -- its `.` is input-independent iff tryExpr's is.
+			boolean savedInputFixed = context.isInputFixed();
+			context.setInputFixed(!newTry.dependsOnInput());
+			Expression<StackFrame, JsonNode> newCatch;
+			try {
+				newCatch = compile(env, context, tc.catchExpr());
+			} finally {
+				context.setInputFixed(savedInputFixed);
 			}
 			return new TryCatch<>(env.getJsonProvider(), newTry, newCatch);
 		}
 
 		if (ast instanceof TupleAstNode) {
 			TupleAstNode tuple = (TupleAstNode) ast;
-			List<Expression<JsonNode>> newQs = new ArrayList<>();
+			List<Expression<StackFrame, JsonNode>> newQs = new ArrayList<>();
 			for (AstNode q : tuple.qs) {
 				newQs.add(compileNonNull(env, context, q));
 			}
@@ -388,8 +444,8 @@ public class Compiler {
 
 		if (ast instanceof ReduceExpressionAstNode) {
 			ReduceExpressionAstNode red = (ReduceExpressionAstNode) ast;
-			Expression<JsonNode> compiledIter = compileNonNull(env, context, red.iterExpr());
-			Expression<JsonNode> compiledInit = compileNonNull(env, context, red.initExpr());
+			Expression<StackFrame, JsonNode> compiledIter = compileNonNull(env, context, red.iterExpr());
+			Expression<StackFrame, JsonNode> compiledInit = compileNonNull(env, context, red.initExpr());
 			@Var PatternMatcher<JsonNode> compiledMatcher = compileMatcher(env, context, red.matcher());
 
 			Set<String> varNames = new HashSet<>();
@@ -402,8 +458,16 @@ public class Compiler {
 					slots.put(varName, context.getVariableSlot(varName));
 				}
 				compiledMatcher = compiledMatcher.resolveSlots(slots);
-				Expression<JsonNode> compiledReduce = compileNonNull(env, context, red.reduceExpr());
-				return new ReduceExpression<>(env.getJsonProvider(), compiledMatcher, compiledInit, compiledReduce, compiledIter);
+				// reduceExpr sees the accumulator, not `.` -- its `.` is input-independent iff iterExpr and initExpr's both are.
+				boolean savedInputFixed = context.isInputFixed();
+				context.setInputFixed(!compiledIter.dependsOnInput() && !compiledInit.dependsOnInput());
+				Expression<StackFrame, JsonNode> compiledReduce;
+				try {
+					compiledReduce = compileNonNull(env, context, red.reduceExpr());
+				} finally {
+					context.setInputFixed(savedInputFixed);
+				}
+				return new ReduceExpression<>(env.getJsonProvider(), compiledMatcher, compiledInit, compiledReduce, compiledIter, new HashSet<>(slots.values()));
 			} finally {
 				context.popScope();
 			}
@@ -411,8 +475,8 @@ public class Compiler {
 
 		if (ast instanceof ForeachExpressionAstNode) {
 			ForeachExpressionAstNode fe = (ForeachExpressionAstNode) ast;
-			Expression<JsonNode> compiledIter = compileNonNull(env, context, fe.iterExpr());
-			Expression<JsonNode> compiledInit = compileNonNull(env, context, fe.initExpr());
+			Expression<StackFrame, JsonNode> compiledIter = compileNonNull(env, context, fe.iterExpr());
+			Expression<StackFrame, JsonNode> compiledInit = compileNonNull(env, context, fe.initExpr());
 			@Var PatternMatcher<JsonNode> compiledMatcher = compileMatcher(env, context, fe.matcher());
 
 			Set<String> varNames = new HashSet<>();
@@ -425,9 +489,26 @@ public class Compiler {
 					slots.put(varName, context.getVariableSlot(varName));
 				}
 				compiledMatcher = compiledMatcher.resolveSlots(slots);
-				Expression<JsonNode> compiledUpdate = compileNonNull(env, context, fe.updateExpr());
-				Expression<JsonNode> compiledExtract = fe.extractExpr() != null ? compile(env, context, fe.extractExpr()) : null;
-				return new ForeachExpression<>(compiledMatcher, compiledInit, compiledUpdate, compiledExtract, compiledIter);
+				// updateExpr sees the accumulator, not `.` -- its `.` is input-independent iff iterExpr and initExpr's both are.
+				boolean savedInputFixed = context.isInputFixed();
+				context.setInputFixed(!compiledIter.dependsOnInput() && !compiledInit.dependsOnInput());
+				Expression<StackFrame, JsonNode> compiledUpdate;
+				try {
+					compiledUpdate = compileNonNull(env, context, fe.updateExpr());
+				} finally {
+					context.setInputFixed(savedInputFixed);
+				}
+				// extractExpr sees updateExpr's own output, not the iter/init-fixedness above.
+				@Var Expression<StackFrame, JsonNode> compiledExtract = null;
+				if (fe.extractExpr() != null) {
+					context.setInputFixed(!compiledUpdate.dependsOnInput());
+					try {
+						compiledExtract = compile(env, context, fe.extractExpr());
+					} finally {
+						context.setInputFixed(savedInputFixed);
+					}
+				}
+				return new ForeachExpression<>(compiledMatcher, compiledInit, compiledUpdate, compiledExtract, compiledIter, new HashSet<>(slots.values()));
 			} finally {
 				context.popScope();
 			}
@@ -436,38 +517,36 @@ public class Compiler {
 		if (ast instanceof FormattingFilterAstNode) {
 			FormattingFilterAstNode ff = (FormattingFilterAstNode) ast;
 			String fname = ff.name().startsWith("@") ? ff.name() : "@" + ff.name();
-			SymbolLocation loc = context.getFunctionLocation(fname, 0);
-			if (loc == null) {
-				Function factory = resolveFunction(env, fname, 0);
-				if (factory == null) {
-					throw new JsonQueryException(String.format("Formatting operator %s does not exist", fname));
-				}
-				Expression<JsonNode> fn = factory.bindArguments(env.getJsonProvider(), Collections.emptyList(), env.getJqVersion());
-				return new ResolvedFunctionCall<>(fname, fn);
-			}
-			Function defaultFactory = loc.isGlobal ? resolveFunction(env, fname, 0) : null;
-			Expression<JsonNode> defaultFunction = defaultFactory != null ? defaultFactory.bindArguments(env.getJsonProvider(), Collections.emptyList(), env.getJqVersion()) : null;
-			if (!loc.isLocal)
-				return new ResolvedCapturedFunctionAccess<>(env.getJsonProvider(), env.getJqVersion(), fname, loc.slot, context.getCurrentFunctionClosureSlot(), Collections.emptyList(), defaultFactory, defaultFunction);
-			return new ResolvedLocalFunctionAccess<>(env.getJsonProvider(), env.getJqVersion(), fname, loc.slot, Collections.emptyList(), defaultFactory, defaultFunction);
+			return compileFunctionCall(env, context, fname, Collections.emptyList());
 		}
 
 		if (ast instanceof StringInterpolationAstNode) {
 			StringInterpolationAstNode si = (StringInterpolationAstNode) ast;
-			List<Pair<Integer, Expression<JsonNode>>> compiledInterpolations = new ArrayList<>();
+			List<Pair<Integer, Expression<StackFrame, JsonNode>>> compiledInterpolations = new ArrayList<>();
+			@Var boolean anyInterpolationDependsOnInput = false;
 			for (Pair<Integer, AstNode> pair : si.interpolations()) {
-				Expression<JsonNode> resExpr = compileNonNull(env, context, pair._2);
+				Expression<StackFrame, JsonNode> resExpr = compileNonNull(env, context, pair._2);
 				compiledInterpolations.add(Pair.of(pair._1, resExpr));
+				anyInterpolationDependsOnInput = anyInterpolationDependsOnInput || resExpr.dependsOnInput();
 			}
-			Expression<JsonNode> compiledFormatter = compile(env, context, si.formatter());
+			// formatter sees each interpolated value, not `.` -- its `.` is input-independent iff every
+			// interpolation expression's is.
+			boolean savedInputFixed = context.isInputFixed();
+			context.setInputFixed(!anyInterpolationDependsOnInput);
+			Expression<StackFrame, JsonNode> compiledFormatter;
+			try {
+				compiledFormatter = compile(env, context, si.formatter());
+			} finally {
+				context.setInputFixed(savedInputFixed);
+			}
 			return new StringInterpolation<>(env.getJsonProvider(), si.template(), compiledInterpolations, compiledFormatter);
 		}
 
 		if (ast instanceof BracketFieldAccessAstNode) {
 			BracketFieldAccessAstNode bfa = (BracketFieldAccessAstNode) ast;
-			Expression<JsonNode> target = compileNonNull(env, context, bfa.target());
-			@Var Expression<JsonNode> start = compile(env, context, bfa.startExpr());
-			@Var Expression<JsonNode> end = compile(env, context, bfa.endExpr());
+			Expression<StackFrame, JsonNode> target = compileNonNull(env, context, bfa.target());
+			@Var Expression<StackFrame, JsonNode> start = compile(env, context, bfa.startExpr());
+			@Var Expression<StackFrame, JsonNode> end = compile(env, context, bfa.endExpr());
 			if (start == null)
 				start = new NullLiteral<>(env.getJsonProvider());
 			if (end == null)
@@ -481,20 +560,20 @@ public class Compiler {
 
 		if (ast instanceof IdentifierFieldAccessAstNode) {
 			IdentifierFieldAccessAstNode ifa = (IdentifierFieldAccessAstNode) ast;
-			Expression<JsonNode> target = compileNonNull(env, context, ifa.target());
+			Expression<StackFrame, JsonNode> target = compileNonNull(env, context, ifa.target());
 			return new IdentifierFieldAccess<>(env.getJsonProvider(), target, ifa.field(), ifa.permissive(), env.getJqVersion());
 		}
 
 		if (ast instanceof StringFieldAccessAstNode) {
 			StringFieldAccessAstNode sfa = (StringFieldAccessAstNode) ast;
-			Expression<JsonNode> target = compileNonNull(env, context, sfa.target());
-			Expression<JsonNode> key = compileNonNull(env, context, sfa.key());
+			Expression<StackFrame, JsonNode> target = compileNonNull(env, context, sfa.target());
+			Expression<StackFrame, JsonNode> key = compileNonNull(env, context, sfa.key());
 			return new StringFieldAccess<>(env.getJsonProvider(), target, key, sfa.permissive(), env.getJqVersion());
 		}
 
 		if (ast instanceof BracketExtractFieldAccessAstNode) {
 			BracketExtractFieldAccessAstNode befa = (BracketExtractFieldAccessAstNode) ast;
-			Expression<JsonNode> target = compileNonNull(env, context, befa.target());
+			Expression<StackFrame, JsonNode> target = compileNonNull(env, context, befa.target());
 			return new BracketExtractFieldAccess<>(env.getJsonProvider(), target, befa.permissive(), env.getJqVersion());
 		}
 
@@ -519,11 +598,11 @@ public class Compiler {
 		}
 
 		if (ast instanceof ThisObjectAstNode) {
-			return new ThisObject();
+			return new ThisObject<>(!context.isInputFixed());
 		}
 
 		if (ast instanceof RecursionOperatorAstNode) {
-			return new RecursionOperator<>(env.getJsonProvider());
+			return new RecursionOperator<>(env.getJsonProvider(), !context.isInputFixed());
 		}
 
 		if (ast instanceof BreakExpressionAstNode) {
@@ -538,7 +617,7 @@ public class Compiler {
 			List<Integer> paramSlots = new ArrayList<>();
 			int fnSize;
 			int ownClosureSlot;
-			Expression<JsonNode> compiledBody;
+			Expression<StackFrame, JsonNode> compiledBody;
 			ClosureSpec closureSpec;
 			context.pushFunctionScope();
 			try {
@@ -565,7 +644,31 @@ public class Compiler {
 			if (context.exportsTopLevelFunctions() && isTopLevelDefinition) {
 				context.recordRootFunctionSlot(FunctionSignature.of(fd.fname(), fd.args().size()), slot);
 			}
-			return new ResolvedFunctionDefinition(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody, ownClosureSlot, definerClosureSlot);
+			ResolvedFunctionDefinition<JsonNode> resolvedDef = new ResolvedFunctionDefinition<>(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody, ownClosureSlot, definerClosureSlot);
+			// freeLocalSlots always come from resolvedDef's own closureSpec, which is already precise for
+			// calls to *this* def -- including through nested defs in its body: resolving a deeper def's
+			// own capture threads an entry through every intermediate function-boundary scope's
+			// closureSpec as a side effect (see CompileContext#getVariableLocation), so this def's own
+			// closureSpec already reflects what any nested def inside its body ultimately needs, with no
+			// separate propagation required here.
+			//
+			// hasOpaqueVariableReference adds two more conservative sources resolvedDef's own (variables-
+			// only) closureSpec can't see: (a) any local function captured across a closure boundary
+			// (closureSpec.capturedFunctions()) -- e.g. a def that calls another def declared further out
+			// (including itself, recursively) -- since we don't attempt to trace *that* function's own
+			// transitive slot dependencies back through the boundary; (b) when the body has no local
+			// variable capture at all, whatever FreeVariables says about compiledBody directly, to catch
+			// dependencies closureSpec never tracks in the first place (a declared/global variable read).
+			// The second check is skipped whenever there *is* a local capture to avoid double-counting the
+			// unconditional opacity every ResolvedCapturedVariableAccess reports on its own (already
+			// captured precisely, above) -- the one case this misses is a body mixing a local capture with
+			// an untracked (e.g. global) read; accepted as a rare, deliberately conservative edge case.
+			boolean hasOpaqueVariableReference = resolvedDef.hasOpaqueVariableReference()
+					|| !closureSpec.capturedFunctions().isEmpty()
+					|| (closureSpec.capturedVariables().isEmpty() && FreeVariables.dependsOnVariables(compiledBody));
+			context.recordFunctionDependsOnInfo(fd.fname(), fd.args().size(),
+					new FunctionDependsOnInfo(compiledBody.dependsOnInput(), compiledBody.dependsOnExternalState(), resolvedDef.freeLocalSlots(), hasOpaqueVariableReference));
+			return resolvedDef;
 		}
 
 		throw new IllegalStateException("Unknown AST node: " + ast.getClass());
@@ -584,14 +687,71 @@ public class Compiler {
 	}
 
 	/**
-	 * Resolves a plain (non-module-qualified) function by name/arity: checked against builder-registered
-	 * functions before falling back to the version-gated {@link FunctionLoader}.
+	 * Exact-then-variadic lookup of {@code name}/{@code arity} against {@code env.getDeclaredFunctions()},
+	 * mirroring {@link #lookupFunction}'s exact-then-variadic pattern for the defined/builtin registries.
 	 */
-	private static <N> @Nullable Function resolveFunction(Environment<N> env, String fname, int nargs) {
-		Function factory = lookupFunction(env.getFunctions(), fname, nargs);
-		if (factory != null)
-			return factory;
-		return lookupFunction(env.getFunctionLoader().getFunctions(env.getJqVersion()), fname, nargs);
+	private static @Nullable FunctionSignature resolveDeclaredFunctionKey(Environment<?> env, String name, int arity) {
+		FunctionSignature exact = FunctionSignature.of(name, arity);
+		if (env.getDeclaredFunctions().contains(exact))
+			return exact;
+		FunctionSignature variadic = exact.withArity(null);
+		return env.getDeclaredFunctions().contains(variadic) ? variadic : null;
+	}
+
+	/**
+	 * Compiles a (non-module-qualified) function call/formatting-filter reference: local/captured {@code def}
+	 * first, then a declared (no compile-time implementation, resolved via a {@link Memory} global slot
+	 * at runtime) global, then a defined/builtin (fixed at compile time) global. Declared is checked before
+	 * environment-defined, jq-library, or Java builtin registries so that a declared signature coinciding
+	 * with a real builtin still requires a binding rather than silently falling back to the builtin.
+	 */
+	private static <N> Expression<StackFrame, N> compileFunctionCall(Environment<N> env, CompileContext context, String fullName, List<Expression<StackFrame, N>> compiledArgs) throws JsonQueryException {
+		int arity = compiledArgs.size();
+		if (context.isLocalFunction(fullName, arity)) {
+			SymbolLocation loc = context.getFunctionLocation(fullName, arity);
+			int slot = loc != null ? loc.slot : 0;
+			FunctionDependsOnInfo info = loc != null ? loc.dependsOnInfo : null;
+			BoundArgumentInfo boundArgumentInfo = loc != null ? loc.boundArgumentInfo : null;
+			Expression<StackFrame, N> precomputed = boundArgumentInfo != null && compiledArgs.isEmpty() ? precomputedBoundArgument(boundArgumentInfo) : null;
+			if (precomputed != null)
+				return precomputed;
+			if (loc != null && !loc.isLocal) {
+				return boundArgumentInfo != null
+						? new ResolvedCapturedFunctionBoundArgumentAccess<>(env.getJsonProvider(), env.getJqVersion(), fullName, slot, context.getCurrentFunctionClosureSlot(), compiledArgs, boundArgumentInfo, context.isInputFixed())
+						: new ResolvedCapturedFunctionAccess<>(env.getJsonProvider(), env.getJqVersion(), fullName, slot, context.getCurrentFunctionClosureSlot(), compiledArgs, info, context.isInputFixed());
+			}
+			return boundArgumentInfo != null
+					? new ResolvedLocalFunctionBoundArgumentAccess<>(env.getJsonProvider(), env.getJqVersion(), fullName, slot, compiledArgs, boundArgumentInfo, context.isInputFixed())
+					: new ResolvedLocalFunctionAccess<>(env.getJsonProvider(), env.getJqVersion(), fullName, slot, compiledArgs, info, context.isInputFixed());
+		}
+
+		FunctionSignature declaredKey = resolveDeclaredFunctionKey(env, fullName, arity);
+		if (declaredKey != null) {
+			int globalIndex = context.getOrAssignGlobalFunctionIndex(declaredKey);
+			return new ResolvedGlobalFunctionAccess<>(env.getJsonProvider(), env.getJqVersion(), fullName, globalIndex, compiledArgs);
+		}
+
+		FunctionSignature exact = FunctionSignature.of(fullName, arity);
+		@Var Function factory = env.getFunctions().get(exact);
+		if (factory == null) {
+			JqFunction jqFunction = env.getJqFunctions().get(exact);
+			if (jqFunction != null)
+				return JqFunctionCompiler.compile(env, context, exact, jqFunction, JqFunctionCompiler.Origin.ENVIRONMENT, compiledArgs);
+			factory = env.getFunctions().get(exact.withArity(null));
+		}
+		if (factory == null) {
+			JqFunction jqFunction = env.getFunctionLoader().getJqFunctions(env.getJqVersion()).get(exact);
+			if (jqFunction != null)
+				return JqFunctionCompiler.compile(env, context, exact, jqFunction, JqFunctionCompiler.Origin.LOADER, compiledArgs);
+			Map<FunctionSignature, Function> loadedFunctions = env.getFunctionLoader().getFunctions(env.getJqVersion());
+			factory = loadedFunctions.get(exact);
+			if (factory == null)
+				factory = loadedFunctions.get(exact.withArity(null));
+		}
+		if (factory == null)
+			throw new JsonQueryException(String.format("Function %s/%d does not exist", fullName, arity));
+		Expression<StackFrame, N> fn = factory.bindArguments(env.getJsonProvider(), compiledArgs, env.getJqVersion());
+		return new ResolvedFunctionCall<>(fullName, fn, fn.dependsOnExternalState(), fn.dependsOnInput(), context.isInputFixed(), compiledArgs);
 	}
 
 	/**
@@ -603,6 +763,9 @@ public class Compiler {
 		Supplier<N> supplier = env.getVariables().get(name);
 		if (supplier != null)
 			return supplier;
+		N constant = env.getConstants().get(name);
+		if (constant != null)
+			return () -> constant;
 		if (!context.importedVariableDefaults().containsKey(name))
 			return null;
 		@SuppressWarnings("unchecked")
@@ -610,43 +773,72 @@ public class Compiler {
 		return () -> value;
 	}
 
-	private static <N> Expression<N> compileVariableRef(Environment<N> env, CompileContext context, @Nullable String moduleName, String varName) throws JsonQueryException {
+	/**
+	 * Resolves {@code bareName} (the plain, unqualified Environment-registered name) as a global variable --
+	 * declared first (a {@link Memory} global slot, checked first for the same reason as
+	 * {@link #compileFunctionCall}), then defined/constant/imported (fixed at compile time). Returns
+	 * {@code null} if {@code bareName} isn't a global at all. {@code displayName} is what the user actually
+	 * wrote ({@code name} or the self-qualified {@code name::name} form), used only for error/{@code toString()}
+	 * purposes.
+	 */
+	private static <N> @Nullable Expression<StackFrame, N> compileGlobalVariableAccess(Environment<N> env, CompileContext context, String displayName, String bareName) {
+		if (env.getDeclaredVariables().contains(bareName)) {
+			int globalIndex = context.getOrAssignGlobalVariableIndex(bareName);
+			return new ResolvedGlobalVariableAccess<>(displayName, globalIndex);
+		}
+		Supplier<N> supplier = resolveVariableSupplier(env, context, bareName);
+		if (supplier != null)
+			return new ResolvedFixedVariableAccess<>(displayName, supplier);
+		return null;
+	}
+
+	private static <N> Expression<StackFrame, N> compileVariableRef(Environment<N> env, CompileContext context, @Nullable String moduleName, String varName) throws JsonQueryException {
 		if (moduleName != null) {
 			String fullName = moduleName + "::" + varName;
 			if (context.isLocalVariable(fullName)) {
 				SymbolLocation loc = context.getVariableLocation(fullName);
 				int slot = loc != null ? loc.slot : 0;
-				if (loc != null && loc.isGlobal) {
-					@Var Supplier<N> supplier = resolveVariableSupplier(env, context, fullName);
-					if (supplier == null && moduleName.equals(varName))
-						supplier = resolveVariableSupplier(env, context, varName);
-					if (supplier == null)
-						throw new JsonQueryException(String.format("Variable $%s::%s is not defined", moduleName, varName));
-					return new ResolvedGlobalVariableAccess<>(fullName, slot, !loc.isLocal, context.getCurrentFunctionClosureSlot(), supplier);
-				}
+				BoundArgumentInfo boundArgumentInfo = loc != null ? loc.boundArgumentInfo : null;
+				Expression<StackFrame, N> precomputed = boundArgumentInfo != null ? precomputedBoundArgument(boundArgumentInfo) : null;
+				if (precomputed != null)
+					return precomputed;
 				if (loc != null && !loc.isLocal) {
-					return new ResolvedCapturedVariableAccess<>(fullName, slot, context.getCurrentFunctionClosureSlot());
+					return boundArgumentInfo != null
+							? new ResolvedCapturedVariableBoundArgumentAccess<>(fullName, slot, context.getCurrentFunctionClosureSlot(), boundArgumentInfo)
+							: new ResolvedCapturedVariableAccess<>(fullName, slot, context.getCurrentFunctionClosureSlot());
 				}
-				return new ResolvedLocalVariableAccess<>(fullName, slot);
+				return boundArgumentInfo != null
+						? new ResolvedLocalVariableBoundArgumentAccess<>(fullName, slot, boundArgumentInfo)
+						: new ResolvedLocalVariableAccess<>(fullName, slot);
 			}
-
+			if (moduleName.equals(varName)) {
+				Expression<StackFrame, N> global = compileGlobalVariableAccess(env, context, fullName, varName);
+				if (global != null)
+					return global;
+			}
 			throw new JsonQueryException(String.format("Variable $%s::%s is not defined", moduleName, varName));
 		}
 
 		if (context.isLocalVariable(varName)) {
 			SymbolLocation loc = context.getVariableLocation(varName);
 			int slot = loc != null ? loc.slot : 0;
-			if (loc != null && loc.isGlobal) {
-				Supplier<N> supplier = resolveVariableSupplier(env, context, varName);
-				if (supplier == null)
-					throw new JsonQueryException(String.format("Variable $%s is not defined", varName));
-				return new ResolvedGlobalVariableAccess<>(varName, slot, !loc.isLocal, context.getCurrentFunctionClosureSlot(), supplier);
-			}
+			BoundArgumentInfo boundArgumentInfo = loc != null ? loc.boundArgumentInfo : null;
+			Expression<StackFrame, N> precomputed = boundArgumentInfo != null ? precomputedBoundArgument(boundArgumentInfo) : null;
+			if (precomputed != null)
+				return precomputed;
 			if (loc != null && !loc.isLocal) {
-				return new ResolvedCapturedVariableAccess<>(varName, slot, context.getCurrentFunctionClosureSlot());
+				return boundArgumentInfo != null
+						? new ResolvedCapturedVariableBoundArgumentAccess<>(varName, slot, context.getCurrentFunctionClosureSlot(), boundArgumentInfo)
+						: new ResolvedCapturedVariableAccess<>(varName, slot, context.getCurrentFunctionClosureSlot());
 			}
-			return new ResolvedLocalVariableAccess<>(varName, slot);
+			return boundArgumentInfo != null
+					? new ResolvedLocalVariableBoundArgumentAccess<>(varName, slot, boundArgumentInfo)
+					: new ResolvedLocalVariableAccess<>(varName, slot);
 		}
+
+		Expression<StackFrame, N> global = compileGlobalVariableAccess(env, context, varName, varName);
+		if (global != null)
+			return global;
 
 		throw new JsonQueryException(String.format("Variable $%s is not defined", varName));
 	}
@@ -667,7 +859,7 @@ public class Compiler {
 			ObjectMatcherAstNode om = (ObjectMatcherAstNode) matcher;
 			List<ObjectMatcher.FieldMatcher<N>> compiled = new ArrayList<>();
 			for (ObjectMatcherAstNode.FieldMatcher fm : om.matchers()) {
-				Expression<N> name = compileNonNull(env, context, fm.name());
+				Expression<StackFrame, N> name = compileNonNull(env, context, fm.name());
 				PatternMatcher<N> sub = fm.rawMatcher() != null ? compileMatcher(env, context, fm.rawMatcher()) : null;
 				compiled.add(new ObjectMatcher.FieldMatcher<>(fm.dollar(), name, sub));
 			}
@@ -676,19 +868,18 @@ public class Compiler {
 		throw new IllegalStateException("Unknown matcher type: " + matcher.getClass());
 	}
 
-	public static <N> void bindAndApply(@Nullable StackFrame callerFrame, StackFrame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<N>> fnArgs, N in, @Nullable Path<N> path, Output<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
+	public static <N> void bindAndApply(StackFrame callerFrame, StackFrame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<StackFrame, N>> fnArgs, N in, @Nullable Path<N> path, Output<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
 		for (int i = 0; i < paramNames.size(); i++) {
 			String pName = paramNames.get(i);
 			int slot = paramSlots.get(i);
-			Expression<N> pExpr = fnArgs.get(i);
+			Expression<StackFrame, N> pExpr = fnArgs.get(i);
 			if (!pName.startsWith("$")) {
 				currentFrame.set(slot, new Function() {
 					@Override
 					@SuppressWarnings("unchecked")
-					public <N1> Expression<N1> bindArguments(JsonProvider<N1> jp, List<Expression<N1>> emptyArgs, Version v) {
-						Expression<N1> effectiveExpr = (Expression<N1>) (Expression<?>) pExpr;
-						StackFrame effectiveCallerFrame = (StackFrame) (Object) callerFrame;
-						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(effectiveCallerFrame, inVal, pVal, outVal);
+					public <Context, N1> Expression<Context, N1> bindArguments(JsonProvider<N1> jp, List<Expression<Context, N1>> emptyArgs, Version v) {
+						Expression<StackFrame, N1> effectiveExpr = (Expression<StackFrame, N1>) (Expression<?, ?>) pExpr;
+						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(callerFrame, inVal, pVal, outVal);
 					}
 				});
 			}
@@ -696,13 +887,13 @@ public class Compiler {
 		bindValueParams(callerFrame, currentFrame, paramNames, paramSlots, fnArgs, 0, in, path, output, bodyTask);
 	}
 
-	private static <N> void bindValueParams(@Nullable StackFrame callerFrame, StackFrame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<N>> fnArgs, int index, N in, @Nullable Path<N> path, Output<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
+	private static <N> void bindValueParams(StackFrame callerFrame, StackFrame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<StackFrame, N>> fnArgs, int index, N in, @Nullable Path<N> path, Output<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
 		if (index >= paramNames.size()) {
 			bodyTask.accept(currentFrame);
 			return;
 		}
 		String argName = paramNames.get(index);
-		Expression<N> argExpr = fnArgs.get(index);
+		Expression<StackFrame, N> argExpr = fnArgs.get(index);
 		int slot = paramSlots.get(index);
 		if (argName.startsWith("$")) {
 			argExpr.apply(callerFrame, in, path, (val, p) -> {
@@ -733,12 +924,12 @@ public class Compiler {
 		}
 	}
 
-	public static <JsonNode> Expression<JsonNode> compileNonNull(Environment<JsonNode> env, CompileContext context, AstNode ast) throws JsonQueryException {
+	public static <JsonNode> Expression<StackFrame, JsonNode> compileNonNull(Environment<JsonNode> env, CompileContext context, AstNode ast) throws JsonQueryException {
 		return compileNonNull(env, context, (Module) null, ast);
 	}
 
-	public static <JsonNode> Expression<JsonNode> compileNonNull(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
-		Expression<JsonNode> compiled = compile(env, context, currentModule, ast);
+	public static <JsonNode> Expression<StackFrame, JsonNode> compileNonNull(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
+		Expression<StackFrame, JsonNode> compiled = compile(env, context, currentModule, ast);
 		if (compiled == null)
 			throw new JsonQueryException("Cannot resolve null expression");
 		return compiled;

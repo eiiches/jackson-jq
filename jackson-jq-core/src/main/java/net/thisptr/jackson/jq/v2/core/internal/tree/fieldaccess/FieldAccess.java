@@ -2,12 +2,15 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Strings;
+import net.thisptr.jackson.jq.v2.core.internal.tree.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.path.ArrayIndexOfPath;
 import net.thisptr.jackson.jq.v2.core.path.ArrayIndexPath;
 import net.thisptr.jackson.jq.v2.core.path.ArrayRangeIndexPath;
@@ -21,29 +24,49 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public abstract class FieldAccess<JsonNode> implements Expression<JsonNode> {
+public abstract class FieldAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	protected final JsonProvider<JsonNode> jsonProvider;
-	protected final Expression<JsonNode> target;
+	protected final Expression<StackFrame, JsonNode> target;
 	protected final boolean permissive;
 	protected final @Nullable Version version;
 
-	public FieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> target, boolean permissive) {
+	public FieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> target, boolean permissive) {
 		this(jsonProvider, target, permissive, null);
 	}
 
-	public FieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> target, boolean permissive, @Nullable Version version) {
+	public FieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> target, boolean permissive, @Nullable Version version) {
 		this.jsonProvider = jsonProvider;
 		this.target = target;
 		this.permissive = permissive;
 		this.version = version;
 	}
 
-	public Expression<JsonNode> target() {
+	public Expression<StackFrame, JsonNode> target() {
 		return target;
 	}
 
 	public boolean permissive() {
 		return permissive;
+	}
+
+	@Override
+	public boolean dependsOnInput() {
+		return target.dependsOnInput();
+	}
+
+	@Override
+	public boolean dependsOnExternalState() {
+		return target.dependsOnExternalState();
+	}
+
+	@Override
+	public Set<Integer> freeLocalSlots() {
+		return FreeVariables.union(target);
+	}
+
+	@Override
+	public boolean hasOpaqueVariableReference() {
+		return FreeVariables.anyOpaque(target);
 	}
 
 	protected static <JsonNode> void emitAllPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode pobj, @Nullable Path<JsonNode> ppath, Output<JsonNode> output, boolean tracking) throws JsonQueryException {

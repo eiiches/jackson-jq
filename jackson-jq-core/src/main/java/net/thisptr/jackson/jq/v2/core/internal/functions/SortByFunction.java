@@ -6,12 +6,14 @@ import java.util.List;
 
 import com.google.auto.service.AutoService;
 
+import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -21,8 +23,8 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 @FunctionRegistration(name = "sort_by", nargs = 1)
 public class SortByFunction implements Function {
 	@Override
-	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, items, ipath, output) -> {
+	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((frame, items, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "sort_by", items, JsonNodeType.ARRAY);
 
 			JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
@@ -38,6 +40,6 @@ public class SortByFunction implements Function {
 			zipped.sort((o1, o2) -> comparator.compare(o1._2, o2._2));
 
 			output.emit(JsonNodeUtils.asArrayNode(jsonProvider, Pair._1(zipped)), null);
-		};
+		});
 	}
 }

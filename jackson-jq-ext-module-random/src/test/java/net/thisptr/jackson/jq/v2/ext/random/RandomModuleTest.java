@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.ext.random;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -11,6 +12,7 @@ import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -34,5 +36,15 @@ public class RandomModuleTest {
 		ModuleImpl module = new ModuleImpl();
 		assertThat(module.getFunctions().keySet()).containsExactlyInAnyOrder(
 				FunctionSignature.of("random", 0));
+	}
+
+	@Test
+	public void functionContract() {
+		ModuleImpl module = new ModuleImpl();
+		module.getFunctions().values().forEach(fn -> {
+			Expression<Object, JsonNode> expr = fn.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.emptyList(), Versions.JQ_1_6);
+			assertThat(expr.dependsOnInput()).isFalse();
+			assertThat(expr.dependsOnExternalState()).isTrue();
+		});
 	}
 }

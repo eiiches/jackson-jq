@@ -26,7 +26,8 @@ public final class UnrepresentablePath<JsonNode> implements Path<JsonNode> {
 		return path == null || path instanceof UnrepresentablePath;
 	}
 
-	private UnrepresentablePath() {}
+	private UnrepresentablePath() {
+	}
 
 	@Override
 	public void toJsonNode(JsonProvider<JsonNode> jsonProvider, JsonNode out) throws JsonQueryException {

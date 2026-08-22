@@ -7,6 +7,7 @@ import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.operators.PlusOperator;
@@ -26,35 +27,35 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 public class RangeFunction implements Function {
 
 	@Override
-	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output) -> {
-								if (args.size() == 1) {
-					args.get(0).apply(frame, in, null, (end, opath) -> {
-						range1(jsonProvider, output, end);
-					});
-				} else if (args.size() == 2) {
-					args.get(0).apply(frame, in, null, (start, opath) -> {
-						if (version.compareTo(Versions.JQ_1_5) <= 0) {
-							Object[] cur = new Object[] { start }; // only reset when start changes [v1.5]
-							args.get(1).apply(frame, in, null, (end, opath2) -> {
-								cur[0] = range2(jsonProvider, output, (JsonNode) cur[0], end);
-							});
-						} else {
-							args.get(1).apply(frame, in, null, (end, opath2) -> {
-								range2(jsonProvider, output, start, end);
-							});
-						}
-					});
-				} else {
-					args.get(0).apply(frame, in, null, (start, opath) -> {
+	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+		return FunctionBody.builder(args).build((frame, in, ipath, output) -> {
+			if (args.size() == 1) {
+				args.get(0).apply(frame, in, null, (end, opath) -> {
+					range1(jsonProvider, output, end);
+				});
+			} else if (args.size() == 2) {
+				args.get(0).apply(frame, in, null, (start, opath) -> {
+					if (version.compareTo(Versions.JQ_1_5) <= 0) {
+						Object[] cur = new Object[] { start }; // only reset when start changes [v1.5]
 						args.get(1).apply(frame, in, null, (end, opath2) -> {
-							args.get(2).apply(frame, in, null, (incr, opath3) -> {
-								range3(jsonProvider, output, start, end, incr);
-							});
+							cur[0] = range2(jsonProvider, output, (JsonNode) cur[0], end);
+						});
+					} else {
+						args.get(1).apply(frame, in, null, (end, opath2) -> {
+							range2(jsonProvider, output, start, end);
+						});
+					}
+				});
+			} else {
+				args.get(0).apply(frame, in, null, (start, opath) -> {
+					args.get(1).apply(frame, in, null, (end, opath2) -> {
+						args.get(2).apply(frame, in, null, (incr, opath3) -> {
+							range3(jsonProvider, output, start, end, incr);
 						});
 					});
-				}
-	};
+				});
+			}
+		});
 	}
 
 	private static <JsonNode> void range1(JsonProvider<JsonNode> jsonProvider, Output<JsonNode> output, JsonNode end) throws JsonQueryException {

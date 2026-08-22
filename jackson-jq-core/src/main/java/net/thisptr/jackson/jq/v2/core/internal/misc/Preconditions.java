@@ -8,11 +8,10 @@ import net.thisptr.jackson.jq.v2.core.exception.IllegalJsonArgumentException;
 import net.thisptr.jackson.jq.v2.core.exception.IllegalJsonInputException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 
 public class Preconditions {
 
-	public static <JsonNode> void checkArgumentCount(String fname, List<Expression<JsonNode>> args, int... nums) throws IllegalJsonArgumentException {
+	public static void checkArgumentCount(String fname, List<?> args, int... nums) throws IllegalJsonArgumentException {
 		int nargs = args.size();
 		for (int num : nums)
 			if (nargs == num)

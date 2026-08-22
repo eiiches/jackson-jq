@@ -6,13 +6,15 @@ import java.util.List;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 
-public abstract class AbstractSvFilter implements Function {
+public abstract class AbstractXsvFilter implements Function {
 
 	protected abstract String name();
 
@@ -21,8 +23,8 @@ public abstract class AbstractSvFilter implements Function {
 	protected abstract void appendEscaped(StringBuilder builder, String text);
 
 	@Override
-	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (scope, in, ipath, output) -> {
+	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 			if (jsonProvider.getNodeType(in) != JsonNodeType.ARRAY)
 				throw new JsonQueryTypeException(jsonProvider, version, "%s cannot be %s-formatted, only array", in, name());
 
@@ -49,6 +51,6 @@ public abstract class AbstractSvFilter implements Function {
 			}
 
 			output.emit(jsonProvider.createString(row.toString()), null);
-		};
+		});
 	}
 }

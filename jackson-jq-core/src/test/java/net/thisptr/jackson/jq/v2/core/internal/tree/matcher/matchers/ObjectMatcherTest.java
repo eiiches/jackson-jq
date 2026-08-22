@@ -13,6 +13,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.IntNode;
 import org.junit.jupiter.api.Test;
 
+import net.thisptr.jackson.jq.v2.core.internal.Memory;
+import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.tree.Tuple;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
@@ -31,14 +33,14 @@ public class ObjectMatcherTest {
 		JsonNode in = new ObjectMapper().readTree("{\"outer\":{\"a\": 1, \"b\": 2}, \"c\": 3}");
 		PatternMatcher<JsonNode> matcher = new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
 				new ObjectMatcher.FieldMatcher<>(false, new StringLiteral<>(JSON_PROVIDER, "outer"), new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
-						new ObjectMatcher.FieldMatcher<>(false, new Tuple<>(Arrays.<Expression<JsonNode>>asList(new StringLiteral<>(JSON_PROVIDER, "a"), new StringLiteral<>(JSON_PROVIDER, "b"))), new ValueMatcher<>("x"))))),
+						new ObjectMatcher.FieldMatcher<>(false, new Tuple<>(Arrays.<Expression<StackFrame, JsonNode>>asList(new StringLiteral<>(JSON_PROVIDER, "a"), new StringLiteral<>(JSON_PROVIDER, "b"))), new ValueMatcher<>("x"))))),
 				new ObjectMatcher.FieldMatcher<>(false, new StringLiteral<>(JSON_PROVIDER, "c"), new ValueMatcher<>("y"))))
 				.resolveSlots(slots("x", 3, "y", 5));
 
 		List<List<Pair<Integer, JsonNode>>> matches = new ArrayList<>();
 
 		Deque<PatternMatcher.Match<JsonNode>> accumulator = new ArrayDeque<>();
-		matcher.match(null, in, (match) -> {
+		matcher.match(new Memory().pushFrame(0), in, (match) -> {
 			List<Pair<Integer, JsonNode>> copy = new ArrayList<>();
 			for (PatternMatcher.Match<JsonNode> item : match)
 				copy.add(Pair.of(item.slot, item.value));
@@ -56,13 +58,13 @@ public class ObjectMatcherTest {
 		PatternMatcher<JsonNode> matcher = new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
 				new ObjectMatcher.FieldMatcher<>(false, new StringLiteral<>(JSON_PROVIDER, "outer"), new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
 						new ObjectMatcher.FieldMatcher<>(false, new StringLiteral<>(JSON_PROVIDER, "a"), new ValueMatcher<>("x"))))),
-				new ObjectMatcher.FieldMatcher<>(false, new Tuple<>(Arrays.<Expression<JsonNode>>asList(new StringLiteral<>(JSON_PROVIDER, "b"), new StringLiteral<>(JSON_PROVIDER, "c"))), new ValueMatcher<>("y"))))
+				new ObjectMatcher.FieldMatcher<>(false, new Tuple<>(Arrays.<Expression<StackFrame, JsonNode>>asList(new StringLiteral<>(JSON_PROVIDER, "b"), new StringLiteral<>(JSON_PROVIDER, "c"))), new ValueMatcher<>("y"))))
 				.resolveSlots(slots("x", 7, "y", 11));
 
 		List<List<Pair<Integer, JsonNode>>> matches = new ArrayList<>();
 
 		Deque<PatternMatcher.Match<JsonNode>> accumulator = new ArrayDeque<>();
-		matcher.match(null, in, (match) -> {
+		matcher.match(new Memory().pushFrame(0), in, (match) -> {
 			List<Pair<Integer, JsonNode>> copy = new ArrayList<>();
 			for (PatternMatcher.Match<JsonNode> item : match)
 				copy.add(Pair.of(item.slot, item.value));

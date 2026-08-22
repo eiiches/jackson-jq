@@ -15,10 +15,21 @@ public class ReduceExpressionAstNode implements AstNode {
 		this.iterExpr = iterExpr;
 	}
 
-	public PatternMatcherAstNode matcher() { return matcher; }
-	public AstNode initExpr() { return initExpr; }
-	public AstNode reduceExpr() { return reduceExpr; }
-	public AstNode iterExpr() { return iterExpr; }
+	public PatternMatcherAstNode matcher() {
+		return matcher;
+	}
+
+	public AstNode initExpr() {
+		return initExpr;
+	}
+
+	public AstNode reduceExpr() {
+		return reduceExpr;
+	}
+
+	public AstNode iterExpr() {
+		return iterExpr;
+	}
 
 	@Override
 	public String toString() {

@@ -33,12 +33,13 @@ import java.util.List;
 
 import com.google.auto.service.AutoService;
 
+import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 import net.thisptr.jackson.jq.v2.spi.VersionRange;
 
 @AutoService(JqLibrary.class)
 public class CoreJqLibrary implements JqLibrary {
-	private static final List<JqFunc> FUNCTIONS = Collections.unmodifiableList(Arrays.asList(
+	private static final List<JqFunction> FUNCTIONS = Collections.unmodifiableList(Arrays.asList(
 			jq("@text", "tostring"),
 			jq("@json", "tojson"),
 			jq("paths", "paths(. != null)"),
@@ -101,16 +102,16 @@ public class CoreJqLibrary implements JqLibrary {
 			jq("_modify", args("paths", "update"), "reduce path(paths) as $p (.; setpath($p; getpath($p) | update))", "[, 1.6)"),
 			jq("pick", args("pathexps"), ". as $in | reduce path(pathexps) as $a (null; setpath($a; $in|getpath($a)) )", "[1.7, )")));
 
-	private static JqFunc jq(String name, String body) {
-		return new JqFunc(name, Collections.emptyList(), body, null);
+	private static JqFunction jq(String name, String body) {
+		return new JqFunction(name, Collections.emptyList(), body, null);
 	}
 
-	private static JqFunc jq(String name, List<String> args, String body) {
-		return new JqFunc(name, args, body, null);
+	private static JqFunction jq(String name, List<String> args, String body) {
+		return new JqFunction(name, args, body, null);
 	}
 
-	private static JqFunc jq(String name, List<String> args, String body, String version) {
-		return new JqFunc(name, args, body, VersionRange.valueOf(version));
+	private static JqFunction jq(String name, List<String> args, String body, String version) {
+		return new JqFunction(name, args, body, VersionRange.valueOf(version));
 	}
 
 	private static List<String> args(String... args) {
@@ -118,7 +119,7 @@ public class CoreJqLibrary implements JqLibrary {
 	}
 
 	@Override
-	public List<JqFunc> getFunctions() {
+	public List<JqFunction> getJqFunctions() {
 		return FUNCTIONS;
 	}
 }

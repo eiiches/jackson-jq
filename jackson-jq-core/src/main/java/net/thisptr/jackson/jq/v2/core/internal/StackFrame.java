@@ -1,13 +1,13 @@
-package net.thisptr.jackson.jq.v2.spi;
+package net.thisptr.jackson.jq.v2.core.internal;
 
 import org.jspecify.annotations.Nullable;
 
 public class StackFrame {
-	private final StackMemory stack;
+	private final Memory stack;
 	private final int size;
 	private final int offset;
 
-	StackFrame(StackMemory stack, int offset, int size) {
+	StackFrame(Memory stack, int offset, int size) {
 		this.stack = stack;
 		this.offset = offset;
 		this.size = size;
@@ -17,7 +17,7 @@ public class StackFrame {
 		return size;
 	}
 
-	public StackMemory getEnclosingMemory() {
+	public Memory getEnclosingMemory() {
 		return stack;
 	}
 

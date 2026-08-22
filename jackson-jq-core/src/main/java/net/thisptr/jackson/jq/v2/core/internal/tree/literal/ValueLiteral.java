@@ -1,15 +1,21 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.literal;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.tree.FreeVariables;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
+import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
 import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public abstract class ValueLiteral<JsonNode> implements Expression<JsonNode> {
+public abstract class ValueLiteral<JsonNode> implements ConstantExpression<StackFrame, JsonNode>, FreeVariables {
 	protected final JsonProvider<JsonNode> jsonProvider;
 
 	protected ValueLiteral(JsonProvider<JsonNode> jsonProvider) {
@@ -19,12 +25,37 @@ public abstract class ValueLiteral<JsonNode> implements Expression<JsonNode> {
 	public abstract JsonNode value();
 
 	@Override
-	public @Nullable JsonNode evaluateConstantExpr() {
-		return value();
+	public List<JsonNode> getConstantResults() {
+		return Collections.singletonList(value());
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+	public Cardinality getCardinality() {
+		return Cardinality.ONE;
+	}
+
+	@Override
+	public boolean dependsOnInput() {
+		return false;
+	}
+
+	@Override
+	public boolean dependsOnExternalState() {
+		return false;
+	}
+
+	@Override
+	public Set<Integer> freeLocalSlots() {
+		return Collections.emptySet();
+	}
+
+	@Override
+	public boolean hasOpaqueVariableReference() {
+		return false;
+	}
+
+	@Override
+	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		output.emit(value(), null);
 	}
 }

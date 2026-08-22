@@ -28,6 +28,7 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 	};
 
 	private static final Map<JsonNodeType, Integer> orderValues = new HashMap<>();
+
 	static {
 		for (int i = 0; i < ordering.length; i++)
 			for (JsonNodeType type : ordering[i])

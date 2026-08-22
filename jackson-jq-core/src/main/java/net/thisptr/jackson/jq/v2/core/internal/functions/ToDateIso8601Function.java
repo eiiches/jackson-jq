@@ -6,9 +6,11 @@ import java.util.List;
 
 import com.google.auto.service.AutoService;
 
+import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -20,22 +22,22 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 public class ToDateIso8601Function implements Function {
 
 	@Override
-	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (scope, in, ipath, output) -> {
+	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 
-				Preconditions.checkInputType(jsonProvider, "todateiso8601", in, JsonNodeType.NUMBER);
-		double epochDouble = jsonProvider.asDouble(in);
-		if (Double.isNaN(epochDouble))
-			throw new JsonQueryException("todateiso8601 cannot be applied to nan");
-		if (Double.isInfinite(epochDouble))
-			throw new JsonQueryException("todateiso8601 cannot be applied to infinite");
-		try {
-			long epochSeconds = (long) epochDouble;
-			String iso8601String = Instant.ofEpochSecond(epochSeconds).toString();
-			output.emit(jsonProvider.createString(iso8601String), null);
-		} catch (DateTimeException e) {
-			throw new JsonQueryException(e);
-		}
-		};
-}
+			Preconditions.checkInputType(jsonProvider, "todateiso8601", in, JsonNodeType.NUMBER);
+			double epochDouble = jsonProvider.asDouble(in);
+			if (Double.isNaN(epochDouble))
+				throw new JsonQueryException("todateiso8601 cannot be applied to nan");
+			if (Double.isInfinite(epochDouble))
+				throw new JsonQueryException("todateiso8601 cannot be applied to infinite");
+			try {
+				long epochSeconds = (long) epochDouble;
+				String iso8601String = Instant.ofEpochSecond(epochSeconds).toString();
+				output.emit(jsonProvider.createString(iso8601String), null);
+			} catch (DateTimeException e) {
+				throw new JsonQueryException(e);
+			}
+		});
+	}
 }

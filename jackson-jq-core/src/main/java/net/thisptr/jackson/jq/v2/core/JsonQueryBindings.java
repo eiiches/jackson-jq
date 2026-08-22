@@ -44,20 +44,20 @@ public final class JsonQueryBindings<JsonNode> {
 		private final Map<String, Supplier<JsonNode>> variables = new HashMap<>();
 		private final Map<FunctionSignature, Function> functions = new HashMap<>();
 
-		public Builder<JsonNode> addVariable(String name, JsonNode value) {
+		public Builder<JsonNode> setVariable(String name, JsonNode value) {
 			Objects.requireNonNull(value, "value");
-			return addVariable(name, () -> value);
+			return setVariable(name, () -> value);
 		}
 
 		/**
 		 * Adds a variable whose supplier is evaluated whenever the variable is referenced.
 		 */
-		public Builder<JsonNode> addVariable(String name, Supplier<JsonNode> supplier) {
+		public Builder<JsonNode> setVariable(String name, Supplier<JsonNode> supplier) {
 			variables.put(Objects.requireNonNull(name, "name"), Objects.requireNonNull(supplier, "supplier"));
 			return this;
 		}
 
-		public Builder<JsonNode> addFunction(FunctionSignature nameAndArity, Function function) {
+		public Builder<JsonNode> setFunction(FunctionSignature nameAndArity, Function function) {
 			functions.put(Objects.requireNonNull(nameAndArity, "nameAndArity"), Objects.requireNonNull(function, "function"));
 			return this;
 		}

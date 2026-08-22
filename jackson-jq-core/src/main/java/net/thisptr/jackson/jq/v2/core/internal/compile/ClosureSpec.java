@@ -5,7 +5,7 @@ import java.util.List;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.spi.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 
 public class ClosureSpec {
 	public static class CapturedVariableRef {
@@ -54,17 +54,17 @@ public class ClosureSpec {
 	 * off that frame. A hop-2+ entry reads instead from {@code currentFrame}'s own Closure, found at
 	 * {@code definerClosureSlot} of that same frame (the immediately-enclosing function's own reserved slot).
 	 */
-	public <JsonNode> Closure buildClosure(@Nullable StackFrame currentFrame, int definerClosureSlot) {
+	public Closure buildClosure(StackFrame currentFrame, int definerClosureSlot) {
 		Closure closure = new Closure(capturedVariables.size() + capturedFunctions.size());
 		@Var @Nullable Closure parentClosure = null;
 		@Var boolean parentClosureFetched = false;
 		for (CapturedVariableRef ref : capturedVariables) {
 			Object value;
 			if (ref.isLocalInParent) {
-				value = currentFrame != null ? currentFrame.get(ref.parentSlot) : null;
+				value = currentFrame.get(ref.parentSlot);
 			} else {
 				if (!parentClosureFetched) {
-					parentClosure = currentFrame != null ? (Closure) currentFrame.get(definerClosureSlot) : null;
+					parentClosure = (Closure) currentFrame.get(definerClosureSlot);
 					parentClosureFetched = true;
 				}
 				value = parentClosure != null ? parentClosure.get(ref.parentSlot) : null;
@@ -74,10 +74,10 @@ public class ClosureSpec {
 		for (CapturedFunctionRef ref : capturedFunctions) {
 			Object value;
 			if (ref.isLocalInParent) {
-				value = currentFrame != null ? currentFrame.get(ref.parentSlot) : null;
+				value = currentFrame.get(ref.parentSlot);
 			} else {
 				if (!parentClosureFetched) {
-					parentClosure = currentFrame != null ? (Closure) currentFrame.get(definerClosureSlot) : null;
+					parentClosure = (Closure) currentFrame.get(definerClosureSlot);
 					parentClosureFetched = true;
 				}
 				value = parentClosure != null ? parentClosure.get(ref.parentSlot) : null;

@@ -69,6 +69,11 @@
 		</dependency>
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-debug</artifactId>
+			<version>${jackson-jq.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
 			<artifactId>jackson-jq-ext-module-time</artifactId>
 			<version>${jackson-jq.version}</version>
 		</dependency>

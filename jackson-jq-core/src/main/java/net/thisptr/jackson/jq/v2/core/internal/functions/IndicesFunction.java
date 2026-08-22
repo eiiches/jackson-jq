@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.google.auto.service.AutoService;
 
+import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -19,8 +20,8 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 @FunctionRegistration(name = "indices", nargs = 1)
 public class IndicesFunction implements Function {
 	@Override
-	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output) -> {
+	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+		return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "indices", in, JsonNodeType.STRING, JsonNodeType.ARRAY, JsonNodeType.NULL);
 
 			if (jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
@@ -29,12 +30,12 @@ public class IndicesFunction implements Function {
 			}
 
 			args.get(0).apply(frame, in, null, (needle, opath) -> {
-					JsonNode indices = jsonProvider.createArray();
-					for (int index : indices(jsonProvider, needle, in))
-						jsonProvider.add(indices, jsonProvider.createNumber(index));
-					output.emit(indices, null);
-				});
-	};
+				JsonNode indices = jsonProvider.createArray();
+				for (int index : indices(jsonProvider, needle, in))
+					jsonProvider.add(indices, jsonProvider.createNumber(index));
+				output.emit(indices, null);
+			});
+		});
 	}
 
 	public static <JsonNode> List<Integer> indices(JsonProvider<JsonNode> jsonProvider, JsonNode needle, JsonNode haystack) throws JsonQueryException {
@@ -53,7 +54,8 @@ public class IndicesFunction implements Function {
 			int needleSize = jsonProvider.size(needle);
 			int haystackSize = jsonProvider.size(haystack);
 			if (needleSize != 0) {
-				shift: for (int i = 0; i < haystackSize - needleSize + 1; ++i) {
+				shift:
+				for (int i = 0; i < haystackSize - needleSize + 1; ++i) {
 					for (int j = 0; j < needleSize; ++j)
 						if (comparator.compare(jsonProvider.requireGet(haystack, i + j), jsonProvider.requireGet(needle, j)) != 0)
 							continue shift;

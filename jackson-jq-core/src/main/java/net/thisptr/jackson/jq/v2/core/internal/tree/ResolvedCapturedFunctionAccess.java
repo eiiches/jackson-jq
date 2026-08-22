@@ -1,38 +1,49 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.List;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Closure;
+import net.thisptr.jackson.jq.v2.core.internal.compile.FunctionDependsOnInfo;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<JsonNode> {
+public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final Version version;
 	private final String name;
 	private final int closureSlot;
 	private final int frameClosureSlot;
-	private final List<Expression<JsonNode>> args;
-	private final @Nullable Function defaultFactory;
-	private final @Nullable Expression<JsonNode> defaultFunction;
+	private final List<Expression<StackFrame, JsonNode>> args;
+	private final boolean dependsOnInput;
+	private final boolean dependsOnExternalState;
+	private final Set<Integer> freeLocalSlots;
 
-	public ResolvedCapturedFunctionAccess(JsonProvider<JsonNode> jsonProvider, Version version, String name, int closureSlot, int frameClosureSlot, List<Expression<JsonNode>> args, @Nullable Function defaultFactory, @Nullable Expression<JsonNode> defaultFunction) {
+	public ResolvedCapturedFunctionAccess(JsonProvider<JsonNode> jsonProvider, Version version, String name, int closureSlot, int frameClosureSlot, List<Expression<StackFrame, JsonNode>> args, @Nullable FunctionDependsOnInfo info, boolean inputFixed) {
 		this.jsonProvider = jsonProvider;
 		this.version = version;
 		this.name = name;
 		this.closureSlot = closureSlot;
 		this.frameClosureSlot = frameClosureSlot;
 		this.args = args;
-		this.defaultFactory = defaultFactory;
-		this.defaultFunction = defaultFunction;
+
+		boolean ownInput = info != null ? info.dependsOnInput() : true;
+		boolean ownExternal = info != null ? info.dependsOnExternalState() : true;
+		this.dependsOnInput = (ownInput && !inputFixed) || args.stream().anyMatch(Expression::dependsOnInput);
+		this.dependsOnExternalState = ownExternal || args.stream().anyMatch(Expression::dependsOnExternalState);
+
+		// Finding the callee itself already crosses a closure hop -- stay unconditionally opaque for the
+		// "own" contribution (matching ResolvedCapturedVariableAccess's "defs stay conservative"
+		// precedent); only args, evaluated in the caller's own frame, are ever subtractable.
+		this.freeLocalSlots = FreeVariables.unionAll(args);
 	}
 
 	public String name() {
@@ -43,24 +54,38 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<Json
 		return closureSlot;
 	}
 
-	public List<Expression<JsonNode>> args() {
+	public List<Expression<StackFrame, JsonNode>> args() {
 		return args;
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
-		Closure closure = frame != null ? (Closure) frame.get(frameClosureSlot) : null;
+	public boolean dependsOnInput() {
+		return dependsOnInput;
+	}
+
+	@Override
+	public boolean dependsOnExternalState() {
+		return dependsOnExternalState;
+	}
+
+	@Override
+	public Set<Integer> freeLocalSlots() {
+		return freeLocalSlots;
+	}
+
+	@Override
+	public boolean hasOpaqueVariableReference() {
+		return true;
+	}
+
+	@Override
+	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+		Closure closure = (Closure) frame.get(frameClosureSlot);
 		Function factory = closure != null ? (Function) closure.get(closureSlot) : null;
-		if (factory == null && defaultFunction != null) {
-			defaultFunction.apply(frame, in, path, output);
-			return;
-		}
 		if (factory == null) {
 			throw new JsonQueryException("Function " + name + " is not defined");
 		}
-		Expression<JsonNode> fn = factory == defaultFactory && defaultFunction != null
-				? defaultFunction : factory.bindArguments(jsonProvider, args, version);
-		fn.apply(frame, in, path, output);
+		factory.bindArguments(jsonProvider, args, version).apply(frame, in, path, output);
 	}
 
 	@Override

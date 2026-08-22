@@ -29,7 +29,7 @@ public class PlusOperator<JsonNode> implements BinaryOperator<JsonNode> {
 		JsonNodeType rtype = jsonProvider.getNodeType(rhs);
 		if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.NUMBER) {
 			// This is a bit tricky because Jackson distinguishes between integral and floating point numbers
-			// but our JsonNodeType.NUMBER doesn't. 
+			// but our JsonNodeType.NUMBER doesn't.
 			// Let's check if they can be represented as longs.
 			double ld = jsonProvider.asDouble(lhs);
 			double rd = jsonProvider.asDouble(rhs);

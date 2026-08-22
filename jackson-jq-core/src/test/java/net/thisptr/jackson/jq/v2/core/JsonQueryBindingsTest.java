@@ -31,11 +31,11 @@ public class JsonQueryBindingsTest {
 	@Test
 	public void reusesCompiledQueryWithDifferentVariableBindings() throws Exception {
 		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
-				.addVariable("value", JSON_PROVIDER.createNumber(1))
+				.declareVariable("value")
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$value");
 
-		assertEquals(Arrays.asList(MAPPER.readTree("1")), run(query, JsonQueryBindings.empty()));
+		assertEquals(Arrays.asList(MAPPER.readTree("1")), run(query, bindingsWithVariable("value", 1)));
 		assertEquals(Arrays.asList(MAPPER.readTree("2")), run(query, bindingsWithVariable("value", 2)));
 		assertEquals(Arrays.asList(MAPPER.readTree("3")), run(query, bindingsWithVariable("value", 3)));
 	}
@@ -44,7 +44,7 @@ public class JsonQueryBindingsTest {
 	public void evaluatesDefaultSupplierForEveryReference() throws Exception {
 		AtomicInteger counter = new AtomicInteger();
 		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
-				.addVariable("value", () -> JSON_PROVIDER.createNumber(counter.incrementAndGet()))
+				.defineVariable("value", () -> JSON_PROVIDER.createNumber(counter.incrementAndGet()))
 				.build();
 
 		assertEquals(Arrays.asList(MAPPER.readTree("[1,2]")), run(env.compile("[$value, $value]"), JsonQueryBindings.empty()));
@@ -52,20 +52,17 @@ public class JsonQueryBindingsTest {
 
 	@Test
 	public void evaluatesOverrideSupplierForEveryReferenceAndThroughClosure() throws Exception {
-		AtomicInteger defaultCounter = new AtomicInteger();
 		AtomicInteger overrideCounter = new AtomicInteger();
 		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
-				.addVariable("value", () -> JSON_PROVIDER.createNumber(defaultCounter.incrementAndGet()))
+				.declareVariable("value")
 				.build();
 		JsonQuery<JsonNode> query = env.compile("def values: [$value, $value]; values");
 		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
-				.addVariable("value", () -> JSON_PROVIDER.createNumber(overrideCounter.incrementAndGet()))
+				.setVariable("value", () -> JSON_PROVIDER.createNumber(overrideCounter.incrementAndGet()))
 				.build();
 
-		assertEquals(0, defaultCounter.get());
 		assertEquals(0, overrideCounter.get());
 		assertEquals(Arrays.asList(MAPPER.readTree("[1,2]")), run(query, bindings));
-		assertEquals(0, defaultCounter.get());
 		assertEquals(2, overrideCounter.get());
 	}
 
@@ -73,10 +70,10 @@ public class JsonQueryBindingsTest {
 	public void doesNotEvaluateUnusedOverrideSupplier() throws Exception {
 		AtomicInteger counter = new AtomicInteger();
 		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
-				.addVariable("value", JSON_PROVIDER.createNumber(1))
+				.declareVariable("value")
 				.build();
 		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
-				.addVariable("value", () -> JSON_PROVIDER.createNumber(counter.incrementAndGet()))
+				.setVariable("value", () -> JSON_PROVIDER.createNumber(counter.incrementAndGet()))
 				.build();
 
 		run(env.compile("."), bindings);
@@ -86,10 +83,10 @@ public class JsonQueryBindingsTest {
 	@Test
 	public void reportsNullValueFromOverrideSupplier() throws Exception {
 		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
-				.addVariable("value", JSON_PROVIDER.createNumber(1))
+				.declareVariable("value")
 				.build();
 		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
-				.addVariable("value", () -> null)
+				.setVariable("value", () -> null)
 				.build();
 
 		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(env.compile("$value"), bindings));
@@ -100,24 +97,28 @@ public class JsonQueryBindingsTest {
 	public void overridesFunctionPerInvocationAndThroughClosure() throws Exception {
 		FunctionSignature key = FunctionSignature.of("custom", 0);
 		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
-				.addVariable("value", JSON_PROVIDER.createString("default-variable"))
-				.addFunction(key, constantFunction("default-function"))
+				.declareVariable("value")
+				.declareFunction(key)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("def wrapper: [$value, custom]; wrapper");
 
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
-				.addVariable("value", JSON_PROVIDER.createString("override-variable"))
-				.addFunction(key, constantFunction("override-function"))
+		JsonQueryBindings<JsonNode> firstCall = JsonQueryBindings.<JsonNode>builder()
+				.setVariable("value", JSON_PROVIDER.createString("default-variable"))
+				.setFunction(key, constantFunction("default-function"))
+				.build();
+		JsonQueryBindings<JsonNode> secondCall = JsonQueryBindings.<JsonNode>builder()
+				.setVariable("value", JSON_PROVIDER.createString("override-variable"))
+				.setFunction(key, constantFunction("override-function"))
 				.build();
 
-		assertEquals(Arrays.asList(MAPPER.readTree("[\"default-variable\",\"default-function\"]")), run(query, JsonQueryBindings.empty()));
-		assertEquals(Arrays.asList(MAPPER.readTree("[\"override-variable\",\"override-function\"]")), run(query, bindings));
+		assertEquals(Arrays.asList(MAPPER.readTree("[\"default-variable\",\"default-function\"]")), run(query, firstCall));
+		assertEquals(Arrays.asList(MAPPER.readTree("[\"override-variable\",\"override-function\"]")), run(query, secondCall));
 	}
 
 	@Test
 	public void rejectsUnknownOverrides() throws Exception {
 		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
-				.addVariable("known", JSON_PROVIDER.createNull())
+				.defineConstant("known", JSON_PROVIDER.createNull())
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$known");
 
@@ -126,16 +127,56 @@ public class JsonQueryBindingsTest {
 		assertThat(variableError).hasMessageContaining("$unknown");
 
 		JsonQueryBindings<JsonNode> functionBindings = JsonQueryBindings.<JsonNode>builder()
-				.addFunction(FunctionSignature.of("unknown", 0), constantFunction("unused"))
+				.setFunction(FunctionSignature.of("unknown", 0), constantFunction("unused"))
 				.build();
 		JsonQueryException functionError = assertThrows(JsonQueryException.class, () -> run(query, functionBindings));
 		assertThat(functionError).hasMessageContaining("unknown/0");
 	}
 
 	@Test
+	public void rejectsOverrideOfFixedValue() throws Exception {
+		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+				.defineConstant("known", JSON_PROVIDER.createNumber(1))
+				.build();
+		JsonQuery<JsonNode> query = env.compile("$known");
+
+		JsonQueryException error = assertThrows(JsonQueryException.class,
+				() -> run(query, bindingsWithVariable("known", 2)));
+		assertThat(error).hasMessageContaining("$known").hasMessageContaining("fixed value");
+	}
+
+	@Test
+	public void rejectsMissingDeclaredVariable() throws Exception {
+		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+				.declareVariable("value")
+				.build();
+		JsonQuery<JsonNode> query = env.compile("$value");
+
+		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(query, JsonQueryBindings.empty()));
+		assertThat(error).hasMessageContaining("$value").hasMessageContaining("must be supplied");
+	}
+
+	@Test
+	public void declaredFunctionColludingWithABuiltinStillRequiresABinding() throws Exception {
+		FunctionSignature builtinCollision = FunctionSignature.of("length", 0);
+		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+				.declareFunction(builtinCollision)
+				.build();
+		JsonQuery<JsonNode> query = env.compile("length");
+
+		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(query, JsonQueryBindings.empty()));
+		assertThat(error).hasMessageContaining("length").hasMessageContaining("must be supplied");
+
+		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+				.setFunction(builtinCollision, constantFunction("overridden"))
+				.build();
+		assertEquals(Arrays.asList(MAPPER.readTree("\"overridden\"")), run(query, bindings));
+	}
+
+	@Test
 	public void localVariableShadowsGlobalBinding() throws Exception {
 		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
-				.addVariable("value", JSON_PROVIDER.createNumber(1))
+				.declareVariable("value")
 				.build();
 		JsonQuery<JsonNode> query = env.compile("10 as $value | $value");
 
@@ -143,16 +184,16 @@ public class JsonQueryBindingsTest {
 	}
 
 	@Test
-	public void overridesOnlyTheMatchingFunctionSignature() throws Exception {
+	public void overridesOnlyDeclaredFunctionSignatureLeavingDefinedOneFixed() throws Exception {
 		FunctionSignature zeroArg = FunctionSignature.of("custom", 0);
 		FunctionSignature oneArg = FunctionSignature.of("custom", 1);
 		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
-				.addFunction(zeroArg, constantFunction("zero"))
-				.addFunction(oneArg, constantFunction("one"))
+				.declareFunction(zeroArg)
+				.defineFunction(oneArg, constantFunction("one"))
 				.build();
 		JsonQuery<JsonNode> query = env.compile("[custom, custom(.)]");
 		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
-				.addFunction(zeroArg, constantFunction("override"))
+				.setFunction(zeroArg, constantFunction("override"))
 				.build();
 
 		assertEquals(Arrays.asList(MAPPER.readTree("[\"override\",\"one\"]")), run(query, bindings));
@@ -162,11 +203,11 @@ public class JsonQueryBindingsTest {
 	public void overridesVariadicFunctionUsingRegisteredSignature() throws Exception {
 		FunctionSignature variadic = FunctionSignature.of("custom", 0).withArity(null);
 		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
-				.addFunction(variadic, constantFunction("default"))
+				.declareFunction(variadic)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("[custom, custom(.)]");
 		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
-				.addFunction(variadic, constantFunction("override"))
+				.setFunction(variadic, constantFunction("override"))
 				.build();
 
 		assertEquals(Arrays.asList(MAPPER.readTree("[\"override\",\"override\"]")), run(query, bindings));
@@ -175,7 +216,7 @@ public class JsonQueryBindingsTest {
 	@Test
 	public void isolatesBindingsAcrossConcurrentInvocations() throws Exception {
 		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
-				.addVariable("value", JSON_PROVIDER.createNumber(-1))
+				.declareVariable("value")
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$value");
 		ExecutorService executor = Executors.newFixedThreadPool(4);
@@ -193,13 +234,13 @@ public class JsonQueryBindingsTest {
 	}
 
 	private static JsonQueryBindings<JsonNode> bindingsWithVariable(String name, int value) {
-		return JsonQueryBindings.<JsonNode>builder().addVariable(name, JSON_PROVIDER.createNumber(value)).build();
+		return JsonQueryBindings.<JsonNode>builder().setVariable(name, JSON_PROVIDER.createNumber(value)).build();
 	}
 
 	private static Function constantFunction(String value) {
 		return new Function() {
 			@Override
-			public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version version) {
+			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version version) {
 				return (frame, in, path, output) -> output.emit(jsonProvider.createString(value), null);
 			}
 		};

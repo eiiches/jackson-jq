@@ -1,31 +1,61 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import java.util.Set;
+
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
-	public final Expression<JsonNode> key;
-	public final @Nullable Expression<JsonNode> value;
+	public final Expression<StackFrame, JsonNode> key;
+	public final @Nullable Expression<StackFrame, JsonNode> value;
 
-	public StringKeyFieldConstruction(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> key, @Nullable Expression<JsonNode> value) {
+	@Override
+	public Cardinality getCardinality() {
+		return value == null ? key.getCardinality() : CardinalityUtils.multiply(key.getCardinality(), value.getCardinality());
+	}
+
+	public StringKeyFieldConstruction(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> key, @Nullable Expression<StackFrame, JsonNode> value) {
 		this.jsonProvider = jsonProvider;
 		this.key = key;
 		this.value = value;
 	}
 
-	public StringKeyFieldConstruction(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> key) {
+	public StringKeyFieldConstruction(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> key) {
 		this(jsonProvider, key, null);
 	}
 
+	// `{(key)}` shorthand implicitly reads `in` when value is absent.
 	@Override
-	public void evaluate(@Nullable StackFrame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
+	public boolean dependsOnInput() {
+		return key.dependsOnInput() || value == null || value.dependsOnInput();
+	}
+
+	@Override
+	public boolean dependsOnExternalState() {
+		return key.dependsOnExternalState() || (value != null && value.dependsOnExternalState());
+	}
+
+	@Override
+	public Set<Integer> freeLocalSlots() {
+		return FreeVariables.union(key, value);
+	}
+
+	@Override
+	public boolean hasOpaqueVariableReference() {
+		return FreeVariables.anyOpaque(key, value);
+	}
+
+	@Override
+	public void evaluate(StackFrame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		key.apply(frame, in, null, (k, opath) -> {
 			if (jsonProvider.getNodeType(k) != JsonNodeType.STRING)
 				throw new JsonQueryException("key must evaluate to string");

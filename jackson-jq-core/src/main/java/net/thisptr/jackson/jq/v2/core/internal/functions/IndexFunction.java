@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.google.auto.service.AutoService;
 
+import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -15,8 +16,8 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 @FunctionRegistration(name = "index", nargs = 1)
 public class IndexFunction implements Function {
 	@Override
-	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output) -> {
+	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+		return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
 			if (jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
 				output.emit(jsonProvider.createNull(), null);
 				return;
@@ -30,6 +31,6 @@ public class IndexFunction implements Function {
 					output.emit(jsonProvider.createNumber(tmp.get(0)), null);
 				}
 			});
-		};
+		});
 	}
 }

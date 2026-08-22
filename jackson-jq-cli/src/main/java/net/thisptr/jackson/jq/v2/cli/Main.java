@@ -19,6 +19,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.help.HelpFormatter;
+import org.jspecify.annotations.Nullable;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.MappingIterator;
 import tools.jackson.databind.ObjectMapper;
@@ -36,11 +37,14 @@ import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.JsonQueryJacksonModule;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class Main {
 	private static ObjectMapper MAPPER = JsonMapper.builder()
@@ -110,15 +114,33 @@ public class Main {
 
 		Jackson3JsonProviderImpl jsonProvider = Jackson3JsonProviderImpl.getInstance();
 		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, version)
-				.addFunction(FunctionSignature.of("env", 0), new Function() {
+				.defineFunction(FunctionSignature.of("env", 0), new Function() {
 					@Override
-					public <N> Expression<N> bindArguments(JsonProvider<N> jsonProv, List<Expression<N>> fnArgs, Version ver) {
-						return (frame, in, path, output) -> {
-							N envObj = jsonProv.createObject();
-							for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
-								jsonProv.set(envObj, entry.getKey(), jsonProv.createString(entry.getValue()));
+					public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProv, List<Expression<Context, N>> fnArgs, Version ver) {
+						return new Expression<Context, N>() {
+							@Override
+							public Cardinality getCardinality() {
+								return Cardinality.ONE;
 							}
-							output.emit(envObj, null);
+
+							@Override
+							public boolean dependsOnInput() {
+								return false;
+							}
+
+							@Override
+							public boolean dependsOnExternalState() {
+								return true;
+							}
+
+							@Override
+							public void apply(Context context, N in, @Nullable Path<N> ipath, Output<N> output) throws JsonQueryException {
+								N envObj = jsonProv.createObject();
+								for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+									jsonProv.set(envObj, entry.getKey(), jsonProv.createString(entry.getValue()));
+								}
+								output.emit(envObj, null);
+							}
 						};
 					}
 				})

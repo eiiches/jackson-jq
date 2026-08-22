@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.google.auto.service.AutoService;
 
-import net.thisptr.jackson.jq.v2.core.internal.JsonArgumentFunction;
+import net.thisptr.jackson.jq.v2.core.internal.PureJsonArgumentFunction;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -15,9 +15,9 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "atan2", nargs = 2)
-public class Atan2Function extends JsonArgumentFunction {
+public class Atan2Function extends PureJsonArgumentFunction {
 	@Override
-	protected <JsonNode> JsonNode fn(JsonProvider<JsonNode> jsonProvider, List<JsonNode> args, JsonNode in) throws JsonQueryException {
+	protected <JsonNode> JsonNode fn(JsonProvider<JsonNode> jsonProvider, List<JsonNode> args) throws JsonQueryException {
 		Preconditions.checkArgumentType(jsonProvider, "atan2/2", 0, args.get(0), JsonNodeType.NUMBER);
 		Preconditions.checkArgumentType(jsonProvider, "atan2/2", 1, args.get(1), JsonNodeType.NUMBER);
 		return JsonNodeUtils.asNumericNode(jsonProvider, Math.atan2(jsonProvider.asDouble(args.get(0)), jsonProvider.asDouble(args.get(1))));

@@ -25,8 +25,8 @@ public class ClassLoaderUtils {
 		// https://github.com/oracle/graal/issues/7682
 		try {
 			FileSystem fileSystem = FileSystems.newFileSystem(
-				URI.create("resource:/"),
-				Collections.singletonMap("create", "true")
+					URI.create("resource:/"),
+					Collections.singletonMap("create", "true")
 			);
 			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 				try {

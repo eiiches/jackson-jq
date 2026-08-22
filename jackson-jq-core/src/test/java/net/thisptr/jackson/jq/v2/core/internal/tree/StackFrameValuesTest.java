@@ -42,7 +42,7 @@ public class StackFrameValuesTest {
 	void returnsNullForFunctionRawValue() {
 		Function factory = new Function() {
 			@Override
-			public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version version) {
+			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version version) {
 				throw new UnsupportedOperationException();
 			}
 		};
@@ -52,7 +52,7 @@ public class StackFrameValuesTest {
 
 	@Test
 	void returnsNullForExpressionRawValue() {
-		Expression<String> expression = (frame, in, path, output) -> {
+		Expression<Object, String> expression = (frame, in, path, output) -> {
 			throw new UnsupportedOperationException();
 		};
 

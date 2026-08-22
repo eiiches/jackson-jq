@@ -38,9 +38,9 @@ public class Usage {
 		// First of all, prepare an Environment via EnvironmentBuilder, configured with JSON provider and JQ version.
 		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
 				// You can also define a custom function. E.g.
-				.addFunction(FunctionSignature.of("repeat", 1), new Function() {
+				.defineFunction(FunctionSignature.of("repeat", 1), new Function() {
 					@Override
-					public <N> Expression<N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<N>> args, Version jqVersion) {
+					public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version jqVersion) {
 						return (frame, in, path, output) -> {
 							args.get(0).apply(frame, in, null, (time, opath) -> {
 								output.emit(jsonProvider.createString(Strings.repeat(jsonProvider.asText(in), jsonProvider.asInt(time))), null);
@@ -57,8 +57,9 @@ public class Usage {
 								FileSystems.getDefault().getPath("").toAbsolutePath(), // search modules in the actual file system
 								Paths.get(Usage.class.getClassLoader().getResource("classpath_modules").toURI())) // or in the classpath resources
 				))
-				// addVariable(...) sets a custom variable that can be used from jq expressions.
-				.addVariable("param", jsonProvider.createNumber(42))
+				// declareVariable(...) declares a custom variable that can be used from jq expressions, with
+				// no value -- a value must be supplied via JsonQueryBindings on every apply() call.
+				.declareVariable("param")
 				.build();
 
 		// env.compile(...) parses, resolves symbols, and compiles a given expression.
@@ -67,13 +68,15 @@ public class Usage {
 		// You need a JsonNode to use as an input to the JsonQuery.
 		JsonNode in = MAPPER.readTree("{\"ids\":\"12,15,23\",\"name\":\"jackson\",\"timestamp\":1418785331123}");
 
-		// Finally, JsonQuery#apply(...) executes the query with given input and produces 0, 1 or more JsonNode.
-		q.apply(in, (out, path) -> System.out.println(out)); // => 84
-
-		// A compiled query can be reused with different variable and function bindings for each invocation.
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
-				.addVariable("param", () -> jsonProvider.createNumber(7)) // suppliers are evaluated on each reference
+		// A compiled query is reused with different variable and function bindings for each invocation.
+		JsonQueryBindings<JsonNode> firstBindings = JsonQueryBindings.<JsonNode>builder()
+				.setVariable("param", jsonProvider.createNumber(42))
 				.build();
-		q.apply(in, bindings, (out, path) -> System.out.println(out)); // => 14
+		q.apply(in, firstBindings, (out, path) -> System.out.println(out)); // => 84
+
+		JsonQueryBindings<JsonNode> secondBindings = JsonQueryBindings.<JsonNode>builder()
+				.setVariable("param", () -> jsonProvider.createNumber(7)) // suppliers are evaluated on each reference
+				.build();
+		q.apply(in, secondBindings, (out, path) -> System.out.println(out)); // => 14
 	}
 }

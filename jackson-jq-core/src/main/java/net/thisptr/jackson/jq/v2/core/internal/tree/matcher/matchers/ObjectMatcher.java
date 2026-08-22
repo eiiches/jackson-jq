@@ -9,6 +9,7 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Functional;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
@@ -17,7 +18,6 @@ import net.thisptr.jackson.jq.v2.core.path.ObjectFieldPath;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -48,15 +48,15 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		// {x: [$a]} : dollar = false, name = "x", matcher = [$a]
 
 		private boolean dollar;
-		private Expression<JsonNode> name;
+		private Expression<StackFrame, JsonNode> name;
 		private @Nullable PatternMatcher<JsonNode> matcher;
 		private int slot;
 
-		public FieldMatcher(boolean dollar, Expression<JsonNode> name, @Nullable PatternMatcher<JsonNode> matcher) {
+		public FieldMatcher(boolean dollar, Expression<StackFrame, JsonNode> name, @Nullable PatternMatcher<JsonNode> matcher) {
 			this(dollar, name, matcher, -1);
 		}
 
-		private FieldMatcher(boolean dollar, Expression<JsonNode> name, @Nullable PatternMatcher<JsonNode> matcher, int slot) {
+		private FieldMatcher(boolean dollar, Expression<StackFrame, JsonNode> name, @Nullable PatternMatcher<JsonNode> matcher, int slot) {
 			if (dollar && !(name instanceof StringLiteral))
 				throw new IllegalArgumentException("BUG: name must be instance of StringLiteral when dollar = true");
 			if (!dollar && matcher == null)
@@ -71,7 +71,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			return dollar;
 		}
 
-		public Expression<JsonNode> name() {
+		public Expression<StackFrame, JsonNode> name() {
 			return name;
 		}
 
@@ -114,7 +114,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		}
 	}
 
-	private void recursive(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate, int index) throws JsonQueryException {
+	private void recursive(StackFrame frame, JsonNode in, Functional.Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
 			out.accept(accumulate);
 			return;
@@ -139,7 +139,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		});
 	}
 
-	private void recursiveWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> inpath, MatchOutput<JsonNode> output, Deque<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
+	private void recursiveWithPath(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> inpath, MatchOutput<JsonNode> output, Deque<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
 			output.emit(accumulate);
 			return;
@@ -166,7 +166,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public void match(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate) throws JsonQueryException {
+	public void match(StackFrame frame, JsonNode in, Functional.Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL) {
 			if (matchers.isEmpty())
@@ -177,7 +177,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public void matchWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Deque<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
+	public void matchWithPath(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Deque<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL) {
 			if (matchers.isEmpty())

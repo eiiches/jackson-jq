@@ -5,5 +5,5 @@ module net.thisptr.jackson.jq.v2.ext.module.debug {
 	requires net.thisptr.jackson.jq.v2.json;
 
 	provides net.thisptr.jackson.jq.v2.spi.module.Module with
-		net.thisptr.jackson.jq.v2.ext.debug.ModuleImpl;
+			net.thisptr.jackson.jq.v2.ext.debug.ModuleImpl;
 }

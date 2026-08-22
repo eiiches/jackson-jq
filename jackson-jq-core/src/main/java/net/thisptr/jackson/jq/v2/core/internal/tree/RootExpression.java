@@ -1,10 +1,8 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -12,83 +10,111 @@ import java.util.function.Supplier;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.JsonQueryBindings;
+import net.thisptr.jackson.jq.v2.core.internal.Memory;
+import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.StackFrame;
-import net.thisptr.jackson.jq.v2.spi.StackMemory;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class RootExpression<JsonNode> implements Expression<JsonNode> {
+public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode> {
 	private final int frameSize;
-	private final Expression<JsonNode> inner;
-	private final Map<String, Supplier<JsonNode>> defaultVariables;
-	private final Map<FunctionSignature, Function> defaultFunctions;
-	private final Map<String, List<Integer>> variableSlots;
-	private final Map<FunctionSignature, List<Integer>> functionSlots;
-	private final Set<String> validVariables;
-	private final Set<FunctionSignature> validFunctions;
+
+	@Override
+	public Cardinality getCardinality() {
+		return inner.getCardinality();
+	}
+
+	@Override
+	public boolean dependsOnInput() {
+		return inner.dependsOnInput();
+	}
+
+	@Override
+	public boolean dependsOnExternalState() {
+		return inner.dependsOnExternalState();
+	}
+
+	// Size of the StackMemory global-slots array this compiled query needs -- one slot per referenced
+	// declareVariable/declareFunction name/signature (see CompileContext#getGlobalCount).
+	private final int globalCount;
+	private final Expression<StackFrame, JsonNode> inner;
+	// Names/signatures with a fixed, compile-time-baked value
+	// (defineVariable/defineConstant/defineFunction/defineJqFunction)
+	// -- used only to pick the right validateBindings() error message; the actual values are already bound
+	// directly into `inner`'s tree, not stored here.
+	private final Set<String> definedVariables;
+	private final Set<FunctionSignature> definedFunctions;
+	// Global-slot index for every declared name/signature this compiled query actually references (see
+	// CompileContext#globalVariableIndices/globalFunctionIndices) -- bindings MUST supply all of these,
+	// since (unlike defineVariable/defineFunction) a declared name has no compiled-in default to fall back
+	// on.
+	private final Map<String, Integer> globalVariableIndices;
+	private final Map<FunctionSignature, Integer> globalFunctionIndices;
+	// The full set of names/signatures declared on the Environment (via declareVariable/declareFunction) --
+	// bindings may supply any of these, whether or not this particular compiled query happens to reference
+	// them.
+	private final Set<String> declaredVariables;
+	private final Set<FunctionSignature> declaredFunctions;
 	private final Map<FunctionSignature, Integer> rootFunctionSlots;
 
-	public RootExpression(int frameSize, Expression<JsonNode> inner) {
-		this(frameSize, inner, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
+	public RootExpression(int frameSize, Expression<StackFrame, JsonNode> inner) {
+		this(frameSize, 0, inner, Collections.emptySet(), Collections.emptySet(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
 	}
 
-	public RootExpression(int frameSize, Expression<JsonNode> inner,
-			Map<String, Supplier<JsonNode>> defaultVariables,
-			Map<FunctionSignature, Function> defaultFunctions,
-			Map<String, List<Integer>> variableSlots,
-			Map<FunctionSignature, List<Integer>> functionSlots,
-			Set<String> validVariables,
-			Set<FunctionSignature> validFunctions,
-			Map<FunctionSignature, Integer> rootFunctionSlots) {
+	public RootExpression(int frameSize, int globalCount, Expression<StackFrame, JsonNode> inner,
+						  Set<String> definedVariables,
+						  Set<FunctionSignature> definedFunctions,
+						  Map<String, Integer> globalVariableIndices,
+						  Map<FunctionSignature, Integer> globalFunctionIndices,
+						  Set<String> declaredVariables,
+						  Set<FunctionSignature> declaredFunctions,
+						  Map<FunctionSignature, Integer> rootFunctionSlots) {
 		this.frameSize = frameSize;
+		this.globalCount = globalCount;
 		this.inner = inner;
-		this.defaultVariables = Collections.unmodifiableMap(new HashMap<>(defaultVariables));
-		this.defaultFunctions = Collections.unmodifiableMap(new HashMap<>(defaultFunctions));
-		this.variableSlots = copySlotMap(variableSlots);
-		this.functionSlots = copySlotMap(functionSlots);
-		this.validVariables = Collections.unmodifiableSet(new HashSet<>(validVariables));
-		this.validFunctions = Collections.unmodifiableSet(new HashSet<>(validFunctions));
+		this.definedVariables = Collections.unmodifiableSet(new HashSet<>(definedVariables));
+		this.definedFunctions = Collections.unmodifiableSet(new HashSet<>(definedFunctions));
+		this.globalVariableIndices = Collections.unmodifiableMap(new HashMap<>(globalVariableIndices));
+		this.globalFunctionIndices = Collections.unmodifiableMap(new HashMap<>(globalFunctionIndices));
+		this.declaredVariables = Collections.unmodifiableSet(new HashSet<>(declaredVariables));
+		this.declaredFunctions = Collections.unmodifiableSet(new HashSet<>(declaredFunctions));
 		this.rootFunctionSlots = Collections.unmodifiableMap(new HashMap<>(rootFunctionSlots));
-	}
-
-	private static <K> Map<K, List<Integer>> copySlotMap(Map<K, List<Integer>> source) {
-		Map<K, List<Integer>> result = new HashMap<>();
-		for (Map.Entry<K, List<Integer>> entry : source.entrySet())
-			result.put(entry.getKey(), Collections.unmodifiableList(new ArrayList<>(entry.getValue())));
-		return Collections.unmodifiableMap(result);
 	}
 
 	public int frameSize() {
 		return frameSize;
 	}
 
-	public Expression<JsonNode> inner() {
+	public Expression<StackFrame, JsonNode> inner() {
 		return inner;
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		apply(parentFrame, in, path, output, JsonQueryBindings.empty());
 	}
 
 	public void apply(JsonNode in, JsonQueryBindings<JsonNode> bindings, Output<JsonNode> output) throws JsonQueryException {
-		apply(null, in, null, output, bindings);
+		apply((StackFrame) null, in, null, output, bindings);
+	}
+
+	public void apply(JsonNode in, Output<JsonNode> output) throws JsonQueryException {
+		apply(in, JsonQueryBindings.empty(), output);
 	}
 
 	private void apply(@Nullable StackFrame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output, JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {
 		validateBindings(bindings);
-		StackFrame rootFrame = parentFrame != null
-				? parentFrame.getEnclosingMemory().pushFrame(frameSize)
-				: new StackMemory().pushFrame(frameSize);
+		Memory memory = parentFrame != null ? parentFrame.getEnclosingMemory() : new Memory(globalCount);
+		StackFrame rootFrame = memory.pushFrame(frameSize);
 		try {
-			initializeFrame(rootFrame, bindings);
+			initializeGlobals(memory, bindings);
 			inner.apply(rootFrame, in, path, output);
 		} finally {
-			rootFrame.getEnclosingMemory().popFrame();
+			memory.popFrame();
 		}
 	}
 
@@ -102,10 +128,12 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 	 * (non-module) compiles carry an empty {@code rootFunctionSlots} map and this always returns empty.
 	 */
 	public Map<FunctionSignature, Function> applyForModuleExports(JsonNode in) throws JsonQueryException {
-		StackFrame rootFrame = new StackMemory().pushFrame(frameSize);
+		Memory memory = new Memory(globalCount);
+		StackFrame rootFrame = memory.pushFrame(frameSize);
 		try {
-			initializeFrame(rootFrame, JsonQueryBindings.empty());
-			inner.apply(rootFrame, in, null, (v, p) -> { });
+			initializeGlobals(memory, JsonQueryBindings.empty());
+			inner.apply(rootFrame, in, null, (v, p) -> {
+			});
 			Map<FunctionSignature, Function> result = new HashMap<>();
 			for (Map.Entry<FunctionSignature, Integer> entry : rootFunctionSlots.entrySet()) {
 				Object raw = rootFrame.get(entry.getValue());
@@ -115,40 +143,45 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 			}
 			return result;
 		} finally {
-			rootFrame.getEnclosingMemory().popFrame();
+			memory.popFrame();
 		}
 	}
 
 	private void validateBindings(JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {
 		for (String name : bindings.variables().keySet()) {
-			if (!validVariables.contains(name))
-				throw new JsonQueryException("Variable $" + name + " cannot be overridden because it was not defined when the query was compiled");
+			if (declaredVariables.contains(name))
+				continue;
+			if (definedVariables.contains(name))
+				throw new JsonQueryException("Variable $" + name + " cannot be overridden because it has a fixed value in the Environment");
+			throw new JsonQueryException("Variable $" + name + " cannot be overridden because it was not defined when the query was compiled");
 		}
 		for (FunctionSignature key : bindings.functions().keySet()) {
-			if (!validFunctions.contains(key))
-				throw new JsonQueryException("Function " + key + " cannot be overridden because it was not defined when the query was compiled");
+			if (declaredFunctions.contains(key))
+				continue;
+			if (definedFunctions.contains(key))
+				throw new JsonQueryException("Function " + key + " cannot be overridden because it has a fixed value in the Environment");
+			throw new JsonQueryException("Function " + key + " cannot be overridden because it was not defined when the query was compiled");
+		}
+		for (String name : globalVariableIndices.keySet()) {
+			if (!bindings.variables().containsKey(name))
+				throw new JsonQueryException("Variable $" + name + " must be supplied when calling apply(), because it was declared without a value in the Environment");
+		}
+		for (FunctionSignature key : globalFunctionIndices.keySet()) {
+			if (!bindings.functions().containsKey(key))
+				throw new JsonQueryException("Function " + key + " must be supplied when calling apply(), because it was declared without a value in the Environment");
 		}
 	}
 
-	private void initializeFrame(StackFrame frame, JsonQueryBindings<JsonNode> bindings) {
-		for (Map.Entry<String, List<Integer>> entry : variableSlots.entrySet()) {
-			String name = entry.getKey();
-			Supplier<JsonNode> supplier = bindings.variables().containsKey(name)
-					? bindings.variables().get(name)
-					: defaultVariables.get(name);
-			if (supplier != null) {
-				for (int slot : entry.getValue())
-					frame.set(slot, supplier);
-			}
+	private void initializeGlobals(Memory memory, JsonQueryBindings<JsonNode> bindings) {
+		for (Map.Entry<String, Integer> entry : globalVariableIndices.entrySet()) {
+			Supplier<JsonNode> supplier = bindings.variables().get(entry.getKey());
+			if (supplier != null)
+				memory.setGlobal(entry.getValue(), supplier);
 		}
-		for (Map.Entry<FunctionSignature, List<Integer>> entry : functionSlots.entrySet()) {
-			Function factory = bindings.functions().containsKey(entry.getKey())
-					? bindings.functions().get(entry.getKey())
-					: defaultFunctions.get(entry.getKey());
-			if (factory != null) {
-				for (int slot : entry.getValue())
-					frame.set(slot, factory);
-			}
+		for (Map.Entry<FunctionSignature, Integer> entry : globalFunctionIndices.entrySet()) {
+			Function factory = bindings.functions().get(entry.getKey());
+			if (factory != null)
+				memory.setGlobal(entry.getValue(), factory);
 		}
 	}
 

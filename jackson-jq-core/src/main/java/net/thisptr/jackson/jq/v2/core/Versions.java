@@ -25,5 +25,6 @@ public class Versions {
 		return Arrays.asList(JQ_1_5, JQ_1_6, JQ_1_7, JQ_1_7_1, JQ_1_8_0, JQ_1_8_1, JQ_1_8_2);
 	}
 
-	private Versions() {}
+	private Versions() {
+	}
 }

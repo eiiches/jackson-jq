@@ -5,19 +5,46 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public interface Expression<JsonNode> {
-
-	// TODO: Replace with 'boolean isConstantExpression()' and update the compiler to recursively set the flag.
-	//       For an expression to be "constant", it must meet these requirements:
-	//        1. the expression doesn't use inputs. any input returns the same value(s).
-	//        2. any function used in the expression is pure, i.e.,
-	//           (i) returns the same value(s) for the same arguments (no random or time-based values, etc.)
-	//           (ii) doesn't use the inputs
-	//       Functions probably need default boolean isPure() { return false; }.
-	//       Anyone who needs the pre-evaluated constant value should call apply() with NullNode and a null Path.
-	default @Nullable JsonNode evaluateConstantExpr() {
-		return null;
+/**
+ * An executable jq expression.
+ *
+ * @param <JsonNode> the JSON node type
+ * @param <Context> an opaque object representing execution state that has to be passed on when evaluating function arguments
+ */
+public interface Expression<Context, JsonNode> {
+	/**
+	 * Returns the number of values this expression is known to emit for one input on normal
+	 * completion.
+	 *
+	 * @return the known output cardinality, or {@link Cardinality#UNKNOWN} when it cannot be proven
+	 */
+	default Cardinality getCardinality() {
+		return Cardinality.UNKNOWN;
 	}
 
-	void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException;
+	/** Whether this expression's result can vary depending on the {@code .}/path it's applied to. */
+	default boolean dependsOnInput() {
+		return true;
+	}
+
+	/**
+	 * Whether this expression's result can vary due to external, non-deterministic state -- the
+	 * JVM's RNG state, wall-clock time, the filesystem, the network, etc., rather than purely from its
+	 * own {@code .}/path and bound arguments. References to jq variables such as {@code $var} are not
+	 * considered external state.
+	 */
+	default boolean dependsOnExternalState() {
+		return true;
+	}
+
+	/**
+	 * Evaluates this expression against the given input.
+	 *
+	 * @param context an opaque object that has to be passed on when evaluating Function arguments
+	 * @param in the input JSON node (the {@code .} context)
+	 * @param ipath the path of the input JSON node, or {@code null} if untracked
+	 * @param output the consumer to receive output JSON nodes
+	 * @throws JsonQueryException if an error occurs during evaluation
+	 */
+	void apply(Context context, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException;
 }

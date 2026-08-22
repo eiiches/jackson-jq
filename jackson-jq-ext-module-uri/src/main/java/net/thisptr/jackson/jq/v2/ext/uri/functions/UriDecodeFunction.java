@@ -5,26 +5,44 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.ext.uri.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class UriDecodeFunction implements Function {
 	@Override
 	// Suppress JdkObsolete because URLDecoder.decode(String, Charset) is not available in Java 8 target.
 	@SuppressWarnings("JdkObsolete")
-	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output) -> {
-			Preconditions.checkInputType(jsonProvider, "urldecode", in, JsonNodeType.STRING);
+	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+		return new Expression<Context, JsonNode>() {
+			@Override
+			public Cardinality getCardinality() {
+				return Cardinality.ONE;
+			}
 
-			try {
-				output.emit(jsonProvider.createString(URLDecoder.decode(jsonProvider.asText(in), StandardCharsets.UTF_8.name())), null);
-			} catch (UnsupportedEncodingException e) {
-				throw new JsonQueryException(e);
+			@Override
+			public boolean dependsOnExternalState() {
+				return false;
+			}
+
+			@Override
+			public void apply(Context context, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+				Preconditions.checkInputType(jsonProvider, "urldecode", in, JsonNodeType.STRING);
+
+				try {
+					output.emit(jsonProvider.createString(URLDecoder.decode(jsonProvider.asText(in), StandardCharsets.UTF_8.name())), null);
+				} catch (UnsupportedEncodingException e) {
+					throw new JsonQueryException(e);
+				}
 			}
 		};
 	}

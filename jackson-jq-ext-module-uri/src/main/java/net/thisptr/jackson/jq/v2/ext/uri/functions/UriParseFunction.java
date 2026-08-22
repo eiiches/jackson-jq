@@ -11,14 +11,18 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.ext.uri.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class UriParseFunction implements Function {
 
@@ -26,16 +30,29 @@ public class UriParseFunction implements Function {
 	private static final Pattern EQUAL = Pattern.compile(Pattern.quote("="));
 
 	@Override
-	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
-		return (frame, in, ipath, output) -> {
-			Preconditions.checkInputType(jsonProvider, "uriparse", in, JsonNodeType.STRING);
+	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+		return new Expression<Context, JsonNode>() {
+			@Override
+			public Cardinality getCardinality() {
+				return Cardinality.ONE;
+			}
 
-			try {
-				URI uri = new URI(jsonProvider.asText(in));
-				Map<String, JsonNode> queryObj = parseQueryObj(jsonProvider, uri.getRawQuery());
-				output.emit(buildResult(jsonProvider, uri, queryObj), null);
-			} catch (URISyntaxException e) {
-				throw new JsonQueryException(e);
+			@Override
+			public boolean dependsOnExternalState() {
+				return false;
+			}
+
+			@Override
+			public void apply(Context context, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+				Preconditions.checkInputType(jsonProvider, "uriparse", in, JsonNodeType.STRING);
+
+				try {
+					URI uri = new URI(jsonProvider.asText(in));
+					Map<String, JsonNode> queryObj = parseQueryObj(jsonProvider, uri.getRawQuery());
+					output.emit(buildResult(jsonProvider, uri, queryObj), null);
+				} catch (URISyntaxException e) {
+					throw new JsonQueryException(e);
+				}
 			}
 		};
 	}

@@ -67,7 +67,8 @@ public class ArrayIndexOfPath<JsonNode> implements Path<JsonNode> {
 		@Var JsonNode out = jsonProvider.createArray();
 
 		if (jsonProvider.size(subseq) != 0) {
-			shift: for (int i = 0; i < jsonProvider.size(seq) - jsonProvider.size(subseq) + 1; ++i) {
+			shift:
+			for (int i = 0; i < jsonProvider.size(seq) - jsonProvider.size(subseq) + 1; ++i) {
 				for (int j = 0; j < jsonProvider.size(subseq); ++j)
 					if (comparator.compare(jsonProvider.requireGet(seq, i + j), jsonProvider.requireGet(subseq, j)) != 0)
 						continue shift;

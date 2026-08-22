@@ -1,53 +1,71 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.compile.Closure;
+import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ResolvedGlobalVariableAccess<JsonNode> implements Expression<JsonNode> {
+/**
+ * Reference to an {@code EnvironmentBuilder.declareVariable}-registered variable -- no compile-time value,
+ * so it's read from {@code StackFrame.getEnclosingMemory()}'s flat global-slots array (populated once per
+ * top-level {@code apply()} call from {@code JsonQueryBindings}, before the query body runs). The same
+ * {@code globalIndex} is valid from any {@code def}-nesting depth, since one {@code StackMemory} backs
+ * exactly one top-level {@code apply()} call -- no closure capture needed.
+ */
+public class ResolvedGlobalVariableAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final String name;
-	private final int slot;
-	private final boolean captured;
-	private final int frameClosureSlot;
-	private final Supplier<JsonNode> defaultSupplier;
+	private final int globalIndex;
 
-	public ResolvedGlobalVariableAccess(String name, int slot, boolean captured, int frameClosureSlot, Supplier<JsonNode> defaultSupplier) {
+	public ResolvedGlobalVariableAccess(String name, int globalIndex) {
 		this.name = name;
-		this.slot = slot;
-		this.captured = captured;
-		this.frameClosureSlot = frameClosureSlot;
-		this.defaultSupplier = defaultSupplier;
+		this.globalIndex = globalIndex;
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	public Cardinality getCardinality() {
+		return Cardinality.ONE;
+	}
+
+	@Override
+	public boolean dependsOnInput() {
+		return false;
+	}
+
+	@Override
+	public boolean dependsOnExternalState() {
+		return false;
+	}
+
+	// No binding-construct node in the AST could ever capture/subtract a global variable -- it's
+	// registered on the Environment, entirely outside the compiled expression.
+	@Override
+	public Set<Integer> freeLocalSlots() {
+		return Collections.emptySet();
+	}
+
+	@Override
+	public boolean hasOpaqueVariableReference() {
+		return true;
+	}
+
+	@Override
+	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		@Var Supplier<JsonNode> valueSupplier = null;
-		if (captured) {
-			Closure closure = frame != null ? (Closure) frame.get(frameClosureSlot) : null;
-			Object raw = closure != null ? closure.get(slot) : null;
-			if (raw instanceof Supplier) {
-				@SuppressWarnings("unchecked")
-				Supplier<JsonNode> effectiveSupplier = (Supplier<JsonNode>) raw;
-				valueSupplier = effectiveSupplier;
-			}
-		} else if (frame != null) {
-			Object raw = frame.get(slot);
-			if (raw instanceof Supplier) {
-				@SuppressWarnings("unchecked")
-				Supplier<JsonNode> effectiveSupplier = (Supplier<JsonNode>) raw;
-				valueSupplier = effectiveSupplier;
-			}
+		Object raw = frame.getEnclosingMemory().getGlobal(globalIndex);
+		if (raw instanceof Supplier) {
+			@SuppressWarnings("unchecked")
+			Supplier<JsonNode> effectiveSupplier = (Supplier<JsonNode>) raw;
+			valueSupplier = effectiveSupplier;
 		}
-		if (valueSupplier == null)
-			valueSupplier = defaultSupplier;
 		if (valueSupplier == null)
 			throw new JsonQueryException(String.format("Variable $%s is not defined", name));
 		JsonNode val = valueSupplier.get();

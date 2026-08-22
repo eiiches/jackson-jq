@@ -6,6 +6,7 @@ import java.util.List;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.operators.BinaryOperator;
@@ -13,24 +14,36 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpre
 import net.thisptr.jackson.jq.v2.core.path.RootPath;
 import net.thisptr.jackson.jq.v2.core.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class ComplexAssignment<JsonNode> extends BinaryOperatorExpression<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private BinaryOperator<JsonNode> operator;
+	private final boolean inputFixed;
 
-	public ComplexAssignment(JsonProvider<JsonNode> jsonProvider, Expression<JsonNode> lhs, Expression<JsonNode> rhs, BinaryOperator<JsonNode> operator) {
+	@Override
+	public Cardinality getCardinality() {
+		return rhs.getCardinality();
+	}
+
+	public ComplexAssignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, BinaryOperator<JsonNode> operator, boolean inputFixed) {
 		super(lhs, rhs, operator.image() + "=");
 		this.jsonProvider = jsonProvider;
 		this.operator = operator;
+		this.inputFixed = inputFixed;
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+	public boolean dependsOnInput() {
+		return !inputFixed || super.dependsOnInput();
+	}
+
+	@Override
+	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		rhs.apply(frame, in, null, (rval, opath) -> {
 			List<Path<JsonNode>> lpaths = new ArrayList<>();
 			lhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
