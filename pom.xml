@@ -142,11 +142,12 @@
 			<version>${com.google.auto.service-version}</version>
 			<optional>true</optional> <!-- unnecessary for runtime -->
 		</dependency>
+		<!-- JSpecify recommends against using optional or provided scope (see https://jspecify.dev/docs/using).
+		     Downstream module consumers read it via 'requires static transitive org.jspecify'. -->
 		<dependency>
 			<groupId>org.jspecify</groupId>
 			<artifactId>jspecify</artifactId>
 			<version>${org.jspecify-version}</version>
-			<optional>true</optional> <!-- unnecessary for runtime -->
 		</dependency>
 		<dependency>
 			<groupId>com.google.errorprone</groupId>
