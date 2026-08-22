@@ -1,9 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
@@ -39,7 +39,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		return matchers;
 	}
 
-	private void recursive(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<List<Match<JsonNode>>> out, Stack<Match<JsonNode>> accumulate, int index) throws JsonQueryException {
+	private void recursive(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
 			out.accept(accumulate);
 			return;
@@ -58,7 +58,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public void match(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<List<Match<JsonNode>>> out, Stack<Match<JsonNode>> accumulate) throws JsonQueryException {
+	public void match(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.ARRAY && type != JsonNodeType.NULL) {
 			if (matchers.isEmpty())
@@ -67,7 +67,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		recursive(frame, in, out, accumulate, 0);
 	}
 
-	private void recursiveWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> out, Stack<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
+	private void recursiveWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> out, Deque<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
 			out.emit(accumulate);
 			return;
@@ -87,7 +87,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public void matchWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> out, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
+	public void matchWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> out, Deque<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.ARRAY && type != JsonNodeType.NULL) {
 			if (matchers.isEmpty())

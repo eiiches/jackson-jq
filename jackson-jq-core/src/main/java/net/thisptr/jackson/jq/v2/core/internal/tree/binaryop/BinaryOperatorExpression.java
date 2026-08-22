@@ -1,10 +1,11 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.binaryop;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
@@ -232,8 +233,8 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<J
 			throw new IllegalArgumentException();
 
 		// shunting-yard algorithm
-		Stack<AstNode> stackExprs = new Stack<>();
-		Stack<Operator> stackOperators = new Stack<>();
+		Deque<AstNode> stackExprs = new ArrayDeque<>();
+		Deque<Operator> stackOperators = new ArrayDeque<>();
 
 		Iterator<AstNode> iterExpr = exprs.iterator();
 		Iterator<Operator> iterOperator = operators.iterator();
@@ -244,7 +245,7 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<J
 			while (!stackOperators.isEmpty()) {
 				Operator op2 = stackOperators.peek();
 				if (op1.precedence > op2.precedence
-						|| op1.precedence == op2.precedence && op1.associativity == Operator.Associativity.LEFT) {
+						|| (op1.precedence == op2.precedence && op1.associativity == Operator.Associativity.LEFT)) {
 					Operator op = stackOperators.pop();
 					AstNode rhs = stackExprs.pop();
 					AstNode lhs = stackExprs.pop();
@@ -264,6 +265,6 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<J
 			stackExprs.push(new BinaryOpAstNode(op, lhs, rhs));
 		}
 
-		return stackExprs.get(0);
+		return stackExprs.pop();
 	}
 }

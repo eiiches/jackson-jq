@@ -1,9 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
@@ -114,7 +114,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		}
 	}
 
-	private void recursive(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<List<Match<JsonNode>>> out, Stack<Match<JsonNode>> accumulate, int index) throws JsonQueryException {
+	private void recursive(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
 			out.accept(accumulate);
 			return;
@@ -129,17 +129,17 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 
 			JsonNode value = jsonProvider.get(in, jsonProvider.asText(key));
 
-			int size = accumulate.size();
 			if (fmatcher.dollar)
-				accumulate.push(new Match<>(fmatcher.slot, value != null ? value : jsonProvider.createNull()));
+				accumulate.addLast(new Match<>(fmatcher.slot, value != null ? value : jsonProvider.createNull()));
 			fmatcher.matcher().match(frame, value != null ? value : jsonProvider.createNull(), (match) -> {
 				recursive(frame, in, out, accumulate, index + 1);
 			}, accumulate);
-			accumulate.setSize(size);
+			if (fmatcher.dollar)
+				accumulate.removeLast();
 		});
 	}
 
-	private void recursiveWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> inpath, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
+	private void recursiveWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> inpath, MatchOutput<JsonNode> output, Deque<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
 			output.emit(accumulate);
 			return;
@@ -155,18 +155,18 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			JsonNode value = jsonProvider.get(in, jsonProvider.asText(key));
 			@Nullable Path<JsonNode> valuepath = ObjectFieldPath.chainIfNotNull(inpath, jsonProvider.asText(key), version);
 
-			int size = accumulate.size();
 			if (fmatcher.dollar)
-				accumulate.push(new MatchWithPath<>(fmatcher.slot, value != null ? value : jsonProvider.createNull(), valuepath));
+				accumulate.addLast(new MatchWithPath<>(fmatcher.slot, value != null ? value : jsonProvider.createNull(), valuepath));
 			fmatcher.matcher().matchWithPath(frame, value != null ? value : jsonProvider.createNull(), valuepath, (match) -> {
 				recursiveWithPath(frame, in, inpath, output, accumulate, index + 1);
 			}, accumulate);
-			accumulate.setSize(size);
+			if (fmatcher.dollar)
+				accumulate.removeLast();
 		});
 	}
 
 	@Override
-	public void match(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<List<Match<JsonNode>>> out, Stack<Match<JsonNode>> accumulate) throws JsonQueryException {
+	public void match(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL) {
 			if (matchers.isEmpty())
@@ -177,7 +177,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public void matchWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
+	public void matchWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Deque<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL) {
 			if (matchers.isEmpty())

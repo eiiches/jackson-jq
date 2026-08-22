@@ -20,5 +20,5 @@ public @interface FunctionRegistration {
 	 */
 	int nargs();
 
-	VersionRangeSpec version() default @VersionRangeSpec();
+	VersionRangeSpec version() default @VersionRangeSpec;
 }

@@ -166,7 +166,7 @@ public class RandomTest {
 
 			Evaluator.Result expected;
 			try {
-				expected = new JqRunner(JqExecutables.executableFor(VERSION)).evaluate(expr.toString(), in, Duration.ofMillis(1000L));
+				expected = new JqRunner(JqExecutables.executableFor(VERSION)).evaluate(expr.toString(), in, Duration.ofSeconds(1));
 			} catch (Throwable e) {
 				// System.err.printf("Cloud not evaluate jq '%s' <<< '%s'%n", expr, in);
 				continue;
@@ -174,7 +174,7 @@ public class RandomTest {
 
 			Evaluator.Result actual;
 			try {
-				actual = new JacksonJqRunner(VERSION).evaluate(expr.toString(), in, Duration.ofMillis(1000L));
+				actual = new JacksonJqRunner(VERSION).evaluate(expr.toString(), in, Duration.ofSeconds(1));
 			} catch (Throwable e) {
 				// System.err.printf("Cloud not evaluate jackson-jq '%s' <<< '%s'%n", expr, in);
 				continue;

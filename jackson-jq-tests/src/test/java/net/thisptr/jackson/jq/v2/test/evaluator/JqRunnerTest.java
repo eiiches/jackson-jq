@@ -20,7 +20,7 @@ public class JqRunnerTest {
 
 	@Test
 	void testJqCli() throws JsonQueryException, IOException, InterruptedException, TimeoutException {
-		Evaluator.Result result = new JqRunner(JQ_1_5).evaluate("{a: (. + 1), b: 10}", MAPPER.readTree("1"), Duration.ofMillis(1000L));
+		Evaluator.Result result = new JqRunner(JQ_1_5).evaluate("{a: (. + 1), b: 10}", MAPPER.readTree("1"), Duration.ofSeconds(1));
 		assertEquals(1, result.values.size());
 		assertEquals(MAPPER.readTree("{\"a\":2,\"b\":10}"), result.values.get(0));
 		assertNull(result.error);
@@ -28,7 +28,7 @@ public class JqRunnerTest {
 
 	@Test
 	void testJqCliError() throws JsonQueryException, IOException, InterruptedException, TimeoutException {
-		Evaluator.Result result = new JqRunner(JQ_1_5).evaluate("null[]", MAPPER.readTree("null"), Duration.ofMillis(1000L));
+		Evaluator.Result result = new JqRunner(JQ_1_5).evaluate("null[]", MAPPER.readTree("null"), Duration.ofSeconds(1));
 		assertEquals(0, result.values.size());
 		assertNotNull(result.error);
 		assertEquals("Cannot iterate over null (null)", result.error.getMessage());

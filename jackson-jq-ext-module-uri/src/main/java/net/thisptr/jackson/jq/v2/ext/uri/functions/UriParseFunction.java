@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.ext.uri.functions;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,6 +41,8 @@ public class UriParseFunction implements Function {
 		};
 	}
 
+	// Suppress JdkObsolete because URLDecoder.decode(String, Charset) is not available in Java 8 target.
+	@SuppressWarnings("JdkObsolete")
 	private <JsonNode> Map<String, JsonNode> parseQueryObj(JsonProvider<JsonNode> jsonProvider, String rawQuery) {
 		Map<String, List<String>> result = new HashMap<>();
 		if (rawQuery == null)
@@ -52,8 +55,8 @@ public class UriParseFunction implements Function {
 			String valueEncoded = tuple[1];
 
 			try {
-				String key = URLDecoder.decode(keyEncoded, "UTF-8");
-				String value = URLDecoder.decode(valueEncoded, "UTF-8");
+				String key = URLDecoder.decode(keyEncoded, StandardCharsets.UTF_8.name());
+				String value = URLDecoder.decode(valueEncoded, StandardCharsets.UTF_8.name());
 				@Var List<String> arr = result.get(key);
 				if (arr == null) {
 					arr = new ArrayList<>(1);

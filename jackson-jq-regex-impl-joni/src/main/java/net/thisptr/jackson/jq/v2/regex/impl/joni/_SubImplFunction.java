@@ -1,9 +1,10 @@
 package net.thisptr.jackson.jq.v2.regex.impl.joni;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
-import java.util.Stack;
 
 import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
@@ -45,18 +46,18 @@ public class _SubImplFunction implements Function {
 
 					// This just repeats same emit()s the number of times as the number of flags. This is to emulate jq behavior (which is probably a bug).
 					flagsExpr.apply(frame, in, (dummy) -> {
-						replaceAndConcat(jsonProvider, frame, new Stack<>(), output, match, replaceExpr, in, flagsExpr);
+						replaceAndConcat(jsonProvider, frame, new ArrayDeque<>(), output, match, replaceExpr, in, flagsExpr);
 					});
 				});
 			});
 		};
 	}
 
-	private <JsonNode> void replaceAndConcat(JsonProvider<JsonNode> jsonProvider, @Nullable StackFrame frame, Stack<String> stack, PathOutput<JsonNode> output, List<JsonNode> match, Expression<JsonNode> replaceExpr, JsonNode in, Expression<JsonNode> flags) throws JsonQueryException {
+	private <JsonNode> void replaceAndConcat(JsonProvider<JsonNode> jsonProvider, @Nullable StackFrame frame, Deque<String> stack, PathOutput<JsonNode> output, List<JsonNode> match, Expression<JsonNode> replaceExpr, JsonNode in, Expression<JsonNode> flags) throws JsonQueryException {
 		if (match.isEmpty()) {
 			StringBuilder sb = new StringBuilder();
-			for (int i = stack.size() - 1; i >= 0; --i) {
-				sb.append(stack.get(i));
+			for (String s : stack) {
+				sb.append(s);
 			}
 			output.emit(jsonProvider.createString(sb.toString()), null);
 			return;

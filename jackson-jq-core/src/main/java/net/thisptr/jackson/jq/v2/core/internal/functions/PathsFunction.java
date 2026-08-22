@@ -1,9 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.functions;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 
 import com.google.auto.service.AutoService;
 import org.jspecify.annotations.Nullable;
@@ -25,12 +25,12 @@ public class PathsFunction implements Function {
 	@Override
 	public <JsonNode> Expression<JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<JsonNode>> args, Version version) {
 		return (frame, in, ipath, output) -> {
-			Stack<JsonNode> stack = new Stack<>();
+			List<JsonNode> stack = new ArrayList<>();
 			applyRecursive(frame, jsonProvider, in, output, stack, args.get(0));
 		};
 	}
 
-	private static <JsonNode> void applyRecursive(@Nullable StackFrame frame, JsonProvider<JsonNode> jsonProvider, JsonNode in, PathOutput<JsonNode> output, Stack<JsonNode> stack, Expression<JsonNode> predicate) throws JsonQueryException {
+	private static <JsonNode> void applyRecursive(@Nullable StackFrame frame, JsonProvider<JsonNode> jsonProvider, JsonNode in, PathOutput<JsonNode> output, List<JsonNode> stack, Expression<JsonNode> predicate) throws JsonQueryException {
 		if (!stack.isEmpty()) {
 			predicate.apply(frame, in, (shouldInclude) -> {
 				if (JsonNodeUtils.asBoolean(jsonProvider, shouldInclude))
@@ -42,17 +42,17 @@ public class PathsFunction implements Function {
 		if (inType == JsonNodeType.ARRAY) {
 			int size = jsonProvider.size(in);
 			for (int i = 0; i < size; ++i) {
-				stack.push(jsonProvider.createNumber(i));
+				stack.add(jsonProvider.createNumber(i));
 				applyRecursive(frame, jsonProvider, jsonProvider.requireGet(in, i), output, stack, predicate);
-				stack.pop();
+				stack.remove(stack.size() - 1);
 			}
 		} else if (inType == JsonNodeType.OBJECT) {
 			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(in);
 			while (iter.hasNext()) {
 				Map.Entry<String, JsonNode> entry = iter.next();
-				stack.push(jsonProvider.createString(entry.getKey()));
+				stack.add(jsonProvider.createString(entry.getKey()));
 				applyRecursive(frame, jsonProvider, entry.getValue(), output, stack, predicate);
-				stack.pop();
+				stack.remove(stack.size() - 1);
 			}
 		}
 	}

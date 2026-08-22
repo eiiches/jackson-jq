@@ -48,7 +48,7 @@ public class VerifyTestCasesTest {
 	private void verify(TestCase tc, JqExecutables.JqExecutable e, @Nullable Path moduleSearchPath) throws Throwable {
 		String command = String.format("%s '%s' <<< '%s'", e.executable, tc.q, tc.in);
 
-		Evaluator.Result result = new JqRunner(e.executable, moduleSearchPath).evaluate(tc.q, tc.in, Duration.ofMillis(2000));
+		Evaluator.Result result = new JqRunner(e.executable, moduleSearchPath).evaluate(tc.q, tc.in, Duration.ofSeconds(2));
 		assertThat(result.error).as("%s", command).isNull();
 
 		Comparator<JsonNode> comparator = new JsonNodeComparatorForTests(!tc.ignoreFieldOrder, tc.numericalErrors);

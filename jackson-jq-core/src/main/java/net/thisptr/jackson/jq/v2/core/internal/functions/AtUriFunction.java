@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.functions;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import com.google.auto.service.AutoService;
 
@@ -20,9 +21,11 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 @FunctionRegistration(name = "@uri", nargs = 0)
 public class AtUriFunction extends AbstractAtFormattingFunction {
 	@Override
+	// Suppress JdkObsolete because URLEncoder.encode(String, Charset) is not available in Java 8 target.
+	@SuppressWarnings("JdkObsolete")
 	public String convert(String text) throws JsonQueryException {
 		try {
-			return URLEncoder.encode(text, "UTF-8")
+			return URLEncoder.encode(text, StandardCharsets.UTF_8.name())
 					.replaceAll("\\+", "%20")
 					.replaceAll("%21", "!")
 					.replaceAll("%27", "'")

@@ -1,11 +1,12 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,7 +37,7 @@ public class ObjectMatcherTest {
 
 		List<List<Pair<Integer, JsonNode>>> matches = new ArrayList<>();
 
-		Stack<PatternMatcher.Match<JsonNode>> accumulator = new Stack<>();
+		Deque<PatternMatcher.Match<JsonNode>> accumulator = new ArrayDeque<>();
 		matcher.match(null, in, (match) -> {
 			List<Pair<Integer, JsonNode>> copy = new ArrayList<>();
 			for (PatternMatcher.Match<JsonNode> item : match)
@@ -60,7 +61,7 @@ public class ObjectMatcherTest {
 
 		List<List<Pair<Integer, JsonNode>>> matches = new ArrayList<>();
 
-		Stack<PatternMatcher.Match<JsonNode>> accumulator = new Stack<>();
+		Deque<PatternMatcher.Match<JsonNode>> accumulator = new ArrayDeque<>();
 		matcher.match(null, in, (match) -> {
 			List<Pair<Integer, JsonNode>> copy = new ArrayList<>();
 			for (PatternMatcher.Match<JsonNode> item : match)

@@ -46,7 +46,7 @@ public class _MatchImplFunction implements Function {
 		};
 	}
 
-	private static class CaptureObject {
+	static class CaptureObject {
 		public int offset;
 		public int length;
 		public @Nullable String string;

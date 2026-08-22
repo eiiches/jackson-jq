@@ -10,8 +10,9 @@ PARSER_BEGIN(AstParser)
 	package net.thisptr.jackson.jq.v2.internal.javacc;
 
 	import java.io.StringReader;
+	import java.util.ArrayDeque;
+	import java.util.Deque;
 	import java.util.List;
-	import java.util.Stack;
 	import java.util.ArrayList;
 
 	import net.thisptr.jackson.jq.v2.spi.Version;
@@ -48,7 +49,7 @@ PARSER_END(AstParser)
 
 TOKEN_MGR_DECLS:
 {
-	Stack<Integer> depthStack = new Stack<Integer>();
+	Deque<Integer> depthStack = new ArrayDeque<Integer>();
 	int depth = 0;
 	int stringInterpLevel = 0;
 }

@@ -1,8 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
 
-import java.util.List;
+import java.util.Deque;
 import java.util.Map;
-import java.util.Stack;
 
 import org.jspecify.annotations.Nullable;
 
@@ -30,15 +29,17 @@ public class ValueMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public void match(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<List<Match<JsonNode>>> out, Stack<Match<JsonNode>> accumulate) throws JsonQueryException {
-		accumulate.push(new Match<>(slot, in));
+	public void match(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate) throws JsonQueryException {
+		accumulate.addLast(new Match<>(slot, in));
 		out.accept(accumulate);
+		accumulate.removeLast();
 	}
 
 	@Override
-	public void matchWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
-		accumulate.push(new MatchWithPath<>(slot, in, path));
+	public void matchWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Deque<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
+		accumulate.addLast(new MatchWithPath<>(slot, in, path));
 		output.emit(accumulate);
+		accumulate.removeLast();
 	}
 
 	@Override

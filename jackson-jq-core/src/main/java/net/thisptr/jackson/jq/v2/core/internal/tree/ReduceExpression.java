@@ -1,8 +1,10 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Stack;
 
 import org.jspecify.annotations.Nullable;
 
@@ -44,10 +46,10 @@ public class ReduceExpression<JsonNode> implements Expression<JsonNode> {
 			JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
 
 			iterExpr.apply(frame, in, (item) -> {
-				Stack<PatternMatcher.Match<JsonNode>> stack = new Stack<>();
-				matcher.match(frame, item, (List<PatternMatcher.Match<JsonNode>> vars) -> {
-					for (int i = vars.size() - 1; i >= 0; --i) {
-						PatternMatcher.Match<JsonNode> var = vars.get(i);
+				Deque<PatternMatcher.Match<JsonNode>> stack = new ArrayDeque<>();
+				matcher.match(frame, item, (Deque<PatternMatcher.Match<JsonNode>> vars) -> {
+					for (Iterator<PatternMatcher.Match<JsonNode>> it = vars.descendingIterator(); it.hasNext();) {
+						PatternMatcher.Match<JsonNode> var = it.next();
 						if (frame != null && var.slot >= 0) {
 							frame.set(var.slot, var.value);
 						}

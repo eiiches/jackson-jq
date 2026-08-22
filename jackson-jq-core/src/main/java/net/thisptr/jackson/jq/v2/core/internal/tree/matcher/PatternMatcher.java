@@ -1,8 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.matcher;
 
-import java.util.List;
+import java.util.Deque;
 import java.util.Map;
-import java.util.Stack;
 
 import org.jspecify.annotations.Nullable;
 
@@ -22,7 +21,7 @@ public interface PatternMatcher<JsonNode> {
 		}
 	}
 
-	void match(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<List<Match<JsonNode>>> out, Stack<Match<JsonNode>> accumulate) throws JsonQueryException;
+	void match(@Nullable StackFrame frame, JsonNode in, Functional.Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate) throws JsonQueryException;
 
 	class MatchWithPath<JsonNode> {
 		public final int slot;
@@ -37,10 +36,10 @@ public interface PatternMatcher<JsonNode> {
 	}
 
 	public interface MatchOutput<JsonNode> {
-		void emit(List<MatchWithPath<JsonNode>> vars) throws JsonQueryException;
+		void emit(Deque<MatchWithPath<JsonNode>> vars) throws JsonQueryException;
 	}
 
-	void matchWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Stack<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException;
+	void matchWithPath(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Deque<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException;
 
 	PatternMatcher<JsonNode> resolveSlots(Map<String, Integer> slots);
 }

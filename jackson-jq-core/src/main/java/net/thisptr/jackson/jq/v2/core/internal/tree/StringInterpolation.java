@@ -1,7 +1,8 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
-import java.util.Stack;
 
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
@@ -42,16 +43,15 @@ public class StringInterpolation<JsonNode> implements Expression<JsonNode> {
 
 	@Override
 	public void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output) throws JsonQueryException {
-		Stack<Pair<Integer, JsonNode>> stack = new Stack<>();
+		Deque<Pair<Integer, JsonNode>> stack = new ArrayDeque<>();
 		recurse(frame, in, output, stack, interpolations);
 	}
 
-	private void recurse(@Nullable StackFrame frame, JsonNode in, PathOutput<JsonNode> output, Stack<Pair<Integer, JsonNode>> stack, List<Pair<Integer, Expression<JsonNode>>> interpolations) throws JsonQueryException {
+	private void recurse(@Nullable StackFrame frame, JsonNode in, PathOutput<JsonNode> output, Deque<Pair<Integer, JsonNode>> stack, List<Pair<Integer, Expression<JsonNode>>> interpolations) throws JsonQueryException {
 		if (interpolations.isEmpty()) {
 			StringBuilder builder = new StringBuilder();
 			@Var int pos = 0;
-			for (int index = stack.size() - 1; index >= 0; --index) {
-				Pair<Integer, JsonNode> head = stack.get(index);
+			for (Pair<Integer, JsonNode> head : stack) {
 				builder.append(template.substring(pos, head._1));
 				pos = head._1;
 

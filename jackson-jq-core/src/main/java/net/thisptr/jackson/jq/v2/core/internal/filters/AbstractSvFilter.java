@@ -37,7 +37,7 @@ public abstract class AbstractSvFilter implements Function {
 				JsonNodeType colType = jsonProvider.getNodeType(col);
 				if (colType == JsonNodeType.STRING) {
 					appendEscaped(row, jsonProvider.asText(col));
-				} else if (colType == JsonNodeType.NULL || colType == JsonNodeType.NUMBER && Double.isNaN(jsonProvider.asDouble(col))) {
+				} else if (colType == JsonNodeType.NULL || (colType == JsonNodeType.NUMBER && Double.isNaN(jsonProvider.asDouble(col)))) {
 					// empty
 				} else if (colType == JsonNodeType.BOOLEAN || colType == JsonNodeType.NUMBER) {
 					row.append(jsonProvider.toString(col));

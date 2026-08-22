@@ -1,7 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Stack;
 
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
@@ -43,12 +45,12 @@ public class PipedQuery<JsonNode> implements Expression<JsonNode> {
 
 		if (head instanceof AssignPipeComponent) {
 			((AssignPipeComponent<JsonNode>) head).expr.apply(frame, in, (o) -> {
-				Stack<PatternMatcher.MatchWithPath<JsonNode>> accumulate = new Stack<>();
-				((AssignPipeComponent<JsonNode>) head).matcher.matchWithPath(frame, o, path, (List<PatternMatcher.MatchWithPath<JsonNode>> vars) -> {
+				Deque<PatternMatcher.MatchWithPath<JsonNode>> accumulate = new ArrayDeque<>();
+				((AssignPipeComponent<JsonNode>) head).matcher.matchWithPath(frame, o, path, (Deque<PatternMatcher.MatchWithPath<JsonNode>> vars) -> {
 					// Set values in reverse order since if there is the variable name crash,
 					// jq only uses the first match.
-					for (int i = vars.size() - 1; i >= 0; --i) {
-						PatternMatcher.MatchWithPath<JsonNode> var = vars.get(i);
+					for (Iterator<PatternMatcher.MatchWithPath<JsonNode>> it = vars.descendingIterator(); it.hasNext();) {
+						PatternMatcher.MatchWithPath<JsonNode> var = it.next();
 						if (frame != null && var.slot >= 0) {
 							frame.set(var.slot, var.path != null ? new PathAndValue<>(var.path, var.value) : var.value);
 						}
