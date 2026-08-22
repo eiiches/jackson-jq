@@ -5,7 +5,6 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,9 +43,9 @@ public class UriParseFunction implements Function {
 	// Suppress JdkObsolete because URLDecoder.decode(String, Charset) is not available in Java 8 target.
 	@SuppressWarnings("JdkObsolete")
 	private <JsonNode> Map<String, JsonNode> parseQueryObj(JsonProvider<JsonNode> jsonProvider, String rawQuery) {
-		Map<String, List<String>> result = new HashMap<>();
 		if (rawQuery == null)
-			return Collections.emptyMap();
+			return new HashMap<>();
+		Map<String, List<String>> result = new HashMap<>();
 		for (String kv : AMPERSAND.split(rawQuery, -1)) {
 			String[] tuple = EQUAL.split(kv, -1);
 			if (tuple.length != 2)
@@ -64,7 +63,7 @@ public class UriParseFunction implements Function {
 				}
 				arr.add(value);
 			} catch (Exception e) {
-				continue;
+				// ignore malformed query parameters
 			}
 		}
 		Map<String, JsonNode> result2 = new HashMap<>();

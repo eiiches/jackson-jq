@@ -186,10 +186,28 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
+					<fork>true</fork>
 					<release>8</release>
-					<compilerArgument>-Xlint:all,-processing,-options</compilerArgument>
+					<compilerArgs>
+						<arg>-Xlint:all</arg>
+						<!-- https://bugs.openjdk.org/browse/JDK-8380971 -->
+						<arg>-Werror:exports,opens,overrides,overloads,fallthrough,finally,divzero,empty,static,try,cast,synchronization,lossy-conversions,missing-explicit-ctor,dep-ann,removal,restricted,deprecation</arg>
+						<arg>-XDcompilePolicy=simple</arg>
+						<arg>--should-stop=ifError=FLOW</arg>
+						<arg>-Xplugin:ErrorProne -Xep:Var:ERROR -Xep:UnnecessaryFinal:ERROR -Xep:DefaultCharset:ERROR -Xep:DeprecatedVariable:ERROR -Xep:EmptyCatch:ERROR -Xep:FallThrough:ERROR -Xep:ImmutableEnumChecker:ERROR -Xep:IncorrectMainMethod:ERROR -Xep:InconsistentHashCode:ERROR -Xep:MissingOverride:ERROR -Xep:WildcardImport:ERROR -Xep:RemoveUnusedImports:ERROR -Xep:Finally:ERROR -Xep:BadInstanceof:ERROR -Xep:BadImport:ERROR -Xep:RedundantNullCheck:ERROR -Xep:ExposedPrivateType:ERROR -Xep:CanonicalDuration:ERROR -Xep:JdkObsolete:ERROR -Xep:UnnecessaryParentheses:ERROR -Xep:OperatorPrecedence:ERROR -XepExcludedPaths:.*/generated-sources/.* -Xep:NullAway:ERROR -XepOpt:NullAway:AnnotatedPackages=net.thisptr.jackson.jq -XepOpt:NullAway:TreatGeneratedAsUnannotated=true -Xep:VoidMissingNullable:ERROR -Xep:ReturnMissingNullable:ERROR -Xep:ParameterMissingNullable:ERROR -Xep:FieldMissingNullable:ERROR -Xep:EqualsMissingNullable:ERROR -Xep:NullableConstructor:ERROR -Xep:NullablePrimitive:ERROR -Xep:NullablePrimitiveArray:ERROR -Xep:NullableOnContainingClass:ERROR</arg>
+						<arg>-XDaddTypeAnnotationsToSymbol=true</arg>
+						<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
+						<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
+						<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
+						<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</arg>
+						<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>
+						<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>
+						<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
+						<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
+						<arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
+						<arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
+					</compilerArgs>
 					<showWarnings>true</showWarnings>
-					<showDeprecation>true</showDeprecation>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>com.google.auto.service</groupId>
@@ -259,7 +277,7 @@
 									<version>3.6.3</version>
 								</requireMavenVersion>
 								<requireJavaVersion>
-									<version>[21,)</version>
+									<version>[25,)</version>
 								</requireJavaVersion>
 							</rules>
 						</configuration>
@@ -372,66 +390,7 @@
 	</build>
 
 	<profiles>
-		<profile>
-			<id>error-prone</id>
-			<activation>
-				<jdk>[21,)</jdk>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-compiler-plugin</artifactId>
-						<executions>
-							<execution>
-								<id>default-compile</id>
-								<configuration>
-									<fork>true</fork>
-									<compilerArgs>
-										<arg>-XDcompilePolicy=simple</arg>
-										<arg>--should-stop=ifError=FLOW</arg>
-										<arg>-Xplugin:ErrorProne -Xep:Var:ERROR -Xep:UnnecessaryFinal:ERROR -Xep:DefaultCharset:ERROR -Xep:DeprecatedVariable:ERROR -Xep:EmptyCatch:ERROR -Xep:FallThrough:ERROR -Xep:ImmutableEnumChecker:ERROR -Xep:IncorrectMainMethod:ERROR -Xep:InconsistentHashCode:ERROR -Xep:MissingOverride:ERROR -Xep:WildcardImport:ERROR -Xep:RemoveUnusedImports:ERROR -Xep:Finally:ERROR -Xep:BadInstanceof:ERROR -Xep:BadImport:ERROR -Xep:RedundantNullCheck:ERROR -Xep:ExposedPrivateType:ERROR -Xep:CanonicalDuration:ERROR -Xep:JdkObsolete:ERROR -Xep:UnnecessaryParentheses:ERROR -Xep:OperatorPrecedence:ERROR -XepExcludedPaths:.*/generated-sources/.* -Xep:NullAway:ERROR -XepOpt:NullAway:AnnotatedPackages=net.thisptr.jackson.jq -XepOpt:NullAway:TreatGeneratedAsUnannotated=true -Xep:VoidMissingNullable:ERROR -Xep:ReturnMissingNullable:ERROR -Xep:ParameterMissingNullable:ERROR -Xep:FieldMissingNullable:ERROR -Xep:EqualsMissingNullable:ERROR -Xep:NullableConstructor:ERROR -Xep:NullablePrimitive:ERROR -Xep:NullablePrimitiveArray:ERROR -Xep:NullableOnContainingClass:ERROR</arg>
-										<arg>-XDaddTypeAnnotationsToSymbol=true</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
-										<arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
-										<arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
-									</compilerArgs>
-								</configuration>
-							</execution>
-							<execution>
-								<id>default-testCompile</id>
-								<configuration>
-									<fork>true</fork>
-									<compilerArgs>
-										<arg>-XDcompilePolicy=simple</arg>
-										<arg>--should-stop=ifError=FLOW</arg>
-										<arg>-Xplugin:ErrorProne -Xep:Var:ERROR -Xep:UnnecessaryFinal:ERROR -Xep:DefaultCharset:ERROR -Xep:DeprecatedVariable:ERROR -Xep:EmptyCatch:ERROR -Xep:FallThrough:ERROR -Xep:ImmutableEnumChecker:ERROR -Xep:IncorrectMainMethod:ERROR -Xep:InconsistentHashCode:ERROR -Xep:MissingOverride:ERROR -Xep:WildcardImport:ERROR -Xep:RemoveUnusedImports:ERROR -Xep:Finally:ERROR -Xep:BadInstanceof:ERROR -Xep:BadImport:ERROR -Xep:RedundantNullCheck:ERROR -Xep:ExposedPrivateType:ERROR -Xep:CanonicalDuration:ERROR -Xep:JdkObsolete:ERROR -Xep:UnnecessaryParentheses:ERROR -Xep:OperatorPrecedence:ERROR -XepExcludedPaths:.*/generated-sources/.* -Xep:NullAway:ERROR -XepOpt:NullAway:AnnotatedPackages=net.thisptr.jackson.jq -XepOpt:NullAway:TreatGeneratedAsUnannotated=true -Xep:VoidMissingNullable:ERROR -Xep:ReturnMissingNullable:ERROR -Xep:ParameterMissingNullable:ERROR -Xep:FieldMissingNullable:ERROR -Xep:EqualsMissingNullable:ERROR -Xep:NullableConstructor:ERROR -Xep:NullablePrimitive:ERROR -Xep:NullablePrimitiveArray:ERROR -Xep:NullableOnContainingClass:ERROR</arg>
-										<arg>-XDaddTypeAnnotationsToSymbol=true</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
-										<arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
-										<arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
-										<arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
-									</compilerArgs>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
+
 		<profile>
 			<id>release</id>
 			<build>

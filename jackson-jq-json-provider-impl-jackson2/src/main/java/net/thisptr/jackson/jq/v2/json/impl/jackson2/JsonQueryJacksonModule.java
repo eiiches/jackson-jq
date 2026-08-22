@@ -65,6 +65,8 @@ public class JsonQueryJacksonModule extends SimpleModule {
 		@Override
 		public void serialize(ObjectNode value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
 			gen.writeStartObject();
+			// Prefer fields() over properties() for broader Jackson 2.x version compatibility
+			@SuppressWarnings("deprecation")
 			Iterator<Map.Entry<String, JsonNode>> iter = value.fields();
 			while (iter.hasNext()) {
 				Map.Entry<String, JsonNode> entry = iter.next();

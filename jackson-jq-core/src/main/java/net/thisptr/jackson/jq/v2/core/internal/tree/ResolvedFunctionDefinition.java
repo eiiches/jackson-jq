@@ -79,7 +79,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<JsonNode
 			public <N> Expression<N> bindArguments(JsonProvider<N> jp, List<Expression<N>> fnArgs, Version version) {
 				Expression<N> effectiveBody = (Expression<N>) resolvedBody;
 				return (callerFrame, input, path, out) -> {
-					Closure effectiveClosure = (Closure) closureHolder[0];
+					Closure effectiveClosure = closureHolder[0];
 					StackFrame fnFrame = callerFrame != null
 							? callerFrame.getEnclosingMemory().pushFrame(fnSize)
 							: new StackMemory().pushFrame(fnSize);

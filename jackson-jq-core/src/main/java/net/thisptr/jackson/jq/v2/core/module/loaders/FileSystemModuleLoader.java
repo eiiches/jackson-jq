@@ -165,7 +165,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		}
 
 		private static class RecursiveInvocationException extends IllegalStateException {
-			private static long serialVersionUID = 1L;
+			private static final long serialVersionUID = 1L;
 		}
 
 		public T tryOnce(Callable<T> task) throws CompletionException, RecursiveInvocationException {

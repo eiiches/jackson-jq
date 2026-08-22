@@ -30,8 +30,8 @@ public class JsonNodeComparatorForTests extends JsonNodeComparator<JsonNode> {
 	@Override
 	protected int compareObjectNode(JsonNode o1, JsonNode o2) {
 		if (strictFieldOrder) {
-			Iterator<Map.Entry<String, JsonNode>> it1 = o1.fields();
-			Iterator<Map.Entry<String, JsonNode>> it2 = o2.fields();
+			Iterator<Map.Entry<String, JsonNode>> it1 = o1.properties().iterator();
+			Iterator<Map.Entry<String, JsonNode>> it2 = o2.properties().iterator();
 			while (it1.hasNext() && it2.hasNext()) {
 				Map.Entry<String, JsonNode> entry1 = it1.next();
 				Map.Entry<String, JsonNode> entry2 = it2.next();

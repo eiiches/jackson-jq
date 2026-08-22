@@ -15,10 +15,10 @@ import com.google.errorprone.annotations.Var;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.help.HelpFormatter;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.MappingIterator;
 import tools.jackson.databind.ObjectMapper;
@@ -50,28 +50,28 @@ public class Main {
 	private static final Option OPT_COMPACT = Option.builder("c")
 			.longOpt("compact")
 			.desc("compact instead of pretty-printed output")
-			.build();
+			.get();
 
 	private static final Option OPT_RAW_OUTPUT = Option.builder("r")
 			.longOpt("raw-output")
 			.desc("output raw strings, not JSON texts")
-			.build();
+			.get();
 
 	private static final Option OPT_NULL_INPUT = Option.builder("n")
 			.longOpt("null-input")
 			.desc("use `null` as the single input value")
-			.build();
+			.get();
 
 	private static final Option OPT_VERSION = Option.builder()
 			.longOpt("jq")
 			.desc("specify jq version")
 			.numberOfArgs(1)
-			.build();
+			.get();
 
 	private static final Option OPT_HELP = Option.builder("h")
 			.longOpt("help")
 			.desc("print this message")
-			.build();
+			.get();
 
 	public static void main(String[] args) throws IOException, ParseException {
 		Options options = new Options();
@@ -103,8 +103,8 @@ public class Main {
 		}
 
 		if (rest.isEmpty() || command.hasOption(OPT_HELP.getOpt())) {
-			HelpFormatter help = new HelpFormatter();
-			help.printHelp("jackson-jq [OPTIONS...] QUERY", options, false);
+			HelpFormatter help = HelpFormatter.builder().get();
+			help.printHelp("jackson-jq [OPTIONS...] QUERY", null, options, null, false);
 			System.exit(0);
 		}
 
@@ -147,7 +147,7 @@ public class Main {
 				JsonNode tree = iter.next();
 				try {
 					jq.apply(tree, (out, path) -> {
-						if (out.isTextual() && command.hasOption(OPT_RAW_OUTPUT.getOpt())) {
+						if (out.isString() && command.hasOption(OPT_RAW_OUTPUT.getOpt())) {
 							System.out.println(out.asString());
 						} else {
 							System.out.println(MAPPER.writeValueAsString(out));

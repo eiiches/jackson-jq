@@ -165,6 +165,8 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
+	// Prefer fields() over properties() for broader Jackson 2.x version compatibility
+	@SuppressWarnings("deprecation")
 	public Iterator<Map.Entry<String, JsonNode>> fields(JsonNode node) {
 		return node.fields();
 	}
