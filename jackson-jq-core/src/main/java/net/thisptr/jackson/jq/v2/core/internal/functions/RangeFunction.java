@@ -14,7 +14,7 @@ import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.PathOutput;
+import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -57,11 +57,11 @@ public class RangeFunction implements Function {
 	};
 	}
 
-	private static <JsonNode> void range1(JsonProvider<JsonNode> jsonProvider, PathOutput<JsonNode> output, JsonNode end) throws JsonQueryException {
+	private static <JsonNode> void range1(JsonProvider<JsonNode> jsonProvider, Output<JsonNode> output, JsonNode end) throws JsonQueryException {
 		range2(jsonProvider, output, jsonProvider.createNumber(0), end);
 	}
 
-	private static <JsonNode> JsonNode range2(JsonProvider<JsonNode> jsonProvider, PathOutput<JsonNode> output, JsonNode start, JsonNode end) throws JsonQueryException {
+	private static <JsonNode> JsonNode range2(JsonProvider<JsonNode> jsonProvider, Output<JsonNode> output, JsonNode start, JsonNode end) throws JsonQueryException {
 		if (jsonProvider.getNodeType(start) != JsonNodeType.NUMBER || jsonProvider.getNodeType(end) != JsonNodeType.NUMBER)
 			throw new JsonQueryTypeException("Range bounds must be numeric");
 		double _start = jsonProvider.asDouble(start);
@@ -72,7 +72,7 @@ public class RangeFunction implements Function {
 		return JsonNodeUtils.asNumericNode(jsonProvider, i);
 	}
 
-	private static <JsonNode> void range3(JsonProvider<JsonNode> jsonProvider, PathOutput<JsonNode> output, JsonNode start, JsonNode end, JsonNode incr) throws JsonQueryException {
+	private static <JsonNode> void range3(JsonProvider<JsonNode> jsonProvider, Output<JsonNode> output, JsonNode start, JsonNode end, JsonNode incr) throws JsonQueryException {
 		JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
 		PlusOperator<JsonNode> operator = new PlusOperator<>();
 		int dir = Integer.signum(comparator.compare(jsonProvider.createNumber(0), incr));

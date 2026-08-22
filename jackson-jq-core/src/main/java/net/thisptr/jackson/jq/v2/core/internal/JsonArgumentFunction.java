@@ -6,14 +6,14 @@ import java.util.List;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.PathOutput;
+import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public abstract class JsonArgumentFunction implements Function {
 	protected abstract <JsonNode> JsonNode fn(JsonProvider<JsonNode> jsonProvider, List<JsonNode> args, JsonNode in) throws JsonQueryException;
 
-	private <JsonNode> void combinations(JsonProvider<JsonNode> jsonProvider, PathOutput<JsonNode> output, List<JsonNode> args, int index, List<List<JsonNode>> argmat, JsonNode in) throws JsonQueryException {
+	private <JsonNode> void combinations(JsonProvider<JsonNode> jsonProvider, Output<JsonNode> output, List<JsonNode> args, int index, List<List<JsonNode>> argmat, JsonNode in) throws JsonQueryException {
 		if (index >= argmat.size()) {
 			output.emit(fn(jsonProvider, args, in), null);
 			return;

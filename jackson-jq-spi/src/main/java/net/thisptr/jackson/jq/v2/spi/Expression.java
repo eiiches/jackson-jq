@@ -12,5 +12,5 @@ public interface Expression<JsonNode> {
 		return null;
 	}
 
-	void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output) throws JsonQueryException;
+	void apply(@Nullable StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException;
 }

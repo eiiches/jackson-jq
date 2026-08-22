@@ -9,7 +9,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.PathOutput;
+import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -48,7 +48,7 @@ public class ObjectFieldPath<JsonNode> implements Path<JsonNode> {
 	}
 
 	@Override
-	public void get(JsonProvider<JsonNode> jsonProvider, JsonNode in, @Nullable Path<JsonNode> ipath, PathOutput<JsonNode> output, boolean permissive) throws JsonQueryException {
+	public void get(JsonProvider<JsonNode> jsonProvider, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output, boolean permissive) throws JsonQueryException {
 		parent.get(jsonProvider, in, ipath, (parent, ppath) -> {
 			resolve(jsonProvider, parent, ppath, output, key, permissive, version);
 		}, permissive);
@@ -83,11 +83,11 @@ public class ObjectFieldPath<JsonNode> implements Path<JsonNode> {
 		}
 	}
 
-	public static <JsonNode> void resolve(JsonProvider<JsonNode> jsonProvider, JsonNode pobj, @Nullable Path<JsonNode> ppath, PathOutput<JsonNode> output, String key, boolean permissive) throws JsonQueryException {
+	public static <JsonNode> void resolve(JsonProvider<JsonNode> jsonProvider, JsonNode pobj, @Nullable Path<JsonNode> ppath, Output<JsonNode> output, String key, boolean permissive) throws JsonQueryException {
 		resolve(jsonProvider, pobj, ppath, output, key, permissive, null);
 	}
 
-	public static <JsonNode> void resolve(JsonProvider<JsonNode> jsonProvider, JsonNode pobj, @Nullable Path<JsonNode> ppath, PathOutput<JsonNode> output, String key, boolean permissive, @Nullable Version version) throws JsonQueryException {
+	public static <JsonNode> void resolve(JsonProvider<JsonNode> jsonProvider, JsonNode pobj, @Nullable Path<JsonNode> ppath, Output<JsonNode> output, String key, boolean permissive, @Nullable Version version) throws JsonQueryException {
 		if (jsonProvider.getNodeType(pobj) == JsonNodeType.NULL) {
 			output.emit(jsonProvider.createNull(), ObjectFieldPath.chainIfNotNull(ppath, key, version));
 		} else if (jsonProvider.getNodeType(pobj) == JsonNodeType.OBJECT) {

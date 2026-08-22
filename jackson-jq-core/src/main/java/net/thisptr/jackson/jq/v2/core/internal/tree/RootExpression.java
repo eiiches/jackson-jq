@@ -15,7 +15,7 @@ import net.thisptr.jackson.jq.v2.core.JsonQueryBindings;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
-import net.thisptr.jackson.jq.v2.spi.PathOutput;
+import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.StackMemory;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -71,15 +71,15 @@ public class RootExpression<JsonNode> implements Expression<JsonNode> {
 	}
 
 	@Override
-	public void apply(@Nullable StackFrame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output) throws JsonQueryException {
+	public void apply(@Nullable StackFrame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		apply(parentFrame, in, path, output, JsonQueryBindings.empty());
 	}
 
-	public void apply(JsonNode in, JsonQueryBindings<JsonNode> bindings, PathOutput<JsonNode> output) throws JsonQueryException {
+	public void apply(JsonNode in, JsonQueryBindings<JsonNode> bindings, Output<JsonNode> output) throws JsonQueryException {
 		apply(null, in, null, output, bindings);
 	}
 
-	private void apply(@Nullable StackFrame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, PathOutput<JsonNode> output, JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {
+	private void apply(@Nullable StackFrame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output, JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {
 		validateBindings(bindings);
 		StackFrame rootFrame = parentFrame != null
 				? parentFrame.getEnclosingMemory().pushFrame(frameSize)
