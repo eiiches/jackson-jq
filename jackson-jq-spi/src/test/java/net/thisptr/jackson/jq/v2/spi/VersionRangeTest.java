@@ -35,4 +35,20 @@ public class VersionRangeTest {
 		assertFalse(VersionRange.valueOf("[, 1.5]").contains(Version.valueOf("1.6")));
 		assertFalse(VersionRange.valueOf("(, 1.5]").contains(Version.valueOf("1.6")));
 	}
+
+	@Test
+	void testMultiDigitAndThreeParts() {
+		assertTrue(VersionRange.valueOf("[1.0.0, 2.3.4)").contains(Version.valueOf("2.3.3")));
+		assertFalse(VersionRange.valueOf("[1.0.0, 2.3.4)").contains(Version.valueOf("2.3.4")));
+		assertTrue(VersionRange.valueOf("[10.20.30, 40.50.60]").contains(Version.valueOf("10.20.30")));
+		assertTrue(VersionRange.valueOf("[10.20.30, 40.50.60]").contains(Version.valueOf("40.50.60")));
+	}
+
+	@Test
+	void testInvalidRanges() {
+		org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> VersionRange.valueOf("[1.0, 2.0.0.0]"));
+		org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> VersionRange.valueOf("[01.0, 2.0]"));
+		org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> VersionRange.valueOf("1.0, 2.0"));
+		org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> VersionRange.valueOf("[1.0]"));
+	}
 }

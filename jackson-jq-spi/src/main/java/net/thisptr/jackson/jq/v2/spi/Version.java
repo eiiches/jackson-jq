@@ -59,7 +59,10 @@ public class Version implements Comparable<Version> {
 		return patch;
 	}
 
-	public static Pattern VERSION_PATTERN = Pattern.compile("([0-9])\\.([0-9])(?:\\.([0-9]+))?");
+	static final String INTEGER = "0|[1-9][0-9]*";
+	static final String VERSION = "(?:" + INTEGER + ")\\.(?:" + INTEGER + ")(?:\\.(?:" + INTEGER + "))?";
+
+	private static final Pattern VERSION_PATTERN = Pattern.compile("^(" + INTEGER + ")\\.(" + INTEGER + ")(?:\\.(" + INTEGER + "))?$");
 
 	public static Version valueOf(int major, int minor, int patch) {
 		return new Version(major, minor, patch);

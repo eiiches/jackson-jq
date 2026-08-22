@@ -49,7 +49,7 @@ public class VersionRange {
 		return Objects.hash(minVersion, minInclusive, maxVersion, maxInclusive);
 	}
 
-	public static Pattern VERSION_RANGE_PATTERN = Pattern.compile("([\\[\\(])\\s*([0-9]+(?:\\.[0-9]+)*)?\\s*,\\s*([0-9]+(?:\\.[0-9]+)*)?([\\]\\)])");
+	private static final Pattern VERSION_RANGE_PATTERN = Pattern.compile("^([\\[(])\\s*(" + Version.VERSION + ")?\\s*,\\s*(" + Version.VERSION + ")?\\s*([)\\]])$");
 
 	public static VersionRange valueOf(String text) {
 		Matcher m = VERSION_RANGE_PATTERN.matcher(text);
