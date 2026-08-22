@@ -44,8 +44,9 @@ public class FunctionSignature {
 	}
 
 	@Override
-	public boolean equals(Object o) {
-		if (o == null || getClass() != o.getClass()) return false;
+	public boolean equals(@Nullable Object o) {
+		if (!(o instanceof FunctionSignature))
+			return false;
 		FunctionSignature that = (FunctionSignature) o;
 		return Objects.equals(name, that.name) && Objects.equals(arity, that.arity);
 	}

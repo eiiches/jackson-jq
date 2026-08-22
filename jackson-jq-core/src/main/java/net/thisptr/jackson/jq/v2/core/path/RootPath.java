@@ -21,7 +21,7 @@ public class RootPath<JsonNode> implements Path<JsonNode> {
 
 	@Override
 	public void toJsonNode(JsonProvider<JsonNode> jsonProvider, JsonNode out) throws JsonQueryException {
-		return;
+		// Root path represents the root of the path and contributes no segments to the array.
 	}
 
 	@Override

@@ -2,8 +2,8 @@ package net.thisptr.jackson.jq.v2.core.internal.misc;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 public class Pair<T, U> {
@@ -39,33 +39,15 @@ public class Pair<T, U> {
 	}
 
 	@Override
-	public int hashCode() {
-		int prime = 31;
-		@Var int result = 1;
-		result = prime * result + ((_1 == null) ? 0 : _1.hashCode());
-		result = prime * result + ((_2 == null) ? 0 : _2.hashCode());
-		return result;
+	public boolean equals(@Nullable Object o) {
+		if (!(o instanceof Pair))
+			return false;
+		Pair<?, ?> pair = (Pair<?, ?>) o;
+		return Objects.equals(_1, pair._1) && Objects.equals(_2, pair._2);
 	}
 
 	@Override
-	public boolean equals(@Nullable Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Pair<?, ?> other = (Pair<?, ?>) obj;
-		if (_1 == null) {
-			if (other._1 != null)
-				return false;
-		} else if (!_1.equals(other._1))
-			return false;
-		if (_2 == null) {
-			if (other._2 != null)
-				return false;
-		} else if (!_2.equals(other._2))
-			return false;
-		return true;
+	public int hashCode() {
+		return Objects.hash(_1, _2);
 	}
 }

@@ -99,9 +99,9 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	}
 
 	private static final class ModuleFile {
-		public Path searchPath;
-		public Path modulePath;
-		public byte[] bytes;
+		Path searchPath;
+		Path modulePath;
+		byte[] bytes;
 
 		ModuleFile(Path searchPath, Path modulePath, byte[] bytes) {
 			this.searchPath = searchPath;
@@ -168,7 +168,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 			private static final long serialVersionUID = 1L;
 		}
 
-		public T tryOnce(Callable<T> task) throws CompletionException, RecursiveInvocationException {
+		T tryOnce(Callable<T> task) throws CompletionException, RecursiveInvocationException {
 			if (f.isDone())
 				return f.join();
 

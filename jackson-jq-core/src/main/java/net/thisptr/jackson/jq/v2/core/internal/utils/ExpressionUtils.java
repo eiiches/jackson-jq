@@ -16,6 +16,8 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 public class ExpressionUtils {
 
 	/**
+	 * Evaluates a literal expression.
+	 *
 	 * @param jsonProvider the JSON provider
 	 * @param expr the AST node to evaluate
 	 * @return null if expr is not a constant

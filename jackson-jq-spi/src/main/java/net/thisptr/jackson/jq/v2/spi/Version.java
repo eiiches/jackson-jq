@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.spi;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,31 +35,16 @@ public class Version implements Comparable<Version> {
 	}
 
 	@Override
-	public int hashCode() {
-		int prime = 31;
-		@Var int result = 1;
-		result = prime * result + major;
-		result = prime * result + minor;
-		result = prime * result + patch;
-		return result;
+	public boolean equals(@Nullable Object o) {
+		if (!(o instanceof Version))
+			return false;
+		Version version = (Version) o;
+		return major == version.major && minor == version.minor && patch == version.patch;
 	}
 
 	@Override
-	public boolean equals(@Nullable Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Version other = (Version) obj;
-		if (major != other.major)
-			return false;
-		if (minor != other.minor)
-			return false;
-		if (patch != other.patch)
-			return false;
-		return true;
+	public int hashCode() {
+		return Objects.hash(major, minor, patch);
 	}
 
 	public int major() {

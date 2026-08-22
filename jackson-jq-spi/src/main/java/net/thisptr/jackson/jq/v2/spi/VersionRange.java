@@ -1,9 +1,9 @@
 package net.thisptr.jackson.jq.v2.spi;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
@@ -37,40 +37,16 @@ public class VersionRange {
 	}
 
 	@Override
-	public int hashCode() {
-		int prime = 31;
-		@Var int result = 1;
-		result = prime * result + (maxInclusive ? 1231 : 1237);
-		result = prime * result + ((maxVersion == null) ? 0 : maxVersion.hashCode());
-		result = prime * result + (minInclusive ? 1231 : 1237);
-		result = prime * result + ((minVersion == null) ? 0 : minVersion.hashCode());
-		return result;
+	public boolean equals(@Nullable Object o) {
+		if (!(o instanceof VersionRange))
+			return false;
+		VersionRange that = (VersionRange) o;
+		return minInclusive == that.minInclusive && maxInclusive == that.maxInclusive && Objects.equals(minVersion, that.minVersion) && Objects.equals(maxVersion, that.maxVersion);
 	}
 
 	@Override
-	public boolean equals(@Nullable Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		VersionRange other = (VersionRange) obj;
-		if (maxInclusive != other.maxInclusive)
-			return false;
-		if (maxVersion == null) {
-			if (other.maxVersion != null)
-				return false;
-		} else if (!maxVersion.equals(other.maxVersion))
-			return false;
-		if (minInclusive != other.minInclusive)
-			return false;
-		if (minVersion == null) {
-			if (other.minVersion != null)
-				return false;
-		} else if (!minVersion.equals(other.minVersion))
-			return false;
-		return true;
+	public int hashCode() {
+		return Objects.hash(minVersion, minInclusive, maxVersion, maxInclusive);
 	}
 
 	public static Pattern VERSION_RANGE_PATTERN = Pattern.compile("([\\[\\(])\\s*([0-9]+(?:\\.[0-9]+)*)?\\s*,\\s*([0-9]+(?:\\.[0-9]+)*)?([\\]\\)])");

@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.spi.exception;
 
+import java.util.Locale;
+
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
@@ -53,10 +55,10 @@ public class JsonQueryException extends RuntimeException {
                 } catch (Exception e) {
                     json = "<failed to format json>";
                 }
-                formattedArguments[i] = String.format("%s (%s)", jsonProvider.getNodeType(node).toString().toLowerCase(), json);
+                formattedArguments[i] = String.format("%s (%s)", jsonProvider.getNodeType(node).toString().toLowerCase(Locale.ROOT), json);
             } else if (args[i] instanceof JsonNodeType) {
                 JsonNodeType type = (JsonNodeType) args[i];
-                formattedArguments[i] = type.toString().toLowerCase();
+                formattedArguments[i] = type.toString().toLowerCase(Locale.ROOT);
             } else {
                 formattedArguments[i] = args[i];
             }

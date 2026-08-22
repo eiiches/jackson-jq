@@ -53,7 +53,8 @@ public class AtShFunction implements Function {
 
 	public String escape(String text) {
 		StringBuilder builder = new StringBuilder("'");
-		for (char ch : text.toCharArray()) {
+		for (int i = 0; i < text.length(); ++i) {
+			char ch = text.charAt(i);
 			switch (ch) {
 			case '\'':
 				builder.append("'\\''");

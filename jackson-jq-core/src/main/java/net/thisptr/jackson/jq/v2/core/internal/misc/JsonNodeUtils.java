@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.misc;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.jspecify.annotations.Nullable;
 
@@ -45,7 +46,7 @@ public class JsonNodeUtils {
 	}
 
 	public static <JsonNode> String typeOf(JsonProvider<JsonNode> jsonProvider, JsonNode in) {
-		return jsonProvider.getNodeType(in).toString().toLowerCase();
+		return jsonProvider.getNodeType(in).toString().toLowerCase(Locale.ROOT);
 	}
 
 	public static <JsonNode> String formatType(JsonProvider<JsonNode> jsonProvider, JsonNode in) {
@@ -106,24 +107,24 @@ public class JsonNodeUtils {
 	}
 
 	public static <JsonNode> String cannotIndex(JsonProvider<JsonNode> jsonProvider, @Nullable Version version, JsonNode in, JsonNode accessor) {
-		String inType = jsonProvider.getNodeType(in).toString().toLowerCase();
+		String inType = jsonProvider.getNodeType(in).toString().toLowerCase(Locale.ROOT);
 		return cannotIndex(jsonProvider, version, inType, accessor);
 	}
 
 	public static <JsonNode> String cannotIndex(JsonProvider<JsonNode> jsonProvider, @Nullable Version version, JsonNodeType inType, JsonNode accessor) {
-		return cannotIndex(jsonProvider, version, inType.toString().toLowerCase(), accessor);
+		return cannotIndex(jsonProvider, version, inType.toString().toLowerCase(Locale.ROOT), accessor);
 	}
 
 	public static <JsonNode> String cannotIndex(JsonProvider<JsonNode> jsonProvider, @Nullable Version version, String inType, JsonNode accessor) {
 		JsonNodeType accessorType = jsonProvider.getNodeType(accessor);
 		if (version != null && version.compareTo(Version.valueOf(1, 8, 2)) >= 0) {
 			String formatted = Strings.truncate(jsonProvider.toString(accessor), version);
-			return String.format("Cannot index %s with %s (%s)", inType, accessorType.toString().toLowerCase(), formatted);
+			return String.format("Cannot index %s with %s (%s)", inType, accessorType.toString().toLowerCase(Locale.ROOT), formatted);
 		} else {
 			if (accessorType == JsonNodeType.STRING) {
 				return String.format("Cannot index %s with string \"%s\"", inType, jsonProvider.asText(accessor));
 			} else {
-				return String.format("Cannot index %s with %s", inType, accessorType.toString().toLowerCase());
+				return String.format("Cannot index %s with %s", inType, accessorType.toString().toLowerCase(Locale.ROOT));
 			}
 		}
 	}

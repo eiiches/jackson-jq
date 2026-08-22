@@ -33,7 +33,7 @@ public class MultiplyOperator<JsonNode> implements BinaryOperator<JsonNode> {
 			double ld = jsonProvider.asDouble(lhs);
 			double rd = jsonProvider.asDouble(rhs);
 			if (ld == (long) ld && rd == (long) rd) {
-				return JsonNodeUtils.asNumericNode(jsonProvider, (long) ld * (long) rd);
+				return JsonNodeUtils.asNumericNode(jsonProvider, ((long) ld) * (long) rd);
 			}
 			return JsonNodeUtils.asNumericNode(jsonProvider, ld * rd);
 		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.NUMBER) {
