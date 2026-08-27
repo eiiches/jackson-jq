@@ -38,5 +38,12 @@ public class VersionTest {
 		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("1.0.0-SNAPSHOT"));
 		assertThrows(IllegalArgumentException.class, () -> Version.valueOf(""));
 		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("abc"));
+		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("-1.0"));
+		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("1.-1.0"));
+		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("1.0.-1"));
+		assertThrows(IllegalArgumentException.class, () -> Version.valueOf(-1, 0, 0));
+		assertThrows(IllegalArgumentException.class, () -> Version.valueOf(0, -1, 0));
+		assertThrows(IllegalArgumentException.class, () -> Version.valueOf(0, 0, -1));
+		assertThrows(IllegalArgumentException.class, () -> Version.valueOf(-1, -1, -1));
 	}
 }

@@ -18,6 +18,8 @@ public class Version implements Comparable<Version> {
 	private final int patch;
 
 	Version(int major, int minor, int patch) {
+		if (major < 0 || minor < 0 || patch < 0)
+			throw new IllegalArgumentException("Invalid version components (must be non-negative): " + major + "." + minor + "." + patch);
 		this.major = major;
 		this.minor = minor;
 		this.patch = patch;
