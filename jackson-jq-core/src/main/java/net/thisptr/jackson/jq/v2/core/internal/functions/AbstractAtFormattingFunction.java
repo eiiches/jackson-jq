@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.functions;
 import java.util.List;
 
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
+import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -18,7 +19,7 @@ public abstract class AbstractAtFormattingFunction implements Function {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 			String text = jsonProvider.getNodeType(in) == JsonNodeType.STRING
 					? jsonProvider.asText(in)
-					: jsonProvider.toString(in);
+					: JsonNodeUtils.toString(jsonProvider, in, version);
 			output.emit(jsonProvider.createString(convert(text)), null);
 		});
 	}

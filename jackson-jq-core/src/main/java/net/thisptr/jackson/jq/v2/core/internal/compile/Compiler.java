@@ -353,7 +353,7 @@ public class Compiler {
 				if (fc instanceof ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst ik = (ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst) fc;
 					Expression<StackFrame, JsonNode> val = compile(env, context, ik.value);
-					res.add(new IdentifierKeyFieldConstruction<>(env.getJsonProvider(), ik.key, val));
+					res.add(new IdentifierKeyFieldConstruction<>(env.getJsonProvider(), ik.key, val, env.getJqVersion()));
 				} else if (fc instanceof ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst jq = (ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst) fc;
 					Expression<StackFrame, JsonNode> key = compileNonNull(env, context, jq.key());
@@ -363,12 +363,12 @@ public class Compiler {
 					ObjectConstructionAstNode.StringKeyFieldConstructionAst sk = (ObjectConstructionAstNode.StringKeyFieldConstructionAst) fc;
 					Expression<StackFrame, JsonNode> key = compileNonNull(env, context, sk.key);
 					Expression<StackFrame, JsonNode> val = compile(env, context, sk.value);
-					res.add(new StringKeyFieldConstruction<>(env.getJsonProvider(), key, val));
+					res.add(new StringKeyFieldConstruction<>(env.getJsonProvider(), key, val, env.getJqVersion()));
 				} else if (fc instanceof ObjectConstructionAstNode.VariableKeyFieldConstruction) {
 					// desugar `{ $x }` into the same shape as `{ x: $x }` -- no dedicated resolved class needed.
 					ObjectConstructionAstNode.VariableKeyFieldConstruction vk = (ObjectConstructionAstNode.VariableKeyFieldConstruction) fc;
 					Expression<StackFrame, JsonNode> compiledValue = compileVariableRef(env, context, null, vk.name());
-					res.add(new IdentifierKeyFieldConstruction<>(env.getJsonProvider(), vk.name(), compiledValue));
+					res.add(new IdentifierKeyFieldConstruction<>(env.getJsonProvider(), vk.name(), compiledValue, env.getJqVersion()));
 				} else {
 					throw new IllegalStateException("Unknown field construction: " + fc.getClass());
 				}
@@ -539,7 +539,7 @@ public class Compiler {
 			} finally {
 				context.setInputFixed(savedInputFixed);
 			}
-			return new StringInterpolation<>(env.getJsonProvider(), si.template(), compiledInterpolations, compiledFormatter);
+			return new StringInterpolation<>(env.getJsonProvider(), si.template(), compiledInterpolations, compiledFormatter, env.getJqVersion());
 		}
 
 		if (ast instanceof BracketFieldAccessAstNode) {

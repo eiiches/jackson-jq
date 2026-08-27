@@ -14,7 +14,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.FloatNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.errorprone.annotations.Var;
 
 public class JsonQueryJacksonModule extends SimpleModule {
 	private static final long serialVersionUID = 1137650244815104623L;
@@ -33,20 +32,18 @@ public class JsonQueryJacksonModule extends SimpleModule {
 		addSerializer(ObjectNode.class, new ObjectNodeSerializer());
 	}
 
-	private static String format(@Var double val) {
+	private static String format(double val) {
 		if (Double.isNaN(val))
 			return "null";
 
-		if (Double.isInfinite(val) && val > 0)
-			val = Double.MAX_VALUE;
-		if (Double.isInfinite(val) && val < 0)
-			val = -Double.MAX_VALUE;
+		if (Double.isInfinite(val))
+			return (val > 0) ? "1.7976931348623157e+308" : "-1.7976931348623157e+308";
 
 		String repr = (val == (long) val) ? Long.toString((long) val) : Double.toString(val);
 		if (repr.contains("E-")) {
-			return repr.replace('E', 'e');
+			return repr;
 		} else {
-			return repr.replace("E", "e+");
+			return repr.replace("E", "E+");
 		}
 	}
 

@@ -7,6 +7,7 @@ import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
+import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -42,7 +43,7 @@ public abstract class AbstractXsvFilter implements Function {
 				} else if (colType == JsonNodeType.NULL || (colType == JsonNodeType.NUMBER && Double.isNaN(jsonProvider.asDouble(col)))) {
 					// empty
 				} else if (colType == JsonNodeType.BOOLEAN || colType == JsonNodeType.NUMBER) {
-					row.append(jsonProvider.toString(col));
+					row.append(JsonNodeUtils.toString(jsonProvider, col, version));
 				} else {
 					throw new JsonQueryTypeException(jsonProvider, version, "%s is not valid in a csv row", col);
 				}

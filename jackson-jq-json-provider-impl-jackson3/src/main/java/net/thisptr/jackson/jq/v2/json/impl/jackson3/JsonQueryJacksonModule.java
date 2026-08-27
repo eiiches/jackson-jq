@@ -3,7 +3,6 @@ package net.thisptr.jackson.jq.v2.json.impl.jackson3;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.google.errorprone.annotations.Var;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.core.Version;
@@ -33,20 +32,18 @@ public class JsonQueryJacksonModule extends SimpleModule {
 		addSerializer(ObjectNode.class, new ObjectNodeSerializer());
 	}
 
-	private static String format(@Var double val) {
+	private static String format(double val) {
 		if (Double.isNaN(val))
 			return "null";
 
-		if (Double.isInfinite(val) && val > 0)
-			val = Double.MAX_VALUE;
-		if (Double.isInfinite(val) && val < 0)
-			val = -Double.MAX_VALUE;
+		if (Double.isInfinite(val))
+			return (val > 0) ? "1.7976931348623157e+308" : "-1.7976931348623157e+308";
 
 		String repr = (val == (long) val) ? Long.toString((long) val) : Double.toString(val);
 		if (repr.contains("E-")) {
-			return repr.replace('E', 'e');
+			return repr;
 		} else {
-			return repr.replace("E", "e+");
+			return repr.replace("E", "E+");
 		}
 	}
 

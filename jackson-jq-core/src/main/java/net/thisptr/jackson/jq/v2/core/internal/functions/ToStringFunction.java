@@ -5,6 +5,7 @@ import java.util.List;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
+import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -23,7 +24,7 @@ public class ToStringFunction implements Function {
 			if (jsonProvider.getNodeType(in) == JsonNodeType.STRING) {
 				output.emit(in, null);
 			} else {
-				output.emit(jsonProvider.createString(jsonProvider.toString(in)), null);
+				output.emit(jsonProvider.createString(JsonNodeUtils.toString(jsonProvider, in, version)), null);
 			}
 		});
 	}

@@ -41,9 +41,7 @@ public final class GsonUtils {
 			return "null";
 		}
 		if (Double.isInfinite(val)) {
-			// Use MAX_VALUE but normalize the output
-			double replacement = val > 0 ? Double.MAX_VALUE : -Double.MAX_VALUE;
-			return normalizeExponent(String.valueOf(replacement));
+			return val > 0 ? "1.7976931348623157e+308" : "-1.7976931348623157e+308";
 		}
 		// Check if the value is an integer (no fractional part)
 		if (val == Math.floor(val) && !Double.isInfinite(val) && Math.abs(val) < Long.MAX_VALUE) {
@@ -54,13 +52,13 @@ public final class GsonUtils {
 
 	/**
 	 * Normalizes the exponent notation in a number string.
-	 * Converts 'E' to 'e' and adds '+' after 'e' if not present.
+	 * Converts 'e' to 'E' and adds '+' after 'E' if not present.
 	 */
 	private static String normalizeExponent(@Var String text) {
-		// Normalize scientific notation: E -> e
-		text = text.replace("E", "e");
-		// Add + after e if not present
-		int eIndex = text.indexOf('e');
+		// Normalize scientific notation: e -> E
+		text = text.replace('e', 'E');
+		// Add + after E if not present
+		int eIndex = text.indexOf('E');
 		if (eIndex >= 0 && eIndex + 1 < text.length()) {
 			char next = text.charAt(eIndex + 1);
 			if (next != '+' && next != '-') {

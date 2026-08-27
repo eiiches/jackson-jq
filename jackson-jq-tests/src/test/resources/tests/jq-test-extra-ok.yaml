@@ -594,7 +594,6 @@
   - ["number", "null", false, true, true]
   - ["number", "-1.7976931348623157e+308", true, false, false]
   v: '[1.7.1, )'
-  failing: true
 
 - q: '(., .) as {(.a, .b): $a, (.a, .b): $a} | [$a, $a]'
   in: {"a": "a", "b": "b"}

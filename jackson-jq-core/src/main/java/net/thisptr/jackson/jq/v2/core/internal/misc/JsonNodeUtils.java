@@ -5,8 +5,10 @@ import java.util.Locale;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Version;
 
 public class JsonNodeUtils {
 	private JsonNodeUtils() {
@@ -96,6 +98,16 @@ public class JsonNodeUtils {
 
 	public static <JsonNode> String toString(JsonProvider<JsonNode> jsonProvider, JsonNode node) {
 		return jsonProvider.toString(node);
+	}
+
+	public static <JsonNode> String toString(JsonProvider<JsonNode> jsonProvider, JsonNode node, @Nullable Version version) {
+		String text = jsonProvider.toString(node);
+		if (version != null && version.compareTo(Versions.JQ_1_7) < 0) {
+			if (jsonProvider.getNodeType(node) == JsonNodeType.NUMBER) {
+				return text.replace('E', 'e');
+			}
+		}
+		return text;
 	}
 
 	/**

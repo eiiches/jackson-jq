@@ -12,12 +12,14 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
+import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -26,6 +28,7 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 	private final List<Pair<Integer, Expression<StackFrame, JsonNode>>> interpolations;
 	private final String template;
 	private final @Nullable Expression<StackFrame, JsonNode> formatter;
+	private final @Nullable Version version;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -38,11 +41,12 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public StringInterpolation(JsonProvider<JsonNode> jsonProvider, String template, List<Pair<Integer, Expression<StackFrame, JsonNode>>> interpolations, @Nullable Expression<StackFrame, JsonNode> formatter) {
+	public StringInterpolation(JsonProvider<JsonNode> jsonProvider, String template, List<Pair<Integer, Expression<StackFrame, JsonNode>>> interpolations, @Nullable Expression<StackFrame, JsonNode> formatter, @Nullable Version version) {
 		this.jsonProvider = jsonProvider;
 		this.template = template;
 		this.interpolations = interpolations;
 		this.formatter = formatter;
+		this.version = version;
 		// formatter is already compiled under the correct shielded context (see Compiler's
 		// StringInterpolationAstNode handling), so this is just a flat OR, same as everywhere else.
 		List<Expression<StackFrame, JsonNode>> interpValues = new ArrayList<>(interpolations.size());
@@ -108,8 +112,7 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 				pos = head._1;
 
 				JsonNodeType nodeType = jsonProvider.getNodeType(head._2);
-				boolean isValueNode = nodeType != JsonNodeType.ARRAY && nodeType != JsonNodeType.OBJECT;
-				builder.append(isValueNode ? jsonProvider.asText(head._2) : jsonProvider.toString(head._2));
+				builder.append(nodeType == JsonNodeType.STRING ? jsonProvider.asText(head._2) : JsonNodeUtils.toString(jsonProvider, head._2, version));
 			}
 			builder.append(template.substring(pos));
 			output.emit(jsonProvider.createString(builder.toString()), null);

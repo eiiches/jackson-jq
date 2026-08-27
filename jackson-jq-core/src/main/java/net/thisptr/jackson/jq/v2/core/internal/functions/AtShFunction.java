@@ -8,6 +8,7 @@ import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.v2.core.exception.IllegalJsonInputException;
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
+import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Strings;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -33,7 +34,7 @@ public class AtShFunction implements Function {
 					if (iType == JsonNodeType.STRING) {
 						tokens.add(escape(jsonProvider.asText(i)));
 					} else if (isValueNode(iType)) {
-						tokens.add(jsonProvider.toString(i));
+						tokens.add(JsonNodeUtils.toString(jsonProvider, i, version));
 					} else {
 						throw new IllegalJsonInputException(iType + " cannot be escaped for shell");
 					}
@@ -42,7 +43,7 @@ public class AtShFunction implements Function {
 			} else if (type == JsonNodeType.STRING) {
 				output.emit(jsonProvider.createString(escape(jsonProvider.asText(in))), null);
 			} else if (isValueNode(type)) {
-				output.emit(jsonProvider.createString(jsonProvider.toString(in)), null);
+				output.emit(jsonProvider.createString(JsonNodeUtils.toString(jsonProvider, in, version)), null);
 			} else {
 				throw new IllegalJsonInputException(type + " cannot be escaped for shell");
 			}
