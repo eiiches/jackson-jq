@@ -231,7 +231,7 @@ public class Compiler {
 			} finally {
 				context.setInputFixed(inputFixed);
 			}
-			compiledArgs = precomputeConstantArguments(env, context, compiledArgs);
+			compiledArgs = Collections.unmodifiableList(precomputeConstantArguments(env, context, compiledArgs));
 
 			if (call.moduleName() != null) {
 				@Var Module mod = context.getImportedModule(call.moduleName());
