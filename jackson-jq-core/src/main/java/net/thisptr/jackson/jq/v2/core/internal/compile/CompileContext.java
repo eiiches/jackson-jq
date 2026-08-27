@@ -580,7 +580,7 @@ public class CompileContext {
 							: SymbolLocation.captured(targetSlot, outer.functionDependsOnInfo.get(outerKey));
 				}
 			}
-			FunctionSignature existingKey = outer.capturedFnSlots.containsKey(key) ? key : key.withArity(null);
+			FunctionSignature existingKey = outer.capturedFnSlots.containsKey(key) ? key : key.asVariadic();
 			Integer existingClosureSlot = outer.capturedFnSlots.get(existingKey);
 			if (existingClosureSlot != null && crossedFunctionBoundary) {
 				BoundArgumentInfo boundArgumentInfo = outer.capturedFnBoundArguments.get(existingKey);
@@ -611,7 +611,7 @@ public class CompileContext {
 	private static @Nullable FunctionSignature resolveFunctionKey(ScopeFrame frame, FunctionSignature key) {
 		if (frame.functions.contains(key))
 			return key;
-		FunctionSignature variadicKey = key.withArity(null);
+		FunctionSignature variadicKey = key.asVariadic();
 		return frame.functions.contains(variadicKey) ? variadicKey : null;
 	}
 }

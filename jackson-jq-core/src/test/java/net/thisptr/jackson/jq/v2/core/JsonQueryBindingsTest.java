@@ -201,7 +201,7 @@ public class JsonQueryBindingsTest {
 
 	@Test
 	public void overridesVariadicFunctionUsingRegisteredSignature() throws Exception {
-		FunctionSignature variadic = FunctionSignature.of("custom", 0).withArity(null);
+		FunctionSignature variadic = FunctionSignature.ofVariadic("custom");
 		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareFunction(variadic)
 				.build();

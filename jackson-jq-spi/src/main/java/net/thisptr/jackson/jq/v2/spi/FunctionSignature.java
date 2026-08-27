@@ -11,8 +11,9 @@ import org.jspecify.annotations.Nullable;
  * A {@code null} {@link #arity()} means the function is variadic (bound under {@code name} alone),
  * matching the convention used by a negative {@code @FunctionRegistration#nargs()}.
  */
-public class FunctionSignature {
+public final class FunctionSignature {
 	private static final Pattern FUNCTION_NAME_PATTERN = Pattern.compile("@?[a-zA-Z_][a-zA-Z0-9_]*");
+	private static final Pattern ARITY_PATTERN = Pattern.compile("0|[1-9][0-9]*");
 
 	private final String name;
 
@@ -38,16 +39,55 @@ public class FunctionSignature {
 	}
 
 	/**
+	 * Creates a signature for the given name with no arity constraint (variadic).
+	 *
+	 * @param name the function name
+	 * @return the signature
+	 * @throws IllegalArgumentException if {@code name} is not a valid jq function name
+	 */
+	public static FunctionSignature ofVariadic(String name) {
+		return new FunctionSignature(name, null);
+	}
+
+	/**
 	 * Creates a signature for the given name and arity.
 	 *
 	 * @param name the function name
-	 * @param arity the number of arguments, or {@code null} if variadic
+	 * @param arity the number of arguments (must be non-negative)
 	 * @return the signature
 	 * @throws IllegalArgumentException if {@code name} is not a valid jq function name, or
 	 *                                   {@code arity} is negative
 	 */
-	public static FunctionSignature of(String name, @Nullable Integer arity) {
+	public static FunctionSignature of(String name, int arity) {
 		return new FunctionSignature(name, arity);
+	}
+
+	/**
+	 * Parses a function signature from its {@code name/arity} or {@code name/*} string form
+	 * (e.g. {@code "length/0"} or {@code "custom/*"}).
+	 *
+	 * @param text the string form to parse
+	 * @return the parsed function signature
+	 * @throws IllegalArgumentException if {@code text} does not match the expected syntax
+	 */
+	public static FunctionSignature valueOf(String text) {
+		Objects.requireNonNull(text, "text");
+		int slash = text.indexOf('/');
+		if (slash < 0)
+			throw new IllegalArgumentException("Invalid function signature (expected name/arity or name/*): " + text);
+		String name = text.substring(0, slash);
+		String arityStr = text.substring(slash + 1);
+		if ("*".equals(arityStr))
+			return ofVariadic(name);
+		if (!ARITY_PATTERN.matcher(arityStr).matches())
+			throw new IllegalArgumentException("Invalid arity in function signature: " + text);
+		int arity;
+		try {
+			arity = Integer.parseInt(arityStr);
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("Invalid arity in function signature: " + text, e);
+		}
+		return of(name, arity);
 	}
 
 	/**
@@ -68,6 +108,15 @@ public class FunctionSignature {
 		return arity;
 	}
 
+	/**
+	 * Returns {@code true} if this signature is variadic (has no arity constraint).
+	 *
+	 * @return whether this signature is variadic
+	 */
+	public boolean isVariadic() {
+		return arity == null;
+	}
+
 	@Override
 	public boolean equals(@Nullable Object o) {
 		if (!(o instanceof FunctionSignature))
@@ -83,17 +132,26 @@ public class FunctionSignature {
 
 	@Override
 	public String toString() {
-		return name + (arity != null ? "/" + arity : "");
+		return name + "/" + (arity != null ? arity : "*");
 	}
 
 	/**
 	 * Returns a copy of this signature with a different arity.
 	 *
-	 * @param arity the new arity, or {@code null} if variadic
+	 * @param arity the new arity (must be non-negative)
 	 * @return the new signature
 	 * @throws IllegalArgumentException if {@code arity} is negative
 	 */
-	public FunctionSignature withArity(@Nullable Integer arity) {
+	public FunctionSignature withArity(int arity) {
 		return new FunctionSignature(name, arity);
+	}
+
+	/**
+	 * Returns a variadic copy of this signature (with no arity constraint).
+	 *
+	 * @return the variadic signature
+	 */
+	public FunctionSignature asVariadic() {
+		return arity == null ? this : ofVariadic(name);
 	}
 }

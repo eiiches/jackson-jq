@@ -98,7 +98,7 @@ public class EnvironmentAddImportedModuleTest {
 		Module variadicModule = new Module() {
 			@Override
 			public Map<FunctionSignature, Function> getFunctions() {
-				return Collections.singletonMap(FunctionSignature.of("greet", null), countArgs);
+				return Collections.singletonMap(FunctionSignature.ofVariadic("greet"), countArgs);
 			}
 		};
 

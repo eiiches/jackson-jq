@@ -30,6 +30,6 @@ public class ClassPathFunctionLoaderTest {
 	@Test
 	public void negativeNargsProducesVariadicSignature() {
 		assertThat(ClassPathFunctionLoader.signatureOf(registrationNamed("variadic")))
-				.isEqualTo(FunctionSignature.of("variadic", null));
+				.isEqualTo(FunctionSignature.ofVariadic("variadic"));
 	}
 }

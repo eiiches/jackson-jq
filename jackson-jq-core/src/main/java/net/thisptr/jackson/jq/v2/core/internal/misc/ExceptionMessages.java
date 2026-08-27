@@ -16,7 +16,7 @@ public final class ExceptionMessages {
 	}
 
 	public static String truncate(String text, @Nullable Version version) {
-		if (version != null && version.compareTo(Version.valueOf(1, 8, 2)) >= 0) {
+		if (version != null && version.compareTo(Version.of(1, 8, 2)) >= 0) {
 			if (text.length() <= 29)
 				return text;
 			@Var char delim = 0;
@@ -43,7 +43,7 @@ public final class ExceptionMessages {
 
 	public static <JsonNode> String cannotIndex(JsonProvider<JsonNode> jsonProvider, @Nullable Version version, String inType, JsonNode accessor) {
 		JsonNodeType accessorType = jsonProvider.getNodeType(accessor);
-		if (version != null && version.compareTo(Version.valueOf(1, 8, 2)) >= 0) {
+		if (version != null && version.compareTo(Version.of(1, 8, 2)) >= 0) {
 			String formatted = truncate(jsonProvider.toString(accessor), version);
 			return String.format("Cannot index %s with %s (%s)", inType, accessorType.toString().toLowerCase(Locale.ROOT), formatted);
 		} else {

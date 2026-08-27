@@ -205,7 +205,7 @@ public class RandomTest {
 			} catch (Throwable th) {
 				TestCase test = new TestCase();
 				test.in = in;
-				test.version = new VersionRange(VERSION, true, VERSION, true);
+				test.version = VersionRange.of(VERSION, true, VERSION, true);
 				if (expected.error != null) {
 					test.expression = new TryCatchAstNode(expr, new StringLiteralAstNode("__ERROR__"));
 					test.out = new ArrayList<>(expected.values);

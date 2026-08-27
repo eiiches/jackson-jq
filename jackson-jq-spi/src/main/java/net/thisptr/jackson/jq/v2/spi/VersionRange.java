@@ -17,7 +17,7 @@ import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
  * {@code (, 1.8)} means "below 1.8". Test-case YAML in this repository follows the same
  * {@code [inclusive, exclusive)} convention.
  */
-public class VersionRange {
+public final class VersionRange {
 	private final @Nullable Version minVersion;
 	private final boolean minInclusive;
 	private final @Nullable Version maxVersion;
@@ -36,8 +36,8 @@ public class VersionRange {
 	 * @throws IllegalArgumentException if {@code minVersion} is greater than {@code maxVersion}, or
 	 *                                   they are equal but not both inclusive
 	 */
-	public VersionRange(@Nullable Version minVersion, boolean minInclusive,
-						@Nullable Version maxVersion, boolean maxInclusive) {
+	VersionRange(@Nullable Version minVersion, boolean minInclusive,
+				 @Nullable Version maxVersion, boolean maxInclusive) {
 		this.minVersion = minVersion;
 		this.minInclusive = minVersion != null && minInclusive;
 		this.maxVersion = maxVersion;
@@ -48,6 +48,61 @@ public class VersionRange {
 			if (r > 0 || (r == 0 && (!this.minInclusive || !this.maxInclusive)))
 				throw new IllegalArgumentException("Invalid VersionRange (min must be less than or equal to max): " + (this.minInclusive ? "[" : "(") + this.minVersion + ", " + this.maxVersion + (this.maxInclusive ? "]" : ")"));
 		}
+	}
+
+	/**
+	 * Creates a version range.
+	 * <p>
+	 * A {@code null} bound means unbounded on that side; the corresponding inclusive flag is then
+	 * ignored (treated as {@code false}).
+	 *
+	 * @param minVersion the lower bound, or {@code null} if unbounded
+	 * @param minInclusive whether {@code minVersion} itself is included in the range
+	 * @param maxVersion the upper bound, or {@code null} if unbounded
+	 * @param maxInclusive whether {@code maxVersion} itself is included in the range
+	 * @return the version range
+	 * @throws IllegalArgumentException if {@code minVersion} is greater than {@code maxVersion}, or
+	 *                                   they are equal but not both inclusive
+	 */
+	public static VersionRange of(@Nullable Version minVersion, boolean minInclusive,
+								  @Nullable Version maxVersion, boolean maxInclusive) {
+		return new VersionRange(minVersion, minInclusive, maxVersion, maxInclusive);
+	}
+
+	/**
+	 * Returns the lower bound version, or {@code null} if unbounded below.
+	 *
+	 * @return the lower bound, or {@code null}
+	 */
+	public @Nullable Version minVersion() {
+		return minVersion;
+	}
+
+	/**
+	 * Returns whether the lower bound is inclusive.
+	 *
+	 * @return {@code true} if the lower bound is inclusive
+	 */
+	public boolean minInclusive() {
+		return minInclusive;
+	}
+
+	/**
+	 * Returns the upper bound version, or {@code null} if unbounded above.
+	 *
+	 * @return the upper bound, or {@code null}
+	 */
+	public @Nullable Version maxVersion() {
+		return maxVersion;
+	}
+
+	/**
+	 * Returns whether the upper bound is inclusive.
+	 *
+	 * @return {@code true} if the upper bound is inclusive
+	 */
+	public boolean maxInclusive() {
+		return maxInclusive;
 	}
 
 	/**
@@ -117,16 +172,16 @@ public class VersionRange {
 	 * exactly {@code -1} is {@code VersionRangeSpec}'s sentinel for an absent bound and is
 	 * converted to {@code null} here, matching this class's own "unbounded" representation. Any
 	 * other negative component is not the sentinel and is rejected: it is passed through to
-	 * {@link Version#valueOf(VersionSpec)}, which throws {@code IllegalArgumentException}.
+	 * {@link Version#from(VersionSpec)}, which throws {@code IllegalArgumentException}.
 	 *
 	 * @param spec the annotation form to convert
 	 * @return the equivalent version range
 	 * @throws IllegalArgumentException if {@code spec} has a negative component that isn't the
 	 *                                   {@code -1, -1, -1} sentinel
 	 */
-	public static VersionRange valueOf(VersionRangeSpec spec) {
-		return new VersionRange(isUnbounded(spec.min()) ? null : Version.valueOf(spec.min()), spec.minInclusive(),
-				isUnbounded(spec.max()) ? null : Version.valueOf(spec.max()), spec.maxInclusive());
+	public static VersionRange from(VersionRangeSpec spec) {
+		return new VersionRange(isUnbounded(spec.min()) ? null : Version.from(spec.min()), spec.minInclusive(),
+				isUnbounded(spec.max()) ? null : Version.from(spec.max()), spec.maxInclusive());
 	}
 
 	private static boolean isUnbounded(VersionSpec spec) {
@@ -143,7 +198,7 @@ public class VersionRange {
 		StringBuilder builder = new StringBuilder();
 		builder.append(minInclusive ? "[" : "(");
 		builder.append(minVersion != null ? minVersion : "");
-		builder.append(",");
+		builder.append(", ");
 		builder.append(maxVersion != null ? maxVersion : "");
 		builder.append(maxInclusive ? "]" : ")");
 		return builder.toString();

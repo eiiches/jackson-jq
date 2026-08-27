@@ -12,6 +12,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionParameter;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -115,7 +116,7 @@ public class EnvironmentFunctionLoaderTest {
 	@Test
 	public void jqFunctionIsResolvedFromSeparateLoaderRegistry() throws Exception {
 		FunctionSignature key = FunctionSignature.of("greet", 0);
-		JqFunction jqFunction = new JqFunction("greet", Collections.emptyList(), "\"from-jq\"", null);
+		JqFunction jqFunction = JqFunction.of("greet", Collections.emptyList(), "\"from-jq\"");
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.setFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(key, jqFunction)))
 				.build();
@@ -126,7 +127,7 @@ public class EnvironmentFunctionLoaderTest {
 	@Test
 	public void jqFunctionWinsOverLoadedJavaFunctionWithSameExactSignature() throws Exception {
 		FunctionSignature key = FunctionSignature.of("greet", 0);
-		JqFunction jqFunction = new JqFunction("greet", Collections.emptyList(), "\"from-jq\"", null);
+		JqFunction jqFunction = JqFunction.of("greet", Collections.emptyList(), "\"from-jq\"");
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.setFunctionLoader(functionLoader(Collections.singletonMap(key, constantFunction("from-java")), Collections.singletonMap(key, jqFunction)))
 				.build();
@@ -137,7 +138,7 @@ public class EnvironmentFunctionLoaderTest {
 	@Test
 	public void explicitFunctionWinsOverLoadedJqFunction() throws Exception {
 		FunctionSignature key = FunctionSignature.of("greet", 0);
-		JqFunction jqFunction = new JqFunction("greet", Collections.emptyList(), "\"from-jq\"", null);
+		JqFunction jqFunction = JqFunction.of("greet", Collections.emptyList(), "\"from-jq\"");
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.setFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(key, jqFunction)))
 				.defineFunction(key, constantFunction("from-explicit"))
@@ -149,8 +150,8 @@ public class EnvironmentFunctionLoaderTest {
 	@Test
 	public void recursiveJqFunctionUsesGenericBodyAsRecursionGuard() throws Exception {
 		FunctionSignature key = FunctionSignature.of("countdown", 1);
-		JqFunction jqFunction = new JqFunction("countdown", Collections.singletonList("$n"),
-				"if $n <= 0 then 0 else countdown($n - 1) end", null);
+		JqFunction jqFunction = JqFunction.of("countdown", Collections.singletonList(FunctionParameter.ofValue("n")),
+				"if $n <= 0 then 0 else countdown($n - 1) end");
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.setFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(key, jqFunction)))
 				.build();
@@ -160,8 +161,8 @@ public class EnvironmentFunctionLoaderTest {
 
 	@Test
 	public void environmentJqFunctionUsesFullEnvironment() throws Exception {
-		JqFunction helper = new JqFunction("jq_helper", Collections.emptyList(), "\"-jq\"", null);
-		JqFunction greet = new JqFunction("greet", Collections.emptyList(), "java_helper + jq_helper + $suffix", null);
+		JqFunction helper = JqFunction.of("jq_helper", Collections.emptyList(), "\"-jq\"");
+		JqFunction greet = JqFunction.of("greet", Collections.emptyList(), "java_helper + jq_helper + $suffix");
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.defineFunction(FunctionSignature.of("java_helper", 0), constantFunction("java"))
 				.defineJqFunction(helper)
@@ -174,8 +175,8 @@ public class EnvironmentFunctionLoaderTest {
 
 	@Test
 	public void environmentJqFunctionIsRecursive() throws Exception {
-		JqFunction countdown = new JqFunction("countdown", Collections.singletonList("$n"),
-				"if $n <= 0 then 0 else countdown($n - 1) end", null);
+		JqFunction countdown = JqFunction.of("countdown", Collections.singletonList(FunctionParameter.ofValue("n")),
+				"if $n <= 0 then 0 else countdown($n - 1) end");
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.defineJqFunction(countdown)
 				.build();
@@ -186,8 +187,8 @@ public class EnvironmentFunctionLoaderTest {
 	@Test
 	public void recursiveEnvironmentJqFunctionCanUseDeclaredGlobals() throws Exception {
 		FunctionSignature helperSignature = FunctionSignature.of("declared_helper", 0);
-		JqFunction countdown = new JqFunction("countdown", Collections.singletonList("$n"),
-				"if $n <= 0 then declared_helper + $suffix else countdown($n - 1) end", null);
+		JqFunction countdown = JqFunction.of("countdown", Collections.singletonList(FunctionParameter.ofValue("n")),
+				"if $n <= 0 then declared_helper + $suffix else countdown($n - 1) end");
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.declareFunction(helperSignature)
 				.declareVariable("suffix")
@@ -207,8 +208,8 @@ public class EnvironmentFunctionLoaderTest {
 	@Test
 	public void environmentJqFunctionWinsOverLoaderDefinition() throws Exception {
 		FunctionSignature key = FunctionSignature.of("greet", 0);
-		JqFunction loaded = new JqFunction("greet", Collections.emptyList(), "\"from-loader\"", null);
-		JqFunction defined = new JqFunction("greet", Collections.emptyList(), "\"from-environment\"", null);
+		JqFunction loaded = JqFunction.of("greet", Collections.emptyList(), "\"from-loader\"");
+		JqFunction defined = JqFunction.of("greet", Collections.emptyList(), "\"from-environment\"");
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.setFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(key, loaded)))
 				.defineJqFunction(defined)
@@ -220,7 +221,7 @@ public class EnvironmentFunctionLoaderTest {
 	@Test
 	public void loaderJqFunctionCannotSeeEnvironmentDefinitions() {
 		FunctionSignature key = FunctionSignature.of("loaded", 0);
-		JqFunction loaded = new JqFunction("loaded", Collections.emptyList(), "environment_only", null);
+		JqFunction loaded = JqFunction.of("loaded", Collections.emptyList(), "environment_only");
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.setFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(key, loaded)))
 				.defineFunction(FunctionSignature.of("environment_only", 0), constantFunction("visible"))
@@ -237,7 +238,7 @@ public class EnvironmentFunctionLoaderTest {
 	// one of the same name at that particular call site.
 	@Test
 	public void inlinedJqFunctionBodyCannotSeeTheCallSitesLocalVariable() {
-		JqFunction leaks = new JqFunction("leaks", Collections.singletonList("f"), "$outer", null);
+		JqFunction leaks = JqFunction.of("leaks", Collections.singletonList(FunctionParameter.ofFilter("f")), "$outer");
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.defineJqFunction(leaks)
 				.build();
@@ -252,7 +253,7 @@ public class EnvironmentFunctionLoaderTest {
 	// hop has already been taken once.
 	@Test
 	public void inlinedJqFunctionBodyCannotSeeTheCallSitesLocalVariableThroughAnInternalDef() {
-		JqFunction leaks = new JqFunction("leaks", Collections.singletonList("f"), "def inner: $outer; inner", null);
+		JqFunction leaks = JqFunction.of("leaks", Collections.singletonList(FunctionParameter.ofFilter("f")), "def inner: $outer; inner");
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.defineJqFunction(leaks)
 				.build();
@@ -277,8 +278,8 @@ public class EnvironmentFunctionLoaderTest {
 	// must keep working exactly as before through the unmodified compileResolvedFunction/bindResolved path.
 	@Test
 	public void jqFunctionWithAnInternalDefStillWorksThroughTheUnmodifiedPath() throws Exception {
-		JqFunction countUp = new JqFunction("count_up", Collections.singletonList("$limit"),
-				"def _step: if . >= $limit then . else (. + 1 | _step) end; _step", null);
+		JqFunction countUp = JqFunction.of("count_up", Collections.singletonList(FunctionParameter.ofValue("limit")),
+				"def _step: if . >= $limit then . else (. + 1 | _step) end; _step");
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.defineJqFunction(countUp)
 				.build();
@@ -291,9 +292,9 @@ public class EnvironmentFunctionLoaderTest {
 
 	@Test
 	public void exactEnvironmentJqFunctionWinsOverEnvironmentJavaVariadicFunction() throws Exception {
-		JqFunction defined = new JqFunction("greet", Collections.emptyList(), "\"exact-jq\"", null);
+		JqFunction defined = JqFunction.of("greet", Collections.emptyList(), "\"exact-jq\"");
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
-				.defineFunction(FunctionSignature.of("greet", null), constantFunction("variadic-java"))
+				.defineFunction(FunctionSignature.ofVariadic("greet"), constantFunction("variadic-java"))
 				.defineJqFunction(defined)
 				.build();
 
@@ -302,8 +303,8 @@ public class EnvironmentFunctionLoaderTest {
 
 	@Test
 	public void environmentJqFunctionMapIsAnImmutableSnapshot() {
-		JqFunction first = new JqFunction("first", Collections.emptyList(), "1", null);
-		JqFunction second = new JqFunction("second", Collections.emptyList(), "2", null);
+		JqFunction first = JqFunction.of("first", Collections.emptyList(), "1");
+		JqFunction second = JqFunction.of("second", Collections.emptyList(), "2");
 		EnvironmentBuilder<JsonNode> builder = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.defineJqFunction(first);
 		Environment<JsonNode> env = builder.build();
@@ -317,7 +318,7 @@ public class EnvironmentFunctionLoaderTest {
 	public void environmentJqFunctionCannotBeOverriddenByBindings() throws Exception {
 		FunctionSignature signature = FunctionSignature.of("greet", 0);
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
-				.defineJqFunction(new JqFunction("greet", Collections.emptyList(), "\"fixed\"", null))
+				.defineJqFunction(JqFunction.of("greet", Collections.emptyList(), "\"fixed\""))
 				.build();
 		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
 				.setFunction(signature, constantFunction("override"))
@@ -331,7 +332,7 @@ public class EnvironmentFunctionLoaderTest {
 	@Test
 	public void environmentFunctionRegistrationsRejectExactSignatureConflicts() {
 		FunctionSignature signature = FunctionSignature.of("greet", 0);
-		JqFunction jqFunction = new JqFunction("greet", Collections.emptyList(), "1", null);
+		JqFunction jqFunction = JqFunction.of("greet", Collections.emptyList(), "1");
 
 		assertThatThrownBy(() -> new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.defineFunction(signature, constantFunction("java"))
@@ -353,8 +354,8 @@ public class EnvironmentFunctionLoaderTest {
 
 	@Test
 	public void environmentJqFunctionRejectsIncompatibleVersionRange() {
-		JqFunction incompatible = new JqFunction("future", Collections.emptyList(), "1", VersionRange.valueOf("[1.7, )"));
-		JqFunction compatible = new JqFunction("current", Collections.emptyList(), "1", VersionRange.valueOf("[1.6, 1.7)"));
+		JqFunction incompatible = JqFunction.of("future", Collections.emptyList(), "1", VersionRange.valueOf("[1.7, )"));
+		JqFunction compatible = JqFunction.of("current", Collections.emptyList(), "1", VersionRange.valueOf("[1.6, 1.7)"));
 		EnvironmentBuilder<JsonNode> builder = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
 
 		assertThatThrownBy(() -> builder.defineJqFunction(incompatible))

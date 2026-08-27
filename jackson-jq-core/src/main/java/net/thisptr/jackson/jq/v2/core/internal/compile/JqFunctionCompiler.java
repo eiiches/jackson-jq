@@ -19,6 +19,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionParameter;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -35,15 +36,15 @@ final class JqFunctionCompiler {
 	static final class DefinitionKey {
 		private final Version version;
 		private final FunctionSignature signature;
-		private final List<String> args;
+		private final List<FunctionParameter> parameters;
 		private final String body;
 		private final Origin origin;
 
 		DefinitionKey(Version version, FunctionSignature signature, JqFunction definition, Origin origin) {
 			this.version = version;
 			this.signature = signature;
-			this.args = definition.args;
-			this.body = definition.body;
+			this.parameters = definition.parameters();
+			this.body = definition.body();
 			this.origin = origin;
 		}
 
@@ -54,12 +55,12 @@ final class JqFunctionCompiler {
 			if (!(obj instanceof DefinitionKey))
 				return false;
 			DefinitionKey other = (DefinitionKey) obj;
-			return version.equals(other.version) && signature.equals(other.signature) && args.equals(other.args) && body.equals(other.body) && origin == other.origin;
+			return version.equals(other.version) && signature.equals(other.signature) && parameters.equals(other.parameters) && body.equals(other.body) && origin == other.origin;
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(version, signature, args, body, origin);
+			return Objects.hash(version, signature, parameters, body, origin);
 		}
 	}
 
@@ -118,8 +119,8 @@ final class JqFunctionCompiler {
 			this.definition = definition;
 			this.origin = origin;
 			this.version = version;
-			this.parsedAst = AstParser.parse(definition.body, version);
-			this.eligibleForInlining = !definition.body.contains("def ");
+			this.parsedAst = AstParser.parse(definition.body(), version);
+			this.eligibleForInlining = !definition.body().contains("def ");
 		}
 
 		@SuppressWarnings("unchecked")
@@ -171,20 +172,20 @@ final class JqFunctionCompiler {
 		// respectively) -- it's threaded through only so callers of compileResolvedFunctionInline can be
 		// reminded params start there, matching what bindAndApply needs to reconstruct independently.
 		private <N> void bindParamNames(CompileContext context, @Nullable List<Expression<StackFrame, N>> boundArguments, int baseSlot) {
-			for (int i = 0; i < definition.args.size(); i++) {
-				String arg = definition.args.get(i);
+			for (int i = 0; i < definition.parameters().size(); i++) {
+				FunctionParameter arg = definition.parameters().get(i);
 				BoundArgumentInfo info = boundArguments != null
-						? new BoundArgumentInfo(boundArguments.get(i), !arg.startsWith("$") || boundArguments.get(i).getCardinality() == Cardinality.ONE)
+						? new BoundArgumentInfo(boundArguments.get(i), arg.kind() == FunctionParameter.Kind.FILTER || boundArguments.get(i).getCardinality() == Cardinality.ONE)
 						: null;
-				if (arg.startsWith("$")) {
+				if (arg.kind() == FunctionParameter.Kind.VALUE) {
 					if (info != null)
-						context.addLocalVariable(arg.substring(1), info);
+						context.addLocalVariable(arg.name(), info);
 					else
-						context.addLocalVariable(arg.substring(1));
+						context.addLocalVariable(arg.name());
 				} else if (info != null) {
-					context.addLocalFunction(arg, 0, info);
+					context.addLocalFunction(arg.name(), 0, info);
 				} else {
-					context.addLocalFunction(arg, 0);
+					context.addLocalFunction(arg.name(), 0);
 				}
 			}
 		}
@@ -205,11 +206,11 @@ final class JqFunctionCompiler {
 				// StackFrame is pushed at runtime -- see bindResolvedInline.
 				CompileContext inlineContext = context.createInlinedJqFunctionContext(compiled.key, origin == Origin.ENVIRONMENT);
 				ResolvedFunction<N> resolved = compiled.compileResolvedFunctionInline(env, args, inlineContext);
-				return bindResolvedInline(compiled.definition.args, args, resolved);
+				return bindResolvedInline(compiled.definition.parameters(), args, resolved);
 			}
 			CompileContext functionContext = context.createJqFunctionContext(compiled.key, origin == Origin.ENVIRONMENT);
 			ResolvedFunction<N> resolved = compiled.compileResolvedFunction(env, args, functionContext);
-			return bindResolved(compiled.definition.args, args, resolved);
+			return bindResolved(compiled.definition.parameters(), args, resolved);
 		} catch (JsonQueryException ignored) {
 			return bindFallback(compiled, env, args, context, origin);
 		}
@@ -218,15 +219,15 @@ final class JqFunctionCompiler {
 	private static <N> Expression<StackFrame, N> bindFallback(CompiledDefinition definition, Environment<N> env, List<Expression<StackFrame, N>> args, CompileContext context, Origin origin) {
 		CompileContext genericContext = context.createGenericJqFunctionContext(definition.key, origin == Origin.ENVIRONMENT);
 		if (origin == Origin.ENVIRONMENT && !context.isGenericJqFunctionActive(definition.key))
-			return bindResolved(definition.definition.args, args, definition.getGenericFunction(env, genericContext));
+			return bindResolved(definition.definition.parameters(), args, definition.getGenericFunction(env, genericContext));
 		return bindGeneric(definition, env, args, genericContext);
 	}
 
 	private static <N> Expression<StackFrame, N> bindGeneric(CompiledDefinition definition, Environment<N> env, List<Expression<StackFrame, N>> args, CompileContext genericContext) {
-		return (callerFrame, in, path, output) -> bindResolved(definition.definition.args, args, definition.getGenericFunction(env, genericContext)).apply(callerFrame, in, path, output);
+		return (callerFrame, in, path, output) -> bindResolved(definition.definition.parameters(), args, definition.getGenericFunction(env, genericContext)).apply(callerFrame, in, path, output);
 	}
 
-	private static <N> Expression<StackFrame, N> bindResolved(List<String> paramNames, List<Expression<StackFrame, N>> args, ResolvedFunction<N> resolved) {
+	private static <N> Expression<StackFrame, N> bindResolved(List<FunctionParameter> paramNames, List<Expression<StackFrame, N>> args, ResolvedFunction<N> resolved) {
 		return new Expression<StackFrame, N>() {
 			@Override
 			public Cardinality getCardinality() {
@@ -262,7 +263,7 @@ final class JqFunctionCompiler {
 	 * {@link CompileContext#pushInlinedFunctionScope}), so {@code apply()} binds params directly into
 	 * {@code callerFrame} instead of pushing a dedicated one.
 	 */
-	private static <N> Expression<StackFrame, N> bindResolvedInline(List<String> paramNames, List<Expression<StackFrame, N>> args, ResolvedFunction<N> resolved) {
+	private static <N> Expression<StackFrame, N> bindResolvedInline(List<FunctionParameter> paramNames, List<Expression<StackFrame, N>> args, ResolvedFunction<N> resolved) {
 		return new Expression<StackFrame, N>() {
 			@Override
 			public Cardinality getCardinality() {
@@ -286,12 +287,12 @@ final class JqFunctionCompiler {
 		};
 	}
 
-	private static <N> void bindAndApply(StackFrame callerFrame, StackFrame functionFrame, int baseSlot, List<String> paramNames, List<Expression<StackFrame, N>> args, int valueParamIndex, N in, @Nullable Path<N> path, Output<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
+	private static <N> void bindAndApply(StackFrame callerFrame, StackFrame functionFrame, int baseSlot, List<FunctionParameter> paramNames, List<Expression<StackFrame, N>> args, int valueParamIndex, N in, @Nullable Path<N> path, Output<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
 		if (valueParamIndex == 0) {
 			for (int i = 0; i < paramNames.size(); i++) {
-				String paramName = paramNames.get(i);
+				FunctionParameter paramName = paramNames.get(i);
 				Expression<StackFrame, N> paramExpression = args.get(i);
-				if (!paramName.startsWith("$"))
+				if (paramName.kind() == FunctionParameter.Kind.FILTER)
 					functionFrame.set(baseSlot + i, boundFilter(callerFrame, paramExpression));
 			}
 		}
@@ -299,9 +300,9 @@ final class JqFunctionCompiler {
 			bodyTask.accept(functionFrame);
 			return;
 		}
-		String paramName = paramNames.get(valueParamIndex);
+		FunctionParameter paramName = paramNames.get(valueParamIndex);
 		Expression<StackFrame, N> paramExpression = args.get(valueParamIndex);
-		if (paramName.startsWith("$")) {
+		if (paramName.kind() == FunctionParameter.Kind.VALUE) {
 			int slot = baseSlot + valueParamIndex;
 			paramExpression.apply(callerFrame, in, path, (value, valuePath) -> {
 				functionFrame.set(slot, value);

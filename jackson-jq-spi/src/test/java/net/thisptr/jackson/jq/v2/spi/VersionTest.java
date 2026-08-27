@@ -31,6 +31,19 @@ public class VersionTest {
 	}
 
 	@Test
+	void testOfComponents() {
+		Version v1 = Version.of(1, 2, 3);
+		assertEquals(1, v1.major());
+		assertEquals(2, v1.minor());
+		assertEquals(3, v1.patch());
+
+		Version v2 = Version.of(1, 2);
+		assertEquals(1, v2.major());
+		assertEquals(2, v2.minor());
+		assertEquals(0, v2.patch());
+	}
+
+	@Test
 	void testInvalidVersions() {
 		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("1"));
 		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("1.0.0.0"));
@@ -41,9 +54,11 @@ public class VersionTest {
 		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("-1.0"));
 		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("1.-1.0"));
 		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("1.0.-1"));
-		assertThrows(IllegalArgumentException.class, () -> Version.valueOf(-1, 0, 0));
-		assertThrows(IllegalArgumentException.class, () -> Version.valueOf(0, -1, 0));
-		assertThrows(IllegalArgumentException.class, () -> Version.valueOf(0, 0, -1));
-		assertThrows(IllegalArgumentException.class, () -> Version.valueOf(-1, -1, -1));
+		assertThrows(IllegalArgumentException.class, () -> Version.of(-1, 0, 0));
+		assertThrows(IllegalArgumentException.class, () -> Version.of(0, -1, 0));
+		assertThrows(IllegalArgumentException.class, () -> Version.of(0, 0, -1));
+		assertThrows(IllegalArgumentException.class, () -> Version.of(-1, -1, -1));
+		assertThrows(IllegalArgumentException.class, () -> Version.of(-1, 0));
+		assertThrows(IllegalArgumentException.class, () -> Version.of(0, -1));
 	}
 }

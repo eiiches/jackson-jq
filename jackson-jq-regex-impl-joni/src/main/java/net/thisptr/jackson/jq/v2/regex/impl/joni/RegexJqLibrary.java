@@ -30,39 +30,37 @@ package net.thisptr.jackson.jq.v2.regex.impl.joni;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.google.auto.service.AutoService;
 
+import net.thisptr.jackson.jq.v2.spi.FunctionParameter;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 
 @AutoService(JqLibrary.class)
 public class RegexJqLibrary implements JqLibrary {
 	private static final List<JqFunction> FUNCTIONS = Collections.unmodifiableList(Arrays.asList(
-			jq("match", args("re", "mode"), "_match_impl(re; mode; false)|.[]"),
-			jq("match", args("$val"), "($val|type) as $vt | if $vt == \"string\" then match($val; null) elif $vt == \"array\" and ($val | length) > 1 then match($val[0]; $val[1]) elif $vt == \"array\" and ($val | length) > 0 then match($val[0]; null) else error( $vt + \" not a string or array\") end"),
-			jq("test", args("re", "mode"), "_match_impl(re; mode; true)"),
-			jq("test", args("$val"), "($val|type) as $vt | if $vt == \"string\" then test($val; null) elif $vt == \"array\" and ($val | length) > 1 then test($val[0]; $val[1]) elif $vt == \"array\" and ($val | length) > 0 then test($val[0]; null) else error( $vt + \" not a string or array\") end"),
-			jq("capture", args("re", "mods"), "match(re; mods) | reduce ( .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair ({}; . + $pair)"),
-			jq("capture", args("$val"), "($val|type) as $vt | if $vt == \"string\" then capture($val; null) elif $vt == \"array\" and ($val | length) > 1 then capture($val[0]; $val[1]) elif $vt == \"array\" and ($val | length) > 0 then capture($val[0]; null) else error( $vt + \" not a string or array\") end"),
-			jq("scan", args("re"), "scan(re; \"\")"),
-			jq("scan", args("re", "flags"), "match(re; flags + \"g\") | if (.captures|length > 0) then [ .captures | .[] | .string ] else .string end"),
-			jq("_nwise", args("a", "$n"), "if a|length <= $n then a else a[0:$n] , _nwise(a[$n:]; $n) end"),
-			jq("_nwise", args("$n"), "_nwise(.; $n)"),
-			jq("splits", args("$re", "flags"), ". as $s | [ match($re; \"g\" + flags) | (.offset, .offset + .length) ] | [0] + . +[$s|length] | _nwise(2) | $s[.[0]:.[1] ]"),
-			jq("splits", args("$re"), "splits($re; null)"),
-			jq("split", args("$re", "flags"), "[splits($re; flags)]"),
-			jq("sub", args("$re", "s"), "_sub_impl($re; s; \"\")"),
-			jq("sub", args("$re", "s", "flags"), "_sub_impl($re; s; flags)"),
-			jq("gsub", args("$re", "s", "flags"), "_sub_impl($re; s; flags + \"g\")"),
-			jq("gsub", args("$re", "s"), "_sub_impl($re; s; \"g\")")));
+			JqFunction.of("match", args("re", "mode"), "_match_impl(re; mode; false)|.[]"),
+			JqFunction.of("match", args("$val"), "($val|type) as $vt | if $vt == \"string\" then match($val; null) elif $vt == \"array\" and ($val | length) > 1 then match($val[0]; $val[1]) elif $vt == \"array\" and ($val | length) > 0 then match($val[0]; null) else error( $vt + \" not a string or array\") end"),
+			JqFunction.of("test", args("re", "mode"), "_match_impl(re; mode; true)"),
+			JqFunction.of("test", args("$val"), "($val|type) as $vt | if $vt == \"string\" then test($val; null) elif $vt == \"array\" and ($val | length) > 1 then test($val[0]; $val[1]) elif $vt == \"array\" and ($val | length) > 0 then test($val[0]; null) else error( $vt + \" not a string or array\") end"),
+			JqFunction.of("capture", args("re", "mods"), "match(re; mods) | reduce ( .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair ({}; . + $pair)"),
+			JqFunction.of("capture", args("$val"), "($val|type) as $vt | if $vt == \"string\" then capture($val; null) elif $vt == \"array\" and ($val | length) > 1 then capture($val[0]; $val[1]) elif $vt == \"array\" and ($val | length) > 0 then capture($val[0]; null) else error( $vt + \" not a string or array\") end"),
+			JqFunction.of("scan", args("re"), "scan(re; \"\")"),
+			JqFunction.of("scan", args("re", "flags"), "match(re; flags + \"g\") | if (.captures|length > 0) then [ .captures | .[] | .string ] else .string end"),
+			JqFunction.of("_nwise", args("a", "$n"), "if a|length <= $n then a else a[0:$n] , _nwise(a[$n:]; $n) end"),
+			JqFunction.of("_nwise", args("$n"), "_nwise(.; $n)"),
+			JqFunction.of("splits", args("$re", "flags"), ". as $s | [ match($re; \"g\" + flags) | (.offset, .offset + .length) ] | [0] + . +[$s|length] | _nwise(2) | $s[.[0]:.[1] ]"),
+			JqFunction.of("splits", args("$re"), "splits($re; null)"),
+			JqFunction.of("split", args("$re", "flags"), "[splits($re; flags)]"),
+			JqFunction.of("sub", args("$re", "s"), "_sub_impl($re; s; \"\")"),
+			JqFunction.of("sub", args("$re", "s", "flags"), "_sub_impl($re; s; flags)"),
+			JqFunction.of("gsub", args("$re", "s", "flags"), "_sub_impl($re; s; flags + \"g\")"),
+			JqFunction.of("gsub", args("$re", "s"), "_sub_impl($re; s; \"g\")")));
 
-	private static JqFunction jq(String name, List<String> args, String body) {
-		return new JqFunction(name, args, body, null);
-	}
-
-	private static List<String> args(String... args) {
-		return Arrays.asList(args);
+	private static List<FunctionParameter> args(String... args) {
+		return Arrays.stream(args).map(FunctionParameter::valueOf).collect(Collectors.toList());
 	}
 
 	@Override

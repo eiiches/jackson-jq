@@ -683,7 +683,7 @@ public class Compiler {
 		Function factory = functions.get(key);
 		if (factory != null)
 			return factory;
-		return functions.get(key.withArity(null));
+		return functions.get(key.asVariadic());
 	}
 
 	/**
@@ -694,7 +694,7 @@ public class Compiler {
 		FunctionSignature exact = FunctionSignature.of(name, arity);
 		if (env.getDeclaredFunctions().contains(exact))
 			return exact;
-		FunctionSignature variadic = exact.withArity(null);
+		FunctionSignature variadic = exact.asVariadic();
 		return env.getDeclaredFunctions().contains(variadic) ? variadic : null;
 	}
 
@@ -737,7 +737,7 @@ public class Compiler {
 			JqFunction jqFunction = env.getJqFunctions().get(exact);
 			if (jqFunction != null)
 				return JqFunctionCompiler.compile(env, context, exact, jqFunction, JqFunctionCompiler.Origin.ENVIRONMENT, compiledArgs);
-			factory = env.getFunctions().get(exact.withArity(null));
+			factory = env.getFunctions().get(exact.asVariadic());
 		}
 		if (factory == null) {
 			JqFunction jqFunction = env.getFunctionLoader().getJqFunctions(env.getJqVersion()).get(exact);
@@ -746,7 +746,7 @@ public class Compiler {
 			Map<FunctionSignature, Function> loadedFunctions = env.getFunctionLoader().getFunctions(env.getJqVersion());
 			factory = loadedFunctions.get(exact);
 			if (factory == null)
-				factory = loadedFunctions.get(exact.withArity(null));
+				factory = loadedFunctions.get(exact.asVariadic());
 		}
 		if (factory == null)
 			throw new JsonQueryException(String.format("Function %s/%d does not exist", fullName, arity));

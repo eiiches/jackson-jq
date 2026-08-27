@@ -30,9 +30,11 @@ package net.thisptr.jackson.jq.v2.core.internal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.google.auto.service.AutoService;
 
+import net.thisptr.jackson.jq.v2.spi.FunctionParameter;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 import net.thisptr.jackson.jq.v2.spi.VersionRange;
@@ -40,82 +42,70 @@ import net.thisptr.jackson.jq.v2.spi.VersionRange;
 @AutoService(JqLibrary.class)
 public class CoreJqLibrary implements JqLibrary {
 	private static final List<JqFunction> FUNCTIONS = Collections.unmodifiableList(Arrays.asList(
-			jq("@text", "tostring"),
-			jq("@json", "tojson"),
-			jq("paths", "paths(. != null)"),
-			jq("arrays", "select(type == \"array\")"),
-			jq("booleans", "select(type == \"boolean\")"),
-			jq("del", args("f"), "delpaths([path(f)])"),
-			jq("nulls", "select(type == \"null\")"),
-			jq("objects", "select(type == \"object\")"),
-			jq("numbers", "select(type == \"number\")"),
-			jq("strings", "select(type == \"string\")"),
-			jq("finites", "select(isfinite)"),
-			jq("normals", "select(isnormal)"),
-			jq("values", "booleans, numbers, strings, arrays, objects"),
-			jq("iterables", "arrays, objects"),
-			jq("scalars", "nulls, booleans, numbers, strings"),
-			jq("isfinite", "type == \"number\" and (isinfinite | not)"),
-			jq("add", "reduce .[] as $item (null; . + $item)"),
-			jq("min", "min_by(.)"),
-			jq("max", "max_by(.)"),
-			jq("sort", "sort_by(.)"),
-			jq("unique", "group_by(.) | map(.[0])"),
-			jq("unique_by", args("f"), "group_by(f) | map(.[0])"),
-			jq("with_entries", args("f"), "to_entries | map(f) | from_entries"),
-			jq("select", args("pred"), "if pred then . else empty end"),
-			jq("map", args("f"), "[.[] | f]"),
-			jq("recurse", args("f"), "def r: ., (f | select(. != null) | r); r"),
-			jq("recurse", args("f", "cond"), "def r: ., (f | select(cond) | r); r"),
-			jq("recurse", "recurse(.[]?)"),
-			jq("recurse_down", "recurse"),
-			jq("last", ".[-1]"),
-			jq("last", args("stream"), "reduce stream as $i (null; $i)"),
-			jq("first", ".[0]"),
-			jq("first", args("g"), "label $out | foreach g as $item ([false, null]; if .[0]==true then break $out else [true, $item] end; .[1])", "[, 1.6)"),
-			jq("first", args("g"), "label $out | g | ., break $out", "[1.6, )"),
-			jq("nth", args("n"), "n as $n | .[$n]"),
-			jq("transpose", "if . == [] then [] else . as $in | (map(length) | max) as $max | length as $length | reduce range(0; $max) as $j ([]; . + [reduce range(0; $length) as $i ([]; . + [$in[$i][$j]])]) end"),
-			jq("limit", args("$n", "exp"), "if $n < 0 then exp else label $out | foreach exp as $item ([$n, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1]) end"),
-			jq("nth", args("n", "g"), "n as $n | if $n < 0 then error(\"nth doesn't support negative indices\") else last(limit($n + 1; g)) end"),
-			jq("any", args("generator", "condition"), "[label $out | foreach generator as $i (false; if . then break $out elif $i | condition then true else . end; if . then . else empty end)] | length == 1"),
-			jq("any", args("condition"), "any(.[]; condition)"),
-			jq("any", "any(.)"),
-			jq("all", args("generator", "condition"), "[label $out | foreach generator as $i (true; if .|not then break $out elif $i | condition then . else false end; if .|not then . else empty end)] | length == 0"),
-			jq("all", args("condition"), "all(.[]; condition)"),
-			jq("all", "all(.)"),
-			jq("flatten", "_flatten(-1)"),
-			jq("flatten", args("$x"), "if $x < 0 then error(\"flatten depth must not be negative\") else _flatten($x) end"),
-			jq("_flatten", args("$x"), "reduce .[] as $i ([]; if $i | type == \"array\" and $x != 0 then . + ($i | _flatten($x-1)) else . + [$i] end)"),
-			jq("ascii_downcase", "explode | map( if 65 <= . and . <= 90 then . + 32  else . end) | implode"),
-			jq("ascii_upcase", "explode | map( if 97 <= . and . <= 122 then . - 32  else . end) | implode"),
-			jq("until", args("cond", "next"), "def _until: if cond then . else (next|_until) end; _until"),
-			jq("while", args("cond", "update"), "def _while: if cond then ., (update | _while) else empty end; _while"),
-			jq("leaf_paths", "paths(scalars)"),
-			jq("walk", args("f"), ". as $in | if type == \"object\" then reduce keys[] as $key ( {}; . + { ($key):  ($in[$key] | walk(f)) } ) | f elif type == \"array\" then map( walk(f) ) | f else f end", "[1.6, )"),
-			jq("in", args("xs"), ". as $x | xs | has($x)"),
-			jq("inside", args("xs"), ". as $x | xs | contains($x)"),
-			jq("combinations", "if length == 0 then [] else .[0][] as $x | (.[1:] | combinations) as $y | [$x] + $y end"),
-			jq("combinations", args("n"), ". as $dot | [range(n) | $dot] | combinations"),
-			jq("map_values", args("f"), ".[] |= f"),
-			jq("_modify", args("paths", "update"), "reduce path(paths) as $p (.; label $out | (setpath($p; getpath($p) | update) | ., break $out), delpaths([$p]))", "[1.6, )"),
-			jq("_modify", args("paths", "update"), "reduce path(paths) as $p (.; setpath($p; getpath($p) | update))", "[, 1.6)"),
-			jq("pick", args("pathexps"), ". as $in | reduce path(pathexps) as $a (null; setpath($a; $in|getpath($a)) )", "[1.7, )")));
+			JqFunction.of("@text", args(), "tostring"),
+			JqFunction.of("@json", args(), "tojson"),
+			JqFunction.of("paths", args(), "paths(. != null)"),
+			JqFunction.of("arrays", args(), "select(type == \"array\")"),
+			JqFunction.of("booleans", args(), "select(type == \"boolean\")"),
+			JqFunction.of("del", args("f"), "delpaths([path(f)])"),
+			JqFunction.of("nulls", args(), "select(type == \"null\")"),
+			JqFunction.of("objects", args(), "select(type == \"object\")"),
+			JqFunction.of("numbers", args(), "select(type == \"number\")"),
+			JqFunction.of("strings", args(), "select(type == \"string\")"),
+			JqFunction.of("finites", args(), "select(isfinite)"),
+			JqFunction.of("normals", args(), "select(isnormal)"),
+			JqFunction.of("values", args(), "booleans, numbers, strings, arrays, objects"),
+			JqFunction.of("iterables", args(), "arrays, objects"),
+			JqFunction.of("scalars", args(), "nulls, booleans, numbers, strings"),
+			JqFunction.of("isfinite", args(), "type == \"number\" and (isinfinite | not)"),
+			JqFunction.of("add", args(), "reduce .[] as $item (null; . + $item)"),
+			JqFunction.of("min", args(), "min_by(.)"),
+			JqFunction.of("max", args(), "max_by(.)"),
+			JqFunction.of("sort", args(), "sort_by(.)"),
+			JqFunction.of("unique", args(), "group_by(.) | map(.[0])"),
+			JqFunction.of("unique_by", args("f"), "group_by(f) | map(.[0])"),
+			JqFunction.of("with_entries", args("f"), "to_entries | map(f) | from_entries"),
+			JqFunction.of("select", args("pred"), "if pred then . else empty end"),
+			JqFunction.of("map", args("f"), "[.[] | f]"),
+			JqFunction.of("recurse", args("f"), "def r: ., (f | select(. != null) | r); r"),
+			JqFunction.of("recurse", args("f", "cond"), "def r: ., (f | select(cond) | r); r"),
+			JqFunction.of("recurse", args(), "recurse(.[]?)"),
+			JqFunction.of("recurse_down", args(), "recurse"),
+			JqFunction.of("last", args(), ".[-1]"),
+			JqFunction.of("last", args("stream"), "reduce stream as $i (null; $i)"),
+			JqFunction.of("first", args(), ".[0]"),
+			JqFunction.of("first", args("g"), "label $out | foreach g as $item ([false, null]; if .[0]==true then break $out else [true, $item] end; .[1])", VersionRange.valueOf("[, 1.6)")),
+			JqFunction.of("first", args("g"), "label $out | g | ., break $out", VersionRange.valueOf("[1.6, )")),
+			JqFunction.of("nth", args("n"), "n as $n | .[$n]"),
+			JqFunction.of("transpose", args(), "if . == [] then [] else . as $in | (map(length) | max) as $max | length as $length | reduce range(0; $max) as $j ([]; . + [reduce range(0; $length) as $i ([]; . + [$in[$i][$j]])]) end"),
+			JqFunction.of("limit", args("$n", "exp"), "if $n < 0 then exp else label $out | foreach exp as $item ([$n, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1]) end"),
+			JqFunction.of("nth", args("n", "g"), "n as $n | if $n < 0 then error(\"nth doesn't support negative indices\") else last(limit($n + 1; g)) end"),
+			JqFunction.of("any", args("generator", "condition"), "[label $out | foreach generator as $i (false; if . then break $out elif $i | condition then true else . end; if . then . else empty end)] | length == 1"),
+			JqFunction.of("any", args("condition"), "any(.[]; condition)"),
+			JqFunction.of("any", args(), "any(.)"),
+			JqFunction.of("all", args("generator", "condition"), "[label $out | foreach generator as $i (true; if .|not then break $out elif $i | condition then . else false end; if .|not then . else empty end)] | length == 0"),
+			JqFunction.of("all", args("condition"), "all(.[]; condition)"),
+			JqFunction.of("all", args(), "all(.)"),
+			JqFunction.of("flatten", args(), "_flatten(-1)"),
+			JqFunction.of("flatten", args("$x"), "if $x < 0 then error(\"flatten depth must not be negative\") else _flatten($x) end"),
+			JqFunction.of("_flatten", args("$x"), "reduce .[] as $i ([]; if $i | type == \"array\" and $x != 0 then . + ($i | _flatten($x-1)) else . + [$i] end)"),
+			JqFunction.of("ascii_downcase", args(), "explode | map( if 65 <= . and . <= 90 then . + 32  else . end) | implode"),
+			JqFunction.of("ascii_upcase", args(), "explode | map( if 97 <= . and . <= 122 then . - 32  else . end) | implode"),
+			JqFunction.of("until", args("cond", "next"), "def _until: if cond then . else (next|_until) end; _until"),
+			JqFunction.of("while", args("cond", "update"), "def _while: if cond then ., (update | _while) else empty end; _while"),
+			JqFunction.of("leaf_paths", args(), "paths(scalars)"),
+			JqFunction.of("walk", args("f"), ". as $in | if type == \"object\" then reduce keys[] as $key ( {}; . + { ($key):  ($in[$key] | walk(f)) } ) | f elif type == \"array\" then map( walk(f) ) | f else f end", VersionRange.valueOf("[1.6, )")),
+			JqFunction.of("in", args("xs"), ". as $x | xs | has($x)"),
+			JqFunction.of("inside", args("xs"), ". as $x | xs | contains($x)"),
+			JqFunction.of("combinations", args(), "if length == 0 then [] else .[0][] as $x | (.[1:] | combinations) as $y | [$x] + $y end"),
+			JqFunction.of("combinations", args("n"), ". as $dot | [range(n) | $dot] | combinations"),
+			JqFunction.of("map_values", args("f"), ".[] |= f"),
+			JqFunction.of("_modify", args("paths", "update"), "reduce path(paths) as $p (.; label $out | (setpath($p; getpath($p) | update) | ., break $out), delpaths([$p]))", VersionRange.valueOf("[1.6, )")),
+			JqFunction.of("_modify", args("paths", "update"), "reduce path(paths) as $p (.; setpath($p; getpath($p) | update))", VersionRange.valueOf("[, 1.6)")),
+			JqFunction.of("pick", args("pathexps"), ". as $in | reduce path(pathexps) as $a (null; setpath($a; $in|getpath($a)) )", VersionRange.valueOf("[1.7, )"))));
 
-	private static JqFunction jq(String name, String body) {
-		return new JqFunction(name, Collections.emptyList(), body, null);
-	}
-
-	private static JqFunction jq(String name, List<String> args, String body) {
-		return new JqFunction(name, args, body, null);
-	}
-
-	private static JqFunction jq(String name, List<String> args, String body, String version) {
-		return new JqFunction(name, args, body, VersionRange.valueOf(version));
-	}
-
-	private static List<String> args(String... args) {
-		return Arrays.asList(args);
+	private static List<FunctionParameter> args(String... args) {
+		return Arrays.stream(args).map(FunctionParameter::valueOf).collect(Collectors.toList());
 	}
 
 	@Override

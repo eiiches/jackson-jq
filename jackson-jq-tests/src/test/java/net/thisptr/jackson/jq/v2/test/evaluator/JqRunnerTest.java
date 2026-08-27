@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class JqRunnerTest {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
-	private static final String JQ_1_5 = JqExecutables.executableFor(Version.valueOf(1, 5, 0));
+	private static final String JQ_1_5 = JqExecutables.executableFor(Version.of(1, 5, 0));
 
 	@Test
 	void testJqCli() throws JsonQueryException, IOException, InterruptedException, TimeoutException {

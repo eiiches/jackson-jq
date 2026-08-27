@@ -40,7 +40,7 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 		for (Function factory : ServiceLoader.load(Function.class, classLoader)) {
 			FunctionRegistration[] regs = factory.getClass().getAnnotationsByType(FunctionRegistration.class);
 			for (FunctionRegistration reg : regs) {
-				VersionRange versionRange = VersionRange.valueOf(reg.version());
+				VersionRange versionRange = VersionRange.from(reg.version());
 				if (!versionRange.contains(jqVersion))
 					continue;
 
@@ -53,8 +53,7 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 
 	/** A negative {@link FunctionRegistration#nargs()} registers a variadic function, matching {@link FunctionSignature}'s null-arity convention. */
 	static FunctionSignature signatureOf(FunctionRegistration reg) {
-		Integer arity = reg.nargs() < 0 ? null : reg.nargs();
-		return FunctionSignature.of(reg.name(), arity);
+		return reg.nargs() < 0 ? FunctionSignature.ofVariadic(reg.name()) : FunctionSignature.of(reg.name(), reg.nargs());
 	}
 
 	/**
@@ -70,9 +69,10 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 
 		for (JqLibrary library : ServiceLoader.load(JqLibrary.class, classLoader)) {
 			for (JqFunction def : library.getJqFunctions()) {
-				if (def.version != null && !def.version.contains(jqVersion))
+				VersionRange version = def.version();
+				if (version != null && !version.contains(jqVersion))
 					continue;
-				result.put(FunctionSignature.of(def.name, def.args.size()), def);
+				result.put(def.signature(), def);
 			}
 		}
 

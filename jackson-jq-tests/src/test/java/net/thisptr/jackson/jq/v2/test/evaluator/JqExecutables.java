@@ -30,13 +30,13 @@ public final class JqExecutables {
 	}
 
 	public static final List<JqExecutable> ALL = Collections.unmodifiableList(Arrays.asList(
-			new JqExecutable("jq-1.5", Version.valueOf(1, 5, 0)),
-			new JqExecutable("jq-1.6", Version.valueOf(1, 6, 0)),
-			new JqExecutable("jq-1.7", Version.valueOf(1, 7, 0)),
-			new JqExecutable("jq-1.7.1", Version.valueOf(1, 7, 1)),
-			new JqExecutable("jq-1.8.0", Version.valueOf(1, 8, 0)),
-			new JqExecutable("jq-1.8.1", Version.valueOf(1, 8, 1)),
-			new JqExecutable("jq-1.8.2", Version.valueOf(1, 8, 2))));
+			new JqExecutable("jq-1.5", Version.of(1, 5, 0)),
+			new JqExecutable("jq-1.6", Version.of(1, 6, 0)),
+			new JqExecutable("jq-1.7", Version.of(1, 7, 0)),
+			new JqExecutable("jq-1.7.1", Version.of(1, 7, 1)),
+			new JqExecutable("jq-1.8.0", Version.of(1, 8, 0)),
+			new JqExecutable("jq-1.8.1", Version.of(1, 8, 1)),
+			new JqExecutable("jq-1.8.2", Version.of(1, 8, 2))));
 
 	public static String executableFor(Version version) {
 		return ALL.stream()

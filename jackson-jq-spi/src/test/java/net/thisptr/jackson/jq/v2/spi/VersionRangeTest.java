@@ -106,33 +106,50 @@ public class VersionRangeTest {
 
 	@Test
 	void testToString() {
-		assertEquals("(,1.5.0]", VersionRange.valueOf("[, 1.5]").toString());
-		assertEquals("[1.3.0,)", VersionRange.valueOf("[1.3, ]").toString());
-		assertEquals("(,)", VersionRange.valueOf("[,]").toString());
-		assertEquals("[1.0.0,2.0.0]", VersionRange.valueOf("[1.0, 2.0]").toString());
+		assertEquals("(, 1.5.0]", VersionRange.valueOf("[, 1.5]").toString());
+		assertEquals("[1.3.0, )", VersionRange.valueOf("[1.3, ]").toString());
+		assertEquals("(, )", VersionRange.valueOf("[,]").toString());
+		assertEquals("[1.0.0, 2.0.0]", VersionRange.valueOf("[1.0, 2.0]").toString());
 	}
 
 	@Test
-	void testValueOfVersionRangeSpecDefaultsAreGenuinelyUnbounded() {
+	void testOfAndAccessors() {
+		Version min = Version.of(1, 3);
+		Version max = Version.of(1, 5);
+		VersionRange range = VersionRange.of(min, true, max, false);
+		assertEquals(min, range.minVersion());
+		assertTrue(range.minInclusive());
+		assertEquals(max, range.maxVersion());
+		assertFalse(range.maxInclusive());
+
+		VersionRange unbounded = VersionRange.of(null, true, null, true);
+		assertEquals(null, unbounded.minVersion());
+		assertFalse(unbounded.minInclusive());
+		assertEquals(null, unbounded.maxVersion());
+		assertFalse(unbounded.maxInclusive());
+	}
+
+	@Test
+	void testFromVersionRangeSpecDefaultsAreGenuinelyUnbounded() {
 		VersionRangeSpec spec = DefaultVersionRangeSpecHolder.class.getAnnotation(FunctionRegistration.class).version();
-		VersionRange range = VersionRange.valueOf(spec);
+		VersionRange range = VersionRange.from(spec);
 		assertEquals(VersionRange.valueOf("(,)"), range);
-		assertTrue(range.contains(Version.valueOf(0, 0, 0)));
-		assertTrue(range.contains(Version.valueOf(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE)));
+		assertTrue(range.contains(Version.of(0, 0, 0)));
+		assertTrue(range.contains(Version.of(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE)));
 	}
 
 	@Test
-	void testValueOfVersionRangeSpecWithOnlyMinLeavesMaxUnbounded() {
+	void testFromVersionRangeSpecWithOnlyMinLeavesMaxUnbounded() {
 		VersionRangeSpec spec = MinOnlyVersionRangeSpecHolder.class.getAnnotation(FunctionRegistration.class).version();
-		VersionRange range = VersionRange.valueOf(spec);
+		VersionRange range = VersionRange.from(spec);
 		assertEquals(VersionRange.valueOf("[1.6.0,)"), range);
-		assertTrue(range.contains(Version.valueOf(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE)));
-		assertFalse(range.contains(Version.valueOf(1, 5, 0)));
+		assertTrue(range.contains(Version.of(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE)));
+		assertFalse(range.contains(Version.of(1, 5, 0)));
 	}
 
 	@Test
-	void testValueOfVersionRangeSpecRejectsNonCanonicalNegativeSentinel() {
+	void testFromVersionRangeSpecRejectsNonCanonicalNegativeSentinel() {
 		VersionRangeSpec spec = NonCanonicalNegativeVersionRangeSpecHolder.class.getAnnotation(FunctionRegistration.class).version();
-		assertThrows(IllegalArgumentException.class, () -> VersionRange.valueOf(spec));
+		assertThrows(IllegalArgumentException.class, () -> VersionRange.from(spec));
 	}
 }

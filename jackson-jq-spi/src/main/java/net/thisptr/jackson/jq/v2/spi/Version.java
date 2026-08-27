@@ -10,9 +10,12 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
 
 /**
- * Use {@code Versions} to get a {@link Version} instance.
+ * Represents a semantic version of jq (e.g. {@code 1.6} or {@code 1.7.1}).
+ * <p>
+ * Instances are immutable and can be created using the static factory methods
+ * {@link #of(int, int)}, {@link #of(int, int, int)}, or parsed from text via {@link #valueOf(String)}.
  */
-public class Version implements Comparable<Version> {
+public final class Version implements Comparable<Version> {
 	private final int major;
 	private final int minor;
 	private final int patch;
@@ -90,8 +93,20 @@ public class Version implements Comparable<Version> {
 	 * @return the version
 	 * @throws IllegalArgumentException if any component is negative
 	 */
-	public static Version valueOf(int major, int minor, int patch) {
+	public static Version of(int major, int minor, int patch) {
 		return new Version(major, minor, patch);
+	}
+
+	/**
+	 * Creates a version from its major and minor components, with patch set to 0.
+	 *
+	 * @param major the major version component
+	 * @param minor the minor version component
+	 * @return the version
+	 * @throws IllegalArgumentException if any component is negative
+	 */
+	public static Version of(int major, int minor) {
+		return new Version(major, minor, 0);
 	}
 
 	/**
@@ -100,7 +115,7 @@ public class Version implements Comparable<Version> {
 	 * @param spec the annotation form to convert
 	 * @return the equivalent version
 	 */
-	public static Version valueOf(VersionSpec spec) {
+	public static Version from(VersionSpec spec) {
 		return new Version(spec.major(), spec.minor(), spec.patch());
 	}
 
