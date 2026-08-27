@@ -17,9 +17,13 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
+import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
 
 @AutoService(Function.class)
-@FunctionRegistration(name = "builtins", nargs = 0)
+@FunctionRegistration(name = "builtins", nargs = 0, version = @VersionRangeSpec(
+		min = @VersionSpec(major = 1, minor = 6, patch = 0)
+))
 public class BuiltinsFunction implements Function {
 	@Override
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {

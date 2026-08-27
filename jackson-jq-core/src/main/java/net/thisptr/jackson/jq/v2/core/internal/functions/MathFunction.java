@@ -92,7 +92,9 @@ public abstract class MathFunction implements Function {
 	}
 
 	@AutoService(Function.class)
-	@FunctionRegistration(name = "ceil", nargs = 0)
+	@FunctionRegistration(name = "ceil", nargs = 0, version = @VersionRangeSpec(
+			min = @VersionSpec(major = 1, minor = 6, patch = 0)
+	))
 	public static class CeilFunction extends MathFunction {
 		@Override
 		protected double f(double f) {
