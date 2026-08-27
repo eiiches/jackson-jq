@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.v2.test.random;
+package net.thisptr.jackson.jq.v2.fuzz;
 
 import java.util.List;
 

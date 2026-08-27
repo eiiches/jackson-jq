@@ -49,6 +49,7 @@
 		<module>jackson-jq-ext-module-random</module>
 		<module>jackson-jq-ext-module-debug</module>
 		<module>jackson-jq-cli</module>
+		<module>jackson-jq-fuzz</module>
 	</modules>
 
 	<distributionManagement>
