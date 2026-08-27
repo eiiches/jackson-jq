@@ -5,3 +5,33 @@
   - "foo"
   - "foo"
   v: '[1.5, 1.8.0)'
+
+- q: 'try rtrimstr("foo") catch .'
+  in: 4
+  out:
+  - "endswith() requires string inputs"
+  v: '[1.8.0, )'
+
+- q: 'try rtrimstr(123) catch .'
+  in: "abc"
+  out:
+  - "endswith() requires string inputs"
+  v: '[1.8.0, )'
+
+- q: 'rtrimstr("bar")'
+  in: "foobar"
+  out:
+  - "foo"
+  v: '[1.5, )'
+
+- q: 'rtrimstr("foo")'
+  in: "foobar"
+  out:
+  - "foobar"
+  v: '[1.5, )'
+
+- q: 'rtrimstr("")'
+  in: "foobar"
+  out:
+  - ""
+  v: '[1.8.0, 1.8.2)'

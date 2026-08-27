@@ -102,7 +102,11 @@ public class CoreJqLibrary implements JqLibrary {
 			JqFunction.of("map_values", args("f"), ".[] |= f"),
 			JqFunction.of("_modify", args("paths", "update"), "reduce path(paths) as $p (.; label $out | (setpath($p; getpath($p) | update) | ., break $out), delpaths([$p]))", VersionRange.valueOf("[1.6, )")),
 			JqFunction.of("_modify", args("paths", "update"), "reduce path(paths) as $p (.; setpath($p; getpath($p) | update))", VersionRange.valueOf("[, 1.6)")),
-			JqFunction.of("pick", args("pathexps"), ". as $in | reduce path(pathexps) as $a (null; setpath($a; $in|getpath($a)) )", VersionRange.valueOf("[1.7, )"))));
+			JqFunction.of("pick", args("pathexps"), ". as $in | reduce path(pathexps) as $a (null; setpath($a; $in|getpath($a)) )", VersionRange.valueOf("[1.7, )")),
+			JqFunction.of("ltrimstr", args("$left"), "if startswith($left) then .[$left | length:] else . end", VersionRange.valueOf("[1.8.0, )")),
+			JqFunction.of("rtrimstr", args("$right"), "if endswith($right) then .[:$right | -length] else . end", VersionRange.valueOf("[1.8.0, 1.8.2)")),
+			JqFunction.of("rtrimstr", args("$right"), "if endswith($right) then .[:length - ($right | length)] else . end", VersionRange.valueOf("[1.8.2, )")),
+			JqFunction.of("trimstr", args("$val"), "ltrimstr($val) | rtrimstr($val)", VersionRange.valueOf("[1.8.0, )"))));
 
 	private static List<FunctionParameter> args(String... args) {
 		return Arrays.stream(args).map(FunctionParameter::valueOf).collect(Collectors.toList());

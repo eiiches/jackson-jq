@@ -21,7 +21,7 @@ public class CoreJqLibraryTest {
 	public void discoverableThroughServiceLoader() {
 		assertThat(ServiceLoader.load(JqLibrary.class, getClass().getClassLoader()))
 				.anyMatch(CoreJqLibrary.class::isInstance);
-		assertThat(new CoreJqLibrary().getJqFunctions()).hasSize(61);
+		assertThat(new CoreJqLibrary().getJqFunctions()).hasSize(65);
 	}
 
 	@Test
@@ -31,11 +31,18 @@ public class CoreJqLibraryTest {
 		assertThatCode(() -> env15.compile("first(empty)")).doesNotThrowAnyException();
 		assertThatThrownBy(() -> env15.compile("walk(.)")).isInstanceOf(JsonQueryException.class);
 		assertThatThrownBy(() -> env15.compile("pick(.)")).isInstanceOf(JsonQueryException.class);
+		assertThatThrownBy(() -> env15.compile("trimstr(\"a\")")).isInstanceOf(JsonQueryException.class);
 
 		Environment<JsonNode> env17 = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_7).build();
 		assertThatCode(() -> env17.compile("paths")).doesNotThrowAnyException();
 		assertThatCode(() -> env17.compile("first(empty)")).doesNotThrowAnyException();
 		assertThatCode(() -> env17.compile("walk(.)")).doesNotThrowAnyException();
 		assertThatCode(() -> env17.compile("pick(.)")).doesNotThrowAnyException();
+		assertThatThrownBy(() -> env17.compile("trimstr(\"a\")")).isInstanceOf(JsonQueryException.class);
+
+		Environment<JsonNode> env18 = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_8_0).build();
+		assertThatCode(() -> env18.compile("trimstr(\"a\")")).doesNotThrowAnyException();
+		assertThatCode(() -> env18.compile("ltrimstr(\"a\")")).doesNotThrowAnyException();
+		assertThatCode(() -> env18.compile("rtrimstr(\"a\")")).doesNotThrowAnyException();
 	}
 }

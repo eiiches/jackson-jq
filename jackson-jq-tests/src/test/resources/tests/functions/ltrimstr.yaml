@@ -17,3 +17,33 @@
   out:
   - null
   v: '[1.5, 1.8.0)'
+
+- q: 'try ltrimstr("foo") catch .'
+  in: 4
+  out:
+  - "startswith() requires string inputs"
+  v: '[1.8.0, )'
+
+- q: 'try ltrimstr(123) catch .'
+  in: "abc"
+  out:
+  - "startswith() requires string inputs"
+  v: '[1.8.0, )'
+
+- q: 'ltrimstr("foo")'
+  in: "foobar"
+  out:
+  - "bar"
+  v: '[1.5, )'
+
+- q: 'ltrimstr("bar")'
+  in: "foobar"
+  out:
+  - "foobar"
+  v: '[1.5, )'
+
+- q: 'ltrimstr("")'
+  in: "foobar"
+  out:
+  - "foobar"
+  v: '[1.5, )'
