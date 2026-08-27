@@ -18,7 +18,7 @@ public class JsonQueryUserException extends JsonQueryException {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <JsonNode> JsonNode getMessageAsJsonNode(JsonProvider<JsonNode> jsonProvider) {
+	public <JsonNode> JsonNode toJsonNode(JsonProvider<JsonNode> jsonProvider) {
 		return (JsonNode) value;
 	}
 }

@@ -15,7 +15,7 @@ final class Preconditions {
 		for (JsonNodeType type : types)
 			if (actual == type)
 				return;
-		throw new JsonQueryException("%s is not applicable to %s; expected one of %s", fname, actual, Arrays.toString(types));
+		throw new JsonQueryException(String.format("%s is not applicable to %s; expected one of %s", fname, actual, Arrays.toString(types)));
 	}
 
 	static <JsonNode> void checkArgumentType(JsonProvider<JsonNode> jsonProvider, String fname, int argumentIndex, JsonNode value, JsonNodeType... types) throws JsonQueryException {
@@ -38,6 +38,6 @@ final class Preconditions {
 			default:
 				indexText = argumentIndex + "th";
 		}
-		throw new JsonQueryException("cannot accept %s as %s argument of %s; expected one of %s", actual, indexText, fname, Arrays.toString(types));
+		throw new JsonQueryException(String.format("cannot accept %s as %s argument of %s; expected one of %s", actual, indexText, fname, Arrays.toString(types)));
 	}
 }

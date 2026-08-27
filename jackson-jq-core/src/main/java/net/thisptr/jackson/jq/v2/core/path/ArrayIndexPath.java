@@ -3,7 +3,7 @@ package net.thisptr.jackson.jq.v2.core.path;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -100,7 +100,7 @@ public class ArrayIndexPath<JsonNode> implements Path<JsonNode> {
 			jsonProvider.set(out, _index, newval);
 			return out;
 		} else {
-			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, index));
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, index));
 		}
 	}
 
@@ -132,7 +132,7 @@ public class ArrayIndexPath<JsonNode> implements Path<JsonNode> {
 			output.emit(jsonProvider.createNull(), ArrayIndexPath.chainIfNotNull(ppath, index, version));
 		} else {
 			if (!permissive)
-				throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, pobj, index));
+				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, pobj, index));
 		}
 	}
 }

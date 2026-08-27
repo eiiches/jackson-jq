@@ -54,7 +54,7 @@ public class UpdateAssignment<JsonNode> extends BinaryOperatorExpression<JsonNod
 			if (UnrepresentablePath.isLost(lpath) && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)
 				lpath = RootPath.getInstance();
 			if (lpath == null || lpath instanceof UnrepresentablePath)
-				throw new JsonQueryException("Invalid path expression with result %s", JsonNodeUtils.toString(jsonProvider, lval));
+				throw new JsonQueryException(String.format("Invalid path expression with result %s", JsonNodeUtils.toString(jsonProvider, lval)));
 
 			out[0] = lpath.mutate(jsonProvider, out[0], (lval_) -> {
 				List<JsonNode> rvals = new ArrayList<>();

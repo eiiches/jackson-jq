@@ -31,7 +31,7 @@ public class FromJsonFunction implements Function {
 			} catch (JsonQueryException e) {
 				throw e;
 			} catch (Exception e) {
-				throw new JsonQueryException("failed to parse %s as json", jsonProvider.toString(in));
+				throw new JsonQueryException(String.format("failed to parse %s as json", jsonProvider.toString(in)));
 			}
 			output.emit(tree, null);
 		});

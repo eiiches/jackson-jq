@@ -124,7 +124,7 @@ public class Compiler {
 		private static final long serialVersionUID = 1L;
 
 		TooManyConstantResultsException() {
-			super("constant expression produced more than %d values", MAX_PRECOMPUTED_RESULTS);
+			super(String.format("constant expression produced more than %d values", MAX_PRECOMPUTED_RESULTS));
 		}
 	}
 

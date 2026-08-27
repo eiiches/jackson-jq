@@ -13,6 +13,7 @@ import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
+import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Range;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -85,20 +86,20 @@ public class DelPathsFunction implements Function {
 				case ARRAY:
 					throw new JsonQueryException("Cannot update field at array index of array");
 				default:
-					throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, inType, pathSegment));
+					throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, inType, pathSegment));
 			}
 		}
 
 		if (!stringPathSegments.isEmpty() && inType != JsonNodeType.OBJECT)
-			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, inType, stringPathSegments.get(0).get(depth)));
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, inType, stringPathSegments.get(0).get(depth)));
 
 		if (!numberPathSegments.isEmpty() && inType != JsonNodeType.ARRAY)
-			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, inType, numberPathSegments.get(0).get(depth)));
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, inType, numberPathSegments.get(0).get(depth)));
 
 		if (!rangePathSegments.isEmpty() && inType != JsonNodeType.ARRAY) {
 			if (inType == JsonNodeType.STRING)
 				throw new JsonQueryException("Cannot update field at object index of string");
-			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, inType, rangePathSegments.get(0).get(depth)));
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, inType, rangePathSegments.get(0).get(depth)));
 		}
 
 		if (!stringPathSegments.isEmpty())

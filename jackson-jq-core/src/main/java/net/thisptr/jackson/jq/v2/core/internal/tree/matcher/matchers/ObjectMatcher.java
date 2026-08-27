@@ -10,8 +10,8 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Functional;
-import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.path.ObjectFieldPath;
@@ -123,9 +123,9 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		FieldMatcher<JsonNode> fmatcher = matchers.get(index);
 		fmatcher.name.apply(frame, in, null, (key, opath) -> {
 			if (jsonProvider.getNodeType(key) != JsonNodeType.STRING)
-				throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, key));
+				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
 			if (jsonProvider.getNodeType(in) != JsonNodeType.OBJECT && jsonProvider.getNodeType(in) != JsonNodeType.NULL)
-				throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, key));
+				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
 
 			JsonNode value = jsonProvider.get(in, jsonProvider.asText(key));
 
@@ -148,9 +148,9 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		FieldMatcher<JsonNode> fmatcher = matchers.get(index);
 		fmatcher.name.apply(frame, in, null, (key, opath) -> {
 			if (jsonProvider.getNodeType(key) != JsonNodeType.STRING)
-				throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, key));
+				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
 			if (jsonProvider.getNodeType(in) != JsonNodeType.OBJECT && jsonProvider.getNodeType(in) != JsonNodeType.NULL)
-				throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, key));
+				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
 
 			JsonNode value = jsonProvider.get(in, jsonProvider.asText(key));
 			@Nullable Path<JsonNode> valuepath = ObjectFieldPath.chainIfNotNull(inpath, jsonProvider.asText(key), version);

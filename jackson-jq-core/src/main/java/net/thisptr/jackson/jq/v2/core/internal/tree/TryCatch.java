@@ -71,7 +71,7 @@ public class TryCatch<JsonNode> implements Expression<StackFrame, JsonNode>, Fre
 			tryExpr.apply(frame, in, path, output);
 		} catch (JsonQueryException e) {
 			if (catchExpr != null) {
-				catchExpr.apply(frame, e.getMessageAsJsonNode(jsonProvider), path != null ? UnrepresentablePath.getInstance() : null, output);
+				catchExpr.apply(frame, e.toJsonNode(jsonProvider), path != null ? UnrepresentablePath.getInstance() : null, output);
 			}
 		}
 	}

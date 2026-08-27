@@ -6,7 +6,7 @@ import java.util.Map;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -79,7 +79,7 @@ public class ObjectFieldPath<JsonNode> implements Path<JsonNode> {
 				jsonProvider.set(newobj, key, newval);
 			return newobj;
 		} else {
-			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, jsonProvider.createString(key)));
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createString(key)));
 		}
 	}
 
@@ -95,7 +95,7 @@ public class ObjectFieldPath<JsonNode> implements Path<JsonNode> {
 			output.emit(n == null ? jsonProvider.createNull() : n, ObjectFieldPath.chainIfNotNull(ppath, key, version));
 		} else {
 			if (!permissive)
-				throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, pobj, jsonProvider.createString(key)));
+				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, pobj, jsonProvider.createString(key)));
 		}
 	}
 }

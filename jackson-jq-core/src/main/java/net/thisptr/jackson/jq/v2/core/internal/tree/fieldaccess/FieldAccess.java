@@ -8,8 +8,8 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
-import net.thisptr.jackson.jq.v2.core.internal.misc.Strings;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.path.ArrayIndexOfPath;
 import net.thisptr.jackson.jq.v2.core.path.ArrayIndexPath;
@@ -75,7 +75,7 @@ public abstract class FieldAccess<JsonNode> implements Expression<StackFrame, Js
 
 	protected static <JsonNode> void emitAllPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode pobj, @Nullable Path<JsonNode> ppath, Output<JsonNode> output, boolean tracking, @Nullable Version version) throws JsonQueryException {
 		if (tracking && UnrepresentablePath.isLost(ppath))
-			throw new JsonQueryException("Invalid path expression near attempt to iterate through %s", JsonNodeUtils.toString(jsonProvider, pobj));
+			throw new JsonQueryException(String.format("Invalid path expression near attempt to iterate through %s", JsonNodeUtils.toString(jsonProvider, pobj)));
 		if (jsonProvider.getNodeType(pobj) == JsonNodeType.NULL) {
 			if (!permissive)
 				throw new JsonQueryException("Cannot iterate over null (null)");
@@ -100,7 +100,7 @@ public abstract class FieldAccess<JsonNode> implements Expression<StackFrame, Js
 
 	protected static <JsonNode> void emitObjectFieldPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, String key, JsonNode pobj, @Nullable Path<JsonNode> ppath, Output<JsonNode> output, boolean tracking, @Nullable Version version) throws JsonQueryException {
 		if (tracking && UnrepresentablePath.isLost(ppath))
-			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(jsonProvider, jsonProvider.createString(key)), JsonNodeUtils.toString(jsonProvider, pobj));
+			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(jsonProvider, jsonProvider.createString(key)), JsonNodeUtils.toString(jsonProvider, pobj)));
 		ObjectFieldPath.resolve(jsonProvider, pobj, ppath, output, key, permissive, version);
 	}
 
@@ -111,7 +111,7 @@ public abstract class FieldAccess<JsonNode> implements Expression<StackFrame, Js
 	protected static <JsonNode> void emitArrayIndexPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode index, JsonNode pobj, @Nullable Path<JsonNode> ppath, Output<JsonNode> output, boolean tracking, @Nullable Version version) throws JsonQueryException {
 		assert jsonProvider.getNodeType(index) == JsonNodeType.NUMBER;
 		if (tracking && UnrepresentablePath.isLost(ppath))
-			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(jsonProvider, index), JsonNodeUtils.toString(jsonProvider, pobj));
+			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(jsonProvider, index), JsonNodeUtils.toString(jsonProvider, pobj)));
 		ArrayIndexPath.resolve(jsonProvider, pobj, ppath, output, index, permissive, version);
 	}
 
@@ -122,7 +122,7 @@ public abstract class FieldAccess<JsonNode> implements Expression<StackFrame, Js
 	protected static <JsonNode> void emitArrayIndexOfPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode subseqToLookFor, JsonNode pobj, @Nullable Path<JsonNode> ppath, Output<JsonNode> output, boolean tracking, @Nullable Version version) throws JsonQueryException {
 		assert jsonProvider.getNodeType(subseqToLookFor) == JsonNodeType.ARRAY;
 		if (tracking && UnrepresentablePath.isLost(ppath))
-			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(jsonProvider, subseqToLookFor), JsonNodeUtils.toString(jsonProvider, pobj));
+			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(jsonProvider, subseqToLookFor), JsonNodeUtils.toString(jsonProvider, pobj)));
 		ArrayIndexOfPath.resolve(jsonProvider, pobj, ppath, output, subseqToLookFor, permissive, version);
 	}
 
@@ -139,7 +139,7 @@ public abstract class FieldAccess<JsonNode> implements Expression<StackFrame, Js
 			JsonNode subpath = jsonProvider.createObject();
 			jsonProvider.set(subpath, "start", start);
 			jsonProvider.set(subpath, "end", end);
-			throw new JsonQueryException("Invalid path expression near attempt to access element %s of %s", Strings.truncate(JsonNodeUtils.toString(jsonProvider, subpath), version), JsonNodeUtils.toString(jsonProvider, pobj));
+			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", ExceptionMessages.truncate(JsonNodeUtils.toString(jsonProvider, subpath), version), JsonNodeUtils.toString(jsonProvider, pobj)));
 		}
 		ArrayRangeIndexPath.resolve(jsonProvider, pobj, ppath, output, start, end, permissive, version);
 	}

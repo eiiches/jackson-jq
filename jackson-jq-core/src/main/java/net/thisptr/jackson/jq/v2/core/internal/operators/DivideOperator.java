@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.operators;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Strings;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -29,7 +30,7 @@ public class DivideOperator<JsonNode> implements BinaryOperator<JsonNode> {
 			double divisor = jsonProvider.asDouble(rhs);
 			double dividend = jsonProvider.asDouble(lhs);
 			if (divisor == 0.0)
-				throw new JsonQueryException(jsonProvider, version, "%s and %s cannot be divided because the divisor is zero", lhs, rhs);
+				throw new JsonQueryException(ExceptionMessages.format(jsonProvider, version, "%s and %s cannot be divided because the divisor is zero", lhs, rhs));
 			return JsonNodeUtils.asNumericNode(jsonProvider, dividend / divisor);
 		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.STRING) {
 			JsonNode result = jsonProvider.createArray();

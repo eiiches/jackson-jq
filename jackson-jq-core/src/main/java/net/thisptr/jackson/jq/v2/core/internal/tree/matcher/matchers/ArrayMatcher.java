@@ -10,8 +10,8 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Functional;
-import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.path.ArrayIndexPath;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -47,7 +47,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 
 		int rindex = matchers.size() - index - 1;
 		if (jsonProvider.getNodeType(in) != JsonNodeType.ARRAY && jsonProvider.getNodeType(in) != JsonNodeType.NULL)
-			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(rindex)));
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(rindex)));
 
 		PatternMatcher<JsonNode> matcher = matchers.get(rindex);
 		JsonNode value = jsonProvider.get(in, rindex);
@@ -75,7 +75,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 
 		int rindex = matchers.size() - index - 1;
 		if (jsonProvider.getNodeType(in) != JsonNodeType.ARRAY && jsonProvider.getNodeType(in) != JsonNodeType.NULL)
-			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(rindex)));
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(rindex)));
 
 		PatternMatcher<JsonNode> matcher = matchers.get(rindex);
 		JsonNode value = jsonProvider.get(in, rindex);

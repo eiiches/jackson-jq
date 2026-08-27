@@ -1,7 +1,10 @@
 package net.thisptr.jackson.jq.v2.core.exception;
 
+import com.google.errorprone.annotations.FormatMethod;
+import com.google.errorprone.annotations.FormatString;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -16,15 +19,13 @@ public class JsonQueryTypeException extends JsonQueryException {
 	/**
 	 * Simple format constructor without JsonProvider - uses default Object.toString() for arguments.
 	 */
-	public JsonQueryTypeException(String format, Object... args) {
+	@FormatMethod
+	public JsonQueryTypeException(@FormatString String format, Object... args) {
 		super(String.format(format, args));
 	}
 
-	public JsonQueryTypeException(JsonProvider<?> jsonProvider, String format, Object... args) {
-		super(jsonProvider, format, args);
-	}
-
-	public JsonQueryTypeException(JsonProvider<?> jsonProvider, @Nullable Version version, String format, Object... args) {
-		super(jsonProvider, version, format, args);
+	@FormatMethod
+	public JsonQueryTypeException(JsonProvider<?> jsonProvider, @Nullable Version version, @FormatString String format, Object... args) {
+		super(ExceptionMessages.format(jsonProvider, version, format, args));
 	}
 }

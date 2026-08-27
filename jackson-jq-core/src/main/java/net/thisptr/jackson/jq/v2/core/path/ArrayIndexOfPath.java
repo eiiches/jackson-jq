@@ -3,8 +3,8 @@ package net.thisptr.jackson.jq.v2.core.path;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
-import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -90,7 +90,7 @@ public class ArrayIndexOfPath<JsonNode> implements Path<JsonNode> {
 			output.emit(indexList, ArrayIndexOfPath.chainIfNotNull(ppath, subseq, version));
 		} else {
 			if (!permissive)
-				throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, pobj, subseq));
+				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, pobj, subseq));
 		}
 	}
 }

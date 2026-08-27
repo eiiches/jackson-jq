@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.operators;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -42,7 +43,7 @@ public class ModuloOperator<JsonNode> implements BinaryOperator<JsonNode> {
 					: (long) rhsDouble;
 
 			if (divisor == 0L)
-				throw new JsonQueryException(jsonProvider, version, "%s and %s cannot be divided (remainder) because the divisor is zero", lhs, rhs);
+				throw new JsonQueryException(ExceptionMessages.format(jsonProvider, version, "%s and %s cannot be divided (remainder) because the divisor is zero", lhs, rhs));
 			return JsonNodeUtils.asNumericNode(jsonProvider, dividend % divisor);
 		} else {
 			throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot be divided (remainder)", lhs, rhs);

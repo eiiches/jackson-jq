@@ -253,7 +253,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 				if (module != null)
 					return module;
 			} catch (TryOnce.RecursiveInvocationException e) {
-				throw new JsonQueryException("module %s is imported recursively", path);
+				throw new JsonQueryException(String.format("module %s is imported recursively", path));
 			} catch (CompletionException e) {
 				Throwable cause = e.getCause();
 				throw new JsonQueryException(String.format("failed to load module %s: %s", path, cause == null ? e.getMessage() : cause.getMessage()), e);

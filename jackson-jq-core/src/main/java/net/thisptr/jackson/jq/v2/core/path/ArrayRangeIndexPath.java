@@ -6,7 +6,7 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
-import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Range;
 import net.thisptr.jackson.jq.v2.core.internal.misc.UnicodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -115,7 +115,7 @@ public class ArrayRangeIndexPath<JsonNode> implements Path<JsonNode> {
 			JsonNode subpath = jsonProvider.createObject();
 			jsonProvider.set(subpath, "start", start);
 			jsonProvider.set(subpath, "end", end);
-			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, subpath));
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, subpath));
 		}
 	}
 
@@ -143,7 +143,7 @@ public class ArrayRangeIndexPath<JsonNode> implements Path<JsonNode> {
 				JsonNode subpath = jsonProvider.createObject();
 				jsonProvider.set(subpath, "start", start);
 				jsonProvider.set(subpath, "end", end);
-				throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, pobj, subpath));
+				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, pobj, subpath));
 			}
 		}
 	}

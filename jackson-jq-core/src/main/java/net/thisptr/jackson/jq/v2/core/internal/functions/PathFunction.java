@@ -32,7 +32,7 @@ public class PathFunction implements Function {
 				if (UnrepresentablePath.isLost(path) && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, obj) == 0)
 					path = RootPath.getInstance();
 				if (path == null || path instanceof UnrepresentablePath)
-					throw new JsonQueryException("Invalid path expression with result %s", JsonNodeUtils.toString(jsonProvider, obj));
+					throw new JsonQueryException(String.format("Invalid path expression with result %s", JsonNodeUtils.toString(jsonProvider, obj)));
 				JsonNode out = jsonProvider.createArray();
 				path.toJsonNode(jsonProvider, out);
 				output.emit(out, null);

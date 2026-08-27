@@ -7,7 +7,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
-import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -129,7 +129,7 @@ public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 						emitArrayIndexOfPath(jsonProvider, permissive, accessor, pobj, ppath, output, path != null, version);
 					} else {
 						if (!permissive)
-							throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, pobj, accessor));
+							throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, pobj, accessor));
 					}
 				});
 			});

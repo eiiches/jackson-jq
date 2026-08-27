@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.v2.core.path;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -35,14 +35,14 @@ public class InvalidPath<JsonNode> implements Path<JsonNode> {
 	@Override
 	public void get(JsonProvider<JsonNode> jsonProvider, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output, boolean permissive) throws JsonQueryException {
 		parent.get(jsonProvider, in, ipath, (parent, ppath) -> {
-			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, index));
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, index));
 		}, permissive);
 	}
 
 	@Override
 	public JsonNode mutate(JsonProvider<JsonNode> jsonProvider, JsonNode in, Mutation<JsonNode> mutation, boolean makeParent) throws JsonQueryException {
 		return parent.mutate(jsonProvider, in, (oldval) -> {
-			throw new JsonQueryException(JsonNodeUtils.cannotIndex(jsonProvider, version, in, index));
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, index));
 		}, makeParent);
 	}
 }
