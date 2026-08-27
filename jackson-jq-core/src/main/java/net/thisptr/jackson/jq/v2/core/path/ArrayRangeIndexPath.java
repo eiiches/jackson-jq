@@ -5,7 +5,7 @@ import java.util.Iterator;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Range;
 import net.thisptr.jackson.jq.v2.core.internal.misc.UnicodeUtils;

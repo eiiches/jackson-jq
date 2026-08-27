@@ -5,8 +5,8 @@ import java.util.List;
 import com.google.auto.service.AutoService;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
+import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.UnicodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;

@@ -1,7 +1,5 @@
 import org.jspecify.annotations.NullMarked;
 
-import net.thisptr.jackson.jq.v2.spi.Function;
-
 @NullMarked
 module net.thisptr.jackson.jq.v2.core {
 	requires static com.google.auto.service;
@@ -10,10 +8,10 @@ module net.thisptr.jackson.jq.v2.core {
 	requires static transitive org.jspecify;
 
 	exports net.thisptr.jackson.jq.v2.core;
-	exports net.thisptr.jackson.jq.v2.core.exception;
 	exports net.thisptr.jackson.jq.v2.core.module;
 	exports net.thisptr.jackson.jq.v2.core.module.loaders;
 	exports net.thisptr.jackson.jq.v2.core.path;
+
 	exports net.thisptr.jackson.jq.v2.core.internal to net.thisptr.jackson.jq.v2.ext.module.debug;
 	opens net.thisptr.jackson.jq.v2.core.internal to net.thisptr.jackson.jq.v2.ext.module.debug;
 	opens net.thisptr.jackson.jq.v2.core.internal.compile to net.thisptr.jackson.jq.v2.ext.module.debug;
@@ -27,14 +25,14 @@ module net.thisptr.jackson.jq.v2.core {
 	opens net.thisptr.jackson.jq.v2.core.internal.tree.matcher to net.thisptr.jackson.jq.v2.ext.module.debug;
 	opens net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers to net.thisptr.jackson.jq.v2.ext.module.debug;
 
-	uses Function;
+	uses net.thisptr.jackson.jq.v2.spi.Function;
 	uses net.thisptr.jackson.jq.v2.spi.JqLibrary;
 	uses net.thisptr.jackson.jq.v2.spi.module.Module;
 
 	provides net.thisptr.jackson.jq.v2.spi.JqLibrary with
 			net.thisptr.jackson.jq.v2.core.internal.CoreJqLibrary;
 
-	provides Function with
+	provides net.thisptr.jackson.jq.v2.spi.Function with
 			net.thisptr.jackson.jq.v2.core.internal.filters.CsvFilter,
 			net.thisptr.jackson.jq.v2.core.internal.filters.TsvFilter,
 			net.thisptr.jackson.jq.v2.core.internal.functions.AtBase64dFunction,

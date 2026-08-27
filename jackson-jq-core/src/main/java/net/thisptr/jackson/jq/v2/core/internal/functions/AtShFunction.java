@@ -6,8 +6,8 @@ import java.util.List;
 
 import com.google.auto.service.AutoService;
 
-import net.thisptr.jackson.jq.v2.core.exception.IllegalJsonInputException;
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
+import net.thisptr.jackson.jq.v2.core.internal.exception.IllegalJsonInputException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Strings;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;

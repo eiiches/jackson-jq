@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.v2.core.exception;
+package net.thisptr.jackson.jq.v2.core.internal.exception;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;

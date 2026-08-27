@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.v2.core.exception;
+package net.thisptr.jackson.jq.v2.core.internal.exception;
 
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;

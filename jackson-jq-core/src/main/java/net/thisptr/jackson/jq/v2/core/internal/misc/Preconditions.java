@@ -4,8 +4,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import net.thisptr.jackson.jq.v2.core.exception.IllegalJsonArgumentException;
-import net.thisptr.jackson.jq.v2.core.exception.IllegalJsonInputException;
+import net.thisptr.jackson.jq.v2.core.internal.exception.IllegalJsonArgumentException;
+import net.thisptr.jackson.jq.v2.core.internal.exception.IllegalJsonInputException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
