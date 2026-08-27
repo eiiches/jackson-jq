@@ -5,8 +5,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Container for repeated {@link ModuleRegistration} annotations.
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ModuleRegistrations {
+	/**
+	 * Returns the repeated registrations.
+	 *
+	 * @return the repeated registrations
+	 */
 	ModuleRegistration[] value();
 }

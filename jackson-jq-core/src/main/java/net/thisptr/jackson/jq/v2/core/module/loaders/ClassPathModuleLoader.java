@@ -22,6 +22,11 @@ public class ClassPathModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 		return (ClassPathModuleLoader<JsonNode>) INSTANCE;
 	}
 
+	/**
+	 * If two modules register the same {@link ModuleRegistration#path()}, which one is used is
+	 * unspecified: this loader currently resolves the collision by {@link ServiceLoader} discovery
+	 * order, but that order itself is not part of this loader's contract.
+	 */
 	public ClassPathModuleLoader(ClassLoader classLoader) {
 		for (Module module : ServiceLoader.load(Module.class, classLoader)) {
 			for (ModuleRegistration annotation : module.getClass().getAnnotationsByType(ModuleRegistration.class)) {

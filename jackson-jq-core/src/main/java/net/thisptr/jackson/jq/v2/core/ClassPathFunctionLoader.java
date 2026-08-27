@@ -26,7 +26,13 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 		this.classLoader = classLoader;
 	}
 
-	/** Loads Java-implemented functions visible to this loader's {@link ClassLoader}. */
+	/**
+	 * Loads Java-implemented functions visible to this loader's {@link ClassLoader}.
+	 * <p>
+	 * If two providers register the same {@link FunctionSignature}, which one is used is
+	 * unspecified: this loader currently resolves the collision by {@link ServiceLoader} discovery
+	 * order, but that order itself is not part of this loader's contract.
+	 */
 	@Override
 	public Map<FunctionSignature, Function> getFunctions(Version jqVersion) {
 		Map<FunctionSignature, Function> result = new HashMap<>();
@@ -51,6 +57,13 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 		return FunctionSignature.of(reg.name(), arity);
 	}
 
+	/**
+	 * Loads raw jq function definitions visible to this loader's {@link ClassLoader}.
+	 * <p>
+	 * If two {@link JqLibrary}s register the same {@link FunctionSignature} for an overlapping
+	 * version range, which one is used is unspecified, for the same reason as
+	 * {@link #getFunctions(Version)}.
+	 */
 	@Override
 	public Map<FunctionSignature, JqFunction> getJqFunctions(Version jqVersion) {
 		Map<FunctionSignature, JqFunction> result = new HashMap<>();

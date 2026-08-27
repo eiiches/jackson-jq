@@ -14,6 +14,11 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
  * <p>
  * {@code Function} instances may be cached and shared by the caller across compilations. Implementations
  * must be safe for concurrent, reentrant calls to {@link #bindArguments}.
+ * <p>
+ * This SPI does not specify which registration wins if multiple providers (or multiple
+ * {@code @FunctionRegistration}s) resolve to the same {@code FunctionSignature}; which one is used
+ * is left to the function/module loader in use (e.g. {@code ClassPathFunctionLoader} picks one
+ * arbitrarily, based on {@link java.util.ServiceLoader} discovery order).
  */
 public interface Function {
 

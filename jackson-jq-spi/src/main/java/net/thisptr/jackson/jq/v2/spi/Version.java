@@ -49,14 +49,29 @@ public class Version implements Comparable<Version> {
 		return Objects.hash(major, minor, patch);
 	}
 
+	/**
+	 * Returns the major version component.
+	 *
+	 * @return the major version component
+	 */
 	public int major() {
 		return major;
 	}
 
+	/**
+	 * Returns the minor version component.
+	 *
+	 * @return the minor version component
+	 */
 	public int minor() {
 		return minor;
 	}
 
+	/**
+	 * Returns the patch version component.
+	 *
+	 * @return the patch version component
+	 */
 	public int patch() {
 		return patch;
 	}
@@ -66,14 +81,37 @@ public class Version implements Comparable<Version> {
 
 	private static final Pattern VERSION_PATTERN = Pattern.compile("^(" + INTEGER + ")\\.(" + INTEGER + ")(?:\\.(" + INTEGER + "))?$");
 
+	/**
+	 * Creates a version from its components.
+	 *
+	 * @param major the major version component
+	 * @param minor the minor version component
+	 * @param patch the patch version component
+	 * @return the version
+	 * @throws IllegalArgumentException if any component is negative
+	 */
 	public static Version valueOf(int major, int minor, int patch) {
 		return new Version(major, minor, patch);
 	}
 
+	/**
+	 * Bridges the annotation-compatible {@link VersionSpec} form to a runtime {@code Version}.
+	 *
+	 * @param spec the annotation form to convert
+	 * @return the equivalent version
+	 */
 	public static Version valueOf(VersionSpec spec) {
 		return new Version(spec.major(), spec.minor(), spec.patch());
 	}
 
+	/**
+	 * Parses a version from its {@code major.minor[.patch]} string form (patch defaults to 0 if
+	 * omitted).
+	 *
+	 * @param text the string form to parse
+	 * @return the parsed version
+	 * @throws IllegalArgumentException if {@code text} does not match the expected syntax
+	 */
 	public static Version valueOf(String text) {
 		Matcher m = VERSION_PATTERN.matcher(text);
 		if (!m.matches())

@@ -13,7 +13,11 @@ import java.util.List;
  * @param <JsonNode> the JSON node type
  */
 public interface ConstantExpression<Context, JsonNode> extends Expression<Context, JsonNode> {
-	/** Returns all values emitted by this expression, in emission order. */
+	/**
+	 * Returns all values emitted by this expression, in emission order.
+	 *
+	 * @return the emitted values, in emission order
+	 */
 	List<JsonNode> getConstantResults();
 
 	@Override
