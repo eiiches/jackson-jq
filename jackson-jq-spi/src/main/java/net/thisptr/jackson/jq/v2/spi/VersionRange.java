@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
+import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
 
 /**
  * An inclusive/exclusive range of {@link Version}s.
@@ -111,13 +112,25 @@ public class VersionRange {
 	/**
 	 * Bridges the annotation-compatible {@link VersionRangeSpec} form (as used in
 	 * {@code @FunctionRegistration}) to a runtime {@code VersionRange}.
+	 * <p>
+	 * A {@link VersionSpec} bound whose {@code major}, {@code minor}, and {@code patch} are all
+	 * exactly {@code -1} is {@code VersionRangeSpec}'s sentinel for an absent bound and is
+	 * converted to {@code null} here, matching this class's own "unbounded" representation. Any
+	 * other negative component is not the sentinel and is rejected: it is passed through to
+	 * {@link Version#valueOf(VersionSpec)}, which throws {@code IllegalArgumentException}.
 	 *
 	 * @param spec the annotation form to convert
 	 * @return the equivalent version range
+	 * @throws IllegalArgumentException if {@code spec} has a negative component that isn't the
+	 *                                   {@code -1, -1, -1} sentinel
 	 */
 	public static VersionRange valueOf(VersionRangeSpec spec) {
-		return new VersionRange(Version.valueOf(spec.min()), spec.minInclusive(),
-				Version.valueOf(spec.max()), spec.maxInclusive());
+		return new VersionRange(isUnbounded(spec.min()) ? null : Version.valueOf(spec.min()), spec.minInclusive(),
+				isUnbounded(spec.max()) ? null : Version.valueOf(spec.max()), spec.maxInclusive());
+	}
+
+	private static boolean isUnbounded(VersionSpec spec) {
+		return spec.major() == -1 && spec.minor() == -1 && spec.patch() == -1;
 	}
 
 	/**

@@ -2,12 +2,32 @@ package net.thisptr.jackson.jq.v2.spi;
 
 import org.junit.jupiter.api.Test;
 
+import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
+import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class VersionRangeTest {
+
+	// VersionRangeSpec itself isn't @Retention(RUNTIME); it's only reflectively visible when
+	// nested inside a RUNTIME-retained annotation such as @FunctionRegistration (as used in
+	// practice), so these holders mirror that real usage pattern rather than using
+	// @VersionRangeSpec directly.
+	@FunctionRegistration(name = "test", nargs = 0)
+	private static class DefaultVersionRangeSpecHolder {
+	}
+
+	@FunctionRegistration(name = "test", nargs = 0, version = @VersionRangeSpec(min = @VersionSpec(major = 1, minor = 6, patch = 0)))
+	private static class MinOnlyVersionRangeSpecHolder {
+	}
+
+	@FunctionRegistration(name = "test", nargs = 0, version = @VersionRangeSpec(min = @VersionSpec(major = -2, minor = -3, patch = -4)))
+	private static class NonCanonicalNegativeVersionRangeSpecHolder {
+	}
 
 	@Test
 	void testMaxBounds() throws Exception {
@@ -90,5 +110,29 @@ public class VersionRangeTest {
 		assertEquals("[1.3.0,)", VersionRange.valueOf("[1.3, ]").toString());
 		assertEquals("(,)", VersionRange.valueOf("[,]").toString());
 		assertEquals("[1.0.0,2.0.0]", VersionRange.valueOf("[1.0, 2.0]").toString());
+	}
+
+	@Test
+	void testValueOfVersionRangeSpecDefaultsAreGenuinelyUnbounded() {
+		VersionRangeSpec spec = DefaultVersionRangeSpecHolder.class.getAnnotation(FunctionRegistration.class).version();
+		VersionRange range = VersionRange.valueOf(spec);
+		assertEquals(VersionRange.valueOf("(,)"), range);
+		assertTrue(range.contains(Version.valueOf(0, 0, 0)));
+		assertTrue(range.contains(Version.valueOf(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE)));
+	}
+
+	@Test
+	void testValueOfVersionRangeSpecWithOnlyMinLeavesMaxUnbounded() {
+		VersionRangeSpec spec = MinOnlyVersionRangeSpecHolder.class.getAnnotation(FunctionRegistration.class).version();
+		VersionRange range = VersionRange.valueOf(spec);
+		assertEquals(VersionRange.valueOf("[1.6.0,)"), range);
+		assertTrue(range.contains(Version.valueOf(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE)));
+		assertFalse(range.contains(Version.valueOf(1, 5, 0)));
+	}
+
+	@Test
+	void testValueOfVersionRangeSpecRejectsNonCanonicalNegativeSentinel() {
+		VersionRangeSpec spec = NonCanonicalNegativeVersionRangeSpecHolder.class.getAnnotation(FunctionRegistration.class).version();
+		assertThrows(IllegalArgumentException.class, () -> VersionRange.valueOf(spec));
 	}
 }
