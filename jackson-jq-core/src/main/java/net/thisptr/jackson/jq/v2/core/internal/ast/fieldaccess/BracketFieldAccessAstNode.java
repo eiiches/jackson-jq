@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.literal.NullLiteralAstNode;
 
@@ -8,13 +10,13 @@ public class BracketFieldAccessAstNode extends FieldAccessAstNode {
 	private AstNode endExpr = new NullLiteralAstNode();
 	private boolean isRange;
 
-	public BracketFieldAccessAstNode(AstNode src, AstNode atExpr, boolean permissive) {
+	public BracketFieldAccessAstNode(AstNode src, @Nullable AstNode atExpr, boolean permissive) {
 		super(src, permissive);
 		this.startExpr = atExpr != null ? atExpr : new NullLiteralAstNode();
 		this.isRange = false;
 	}
 
-	public BracketFieldAccessAstNode(AstNode src, AstNode startExpr, AstNode endExpr, boolean permissive) {
+	public BracketFieldAccessAstNode(AstNode src, @Nullable AstNode startExpr, @Nullable AstNode endExpr, boolean permissive) {
 		super(src, permissive);
 		this.startExpr = startExpr != null ? startExpr : new NullLiteralAstNode();
 		this.endExpr = endExpr != null ? endExpr : new NullLiteralAstNode();

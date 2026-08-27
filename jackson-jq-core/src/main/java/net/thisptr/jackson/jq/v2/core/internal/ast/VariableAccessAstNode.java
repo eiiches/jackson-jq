@@ -1,19 +1,25 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
+import org.jspecify.annotations.Nullable;
+
 public class VariableAccessAstNode implements AstNode {
 	private final String name;
-	private final String moduleName;
+	private final @Nullable String moduleName;
 
-	public VariableAccessAstNode(String moduleName, String name) {
+	public VariableAccessAstNode(@Nullable String moduleName, String name) {
 		this.moduleName = moduleName;
 		this.name = name;
+	}
+
+	public VariableAccessAstNode(String name) {
+		this(null, name);
 	}
 
 	public String name() {
 		return name;
 	}
 
-	public String moduleName() {
+	public @Nullable String moduleName() {
 		return moduleName;
 	}
 

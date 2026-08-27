@@ -25,7 +25,7 @@ public class ObjectConstructionAstNode implements AstNode {
 		for (FieldConstructionAst field : fields) {
 			builder.append(sep);
 			builder.append(field);
-			sep = ",";
+			sep = ", ";
 		}
 		builder.append("}");
 		return builder.toString();
