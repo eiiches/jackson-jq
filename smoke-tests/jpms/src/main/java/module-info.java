@@ -1,3 +1,6 @@
+import org.jspecify.annotations.NullMarked;
+
+@NullMarked
 module net.thisptr.jackson.jq.v2.smoketests.jpms {
 	requires net.thisptr.jackson.jq.v2.core;
 	requires net.thisptr.jackson.jq.v2.ext.module.debug;

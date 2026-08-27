@@ -1,5 +1,8 @@
+import org.jspecify.annotations.NullMarked;
+
 import net.thisptr.jackson.jq.v2.spi.Function;
 
+@NullMarked
 module net.thisptr.jackson.jq.v2.regex.impl.joni {
 	requires static com.google.auto.service;
 	requires net.thisptr.jackson.jq.v2.json;

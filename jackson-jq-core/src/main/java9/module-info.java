@@ -1,5 +1,8 @@
+import org.jspecify.annotations.NullMarked;
+
 import net.thisptr.jackson.jq.v2.spi.Function;
 
+@NullMarked
 module net.thisptr.jackson.jq.v2.core {
 	requires static com.google.auto.service;
 	requires transitive net.thisptr.jackson.jq.v2.json;

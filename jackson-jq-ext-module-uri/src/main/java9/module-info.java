@@ -1,3 +1,6 @@
+import org.jspecify.annotations.NullMarked;
+
+@NullMarked
 module net.thisptr.jackson.jq.v2.ext.module.uri {
 	requires static org.jspecify;
 	requires static com.google.auto.service;

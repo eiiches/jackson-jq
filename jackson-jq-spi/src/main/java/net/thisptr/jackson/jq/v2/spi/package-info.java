@@ -1,0 +1,4 @@
+@NullMarked
+package net.thisptr.jackson.jq.v2.spi;
+
+import org.jspecify.annotations.NullMarked;
