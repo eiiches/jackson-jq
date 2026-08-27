@@ -17,9 +17,15 @@ public class VersionRange {
 	public VersionRange(@Nullable Version minVersion, boolean minInclusive,
 						@Nullable Version maxVersion, boolean maxInclusive) {
 		this.minVersion = minVersion;
-		this.minInclusive = minInclusive;
+		this.minInclusive = minVersion != null && minInclusive;
 		this.maxVersion = maxVersion;
-		this.maxInclusive = maxInclusive;
+		this.maxInclusive = maxVersion != null && maxInclusive;
+
+		if (this.minVersion != null && this.maxVersion != null) {
+			int r = this.minVersion.compareTo(this.maxVersion);
+			if (r > 0 || (r == 0 && (!this.minInclusive || !this.maxInclusive)))
+				throw new IllegalArgumentException("Invalid VersionRange (min must be less than or equal to max): " + (this.minInclusive ? "[" : "(") + this.minVersion + ", " + this.maxVersion + (this.maxInclusive ? "]" : ")"));
+		}
 	}
 
 	public boolean contains(Version version) {
