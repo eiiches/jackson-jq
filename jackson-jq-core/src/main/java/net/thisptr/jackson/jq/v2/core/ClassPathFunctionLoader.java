@@ -38,11 +38,17 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 				if (!versionRange.contains(jqVersion))
 					continue;
 
-				result.put(FunctionSignature.of(reg.name(), reg.nargs()), factory);
+				result.put(signatureOf(reg), factory);
 			}
 		}
 
 		return result;
+	}
+
+	/** A negative {@link FunctionRegistration#nargs()} registers a variadic function, matching {@link FunctionSignature}'s null-arity convention. */
+	static FunctionSignature signatureOf(FunctionRegistration reg) {
+		Integer arity = reg.nargs() < 0 ? null : reg.nargs();
+		return FunctionSignature.of(reg.name(), arity);
 	}
 
 	@Override
