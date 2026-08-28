@@ -21,6 +21,7 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "_sub_impl", nargs = 3)
@@ -46,17 +47,17 @@ public class _SubImplFunction implements Function {
 		return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "_sub_impl/3", in, JsonNodeType.STRING);
 
-			regexExpr.apply(frame, in, null, (regexText, opath) -> {
+			regexExpr.apply(frame, in, UntrackedPath.getInstance(), (regexText, opath) -> {
 				Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 1, regexText, JsonNodeType.STRING);
 
-				flagsExpr.apply(frame, in, null, (flagsText, opath2) -> {
+				flagsExpr.apply(frame, in, UntrackedPath.getInstance(), (flagsText, opath2) -> {
 					Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 3, flagsText, JsonNodeType.STRING);
 
 					OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asText(regexText), jsonProvider.asText(flagsText));
 					List<JsonNode> match = match(jsonProvider, p, jsonProvider.asText(in));
 
 					// This just repeats same emit()s the number of times as the number of flags. This is to emulate jq behavior (which is probably a bug).
-					flagsExpr.apply(frame, in, null, (dummy, opath3) -> {
+					flagsExpr.apply(frame, in, UntrackedPath.getInstance(), (dummy, opath3) -> {
 						replaceAndConcat(jsonProvider, frame, new ArrayDeque<>(), output, match, replaceExpr, in, flagsExpr);
 					});
 				});
@@ -70,7 +71,7 @@ public class _SubImplFunction implements Function {
 			for (String s : stack) {
 				sb.append(s);
 			}
-			output.emit(jsonProvider.createString(sb.toString()), null);
+			output.emit(jsonProvider.createString(sb.toString()), UntrackedPath.getInstance());
 			return;
 		}
 
@@ -82,7 +83,7 @@ public class _SubImplFunction implements Function {
 			replaceAndConcat(jsonProvider, context, stack, output, rtail, replaceExpr, in, flags);
 			stack.pop();
 		} else {
-			replaceExpr.apply(context, rhead, null, (replacement, opath) -> {
+			replaceExpr.apply(context, rhead, UntrackedPath.getInstance(), (replacement, opath) -> {
 				stack.push(jsonProvider.asText(replacement));
 				replaceAndConcat(jsonProvider, context, stack, output, rtail, replaceExpr, in, flags);
 				stack.pop();

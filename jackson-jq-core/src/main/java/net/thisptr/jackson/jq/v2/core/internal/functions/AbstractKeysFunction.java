@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class AbstractKeysFunction implements Function {
 	private final boolean sortKeys;
@@ -36,12 +37,12 @@ public class AbstractKeysFunction implements Function {
 				List<JsonNode> result = new ArrayList<>();
 				for (String key : keys)
 					result.add(jsonProvider.createString(key));
-				output.emit(jsonProvider.createArray(result), null);
+				output.emit(jsonProvider.createArray(result), UntrackedPath.getInstance());
 			} else if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
 				List<JsonNode> result = new ArrayList<>();
 				for (int i = 0; i < jsonProvider.size(in); ++i)
 					result.add(jsonProvider.createNumber(i));
-				output.emit(jsonProvider.createArray(result), null);
+				output.emit(jsonProvider.createArray(result), UntrackedPath.getInstance());
 			} else {
 				throw new IllegalStateException();
 			}

@@ -2,8 +2,6 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.Set;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -47,7 +45,7 @@ public final class FixedInputExpression<JsonNode> implements Expression<StackFra
 	}
 
 	@Override
-	public void apply(StackFrame context, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		delegate.apply(context, in, ipath, output);
 	}
 }

@@ -7,8 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -17,6 +15,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
@@ -70,7 +69,6 @@ public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNo
 	}
 
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
-
 	@Override
 	public boolean dependsOnInput() {
 		return dependsOnInput;
@@ -92,13 +90,12 @@ public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNo
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
-		initExpr.apply(frame, in, null, (accumulator, opath) -> {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+		initExpr.apply(frame, in, UntrackedPath.getInstance(), (accumulator, opath) -> {
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
 			JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
-
-			iterExpr.apply(frame, in, null, (item, opath2) -> {
+			iterExpr.apply(frame, in, UntrackedPath.getInstance(), (item, opath2) -> {
 				Deque<PatternMatcher.Match<JsonNode>> stack = new ArrayDeque<>();
 				matcher.match(frame, item, (Deque<PatternMatcher.Match<JsonNode>> vars) -> {
 					for (Iterator<PatternMatcher.Match<JsonNode>> it = vars.descendingIterator(); it.hasNext(); ) {
@@ -107,15 +104,13 @@ public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNo
 							frame.set(var.slot, var.value);
 						}
 					}
-
 					// We only use the last value from reduce expression.
 					List<JsonNode> reduceResult = new ArrayList<>();
-					reduceExpr.apply(frame, accumulators[0], null, (v, opath3) -> reduceResult.add(v));
+					reduceExpr.apply(frame, accumulators[0], UntrackedPath.getInstance(), (v, opath3) -> reduceResult.add(v));
 					accumulators[0] = reduceResult.isEmpty() ? jsonProvider.createNull() : reduceResult.get(reduceResult.size() - 1);
 				}, stack);
 			});
-
-			output.emit(accumulators[0], null);
+			output.emit(accumulators[0], UntrackedPath.getInstance());
 		});
 	}
 

@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -13,6 +12,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 /**
  * Reference to an {@code EnvironmentBuilder.declareVariable}-registered variable -- no compile-time value,
@@ -58,7 +58,7 @@ public class ResolvedGlobalVariableAccess<JsonNode> implements Expression<StackF
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		@Var Supplier<JsonNode> valueSupplier = null;
 		Object raw = frame.getEnclosingMemory().getGlobal(globalIndex);
 		if (raw instanceof Supplier) {
@@ -71,7 +71,7 @@ public class ResolvedGlobalVariableAccess<JsonNode> implements Expression<StackF
 		JsonNode val = valueSupplier.get();
 		if (val == null)
 			throw new JsonQueryException(String.format("Variable $%s evaluated to null", name));
-		output.emit(val, null);
+		output.emit(val, UntrackedPath.getInstance());
 	}
 
 	@Override

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
@@ -25,7 +24,6 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TimeModuleTest {
-
 	private static <T, Context> Expression<Context, T> pureExpression() {
 		return new Expression<Context, T>() {
 			@Override
@@ -39,7 +37,7 @@ public class TimeModuleTest {
 			}
 
 			@Override
-			public void apply(Context context, T in, @Nullable Path<T> ipath, Output<T> output) {
+			public void apply(Context context, T in, Path<T> ipath, Output<T> output) {
 			}
 		};
 	}
@@ -84,22 +82,18 @@ public class TimeModuleTest {
 		Expression<Object, JsonNode> strftime1Expr = strftime1.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.singletonList(pureExpression()), Versions.JQ_1_6);
 		assertThat(strftime1Expr.dependsOnInput()).isTrue();
 		assertThat(strftime1Expr.dependsOnExternalState()).isTrue();
-
 		Function strftime2 = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("strftime", 2)));
 		Expression<Object, JsonNode> strftime2Expr = strftime2.bindArguments(Jackson2JsonProviderImpl.getInstance(), Arrays.asList(pureExpression(), pureExpression()), Versions.JQ_1_6);
 		assertThat(strftime2Expr.dependsOnInput()).isTrue();
 		assertThat(strftime2Expr.dependsOnExternalState()).isFalse();
-
 		Function strptime1 = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("strptime", 1)));
 		Expression<Object, JsonNode> strptime1Expr = strptime1.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.singletonList(pureExpression()), Versions.JQ_1_6);
 		assertThat(strptime1Expr.dependsOnInput()).isTrue();
 		assertThat(strptime1Expr.dependsOnExternalState()).isTrue();
-
 		Function strptime2 = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("strptime", 2)));
 		Expression<Object, JsonNode> strptime2Expr = strptime2.bindArguments(Jackson2JsonProviderImpl.getInstance(), Arrays.asList(pureExpression(), pureExpression()), Versions.JQ_1_6);
 		assertThat(strptime2Expr.dependsOnInput()).isTrue();
 		assertThat(strptime2Expr.dependsOnExternalState()).isFalse();
-
 		Function timestamp = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("timestamp", 0)));
 		Expression<Object, JsonNode> timestampExpr = timestamp.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.emptyList(), Versions.JQ_1_6);
 		assertThat(timestampExpr.dependsOnInput()).isFalse();

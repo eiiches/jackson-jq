@@ -4,8 +4,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FreeVariables;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -14,6 +12,7 @@ import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public abstract class ValueLiteral<JsonNode> implements ConstantExpression<StackFrame, JsonNode>, FreeVariables {
 	protected final JsonProvider<JsonNode> jsonProvider;
@@ -55,7 +54,7 @@ public abstract class ValueLiteral<JsonNode> implements ConstantExpression<Stack
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
-		output.emit(value(), null);
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+		output.emit(value(), UntrackedPath.getInstance());
 	}
 }

@@ -15,6 +15,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "implode", nargs = 0)
@@ -38,7 +39,7 @@ public class ImplodeFunction implements Function {
 				}
 			}
 
-			output.emit(jsonProvider.createString(builder.toString()), null);
+			output.emit(jsonProvider.createString(builder.toString()), UntrackedPath.getInstance());
 		});
 	}
 }

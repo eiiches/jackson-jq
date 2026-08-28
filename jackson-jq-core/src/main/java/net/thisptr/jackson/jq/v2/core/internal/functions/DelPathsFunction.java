@@ -23,7 +23,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "delpaths", nargs = 1)
@@ -32,7 +32,7 @@ public class DelPathsFunction implements Function {
 	@Override
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(args.get(0).getCardinality()).build((frame, in, ipath, output) -> {
-			args.get(0).apply(frame, in, null, (paths, opath) -> {
+			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (paths, opath) -> {
 				if (jsonProvider.getNodeType(paths) != JsonNodeType.ARRAY)
 					throw new JsonQueryException("Paths must be specified as an array");
 
@@ -47,12 +47,12 @@ public class DelPathsFunction implements Function {
 				// any sibling path in the same call, since there is no parent to omit it from.
 				for (List<JsonNode> path : pathList) {
 					if (path.isEmpty()) {
-						output.emit(jsonProvider.createNull(), null);
+						output.emit(jsonProvider.createNull(), UntrackedPath.getInstance());
 						return;
 					}
 				}
 
-				output.emit(delete(jsonProvider, in, pathList, 0, version), null);
+				output.emit(delete(jsonProvider, in, pathList, 0, version), UntrackedPath.getInstance());
 			});
 		});
 	}
@@ -60,8 +60,8 @@ public class DelPathsFunction implements Function {
 	/**
 	 * Deletes, from {@code in}, every path in {@code paths} whose first {@code depth} segments have
 	 * already been consumed by the caller. {@code in} always exists (it is either the original input,
-	 * or a child fetched from a real, present key/index by the caller), so unlike {@link Path#mutate},
-	 * this never has to special-case a synthetic "not created yet" value.
+	 * or a child fetched from a real, present key/index by the caller), so this never has to
+	 * special-case a synthetic "not created yet" value.
 	 */
 	private static <JsonNode> JsonNode delete(JsonProvider<JsonNode> jsonProvider, JsonNode in, List<List<JsonNode>> paths, int depth, Version version) throws JsonQueryException {
 		JsonNodeType inType = jsonProvider.getNodeType(in);

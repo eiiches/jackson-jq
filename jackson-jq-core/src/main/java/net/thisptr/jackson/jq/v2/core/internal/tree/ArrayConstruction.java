@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class ArrayConstruction<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
@@ -61,11 +62,11 @@ public class ArrayConstruction<JsonNode> implements Expression<StackFrame, JsonN
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		List<JsonNode> values = new ArrayList<>();
 		if (q != null)
-			q.apply(frame, in, null, (out, opath) -> values.add(out));
-		output.emit(jsonProvider.createArray(values), null);
+			q.apply(frame, in, UntrackedPath.getInstance(), (out, opath) -> values.add(out));
+		output.emit(jsonProvider.createArray(values), UntrackedPath.getInstance());
 	}
 
 	@Override

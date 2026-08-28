@@ -9,6 +9,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public abstract class AbstractStartsEndsWithFunction implements Function {
 	private final String fname;
@@ -22,10 +23,10 @@ public abstract class AbstractStartsEndsWithFunction implements Function {
 	@Override
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(args.get(0).getCardinality()).build((frame, in, ipath, output) -> {
-			args.get(0).apply(frame, in, null, (needle, opath) -> {
+			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (needle, opath) -> {
 				if (jsonProvider.getNodeType(needle) != JsonNodeType.STRING || jsonProvider.getNodeType(in) != JsonNodeType.STRING)
 					throw new JsonQueryException(fname + "() requires string inputs");
-				output.emit(jsonProvider.createBoolean(doCheck(jsonProvider.asText(in), jsonProvider.asText(needle))), null);
+				output.emit(jsonProvider.createBoolean(doCheck(jsonProvider.asText(in), jsonProvider.asText(needle))), UntrackedPath.getInstance());
 			});
 		});
 	}

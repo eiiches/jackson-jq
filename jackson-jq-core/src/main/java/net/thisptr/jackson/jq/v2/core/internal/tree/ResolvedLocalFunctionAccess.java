@@ -34,12 +34,10 @@ public class ResolvedLocalFunctionAccess<JsonNode> implements Expression<StackFr
 		this.name = name;
 		this.slot = slot;
 		this.args = args;
-
 		boolean ownInput = info != null ? info.dependsOnInput() : true;
 		boolean ownExternal = info != null ? info.dependsOnExternalState() : true;
 		this.dependsOnInput = (ownInput && !inputFixed) || args.stream().anyMatch(Expression::dependsOnInput);
 		this.dependsOnExternalState = ownExternal || args.stream().anyMatch(Expression::dependsOnExternalState);
-
 		// The callee lives in the same frame this call runs in -- no closure hop needed to find it, so its
 		// freeLocalSlots (already numbered relative to that shared frame) are directly comparable/unionable.
 		Set<Integer> free = new HashSet<>(info != null ? info.freeLocalSlots() : Collections.emptySet());
@@ -81,7 +79,7 @@ public class ResolvedLocalFunctionAccess<JsonNode> implements Expression<StackFr
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		Function factory = (Function) frame.get(slot);
 		if (factory == null)
 			throw new JsonQueryException("Function " + name + " is not defined");

@@ -3,8 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 import java.util.List;
 import java.util.Set;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.compile.BoundArgumentInfo;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Closure;
@@ -45,12 +43,10 @@ public class ResolvedCapturedFunctionBoundArgumentAccess<JsonNode> implements Ex
 		this.frameClosureSlot = frameClosureSlot;
 		this.args = args;
 		this.boundArgumentInfo = boundArgumentInfo;
-
 		boolean ownInput = boundArgumentInfo.dependsOnInput();
 		boolean ownExternal = boundArgumentInfo.dependsOnExternalState();
 		this.dependsOnInput = (ownInput && !inputFixed) || args.stream().anyMatch(Expression::dependsOnInput);
 		this.dependsOnExternalState = ownExternal || args.stream().anyMatch(Expression::dependsOnExternalState);
-
 		// Finding the callee itself already crosses a closure hop -- stay unconditionally opaque for the
 		// "own" contribution (matching ResolvedCapturedVariableAccess's "defs stay conservative"
 		// precedent); only args, evaluated in the caller's own frame, are ever subtractable.
@@ -95,7 +91,7 @@ public class ResolvedCapturedFunctionBoundArgumentAccess<JsonNode> implements Ex
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		Closure closure = (Closure) frame.get(frameClosureSlot);
 		Function factory = closure != null ? (Function) closure.get(closureSlot) : null;
 		if (factory == null) {

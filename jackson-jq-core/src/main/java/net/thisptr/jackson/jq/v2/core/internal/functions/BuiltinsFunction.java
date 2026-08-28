@@ -19,6 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "builtins", nargs = 0, version = @VersionRangeSpec(
@@ -39,7 +40,7 @@ public class BuiltinsFunction implements Function {
 			List<JsonNode> result = new ArrayList<>();
 			for (String builtin : builtins)
 				result.add(jsonProvider.createString(builtin));
-			output.emit(jsonProvider.createArray(result), null);
+			output.emit(jsonProvider.createArray(result), UntrackedPath.getInstance());
 		});
 	}
 }

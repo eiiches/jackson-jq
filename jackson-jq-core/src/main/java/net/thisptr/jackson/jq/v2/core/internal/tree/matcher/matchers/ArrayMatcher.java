@@ -13,7 +13,6 @@ import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Functional;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
-import net.thisptr.jackson.jq.v2.core.path.ArrayIndexPath;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -67,7 +66,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		recursive(frame, in, out, accumulate, 0);
 	}
 
-	private void recursiveWithPath(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> out, Deque<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
+	private void recursiveWithPath(StackFrame frame, JsonNode in, Path<JsonNode> path, MatchOutput<JsonNode> out, Deque<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
 			out.emit(accumulate);
 			return;
@@ -79,7 +78,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 
 		PatternMatcher<JsonNode> matcher = matchers.get(rindex);
 		JsonNode value = jsonProvider.get(in, rindex);
-		ArrayIndexPath<JsonNode> valuePath = ArrayIndexPath.chainIfNotNull(jsonProvider, path, rindex, version);
+		Path<JsonNode> valuePath = path.appendIndex(rindex);
 
 		matcher.matchWithPath(frame, value != null ? value : jsonProvider.createNull(), valuePath, (match) -> {
 			recursiveWithPath(frame, in, path, out, accumulate, index + 1);
@@ -87,7 +86,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public void matchWithPath(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> out, Deque<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
+	public void matchWithPath(StackFrame frame, JsonNode in, Path<JsonNode> path, MatchOutput<JsonNode> out, Deque<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.ARRAY && type != JsonNodeType.NULL) {
 			if (matchers.isEmpty())

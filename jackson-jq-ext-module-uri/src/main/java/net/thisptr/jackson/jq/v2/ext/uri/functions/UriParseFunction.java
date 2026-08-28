@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.ext.uri.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -23,9 +22,9 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class UriParseFunction implements Function {
-
 	private static final Pattern AMPERSAND = Pattern.compile(Pattern.quote("&"));
 	private static final Pattern EQUAL = Pattern.compile(Pattern.quote("="));
 
@@ -43,13 +42,12 @@ public class UriParseFunction implements Function {
 			}
 
 			@Override
-			public void apply(Context context, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 				Preconditions.checkInputType(jsonProvider, "uriparse", in, JsonNodeType.STRING);
-
 				try {
 					URI uri = new URI(jsonProvider.asText(in));
 					Map<String, JsonNode> queryObj = parseQueryObj(jsonProvider, uri.getRawQuery());
-					output.emit(buildResult(jsonProvider, uri, queryObj), null);
+					output.emit(buildResult(jsonProvider, uri, queryObj), UntrackedPath.getInstance());
 				} catch (URISyntaxException e) {
 					throw new JsonQueryException(e);
 				}
@@ -69,7 +67,6 @@ public class UriParseFunction implements Function {
 				continue;
 			String keyEncoded = tuple[0];
 			String valueEncoded = tuple[1];
-
 			try {
 				String key = URLDecoder.decode(keyEncoded, StandardCharsets.UTF_8.name());
 				String value = URLDecoder.decode(valueEncoded, StandardCharsets.UTF_8.name());
@@ -110,13 +107,11 @@ public class UriParseFunction implements Function {
 		result = jsonProvider.set(result, "raw_path", uri.getRawPath() != null ? jsonProvider.createString(uri.getRawPath()) : jsonProvider.createNull());
 		result = jsonProvider.set(result, "query", uri.getQuery() != null ? jsonProvider.createString(uri.getQuery()) : jsonProvider.createNull());
 		result = jsonProvider.set(result, "raw_query", uri.getRawQuery() != null ? jsonProvider.createString(uri.getRawQuery()) : jsonProvider.createNull());
-
 		@Var JsonNode queryObjNode = jsonProvider.createObject();
 		for (Map.Entry<String, JsonNode> entry : queryObj.entrySet()) {
 			queryObjNode = jsonProvider.set(queryObjNode, entry.getKey(), entry.getValue());
 		}
 		result = jsonProvider.set(result, "query_obj", queryObjNode);
-
 		result = jsonProvider.set(result, "fragment", uri.getFragment() != null ? jsonProvider.createString(uri.getFragment()) : jsonProvider.createNull());
 		result = jsonProvider.set(result, "raw_fragment", uri.getRawFragment() != null ? jsonProvider.createString(uri.getRawFragment()) : jsonProvider.createNull());
 		return result;

@@ -16,6 +16,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "reverse", nargs = 0)
@@ -29,14 +30,14 @@ public class ReverseFunction implements Function {
 
 			JsonNodeType type = jsonProvider.getNodeType(in);
 			if (type == JsonNodeType.NULL) {
-				output.emit(emptyArray, null);
+				output.emit(emptyArray, UntrackedPath.getInstance());
 				return;
 			}
 			if (type == JsonNodeType.ARRAY) {
 				int size = jsonProvider.size(in);
 				for (int i = size - 1; i >= 0; --i)
 					result.add(jsonProvider.requireGet(in, i));
-				output.emit(jsonProvider.createArray(result), null);
+				output.emit(jsonProvider.createArray(result), UntrackedPath.getInstance());
 				return;
 			}
 
@@ -44,21 +45,21 @@ public class ReverseFunction implements Function {
 
 			if (type == JsonNodeType.STRING) {
 				if (jsonProvider.asText(in).isEmpty()) {
-					output.emit(emptyArray, null);
+					output.emit(emptyArray, UntrackedPath.getInstance());
 					return;
 				}
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
 			}
 			if (type == JsonNodeType.NUMBER) {
 				if (jsonProvider.asDouble(in) == 0.0) {
-					output.emit(emptyArray, null);
+					output.emit(emptyArray, UntrackedPath.getInstance());
 					return;
 				}
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
 			}
 			if (type == JsonNodeType.OBJECT) {
 				if (jsonProvider.size(in) == 0) {
-					output.emit(emptyArray, null);
+					output.emit(emptyArray, UntrackedPath.getInstance());
 					return;
 				}
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));

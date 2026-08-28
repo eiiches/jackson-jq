@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "isnormal", nargs = 0)
@@ -26,7 +27,7 @@ public class IsNormalFunction implements Function {
 				double v = jsonProvider.asDouble(in);
 				result = !Double.isInfinite(v) && (v <= -Double.MIN_NORMAL || Double.MIN_NORMAL <= v);
 			}
-			output.emit(jsonProvider.createBoolean(result), null);
+			output.emit(jsonProvider.createBoolean(result), UntrackedPath.getInstance());
 		});
 	}
 }

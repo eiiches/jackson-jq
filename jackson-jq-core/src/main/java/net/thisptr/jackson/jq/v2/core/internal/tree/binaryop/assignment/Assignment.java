@@ -4,23 +4,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.misc.PathUtils;
+import net.thisptr.jackson.jq.v2.core.internal.path.PathOperations;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression;
-import net.thisptr.jackson.jq.v2.core.path.RootPath;
-import net.thisptr.jackson.jq.v2.core.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.RootPath;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class Assignment<JsonNode> extends BinaryOperatorExpression<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
+	private final Version version;
 	private final boolean inputFixed;
 
 	@Override
@@ -28,9 +31,10 @@ public class Assignment<JsonNode> extends BinaryOperatorExpression<JsonNode> {
 		return rhs.getCardinality();
 	}
 
-	public Assignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, boolean inputFixed) {
+	public Assignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, boolean inputFixed) {
 		super(lhs, rhs, "=");
 		this.jsonProvider = jsonProvider;
+		this.version = version;
 		this.inputFixed = inputFixed;
 	}
 
@@ -45,22 +49,22 @@ public class Assignment<JsonNode> extends BinaryOperatorExpression<JsonNode> {
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
-		rhs.apply(frame, in, null, (rval, opath) -> {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+		rhs.apply(frame, in, UntrackedPath.getInstance(), (rval, opath) -> {
 			List<Path<JsonNode>> lpaths = new ArrayList<>();
 			lhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
 				@Var Path<JsonNode> lpath = lpath0;
 				// `VALUE | path(VALUE) => []`
-				if (UnrepresentablePath.isLost(lpath) && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)
+				if (PathUtils.isLost(lpath) && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)
 					lpath = RootPath.getInstance();
-				if (UnrepresentablePath.isLost(lpath))
+				if (PathUtils.isLost(lpath))
 					throw new JsonQueryException(String.format("Invalid path expression with result %s", JsonNodeUtils.toString(jsonProvider, lval)));
 				lpaths.add(lpath);
 			});
 			@Var JsonNode out = in;
 			for (Path<JsonNode> lpath : lpaths)
-				out = lpath.mutate(jsonProvider, out, (lval_) -> rval);
-			output.emit(out, null);
+				out = PathOperations.mutate(jsonProvider, lpath, out, (lval_) -> rval, version);
+			output.emit(out, UntrackedPath.getInstance());
 		});
 	}
 }

@@ -17,6 +17,7 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "paths", nargs = 1)
@@ -31,9 +32,9 @@ public class PathsFunction implements Function {
 
 	private static <Context, JsonNode> void applyRecursive(Context context, JsonProvider<JsonNode> jsonProvider, JsonNode in, Output<JsonNode> output, List<JsonNode> stack, Expression<Context, JsonNode> predicate) throws JsonQueryException {
 		if (!stack.isEmpty()) {
-			predicate.apply(context, in, null, (shouldInclude, opath) -> {
+			predicate.apply(context, in, UntrackedPath.getInstance(), (shouldInclude, opath) -> {
 				if (JsonNodeUtils.asBoolean(jsonProvider, shouldInclude))
-					output.emit(JsonNodeUtils.asArrayNode(jsonProvider, stack), null);
+					output.emit(JsonNodeUtils.asArrayNode(jsonProvider, stack), UntrackedPath.getInstance());
 			});
 		}
 

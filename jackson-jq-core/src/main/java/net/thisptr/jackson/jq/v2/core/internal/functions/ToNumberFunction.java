@@ -14,6 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "tonumber", nargs = 0)
@@ -24,11 +25,11 @@ public class ToNumberFunction implements Function {
 
 			JsonNodeType inType = jsonProvider.getNodeType(in);
 			if (inType == JsonNodeType.NUMBER) {
-				output.emit(in, null);
+				output.emit(in, UntrackedPath.getInstance());
 			} else if (inType == JsonNodeType.STRING) {
 				try {
 					double value = Double.parseDouble(jsonProvider.asText(in));
-					output.emit(JsonNodeUtils.asNumericNode(jsonProvider, value), null);
+					output.emit(JsonNodeUtils.asNumericNode(jsonProvider, value), UntrackedPath.getInstance());
 				} catch (NumberFormatException e) {
 					throw new JsonQueryException(e);
 				}

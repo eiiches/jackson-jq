@@ -245,7 +245,7 @@ final class JqFunctionCompiler {
 			}
 
 			@Override
-			public void apply(StackFrame callerFrame, N in, @Nullable Path<N> path, Output<N> output) throws JsonQueryException {
+			public void apply(StackFrame callerFrame, N in, Path<N> path, Output<N> output) throws JsonQueryException {
 				StackFrame functionFrame = callerFrame.getEnclosingMemory().pushFrame(resolved.frameSize);
 				try {
 					bindAndApply(callerFrame, functionFrame, resolved.paramBaseSlot, paramNames, args, 0, in, path, output, execFrame -> resolved.body.apply(execFrame, in, path, output));
@@ -281,13 +281,13 @@ final class JqFunctionCompiler {
 			}
 
 			@Override
-			public void apply(StackFrame callerFrame, N in, @Nullable Path<N> path, Output<N> output) throws JsonQueryException {
+			public void apply(StackFrame callerFrame, N in, Path<N> path, Output<N> output) throws JsonQueryException {
 				bindAndApply(callerFrame, callerFrame, resolved.paramBaseSlot, paramNames, args, 0, in, path, output, execFrame -> resolved.body.apply(execFrame, in, path, output));
 			}
 		};
 	}
 
-	private static <N> void bindAndApply(StackFrame callerFrame, StackFrame functionFrame, int baseSlot, List<FunctionParameter> paramNames, List<Expression<StackFrame, N>> args, int valueParamIndex, N in, @Nullable Path<N> path, Output<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
+	private static <N> void bindAndApply(StackFrame callerFrame, StackFrame functionFrame, int baseSlot, List<FunctionParameter> paramNames, List<Expression<StackFrame, N>> args, int valueParamIndex, N in, Path<N> path, Output<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
 		if (valueParamIndex == 0) {
 			for (int i = 0; i < paramNames.size(); i++) {
 				FunctionParameter paramName = paramNames.get(i);

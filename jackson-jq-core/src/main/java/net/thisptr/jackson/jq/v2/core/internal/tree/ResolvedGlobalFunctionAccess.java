@@ -2,8 +2,6 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.List;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -43,7 +41,7 @@ public class ResolvedGlobalFunctionAccess<JsonNode> implements Expression<StackF
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		Function factory = (Function) frame.getEnclosingMemory().getGlobal(globalIndex);
 		if (factory == null)
 			throw new JsonQueryException("Function " + name + " is not defined");

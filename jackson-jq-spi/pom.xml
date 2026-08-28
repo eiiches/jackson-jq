@@ -17,6 +17,12 @@
 			<artifactId>jackson-jq-json-provider</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-json-provider-impl-jackson2</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -42,6 +48,19 @@
 							<release>9</release>
 							<compileSourceRoots>
 								<compileSourceRoot>${project.basedir}/src/main/java9</compileSourceRoot>
+							</compileSourceRoots>
+							<multiReleaseOutput>true</multiReleaseOutput>
+						</configuration>
+					</execution>
+					<execution>
+						<id>compile-java17</id>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+						<configuration>
+							<release>17</release>
+							<compileSourceRoots>
+								<compileSourceRoot>${project.basedir}/src/main/java17</compileSourceRoot>
 							</compileSourceRoots>
 							<multiReleaseOutput>true</multiReleaseOutput>
 						</configuration>

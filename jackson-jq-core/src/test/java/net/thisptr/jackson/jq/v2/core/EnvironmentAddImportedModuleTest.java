@@ -20,6 +20,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -92,7 +93,7 @@ public class EnvironmentAddImportedModuleTest {
 		Function countArgs = new Function() {
 			@Override
 			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> fprovider, List<Expression<Context, N>> fargs, Version ver) {
-				return (frame, in, path, output) -> output.emit(fprovider.createNumber(fargs.size()), null);
+				return (frame, in, path, output) -> output.emit(fprovider.createNumber(fargs.size()), UntrackedPath.getInstance());
 			}
 		};
 		Module variadicModule = new Module() {

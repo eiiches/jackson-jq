@@ -3,8 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 import java.util.Collections;
 import java.util.Set;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.utils.PathAndValue;
 import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
@@ -13,6 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class ResolvedLocalVariableAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final String name;
@@ -57,10 +56,10 @@ public class ResolvedLocalVariableAccess<JsonNode> implements Expression<StackFr
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		PathAndValue<JsonNode> val = StackFrameValues.asPathAndValue(frame.get(slot));
 		if (val != null && val.getValue() != null) {
-			output.emit(val.getValue(), path != null ? val.getPath() : null);
+			output.emit(val.getValue(), path instanceof UntrackedPath ? UntrackedPath.getInstance() : val.getPath());
 			return;
 		}
 		throw new JsonQueryException(String.format("$%s is not defined", name));

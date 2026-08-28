@@ -18,6 +18,7 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	private Expression<StackFrame, JsonNode> startExpr;
@@ -37,22 +38,14 @@ public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 		}
 	}
 
-	public BracketFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> src, @Nullable Expression<StackFrame, JsonNode> atExpr, boolean permissive) {
-		this(jsonProvider, src, atExpr, permissive, null);
-	}
-
-	public BracketFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> src, @Nullable Expression<StackFrame, JsonNode> atExpr, boolean permissive, @Nullable Version version) {
+	public BracketFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> src, @Nullable Expression<StackFrame, JsonNode> atExpr, boolean permissive, Version version) {
 		super(jsonProvider, src, permissive, version);
 		this.startExpr = atExpr != null ? atExpr : new NullLiteral<>(jsonProvider);
 		this.endExpr = new NullLiteral<>(jsonProvider);
 		this.isRange = false;
 	}
 
-	public BracketFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> src, @Nullable Expression<StackFrame, JsonNode> startExpr, @Nullable Expression<StackFrame, JsonNode> endExpr, boolean permissive) {
-		this(jsonProvider, src, startExpr, endExpr, permissive, null);
-	}
-
-	public BracketFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> src, @Nullable Expression<StackFrame, JsonNode> startExpr, @Nullable Expression<StackFrame, JsonNode> endExpr, boolean permissive, @Nullable Version version) {
+	public BracketFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> src, @Nullable Expression<StackFrame, JsonNode> startExpr, @Nullable Expression<StackFrame, JsonNode> endExpr, boolean permissive, Version version) {
 		super(jsonProvider, src, permissive, version);
 		this.startExpr = startExpr != null ? startExpr : new NullLiteral<>(jsonProvider);
 		this.endExpr = endExpr != null ? endExpr : new NullLiteral<>(jsonProvider);
@@ -101,15 +94,15 @@ public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		if (isRange) {
-			startExpr.apply(frame, in, null, (start, opath) -> {
-				endExpr.apply(frame, in, null, (end, opath2) -> {
+			startExpr.apply(frame, in, UntrackedPath.getInstance(), (start, opath) -> {
+				endExpr.apply(frame, in, UntrackedPath.getInstance(), (end, opath2) -> {
 					target.apply(frame, in, path, (pobj, ppath) -> {
 						JsonNodeType startType = jsonProvider.getNodeType(start);
 						JsonNodeType endType = jsonProvider.getNodeType(end);
 						if ((startType == JsonNodeType.NUMBER || startType == JsonNodeType.NULL) && (endType == JsonNodeType.NUMBER || endType == JsonNodeType.NULL)) {
-							emitArrayRangeIndexPath(jsonProvider, permissive, start, end, pobj, ppath, output, path != null, version);
+							emitIndexRangePath(jsonProvider, permissive, start, end, pobj, ppath, output, !(path instanceof UntrackedPath), version);
 						} else {
 							if (!permissive)
 								throw new JsonQueryTypeException(jsonProvider, version, "Start and end indices of an %s slice must be numbers", jsonProvider.getNodeType(pobj));
@@ -118,15 +111,15 @@ public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 				});
 			});
 		} else { // isRange == false
-			startExpr.apply(frame, in, null, (accessor, opath) -> {
+			startExpr.apply(frame, in, UntrackedPath.getInstance(), (accessor, opath) -> {
 				target.apply(frame, in, path, (pobj, ppath) -> {
 					JsonNodeType accessorType = jsonProvider.getNodeType(accessor);
 					if (accessorType == JsonNodeType.NUMBER) {
-						emitArrayIndexPath(jsonProvider, permissive, accessor, pobj, ppath, output, path != null, version);
+						emitArrayIndexPath(jsonProvider, permissive, accessor, pobj, ppath, output, !(path instanceof UntrackedPath), version);
 					} else if (accessorType == JsonNodeType.STRING) {
-						emitObjectFieldPath(jsonProvider, permissive, jsonProvider.asText(accessor), pobj, ppath, output, path != null, version);
+						emitObjectFieldPath(jsonProvider, permissive, jsonProvider.asText(accessor), pobj, ppath, output, !(path instanceof UntrackedPath), version);
 					} else if (accessorType == JsonNodeType.ARRAY) {
-						emitArrayIndexOfPath(jsonProvider, permissive, accessor, pobj, ppath, output, path != null, version);
+						emitIndexOfPath(jsonProvider, permissive, accessor, pobj, ppath, output, !(path instanceof UntrackedPath), version);
 					} else {
 						if (!permissive)
 							throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, pobj, accessor));

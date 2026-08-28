@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "error", nargs = 0)
@@ -26,7 +27,7 @@ public class ErrorFunction implements Function {
 					return;
 				throw new JsonQueryUserException(jsonProvider, in);
 			} else {
-				args.get(0).apply(frame, in, null, (out, opath) -> {
+				args.get(0).apply(frame, in, UntrackedPath.getInstance(), (out, opath) -> {
 					if (jsonProvider.getNodeType(out) == JsonNodeType.NULL)
 						return;
 					throw new JsonQueryUserException(jsonProvider, out);

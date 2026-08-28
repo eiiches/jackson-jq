@@ -3,8 +3,6 @@ package net.thisptr.jackson.jq.v2.ext.uuid.functions;
 import java.util.List;
 import java.util.UUID;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -13,6 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class Uuid4Function implements Function {
 	@Override
@@ -34,8 +33,8 @@ public class Uuid4Function implements Function {
 			}
 
 			@Override
-			public void apply(Context context, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
-				output.emit(jsonProvider.createString(UUID.randomUUID().toString()), null);
+			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+				output.emit(jsonProvider.createString(UUID.randomUUID().toString()), UntrackedPath.getInstance());
 			}
 		};
 	}

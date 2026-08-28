@@ -8,19 +8,19 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryBreakException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.utils.PathAndValue;
-import net.thisptr.jackson.jq.v2.core.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class PipedQuery<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private List<PipeComponent<JsonNode>> components;
@@ -116,11 +116,11 @@ public class PipedQuery<JsonNode> implements Expression<StackFrame, JsonNode>, F
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		pathRecursive(frame, in, path, output, components);
 	}
 
-	private static <JsonNode> void pathRecursive(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output, List<PipeComponent<JsonNode>> components) throws JsonQueryException {
+	private static <JsonNode> void pathRecursive(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output, List<PipeComponent<JsonNode>> components) throws JsonQueryException {
 		if (components.isEmpty()) {
 			output.emit(in, path);
 			return;
@@ -130,7 +130,7 @@ public class PipedQuery<JsonNode> implements Expression<StackFrame, JsonNode>, F
 		List<PipeComponent<JsonNode>> tail = components.subList(1, components.size());
 
 		if (head instanceof AssignPipeComponent) {
-			((AssignPipeComponent<JsonNode>) head).expr.apply(frame, in, null, (o, opath) -> {
+			((AssignPipeComponent<JsonNode>) head).expr.apply(frame, in, UntrackedPath.getInstance(), (o, opath) -> {
 				Deque<PatternMatcher.MatchWithPath<JsonNode>> accumulate = new ArrayDeque<>();
 				((AssignPipeComponent<JsonNode>) head).matcher.matchWithPath(frame, o, path, (Deque<PatternMatcher.MatchWithPath<JsonNode>> vars) -> {
 					// Set values in reverse order since if there is the variable name crash,
@@ -138,7 +138,7 @@ public class PipedQuery<JsonNode> implements Expression<StackFrame, JsonNode>, F
 					for (Iterator<PatternMatcher.MatchWithPath<JsonNode>> it = vars.descendingIterator(); it.hasNext(); ) {
 						PatternMatcher.MatchWithPath<JsonNode> var = it.next();
 						if (var.slot >= 0) {
-							frame.set(var.slot, var.path != null ? new PathAndValue<>(var.path, var.value) : var.value);
+							frame.set(var.slot, var.path instanceof UntrackedPath ? var.value : new PathAndValue<>(var.path, var.value));
 						}
 					}
 					pathRecursive(frame, in, path, output, tail);
@@ -146,7 +146,7 @@ public class PipedQuery<JsonNode> implements Expression<StackFrame, JsonNode>, F
 			});
 		} else if (head instanceof TransformPipeComponent) {
 			((TransformPipeComponent<JsonNode>) head).expr.apply(frame, in, path, (pobj, ppath) -> {
-				pathRecursive(frame, pobj, path != null && ppath == null ? UnrepresentablePath.getInstance() : ppath, output, tail);
+				pathRecursive(frame, pobj, !(path instanceof UntrackedPath) && ppath instanceof UntrackedPath ? UnrepresentablePath.getInstance() : ppath, output, tail);
 			});
 		} else if (head instanceof LabelPipeComponent) {
 			try {

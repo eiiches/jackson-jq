@@ -12,6 +12,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "has", nargs = 1)
@@ -21,15 +22,15 @@ public class HasFunction implements Function {
 		return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
 			JsonNodeType inType = jsonProvider.getNodeType(in);
 			if (inType == JsonNodeType.NULL) {
-				output.emit(jsonProvider.createBoolean(false), null);
+				output.emit(jsonProvider.createBoolean(false), UntrackedPath.getInstance());
 				return;
 			}
-			args.get(0).apply(frame, in, null, (keyName, opath) -> {
+			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (keyName, opath) -> {
 				JsonNodeType keyType = jsonProvider.getNodeType(keyName);
 				if (inType == JsonNodeType.OBJECT) {
 					if (keyType != JsonNodeType.STRING)
 						throw new JsonQueryException("argument 1 of has() must be string for object input");
-					output.emit(jsonProvider.createBoolean(jsonProvider.has(in, jsonProvider.asText(keyName))), null);
+					output.emit(jsonProvider.createBoolean(jsonProvider.has(in, jsonProvider.asText(keyName))), UntrackedPath.getInstance());
 				} else if (inType == JsonNodeType.ARRAY) {
 					if (keyType != JsonNodeType.NUMBER)
 						throw new JsonQueryException("argument 1 of has() must be int for array input");
@@ -39,7 +40,7 @@ public class HasFunction implements Function {
 					int keyAsInt = (int) keyAsDouble;
 					if (keyAsDouble != keyAsInt)
 						throw new JsonQueryException("argument 1 of has() must be int for array input, got " + keyAsDouble);
-					output.emit(jsonProvider.createBoolean(jsonProvider.has(in, keyAsInt)), null);
+					output.emit(jsonProvider.createBoolean(jsonProvider.has(in, keyAsInt)), UntrackedPath.getInstance());
 				} else {
 					throw new JsonQueryException("has() is not applicable to " + inType);
 				}

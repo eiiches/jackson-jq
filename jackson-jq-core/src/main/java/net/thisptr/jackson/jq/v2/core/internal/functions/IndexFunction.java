@@ -11,6 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "index", nargs = 1)
@@ -19,16 +20,16 @@ public class IndexFunction implements Function {
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
 			if (jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
-				output.emit(jsonProvider.createNull(), null);
+				output.emit(jsonProvider.createNull(), UntrackedPath.getInstance());
 				return;
 			}
 
-			args.get(0).apply(frame, in, null, (needle, opath) -> {
+			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (needle, opath) -> {
 				List<Integer> tmp = IndicesFunction.indices(jsonProvider, needle, in);
 				if (tmp.isEmpty()) {
-					output.emit(jsonProvider.createNull(), null);
+					output.emit(jsonProvider.createNull(), UntrackedPath.getInstance());
 				} else {
-					output.emit(jsonProvider.createNumber(tmp.get(0)), null);
+					output.emit(jsonProvider.createNumber(tmp.get(0)), UntrackedPath.getInstance());
 				}
 			});
 		});

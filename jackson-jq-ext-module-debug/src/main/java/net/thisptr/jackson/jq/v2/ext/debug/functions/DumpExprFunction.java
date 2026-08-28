@@ -21,13 +21,12 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class DumpExprFunction implements Function {
-
 	@Override
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		JsonNode dump = new Dumper<>(jsonProvider).dump(args.get(0));
-
 		return new Expression<Context, JsonNode>() {
 			@Override
 			public Cardinality getCardinality() {
@@ -45,8 +44,8 @@ public class DumpExprFunction implements Function {
 			}
 
 			@Override
-			public void apply(Context context, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
-				output.emit(dump, null);
+			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+				output.emit(dump, UntrackedPath.getInstance());
 			}
 		};
 	}
@@ -80,13 +79,11 @@ public class DumpExprFunction implements Function {
 				return jsonProvider.createNumber(((Double) value).doubleValue());
 			if (value instanceof Number)
 				return jsonProvider.valueToTree(value);
-
 			String previousIdentity = identities.get(value);
 			if (previousIdentity != null)
 				return reference(previousIdentity);
 			String identity = identity(value);
 			identities.put(value, identity);
-
 			if (value instanceof Expression)
 				return serializeExpression((Expression<?, ?>) value, identity);
 			if (value.getClass().isArray())

@@ -1,9 +1,8 @@
 package net.thisptr.jackson.jq.v2.spi;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 /**
  * An executable jq expression.
@@ -63,9 +62,9 @@ public interface Expression<Context, JsonNode> {
 	 *
 	 * @param context an opaque object that has to be passed on when evaluating Function arguments
 	 * @param in the input JSON node (the {@code .} context)
-	 * @param ipath the path of the input JSON node, or {@code null} if untracked
+	 * @param ipath the path of the input JSON node, or {@link UntrackedPath#getInstance()} if untracked
 	 * @param output the consumer to receive output JSON nodes
 	 * @throws JsonQueryException if an error occurs during evaluation
 	 */
-	void apply(Context context, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException;
+	void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException;
 }

@@ -10,7 +10,6 @@ module net.thisptr.jackson.jq.v2.core {
 	exports net.thisptr.jackson.jq.v2.core;
 	exports net.thisptr.jackson.jq.v2.core.module;
 	exports net.thisptr.jackson.jq.v2.core.module.loaders;
-	exports net.thisptr.jackson.jq.v2.core.path;
 
 	exports net.thisptr.jackson.jq.v2.core.internal to net.thisptr.jackson.jq.v2.ext.module.debug;
 	opens net.thisptr.jackson.jq.v2.core.internal to net.thisptr.jackson.jq.v2.ext.module.debug;

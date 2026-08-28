@@ -5,13 +5,14 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
-import net.thisptr.jackson.jq.v2.core.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class TryCatch<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
@@ -66,12 +67,12 @@ public class TryCatch<JsonNode> implements Expression<StackFrame, JsonNode>, Fre
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		try {
 			tryExpr.apply(frame, in, path, output);
 		} catch (JsonQueryException e) {
 			if (catchExpr != null) {
-				catchExpr.apply(frame, e.toJsonNode(jsonProvider), path != null ? UnrepresentablePath.getInstance() : null, output);
+				catchExpr.apply(frame, e.toJson(jsonProvider), path instanceof UntrackedPath ? UntrackedPath.getInstance() : UnrepresentablePath.getInstance(), output);
 			}
 		}
 	}

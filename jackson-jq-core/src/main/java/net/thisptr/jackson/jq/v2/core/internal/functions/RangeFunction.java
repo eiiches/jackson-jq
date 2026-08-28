@@ -19,6 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "range", nargs = 1)
@@ -30,26 +31,26 @@ public class RangeFunction implements Function {
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).build((frame, in, ipath, output) -> {
 			if (args.size() == 1) {
-				args.get(0).apply(frame, in, null, (end, opath) -> {
+				args.get(0).apply(frame, in, UntrackedPath.getInstance(), (end, opath) -> {
 					range1(jsonProvider, output, end);
 				});
 			} else if (args.size() == 2) {
-				args.get(0).apply(frame, in, null, (start, opath) -> {
+				args.get(0).apply(frame, in, UntrackedPath.getInstance(), (start, opath) -> {
 					if (version.compareTo(Versions.JQ_1_5) <= 0) {
 						Object[] cur = new Object[] { start }; // only reset when start changes [v1.5]
-						args.get(1).apply(frame, in, null, (end, opath2) -> {
+						args.get(1).apply(frame, in, UntrackedPath.getInstance(), (end, opath2) -> {
 							cur[0] = range2(jsonProvider, output, (JsonNode) cur[0], end);
 						});
 					} else {
-						args.get(1).apply(frame, in, null, (end, opath2) -> {
+						args.get(1).apply(frame, in, UntrackedPath.getInstance(), (end, opath2) -> {
 							range2(jsonProvider, output, start, end);
 						});
 					}
 				});
 			} else {
-				args.get(0).apply(frame, in, null, (start, opath) -> {
-					args.get(1).apply(frame, in, null, (end, opath2) -> {
-						args.get(2).apply(frame, in, null, (incr, opath3) -> {
+				args.get(0).apply(frame, in, UntrackedPath.getInstance(), (start, opath) -> {
+					args.get(1).apply(frame, in, UntrackedPath.getInstance(), (end, opath2) -> {
+						args.get(2).apply(frame, in, UntrackedPath.getInstance(), (incr, opath3) -> {
 							range3(jsonProvider, output, start, end, incr);
 						});
 					});
@@ -69,7 +70,7 @@ public class RangeFunction implements Function {
 		double _end = jsonProvider.asDouble(end);
 		@Var double i;
 		for (i = _start; i < _end; i += 1)
-			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, i), null);
+			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, i), UntrackedPath.getInstance());
 		return JsonNodeUtils.asNumericNode(jsonProvider, i);
 	}
 
@@ -81,7 +82,7 @@ public class RangeFunction implements Function {
 			return;
 		@Var JsonNode cur = start;
 		while (Integer.signum(comparator.compare(cur, end)) == dir) {
-			output.emit(cur, null);
+			output.emit(cur, UntrackedPath.getInstance());
 			cur = operator.apply(jsonProvider, cur, incr);
 		}
 	}

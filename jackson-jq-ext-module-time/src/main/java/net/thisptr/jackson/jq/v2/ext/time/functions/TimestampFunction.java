@@ -2,8 +2,6 @@ package net.thisptr.jackson.jq.v2.ext.time.functions;
 
 import java.util.List;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -12,6 +10,7 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class TimestampFunction implements Function {
 	@Override
@@ -33,8 +32,8 @@ public class TimestampFunction implements Function {
 			}
 
 			@Override
-			public void apply(Context context, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
-				output.emit(jsonProvider.createNumber(System.currentTimeMillis()), null);
+			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+				output.emit(jsonProvider.createNumber(System.currentTimeMillis()), UntrackedPath.getInstance());
 			}
 		};
 	}

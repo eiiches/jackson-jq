@@ -5,15 +5,15 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class PathAndValue<JsonNode> {
-	private final @Nullable Path<JsonNode> path;
+	private final Path<JsonNode> path;
 	private final @Nullable JsonNode value;
 
-	public PathAndValue(@Nullable Path<JsonNode> path, @Nullable JsonNode value) {
+	public PathAndValue(Path<JsonNode> path, @Nullable JsonNode value) {
 		this.value = value;
 		this.path = path;
 	}
 
-	public @Nullable Path<JsonNode> getPath() {
+	public Path<JsonNode> getPath() {
 		return path;
 	}
 

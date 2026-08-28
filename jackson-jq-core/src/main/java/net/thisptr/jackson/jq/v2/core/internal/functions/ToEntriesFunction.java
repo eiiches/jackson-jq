@@ -17,6 +17,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "to_entries", nargs = 0)
@@ -50,7 +51,7 @@ public class ToEntriesFunction implements Function {
 				throw new JsonQueryTypeException(jsonProvider, version, "%s has no keys", in);
 			}
 
-			output.emit(jsonProvider.createArray(result), null);
+			output.emit(jsonProvider.createArray(result), UntrackedPath.getInstance());
 		});
 	}
 }

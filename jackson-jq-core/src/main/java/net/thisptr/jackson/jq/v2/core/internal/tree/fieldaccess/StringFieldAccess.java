@@ -2,8 +2,6 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 
 import java.util.Set;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FreeVariables;
@@ -16,6 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class StringFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	private Expression<StackFrame, JsonNode> field;
@@ -27,11 +26,7 @@ public class StringFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 				: (target.getCardinality() == Cardinality.ZERO || field.getCardinality() == Cardinality.ZERO ? Cardinality.ZERO : Cardinality.UNKNOWN);
 	}
 
-	public StringFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> obj, Expression<StackFrame, JsonNode> field, boolean permissive) {
-		this(jsonProvider, obj, field, permissive, null);
-	}
-
-	public StringFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> obj, Expression<StackFrame, JsonNode> field, boolean permissive, @Nullable Version version) {
+	public StringFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> obj, Expression<StackFrame, JsonNode> field, boolean permissive, Version version) {
 		super(jsonProvider, obj, permissive, version);
 		this.field = field;
 	}
@@ -73,12 +68,12 @@ public class StringFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
-		field.apply(frame, in, null, (key, opath) -> {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+		field.apply(frame, in, UntrackedPath.getInstance(), (key, opath) -> {
 			target.apply(frame, in, path, (pobj, ppath) -> {
 				if (jsonProvider.getNodeType(key) != JsonNodeType.STRING && !permissive)
 					throw new IllegalStateException(); // FIXME: exception type
-				emitObjectFieldPath(jsonProvider, permissive, jsonProvider.asText(key), pobj, ppath, output, path != null, version);
+				emitObjectFieldPath(jsonProvider, permissive, jsonProvider.asText(key), pobj, ppath, output, !(path instanceof UntrackedPath), version);
 			});
 		});
 	}

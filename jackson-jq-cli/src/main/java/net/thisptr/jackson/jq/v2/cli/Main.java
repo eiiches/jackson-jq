@@ -19,7 +19,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.help.HelpFormatter;
-import org.jspecify.annotations.Nullable;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.MappingIterator;
 import tools.jackson.databind.ObjectMapper;
@@ -48,39 +47,34 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class Main {
 	private static final ObjectMapper MAPPER = JsonMapper.builder()
 			.addModule(JsonQueryJacksonModule.getInstance())
 			.build();
-
 	private static final Option OPT_COMPACT = Option.builder("c")
 			.longOpt("compact")
 			.desc("compact instead of pretty-printed output")
 			.get();
-
 	private static final Option OPT_RAW_OUTPUT = Option.builder("r")
 			.longOpt("raw-output")
 			.desc("output raw strings, not JSON texts")
 			.get();
-
 	private static final Option OPT_NULL_INPUT = Option.builder("n")
 			.longOpt("null-input")
 			.desc("use `null` as the single input value")
 			.get();
-
 	private static final Option OPT_VERSION = Option.builder()
 			.longOpt("jq")
 			.desc("specify jq version")
 			.numberOfArgs(1)
 			.get();
-
 	private static final Option OPT_JSON_PROVIDER = Option.builder()
 			.longOpt("json-provider")
 			.desc("JSON provider: jackson2, jackson3, gson, or jakarta (default: jackson3)")
 			.numberOfArgs(1)
 			.get();
-
 	private static final Option OPT_HELP = Option.builder("h")
 			.longOpt("help")
 			.desc("print this message")
@@ -94,7 +88,6 @@ public class Main {
 		options.addOption(OPT_VERSION);
 		options.addOption(OPT_JSON_PROVIDER);
 		options.addOption(OPT_HELP);
-
 		CommandLine command;
 		List<String> rest;
 		try {
@@ -106,7 +99,6 @@ public class Main {
 			System.exit(1);
 			throw e;
 		}
-
 		@Var Version version = Versions.JQ_1_6;
 		if (command.hasOption(OPT_VERSION.getLongOpt())) {
 			version = Version.valueOf(command.getOptionValue(OPT_VERSION.getLongOpt()));
@@ -115,13 +107,11 @@ public class Main {
 				System.exit(1);
 			}
 		}
-
 		if (rest.isEmpty() || command.hasOption(OPT_HELP.getOpt())) {
 			HelpFormatter help = HelpFormatter.builder().get();
 			help.printHelp("jackson-jq [OPTIONS...] QUERY", null, options, null, false);
 			System.exit(0);
 		}
-
 		String providerName = command.hasOption(OPT_JSON_PROVIDER.getLongOpt())
 				? command.getOptionValue(OPT_JSON_PROVIDER.getLongOpt())
 				: "jackson3";
@@ -133,7 +123,6 @@ public class Main {
 			System.exit(1);
 			throw e;
 		}
-
 		run(command, rest.get(0), version, jsonProvider);
 	}
 
@@ -174,12 +163,12 @@ public class Main {
 							}
 
 							@Override
-							public void apply(Context context, N2 in, @Nullable Path<N2> ipath, Output<N2> output) throws JsonQueryException {
+							public void apply(Context context, N2 in, Path<N2> ipath, Output<N2> output) throws JsonQueryException {
 								Map<String, N2> envValues = new HashMap<>();
 								for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
 									envValues.put(entry.getKey(), jsonProv.createString(entry.getValue()));
 								}
-								output.emit(jsonProv.createObject(envValues), null);
+								output.emit(jsonProv.createObject(envValues), UntrackedPath.getInstance());
 							}
 						};
 					}
@@ -188,20 +177,16 @@ public class Main {
 						ClassPathModuleLoader.getInstance(),
 						new FileSystemModuleLoader<>(jsonProvider, version, FileSystems.getDefault().getPath("").toAbsolutePath())))
 				.build();
-
 		JsonQuery<N> jq = env.compile(query);
-
 		ObjectMapper outputMapper = command.hasOption(OPT_COMPACT.getOpt())
 				? MAPPER
 				: MAPPER.rebuild()
 				.enable(SerializationFeature.INDENT_OUTPUT)
 				.build();
-
 		@Var InputStream is = System.in;
 		if (command.hasOption(OPT_NULL_INPUT.getOpt())) {
 			is = new ByteArrayInputStream("null".getBytes(StandardCharsets.UTF_8));
 		}
-
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 			 MappingIterator<JsonNode> iter = MAPPER.readerFor(JsonNode.class).readValues(reader)) {
 			while (iter.hasNext()) {

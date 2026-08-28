@@ -14,6 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,9 +32,9 @@ public class CustomFunctionTest {
 					@Override
 					public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version ver) {
 						return (frame, in, path, output) -> {
-							args.get(0).apply(frame, in, null, (numberNode, opath) -> {
+							args.get(0).apply(frame, in, UntrackedPath.getInstance(), (numberNode, opath) -> {
 								int n = jsonProvider.asInt(numberNode);
-								output.emit(jsonProvider.createNumber(n * 100), null);
+								output.emit(jsonProvider.createNumber(n * 100), UntrackedPath.getInstance());
 							});
 						};
 					}

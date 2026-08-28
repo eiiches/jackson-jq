@@ -4,16 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryUndefinedBehaviorException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.misc.PathUtils;
+import net.thisptr.jackson.jq.v2.core.internal.path.PathOperations;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression;
-import net.thisptr.jackson.jq.v2.core.path.RootPath;
-import net.thisptr.jackson.jq.v2.core.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -21,6 +20,8 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.RootPath;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class UpdateAssignment<JsonNode> extends BinaryOperatorExpression<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
@@ -45,20 +46,20 @@ public class UpdateAssignment<JsonNode> extends BinaryOperatorExpression<JsonNod
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		@SuppressWarnings("unchecked")
 		JsonNode[] out = (JsonNode[]) new Object[] { in };
 		lhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
 			@Var Path<JsonNode> lpath = lpath0;
 			// `VALUE | path(VALUE) => []`
-			if (UnrepresentablePath.isLost(lpath) && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)
+			if (PathUtils.isLost(lpath) && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)
 				lpath = RootPath.getInstance();
-			if (lpath == null || lpath instanceof UnrepresentablePath)
+			if (PathUtils.isLost(lpath))
 				throw new JsonQueryException(String.format("Invalid path expression with result %s", JsonNodeUtils.toString(jsonProvider, lval)));
 
-			out[0] = lpath.mutate(jsonProvider, out[0], (lval_) -> {
+			out[0] = PathOperations.mutate(jsonProvider, lpath, out[0], (lval_) -> {
 				List<JsonNode> rvals = new ArrayList<>();
-				rhs.apply(frame, lval_ == null ? jsonProvider.createNull() : lval_, null, (v, opath) -> rvals.add(v));
+				rhs.apply(frame, lval_ == null ? jsonProvider.createNull() : lval_, UntrackedPath.getInstance(), (v, opath) -> rvals.add(v));
 				if (rvals.isEmpty())
 					throw new JsonQueryUndefinedBehaviorException("`|= empty` is undefined. See https://github.com/stedolan/jq/issues/897");
 				if (version.compareTo(Versions.JQ_1_6) >= 0) {
@@ -66,8 +67,8 @@ public class UpdateAssignment<JsonNode> extends BinaryOperatorExpression<JsonNod
 				} else {
 					return rvals.get(rvals.size() - 1);
 				}
-			});
+			}, version);
 		});
-		output.emit(out[0], null);
+		output.emit(out[0], UntrackedPath.getInstance());
 	}
 }

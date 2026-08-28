@@ -3,8 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 import java.util.Collections;
 import java.util.Set;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.compile.BoundArgumentInfo;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Closure;
@@ -14,6 +12,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 /**
  * Like {@link ResolvedCapturedVariableAccess}, but for a captured variable the compiler has bound to a
@@ -71,7 +70,7 @@ public class ResolvedCapturedVariableBoundArgumentAccess<JsonNode> implements Ex
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		Closure closure = (Closure) frame.get(frameClosureSlot);
 		if (closure == null) {
 			throw new JsonQueryException("Variable $" + name + " is not defined (no closure)");
@@ -83,10 +82,10 @@ public class ResolvedCapturedVariableBoundArgumentAccess<JsonNode> implements Ex
 		if (raw instanceof PathAndValue) {
 			PathAndValue<JsonNode> pv = (PathAndValue<JsonNode>) raw;
 			if (pv.getValue() != null) {
-				output.emit(pv.getValue(), path != null ? pv.getPath() : null);
+				output.emit(pv.getValue(), path instanceof UntrackedPath ? UntrackedPath.getInstance() : pv.getPath());
 			}
 		} else {
-			output.emit((JsonNode) raw, null);
+			output.emit((JsonNode) raw, UntrackedPath.getInstance());
 		}
 	}
 

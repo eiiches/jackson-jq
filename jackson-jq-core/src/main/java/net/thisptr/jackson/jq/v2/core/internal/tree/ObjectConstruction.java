@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
@@ -19,6 +18,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class ObjectConstruction<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
@@ -74,7 +74,7 @@ public class ObjectConstruction<JsonNode> implements Expression<StackFrame, Json
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		Map<String, JsonNode> tmp = new LinkedHashMap<>(fields.size());
 		applyRecursive(jsonProvider, frame, in, output, fields, tmp);
 	}
@@ -84,7 +84,7 @@ public class ObjectConstruction<JsonNode> implements Expression<StackFrame, Json
 			@Var JsonNode obj = jsonProvider.createObject();
 			for (Map.Entry<String, JsonNode> e : tmp.entrySet())
 				obj = jsonProvider.set(obj, e.getKey(), e.getValue());
-			output.emit(obj, null);
+			output.emit(obj, UntrackedPath.getInstance());
 			return;
 		}
 		fields.get(0).evaluate(frame, in, (k, v) -> {

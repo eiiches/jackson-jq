@@ -12,6 +12,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "type", nargs = 0)
@@ -21,7 +22,7 @@ public class TypeFunction implements Function {
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 
-			output.emit(jsonProvider.createString(JsonNodeUtils.typeOf(jsonProvider, in)), null);
+			output.emit(jsonProvider.createString(JsonNodeUtils.typeOf(jsonProvider, in)), UntrackedPath.getInstance());
 		});
 	}
 }

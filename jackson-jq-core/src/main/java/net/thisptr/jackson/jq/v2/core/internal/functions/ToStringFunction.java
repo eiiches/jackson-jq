@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "tostring", nargs = 0)
@@ -22,9 +23,9 @@ public class ToStringFunction implements Function {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 
 			if (jsonProvider.getNodeType(in) == JsonNodeType.STRING) {
-				output.emit(in, null);
+				output.emit(in, UntrackedPath.getInstance());
 			} else {
-				output.emit(jsonProvider.createString(JsonNodeUtils.toString(jsonProvider, in, version)), null);
+				output.emit(jsonProvider.createString(JsonNodeUtils.toString(jsonProvider, in, version)), UntrackedPath.getInstance());
 			}
 		});
 	}

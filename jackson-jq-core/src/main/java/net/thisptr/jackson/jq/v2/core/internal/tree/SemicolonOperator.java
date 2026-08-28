@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -12,6 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class SemicolonOperator<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private List<Expression<StackFrame, JsonNode>> qs;
@@ -59,11 +59,11 @@ public class SemicolonOperator<JsonNode> implements Expression<StackFrame, JsonN
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		if (qs.isEmpty())
 			return;
 		for (Expression<StackFrame, JsonNode> q : qs.subList(0, qs.size() - 1))
-			q.apply(frame, in, null, (out, opath) -> {
+			q.apply(frame, in, UntrackedPath.getInstance(), (out, opath) -> {
 			});
 		qs.get(qs.size() - 1).apply(frame, in, path, output);
 	}

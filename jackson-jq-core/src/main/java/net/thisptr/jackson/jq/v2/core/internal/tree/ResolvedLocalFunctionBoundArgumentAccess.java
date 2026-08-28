@@ -3,8 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 import java.util.List;
 import java.util.Set;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.compile.BoundArgumentInfo;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -43,12 +41,10 @@ public class ResolvedLocalFunctionBoundArgumentAccess<JsonNode> implements Expre
 		this.slot = slot;
 		this.args = args;
 		this.boundArgumentInfo = boundArgumentInfo;
-
 		boolean ownInput = boundArgumentInfo.dependsOnInput();
 		boolean ownExternal = boundArgumentInfo.dependsOnExternalState();
 		this.dependsOnInput = (ownInput && !inputFixed) || args.stream().anyMatch(Expression::dependsOnInput);
 		this.dependsOnExternalState = ownExternal || args.stream().anyMatch(Expression::dependsOnExternalState);
-
 		// The callee lives in the same frame this call runs in -- no closure hop needed to find it, so its
 		// freeLocalSlots (already numbered relative to that shared frame) are directly comparable/unionable.
 		this.freeLocalSlots = FreeVariables.unionAll(args);
@@ -93,7 +89,7 @@ public class ResolvedLocalFunctionBoundArgumentAccess<JsonNode> implements Expre
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		Function factory = (Function) frame.get(slot);
 		if (factory == null)
 			throw new JsonQueryException("Function " + name + " is not defined");

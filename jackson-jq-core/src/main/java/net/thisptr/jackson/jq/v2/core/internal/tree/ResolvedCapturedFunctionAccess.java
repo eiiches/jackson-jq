@@ -34,12 +34,10 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<Stac
 		this.closureSlot = closureSlot;
 		this.frameClosureSlot = frameClosureSlot;
 		this.args = args;
-
 		boolean ownInput = info != null ? info.dependsOnInput() : true;
 		boolean ownExternal = info != null ? info.dependsOnExternalState() : true;
 		this.dependsOnInput = (ownInput && !inputFixed) || args.stream().anyMatch(Expression::dependsOnInput);
 		this.dependsOnExternalState = ownExternal || args.stream().anyMatch(Expression::dependsOnExternalState);
-
 		// Finding the callee itself already crosses a closure hop -- stay unconditionally opaque for the
 		// "own" contribution (matching ResolvedCapturedVariableAccess's "defs stay conservative"
 		// precedent); only args, evaluated in the caller's own frame, are ever subtractable.
@@ -79,7 +77,7 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<Stac
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		Closure closure = (Closure) frame.get(frameClosureSlot);
 		Function factory = closure != null ? (Function) closure.get(closureSlot) : null;
 		if (factory == null) {

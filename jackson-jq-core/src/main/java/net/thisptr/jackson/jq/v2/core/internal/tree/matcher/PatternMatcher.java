@@ -3,8 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.matcher;
 import java.util.Deque;
 import java.util.Map;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Functional;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -26,9 +24,9 @@ public interface PatternMatcher<JsonNode> {
 	class MatchWithPath<JsonNode> {
 		public final int slot;
 		public final JsonNode value;
-		public final @Nullable Path<JsonNode> path;
+		public final Path<JsonNode> path;
 
-		public MatchWithPath(int slot, JsonNode value, @Nullable Path<JsonNode> path) {
+		public MatchWithPath(int slot, JsonNode value, Path<JsonNode> path) {
 			this.slot = slot;
 			this.value = value;
 			this.path = path;
@@ -39,7 +37,7 @@ public interface PatternMatcher<JsonNode> {
 		void emit(Deque<MatchWithPath<JsonNode>> vars) throws JsonQueryException;
 	}
 
-	void matchWithPath(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Deque<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException;
+	void matchWithPath(StackFrame frame, JsonNode in, Path<JsonNode> path, MatchOutput<JsonNode> output, Deque<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException;
 
 	PatternMatcher<JsonNode> resolveSlots(Map<String, Integer> slots);
 }

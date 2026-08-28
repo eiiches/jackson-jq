@@ -17,6 +17,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "@sh", nargs = 0)
@@ -39,11 +40,11 @@ public class AtShFunction implements Function {
 						throw new IllegalJsonInputException(iType + " cannot be escaped for shell");
 					}
 				}
-				output.emit(jsonProvider.createString(Strings.join(" ", tokens)), null);
+				output.emit(jsonProvider.createString(Strings.join(" ", tokens)), UntrackedPath.getInstance());
 			} else if (type == JsonNodeType.STRING) {
-				output.emit(jsonProvider.createString(escape(jsonProvider.asText(in))), null);
+				output.emit(jsonProvider.createString(escape(jsonProvider.asText(in))), UntrackedPath.getInstance());
 			} else if (isValueNode(type)) {
-				output.emit(jsonProvider.createString(JsonNodeUtils.toString(jsonProvider, in, version)), null);
+				output.emit(jsonProvider.createString(JsonNodeUtils.toString(jsonProvider, in, version)), UntrackedPath.getInstance());
 			} else {
 				throw new IllegalJsonInputException(type + " cannot be escaped for shell");
 			}

@@ -22,6 +22,7 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class StringInterpolation<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
@@ -98,7 +99,7 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		Deque<Pair<Integer, JsonNode>> stack = new ArrayDeque<>();
 		recurse(frame, in, output, stack, interpolations);
 	}
@@ -110,18 +111,17 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 			for (Pair<Integer, JsonNode> head : stack) {
 				builder.append(template.substring(pos, head._1));
 				pos = head._1;
-
 				JsonNodeType nodeType = jsonProvider.getNodeType(head._2);
 				builder.append(nodeType == JsonNodeType.STRING ? jsonProvider.asText(head._2) : JsonNodeUtils.toString(jsonProvider, head._2, version));
 			}
 			builder.append(template.substring(pos));
-			output.emit(jsonProvider.createString(builder.toString()), null);
+			output.emit(jsonProvider.createString(builder.toString()), UntrackedPath.getInstance());
 		} else {
 			Pair<Integer, Expression<StackFrame, JsonNode>> rhead = interpolations.get(interpolations.size() - 1);
 			List<Pair<Integer, Expression<StackFrame, JsonNode>>> rtail = interpolations.subList(0, interpolations.size() - 1);
-			rhead._2.apply(frame, in, null, (interpolated, opath) -> {
+			rhead._2.apply(frame, in, UntrackedPath.getInstance(), (interpolated, opath) -> {
 				if (formatter != null) {
-					formatter.apply(frame, interpolated, null, (formatted, opath2) -> {
+					formatter.apply(frame, interpolated, UntrackedPath.getInstance(), (formatted, opath2) -> {
 						stack.push(Pair.of(rhead._1, formatted));
 						recurse(frame, in, output, stack, rtail);
 						stack.pop();

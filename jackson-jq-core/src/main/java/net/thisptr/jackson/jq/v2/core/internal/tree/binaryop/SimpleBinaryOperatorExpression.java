@@ -1,7 +1,5 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.binaryop;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.operators.BinaryOperator;
@@ -11,6 +9,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public abstract class SimpleBinaryOperatorExpression<JsonNode> extends BinaryOperatorExpression<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
@@ -28,10 +27,10 @@ public abstract class SimpleBinaryOperatorExpression<JsonNode> extends BinaryOpe
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
-		rhs.apply(frame, in, null, (r, opath) -> {
-			lhs.apply(frame, in, null, (l, opath2) -> {
-				output.emit(operator.apply(jsonProvider, l, r), null);
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+		rhs.apply(frame, in, UntrackedPath.getInstance(), (r, opath) -> {
+			lhs.apply(frame, in, UntrackedPath.getInstance(), (l, opath2) -> {
+				output.emit(operator.apply(jsonProvider, l, r), UntrackedPath.getInstance());
 			});
 		});
 	}

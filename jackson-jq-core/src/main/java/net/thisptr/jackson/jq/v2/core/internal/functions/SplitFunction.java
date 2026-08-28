@@ -14,6 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "split", nargs = 1)
@@ -21,7 +22,7 @@ public class SplitFunction implements Function {
 	@Override
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(args.get(0).getCardinality()).build((frame, in, ipath, output) -> {
-			args.get(0).apply(frame, in, null, (sep, opath) -> {
+			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (sep, opath) -> {
 				if (jsonProvider.getNodeType(in) != JsonNodeType.STRING || jsonProvider.getNodeType(sep) != JsonNodeType.STRING)
 					throw new JsonQueryTypeException("split input and separator must be strings");
 
@@ -29,7 +30,7 @@ public class SplitFunction implements Function {
 				for (String seg : Strings.split(jsonProvider.asText(in), jsonProvider.asText(sep)))
 					row.add(jsonProvider.createString(seg));
 
-				output.emit(jsonProvider.createArray(row), null);
+				output.emit(jsonProvider.createArray(row), UntrackedPath.getInstance());
 			});
 		});
 	}

@@ -12,12 +12,13 @@ import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.utils.PathAndValue;
-import net.thisptr.jackson.jq.v2.core.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private Expression<StackFrame, JsonNode> iterExpr;
@@ -99,7 +100,7 @@ public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonN
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		initExpr.apply(frame, in, ipath, (accumulator, accumulatorPath) -> {
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
@@ -113,18 +114,18 @@ public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonN
 					for (Iterator<PatternMatcher.MatchWithPath<JsonNode>> it = vars.descendingIterator(); it.hasNext(); ) {
 						PatternMatcher.MatchWithPath<JsonNode> var = it.next();
 						if (var.slot >= 0) {
-							frame.set(var.slot, var.path != null ? new PathAndValue<>(var.path, var.value) : var.value);
+							frame.set(var.slot, var.path instanceof UntrackedPath ? var.value : new PathAndValue<>(var.path, var.value));
 						}
 					}
 
-					updateExpr.apply(frame, accumulators[0], extractExpr != null ? null : accumulatorPaths[0], (newaccumulator, newaccumulatorPath) -> {
+					updateExpr.apply(frame, accumulators[0], extractExpr != null ? UntrackedPath.getInstance() : accumulatorPaths[0], (newaccumulator, newaccumulatorPath) -> {
 						if (extractExpr != null) {
-							extractExpr.apply(frame, newaccumulator, ipath != null && newaccumulatorPath == null ? UnrepresentablePath.getInstance() : newaccumulatorPath, output);
+							extractExpr.apply(frame, newaccumulator, !(ipath instanceof UntrackedPath) && newaccumulatorPath instanceof UntrackedPath ? UnrepresentablePath.getInstance() : newaccumulatorPath, output);
 						} else {
 							output.emit(newaccumulator, newaccumulatorPath);
 						}
 						accumulators[0] = newaccumulator;
-						accumulatorPaths[0] = ipath != null && newaccumulatorPath == null
+						accumulatorPaths[0] = !(ipath instanceof UntrackedPath) && newaccumulatorPath instanceof UntrackedPath
 								? UnrepresentablePath.getInstance()
 								: newaccumulatorPath;
 					});

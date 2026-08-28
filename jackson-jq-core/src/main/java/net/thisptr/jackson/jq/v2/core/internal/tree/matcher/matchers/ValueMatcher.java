@@ -3,8 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
 import java.util.Deque;
 import java.util.Map;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Functional;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
@@ -36,7 +34,7 @@ public class ValueMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public void matchWithPath(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, MatchOutput<JsonNode> output, Deque<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
+	public void matchWithPath(StackFrame frame, JsonNode in, Path<JsonNode> path, MatchOutput<JsonNode> output, Deque<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
 		accumulate.addLast(new MatchWithPath<>(slot, in, path));
 		output.emit(accumulate);
 		accumulate.removeLast();

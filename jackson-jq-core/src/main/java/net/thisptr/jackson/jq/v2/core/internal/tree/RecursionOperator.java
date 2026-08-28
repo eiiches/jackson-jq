@@ -5,11 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
-import net.thisptr.jackson.jq.v2.core.path.ArrayIndexPath;
-import net.thisptr.jackson.jq.v2.core.path.ObjectFieldPath;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -46,22 +42,22 @@ public class RecursionOperator<JsonNode> implements Expression<StackFrame, JsonN
 		return false;
 	}
 
-	private void pathRecursive(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	private void pathRecursive(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		output.emit(in, path);
 		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
 			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(in);
 			while (iter.hasNext()) {
 				Map.Entry<String, JsonNode> entry = iter.next();
-				pathRecursive(frame, entry.getValue(), ObjectFieldPath.chainIfNotNull(path, entry.getKey()), output);
+				pathRecursive(frame, entry.getValue(), path.appendKey(entry.getKey()), output);
 			}
 		} else if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
 			for (int i = 0; i < jsonProvider.size(in); ++i)
-				pathRecursive(frame, jsonProvider.requireGet(in, i), ArrayIndexPath.chainIfNotNull(jsonProvider, path, i), output);
+				pathRecursive(frame, jsonProvider.requireGet(in, i), path.appendIndex(i), output);
 		}
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		pathRecursive(frame, in, path, output);
 	}
 

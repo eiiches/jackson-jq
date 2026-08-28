@@ -21,6 +21,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "todateiso8601", nargs = 0)
@@ -42,7 +43,7 @@ public class ToDateIso8601Function implements Function {
 				try {
 					long epochSeconds = (long) epochDouble;
 					String iso8601String = Instant.ofEpochSecond(epochSeconds).toString();
-					output.emit(jsonProvider.createString(iso8601String), null);
+					output.emit(jsonProvider.createString(iso8601String), UntrackedPath.getInstance());
 				} catch (DateTimeException e) {
 					throw new JsonQueryException(e);
 				}
@@ -64,7 +65,7 @@ public class ToDateIso8601Function implements Function {
 					}
 					String iso8601String = String.format(Locale.ROOT, "%d-%02d-%02dT%02d:%02d:%02dZ",
 							fields[0], fields[1] + 1, fields[2], fields[3], fields[4], fields[5]);
-					output.emit(jsonProvider.createString(iso8601String), null);
+					output.emit(jsonProvider.createString(iso8601String), UntrackedPath.getInstance());
 				} else {
 					int[] fields = new int[8];
 					int checkLen = Math.min(size, 8);
@@ -105,7 +106,7 @@ public class ToDateIso8601Function implements Function {
 
 					String iso8601String = String.format(Locale.ROOT, "%d-%02d-%02dT%02d:%02d:%02dZ",
 							normYear, normMonth, normDay, normHour, normMin, normSec);
-					output.emit(jsonProvider.createString(iso8601String), null);
+					output.emit(jsonProvider.createString(iso8601String), UntrackedPath.getInstance());
 				}
 			}
 		});

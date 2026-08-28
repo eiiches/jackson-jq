@@ -19,6 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode> {
 	private final int frameSize;
@@ -94,19 +95,19 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 	}
 
 	@Override
-	public void apply(StackFrame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame parentFrame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		apply(parentFrame, in, path, output, JsonQueryBindings.empty());
 	}
 
 	public void apply(JsonNode in, JsonQueryBindings<JsonNode> bindings, Output<JsonNode> output) throws JsonQueryException {
-		apply((StackFrame) null, in, null, output, bindings);
+		apply((StackFrame) null, in, UntrackedPath.getInstance(), output, bindings);
 	}
 
 	public void apply(JsonNode in, Output<JsonNode> output) throws JsonQueryException {
 		apply(in, JsonQueryBindings.empty(), output);
 	}
 
-	private void apply(@Nullable StackFrame parentFrame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output, JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {
+	private void apply(@Nullable StackFrame parentFrame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output, JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {
 		validateBindings(bindings);
 		Memory memory = parentFrame != null ? parentFrame.getEnclosingMemory() : new Memory(globalCount);
 		StackFrame rootFrame = memory.pushFrame(frameSize);
@@ -132,7 +133,7 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 		StackFrame rootFrame = memory.pushFrame(frameSize);
 		try {
 			initializeGlobals(memory, JsonQueryBindings.empty());
-			inner.apply(rootFrame, in, null, (v, p) -> {
+			inner.apply(rootFrame, in, UntrackedPath.getInstance(), (v, p) -> {
 			});
 			Map<FunctionSignature, Function> result = new HashMap<>();
 			for (Map.Entry<FunctionSignature, Integer> entry : rootFunctionSlots.entrySet()) {

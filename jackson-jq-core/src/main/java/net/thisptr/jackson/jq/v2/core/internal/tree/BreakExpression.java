@@ -1,7 +1,5 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryBreakException;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -23,7 +21,7 @@ public class BreakExpression<JsonNode> implements Expression<StackFrame, JsonNod
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		throw new JsonQueryBreakException(name);
 	}
 

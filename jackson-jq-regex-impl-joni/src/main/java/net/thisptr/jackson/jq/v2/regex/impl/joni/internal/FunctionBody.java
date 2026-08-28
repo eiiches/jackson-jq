@@ -2,8 +2,6 @@ package net.thisptr.jackson.jq.v2.regex.impl.joni.internal;
 
 import java.util.List;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -54,7 +52,7 @@ public class FunctionBody {
 				}
 
 				@Override
-				public void apply(Context context, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+				public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 					expr.apply(context, in, ipath, output);
 				}
 			};

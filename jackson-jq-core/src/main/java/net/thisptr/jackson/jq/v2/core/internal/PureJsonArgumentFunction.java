@@ -10,13 +10,14 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public abstract class PureJsonArgumentFunction implements Function {
 	protected abstract <JsonNode> JsonNode fn(JsonProvider<JsonNode> jsonProvider, List<JsonNode> args) throws JsonQueryException;
 
 	private <JsonNode> void combinations(JsonProvider<JsonNode> jsonProvider, Output<JsonNode> output, List<JsonNode> args, int index, List<List<JsonNode>> argmat) throws JsonQueryException {
 		if (index >= argmat.size()) {
-			output.emit(fn(jsonProvider, args), null);
+			output.emit(fn(jsonProvider, args), UntrackedPath.getInstance());
 			return;
 		}
 
@@ -33,7 +34,7 @@ public abstract class PureJsonArgumentFunction implements Function {
 			List<List<JsonNode>> _args = new ArrayList<>(args.size());
 			for (Expression<Context, JsonNode> arg : args) {
 				List<JsonNode> out = new ArrayList<>();
-				arg.apply(frame, in, null, (v, opath) -> out.add(v));
+				arg.apply(frame, in, UntrackedPath.getInstance(), (v, opath) -> out.add(v));
 				_args.add(out);
 			}
 

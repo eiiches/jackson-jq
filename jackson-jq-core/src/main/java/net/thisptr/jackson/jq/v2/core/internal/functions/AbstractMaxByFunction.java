@@ -15,6 +15,7 @@ import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public abstract class AbstractMaxByFunction implements Function {
 
@@ -35,7 +36,7 @@ public abstract class AbstractMaxByFunction implements Function {
 			while (iter.hasNext()) {
 				JsonNode i = iter.next();
 				List<JsonNode> valueList = new ArrayList<>();
-				args.get(0).apply(frame, i, null, (v, opath) -> valueList.add(v));
+				args.get(0).apply(frame, i, UntrackedPath.getInstance(), (v, opath) -> valueList.add(v));
 				JsonNode value = JsonNodeUtils.asArrayNode(jsonProvider, valueList);
 				if (maxValue == null || !isLarger(jsonProvider, maxValue, value)) {
 					maxValue = value;
@@ -43,7 +44,7 @@ public abstract class AbstractMaxByFunction implements Function {
 				}
 			}
 
-			output.emit(maxItem, null);
+			output.emit(maxItem, UntrackedPath.getInstance());
 		});
 	}
 

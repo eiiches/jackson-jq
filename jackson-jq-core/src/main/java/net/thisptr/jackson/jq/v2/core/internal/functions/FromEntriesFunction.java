@@ -19,6 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "from_entries", nargs = 0)
@@ -54,7 +55,7 @@ public class FromEntriesFunction implements Function {
 				result.put(jsonProvider.asText(key), value == null ? jsonProvider.createNull() : value);
 			}
 
-			output.emit(jsonProvider.createObject(result), null);
+			output.emit(jsonProvider.createObject(result), UntrackedPath.getInstance());
 		});
 	}
 }

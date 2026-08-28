@@ -17,6 +17,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "fromdateiso8601", nargs = 0)
@@ -32,7 +33,7 @@ public class FromDateIso8601Function implements Function {
 					throw new JsonQueryException(String.format("date \"%s\" does not match format \"%%Y-%%m-%%dT%%H:%%M:%%SZ\"", iso8601String));
 				}
 				long epochSeconds = Instant.parse(iso8601String).getEpochSecond();
-				output.emit(JsonNodeUtils.asNumericNode(jsonProvider, epochSeconds), null);
+				output.emit(JsonNodeUtils.asNumericNode(jsonProvider, epochSeconds), UntrackedPath.getInstance());
 			} catch (DateTimeParseException e) {
 				throw new JsonQueryException(e);
 			}

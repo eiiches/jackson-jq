@@ -11,6 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public abstract class AbstractAtFormattingFunction implements Function {
 
@@ -20,7 +21,7 @@ public abstract class AbstractAtFormattingFunction implements Function {
 			String text = jsonProvider.getNodeType(in) == JsonNodeType.STRING
 					? jsonProvider.asText(in)
 					: JsonNodeUtils.toString(jsonProvider, in, version);
-			output.emit(jsonProvider.createString(convert(text)), null);
+			output.emit(jsonProvider.createString(convert(text)), UntrackedPath.getInstance());
 		});
 	}
 

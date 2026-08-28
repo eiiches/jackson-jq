@@ -22,6 +22,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -97,7 +98,7 @@ public class EnvironmentPocTest {
 		Function increment = new Function() {
 			@Override
 			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
-				return FunctionBody.<Context, N>builder(args).usesInput(true).build((scope, in, path, output) -> output.emit(provider.createNumber(provider.asLong(in) + 1), null));
+				return FunctionBody.<Context, N>builder(args).usesInput(true).build((scope, in, path, output) -> output.emit(provider.createNumber(provider.asLong(in) + 1), UntrackedPath.getInstance()));
 			}
 		};
 		FunctionLoader testLoader = javaFunctionLoader(FunctionSignature.of("increment", 0), increment);
@@ -132,7 +133,7 @@ public class EnvironmentPocTest {
 		Function random = new Function() {
 			@Override
 			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
-				return FunctionBody.<Context, N>builder(args).usesExternalState(true).build((scope, in, path, output) -> output.emit(provider.createNumber(0), null));
+				return FunctionBody.<Context, N>builder(args).usesExternalState(true).build((scope, in, path, output) -> output.emit(provider.createNumber(0), UntrackedPath.getInstance()));
 			}
 		};
 		FunctionLoader testLoader = javaFunctionLoader(FunctionSignature.of("random", 0), random);

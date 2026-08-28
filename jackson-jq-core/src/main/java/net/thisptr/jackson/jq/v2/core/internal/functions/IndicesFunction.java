@@ -15,6 +15,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "indices", nargs = 1)
@@ -25,15 +26,15 @@ public class IndicesFunction implements Function {
 			Preconditions.checkInputType(jsonProvider, "indices", in, JsonNodeType.STRING, JsonNodeType.ARRAY, JsonNodeType.NULL);
 
 			if (jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
-				output.emit(jsonProvider.createNull(), null);
+				output.emit(jsonProvider.createNull(), UntrackedPath.getInstance());
 				return;
 			}
 
-			args.get(0).apply(frame, in, null, (needle, opath) -> {
+			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (needle, opath) -> {
 				List<JsonNode> result = new ArrayList<>();
 				for (int index : indices(jsonProvider, needle, in))
 					result.add(jsonProvider.createNumber(index));
-				output.emit(jsonProvider.createArray(result), null);
+				output.emit(jsonProvider.createArray(result), UntrackedPath.getInstance());
 			});
 		});
 	}

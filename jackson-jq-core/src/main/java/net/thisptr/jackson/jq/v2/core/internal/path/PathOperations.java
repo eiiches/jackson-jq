@@ -1,0 +1,358 @@
+package net.thisptr.jackson.jq.v2.core.internal.path;
+
+import java.util.Iterator;
+import java.util.Map;
+
+import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
+
+import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
+import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
+import net.thisptr.jackson.jq.v2.core.internal.misc.Range;
+import net.thisptr.jackson.jq.v2.core.internal.misc.UnicodeUtils;
+import net.thisptr.jackson.jq.v2.json.JsonNodeType;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.IndexOfPath;
+import net.thisptr.jackson.jq.v2.spi.path.IndexRangePath;
+import net.thisptr.jackson.jq.v2.spi.path.IntIndexPath;
+import net.thisptr.jackson.jq.v2.spi.path.InvalidPath;
+import net.thisptr.jackson.jq.v2.spi.path.NumberIndexPath;
+import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.RootPath;
+import net.thisptr.jackson.jq.v2.spi.path.StringKeyPath;
+import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
+
+/**
+ * Core operations over the data-only {@link Path} hierarchy.
+ */
+public final class PathOperations {
+	@FunctionalInterface
+	public interface Mutation<JsonNode> {
+		/**
+		 * Computes the replacement for the node currently at a path location.
+		 *
+		 * @return the new value; deletion is not expressed through {@link #mutate}, see
+		 * {@code DelPathsFunction}
+		 */
+		JsonNode apply(@Nullable JsonNode node) throws JsonQueryException;
+	}
+
+	private PathOperations() {
+	}
+
+	// The casts are safe because every concrete path retains the JsonNode type of its parent and component.
+	public static <JsonNode> void resolve(JsonProvider<JsonNode> jsonProvider, Path<JsonNode> path, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output, boolean permissive, Version version) throws JsonQueryException {
+		resolveUnchecked(jsonProvider, path, in, ipath, output, permissive, version);
+	}
+
+	// The casts are safe because every concrete path retains the JsonNode type of its parent and component.
+	private static <JsonNode> void resolveUnchecked(JsonProvider<JsonNode> jsonProvider, Path<JsonNode> path, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output, boolean permissive, Version version) throws JsonQueryException {
+		if (path instanceof RootPath<?>) {
+			output.emit(in, ipath);
+			return;
+		}
+		if (path instanceof UnrepresentablePath<?>)
+			throw new JsonQueryException("Invalid path expression");
+		if (path instanceof StringKeyPath<?>) {
+			StringKeyPath<JsonNode> objectPath = (StringKeyPath<JsonNode>) path;
+			resolveUnchecked(jsonProvider, objectPath.getParentPath(), in, ipath, (parent, parentPath) -> {
+				resolveObjectField(jsonProvider, parent, parentPath, output, objectPath.getKey(), permissive, version);
+			}, permissive, version);
+			return;
+		}
+		if (path instanceof NumberIndexPath<?>) {
+			NumberIndexPath<JsonNode> indexPath = (NumberIndexPath<JsonNode>) path;
+			resolveUnchecked(jsonProvider, indexPath.getParentPath(), in, ipath, (parent, parentPath) -> {
+				resolveArrayIndex(jsonProvider, parent, parentPath, output, indexPath.getIndex(), permissive, version);
+			}, permissive, version);
+			return;
+		}
+		if (path instanceof IntIndexPath<?>) {
+			IntIndexPath<JsonNode> indexPath = (IntIndexPath<JsonNode>) path;
+			resolveUnchecked(jsonProvider, indexPath.getParentPath(), in, ipath, (parent, parentPath) -> {
+				resolveArrayIndex(jsonProvider, parent, parentPath, output, indexPath.getIndex(), permissive, version);
+			}, permissive, version);
+			return;
+		}
+		if (path instanceof IndexRangePath<?>) {
+			IndexRangePath<JsonNode> rangePath = (IndexRangePath<JsonNode>) path;
+			resolveUnchecked(jsonProvider, rangePath.getParentPath(), in, ipath, (parent, parentPath) -> {
+				resolveArrayRangeIndex(jsonProvider, parent, parentPath, output, rangePath.getStartIndex(), rangePath.getEndIndex(), permissive, version);
+			}, permissive, version);
+			return;
+		}
+		if (path instanceof IndexOfPath<?>) {
+			IndexOfPath<JsonNode> indexOfPath = (IndexOfPath<JsonNode>) path;
+			resolveUnchecked(jsonProvider, indexOfPath.getParentPath(), in, ipath, (parent, parentPath) -> {
+				resolveArrayIndexOf(jsonProvider, parent, parentPath, output, indexOfPath.getSearchSequence(), permissive, version);
+			}, permissive, version);
+			return;
+		}
+		if (path instanceof InvalidPath<?>) {
+			InvalidPath<JsonNode> invalidPath = (InvalidPath<JsonNode>) path;
+			resolveUnchecked(jsonProvider, invalidPath.getParentPath(), in, ipath, (parent, parentPath) -> {
+				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, invalidPath.getIndex()));
+			}, permissive, version);
+			return;
+		}
+		throw unsupported(path);
+	}
+
+	public static <JsonNode> void resolveObjectField(JsonProvider<JsonNode> jsonProvider, JsonNode parent, Path<JsonNode> parentPath, Output<JsonNode> output, String key, boolean permissive, Version version) throws JsonQueryException {
+		if (jsonProvider.getNodeType(parent) == JsonNodeType.NULL) {
+			output.emit(jsonProvider.createNull(), parentPath.appendKey(key));
+		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.OBJECT) {
+			JsonNode node = jsonProvider.get(parent, key);
+			output.emit(node == null ? jsonProvider.createNull() : node, parentPath.appendKey(key));
+		} else if (!permissive) {
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, parent, jsonProvider.createString(key)));
+		}
+	}
+
+	public static <JsonNode> void resolveArrayIndex(JsonProvider<JsonNode> jsonProvider, JsonNode parent, Path<JsonNode> parentPath, Output<JsonNode> output, JsonNode index, boolean permissive, Version version) throws JsonQueryException {
+		assert jsonProvider.getNodeType(index) == JsonNodeType.NUMBER;
+		if (jsonProvider.getNodeType(parent) == JsonNodeType.ARRAY) {
+			double indexAsDouble = jsonProvider.asDouble(index);
+			if (Double.isNaN(indexAsDouble) || Double.isInfinite(indexAsDouble)) {
+				output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
+				return;
+			}
+			int indexAsInt = (int) indexAsDouble;
+			if (indexAsDouble != indexAsInt) {
+				output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
+				return;
+			}
+			int resolvedIndex = indexAsInt < 0 ? indexAsInt + jsonProvider.size(parent) : indexAsInt;
+			if (resolvedIndex < 0 || jsonProvider.size(parent) <= resolvedIndex) {
+				output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
+				return;
+			}
+			output.emit(jsonProvider.requireGet(parent, resolvedIndex), parentPath.appendIndex(jsonProvider, index));
+		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.NULL) {
+			output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
+		} else if (!permissive) {
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, parent, index));
+		}
+	}
+
+	public static <JsonNode> void resolveArrayIndex(JsonProvider<JsonNode> jsonProvider, JsonNode parent, Path<JsonNode> parentPath, Output<JsonNode> output, int index, boolean permissive, Version version) throws JsonQueryException {
+		if (jsonProvider.getNodeType(parent) == JsonNodeType.ARRAY) {
+			int resolvedIndex = index < 0 ? index + jsonProvider.size(parent) : index;
+			if (resolvedIndex < 0 || jsonProvider.size(parent) <= resolvedIndex) {
+				output.emit(jsonProvider.createNull(), parentPath.appendIndex(index));
+				return;
+			}
+			output.emit(jsonProvider.requireGet(parent, resolvedIndex), parentPath.appendIndex(index));
+		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.NULL) {
+			output.emit(jsonProvider.createNull(), parentPath.appendIndex(index));
+		} else if (!permissive) {
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, parent, jsonProvider.createNumber(index)));
+		}
+	}
+
+	public static <JsonNode> void resolveArrayRangeIndex(JsonProvider<JsonNode> jsonProvider, JsonNode parent, Path<JsonNode> parentPath, Output<JsonNode> output, JsonNode start, JsonNode end, boolean permissive, Version version) throws JsonQueryException {
+		assert jsonProvider.getNodeType(start) == JsonNodeType.NULL || jsonProvider.getNodeType(start) == JsonNodeType.NUMBER;
+		assert jsonProvider.getNodeType(end) == JsonNodeType.NULL || jsonProvider.getNodeType(end) == JsonNodeType.NUMBER;
+		if (jsonProvider.getNodeType(parent) == JsonNodeType.ARRAY) {
+			Range range = Range.resolve(jsonProvider, start, end, jsonProvider.size(parent));
+			@Var JsonNode subarray = jsonProvider.createArray();
+			for (long index = range.start; index < range.end; ++index)
+				subarray = jsonProvider.add(subarray, jsonProvider.requireGet(parent, (int) index));
+			output.emit(subarray, parentPath.appendIndexRange(jsonProvider, start, end));
+		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.STRING) {
+			Range range = Range.resolve(jsonProvider, start, end, UnicodeUtils.lengthUtf32(jsonProvider.asText(parent)));
+			JsonNode substring = jsonProvider.createString(UnicodeUtils.substringUtf32(jsonProvider.asText(parent), (int) range.start, (int) range.end));
+			output.emit(substring, parentPath.appendIndexRange(jsonProvider, start, end));
+		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.NULL) {
+			output.emit(jsonProvider.createNull(), parentPath.appendIndexRange(jsonProvider, start, end));
+		} else if (!permissive) {
+			@Var JsonNode subpath = jsonProvider.createObject();
+			subpath = jsonProvider.set(subpath, "start", start);
+			subpath = jsonProvider.set(subpath, "end", end);
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, parent, subpath));
+		}
+	}
+
+	public static <JsonNode> void resolveArrayIndexOf(JsonProvider<JsonNode> jsonProvider, JsonNode parent, Path<JsonNode> parentPath, Output<JsonNode> output, JsonNode subsequence, boolean permissive, Version version) throws JsonQueryException {
+		assert jsonProvider.getNodeType(subsequence) == JsonNodeType.ARRAY;
+		if (jsonProvider.getNodeType(parent) == JsonNodeType.ARRAY) {
+			JsonNode indexList = indexOfAll(jsonProvider, parent, subsequence);
+			output.emit(indexList, parentPath.appendIndexOf(jsonProvider, subsequence));
+		} else if (!permissive) {
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, parent, subsequence));
+		}
+	}
+
+	public static <JsonNode> JsonNode mutate(JsonProvider<JsonNode> jsonProvider, Path<JsonNode> path, JsonNode in, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
+		return mutateUnchecked(jsonProvider, path, in, mutation, version);
+	}
+
+	// The casts are safe because every concrete path retains the JsonNode type of its parent and component.
+	private static <JsonNode> JsonNode mutateUnchecked(JsonProvider<JsonNode> jsonProvider, Path<JsonNode> path, JsonNode in, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
+		if (path instanceof RootPath<?>)
+			return mutation.apply(in);
+		if (path instanceof UnrepresentablePath<?>)
+			throw new JsonQueryException("Invalid path expression");
+		if (path instanceof StringKeyPath<?>) {
+			StringKeyPath<JsonNode> objectPath = (StringKeyPath<JsonNode>) path;
+			return mutateUnchecked(jsonProvider, objectPath.getParentPath(), in, oldValue -> {
+				return mutateObjectField(jsonProvider, oldValue, objectPath.getKey(), mutation, version);
+			}, version);
+		}
+		if (path instanceof NumberIndexPath<?>) {
+			NumberIndexPath<JsonNode> indexPath = (NumberIndexPath<JsonNode>) path;
+			return mutateUnchecked(jsonProvider, indexPath.getParentPath(), in, oldValue -> {
+				return mutateArrayIndex(jsonProvider, oldValue, indexPath.getIndex(), mutation, version);
+			}, version);
+		}
+		if (path instanceof IntIndexPath<?>) {
+			IntIndexPath<JsonNode> indexPath = (IntIndexPath<JsonNode>) path;
+			return mutateUnchecked(jsonProvider, indexPath.getParentPath(), in, oldValue -> {
+				return mutateArrayIndex(jsonProvider, oldValue, indexPath.getIndex(), mutation, version);
+			}, version);
+		}
+		if (path instanceof IndexRangePath<?>) {
+			IndexRangePath<JsonNode> rangePath = (IndexRangePath<JsonNode>) path;
+			return mutateUnchecked(jsonProvider, rangePath.getParentPath(), in, oldValue -> {
+				return mutateArrayRangeIndex(jsonProvider, oldValue, rangePath.getStartIndex(), rangePath.getEndIndex(), mutation, version);
+			}, version);
+		}
+		if (path instanceof IndexOfPath<?>) {
+			IndexOfPath<JsonNode> indexOfPath = (IndexOfPath<JsonNode>) path;
+			return mutateUnchecked(jsonProvider, indexOfPath.getParentPath(), in, oldValue -> {
+				throw new JsonQueryException("Cannot update field at array index of array");
+			}, version);
+		}
+		if (path instanceof InvalidPath<?>) {
+			InvalidPath<JsonNode> invalidPath = (InvalidPath<JsonNode>) path;
+			return mutateUnchecked(jsonProvider, invalidPath.getParentPath(), in, oldValue -> {
+				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, invalidPath.getIndex()));
+			}, version);
+		}
+		throw unsupported(path);
+	}
+
+	private static <JsonNode> JsonNode mutateObjectField(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, String key, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
+		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL)
+			in = jsonProvider.createObject();
+		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
+			@Var JsonNode newObject = jsonProvider.createObject();
+			Iterator<Map.Entry<String, JsonNode>> iterator = jsonProvider.fields(in);
+			while (iterator.hasNext()) {
+				Map.Entry<String, JsonNode> entry = iterator.next();
+				newObject = jsonProvider.set(newObject, entry.getKey(), entry.getValue());
+			}
+			JsonNode newValue = mutation.apply(jsonProvider.get(newObject, key));
+			return jsonProvider.set(newObject, key, newValue);
+		}
+		throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createString(key)));
+	}
+
+	private static <JsonNode> JsonNode mutateArrayIndex(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, JsonNode index, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
+		assert jsonProvider.getNodeType(index) == JsonNodeType.NUMBER;
+		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL)
+			in = jsonProvider.createArray();
+		if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
+			double indexAsDouble = jsonProvider.asDouble(index);
+			if (Double.isNaN(indexAsDouble) || Double.isInfinite(indexAsDouble))
+				throw new JsonQueryException("Cannot use " + (Double.isNaN(indexAsDouble) ? "nan" : "infinite") + " as array index");
+			int indexAsInt = (int) indexAsDouble;
+			int resolvedIndex = indexAsInt < 0 ? indexAsInt + jsonProvider.size(in) : indexAsInt;
+			if (resolvedIndex < 0)
+				throw new JsonQueryException("Out of bounds negative array index");
+
+			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.size(in) ? jsonProvider.requireGet(in, resolvedIndex) : null);
+
+			@Var JsonNode out = jsonProvider.createArray();
+			for (int i = 0; i < jsonProvider.size(in); ++i)
+				out = jsonProvider.add(out, jsonProvider.requireGet(in, i));
+			for (int i = jsonProvider.size(in); i <= resolvedIndex; ++i)
+				out = jsonProvider.add(out, jsonProvider.createNull());
+			out = jsonProvider.set(out, resolvedIndex, newValue);
+			return out;
+		}
+		throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, index));
+	}
+
+	private static <JsonNode> JsonNode mutateArrayIndex(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, int index, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
+		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL)
+			in = jsonProvider.createArray();
+		if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
+			int resolvedIndex = index < 0 ? index + jsonProvider.size(in) : index;
+			if (resolvedIndex < 0)
+				throw new JsonQueryException("Out of bounds negative array index");
+
+			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.size(in) ? jsonProvider.requireGet(in, resolvedIndex) : null);
+
+			@Var JsonNode out = jsonProvider.createArray();
+			for (int i = 0; i < jsonProvider.size(in); ++i)
+				out = jsonProvider.add(out, jsonProvider.requireGet(in, i));
+			for (int i = jsonProvider.size(in); i <= resolvedIndex; ++i)
+				out = jsonProvider.add(out, jsonProvider.createNull());
+			out = jsonProvider.set(out, resolvedIndex, newValue);
+			return out;
+		}
+		throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(index)));
+	}
+
+	private static <JsonNode> JsonNode mutateArrayRangeIndex(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, JsonNode start, JsonNode end, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
+		assert jsonProvider.getNodeType(start) == JsonNodeType.NULL || jsonProvider.getNodeType(start) == JsonNodeType.NUMBER;
+		assert jsonProvider.getNodeType(end) == JsonNodeType.NULL || jsonProvider.getNodeType(end) == JsonNodeType.NUMBER;
+		if (in == null)
+			in = jsonProvider.createNull();
+		if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
+			Range range = Range.resolve(jsonProvider, start, end, jsonProvider.size(in));
+			@Var JsonNode out = jsonProvider.createArray();
+			for (int index = 0; index < range.start; ++index)
+				out = jsonProvider.add(out, jsonProvider.requireGet(in, index));
+
+			@Var JsonNode oldValue = jsonProvider.createArray();
+			for (long index = range.start; index < range.end; ++index)
+				oldValue = jsonProvider.add(oldValue, jsonProvider.requireGet(in, (int) index));
+			JsonNode newValue = mutation.apply(oldValue);
+			if (jsonProvider.getNodeType(newValue) != JsonNodeType.ARRAY)
+				throw new JsonQueryTypeException("A slice of an array can only be assigned another array");
+			Iterator<JsonNode> iterator = jsonProvider.elements(newValue);
+			while (iterator.hasNext())
+				out = jsonProvider.add(out, iterator.next());
+			for (long index = range.end; index < jsonProvider.size(in); ++index)
+				out = jsonProvider.add(out, jsonProvider.requireGet(in, (int) index));
+			return out;
+		}
+		if (jsonProvider.getNodeType(in) == JsonNodeType.STRING)
+			throw new JsonQueryException("Cannot update field at object index of string");
+		if (jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
+			JsonNode newValue = mutation.apply(jsonProvider.createNull());
+			if (jsonProvider.getNodeType(newValue) != JsonNodeType.ARRAY)
+				throw new JsonQueryTypeException("A slice of an array can only be assigned another array");
+			return newValue;
+		}
+		@Var JsonNode subpath = jsonProvider.createObject();
+		subpath = jsonProvider.set(subpath, "start", start);
+		subpath = jsonProvider.set(subpath, "end", end);
+		throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, subpath));
+	}
+
+	private static <JsonNode> JsonNode indexOfAll(JsonProvider<JsonNode> jsonProvider, JsonNode sequence, JsonNode subsequence) {
+		JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
+		@Var JsonNode out = jsonProvider.createArray();
+		if (jsonProvider.size(subsequence) != 0) {
+			shift:
+			for (int i = 0; i < jsonProvider.size(sequence) - jsonProvider.size(subsequence) + 1; ++i) {
+				for (int j = 0; j < jsonProvider.size(subsequence); ++j)
+					if (comparator.compare(jsonProvider.requireGet(sequence, i + j), jsonProvider.requireGet(subsequence, j)) != 0)
+						continue shift;
+				out = jsonProvider.add(out, jsonProvider.createNumber(i));
+			}
+		}
+		return out;
+	}
+
+	private static JsonQueryException unsupported(Path<?> path) {
+		return new JsonQueryException("Unsupported path implementation: " + path.getClass().getName());
+	}
+}

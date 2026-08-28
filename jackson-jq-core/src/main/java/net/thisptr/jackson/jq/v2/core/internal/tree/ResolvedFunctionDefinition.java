@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Closure;
@@ -47,7 +46,6 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<StackFra
 		this.resolvedBody = resolvedBody;
 		this.ownClosureSlot = ownClosureSlot;
 		this.definerClosureSlot = definerClosureSlot;
-
 		// Capturing a variable directly off the enclosing frame (isLocalInParent) is a plain local-slot
 		// read from this node's own perspective -- subtractable by an enclosing `as $x | ...`, just like
 		// ResolvedLocalVariableAccess. Reaching one further via the enclosing frame's own closure is a
@@ -123,7 +121,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<StackFra
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		Closure[] closureHolder = new Closure[1];
 		Function factory = new Function() {
 			@Override

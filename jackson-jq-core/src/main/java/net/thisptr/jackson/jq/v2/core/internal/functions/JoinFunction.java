@@ -15,6 +15,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "join", nargs = 1)
@@ -22,7 +23,7 @@ public class JoinFunction implements Function {
 	@Override
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(args.get(0).getCardinality()).build((frame, in, ipath, output) -> {
-			args.get(0).apply(frame, in, null, (sep, opath) -> {
+			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (sep, opath) -> {
 				JsonNodeType inType = jsonProvider.getNodeType(in);
 				if (inType != JsonNodeType.ARRAY && inType != JsonNodeType.OBJECT)
 					throw new JsonQueryTypeException(jsonProvider, version, "Cannot iterate over %s", in);
@@ -58,7 +59,7 @@ public class JoinFunction implements Function {
 
 					isep = sep;
 				}
-				output.emit(jsonProvider.createString(builder.toString()), null);
+				output.emit(jsonProvider.createString(builder.toString()), UntrackedPath.getInstance());
 			});
 		});
 	}

@@ -22,6 +22,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,7 +31,6 @@ public class DebugModuleTest {
 	public void emitsScopeAndInputInformation() throws JsonQueryException {
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.build();
-
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::debug_scope");
 		List<JsonNode> results = new ArrayList<>();
 		query.apply(env.getJsonProvider().createNull(), (val, path) -> results.add(val));
@@ -123,21 +123,18 @@ public class DebugModuleTest {
 		assertThat(result.get("depends_on_input").asBoolean()).isTrue();
 		assertThat(result.get("depends_on_external_state").asBoolean()).isFalse();
 		assertThat(result.has("depends_on_variables")).isFalse();
-
 		JsonNode lhs = result.get("fields").get("lhs");
 		assertThat(lhs.get("class").asText()).endsWith(".LongLiteral");
 		assertThat(lhs.get("cardinality").asText()).isEqualTo("one");
 		assertThat(lhs.get("depends_on_input").asBoolean()).isFalse();
 		assertThat(lhs.get("depends_on_external_state").asBoolean()).isFalse();
 		assertThat(lhs.has("depends_on_variables")).isFalse();
-
 		JsonNode rhs = result.get("fields").get("rhs");
 		assertThat(rhs.get("class").asText()).endsWith(".ThisObject");
 		assertThat(rhs.get("cardinality").asText()).isEqualTo("one");
 		assertThat(rhs.get("depends_on_input").asBoolean()).isTrue();
 		assertThat(rhs.get("depends_on_external_state").asBoolean()).isFalse();
 		assertThat(rhs.has("depends_on_variables")).isFalse();
-
 		JsonNode provider = result.get("fields").get("jsonProvider");
 		assertThat(provider.get("object").asText()).startsWith(provider.get("class").asText() + "@");
 		assertThat(provider.has("value")).isTrue();
@@ -170,7 +167,6 @@ public class DebugModuleTest {
 		assertThat(argument.self).isSameAs(argument);
 		assertThat(argument.values).containsExactly(argument, "scalar-value");
 		assertThat(argument.mapping).hasSize(1);
-
 		JsonNode result = dumpExpression(argument);
 		JsonNode fields = result.get("fields");
 		String rootIdentity = result.get("object").asText();
@@ -178,7 +174,6 @@ public class DebugModuleTest {
 		assertThat(fields.get("self").get("$ref").asText()).isEqualTo(rootIdentity);
 		assertThat(fields.get("values").get("elements").get(0).get("$ref").asText()).isEqualTo(rootIdentity);
 		assertThat(fields.get("values").get("elements").get(1).asText()).isEqualTo("scalar-value");
-
 		JsonNode mapEntry = fields.get("mapping").get("entries").get(0);
 		assertThat(mapEntry.get("key").get("value").asText()).isEqualTo("map-key");
 		assertThat(mapEntry.get("value").get("$ref").asText()).isEqualTo(rootIdentity);
@@ -189,11 +184,9 @@ public class DebugModuleTest {
 		JsonNode result = dumpExpr(". as $a | def f: $a; f");
 		JsonNode components = result.get("fields").get("components");
 		assertThat(components.get("object").asText()).startsWith(components.get("class").asText() + "@");
-
 		JsonNode firstComponent = components.get("elements").get(0);
 		assertThat(firstComponent.get("class").asText()).endsWith(".AssignPipeComponent");
 		assertThat(firstComponent.get("fields").get("expr").get("class").asText()).endsWith(".ThisObject");
-
 		JsonNode secondComponent = components.get("elements").get(1);
 		assertThat(secondComponent.get("class").asText()).endsWith(".TransformPipeComponent");
 		JsonNode semicolon = secondComponent.get("fields").get("expr");
@@ -240,7 +233,7 @@ public class DebugModuleTest {
 		Expression<Object, JsonNode> castArg = (Expression<Object, JsonNode>) argument;
 		Expression<Object, JsonNode> expression = fn.bindArguments(Jackson2JsonProviderImpl.getInstance(), Arrays.asList(castArg), Versions.JQ_1_6);
 		List<JsonNode> results = new ArrayList<>();
-		expression.apply(new Object(), Jackson2JsonProviderImpl.getInstance().createNull(), null, (val, path) -> results.add(val));
+		expression.apply(new Object(), Jackson2JsonProviderImpl.getInstance().createNull(), UntrackedPath.getInstance(), (val, path) -> results.add(val));
 		assertThat(results).hasSize(1);
 		return results.get(0);
 	}
@@ -251,7 +244,7 @@ public class DebugModuleTest {
 		for (int i = 0; i < n; ++i) {
 			args.add(new Expression<Context, JsonNode>() {
 				@Override
-				public void apply(Context context, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) {
+				public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) {
 					throw new UnsupportedOperationException();
 				}
 			});
@@ -286,7 +279,7 @@ public class DebugModuleTest {
 		}
 
 		@Override
-		public void apply(Object frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) {
+		public void apply(Object frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) {
 			throw new AssertionError("The argument must not be evaluated");
 		}
 	}

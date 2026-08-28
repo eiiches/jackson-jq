@@ -43,7 +43,7 @@ public class JsonQueryException extends RuntimeException {
 	 * @param jsonProvider the JSON provider used to create the result
 	 * @return a string node holding {@link #getMessage()}, or a null node if there is no message
 	 */
-	public <JsonNode> JsonNode toJsonNode(JsonProvider<JsonNode> jsonProvider) {
+	public <JsonNode> JsonNode toJson(JsonProvider<JsonNode> jsonProvider) {
 		String message = getMessage();
 		return message == null ? jsonProvider.createNull() : jsonProvider.createString(message);
 	}

@@ -116,6 +116,7 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class Compiler {
 	private static final int MAX_PRECOMPUTED_RESULTS = 256;
@@ -143,7 +144,7 @@ public class Compiler {
 		StackFrame frame = memory.pushFrame(context.getSlotCount());
 		List<N> results = new ArrayList<>();
 		try {
-			expression.apply(frame, env.getJsonProvider().createNull(), null, (value, path) -> {
+			expression.apply(frame, env.getJsonProvider().createNull(), UntrackedPath.getInstance(), (value, path) -> {
 				if (results.size() == MAX_PRECOMPUTED_RESULTS)
 					throw new TooManyConstantResultsException();
 				results.add(value);
@@ -868,7 +869,7 @@ public class Compiler {
 		throw new IllegalStateException("Unknown matcher type: " + matcher.getClass());
 	}
 
-	public static <N> void bindAndApply(StackFrame callerFrame, StackFrame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<StackFrame, N>> fnArgs, N in, @Nullable Path<N> path, Output<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
+	public static <N> void bindAndApply(StackFrame callerFrame, StackFrame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<StackFrame, N>> fnArgs, N in, Path<N> path, Output<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
 		for (int i = 0; i < paramNames.size(); i++) {
 			String pName = paramNames.get(i);
 			int slot = paramSlots.get(i);
@@ -887,7 +888,7 @@ public class Compiler {
 		bindValueParams(callerFrame, currentFrame, paramNames, paramSlots, fnArgs, 0, in, path, output, bodyTask);
 	}
 
-	private static <N> void bindValueParams(StackFrame callerFrame, StackFrame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<StackFrame, N>> fnArgs, int index, N in, @Nullable Path<N> path, Output<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
+	private static <N> void bindValueParams(StackFrame callerFrame, StackFrame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<StackFrame, N>> fnArgs, int index, N in, Path<N> path, Output<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
 		if (index >= paramNames.size()) {
 			bodyTask.accept(currentFrame);
 			return;

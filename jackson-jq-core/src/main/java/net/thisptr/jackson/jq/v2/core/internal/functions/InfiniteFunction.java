@@ -11,6 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "infinite", nargs = 0)
@@ -19,7 +20,7 @@ public class InfiniteFunction implements Function {
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 
-			output.emit(jsonProvider.createNumber(Double.POSITIVE_INFINITY), null);
+			output.emit(jsonProvider.createNumber(Double.POSITIVE_INFINITY), UntrackedPath.getInstance());
 		});
 	}
 }

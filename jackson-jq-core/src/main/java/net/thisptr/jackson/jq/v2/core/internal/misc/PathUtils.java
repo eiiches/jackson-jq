@@ -1,21 +1,26 @@
 package net.thisptr.jackson.jq.v2.core.internal.misc;
 
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.path.ArrayIndexOfPath;
-import net.thisptr.jackson.jq.v2.core.path.ArrayIndexPath;
-import net.thisptr.jackson.jq.v2.core.path.ArrayRangeIndexPath;
-import net.thisptr.jackson.jq.v2.core.path.InvalidPath;
-import net.thisptr.jackson.jq.v2.core.path.ObjectFieldPath;
-import net.thisptr.jackson.jq.v2.core.path.RootPath;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.RootPath;
+import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class PathUtils {
+	/**
+	 * Returns whether the given path is an instance of {@link UntrackedPath} or {@link UnrepresentablePath}.
+	 *
+	 * @param path the path to check
+	 * @return {@code true} if the path is lost or not tracked, {@code false} otherwise
+	 */
+	public static boolean isLost(Path<?> path) {
+		return path instanceof UntrackedPath || path instanceof UnrepresentablePath;
+	}
+
 	private static <JsonNode> JsonNode parseArraySliceIndices(JsonProvider<JsonNode> jsonProvider, JsonNode startOrEnd) throws JsonQueryException {
 		if (startOrEnd == null)
 			return jsonProvider.createNull();
@@ -28,27 +33,23 @@ public class PathUtils {
 	}
 
 	public static <JsonNode> Path<JsonNode> toPath(JsonProvider<JsonNode> jsonProvider, JsonNode pathObj) throws JsonQueryException {
-		return toPath(jsonProvider, pathObj, null);
-	}
-
-	public static <JsonNode> Path<JsonNode> toPath(JsonProvider<JsonNode> jsonProvider, JsonNode pathObj, @Nullable Version version) throws JsonQueryException {
 		if (jsonProvider.getNodeType(pathObj) != JsonNodeType.ARRAY)
 			throw new JsonQueryException("Path must be specified as an array");
-		@Var @Nullable Path<JsonNode> path = RootPath.getInstance();
+		@Var Path<JsonNode> path = RootPath.getInstance();
 		for (JsonNode segObj : jsonProvider.iterate(pathObj)) {
 			JsonNodeType type = jsonProvider.getNodeType(segObj);
 			if (type == JsonNodeType.OBJECT) {
 				JsonNode start = parseArraySliceIndices(jsonProvider, jsonProvider.requireGet(segObj, "start"));
 				JsonNode end = parseArraySliceIndices(jsonProvider, jsonProvider.requireGet(segObj, "end"));
-				path = new ArrayRangeIndexPath<>(path, start, end, version);
+				path = path.appendIndexRange(jsonProvider, start, end);
 			} else if (type == JsonNodeType.NUMBER) {
-				path = new ArrayIndexPath<>(path, segObj, version);
+				path = path.appendIndex(jsonProvider, segObj);
 			} else if (type == JsonNodeType.STRING) {
-				path = new ObjectFieldPath<>(path, jsonProvider.asText(segObj), version);
+				path = path.appendKey(jsonProvider.asText(segObj));
 			} else if (type == JsonNodeType.ARRAY) {
-				path = new ArrayIndexOfPath<>(path, segObj, version);
+				path = path.appendIndexOf(jsonProvider, segObj);
 			} else {
-				path = new InvalidPath<>(path, segObj, version);
+				path = path.appendInvalid(segObj);
 			}
 		}
 		return path;

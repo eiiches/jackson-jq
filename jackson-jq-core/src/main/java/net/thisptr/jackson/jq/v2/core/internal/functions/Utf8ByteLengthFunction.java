@@ -16,6 +16,7 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "utf8bytelength", nargs = 0, version = @VersionRangeSpec(
@@ -28,7 +29,7 @@ public class Utf8ByteLengthFunction implements Function {
 
 			if (jsonProvider.getNodeType(in) != JsonNodeType.STRING)
 				throw new JsonQueryTypeException(jsonProvider, version, "%s only strings have UTF-8 byte length", in);
-			output.emit(jsonProvider.createNumber(UnicodeUtils.lengthUtf8(jsonProvider.asText(in))), null);
+			output.emit(jsonProvider.createNumber(UnicodeUtils.lengthUtf8(jsonProvider.asText(in))), UntrackedPath.getInstance());
 		});
 	}
 }

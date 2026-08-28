@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.ClassPathFunctionLoader;
@@ -29,7 +28,6 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class FunctionContractTest {
-
 	private static <Context> Expression<Context, JsonNode> pureExpression() {
 		return new Expression<Context, JsonNode>() {
 			@Override
@@ -43,7 +41,7 @@ public class FunctionContractTest {
 			}
 
 			@Override
-			public void apply(Context context, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) {
+			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) {
 			}
 		};
 	}
@@ -54,20 +52,16 @@ public class FunctionContractTest {
 		for (Version version : Versions.versions()) {
 			Map<FunctionSignature, Function> functions = ClassPathFunctionLoader.getInstance().getFunctions(version);
 			assertThat(functions).isNotEmpty();
-
 			for (Map.Entry<FunctionSignature, Function> entry : functions.entrySet()) {
 				FunctionSignature sig = entry.getKey();
 				Function fn = entry.getValue();
 				int arity = sig.arity() != null ? sig.arity() : 0;
-
 				// Test with pure dummy args
 				List<Expression<Object, JsonNode>> pureArgs = new ArrayList<>();
 				for (int i = 0; i < arity; i++) {
 					pureArgs.add(pureExpression());
 				}
-
 				Expression<Object, JsonNode> expr = fn.bindArguments(jsonProvider, pureArgs, version);
-
 				if (fn instanceof EmptyFunction || fn instanceof BuiltinsFunction || fn instanceof NanFunction || fn instanceof InfiniteFunction || fn instanceof RangeFunction || fn instanceof PureJsonArgumentFunction) {
 					assertThat(expr.dependsOnInput())
 							.as("%s/%d in %s (Pure) expr.dependsOnInput()", sig.name(), arity, version)
@@ -103,7 +97,6 @@ public class FunctionContractTest {
 							.as("%s/%d in %s expr.dependsOnExternalState()", sig.name(), arity, version)
 							.isFalse();
 				}
-
 				// If the function takes arguments, test propagating dependsOnInput and dependsOnExternalState from args
 				if (arity > 0) {
 					// Test arg with dependsOnInput=true
@@ -121,7 +114,7 @@ public class FunctionContractTest {
 							}
 
 							@Override
-							public void apply(Object frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) {
+							public void apply(Object frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) {
 							}
 						});
 					}
@@ -129,7 +122,6 @@ public class FunctionContractTest {
 					assertThat(inputExpr.dependsOnInput())
 							.as("%s/%d with input-dependent args in %s expr.dependsOnInput()", sig.name(), arity, version)
 							.isTrue();
-
 					// Test arg with dependsOnExternalState=true
 					List<Expression<Object, JsonNode>> externalStateArgs = new ArrayList<>();
 					for (int i = 0; i < arity; i++) {
@@ -145,7 +137,7 @@ public class FunctionContractTest {
 							}
 
 							@Override
-							public void apply(Object frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) {
+							public void apply(Object frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) {
 							}
 						});
 					}

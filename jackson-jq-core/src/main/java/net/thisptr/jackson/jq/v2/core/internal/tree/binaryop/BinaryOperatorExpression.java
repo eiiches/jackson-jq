@@ -95,7 +95,7 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<S
 
 			@Override
 			public <JsonNode> Expression<StackFrame, JsonNode> create(Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider, boolean inputFixed) {
-				return new Assignment<>(jsonProvider, lhs, rhs, inputFixed);
+				return new Assignment<>(jsonProvider, lhs, rhs, version, inputFixed);
 			}
 		},
 		UDPATE("|=", 6, Associativity.RIGHT) {
@@ -117,7 +117,7 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<S
 
 			@Override
 			public <JsonNode> Expression<StackFrame, JsonNode> create(Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider, boolean inputFixed) {
-				return new ComplexAlternativeAssignment<>(jsonProvider, lhs, rhs, inputFixed);
+				return new ComplexAlternativeAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
 			}
 		},
 		PLUS_EQUAL("+=", 6, Associativity.RIGHT) {
@@ -128,7 +128,7 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<S
 
 			@Override
 			public <JsonNode> Expression<StackFrame, JsonNode> create(Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider, boolean inputFixed) {
-				return new ComplexPlusAssignment<>(jsonProvider, lhs, rhs, inputFixed);
+				return new ComplexPlusAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
 			}
 		},
 		MINUS_EQUAL("-=", 6, Associativity.RIGHT) {
@@ -139,7 +139,7 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<S
 
 			@Override
 			public <JsonNode> Expression<StackFrame, JsonNode> create(Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider, boolean inputFixed) {
-				return new ComplexMinusAssignment<>(jsonProvider, lhs, rhs, inputFixed);
+				return new ComplexMinusAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
 			}
 		},
 		TIMES_EQUAL("*=", 6, Associativity.RIGHT) {
@@ -150,7 +150,7 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<S
 
 			@Override
 			public <JsonNode> Expression<StackFrame, JsonNode> create(Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider, boolean inputFixed) {
-				return new ComplexMultiplyAssignment<>(jsonProvider, lhs, rhs, inputFixed);
+				return new ComplexMultiplyAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
 			}
 		},
 		DIVIDE_EQUAL("/=", 6, Associativity.RIGHT) {
@@ -161,7 +161,7 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<S
 
 			@Override
 			public <JsonNode> Expression<StackFrame, JsonNode> create(Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider, boolean inputFixed) {
-				return new ComplexDivideAssignment<>(jsonProvider, lhs, rhs, inputFixed);
+				return new ComplexDivideAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
 			}
 		},
 		MODULO_EQUAL("%=", 6, Associativity.RIGHT) {
@@ -172,7 +172,7 @@ public abstract class BinaryOperatorExpression<JsonNode> implements Expression<S
 
 			@Override
 			public <JsonNode> Expression<StackFrame, JsonNode> create(Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, JsonProvider<JsonNode> jsonProvider, boolean inputFixed) {
-				return new ComplexModuloAssignment<>(jsonProvider, lhs, rhs, inputFixed);
+				return new ComplexModuloAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
 			}
 		},
 		DEFAULT("//", 5, Associativity.LEFT) {

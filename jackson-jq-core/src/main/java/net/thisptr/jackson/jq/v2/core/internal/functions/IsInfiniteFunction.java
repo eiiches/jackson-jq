@@ -12,6 +12,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "isinfinite", nargs = 0)
@@ -21,7 +22,7 @@ public class IsInfiniteFunction implements Function {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 
 			boolean result = jsonProvider.getNodeType(in) == JsonNodeType.NUMBER && Double.isInfinite(jsonProvider.asDouble(in));
-			output.emit(jsonProvider.createBoolean(result), null);
+			output.emit(jsonProvider.createBoolean(result), UntrackedPath.getInstance());
 		});
 	}
 }

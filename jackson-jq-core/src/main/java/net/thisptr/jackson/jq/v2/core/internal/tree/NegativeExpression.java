@@ -15,6 +15,7 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class NegativeExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
@@ -61,11 +62,11 @@ public class NegativeExpression<JsonNode> implements Expression<StackFrame, Json
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
-		value.apply(frame, in, null, (v, opath) -> {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+		value.apply(frame, in, UntrackedPath.getInstance(), (v, opath) -> {
 			if (jsonProvider.getNodeType(v) != JsonNodeType.NUMBER)
 				throw new JsonQueryTypeException(jsonProvider, version, "%s cannot be negated", v);
-			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, -jsonProvider.asDouble(v)), null);
+			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, -jsonProvider.asDouble(v)), UntrackedPath.getInstance());
 		});
 	}
 

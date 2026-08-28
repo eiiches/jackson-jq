@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
@@ -37,7 +36,7 @@ public class RegexFunctionContractTest {
 			}
 
 			@Override
-			public void apply(Context context, T in, @Nullable Path<T> ipath, Output<T> output) {
+			public void apply(Context context, T in, Path<T> ipath, Output<T> output) {
 			}
 		};
 	}
@@ -45,7 +44,6 @@ public class RegexFunctionContractTest {
 	@Test
 	public void testMatchImplFunctionContract() {
 		_MatchImplFunction fn = new _MatchImplFunction();
-
 		Expression<Object, JsonNode> expr = fn.bindArguments(Jackson2JsonProviderImpl.getInstance(), Arrays.asList(pureExpression(), pureExpression(), pureExpression()), Versions.JQ_1_6);
 		assertThat(expr.dependsOnInput()).isTrue();
 		assertThat(expr.dependsOnExternalState()).isFalse();
@@ -54,7 +52,6 @@ public class RegexFunctionContractTest {
 	@Test
 	public void testSubImplFunctionContract() {
 		_SubImplFunction fn = new _SubImplFunction();
-
 		Expression<Object, JsonNode> expr = fn.bindArguments(Jackson2JsonProviderImpl.getInstance(), Arrays.asList(pureExpression(), pureExpression(), pureExpression()), Versions.JQ_1_6);
 		assertThat(expr.dependsOnInput()).isTrue();
 		assertThat(expr.dependsOnExternalState()).isFalse();
@@ -64,17 +61,14 @@ public class RegexFunctionContractTest {
 	public void valueParameterSpecializationPreservesMultipleArgumentOutputs() {
 		Environment<JsonNode> environment = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7).build();
 		JsonQuery<JsonNode> query = environment.compile("splits((\"a\", \"b\"))");
-
 		List<JsonNode> output = new ArrayList<>();
 		query.apply(JSON_PROVIDER.createString("aba"), (value, path) -> output.add(value));
-
 		assertThat(output).extracting(JSON_PROVIDER::asText).containsExactly("", "b", "", "a", "a");
 	}
 
 	@Test
 	public void invalidConstantRegexFailsAtCompileTime() {
 		Environment<JsonNode> environment = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7).build();
-
 		assertThatThrownBy(() -> environment.compile("test(\"[\"; \"\")"))
 				.isInstanceOf(RuntimeException.class);
 	}

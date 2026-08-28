@@ -14,6 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "fromjson", nargs = 0)
@@ -33,7 +34,7 @@ public class FromJsonFunction implements Function {
 			} catch (Exception e) {
 				throw new JsonQueryException(String.format("failed to parse %s as json", jsonProvider.toString(in)));
 			}
-			output.emit(tree, null);
+			output.emit(tree, UntrackedPath.getInstance());
 		});
 	}
 }

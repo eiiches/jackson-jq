@@ -24,6 +24,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class Usage {
 	/**
@@ -42,8 +43,8 @@ public class Usage {
 					@Override
 					public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version jqVersion) {
 						return (frame, in, path, output) -> {
-							args.get(0).apply(frame, in, null, (time, opath) -> {
-								output.emit(jsonProvider.createString(Strings.repeat(jsonProvider.asText(in), jsonProvider.asInt(time))), null);
+							args.get(0).apply(frame, in, UntrackedPath.getInstance(), (time, opath) -> {
+								output.emit(jsonProvider.createString(Strings.repeat(jsonProvider.asText(in), jsonProvider.asInt(time))), UntrackedPath.getInstance());
 							});
 						};
 					}

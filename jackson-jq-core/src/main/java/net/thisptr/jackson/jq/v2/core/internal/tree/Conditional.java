@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
@@ -17,6 +16,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class Conditional<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
@@ -95,11 +95,11 @@ public class Conditional<JsonNode> implements Expression<StackFrame, JsonNode>, 
 	}
 
 	@Override
-	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		applyBranch(frame, in, path, output, 0);
 	}
 
-	private void applyBranch(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> path, Output<JsonNode> output, int switchIndex) throws JsonQueryException {
+	private void applyBranch(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output, int switchIndex) throws JsonQueryException {
 		if (switchIndex >= switches.size()) {
 			if (otherwise != null) {
 				otherwise.apply(frame, in, path, output);
@@ -108,8 +108,7 @@ public class Conditional<JsonNode> implements Expression<StackFrame, JsonNode>, 
 		}
 		Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>> sw = switches.get(switchIndex);
 		List<JsonNode> condValues = new ArrayList<>();
-		sw._1.apply(frame, in, null, (r, opath) -> condValues.add(r));
-
+		sw._1.apply(frame, in, UntrackedPath.getInstance(), (r, opath) -> condValues.add(r));
 		for (JsonNode r : condValues) {
 			if (JsonNodeUtils.asBoolean(jsonProvider, r)) {
 				sw._2.apply(frame, in, path, output);

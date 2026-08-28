@@ -19,6 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -241,7 +242,7 @@ public class JsonQueryBindingsTest {
 		return new Function() {
 			@Override
 			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version version) {
-				return (frame, in, path, output) -> output.emit(jsonProvider.createString(value), null);
+				return (frame, in, path, output) -> output.emit(jsonProvider.createString(value), UntrackedPath.getInstance());
 			}
 		};
 	}

@@ -14,6 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public abstract class AbstractXsvFilter implements Function {
 
@@ -51,7 +52,7 @@ public abstract class AbstractXsvFilter implements Function {
 				heading = false;
 			}
 
-			output.emit(jsonProvider.createString(row.toString()), null);
+			output.emit(jsonProvider.createString(row.toString()), UntrackedPath.getInstance());
 		});
 	}
 }

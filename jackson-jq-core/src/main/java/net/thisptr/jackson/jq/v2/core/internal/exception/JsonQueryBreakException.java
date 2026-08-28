@@ -16,7 +16,7 @@ public class JsonQueryBreakException extends JsonQueryException {
 	}
 
 	@Override
-	public <JsonNode> JsonNode toJsonNode(JsonProvider<JsonNode> jsonProvider) {
+	public <JsonNode> JsonNode toJson(JsonProvider<JsonNode> jsonProvider) {
 		@Var JsonNode object = jsonProvider.createObject();
 		object = jsonProvider.set(object, "__jq", jsonProvider.createNumber(0));
 		return object;
