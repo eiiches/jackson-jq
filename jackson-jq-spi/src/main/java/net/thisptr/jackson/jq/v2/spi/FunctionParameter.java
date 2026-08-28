@@ -16,7 +16,9 @@ import org.jspecify.annotations.Nullable;
 public final class FunctionParameter {
 	private static final Pattern PARAMETER_NAME_PATTERN = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
 
-	/** Distinguishes a filter parameter from a value ({@code $}-prefixed) parameter. */
+	/**
+	 * Distinguishes a filter parameter from a value ({@code $}-prefixed) parameter.
+	 */
 	public enum Kind {
 		/**
 		 * A filter parameter, bound to the caller's raw, unevaluated argument expression

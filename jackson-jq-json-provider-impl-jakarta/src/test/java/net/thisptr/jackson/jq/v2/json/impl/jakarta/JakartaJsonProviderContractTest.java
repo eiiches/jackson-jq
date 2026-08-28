@@ -5,7 +5,9 @@ import jakarta.json.JsonValue;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.JsonProviderContractTest;
 
-/** Contract tests for {@link JakartaJsonProviderImpl}. */
+/**
+ * Contract tests for {@link JakartaJsonProviderImpl}.
+ */
 public class JakartaJsonProviderContractTest extends JsonProviderContractTest<JsonValue> {
 
 	@Override

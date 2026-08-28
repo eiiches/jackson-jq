@@ -56,7 +56,7 @@ public final class FunctionSignature {
 	 * @param arity the number of arguments (must be non-negative)
 	 * @return the signature
 	 * @throws IllegalArgumentException if {@code name} is not a valid jq function name, or
-	 *                                   {@code arity} is negative
+	 * {@code arity} is negative
 	 */
 	public static FunctionSignature of(String name, int arity) {
 		return new FunctionSignature(name, arity);

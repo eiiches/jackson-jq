@@ -24,7 +24,9 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
-/** A jackson-jq JSON provider backed by the Jakarta JSON Processing tree model. */
+/**
+ * A jackson-jq JSON provider backed by the Jakarta JSON Processing tree model.
+ */
 public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	private final jakarta.json.spi.JsonProvider delegate;
 

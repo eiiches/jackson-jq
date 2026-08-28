@@ -27,7 +27,7 @@ public final class JqFunction {
 	 * @param body the jq source of the function body
 	 * @param version the jq versions this definition applies to, or {@code null} for all versions
 	 * @throws IllegalArgumentException if {@code name} is not a valid jq function name (see
-	 *                                   {@link FunctionSignature#of})
+	 * {@link FunctionSignature#of})
 	 */
 	JqFunction(String name, List<FunctionParameter> parameters, String body, @Nullable VersionRange version) {
 		Objects.requireNonNull(parameters, "parameters");
@@ -47,7 +47,7 @@ public final class JqFunction {
 	 * @param body the jq source of the function body
 	 * @return the function definition
 	 * @throws IllegalArgumentException if {@code name} is not a valid jq function name (see
-	 *                                   {@link FunctionSignature#of})
+	 * {@link FunctionSignature#of})
 	 */
 	public static JqFunction of(String name, List<FunctionParameter> parameters, String body) {
 		return new JqFunction(name, parameters, body, null);
@@ -62,7 +62,7 @@ public final class JqFunction {
 	 * @param version the jq versions this definition applies to, or {@code null} for all versions
 	 * @return the function definition
 	 * @throws IllegalArgumentException if {@code name} is not a valid jq function name (see
-	 *                                   {@link FunctionSignature#of})
+	 * {@link FunctionSignature#of})
 	 */
 	public static JqFunction of(String name, List<FunctionParameter> parameters, String body, @Nullable VersionRange version) {
 		return new JqFunction(name, parameters, body, version);

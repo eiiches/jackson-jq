@@ -34,7 +34,7 @@ public final class VersionRange {
 	 * @param maxVersion the upper bound, or {@code null} if unbounded
 	 * @param maxInclusive whether {@code maxVersion} itself is included in the range
 	 * @throws IllegalArgumentException if {@code minVersion} is greater than {@code maxVersion}, or
-	 *                                   they are equal but not both inclusive
+	 * they are equal but not both inclusive
 	 */
 	VersionRange(@Nullable Version minVersion, boolean minInclusive,
 				 @Nullable Version maxVersion, boolean maxInclusive) {
@@ -62,7 +62,7 @@ public final class VersionRange {
 	 * @param maxInclusive whether {@code maxVersion} itself is included in the range
 	 * @return the version range
 	 * @throws IllegalArgumentException if {@code minVersion} is greater than {@code maxVersion}, or
-	 *                                   they are equal but not both inclusive
+	 * they are equal but not both inclusive
 	 */
 	public static VersionRange of(@Nullable Version minVersion, boolean minInclusive,
 								  @Nullable Version maxVersion, boolean maxInclusive) {
@@ -177,7 +177,7 @@ public final class VersionRange {
 	 * @param spec the annotation form to convert
 	 * @return the equivalent version range
 	 * @throws IllegalArgumentException if {@code spec} has a negative component that isn't the
-	 *                                   {@code -1, -1, -1} sentinel
+	 * {@code -1, -1, -1} sentinel
 	 */
 	public static VersionRange from(VersionRangeSpec spec) {
 		return new VersionRange(isUnbounded(spec.min()) ? null : Version.from(spec.min()), spec.minInclusive(),

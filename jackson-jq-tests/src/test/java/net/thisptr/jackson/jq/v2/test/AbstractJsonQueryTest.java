@@ -60,7 +60,7 @@ public abstract class AbstractJsonQueryTest<T> {
 	 * Create a comparator for comparing output nodes.
 	 *
 	 * @param strictFieldOrder Whether to enforce strict field ordering in objects
-	 * @param numericalErrors  Allowed numerical error tolerance
+	 * @param numericalErrors Allowed numerical error tolerance
 	 * @return A comparator for the provider's node type
 	 */
 	protected abstract Comparator<T> createComparator(boolean strictFieldOrder, double numericalErrors);

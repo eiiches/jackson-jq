@@ -26,7 +26,9 @@ public interface FreeVariables {
 		return !slotsOf(expr).isEmpty() || opaqueIn(expr);
 	}
 
-	/** Local slots (within the current function/root frame) read as free variables here. */
+	/**
+	 * Local slots (within the current function/root frame) read as free variables here.
+	 */
 	Set<Integer> freeLocalSlots();
 
 	/**

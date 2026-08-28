@@ -11,7 +11,9 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-/** Restores the enclosing query's fixed-input dependency view after compiling a call locally. */
+/**
+ * Restores the enclosing query's fixed-input dependency view after compiling a call locally.
+ */
 public final class FixedInputExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final Expression<StackFrame, JsonNode> delegate;
 

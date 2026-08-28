@@ -15,7 +15,9 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-/** A bounded, compiler-materialized constant expression. */
+/**
+ * A bounded, compiler-materialized constant expression.
+ */
 public final class PrecomputedConstantExpression<JsonNode> implements ConstantExpression<StackFrame, JsonNode>, FreeVariables {
 	private final Expression<StackFrame, JsonNode> delegate;
 	private final List<JsonNode> results;

@@ -15,7 +15,9 @@ import net.thisptr.jackson.jq.v2.json.impl.jakarta.JakartaJsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.test.AbstractJsonQueryTest;
 
-/** Runs the standard jq test suite with Jakarta JSON Processing. */
+/**
+ * Runs the standard jq test suite with Jakarta JSON Processing.
+ */
 public class JakartaJsonQueryTest extends AbstractJsonQueryTest<JsonValue> {
 
 	@Override

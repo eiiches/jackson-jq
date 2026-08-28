@@ -72,7 +72,7 @@ public interface JsonProvider<JsonNode> {
 	 * @param node the JSON node
 	 * @return the long value
 	 * @throws IllegalArgumentException if the value is NaN, Infinity, or cannot be
-	 *                                  represented as a long
+	 * represented as a long
 	 */
 	long asLong(JsonNode node);
 
@@ -85,7 +85,7 @@ public interface JsonProvider<JsonNode> {
 	 * @param node the JSON node
 	 * @return the int value
 	 * @throws IllegalArgumentException if the value is NaN, Infinity, or outside
-	 *                                  the range of int
+	 * the range of int
 	 */
 	int asInt(JsonNode node);
 

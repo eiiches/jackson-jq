@@ -101,7 +101,9 @@ if [ ! -f "$formatter_jar" ] || [ "$(checksum "$formatter_jar")" != "$FORMATTER_
 fi
 
 mkdir -p "$launcher_dir"
-javac -d "$launcher_dir" "${script_dir}/IdeaFormatLauncher.java"
+javac -d "$launcher_dir" -cp "$formatter_jar" \
+	"${script_dir}/IdeaFormatLauncher.java" \
+	"${script_dir}/idea-format-stubs/com/intellij/ide/todo/TodoConfiguration.java"
 
 exec java \
 	--add-opens java.base/java.lang=ALL-UNNAMED \

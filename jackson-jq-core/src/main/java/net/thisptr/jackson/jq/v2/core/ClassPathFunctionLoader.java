@@ -12,7 +12,9 @@ import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.VersionRange;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 
-/** Loads Java functions and raw jq function definitions through {@link ServiceLoader}. */
+/**
+ * Loads Java functions and raw jq function definitions through {@link ServiceLoader}.
+ */
 public class ClassPathFunctionLoader implements FunctionLoader {
 	private static final ClassPathFunctionLoader INSTANCE = new ClassPathFunctionLoader(ClassPathFunctionLoader.class.getClassLoader());
 
@@ -51,7 +53,9 @@ public class ClassPathFunctionLoader implements FunctionLoader {
 		return result;
 	}
 
-	/** A negative {@link FunctionRegistration#nargs()} registers a variadic function, matching {@link FunctionSignature}'s null-arity convention. */
+	/**
+	 * A negative {@link FunctionRegistration#nargs()} registers a variadic function, matching {@link FunctionSignature}'s null-arity convention.
+	 */
 	static FunctionSignature signatureOf(FunctionRegistration reg) {
 		return reg.nargs() < 0 ? FunctionSignature.ofVariadic(reg.name()) : FunctionSignature.of(reg.name(), reg.nargs());
 	}

@@ -261,9 +261,9 @@ public class CompileContext {
 	 * Must be paired with {@link #popScope()}.
 	 *
 	 * @return the absolute frame slot this scope's first local (its first param, by convention) will be
-	 *         assigned -- the caller needs this to translate this scope's own 0-based param index into an
-	 *         absolute slot number, since (unlike {@link #pushFunctionScope()}) slot numbering here does
-	 *         not start at 0.
+	 * assigned -- the caller needs this to translate this scope's own 0-based param index into an
+	 * absolute slot number, since (unlike {@link #pushFunctionScope()}) slot numbering here does
+	 * not start at 0.
 	 */
 	public int pushInlinedFunctionScope() {
 		int currentSlot = scopes.isEmpty() ? 0 : scopes.get(scopes.size() - 1).nextSlot;

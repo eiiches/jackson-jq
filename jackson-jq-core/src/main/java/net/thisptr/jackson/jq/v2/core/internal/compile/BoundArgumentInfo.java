@@ -7,7 +7,9 @@ import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 
-/** Compile-time dependency facts and delegate for a bound jq-library parameter. */
+/**
+ * Compile-time dependency facts and delegate for a bound jq-library parameter.
+ */
 public final class BoundArgumentInfo {
 	private final Expression<?, ?> expression;
 	private final boolean dependsOnInput;

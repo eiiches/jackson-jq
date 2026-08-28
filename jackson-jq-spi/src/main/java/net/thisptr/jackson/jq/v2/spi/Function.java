@@ -33,11 +33,11 @@ public interface Function {
 	 * read from it later (for example from within the returned {@code Expression}) without defensively
 	 * copying it; attempting to mutate it throws {@link UnsupportedOperationException}.
 	 *
-	 * @param <JsonNode>   the JSON node type
-	 * @param <Context>    an opaque object representing execution state that has to be passed on when evaluating function arguments
+	 * @param <JsonNode> the JSON node type
+	 * @param <Context> an opaque object representing execution state that has to be passed on when evaluating function arguments
 	 * @param jsonProvider the JSON provider
-	 * @param args         the argument expressions to bind
-	 * @param jqVersion    the jq compatibility version
+	 * @param args the argument expressions to bind
+	 * @param jqVersion the jq compatibility version
 	 * @return the bound expression
 	 */
 	<Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version jqVersion) throws JsonQueryException;
