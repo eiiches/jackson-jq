@@ -33,6 +33,7 @@ If you use Maven, add `jackson-jq-core` and the appropriate JSON provider to the
 	<version>2.0.0-alpha1</version>
 </dependency>
 <dependency>
+    <!-- Requires Java 17. -->
 	<groupId>net.thisptr.jackson.jq.v2</groupId>
 	<artifactId>jackson-jq-json-provider-impl-jackson3</artifactId>
 	<version>2.0.0-alpha1</version>
@@ -42,7 +43,14 @@ If you use Maven, add `jackson-jq-core` and the appropriate JSON provider to the
 	<artifactId>jackson-jq-json-provider-impl-gson</artifactId>
 	<version>2.0.0-alpha1</version>
 </dependency>
+<dependency>
+    <!-- Requires Java 11 and JSON-P 2.1 implementation such as `org.eclipse.parsson:parsson`. -->
+	<groupId>net.thisptr.jackson.jq.v2</groupId>
+	<artifactId>jackson-jq-json-provider-impl-jakarta</artifactId>
+	<version>2.0.0-alpha1</version>
+</dependency>
 ```
+
 
 See [jackson-jq-core/src/test/java/examples/Usage.java](jackson-jq-core/src/test/java/examples/Usage.java) for an example of using the API.
 

@@ -36,6 +36,7 @@
 		<module>jackson-jq-json-provider-impl-jackson2</module>
 		<module>jackson-jq-json-provider-impl-jackson3</module>
 		<module>jackson-jq-json-provider-impl-gson</module>
+		<module>jackson-jq-json-provider-impl-jakarta</module>
 		<module>jackson-jq-spi</module>
 		<module>jackson-jq-core</module>
 		<module>jackson-jq-regex-impl-joni</module>
@@ -43,6 +44,7 @@
 		<module>jackson-jq-tests-jackson2</module>
 		<module>jackson-jq-tests-jackson3</module>
 		<module>jackson-jq-tests-gson</module>
+		<module>jackson-jq-tests-jakarta</module>
 		<module>jackson-jq-ext-module-uuid</module>
 		<module>jackson-jq-ext-module-time</module>
 		<module>jackson-jq-ext-module-uri</module>
@@ -63,6 +65,8 @@
 		<org.slf4j-version>2.0.18</org.slf4j-version>
 		<com.google.auto.service-version>1.1.1</com.google.auto.service-version>
 		<com.google.errorprone-version>2.50.0</com.google.errorprone-version>
+		<jakarta.json-api-version>2.1.3</jakarta.json-api-version>
+		<org.eclipse.parsson-version>1.1.9</org.eclipse.parsson-version>
 		<com.uber.nullaway-version>0.13.8</com.uber.nullaway-version>
 		<org.jspecify-version>1.0.0</org.jspecify-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -95,6 +99,16 @@
 				<groupId>com.google.code.gson</groupId>
 				<artifactId>gson</artifactId>
 				<version>2.11.0</version>
+			</dependency>
+			<dependency>
+				<groupId>jakarta.json</groupId>
+				<artifactId>jakarta.json-api</artifactId>
+				<version>${jakarta.json-api-version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.eclipse.parsson</groupId>
+				<artifactId>parsson</artifactId>
+				<version>${org.eclipse.parsson-version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.assertj</groupId>
