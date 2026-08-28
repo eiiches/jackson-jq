@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.v2.cli;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -31,13 +30,16 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
-import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
+import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.JsonQueryJacksonModule;
+import net.thisptr.jackson.jq.v2.json.impl.jakarta.JakartaJsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -48,7 +50,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class Main {
-	private static ObjectMapper MAPPER = JsonMapper.builder()
+	private static final ObjectMapper MAPPER = JsonMapper.builder()
 			.addModule(JsonQueryJacksonModule.getInstance())
 			.build();
 
@@ -73,17 +75,24 @@ public class Main {
 			.numberOfArgs(1)
 			.get();
 
+	private static final Option OPT_JSON_PROVIDER = Option.builder()
+			.longOpt("json-provider")
+			.desc("JSON provider: jackson2, jackson3, gson, or jakarta (default: jackson3)")
+			.numberOfArgs(1)
+			.get();
+
 	private static final Option OPT_HELP = Option.builder("h")
 			.longOpt("help")
 			.desc("print this message")
 			.get();
 
-	public static void main(String[] args) throws IOException, ParseException {
+	public static void main(String[] args) throws Exception {
 		Options options = new Options();
 		options.addOption(OPT_COMPACT);
 		options.addOption(OPT_RAW_OUTPUT);
 		options.addOption(OPT_NULL_INPUT);
 		options.addOption(OPT_VERSION);
+		options.addOption(OPT_JSON_PROVIDER);
 		options.addOption(OPT_HELP);
 
 		CommandLine command;
@@ -113,12 +122,42 @@ public class Main {
 			System.exit(0);
 		}
 
-		Jackson3JsonProviderImpl jsonProvider = Jackson3JsonProviderImpl.getInstance();
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, version)
+		String providerName = command.hasOption(OPT_JSON_PROVIDER.getLongOpt())
+				? command.getOptionValue(OPT_JSON_PROVIDER.getLongOpt())
+				: "jackson3";
+		JsonProvider<?> jsonProvider;
+		try {
+			jsonProvider = resolveProvider(providerName);
+		} catch (IllegalArgumentException e) {
+			System.err.println(e.getMessage());
+			System.exit(1);
+			throw e;
+		}
+
+		run(command, rest.get(0), version, jsonProvider);
+	}
+
+	static JsonProvider<?> resolveProvider(String name) {
+		switch (name) {
+			case "jackson2":
+				return Jackson2JsonProviderImpl.getInstance();
+			case "jackson3":
+				return Jackson3JsonProviderImpl.getInstance();
+			case "gson":
+				return GsonJsonProviderImpl.getInstance();
+			case "jakarta":
+				return JakartaJsonProviderImpl.getInstance();
+			default:
+				throw new IllegalArgumentException("unknown --json-provider: " + name + " (expected one of: jackson2, jackson3, gson, jakarta)");
+		}
+	}
+
+	private static <N> void run(CommandLine command, String query, Version version, JsonProvider<N> jsonProvider) throws Exception {
+		Environment<N> env = new EnvironmentBuilder<>(jsonProvider, version)
 				.defineFunction(FunctionSignature.of("env", 0), new Function() {
 					@Override
-					public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProv, List<Expression<Context, N>> fnArgs, Version ver) {
-						return new Expression<Context, N>() {
+					public <Context, N2> Expression<Context, N2> bindArguments(JsonProvider<N2> jsonProv, List<Expression<Context, N2>> fnArgs, Version ver) {
+						return new Expression<Context, N2>() {
 							@Override
 							public Cardinality getCardinality() {
 								return Cardinality.ONE;
@@ -135,8 +174,8 @@ public class Main {
 							}
 
 							@Override
-							public void apply(Context context, N in, @Nullable Path<N> ipath, Output<N> output) throws JsonQueryException {
-								Map<String, N> envValues = new HashMap<>();
+							public void apply(Context context, N2 in, @Nullable Path<N2> ipath, Output<N2> output) throws JsonQueryException {
+								Map<String, N2> envValues = new HashMap<>();
 								for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
 									envValues.put(entry.getKey(), jsonProv.createString(entry.getValue()));
 								}
@@ -145,19 +184,18 @@ public class Main {
 						};
 					}
 				})
-				.setModuleLoader(new ChainedModuleLoader<>(new ModuleLoader[] {
+				.setModuleLoader(new ChainedModuleLoader<N>(
 						ClassPathModuleLoader.getInstance(),
-						new FileSystemModuleLoader<>(jsonProvider, version, FileSystems.getDefault().getPath("").toAbsolutePath()),
-				}))
+						new FileSystemModuleLoader<>(jsonProvider, version, FileSystems.getDefault().getPath("").toAbsolutePath())))
 				.build();
 
-		JsonQuery<JsonNode> jq = env.compile(rest.get(0));
+		JsonQuery<N> jq = env.compile(query);
 
-		if (!command.hasOption(OPT_COMPACT.getOpt())) {
-			MAPPER = MAPPER.rebuild()
-					.enable(SerializationFeature.INDENT_OUTPUT)
-					.build();
-		}
+		ObjectMapper outputMapper = command.hasOption(OPT_COMPACT.getOpt())
+				? MAPPER
+				: MAPPER.rebuild()
+				.enable(SerializationFeature.INDENT_OUTPUT)
+				.build();
 
 		@Var InputStream is = System.in;
 		if (command.hasOption(OPT_NULL_INPUT.getOpt())) {
@@ -167,13 +205,19 @@ public class Main {
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 			 MappingIterator<JsonNode> iter = MAPPER.readerFor(JsonNode.class).readValues(reader)) {
 			while (iter.hasNext()) {
-				JsonNode tree = iter.next();
+				N tree = jsonProvider.fromString(MAPPER.writeValueAsString(iter.next()));
 				try {
 					jq.apply(tree, (out, path) -> {
-						if (out.isString() && command.hasOption(OPT_RAW_OUTPUT.getOpt())) {
-							System.out.println(out.asString());
+						if (jsonProvider.getNodeType(out) == JsonNodeType.STRING && command.hasOption(OPT_RAW_OUTPUT.getOpt())) {
+							System.out.println(jsonProvider.asText(out));
 						} else {
-							System.out.println(MAPPER.writeValueAsString(out));
+							String json = jsonProvider.toString(out);
+							if (command.hasOption(OPT_COMPACT.getOpt())) {
+								System.out.println(json);
+							} else {
+								JsonNode outputTree = MAPPER.readTree(json);
+								System.out.println(outputMapper.writeValueAsString(outputTree));
+							}
 						}
 					});
 				} catch (JsonQueryException e) {

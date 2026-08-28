@@ -68,6 +68,8 @@ $ java -jar jackson-jq-cli-2.0.0-alpha1.jar --help
 usage: jackson-jq [OPTIONS...] QUERY
  -c,--compact      compact instead of pretty-printed output
  -h,--help         print this message
+    --json-provider <arg>
+                     JSON provider: jackson2, jackson3, gson, or jakarta (default: jackson3)
     --jq <arg>     specify jq version
  -n,--null-input   use `null` as the single input value
  -r,--raw          output raw strings, not JSON texts

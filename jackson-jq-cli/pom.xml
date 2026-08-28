@@ -49,8 +49,27 @@
 		</dependency>
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-json-provider-impl-jackson2</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
 			<artifactId>jackson-jq-json-provider-impl-jackson3</artifactId>
 			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-json-provider-impl-gson</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-json-provider-impl-jakarta</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.parsson</groupId>
+			<artifactId>parsson</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>
