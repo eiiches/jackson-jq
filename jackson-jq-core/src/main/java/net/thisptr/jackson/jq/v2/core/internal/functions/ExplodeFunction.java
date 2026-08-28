@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.functions;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
@@ -23,10 +24,10 @@ public class ExplodeFunction implements Function {
 
 			Preconditions.checkInputType(jsonProvider, "explode", in, JsonNodeType.STRING);
 
-			JsonNode result = jsonProvider.createArray();
+			List<JsonNode> result = new ArrayList<>();
 			for (int ch : jsonProvider.asText(in).codePoints().toArray())
-				jsonProvider.add(result, jsonProvider.createNumber(ch));
-			output.emit(result, null);
+				result.add(jsonProvider.createNumber(ch));
+			output.emit(jsonProvider.createArray(result), null);
 		});
 	}
 }

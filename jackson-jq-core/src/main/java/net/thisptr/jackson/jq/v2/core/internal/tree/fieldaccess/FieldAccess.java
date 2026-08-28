@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
@@ -136,9 +137,9 @@ public abstract class FieldAccess<JsonNode> implements Expression<StackFrame, Js
 		assert startType == JsonNodeType.NULL || startType == JsonNodeType.NUMBER;
 		assert endType == JsonNodeType.NULL || endType == JsonNodeType.NUMBER;
 		if (tracking && UnrepresentablePath.isLost(ppath)) {
-			JsonNode subpath = jsonProvider.createObject();
-			jsonProvider.set(subpath, "start", start);
-			jsonProvider.set(subpath, "end", end);
+			@Var JsonNode subpath = jsonProvider.createObject();
+			subpath = jsonProvider.set(subpath, "start", start);
+			subpath = jsonProvider.set(subpath, "end", end);
 			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", ExceptionMessages.truncate(JsonNodeUtils.toString(jsonProvider, subpath), version), JsonNodeUtils.toString(jsonProvider, pobj)));
 		}
 		ArrayRangeIndexPath.resolve(jsonProvider, pobj, ppath, output, start, end, permissive, version);

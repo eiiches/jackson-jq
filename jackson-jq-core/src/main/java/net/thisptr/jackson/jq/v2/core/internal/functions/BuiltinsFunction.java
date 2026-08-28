@@ -36,10 +36,10 @@ public class BuiltinsFunction implements Function {
 		Collections.sort(builtins);
 
 		return FunctionBody.builder(args).cardinality(Cardinality.ONE).build((scope, in, path, output) -> {
-			JsonNode result = jsonProvider.createArray();
+			List<JsonNode> result = new ArrayList<>();
 			for (String builtin : builtins)
-				jsonProvider.add(result, jsonProvider.createString(builtin));
-			output.emit(result, null);
+				result.add(jsonProvider.createString(builtin));
+			output.emit(jsonProvider.createArray(result), null);
 		});
 	}
 }

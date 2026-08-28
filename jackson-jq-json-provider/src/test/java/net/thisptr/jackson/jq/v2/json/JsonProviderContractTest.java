@@ -1,7 +1,9 @@
 package net.thisptr.jackson.jq.v2.json;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -119,6 +121,27 @@ public abstract class JsonProviderContractTest<T> {
 		T node = provider.createArray();
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.ARRAY);
 		assertThat(provider.size(node)).isEqualTo(0);
+	}
+
+	@Test
+	void testCreateArrayFromValues() {
+		T node = provider.createArray(Arrays.asList(provider.createNumber(1), provider.createString("two")));
+
+		assertThat(provider.size(node)).isEqualTo(2);
+		assertThat(provider.asInt(requireGet(node, 0))).isEqualTo(1);
+		assertThat(provider.asText(requireGet(node, 1))).isEqualTo("two");
+	}
+
+	@Test
+	void testCreateObjectFromValues() {
+		Map<String, T> values = new LinkedHashMap<>();
+		values.put("one", provider.createNumber(1));
+		values.put("two", provider.createString("two"));
+		T node = provider.createObject(values);
+
+		assertThat(provider.size(node)).isEqualTo(2);
+		assertThat(provider.asInt(requireGet(node, "one"))).isEqualTo(1);
+		assertThat(provider.asText(requireGet(node, "two"))).isEqualTo("two");
 	}
 
 	// ===================
@@ -299,20 +322,22 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testDeepCopy() {
+		@Var T nested = provider.createObject();
+		nested = provider.set(nested, "value", provider.createNumber(42));
 		@Var T original = provider.createObject();
-		original = provider.set(original, "nested", provider.createObject());
-		T nested = requireGet(original, "nested");
-		provider.set(nested, "value", provider.createNumber(42));
+		original = provider.set(original, "nested", nested);
 
-		T copy = provider.deepCopy(original);
+		@Var T copy = provider.deepCopy(original);
 
 		// Modify the copy's nested object
-		T copiedNested = requireGet(copy, "nested");
-		provider.set(copiedNested, "value", provider.createNumber(999));
+		@Var T copiedNested = requireGet(copy, "nested");
+		copiedNested = provider.set(copiedNested, "value", provider.createNumber(999));
+		copy = provider.set(copy, "nested", copiedNested);
 
 		// Original should be unchanged
 		T originalNested = requireGet(original, "nested");
 		assertThat(provider.asInt(requireGet(originalNested, "value"))).isEqualTo(42);
+		assertThat(provider.asInt(requireGet(requireGet(copy, "nested"), "value"))).isEqualTo(999);
 	}
 
 	// ===================

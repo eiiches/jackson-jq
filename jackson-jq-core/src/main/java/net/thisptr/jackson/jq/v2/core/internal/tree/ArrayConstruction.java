@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -60,10 +62,10 @@ public class ArrayConstruction<JsonNode> implements Expression<StackFrame, JsonN
 
 	@Override
 	public void apply(StackFrame frame, JsonNode in, @Nullable Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
-		JsonNode[] array = (JsonNode[]) new Object[] { jsonProvider.createArray() };
+		List<JsonNode> values = new ArrayList<>();
 		if (q != null)
-			q.apply(frame, in, null, (out, opath) -> array[0] = jsonProvider.add(array[0], out));
-		output.emit(array[0], null);
+			q.apply(frame, in, null, (out, opath) -> values.add(out));
+		output.emit(jsonProvider.createArray(values), null);
 	}
 
 	@Override

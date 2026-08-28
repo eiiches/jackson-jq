@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.operators;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.google.errorprone.annotations.Var;
@@ -58,26 +59,26 @@ public class MultiplyOperator<JsonNode> implements BinaryOperator<JsonNode> {
 	}
 
 	private static <JsonNode> JsonNode mergeRecursive(JsonProvider<JsonNode> jsonProvider, JsonNode lhs, JsonNode rhs) {
-		JsonNode result = jsonProvider.createObject();
+		Map<String, JsonNode> result = new LinkedHashMap<>();
 
 		Iterator<Map.Entry<String, JsonNode>> liter = jsonProvider.fields(lhs);
 		while (liter.hasNext()) {
 			Map.Entry<String, JsonNode> e = liter.next();
-			jsonProvider.set(result, e.getKey(), e.getValue());
+			result.put(e.getKey(), e.getValue());
 		}
 
 		Iterator<Map.Entry<String, JsonNode>> riter = jsonProvider.fields(rhs);
 		while (riter.hasNext()) {
 			Map.Entry<String, JsonNode> e = riter.next();
-			JsonNode l = jsonProvider.get(result, e.getKey());
+			JsonNode l = result.get(e.getKey());
 			JsonNode r = e.getValue();
 
 			@Var JsonNode resolved = r;
 			if (l != null && jsonProvider.getNodeType(l) == JsonNodeType.OBJECT && jsonProvider.getNodeType(r) == JsonNodeType.OBJECT)
 				resolved = mergeRecursive(jsonProvider, l, r);
-			jsonProvider.set(result, e.getKey(), resolved);
+			result.put(e.getKey(), resolved);
 		}
-		return result;
+		return jsonProvider.createObject(result);
 	}
 
 	@Override

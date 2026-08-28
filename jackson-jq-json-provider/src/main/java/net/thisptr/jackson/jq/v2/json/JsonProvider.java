@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.google.errorprone.annotations.CheckReturnValue;
+import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 // FIXME: too many methods
@@ -12,6 +14,32 @@ public interface JsonProvider<JsonNode> {
 	JsonNode createObject();
 
 	JsonNode createArray();
+
+	/**
+	 * Creates an array containing the supplied values.
+	 *
+	 * @param values the values to add
+	 * @return the created array
+	 */
+	default JsonNode createArray(Iterable<? extends JsonNode> values) {
+		@Var JsonNode result = createArray();
+		for (JsonNode value : values)
+			result = add(result, value);
+		return result;
+	}
+
+	/**
+	 * Creates an object containing the supplied fields.
+	 *
+	 * @param values the fields to add
+	 * @return the created object
+	 */
+	default JsonNode createObject(Map<String, ? extends JsonNode> values) {
+		@Var JsonNode result = createObject();
+		for (Map.Entry<String, ? extends JsonNode> entry : values.entrySet())
+			result = set(result, entry.getKey(), entry.getValue());
+		return result;
+	}
 
 	JsonNode createString(String value);
 
@@ -94,6 +122,7 @@ public interface JsonProvider<JsonNode> {
 	 *
 	 * @return the modified node (same as input for mutable implementations)
 	 */
+	@CheckReturnValue
 	JsonNode set(JsonNode node, String fieldName, JsonNode value);
 
 	/**
@@ -102,6 +131,7 @@ public interface JsonProvider<JsonNode> {
 	 *
 	 * @return the modified node (same as input for mutable implementations)
 	 */
+	@CheckReturnValue
 	JsonNode add(JsonNode node, JsonNode value);
 
 	/**
@@ -109,6 +139,7 @@ public interface JsonProvider<JsonNode> {
 	 *
 	 * @return the modified node (same as input for mutable implementations)
 	 */
+	@CheckReturnValue
 	JsonNode set(JsonNode node, int index, JsonNode value);
 
 	int size(JsonNode node);

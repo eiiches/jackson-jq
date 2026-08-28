@@ -1,6 +1,8 @@
 package net.thisptr.jackson.jq.v2.core.internal.functions;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,32 +25,32 @@ public class ToEntriesFunction implements Function {
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 
-			JsonNode out = jsonProvider.createArray();
+			List<JsonNode> result = new ArrayList<>();
 			JsonNodeType inType = jsonProvider.getNodeType(in);
 
 			if (inType == JsonNodeType.OBJECT) {
 				Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(in);
 				while (iter.hasNext()) {
 					Map.Entry<String, JsonNode> entry = iter.next();
-					JsonNode entryNode = jsonProvider.createObject();
-					jsonProvider.set(entryNode, "key", jsonProvider.createString(entry.getKey()));
-					jsonProvider.set(entryNode, "value", entry.getValue());
-					jsonProvider.add(out, entryNode);
+					Map<String, JsonNode> fields = new LinkedHashMap<>();
+					fields.put("key", jsonProvider.createString(entry.getKey()));
+					fields.put("value", entry.getValue());
+					result.add(jsonProvider.createObject(fields));
 				}
 			} else if (inType == JsonNodeType.ARRAY) {
 				Iterator<JsonNode> iter = jsonProvider.elements(in);
 				for (int i = 0; iter.hasNext(); ++i) {
 					JsonNode value = iter.next();
-					JsonNode entryNode = jsonProvider.createObject();
-					jsonProvider.set(entryNode, "key", jsonProvider.createNumber(i));
-					jsonProvider.set(entryNode, "value", value);
-					jsonProvider.add(out, entryNode);
+					Map<String, JsonNode> fields = new LinkedHashMap<>();
+					fields.put("key", jsonProvider.createNumber(i));
+					fields.put("value", value);
+					result.add(jsonProvider.createObject(fields));
 				}
 			} else {
 				throw new JsonQueryTypeException(jsonProvider, version, "%s has no keys", in);
 			}
 
-			output.emit(out, null);
+			output.emit(jsonProvider.createArray(result), null);
 		});
 	}
 }

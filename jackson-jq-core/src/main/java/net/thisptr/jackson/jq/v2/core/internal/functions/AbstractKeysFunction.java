@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.functions;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,15 +33,15 @@ public class AbstractKeysFunction implements Function {
 				if (sortKeys)
 					Collections.sort(keys);
 
-				JsonNode result = jsonProvider.createArray();
+				List<JsonNode> result = new ArrayList<>();
 				for (String key : keys)
-					jsonProvider.add(result, jsonProvider.createString(key));
-				output.emit(result, null);
+					result.add(jsonProvider.createString(key));
+				output.emit(jsonProvider.createArray(result), null);
 			} else if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
-				JsonNode result = jsonProvider.createArray();
+				List<JsonNode> result = new ArrayList<>();
 				for (int i = 0; i < jsonProvider.size(in); ++i)
-					jsonProvider.add(result, jsonProvider.createNumber(i));
-				output.emit(result, null);
+					result.add(jsonProvider.createNumber(i));
+				output.emit(jsonProvider.createArray(result), null);
 			} else {
 				throw new IllegalStateException();
 			}

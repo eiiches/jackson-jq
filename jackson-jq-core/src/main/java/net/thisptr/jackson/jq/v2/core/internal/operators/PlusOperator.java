@@ -1,6 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.operators;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
@@ -38,29 +41,29 @@ public class PlusOperator<JsonNode> implements BinaryOperator<JsonNode> {
 			}
 			return JsonNodeUtils.asNumericNode(jsonProvider, ld + rd);
 		} else if (ltype == JsonNodeType.ARRAY && rtype == JsonNodeType.ARRAY) {
-			JsonNode result = jsonProvider.createArray();
+			List<JsonNode> values = new ArrayList<>(jsonProvider.size(lhs) + jsonProvider.size(rhs));
 			Iterator<JsonNode> liter = jsonProvider.elements(lhs);
 			while (liter.hasNext())
-				jsonProvider.add(result, liter.next());
+				values.add(liter.next());
 			Iterator<JsonNode> riter = jsonProvider.elements(rhs);
 			while (riter.hasNext())
-				jsonProvider.add(result, riter.next());
-			return result;
+				values.add(riter.next());
+			return jsonProvider.createArray(values);
 		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.STRING) {
 			return jsonProvider.createString(jsonProvider.asText(lhs) + jsonProvider.asText(rhs));
 		} else if (ltype == JsonNodeType.OBJECT && rtype == JsonNodeType.OBJECT) {
-			JsonNode result = jsonProvider.createObject();
+			Map<String, JsonNode> values = new LinkedHashMap<>();
 			Iterator<Map.Entry<String, JsonNode>> liter = jsonProvider.fields(lhs);
 			while (liter.hasNext()) {
 				Map.Entry<String, JsonNode> e = liter.next();
-				jsonProvider.set(result, e.getKey(), e.getValue());
+				values.put(e.getKey(), e.getValue());
 			}
 			Iterator<Map.Entry<String, JsonNode>> riter = jsonProvider.fields(rhs);
 			while (riter.hasNext()) {
 				Map.Entry<String, JsonNode> e = riter.next();
-				jsonProvider.set(result, e.getKey(), e.getValue());
+				values.put(e.getKey(), e.getValue());
 			}
-			return result;
+			return jsonProvider.createObject(values);
 		} else if (ltype == JsonNodeType.NULL) {
 			return rhs;
 		} else if (rtype == JsonNodeType.NULL) {

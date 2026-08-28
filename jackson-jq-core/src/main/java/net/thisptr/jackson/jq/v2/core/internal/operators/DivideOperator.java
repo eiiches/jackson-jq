@@ -1,5 +1,8 @@
 package net.thisptr.jackson.jq.v2.core.internal.operators;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
@@ -33,10 +36,10 @@ public class DivideOperator<JsonNode> implements BinaryOperator<JsonNode> {
 				throw new JsonQueryException(ExceptionMessages.format(jsonProvider, version, "%s and %s cannot be divided because the divisor is zero", lhs, rhs));
 			return JsonNodeUtils.asNumericNode(jsonProvider, dividend / divisor);
 		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.STRING) {
-			JsonNode result = jsonProvider.createArray();
+			List<JsonNode> result = new ArrayList<>();
 			for (String token : Strings.split(jsonProvider.asText(lhs), jsonProvider.asText(rhs)))
-				jsonProvider.add(result, jsonProvider.createString(token));
-			return result;
+				result.add(jsonProvider.createString(token));
+			return jsonProvider.createArray(result);
 		} else {
 			throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot be divided", lhs, rhs);
 		}

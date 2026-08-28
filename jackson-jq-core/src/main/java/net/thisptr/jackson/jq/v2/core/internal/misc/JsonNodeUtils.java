@@ -37,10 +37,7 @@ public class JsonNodeUtils {
 	}
 
 	public static <JsonNode> JsonNode asArrayNode(JsonProvider<JsonNode> jsonProvider, List<JsonNode> values) {
-		JsonNode result = jsonProvider.createArray();
-		for (JsonNode value : values)
-			jsonProvider.add(result, value);
-		return result;
+		return jsonProvider.createArray(values);
 	}
 
 	public static <JsonNode> List<JsonNode> asArrayList(JsonProvider<JsonNode> jsonProvider, JsonNode in) {

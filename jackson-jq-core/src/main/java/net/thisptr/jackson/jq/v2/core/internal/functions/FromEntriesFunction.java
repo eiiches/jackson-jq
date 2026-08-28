@@ -1,7 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.functions;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
@@ -28,7 +30,7 @@ public class FromEntriesFunction implements Function {
 			if (inType != JsonNodeType.ARRAY && inType != JsonNodeType.OBJECT)
 				throw new JsonQueryTypeException(jsonProvider, version, "Cannot iterate over %s", in);
 
-			JsonNode out = jsonProvider.createObject();
+			Map<String, JsonNode> result = new LinkedHashMap<>();
 			Iterator<JsonNode> iter = jsonProvider.elements(in);
 			while (iter.hasNext()) {
 				JsonNode entry = iter.next();
@@ -49,10 +51,10 @@ public class FromEntriesFunction implements Function {
 				if (value == null)
 					value = jsonProvider.get(entry, "Value");
 
-				jsonProvider.set(out, jsonProvider.asText(key), value == null ? jsonProvider.createNull() : value);
+				result.put(jsonProvider.asText(key), value == null ? jsonProvider.createNull() : value);
 			}
 
-			output.emit(out, null);
+			output.emit(jsonProvider.createObject(result), null);
 		});
 	}
 }

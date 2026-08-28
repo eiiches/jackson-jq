@@ -1,6 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.utils;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
@@ -26,7 +29,7 @@ public class ExpressionUtils {
 		if (expr instanceof ParenAstNode) {
 			return evaluateLiteralExpression(jsonProvider, ((ParenAstNode) expr).value());
 		} else if (expr instanceof ObjectConstructionAstNode) {
-			JsonNode obj = jsonProvider.createObject();
+			Map<String, JsonNode> fields = new LinkedHashMap<>();
 
 			for (ObjectConstructionAstNode.FieldConstructionAst field : ((ObjectConstructionAstNode) expr).fields) {
 				if (field instanceof ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst) {
@@ -41,7 +44,7 @@ public class ExpressionUtils {
 					if (v == null)
 						return null;
 
-					jsonProvider.set(obj, k, v);
+					fields.put(k, v);
 				} else if (field instanceof ObjectConstructionAstNode.StringKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.StringKeyFieldConstructionAst f = (ObjectConstructionAstNode.StringKeyFieldConstructionAst) field;
 					AstNode valueExpr = f.value;
@@ -55,19 +58,19 @@ public class ExpressionUtils {
 					if (v == null)
 						return null;
 
-					jsonProvider.set(obj, k, v);
+					fields.put(k, v);
 				} else {
 					return null;
 				}
 			}
 
-			return obj;
+			return jsonProvider.createObject(fields);
 		} else if (expr instanceof ArrayConstructionAstNode) {
-			JsonNode array = jsonProvider.createArray();
+			List<JsonNode> result = new ArrayList<>();
 
 			AstNode tuple = ((ArrayConstructionAstNode) expr).q;
 			if (tuple == null)
-				return array; // empty
+				return jsonProvider.createArray(); // empty
 
 			if (tuple instanceof TupleAstNode) {
 				List<AstNode> values = ((TupleAstNode) tuple).qs;
@@ -76,16 +79,16 @@ public class ExpressionUtils {
 					if (value == null)
 						return null;
 
-					jsonProvider.add(array, value);
+					result.add(value);
 				}
 			} else {
 				JsonNode value = evaluateLiteralExpression(jsonProvider, tuple);
 				if (value == null)
 					return null;
-				jsonProvider.add(array, value);
+				result.add(value);
 			}
 
-			return array;
+			return jsonProvider.createArray(result);
 		} else if (expr instanceof ValueLiteralAstNode) {
 			return ((ValueLiteralAstNode) expr).value(jsonProvider);
 		} else {

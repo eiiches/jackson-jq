@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.functions;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
@@ -24,11 +25,11 @@ public class SplitFunction implements Function {
 				if (jsonProvider.getNodeType(in) != JsonNodeType.STRING || jsonProvider.getNodeType(sep) != JsonNodeType.STRING)
 					throw new JsonQueryTypeException("split input and separator must be strings");
 
-				JsonNode row = jsonProvider.createArray();
+				List<JsonNode> row = new ArrayList<>();
 				for (String seg : Strings.split(jsonProvider.asText(in), jsonProvider.asText(sep)))
-					jsonProvider.add(row, jsonProvider.createString(seg));
+					row.add(jsonProvider.createString(seg));
 
-				output.emit(row, null);
+				output.emit(jsonProvider.createArray(row), null);
 			});
 		});
 	}

@@ -1,6 +1,8 @@
 package net.thisptr.jackson.jq.v2.core.internal.operators;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.TreeSet;
 
 import org.jspecify.annotations.Nullable;
@@ -36,7 +38,7 @@ public class MinusOperator<JsonNode> implements BinaryOperator<JsonNode> {
 			}
 			return JsonNodeUtils.asNumericNode(jsonProvider, ld - rd);
 		} else if (ltype == JsonNodeType.ARRAY && rtype == JsonNodeType.ARRAY) {
-			JsonNode result = jsonProvider.createArray();
+			List<JsonNode> result = new ArrayList<>();
 			TreeSet<JsonNode> rset = new TreeSet<>(new JsonNodeComparator<>(jsonProvider));
 			Iterator<JsonNode> riter = jsonProvider.elements(rhs);
 			while (riter.hasNext())
@@ -45,9 +47,9 @@ public class MinusOperator<JsonNode> implements BinaryOperator<JsonNode> {
 			while (liter.hasNext()) {
 				JsonNode l = liter.next();
 				if (!rset.contains(l))
-					jsonProvider.add(result, l);
+					result.add(l);
 			}
-			return result;
+			return jsonProvider.createArray(result);
 		} else {
 			throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot be subtracted", lhs, rhs);
 		}

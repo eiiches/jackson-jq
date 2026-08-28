@@ -30,10 +30,10 @@ public class IndicesFunction implements Function {
 			}
 
 			args.get(0).apply(frame, in, null, (needle, opath) -> {
-				JsonNode indices = jsonProvider.createArray();
+				List<JsonNode> result = new ArrayList<>();
 				for (int index : indices(jsonProvider, needle, in))
-					jsonProvider.add(indices, jsonProvider.createNumber(index));
-				output.emit(indices, null);
+					result.add(jsonProvider.createNumber(index));
+				output.emit(jsonProvider.createArray(result), null);
 			});
 		});
 	}

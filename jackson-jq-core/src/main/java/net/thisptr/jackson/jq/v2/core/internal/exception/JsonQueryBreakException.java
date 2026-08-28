@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.exception;
 
+import com.google.errorprone.annotations.Var;
+
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -15,8 +17,8 @@ public class JsonQueryBreakException extends JsonQueryException {
 
 	@Override
 	public <JsonNode> JsonNode toJsonNode(JsonProvider<JsonNode> jsonProvider) {
-		JsonNode object = jsonProvider.createObject();
-		jsonProvider.set(object, "__jq", jsonProvider.createNumber(0));
+		@Var JsonNode object = jsonProvider.createObject();
+		object = jsonProvider.set(object, "__jq", jsonProvider.createNumber(0));
 		return object;
 	}
 

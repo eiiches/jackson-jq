@@ -32,9 +32,9 @@ public class SortByFunction implements Function {
 			Iterator<JsonNode> iter = jsonProvider.elements(items);
 			while (iter.hasNext()) {
 				JsonNode item = iter.next();
-				JsonNode value = jsonProvider.createArray();
-				args.get(0).apply(frame, item, null, (v, opath) -> jsonProvider.add(value, v));
-				zipped.add(Pair.of(item, value));
+				List<JsonNode> values = new ArrayList<>();
+				args.get(0).apply(frame, item, null, (v, opath) -> values.add(v));
+				zipped.add(Pair.of(item, jsonProvider.createArray(values)));
 			}
 
 			zipped.sort((o1, o2) -> comparator.compare(o1._2, o2._2));
