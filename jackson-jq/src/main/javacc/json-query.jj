@@ -775,7 +775,7 @@ Expression ConditionalExpression():
 	Expression tmpPred;
 	Expression tmpExpr;
 	final List<Pair<Expression, Expression>> switches = new ArrayList<Pair<Expression, Expression>>();
-	final Expression otherwise;
+	Expression otherwise = new ThisObject();
 }
 {
 	<KEYWORD_IF>
@@ -790,8 +790,10 @@ Expression ConditionalExpression():
 		tmpExpr = Expression()
 		{ switches.add(Pair.of(tmpPred, tmpExpr)); }
 	)*
-	<KEYWORD_ELSE>
-	otherwise = Expression()
+	(
+    	<KEYWORD_ELSE>
+    	otherwise = Expression()
+    )?
 	<KEYWORD_END>
 	{
 		return new Conditional(switches, otherwise);
@@ -808,7 +810,12 @@ Expression ObjectConstruction():
 		ObjectField(obj)
 		(
 			<COMMA>
-			ObjectField(obj)
+			(
+				ObjectField(obj)
+				|
+				<CLOSE_BRACE>
+				{ return obj; }
+			)
 		)*
 	)?
 	<CLOSE_BRACE>

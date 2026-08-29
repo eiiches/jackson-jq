@@ -1,0 +1,14 @@
+- q: 'if true then 1 else 2 end'
+  out:
+  - 1
+- q: 'if false then 1 end'
+  in: 2
+  out:
+  - 2
+- q: 'if false then 1 elif false then 2 else 3 end'
+  out:
+  - 3
+- q: 'if false then 1 elif false then 2 end'
+  in: 3
+  out:
+  - 3
