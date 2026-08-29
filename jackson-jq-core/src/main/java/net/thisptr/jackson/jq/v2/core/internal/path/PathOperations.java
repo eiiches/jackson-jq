@@ -1,6 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.path;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.errorprone.annotations.Var;
@@ -159,10 +162,10 @@ public final class PathOperations {
 		assert jsonProvider.getNodeType(end) == JsonNodeType.NULL || jsonProvider.getNodeType(end) == JsonNodeType.NUMBER;
 		if (jsonProvider.getNodeType(parent) == JsonNodeType.ARRAY) {
 			Range range = Range.resolve(jsonProvider, start, end, jsonProvider.size(parent));
-			@Var JsonNode subarray = jsonProvider.createArray();
+			List<JsonNode> subarray = new ArrayList<>((int) (range.end - range.start));
 			for (long index = range.start; index < range.end; ++index)
-				subarray = jsonProvider.add(subarray, jsonProvider.requireGet(parent, (int) index));
-			output.emit(subarray, parentPath.appendIndexRange(jsonProvider, start, end));
+				subarray.add(jsonProvider.requireGet(parent, (int) index));
+			output.emit(jsonProvider.createArray(subarray), parentPath.appendIndexRange(jsonProvider, start, end));
 		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.STRING) {
 			Range range = Range.resolve(jsonProvider, start, end, UnicodeUtils.lengthUtf32(jsonProvider.asText(parent)));
 			JsonNode substring = jsonProvider.createString(UnicodeUtils.substringUtf32(jsonProvider.asText(parent), (int) range.start, (int) range.end));
@@ -240,14 +243,15 @@ public final class PathOperations {
 		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL)
 			in = jsonProvider.createObject();
 		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
-			@Var JsonNode newObject = jsonProvider.createObject();
+			Map<String, JsonNode> values = new LinkedHashMap<>();
 			Iterator<Map.Entry<String, JsonNode>> iterator = jsonProvider.fields(in);
 			while (iterator.hasNext()) {
 				Map.Entry<String, JsonNode> entry = iterator.next();
-				newObject = jsonProvider.set(newObject, entry.getKey(), entry.getValue());
+				values.put(entry.getKey(), entry.getValue());
 			}
-			JsonNode newValue = mutation.apply(jsonProvider.get(newObject, key));
-			return jsonProvider.set(newObject, key, newValue);
+			JsonNode newValue = mutation.apply(values.get(key));
+			values.put(key, newValue);
+			return jsonProvider.createObject(values);
 		}
 		throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createString(key)));
 	}
@@ -267,13 +271,13 @@ public final class PathOperations {
 
 			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.size(in) ? jsonProvider.requireGet(in, resolvedIndex) : null);
 
-			@Var JsonNode out = jsonProvider.createArray();
+			List<JsonNode> out = new ArrayList<>(Math.max(jsonProvider.size(in), resolvedIndex + 1));
 			for (int i = 0; i < jsonProvider.size(in); ++i)
-				out = jsonProvider.add(out, jsonProvider.requireGet(in, i));
+				out.add(jsonProvider.requireGet(in, i));
 			for (int i = jsonProvider.size(in); i <= resolvedIndex; ++i)
-				out = jsonProvider.add(out, jsonProvider.createNull());
-			out = jsonProvider.set(out, resolvedIndex, newValue);
-			return out;
+				out.add(jsonProvider.createNull());
+			out.set(resolvedIndex, newValue);
+			return jsonProvider.createArray(out);
 		}
 		throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, index));
 	}
@@ -288,13 +292,13 @@ public final class PathOperations {
 
 			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.size(in) ? jsonProvider.requireGet(in, resolvedIndex) : null);
 
-			@Var JsonNode out = jsonProvider.createArray();
+			List<JsonNode> out = new ArrayList<>(Math.max(jsonProvider.size(in), resolvedIndex + 1));
 			for (int i = 0; i < jsonProvider.size(in); ++i)
-				out = jsonProvider.add(out, jsonProvider.requireGet(in, i));
+				out.add(jsonProvider.requireGet(in, i));
 			for (int i = jsonProvider.size(in); i <= resolvedIndex; ++i)
-				out = jsonProvider.add(out, jsonProvider.createNull());
-			out = jsonProvider.set(out, resolvedIndex, newValue);
-			return out;
+				out.add(jsonProvider.createNull());
+			out.set(resolvedIndex, newValue);
+			return jsonProvider.createArray(out);
 		}
 		throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(index)));
 	}
@@ -306,22 +310,23 @@ public final class PathOperations {
 			in = jsonProvider.createNull();
 		if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
 			Range range = Range.resolve(jsonProvider, start, end, jsonProvider.size(in));
-			@Var JsonNode out = jsonProvider.createArray();
-			for (int index = 0; index < range.start; ++index)
-				out = jsonProvider.add(out, jsonProvider.requireGet(in, index));
 
-			@Var JsonNode oldValue = jsonProvider.createArray();
+			List<JsonNode> oldSlice = new ArrayList<>((int) (range.end - range.start));
 			for (long index = range.start; index < range.end; ++index)
-				oldValue = jsonProvider.add(oldValue, jsonProvider.requireGet(in, (int) index));
-			JsonNode newValue = mutation.apply(oldValue);
+				oldSlice.add(jsonProvider.requireGet(in, (int) index));
+			JsonNode newValue = mutation.apply(jsonProvider.createArray(oldSlice));
 			if (jsonProvider.getNodeType(newValue) != JsonNodeType.ARRAY)
 				throw new JsonQueryTypeException("A slice of an array can only be assigned another array");
+
+			List<JsonNode> out = new ArrayList<>((int) range.start + jsonProvider.size(newValue) + (jsonProvider.size(in) - (int) range.end));
+			for (int index = 0; index < range.start; ++index)
+				out.add(jsonProvider.requireGet(in, index));
 			Iterator<JsonNode> iterator = jsonProvider.elements(newValue);
 			while (iterator.hasNext())
-				out = jsonProvider.add(out, iterator.next());
+				out.add(iterator.next());
 			for (long index = range.end; index < jsonProvider.size(in); ++index)
-				out = jsonProvider.add(out, jsonProvider.requireGet(in, (int) index));
-			return out;
+				out.add(jsonProvider.requireGet(in, (int) index));
+			return jsonProvider.createArray(out);
 		}
 		if (jsonProvider.getNodeType(in) == JsonNodeType.STRING)
 			throw new JsonQueryException("Cannot update field at object index of string");
@@ -339,17 +344,17 @@ public final class PathOperations {
 
 	private static <JsonNode> JsonNode indexOfAll(JsonProvider<JsonNode> jsonProvider, JsonNode sequence, JsonNode subsequence) {
 		JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
-		@Var JsonNode out = jsonProvider.createArray();
+		List<JsonNode> out = new ArrayList<>();
 		if (jsonProvider.size(subsequence) != 0) {
 			shift:
 			for (int i = 0; i < jsonProvider.size(sequence) - jsonProvider.size(subsequence) + 1; ++i) {
 				for (int j = 0; j < jsonProvider.size(subsequence); ++j)
 					if (comparator.compare(jsonProvider.requireGet(sequence, i + j), jsonProvider.requireGet(subsequence, j)) != 0)
 						continue shift;
-				out = jsonProvider.add(out, jsonProvider.createNumber(i));
+				out.add(jsonProvider.createNumber(i));
 			}
 		}
-		return out;
+		return jsonProvider.createArray(out);
 	}
 
 	private static JsonQueryException unsupported(Path<?> path) {
