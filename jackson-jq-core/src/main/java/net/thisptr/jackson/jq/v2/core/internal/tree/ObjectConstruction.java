@@ -81,10 +81,7 @@ public class ObjectConstruction<JsonNode> implements Expression<StackFrame, Json
 
 	private static <JsonNode> void applyRecursive(JsonProvider<JsonNode> jsonProvider, StackFrame frame, JsonNode in, Output<JsonNode> output, List<FieldConstruction<JsonNode>> fields, Map<String, JsonNode> tmp) throws JsonQueryException {
 		if (fields.isEmpty()) {
-			@Var JsonNode obj = jsonProvider.createObject();
-			for (Map.Entry<String, JsonNode> e : tmp.entrySet())
-				obj = jsonProvider.set(obj, e.getKey(), e.getValue());
-			output.emit(obj, UntrackedPath.getInstance());
+			output.emit(jsonProvider.createObject(tmp), UntrackedPath.getInstance());
 			return;
 		}
 		fields.get(0).evaluate(frame, in, (k, v) -> {

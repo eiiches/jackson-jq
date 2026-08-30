@@ -36,7 +36,7 @@ public class JoinFunction implements Function {
 					if (isep != null) {
 						JsonNodeType isepType = jsonProvider.getNodeType(isep);
 						if (isepType == JsonNodeType.STRING) {
-							builder.append(jsonProvider.asText(isep));
+							builder.append(jsonProvider.asString(isep));
 						} else if (isepType == JsonNodeType.NULL) {
 							// append nothing
 						} else {
@@ -46,11 +46,11 @@ public class JoinFunction implements Function {
 
 					JsonNodeType itemType = jsonProvider.getNodeType(item);
 					if (itemType == JsonNodeType.STRING) {
-						builder.append(jsonProvider.asText(item));
+						builder.append(jsonProvider.asString(item));
 					} else if (itemType == JsonNodeType.NULL) {
 						// append nothing
 					} else if (version.compareTo(Versions.JQ_1_6) >= 0 && (itemType == JsonNodeType.NUMBER || itemType == JsonNodeType.BOOLEAN)) {
-						builder.append(jsonProvider.toString(item));
+						builder.append(jsonProvider.format(item));
 					} else {
 						if (version.compareTo(Versions.JQ_1_6) >= 0)
 							throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot be added", jsonProvider.createString(builder.toString()), item);

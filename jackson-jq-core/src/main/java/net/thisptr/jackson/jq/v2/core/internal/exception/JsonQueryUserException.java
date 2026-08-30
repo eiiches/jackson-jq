@@ -11,8 +11,8 @@ public class JsonQueryUserException extends JsonQueryException {
 
 	public <JsonNode> JsonQueryUserException(JsonProvider<JsonNode> jsonProvider, JsonNode value) {
 		super(jsonProvider.getNodeType(value) == JsonNodeType.STRING
-				? jsonProvider.asText(value)
-				: jsonProvider.toString(value));
+				? jsonProvider.asString(value)
+				: jsonProvider.format(value));
 		this.value = value;
 	}
 

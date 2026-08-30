@@ -38,3 +38,27 @@
   out:
   - "strftime/1 requires parsed datetime inputs"
   v: '[1.5.0, )'
+
+- q: 'try (nan | todateiso8601) catch .'
+  out:
+  - "error converting number of seconds since epoch to datetime"
+  v: '[1.7.0, )'
+  comment: 'jq 1.5/1.6 crash (native assertion failure) on this input rather than erroring cleanly, so this is verified against real jq for 1.7.0 and above only; jackson-jq raises the same error consistently on every supported version'
+
+- q: 'try (infinite | todateiso8601) catch .'
+  out:
+  - "error converting number of seconds since epoch to datetime"
+  v: '[1.7.0, )'
+  comment: 'jq 1.5/1.6 crash (native assertion failure) on this input rather than erroring cleanly, so this is verified against real jq for 1.7.0 and above only; jackson-jq raises the same error consistently on every supported version'
+
+- q: 'try (-infinite | todateiso8601) catch .'
+  out:
+  - "error converting number of seconds since epoch to datetime"
+  v: '[1.7.0, )'
+  comment: 'jq 1.5/1.6 crash (native assertion failure) on this input rather than erroring cleanly, so this is verified against real jq for 1.7.0 and above only; jackson-jq raises the same error consistently on every supported version'
+
+- q: 'try (1e300 | todateiso8601) catch .'
+  out:
+  - "error converting number of seconds since epoch to datetime"
+  v: '[1.7.0, )'
+  comment: 'jq 1.5/1.6 crash (native assertion failure) on this input rather than erroring cleanly, so this is verified against real jq for 1.7.0 and above only; jackson-jq raises the same error consistently on every supported version'

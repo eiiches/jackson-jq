@@ -1,8 +1,9 @@
 package net.thisptr.jackson.jq.v2.ext.debug.functions;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
-
-import com.google.errorprone.annotations.Var;
+import java.util.Map;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -31,13 +32,12 @@ public class DebugScopeFunction implements Function {
 
 			@Override
 			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
-				JsonNode functions = jsonProvider.createObject();
-				@Var JsonNode scopeNode = jsonProvider.createObject();
-				scopeNode = jsonProvider.set(scopeNode, "functions", functions);
-				@Var JsonNode info = jsonProvider.createObject();
-				info = jsonProvider.set(info, "scope", scopeNode);
-				info = jsonProvider.set(info, "input", in);
-				output.emit(info, UntrackedPath.getInstance());
+				JsonNode functions = jsonProvider.createObject(Collections.emptyMap());
+				JsonNode scopeNode = jsonProvider.createObject(Collections.singletonMap("functions", functions));
+				Map<String, JsonNode> info = new LinkedHashMap<>();
+				info.put("scope", scopeNode);
+				info.put("input", in);
+				output.emit(jsonProvider.createObject(info), UntrackedPath.getInstance());
 			}
 		};
 	}

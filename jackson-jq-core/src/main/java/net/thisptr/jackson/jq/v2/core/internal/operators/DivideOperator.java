@@ -37,7 +37,7 @@ public class DivideOperator<JsonNode> implements BinaryOperator<JsonNode> {
 			return JsonNodeUtils.asNumericNode(jsonProvider, dividend / divisor);
 		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.STRING) {
 			List<JsonNode> result = new ArrayList<>();
-			for (String token : Strings.split(jsonProvider.asText(lhs), jsonProvider.asText(rhs)))
+			for (String token : Strings.split(jsonProvider.asString(lhs), jsonProvider.asString(rhs)))
 				result.add(jsonProvider.createString(token));
 			return jsonProvider.createArray(result);
 		} else {

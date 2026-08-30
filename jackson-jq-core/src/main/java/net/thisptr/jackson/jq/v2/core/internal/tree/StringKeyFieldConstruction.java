@@ -59,7 +59,7 @@ public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<J
 		key.apply(frame, in, UntrackedPath.getInstance(), (k, opath) -> {
 			if (jsonProvider.getNodeType(k) != JsonNodeType.STRING)
 				throw new JsonQueryException("key must evaluate to string");
-			String keyStr = jsonProvider.asText(k);
+			String keyStr = jsonProvider.asString(k);
 			if (value == null) {
 				PathOperations.resolveObjectField(jsonProvider, in, UntrackedPath.getInstance(), (v, path) -> consumer.accept(keyStr, v), keyStr, false, version);
 			} else {

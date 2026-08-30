@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.path;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Map;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
@@ -124,8 +126,14 @@ public final class PathOperations {
 				output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
 				return;
 			}
-			int indexAsInt = (int) indexAsDouble;
-			if (indexAsDouble != indexAsInt) {
+			int indexAsInt;
+			try {
+				indexAsInt = jsonProvider.asIntTruncated(index);
+			} catch (IllegalArgumentException e) {
+				output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
+				return;
+			}
+			if (version.compareTo(Versions.JQ_1_7) < 0 && indexAsDouble != indexAsInt) {
 				output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
 				return;
 			}
@@ -167,16 +175,16 @@ public final class PathOperations {
 				subarray.add(jsonProvider.requireGet(parent, (int) index));
 			output.emit(jsonProvider.createArray(subarray), parentPath.appendIndexRange(jsonProvider, start, end));
 		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.STRING) {
-			Range range = Range.resolve(jsonProvider, start, end, UnicodeUtils.lengthUtf32(jsonProvider.asText(parent)));
-			JsonNode substring = jsonProvider.createString(UnicodeUtils.substringUtf32(jsonProvider.asText(parent), (int) range.start, (int) range.end));
+			Range range = Range.resolve(jsonProvider, start, end, UnicodeUtils.lengthUtf32(jsonProvider.asString(parent)));
+			JsonNode substring = jsonProvider.createString(UnicodeUtils.substringUtf32(jsonProvider.asString(parent), (int) range.start, (int) range.end));
 			output.emit(substring, parentPath.appendIndexRange(jsonProvider, start, end));
 		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.NULL) {
 			output.emit(jsonProvider.createNull(), parentPath.appendIndexRange(jsonProvider, start, end));
 		} else if (!permissive) {
-			@Var JsonNode subpath = jsonProvider.createObject();
-			subpath = jsonProvider.set(subpath, "start", start);
-			subpath = jsonProvider.set(subpath, "end", end);
-			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, parent, subpath));
+			Map<String, JsonNode> subpath = new LinkedHashMap<>();
+			subpath.put("start", start);
+			subpath.put("end", end);
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, parent, jsonProvider.createObject(subpath)));
 		}
 	}
 
@@ -241,7 +249,7 @@ public final class PathOperations {
 
 	private static <JsonNode> JsonNode mutateObjectField(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, String key, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
 		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL)
-			in = jsonProvider.createObject();
+			in = jsonProvider.createObject(Collections.emptyMap());
 		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
 			Map<String, JsonNode> values = new LinkedHashMap<>();
 			Iterator<Map.Entry<String, JsonNode>> iterator = jsonProvider.fields(in);
@@ -259,12 +267,17 @@ public final class PathOperations {
 	private static <JsonNode> JsonNode mutateArrayIndex(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, JsonNode index, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
 		assert jsonProvider.getNodeType(index) == JsonNodeType.NUMBER;
 		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL)
-			in = jsonProvider.createArray();
+			in = jsonProvider.createArray(Collections.emptyList());
 		if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
 			double indexAsDouble = jsonProvider.asDouble(index);
 			if (Double.isNaN(indexAsDouble) || Double.isInfinite(indexAsDouble))
 				throw new JsonQueryException("Cannot use " + (Double.isNaN(indexAsDouble) ? "nan" : "infinite") + " as array index");
-			int indexAsInt = (int) indexAsDouble;
+			int indexAsInt;
+			try {
+				indexAsInt = jsonProvider.asIntTruncated(index);
+			} catch (IllegalArgumentException e) {
+				throw new JsonQueryException("Array index too large", e);
+			}
 			int resolvedIndex = indexAsInt < 0 ? indexAsInt + jsonProvider.size(in) : indexAsInt;
 			if (resolvedIndex < 0)
 				throw new JsonQueryException("Out of bounds negative array index");
@@ -284,7 +297,7 @@ public final class PathOperations {
 
 	private static <JsonNode> JsonNode mutateArrayIndex(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, int index, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
 		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL)
-			in = jsonProvider.createArray();
+			in = jsonProvider.createArray(Collections.emptyList());
 		if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
 			int resolvedIndex = index < 0 ? index + jsonProvider.size(in) : index;
 			if (resolvedIndex < 0)
@@ -336,10 +349,10 @@ public final class PathOperations {
 				throw new JsonQueryTypeException("A slice of an array can only be assigned another array");
 			return newValue;
 		}
-		@Var JsonNode subpath = jsonProvider.createObject();
-		subpath = jsonProvider.set(subpath, "start", start);
-		subpath = jsonProvider.set(subpath, "end", end);
-		throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, subpath));
+		Map<String, JsonNode> subpath = new LinkedHashMap<>();
+		subpath.put("start", start);
+		subpath.put("end", end);
+		throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createObject(subpath)));
 	}
 
 	private static <JsonNode> JsonNode indexOfAll(JsonProvider<JsonNode> jsonProvider, JsonNode sequence, JsonNode subsequence) {

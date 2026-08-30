@@ -22,6 +22,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class TimeModuleTest {
 	private static <T, Context> Expression<Context, T> pureExpression() {
@@ -53,6 +54,14 @@ public class TimeModuleTest {
 		assertThat(run("1477162342372 | ext::strftime(\"yyyy-MM-dd HH:mm:ss.SSS\") | ext::strptime(\"yyyy-MM-dd HH:mm:ss.SSS\")"))
 				.extracting(JsonNode::longValue)
 				.containsExactly(1477162342372L);
+	}
+
+	@Test
+	public void rejectsNonFiniteEpoch() {
+		assertThatThrownBy(() -> run("infinite | ext::strftime(\"yyyy\")")).isInstanceOf(JsonQueryException.class);
+		assertThatThrownBy(() -> run("-infinite | ext::strftime(\"yyyy\")")).isInstanceOf(JsonQueryException.class);
+		assertThatThrownBy(() -> run("nan | ext::strftime(\"yyyy\")")).isInstanceOf(JsonQueryException.class);
+		assertThatThrownBy(() -> run("1e300 | ext::strftime(\"yyyy\")")).isInstanceOf(JsonQueryException.class);
 	}
 
 	@Test

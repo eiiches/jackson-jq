@@ -27,7 +27,7 @@ public class SplitFunction implements Function {
 					throw new JsonQueryTypeException("split input and separator must be strings");
 
 				List<JsonNode> row = new ArrayList<>();
-				for (String seg : Strings.split(jsonProvider.asText(in), jsonProvider.asText(sep)))
+				for (String seg : Strings.split(jsonProvider.asString(in), jsonProvider.asString(sep)))
 					row.add(jsonProvider.createString(seg));
 
 				output.emit(jsonProvider.createArray(row), UntrackedPath.getInstance());

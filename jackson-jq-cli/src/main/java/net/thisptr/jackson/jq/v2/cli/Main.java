@@ -1,9 +1,7 @@
 package net.thisptr.jackson.jq.v2.cli;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.util.Arrays;
@@ -20,7 +18,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.help.HelpFormatter;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.MappingIterator;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
@@ -33,6 +30,7 @@ import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
+import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
@@ -178,6 +176,8 @@ public class Main {
 						new FileSystemModuleLoader<>(jsonProvider, version, FileSystems.getDefault().getPath("").toAbsolutePath())))
 				.build();
 		JsonQuery<N> jq = env.compile(query);
+		// TODO: Pretty-printing still goes through Jackson 3 regardless of --json-provider. Drop MAPPER
+		// once JsonProvider can format to a stream.
 		ObjectMapper outputMapper = command.hasOption(OPT_COMPACT.getOpt())
 				? MAPPER
 				: MAPPER.rebuild()
@@ -187,16 +187,14 @@ public class Main {
 		if (command.hasOption(OPT_NULL_INPUT.getOpt())) {
 			is = new ByteArrayInputStream("null".getBytes(StandardCharsets.UTF_8));
 		}
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
-			 MappingIterator<JsonNode> iter = MAPPER.readerFor(JsonNode.class).readValues(reader)) {
-			while (iter.hasNext()) {
-				N tree = jsonProvider.fromString(MAPPER.writeValueAsString(iter.next()));
+		try (JsonParser<N> parser = jsonProvider.createParser(is)) {
+			for (@Var N tree = parser.next(); tree != null; tree = parser.next()) {
 				try {
 					jq.apply(tree, (out, path) -> {
 						if (jsonProvider.getNodeType(out) == JsonNodeType.STRING && command.hasOption(OPT_RAW_OUTPUT.getOpt())) {
-							System.out.println(jsonProvider.asText(out));
+							System.out.println(jsonProvider.asString(out));
 						} else {
-							String json = jsonProvider.toString(out);
+							String json = jsonProvider.format(out);
 							if (command.hasOption(OPT_COMPACT.getOpt())) {
 								System.out.println(json);
 							} else {

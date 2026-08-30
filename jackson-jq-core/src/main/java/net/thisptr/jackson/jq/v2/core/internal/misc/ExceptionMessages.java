@@ -44,11 +44,11 @@ public final class ExceptionMessages {
 	public static <JsonNode> String cannotIndex(JsonProvider<JsonNode> jsonProvider, @Nullable Version version, String inType, JsonNode accessor) {
 		JsonNodeType accessorType = jsonProvider.getNodeType(accessor);
 		if (version != null && version.compareTo(Version.of(1, 8, 2)) >= 0) {
-			String formatted = truncate(jsonProvider.toString(accessor), version);
+			String formatted = truncate(jsonProvider.format(accessor), version);
 			return String.format("Cannot index %s with %s (%s)", inType, accessorType.toString().toLowerCase(Locale.ROOT), formatted);
 		} else {
 			if (accessorType == JsonNodeType.STRING) {
-				return String.format("Cannot index %s with string \"%s\"", inType, jsonProvider.asText(accessor));
+				return String.format("Cannot index %s with string \"%s\"", inType, jsonProvider.asString(accessor));
 			} else {
 				return String.format("Cannot index %s with %s", inType, accessorType.toString().toLowerCase(Locale.ROOT));
 			}
@@ -63,7 +63,7 @@ public final class ExceptionMessages {
 				@SuppressWarnings("unchecked") JsonNode node = (JsonNode) args[i];
 				@Var String json;
 				try {
-					json = truncate(jsonProvider.toString(node), version);
+					json = truncate(jsonProvider.format(node), version);
 				} catch (Exception e) {
 					json = "<failed to format json>";
 				}

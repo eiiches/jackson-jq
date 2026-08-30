@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.functions;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
@@ -26,7 +27,7 @@ public class ReverseFunction implements Function {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 
 			List<JsonNode> result = new ArrayList<>();
-			JsonNode emptyArray = jsonProvider.createArray();
+			JsonNode emptyArray = jsonProvider.createArray(Collections.emptyList());
 
 			JsonNodeType type = jsonProvider.getNodeType(in);
 			if (type == JsonNodeType.NULL) {
@@ -44,7 +45,7 @@ public class ReverseFunction implements Function {
 			// below are to emulate jq behavior
 
 			if (type == JsonNodeType.STRING) {
-				if (jsonProvider.asText(in).isEmpty()) {
+				if (jsonProvider.asString(in).isEmpty()) {
 					output.emit(emptyArray, UntrackedPath.getInstance());
 					return;
 				}

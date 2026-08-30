@@ -127,7 +127,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			if (jsonProvider.getNodeType(in) != JsonNodeType.OBJECT && jsonProvider.getNodeType(in) != JsonNodeType.NULL)
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
 
-			JsonNode value = jsonProvider.get(in, jsonProvider.asText(key));
+			JsonNode value = jsonProvider.get(in, jsonProvider.asString(key));
 
 			if (fmatcher.dollar)
 				accumulate.addLast(new Match<>(fmatcher.slot, value != null ? value : jsonProvider.createNull()));
@@ -152,8 +152,8 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			if (jsonProvider.getNodeType(in) != JsonNodeType.OBJECT && jsonProvider.getNodeType(in) != JsonNodeType.NULL)
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
 
-			JsonNode value = jsonProvider.get(in, jsonProvider.asText(key));
-			Path<JsonNode> valuepath = inpath.appendKey(jsonProvider.asText(key));
+			JsonNode value = jsonProvider.get(in, jsonProvider.asString(key));
+			Path<JsonNode> valuepath = inpath.appendKey(jsonProvider.asString(key));
 
 			if (fmatcher.dollar)
 				accumulate.addLast(new MatchWithPath<>(fmatcher.slot, value != null ? value : jsonProvider.createNull(), valuepath));

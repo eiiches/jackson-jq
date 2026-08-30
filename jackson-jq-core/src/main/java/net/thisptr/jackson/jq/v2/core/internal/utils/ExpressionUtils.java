@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +71,7 @@ public class ExpressionUtils {
 
 			AstNode tuple = ((ArrayConstructionAstNode) expr).q;
 			if (tuple == null)
-				return jsonProvider.createArray(); // empty
+				return jsonProvider.createArray(Collections.emptyList()); // empty
 
 			if (tuple instanceof TupleAstNode) {
 				List<AstNode> values = ((TupleAstNode) tuple).qs;

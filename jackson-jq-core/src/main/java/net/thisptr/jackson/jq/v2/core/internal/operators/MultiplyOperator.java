@@ -43,14 +43,14 @@ public class MultiplyOperator<JsonNode> implements BinaryOperator<JsonNode> {
 				return jsonProvider.createNull();
 			if (count < 2)
 				return lhs;
-			return jsonProvider.createString(Strings.repeat(jsonProvider.asText(lhs), (int) count));
+			return jsonProvider.createString(Strings.repeat(jsonProvider.asString(lhs), (int) count));
 		} else if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.STRING) {
 			double count = jsonProvider.asDouble(lhs);
 			if (count <= 0)
 				return jsonProvider.createNull();
 			if (count < 2)
 				return rhs;
-			return jsonProvider.createString(Strings.repeat(jsonProvider.asText(rhs), (int) count));
+			return jsonProvider.createString(Strings.repeat(jsonProvider.asString(rhs), (int) count));
 		} else if (ltype == JsonNodeType.OBJECT && rtype == JsonNodeType.OBJECT) {
 			return mergeRecursive(jsonProvider, lhs, rhs);
 		} else {

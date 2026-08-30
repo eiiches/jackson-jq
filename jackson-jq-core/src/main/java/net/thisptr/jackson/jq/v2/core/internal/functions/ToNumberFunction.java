@@ -28,7 +28,7 @@ public class ToNumberFunction implements Function {
 				output.emit(in, UntrackedPath.getInstance());
 			} else if (inType == JsonNodeType.STRING) {
 				try {
-					double value = Double.parseDouble(jsonProvider.asText(in));
+					double value = Double.parseDouble(jsonProvider.asString(in));
 					output.emit(JsonNodeUtils.asNumericNode(jsonProvider, value), UntrackedPath.getInstance());
 				} catch (NumberFormatException e) {
 					throw new JsonQueryException(e);

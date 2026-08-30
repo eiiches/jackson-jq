@@ -35,17 +35,12 @@ public class ToDateIso8601Function implements Function {
 			Preconditions.checkInputType(jsonProvider, "todateiso8601", in, JsonNodeType.NUMBER, JsonNodeType.ARRAY);
 
 			if (jsonProvider.getNodeType(in) == JsonNodeType.NUMBER) {
-				double epochDouble = jsonProvider.asDouble(in);
-				if (Double.isNaN(epochDouble))
-					throw new JsonQueryException("todateiso8601 cannot be applied to nan");
-				if (Double.isInfinite(epochDouble))
-					throw new JsonQueryException("todateiso8601 cannot be applied to infinite");
 				try {
-					long epochSeconds = (long) epochDouble;
+					long epochSeconds = jsonProvider.asLongTruncated(in);
 					String iso8601String = Instant.ofEpochSecond(epochSeconds).toString();
 					output.emit(jsonProvider.createString(iso8601String), UntrackedPath.getInstance());
-				} catch (DateTimeException e) {
-					throw new JsonQueryException(e);
+				} catch (IllegalArgumentException | DateTimeException e) {
+					throw new JsonQueryException("error converting number of seconds since epoch to datetime", e);
 				}
 			} else if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
 				int size = jsonProvider.size(in);

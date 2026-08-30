@@ -6,6 +6,7 @@ import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -28,11 +29,9 @@ public class FromJsonFunction implements Function {
 
 			JsonNode tree;
 			try {
-				tree = jsonProvider.fromStringStrict(jsonProvider.asText(in));
-			} catch (JsonQueryException e) {
-				throw e;
-			} catch (Exception e) {
-				throw new JsonQueryException(String.format("failed to parse %s as json", jsonProvider.toString(in)));
+				tree = jsonProvider.parse(jsonProvider.asString(in));
+			} catch (JsonException e) {
+				throw new JsonQueryException(String.format("failed to parse %s as json", jsonProvider.format(in)), e);
 			}
 			output.emit(tree, UntrackedPath.getInstance());
 		});

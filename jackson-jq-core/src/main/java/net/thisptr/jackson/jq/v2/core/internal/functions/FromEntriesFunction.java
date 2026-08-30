@@ -52,7 +52,7 @@ public class FromEntriesFunction implements Function {
 				if (value == null)
 					value = jsonProvider.get(entry, "Value");
 
-				result.put(jsonProvider.asText(key), value == null ? jsonProvider.createNull() : value);
+				result.put(jsonProvider.asString(key), value == null ? jsonProvider.createNull() : value);
 			}
 
 			output.emit(jsonProvider.createObject(result), UntrackedPath.getInstance());

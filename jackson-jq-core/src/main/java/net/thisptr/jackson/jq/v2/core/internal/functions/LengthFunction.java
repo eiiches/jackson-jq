@@ -37,7 +37,7 @@ public class LengthFunction implements Function {
 	public <JsonNode> JsonNode length(JsonProvider<JsonNode> jsonProvider, JsonNode in, @Nullable Version version) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type == JsonNodeType.STRING) {
-			return jsonProvider.createNumber(UnicodeUtils.lengthUtf32(jsonProvider.asText(in)));
+			return jsonProvider.createNumber(UnicodeUtils.lengthUtf32(jsonProvider.asString(in)));
 		} else if (type == JsonNodeType.ARRAY || type == JsonNodeType.OBJECT) {
 			return jsonProvider.createNumber(jsonProvider.size(in));
 		} else if (type == JsonNodeType.NULL) {

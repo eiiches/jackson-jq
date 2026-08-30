@@ -57,9 +57,19 @@ public class JacksonJqBundleTest {
 
 	private static <JsonNode> void assertQuery(JsonProvider<JsonNode> jsonProvider, Environment<JsonNode> env, String expression, String inputJson, Object expected) throws Exception {
 		JsonQuery<JsonNode> query = env.compile(expression);
-		JsonNode input = jsonProvider.fromStringStrict(inputJson);
+		JsonNode input = jsonProvider.parse(inputJson);
 		List<JsonNode> output = new ArrayList<>();
 		query.apply(input, (val, path) -> output.add(val));
-		assertEquals(Collections.singletonList(jsonProvider.valueToTree(expected)), output);
+		assertEquals(Collections.singletonList(toJsonNode(jsonProvider, expected)), output);
+	}
+
+	private static <JsonNode> JsonNode toJsonNode(JsonProvider<JsonNode> jsonProvider, Object value) {
+		if (value instanceof Integer)
+			return jsonProvider.createNumber((Integer) value);
+		if (value instanceof Boolean)
+			return jsonProvider.createBoolean((Boolean) value);
+		if (value instanceof String)
+			return jsonProvider.createString((String) value);
+		throw new IllegalArgumentException("Unsupported type: " + value.getClass());
 	}
 }

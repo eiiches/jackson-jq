@@ -2,7 +2,9 @@ package net.thisptr.jackson.jq.v2.regex.impl.joni;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
@@ -33,7 +35,7 @@ public class _MatchImplFunction implements Function {
 		if (precompiled != null) {
 			return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
 				Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
-				byte[] ibytes = jsonProvider.asText(in).getBytes(StandardCharsets.UTF_8);
+				byte[] ibytes = jsonProvider.asString(in).getBytes(StandardCharsets.UTF_8);
 				int[] cindex = UnicodeUtils.utf8CharIndex(ibytes);
 
 				testExpr.apply(frame, in, UntrackedPath.getInstance(), (test, opath) -> {
@@ -46,7 +48,7 @@ public class _MatchImplFunction implements Function {
 
 		return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
-			byte[] ibytes = jsonProvider.asText(in).getBytes(StandardCharsets.UTF_8);
+			byte[] ibytes = jsonProvider.asString(in).getBytes(StandardCharsets.UTF_8);
 			int[] cindex = UnicodeUtils.utf8CharIndex(ibytes);
 
 			testExpr.apply(frame, in, UntrackedPath.getInstance(), (test, opath) -> {
@@ -55,7 +57,7 @@ public class _MatchImplFunction implements Function {
 					Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 2, flags, JsonNodeType.STRING, JsonNodeType.NULL);
 					regexExpr.apply(frame, in, UntrackedPath.getInstance(), (regex, opath3) -> {
 						Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 1, regex, JsonNodeType.STRING);
-						OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asText(regex), jsonProvider.getNodeType(flags) == JsonNodeType.NULL ? null : jsonProvider.asText(flags));
+						OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asString(regex), jsonProvider.getNodeType(flags) == JsonNodeType.NULL ? null : jsonProvider.asString(flags));
 						output.emit(match(jsonProvider, p, ibytes, cindex, jsonProvider.asBoolean(test)), UntrackedPath.getInstance());
 					});
 				});
@@ -78,25 +80,25 @@ public class _MatchImplFunction implements Function {
 	}
 
 	private static <JsonNode> JsonNode captureToJson(JsonProvider<JsonNode> jsonProvider, CaptureObject capture) {
-		@Var JsonNode node = jsonProvider.createObject();
-		node = jsonProvider.set(node, "offset", jsonProvider.createNumber(capture.offset));
-		node = jsonProvider.set(node, "length", jsonProvider.createNumber(capture.length));
-		node = jsonProvider.set(node, "string", capture.string == null ? jsonProvider.createNull() : jsonProvider.createString(capture.string));
-		node = jsonProvider.set(node, "name", capture.name == null ? jsonProvider.createNull() : jsonProvider.createString(capture.name));
-		return node;
+		Map<String, JsonNode> node = new LinkedHashMap<>();
+		node.put("offset", jsonProvider.createNumber(capture.offset));
+		node.put("length", jsonProvider.createNumber(capture.length));
+		node.put("string", capture.string == null ? jsonProvider.createNull() : jsonProvider.createString(capture.string));
+		node.put("name", capture.name == null ? jsonProvider.createNull() : jsonProvider.createString(capture.name));
+		return jsonProvider.createObject(node);
 	}
 
 	private static <JsonNode> JsonNode matchToJson(JsonProvider<JsonNode> jsonProvider, MatchObject obj) {
-		@Var JsonNode node = jsonProvider.createObject();
-		node = jsonProvider.set(node, "offset", jsonProvider.createNumber(obj.offset));
-		node = jsonProvider.set(node, "length", jsonProvider.createNumber(obj.length));
-		node = jsonProvider.set(node, "string", obj.string == null ? jsonProvider.createNull() : jsonProvider.createString(obj.string));
-		@Var JsonNode capturesArray = jsonProvider.createArray();
+		List<JsonNode> capturesArray = new ArrayList<>(obj.captures.size());
 		for (CaptureObject capture : obj.captures) {
-			capturesArray = jsonProvider.add(capturesArray, captureToJson(jsonProvider, capture));
+			capturesArray.add(captureToJson(jsonProvider, capture));
 		}
-		node = jsonProvider.set(node, "captures", capturesArray);
-		return node;
+		Map<String, JsonNode> node = new LinkedHashMap<>();
+		node.put("offset", jsonProvider.createNumber(obj.offset));
+		node.put("length", jsonProvider.createNumber(obj.length));
+		node.put("string", obj.string == null ? jsonProvider.createNull() : jsonProvider.createString(obj.string));
+		node.put("captures", jsonProvider.createArray(capturesArray));
+		return jsonProvider.createObject(node);
 	}
 
 	private static <JsonNode> JsonNode match(JsonProvider<JsonNode> jsonProvider, OnigUtils.Pattern pattern, byte[] ibytes, int[] cindex, boolean test) {
@@ -106,7 +108,7 @@ public class _MatchImplFunction implements Function {
 			boolean match = m.search(0, ibytes.length, Option.NONE) >= 0;
 			return jsonProvider.createBoolean(match);
 		} else {
-			@Var JsonNode matches = jsonProvider.createArray();
+			List<JsonNode> matches = new ArrayList<>();
 
 			@Var int offset = 0;
 			do {
@@ -138,7 +140,7 @@ public class _MatchImplFunction implements Function {
 					}
 				}
 
-				matches = jsonProvider.add(matches, matchToJson(jsonProvider, obj));
+				matches.add(matchToJson(jsonProvider, obj));
 
 				if (m.getEnd() == offset) {
 					++offset;
@@ -147,7 +149,7 @@ public class _MatchImplFunction implements Function {
 				}
 			} while (pattern.global && offset != ibytes.length);
 
-			return matches;
+			return jsonProvider.createArray(matches);
 		}
 	}
 }

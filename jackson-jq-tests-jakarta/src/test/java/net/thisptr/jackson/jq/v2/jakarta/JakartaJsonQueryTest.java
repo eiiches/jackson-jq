@@ -27,7 +27,7 @@ public class JakartaJsonQueryTest extends AbstractJsonQueryTest<JsonValue> {
 
 	@Override
 	protected JsonValue parseTestNode(JsonNode node) {
-		return JakartaJsonProviderImpl.getInstance().fromString(node.toString());
+		return JakartaJsonProviderImpl.getInstance().parse(node.toString());
 	}
 
 	@Override

@@ -39,6 +39,20 @@ class MainTest {
 				.isEqualTo("true\n");
 	}
 
+	@ParameterizedTest
+	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	void readsMultipleInputDocumentsWithSelectedJsonProvider(String provider) throws Exception {
+		assertThat(run("1 2\n{\"a\":3}\n[4,5] \"six\" null true", "--json-provider", provider, "--compact", "."))
+				.isEqualTo("1\n2\n{\"a\":3}\n[4,5]\n\"six\"\nnull\ntrue\n");
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	void treatsTopLevelArrayAsOneDocument(String provider) throws Exception {
+		assertThat(run("[1,2,3]", "--json-provider", provider, "--compact", "length"))
+				.isEqualTo("3\n");
+	}
+
 	@Test
 	void rejectsUnknownJsonProvider() {
 		assertThatIllegalArgumentException()

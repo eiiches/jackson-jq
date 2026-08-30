@@ -4,7 +4,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
@@ -37,7 +39,7 @@ public class _SubImplFunction implements Function {
 			return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
 				Preconditions.checkInputType(jsonProvider, "_sub_impl/3", in, JsonNodeType.STRING);
 				for (OnigUtils.Pattern pattern : precompiled.patterns()) {
-					List<JsonNode> match = match(jsonProvider, pattern, jsonProvider.asText(in));
+					List<JsonNode> match = match(jsonProvider, pattern, jsonProvider.asString(in));
 					for (int i = 0; i < precompiled.flagsMultiplicity(); i++)
 						replaceAndConcat(jsonProvider, frame, new ArrayDeque<>(), output, match, replaceExpr, in, flagsExpr);
 				}
@@ -53,8 +55,8 @@ public class _SubImplFunction implements Function {
 				flagsExpr.apply(frame, in, UntrackedPath.getInstance(), (flagsText, opath2) -> {
 					Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 3, flagsText, JsonNodeType.STRING);
 
-					OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asText(regexText), jsonProvider.asText(flagsText));
-					List<JsonNode> match = match(jsonProvider, p, jsonProvider.asText(in));
+					OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asString(regexText), jsonProvider.asString(flagsText));
+					List<JsonNode> match = match(jsonProvider, p, jsonProvider.asString(in));
 
 					// This just repeats same emit()s the number of times as the number of flags. This is to emulate jq behavior (which is probably a bug).
 					flagsExpr.apply(frame, in, UntrackedPath.getInstance(), (dummy, opath3) -> {
@@ -79,12 +81,12 @@ public class _SubImplFunction implements Function {
 		List<JsonNode> rtail = match.subList(0, match.size() - 1);
 
 		if (jsonProvider.getNodeType(rhead) == JsonNodeType.STRING) {
-			stack.push(jsonProvider.asText(rhead));
+			stack.push(jsonProvider.asString(rhead));
 			replaceAndConcat(jsonProvider, context, stack, output, rtail, replaceExpr, in, flags);
 			stack.pop();
 		} else {
 			replaceExpr.apply(context, rhead, UntrackedPath.getInstance(), (replacement, opath) -> {
-				stack.push(jsonProvider.asText(replacement));
+				stack.push(jsonProvider.asString(replacement));
 				replaceAndConcat(jsonProvider, context, stack, output, rtail, replaceExpr, in, flags);
 				stack.pop();
 			});
@@ -103,7 +105,7 @@ public class _SubImplFunction implements Function {
 
 			result.add(jsonProvider.createString(new String(inputBytes, offset, m.getBegin() - offset, StandardCharsets.UTF_8)));
 
-			@Var JsonNode captures = jsonProvider.createObject();
+			Map<String, JsonNode> captures = new LinkedHashMap<>();
 			Region regions = m.getRegion();
 			if (regions != null) {
 				for (int i = 1; i < regions.getNumRegs(); ++i) {
@@ -112,14 +114,14 @@ public class _SubImplFunction implements Function {
 						continue;
 					if (regions.getBeg(i) >= 0) {
 						String value = new String(inputBytes, regions.getBeg(i), regions.getEnd(i) - regions.getBeg(i), StandardCharsets.UTF_8);
-						captures = jsonProvider.set(captures, name, jsonProvider.createString(value));
+						captures.put(name, jsonProvider.createString(value));
 					} else {
-						captures = jsonProvider.set(captures, name, jsonProvider.createNull());
+						captures.put(name, jsonProvider.createNull());
 					}
 				}
 			}
 
-			result.add(captures);
+			result.add(jsonProvider.createObject(captures));
 
 			offset = m.getEnd();
 		} while (pattern.global && offset != inputBytes.length);

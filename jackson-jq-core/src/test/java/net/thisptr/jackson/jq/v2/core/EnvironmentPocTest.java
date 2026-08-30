@@ -55,7 +55,7 @@ public class EnvironmentPocTest {
 					@Override
 					public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version version) {
 						return (scope, in, path, output) -> {
-							String text = provider.asText(in);
+							String text = provider.asString(in);
 							output.emit(provider.createString("hello:" + text), path);
 						};
 					}

@@ -75,7 +75,7 @@ final class PrecompiledPatternPlan {
 			Preconditions.checkArgumentType(jsonProvider, "regex", 2, flags, JsonNodeType.STRING, JsonNodeType.NULL);
 		else
 			Preconditions.checkArgumentType(jsonProvider, "regex", 2, flags, JsonNodeType.STRING);
-		String flagsText = jsonProvider.getNodeType(flags) == JsonNodeType.NULL ? null : jsonProvider.asText(flags);
-		return new OnigUtils.Pattern(jsonProvider.asText(regex), flagsText);
+		String flagsText = jsonProvider.getNodeType(flags) == JsonNodeType.NULL ? null : jsonProvider.asString(flags);
+		return new OnigUtils.Pattern(jsonProvider.asString(regex), flagsText);
 	}
 }

@@ -1,14 +1,18 @@
 package net.thisptr.jackson.jq.v2.json;
 
+import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import com.google.errorprone.annotations.Var;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -36,6 +40,21 @@ public abstract class JsonProviderContractTest<T> {
 
 	private T requireGet(T node, int index) {
 		return Objects.requireNonNull(provider.get(node, index));
+	}
+
+	private static <T> Map<String, T> mapOf(String k1, T v1, String k2, T v2) {
+		Map<String, T> map = new LinkedHashMap<>();
+		map.put(k1, v1);
+		map.put(k2, v2);
+		return map;
+	}
+
+	private static <T> Map<String, T> mapOf(String k1, T v1, String k2, T v2, String k3, T v3) {
+		Map<String, T> map = new LinkedHashMap<>();
+		map.put(k1, v1);
+		map.put(k2, v2);
+		map.put(k3, v3);
+		return map;
 	}
 
 	@BeforeEach
@@ -96,29 +115,117 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
+	void testCreateNumberFromBigInteger() {
+		BigInteger value = new BigInteger("123456789012345678901234567890");
+		T node = provider.createNumber(value);
+		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.NUMBER);
+		assertThat(provider.asDouble(node)).isEqualTo(value.doubleValue());
+	}
+
+	@Test
+	void testCreateNumberFromBigDecimal() {
+		BigDecimal value = new BigDecimal("3.14159265358979323846264338327950288");
+		T node = provider.createNumber(value);
+		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.NUMBER);
+		assertThat(provider.asDouble(node)).isEqualTo(value.doubleValue());
+	}
+
+	@Test
+	void testExactIntegralAccessorsRejectFractionalValues() {
+		T positive = provider.createNumber(1.9);
+		T negative = provider.createNumber(-1.9);
+
+		assertThatThrownBy(() -> provider.asInt(positive)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asInt(negative)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asLong(positive)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asLong(negative)).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	void testTruncatedIntegralAccessorsRoundTowardZero() {
+		T positive = provider.createNumber(1.9);
+		T negative = provider.createNumber(-1.9);
+
+		assertThat(provider.asIntTruncated(positive)).isEqualTo(1);
+		assertThat(provider.asIntTruncated(negative)).isEqualTo(-1);
+		assertThat(provider.asLongTruncated(positive)).isEqualTo(1L);
+		assertThat(provider.asLongTruncated(negative)).isEqualTo(-1L);
+	}
+
+	@Test
+	void testTruncatedIntChecksRangeAfterTruncation() {
+		assertThat(provider.asIntTruncated(provider.createNumber(2147483647.9))).isEqualTo(Integer.MAX_VALUE);
+		assertThat(provider.asIntTruncated(provider.createNumber(-2147483648.9))).isEqualTo(Integer.MIN_VALUE);
+		assertThatThrownBy(() -> provider.asIntTruncated(provider.createNumber(2147483648.0)))
+				.isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asIntTruncated(provider.createNumber(-2147483649.0)))
+				.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	void testTruncatedLongDoesNotLoseDoublePrecision() {
+		long value = 9007199254740993L;
+		assertThat(provider.asLongTruncated(provider.createNumber(value))).isEqualTo(value);
+	}
+
+	@Test
+	void testLongConversionsBeyondExactDoubleIntegerBoundary() {
+		double above = Math.nextUp(0x1p53);
+		double below = Math.nextDown(-0x1p53);
+
+		assertThat(provider.asLong(provider.createNumber(above))).isEqualTo(9_007_199_254_740_994L);
+		assertThat(provider.asLongTruncated(provider.createNumber(above))).isEqualTo(9_007_199_254_740_994L);
+		assertThat(provider.asLong(provider.createNumber(below))).isEqualTo(-9_007_199_254_740_994L);
+		assertThat(provider.asLongTruncated(provider.createNumber(below))).isEqualTo(-9_007_199_254_740_994L);
+
+		long positiveOdd = 9_007_199_254_740_995L;
+		long negativeOdd = -9_007_199_254_740_995L;
+		assertThat(provider.asLong(provider.createNumber((double) positiveOdd))).isEqualTo(9_007_199_254_740_996L);
+		assertThat(provider.asLong(provider.createNumber((double) negativeOdd))).isEqualTo(-9_007_199_254_740_996L);
+		assertThat(provider.asLong(provider.createNumber(positiveOdd))).isEqualTo(positiveOdd);
+		assertThat(provider.asLong(provider.createNumber(negativeOdd))).isEqualTo(negativeOdd);
+
+		double largestLong = Math.nextDown(0x1p63);
+		assertThat(provider.asLong(provider.createNumber(largestLong))).isEqualTo((long) largestLong);
+		assertThatThrownBy(() -> provider.asLong(provider.createNumber(0x1p63))).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asLongTruncated(provider.createNumber(0x1p63)))
+				.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	void testTruncatedIntegralAccessorsRejectInvalidValues() {
+		T text = provider.createString("1");
+		assertThatThrownBy(() -> provider.asIntTruncated(text)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asLongTruncated(text)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asIntTruncated(provider.createNumber(Double.NaN))).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asLongTruncated(provider.createNumber(Double.POSITIVE_INFINITY))).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asLongTruncated(provider.createNumber(1e20))).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
 	void testCreateString() {
 		T node = provider.createString("hello");
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.STRING);
-		assertThat(provider.asText(node)).isEqualTo("hello");
+		assertThat(provider.asString(node)).isEqualTo("hello");
 	}
 
 	@Test
 	void testCreateEmptyString() {
 		T node = provider.createString("");
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.STRING);
-		assertThat(provider.asText(node)).isEqualTo("");
+		assertThat(provider.asString(node)).isEqualTo("");
 	}
 
 	@Test
 	void testCreateObject() {
-		T node = provider.createObject();
+		T node = provider.createObject(Collections.emptyMap());
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.OBJECT);
 		assertThat(provider.size(node)).isEqualTo(0);
 	}
 
 	@Test
 	void testCreateArray() {
-		T node = provider.createArray();
+		T node = provider.createArray(Collections.emptyList());
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.ARRAY);
 		assertThat(provider.size(node)).isEqualTo(0);
 	}
@@ -129,7 +236,7 @@ public abstract class JsonProviderContractTest<T> {
 
 		assertThat(provider.size(node)).isEqualTo(2);
 		assertThat(provider.asInt(requireGet(node, 0))).isEqualTo(1);
-		assertThat(provider.asText(requireGet(node, 1))).isEqualTo("two");
+		assertThat(provider.asString(requireGet(node, 1))).isEqualTo("two");
 	}
 
 	@Test
@@ -141,7 +248,7 @@ public abstract class JsonProviderContractTest<T> {
 
 		assertThat(provider.size(node)).isEqualTo(2);
 		assertThat(provider.asInt(requireGet(node, "one"))).isEqualTo(1);
-		assertThat(provider.asText(requireGet(node, "two"))).isEqualTo("two");
+		assertThat(provider.asString(requireGet(node, "two"))).isEqualTo("two");
 	}
 
 	// ===================
@@ -149,37 +256,8 @@ public abstract class JsonProviderContractTest<T> {
 	// ===================
 
 	@Test
-	void testObjectSetAndGet() {
-		@Var T obj = provider.createObject();
-		T value = provider.createString("world");
-		obj = provider.set(obj, "hello", value);
-
-		assertThat(provider.has(obj, "hello")).isTrue();
-		assertThat(provider.has(obj, "nonexistent")).isFalse();
-		assertThat(provider.size(obj)).isEqualTo(1);
-
-		T retrieved = requireGet(obj, "hello");
-		assertThat(provider.asText(retrieved)).isEqualTo("world");
-	}
-
-	@Test
-	void testObjectMultipleFields() {
-		@Var T obj = provider.createObject();
-		obj = provider.set(obj, "a", provider.createNumber(1));
-		obj = provider.set(obj, "b", provider.createNumber(2));
-		obj = provider.set(obj, "c", provider.createNumber(3));
-
-		assertThat(provider.size(obj)).isEqualTo(3);
-		assertThat(provider.asInt(requireGet(obj, "a"))).isEqualTo(1);
-		assertThat(provider.asInt(requireGet(obj, "b"))).isEqualTo(2);
-		assertThat(provider.asInt(requireGet(obj, "c"))).isEqualTo(3);
-	}
-
-	@Test
 	void testObjectFields() {
-		@Var T obj = provider.createObject();
-		obj = provider.set(obj, "x", provider.createNumber(10));
-		obj = provider.set(obj, "y", provider.createNumber(20));
+		T obj = provider.createObject(mapOf("x", provider.createNumber(10), "y", provider.createNumber(20)));
 
 		List<String> keys = new ArrayList<>();
 		List<Integer> values = new ArrayList<>();
@@ -196,9 +274,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testObjectFieldNames() {
-		@Var T obj = provider.createObject();
-		obj = provider.set(obj, "foo", provider.createNull());
-		obj = provider.set(obj, "bar", provider.createNull());
+		T obj = provider.createObject(mapOf("foo", provider.createNull(), "bar", provider.createNull()));
 
 		List<String> names = new ArrayList<>();
 		Iterator<String> it = provider.fieldNames(obj);
@@ -214,64 +290,16 @@ public abstract class JsonProviderContractTest<T> {
 	// ===================
 
 	@Test
-	void testArrayAddAndGet() {
-		@Var T arr = provider.createArray();
-		arr = provider.add(arr, provider.createNumber(1));
-		arr = provider.add(arr, provider.createNumber(2));
-		arr = provider.add(arr, provider.createNumber(3));
-
-		assertThat(provider.size(arr)).isEqualTo(3);
-		assertThat(provider.has(arr, 0)).isTrue();
-		assertThat(provider.has(arr, 2)).isTrue();
-		assertThat(provider.has(arr, 3)).isFalse();
-
-		assertThat(provider.asInt(requireGet(arr, 0))).isEqualTo(1);
-		assertThat(provider.asInt(requireGet(arr, 1))).isEqualTo(2);
-		assertThat(provider.asInt(requireGet(arr, 2))).isEqualTo(3);
-	}
-
-	@Test
-	void testArraySet() {
-		@Var T arr = provider.createArray();
-		arr = provider.add(arr, provider.createNumber(1));
-		arr = provider.add(arr, provider.createNumber(2));
-		arr = provider.add(arr, provider.createNumber(3));
-
-		arr = provider.set(arr, 1, provider.createNumber(99));
-
-		assertThat(provider.asInt(requireGet(arr, 0))).isEqualTo(1);
-		assertThat(provider.asInt(requireGet(arr, 1))).isEqualTo(99);
-		assertThat(provider.asInt(requireGet(arr, 2))).isEqualTo(3);
-	}
-
-	@Test
 	void testArrayElements() {
-		@Var T arr = provider.createArray();
-		arr = provider.add(arr, provider.createString("a"));
-		arr = provider.add(arr, provider.createString("b"));
-		arr = provider.add(arr, provider.createString("c"));
+		T arr = provider.createArray(Arrays.asList(provider.createString("a"), provider.createString("b"), provider.createString("c")));
 
 		List<String> elements = new ArrayList<>();
 		Iterator<T> it = provider.elements(arr);
 		while (it.hasNext()) {
-			elements.add(provider.asText(it.next()));
+			elements.add(provider.asString(it.next()));
 		}
 
 		assertThat(elements).containsExactly("a", "b", "c");
-	}
-
-	@Test
-	void testArrayIterate() {
-		@Var T arr = provider.createArray();
-		arr = provider.add(arr, provider.createNumber(10));
-		arr = provider.add(arr, provider.createNumber(20));
-
-		List<Integer> values = new ArrayList<>();
-		for (T element : provider.iterate(arr)) {
-			values.add(provider.asInt(element));
-		}
-
-		assertThat(values).containsExactly(10, 20);
 	}
 
 	// ===================
@@ -279,12 +307,10 @@ public abstract class JsonProviderContractTest<T> {
 	// ===================
 
 	@Test
-	void testToString() {
-		@Var T obj = provider.createObject();
-		obj = provider.set(obj, "name", provider.createString("test"));
-		obj = provider.set(obj, "value", provider.createNumber(42));
+	void testFormat() {
+		T obj = provider.createObject(mapOf("name", provider.createString("test"), "value", provider.createNumber(42)));
 
-		String json = provider.toString(obj);
+		String json = provider.format(obj);
 		assertThat(json).contains("\"name\"");
 		assertThat(json).contains("\"test\"");
 		assertThat(json).contains("\"value\"");
@@ -292,8 +318,8 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testFromString() throws Exception {
-		T node = provider.fromString("{\"foo\": 123, \"bar\": true}");
+	void testFromString() {
+		T node = provider.parse("{\"foo\": 123, \"bar\": true}");
 
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.OBJECT);
 		assertThat(provider.asInt(requireGet(node, "foo"))).isEqualTo(123);
@@ -301,19 +327,19 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testFromStringArray() throws Exception {
-		T node = provider.fromString("[1, 2, 3]");
+	void testFromStringArray() {
+		T node = provider.parse("[1, 2, 3]");
 
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.ARRAY);
 		assertThat(provider.size(node)).isEqualTo(3);
 	}
 
 	@Test
-	void testFromStringPrimitives() throws Exception {
-		assertThat(provider.getNodeType(provider.fromString("null"))).isEqualTo(JsonNodeType.NULL);
-		assertThat(provider.getNodeType(provider.fromString("true"))).isEqualTo(JsonNodeType.BOOLEAN);
-		assertThat(provider.getNodeType(provider.fromString("123"))).isEqualTo(JsonNodeType.NUMBER);
-		assertThat(provider.getNodeType(provider.fromString("\"hello\""))).isEqualTo(JsonNodeType.STRING);
+	void testFromStringPrimitives() {
+		assertThat(provider.getNodeType(provider.parse("null"))).isEqualTo(JsonNodeType.NULL);
+		assertThat(provider.getNodeType(provider.parse("true"))).isEqualTo(JsonNodeType.BOOLEAN);
+		assertThat(provider.getNodeType(provider.parse("123"))).isEqualTo(JsonNodeType.NUMBER);
+		assertThat(provider.getNodeType(provider.parse("\"hello\""))).isEqualTo(JsonNodeType.STRING);
 	}
 
 	// ===================
@@ -322,34 +348,13 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testDeepCopy() {
-		@Var T nested = provider.createObject();
-		nested = provider.set(nested, "value", provider.createNumber(42));
-		@Var T original = provider.createObject();
-		original = provider.set(original, "nested", nested);
+		T nested = provider.createObject(Collections.singletonMap("value", provider.createNumber(42)));
+		T original = provider.createObject(Collections.singletonMap("nested", nested));
 
-		@Var T copy = provider.deepCopy(original);
+		T copy = provider.deepCopy(original);
 
-		// Modify the copy's nested object
-		@Var T copiedNested = requireGet(copy, "nested");
-		copiedNested = provider.set(copiedNested, "value", provider.createNumber(999));
-		copy = provider.set(copy, "nested", copiedNested);
-
-		// Original should be unchanged
-		T originalNested = requireGet(original, "nested");
-		assertThat(provider.asInt(requireGet(originalNested, "value"))).isEqualTo(42);
-		assertThat(provider.asInt(requireGet(requireGet(copy, "nested"), "value"))).isEqualTo(999);
-	}
-
-	// ===================
-	// valueToTree Tests
-	// ===================
-
-	@Test
-	void testValueToTreePrimitives() {
-		assertThat(provider.getNodeType(provider.valueToTree(null))).isEqualTo(JsonNodeType.NULL);
-		assertThat(provider.asBoolean(provider.valueToTree(true))).isTrue();
-		assertThat(provider.asInt(provider.valueToTree(42))).isEqualTo(42);
-		assertThat(provider.asText(provider.valueToTree("hello"))).isEqualTo("hello");
+		assertThat(provider.format(copy)).isEqualTo(provider.format(original));
+		assertThat(provider.asInt(requireGet(requireGet(copy, "nested"), "value"))).isEqualTo(42);
 	}
 
 	// ===================
@@ -385,28 +390,21 @@ public abstract class JsonProviderContractTest<T> {
 	void testSpecialStrings() {
 		// Test string with special characters
 		T node = provider.createString("hello\nworld\ttab\"quote");
-		assertThat(provider.asText(node)).isEqualTo("hello\nworld\ttab\"quote");
+		assertThat(provider.asString(node)).isEqualTo("hello\nworld\ttab\"quote");
 	}
 
 	@Test
 	void testUnicodeStrings() {
 		T node = provider.createString("日本語 emoji: \uD83D\uDE00");
-		assertThat(provider.asText(node)).isEqualTo("日本語 emoji: \uD83D\uDE00");
+		assertThat(provider.asString(node)).isEqualTo("日本語 emoji: \uD83D\uDE00");
 	}
 
 	@Test
-	void testNestedStructures() throws Exception {
+	void testNestedStructures() {
 		// Create nested object: {"outer": {"inner": [1, 2, 3]}}
-		@Var T inner = provider.createArray();
-		inner = provider.add(inner, provider.createNumber(1));
-		inner = provider.add(inner, provider.createNumber(2));
-		inner = provider.add(inner, provider.createNumber(3));
-
-		@Var T nested = provider.createObject();
-		nested = provider.set(nested, "inner", inner);
-
-		@Var T outer = provider.createObject();
-		outer = provider.set(outer, "outer", nested);
+		T inner = provider.createArray(Arrays.asList(provider.createNumber(1), provider.createNumber(2), provider.createNumber(3)));
+		T nested = provider.createObject(Collections.singletonMap("inner", inner));
+		T outer = provider.createObject(Collections.singletonMap("outer", nested));
 
 		// Verify structure
 		T retrievedNested = requireGet(outer, "outer");
@@ -420,10 +418,10 @@ public abstract class JsonProviderContractTest<T> {
 	// ================================
 
 	@Test
-	void testAsTextOnNullNode() {
+	void testAsStringOnNullNode() {
 		// asText on null node should return "null", not empty string
 		T node = provider.createNull();
-		assertThat(provider.asText(node)).isEqualTo("null");
+		assertThat(provider.asString(node)).isEqualTo("null");
 	}
 
 	@Test
@@ -511,76 +509,166 @@ public abstract class JsonProviderContractTest<T> {
 	// ================================
 
 	@Test
-	void testToStringOnNaN() {
+	void testFormatOnNaN() {
 		// toString on NaN should return "null" (jq behavior)
 		T node = provider.createNumber(Double.NaN);
-		String json = provider.toString(node);
+		String json = provider.format(node);
 		assertThat(json).isEqualTo("null");
 	}
 
 	@Test
-	void testToStringOnPositiveInfinity() {
+	void testFormatOnPositiveInfinity() {
 		// toString on positive infinity should return the max double value
 		T node = provider.createNumber(Double.POSITIVE_INFINITY);
-		String json = provider.toString(node);
+		String json = provider.format(node);
 		assertThat(json).contains("1.7976931348623157e+308");
 	}
 
 	@Test
-	void testToStringOnNegativeInfinity() {
+	void testFormatOnNegativeInfinity() {
 		// toString on negative infinity should return the negative max double value
 		T node = provider.createNumber(Double.NEGATIVE_INFINITY);
-		String json = provider.toString(node);
+		String json = provider.format(node);
 		assertThat(json).contains("-1.7976931348623157e+308");
 	}
 
 	@Test
-	void testToStringOnWholeNumberDouble() {
+	void testFormatOnWholeNumberDouble() {
 		// toString on a whole number double like 0.0 should serialize without decimal (jq behavior)
 		T node = provider.createNumber(0.0);
-		String json = provider.toString(node);
+		String json = provider.format(node);
 		assertThat(json).isEqualTo("0");
 	}
 
 	@Test
-	void testToStringOnNegativeZero() {
+	void testFormatOnNegativeZero() {
 		// toString on -0.0 should serialize as "0" (jq behavior)
 		T node = provider.createNumber(-0.0);
-		String json = provider.toString(node);
+		String json = provider.format(node);
 		assertThat(json).isEqualTo("0");
 	}
 
 	// ================================
-	// fromStringStrict Tests
+	// parse Tests
 	// ================================
 
 	@Test
-	void testFromStringStrictWithEmptyString() {
-		// fromStringStrict on empty string should throw exception
-		assertThatThrownBy(() -> provider.fromStringStrict(""))
-				.isInstanceOf(Exception.class);
+	void testParseWithEmptyString() {
+		// parse on empty string should throw exception
+		assertThatThrownBy(() -> provider.parse(""))
+				.isInstanceOf(JsonException.class);
 	}
 
 	@Test
-	void testFromStringStrictWithTrailingContent() {
-		// fromStringStrict with trailing content should throw exception
-		assertThatThrownBy(() -> provider.fromStringStrict("123 456"))
-				.isInstanceOf(Exception.class);
+	void testParseWithTrailingContent() {
+		// parse with trailing content should throw exception
+		assertThatThrownBy(() -> provider.parse("123 456"))
+				.isInstanceOf(JsonException.class);
 	}
 
 	@Test
-	void testFromStringStrictWithWhitespaceOnly() {
-		// fromStringStrict on whitespace-only string should throw exception
-		assertThatThrownBy(() -> provider.fromStringStrict("   "))
-				.isInstanceOf(Exception.class);
+	void testParseWithWhitespaceOnly() {
+		// parse on whitespace-only string should throw exception
+		assertThatThrownBy(() -> provider.parse("   "))
+				.isInstanceOf(JsonException.class);
 	}
 
 	@Test
-	void testFromStringStrictWithValidJson() throws Exception {
-		// fromStringStrict with valid JSON should work
-		T node = provider.fromStringStrict("{\"key\": \"value\"}");
+	void testParseWithValidJson() {
+		// parse with valid JSON should work
+		T node = provider.parse("{\"key\": \"value\"}");
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.OBJECT);
-		assertThat(provider.asText(requireGet(node, "key"))).isEqualTo("value");
+		assertThat(provider.asString(requireGet(node, "key"))).isEqualTo("value");
+	}
+
+	// ================================
+	// createParser Tests
+	// ================================
+
+	private List<String> parseStream(String json) {
+		List<String> result = new ArrayList<>();
+		try (JsonParser<T> parser = provider.createParser(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)))) {
+			for (T value = parser.next(); value != null; value = parser.next())
+				result.add(provider.format(value));
+		}
+		return result;
+	}
+
+	@Test
+	void testCreateParserReadsSequenceOfValues() {
+		assertThat(parseStream("1 2 {\"a\":3} [4,5] \"six\" null true"))
+				.containsExactly("1", "2", "{\"a\":3}", "[4,5]", "\"six\"", "null", "true");
+	}
+
+	@Test
+	void testCreateParserReadsValuesWithoutSeparatingWhitespace() {
+		assertThat(parseStream("{\"a\":1}{\"b\":2}[1][2]"))
+				.containsExactly("{\"a\":1}", "{\"b\":2}", "[1]", "[2]");
+	}
+
+	@Test
+	void testCreateParserReadsValuesSeparatedByNewlines() {
+		assertThat(parseStream("{\"a\":1}\n{\"b\":2}\n")).containsExactly("{\"a\":1}", "{\"b\":2}");
+	}
+
+	@Test
+	void testCreateParserReadsSingleValue() {
+		assertThat(parseStream("  {\"k\":\"v\"}  ")).containsExactly("{\"k\":\"v\"}");
+	}
+
+	@Test
+	void testCreateParserOnEmptyInput() {
+		assertThat(parseStream("")).isEmpty();
+	}
+
+	@Test
+	void testCreateParserOnWhitespaceOnlyInput() {
+		assertThat(parseStream("  \n\t\r ")).isEmpty();
+	}
+
+	@Test
+	void testCreateParserPreservesUnicode() {
+		assertThat(parseStream("\"日本語\" \"😀\"")).containsExactly("\"日本語\"", "\"😀\"");
+	}
+
+	@Test
+	void testCreateParserKeepsReturningNullAfterExhaustion() {
+		try (JsonParser<T> parser = provider.createParser(new ByteArrayInputStream("1".getBytes(StandardCharsets.UTF_8)))) {
+			assertThat(parser.next()).isNotNull();
+			assertThat(parser.next()).isNull();
+			assertThat(parser.next()).isNull();
+		}
+	}
+
+	@Test
+	void testCreateParserReadsValuesLargerThanInternalBuffers() {
+		StringBuilder array = new StringBuilder("[");
+		for (int i = 0; i < 20000; ++i) {
+			if (i > 0)
+				array.append(',');
+			array.append(i);
+		}
+		array.append(']');
+
+		assertThat(parseStream(array + " " + array + " 7"))
+				.containsExactly(array.toString(), array.toString(), "7");
+	}
+
+	// Bare words such as "tru" are deliberately not covered: Gson reads them as strings, and cannot be
+	// made to reject them here. Its JsonReader.doPeek() gates both "content follows the first document"
+	// and "unquoted literal" on the same checkLenient(), within a single peek(), so the strictness that
+	// would reject a bare word also rejects the second document in a sequence.
+	@Test
+	void testCreateParserOnMalformedInput() {
+		assertThatThrownBy(() -> parseStream("{,,,")).isInstanceOf(JsonException.class);
+		assertThatThrownBy(() -> parseStream("[1,2")).isInstanceOf(JsonException.class);
+		assertThatThrownBy(() -> parseStream("{\"a\":}")).isInstanceOf(JsonException.class);
+		assertThatThrownBy(() -> parseStream("{\"a\":1")).isInstanceOf(JsonException.class);
+	}
+
+	@Test
+	void testCreateParserRejectsMalformedValueAfterValidOnes() {
+		assertThatThrownBy(() -> parseStream("1 2 }")).isInstanceOf(JsonException.class);
 	}
 
 	// ================================
@@ -591,10 +679,7 @@ public abstract class JsonProviderContractTest<T> {
 	void testObjectElements() {
 		// elements() on an object should return an iterator over the field values
 		// This is important for jq functions like from_entries that iterate over object values
-		@Var T obj = provider.createObject();
-		obj = provider.set(obj, "a", provider.createNumber(1));
-		obj = provider.set(obj, "b", provider.createNumber(2));
-		obj = provider.set(obj, "c", provider.createNumber(3));
+		T obj = provider.createObject(mapOf("a", provider.createNumber(1), "b", provider.createNumber(2), "c", provider.createNumber(3)));
 
 		List<Integer> values = new ArrayList<>();
 		Iterator<T> it = provider.elements(obj);
@@ -605,42 +690,26 @@ public abstract class JsonProviderContractTest<T> {
 		assertThat(values).containsExactlyInAnyOrder(1, 2, 3);
 	}
 
-	@Test
-	void testObjectIterate() {
-		// iterate() on an object should also work, returning field values
-		@Var T obj = provider.createObject();
-		obj = provider.set(obj, "x", provider.createString("foo"));
-		obj = provider.set(obj, "y", provider.createString("bar"));
-
-		List<String> values = new ArrayList<>();
-		for (T element : provider.iterate(obj)) {
-			values.add(provider.asText(element));
-		}
-
-		assertThat(values).containsExactlyInAnyOrder("foo", "bar");
-	}
-
 	// ================================
 	// HTML Character Escaping Tests
 	// ================================
 
 	@Test
-	void testToStringDoesNotEscapeHtmlCharacters() {
-		// toString() should not escape HTML-like characters (<, >, &, ')
+	void testFormatDoesNotEscapeHtmlCharacters() {
+		// format() should not escape HTML-like characters (<, >, &, ')
 		// This is important for jq @json format compatibility
 		T node = provider.createString("<>&'\"");
-		String json = provider.toString(node);
+		String json = provider.format(node);
 		// The string should be JSON-escaped for quotes and backslashes,
 		// but HTML characters should NOT be Unicode-escaped
 		assertThat(json).isEqualTo("\"<>&'\\\"\"");
 	}
 
 	@Test
-	void testToStringObjectWithHtmlCharacters() {
+	void testFormatObjectWithHtmlCharacters() {
 		// Verify HTML characters in object values are not escaped
-		@Var T obj = provider.createObject();
-		obj = provider.set(obj, "html", provider.createString("<tag>"));
-		String json = provider.toString(obj);
+		T obj = provider.createObject(Collections.singletonMap("html", provider.createString("<tag>")));
+		String json = provider.format(obj);
 		assertThat(json).contains("\"<tag>\"");
 		assertThat(json).doesNotContain("\\u003c"); // Should not Unicode-escape <
 	}

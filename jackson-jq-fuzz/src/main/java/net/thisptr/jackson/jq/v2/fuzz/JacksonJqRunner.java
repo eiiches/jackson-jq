@@ -42,7 +42,7 @@ public class JacksonJqRunner<N> implements Evaluator {
 		try {
 			expr.apply(in, (out, opath) -> {
 				try {
-					values.add(MAPPER.readTree(jsonProvider.toString(out)));
+					values.add(MAPPER.readTree(jsonProvider.format(out)));
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}
@@ -68,7 +68,7 @@ public class JacksonJqRunner<N> implements Evaluator {
 				try {
 					Environment<N> env = new EnvironmentBuilder<>(jsonProvider, jqVersion).build();
 					JsonQuery<N> jq = env.compile(exprText);
-					N nativeIn = jsonProvider.fromString(in.toString());
+					N nativeIn = jsonProvider.parse(in.toString());
 					result.set(doEvaluate(jq, nativeIn));
 				} catch (Throwable e) {
 					exception.set(e);

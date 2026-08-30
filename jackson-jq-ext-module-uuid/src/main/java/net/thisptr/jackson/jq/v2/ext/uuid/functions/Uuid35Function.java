@@ -51,7 +51,7 @@ public class Uuid35Function implements Function {
 						throw new JsonQueryException(String.format("namespace must be string, but got: %s", jsonProvider.getNodeType(namespaceArg)));
 					UUID namespace;
 					try {
-						namespace = UUID.fromString(jsonProvider.asText(namespaceArg));
+						namespace = UUID.fromString(jsonProvider.asString(namespaceArg));
 					} catch (IllegalArgumentException e) {
 						throw new JsonQueryException("namespace must be a valid UUID", e);
 					}
@@ -59,7 +59,7 @@ public class Uuid35Function implements Function {
 					if (jsonProvider.getNodeType(in) == JsonNodeType.BINARY) {
 						uuid = UuidUtils.uuid3or5(namespace, jsonProvider.asByteArray(in), Uuid35Function.this.uuidVersion);
 					} else {
-						uuid = UuidUtils.uuid3or5(namespace, jsonProvider.asText(in).getBytes(StandardCharsets.UTF_8), Uuid35Function.this.uuidVersion);
+						uuid = UuidUtils.uuid3or5(namespace, jsonProvider.asString(in).getBytes(StandardCharsets.UTF_8), Uuid35Function.this.uuidVersion);
 					}
 					output.emit(jsonProvider.createString(uuid.toString()), UntrackedPath.getInstance());
 				});

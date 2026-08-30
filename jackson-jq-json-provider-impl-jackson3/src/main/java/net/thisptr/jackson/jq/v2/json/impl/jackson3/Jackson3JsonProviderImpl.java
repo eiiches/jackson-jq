@@ -1,20 +1,21 @@
 package net.thisptr.jackson.jq.v2.json.impl.jackson3;
 
-import java.io.IOException;
-import java.util.ArrayList;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 import tools.jackson.core.JacksonException;
-import tools.jackson.core.JsonParser;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.MappingIterator;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.BigIntegerNode;
 import tools.jackson.databind.node.BooleanNode;
+import tools.jackson.databind.node.DecimalNode;
 import tools.jackson.databind.node.DoubleNode;
 import tools.jackson.databind.node.FloatNode;
 import tools.jackson.databind.node.IntNode;
@@ -23,7 +24,9 @@ import tools.jackson.databind.node.NullNode;
 import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.databind.node.StringNode;
 
+import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
+import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
 public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
@@ -43,13 +46,21 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public JsonNode createObject() {
-		return mapper.createObjectNode();
+	public JsonNode createObject(Map<String, ? extends JsonNode> values) {
+		ObjectNode result = mapper.createObjectNode();
+		for (Map.Entry<String, ? extends JsonNode> entry : values.entrySet()) {
+			result.set(entry.getKey(), entry.getValue());
+		}
+		return result;
 	}
 
 	@Override
-	public JsonNode createArray() {
-		return mapper.createArrayNode();
+	public JsonNode createArray(Iterable<? extends JsonNode> values) {
+		ArrayNode result = mapper.createArrayNode();
+		for (JsonNode value : values) {
+			result.add(value);
+		}
+		return result;
 	}
 
 	@Override
@@ -75,6 +86,16 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	@Override
 	public JsonNode createNumber(double value) {
 		return DoubleNode.valueOf(value);
+	}
+
+	@Override
+	public JsonNode createNumber(BigInteger value) {
+		return BigIntegerNode.valueOf(value);
+	}
+
+	@Override
+	public JsonNode createNumber(BigDecimal value) {
+		return DecimalNode.valueOf(value);
 	}
 
 	@Override
@@ -112,7 +133,7 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public String asText(JsonNode node) {
+	public String asString(JsonNode node) {
 		// Jackson3's NullNode.asString() returns "" but we need "null" to match Jackson2 behavior
 		if (node.isNull()) {
 			return "null";
@@ -122,12 +143,154 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 
 	@Override
 	public long asLong(JsonNode node) {
-		return node.asLong();
+		if (!node.isNumber())
+			throw new IllegalArgumentException("Cannot convert non-number to long");
+		if (node.isIntegralNumber()) {
+			if (node.canConvertToLong())
+				return node.longValue();
+			throw new IllegalArgumentException("Value " + node + " cannot be represented as long");
+		}
+		if (node.isDouble()) {
+			double value = node.doubleValue();
+			if (Double.isNaN(value))
+				throw new IllegalArgumentException("Cannot convert NaN to long");
+			if (Double.isInfinite(value))
+				throw new IllegalArgumentException("Cannot convert Infinity to long");
+			if (value != Math.rint(value) || value < -0x1p63 || value >= 0x1p63)
+				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
+			return (long) value;
+		}
+		if (node.isFloat()) {
+			float value = node.floatValue();
+			if (Float.isNaN(value))
+				throw new IllegalArgumentException("Cannot convert NaN to long");
+			if (Float.isInfinite(value))
+				throw new IllegalArgumentException("Cannot convert Infinity to long");
+			if (value != Math.rint(value) || value < -0x1p63 || value >= 0x1p63)
+				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
+			return (long) value;
+		}
+		BigDecimal value = node.decimalValue();
+		try {
+			return value.longValueExact();
+		} catch (ArithmeticException e) {
+			throw new IllegalArgumentException("Value " + value + " cannot be represented as long", e);
+		}
+	}
+
+	@Override
+	public long asLongTruncated(JsonNode node) {
+		if (!node.isNumber())
+			throw new IllegalArgumentException("Cannot convert non-number to long");
+		if (node.isIntegralNumber()) {
+			if (node.canConvertToLong())
+				return node.longValue();
+			throw new IllegalArgumentException("Value " + node + " cannot be represented as long");
+		}
+		if (node.isDouble()) {
+			double value = node.doubleValue();
+			if (Double.isNaN(value))
+				throw new IllegalArgumentException("Cannot convert NaN to long");
+			if (Double.isInfinite(value))
+				throw new IllegalArgumentException("Cannot convert Infinity to long");
+			double truncated = value < 0 ? Math.ceil(value) : Math.floor(value);
+			if (truncated < -0x1p63 || truncated >= 0x1p63)
+				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
+			return (long) truncated;
+		}
+		if (node.isFloat()) {
+			float value = node.floatValue();
+			if (Float.isNaN(value))
+				throw new IllegalArgumentException("Cannot convert NaN to long");
+			if (Float.isInfinite(value))
+				throw new IllegalArgumentException("Cannot convert Infinity to long");
+			double truncated = value < 0 ? Math.ceil(value) : Math.floor(value);
+			if (truncated < -0x1p63 || truncated >= 0x1p63)
+				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
+			return (long) truncated;
+		}
+		BigDecimal value = node.decimalValue().setScale(0, RoundingMode.DOWN);
+		try {
+			return value.longValueExact();
+		} catch (ArithmeticException e) {
+			throw new IllegalArgumentException("Value " + value + " cannot be represented as long", e);
+		}
 	}
 
 	@Override
 	public int asInt(JsonNode node) {
-		return node.asInt();
+		if (!node.isNumber())
+			throw new IllegalArgumentException("Cannot convert non-number to int");
+		if (node.isIntegralNumber()) {
+			if (node.canConvertToInt())
+				return node.intValue();
+			throw new IllegalArgumentException("Value " + node + " cannot be represented as int");
+		}
+		if (node.isDouble()) {
+			double value = node.doubleValue();
+			if (Double.isNaN(value))
+				throw new IllegalArgumentException("Cannot convert NaN to int");
+			if (Double.isInfinite(value))
+				throw new IllegalArgumentException("Cannot convert Infinity to int");
+			if (value != Math.rint(value) || value < Integer.MIN_VALUE || value > Integer.MAX_VALUE)
+				throw new IllegalArgumentException("Value " + value + " cannot be represented as int");
+			return (int) value;
+		}
+		if (node.isFloat()) {
+			float value = node.floatValue();
+			if (Float.isNaN(value))
+				throw new IllegalArgumentException("Cannot convert NaN to int");
+			if (Float.isInfinite(value))
+				throw new IllegalArgumentException("Cannot convert Infinity to int");
+			if (value != Math.rint(value) || value < Integer.MIN_VALUE || value > Integer.MAX_VALUE)
+				throw new IllegalArgumentException("Value " + value + " cannot be represented as int");
+			return (int) value;
+		}
+		BigDecimal value = node.decimalValue();
+		try {
+			return value.intValueExact();
+		} catch (ArithmeticException e) {
+			throw new IllegalArgumentException("Value " + value + " cannot be represented as int", e);
+		}
+	}
+
+	@Override
+	public int asIntTruncated(JsonNode node) {
+		if (!node.isNumber())
+			throw new IllegalArgumentException("Cannot convert non-number to int");
+		if (node.isIntegralNumber()) {
+			if (node.canConvertToInt())
+				return node.intValue();
+			throw new IllegalArgumentException("Value " + node + " cannot be represented as int");
+		}
+		if (node.isDouble()) {
+			double value = node.doubleValue();
+			if (Double.isNaN(value))
+				throw new IllegalArgumentException("Cannot convert NaN to int");
+			if (Double.isInfinite(value))
+				throw new IllegalArgumentException("Cannot convert Infinity to int");
+			double truncated = value < 0 ? Math.ceil(value) : Math.floor(value);
+			if (truncated < Integer.MIN_VALUE || truncated > Integer.MAX_VALUE)
+				throw new IllegalArgumentException("Value " + value + " cannot be represented as int");
+			return (int) truncated;
+		}
+		if (node.isFloat()) {
+			float value = node.floatValue();
+			if (Float.isNaN(value))
+				throw new IllegalArgumentException("Cannot convert NaN to int");
+			if (Float.isInfinite(value))
+				throw new IllegalArgumentException("Cannot convert Infinity to int");
+			double truncated = value < 0 ? Math.ceil(value) : Math.floor(value);
+			if (truncated < Integer.MIN_VALUE || truncated > Integer.MAX_VALUE)
+				throw new IllegalArgumentException("Value " + value + " cannot be represented as int");
+			return (int) truncated;
+		}
+		BigDecimal value = node.decimalValue().setScale(0, RoundingMode.DOWN);
+		try {
+			return value.intValueExact();
+		} catch (ArithmeticException e) {
+			throw new IllegalArgumentException("Value " + value + " cannot be represented as int", e);
+		}
 	}
 
 	@Override
@@ -161,24 +324,6 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public JsonNode set(JsonNode node, String fieldName, JsonNode value) {
-		((ObjectNode) node).set(fieldName, value);
-		return node;
-	}
-
-	@Override
-	public JsonNode add(JsonNode node, JsonNode value) {
-		((ArrayNode) node).add(value);
-		return node;
-	}
-
-	@Override
-	public JsonNode set(JsonNode node, int index, JsonNode value) {
-		((ArrayNode) node).set(index, value);
-		return node;
-	}
-
-	@Override
 	public int size(JsonNode node) {
 		return node.size();
 	}
@@ -199,7 +344,7 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public String toString(JsonNode node) {
+	public String format(JsonNode node) {
 		try {
 			return mapper.writeValueAsString(node);
 		} catch (JacksonException e) {
@@ -208,44 +353,46 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public JsonNode fromString(String json) throws IOException {
+	public JsonParser<JsonNode> createParser(InputStream in) {
 		try {
-			return mapper.readTree(json);
+			return new JacksonJsonParser(mapper.createParser(in));
 		} catch (JacksonException e) {
-			throw new IOException(e);
+			throw new JsonException(e);
 		}
 	}
 
-	@Override
-	public JsonNode fromStringStrict(String json) throws IOException {
-		try (JsonParser parser = mapper.createParser(json)) {
-			JsonNode tree = parser.readValueAsTree();
-			if (tree == null)
-				throw new IOException("empty input");
-			if (parser.nextToken() != null)
-				throw new IOException("trailing content");
-			return tree;
-		} catch (JacksonException e) {
-			throw new IOException(e);
-		}
-	}
+	/**
+	 * Reads one value per call off a streaming parser. {@code ObjectReader#readValues} is deliberately
+	 * not used: it unwraps a root-level array into its elements, whereas an array is a single value here.
+	 */
+	private static class JacksonJsonParser implements JsonParser<JsonNode> {
+		private final tools.jackson.core.JsonParser parser;
 
-	@Override
-	public List<JsonNode> readMultipleValues(String json) throws IOException {
-		List<JsonNode> result = new ArrayList<>();
-		try (MappingIterator<JsonNode> iter = mapper.readerFor(JsonNode.class).readValues(json)) {
-			while (iter.hasNext()) {
-				result.add(iter.next());
+		JacksonJsonParser(tools.jackson.core.JsonParser parser) {
+			this.parser = parser;
+		}
+
+		@Override
+		public @Nullable JsonNode next() {
+			try {
+				// readValueAsTree() binds the token the parser already sits on, so without advancing
+				// first it would return the same value forever.
+				if (parser.nextToken() == null)
+					return null;
+				return parser.readValueAsTree();
+			} catch (JacksonException e) {
+				throw new JsonException(e);
 			}
-		} catch (JacksonException e) {
-			throw new IOException(e);
 		}
-		return result;
-	}
 
-	@Override
-	public JsonNode valueToTree(@Nullable Object value) {
-		return mapper.valueToTree(value);
+		@Override
+		public void close() {
+			try {
+				parser.close();
+			} catch (JacksonException e) {
+				throw new JsonException(e);
+			}
+		}
 	}
 
 	@Override

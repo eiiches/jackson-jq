@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.test;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -73,11 +74,7 @@ public abstract class AbstractJsonQueryTest<T> {
 					ClassPathModuleLoader.getInstance()));
 		}
 		Environment<T> env = envBuilder
-				.defineVariable("ENV", () -> {
-					@Var T envObj = envBuilder.getJsonProvider().createObject();
-					envObj = envBuilder.getJsonProvider().set(envObj, "PAGER", envBuilder.getJsonProvider().createString("less"));
-					return envObj;
-				})
+				.defineVariable("ENV", () -> envBuilder.getJsonProvider().createObject(Collections.singletonMap("PAGER", envBuilder.getJsonProvider().createString("less"))))
 				.build();
 
 		String command = String.format("jq (v%s) '%s' <<< '%s'", version, tc.q, tc.in);

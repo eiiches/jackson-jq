@@ -122,7 +122,7 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 		}
 
 		if (type == JsonNodeType.STRING || type == JsonNodeType.BINARY)
-			return jsonProvider.asText(o1).compareTo(jsonProvider.asText(o2));
+			return jsonProvider.asString(o1).compareTo(jsonProvider.asString(o2));
 
 		if (type == JsonNodeType.ARRAY) {
 			return compareArrayNode(o1, o2);

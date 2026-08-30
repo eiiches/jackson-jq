@@ -52,16 +52,16 @@ public class StrFTimeFunction implements Function {
 					args.get(0).apply(context, in, UntrackedPath.getInstance(), (fmt, opath) -> {
 						if (jsonProvider.getNodeType(fmt) != JsonNodeType.STRING)
 							throw new JsonQueryException(String.format("Illegal argument type: %s", jsonProvider.getNodeType(fmt)));
-						SimpleDateFormat sdf = new SimpleDateFormat(jsonProvider.asText(fmt));
+						SimpleDateFormat sdf = new SimpleDateFormat(jsonProvider.asString(fmt));
 						if (args.size() == 2) {
 							args.get(1).apply(context, in, UntrackedPath.getInstance(), (tz, opath2) -> {
 								if (jsonProvider.getNodeType(tz) != JsonNodeType.STRING)
 									throw new JsonQueryException("Timezone must be a string");
-								sdf.setTimeZone(TimeZone.getTimeZone(jsonProvider.asText(tz)));
-								output.emit(jsonProvider.createString(sdf.format((long) jsonProvider.asDouble(in))), UntrackedPath.getInstance());
+								sdf.setTimeZone(TimeZone.getTimeZone(jsonProvider.asString(tz)));
+								output.emit(jsonProvider.createString(sdf.format(jsonProvider.asLongTruncated(in))), UntrackedPath.getInstance());
 							});
 						} else {
-							output.emit(jsonProvider.createString(sdf.format((long) jsonProvider.asDouble(in))), UntrackedPath.getInstance());
+							output.emit(jsonProvider.createString(sdf.format(jsonProvider.asLongTruncated(in))), UntrackedPath.getInstance());
 						}
 					});
 				} catch (Exception e) {

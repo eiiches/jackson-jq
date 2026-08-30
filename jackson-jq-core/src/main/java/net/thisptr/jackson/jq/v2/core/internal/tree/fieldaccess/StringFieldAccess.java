@@ -73,7 +73,7 @@ public class StringFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 			target.apply(frame, in, path, (pobj, ppath) -> {
 				if (jsonProvider.getNodeType(key) != JsonNodeType.STRING && !permissive)
 					throw new IllegalStateException(); // FIXME: exception type
-				emitObjectFieldPath(jsonProvider, permissive, jsonProvider.asText(key), pobj, ppath, output, !(path instanceof UntrackedPath), version);
+				emitObjectFieldPath(jsonProvider, permissive, jsonProvider.asString(key), pobj, ppath, output, !(path instanceof UntrackedPath), version);
 			});
 		});
 	}

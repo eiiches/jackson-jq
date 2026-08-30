@@ -3,9 +3,13 @@ package net.thisptr.jackson.jq.v2.ext.debug.functions;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -77,8 +81,12 @@ public class DumpExprFunction implements Function {
 				return jsonProvider.createNumber(((Float) value).floatValue());
 			if (value instanceof Double)
 				return jsonProvider.createNumber(((Double) value).doubleValue());
+			if (value instanceof BigInteger)
+				return jsonProvider.createNumber((BigInteger) value);
+			if (value instanceof BigDecimal)
+				return jsonProvider.createNumber((BigDecimal) value);
 			if (value instanceof Number)
-				return jsonProvider.valueToTree(value);
+				return jsonProvider.createNumber(((Number) value).doubleValue());
 			String previousIdentity = identities.get(value);
 			if (previousIdentity != null)
 				return reference(previousIdentity);
@@ -98,19 +106,22 @@ public class DumpExprFunction implements Function {
 		}
 
 		private JsonNode serializeExpression(Expression<?, ?> expression, String identity) {
-			@Var JsonNode node = objectEnvelope(expression, identity);
-			node = jsonProvider.set(node, "cardinality", jsonProvider.createString(expression.getCardinality().name().toLowerCase(Locale.ROOT)));
-			node = jsonProvider.set(node, "depends_on_input", jsonProvider.createBoolean(expression.dependsOnInput()));
-			node = jsonProvider.set(node, "depends_on_external_state", jsonProvider.createBoolean(expression.dependsOnExternalState()));
-			return serializeFields(expression, node);
+			Map<String, JsonNode> node = objectEnvelope(expression, identity);
+			node.put("cardinality", jsonProvider.createString(expression.getCardinality().name().toLowerCase(Locale.ROOT)));
+			node.put("depends_on_input", jsonProvider.createBoolean(expression.dependsOnInput()));
+			node.put("depends_on_external_state", jsonProvider.createBoolean(expression.dependsOnExternalState()));
+			putFields(expression, node);
+			return jsonProvider.createObject(node);
 		}
 
 		private JsonNode serializeObject(Object value, String identity) {
-			return serializeFields(value, objectEnvelope(value, identity));
+			Map<String, JsonNode> node = objectEnvelope(value, identity);
+			putFields(value, node);
+			return jsonProvider.createObject(node);
 		}
 
-		private JsonNode serializeFields(Object value, @Var JsonNode node) {
-			@Var JsonNode fieldsNode = jsonProvider.createObject();
+		private void putFields(Object value, Map<String, JsonNode> node) {
+			Map<String, JsonNode> fields = new LinkedHashMap<>();
 			for (Field field : instanceFields(value.getClass())) {
 				String name = fieldName(field, value.getClass());
 				@Var JsonNode fieldValue;
@@ -121,74 +132,71 @@ public class DumpExprFunction implements Function {
 				} catch (IllegalAccessException | RuntimeException e) {
 					fieldValue = inaccessible(e);
 				}
-				fieldsNode = jsonProvider.set(fieldsNode, name, fieldValue);
+				fields.put(name, fieldValue);
 			}
-			node = jsonProvider.set(node, "fields", fieldsNode);
-			return node;
+			node.put("fields", jsonProvider.createObject(fields));
 		}
 
 		private JsonNode serializeArray(Object array, String identity) {
-			@Var JsonNode elements = jsonProvider.createArray();
+			List<JsonNode> elements = new ArrayList<>(Array.getLength(array));
 			for (int i = 0; i < Array.getLength(array); ++i)
-				elements = jsonProvider.add(elements, serialize(Array.get(array, i)));
-			@Var JsonNode node = objectEnvelope(array, identity);
-			node = jsonProvider.set(node, "elements", elements);
-			return node;
+				elements.add(serialize(Array.get(array, i)));
+			Map<String, JsonNode> node = objectEnvelope(array, identity);
+			node.put("elements", jsonProvider.createArray(elements));
+			return jsonProvider.createObject(node);
 		}
 
 		private JsonNode serializeIterable(Iterable<?> iterable, String identity) {
-			@Var JsonNode elements = jsonProvider.createArray();
+			List<JsonNode> elements = new ArrayList<>();
 			for (Object element : iterable)
-				elements = jsonProvider.add(elements, serialize(element));
-			@Var JsonNode node = objectEnvelope(iterable, identity);
-			node = jsonProvider.set(node, "elements", elements);
-			return node;
+				elements.add(serialize(element));
+			Map<String, JsonNode> node = objectEnvelope(iterable, identity);
+			node.put("elements", jsonProvider.createArray(elements));
+			return jsonProvider.createObject(node);
 		}
 
 		private JsonNode serializeMap(Map<?, ?> map, String identity) {
-			@Var JsonNode entries = jsonProvider.createArray();
+			List<JsonNode> entries = new ArrayList<>(map.size());
 			for (Map.Entry<?, ?> entry : map.entrySet()) {
-				@Var JsonNode entryNode = jsonProvider.createObject();
-				entryNode = jsonProvider.set(entryNode, "key", serialize(entry.getKey()));
-				entryNode = jsonProvider.set(entryNode, "value", serialize(entry.getValue()));
-				entries = jsonProvider.add(entries, entryNode);
+				Map<String, JsonNode> entryNode = new LinkedHashMap<>();
+				entryNode.put("key", serialize(entry.getKey()));
+				entryNode.put("value", serialize(entry.getValue()));
+				entries.add(jsonProvider.createObject(entryNode));
 			}
-			@Var JsonNode node = objectEnvelope(map, identity);
-			node = jsonProvider.set(node, "entries", entries);
-			return node;
+			Map<String, JsonNode> node = objectEnvelope(map, identity);
+			node.put("entries", jsonProvider.createArray(entries));
+			return jsonProvider.createObject(node);
 		}
 
 		private JsonNode reference(String identity) {
-			@Var JsonNode node = jsonProvider.createObject();
-			node = jsonProvider.set(node, "$ref", jsonProvider.createString(identity));
-			return node;
+			return jsonProvider.createObject(Collections.singletonMap("$ref", jsonProvider.createString(identity)));
 		}
 
 		private JsonNode serializeOpaque(Object value, String identity) {
-			@Var JsonNode node = objectEnvelope(value, identity);
+			Map<String, JsonNode> node = objectEnvelope(value, identity);
 			try {
-				node = jsonProvider.set(node, "value", jsonProvider.createString(String.valueOf(value)));
+				node.put("value", jsonProvider.createString(String.valueOf(value)));
 			} catch (RuntimeException e) {
-				node = jsonProvider.set(node, "stringification_failed", jsonProvider.createBoolean(true));
-				node = jsonProvider.set(node, "error", jsonProvider.createString(e.getClass().getName()));
+				node.put("stringification_failed", jsonProvider.createBoolean(true));
+				node.put("error", jsonProvider.createString(e.getClass().getName()));
 			}
-			return node;
+			return jsonProvider.createObject(node);
 		}
 
-		private JsonNode objectEnvelope(Object value, String identity) {
-			@Var JsonNode node = jsonProvider.createObject();
-			node = jsonProvider.set(node, "object", jsonProvider.createString(identity));
-			node = jsonProvider.set(node, "class", jsonProvider.createString(value.getClass().getName()));
+		private Map<String, JsonNode> objectEnvelope(Object value, String identity) {
+			Map<String, JsonNode> node = new LinkedHashMap<>();
+			node.put("object", jsonProvider.createString(identity));
+			node.put("class", jsonProvider.createString(value.getClass().getName()));
 			return node;
 		}
 
 		private JsonNode inaccessible(Exception e) {
-			@Var JsonNode node = jsonProvider.createObject();
-			node = jsonProvider.set(node, "inaccessible", jsonProvider.createBoolean(true));
-			node = jsonProvider.set(node, "error", jsonProvider.createString(e.getClass().getName()));
+			Map<String, JsonNode> node = new LinkedHashMap<>();
+			node.put("inaccessible", jsonProvider.createBoolean(true));
+			node.put("error", jsonProvider.createString(e.getClass().getName()));
 			if (e.getMessage() != null)
-				node = jsonProvider.set(node, "message", jsonProvider.createString(e.getMessage()));
-			return node;
+				node.put("message", jsonProvider.createString(e.getMessage()));
+			return jsonProvider.createObject(node);
 		}
 
 		private static List<Field> instanceFields(Class<?> type) {

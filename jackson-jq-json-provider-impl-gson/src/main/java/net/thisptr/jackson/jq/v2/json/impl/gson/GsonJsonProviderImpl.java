@@ -1,23 +1,33 @@
 package net.thisptr.jackson.jq.v2.json.impl.gson;
 
-import java.util.ArrayList;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import com.google.errorprone.annotations.Var;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonStreamParser;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
+import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
 public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
@@ -37,13 +47,21 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public JsonElement createObject() {
-		return new JsonObject();
+	public JsonElement createObject(Map<String, ? extends JsonElement> values) {
+		JsonObject result = new JsonObject();
+		for (Map.Entry<String, ? extends JsonElement> entry : values.entrySet()) {
+			result.add(entry.getKey(), entry.getValue());
+		}
+		return result;
 	}
 
 	@Override
-	public JsonElement createArray() {
-		return new JsonArray();
+	public JsonElement createArray(Iterable<? extends JsonElement> values) {
+		JsonArray result = new JsonArray();
+		for (JsonElement value : values) {
+			result.add(value);
+		}
+		return result;
 	}
 
 	@Override
@@ -68,6 +86,16 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 
 	@Override
 	public JsonElement createNumber(double value) {
+		return new JsonPrimitive(value);
+	}
+
+	@Override
+	public JsonElement createNumber(BigInteger value) {
+		return new JsonPrimitive(value);
+	}
+
+	@Override
+	public JsonElement createNumber(BigDecimal value) {
 		return new JsonPrimitive(value);
 	}
 
@@ -141,7 +169,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public String asText(JsonElement node) {
+	public String asString(JsonElement node) {
 		if (node.isJsonNull()) {
 			return "null";
 		}
@@ -153,56 +181,87 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 
 	@Override
 	public long asLong(JsonElement node) {
-		if (node.isJsonPrimitive()) {
-			JsonPrimitive primitive = node.getAsJsonPrimitive();
-			if (primitive.isNumber()) {
-				double d = primitive.getAsDouble();
-				if (Double.isNaN(d)) {
-					throw new IllegalArgumentException("Cannot convert NaN to long");
-				}
-				if (Double.isInfinite(d)) {
-					throw new IllegalArgumentException("Cannot convert Infinity to long");
-				}
-				return primitive.getAsLong();
-			}
-			if (primitive.isString()) {
-				try {
-					return Long.parseLong(primitive.getAsString());
-				} catch (NumberFormatException e) {
-					return 0;
-				}
-			}
+		if (!node.isJsonPrimitive() || !node.getAsJsonPrimitive().isNumber())
+			throw new IllegalArgumentException("Cannot convert non-number to long");
+		JsonPrimitive primitive = node.getAsJsonPrimitive();
+		Number number = primitive.getAsNumber();
+		if (number instanceof Double || number instanceof Float) {
+			double value = number.doubleValue();
+			if (Double.isNaN(value))
+				throw new IllegalArgumentException("Cannot convert NaN to long");
+			if (Double.isInfinite(value))
+				throw new IllegalArgumentException("Cannot convert Infinity to long");
+			if (value != Math.rint(value) || value < -0x1p63 || value >= 0x1p63)
+				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
+			return (long) value;
 		}
-		return 0;
+		BigDecimal value = requireFiniteNumber(node, "long");
+		try {
+			return value.longValueExact();
+		} catch (ArithmeticException e) {
+			throw cannotRepresent(value, "long", e);
+		}
+	}
+
+	@Override
+	public long asLongTruncated(JsonElement node) {
+		if (!node.isJsonPrimitive() || !node.getAsJsonPrimitive().isNumber())
+			throw new IllegalArgumentException("Cannot convert non-number to long");
+		JsonPrimitive primitive = node.getAsJsonPrimitive();
+		Number number = primitive.getAsNumber();
+		if (number instanceof Double || number instanceof Float) {
+			double value = number.doubleValue();
+			if (Double.isNaN(value))
+				throw new IllegalArgumentException("Cannot convert NaN to long");
+			if (Double.isInfinite(value))
+				throw new IllegalArgumentException("Cannot convert Infinity to long");
+			double truncated = value < 0 ? Math.ceil(value) : Math.floor(value);
+			if (truncated < -0x1p63 || truncated >= 0x1p63)
+				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
+			return (long) truncated;
+		}
+		BigDecimal value = requireFiniteNumber(node, "long").setScale(0, RoundingMode.DOWN);
+		try {
+			return value.longValueExact();
+		} catch (ArithmeticException e) {
+			throw cannotRepresent(value, "long", e);
+		}
 	}
 
 	@Override
 	public int asInt(JsonElement node) {
-		if (node.isJsonPrimitive()) {
-			JsonPrimitive primitive = node.getAsJsonPrimitive();
-			if (primitive.isNumber()) {
-				double d = primitive.getAsDouble();
-				if (Double.isNaN(d)) {
-					throw new IllegalArgumentException("Cannot convert NaN to int");
-				}
-				if (Double.isInfinite(d)) {
-					throw new IllegalArgumentException("Cannot convert Infinity to int");
-				}
-				long l = primitive.getAsLong();
-				if (l > Integer.MAX_VALUE || l < Integer.MIN_VALUE) {
-					throw new IllegalArgumentException("Value " + l + " is outside the range of int");
-				}
-				return primitive.getAsInt();
-			}
-			if (primitive.isString()) {
-				try {
-					return Integer.parseInt(primitive.getAsString());
-				} catch (NumberFormatException e) {
-					return 0;
-				}
-			}
+		BigDecimal value = requireFiniteNumber(node, "int");
+		try {
+			return value.intValueExact();
+		} catch (ArithmeticException e) {
+			throw cannotRepresent(value, "int", e);
 		}
-		return 0;
+	}
+
+	@Override
+	public int asIntTruncated(JsonElement node) {
+		BigDecimal value = requireFiniteNumber(node, "int").setScale(0, RoundingMode.DOWN);
+		try {
+			return value.intValueExact();
+		} catch (ArithmeticException e) {
+			throw cannotRepresent(value, "int", e);
+		}
+	}
+
+	private static BigDecimal requireFiniteNumber(JsonElement node, String targetType) {
+		if (!node.isJsonPrimitive() || !node.getAsJsonPrimitive().isNumber())
+			throw new IllegalArgumentException("Cannot convert non-number to " + targetType);
+		JsonPrimitive primitive = node.getAsJsonPrimitive();
+		double value = primitive.getAsDouble();
+		if (Double.isNaN(value))
+			throw new IllegalArgumentException("Cannot convert NaN to " + targetType);
+		if (Double.isInfinite(value))
+			throw new IllegalArgumentException("Cannot convert Infinity to " + targetType);
+		return primitive.getAsBigDecimal();
+	}
+
+	private static IllegalArgumentException cannotRepresent(BigDecimal value, String targetType, ArithmeticException cause) {
+		return new IllegalArgumentException("Value " + value + " cannot be represented as " + targetType, cause);
 	}
 
 	@Override
@@ -260,24 +319,6 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public JsonElement set(JsonElement node, String fieldName, JsonElement value) {
-		node.getAsJsonObject().add(fieldName, value);
-		return node;
-	}
-
-	@Override
-	public JsonElement add(JsonElement node, JsonElement value) {
-		node.getAsJsonArray().add(value);
-		return node;
-	}
-
-	@Override
-	public JsonElement set(JsonElement node, int index, JsonElement value) {
-		node.getAsJsonArray().set(index, value);
-		return node;
-	}
-
-	@Override
 	public int size(JsonElement node) {
 		if (node.isJsonArray()) {
 			return node.getAsJsonArray().size();
@@ -311,7 +352,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public String toString(JsonElement node) {
+	public String format(JsonElement node) {
 		return toJqString(node);
 	}
 
@@ -371,39 +412,52 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public JsonElement fromString(String json) throws Exception {
-		return JsonParser.parseString(json);
+	public JsonParser<JsonElement> createParser(InputStream in) {
+		return new JsonStreamParserAdapter(in);
 	}
 
-	@Override
-	public JsonElement fromStringStrict(String json) throws Exception {
-		if (json == null || json.isEmpty()) {
-			throw new IllegalArgumentException("empty input");
-		}
-		JsonStreamParser parser = new JsonStreamParser(json);
-		if (!parser.hasNext()) {
-			throw new IllegalArgumentException("empty input");
-		}
-		JsonElement result = parser.next();
-		if (parser.hasNext()) {
-			throw new IllegalArgumentException("trailing content");
-		}
-		return result;
-	}
+	private static class JsonStreamParserAdapter implements JsonParser<JsonElement> {
+		private final Reader reader;
+		private final JsonStreamParser parser;
 
-	@Override
-	public List<JsonElement> readMultipleValues(String json) throws Exception {
-		List<JsonElement> result = new ArrayList<>();
-		JsonStreamParser parser = new JsonStreamParser(json);
-		while (parser.hasNext()) {
-			result.add(parser.next());
+		JsonStreamParserAdapter(InputStream in) {
+			this.reader = new InputStreamReader(in, StandardCharsets.UTF_8);
+			this.parser = new JsonStreamParser(reader);
 		}
-		return result;
-	}
 
-	@Override
-	public JsonElement valueToTree(@Nullable Object value) {
-		return gson.toJsonTree(value);
+		@Override
+		public @Nullable JsonElement next() {
+			try {
+				return hasNext() ? parser.next() : null;
+			} catch (JsonParseException e) {
+				throw new JsonException(e);
+			}
+		}
+
+		/**
+		 * Reports whether another value follows. Gson signals end of input by throwing
+		 * {@link EOFException} out of {@code hasNext()} rather than returning {@code false}; a value
+		 * that is merely truncated throws from {@code next()} instead, so treating this one case as
+		 * end of input does not swallow malformed JSON.
+		 */
+		private boolean hasNext() {
+			try {
+				return parser.hasNext();
+			} catch (JsonIOException e) {
+				if (e.getCause() instanceof EOFException)
+					return false;
+				throw new JsonException(e);
+			}
+		}
+
+		@Override
+		public void close() {
+			try {
+				reader.close();
+			} catch (IOException e) {
+				throw new JsonException(e);
+			}
+		}
 	}
 
 	@Override

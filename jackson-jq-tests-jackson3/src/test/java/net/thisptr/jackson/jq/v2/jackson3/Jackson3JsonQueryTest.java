@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.v2.jackson3;
 
-import java.io.IOException;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,11 +26,7 @@ public class Jackson3JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 	@Override
 	protected JsonNode parseTestNode(com.fasterxml.jackson.databind.JsonNode node) {
 		// Convert Jackson 2 JsonNode (from test data) to Jackson 3 JsonNode via JSON string
-		try {
-			return Jackson3JsonProviderImpl.getInstance().fromString(node.toString());
-		} catch (IOException e) {
-			throw new RuntimeException("Failed to parse test node", e);
-		}
+		return Jackson3JsonProviderImpl.getInstance().parse(node.toString());
 	}
 
 	@Override

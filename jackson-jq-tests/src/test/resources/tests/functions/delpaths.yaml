@@ -21,3 +21,9 @@
   - "Cannot delete boolean field of object"
   v: '[1.5, )'
   failing: true
+
+- q: 'delpaths([[1.9], [1e20]])'
+  in: [0, 1, 2]
+  out:
+  - [0, 2]
+  v: '[1.5, )'

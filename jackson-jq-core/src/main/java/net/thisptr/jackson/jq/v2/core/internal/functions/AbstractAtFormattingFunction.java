@@ -19,7 +19,7 @@ public abstract class AbstractAtFormattingFunction implements Function {
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 			String text = jsonProvider.getNodeType(in) == JsonNodeType.STRING
-					? jsonProvider.asText(in)
+					? jsonProvider.asString(in)
 					: JsonNodeUtils.toString(jsonProvider, in, version);
 			output.emit(jsonProvider.createString(convert(text)), UntrackedPath.getInstance());
 		});

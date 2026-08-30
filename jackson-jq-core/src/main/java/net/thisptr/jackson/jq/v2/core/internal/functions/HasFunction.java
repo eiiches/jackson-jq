@@ -30,16 +30,22 @@ public class HasFunction implements Function {
 				if (inType == JsonNodeType.OBJECT) {
 					if (keyType != JsonNodeType.STRING)
 						throw new JsonQueryException("argument 1 of has() must be string for object input");
-					output.emit(jsonProvider.createBoolean(jsonProvider.has(in, jsonProvider.asText(keyName))), UntrackedPath.getInstance());
+					output.emit(jsonProvider.createBoolean(jsonProvider.has(in, jsonProvider.asString(keyName))), UntrackedPath.getInstance());
 				} else if (inType == JsonNodeType.ARRAY) {
 					if (keyType != JsonNodeType.NUMBER)
 						throw new JsonQueryException("argument 1 of has() must be int for array input");
 					double keyAsDouble = jsonProvider.asDouble(keyName);
-					if (Double.isNaN(keyAsDouble) || Double.isInfinite(keyAsDouble))
-						throw new JsonQueryException("argument 1 of has() must be int for array input, got " + (Double.isNaN(keyAsDouble) ? "nan" : "infinite"));
-					int keyAsInt = (int) keyAsDouble;
-					if (keyAsDouble != keyAsInt)
-						throw new JsonQueryException("argument 1 of has() must be int for array input, got " + keyAsDouble);
+					if (Double.isNaN(keyAsDouble) || Double.isInfinite(keyAsDouble)) {
+						output.emit(jsonProvider.createBoolean(false), UntrackedPath.getInstance());
+						return;
+					}
+					int keyAsInt;
+					try {
+						keyAsInt = jsonProvider.asIntTruncated(keyName);
+					} catch (IllegalArgumentException e) {
+						output.emit(jsonProvider.createBoolean(false), UntrackedPath.getInstance());
+						return;
+					}
 					output.emit(jsonProvider.createBoolean(jsonProvider.has(in, keyAsInt)), UntrackedPath.getInstance());
 				} else {
 					throw new JsonQueryException("has() is not applicable to " + inType);

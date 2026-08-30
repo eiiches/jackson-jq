@@ -56,9 +56,9 @@ public class JsonNodeUtils {
 			case BOOLEAN:
 				return jsonProvider.asBoolean(in) ? "true" : "false";
 			case NUMBER:
-				return jsonProvider.toString(in);
+				return jsonProvider.format(in);
 			case STRING:
-				return String.format("\"%s\"", jsonProvider.asText(in));
+				return String.format("\"%s\"", jsonProvider.asString(in));
 			case ARRAY:
 				return "array";
 			case OBJECT:
@@ -79,7 +79,7 @@ public class JsonNodeUtils {
 	}
 
 	public static <JsonNode> String print(JsonProvider<JsonNode> jsonProvider, JsonNode in) {
-		return jsonProvider.toString(in);
+		return jsonProvider.format(in);
 	}
 
 	public static <JsonNode> boolean isIterable(JsonProvider<JsonNode> jsonProvider, JsonNode in) {
@@ -94,11 +94,11 @@ public class JsonNodeUtils {
 	}
 
 	public static <JsonNode> String toString(JsonProvider<JsonNode> jsonProvider, JsonNode node) {
-		return jsonProvider.toString(node);
+		return jsonProvider.format(node);
 	}
 
 	public static <JsonNode> String toString(JsonProvider<JsonNode> jsonProvider, JsonNode node, @Nullable Version version) {
-		String text = jsonProvider.toString(node);
+		String text = jsonProvider.format(node);
 		if (version != null && version.compareTo(Versions.JQ_1_7) < 0) {
 			if (jsonProvider.getNodeType(node) == JsonNodeType.NUMBER) {
 				return text.replace('E', 'e');

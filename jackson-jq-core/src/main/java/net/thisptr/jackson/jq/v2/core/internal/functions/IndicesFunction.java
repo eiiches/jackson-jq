@@ -45,8 +45,8 @@ public class IndicesFunction implements Function {
 		JsonNodeType needleType = jsonProvider.getNodeType(needle);
 		JsonNodeType haystackType = jsonProvider.getNodeType(haystack);
 		if (needleType == JsonNodeType.STRING && haystackType == JsonNodeType.STRING) {
-			String haystackText = jsonProvider.asText(haystack);
-			String needleText = jsonProvider.asText(needle);
+			String haystackText = jsonProvider.asString(haystack);
+			String needleText = jsonProvider.asString(needle);
 			if (!needleText.isEmpty()) {
 				for (int index = haystackText.indexOf(needleText); index >= 0; index = haystackText.indexOf(needleText, index + 1))
 					result.add(index);

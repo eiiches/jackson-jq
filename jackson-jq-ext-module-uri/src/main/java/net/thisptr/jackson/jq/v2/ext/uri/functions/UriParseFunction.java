@@ -6,6 +6,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -45,7 +46,7 @@ public class UriParseFunction implements Function {
 			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 				Preconditions.checkInputType(jsonProvider, "uriparse", in, JsonNodeType.STRING);
 				try {
-					URI uri = new URI(jsonProvider.asText(in));
+					URI uri = new URI(jsonProvider.asString(in));
 					Map<String, JsonNode> queryObj = parseQueryObj(jsonProvider, uri.getRawQuery());
 					output.emit(buildResult(jsonProvider, uri, queryObj), UntrackedPath.getInstance());
 				} catch (URISyntaxException e) {
@@ -83,10 +84,10 @@ public class UriParseFunction implements Function {
 		Map<String, JsonNode> result2 = new HashMap<>();
 		for (Map.Entry<String, List<String>> entry : result.entrySet()) {
 			if (entry.getValue().size() > 1) {
-				@Var JsonNode arr = jsonProvider.createArray();
+				List<JsonNode> arr = new ArrayList<>(entry.getValue().size());
 				for (String value : entry.getValue())
-					arr = jsonProvider.add(arr, jsonProvider.createString(value));
-				result2.put(entry.getKey(), arr);
+					arr.add(jsonProvider.createString(value));
+				result2.put(entry.getKey(), jsonProvider.createArray(arr));
 			} else {
 				result2.put(entry.getKey(), jsonProvider.createString(entry.getValue().get(0)));
 			}
@@ -95,25 +96,21 @@ public class UriParseFunction implements Function {
 	}
 
 	private <JsonNode> JsonNode buildResult(JsonProvider<JsonNode> jsonProvider, URI uri, Map<String, JsonNode> queryObj) {
-		@Var JsonNode result = jsonProvider.createObject();
-		result = jsonProvider.set(result, "scheme", uri.getScheme() != null ? jsonProvider.createString(uri.getScheme()) : jsonProvider.createNull());
-		result = jsonProvider.set(result, "user_info", uri.getUserInfo() != null ? jsonProvider.createString(uri.getUserInfo()) : jsonProvider.createNull());
-		result = jsonProvider.set(result, "raw_user_info", uri.getRawUserInfo() != null ? jsonProvider.createString(uri.getRawUserInfo()) : jsonProvider.createNull());
-		result = jsonProvider.set(result, "host", uri.getHost() != null ? jsonProvider.createString(uri.getHost()) : jsonProvider.createNull());
-		result = jsonProvider.set(result, "port", jsonProvider.createNumber(uri.getPort()));
-		result = jsonProvider.set(result, "authority", uri.getAuthority() != null ? jsonProvider.createString(uri.getAuthority()) : jsonProvider.createNull());
-		result = jsonProvider.set(result, "raw_authority", uri.getRawAuthority() != null ? jsonProvider.createString(uri.getRawAuthority()) : jsonProvider.createNull());
-		result = jsonProvider.set(result, "path", uri.getPath() != null ? jsonProvider.createString(uri.getPath()) : jsonProvider.createNull());
-		result = jsonProvider.set(result, "raw_path", uri.getRawPath() != null ? jsonProvider.createString(uri.getRawPath()) : jsonProvider.createNull());
-		result = jsonProvider.set(result, "query", uri.getQuery() != null ? jsonProvider.createString(uri.getQuery()) : jsonProvider.createNull());
-		result = jsonProvider.set(result, "raw_query", uri.getRawQuery() != null ? jsonProvider.createString(uri.getRawQuery()) : jsonProvider.createNull());
-		@Var JsonNode queryObjNode = jsonProvider.createObject();
-		for (Map.Entry<String, JsonNode> entry : queryObj.entrySet()) {
-			queryObjNode = jsonProvider.set(queryObjNode, entry.getKey(), entry.getValue());
-		}
-		result = jsonProvider.set(result, "query_obj", queryObjNode);
-		result = jsonProvider.set(result, "fragment", uri.getFragment() != null ? jsonProvider.createString(uri.getFragment()) : jsonProvider.createNull());
-		result = jsonProvider.set(result, "raw_fragment", uri.getRawFragment() != null ? jsonProvider.createString(uri.getRawFragment()) : jsonProvider.createNull());
-		return result;
+		Map<String, JsonNode> result = new LinkedHashMap<>();
+		result.put("scheme", uri.getScheme() != null ? jsonProvider.createString(uri.getScheme()) : jsonProvider.createNull());
+		result.put("user_info", uri.getUserInfo() != null ? jsonProvider.createString(uri.getUserInfo()) : jsonProvider.createNull());
+		result.put("raw_user_info", uri.getRawUserInfo() != null ? jsonProvider.createString(uri.getRawUserInfo()) : jsonProvider.createNull());
+		result.put("host", uri.getHost() != null ? jsonProvider.createString(uri.getHost()) : jsonProvider.createNull());
+		result.put("port", jsonProvider.createNumber(uri.getPort()));
+		result.put("authority", uri.getAuthority() != null ? jsonProvider.createString(uri.getAuthority()) : jsonProvider.createNull());
+		result.put("raw_authority", uri.getRawAuthority() != null ? jsonProvider.createString(uri.getRawAuthority()) : jsonProvider.createNull());
+		result.put("path", uri.getPath() != null ? jsonProvider.createString(uri.getPath()) : jsonProvider.createNull());
+		result.put("raw_path", uri.getRawPath() != null ? jsonProvider.createString(uri.getRawPath()) : jsonProvider.createNull());
+		result.put("query", uri.getQuery() != null ? jsonProvider.createString(uri.getQuery()) : jsonProvider.createNull());
+		result.put("raw_query", uri.getRawQuery() != null ? jsonProvider.createString(uri.getRawQuery()) : jsonProvider.createNull());
+		result.put("query_obj", jsonProvider.createObject(queryObj));
+		result.put("fragment", uri.getFragment() != null ? jsonProvider.createString(uri.getFragment()) : jsonProvider.createNull());
+		result.put("raw_fragment", uri.getRawFragment() != null ? jsonProvider.createString(uri.getRawFragment()) : jsonProvider.createNull());
+		return jsonProvider.createObject(result);
 	}
 }

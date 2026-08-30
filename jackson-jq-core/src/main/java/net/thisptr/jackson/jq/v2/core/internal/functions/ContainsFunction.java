@@ -39,7 +39,7 @@ public class ContainsFunction implements Function {
 		JsonNodeType hType = jsonProvider.getNodeType(haystack);
 		JsonNodeType nType = jsonProvider.getNodeType(needle);
 		if (hType == JsonNodeType.STRING && nType == JsonNodeType.STRING) {
-			return jsonProvider.asText(haystack).contains(jsonProvider.asText(needle));
+			return jsonProvider.asString(haystack).contains(jsonProvider.asString(needle));
 		} else if (hType == JsonNodeType.ARRAY && nType == JsonNodeType.ARRAY) {
 			Iterator<JsonNode> nIter = jsonProvider.elements(needle);
 			while (nIter.hasNext()) {

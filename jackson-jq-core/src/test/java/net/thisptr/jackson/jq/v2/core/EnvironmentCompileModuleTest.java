@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -128,7 +129,7 @@ public class EnvironmentCompileModuleTest {
 		InMemoryModuleLoader moduleLoader = new InMemoryModuleLoader(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
 		moduleLoader.put("foo/bar", "def bar: 1;");
 		moduleLoader.put("helpers", "def helper: 1;");
-		moduleLoader.putData("data/nums", Jackson2JsonProviderImpl.getInstance().createArray());
+		moduleLoader.putData("data/nums", Jackson2JsonProviderImpl.getInstance().createArray(Collections.emptyList()));
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.setModuleLoader(moduleLoader)
 				.build();

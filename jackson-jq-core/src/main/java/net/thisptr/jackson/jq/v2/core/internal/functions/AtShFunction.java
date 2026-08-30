@@ -33,7 +33,7 @@ public class AtShFunction implements Function {
 					JsonNode i = iter.next();
 					JsonNodeType iType = jsonProvider.getNodeType(i);
 					if (iType == JsonNodeType.STRING) {
-						tokens.add(escape(jsonProvider.asText(i)));
+						tokens.add(escape(jsonProvider.asString(i)));
 					} else if (isValueNode(iType)) {
 						tokens.add(JsonNodeUtils.toString(jsonProvider, i, version));
 					} else {
@@ -42,7 +42,7 @@ public class AtShFunction implements Function {
 				}
 				output.emit(jsonProvider.createString(Strings.join(" ", tokens)), UntrackedPath.getInstance());
 			} else if (type == JsonNodeType.STRING) {
-				output.emit(jsonProvider.createString(escape(jsonProvider.asText(in))), UntrackedPath.getInstance());
+				output.emit(jsonProvider.createString(escape(jsonProvider.asString(in))), UntrackedPath.getInstance());
 			} else if (isValueNode(type)) {
 				output.emit(jsonProvider.createString(JsonNodeUtils.toString(jsonProvider, in, version)), UntrackedPath.getInstance());
 			} else {

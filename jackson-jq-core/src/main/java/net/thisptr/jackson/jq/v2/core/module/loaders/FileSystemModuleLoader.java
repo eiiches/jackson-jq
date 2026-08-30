@@ -219,7 +219,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 				if (jsonProvider.getNodeType(search) != JsonNodeType.STRING)
 					throw new JsonQueryException("search path overrides must be a string");
 
-				@Var Path searchPathOverride = callerModule.modulePath.getFileSystem().getPath(jsonProvider.asText(search));
+				@Var Path searchPathOverride = callerModule.modulePath.getFileSystem().getPath(jsonProvider.asString(search));
 				searchPathOverride = Objects.requireNonNull(callerModule.modulePath.getParent()).resolve(searchPathOverride).normalize();
 
 				// still, the search path must be within the original search path
@@ -288,19 +288,13 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		return null;
 	}
 
-	private @Nullable JsonNode loadDataActual(Path searchPath, String path) throws Exception {
+	private @Nullable JsonNode loadDataActual(Path searchPath, String path) throws IOException {
 		ModuleFile moduleFile = loadModuleFile(searchPath, path, "json");
 		if (moduleFile == null)
 			return null;
 
 		JsonProvider<JsonNode> jsonProvider = this.jsonProvider;
-		@Var JsonNode data = jsonProvider.createArray();
-
-		List<JsonNode> values = jsonProvider.readMultipleValues(new String(moduleFile.bytes, StandardCharsets.UTF_8));
-		for (JsonNode value : values) {
-			data = jsonProvider.add(data, value);
-		}
-
-		return data;
+		List<JsonNode> values = jsonProvider.parseAll(new String(moduleFile.bytes, StandardCharsets.UTF_8));
+		return jsonProvider.createArray(values);
 	}
 }

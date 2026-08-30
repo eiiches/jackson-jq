@@ -3,3 +3,15 @@
   out:
   - false
   v: '[1.5, )'
+
+- q: '[has(1.9), has(-0.9)]'
+  in: [0, 1, 2]
+  out:
+  - [true, true]
+  v: '[1.5, )'
+
+- q: '[has(1e20), has(nan)]'
+  in: [0, 1, 2]
+  out:
+  - [false, false]
+  v: '[1.5, )'

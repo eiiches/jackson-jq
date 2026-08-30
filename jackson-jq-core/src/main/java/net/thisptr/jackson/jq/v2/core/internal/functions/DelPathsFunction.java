@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.auto.service.AutoService;
-import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
@@ -37,7 +36,8 @@ public class DelPathsFunction implements Function {
 					throw new JsonQueryException("Paths must be specified as an array");
 
 				List<List<JsonNode>> pathList = new ArrayList<>(jsonProvider.size(paths));
-				for (JsonNode path : jsonProvider.iterate(paths)) {
+				for (Iterator<JsonNode> it = jsonProvider.elements(paths); it.hasNext(); ) {
+					JsonNode path = it.next();
 					if (jsonProvider.getNodeType(path) != JsonNodeType.ARRAY)
 						throw new JsonQueryException("Path must be specified as array, not " + JsonNodeUtils.typeOf(jsonProvider, path));
 					pathList.add(JsonNodeUtils.asArrayList(jsonProvider, path));
@@ -111,14 +111,14 @@ public class DelPathsFunction implements Function {
 		Set<String> deleteKeys = new HashSet<>();
 		Map<String, List<List<JsonNode>>> recurseKeys = new LinkedHashMap<>();
 		for (List<JsonNode> path : paths) {
-			String key = jsonProvider.asText(path.get(depth));
+			String key = jsonProvider.asString(path.get(depth));
 			if (depth == path.size() - 1)
 				deleteKeys.add(key);
 			else
 				recurseKeys.computeIfAbsent(key, k -> new ArrayList<>()).add(path);
 		}
 
-		@Var JsonNode out = jsonProvider.createObject();
+		Map<String, JsonNode> out = new LinkedHashMap<>();
 		Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(in);
 		while (iter.hasNext()) {
 			Map.Entry<String, JsonNode> entry = iter.next();
@@ -126,9 +126,9 @@ public class DelPathsFunction implements Function {
 			if (deleteKeys.contains(key))
 				continue;
 			List<List<JsonNode>> sub = recurseKeys.get(key);
-			out = jsonProvider.set(out, key, sub == null ? entry.getValue() : delete(jsonProvider, entry.getValue(), sub, depth + 1, version));
+			out.put(key, sub == null ? entry.getValue() : delete(jsonProvider, entry.getValue(), sub, depth + 1, version));
 		}
-		return out;
+		return jsonProvider.createObject(out);
 	}
 
 	private static <JsonNode> JsonNode deleteFromArray(JsonProvider<JsonNode> jsonProvider, JsonNode in, List<List<JsonNode>> numberPaths, List<List<JsonNode>> rangePaths, int depth, Version version) throws JsonQueryException {
@@ -148,7 +148,12 @@ public class DelPathsFunction implements Function {
 			}
 			if (Double.isNaN(raw) || Double.isInfinite(raw))
 				throw new JsonQueryException("Cannot use " + (Double.isNaN(raw) ? "nan" : "infinite") + " as array index");
-			int index = (int) raw;
+			int index;
+			try {
+				index = jsonProvider.asIntTruncated(indexNode);
+			} catch (IllegalArgumentException e) {
+				continue;
+			}
 			int resolved = index < 0 ? index + size : index;
 			if (resolved < 0 || resolved >= size)
 				continue;
@@ -166,14 +171,14 @@ public class DelPathsFunction implements Function {
 			deleteRanges.add(Range.resolve(jsonProvider, sliceBound(jsonProvider, rangeNode, "start"), sliceBound(jsonProvider, rangeNode, "end"), size));
 		}
 
-		@Var JsonNode out = jsonProvider.createArray();
+		List<JsonNode> out = new ArrayList<>();
 		for (int i = 0; i < size; ++i) {
 			if (deleteIndices.contains(i) || inAnyRange(deleteRanges, i))
 				continue;
 			List<List<JsonNode>> sub = recurseIndices.get(i);
-			out = jsonProvider.add(out, sub == null ? jsonProvider.requireGet(in, i) : delete(jsonProvider, jsonProvider.requireGet(in, i), sub, depth + 1, version));
+			out.add(sub == null ? jsonProvider.requireGet(in, i) : delete(jsonProvider, jsonProvider.requireGet(in, i), sub, depth + 1, version));
 		}
-		return out;
+		return jsonProvider.createArray(out);
 	}
 
 	private static boolean inAnyRange(List<Range> ranges, int index) {

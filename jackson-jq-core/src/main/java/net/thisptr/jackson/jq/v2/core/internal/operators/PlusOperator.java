@@ -50,7 +50,7 @@ public class PlusOperator<JsonNode> implements BinaryOperator<JsonNode> {
 				values.add(riter.next());
 			return jsonProvider.createArray(values);
 		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.STRING) {
-			return jsonProvider.createString(jsonProvider.asText(lhs) + jsonProvider.asText(rhs));
+			return jsonProvider.createString(jsonProvider.asString(lhs) + jsonProvider.asString(rhs));
 		} else if (ltype == JsonNodeType.OBJECT && rtype == JsonNodeType.OBJECT) {
 			Map<String, JsonNode> values = new LinkedHashMap<>();
 			Iterator<Map.Entry<String, JsonNode>> liter = jsonProvider.fields(lhs);

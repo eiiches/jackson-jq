@@ -1,8 +1,8 @@
 package net.thisptr.jackson.jq.v2.ext.debug.functions;
 
+import java.util.LinkedHashMap;
 import java.util.List;
-
-import com.google.errorprone.annotations.Var;
+import java.util.Map;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -38,10 +38,10 @@ public class DebugExprFunction implements Function {
 
 			@Override
 			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
-				@Var JsonNode info = jsonProvider.createObject();
-				info = jsonProvider.set(info, "depends_on_input", jsonProvider.createBoolean(dependsOnInput));
-				info = jsonProvider.set(info, "depends_on_external_state", jsonProvider.createBoolean(dependsOnExternalState));
-				output.emit(info, UntrackedPath.getInstance());
+				Map<String, JsonNode> info = new LinkedHashMap<>();
+				info.put("depends_on_input", jsonProvider.createBoolean(dependsOnInput));
+				info.put("depends_on_external_state", jsonProvider.createBoolean(dependsOnExternalState));
+				output.emit(jsonProvider.createObject(info), UntrackedPath.getInstance());
 			}
 		};
 	}

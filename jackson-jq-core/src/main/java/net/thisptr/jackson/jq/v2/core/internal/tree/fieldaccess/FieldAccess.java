@@ -1,10 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-
-import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
@@ -109,10 +108,10 @@ public abstract class FieldAccess<JsonNode> implements Expression<StackFrame, Js
 		assert startType == JsonNodeType.NULL || startType == JsonNodeType.NUMBER;
 		assert endType == JsonNodeType.NULL || endType == JsonNodeType.NUMBER;
 		if (tracking && PathUtils.isLost(ppath)) {
-			@Var JsonNode subpath = jsonProvider.createObject();
-			subpath = jsonProvider.set(subpath, "start", start);
-			subpath = jsonProvider.set(subpath, "end", end);
-			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", ExceptionMessages.truncate(JsonNodeUtils.toString(jsonProvider, subpath), version), JsonNodeUtils.toString(jsonProvider, pobj)));
+			Map<String, JsonNode> subpath = new LinkedHashMap<>();
+			subpath.put("start", start);
+			subpath.put("end", end);
+			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", ExceptionMessages.truncate(JsonNodeUtils.toString(jsonProvider, jsonProvider.createObject(subpath)), version), JsonNodeUtils.toString(jsonProvider, pobj)));
 		}
 		PathOperations.resolveArrayRangeIndex(jsonProvider, pobj, ppath, output, start, end, permissive, version);
 	}

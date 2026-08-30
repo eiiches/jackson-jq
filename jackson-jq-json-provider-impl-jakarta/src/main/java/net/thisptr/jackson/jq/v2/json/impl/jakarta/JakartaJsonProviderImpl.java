@@ -1,14 +1,16 @@
 package net.thisptr.jackson.jq.v2.json.impl.jakarta;
 
-import java.io.StringReader;
-import java.lang.reflect.Array;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
+import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -18,10 +20,11 @@ import jakarta.json.JsonNumber;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
-import jakarta.json.stream.JsonParser;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
+import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
 /**
@@ -46,16 +49,6 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	 */
 	public static JakartaJsonProviderImpl getInstance() {
 		return DefaultInstanceHolder.INSTANCE;
-	}
-
-	@Override
-	public JsonValue createObject() {
-		return delegate.createObjectBuilder().build();
-	}
-
-	@Override
-	public JsonValue createArray() {
-		return delegate.createArrayBuilder().build();
 	}
 
 	@Override
@@ -97,6 +90,16 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	@Override
 	public JsonValue createNumber(double value) {
 		return createFloatingPointNumber(value);
+	}
+
+	@Override
+	public JsonValue createNumber(BigInteger value) {
+		return delegate.createValue(value);
+	}
+
+	@Override
+	public JsonValue createNumber(BigDecimal value) {
+		return delegate.createValue(value);
 	}
 
 	@Override
@@ -150,52 +153,79 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public String asText(JsonValue node) {
+	public String asString(JsonValue node) {
 		if (node instanceof JsonString)
 			return ((JsonString) node).getString();
 		if (node.getValueType() == JsonValue.ValueType.NULL)
 			return "null";
-		return node instanceof JsonArray || node instanceof JsonObject ? toString(node) : node.toString();
+		return node instanceof JsonArray || node instanceof JsonObject ? format(node) : node.toString();
 	}
 
 	@Override
 	public long asLong(JsonValue node) {
-		if (node instanceof JsonNumber) {
-			JsonNumber number = (JsonNumber) node;
-			checkFinite(number.doubleValue(), "long");
-			BigDecimal decimal = number.bigDecimalValue();
-			if (decimal.compareTo(BigDecimal.valueOf(Long.MIN_VALUE)) < 0 || decimal.compareTo(BigDecimal.valueOf(Long.MAX_VALUE)) > 0)
-				throw new IllegalArgumentException("Value " + decimal + " is outside the range of long");
-			return number.longValue();
+		if (node instanceof FloatingPointJsonNumber) {
+			double value = ((FloatingPointJsonNumber) node).doubleValue();
+			checkFinite(value, "long");
+			if (value != Math.rint(value) || value < -0x1p63 || value >= 0x1p63)
+				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
+			return (long) value;
 		}
-		if (node instanceof JsonString) {
-			try {
-				return Long.parseLong(((JsonString) node).getString());
-			} catch (NumberFormatException e) {
-				return 0;
-			}
+		BigDecimal value = requireFiniteNumber(node, "long");
+		try {
+			return value.longValueExact();
+		} catch (ArithmeticException e) {
+			throw cannotRepresent(value, "long", e);
 		}
-		return 0;
+	}
+
+	@Override
+	public long asLongTruncated(JsonValue node) {
+		if (node instanceof FloatingPointJsonNumber) {
+			double value = ((FloatingPointJsonNumber) node).doubleValue();
+			checkFinite(value, "long");
+			double truncated = value < 0 ? Math.ceil(value) : Math.floor(value);
+			if (truncated < -0x1p63 || truncated >= 0x1p63)
+				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
+			return (long) truncated;
+		}
+		BigDecimal value = requireFiniteNumber(node, "long").setScale(0, RoundingMode.DOWN);
+		try {
+			return value.longValueExact();
+		} catch (ArithmeticException e) {
+			throw cannotRepresent(value, "long", e);
+		}
 	}
 
 	@Override
 	public int asInt(JsonValue node) {
-		if (node instanceof JsonNumber) {
-			JsonNumber number = (JsonNumber) node;
-			checkFinite(number.doubleValue(), "int");
-			BigDecimal decimal = number.bigDecimalValue();
-			if (decimal.compareTo(BigDecimal.valueOf(Integer.MIN_VALUE)) < 0 || decimal.compareTo(BigDecimal.valueOf(Integer.MAX_VALUE)) > 0)
-				throw new IllegalArgumentException("Value " + decimal + " is outside the range of int");
-			return number.intValue();
+		BigDecimal value = requireFiniteNumber(node, "int");
+		try {
+			return value.intValueExact();
+		} catch (ArithmeticException e) {
+			throw cannotRepresent(value, "int", e);
 		}
-		if (node instanceof JsonString) {
-			try {
-				return Integer.parseInt(((JsonString) node).getString());
-			} catch (NumberFormatException e) {
-				return 0;
-			}
+	}
+
+	@Override
+	public int asIntTruncated(JsonValue node) {
+		BigDecimal value = requireFiniteNumber(node, "int").setScale(0, RoundingMode.DOWN);
+		try {
+			return value.intValueExact();
+		} catch (ArithmeticException e) {
+			throw cannotRepresent(value, "int", e);
 		}
-		return 0;
+	}
+
+	private static BigDecimal requireFiniteNumber(JsonValue node, String targetType) {
+		if (!(node instanceof JsonNumber))
+			throw new IllegalArgumentException("Cannot convert non-number to " + targetType);
+		JsonNumber number = (JsonNumber) node;
+		checkFinite(number.doubleValue(), targetType);
+		return number.bigDecimalValue();
+	}
+
+	private static IllegalArgumentException cannotRepresent(BigDecimal value, String targetType, ArithmeticException cause) {
+		return new IllegalArgumentException("Value " + value + " cannot be represented as " + targetType, cause);
 	}
 
 	@Override
@@ -239,21 +269,6 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public JsonValue set(JsonValue node, String fieldName, JsonValue value) {
-		return delegate.createObjectBuilder(node.asJsonObject()).add(fieldName, value).build();
-	}
-
-	@Override
-	public JsonValue add(JsonValue node, JsonValue value) {
-		return delegate.createArrayBuilder(node.asJsonArray()).add(value).build();
-	}
-
-	@Override
-	public JsonValue set(JsonValue node, int index, JsonValue value) {
-		return delegate.createArrayBuilder(node.asJsonArray()).set(index, value).build();
-	}
-
-	@Override
 	public int size(JsonValue node) {
 		if (node instanceof JsonArray)
 			return ((JsonArray) node).size();
@@ -278,62 +293,15 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public String toString(JsonValue node) {
+	public String format(JsonValue node) {
 		StringBuilder result = new StringBuilder();
 		appendJson(result, node);
 		return result.toString();
 	}
 
 	@Override
-	public JsonValue fromString(String json) {
-		return parseValue(json);
-	}
-
-	@Override
-	public JsonValue fromStringStrict(String json) {
-		List<String> values = splitValues(json);
-		if (values.isEmpty())
-			throw new IllegalArgumentException("empty input");
-		if (values.size() != 1)
-			throw new IllegalArgumentException("trailing content");
-		return parseValue(values.get(0));
-	}
-
-	@Override
-	public List<JsonValue> readMultipleValues(String json) {
-		List<JsonValue> result = new ArrayList<>();
-		for (String value : splitValues(json))
-			result.add(parseValue(value));
-		return result;
-	}
-
-	@Override
-	public JsonValue valueToTree(@Nullable Object value) {
-		if (value == null)
-			return createNull();
-		if (value instanceof JsonValue)
-			return (JsonValue) value;
-		if (value instanceof String || value instanceof Character || value instanceof Enum)
-			return createString(value.toString());
-		if (value instanceof Boolean)
-			return createBoolean((Boolean) value);
-		if (value instanceof Byte || value instanceof Short || value instanceof Integer)
-			return createNumber(((Number) value).intValue());
-		if (value instanceof Long)
-			return createNumber(((Long) value).longValue());
-		if (value instanceof Float)
-			return createNumber(((Float) value).floatValue());
-		if (value instanceof Double)
-			return createNumber(((Double) value).doubleValue());
-		if (value instanceof Number)
-			return delegate.createValue((Number) value);
-		if (value instanceof Map)
-			return mapToTree((Map<?, ?>) value);
-		if (value instanceof Iterable)
-			return iterableToTree((Iterable<?>) value);
-		if (value.getClass().isArray())
-			return arrayToTree(value);
-		throw new IllegalArgumentException("Cannot convert " + value.getClass().getName() + " to a JSON-P value");
+	public JsonParser<JsonValue> createParser(InputStream in) {
+		return new JsonPParser(delegate, new InputStreamReader(in, StandardCharsets.UTF_8));
 	}
 
 	@Override
@@ -341,43 +309,143 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 		return arg instanceof JsonValue;
 	}
 
-	private JsonValue mapToTree(Map<?, ?> map) {
-		jakarta.json.JsonObjectBuilder builder = delegate.createObjectBuilder();
-		for (Map.Entry<?, ?> entry : map.entrySet()) {
-			if (!(entry.getKey() instanceof String))
-				throw new IllegalArgumentException("JSON object keys must be strings");
-			builder.add((String) entry.getKey(), valueToTree(entry.getValue()));
-		}
-		return builder.build();
-	}
-
-	private JsonValue iterableToTree(Iterable<?> iterable) {
-		jakarta.json.JsonArrayBuilder builder = delegate.createArrayBuilder();
-		for (Object value : iterable)
-			builder.add(valueToTree(value));
-		return builder.build();
-	}
-
-	private JsonValue arrayToTree(Object array) {
-		jakarta.json.JsonArrayBuilder builder = delegate.createArrayBuilder();
-		for (int i = 0; i < Array.getLength(array); ++i)
-			builder.add(valueToTree(Array.get(array, i)));
-		return builder.build();
-	}
-
 	private JsonValue createFloatingPointNumber(double value) {
-		return Double.isFinite(value) ? delegate.createValue(value) : new NonFiniteJsonNumber(value);
+		return new FloatingPointJsonNumber(value);
 	}
 
-	private JsonValue parseValue(String json) {
-		try (JsonParser parser = delegate.createParser(new StringReader(json))) {
-			if (!parser.hasNext())
-				throw new IllegalArgumentException("empty input");
-			parser.next();
-			JsonValue value = parser.getValue();
-			if (parser.hasNext())
-				throw new IllegalArgumentException("trailing content");
-			return value;
+	/**
+	 * Reads a sequence of top-level JSON values from a reader.
+	 * <p>
+	 * {@code jakarta.json.stream.JsonParser} is documented to read a sequence of values that are not
+	 * enclosed in an array, but no implementation actually does: both Parsson 1.1.9 and Johnzon 2.2.0
+	 * reject the second value with "EOF expected" (see
+	 * <a href="https://github.com/eclipse-ee4j/parsson/issues/127">parsson#127</a>). So instead of
+	 * reading every value from one parser, each value gets its own parser, positioned at the end of
+	 * the previous one: {@code JsonLocation#getStreamOffset()} reports exactly how many characters a
+	 * value consumed, which is where the next value begins. That holds for both implementations.
+	 * <p>
+	 * Input is buffered only as far as the current value extends, so arbitrarily long sequences stream
+	 * with memory proportional to the largest single value rather than to the whole input.
+	 */
+	private static final class JsonPParser implements JsonParser<JsonValue> {
+		private final jakarta.json.spi.JsonProvider delegate;
+		private final Reader in;
+		private char[] buf = new char[1024];
+		/**
+		 * Start of the not-yet-parsed input within {@link #buf}.
+		 */
+		private int start;
+		/**
+		 * End of the valid input within {@link #buf}.
+		 */
+		private int end;
+		private boolean eof;
+
+		JsonPParser(jakarta.json.spi.JsonProvider delegate, Reader in) {
+			this.delegate = delegate;
+			this.in = in;
+		}
+
+		@Override
+		public @Nullable JsonValue next() {
+			try {
+				// Parsson reports hasNext() == true on a fresh parser without reading the input, so end
+				// of input has to be detected here rather than by asking the parser.
+				if (!skipWhitespace())
+					return null;
+				try (jakarta.json.stream.JsonParser parser = delegate.createParser(new Window())) {
+					parser.next();
+					JsonValue value = parser.getValue();
+					// The offset counts the characters of this one value, which came out of buf and so
+					// always fits in an int.
+					start += (int) parser.getLocation().getStreamOffset();
+					return value;
+				}
+			} catch (IOException | jakarta.json.JsonException e) {
+				throw new JsonException(e);
+			}
+		}
+
+		/**
+		 * Advances {@link #start} to the next non-whitespace character.
+		 *
+		 * @return {@code false} if the input is exhausted
+		 */
+		private boolean skipWhitespace() throws IOException {
+			while (true) {
+				while (start < end) {
+					if (!isJsonWhitespace(buf[start]))
+						return true;
+					++start;
+				}
+				if (!fill())
+					return false;
+			}
+		}
+
+		/**
+		 * Reads more input into {@link #buf}, compacting or growing it as needed. Characters before
+		 * {@link #start} have been parsed already and may be discarded; the rest must be preserved.
+		 *
+		 * @return {@code false} if the input is exhausted
+		 */
+		private boolean fill() throws IOException {
+			if (eof)
+				return false;
+			if (end == buf.length) {
+				if (start > 0) {
+					System.arraycopy(buf, start, buf, 0, end - start);
+					end -= start;
+					start = 0;
+				} else {
+					buf = Arrays.copyOf(buf, buf.length * 2);
+				}
+			}
+			int count = in.read(buf, end, buf.length - end);
+			if (count < 0) {
+				eof = true;
+				return false;
+			}
+			end += count;
+			return true;
+		}
+
+		@Override
+		public void close() {
+			try {
+				in.close();
+			} catch (IOException e) {
+				throw new JsonException(e);
+			}
+		}
+
+		/**
+		 * A view of the buffered input starting at {@link #start}, handed to one underlying parser.
+		 * Closing it does not close the underlying reader, which outlives any single value.
+		 */
+		private final class Window extends Reader {
+			private int pos = start;
+
+			@Override
+			public int read(char[] cbuf, int off, int len) throws IOException {
+				if (len == 0)
+					return 0;
+				while (pos >= end) {
+					int previousStart = start;
+					if (!fill())
+						return -1;
+					pos -= previousStart - start; // fill() may have compacted the buffer
+				}
+				int count = Math.min(len, end - pos);
+				System.arraycopy(buf, pos, cbuf, off, count);
+				pos += count;
+				return count;
+			}
+
+			@Override
+			public void close() {
+				// The underlying reader is shared across values and is closed by JsonPParser.close().
+			}
 		}
 	}
 
@@ -456,90 +524,18 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 			throw new IllegalArgumentException("Cannot convert Infinity to " + targetType);
 	}
 
-	private static List<String> splitValues(String json) {
-		List<String> result = new ArrayList<>();
-		@Var int index = 0;
-		while (true) {
-			while (index < json.length() && isJsonWhitespace(json.charAt(index)))
-				++index;
-			if (index == json.length())
-				return result;
-			int start = index;
-			char first = json.charAt(index);
-			if (first == '"') {
-				index = scanString(json, index);
-			} else if (first == '{' || first == '[') {
-				index = scanStructure(json, index);
-			} else {
-				while (index < json.length() && !isJsonWhitespace(json.charAt(index)) && !isValueStart(json.charAt(index)))
-					++index;
-			}
-			result.add(json.substring(start, index));
-		}
-	}
-
-	private static int scanString(String json, int start) {
-		@Var boolean escaped = false;
-		for (int index = start + 1; index < json.length(); ++index) {
-			char ch = json.charAt(index);
-			if (escaped) {
-				escaped = false;
-			} else if (ch == '\\') {
-				escaped = true;
-			} else if (ch == '"') {
-				return index + 1;
-			}
-		}
-		throw new IllegalArgumentException("unterminated string");
-	}
-
-	private static int scanStructure(String json, int start) {
-		ArrayDeque<Character> expectedClosings = new ArrayDeque<>();
-		expectedClosings.push(json.charAt(start) == '{' ? '}' : ']');
-		@Var boolean inString = false;
-		@Var boolean escaped = false;
-		for (int index = start + 1; index < json.length(); ++index) {
-			char ch = json.charAt(index);
-			if (inString) {
-				if (escaped) {
-					escaped = false;
-				} else if (ch == '\\') {
-					escaped = true;
-				} else if (ch == '"') {
-					inString = false;
-				}
-			} else if (ch == '"') {
-				inString = true;
-			} else if (ch == '{') {
-				expectedClosings.push('}');
-			} else if (ch == '[') {
-				expectedClosings.push(']');
-			} else if (ch == '}' || ch == ']') {
-				if (expectedClosings.isEmpty() || expectedClosings.pop() != ch)
-					throw new IllegalArgumentException("mismatched JSON delimiters");
-				if (expectedClosings.isEmpty())
-					return index + 1;
-			}
-		}
-		throw new IllegalArgumentException("unterminated JSON structure");
-	}
-
 	private static boolean isJsonWhitespace(char ch) {
 		return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r';
-	}
-
-	private static boolean isValueStart(char ch) {
-		return ch == '{' || ch == '[' || ch == '"';
 	}
 
 	private static class DefaultInstanceHolder {
 		private static final JakartaJsonProviderImpl INSTANCE = new JakartaJsonProviderImpl(jakarta.json.spi.JsonProvider.provider());
 	}
 
-	private static class NonFiniteJsonNumber implements JsonNumber {
+	private static class FloatingPointJsonNumber implements JsonNumber {
 		private final double value;
 
-		NonFiniteJsonNumber(double value) {
+		FloatingPointJsonNumber(double value) {
 			this.value = value;
 		}
 
@@ -600,8 +596,8 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 
 		@Override
 		public boolean equals(@Nullable Object other) {
-			return this == other || (other instanceof NonFiniteJsonNumber
-					&& Double.doubleToLongBits(value) == Double.doubleToLongBits(((NonFiniteJsonNumber) other).value));
+			return this == other || (other instanceof FloatingPointJsonNumber
+					&& Double.doubleToLongBits(value) == Double.doubleToLongBits(((FloatingPointJsonNumber) other).value));
 		}
 
 		@Override

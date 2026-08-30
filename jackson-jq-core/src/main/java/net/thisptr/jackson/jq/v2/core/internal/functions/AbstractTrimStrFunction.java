@@ -20,7 +20,7 @@ public abstract class AbstractTrimStrFunction implements Function {
 					output.emit(in, ipath);
 					return;
 				}
-				JsonNode out = jsonProvider.createString(doTrim(jsonProvider.asText(in), jsonProvider.asText(trimText)));
+				JsonNode out = jsonProvider.createString(doTrim(jsonProvider.asString(in), jsonProvider.asString(trimText)));
 				output.emit(out, UntrackedPath.getInstance());
 			});
 		});
