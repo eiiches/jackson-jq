@@ -169,6 +169,19 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
+	public @Nullable BigDecimal asBigDecimal(JsonElement node) {
+		if (!node.isJsonPrimitive() || !node.getAsJsonPrimitive().isNumber())
+			throw new IllegalArgumentException("Cannot convert non-number to BigDecimal");
+		JsonPrimitive primitive = node.getAsJsonPrimitive();
+		Number number = primitive.getAsNumber();
+		if ((number instanceof Double || number instanceof Float) && !Double.isFinite(number.doubleValue()))
+			return null;
+		// Gson goes through Number.toString(), i.e. the shortest round-trip representation for
+		// Double/Float (e.g. 0.1 stays 0.1) and the original literal for parsed numbers.
+		return primitive.getAsBigDecimal();
+	}
+
+	@Override
 	public String asString(JsonElement node) {
 		if (node.isJsonNull()) {
 			return "null";
@@ -367,8 +380,16 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 		if (node.isJsonPrimitive()) {
 			JsonPrimitive primitive = node.getAsJsonPrimitive();
 			if (primitive.isNumber()) {
-				double val = primitive.getAsDouble();
-				return GsonUtils.formatDouble(val);
+				Number number = primitive.getAsNumber();
+				// Exact numbers keep their exact representation, mirroring Jackson's Int/Long/
+				// BigInteger/BigDecimal nodes; narrowing them to double here would print e.g.
+				// 2871948651097801136 as 2871948651097801000 and 1.50 as 1.5. Only genuine
+				// floating-point values go through jq's double formatting. (Numbers straight from
+				// the parser are Gson's LazilyParsedNumber and take the double path, which is what
+				// Jackson's parse-to-double does.)
+				if (number instanceof Integer || number instanceof Long || number instanceof BigInteger || number instanceof BigDecimal)
+					return number.toString();
+				return GsonUtils.formatDouble(number.doubleValue());
 			}
 			if (primitive.isBoolean()) {
 				return String.valueOf(primitive.getAsBoolean());

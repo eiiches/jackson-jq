@@ -17,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import net.thisptr.jackson.jq.v2.core.Versions;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.test.evaluator.Evaluator;
 import net.thisptr.jackson.jq.v2.test.evaluator.JqExecutables;
 import net.thisptr.jackson.jq.v2.test.evaluator.JqRunner;
@@ -28,7 +29,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
  * Verifies that the {@code out} expectations in the golden test data under
  * {@code src/test/resources/tests} actually match what the real {@code jq} CLI produces.
  *
- * <p>This is deliberately independent of any {@link net.thisptr.jackson.jq.v2.spi.JsonProvider}
+ * <p>This is deliberately independent of any {@link net.thisptr.jackson.jq.v2.json.JsonProvider}
  * (unlike {@link AbstractJsonQueryTest}, which checks this library's own implementation against
  * the same golden data), so it only needs to run once rather than once per JsonProvider module.
  *
@@ -51,7 +52,7 @@ public class VerifyTestCasesTest {
 		Evaluator.Result result = new JqRunner(e.executable, moduleSearchPath).evaluate(tc.q, tc.in, Duration.ofSeconds(2));
 		assertThat(result.error).as("%s", command).isNull();
 
-		Comparator<JsonNode> comparator = new JsonNodeComparatorForTests(!tc.ignoreFieldOrder, tc.numericalErrors);
+		Comparator<JsonNode> comparator = new TestJsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance(), !tc.ignoreFieldOrder, tc.numericalErrors);
 		assertThat(tc.out).as("%s", command)
 				.usingElementComparator(comparator)
 				.isEqualTo(result.values);

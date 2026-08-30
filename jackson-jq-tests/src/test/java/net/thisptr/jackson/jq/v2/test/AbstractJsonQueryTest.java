@@ -22,6 +22,7 @@ import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -41,13 +42,11 @@ public abstract class AbstractJsonQueryTest<T> {
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
 	/**
-	 * Create an EnvironmentBuilder for the given version, ready for any additional configuration
-	 * (e.g. the {@code ENV} variable added in {@link #test}) before {@code build()}.
+	 * The JsonProvider under test.
 	 *
-	 * @param version The jq version to use
-	 * @return A configured builder ready for query compilation
+	 * @return The provider implementation to run the test suite against
 	 */
-	protected abstract EnvironmentBuilder<T> createEnvironment(Version version);
+	protected abstract JsonProvider<T> getJsonProvider();
 
 	/**
 	 * Parse a Jackson JsonNode (from test data) to the provider's native type.
@@ -57,17 +56,8 @@ public abstract class AbstractJsonQueryTest<T> {
 	 */
 	protected abstract T parseTestNode(JsonNode node);
 
-	/**
-	 * Create a comparator for comparing output nodes.
-	 *
-	 * @param strictFieldOrder Whether to enforce strict field ordering in objects
-	 * @param numericalErrors Allowed numerical error tolerance
-	 * @return A comparator for the provider's node type
-	 */
-	protected abstract Comparator<T> createComparator(boolean strictFieldOrder, double numericalErrors);
-
 	private void test(TestCase tc, Version version, @Nullable Path moduleSearchPath) throws Throwable {
-		EnvironmentBuilder<T> envBuilder = createEnvironment(version);
+		EnvironmentBuilder<T> envBuilder = new EnvironmentBuilder<>(getJsonProvider(), version);
 		if (moduleSearchPath != null) {
 			envBuilder.setModuleLoader(new ChainedModuleLoader<>(
 					new FileSystemModuleLoader<>(envBuilder.getJsonProvider(), version, moduleSearchPath),
@@ -91,7 +81,7 @@ public abstract class AbstractJsonQueryTest<T> {
 			expectedOut.add(parseTestNode(outNode));
 		}
 
-		Comparator<T> comparator = createComparator(!tc.ignoreFieldOrder, tc.numericalErrors);
+		Comparator<T> comparator = new TestJsonNodeComparator<>(getJsonProvider(), !tc.ignoreFieldOrder, tc.numericalErrors);
 
 		@Var boolean failed = false;
 		try {

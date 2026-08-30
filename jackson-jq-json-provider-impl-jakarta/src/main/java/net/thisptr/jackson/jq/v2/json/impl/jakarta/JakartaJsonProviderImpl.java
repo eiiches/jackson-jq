@@ -153,6 +153,16 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
+	public @Nullable BigDecimal asBigDecimal(JsonValue node) {
+		if (!(node instanceof JsonNumber))
+			throw new IllegalArgumentException("Cannot convert non-number to BigDecimal");
+		// JSON-P itself cannot represent non-finite values; only our own wrapper can hold them.
+		if (node instanceof FloatingPointJsonNumber && !Double.isFinite(((FloatingPointJsonNumber) node).doubleValue()))
+			return null;
+		return ((JsonNumber) node).bigDecimalValue();
+	}
+
+	@Override
 	public String asString(JsonValue node) {
 		if (node instanceof JsonString)
 			return ((JsonString) node).getString();
@@ -508,6 +518,14 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 			return value > 0 ? "1.7976931348623157e+308" : "-1.7976931348623157e+308";
 		if (number.isIntegral())
 			return number.bigIntegerValue().toString();
+		// A non-integral JsonNumber that is not one of our own wrappers holds an exact decimal.
+		// Render it exactly when a double cannot represent its value, so that e.g.
+		// "3.14159265358979323846264338327950288" | tonumber does not print as 3.141592653589793.
+		// Values a double does represent keep the double formatting: preserving their scale as
+		// well (1.50 rather than 1.5) is jq 1.7 literal preservation, which jackson-jq does not
+		// implement on the parse path, and doing it here alone would print a parsed 0.0 as "0.0".
+		if (!(number instanceof FloatingPointJsonNumber) && BigDecimal.valueOf(value).compareTo(number.bigDecimalValue()) != 0)
+			return number.bigDecimalValue().toString();
 		if (value == Math.floor(value) && Math.abs(value) < Long.MAX_VALUE)
 			return Long.toString((long) value);
 		@Var String text = Double.toString(value).replace('e', 'E');

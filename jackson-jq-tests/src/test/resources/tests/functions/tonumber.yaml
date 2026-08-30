@@ -40,22 +40,28 @@
   out:
   - 1.5
 
-# NOTE on the two cases below: jackson-jq parses strings via BigDecimal to preserve the exact
-# literal value/scale (e.g. no precision loss for large integers, "1.50" stays "1.50" instead of
-# narrowing to "1.5"). The golden-data comparator (JsonNodeComparatorForTests) only compares
-# numbers via doubleValue(), and Jackson's default JSON parsing of a plain, no-decimal-point
-# integer literal like the one below already auto-widens to BigInteger, so these two specific
-# cases don't actually exercise doubleValue-losing input; they mainly guard against a gross
-# regression (e.g. reverting to Double.parseDouble) changing the resulting numeric value.
+# jackson-jq parses strings via BigDecimal to preserve the exact literal value and scale, rather
+# than narrowing through double, on every version. Real jq only stopped narrowing in 1.7
+# (1.5/1.6 print 2871948651097801000 here), so the golden expectation is scoped to 1.7+.
 - q: 'tonumber'
   in: "2871948651097801136"
   out:
   - 2871948651097801136
+  v: '[1.7, )'
 
 - q: 'tonumber'
   in: "1.50"
   out:
   - 1.50
+
+# Number comparison is scale-insensitive (1.50 == 1.5, in real jq too), so the case above cannot
+# see the preserved scale; tostring can. Real jq only kept the extra precision from 1.7 on
+# (1.5/1.6 print 3.141592653589793).
+- q: 'tonumber | tostring'
+  in: "3.14159265358979323846264338327950288"
+  out:
+  - "3.14159265358979323846264338327950288"
+  v: '[1.7, )'
 
 # scientific notation
 - q: 'tonumber'

@@ -131,6 +131,44 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
+	void testAsBigDecimalIsLossless() {
+		assertThat(provider.asBigDecimal(provider.createNumber(42))).isEqualByComparingTo("42");
+
+		// The whole point: this value is not representable as a double.
+		assertThat(provider.asBigDecimal(provider.createNumber(2871948651097801136L))).isEqualByComparingTo("2871948651097801136");
+
+		BigInteger bigInteger = new BigInteger("123456789012345678901234567890");
+		assertThat(provider.asBigDecimal(provider.createNumber(bigInteger))).isEqualByComparingTo(new BigDecimal(bigInteger));
+
+		BigDecimal bigDecimal = new BigDecimal("3.14159265358979323846264338327950288");
+		assertThat(provider.asBigDecimal(provider.createNumber(bigDecimal))).isEqualByComparingTo(bigDecimal);
+	}
+
+	@Test
+	void testAsBigDecimalOnDoubleUsesShortestRepresentation() {
+		// Not the exact binary expansion (0.1000000000000000055511151231257827...), which would stop
+		// a computed 0.1 from comparing equal to the literal 0.1.
+		assertThat(provider.asBigDecimal(provider.createNumber(0.1))).isEqualByComparingTo("0.1");
+		assertThat(provider.asBigDecimal(provider.createNumber(-3.14))).isEqualByComparingTo("-3.14");
+	}
+
+	@Test
+	void testAsBigDecimalOnNonFiniteReturnsNull() {
+		assertThat(provider.asBigDecimal(provider.createNumber(Double.NaN))).isNull();
+		assertThat(provider.asBigDecimal(provider.createNumber(Double.POSITIVE_INFINITY))).isNull();
+		assertThat(provider.asBigDecimal(provider.createNumber(Double.NEGATIVE_INFINITY))).isNull();
+	}
+
+	@Test
+	void testAsBigDecimalOnNonNumberThrows() {
+		assertThatThrownBy(() -> provider.asBigDecimal(provider.createString("42"))).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asBigDecimal(provider.createBoolean(true))).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asBigDecimal(provider.createNull())).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asBigDecimal(provider.createArray(Collections.emptyList()))).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asBigDecimal(provider.createObject(Collections.emptyMap()))).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
 	void testExactIntegralAccessorsRejectFractionalValues() {
 		T positive = provider.createNumber(1.9);
 		T negative = provider.createNumber(-1.9);

@@ -141,6 +141,19 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
+	public @Nullable BigDecimal asBigDecimal(JsonNode node) {
+		if (!node.isNumber())
+			throw new IllegalArgumentException("Cannot convert non-number to BigDecimal");
+		if (node.isDouble() && !Double.isFinite(node.doubleValue()))
+			return null;
+		if (node.isFloat() && !Float.isFinite(node.floatValue()))
+			return null;
+		// DoubleNode/FloatNode use the shortest round-trip representation (e.g. 0.1 stays 0.1),
+		// not the exact binary expansion.
+		return node.decimalValue();
+	}
+
+	@Override
 	public String asString(JsonNode node) {
 		return node.asText();
 	}

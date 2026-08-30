@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.misc;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -12,7 +13,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
 @SuppressWarnings("serial")
 public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Serializable {
-	private final JsonProvider<JsonNode> jsonProvider;
+	protected final JsonProvider<JsonNode> jsonProvider;
 
 	public JsonNodeComparator(JsonProvider<JsonNode> jsonProvider) {
 		this.jsonProvider = jsonProvider;
@@ -55,7 +56,18 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 			return -1;
 		if (Double.isNaN(b))
 			return 1;
-		return Double.compare(a, b);
+		// Rounding to double is monotonic, so whenever the doubles differ their order is already
+		// the exact order; only a tie can hide a difference in the exact values (e.g.
+		// 2871948651097801136 vs 2871948651097801137, both 2.871948651097801E18 as double).
+		if (a < b)
+			return -1;
+		if (a > b)
+			return 1;
+		BigDecimal x = jsonProvider.asBigDecimal(o1);
+		BigDecimal y = jsonProvider.asBigDecimal(o2);
+		if (x == null || y == null)
+			return 0; // Infinity/-Infinity on at least one side; already ordered by double
+		return x.compareTo(y);
 	}
 
 	protected int compareArrayNode(JsonNode o1, JsonNode o2) {

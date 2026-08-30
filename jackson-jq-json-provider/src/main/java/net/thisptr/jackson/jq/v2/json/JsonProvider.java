@@ -148,6 +148,19 @@ public interface JsonProvider<JsonNode> {
 	double asDouble(JsonNode node);
 
 	/**
+	 * Returns the exact value of a number node.
+	 * <p>
+	 * Unlike {@link #asDouble(Object)}, this does not lose precision. {@link BigDecimal} cannot
+	 * represent the non-finite values jq can produce, so those are reported as {@code null} rather
+	 * than approximated.
+	 *
+	 * @param node the JSON number node
+	 * @return the exact value, or {@code null} if the value is NaN, Infinity or -Infinity
+	 * @throws IllegalArgumentException if the node is not a number
+	 */
+	@Nullable BigDecimal asBigDecimal(JsonNode node);
+
+	/**
 	 * Returns the textual value of the node.
 	 * <p>
 	 * String nodes return their raw (unescaped) value. The {@code null} node returns the literal
