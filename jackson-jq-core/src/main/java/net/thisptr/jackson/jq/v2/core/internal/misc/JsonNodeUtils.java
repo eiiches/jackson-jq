@@ -29,9 +29,9 @@ public class JsonNodeUtils {
 	}
 
 	public static <JsonNode> JsonNode asNumericNode(JsonProvider<JsonNode> jsonProvider, double value) {
-		if (((int) value) == value)
+		if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE && value == Math.rint(value))
 			return jsonProvider.createNumber((int) value);
-		if (((long) value) == value)
+		if (value >= Long.MIN_VALUE && value < 0x1p63 && value == Math.rint(value))
 			return asNumericNode(jsonProvider, (long) value);
 		return jsonProvider.createNumber(value);
 	}
