@@ -127,7 +127,7 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testGetObjectFieldNumberAsBigDecimalExactIsLossless() {
+	void testGetNumberAsBigDecimalExactIsLossless() {
 		assertThat(provider.getNumberAsBigDecimalExact(provider.createNumber(42))).isEqualByComparingTo("42");
 
 		// The whole point: this value is not representable as a double.
@@ -141,7 +141,7 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testGetObjectFieldNumberAsBigDecimalExactOnDoubleUsesShortestRepresentation() {
+	void testGetNumberAsBigDecimalExactOnDoubleUsesShortestRepresentation() {
 		// Not the exact binary expansion (0.1000000000000000055511151231257827...), which would stop
 		// a computed 0.1 from comparing equal to the literal 0.1.
 		assertThat(provider.getNumberAsBigDecimalExact(provider.createNumber(0.1))).isEqualByComparingTo("0.1");
@@ -149,14 +149,14 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testGetObjectFieldNumberAsBigDecimalExactOnNonFiniteReturnsNull() {
+	void testGetNumberAsBigDecimalExactOnNonFiniteReturnsNull() {
 		assertThat(provider.getNumberAsBigDecimalExact(provider.createNumber(Double.NaN))).isNull();
 		assertThat(provider.getNumberAsBigDecimalExact(provider.createNumber(Double.POSITIVE_INFINITY))).isNull();
 		assertThat(provider.getNumberAsBigDecimalExact(provider.createNumber(Double.NEGATIVE_INFINITY))).isNull();
 	}
 
 	@Test
-	void testGetObjectFieldNumberAsBigDecimalExactOnNonNumberThrows() {
+	void testGetNumberAsBigDecimalExactOnNonNumberThrows() {
 		assertThatThrownBy(() -> provider.getNumberAsBigDecimalExact(provider.createString("42"))).isInstanceOf(IllegalArgumentException.class);
 		assertThatThrownBy(() -> provider.getNumberAsBigDecimalExact(provider.createBoolean(true))).isInstanceOf(IllegalArgumentException.class);
 		assertThatThrownBy(() -> provider.getNumberAsBigDecimalExact(provider.createNull())).isInstanceOf(IllegalArgumentException.class);
@@ -219,7 +219,7 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testGetObjectFieldNumberAsDoubleRoundedThrowsOnNonNumber() {
+	void testGetNumberAsDoubleRoundedThrowsOnNonNumber() {
 		// A NaN return therefore means the value is NaN, never that the node was the wrong type.
 		assertThatThrownBy(() -> provider.getNumberAsDoubleRounded(provider.createString("42"))).isInstanceOf(IllegalArgumentException.class);
 		assertThatThrownBy(() -> provider.getNumberAsDoubleRounded(provider.createBoolean(true))).isInstanceOf(IllegalArgumentException.class);
@@ -229,7 +229,7 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testGetObjectFieldNumberAsDoubleRoundedRoundsToNearest() {
+	void testGetNumberAsDoubleRoundedRoundsToNearest() {
 		// Rounding, not truncation: the example documented by JsonProvider lands above the exact value.
 		assertThat(provider.getNumberAsDoubleRounded(provider.createNumber(2871948651097801136L))).isEqualTo(0x1.3ed9b0a7cec61p61);
 		// These are exact halfway cases on opposite sides of an even significand.
@@ -238,7 +238,7 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testGetObjectFieldNumberAsDoubleRoundedHandlesNonFiniteResults() {
+	void testGetNumberAsDoubleRoundedHandlesNonFiniteResults() {
 		assertThat(provider.getNumberAsDoubleRounded(provider.createNumber(new BigDecimal("1e400")))).isEqualTo(Double.POSITIVE_INFINITY);
 		assertThat(provider.getNumberAsDoubleRounded(provider.createNumber(new BigDecimal("-1e400")))).isEqualTo(Double.NEGATIVE_INFINITY);
 		assertThat(provider.getNumberAsDoubleRounded(provider.createNumber(Double.POSITIVE_INFINITY))).isEqualTo(Double.POSITIVE_INFINITY);
@@ -402,7 +402,7 @@ public abstract class JsonProviderContractTest<T> {
 	// ===================
 
 	@Test
-	void testObjectGetObjectFieldObjectEntries() {
+	void testGetObjectEntries() {
 		T obj = provider.createObject(mapOf("x", provider.createNumber(10), "y", provider.createNumber(20)));
 
 		List<String> keys = new ArrayList<>();
@@ -419,7 +419,7 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testObjectGetObjectFieldObjectFieldNames() {
+	void testGetObjectFieldNames() {
 		T obj = provider.createObject(mapOf("foo", provider.createNull(), "bar", provider.createNull()));
 
 		List<String> names = new ArrayList<>();
@@ -458,7 +458,7 @@ public abstract class JsonProviderContractTest<T> {
 	// ===================
 
 	@Test
-	void testArrayGetArrayElements() {
+	void testGetArrayElements() {
 		T arr = provider.createArray(Arrays.asList(provider.createString("a"), provider.createString("b"), provider.createString("c")));
 
 		List<String> elements = new ArrayList<>();
@@ -618,8 +618,8 @@ public abstract class JsonProviderContractTest<T> {
 	// ================================
 
 	@Test
-	void testGetObjectFieldStringOnNullNode() {
-		// asText on null node should return "null", not empty string
+	void testGetStringOnNullNode() {
+		// getString on a null node should return "null", not an empty string
 		T node = provider.createNull();
 		assertThat(provider.getString(node)).isEqualTo("null");
 	}
@@ -630,7 +630,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testFormatOnNaN() {
-		// toString on NaN should return "null" (jq behavior)
+		// format on NaN should return "null" (jq behavior)
 		T node = provider.createNumber(Double.NaN);
 		String json = provider.format(node);
 		assertThat(json).isEqualTo("null");
@@ -638,7 +638,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testFormatOnPositiveInfinity() {
-		// toString on positive infinity should return the max double value
+		// format on positive infinity should return the max double value
 		T node = provider.createNumber(Double.POSITIVE_INFINITY);
 		String json = provider.format(node);
 		assertThat(json).contains("1.7976931348623157e+308");
@@ -646,7 +646,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testFormatOnNegativeInfinity() {
-		// toString on negative infinity should return the negative max double value
+		// format on negative infinity should return the negative max double value
 		T node = provider.createNumber(Double.NEGATIVE_INFINITY);
 		String json = provider.format(node);
 		assertThat(json).contains("-1.7976931348623157e+308");
@@ -654,7 +654,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testFormatOnWholeNumberDouble() {
-		// toString on a whole number double like 0.0 should serialize without decimal (jq behavior)
+		// format on a whole number double like 0.0 should serialize without decimal (jq behavior)
 		T node = provider.createNumber(0.0);
 		String json = provider.format(node);
 		assertThat(json).isEqualTo("0");
@@ -662,7 +662,7 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testFormatOnNegativeZero() {
-		// toString on -0.0 should serialize as "0" (jq behavior)
+		// format on -0.0 should serialize as "0" (jq behavior)
 		T node = provider.createNumber(-0.0);
 		String json = provider.format(node);
 		assertThat(json).isEqualTo("0");
@@ -820,7 +820,7 @@ public abstract class JsonProviderContractTest<T> {
 	// ================================
 
 	@Test
-	void testGetObjectFieldNumberTypeOnNonNumberThrows() {
+	void testGetNumberTypeOnNonNumberThrows() {
 		assertThatThrownBy(() -> provider.getNumberType(provider.createString("42"))).isInstanceOf(IllegalArgumentException.class);
 		assertThatThrownBy(() -> provider.getNumberType(provider.createBoolean(true))).isInstanceOf(IllegalArgumentException.class);
 		assertThatThrownBy(() -> provider.getNumberType(provider.createNull())).isInstanceOf(IllegalArgumentException.class);
@@ -829,7 +829,7 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testGetObjectFieldNumberTypeIsConsistentWithTheAccessors() {
+	void testGetNumberTypeIsConsistentWithTheAccessors() {
 		// Whatever a provider reports, the matching accessor has to work on that node.
 		List<T> numbers = Arrays.asList(
 				provider.createNumber(42),
