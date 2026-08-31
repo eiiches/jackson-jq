@@ -139,7 +139,7 @@ public class DelPathsFunction implements Function {
 		for (List<JsonNode> path : numberPaths) {
 			JsonNode indexNode = path.get(depth);
 			boolean terminal = depth == path.size() - 1;
-			double raw = jsonProvider.asDouble(indexNode);
+			double raw = jsonProvider.asDoubleRounded(indexNode);
 			if (terminal && raw < 0 && version.compareTo(Versions.JQ_1_5) <= 0) {
 				// jq-1.5: [1,2,[1,3]]|delpaths([[-1,1]]) #=> [1,2,[1]]
 				// jq-1.5: [1,2,[1,3]]|delpaths([[-1]]) #=> [1,2,[1,3]]

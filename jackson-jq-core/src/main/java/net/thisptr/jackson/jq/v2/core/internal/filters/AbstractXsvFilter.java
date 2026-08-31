@@ -41,7 +41,7 @@ public abstract class AbstractXsvFilter implements Function {
 				JsonNodeType colType = jsonProvider.getNodeType(col);
 				if (colType == JsonNodeType.STRING) {
 					appendEscaped(row, jsonProvider.asString(col));
-				} else if (colType == JsonNodeType.NULL || (colType == JsonNodeType.NUMBER && Double.isNaN(jsonProvider.asDouble(col)))) {
+				} else if (colType == JsonNodeType.NULL || (colType == JsonNodeType.NUMBER && Double.isNaN(jsonProvider.asDoubleRounded(col)))) {
 					// empty
 				} else if (colType == JsonNodeType.BOOLEAN || colType == JsonNodeType.NUMBER) {
 					row.append(JsonNodeUtils.toString(jsonProvider, col, version));

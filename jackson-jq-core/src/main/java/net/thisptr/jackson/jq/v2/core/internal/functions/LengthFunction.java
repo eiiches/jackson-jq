@@ -43,7 +43,7 @@ public class LengthFunction implements Function {
 		} else if (type == JsonNodeType.NULL) {
 			return jsonProvider.createNumber(0);
 		} else if (type == JsonNodeType.NUMBER) {
-			return JsonNodeUtils.asNumericNode(jsonProvider, Math.abs(jsonProvider.asDouble(in)));
+			return JsonNodeUtils.asNumericNode(jsonProvider, Math.abs(jsonProvider.asDoubleRounded(in)));
 		} else {
 			throw new JsonQueryTypeException(jsonProvider, version, "%s has no length", in);
 		}

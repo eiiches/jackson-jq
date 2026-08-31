@@ -52,7 +52,7 @@ public class ReverseFunction implements Function {
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
 			}
 			if (type == JsonNodeType.NUMBER) {
-				if (jsonProvider.asDouble(in) == 0.0) {
+				if (jsonProvider.asDoubleRounded(in) == 0.0) {
 					output.emit(emptyArray, UntrackedPath.getInstance());
 					return;
 				}

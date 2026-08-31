@@ -178,7 +178,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public double asDouble(JsonElement node) {
+	public double asDoubleRounded(JsonElement node) {
 		if (node.isJsonPrimitive()) {
 			JsonPrimitive primitive = node.getAsJsonPrimitive();
 			if (primitive.isNumber()) {

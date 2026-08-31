@@ -31,21 +31,21 @@ public class MultiplyOperator<JsonNode> implements BinaryOperator<JsonNode> {
 		JsonNodeType ltype = jsonProvider.getNodeType(lhs);
 		JsonNodeType rtype = jsonProvider.getNodeType(rhs);
 		if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.NUMBER) {
-			double ld = jsonProvider.asDouble(lhs);
-			double rd = jsonProvider.asDouble(rhs);
+			double ld = jsonProvider.asDoubleRounded(lhs);
+			double rd = jsonProvider.asDoubleRounded(rhs);
 			if (ld == (long) ld && rd == (long) rd) {
 				return JsonNodeUtils.asNumericNode(jsonProvider, ((long) ld) * (long) rd);
 			}
 			return JsonNodeUtils.asNumericNode(jsonProvider, ld * rd);
 		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.NUMBER) {
-			double count = jsonProvider.asDouble(rhs);
+			double count = jsonProvider.asDoubleRounded(rhs);
 			if (count <= 0)
 				return jsonProvider.createNull();
 			if (count < 2)
 				return lhs;
 			return jsonProvider.createString(Strings.repeat(jsonProvider.asString(lhs), (int) count));
 		} else if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.STRING) {
-			double count = jsonProvider.asDouble(lhs);
+			double count = jsonProvider.asDoubleRounded(lhs);
 			if (count <= 0)
 				return jsonProvider.createNull();
 			if (count < 2)

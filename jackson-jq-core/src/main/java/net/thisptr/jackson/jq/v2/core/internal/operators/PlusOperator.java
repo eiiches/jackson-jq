@@ -34,8 +34,8 @@ public class PlusOperator<JsonNode> implements BinaryOperator<JsonNode> {
 			// This is a bit tricky because Jackson distinguishes between integral and floating point numbers
 			// but our JsonNodeType.NUMBER doesn't.
 			// Let's check if they can be represented as longs.
-			double ld = jsonProvider.asDouble(lhs);
-			double rd = jsonProvider.asDouble(rhs);
+			double ld = jsonProvider.asDoubleRounded(lhs);
+			double rd = jsonProvider.asDoubleRounded(rhs);
 			if (ld == (long) ld && rd == (long) rd) {
 				return JsonNodeUtils.asNumericNode(jsonProvider, (long) ld + (long) rd);
 			}

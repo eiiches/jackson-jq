@@ -31,8 +31,8 @@ public class MinusOperator<JsonNode> implements BinaryOperator<JsonNode> {
 		JsonNodeType ltype = jsonProvider.getNodeType(lhs);
 		JsonNodeType rtype = jsonProvider.getNodeType(rhs);
 		if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.NUMBER) {
-			double ld = jsonProvider.asDouble(lhs);
-			double rd = jsonProvider.asDouble(rhs);
+			double ld = jsonProvider.asDoubleRounded(lhs);
+			double rd = jsonProvider.asDoubleRounded(rhs);
 			if (ld == (long) ld && rd == (long) rd) {
 				return JsonNodeUtils.asNumericNode(jsonProvider, (long) ld - (long) rd);
 			}

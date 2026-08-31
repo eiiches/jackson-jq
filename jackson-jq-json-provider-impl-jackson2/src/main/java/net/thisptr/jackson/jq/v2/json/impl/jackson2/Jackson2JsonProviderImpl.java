@@ -162,7 +162,7 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public double asDouble(JsonNode node) {
+	public double asDoubleRounded(JsonNode node) {
 		return node.asDouble();
 	}
 

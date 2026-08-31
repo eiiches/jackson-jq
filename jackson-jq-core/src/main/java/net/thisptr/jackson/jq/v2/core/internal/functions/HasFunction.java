@@ -34,7 +34,7 @@ public class HasFunction implements Function {
 				} else if (inType == JsonNodeType.ARRAY) {
 					if (keyType != JsonNodeType.NUMBER)
 						throw new JsonQueryException("argument 1 of has() must be int for array input");
-					double keyAsDouble = jsonProvider.asDouble(keyName);
+					double keyAsDouble = jsonProvider.asDoubleRounded(keyName);
 					if (Double.isNaN(keyAsDouble) || Double.isInfinite(keyAsDouble)) {
 						output.emit(jsonProvider.createBoolean(false), UntrackedPath.getInstance());
 						return;

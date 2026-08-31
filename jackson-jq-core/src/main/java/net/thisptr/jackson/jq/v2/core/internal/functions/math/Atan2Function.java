@@ -20,6 +20,6 @@ public class Atan2Function extends PureJsonArgumentFunction {
 	protected <JsonNode> JsonNode fn(JsonProvider<JsonNode> jsonProvider, List<JsonNode> args) throws JsonQueryException {
 		Preconditions.checkArgumentType(jsonProvider, "atan2/2", 0, args.get(0), JsonNodeType.NUMBER);
 		Preconditions.checkArgumentType(jsonProvider, "atan2/2", 1, args.get(1), JsonNodeType.NUMBER);
-		return JsonNodeUtils.asNumericNode(jsonProvider, Math.atan2(jsonProvider.asDouble(args.get(0)), jsonProvider.asDouble(args.get(1))));
+		return JsonNodeUtils.asNumericNode(jsonProvider, Math.atan2(jsonProvider.asDoubleRounded(args.get(0)), jsonProvider.asDoubleRounded(args.get(1))));
 	}
 }

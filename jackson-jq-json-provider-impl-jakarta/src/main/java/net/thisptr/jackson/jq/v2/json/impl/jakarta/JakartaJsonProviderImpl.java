@@ -175,7 +175,7 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public double asDouble(JsonValue node) {
+	public double asDoubleRounded(JsonValue node) {
 		if (node instanceof JsonNumber)
 			return ((JsonNumber) node).doubleValue();
 		if (node instanceof JsonString) {

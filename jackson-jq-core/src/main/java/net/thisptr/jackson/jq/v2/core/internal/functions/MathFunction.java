@@ -23,7 +23,7 @@ public abstract class MathFunction implements Function {
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "mathfunc", in, JsonNodeType.NUMBER);
-			output.emit(jsonProvider.createNumber(f(jsonProvider.asDouble(in))), UntrackedPath.getInstance());
+			output.emit(jsonProvider.createNumber(f(jsonProvider.asDoubleRounded(in))), UntrackedPath.getInstance());
 		});
 	}
 

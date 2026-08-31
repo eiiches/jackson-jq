@@ -161,12 +161,12 @@ public interface JsonProvider<JsonNode> {
 	 * @param node the JSON node
 	 * @return the double value, or {@link Double#NaN} if the node cannot be interpreted as a number
 	 */
-	double asDouble(JsonNode node);
+	double asDoubleRounded(JsonNode node);
 
 	/**
 	 * Returns the exact value of a number node.
 	 * <p>
-	 * Unlike {@link #asDouble(Object)}, this does not lose precision. {@link BigDecimal} cannot
+	 * Unlike {@link #asDoubleRounded(Object)}, this does not lose precision. {@link BigDecimal} cannot
 	 * represent the non-finite values jq can produce, so those are reported as {@code null} rather
 	 * than approximated.
 	 *

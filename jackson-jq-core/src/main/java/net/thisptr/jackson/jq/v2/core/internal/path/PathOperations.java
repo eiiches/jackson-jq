@@ -121,7 +121,7 @@ public final class PathOperations {
 	public static <JsonNode> void resolveArrayIndex(JsonProvider<JsonNode> jsonProvider, JsonNode parent, Path<JsonNode> parentPath, Output<JsonNode> output, JsonNode index, boolean permissive, Version version) throws JsonQueryException {
 		assert jsonProvider.getNodeType(index) == JsonNodeType.NUMBER;
 		if (jsonProvider.getNodeType(parent) == JsonNodeType.ARRAY) {
-			double indexAsDouble = jsonProvider.asDouble(index);
+			double indexAsDouble = jsonProvider.asDoubleRounded(index);
 			if (Double.isNaN(indexAsDouble) || Double.isInfinite(indexAsDouble)) {
 				output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
 				return;
@@ -269,7 +269,7 @@ public final class PathOperations {
 		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL)
 			in = jsonProvider.createArray(Collections.emptyList());
 		if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
-			double indexAsDouble = jsonProvider.asDouble(index);
+			double indexAsDouble = jsonProvider.asDoubleRounded(index);
 			if (Double.isNaN(indexAsDouble) || Double.isInfinite(indexAsDouble))
 				throw new JsonQueryException("Cannot use " + (Double.isNaN(indexAsDouble) ? "nan" : "infinite") + " as array index");
 			int indexAsInt;

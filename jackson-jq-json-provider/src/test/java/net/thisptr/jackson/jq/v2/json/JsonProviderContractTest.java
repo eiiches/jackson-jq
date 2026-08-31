@@ -89,7 +89,7 @@ public abstract class JsonProviderContractTest<T> {
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.NUMBER);
 		assertThat(provider.asInt(node)).isEqualTo(42);
 		assertThat(provider.asLong(node)).isEqualTo(42L);
-		assertThat(provider.asDouble(node)).isEqualTo(42.0);
+		assertThat(provider.asDoubleRounded(node)).isEqualTo(42.0);
 	}
 
 	@Test
@@ -97,21 +97,21 @@ public abstract class JsonProviderContractTest<T> {
 		T node = provider.createNumber(9999999999L);
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.NUMBER);
 		assertThat(provider.asLong(node)).isEqualTo(9999999999L);
-		assertThat(provider.asDouble(node)).isEqualTo(9999999999.0);
+		assertThat(provider.asDoubleRounded(node)).isEqualTo(9999999999.0);
 	}
 
 	@Test
 	void testCreateNumberFromFloat() {
 		T node = provider.createNumber(3.14f);
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.NUMBER);
-		assertThat((float) provider.asDouble(node)).isEqualTo(3.14f);
+		assertThat((float) provider.asDoubleRounded(node)).isEqualTo(3.14f);
 	}
 
 	@Test
 	void testCreateNumberFromDouble() {
 		T node = provider.createNumber(3.14159);
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.NUMBER);
-		assertThat(provider.asDouble(node)).isEqualTo(3.14159);
+		assertThat(provider.asDoubleRounded(node)).isEqualTo(3.14159);
 	}
 
 	@Test
@@ -119,7 +119,7 @@ public abstract class JsonProviderContractTest<T> {
 		BigInteger value = new BigInteger("123456789012345678901234567890");
 		T node = provider.createNumber(value);
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.NUMBER);
-		assertThat(provider.asDouble(node)).isEqualTo(value.doubleValue());
+		assertThat(provider.asDoubleRounded(node)).isEqualTo(value.doubleValue());
 	}
 
 	@Test
@@ -127,7 +127,7 @@ public abstract class JsonProviderContractTest<T> {
 		BigDecimal value = new BigDecimal("3.14159265358979323846264338327950288");
 		T node = provider.createNumber(value);
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.NUMBER);
-		assertThat(provider.asDouble(node)).isEqualTo(value.doubleValue());
+		assertThat(provider.asDoubleRounded(node)).isEqualTo(value.doubleValue());
 	}
 
 	@Test
@@ -421,7 +421,7 @@ public abstract class JsonProviderContractTest<T> {
 		assertThat(provider.asLong(negLong)).isEqualTo(-9999999999L);
 
 		T negDouble = provider.createNumber(-3.14);
-		assertThat(provider.asDouble(negDouble)).isEqualTo(-3.14);
+		assertThat(provider.asDoubleRounded(negDouble)).isEqualTo(-3.14);
 	}
 
 	@Test

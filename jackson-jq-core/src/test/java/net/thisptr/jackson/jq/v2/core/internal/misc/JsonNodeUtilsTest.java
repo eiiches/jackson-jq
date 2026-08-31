@@ -16,7 +16,7 @@ public class JsonNodeUtilsTest {
 		JsonNode node = JsonNodeUtils.asNumericNode(jsonProvider, 0x1p63);
 
 		assertThat(node.isDouble()).isTrue();
-		assertThat(jsonProvider.asDouble(node)).isEqualTo(0x1p63);
+		assertThat(jsonProvider.asDoubleRounded(node)).isEqualTo(0x1p63);
 	}
 
 	@Test
@@ -42,6 +42,6 @@ public class JsonNodeUtilsTest {
 		JsonNode node = JsonNodeUtils.asNumericNode(jsonProvider, value);
 
 		assertThat(node.isDouble()).isTrue();
-		assertThat(jsonProvider.asDouble(node)).isEqualTo(value);
+		assertThat(jsonProvider.asDoubleRounded(node)).isEqualTo(value);
 	}
 }

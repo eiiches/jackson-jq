@@ -50,8 +50,8 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 	}
 
 	protected int compareNumberNode(JsonNode o1, JsonNode o2) {
-		double a = jsonProvider.asDouble(o1);
-		double b = jsonProvider.asDouble(o2);
+		double a = jsonProvider.asDoubleRounded(o1);
+		double b = jsonProvider.asDoubleRounded(o2);
 		if (Double.isNaN(a))
 			return -1;
 		if (Double.isNaN(b))

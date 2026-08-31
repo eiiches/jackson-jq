@@ -66,8 +66,8 @@ public class RangeFunction implements Function {
 	private static <JsonNode> JsonNode range2(JsonProvider<JsonNode> jsonProvider, Output<JsonNode> output, JsonNode start, JsonNode end) throws JsonQueryException {
 		if (jsonProvider.getNodeType(start) != JsonNodeType.NUMBER || jsonProvider.getNodeType(end) != JsonNodeType.NUMBER)
 			throw new JsonQueryTypeException("Range bounds must be numeric");
-		double _start = jsonProvider.asDouble(start);
-		double _end = jsonProvider.asDouble(end);
+		double _start = jsonProvider.asDoubleRounded(start);
+		double _end = jsonProvider.asDoubleRounded(end);
 		@Var double i;
 		for (i = _start; i < _end; i += 1)
 			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, i), UntrackedPath.getInstance());
