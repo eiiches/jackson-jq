@@ -278,8 +278,9 @@ public interface JsonProvider<JsonNode> {
 	/**
 	 * Returns an iterator over the field name/value pairs of an object node.
 	 *
-	 * @param node the JSON node
-	 * @return an iterator over the object's entries, or an empty iterator if {@code node} is not an object
+	 * @param node the JSON object node
+	 * @return an iterator over the object's entries
+	 * @throws IllegalArgumentException if the node is not an object
 	 */
 	Iterator<Map.Entry<String, JsonNode>> getObjectEntries(JsonNode node);
 
@@ -304,17 +305,19 @@ public interface JsonProvider<JsonNode> {
 	/**
 	 * Returns an iterator over the field names of an object node.
 	 *
-	 * @param node the JSON node
-	 * @return an iterator over the object's field names, or an empty iterator if {@code node} is not an object
+	 * @param node the JSON object node
+	 * @return an iterator over the object's field names
+	 * @throws IllegalArgumentException if the node is not an object
 	 */
 	Iterator<String> getObjectFieldNames(JsonNode node);
 
 	/**
 	 * Returns the value of the given field.
 	 *
-	 * @param node the JSON node
+	 * @param node the JSON object node
 	 * @param fieldName the field name
-	 * @return the field's value, or {@code null} if {@code node} is not an object or has no such field
+	 * @return the field's value, or {@code null} if the object has no such field
+	 * @throws IllegalArgumentException if the node is not an object
 	 */
 	@Nullable JsonNode getObjectField(JsonNode node, String fieldName);
 
@@ -332,10 +335,11 @@ public interface JsonProvider<JsonNode> {
 	/**
 	 * Like {@link #getObjectField(Object, String)}, but requires the field to be present.
 	 *
-	 * @param node the JSON node
+	 * @param node the JSON object node
 	 * @param fieldName the field name
 	 * @return the field's value
-	 * @throws NullPointerException if {@code node} is not an object or has no such field
+	 * @throws IllegalArgumentException if the node is not an object
+	 * @throws NullPointerException if the object has no such field
 	 */
 	default JsonNode requireGet(JsonNode node, String fieldName) {
 		return Objects.requireNonNull(getObjectField(node, fieldName));
@@ -362,9 +366,10 @@ public interface JsonProvider<JsonNode> {
 	/**
 	 * Returns whether the object node has the given field.
 	 *
-	 * @param node the JSON node
+	 * @param node the JSON object node
 	 * @param fieldName the field name
-	 * @return {@code true} if {@code node} is an object and has a field named {@code fieldName}
+	 * @return {@code true} if the object has a field named {@code fieldName}, {@code false} otherwise
+	 * @throws IllegalArgumentException if the node is not an object
 	 */
 	boolean hasObjectField(JsonNode node, String fieldName);
 

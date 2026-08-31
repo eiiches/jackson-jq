@@ -303,6 +303,8 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 
 	@Override
 	public Iterator<Map.Entry<String, JsonNode>> getObjectEntries(JsonNode node) {
+		if (!node.isObject())
+			throw new IllegalArgumentException("Expected an object node");
 		return node.properties().iterator();
 	}
 
@@ -322,11 +324,15 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 
 	@Override
 	public Iterator<String> getObjectFieldNames(JsonNode node) {
+		if (!node.isObject())
+			throw new IllegalArgumentException("Expected an object node");
 		return node.propertyNames().iterator();
 	}
 
 	@Override
 	public @Nullable JsonNode getObjectField(JsonNode node, String fieldName) {
+		if (!node.isObject())
+			throw new IllegalArgumentException("Expected an object node");
 		return node.get(fieldName);
 	}
 
@@ -355,6 +361,8 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 
 	@Override
 	public boolean hasObjectField(JsonNode node, String fieldName) {
+		if (!node.isObject())
+			throw new IllegalArgumentException("Expected an object node");
 		return node.has(fieldName);
 	}
 

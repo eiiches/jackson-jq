@@ -309,10 +309,9 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 
 	@Override
 	public Iterator<Map.Entry<String, JsonElement>> getObjectEntries(JsonElement node) {
-		if (node.isJsonObject()) {
-			return node.getAsJsonObject().entrySet().iterator();
-		}
-		return Collections.emptyIterator();
+		if (!node.isJsonObject())
+			throw new IllegalArgumentException("Expected an object node");
+		return node.getAsJsonObject().entrySet().iterator();
 	}
 
 	@Override
@@ -333,18 +332,16 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 
 	@Override
 	public Iterator<String> getObjectFieldNames(JsonElement node) {
-		if (node.isJsonObject()) {
-			return node.getAsJsonObject().keySet().iterator();
-		}
-		return Collections.emptyIterator();
+		if (!node.isJsonObject())
+			throw new IllegalArgumentException("Expected an object node");
+		return node.getAsJsonObject().keySet().iterator();
 	}
 
 	@Override
 	public @Nullable JsonElement getObjectField(JsonElement node, String fieldName) {
-		if (node.isJsonObject()) {
-			return node.getAsJsonObject().get(fieldName);
-		}
-		return null;
+		if (!node.isJsonObject())
+			throw new IllegalArgumentException("Expected an object node");
+		return node.getAsJsonObject().get(fieldName);
 	}
 
 	@Override
@@ -373,10 +370,9 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 
 	@Override
 	public boolean hasObjectField(JsonElement node, String fieldName) {
-		if (node.isJsonObject()) {
-			return node.getAsJsonObject().has(fieldName);
-		}
-		return false;
+		if (!node.isJsonObject())
+			throw new IllegalArgumentException("Expected an object node");
+		return node.getAsJsonObject().has(fieldName);
 	}
 
 	@Override

@@ -318,6 +318,8 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 	// Prefer fields() over properties() for broader Jackson 2.x version compatibility
 	@SuppressWarnings("deprecation")
 	public Iterator<Map.Entry<String, JsonNode>> getObjectEntries(JsonNode node) {
+		if (!node.isObject())
+			throw new IllegalArgumentException("Expected an object node");
 		return node.fields();
 	}
 
@@ -337,11 +339,15 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 
 	@Override
 	public Iterator<String> getObjectFieldNames(JsonNode node) {
+		if (!node.isObject())
+			throw new IllegalArgumentException("Expected an object node");
 		return node.fieldNames();
 	}
 
 	@Override
 	public @Nullable JsonNode getObjectField(JsonNode node, String fieldName) {
+		if (!node.isObject())
+			throw new IllegalArgumentException("Expected an object node");
 		return node.get(fieldName);
 	}
 
@@ -370,6 +376,8 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 
 	@Override
 	public boolean hasObjectField(JsonNode node, String fieldName) {
+		if (!node.isObject())
+			throw new IllegalArgumentException("Expected an object node");
 		return node.has(fieldName);
 	}
 

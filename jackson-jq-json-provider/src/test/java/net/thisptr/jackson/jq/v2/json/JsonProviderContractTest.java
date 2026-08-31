@@ -419,6 +419,19 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
+	void testGetObjectEntriesRejectsNonObjects() {
+		List<T> nonObjects = Arrays.asList(
+				provider.createArray(Collections.emptyList()),
+				provider.createString("value"),
+				provider.createNumber(1),
+				provider.createBoolean(true),
+				provider.createNull());
+
+		for (T node : nonObjects)
+			assertThatThrownBy(() -> provider.getObjectEntries(node)).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
 	void testGetObjectFieldNames() {
 		T obj = provider.createObject(mapOf("foo", provider.createNull(), "bar", provider.createNull()));
 
@@ -429,6 +442,19 @@ public abstract class JsonProviderContractTest<T> {
 		}
 
 		assertThat(names).containsExactlyInAnyOrder("foo", "bar");
+	}
+
+	@Test
+	void testGetObjectFieldNamesRejectsNonObjects() {
+		List<T> nonObjects = Arrays.asList(
+				provider.createArray(Collections.emptyList()),
+				provider.createString("value"),
+				provider.createNumber(1),
+				provider.createBoolean(true),
+				provider.createNull());
+
+		for (T node : nonObjects)
+			assertThatThrownBy(() -> provider.getObjectFieldNames(node)).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
@@ -446,11 +472,81 @@ public abstract class JsonProviderContractTest<T> {
 
 	@Test
 	void testGetObjectFieldValuesRejectsNonObjects() {
-		assertThatThrownBy(() -> provider.getObjectFieldValues(provider.createArray(Collections.emptyList()))).isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> provider.getObjectFieldValues(provider.createString("value"))).isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> provider.getObjectFieldValues(provider.createNumber(1))).isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> provider.getObjectFieldValues(provider.createBoolean(true))).isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> provider.getObjectFieldValues(provider.createNull())).isInstanceOf(IllegalArgumentException.class);
+		List<T> nonObjects = Arrays.asList(
+				provider.createArray(Collections.emptyList()),
+				provider.createString("value"),
+				provider.createNumber(1),
+				provider.createBoolean(true),
+				provider.createNull());
+
+		for (T node : nonObjects)
+			assertThatThrownBy(() -> provider.getObjectFieldValues(node)).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	void testGetObjectFieldAndHasObjectField() {
+		Map<String, T> map = new LinkedHashMap<>();
+		map.put("str", provider.createString("hello"));
+		map.put("nul", provider.createNull());
+		T obj = provider.createObject(map);
+
+		// Present non-null field
+		assertThat(provider.hasObjectField(obj, "str")).isTrue();
+		T strVal = provider.getObjectField(obj, "str");
+		assertThat(strVal).isNotNull();
+		assertThat(provider.getString(Objects.requireNonNull(strVal))).isEqualTo("hello");
+		assertThat(provider.requireGet(obj, "str")).isNotNull();
+
+		// Present explicit JSON null field
+		assertThat(provider.hasObjectField(obj, "nul")).isTrue();
+		T nullVal = provider.getObjectField(obj, "nul");
+		assertThat(nullVal).isNotNull();
+		assertThat(provider.getNodeType(Objects.requireNonNull(nullVal))).isEqualTo(JsonNodeType.NULL);
+		assertThat(provider.requireGet(obj, "nul")).isNotNull();
+
+		// Absent field
+		assertThat(provider.hasObjectField(obj, "missing")).isFalse();
+		assertThat(provider.getObjectField(obj, "missing")).isNull();
+		assertThatThrownBy(() -> provider.requireGet(obj, "missing")).isInstanceOf(NullPointerException.class);
+	}
+
+	@Test
+	void testGetObjectFieldRejectsNonObjects() {
+		List<T> nonObjects = Arrays.asList(
+				provider.createArray(Collections.emptyList()),
+				provider.createString("value"),
+				provider.createNumber(1),
+				provider.createBoolean(true),
+				provider.createNull());
+
+		for (T node : nonObjects)
+			assertThatThrownBy(() -> provider.getObjectField(node, "foo")).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	void testHasObjectFieldRejectsNonObjects() {
+		List<T> nonObjects = Arrays.asList(
+				provider.createArray(Collections.emptyList()),
+				provider.createString("value"),
+				provider.createNumber(1),
+				provider.createBoolean(true),
+				provider.createNull());
+
+		for (T node : nonObjects)
+			assertThatThrownBy(() -> provider.hasObjectField(node, "foo")).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	void testRequireGetRejectsNonObjects() {
+		List<T> nonObjects = Arrays.asList(
+				provider.createArray(Collections.emptyList()),
+				provider.createString("value"),
+				provider.createNumber(1),
+				provider.createBoolean(true),
+				provider.createNull());
+
+		for (T node : nonObjects)
+			assertThatThrownBy(() -> provider.requireGet(node, "foo")).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	// ===================

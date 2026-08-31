@@ -298,9 +298,9 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 
 	@Override
 	public Iterator<Map.Entry<String, JsonValue>> getObjectEntries(JsonValue node) {
-		if (node instanceof JsonObject)
-			return ((JsonObject) node).entrySet().iterator();
-		return Collections.emptyIterator();
+		if (!(node instanceof JsonObject))
+			throw new IllegalArgumentException("Expected an object node");
+		return ((JsonObject) node).entrySet().iterator();
 	}
 
 	@Override
@@ -319,14 +319,16 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 
 	@Override
 	public Iterator<String> getObjectFieldNames(JsonValue node) {
-		if (node instanceof JsonObject)
-			return ((JsonObject) node).keySet().iterator();
-		return Collections.emptyIterator();
+		if (!(node instanceof JsonObject))
+			throw new IllegalArgumentException("Expected an object node");
+		return ((JsonObject) node).keySet().iterator();
 	}
 
 	@Override
 	public @Nullable JsonValue getObjectField(JsonValue node, String fieldName) {
-		return node instanceof JsonObject ? ((JsonObject) node).get(fieldName) : null;
+		if (!(node instanceof JsonObject))
+			throw new IllegalArgumentException("Expected an object node");
+		return ((JsonObject) node).get(fieldName);
 	}
 
 	@Override
@@ -355,7 +357,9 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 
 	@Override
 	public boolean hasObjectField(JsonValue node, String fieldName) {
-		return node instanceof JsonObject && ((JsonObject) node).containsKey(fieldName);
+		if (!(node instanceof JsonObject))
+			throw new IllegalArgumentException("Expected an object node");
+		return ((JsonObject) node).containsKey(fieldName);
 	}
 
 	@Override
