@@ -17,10 +17,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.help.HelpFormatter;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.SerializationFeature;
-import tools.jackson.databind.json.JsonMapper;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
@@ -35,7 +31,6 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.json.impl.jackson3.JsonQueryJacksonModule;
 import net.thisptr.jackson.jq.v2.json.impl.jakarta.JakartaJsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -48,9 +43,10 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class Main {
-	private static final ObjectMapper MAPPER = JsonMapper.builder()
-			.addModule(JsonQueryJacksonModule.getInstance())
-			.build();
+	/**
+	 * jq indents with two spaces.
+	 */
+	private static final String PRETTY_INDENT = "  ";
 	private static final Option OPT_COMPACT = Option.builder("c")
 			.longOpt("compact")
 			.desc("compact instead of pretty-printed output")
@@ -176,13 +172,8 @@ public class Main {
 						new FileSystemModuleLoader<>(jsonProvider, version, FileSystems.getDefault().getPath("").toAbsolutePath())))
 				.build();
 		JsonQuery<N> jq = env.compile(query);
-		// TODO: Pretty-printing still goes through Jackson 3 regardless of --json-provider. Drop MAPPER
-		// once JsonProvider can format to a stream.
-		ObjectMapper outputMapper = command.hasOption(OPT_COMPACT.getOpt())
-				? MAPPER
-				: MAPPER.rebuild()
-				.enable(SerializationFeature.INDENT_OUTPUT)
-				.build();
+		boolean compact = command.hasOption(OPT_COMPACT.getOpt());
+		boolean rawOutput = command.hasOption(OPT_RAW_OUTPUT.getOpt());
 		@Var InputStream is = System.in;
 		if (command.hasOption(OPT_NULL_INPUT.getOpt())) {
 			is = new ByteArrayInputStream("null".getBytes(StandardCharsets.UTF_8));
@@ -191,16 +182,12 @@ public class Main {
 			for (@Var N tree = parser.next(); tree != null; tree = parser.next()) {
 				try {
 					jq.apply(tree, out -> {
-						if (jsonProvider.getNodeType(out) == JsonNodeType.STRING && command.hasOption(OPT_RAW_OUTPUT.getOpt())) {
+						if (jsonProvider.getNodeType(out) == JsonNodeType.STRING && rawOutput) {
 							System.out.println(jsonProvider.asString(out));
+						} else if (compact) {
+							System.out.println(jsonProvider.format(out));
 						} else {
-							String json = jsonProvider.format(out);
-							if (command.hasOption(OPT_COMPACT.getOpt())) {
-								System.out.println(json);
-							} else {
-								JsonNode outputTree = MAPPER.readTree(json);
-								System.out.println(outputMapper.writeValueAsString(outputTree));
-							}
+							System.out.println(JqPrettyPrinter.print(jsonProvider, out, PRETTY_INDENT));
 						}
 					});
 				} catch (JsonQueryException e) {

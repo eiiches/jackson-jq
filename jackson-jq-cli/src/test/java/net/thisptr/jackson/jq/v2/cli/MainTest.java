@@ -53,6 +53,32 @@ class MainTest {
 				.isEqualTo("3\n");
 	}
 
+	@ParameterizedTest
+	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	void prettyPrintsLikeJqByDefault(String provider) throws Exception {
+		assertThat(run("{\"a\":[1,2,{\"b\":null}],\"c\":{},\"d\":[],\"e\":\"<&>\"}", "--json-provider", provider, "."))
+				.isEqualTo(""
+						+ "{\n"
+						+ "  \"a\": [\n"
+						+ "    1,\n"
+						+ "    2,\n"
+						+ "    {\n"
+						+ "      \"b\": null\n"
+						+ "    }\n"
+						+ "  ],\n"
+						+ "  \"c\": {},\n"
+						+ "  \"d\": [],\n"
+						+ "  \"e\": \"<&>\"\n"
+						+ "}\n");
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	void prettyPrintsScalarsAndEmptyContainersOnOneLine(String provider) throws Exception {
+		assertThat(run("1 \"two\" null true [] {}", "--json-provider", provider, "."))
+				.isEqualTo("1\n\"two\"\nnull\ntrue\n[]\n{}\n");
+	}
+
 	@Test
 	void rejectsUnknownJsonProvider() {
 		assertThatIllegalArgumentException()
