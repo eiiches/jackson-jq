@@ -48,7 +48,7 @@ public final class ExceptionMessages {
 			return String.format("Cannot index %s with %s (%s)", inType, accessorType.toString().toLowerCase(Locale.ROOT), formatted);
 		} else {
 			if (accessorType == JsonNodeType.STRING) {
-				return String.format("Cannot index %s with string \"%s\"", inType, jsonProvider.asString(accessor));
+				return String.format("Cannot index %s with string \"%s\"", inType, jsonProvider.getString(accessor));
 			} else {
 				return String.format("Cannot index %s with %s", inType, accessorType.toString().toLowerCase(Locale.ROOT));
 			}

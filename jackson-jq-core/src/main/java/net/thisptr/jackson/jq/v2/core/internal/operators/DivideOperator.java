@@ -30,14 +30,14 @@ public class DivideOperator<JsonNode> implements BinaryOperator<JsonNode> {
 		JsonNodeType ltype = jsonProvider.getNodeType(lhs);
 		JsonNodeType rtype = jsonProvider.getNodeType(rhs);
 		if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.NUMBER) {
-			double divisor = jsonProvider.asDoubleRounded(rhs);
-			double dividend = jsonProvider.asDoubleRounded(lhs);
+			double divisor = jsonProvider.getNumberAsDoubleRounded(rhs);
+			double dividend = jsonProvider.getNumberAsDoubleRounded(lhs);
 			if (divisor == 0.0)
 				throw new JsonQueryException(ExceptionMessages.format(jsonProvider, version, "%s and %s cannot be divided because the divisor is zero", lhs, rhs));
 			return JsonNodeUtils.asNumericNode(jsonProvider, dividend / divisor);
 		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.STRING) {
 			List<JsonNode> result = new ArrayList<>();
-			for (String token : Strings.split(jsonProvider.asString(lhs), jsonProvider.asString(rhs)))
+			for (String token : Strings.split(jsonProvider.getString(lhs), jsonProvider.getString(rhs)))
 				result.add(jsonProvider.createString(token));
 			return jsonProvider.createArray(result);
 		} else {

@@ -26,7 +26,7 @@ public class ExplodeFunction implements Function {
 			Preconditions.checkInputType(jsonProvider, "explode", in, JsonNodeType.STRING);
 
 			List<JsonNode> result = new ArrayList<>();
-			for (int ch : jsonProvider.asString(in).codePoints().toArray())
+			for (int ch : jsonProvider.getString(in).codePoints().toArray())
 				result.add(jsonProvider.createNumber(ch));
 			output.emit(jsonProvider.createArray(result), UntrackedPath.getInstance());
 		});

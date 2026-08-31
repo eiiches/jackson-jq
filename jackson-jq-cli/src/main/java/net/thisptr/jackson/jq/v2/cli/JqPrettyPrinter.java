@@ -50,7 +50,7 @@ final class JqPrettyPrinter {
 	private static <N> void appendArray(JsonProvider<N> provider, StringBuilder out, N node, String indent, int depth) {
 		out.append('[');
 		@Var boolean empty = true;
-		for (Iterator<N> it = provider.elements(node); it.hasNext(); ) {
+		for (Iterator<N> it = provider.getArrayElements(node); it.hasNext(); ) {
 			if (!empty)
 				out.append(',');
 			empty = false;
@@ -66,7 +66,7 @@ final class JqPrettyPrinter {
 	private static <N> void appendObject(JsonProvider<N> provider, StringBuilder out, N node, String indent, int depth) {
 		out.append('{');
 		@Var boolean empty = true;
-		for (Iterator<Map.Entry<String, N>> it = provider.fields(node); it.hasNext(); ) {
+		for (Iterator<Map.Entry<String, N>> it = provider.getObjectEntries(node); it.hasNext(); ) {
 			Map.Entry<String, N> entry = it.next();
 			if (!empty)
 				out.append(',');

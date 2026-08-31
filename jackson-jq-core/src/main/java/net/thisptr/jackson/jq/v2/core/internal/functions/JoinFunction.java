@@ -30,13 +30,15 @@ public class JoinFunction implements Function {
 
 				@Var JsonNode isep = null;
 				StringBuilder builder = new StringBuilder();
-				Iterator<JsonNode> iter = jsonProvider.elements(in);
+				Iterator<JsonNode> iter = inType == JsonNodeType.ARRAY
+						? jsonProvider.getArrayElements(in)
+						: jsonProvider.getObjectFieldValues(in);
 				while (iter.hasNext()) {
 					JsonNode item = iter.next();
 					if (isep != null) {
 						JsonNodeType isepType = jsonProvider.getNodeType(isep);
 						if (isepType == JsonNodeType.STRING) {
-							builder.append(jsonProvider.asString(isep));
+							builder.append(jsonProvider.getString(isep));
 						} else if (isepType == JsonNodeType.NULL) {
 							// append nothing
 						} else {
@@ -46,7 +48,7 @@ public class JoinFunction implements Function {
 
 					JsonNodeType itemType = jsonProvider.getNodeType(item);
 					if (itemType == JsonNodeType.STRING) {
-						builder.append(jsonProvider.asString(item));
+						builder.append(jsonProvider.getString(item));
 					} else if (itemType == JsonNodeType.NULL) {
 						// append nothing
 					} else if (version.compareTo(Versions.JQ_1_6) >= 0 && (itemType == JsonNodeType.NUMBER || itemType == JsonNodeType.BOOLEAN)) {

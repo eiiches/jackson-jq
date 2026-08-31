@@ -46,7 +46,7 @@ public class UriParseFunction implements Function {
 			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 				Preconditions.checkInputType(jsonProvider, "uriparse", in, JsonNodeType.STRING);
 				try {
-					URI uri = new URI(jsonProvider.asString(in));
+					URI uri = new URI(jsonProvider.getString(in));
 					Map<String, JsonNode> queryObj = parseQueryObj(jsonProvider, uri.getRawQuery());
 					output.emit(buildResult(jsonProvider, uri, queryObj), UntrackedPath.getInstance());
 				} catch (URISyntaxException e) {

@@ -142,12 +142,12 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public boolean asBoolean(JsonNode node) {
+	public boolean getBoolean(JsonNode node) {
 		return node.asBoolean();
 	}
 
 	@Override
-	public double asDoubleRounded(JsonNode node) {
+	public double getNumberAsDoubleRounded(JsonNode node) {
 		if (!node.isNumber())
 			throw new IllegalArgumentException("Cannot convert non-number to double");
 		if (node.isDouble() || node.isFloat())
@@ -158,7 +158,7 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public @Nullable BigDecimal asBigDecimal(JsonNode node) {
+	public @Nullable BigDecimal getNumberAsBigDecimalExact(JsonNode node) {
 		if (!node.isNumber())
 			throw new IllegalArgumentException("Cannot convert non-number to BigDecimal");
 		if (node.isDouble() && !Double.isFinite(node.doubleValue()))
@@ -171,10 +171,10 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public @Nullable BigInteger asBigInteger(JsonNode node) {
+	public @Nullable BigInteger getNumberAsBigIntegerExact(JsonNode node) {
 		if (!node.isNumber())
 			throw new IllegalArgumentException("Cannot convert non-number to BigInteger");
-		BigDecimal value = asBigDecimal(node);
+		BigDecimal value = getNumberAsBigDecimalExact(node);
 		if (value == null)
 			return null;
 		try {
@@ -185,15 +185,15 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public @Nullable BigInteger asBigIntegerTruncated(JsonNode node) {
+	public @Nullable BigInteger getNumberAsBigIntegerTruncated(JsonNode node) {
 		if (!node.isNumber())
 			throw new IllegalArgumentException("Cannot convert non-number to BigInteger");
-		BigDecimal value = asBigDecimal(node);
+		BigDecimal value = getNumberAsBigDecimalExact(node);
 		return value == null ? null : value.toBigInteger();
 	}
 
 	@Override
-	public String asString(JsonNode node) {
+	public String getString(JsonNode node) {
 		// Jackson3's NullNode.asString() returns "" but we need "null" to match Jackson2 behavior
 		if (node.isNull()) {
 			return "null";
@@ -202,7 +202,7 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public @Nullable Long asLong(JsonNode node) {
+	public @Nullable Long getNumberAsLongExact(JsonNode node) {
 		if (!node.isNumber())
 			throw new IllegalArgumentException("Cannot convert non-number to long");
 		if (node.isIntegralNumber()) {
@@ -225,7 +225,7 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public @Nullable Long asLongTruncated(JsonNode node) {
+	public @Nullable Long getNumberAsLongTruncated(JsonNode node) {
 		if (!node.isNumber())
 			throw new IllegalArgumentException("Cannot convert non-number to long");
 		if (node.isIntegralNumber()) {
@@ -250,7 +250,7 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public @Nullable Integer asInt(JsonNode node) {
+	public @Nullable Integer getNumberAsIntExact(JsonNode node) {
 		if (!node.isNumber())
 			throw new IllegalArgumentException("Cannot convert non-number to int");
 		if (node.isIntegralNumber()) {
@@ -272,7 +272,7 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public @Nullable Integer asIntTruncated(JsonNode node) {
+	public @Nullable Integer getNumberAsIntTruncated(JsonNode node) {
 		if (!node.isNumber())
 			throw new IllegalArgumentException("Cannot convert non-number to int");
 		if (node.isIntegralNumber()) {
@@ -302,27 +302,36 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public Iterator<Map.Entry<String, JsonNode>> fields(JsonNode node) {
+	public Iterator<Map.Entry<String, JsonNode>> getObjectEntries(JsonNode node) {
 		return node.properties().iterator();
 	}
 
 	@Override
-	public Iterator<JsonNode> elements(JsonNode node) {
+	public Iterator<JsonNode> getArrayElements(JsonNode node) {
+		if (!node.isArray())
+			throw new IllegalArgumentException("Expected an array node");
 		return node.iterator();
 	}
 
 	@Override
-	public Iterator<String> fieldNames(JsonNode node) {
+	public Iterator<JsonNode> getObjectFieldValues(JsonNode node) {
+		if (!node.isObject())
+			throw new IllegalArgumentException("Expected an object node");
+		return node.iterator();
+	}
+
+	@Override
+	public Iterator<String> getObjectFieldNames(JsonNode node) {
 		return node.propertyNames().iterator();
 	}
 
 	@Override
-	public @Nullable JsonNode get(JsonNode node, String fieldName) {
+	public @Nullable JsonNode getObjectField(JsonNode node, String fieldName) {
 		return node.get(fieldName);
 	}
 
 	@Override
-	public @Nullable JsonNode get(JsonNode node, int index) {
+	public @Nullable JsonNode getArrayElement(JsonNode node, int index) {
 		return node.get(index);
 	}
 
@@ -332,12 +341,12 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public boolean has(JsonNode node, String fieldName) {
+	public boolean hasObjectField(JsonNode node, String fieldName) {
 		return node.has(fieldName);
 	}
 
 	@Override
-	public boolean has(JsonNode node, int index) {
+	public boolean hasArrayElement(JsonNode node, int index) {
 		return node.has(index);
 	}
 

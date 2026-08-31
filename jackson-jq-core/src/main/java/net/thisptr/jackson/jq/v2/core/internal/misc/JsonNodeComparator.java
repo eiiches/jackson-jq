@@ -50,8 +50,8 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 	}
 
 	protected int compareNumberNode(JsonNode o1, JsonNode o2) {
-		double a = jsonProvider.asDoubleRounded(o1);
-		double b = jsonProvider.asDoubleRounded(o2);
+		double a = jsonProvider.getNumberAsDoubleRounded(o1);
+		double b = jsonProvider.getNumberAsDoubleRounded(o2);
 		if (Double.isNaN(a))
 			return -1;
 		if (Double.isNaN(b))
@@ -63,8 +63,8 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 			return -1;
 		if (a > b)
 			return 1;
-		BigDecimal x = jsonProvider.asBigDecimal(o1);
-		BigDecimal y = jsonProvider.asBigDecimal(o2);
+		BigDecimal x = jsonProvider.getNumberAsBigDecimalExact(o1);
+		BigDecimal y = jsonProvider.getNumberAsBigDecimalExact(o2);
 		if (x == null || y == null)
 			return 0; // Infinity/-Infinity on at least one side; already ordered by double
 		return x.compareTo(y);
@@ -83,8 +83,8 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 	}
 
 	protected int compareObjectNode(JsonNode o1, JsonNode o2) {
-		List<String> names1 = Lists.newArrayList(jsonProvider.fieldNames(o1));
-		List<String> names2 = Lists.newArrayList(jsonProvider.fieldNames(o2));
+		List<String> names1 = Lists.newArrayList(jsonProvider.getObjectFieldNames(o1));
+		List<String> names2 = Lists.newArrayList(jsonProvider.getObjectFieldNames(o2));
 
 		// compare by keys
 		Collections.sort(names1);
@@ -127,14 +127,14 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 			return 0;
 
 		if (type == JsonNodeType.BOOLEAN)
-			return Boolean.compare(jsonProvider.asBoolean(o1), jsonProvider.asBoolean(o2));
+			return Boolean.compare(jsonProvider.getBoolean(o1), jsonProvider.getBoolean(o2));
 
 		if (type == JsonNodeType.NUMBER) {
 			return compareNumberNode(o1, o2);
 		}
 
 		if (type == JsonNodeType.STRING || type == JsonNodeType.BINARY)
-			return jsonProvider.asString(o1).compareTo(jsonProvider.asString(o2));
+			return jsonProvider.getString(o1).compareTo(jsonProvider.getString(o2));
 
 		if (type == JsonNodeType.ARRAY) {
 			return compareArrayNode(o1, o2);

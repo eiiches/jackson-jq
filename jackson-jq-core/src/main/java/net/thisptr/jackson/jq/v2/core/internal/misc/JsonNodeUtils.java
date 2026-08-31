@@ -18,7 +18,7 @@ public class JsonNodeUtils {
 		if (n == null || jsonProvider.getNodeType(n) == JsonNodeType.NULL)
 			return false;
 		if (jsonProvider.getNodeType(n) == JsonNodeType.BOOLEAN)
-			return jsonProvider.asBoolean(n);
+			return jsonProvider.getBoolean(n);
 		return true;
 	}
 
@@ -41,7 +41,7 @@ public class JsonNodeUtils {
 	}
 
 	public static <JsonNode> List<JsonNode> asArrayList(JsonProvider<JsonNode> jsonProvider, JsonNode in) {
-		return Lists.newArrayList(jsonProvider.elements(in));
+		return Lists.newArrayList(jsonProvider.getArrayElements(in));
 	}
 
 	public static <JsonNode> String typeOf(JsonProvider<JsonNode> jsonProvider, JsonNode in) {
@@ -54,11 +54,11 @@ public class JsonNodeUtils {
 			case NULL:
 				return "null";
 			case BOOLEAN:
-				return jsonProvider.asBoolean(in) ? "true" : "false";
+				return jsonProvider.getBoolean(in) ? "true" : "false";
 			case NUMBER:
 				return jsonProvider.format(in);
 			case STRING:
-				return String.format("\"%s\"", jsonProvider.asString(in));
+				return String.format("\"%s\"", jsonProvider.getString(in));
 			case ARRAY:
 				return "array";
 			case OBJECT:

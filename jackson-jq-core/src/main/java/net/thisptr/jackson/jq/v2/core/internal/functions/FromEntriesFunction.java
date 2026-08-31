@@ -32,27 +32,29 @@ public class FromEntriesFunction implements Function {
 				throw new JsonQueryTypeException(jsonProvider, version, "Cannot iterate over %s", in);
 
 			Map<String, JsonNode> result = new LinkedHashMap<>();
-			Iterator<JsonNode> iter = jsonProvider.elements(in);
+			Iterator<JsonNode> iter = inType == JsonNodeType.ARRAY
+					? jsonProvider.getArrayElements(in)
+					: jsonProvider.getObjectFieldValues(in);
 			while (iter.hasNext()) {
 				JsonNode entry = iter.next();
 				if (jsonProvider.getNodeType(entry) != JsonNodeType.OBJECT)
 					throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, entry, jsonProvider.createString("key")));
 
-				@Var JsonNode key = jsonProvider.get(entry, "key");
+				@Var JsonNode key = jsonProvider.getObjectField(entry, "key");
 				if (key == null)
-					key = jsonProvider.get(entry, "Key");
+					key = jsonProvider.getObjectField(entry, "Key");
 				if (key == null)
-					key = jsonProvider.get(entry, "name");
+					key = jsonProvider.getObjectField(entry, "name");
 				if (key == null)
-					key = jsonProvider.get(entry, "Name");
+					key = jsonProvider.getObjectField(entry, "Name");
 				if (key == null || jsonProvider.getNodeType(key) != JsonNodeType.STRING)
 					throw new JsonQueryTypeException(jsonProvider, version, "Cannot use %s as object key", key == null ? jsonProvider.createNull() : key);
 
-				@Var JsonNode value = jsonProvider.get(entry, "value");
+				@Var JsonNode value = jsonProvider.getObjectField(entry, "value");
 				if (value == null)
-					value = jsonProvider.get(entry, "Value");
+					value = jsonProvider.getObjectField(entry, "Value");
 
-				result.put(jsonProvider.asString(key), value == null ? jsonProvider.createNull() : value);
+				result.put(jsonProvider.getString(key), value == null ? jsonProvider.createNull() : value);
 			}
 
 			output.emit(jsonProvider.createObject(result), UntrackedPath.getInstance());

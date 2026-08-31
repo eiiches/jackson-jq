@@ -163,7 +163,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public boolean asBoolean(JsonElement node) {
+	public boolean getBoolean(JsonElement node) {
 		if (node.isJsonPrimitive()) {
 			JsonPrimitive primitive = node.getAsJsonPrimitive();
 			if (primitive.isBoolean()) {
@@ -178,12 +178,12 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public double asDoubleRounded(JsonElement node) {
+	public double getNumberAsDoubleRounded(JsonElement node) {
 		return requireNumber(node, "double").getAsDouble();
 	}
 
 	@Override
-	public @Nullable BigDecimal asBigDecimal(JsonElement node) {
+	public @Nullable BigDecimal getNumberAsBigDecimalExact(JsonElement node) {
 		JsonPrimitive primitive = requireNumber(node, "BigDecimal");
 		// Gson goes through Number.toString(), i.e. the shortest round-trip representation for
 		// Double/Float (e.g. 0.1 stays 0.1) and the original literal for parsed numbers.
@@ -191,7 +191,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public @Nullable BigInteger asBigInteger(JsonElement node) {
+	public @Nullable BigInteger getNumberAsBigIntegerExact(JsonElement node) {
 		BigDecimal value = finiteDecimal(requireNumber(node, "BigInteger"));
 		if (value == null)
 			return null;
@@ -203,13 +203,13 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public @Nullable BigInteger asBigIntegerTruncated(JsonElement node) {
+	public @Nullable BigInteger getNumberAsBigIntegerTruncated(JsonElement node) {
 		BigDecimal value = finiteDecimal(requireNumber(node, "BigInteger"));
 		return value == null ? null : value.toBigInteger();
 	}
 
 	@Override
-	public String asString(JsonElement node) {
+	public String getString(JsonElement node) {
 		if (node.isJsonNull()) {
 			return "null";
 		}
@@ -220,7 +220,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public @Nullable Long asLong(JsonElement node) {
+	public @Nullable Long getNumberAsLongExact(JsonElement node) {
 		JsonPrimitive primitive = requireNumber(node, "long");
 		Number number = primitive.getAsNumber();
 		if (number instanceof Double || number instanceof Float) {
@@ -240,7 +240,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public @Nullable Long asLongTruncated(JsonElement node) {
+	public @Nullable Long getNumberAsLongTruncated(JsonElement node) {
 		JsonPrimitive primitive = requireNumber(node, "long");
 		Number number = primitive.getAsNumber();
 		if (number instanceof Double || number instanceof Float) {
@@ -263,7 +263,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public @Nullable Integer asInt(JsonElement node) {
+	public @Nullable Integer getNumberAsIntExact(JsonElement node) {
 		BigDecimal value = finiteDecimal(requireNumber(node, "int"));
 		if (value == null)
 			return null;
@@ -275,7 +275,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public @Nullable Integer asIntTruncated(JsonElement node) {
+	public @Nullable Integer getNumberAsIntTruncated(JsonElement node) {
 		BigDecimal value = finiteDecimal(requireNumber(node, "int"));
 		if (value == null)
 			return null;
@@ -308,7 +308,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public Iterator<Map.Entry<String, JsonElement>> fields(JsonElement node) {
+	public Iterator<Map.Entry<String, JsonElement>> getObjectEntries(JsonElement node) {
 		if (node.isJsonObject()) {
 			return node.getAsJsonObject().entrySet().iterator();
 		}
@@ -316,21 +316,23 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public Iterator<JsonElement> elements(JsonElement node) {
-		if (node.isJsonArray()) {
-			return node.getAsJsonArray().iterator();
-		}
-		if (node.isJsonObject()) {
-			// For objects, return an iterator over the values (like Jackson does)
-			return node.getAsJsonObject().entrySet().stream()
-					.map(Map.Entry::getValue)
-					.iterator();
-		}
-		return Collections.emptyIterator();
+	public Iterator<JsonElement> getArrayElements(JsonElement node) {
+		if (!node.isJsonArray())
+			throw new IllegalArgumentException("Expected an array node");
+		return node.getAsJsonArray().iterator();
 	}
 
 	@Override
-	public Iterator<String> fieldNames(JsonElement node) {
+	public Iterator<JsonElement> getObjectFieldValues(JsonElement node) {
+		if (!node.isJsonObject())
+			throw new IllegalArgumentException("Expected an object node");
+		return node.getAsJsonObject().entrySet().stream()
+				.map(Map.Entry::getValue)
+				.iterator();
+	}
+
+	@Override
+	public Iterator<String> getObjectFieldNames(JsonElement node) {
 		if (node.isJsonObject()) {
 			return node.getAsJsonObject().keySet().iterator();
 		}
@@ -338,7 +340,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public @Nullable JsonElement get(JsonElement node, String fieldName) {
+	public @Nullable JsonElement getObjectField(JsonElement node, String fieldName) {
 		if (node.isJsonObject()) {
 			return node.getAsJsonObject().get(fieldName);
 		}
@@ -346,7 +348,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public @Nullable JsonElement get(JsonElement node, int index) {
+	public @Nullable JsonElement getArrayElement(JsonElement node, int index) {
 		if (node.isJsonArray()) {
 			JsonArray array = node.getAsJsonArray();
 			if (index >= 0 && index < array.size()) {
@@ -368,7 +370,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public boolean has(JsonElement node, String fieldName) {
+	public boolean hasObjectField(JsonElement node, String fieldName) {
 		if (node.isJsonObject()) {
 			return node.getAsJsonObject().has(fieldName);
 		}
@@ -376,7 +378,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public boolean has(JsonElement node, int index) {
+	public boolean hasArrayElement(JsonElement node, int index) {
 		if (node.isJsonArray()) {
 			JsonArray array = node.getAsJsonArray();
 			return index >= 0 && index < array.size();

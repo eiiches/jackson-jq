@@ -29,7 +29,7 @@ public class FromJsonFunction implements Function {
 
 			JsonNode tree;
 			try {
-				tree = jsonProvider.parse(jsonProvider.asString(in));
+				tree = jsonProvider.parse(jsonProvider.getString(in));
 			} catch (JsonException e) {
 				throw new JsonQueryException(String.format("failed to parse %s as json", jsonProvider.format(in)), e);
 			}

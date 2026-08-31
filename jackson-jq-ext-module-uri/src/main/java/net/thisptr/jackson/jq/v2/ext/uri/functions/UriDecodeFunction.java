@@ -37,7 +37,7 @@ public class UriDecodeFunction implements Function {
 			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 				Preconditions.checkInputType(jsonProvider, "urldecode", in, JsonNodeType.STRING);
 				try {
-					output.emit(jsonProvider.createString(URLDecoder.decode(jsonProvider.asString(in), StandardCharsets.UTF_8.name())), UntrackedPath.getInstance());
+					output.emit(jsonProvider.createString(URLDecoder.decode(jsonProvider.getString(in), StandardCharsets.UTF_8.name())), UntrackedPath.getInstance());
 				} catch (UnsupportedEncodingException e) {
 					throw new JsonQueryException(e);
 				}

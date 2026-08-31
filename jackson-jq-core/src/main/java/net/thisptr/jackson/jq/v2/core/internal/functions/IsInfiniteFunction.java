@@ -21,7 +21,7 @@ public class IsInfiniteFunction implements Function {
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 
-			boolean result = jsonProvider.getNodeType(in) == JsonNodeType.NUMBER && Double.isInfinite(jsonProvider.asDoubleRounded(in));
+			boolean result = jsonProvider.getNodeType(in) == JsonNodeType.NUMBER && Double.isInfinite(jsonProvider.getNumberAsDoubleRounded(in));
 			output.emit(jsonProvider.createBoolean(result), UntrackedPath.getInstance());
 		});
 	}

@@ -26,7 +26,7 @@ public abstract class AbstractStartsEndsWithFunction implements Function {
 			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (needle, opath) -> {
 				if (jsonProvider.getNodeType(needle) != JsonNodeType.STRING || jsonProvider.getNodeType(in) != JsonNodeType.STRING)
 					throw new JsonQueryException(fname + "() requires string inputs");
-				output.emit(jsonProvider.createBoolean(doCheck(jsonProvider.asString(in), jsonProvider.asString(needle))), UntrackedPath.getInstance());
+				output.emit(jsonProvider.createBoolean(doCheck(jsonProvider.getString(in), jsonProvider.getString(needle))), UntrackedPath.getInstance());
 			});
 		});
 	}

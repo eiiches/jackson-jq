@@ -32,7 +32,7 @@ public abstract class AbstractMaxByFunction implements Function {
 
 			@Var JsonNode maxItem = jsonProvider.createNull();
 			@Var JsonNode maxValue = null;
-			Iterator<JsonNode> iter = jsonProvider.elements(in);
+			Iterator<JsonNode> iter = jsonProvider.getArrayElements(in);
 			while (iter.hasNext()) {
 				JsonNode i = iter.next();
 				List<JsonNode> valueList = new ArrayList<>();

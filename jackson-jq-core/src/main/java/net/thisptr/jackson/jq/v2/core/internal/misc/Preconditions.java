@@ -37,7 +37,7 @@ public class Preconditions {
 
 	public static <JsonNode> void checkInputArrayType(JsonProvider<JsonNode> jsonProvider, String fname, JsonNode in, JsonNodeType... types) throws IllegalJsonInputException {
 		checkInputType(jsonProvider, fname, in, JsonNodeType.ARRAY);
-		Iterator<JsonNode> iter = jsonProvider.elements(in);
+		Iterator<JsonNode> iter = jsonProvider.getArrayElements(in);
 		while (iter.hasNext())
 			checkInputElementType(jsonProvider, fname, iter.next(), types);
 	}

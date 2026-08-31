@@ -30,7 +30,7 @@ public class SortByFunction implements Function {
 
 			JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
 			List<Pair<JsonNode, JsonNode>> zipped = new ArrayList<>(jsonProvider.size(items));
-			Iterator<JsonNode> iter = jsonProvider.elements(items);
+			Iterator<JsonNode> iter = jsonProvider.getArrayElements(items);
 			while (iter.hasNext()) {
 				JsonNode item = iter.next();
 				List<JsonNode> values = new ArrayList<>();

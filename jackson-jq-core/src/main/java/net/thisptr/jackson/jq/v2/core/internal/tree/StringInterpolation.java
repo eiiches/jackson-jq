@@ -112,7 +112,7 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 				builder.append(template.substring(pos, head._1));
 				pos = head._1;
 				JsonNodeType nodeType = jsonProvider.getNodeType(head._2);
-				builder.append(nodeType == JsonNodeType.STRING ? jsonProvider.asString(head._2) : JsonNodeUtils.toString(jsonProvider, head._2, version));
+				builder.append(nodeType == JsonNodeType.STRING ? jsonProvider.getString(head._2) : JsonNodeUtils.toString(jsonProvider, head._2, version));
 			}
 			builder.append(template.substring(pos));
 			output.emit(jsonProvider.createString(builder.toString()), UntrackedPath.getInstance());

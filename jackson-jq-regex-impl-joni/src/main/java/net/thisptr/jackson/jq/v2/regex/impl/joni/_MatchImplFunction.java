@@ -35,20 +35,20 @@ public class _MatchImplFunction implements Function {
 		if (precompiled != null) {
 			return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
 				Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
-				byte[] ibytes = jsonProvider.asString(in).getBytes(StandardCharsets.UTF_8);
+				byte[] ibytes = jsonProvider.getString(in).getBytes(StandardCharsets.UTF_8);
 				int[] cindex = UnicodeUtils.utf8CharIndex(ibytes);
 
 				testExpr.apply(frame, in, UntrackedPath.getInstance(), (test, opath) -> {
 					Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 3, test, JsonNodeType.BOOLEAN);
 					for (OnigUtils.Pattern pattern : precompiled.patterns())
-						output.emit(match(jsonProvider, pattern, ibytes, cindex, jsonProvider.asBoolean(test)), UntrackedPath.getInstance());
+						output.emit(match(jsonProvider, pattern, ibytes, cindex, jsonProvider.getBoolean(test)), UntrackedPath.getInstance());
 				});
 			});
 		}
 
 		return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
-			byte[] ibytes = jsonProvider.asString(in).getBytes(StandardCharsets.UTF_8);
+			byte[] ibytes = jsonProvider.getString(in).getBytes(StandardCharsets.UTF_8);
 			int[] cindex = UnicodeUtils.utf8CharIndex(ibytes);
 
 			testExpr.apply(frame, in, UntrackedPath.getInstance(), (test, opath) -> {
@@ -57,8 +57,8 @@ public class _MatchImplFunction implements Function {
 					Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 2, flags, JsonNodeType.STRING, JsonNodeType.NULL);
 					regexExpr.apply(frame, in, UntrackedPath.getInstance(), (regex, opath3) -> {
 						Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 1, regex, JsonNodeType.STRING);
-						OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asString(regex), jsonProvider.getNodeType(flags) == JsonNodeType.NULL ? null : jsonProvider.asString(flags));
-						output.emit(match(jsonProvider, p, ibytes, cindex, jsonProvider.asBoolean(test)), UntrackedPath.getInstance());
+						OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.getString(regex), jsonProvider.getNodeType(flags) == JsonNodeType.NULL ? null : jsonProvider.getString(flags));
+						output.emit(match(jsonProvider, p, ibytes, cindex, jsonProvider.getBoolean(test)), UntrackedPath.getInstance());
 					});
 				});
 			});

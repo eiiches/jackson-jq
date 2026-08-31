@@ -170,17 +170,17 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public boolean asBoolean(JsonValue node) {
+	public boolean getBoolean(JsonValue node) {
 		return node.getValueType() != JsonValue.ValueType.FALSE && node.getValueType() != JsonValue.ValueType.NULL;
 	}
 
 	@Override
-	public double asDoubleRounded(JsonValue node) {
+	public double getNumberAsDoubleRounded(JsonValue node) {
 		return requireNumber(node, "double").doubleValue();
 	}
 
 	@Override
-	public @Nullable BigDecimal asBigDecimal(JsonValue node) {
+	public @Nullable BigDecimal getNumberAsBigDecimalExact(JsonValue node) {
 		if (!(node instanceof JsonNumber))
 			throw new IllegalArgumentException("Cannot convert non-number to BigDecimal");
 		// JSON-P itself cannot represent non-finite values; only our own wrapper can hold them.
@@ -190,7 +190,7 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public @Nullable BigInteger asBigInteger(JsonValue node) {
+	public @Nullable BigInteger getNumberAsBigIntegerExact(JsonValue node) {
 		BigDecimal value = finiteDecimal(requireNumber(node, "BigInteger"));
 		if (value == null)
 			return null;
@@ -202,13 +202,13 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public @Nullable BigInteger asBigIntegerTruncated(JsonValue node) {
+	public @Nullable BigInteger getNumberAsBigIntegerTruncated(JsonValue node) {
 		BigDecimal value = finiteDecimal(requireNumber(node, "BigInteger"));
 		return value == null ? null : value.toBigInteger();
 	}
 
 	@Override
-	public String asString(JsonValue node) {
+	public String getString(JsonValue node) {
 		if (node instanceof JsonString)
 			return ((JsonString) node).getString();
 		if (node.getValueType() == JsonValue.ValueType.NULL)
@@ -217,7 +217,7 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public @Nullable Long asLong(JsonValue node) {
+	public @Nullable Long getNumberAsLongExact(JsonValue node) {
 		JsonNumber number = requireNumber(node, "long");
 		if (number instanceof FloatingPointJsonNumber) {
 			double value = number.doubleValue();
@@ -233,7 +233,7 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public @Nullable Long asLongTruncated(JsonValue node) {
+	public @Nullable Long getNumberAsLongTruncated(JsonValue node) {
 		JsonNumber number = requireNumber(node, "long");
 		if (number instanceof FloatingPointJsonNumber) {
 			double value = number.doubleValue();
@@ -252,7 +252,7 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public @Nullable Integer asInt(JsonValue node) {
+	public @Nullable Integer getNumberAsIntExact(JsonValue node) {
 		BigDecimal value = finiteDecimal(requireNumber(node, "int"));
 		if (value == null)
 			return null;
@@ -264,7 +264,7 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public @Nullable Integer asIntTruncated(JsonValue node) {
+	public @Nullable Integer getNumberAsIntTruncated(JsonValue node) {
 		BigDecimal value = finiteDecimal(requireNumber(node, "int"));
 		if (value == null)
 			return null;
@@ -297,35 +297,40 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public Iterator<Map.Entry<String, JsonValue>> fields(JsonValue node) {
+	public Iterator<Map.Entry<String, JsonValue>> getObjectEntries(JsonValue node) {
 		if (node instanceof JsonObject)
 			return ((JsonObject) node).entrySet().iterator();
 		return Collections.emptyIterator();
 	}
 
 	@Override
-	public Iterator<JsonValue> elements(JsonValue node) {
-		if (node instanceof JsonArray)
-			return ((JsonArray) node).iterator();
-		if (node instanceof JsonObject)
-			return ((JsonObject) node).values().iterator();
-		return Collections.emptyIterator();
+	public Iterator<JsonValue> getArrayElements(JsonValue node) {
+		if (!(node instanceof JsonArray))
+			throw new IllegalArgumentException("Expected an array node");
+		return ((JsonArray) node).iterator();
 	}
 
 	@Override
-	public Iterator<String> fieldNames(JsonValue node) {
+	public Iterator<JsonValue> getObjectFieldValues(JsonValue node) {
+		if (!(node instanceof JsonObject))
+			throw new IllegalArgumentException("Expected an object node");
+		return ((JsonObject) node).values().iterator();
+	}
+
+	@Override
+	public Iterator<String> getObjectFieldNames(JsonValue node) {
 		if (node instanceof JsonObject)
 			return ((JsonObject) node).keySet().iterator();
 		return Collections.emptyIterator();
 	}
 
 	@Override
-	public @Nullable JsonValue get(JsonValue node, String fieldName) {
+	public @Nullable JsonValue getObjectField(JsonValue node, String fieldName) {
 		return node instanceof JsonObject ? ((JsonObject) node).get(fieldName) : null;
 	}
 
 	@Override
-	public @Nullable JsonValue get(JsonValue node, int index) {
+	public @Nullable JsonValue getArrayElement(JsonValue node, int index) {
 		if (node instanceof JsonArray && index >= 0 && index < ((JsonArray) node).size())
 			return ((JsonArray) node).get(index);
 		return null;
@@ -341,12 +346,12 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public boolean has(JsonValue node, String fieldName) {
+	public boolean hasObjectField(JsonValue node, String fieldName) {
 		return node instanceof JsonObject && ((JsonObject) node).containsKey(fieldName);
 	}
 
 	@Override
-	public boolean has(JsonValue node, int index) {
+	public boolean hasArrayElement(JsonValue node, int index) {
 		return node instanceof JsonArray && index >= 0 && index < ((JsonArray) node).size();
 	}
 

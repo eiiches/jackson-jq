@@ -36,7 +36,7 @@ public class DelPathsFunction implements Function {
 					throw new JsonQueryException("Paths must be specified as an array");
 
 				List<List<JsonNode>> pathList = new ArrayList<>(jsonProvider.size(paths));
-				for (Iterator<JsonNode> it = jsonProvider.elements(paths); it.hasNext(); ) {
+				for (Iterator<JsonNode> it = jsonProvider.getArrayElements(paths); it.hasNext(); ) {
 					JsonNode path = it.next();
 					if (jsonProvider.getNodeType(path) != JsonNodeType.ARRAY)
 						throw new JsonQueryException("Path must be specified as array, not " + JsonNodeUtils.typeOf(jsonProvider, path));
@@ -111,7 +111,7 @@ public class DelPathsFunction implements Function {
 		Set<String> deleteKeys = new HashSet<>();
 		Map<String, List<List<JsonNode>>> recurseKeys = new LinkedHashMap<>();
 		for (List<JsonNode> path : paths) {
-			String key = jsonProvider.asString(path.get(depth));
+			String key = jsonProvider.getString(path.get(depth));
 			if (depth == path.size() - 1)
 				deleteKeys.add(key);
 			else
@@ -119,7 +119,7 @@ public class DelPathsFunction implements Function {
 		}
 
 		Map<String, JsonNode> out = new LinkedHashMap<>();
-		Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(in);
+		Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectEntries(in);
 		while (iter.hasNext()) {
 			Map.Entry<String, JsonNode> entry = iter.next();
 			String key = entry.getKey();
@@ -139,7 +139,7 @@ public class DelPathsFunction implements Function {
 		for (List<JsonNode> path : numberPaths) {
 			JsonNode indexNode = path.get(depth);
 			boolean terminal = depth == path.size() - 1;
-			double raw = jsonProvider.asDoubleRounded(indexNode);
+			double raw = jsonProvider.getNumberAsDoubleRounded(indexNode);
 			if (terminal && raw < 0 && version.compareTo(Versions.JQ_1_5) <= 0) {
 				// jq-1.5: [1,2,[1,3]]|delpaths([[-1,1]]) #=> [1,2,[1]]
 				// jq-1.5: [1,2,[1,3]]|delpaths([[-1]]) #=> [1,2,[1,3]]
@@ -148,7 +148,7 @@ public class DelPathsFunction implements Function {
 			}
 			if (Double.isNaN(raw) || Double.isInfinite(raw))
 				throw new JsonQueryException("Cannot use " + (Double.isNaN(raw) ? "nan" : "infinite") + " as array index");
-			Integer truncated = jsonProvider.asIntTruncated(indexNode);
+			Integer truncated = jsonProvider.getNumberAsIntTruncated(indexNode);
 			if (truncated == null)
 				continue; // Out of int range, so out of bounds too.
 			int index = truncated;

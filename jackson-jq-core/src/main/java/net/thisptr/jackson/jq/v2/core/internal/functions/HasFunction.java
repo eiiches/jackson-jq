@@ -30,13 +30,13 @@ public class HasFunction implements Function {
 				if (inType == JsonNodeType.OBJECT) {
 					if (keyType != JsonNodeType.STRING)
 						throw new JsonQueryException("argument 1 of has() must be string for object input");
-					output.emit(jsonProvider.createBoolean(jsonProvider.has(in, jsonProvider.asString(keyName))), UntrackedPath.getInstance());
+					output.emit(jsonProvider.createBoolean(jsonProvider.hasObjectField(in, jsonProvider.getString(keyName))), UntrackedPath.getInstance());
 				} else if (inType == JsonNodeType.ARRAY) {
 					if (keyType != JsonNodeType.NUMBER)
 						throw new JsonQueryException("argument 1 of has() must be int for array input");
 					// NaN, the infinities and anything outside int range are all simply absent.
-					Integer keyAsInt = jsonProvider.asIntTruncated(keyName);
-					boolean present = keyAsInt != null && jsonProvider.has(in, keyAsInt);
+					Integer keyAsInt = jsonProvider.getNumberAsIntTruncated(keyName);
+					boolean present = keyAsInt != null && jsonProvider.hasArrayElement(in, keyAsInt);
 					output.emit(jsonProvider.createBoolean(present), UntrackedPath.getInstance());
 				} else {
 					throw new JsonQueryException("has() is not applicable to " + inType);

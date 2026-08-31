@@ -34,7 +34,7 @@ public class CustomFunctionTest {
 					public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version ver) {
 						return (frame, in, path, output) -> {
 							args.get(0).apply(frame, in, UntrackedPath.getInstance(), (numberNode, opath) -> {
-								int n = Objects.requireNonNull(jsonProvider.asInt(numberNode));
+								int n = Objects.requireNonNull(jsonProvider.getNumberAsIntExact(numberNode));
 								output.emit(jsonProvider.createNumber(n * 100), UntrackedPath.getInstance());
 							});
 						};

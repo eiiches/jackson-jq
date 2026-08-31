@@ -70,7 +70,7 @@ public class JsonQueryKeyFieldConstruction<JsonNode> implements FieldConstructio
 		key.apply(frame, in, UntrackedPath.getInstance(), (k, opath) -> {
 			if (jsonProvider.getNodeType(k) != JsonNodeType.STRING)
 				throw new JsonQueryTypeException(jsonProvider, version, "Cannot use %s as object key", k);
-			value.apply(frame, in, UntrackedPath.getInstance(), (v, opath2) -> consumer.accept(jsonProvider.asString(k), v));
+			value.apply(frame, in, UntrackedPath.getInstance(), (v, opath2) -> consumer.accept(jsonProvider.getString(k), v));
 		});
 	}
 

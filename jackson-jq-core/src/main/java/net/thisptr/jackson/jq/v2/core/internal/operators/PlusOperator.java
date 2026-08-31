@@ -34,31 +34,31 @@ public class PlusOperator<JsonNode> implements BinaryOperator<JsonNode> {
 			// This is a bit tricky because Jackson distinguishes between integral and floating point numbers
 			// but our JsonNodeType.NUMBER doesn't.
 			// Let's check if they can be represented as longs.
-			double ld = jsonProvider.asDoubleRounded(lhs);
-			double rd = jsonProvider.asDoubleRounded(rhs);
+			double ld = jsonProvider.getNumberAsDoubleRounded(lhs);
+			double rd = jsonProvider.getNumberAsDoubleRounded(rhs);
 			if (ld == (long) ld && rd == (long) rd) {
 				return JsonNodeUtils.asNumericNode(jsonProvider, (long) ld + (long) rd);
 			}
 			return JsonNodeUtils.asNumericNode(jsonProvider, ld + rd);
 		} else if (ltype == JsonNodeType.ARRAY && rtype == JsonNodeType.ARRAY) {
 			List<JsonNode> values = new ArrayList<>(jsonProvider.size(lhs) + jsonProvider.size(rhs));
-			Iterator<JsonNode> liter = jsonProvider.elements(lhs);
+			Iterator<JsonNode> liter = jsonProvider.getArrayElements(lhs);
 			while (liter.hasNext())
 				values.add(liter.next());
-			Iterator<JsonNode> riter = jsonProvider.elements(rhs);
+			Iterator<JsonNode> riter = jsonProvider.getArrayElements(rhs);
 			while (riter.hasNext())
 				values.add(riter.next());
 			return jsonProvider.createArray(values);
 		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.STRING) {
-			return jsonProvider.createString(jsonProvider.asString(lhs) + jsonProvider.asString(rhs));
+			return jsonProvider.createString(jsonProvider.getString(lhs) + jsonProvider.getString(rhs));
 		} else if (ltype == JsonNodeType.OBJECT && rtype == JsonNodeType.OBJECT) {
 			Map<String, JsonNode> values = new LinkedHashMap<>();
-			Iterator<Map.Entry<String, JsonNode>> liter = jsonProvider.fields(lhs);
+			Iterator<Map.Entry<String, JsonNode>> liter = jsonProvider.getObjectEntries(lhs);
 			while (liter.hasNext()) {
 				Map.Entry<String, JsonNode> e = liter.next();
 				values.put(e.getKey(), e.getValue());
 			}
-			Iterator<Map.Entry<String, JsonNode>> riter = jsonProvider.fields(rhs);
+			Iterator<Map.Entry<String, JsonNode>> riter = jsonProvider.getObjectEntries(rhs);
 			while (riter.hasNext()) {
 				Map.Entry<String, JsonNode> e = riter.next();
 				values.put(e.getKey(), e.getValue());

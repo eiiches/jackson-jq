@@ -32,7 +32,7 @@ public abstract class AbstractXsvFilter implements Function {
 
 			@Var boolean heading = true;
 			StringBuilder row = new StringBuilder();
-			Iterator<JsonNode> iter = jsonProvider.elements(in);
+			Iterator<JsonNode> iter = jsonProvider.getArrayElements(in);
 			while (iter.hasNext()) {
 				JsonNode col = iter.next();
 				if (!heading)
@@ -40,8 +40,8 @@ public abstract class AbstractXsvFilter implements Function {
 
 				JsonNodeType colType = jsonProvider.getNodeType(col);
 				if (colType == JsonNodeType.STRING) {
-					appendEscaped(row, jsonProvider.asString(col));
-				} else if (colType == JsonNodeType.NULL || (colType == JsonNodeType.NUMBER && Double.isNaN(jsonProvider.asDoubleRounded(col)))) {
+					appendEscaped(row, jsonProvider.getString(col));
+				} else if (colType == JsonNodeType.NULL || (colType == JsonNodeType.NUMBER && Double.isNaN(jsonProvider.getNumberAsDoubleRounded(col)))) {
 					// empty
 				} else if (colType == JsonNodeType.BOOLEAN || colType == JsonNodeType.NUMBER) {
 					row.append(JsonNodeUtils.toString(jsonProvider, col, version));

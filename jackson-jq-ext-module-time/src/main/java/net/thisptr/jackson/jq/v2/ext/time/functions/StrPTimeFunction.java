@@ -53,21 +53,21 @@ public class StrPTimeFunction implements Function {
 					args.get(0).apply(context, in, UntrackedPath.getInstance(), (fmt, opath) -> {
 						if (jsonProvider.getNodeType(fmt) != JsonNodeType.STRING)
 							throw new JsonQueryException(String.format("Illegal argument type: %s", jsonProvider.getNodeType(fmt)));
-						SimpleDateFormat sdf = new SimpleDateFormat(jsonProvider.asString(fmt));
+						SimpleDateFormat sdf = new SimpleDateFormat(jsonProvider.getString(fmt));
 						if (args.size() == 2) {
 							args.get(1).apply(context, in, UntrackedPath.getInstance(), (tz, opath2) -> {
 								if (jsonProvider.getNodeType(tz) != JsonNodeType.STRING)
 									throw new JsonQueryException("Timezone must be a string");
-								sdf.setTimeZone(TimeZone.getTimeZone(jsonProvider.asString(tz)));
+								sdf.setTimeZone(TimeZone.getTimeZone(jsonProvider.getString(tz)));
 								try {
-									output.emit(jsonProvider.createNumber(sdf.parse(jsonProvider.asString(in)).getTime()), UntrackedPath.getInstance());
+									output.emit(jsonProvider.createNumber(sdf.parse(jsonProvider.getString(in)).getTime()), UntrackedPath.getInstance());
 								} catch (ParseException e) {
 									throw new JsonQueryException(e);
 								}
 							});
 						} else {
 							try {
-								output.emit(jsonProvider.createNumber(sdf.parse(jsonProvider.asString(in)).getTime()), UntrackedPath.getInstance());
+								output.emit(jsonProvider.createNumber(sdf.parse(jsonProvider.getString(in)).getTime()), UntrackedPath.getInstance());
 							} catch (ParseException e) {
 								throw new JsonQueryException(e);
 							}

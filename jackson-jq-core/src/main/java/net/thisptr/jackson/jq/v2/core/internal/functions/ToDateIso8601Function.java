@@ -35,7 +35,7 @@ public class ToDateIso8601Function implements Function {
 			Preconditions.checkInputType(jsonProvider, "todateiso8601", in, JsonNodeType.NUMBER, JsonNodeType.ARRAY);
 
 			if (jsonProvider.getNodeType(in) == JsonNodeType.NUMBER) {
-				Long epochSeconds = jsonProvider.asLongTruncated(in);
+				Long epochSeconds = jsonProvider.getNumberAsLongTruncated(in);
 				if (epochSeconds == null) // NaN, an infinity, or beyond long range.
 					throw new JsonQueryException("error converting number of seconds since epoch to datetime");
 				try {
@@ -51,10 +51,10 @@ public class ToDateIso8601Function implements Function {
 						throw new JsonQueryException("strftime/1 requires parsed datetime inputs");
 					long[] fields = new long[6];
 					for (int i = 0; i < 8; i++) {
-						JsonNode elem = jsonProvider.get(in, i);
+						JsonNode elem = jsonProvider.getArrayElement(in, i);
 						if (elem == null || jsonProvider.getNodeType(elem) != JsonNodeType.NUMBER)
 							throw new JsonQueryException("strftime/1 requires parsed datetime inputs");
-						double rawVal = jsonProvider.asDoubleRounded(elem);
+						double rawVal = jsonProvider.getNumberAsDoubleRounded(elem);
 						double val = Double.isNaN(rawVal) ? Integer.MIN_VALUE : rawVal;
 						if (i < 6) {
 							fields[i] = (long) val;
@@ -67,10 +67,10 @@ public class ToDateIso8601Function implements Function {
 					int[] fields = new int[8];
 					int checkLen = Math.min(size, 8);
 					for (int i = 0; i < checkLen; i++) {
-						JsonNode elem = jsonProvider.get(in, i);
+						JsonNode elem = jsonProvider.getArrayElement(in, i);
 						if (elem == null || jsonProvider.getNodeType(elem) != JsonNodeType.NUMBER)
 							throw new JsonQueryException("strftime/1 requires parsed datetime inputs");
-						double val = jsonProvider.asDoubleRounded(elem);
+						double val = jsonProvider.getNumberAsDoubleRounded(elem);
 						if (Double.isNaN(val))
 							throw new JsonQueryException("strftime/1 requires parsed datetime inputs");
 						double clamped = Math.max(Integer.MIN_VALUE, Math.min(Integer.MAX_VALUE, val));

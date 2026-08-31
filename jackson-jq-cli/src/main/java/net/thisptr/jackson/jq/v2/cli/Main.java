@@ -183,7 +183,7 @@ public class Main {
 				try {
 					jq.apply(tree, out -> {
 						if (jsonProvider.getNodeType(out) == JsonNodeType.STRING && rawOutput) {
-							System.out.println(jsonProvider.asString(out));
+							System.out.println(jsonProvider.getString(out));
 						} else if (compact) {
 							System.out.println(jsonProvider.format(out));
 						} else {

@@ -45,14 +45,14 @@ public class ReverseFunction implements Function {
 			// below are to emulate jq behavior
 
 			if (type == JsonNodeType.STRING) {
-				if (jsonProvider.asString(in).isEmpty()) {
+				if (jsonProvider.getString(in).isEmpty()) {
 					output.emit(emptyArray, UntrackedPath.getInstance());
 					return;
 				}
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
 			}
 			if (type == JsonNodeType.NUMBER) {
-				if (jsonProvider.asDoubleRounded(in) == 0.0) {
+				if (jsonProvider.getNumberAsDoubleRounded(in) == 0.0) {
 					output.emit(emptyArray, UntrackedPath.getInstance());
 					return;
 				}

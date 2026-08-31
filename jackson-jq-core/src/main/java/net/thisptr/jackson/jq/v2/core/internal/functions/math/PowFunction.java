@@ -20,6 +20,6 @@ public class PowFunction extends PureJsonArgumentFunction {
 	protected <JsonNode> JsonNode fn(JsonProvider<JsonNode> jsonProvider, List<JsonNode> args) throws JsonQueryException {
 		Preconditions.checkArgumentType(jsonProvider, "pow/2", 0, args.get(0), JsonNodeType.NUMBER);
 		Preconditions.checkArgumentType(jsonProvider, "pow/2", 1, args.get(1), JsonNodeType.NUMBER);
-		return JsonNodeUtils.asNumericNode(jsonProvider, Math.pow(jsonProvider.asDoubleRounded(args.get(0)), jsonProvider.asDoubleRounded(args.get(1))));
+		return JsonNodeUtils.asNumericNode(jsonProvider, Math.pow(jsonProvider.getNumberAsDoubleRounded(args.get(0)), jsonProvider.getNumberAsDoubleRounded(args.get(1))));
 	}
 }

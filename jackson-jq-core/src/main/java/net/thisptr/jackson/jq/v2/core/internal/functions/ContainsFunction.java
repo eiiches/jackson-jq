@@ -27,7 +27,7 @@ public class ContainsFunction implements Function {
 		return FunctionBody.builder(args).usesInput(true).cardinality(args.get(0).getCardinality()).build((frame, in, ipath, output) -> {
 			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (value, opath) -> {
 				if (jsonProvider.getNodeType(in) != jsonProvider.getNodeType(value)
-						|| (jsonProvider.getNodeType(in) == JsonNodeType.BOOLEAN && jsonProvider.asBoolean(in) != jsonProvider.asBoolean(value))) {
+						|| (jsonProvider.getNodeType(in) == JsonNodeType.BOOLEAN && jsonProvider.getBoolean(in) != jsonProvider.getBoolean(value))) {
 					throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot have their containment checked", in, value);
 				}
 				output.emit(jsonProvider.createBoolean(contains(jsonProvider, value, in)), UntrackedPath.getInstance());
@@ -39,13 +39,13 @@ public class ContainsFunction implements Function {
 		JsonNodeType hType = jsonProvider.getNodeType(haystack);
 		JsonNodeType nType = jsonProvider.getNodeType(needle);
 		if (hType == JsonNodeType.STRING && nType == JsonNodeType.STRING) {
-			return jsonProvider.asString(haystack).contains(jsonProvider.asString(needle));
+			return jsonProvider.getString(haystack).contains(jsonProvider.getString(needle));
 		} else if (hType == JsonNodeType.ARRAY && nType == JsonNodeType.ARRAY) {
-			Iterator<JsonNode> nIter = jsonProvider.elements(needle);
+			Iterator<JsonNode> nIter = jsonProvider.getArrayElements(needle);
 			while (nIter.hasNext()) {
 				JsonNode n = nIter.next();
 				@Var boolean found = false;
-				Iterator<JsonNode> hIter = jsonProvider.elements(haystack);
+				Iterator<JsonNode> hIter = jsonProvider.getArrayElements(haystack);
 				while (hIter.hasNext()) {
 					JsonNode h = hIter.next();
 					if (contains(jsonProvider, n, h)) {
@@ -58,10 +58,10 @@ public class ContainsFunction implements Function {
 			}
 			return true;
 		} else if (hType == JsonNodeType.OBJECT && nType == JsonNodeType.OBJECT) {
-			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(needle);
+			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectEntries(needle);
 			while (iter.hasNext()) {
 				Map.Entry<String, JsonNode> field = iter.next();
-				JsonNode tmp = jsonProvider.get(haystack, field.getKey());
+				JsonNode tmp = jsonProvider.getObjectField(haystack, field.getKey());
 				if (tmp == null)
 					return false;
 				if (!contains(jsonProvider, field.getValue(), tmp))

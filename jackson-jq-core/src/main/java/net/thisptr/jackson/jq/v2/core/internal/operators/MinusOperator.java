@@ -31,8 +31,8 @@ public class MinusOperator<JsonNode> implements BinaryOperator<JsonNode> {
 		JsonNodeType ltype = jsonProvider.getNodeType(lhs);
 		JsonNodeType rtype = jsonProvider.getNodeType(rhs);
 		if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.NUMBER) {
-			double ld = jsonProvider.asDoubleRounded(lhs);
-			double rd = jsonProvider.asDoubleRounded(rhs);
+			double ld = jsonProvider.getNumberAsDoubleRounded(lhs);
+			double rd = jsonProvider.getNumberAsDoubleRounded(rhs);
 			if (ld == (long) ld && rd == (long) rd) {
 				return JsonNodeUtils.asNumericNode(jsonProvider, (long) ld - (long) rd);
 			}
@@ -40,10 +40,10 @@ public class MinusOperator<JsonNode> implements BinaryOperator<JsonNode> {
 		} else if (ltype == JsonNodeType.ARRAY && rtype == JsonNodeType.ARRAY) {
 			List<JsonNode> result = new ArrayList<>();
 			TreeSet<JsonNode> rset = new TreeSet<>(new JsonNodeComparator<>(jsonProvider));
-			Iterator<JsonNode> riter = jsonProvider.elements(rhs);
+			Iterator<JsonNode> riter = jsonProvider.getArrayElements(rhs);
 			while (riter.hasNext())
 				rset.add(riter.next());
-			Iterator<JsonNode> liter = jsonProvider.elements(lhs);
+			Iterator<JsonNode> liter = jsonProvider.getArrayElements(lhs);
 			while (liter.hasNext()) {
 				JsonNode l = liter.next();
 				if (!rset.contains(l))

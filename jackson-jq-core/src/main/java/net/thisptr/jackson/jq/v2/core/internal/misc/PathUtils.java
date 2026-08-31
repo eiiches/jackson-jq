@@ -38,7 +38,7 @@ public class PathUtils {
 		if (jsonProvider.getNodeType(pathObj) != JsonNodeType.ARRAY)
 			throw new JsonQueryException("Path must be specified as an array");
 		@Var Path<JsonNode> path = RootPath.getInstance();
-		for (Iterator<JsonNode> it = jsonProvider.elements(pathObj); it.hasNext(); ) {
+		for (Iterator<JsonNode> it = jsonProvider.getArrayElements(pathObj); it.hasNext(); ) {
 			JsonNode segObj = it.next();
 			JsonNodeType type = jsonProvider.getNodeType(segObj);
 			if (type == JsonNodeType.OBJECT) {
@@ -48,7 +48,7 @@ public class PathUtils {
 			} else if (type == JsonNodeType.NUMBER) {
 				path = path.appendIndex(jsonProvider, segObj);
 			} else if (type == JsonNodeType.STRING) {
-				path = path.appendKey(jsonProvider.asString(segObj));
+				path = path.appendKey(jsonProvider.getString(segObj));
 			} else if (type == JsonNodeType.ARRAY) {
 				path = path.appendIndexOf(jsonProvider, segObj);
 			} else {

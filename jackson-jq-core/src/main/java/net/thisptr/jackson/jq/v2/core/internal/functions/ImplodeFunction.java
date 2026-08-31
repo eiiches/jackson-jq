@@ -27,10 +27,10 @@ public class ImplodeFunction implements Function {
 			Preconditions.checkInputArrayType(jsonProvider, "implode", in, JsonNodeType.NUMBER);
 
 			StringBuilder builder = new StringBuilder();
-			Iterator<JsonNode> iter = jsonProvider.elements(in);
+			Iterator<JsonNode> iter = jsonProvider.getArrayElements(in);
 			while (iter.hasNext()) {
 				JsonNode ch = iter.next();
-				Integer codepoint = jsonProvider.asIntTruncated(ch);
+				Integer codepoint = jsonProvider.getNumberAsIntTruncated(ch);
 				if (codepoint == null) // NaN, an infinity, or beyond int range.
 					throw new JsonQueryException("Cannot use " + jsonProvider.format(ch) + " as a unicode codepoint");
 				builder.append((char) codepoint.intValue());

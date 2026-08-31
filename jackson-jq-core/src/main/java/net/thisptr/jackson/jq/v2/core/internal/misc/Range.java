@@ -15,7 +15,7 @@ public class Range {
 	}
 
 	private static <JsonNode> double resolveToPositiveIndex(JsonProvider<JsonNode> jsonProvider, JsonNode value, long size) {
-		double index = jsonProvider.asDoubleRounded(value);
+		double index = jsonProvider.getNumberAsDoubleRounded(value);
 		if (index < 0)
 			return index + size;
 		return index;

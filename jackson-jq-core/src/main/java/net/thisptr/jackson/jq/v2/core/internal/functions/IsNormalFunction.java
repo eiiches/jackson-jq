@@ -24,7 +24,7 @@ public class IsNormalFunction implements Function {
 
 			@Var boolean result = false;
 			if (jsonProvider.getNodeType(in) == JsonNodeType.NUMBER) {
-				double v = jsonProvider.asDoubleRounded(in);
+				double v = jsonProvider.getNumberAsDoubleRounded(in);
 				result = !Double.isInfinite(v) && (v <= -Double.MIN_NORMAL || Double.MIN_NORMAL <= v);
 			}
 			output.emit(jsonProvider.createBoolean(result), UntrackedPath.getInstance());

@@ -34,8 +34,8 @@ public class TestJsonNodeComparator<T> extends JsonNodeComparator<T> {
 	@Override
 	protected int compareNumberNode(T o1, T o2) {
 		if (numericalErrors > 0) {
-			BigDecimal a = jsonProvider.asBigDecimal(o1);
-			BigDecimal b = jsonProvider.asBigDecimal(o2);
+			BigDecimal a = jsonProvider.getNumberAsBigDecimalExact(o1);
+			BigDecimal b = jsonProvider.getNumberAsBigDecimalExact(o2);
 			if (a != null && b != null && a.subtract(b).abs().compareTo(BigDecimal.valueOf(numericalErrors)) < 0)
 				return 0;
 		}
@@ -47,8 +47,8 @@ public class TestJsonNodeComparator<T> extends JsonNodeComparator<T> {
 		if (!strictFieldOrder)
 			return super.compareObjectNode(o1, o2);
 
-		Iterator<Map.Entry<String, T>> it1 = jsonProvider.fields(o1);
-		Iterator<Map.Entry<String, T>> it2 = jsonProvider.fields(o2);
+		Iterator<Map.Entry<String, T>> it1 = jsonProvider.getObjectEntries(o1);
+		Iterator<Map.Entry<String, T>> it2 = jsonProvider.getObjectEntries(o2);
 		while (it1.hasNext() && it2.hasNext()) {
 			Map.Entry<String, T> entry1 = it1.next();
 			Map.Entry<String, T> entry2 = it2.next();

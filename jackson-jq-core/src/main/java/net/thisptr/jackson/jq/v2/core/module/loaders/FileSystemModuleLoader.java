@@ -208,7 +208,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 
 		JsonProvider<JsonNode> jsonProvider = this.jsonProvider;
 		if (metadata != null) {
-			JsonNode search = jsonProvider.get(metadata, "search");
+			JsonNode search = jsonProvider.getObjectField(metadata, "search");
 			if (search != null) {
 				// disallow search overrides from top-level unnamed expression, which doesn't have a module path.
 				// i.e. import "foo" as foo {search: ./}; doesn't make sense. where is ./ ?
@@ -219,7 +219,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 				if (jsonProvider.getNodeType(search) != JsonNodeType.STRING)
 					throw new JsonQueryException("search path overrides must be a string");
 
-				@Var Path searchPathOverride = callerModule.modulePath.getFileSystem().getPath(jsonProvider.asString(search));
+				@Var Path searchPathOverride = callerModule.modulePath.getFileSystem().getPath(jsonProvider.getString(search));
 				searchPathOverride = Objects.requireNonNull(callerModule.modulePath.getParent()).resolve(searchPathOverride).normalize();
 
 				// still, the search path must be within the original search path

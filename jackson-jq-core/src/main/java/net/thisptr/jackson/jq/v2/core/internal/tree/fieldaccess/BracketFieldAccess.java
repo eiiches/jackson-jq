@@ -117,7 +117,7 @@ public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 					if (accessorType == JsonNodeType.NUMBER) {
 						emitArrayIndexPath(jsonProvider, permissive, accessor, pobj, ppath, output, !(path instanceof UntrackedPath), version);
 					} else if (accessorType == JsonNodeType.STRING) {
-						emitObjectFieldPath(jsonProvider, permissive, jsonProvider.asString(accessor), pobj, ppath, output, !(path instanceof UntrackedPath), version);
+						emitObjectFieldPath(jsonProvider, permissive, jsonProvider.getString(accessor), pobj, ppath, output, !(path instanceof UntrackedPath), version);
 					} else if (accessorType == JsonNodeType.ARRAY) {
 						emitIndexOfPath(jsonProvider, permissive, accessor, pobj, ppath, output, !(path instanceof UntrackedPath), version);
 					} else {

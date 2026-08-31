@@ -29,7 +29,7 @@ public class ToNumberFunction implements Function {
 			if (inType == JsonNodeType.NUMBER) {
 				output.emit(in, UntrackedPath.getInstance());
 			} else if (inType == JsonNodeType.STRING) {
-				String raw = jsonProvider.asString(in);
+				String raw = jsonProvider.getString(in);
 				// jq 1.8 stopped accepting leading/trailing whitespace around an otherwise-valid
 				// numeral; earlier versions trim it.
 				String str = version.compareTo(Versions.JQ_1_8_0) < 0 ? raw.trim() : raw;

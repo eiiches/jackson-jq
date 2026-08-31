@@ -30,7 +30,7 @@ public class ToEntriesFunction implements Function {
 			JsonNodeType inType = jsonProvider.getNodeType(in);
 
 			if (inType == JsonNodeType.OBJECT) {
-				Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(in);
+				Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectEntries(in);
 				while (iter.hasNext()) {
 					Map.Entry<String, JsonNode> entry = iter.next();
 					Map<String, JsonNode> fields = new LinkedHashMap<>();
@@ -39,7 +39,7 @@ public class ToEntriesFunction implements Function {
 					result.add(jsonProvider.createObject(fields));
 				}
 			} else if (inType == JsonNodeType.ARRAY) {
-				Iterator<JsonNode> iter = jsonProvider.elements(in);
+				Iterator<JsonNode> iter = jsonProvider.getArrayElements(in);
 				for (int i = 0; iter.hasNext(); ++i) {
 					JsonNode value = iter.next();
 					Map<String, JsonNode> fields = new LinkedHashMap<>();

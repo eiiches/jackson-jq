@@ -30,7 +30,7 @@ public class AbstractKeysFunction implements Function {
 			Preconditions.checkInputType(jsonProvider, name, in, JsonNodeType.OBJECT, JsonNodeType.ARRAY);
 
 			if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
-				List<String> keys = Lists.newArrayList(jsonProvider.fieldNames(in));
+				List<String> keys = Lists.newArrayList(jsonProvider.getObjectFieldNames(in));
 				if (sortKeys)
 					Collections.sort(keys);
 

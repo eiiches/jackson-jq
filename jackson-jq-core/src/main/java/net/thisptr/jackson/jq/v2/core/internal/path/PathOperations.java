@@ -111,7 +111,7 @@ public final class PathOperations {
 		if (jsonProvider.getNodeType(parent) == JsonNodeType.NULL) {
 			output.emit(jsonProvider.createNull(), parentPath.appendKey(key));
 		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.OBJECT) {
-			JsonNode node = jsonProvider.get(parent, key);
+			JsonNode node = jsonProvider.getObjectField(parent, key);
 			output.emit(node == null ? jsonProvider.createNull() : node, parentPath.appendKey(key));
 		} else if (!permissive) {
 			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, parent, jsonProvider.createString(key)));
@@ -121,9 +121,9 @@ public final class PathOperations {
 	public static <JsonNode> void resolveArrayIndex(JsonProvider<JsonNode> jsonProvider, JsonNode parent, Path<JsonNode> parentPath, Output<JsonNode> output, JsonNode index, boolean permissive, Version version) throws JsonQueryException {
 		assert jsonProvider.getNodeType(index) == JsonNodeType.NUMBER;
 		if (jsonProvider.getNodeType(parent) == JsonNodeType.ARRAY) {
-			double indexAsDouble = jsonProvider.asDoubleRounded(index);
+			double indexAsDouble = jsonProvider.getNumberAsDoubleRounded(index);
 			// NaN, the infinities and anything outside int range all address nothing.
-			Integer truncated = jsonProvider.asIntTruncated(index);
+			Integer truncated = jsonProvider.getNumberAsIntTruncated(index);
 			if (truncated == null) {
 				output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
 				return;
@@ -171,8 +171,8 @@ public final class PathOperations {
 				subarray.add(jsonProvider.requireGet(parent, (int) index));
 			output.emit(jsonProvider.createArray(subarray), parentPath.appendIndexRange(jsonProvider, start, end));
 		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.STRING) {
-			Range range = Range.resolve(jsonProvider, start, end, UnicodeUtils.lengthUtf32(jsonProvider.asString(parent)));
-			JsonNode substring = jsonProvider.createString(UnicodeUtils.substringUtf32(jsonProvider.asString(parent), (int) range.start, (int) range.end));
+			Range range = Range.resolve(jsonProvider, start, end, UnicodeUtils.lengthUtf32(jsonProvider.getString(parent)));
+			JsonNode substring = jsonProvider.createString(UnicodeUtils.substringUtf32(jsonProvider.getString(parent), (int) range.start, (int) range.end));
 			output.emit(substring, parentPath.appendIndexRange(jsonProvider, start, end));
 		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.NULL) {
 			output.emit(jsonProvider.createNull(), parentPath.appendIndexRange(jsonProvider, start, end));
@@ -248,7 +248,7 @@ public final class PathOperations {
 			in = jsonProvider.createObject(Collections.emptyMap());
 		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
 			Map<String, JsonNode> values = new LinkedHashMap<>();
-			Iterator<Map.Entry<String, JsonNode>> iterator = jsonProvider.fields(in);
+			Iterator<Map.Entry<String, JsonNode>> iterator = jsonProvider.getObjectEntries(in);
 			while (iterator.hasNext()) {
 				Map.Entry<String, JsonNode> entry = iterator.next();
 				values.put(entry.getKey(), entry.getValue());
@@ -265,10 +265,10 @@ public final class PathOperations {
 		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL)
 			in = jsonProvider.createArray(Collections.emptyList());
 		if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
-			double indexAsDouble = jsonProvider.asDoubleRounded(index);
+			double indexAsDouble = jsonProvider.getNumberAsDoubleRounded(index);
 			if (Double.isNaN(indexAsDouble) || Double.isInfinite(indexAsDouble))
 				throw new JsonQueryException("Cannot use " + (Double.isNaN(indexAsDouble) ? "nan" : "infinite") + " as array index");
-			Integer truncated = jsonProvider.asIntTruncated(index);
+			Integer truncated = jsonProvider.getNumberAsIntTruncated(index);
 			if (truncated == null)
 				throw new JsonQueryException("Array index too large");
 			int indexAsInt = truncated;
@@ -328,7 +328,7 @@ public final class PathOperations {
 			List<JsonNode> out = new ArrayList<>((int) range.start + jsonProvider.size(newValue) + (jsonProvider.size(in) - (int) range.end));
 			for (int index = 0; index < range.start; ++index)
 				out.add(jsonProvider.requireGet(in, index));
-			Iterator<JsonNode> iterator = jsonProvider.elements(newValue);
+			Iterator<JsonNode> iterator = jsonProvider.getArrayElements(newValue);
 			while (iterator.hasNext())
 				out.add(iterator.next());
 			for (long index = range.end; index < jsonProvider.size(in); ++index)

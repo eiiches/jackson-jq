@@ -31,26 +31,26 @@ public class MultiplyOperator<JsonNode> implements BinaryOperator<JsonNode> {
 		JsonNodeType ltype = jsonProvider.getNodeType(lhs);
 		JsonNodeType rtype = jsonProvider.getNodeType(rhs);
 		if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.NUMBER) {
-			double ld = jsonProvider.asDoubleRounded(lhs);
-			double rd = jsonProvider.asDoubleRounded(rhs);
+			double ld = jsonProvider.getNumberAsDoubleRounded(lhs);
+			double rd = jsonProvider.getNumberAsDoubleRounded(rhs);
 			if (ld == (long) ld && rd == (long) rd) {
 				return JsonNodeUtils.asNumericNode(jsonProvider, ((long) ld) * (long) rd);
 			}
 			return JsonNodeUtils.asNumericNode(jsonProvider, ld * rd);
 		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.NUMBER) {
-			double count = jsonProvider.asDoubleRounded(rhs);
+			double count = jsonProvider.getNumberAsDoubleRounded(rhs);
 			if (count <= 0)
 				return jsonProvider.createNull();
 			if (count < 2)
 				return lhs;
-			return jsonProvider.createString(Strings.repeat(jsonProvider.asString(lhs), (int) count));
+			return jsonProvider.createString(Strings.repeat(jsonProvider.getString(lhs), (int) count));
 		} else if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.STRING) {
-			double count = jsonProvider.asDoubleRounded(lhs);
+			double count = jsonProvider.getNumberAsDoubleRounded(lhs);
 			if (count <= 0)
 				return jsonProvider.createNull();
 			if (count < 2)
 				return rhs;
-			return jsonProvider.createString(Strings.repeat(jsonProvider.asString(rhs), (int) count));
+			return jsonProvider.createString(Strings.repeat(jsonProvider.getString(rhs), (int) count));
 		} else if (ltype == JsonNodeType.OBJECT && rtype == JsonNodeType.OBJECT) {
 			return mergeRecursive(jsonProvider, lhs, rhs);
 		} else {
@@ -61,13 +61,13 @@ public class MultiplyOperator<JsonNode> implements BinaryOperator<JsonNode> {
 	private static <JsonNode> JsonNode mergeRecursive(JsonProvider<JsonNode> jsonProvider, JsonNode lhs, JsonNode rhs) {
 		Map<String, JsonNode> result = new LinkedHashMap<>();
 
-		Iterator<Map.Entry<String, JsonNode>> liter = jsonProvider.fields(lhs);
+		Iterator<Map.Entry<String, JsonNode>> liter = jsonProvider.getObjectEntries(lhs);
 		while (liter.hasNext()) {
 			Map.Entry<String, JsonNode> e = liter.next();
 			result.put(e.getKey(), e.getValue());
 		}
 
-		Iterator<Map.Entry<String, JsonNode>> riter = jsonProvider.fields(rhs);
+		Iterator<Map.Entry<String, JsonNode>> riter = jsonProvider.getObjectEntries(rhs);
 		while (riter.hasNext()) {
 			Map.Entry<String, JsonNode> e = riter.next();
 			JsonNode l = result.get(e.getKey());

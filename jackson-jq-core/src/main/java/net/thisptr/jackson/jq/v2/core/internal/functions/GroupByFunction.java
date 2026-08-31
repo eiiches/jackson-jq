@@ -30,7 +30,7 @@ public class GroupByFunction implements Function {
 
 			JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
 			TreeMap<JsonNode, List<JsonNode>> result = new TreeMap<>(comparator);
-			Iterator<JsonNode> iter = jsonProvider.elements(in);
+			Iterator<JsonNode> iter = jsonProvider.getArrayElements(in);
 			while (iter.hasNext()) {
 				JsonNode i = iter.next();
 				List<JsonNode> fxList = new ArrayList<>();

@@ -39,7 +39,7 @@ public class _SubImplFunction implements Function {
 			return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
 				Preconditions.checkInputType(jsonProvider, "_sub_impl/3", in, JsonNodeType.STRING);
 				for (OnigUtils.Pattern pattern : precompiled.patterns()) {
-					List<JsonNode> match = match(jsonProvider, pattern, jsonProvider.asString(in));
+					List<JsonNode> match = match(jsonProvider, pattern, jsonProvider.getString(in));
 					for (int i = 0; i < precompiled.flagsMultiplicity(); i++)
 						replaceAndConcat(jsonProvider, frame, new ArrayDeque<>(), output, match, replaceExpr, in, flagsExpr);
 				}
@@ -55,8 +55,8 @@ public class _SubImplFunction implements Function {
 				flagsExpr.apply(frame, in, UntrackedPath.getInstance(), (flagsText, opath2) -> {
 					Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 3, flagsText, JsonNodeType.STRING);
 
-					OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.asString(regexText), jsonProvider.asString(flagsText));
-					List<JsonNode> match = match(jsonProvider, p, jsonProvider.asString(in));
+					OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.getString(regexText), jsonProvider.getString(flagsText));
+					List<JsonNode> match = match(jsonProvider, p, jsonProvider.getString(in));
 
 					// This just repeats same emit()s the number of times as the number of flags. This is to emulate jq behavior (which is probably a bug).
 					flagsExpr.apply(frame, in, UntrackedPath.getInstance(), (dummy, opath3) -> {
@@ -81,12 +81,12 @@ public class _SubImplFunction implements Function {
 		List<JsonNode> rtail = match.subList(0, match.size() - 1);
 
 		if (jsonProvider.getNodeType(rhead) == JsonNodeType.STRING) {
-			stack.push(jsonProvider.asString(rhead));
+			stack.push(jsonProvider.getString(rhead));
 			replaceAndConcat(jsonProvider, context, stack, output, rtail, replaceExpr, in, flags);
 			stack.pop();
 		} else {
 			replaceExpr.apply(context, rhead, UntrackedPath.getInstance(), (replacement, opath) -> {
-				stack.push(jsonProvider.asString(replacement));
+				stack.push(jsonProvider.getString(replacement));
 				replaceAndConcat(jsonProvider, context, stack, output, rtail, replaceExpr, in, flags);
 				stack.pop();
 			});

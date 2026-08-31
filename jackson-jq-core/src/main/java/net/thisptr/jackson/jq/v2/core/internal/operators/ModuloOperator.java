@@ -26,8 +26,8 @@ public class ModuloOperator<JsonNode> implements BinaryOperator<JsonNode> {
 		JsonNodeType ltype = jsonProvider.getNodeType(lhs);
 		JsonNodeType rtype = jsonProvider.getNodeType(rhs);
 		if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.NUMBER) {
-			double lhsDouble = jsonProvider.asDoubleRounded(lhs);
-			double rhsDouble = jsonProvider.asDoubleRounded(rhs);
+			double lhsDouble = jsonProvider.getNumberAsDoubleRounded(lhs);
+			double rhsDouble = jsonProvider.getNumberAsDoubleRounded(rhs);
 
 			// Handle Infinity: convert to long representation
 			long dividend = Double.isNaN(lhsDouble) ? 0L

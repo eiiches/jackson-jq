@@ -66,7 +66,7 @@ public class NegativeExpression<JsonNode> implements Expression<StackFrame, Json
 		value.apply(frame, in, UntrackedPath.getInstance(), (v, opath) -> {
 			if (jsonProvider.getNodeType(v) != JsonNodeType.NUMBER)
 				throw new JsonQueryTypeException(jsonProvider, version, "%s cannot be negated", v);
-			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, -jsonProvider.asDoubleRounded(v)), UntrackedPath.getInstance());
+			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, -jsonProvider.getNumberAsDoubleRounded(v)), UntrackedPath.getInstance());
 		});
 	}
 

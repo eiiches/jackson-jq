@@ -129,7 +129,7 @@ public interface JsonProvider<JsonNode> {
 	/**
 	 * Returns the Java type this provider uses to represent the given number node.
 	 * <p>
-	 * Unlike {@link #asInt(Object)} and friends, this answers without converting the value, so it is
+	 * Unlike {@link #getNumberAsIntExact(Object)} and friends, this answers without converting the value, so it is
 	 * a cheap way to ask what a number actually is. The answer describes the representation rather
 	 * than the logical value, and is deliberately not promised to be the same across providers: a
 	 * provider that widens on construction, or that stores every number the same way, reports what it
@@ -150,7 +150,7 @@ public interface JsonProvider<JsonNode> {
 	 * @param node the JSON node
 	 * @return {@code false} if the node is JSON {@code null} or boolean {@code false}, {@code true} otherwise
 	 */
-	boolean asBoolean(JsonNode node);
+	boolean getBoolean(JsonNode node);
 
 	/**
 	 * Returns a number node's value rounded to the nearest double.
@@ -159,7 +159,7 @@ public interface JsonProvider<JsonNode> {
 	 * {@code double}'s 53 bits of mantissa are rounded to nearest (ties to even), in either direction
 	 * -- {@code 2871948651097801136} comes back as {@code 2871948651097801216} -- and values beyond
 	 * {@link Double#MAX_VALUE} overflow to an infinity. Every number therefore has a result, so this
-	 * never returns {@code null}; use {@link #asBigDecimal(Object)} when the exact value is needed.
+	 * never returns {@code null}; use {@link #getNumberAsBigDecimalExact(Object)} when the exact value is needed.
 	 * <p>
 	 * A returned {@link Double#NaN} means the value is NaN, and nothing else.
 	 *
@@ -167,12 +167,12 @@ public interface JsonProvider<JsonNode> {
 	 * @return the value rounded to the nearest double
 	 * @throws IllegalArgumentException if the node is not a number
 	 */
-	double asDoubleRounded(JsonNode node);
+	double getNumberAsDoubleRounded(JsonNode node);
 
 	/**
 	 * Returns the exact value of a number node.
 	 * <p>
-	 * Unlike {@link #asDoubleRounded(Object)}, this does not lose precision. {@link BigDecimal} cannot
+	 * Unlike {@link #getNumberAsDoubleRounded(Object)}, this does not lose precision. {@link BigDecimal} cannot
 	 * represent the non-finite values jq can produce, so those are reported as {@code null} rather
 	 * than approximated.
 	 *
@@ -180,7 +180,7 @@ public interface JsonProvider<JsonNode> {
 	 * @return the exact value, or {@code null} if the value is NaN, Infinity or -Infinity
 	 * @throws IllegalArgumentException if the node is not a number
 	 */
-	@Nullable BigDecimal asBigDecimal(JsonNode node);
+	@Nullable BigDecimal getNumberAsBigDecimalExact(JsonNode node);
 
 	/**
 	 * Returns the exact value of a number node as a {@link BigInteger}.
@@ -192,7 +192,7 @@ public interface JsonProvider<JsonNode> {
 	 * @return the integer value, or {@code null} if it is not exactly representable as a BigInteger
 	 * @throws IllegalArgumentException if the node is not a number
 	 */
-	@Nullable BigInteger asBigInteger(JsonNode node);
+	@Nullable BigInteger getNumberAsBigIntegerExact(JsonNode node);
 
 	/**
 	 * Returns a number node's value as a {@link BigInteger}, truncating any fractional part toward
@@ -202,7 +202,7 @@ public interface JsonProvider<JsonNode> {
 	 * @return the truncated integer value, or {@code null} if the value is NaN or an infinity
 	 * @throws IllegalArgumentException if the node is not a number
 	 */
-	@Nullable BigInteger asBigIntegerTruncated(JsonNode node);
+	@Nullable BigInteger getNumberAsBigIntegerTruncated(JsonNode node);
 
 	/**
 	 * Returns the textual value of the node.
@@ -214,7 +214,7 @@ public interface JsonProvider<JsonNode> {
 	 * @param node the JSON node
 	 * @return the textual representation of the node
 	 */
-	String asString(JsonNode node);
+	String getString(JsonNode node);
 
 	/**
 	 * Returns the exact value of a number node as a long.
@@ -227,7 +227,7 @@ public interface JsonProvider<JsonNode> {
 	 * @return the long value, or {@code null} if it is not exactly representable as a long
 	 * @throws IllegalArgumentException if the node is not a number
 	 */
-	@Nullable Long asLong(JsonNode node);
+	@Nullable Long getNumberAsLongExact(JsonNode node);
 
 	/**
 	 * Returns a number node's value as a long, truncating any fractional part toward zero.
@@ -237,7 +237,7 @@ public interface JsonProvider<JsonNode> {
 	 * truncated value is outside the range of long
 	 * @throws IllegalArgumentException if the node is not a number
 	 */
-	@Nullable Long asLongTruncated(JsonNode node);
+	@Nullable Long getNumberAsLongTruncated(JsonNode node);
 
 	/**
 	 * Returns the exact value of a number node as an int.
@@ -250,7 +250,7 @@ public interface JsonProvider<JsonNode> {
 	 * @return the int value, or {@code null} if it is not exactly representable as an int
 	 * @throws IllegalArgumentException if the node is not a number
 	 */
-	@Nullable Integer asInt(JsonNode node);
+	@Nullable Integer getNumberAsIntExact(JsonNode node);
 
 	/**
 	 * Returns a number node's value as an int, truncating any fractional part toward zero.
@@ -260,7 +260,7 @@ public interface JsonProvider<JsonNode> {
 	 * truncated value is outside the range of int
 	 * @throws IllegalArgumentException if the node is not a number
 	 */
-	@Nullable Integer asIntTruncated(JsonNode node);
+	@Nullable Integer getNumberAsIntTruncated(JsonNode node);
 
 	/**
 	 * Returns the binary value of the node.
@@ -281,16 +281,25 @@ public interface JsonProvider<JsonNode> {
 	 * @param node the JSON node
 	 * @return an iterator over the object's entries, or an empty iterator if {@code node} is not an object
 	 */
-	Iterator<Map.Entry<String, JsonNode>> fields(JsonNode node);
+	Iterator<Map.Entry<String, JsonNode>> getObjectEntries(JsonNode node);
 
 	/**
-	 * Returns an iterator over the child values of the node: the elements of an array, or the field
-	 * values of an object (in the object's iteration order, discarding the field names).
+	 * Returns an iterator over the elements of an array node.
 	 *
-	 * @param node the JSON node
-	 * @return an iterator over the node's children, or an empty iterator if {@code node} is neither an array nor an object
+	 * @param node the JSON array node
+	 * @return an iterator over the array's elements
+	 * @throws IllegalArgumentException if the node is not an array
 	 */
-	Iterator<JsonNode> elements(JsonNode node);
+	Iterator<JsonNode> getArrayElements(JsonNode node);
+
+	/**
+	 * Returns an iterator over the field values of an object node, in the object's iteration order.
+	 *
+	 * @param node the JSON object node
+	 * @return an iterator over the object's field values
+	 * @throws IllegalArgumentException if the node is not an object
+	 */
+	Iterator<JsonNode> getObjectFieldValues(JsonNode node);
 
 	/**
 	 * Returns an iterator over the field names of an object node.
@@ -298,7 +307,7 @@ public interface JsonProvider<JsonNode> {
 	 * @param node the JSON node
 	 * @return an iterator over the object's field names, or an empty iterator if {@code node} is not an object
 	 */
-	Iterator<String> fieldNames(JsonNode node);
+	Iterator<String> getObjectFieldNames(JsonNode node);
 
 	/**
 	 * Returns the value of the given field.
@@ -307,7 +316,7 @@ public interface JsonProvider<JsonNode> {
 	 * @param fieldName the field name
 	 * @return the field's value, or {@code null} if {@code node} is not an object or has no such field
 	 */
-	@Nullable JsonNode get(JsonNode node, String fieldName);
+	@Nullable JsonNode getObjectField(JsonNode node, String fieldName);
 
 	/**
 	 * Returns the element at the given index.
@@ -316,10 +325,10 @@ public interface JsonProvider<JsonNode> {
 	 * @param index the element index
 	 * @return the element at {@code index}, or {@code null} if {@code node} is not an array or {@code index} is out of range
 	 */
-	@Nullable JsonNode get(JsonNode node, int index);
+	@Nullable JsonNode getArrayElement(JsonNode node, int index);
 
 	/**
-	 * Like {@link #get(Object, String)}, but requires the field to be present.
+	 * Like {@link #getObjectField(Object, String)}, but requires the field to be present.
 	 *
 	 * @param node the JSON node
 	 * @param fieldName the field name
@@ -327,11 +336,11 @@ public interface JsonProvider<JsonNode> {
 	 * @throws NullPointerException if {@code node} is not an object or has no such field
 	 */
 	default JsonNode requireGet(JsonNode node, String fieldName) {
-		return Objects.requireNonNull(get(node, fieldName));
+		return Objects.requireNonNull(getObjectField(node, fieldName));
 	}
 
 	/**
-	 * Like {@link #get(Object, int)}, but requires the index to be present.
+	 * Like {@link #getArrayElement(Object, int)}, but requires the index to be present.
 	 *
 	 * @param node the JSON node
 	 * @param index the element index
@@ -339,7 +348,7 @@ public interface JsonProvider<JsonNode> {
 	 * @throws NullPointerException if {@code node} is not an array or {@code index} is out of range
 	 */
 	default JsonNode requireGet(JsonNode node, int index) {
-		return Objects.requireNonNull(get(node, index));
+		return Objects.requireNonNull(getArrayElement(node, index));
 	}
 
 	/**
@@ -357,7 +366,7 @@ public interface JsonProvider<JsonNode> {
 	 * @param fieldName the field name
 	 * @return {@code true} if {@code node} is an object and has a field named {@code fieldName}
 	 */
-	boolean has(JsonNode node, String fieldName);
+	boolean hasObjectField(JsonNode node, String fieldName);
 
 	/**
 	 * Returns whether the given index is within range of the array node.
@@ -366,7 +375,7 @@ public interface JsonProvider<JsonNode> {
 	 * @param index the element index
 	 * @return {@code true} if {@code node} is an array and {@code index} is within its bounds
 	 */
-	boolean has(JsonNode node, int index);
+	boolean hasArrayElement(JsonNode node, int index);
 
 	/**
 	 * Returns a deep copy of the node, safe to mutate without affecting the original.

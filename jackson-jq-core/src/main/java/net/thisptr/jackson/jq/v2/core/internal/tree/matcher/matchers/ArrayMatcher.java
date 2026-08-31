@@ -49,7 +49,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(rindex)));
 
 		PatternMatcher<JsonNode> matcher = matchers.get(rindex);
-		JsonNode value = jsonProvider.get(in, rindex);
+		JsonNode value = jsonProvider.getArrayElement(in, rindex);
 
 		matcher.match(frame, value != null ? value : jsonProvider.createNull(), (match) -> {
 			recursive(frame, in, out, accumulate, index + 1);
@@ -77,7 +77,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(rindex)));
 
 		PatternMatcher<JsonNode> matcher = matchers.get(rindex);
-		JsonNode value = jsonProvider.get(in, rindex);
+		JsonNode value = jsonProvider.getArrayElement(in, rindex);
 		Path<JsonNode> valuePath = path.appendIndex(rindex);
 
 		matcher.matchWithPath(frame, value != null ? value : jsonProvider.createNull(), valuePath, (match) -> {

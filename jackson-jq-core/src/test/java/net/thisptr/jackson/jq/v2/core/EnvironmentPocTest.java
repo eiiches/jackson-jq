@@ -56,7 +56,7 @@ public class EnvironmentPocTest {
 					@Override
 					public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version version) {
 						return (scope, in, path, output) -> {
-							String text = provider.asString(in);
+							String text = provider.getString(in);
 							output.emit(provider.createString("hello:" + text), path);
 						};
 					}
@@ -99,7 +99,7 @@ public class EnvironmentPocTest {
 		Function increment = new Function() {
 			@Override
 			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
-				return FunctionBody.<Context, N>builder(args).usesInput(true).build((scope, in, path, output) -> output.emit(provider.createNumber(Objects.requireNonNull(provider.asLong(in)) + 1), UntrackedPath.getInstance()));
+				return FunctionBody.<Context, N>builder(args).usesInput(true).build((scope, in, path, output) -> output.emit(provider.createNumber(Objects.requireNonNull(provider.getNumberAsLongExact(in)) + 1), UntrackedPath.getInstance()));
 			}
 		};
 		FunctionLoader testLoader = javaFunctionLoader(FunctionSignature.of("increment", 0), increment);

@@ -44,7 +44,7 @@ public class Usage {
 					public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version jqVersion) {
 						return (frame, in, path, output) -> {
 							args.get(0).apply(frame, in, UntrackedPath.getInstance(), (time, opath) -> {
-								output.emit(jsonProvider.createString(Strings.repeat(jsonProvider.asString(in), jsonProvider.asInt(time))), UntrackedPath.getInstance());
+								output.emit(jsonProvider.createString(Strings.repeat(jsonProvider.getString(in), jsonProvider.getNumberAsIntExact(time))), UntrackedPath.getInstance());
 							});
 						};
 					}

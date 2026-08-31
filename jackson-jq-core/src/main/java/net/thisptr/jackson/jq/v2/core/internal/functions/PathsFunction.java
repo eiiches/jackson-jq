@@ -47,7 +47,7 @@ public class PathsFunction implements Function {
 				stack.remove(stack.size() - 1);
 			}
 		} else if (inType == JsonNodeType.OBJECT) {
-			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(in);
+			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectEntries(in);
 			while (iter.hasNext()) {
 				Map.Entry<String, JsonNode> entry = iter.next();
 				stack.add(jsonProvider.createString(entry.getKey()));

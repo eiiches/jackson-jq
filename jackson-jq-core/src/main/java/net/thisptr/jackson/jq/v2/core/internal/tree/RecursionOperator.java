@@ -45,7 +45,7 @@ public class RecursionOperator<JsonNode> implements Expression<StackFrame, JsonN
 	private void pathRecursive(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		output.emit(in, path);
 		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
-			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.fields(in);
+			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectEntries(in);
 			while (iter.hasNext()) {
 				Map.Entry<String, JsonNode> entry = iter.next();
 				pathRecursive(frame, entry.getValue(), path.appendKey(entry.getKey()), output);

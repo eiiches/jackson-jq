@@ -21,7 +21,7 @@ public class Uuid35FunctionTest {
 	@Test
 	public void testUuid4() throws JsonQueryException {
 		List<JsonNode> results = TestUtils.runQuery("uuid::uuid4", JSON_PROVIDER.createNull(), Versions.JQ_1_6);
-		assertThat(JSON_PROVIDER.asString(results.get(0))).matches("[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}");
+		assertThat(JSON_PROVIDER.getString(results.get(0))).matches("[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}");
 	}
 
 	@Test

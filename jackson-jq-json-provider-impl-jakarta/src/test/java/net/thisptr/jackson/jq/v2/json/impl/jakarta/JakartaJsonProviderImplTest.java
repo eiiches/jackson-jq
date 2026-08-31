@@ -25,10 +25,10 @@ class JakartaJsonProviderImplTest {
 		List<JsonValue> values = provider.parseAll("1\n{\"value\": [true, \"}\"]}[2] \"text\"");
 
 		assertThat(values).hasSize(4);
-		assertThat(provider.asInt(values.get(0))).isEqualTo(1);
+		assertThat(provider.getNumberAsIntExact(values.get(0))).isEqualTo(1);
 		assertThat(provider.getNodeType(values.get(1))).isEqualTo(net.thisptr.jackson.jq.v2.json.JsonNodeType.OBJECT);
 		assertThat(provider.getNodeType(values.get(2))).isEqualTo(net.thisptr.jackson.jq.v2.json.JsonNodeType.ARRAY);
-		assertThat(provider.asString(values.get(3))).isEqualTo("text");
+		assertThat(provider.getString(values.get(3))).isEqualTo("text");
 	}
 
 	@Test
