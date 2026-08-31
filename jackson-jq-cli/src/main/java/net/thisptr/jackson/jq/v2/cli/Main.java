@@ -25,7 +25,6 @@ import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
@@ -182,7 +181,7 @@ public class Main {
 			for (@Var N tree = parser.next(); tree != null; tree = parser.next()) {
 				try {
 					jq.apply(tree, out -> {
-						if (jsonProvider.getNodeType(out) == JsonNodeType.STRING && rawOutput) {
+						if (jsonProvider.isString(out) && rawOutput) {
 							System.out.println(jsonProvider.getString(out));
 						} else if (compact) {
 							System.out.println(jsonProvider.format(out));

@@ -47,7 +47,7 @@ public class Uuid35Function implements Function {
 			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 				Preconditions.checkInputType(jsonProvider, "uuid5", in, JsonNodeType.STRING, JsonNodeType.BINARY);
 				namespaceExpr.apply(context, in, UntrackedPath.getInstance(), (namespaceArg, opath) -> {
-					if (jsonProvider.getNodeType(namespaceArg) != JsonNodeType.STRING)
+					if (!jsonProvider.isString(namespaceArg))
 						throw new JsonQueryException(String.format("namespace must be string, but got: %s", jsonProvider.getNodeType(namespaceArg)));
 					UUID namespace;
 					try {

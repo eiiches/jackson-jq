@@ -132,6 +132,40 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 		}
 	}
 
+	// JsonNode's own predicates are cheaper than getNodeType(), which re-maps Jackson's enum.
+	// They also answer for MissingNode and POJONode, which getNodeType() rejects outright; the
+	// jq engine never holds either, so the two forms agree on every node it can see.
+	@Override
+	public boolean isObject(JsonNode node) {
+		return node.isObject();
+	}
+
+	@Override
+	public boolean isArray(JsonNode node) {
+		return node.isArray();
+	}
+
+	@Override
+	public boolean isString(JsonNode node) {
+		// Jackson 2 has no isString(); isTextual() is the same test.
+		return node.isTextual();
+	}
+
+	@Override
+	public boolean isNumber(JsonNode node) {
+		return node.isNumber();
+	}
+
+	@Override
+	public boolean isBoolean(JsonNode node) {
+		return node.isBoolean();
+	}
+
+	@Override
+	public boolean isNull(JsonNode node) {
+		return node.isNull();
+	}
+
 	@Override
 	public NumberType getNumberType(JsonNode node) {
 		// NumericNode is exactly what JsonNode.isNumber() covers.

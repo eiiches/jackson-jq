@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.v2.spi.path;
 
 import java.util.List;
 
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -27,7 +26,7 @@ public final class NumberIndexPath<JsonNode> extends Path<JsonNode> {
 	 * @throws JsonQueryException if {@code index} is not a number
 	 */
 	static <JsonNode> NumberIndexPath<JsonNode> of(JsonProvider<JsonNode> jsonProvider, Path<JsonNode> parent, JsonNode index) {
-		if (jsonProvider.getNodeType(index) != JsonNodeType.NUMBER)
+		if (!jsonProvider.isNumber(index))
 			throw new JsonQueryException("Array index must be a number");
 		return new NumberIndexPath<>(parent, index);
 	}

@@ -135,6 +135,39 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 		throw new IllegalStateException("Unknown JsonElement type: " + node.getClass());
 	}
 
+	// JsonElement's own predicates are cheaper than getNodeType(), which walks a chain of them.
+	// String, number and boolean have no JsonElement-level predicate, so they go through
+	// JsonPrimitive; getAsJsonPrimitive() throws on other nodes, hence the instanceof guard.
+	@Override
+	public boolean isObject(JsonElement node) {
+		return node.isJsonObject();
+	}
+
+	@Override
+	public boolean isArray(JsonElement node) {
+		return node.isJsonArray();
+	}
+
+	@Override
+	public boolean isString(JsonElement node) {
+		return node instanceof JsonPrimitive && ((JsonPrimitive) node).isString();
+	}
+
+	@Override
+	public boolean isNumber(JsonElement node) {
+		return node instanceof JsonPrimitive && ((JsonPrimitive) node).isNumber();
+	}
+
+	@Override
+	public boolean isBoolean(JsonElement node) {
+		return node instanceof JsonPrimitive && ((JsonPrimitive) node).isBoolean();
+	}
+
+	@Override
+	public boolean isNull(JsonElement node) {
+		return node.isJsonNull();
+	}
+
 	@Override
 	public NumberType getNumberType(JsonElement node) {
 		if (!node.isJsonPrimitive() || !node.getAsJsonPrimitive().isNumber())

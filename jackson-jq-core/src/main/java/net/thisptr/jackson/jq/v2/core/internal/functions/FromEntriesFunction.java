@@ -37,7 +37,7 @@ public class FromEntriesFunction implements Function {
 					: jsonProvider.getObjectFieldValues(in);
 			while (iter.hasNext()) {
 				JsonNode entry = iter.next();
-				if (jsonProvider.getNodeType(entry) != JsonNodeType.OBJECT)
+				if (!jsonProvider.isObject(entry))
 					throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, entry, jsonProvider.createString("key")));
 
 				@Var JsonNode key = jsonProvider.getObjectField(entry, "key");
@@ -47,7 +47,7 @@ public class FromEntriesFunction implements Function {
 					key = jsonProvider.getObjectField(entry, "name");
 				if (key == null)
 					key = jsonProvider.getObjectField(entry, "Name");
-				if (key == null || jsonProvider.getNodeType(key) != JsonNodeType.STRING)
+				if (key == null || !jsonProvider.isString(key))
 					throw new JsonQueryTypeException(jsonProvider, version, "Cannot use %s as object key", key == null ? jsonProvider.createNull() : key);
 
 				@Var JsonNode value = jsonProvider.getObjectField(entry, "value");

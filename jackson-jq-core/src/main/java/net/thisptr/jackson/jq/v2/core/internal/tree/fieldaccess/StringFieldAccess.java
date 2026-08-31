@@ -6,7 +6,6 @@ import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ThisObject;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -71,7 +70,7 @@ public class StringFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		field.apply(frame, in, UntrackedPath.getInstance(), (key, opath) -> {
 			target.apply(frame, in, path, (pobj, ppath) -> {
-				if (jsonProvider.getNodeType(key) != JsonNodeType.STRING && !permissive)
+				if (!jsonProvider.isString(key) && !permissive)
 					throw new IllegalStateException(); // FIXME: exception type
 				emitObjectFieldPath(jsonProvider, permissive, jsonProvider.getString(key), pobj, ppath, output, !(path instanceof UntrackedPath), version);
 			});

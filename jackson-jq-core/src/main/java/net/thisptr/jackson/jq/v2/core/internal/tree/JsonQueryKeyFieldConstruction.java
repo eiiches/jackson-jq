@@ -7,7 +7,6 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -68,7 +67,7 @@ public class JsonQueryKeyFieldConstruction<JsonNode> implements FieldConstructio
 	@Override
 	public void evaluate(StackFrame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		key.apply(frame, in, UntrackedPath.getInstance(), (k, opath) -> {
-			if (jsonProvider.getNodeType(k) != JsonNodeType.STRING)
+			if (!jsonProvider.isString(k))
 				throw new JsonQueryTypeException(jsonProvider, version, "Cannot use %s as object key", k);
 			value.apply(frame, in, UntrackedPath.getInstance(), (v, opath2) -> consumer.accept(jsonProvider.getString(k), v));
 		});

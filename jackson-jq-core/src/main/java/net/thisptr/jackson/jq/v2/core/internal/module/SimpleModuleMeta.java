@@ -14,7 +14,6 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleMeta;
 
@@ -60,7 +59,7 @@ public class SimpleModuleMeta implements ModuleMeta {
 		JsonNode node = ExpressionUtils.evaluateLiteralExpression(jsonProvider, expr);
 		if (node == null)
 			throw new IllegalArgumentException("Module metadata must be constant");
-		if (jsonProvider.getNodeType(node) != JsonNodeType.OBJECT)
+		if (!jsonProvider.isObject(node))
 			throw new IllegalArgumentException("Module metadata must be an object");
 		Map<String, JsonNode> result = new LinkedHashMap<>();
 		Iterator<Map.Entry<String, JsonNode>> fields = jsonProvider.getObjectEntries(node);

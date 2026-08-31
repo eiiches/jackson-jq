@@ -122,12 +122,12 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 
 		FieldMatcher<JsonNode> fmatcher = matchers.get(index);
 		fmatcher.name.apply(frame, in, UntrackedPath.getInstance(), (key, opath) -> {
-			if (jsonProvider.getNodeType(key) != JsonNodeType.STRING)
+			if (!jsonProvider.isString(key))
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
-			if (jsonProvider.getNodeType(in) != JsonNodeType.OBJECT && jsonProvider.getNodeType(in) != JsonNodeType.NULL)
+			if (!jsonProvider.isObject(in) && !jsonProvider.isNull(in))
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
 
-			JsonNode value = jsonProvider.getNodeType(in) == JsonNodeType.OBJECT
+			JsonNode value = jsonProvider.isObject(in)
 					? jsonProvider.getObjectField(in, jsonProvider.getString(key))
 					: null;
 
@@ -149,12 +149,12 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 
 		FieldMatcher<JsonNode> fmatcher = matchers.get(index);
 		fmatcher.name.apply(frame, in, UntrackedPath.getInstance(), (key, opath) -> {
-			if (jsonProvider.getNodeType(key) != JsonNodeType.STRING)
+			if (!jsonProvider.isString(key))
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
-			if (jsonProvider.getNodeType(in) != JsonNodeType.OBJECT && jsonProvider.getNodeType(in) != JsonNodeType.NULL)
+			if (!jsonProvider.isObject(in) && !jsonProvider.isNull(in))
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
 
-			JsonNode value = jsonProvider.getNodeType(in) == JsonNodeType.OBJECT
+			JsonNode value = jsonProvider.isObject(in)
 					? jsonProvider.getObjectField(in, jsonProvider.getString(key))
 					: null;
 			Path<JsonNode> valuepath = inpath.appendKey(jsonProvider.getString(key));

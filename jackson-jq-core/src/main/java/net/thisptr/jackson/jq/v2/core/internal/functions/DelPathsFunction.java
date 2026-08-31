@@ -32,13 +32,13 @@ public class DelPathsFunction implements Function {
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(args.get(0).getCardinality()).build((frame, in, ipath, output) -> {
 			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (paths, opath) -> {
-				if (jsonProvider.getNodeType(paths) != JsonNodeType.ARRAY)
+				if (!jsonProvider.isArray(paths))
 					throw new JsonQueryException("Paths must be specified as an array");
 
 				List<List<JsonNode>> pathList = new ArrayList<>(jsonProvider.getArrayLength(paths));
 				for (Iterator<JsonNode> it = jsonProvider.getArrayElements(paths); it.hasNext(); ) {
 					JsonNode path = it.next();
-					if (jsonProvider.getNodeType(path) != JsonNodeType.ARRAY)
+					if (!jsonProvider.isArray(path))
 						throw new JsonQueryException("Path must be specified as array, not " + JsonNodeUtils.typeOf(jsonProvider, path));
 					pathList.add(JsonNodeUtils.asArrayList(jsonProvider, path));
 				}

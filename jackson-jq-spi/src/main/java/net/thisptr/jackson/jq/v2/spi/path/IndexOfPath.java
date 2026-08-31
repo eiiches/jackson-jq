@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.v2.spi.path;
 
 import java.util.List;
 
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -26,7 +25,7 @@ public final class IndexOfPath<JsonNode> extends Path<JsonNode> {
 	 * @throws JsonQueryException if {@code searchSequence} is not an array
 	 */
 	static <JsonNode> IndexOfPath<JsonNode> of(JsonProvider<JsonNode> jsonProvider, Path<JsonNode> parent, JsonNode searchSequence) {
-		if (jsonProvider.getNodeType(searchSequence) != JsonNodeType.ARRAY)
+		if (!jsonProvider.isArray(searchSequence))
 			throw new JsonQueryException("Array index-of search sequence must be an array");
 		return new IndexOfPath<>(parent, searchSequence);
 	}

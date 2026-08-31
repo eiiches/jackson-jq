@@ -16,7 +16,6 @@ import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Range;
 import net.thisptr.jackson.jq.v2.core.internal.misc.UnicodeUtils;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.Version;
@@ -108,9 +107,9 @@ public final class PathOperations {
 	}
 
 	public static <JsonNode> void resolveObjectField(JsonProvider<JsonNode> jsonProvider, JsonNode parent, Path<JsonNode> parentPath, Output<JsonNode> output, String key, boolean permissive, Version version) throws JsonQueryException {
-		if (jsonProvider.getNodeType(parent) == JsonNodeType.NULL) {
+		if (jsonProvider.isNull(parent)) {
 			output.emit(jsonProvider.createNull(), parentPath.appendKey(key));
-		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.OBJECT) {
+		} else if (jsonProvider.isObject(parent)) {
 			JsonNode node = jsonProvider.getObjectField(parent, key);
 			output.emit(node == null ? jsonProvider.createNull() : node, parentPath.appendKey(key));
 		} else if (!permissive) {
@@ -119,8 +118,8 @@ public final class PathOperations {
 	}
 
 	public static <JsonNode> void resolveArrayIndex(JsonProvider<JsonNode> jsonProvider, JsonNode parent, Path<JsonNode> parentPath, Output<JsonNode> output, JsonNode index, boolean permissive, Version version) throws JsonQueryException {
-		assert jsonProvider.getNodeType(index) == JsonNodeType.NUMBER;
-		if (jsonProvider.getNodeType(parent) == JsonNodeType.ARRAY) {
+		assert jsonProvider.isNumber(index);
+		if (jsonProvider.isArray(parent)) {
 			double indexAsDouble = jsonProvider.getNumberAsDoubleRounded(index);
 			// NaN, the infinities and anything outside int range all address nothing.
 			Integer truncated = jsonProvider.getNumberAsIntTruncated(index);
@@ -139,7 +138,7 @@ public final class PathOperations {
 				return;
 			}
 			output.emit(jsonProvider.getArrayElement(parent, resolvedIndex), parentPath.appendIndex(jsonProvider, index));
-		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.NULL) {
+		} else if (jsonProvider.isNull(parent)) {
 			output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
 		} else if (!permissive) {
 			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, parent, index));
@@ -147,14 +146,14 @@ public final class PathOperations {
 	}
 
 	public static <JsonNode> void resolveArrayIndex(JsonProvider<JsonNode> jsonProvider, JsonNode parent, Path<JsonNode> parentPath, Output<JsonNode> output, int index, boolean permissive, Version version) throws JsonQueryException {
-		if (jsonProvider.getNodeType(parent) == JsonNodeType.ARRAY) {
+		if (jsonProvider.isArray(parent)) {
 			int resolvedIndex = index < 0 ? index + jsonProvider.getArrayLength(parent) : index;
 			if (resolvedIndex < 0 || jsonProvider.getArrayLength(parent) <= resolvedIndex) {
 				output.emit(jsonProvider.createNull(), parentPath.appendIndex(index));
 				return;
 			}
 			output.emit(jsonProvider.getArrayElement(parent, resolvedIndex), parentPath.appendIndex(index));
-		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.NULL) {
+		} else if (jsonProvider.isNull(parent)) {
 			output.emit(jsonProvider.createNull(), parentPath.appendIndex(index));
 		} else if (!permissive) {
 			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, parent, jsonProvider.createNumber(index)));
@@ -162,19 +161,19 @@ public final class PathOperations {
 	}
 
 	public static <JsonNode> void resolveArrayRangeIndex(JsonProvider<JsonNode> jsonProvider, JsonNode parent, Path<JsonNode> parentPath, Output<JsonNode> output, JsonNode start, JsonNode end, boolean permissive, Version version) throws JsonQueryException {
-		assert jsonProvider.getNodeType(start) == JsonNodeType.NULL || jsonProvider.getNodeType(start) == JsonNodeType.NUMBER;
-		assert jsonProvider.getNodeType(end) == JsonNodeType.NULL || jsonProvider.getNodeType(end) == JsonNodeType.NUMBER;
-		if (jsonProvider.getNodeType(parent) == JsonNodeType.ARRAY) {
+		assert jsonProvider.isNull(start) || jsonProvider.isNumber(start);
+		assert jsonProvider.isNull(end) || jsonProvider.isNumber(end);
+		if (jsonProvider.isArray(parent)) {
 			Range range = Range.resolve(jsonProvider, start, end, jsonProvider.getArrayLength(parent));
 			List<JsonNode> subarray = new ArrayList<>((int) (range.end - range.start));
 			for (long index = range.start; index < range.end; ++index)
 				subarray.add(jsonProvider.getArrayElement(parent, (int) index));
 			output.emit(jsonProvider.createArray(subarray), parentPath.appendIndexRange(jsonProvider, start, end));
-		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.STRING) {
+		} else if (jsonProvider.isString(parent)) {
 			Range range = Range.resolve(jsonProvider, start, end, UnicodeUtils.lengthUtf32(jsonProvider.getString(parent)));
 			JsonNode substring = jsonProvider.createString(UnicodeUtils.substringUtf32(jsonProvider.getString(parent), (int) range.start, (int) range.end));
 			output.emit(substring, parentPath.appendIndexRange(jsonProvider, start, end));
-		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.NULL) {
+		} else if (jsonProvider.isNull(parent)) {
 			output.emit(jsonProvider.createNull(), parentPath.appendIndexRange(jsonProvider, start, end));
 		} else if (!permissive) {
 			Map<String, JsonNode> subpath = new LinkedHashMap<>();
@@ -185,8 +184,8 @@ public final class PathOperations {
 	}
 
 	public static <JsonNode> void resolveArrayIndexOf(JsonProvider<JsonNode> jsonProvider, JsonNode parent, Path<JsonNode> parentPath, Output<JsonNode> output, JsonNode subsequence, boolean permissive, Version version) throws JsonQueryException {
-		assert jsonProvider.getNodeType(subsequence) == JsonNodeType.ARRAY;
-		if (jsonProvider.getNodeType(parent) == JsonNodeType.ARRAY) {
+		assert jsonProvider.isArray(subsequence);
+		if (jsonProvider.isArray(parent)) {
 			JsonNode indexList = indexOfAll(jsonProvider, parent, subsequence);
 			output.emit(indexList, parentPath.appendIndexOf(jsonProvider, subsequence));
 		} else if (!permissive) {
@@ -244,9 +243,9 @@ public final class PathOperations {
 	}
 
 	private static <JsonNode> JsonNode mutateObjectField(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, String key, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
-		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL)
+		if (in == null || jsonProvider.isNull(in))
 			in = jsonProvider.createObject(Collections.emptyMap());
-		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
+		if (jsonProvider.isObject(in)) {
 			Map<String, JsonNode> values = new LinkedHashMap<>();
 			Iterator<Map.Entry<String, JsonNode>> iterator = jsonProvider.getObjectEntries(in);
 			while (iterator.hasNext()) {
@@ -261,10 +260,10 @@ public final class PathOperations {
 	}
 
 	private static <JsonNode> JsonNode mutateArrayIndex(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, JsonNode index, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
-		assert jsonProvider.getNodeType(index) == JsonNodeType.NUMBER;
-		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL)
+		assert jsonProvider.isNumber(index);
+		if (in == null || jsonProvider.isNull(in))
 			in = jsonProvider.createArray(Collections.emptyList());
-		if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
+		if (jsonProvider.isArray(in)) {
 			double indexAsDouble = jsonProvider.getNumberAsDoubleRounded(index);
 			if (Double.isNaN(indexAsDouble) || Double.isInfinite(indexAsDouble))
 				throw new JsonQueryException("Cannot use " + (Double.isNaN(indexAsDouble) ? "nan" : "infinite") + " as array index");
@@ -290,9 +289,9 @@ public final class PathOperations {
 	}
 
 	private static <JsonNode> JsonNode mutateArrayIndex(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, int index, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
-		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL)
+		if (in == null || jsonProvider.isNull(in))
 			in = jsonProvider.createArray(Collections.emptyList());
-		if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
+		if (jsonProvider.isArray(in)) {
 			int resolvedIndex = index < 0 ? index + jsonProvider.getArrayLength(in) : index;
 			if (resolvedIndex < 0)
 				throw new JsonQueryException("Out of bounds negative array index");
@@ -311,18 +310,18 @@ public final class PathOperations {
 	}
 
 	private static <JsonNode> JsonNode mutateArrayRangeIndex(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, JsonNode start, JsonNode end, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
-		assert jsonProvider.getNodeType(start) == JsonNodeType.NULL || jsonProvider.getNodeType(start) == JsonNodeType.NUMBER;
-		assert jsonProvider.getNodeType(end) == JsonNodeType.NULL || jsonProvider.getNodeType(end) == JsonNodeType.NUMBER;
+		assert jsonProvider.isNull(start) || jsonProvider.isNumber(start);
+		assert jsonProvider.isNull(end) || jsonProvider.isNumber(end);
 		if (in == null)
 			in = jsonProvider.createNull();
-		if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
+		if (jsonProvider.isArray(in)) {
 			Range range = Range.resolve(jsonProvider, start, end, jsonProvider.getArrayLength(in));
 
 			List<JsonNode> oldSlice = new ArrayList<>((int) (range.end - range.start));
 			for (long index = range.start; index < range.end; ++index)
 				oldSlice.add(jsonProvider.getArrayElement(in, (int) index));
 			JsonNode newValue = mutation.apply(jsonProvider.createArray(oldSlice));
-			if (jsonProvider.getNodeType(newValue) != JsonNodeType.ARRAY)
+			if (!jsonProvider.isArray(newValue))
 				throw new JsonQueryTypeException("A slice of an array can only be assigned another array");
 
 			List<JsonNode> out = new ArrayList<>((int) range.start + jsonProvider.getArrayLength(newValue) + (jsonProvider.getArrayLength(in) - (int) range.end));
@@ -335,11 +334,11 @@ public final class PathOperations {
 				out.add(jsonProvider.getArrayElement(in, (int) index));
 			return jsonProvider.createArray(out);
 		}
-		if (jsonProvider.getNodeType(in) == JsonNodeType.STRING)
+		if (jsonProvider.isString(in))
 			throw new JsonQueryException("Cannot update field at object index of string");
-		if (jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
+		if (jsonProvider.isNull(in)) {
 			JsonNode newValue = mutation.apply(jsonProvider.createNull());
-			if (jsonProvider.getNodeType(newValue) != JsonNodeType.ARRAY)
+			if (!jsonProvider.isArray(newValue))
 				throw new JsonQueryTypeException("A slice of an array can only be assigned another array");
 			return newValue;
 		}

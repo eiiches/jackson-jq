@@ -5,7 +5,6 @@ import java.util.List;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -21,7 +20,7 @@ public class IsNanFunction implements Function {
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 
-			boolean result = jsonProvider.getNodeType(in) == JsonNodeType.NUMBER && Double.isNaN(jsonProvider.getNumberAsDoubleRounded(in));
+			boolean result = jsonProvider.isNumber(in) && Double.isNaN(jsonProvider.getNumberAsDoubleRounded(in));
 			output.emit(jsonProvider.createBoolean(result), UntrackedPath.getInstance());
 		});
 	}

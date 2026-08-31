@@ -80,7 +80,7 @@ public class _SubImplFunction implements Function {
 		JsonNode rhead = match.get(match.size() - 1);
 		List<JsonNode> rtail = match.subList(0, match.size() - 1);
 
-		if (jsonProvider.getNodeType(rhead) == JsonNodeType.STRING) {
+		if (jsonProvider.isString(rhead)) {
 			stack.push(jsonProvider.getString(rhead));
 			replaceAndConcat(jsonProvider, context, stack, output, rtail, replaceExpr, in, flags, version);
 			stack.pop();

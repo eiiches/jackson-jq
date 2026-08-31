@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Set;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -44,13 +43,13 @@ public class RecursionOperator<JsonNode> implements Expression<StackFrame, JsonN
 
 	private void pathRecursive(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		output.emit(in, path);
-		if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
+		if (jsonProvider.isObject(in)) {
 			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectEntries(in);
 			while (iter.hasNext()) {
 				Map.Entry<String, JsonNode> entry = iter.next();
 				pathRecursive(frame, entry.getValue(), path.appendKey(entry.getKey()), output);
 			}
-		} else if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
+		} else if (jsonProvider.isArray(in)) {
 			for (int i = 0; i < jsonProvider.getArrayLength(in); ++i)
 				pathRecursive(frame, jsonProvider.getArrayElement(in, i), path.appendIndex(i), output);
 		}

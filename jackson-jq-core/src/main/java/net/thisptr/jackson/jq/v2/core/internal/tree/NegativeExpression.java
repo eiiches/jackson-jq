@@ -7,7 +7,6 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -64,7 +63,7 @@ public class NegativeExpression<JsonNode> implements Expression<StackFrame, Json
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		value.apply(frame, in, UntrackedPath.getInstance(), (v, opath) -> {
-			if (jsonProvider.getNodeType(v) != JsonNodeType.NUMBER)
+			if (!jsonProvider.isNumber(v))
 				throw new JsonQueryTypeException(jsonProvider, version, "%s cannot be negated", v);
 			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, -jsonProvider.getNumberAsDoubleRounded(v)), UntrackedPath.getInstance());
 		});

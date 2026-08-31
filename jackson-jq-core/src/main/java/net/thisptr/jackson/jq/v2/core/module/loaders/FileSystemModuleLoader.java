@@ -30,7 +30,6 @@ import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModuleMeta;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -216,7 +215,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 					throw new JsonQueryException("search path can only be overriden from imported modules, but not from a top-level unnamed module");
 
 				// jq does ignore non-textual search overrides, but i want it to fail fast.
-				if (jsonProvider.getNodeType(search) != JsonNodeType.STRING)
+				if (!jsonProvider.isString(search))
 					throw new JsonQueryException("search path overrides must be a string");
 
 				@Var Path searchPathOverride = callerModule.modulePath.getFileSystem().getPath(jsonProvider.getString(search));

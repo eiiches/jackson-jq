@@ -133,6 +133,39 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 		}
 	}
 
+	// Reading getValueType() directly is cheaper than getNodeType(), which switches over it.
+	@Override
+	public boolean isObject(JsonValue node) {
+		return node.getValueType() == JsonValue.ValueType.OBJECT;
+	}
+
+	@Override
+	public boolean isArray(JsonValue node) {
+		return node.getValueType() == JsonValue.ValueType.ARRAY;
+	}
+
+	@Override
+	public boolean isString(JsonValue node) {
+		return node.getValueType() == JsonValue.ValueType.STRING;
+	}
+
+	@Override
+	public boolean isNumber(JsonValue node) {
+		return node.getValueType() == JsonValue.ValueType.NUMBER;
+	}
+
+	@Override
+	public boolean isBoolean(JsonValue node) {
+		// JSON-P splits boolean into two value types.
+		JsonValue.ValueType valueType = node.getValueType();
+		return valueType == JsonValue.ValueType.TRUE || valueType == JsonValue.ValueType.FALSE;
+	}
+
+	@Override
+	public boolean isNull(JsonValue node) {
+		return node.getValueType() == JsonValue.ValueType.NULL;
+	}
+
 	@Override
 	public NumberType getNumberType(JsonValue node) {
 		if (!(node instanceof JsonNumber))
@@ -662,7 +695,7 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 
 		@Override
 		public ValueType getValueType() {
-			return ValueType.NUMBER;
+			return JsonValue.ValueType.NUMBER;
 		}
 
 		@Override

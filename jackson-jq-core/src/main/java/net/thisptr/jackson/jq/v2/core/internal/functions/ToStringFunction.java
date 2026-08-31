@@ -6,7 +6,6 @@ import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -22,7 +21,7 @@ public class ToStringFunction implements Function {
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 
-			if (jsonProvider.getNodeType(in) == JsonNodeType.STRING) {
+			if (jsonProvider.isString(in)) {
 				output.emit(in, UntrackedPath.getInstance());
 			} else {
 				output.emit(jsonProvider.createString(JsonNodeUtils.toString(jsonProvider, in, version)), UntrackedPath.getInstance());

@@ -27,7 +27,7 @@ public abstract class AbstractXsvFilter implements Function {
 	@Override
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
-			if (jsonProvider.getNodeType(in) != JsonNodeType.ARRAY)
+			if (!jsonProvider.isArray(in))
 				throw new JsonQueryTypeException(jsonProvider, version, "%s cannot be %s-formatted, only array", in, name());
 
 			@Var boolean heading = true;

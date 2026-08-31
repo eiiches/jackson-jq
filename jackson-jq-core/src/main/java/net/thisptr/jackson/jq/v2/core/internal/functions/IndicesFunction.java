@@ -25,7 +25,7 @@ public class IndicesFunction implements Function {
 		return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "indices", in, JsonNodeType.STRING, JsonNodeType.ARRAY, JsonNodeType.NULL);
 
-			if (jsonProvider.getNodeType(in) == JsonNodeType.NULL) {
+			if (jsonProvider.isNull(in)) {
 				output.emit(jsonProvider.createNull(), UntrackedPath.getInstance());
 				return;
 			}

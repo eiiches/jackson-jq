@@ -6,7 +6,6 @@ import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
 public class TopLevelAstNode<JsonNode> implements AstNode {
@@ -72,7 +71,7 @@ public class TopLevelAstNode<JsonNode> implements AstNode {
 					this.metadata = ExpressionUtils.evaluateLiteralExpression(jsonProvider, metadataExpr);
 					if (metadata == null)
 						throw new IllegalArgumentException("Module metadata must be constant");
-					if (jsonProvider.getNodeType(metadata) != JsonNodeType.OBJECT)
+					if (!jsonProvider.isObject(metadata))
 						throw new IllegalArgumentException("Module metadata must be an object");
 				} else {
 					this.metadata = null;
@@ -130,7 +129,7 @@ public class TopLevelAstNode<JsonNode> implements AstNode {
 				this.metadata = ExpressionUtils.evaluateLiteralExpression(jsonProvider, metadataExpr);
 				if (metadata == null)
 					throw new IllegalArgumentException("Module metadata must be constant");
-				if (jsonProvider.getNodeType(metadata) != JsonNodeType.OBJECT)
+				if (!jsonProvider.isObject(metadata))
 					throw new IllegalArgumentException("Module metadata must be an object");
 				metadataEvaluated = true;
 			}

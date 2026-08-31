@@ -34,7 +34,7 @@ public class ToDateIso8601Function implements Function {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "todateiso8601", in, JsonNodeType.NUMBER, JsonNodeType.ARRAY);
 
-			if (jsonProvider.getNodeType(in) == JsonNodeType.NUMBER) {
+			if (jsonProvider.isNumber(in)) {
 				Long epochSeconds = jsonProvider.getNumberAsLongTruncated(in);
 				if (epochSeconds == null) // NaN, an infinity, or beyond long range.
 					throw new JsonQueryException("error converting number of seconds since epoch to datetime");
@@ -44,7 +44,7 @@ public class ToDateIso8601Function implements Function {
 				} catch (DateTimeException e) {
 					throw new JsonQueryException("error converting number of seconds since epoch to datetime", e);
 				}
-			} else if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
+			} else if (jsonProvider.isArray(in)) {
 				int size = jsonProvider.getArrayLength(in);
 				if (version.compareTo(Versions.JQ_1_8_0) < 0) {
 					if (size < 8)
@@ -52,7 +52,7 @@ public class ToDateIso8601Function implements Function {
 					long[] fields = new long[6];
 					for (int i = 0; i < 8; i++) {
 						JsonNode elem = jsonProvider.getArrayElement(in, i);
-						if (jsonProvider.getNodeType(elem) != JsonNodeType.NUMBER)
+						if (!jsonProvider.isNumber(elem))
 							throw new JsonQueryException("strftime/1 requires parsed datetime inputs");
 						double rawVal = jsonProvider.getNumberAsDoubleRounded(elem);
 						double val = Double.isNaN(rawVal) ? Integer.MIN_VALUE : rawVal;
@@ -68,7 +68,7 @@ public class ToDateIso8601Function implements Function {
 					int checkLen = Math.min(size, 8);
 					for (int i = 0; i < checkLen; i++) {
 						JsonNode elem = jsonProvider.getArrayElement(in, i);
-						if (jsonProvider.getNodeType(elem) != JsonNodeType.NUMBER)
+						if (!jsonProvider.isNumber(elem))
 							throw new JsonQueryException("strftime/1 requires parsed datetime inputs");
 						double val = jsonProvider.getNumberAsDoubleRounded(elem);
 						if (Double.isNaN(val))

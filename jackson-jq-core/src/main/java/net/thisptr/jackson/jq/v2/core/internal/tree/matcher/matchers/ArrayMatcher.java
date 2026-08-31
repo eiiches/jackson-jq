@@ -39,7 +39,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	private JsonNode getArrayElementOrNull(JsonNode node, int index) {
-		if (jsonProvider.getNodeType(node) != JsonNodeType.ARRAY || index < 0 || index >= jsonProvider.getArrayLength(node))
+		if (!jsonProvider.isArray(node) || index < 0 || index >= jsonProvider.getArrayLength(node))
 			return jsonProvider.createNull();
 		return jsonProvider.getArrayElement(node, index);
 	}
@@ -51,7 +51,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		}
 
 		int rindex = matchers.size() - index - 1;
-		if (jsonProvider.getNodeType(in) != JsonNodeType.ARRAY && jsonProvider.getNodeType(in) != JsonNodeType.NULL)
+		if (!jsonProvider.isArray(in) && !jsonProvider.isNull(in))
 			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(rindex)));
 
 		PatternMatcher<JsonNode> matcher = matchers.get(rindex);
@@ -79,7 +79,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		}
 
 		int rindex = matchers.size() - index - 1;
-		if (jsonProvider.getNodeType(in) != JsonNodeType.ARRAY && jsonProvider.getNodeType(in) != JsonNodeType.NULL)
+		if (!jsonProvider.isArray(in) && !jsonProvider.isNull(in))
 			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(rindex)));
 
 		PatternMatcher<JsonNode> matcher = matchers.get(rindex);

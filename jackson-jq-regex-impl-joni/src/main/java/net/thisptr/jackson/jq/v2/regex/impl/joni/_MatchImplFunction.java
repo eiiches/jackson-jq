@@ -57,7 +57,7 @@ public class _MatchImplFunction implements Function {
 					Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 2, flags, JsonNodeType.STRING, JsonNodeType.NULL);
 					regexExpr.apply(frame, in, UntrackedPath.getInstance(), (regex, opath3) -> {
 						Preconditions.checkArgumentType(jsonProvider, "_match_impl/3", 1, regex, JsonNodeType.STRING);
-						OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.getString(regex), jsonProvider.getNodeType(flags) == JsonNodeType.NULL ? null : jsonProvider.getString(flags));
+						OnigUtils.Pattern p = new OnigUtils.Pattern(jsonProvider.getString(regex), jsonProvider.isNull(flags) ? null : jsonProvider.getString(flags));
 						output.emit(match(jsonProvider, p, ibytes, cindex, jsonProvider.getBoolean(test)), UntrackedPath.getInstance());
 					});
 				});

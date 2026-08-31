@@ -35,7 +35,7 @@ public class PathUtils {
 	}
 
 	public static <JsonNode> Path<JsonNode> toPath(JsonProvider<JsonNode> jsonProvider, JsonNode pathObj) throws JsonQueryException {
-		if (jsonProvider.getNodeType(pathObj) != JsonNodeType.ARRAY)
+		if (!jsonProvider.isArray(pathObj))
 			throw new JsonQueryException("Path must be specified as an array");
 		@Var Path<JsonNode> path = RootPath.getInstance();
 		for (Iterator<JsonNode> it = jsonProvider.getArrayElements(pathObj); it.hasNext(); ) {

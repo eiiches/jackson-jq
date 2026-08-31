@@ -74,7 +74,7 @@ public class MultiplyOperator<JsonNode> implements BinaryOperator<JsonNode> {
 			JsonNode r = e.getValue();
 
 			@Var JsonNode resolved = r;
-			if (l != null && jsonProvider.getNodeType(l) == JsonNodeType.OBJECT && jsonProvider.getNodeType(r) == JsonNodeType.OBJECT)
+			if (l != null && jsonProvider.isObject(l) && jsonProvider.isObject(r))
 				resolved = mergeRecursive(jsonProvider, l, r);
 			result.put(e.getKey(), resolved);
 		}

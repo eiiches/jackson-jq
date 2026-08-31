@@ -29,7 +29,7 @@ public class AbstractKeysFunction implements Function {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, name, in, JsonNodeType.OBJECT, JsonNodeType.ARRAY);
 
-			if (jsonProvider.getNodeType(in) == JsonNodeType.OBJECT) {
+			if (jsonProvider.isObject(in)) {
 				List<String> keys = Lists.newArrayList(jsonProvider.getObjectFieldNames(in));
 				if (sortKeys)
 					Collections.sort(keys);
@@ -38,7 +38,7 @@ public class AbstractKeysFunction implements Function {
 				for (String key : keys)
 					result.add(jsonProvider.createString(key));
 				output.emit(jsonProvider.createArray(result), UntrackedPath.getInstance());
-			} else if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
+			} else if (jsonProvider.isArray(in)) {
 				List<JsonNode> result = new ArrayList<>();
 				for (int i = 0; i < jsonProvider.getArrayLength(in); ++i)
 					result.add(jsonProvider.createNumber(i));

@@ -7,7 +7,6 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.path.PathOperations;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -57,7 +56,7 @@ public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<J
 	@Override
 	public void evaluate(StackFrame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		key.apply(frame, in, UntrackedPath.getInstance(), (k, opath) -> {
-			if (jsonProvider.getNodeType(k) != JsonNodeType.STRING)
+			if (!jsonProvider.isString(k))
 				throw new JsonQueryException("key must evaluate to string");
 			String keyStr = jsonProvider.getString(k);
 			if (value == null) {

@@ -423,6 +423,56 @@ public abstract class JsonProviderContractTest<T> {
 			assertThatThrownBy(() -> provider.getObjectSize(node)).isInstanceOf(IllegalArgumentException.class);
 	}
 
+	// ====================
+	// Type Predicate Tests
+	// ====================
+
+	private void assertTypePredicates(T node, JsonNodeType expected) {
+		assertThat(provider.getNodeType(node)).as("getNodeType(%s)", provider.format(node)).isEqualTo(expected);
+		assertThat(provider.isObject(node)).as("isObject(%s)", provider.format(node)).isEqualTo(expected == JsonNodeType.OBJECT);
+		assertThat(provider.isArray(node)).as("isArray(%s)", provider.format(node)).isEqualTo(expected == JsonNodeType.ARRAY);
+		assertThat(provider.isString(node)).as("isString(%s)", provider.format(node)).isEqualTo(expected == JsonNodeType.STRING);
+		assertThat(provider.isNumber(node)).as("isNumber(%s)", provider.format(node)).isEqualTo(expected == JsonNodeType.NUMBER);
+		assertThat(provider.isBoolean(node)).as("isBoolean(%s)", provider.format(node)).isEqualTo(expected == JsonNodeType.BOOLEAN);
+		assertThat(provider.isNull(node)).as("isNull(%s)", provider.format(node)).isEqualTo(expected == JsonNodeType.NULL);
+	}
+
+	/**
+	 * Each predicate must answer exactly like the corresponding {@link JsonProvider#getNodeType(Object)}
+	 * comparison. Providers are expected to override the defaults with their library's native check, so
+	 * every predicate is exercised against every type, not just its own.
+	 */
+	@Test
+	void testTypePredicates() {
+		Map<JsonNodeType, List<T>> samples = new LinkedHashMap<>();
+		samples.put(JsonNodeType.NULL, Arrays.asList(
+				provider.createNull(),
+				provider.parse("null")));
+		samples.put(JsonNodeType.BOOLEAN, Arrays.asList(
+				provider.createBoolean(true),
+				provider.createBoolean(false)));
+		samples.put(JsonNodeType.NUMBER, Arrays.asList(
+				provider.createNumber(42),
+				provider.createNumber(9999999999L),
+				provider.createNumber(3.14f),
+				provider.createNumber(3.14159),
+				provider.createNumber(BigInteger.ONE),
+				provider.createNumber(BigDecimal.ONE)));
+		samples.put(JsonNodeType.STRING, Arrays.asList(
+				provider.createString(""),
+				provider.createString("hello")));
+		samples.put(JsonNodeType.ARRAY, Arrays.asList(
+				provider.createArray(Collections.emptyList()),
+				provider.createArray(Collections.singletonList(provider.createNumber(1)))));
+		samples.put(JsonNodeType.OBJECT, Arrays.asList(
+				provider.createObject(Collections.emptyMap()),
+				provider.createObject(mapOf("a", provider.createNumber(1), "b", provider.createNull()))));
+
+		for (Map.Entry<JsonNodeType, List<T>> entry : samples.entrySet())
+			for (T node : entry.getValue())
+				assertTypePredicates(node, entry.getKey());
+	}
+
 	// ===================
 	// Object Operations
 	// ===================

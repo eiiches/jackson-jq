@@ -15,9 +15,9 @@ public class JsonNodeUtils {
 	}
 
 	public static <JsonNode> boolean asBoolean(JsonProvider<JsonNode> jsonProvider, JsonNode n) {
-		if (n == null || jsonProvider.getNodeType(n) == JsonNodeType.NULL)
+		if (n == null || jsonProvider.isNull(n))
 			return false;
-		if (jsonProvider.getNodeType(n) == JsonNodeType.BOOLEAN)
+		if (jsonProvider.isBoolean(n))
 			return jsonProvider.getBoolean(n);
 		return true;
 	}
@@ -100,7 +100,7 @@ public class JsonNodeUtils {
 	public static <JsonNode> String toString(JsonProvider<JsonNode> jsonProvider, JsonNode node, @Nullable Version version) {
 		String text = jsonProvider.format(node);
 		if (version != null && version.compareTo(Versions.JQ_1_7) < 0) {
-			if (jsonProvider.getNodeType(node) == JsonNodeType.NUMBER) {
+			if (jsonProvider.isNumber(node)) {
 				return text.replace('E', 'e');
 			}
 		}

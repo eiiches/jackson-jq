@@ -3,7 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.functions;
 import java.util.List;
 
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -24,7 +23,7 @@ public abstract class AbstractStartsEndsWithFunction implements Function {
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(args.get(0).getCardinality()).build((frame, in, ipath, output) -> {
 			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (needle, opath) -> {
-				if (jsonProvider.getNodeType(needle) != JsonNodeType.STRING || jsonProvider.getNodeType(in) != JsonNodeType.STRING)
+				if (!jsonProvider.isString(needle) || !jsonProvider.isString(in))
 					throw new JsonQueryException(fname + "() requires string inputs");
 				output.emit(jsonProvider.createBoolean(doCheck(jsonProvider.getString(in), jsonProvider.getString(needle))), UntrackedPath.getInstance());
 			});

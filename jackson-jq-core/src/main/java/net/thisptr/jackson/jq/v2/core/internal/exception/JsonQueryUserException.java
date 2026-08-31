@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.v2.core.internal.exception;
 
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -10,7 +9,7 @@ public class JsonQueryUserException extends JsonQueryException {
 	private Object value;
 
 	public <JsonNode> JsonQueryUserException(JsonProvider<JsonNode> jsonProvider, JsonNode value) {
-		super(jsonProvider.getNodeType(value) == JsonNodeType.STRING
+		super(jsonProvider.isString(value)
 				? jsonProvider.getString(value)
 				: jsonProvider.format(value));
 		this.value = value;

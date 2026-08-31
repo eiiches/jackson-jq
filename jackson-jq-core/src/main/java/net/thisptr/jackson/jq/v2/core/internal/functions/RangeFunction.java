@@ -11,7 +11,6 @@ import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.operators.PlusOperator;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -64,7 +63,7 @@ public class RangeFunction implements Function {
 	}
 
 	private static <JsonNode> JsonNode range2(JsonProvider<JsonNode> jsonProvider, Output<JsonNode> output, JsonNode start, JsonNode end) throws JsonQueryException {
-		if (jsonProvider.getNodeType(start) != JsonNodeType.NUMBER || jsonProvider.getNodeType(end) != JsonNodeType.NUMBER)
+		if (!jsonProvider.isNumber(start) || !jsonProvider.isNumber(end))
 			throw new JsonQueryTypeException("Range bounds must be numeric");
 		double _start = jsonProvider.getNumberAsDoubleRounded(start);
 		double _end = jsonProvider.getNumberAsDoubleRounded(end);

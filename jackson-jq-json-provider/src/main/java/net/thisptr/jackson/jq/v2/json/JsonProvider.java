@@ -127,6 +127,84 @@ public interface JsonProvider<JsonNode> {
 	JsonNodeType getNodeType(JsonNode node);
 
 	/**
+	 * Returns whether the node is a JSON object.
+	 * <p>
+	 * Equivalent to {@code getNodeType(node) == JsonNodeType.OBJECT}, but implementations are expected to
+	 * answer with the underlying library's own check, which is cheaper than classifying the node.
+	 *
+	 * @param node the JSON node
+	 * @return {@code true} if the node is a JSON object
+	 */
+	default boolean isObject(JsonNode node) {
+		return getNodeType(node) == JsonNodeType.OBJECT;
+	}
+
+	/**
+	 * Returns whether the node is a JSON array.
+	 * <p>
+	 * Equivalent to {@code getNodeType(node) == JsonNodeType.ARRAY}, but implementations are expected to
+	 * answer with the underlying library's own check, which is cheaper than classifying the node.
+	 *
+	 * @param node the JSON node
+	 * @return {@code true} if the node is a JSON array
+	 */
+	default boolean isArray(JsonNode node) {
+		return getNodeType(node) == JsonNodeType.ARRAY;
+	}
+
+	/**
+	 * Returns whether the node is a JSON string.
+	 * <p>
+	 * Equivalent to {@code getNodeType(node) == JsonNodeType.STRING}, but implementations are expected to
+	 * answer with the underlying library's own check, which is cheaper than classifying the node.
+	 *
+	 * @param node the JSON node
+	 * @return {@code true} if the node is a JSON string
+	 */
+	default boolean isString(JsonNode node) {
+		return getNodeType(node) == JsonNodeType.STRING;
+	}
+
+	/**
+	 * Returns whether the node is a JSON number.
+	 * <p>
+	 * Equivalent to {@code getNodeType(node) == JsonNodeType.NUMBER}, but implementations are expected to
+	 * answer with the underlying library's own check, which is cheaper than classifying the node.
+	 *
+	 * @param node the JSON node
+	 * @return {@code true} if the node is a JSON number
+	 */
+	default boolean isNumber(JsonNode node) {
+		return getNodeType(node) == JsonNodeType.NUMBER;
+	}
+
+	/**
+	 * Returns whether the node is a JSON boolean.
+	 * <p>
+	 * Equivalent to {@code getNodeType(node) == JsonNodeType.BOOLEAN}, but implementations are expected to
+	 * answer with the underlying library's own check, which is cheaper than classifying the node.
+	 *
+	 * @param node the JSON node
+	 * @return {@code true} if the node is a JSON boolean
+	 */
+	default boolean isBoolean(JsonNode node) {
+		return getNodeType(node) == JsonNodeType.BOOLEAN;
+	}
+
+	/**
+	 * Returns whether the node is the JSON {@code null} value.
+	 * <p>
+	 * Equivalent to {@code getNodeType(node) == JsonNodeType.NULL}, but implementations are expected to
+	 * answer with the underlying library's own check, which is cheaper than classifying the node.
+	 *
+	 * @param node the JSON node
+	 * @return {@code true} if the node is the JSON {@code null} value
+	 */
+	default boolean isNull(JsonNode node) {
+		return getNodeType(node) == JsonNodeType.NULL;
+	}
+
+	/**
 	 * Returns the Java type this provider uses to represent the given number node.
 	 * <p>
 	 * Unlike {@link #getNumberAsIntExact(Object)} and friends, this answers without converting the value, so it is

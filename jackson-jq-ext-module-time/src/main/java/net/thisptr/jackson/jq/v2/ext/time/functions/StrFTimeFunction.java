@@ -53,12 +53,12 @@ public class StrFTimeFunction implements Function {
 					throw new JsonQueryException("date \"" + jsonProvider.format(in) + "\" does not fit in a number of seconds since the epoch");
 				try {
 					args.get(0).apply(context, in, UntrackedPath.getInstance(), (fmt, opath) -> {
-						if (jsonProvider.getNodeType(fmt) != JsonNodeType.STRING)
+						if (!jsonProvider.isString(fmt))
 							throw new JsonQueryException(String.format("Illegal argument type: %s", jsonProvider.getNodeType(fmt)));
 						SimpleDateFormat sdf = new SimpleDateFormat(jsonProvider.getString(fmt));
 						if (args.size() == 2) {
 							args.get(1).apply(context, in, UntrackedPath.getInstance(), (tz, opath2) -> {
-								if (jsonProvider.getNodeType(tz) != JsonNodeType.STRING)
+								if (!jsonProvider.isString(tz))
 									throw new JsonQueryException("Timezone must be a string");
 								sdf.setTimeZone(TimeZone.getTimeZone(jsonProvider.getString(tz)));
 								output.emit(jsonProvider.createString(sdf.format(epochSeconds)), UntrackedPath.getInstance());

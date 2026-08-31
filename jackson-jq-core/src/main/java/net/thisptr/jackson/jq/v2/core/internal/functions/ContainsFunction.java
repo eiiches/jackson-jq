@@ -27,7 +27,7 @@ public class ContainsFunction implements Function {
 		return FunctionBody.builder(args).usesInput(true).cardinality(args.get(0).getCardinality()).build((frame, in, ipath, output) -> {
 			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (value, opath) -> {
 				if (jsonProvider.getNodeType(in) != jsonProvider.getNodeType(value)
-						|| (jsonProvider.getNodeType(in) == JsonNodeType.BOOLEAN && jsonProvider.getBoolean(in) != jsonProvider.getBoolean(value))) {
+						|| (jsonProvider.isBoolean(in) && jsonProvider.getBoolean(in) != jsonProvider.getBoolean(value))) {
 					throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot have their containment checked", in, value);
 				}
 				output.emit(jsonProvider.createBoolean(contains(jsonProvider, value, in)), UntrackedPath.getInstance());

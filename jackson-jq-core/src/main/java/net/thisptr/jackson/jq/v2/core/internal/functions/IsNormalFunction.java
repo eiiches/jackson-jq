@@ -6,7 +6,6 @@ import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -23,7 +22,7 @@ public class IsNormalFunction implements Function {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 
 			@Var boolean result = false;
-			if (jsonProvider.getNodeType(in) == JsonNodeType.NUMBER) {
+			if (jsonProvider.isNumber(in)) {
 				double v = jsonProvider.getNumberAsDoubleRounded(in);
 				result = !Double.isInfinite(v) && (v <= -Double.MIN_NORMAL || Double.MIN_NORMAL <= v);
 			}

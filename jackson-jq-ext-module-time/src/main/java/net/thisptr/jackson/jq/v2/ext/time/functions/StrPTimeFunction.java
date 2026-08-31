@@ -51,12 +51,12 @@ public class StrPTimeFunction implements Function {
 				Preconditions.checkInputType(jsonProvider, "strptime", in, JsonNodeType.STRING);
 				try {
 					args.get(0).apply(context, in, UntrackedPath.getInstance(), (fmt, opath) -> {
-						if (jsonProvider.getNodeType(fmt) != JsonNodeType.STRING)
+						if (!jsonProvider.isString(fmt))
 							throw new JsonQueryException(String.format("Illegal argument type: %s", jsonProvider.getNodeType(fmt)));
 						SimpleDateFormat sdf = new SimpleDateFormat(jsonProvider.getString(fmt));
 						if (args.size() == 2) {
 							args.get(1).apply(context, in, UntrackedPath.getInstance(), (tz, opath2) -> {
-								if (jsonProvider.getNodeType(tz) != JsonNodeType.STRING)
+								if (!jsonProvider.isString(tz))
 									throw new JsonQueryException("Timezone must be a string");
 								sdf.setTimeZone(TimeZone.getTimeZone(jsonProvider.getString(tz)));
 								try {

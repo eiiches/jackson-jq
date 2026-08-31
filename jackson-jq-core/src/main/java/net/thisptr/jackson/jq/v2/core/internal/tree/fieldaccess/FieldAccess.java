@@ -64,13 +64,13 @@ public abstract class FieldAccess<JsonNode> implements Expression<StackFrame, Js
 	protected static <JsonNode> void emitAllPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode pobj, Path<JsonNode> ppath, Output<JsonNode> output, boolean tracking, Version version) throws JsonQueryException {
 		if (tracking && PathUtils.isLost(ppath))
 			throw new JsonQueryException(String.format("Invalid path expression near attempt to iterate through %s", JsonNodeUtils.toString(jsonProvider, pobj)));
-		if (jsonProvider.getNodeType(pobj) == JsonNodeType.NULL) {
+		if (jsonProvider.isNull(pobj)) {
 			if (!permissive)
 				throw new JsonQueryException("Cannot iterate over null (null)");
-		} else if (jsonProvider.getNodeType(pobj) == JsonNodeType.ARRAY) {
+		} else if (jsonProvider.isArray(pobj)) {
 			for (int i = 0; i < jsonProvider.getArrayLength(pobj); ++i)
 				output.emit(jsonProvider.getArrayElement(pobj, i), ppath.appendIndex(i));
-		} else if (jsonProvider.getNodeType(pobj) == JsonNodeType.OBJECT) {
+		} else if (jsonProvider.isObject(pobj)) {
 			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectEntries(pobj);
 			while (iter.hasNext()) {
 				Map.Entry<String, JsonNode> entry = iter.next();
@@ -89,14 +89,14 @@ public abstract class FieldAccess<JsonNode> implements Expression<StackFrame, Js
 	}
 
 	protected static <JsonNode> void emitArrayIndexPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode index, JsonNode pobj, Path<JsonNode> ppath, Output<JsonNode> output, boolean tracking, Version version) throws JsonQueryException {
-		assert jsonProvider.getNodeType(index) == JsonNodeType.NUMBER;
+		assert jsonProvider.isNumber(index);
 		if (tracking && PathUtils.isLost(ppath))
 			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(jsonProvider, index), JsonNodeUtils.toString(jsonProvider, pobj)));
 		PathOperations.resolveArrayIndex(jsonProvider, pobj, ppath, output, index, permissive, version);
 	}
 
 	protected static <JsonNode> void emitIndexOfPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode subseqToLookFor, JsonNode pobj, Path<JsonNode> ppath, Output<JsonNode> output, boolean tracking, Version version) throws JsonQueryException {
-		assert jsonProvider.getNodeType(subseqToLookFor) == JsonNodeType.ARRAY;
+		assert jsonProvider.isArray(subseqToLookFor);
 		if (tracking && PathUtils.isLost(ppath))
 			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(jsonProvider, subseqToLookFor), JsonNodeUtils.toString(jsonProvider, pobj)));
 		PathOperations.resolveArrayIndexOf(jsonProvider, pobj, ppath, output, subseqToLookFor, permissive, version);
