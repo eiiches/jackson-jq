@@ -18,7 +18,7 @@ public class TestUtils {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/uuid\" as uuid; " + queryText);
 		List<JsonNode> results = new ArrayList<>();
-		query.apply(in, (val, path) -> results.add(val));
+		query.apply(in, results::add);
 		return results;
 	}
 }

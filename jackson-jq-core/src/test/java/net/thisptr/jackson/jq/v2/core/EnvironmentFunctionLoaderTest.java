@@ -66,7 +66,7 @@ public class EnvironmentFunctionLoaderTest {
 	private static List<JsonNode> execute(Environment<JsonNode> env, String source) throws Exception {
 		JsonQuery<JsonNode> query = env.compile(source);
 		List<JsonNode> out = new ArrayList<>();
-		query.apply(env.getJsonProvider().createNull(), (val, path) -> out.add(val));
+		query.apply(env.getJsonProvider().createNull(), out::add);
 		return out;
 	}
 
@@ -78,7 +78,7 @@ public class EnvironmentFunctionLoaderTest {
 
 		JsonQuery<JsonNode> query = env.compile("greet");
 		List<JsonNode> out = new ArrayList<>();
-		query.apply(env.getJsonProvider().createNull(), (val, path) -> out.add(val));
+		query.apply(env.getJsonProvider().createNull(), out::add);
 
 		assertThat(out).hasSize(1);
 		assertThat(out.get(0).asText()).isEqualTo("hello");
@@ -92,7 +92,7 @@ public class EnvironmentFunctionLoaderTest {
 
 		JsonQuery<JsonNode> query = env.compile("true | not");
 		List<JsonNode> out = new ArrayList<>();
-		query.apply(env.getJsonProvider().createNull(), (val, path) -> out.add(val));
+		query.apply(env.getJsonProvider().createNull(), out::add);
 
 		assertThat(out).hasSize(1);
 		assertThat(out.get(0).asText()).isEqualTo("overridden");
@@ -108,7 +108,7 @@ public class EnvironmentFunctionLoaderTest {
 
 		JsonQuery<JsonNode> query = env.compile("greet");
 		List<JsonNode> out = new ArrayList<>();
-		query.apply(env.getJsonProvider().createNull(), (val, path) -> out.add(val));
+		query.apply(env.getJsonProvider().createNull(), out::add);
 
 		assertThat(out).hasSize(1);
 		assertThat(out.get(0).asText()).isEqualTo("from-explicit");
@@ -201,7 +201,7 @@ public class EnvironmentFunctionLoaderTest {
 				.build();
 		List<JsonNode> out = new ArrayList<>();
 
-		env.compile("countdown(2)").apply(env.getJsonProvider().createNull(), bindings, (value, path) -> out.add(value));
+		env.compile("countdown(2)").apply(env.getJsonProvider().createNull(), bindings, out::add);
 
 		assertThat(out).extracting(JsonNode::asText).containsExactly("declared-value");
 	}
@@ -286,7 +286,7 @@ public class EnvironmentFunctionLoaderTest {
 				.build();
 		List<JsonNode> out = new ArrayList<>();
 
-		env.compile("count_up(5)").apply(env.getJsonProvider().createNull(), (val, path) -> out.add(val));
+		env.compile("count_up(5)").apply(env.getJsonProvider().createNull(), out::add);
 
 		assertThat(out).extracting(JsonNode::asInt).containsExactly(5);
 	}
@@ -325,7 +325,7 @@ public class EnvironmentFunctionLoaderTest {
 				.setFunction(signature, constantFunction("override"))
 				.build();
 
-		assertThatThrownBy(() -> env.compile("greet").apply(env.getJsonProvider().createNull(), bindings, (value, path) -> {
+		assertThatThrownBy(() -> env.compile("greet").apply(env.getJsonProvider().createNull(), bindings, value -> {
 		}))
 				.hasMessageContaining("fixed value in the Environment");
 	}

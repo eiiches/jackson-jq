@@ -85,7 +85,7 @@ public class JsonQueryFunctionTest {
 
 	public static List<JsonNode> eval(Environment<JsonNode> env, String q, JsonNode in) throws JsonQueryException {
 		List<JsonNode> out = new ArrayList<>();
-		env.compile(q).apply(in, (outNode, path) -> out.add(outNode));
+		env.compile(q).apply(in, out::add);
 		return out;
 	}
 }

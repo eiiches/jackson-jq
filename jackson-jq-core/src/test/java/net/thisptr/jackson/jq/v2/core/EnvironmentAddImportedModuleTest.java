@@ -60,7 +60,7 @@ public class EnvironmentAddImportedModuleTest {
 
 		JsonQuery<JsonNode> expr = env.compile("math::square(5)");
 		List<JsonNode> actual = new ArrayList<>();
-		expr.apply(NullNode.getInstance(), (val, path) -> actual.add(val));
+		expr.apply(NullNode.getInstance(), actual::add);
 
 		assertThat(actual).hasSize(1);
 		assertThat(actual.get(0).asInt()).isEqualTo(25);
@@ -82,7 +82,7 @@ public class EnvironmentAddImportedModuleTest {
 
 		JsonQuery<JsonNode> expr = env.compile("import \"foo\" as foo; foo::bar");
 		List<JsonNode> actual = new ArrayList<>();
-		expr.apply(NullNode.getInstance(), (val, path) -> actual.add(val));
+		expr.apply(NullNode.getInstance(), actual::add);
 
 		assertThat(actual).hasSize(1);
 		assertThat(actual.get(0).asInt()).isEqualTo(2);
@@ -109,7 +109,7 @@ public class EnvironmentAddImportedModuleTest {
 
 		JsonQuery<JsonNode> expr = env.compile("m::greet(1; 2; 3)");
 		List<JsonNode> actual = new ArrayList<>();
-		expr.apply(NullNode.getInstance(), (val, path) -> actual.add(val));
+		expr.apply(NullNode.getInstance(), actual::add);
 
 		assertThat(actual).hasSize(1);
 		assertThat(actual.get(0).asInt()).isEqualTo(3);

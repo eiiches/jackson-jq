@@ -33,7 +33,7 @@ public class DebugModuleTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::debug_scope");
 		List<JsonNode> results = new ArrayList<>();
-		query.apply(env.getJsonProvider().createNull(), (val, path) -> results.add(val));
+		query.apply(env.getJsonProvider().createNull(), results::add);
 		assertThat(results).hasSize(1);
 		assertThat(results.get(0).has("scope")).isTrue();
 		assertThat(results.get(0).has("input")).isTrue();
@@ -97,7 +97,7 @@ public class DebugModuleTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::debug_expr($x)");
 		List<JsonNode> results = new ArrayList<>();
-		query.apply(env.getJsonProvider().createNull(), (val, path) -> results.add(val));
+		query.apply(env.getJsonProvider().createNull(), results::add);
 		assertThat(results).hasSize(1);
 		assertThat(results.get(0).get("depends_on_input").asBoolean()).isFalse();
 		assertThat(results.get(0).get("depends_on_external_state").asBoolean()).isFalse();
@@ -110,7 +110,7 @@ public class DebugModuleTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::debug_expr(error(\"boom\"))");
 		List<JsonNode> results = new ArrayList<>();
-		query.apply(env.getJsonProvider().createNull(), (val, path) -> results.add(val));
+		query.apply(env.getJsonProvider().createNull(), results::add);
 		assertThat(results).hasSize(1);
 	}
 
@@ -202,7 +202,7 @@ public class DebugModuleTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::dump_expr(error(\"boom\"))");
 		List<JsonNode> results = new ArrayList<>();
-		query.apply(env.getJsonProvider().createNull(), (val, path) -> results.add(val));
+		query.apply(env.getJsonProvider().createNull(), results::add);
 		assertThat(results).hasSize(1);
 	}
 
@@ -211,7 +211,7 @@ public class DebugModuleTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::debug_expr(" + filter + ")");
 		List<JsonNode> results = new ArrayList<>();
-		query.apply(env.getJsonProvider().createNull(), (val, path) -> results.add(val));
+		query.apply(env.getJsonProvider().createNull(), results::add);
 		assertThat(results).hasSize(1);
 		return results.get(0);
 	}
@@ -221,7 +221,7 @@ public class DebugModuleTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::dump_expr(" + filter + ")");
 		List<JsonNode> results = new ArrayList<>();
-		query.apply(env.getJsonProvider().createNull(), (val, path) -> results.add(val));
+		query.apply(env.getJsonProvider().createNull(), results::add);
 		assertThat(results).hasSize(1);
 		return results.get(0);
 	}

@@ -249,7 +249,7 @@ public class JsonQueryBindingsTest {
 
 	private static List<JsonNode> run(JsonQuery<JsonNode> query, JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {
 		List<JsonNode> result = new ArrayList<>();
-		query.apply(JSON_PROVIDER.createNull(), bindings, (value, path) -> result.add(value));
+		query.apply(JSON_PROVIDER.createNull(), bindings, result::add);
 		return result;
 	}
 }

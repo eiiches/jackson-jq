@@ -73,11 +73,11 @@ public class Usage {
 		JsonQueryBindings<JsonNode> firstBindings = JsonQueryBindings.<JsonNode>builder()
 				.setVariable("param", jsonProvider.createNumber(42))
 				.build();
-		q.apply(in, firstBindings, (out, path) -> System.out.println(out)); // => 84
+		q.apply(in, firstBindings, System.out::println); // => 84
 
 		JsonQueryBindings<JsonNode> secondBindings = JsonQueryBindings.<JsonNode>builder()
 				.setVariable("param", () -> jsonProvider.createNumber(7)) // suppliers are evaluated on each reference
 				.build();
-		q.apply(in, secondBindings, (out, path) -> System.out.println(out)); // => 14
+		q.apply(in, secondBindings, System.out::println); // => 14
 	}
 }

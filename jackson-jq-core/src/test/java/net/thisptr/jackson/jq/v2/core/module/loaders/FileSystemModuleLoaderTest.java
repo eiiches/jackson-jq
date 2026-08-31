@@ -69,7 +69,7 @@ public class FileSystemModuleLoaderTest {
 	public void testSimple() throws Exception {
 		JsonQuery<JsonNode> expr = env.compile("import \"simple\" as simple; simple::one");
 		List<JsonNode> actual = new ArrayList<>();
-		expr.apply(NullNode.getInstance(), (val, path) -> actual.add(val));
+		expr.apply(NullNode.getInstance(), actual::add);
 		assertThat(actual).isEqualTo(Arrays.asList(IntNode.valueOf(1)));
 	}
 
@@ -77,7 +77,7 @@ public class FileSystemModuleLoaderTest {
 	public void testSiblingDefCallWithinModule() throws Exception {
 		JsonQuery<JsonNode> expr = env.compile("import \"sibling_defs\" as m; m::exported_foo");
 		List<JsonNode> actual = new ArrayList<>();
-		expr.apply(NullNode.getInstance(), (val, path) -> actual.add(val));
+		expr.apply(NullNode.getInstance(), actual::add);
 		assertThat(actual).isEqualTo(Arrays.asList(IntNode.valueOf(11)));
 	}
 
@@ -85,7 +85,7 @@ public class FileSystemModuleLoaderTest {
 	public void testRecursiveImports() throws Exception {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"recursive_imports/a\" as a; a::one");
-			expr.apply(NullNode.getInstance(), (value, path) -> {
+			expr.apply(NullNode.getInstance(), value -> {
 			});
 		}).hasMessageContaining("imported recursively");
 	}
@@ -94,7 +94,7 @@ public class FileSystemModuleLoaderTest {
 	public void testSearchPathOverrides() throws Exception {
 		JsonQuery<JsonNode> expr = env.compile("import \"search_path_overrides/a\" as a; a::two");
 		List<JsonNode> actual = new ArrayList<>();
-		expr.apply(NullNode.getInstance(), (val, path) -> actual.add(val));
+		expr.apply(NullNode.getInstance(), actual::add);
 		assertThat(actual).isEqualTo(Arrays.asList(IntNode.valueOf(2)));
 	}
 
@@ -102,12 +102,12 @@ public class FileSystemModuleLoaderTest {
 	public void testRepeatedPathComponents() throws Exception {
 		JsonQuery<JsonNode> expr = env.compile("import \"repeated_path_components\" as a; a::one");
 		List<JsonNode> actual = new ArrayList<>();
-		expr.apply(NullNode.getInstance(), (val, path) -> actual.add(val));
+		expr.apply(NullNode.getInstance(), actual::add);
 		assertThat(actual).isEqualTo(Arrays.asList(IntNode.valueOf(1)));
 
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr2 = env.compile("import \"repeated_path_components/repeated_path_components\" as a; a::one");
-			expr2.apply(NullNode.getInstance(), (value, path) -> {
+			expr2.apply(NullNode.getInstance(), value -> {
 			});
 		}).hasMessageContaining("must not have equal consecutive components");
 	}
@@ -116,7 +116,7 @@ public class FileSystemModuleLoaderTest {
 	public void testDataImports() throws Exception {
 		JsonQuery<JsonNode> expr = env.compile("import \"data_imports/a\" as $a; $a::a[]");
 		List<JsonNode> actual = new ArrayList<>();
-		expr.apply(NullNode.getInstance(), (val, path) -> actual.add(val));
+		expr.apply(NullNode.getInstance(), actual::add);
 		assertThat(actual).isEqualTo(Arrays.asList(IntNode.valueOf(1), IntNode.valueOf(2)));
 	}
 
@@ -124,7 +124,7 @@ public class FileSystemModuleLoaderTest {
 	public void testBrokenDataImports() throws Exception {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"broken_data_imports/a\" as $a; $a::a");
-			expr.apply(NullNode.getInstance(), (value, path) -> {
+			expr.apply(NullNode.getInstance(), value -> {
 			});
 		});
 	}
@@ -133,13 +133,13 @@ public class FileSystemModuleLoaderTest {
 	public void testModuleNotFound() throws Exception {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"module_not_exist\" as a; a::one");
-			expr.apply(NullNode.getInstance(), (value, path) -> {
+			expr.apply(NullNode.getInstance(), value -> {
 			});
 		}).hasMessageContaining("module not found");
 
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"module_not_exist\" as $a; $a::a");
-			expr.apply(NullNode.getInstance(), (value, path) -> {
+			expr.apply(NullNode.getInstance(), value -> {
 			});
 		}).hasMessageContaining("module not found");
 	}
@@ -148,7 +148,7 @@ public class FileSystemModuleLoaderTest {
 	public void testIllegalSearchPathOverrides() throws Exception {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"illegal_search_path_overrides\" as a; a::one");
-			expr.apply(NullNode.getInstance(), (value, path) -> {
+			expr.apply(NullNode.getInstance(), value -> {
 			});
 		}).hasMessageContaining("must stay within the original search path");
 	}
@@ -157,7 +157,7 @@ public class FileSystemModuleLoaderTest {
 	public void testImportWithAbsolutePath() throws Exception {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"/foo\" as foo; foo::foo");
-			expr.apply(NullNode.getInstance(), (value, path) -> {
+			expr.apply(NullNode.getInstance(), value -> {
 			});
 		}).hasMessageContaining("must be relative");
 	}
@@ -166,7 +166,7 @@ public class FileSystemModuleLoaderTest {
 	public void testDirectoryTraversal() throws Exception {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"../foo\" as foo; foo::foo");
-			expr.apply(NullNode.getInstance(), (value, path) -> {
+			expr.apply(NullNode.getInstance(), value -> {
 			});
 		}).hasMessageContaining("must be within the search path");
 	}

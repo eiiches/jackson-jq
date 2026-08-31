@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
@@ -99,12 +100,8 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 		apply(parentFrame, in, path, output, JsonQueryBindings.empty());
 	}
 
-	public void apply(JsonNode in, JsonQueryBindings<JsonNode> bindings, Output<JsonNode> output) throws JsonQueryException {
-		apply((StackFrame) null, in, UntrackedPath.getInstance(), output, bindings);
-	}
-
-	public void apply(JsonNode in, Output<JsonNode> output) throws JsonQueryException {
-		apply(in, JsonQueryBindings.empty(), output);
+	public void apply(JsonNode in, JsonQueryBindings<JsonNode> bindings, Consumer<? super JsonNode> output) throws JsonQueryException {
+		apply((StackFrame) null, in, UntrackedPath.getInstance(), (v, p) -> output.accept(v), bindings);
 	}
 
 	private void apply(@Nullable StackFrame parentFrame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output, JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {

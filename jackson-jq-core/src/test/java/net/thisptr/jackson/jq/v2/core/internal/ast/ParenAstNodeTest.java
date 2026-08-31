@@ -62,7 +62,7 @@ class ParenAstNodeTest {
 		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
 		JsonQuery<JsonNode> query = environment.compile("((1 + 2))");
 		List<JsonNode> output = new ArrayList<>();
-		query.apply(NullNode.getInstance(), (value, path) -> output.add(value));
+		query.apply(NullNode.getInstance(), output::add);
 		assertEquals(3, output.get(0).intValue());
 	}
 

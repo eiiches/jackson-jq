@@ -46,7 +46,7 @@ public class CustomFunctionTest {
 		JsonQuery<JsonNode> query = env.compile("{ \"a\": times100(.a) }");
 
 		List<JsonNode> out = new ArrayList<>();
-		query.apply(mapper.readTree(input), (outNode, path) -> out.add(outNode));
+		query.apply(mapper.readTree(input), out::add);
 		assertThat(out).hasSize(1);
 		assertThat(out.get(0)).isInstanceOf(ObjectNode.class);
 		assertThat(out.get(0).toString()).isEqualTo("{\"a\":500}");

@@ -62,7 +62,7 @@ public class RegexFunctionContractTest {
 		Environment<JsonNode> environment = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7).build();
 		JsonQuery<JsonNode> query = environment.compile("splits((\"a\", \"b\"))");
 		List<JsonNode> output = new ArrayList<>();
-		query.apply(JSON_PROVIDER.createString("aba"), (value, path) -> output.add(value));
+		query.apply(JSON_PROVIDER.createString("aba"), output::add);
 		assertThat(output).extracting(JSON_PROVIDER::asString).containsExactly("", "b", "", "a", "a");
 	}
 

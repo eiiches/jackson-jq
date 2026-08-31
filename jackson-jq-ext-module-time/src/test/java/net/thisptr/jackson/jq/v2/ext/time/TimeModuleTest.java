@@ -114,7 +114,7 @@ public class TimeModuleTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/time\" as ext; " + expression);
 		List<JsonNode> results = new ArrayList<>();
-		query.apply(env.getJsonProvider().createNull(), (val, path) -> results.add(val));
+		query.apply(env.getJsonProvider().createNull(), results::add);
 		return results;
 	}
 }

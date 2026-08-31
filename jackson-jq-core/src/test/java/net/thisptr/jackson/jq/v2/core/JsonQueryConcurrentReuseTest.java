@@ -94,7 +94,7 @@ public class JsonQueryConcurrentReuseTest {
 				.setVariable("seed", JSON_PROVIDER.createNumber(seed))
 				.build();
 		List<JsonNode> result = new ArrayList<>();
-		query.apply(JSON_PROVIDER.createNull(), bindings, (value, path) -> result.add(value));
+		query.apply(JSON_PROVIDER.createNull(), bindings, result::add);
 		return result;
 	}
 }

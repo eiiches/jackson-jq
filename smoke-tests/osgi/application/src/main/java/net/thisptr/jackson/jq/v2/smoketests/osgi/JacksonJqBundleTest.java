@@ -59,7 +59,7 @@ public class JacksonJqBundleTest {
 		JsonQuery<JsonNode> query = env.compile(expression);
 		JsonNode input = jsonProvider.parse(inputJson);
 		List<JsonNode> output = new ArrayList<>();
-		query.apply(input, (val, path) -> output.add(val));
+		query.apply(input, output::add);
 		assertEquals(Collections.singletonList(toJsonNode(jsonProvider, expected)), output);
 	}
 

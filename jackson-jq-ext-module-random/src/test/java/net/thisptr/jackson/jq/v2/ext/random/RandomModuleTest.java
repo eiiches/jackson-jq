@@ -26,7 +26,7 @@ public class RandomModuleTest {
 
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/random\" as ext; ext::random");
 		List<JsonNode> results = new ArrayList<>();
-		query.apply(env.getJsonProvider().createNull(), (val, path) -> results.add(val));
+		query.apply(env.getJsonProvider().createNull(), results::add);
 		assertThat(results).hasSize(1);
 		assertThat(results.get(0).doubleValue()).isGreaterThanOrEqualTo(0.0).isLessThan(1.0);
 	}

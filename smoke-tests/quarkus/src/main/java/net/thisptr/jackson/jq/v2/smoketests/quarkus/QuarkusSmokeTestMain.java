@@ -45,7 +45,7 @@ public class QuarkusSmokeTestMain implements QuarkusApplication {
 		JsonQuery<JsonNode> query = env.compile(expression);
 		JsonNode input = jsonProvider.parse(inputJson);
 		List<JsonNode> output = new ArrayList<>();
-		query.apply(input, (val, path) -> output.add(val));
+		query.apply(input, output::add);
 		if (output.size() != 1 || !output.get(0).equals(toJsonNode(jsonProvider, expected)))
 			throw new AssertionError("Expected [" + expected + "] but was " + output);
 	}

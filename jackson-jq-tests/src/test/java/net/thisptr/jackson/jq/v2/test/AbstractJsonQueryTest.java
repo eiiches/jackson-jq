@@ -87,7 +87,7 @@ public abstract class AbstractJsonQueryTest<T> {
 		try {
 			JsonQuery<T> q = env.compile(tc.q);
 			List<T> out = new ArrayList<>();
-			q.apply(input, (val, path) -> out.add(val));
+			q.apply(input, out::add);
 			assertThat(out).as("%s", command)
 					.usingElementComparator(comparator)
 					.isEqualTo(expectedOut);

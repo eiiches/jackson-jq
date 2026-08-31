@@ -190,7 +190,7 @@ public class Main {
 		try (JsonParser<N> parser = jsonProvider.createParser(is)) {
 			for (@Var N tree = parser.next(); tree != null; tree = parser.next()) {
 				try {
-					jq.apply(tree, (out, path) -> {
+					jq.apply(tree, out -> {
 						if (jsonProvider.getNodeType(out) == JsonNodeType.STRING && command.hasOption(OPT_RAW_OUTPUT.getOpt())) {
 							System.out.println(jsonProvider.asString(out));
 						} else {

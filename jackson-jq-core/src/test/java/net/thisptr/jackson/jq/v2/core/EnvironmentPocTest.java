@@ -65,7 +65,7 @@ public class EnvironmentPocTest {
 		JsonQuery<JsonNode> q = env.compile("examplefn(.)");
 
 		List<JsonNode> out = new ArrayList<>();
-		q.apply(MAPPER.readTree("\"world\""), (outNode, path) -> out.add(outNode));
+		q.apply(MAPPER.readTree("\"world\""), out::add);
 
 		assertEquals(1, out.size());
 		assertEquals("hello:world", out.get(0).asText());
@@ -80,7 +80,7 @@ public class EnvironmentPocTest {
 		JsonQuery<JsonNode> q = env.compile("$var");
 
 		List<JsonNode> out = new ArrayList<>();
-		q.apply(MAPPER.readTree("{}"), (outNode, path) -> out.add(outNode));
+		q.apply(MAPPER.readTree("{}"), out::add);
 
 		assertEquals(1, out.size());
 		assertEquals(42, out.get(0).asInt());
@@ -362,7 +362,7 @@ public class EnvironmentPocTest {
 		JsonQuery<JsonNode> q = env.compile("def f: if . == 0 then 0 else (. - 1 | f) end; f");
 
 		List<JsonNode> out = new ArrayList<>();
-		q.apply(MAPPER.readTree("3"), (outNode, path) -> out.add(outNode));
+		q.apply(MAPPER.readTree("3"), out::add);
 		assertEquals(1, out.size());
 		assertEquals(0, out.get(0).asInt());
 	}
@@ -398,7 +398,7 @@ public class EnvironmentPocTest {
 		// First compile: defines and immediately uses a local `foo` -- must work.
 		JsonQuery<JsonNode> q1 = env.compile("def foo: 1; foo");
 		List<JsonNode> out = new ArrayList<>();
-		q1.apply(MAPPER.readTree("null"), (outNode, path) -> out.add(outNode));
+		q1.apply(MAPPER.readTree("null"), out::add);
 		assertEquals(1, out.size());
 		assertEquals(1, out.get(0).asInt());
 
@@ -431,7 +431,7 @@ public class EnvironmentPocTest {
 		JsonQuery<JsonNode> q = env.compile(". as $x | $x");
 
 		List<JsonNode> out = new ArrayList<>();
-		q.apply(MAPPER.readTree("123"), (outNode, path) -> out.add(outNode));
+		q.apply(MAPPER.readTree("123"), out::add);
 
 		assertEquals(1, out.size());
 		assertEquals(123, out.get(0).asInt());

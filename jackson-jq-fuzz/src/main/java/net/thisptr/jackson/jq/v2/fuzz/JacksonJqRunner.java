@@ -40,7 +40,7 @@ public class JacksonJqRunner<N> implements Evaluator {
 	private Result doEvaluate(JsonQuery<N> expr, N in) {
 		List<JsonNode> values = new ArrayList<>();
 		try {
-			expr.apply(in, (out, opath) -> {
+			expr.apply(in, out -> {
 				try {
 					values.add(MAPPER.readTree(jsonProvider.format(out)));
 				} catch (Exception e) {
