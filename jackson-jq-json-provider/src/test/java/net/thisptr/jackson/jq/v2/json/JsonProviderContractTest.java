@@ -169,14 +169,79 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testExactIntegralAccessorsRejectFractionalValues() {
+	void testExactIntegralAccessorsReturnNullForFractionalValues() {
 		T positive = provider.createNumber(1.9);
 		T negative = provider.createNumber(-1.9);
 
-		assertThatThrownBy(() -> provider.asInt(positive)).isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> provider.asInt(negative)).isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> provider.asLong(positive)).isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> provider.asLong(negative)).isInstanceOf(IllegalArgumentException.class);
+		assertThat(provider.asInt(positive)).isNull();
+		assertThat(provider.asInt(negative)).isNull();
+		assertThat(provider.asLong(positive)).isNull();
+		assertThat(provider.asLong(negative)).isNull();
+	}
+
+	@Test
+	void testExactIntegralAccessorsReturnNullOutOfRange() {
+		assertThat(provider.asInt(provider.createNumber(2147483648L))).isNull();
+		assertThat(provider.asInt(provider.createNumber(-2147483649L))).isNull();
+		// Out of range because of the value, whatever the representation holding it.
+		assertThat(provider.asInt(provider.createNumber(1e15))).isNull();
+		assertThat(provider.asInt(provider.createNumber(-1e15))).isNull();
+		assertThat(provider.asLong(provider.createNumber(new BigInteger("123456789012345678901234567890")))).isNull();
+	}
+
+	@Test
+	void testIntegralAccessorsReturnNullForNonFiniteValues() {
+		for (double value : new double[] { Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY }) {
+			T node = provider.createNumber(value);
+			assertThat(provider.asInt(node)).isNull();
+			assertThat(provider.asLong(node)).isNull();
+			assertThat(provider.asIntTruncated(node)).isNull();
+			assertThat(provider.asLongTruncated(node)).isNull();
+		}
+	}
+
+	@Test
+	void testIntegralAccessorsThrowOnNonNumber() {
+		List<T> nonNumbers = Arrays.asList(
+				provider.createString("42"),
+				provider.createBoolean(true),
+				provider.createNull(),
+				provider.createArray(Collections.emptyList()),
+				provider.createObject(Collections.emptyMap()));
+		for (T node : nonNumbers) {
+			assertThatThrownBy(() -> provider.asInt(node)).isInstanceOf(IllegalArgumentException.class);
+			assertThatThrownBy(() -> provider.asLong(node)).isInstanceOf(IllegalArgumentException.class);
+			assertThatThrownBy(() -> provider.asIntTruncated(node)).isInstanceOf(IllegalArgumentException.class);
+			assertThatThrownBy(() -> provider.asLongTruncated(node)).isInstanceOf(IllegalArgumentException.class);
+		}
+	}
+
+	@Test
+	void testAsDoubleRoundedThrowsOnNonNumber() {
+		// A NaN return therefore means the value is NaN, never that the node was the wrong type.
+		assertThatThrownBy(() -> provider.asDoubleRounded(provider.createString("42"))).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asDoubleRounded(provider.createBoolean(true))).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asDoubleRounded(provider.createNull())).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asDoubleRounded(provider.createArray(Collections.emptyList()))).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.asDoubleRounded(provider.createObject(Collections.emptyMap()))).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	void testAsDoubleRoundedRoundsToNearest() {
+		// Rounding, not truncation: the example documented by JsonProvider lands above the exact value.
+		assertThat(provider.asDoubleRounded(provider.createNumber(2871948651097801136L))).isEqualTo(0x1.3ed9b0a7cec61p61);
+		// These are exact halfway cases on opposite sides of an even significand.
+		assertThat(provider.asDoubleRounded(provider.createNumber(9007199254740993L))).isEqualTo(0x1.0p53);
+		assertThat(provider.asDoubleRounded(provider.createNumber(9007199254740995L))).isEqualTo(0x1.0000000000002p53);
+	}
+
+	@Test
+	void testAsDoubleRoundedHandlesNonFiniteResults() {
+		assertThat(provider.asDoubleRounded(provider.createNumber(new BigDecimal("1e400")))).isEqualTo(Double.POSITIVE_INFINITY);
+		assertThat(provider.asDoubleRounded(provider.createNumber(new BigDecimal("-1e400")))).isEqualTo(Double.NEGATIVE_INFINITY);
+		assertThat(provider.asDoubleRounded(provider.createNumber(Double.POSITIVE_INFINITY))).isEqualTo(Double.POSITIVE_INFINITY);
+		assertThat(provider.asDoubleRounded(provider.createNumber(Double.NEGATIVE_INFINITY))).isEqualTo(Double.NEGATIVE_INFINITY);
+		assertThat(provider.asDoubleRounded(provider.createNumber(Double.NaN))).isNaN();
 	}
 
 	@Test
@@ -194,10 +259,8 @@ public abstract class JsonProviderContractTest<T> {
 	void testTruncatedIntChecksRangeAfterTruncation() {
 		assertThat(provider.asIntTruncated(provider.createNumber(2147483647.9))).isEqualTo(Integer.MAX_VALUE);
 		assertThat(provider.asIntTruncated(provider.createNumber(-2147483648.9))).isEqualTo(Integer.MIN_VALUE);
-		assertThatThrownBy(() -> provider.asIntTruncated(provider.createNumber(2147483648.0)))
-				.isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> provider.asIntTruncated(provider.createNumber(-2147483649.0)))
-				.isInstanceOf(IllegalArgumentException.class);
+		assertThat(provider.asIntTruncated(provider.createNumber(2147483648.0))).isNull();
+		assertThat(provider.asIntTruncated(provider.createNumber(-2147483649.0))).isNull();
 	}
 
 	@Test
@@ -225,19 +288,19 @@ public abstract class JsonProviderContractTest<T> {
 
 		double largestLong = Math.nextDown(0x1p63);
 		assertThat(provider.asLong(provider.createNumber(largestLong))).isEqualTo((long) largestLong);
-		assertThatThrownBy(() -> provider.asLong(provider.createNumber(0x1p63))).isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> provider.asLongTruncated(provider.createNumber(0x1p63)))
-				.isInstanceOf(IllegalArgumentException.class);
+		assertThat(provider.asLong(provider.createNumber(0x1p63))).isNull();
+		assertThat(provider.asLongTruncated(provider.createNumber(0x1p63))).isNull();
 	}
 
 	@Test
-	void testTruncatedIntegralAccessorsRejectInvalidValues() {
+	void testTruncatedIntegralAccessorsReturnNullForUnrepresentableValues() {
+		// A wrong node type still throws; only "no representative exists" is null.
 		T text = provider.createString("1");
 		assertThatThrownBy(() -> provider.asIntTruncated(text)).isInstanceOf(IllegalArgumentException.class);
 		assertThatThrownBy(() -> provider.asLongTruncated(text)).isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> provider.asIntTruncated(provider.createNumber(Double.NaN))).isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> provider.asLongTruncated(provider.createNumber(Double.POSITIVE_INFINITY))).isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> provider.asLongTruncated(provider.createNumber(1e20))).isInstanceOf(IllegalArgumentException.class);
+		assertThat(provider.asIntTruncated(provider.createNumber(Double.NaN))).isNull();
+		assertThat(provider.asLongTruncated(provider.createNumber(Double.POSITIVE_INFINITY))).isNull();
+		assertThat(provider.asLongTruncated(provider.createNumber(1e20))).isNull();
 	}
 
 	@Test
@@ -460,86 +523,6 @@ public abstract class JsonProviderContractTest<T> {
 		// asText on null node should return "null", not empty string
 		T node = provider.createNull();
 		assertThat(provider.asString(node)).isEqualTo("null");
-	}
-
-	@Test
-	void testAsIntOnNaNThrows() {
-		// asInt on NaN should throw exception (strict semantics)
-		T node = provider.createNumber(Double.NaN);
-		assertThatThrownBy(() -> provider.asInt(node))
-				.isInstanceOf(RuntimeException.class);
-	}
-
-	@Test
-	void testAsLongOnNaNThrows() {
-		// asLong on NaN should throw exception (strict semantics)
-		T node = provider.createNumber(Double.NaN);
-		assertThatThrownBy(() -> provider.asLong(node))
-				.isInstanceOf(RuntimeException.class);
-	}
-
-	@Test
-	void testAsIntOnPositiveInfinityThrows() {
-		// asInt on positive infinity should throw exception (strict semantics)
-		T node = provider.createNumber(Double.POSITIVE_INFINITY);
-		assertThatThrownBy(() -> provider.asInt(node))
-				.isInstanceOf(RuntimeException.class);
-	}
-
-	@Test
-	void testAsIntOnNegativeInfinityThrows() {
-		// asInt on negative infinity should throw exception (strict semantics)
-		T node = provider.createNumber(Double.NEGATIVE_INFINITY);
-		assertThatThrownBy(() -> provider.asInt(node))
-				.isInstanceOf(RuntimeException.class);
-	}
-
-	@Test
-	void testAsLongOnPositiveInfinityThrows() {
-		// asLong on positive infinity should throw exception (strict semantics)
-		T node = provider.createNumber(Double.POSITIVE_INFINITY);
-		assertThatThrownBy(() -> provider.asLong(node))
-				.isInstanceOf(RuntimeException.class);
-	}
-
-	@Test
-	void testAsLongOnNegativeInfinityThrows() {
-		// asLong on negative infinity should throw exception (strict semantics)
-		T node = provider.createNumber(Double.NEGATIVE_INFINITY);
-		assertThatThrownBy(() -> provider.asLong(node))
-				.isInstanceOf(RuntimeException.class);
-	}
-
-	@Test
-	void testAsIntOnLargeNumberThrows() {
-		// asInt on a number larger than Integer.MAX_VALUE should throw exception (strict semantics)
-		T node = provider.createNumber(1_000_000_000_000_000_000L);
-		assertThatThrownBy(() -> provider.asInt(node))
-				.isInstanceOf(RuntimeException.class);
-	}
-
-	@Test
-	void testAsIntOnSmallNumberThrows() {
-		// asInt on a number smaller than Integer.MIN_VALUE should throw exception (strict semantics)
-		T node = provider.createNumber(-1_000_000_000_000_000_000L);
-		assertThatThrownBy(() -> provider.asInt(node))
-				.isInstanceOf(RuntimeException.class);
-	}
-
-	@Test
-	void testAsIntOnDoubleLargePositiveThrows() {
-		// asInt on a double larger than Integer.MAX_VALUE should throw exception
-		T node = provider.createNumber(1e15);
-		assertThatThrownBy(() -> provider.asInt(node))
-				.isInstanceOf(RuntimeException.class);
-	}
-
-	@Test
-	void testAsIntOnDoubleLargeNegativeThrows() {
-		// asInt on a double smaller than Integer.MIN_VALUE should throw exception
-		T node = provider.createNumber(-1e15);
-		assertThatThrownBy(() -> provider.asInt(node))
-				.isInstanceOf(RuntimeException.class);
 	}
 
 	// ================================

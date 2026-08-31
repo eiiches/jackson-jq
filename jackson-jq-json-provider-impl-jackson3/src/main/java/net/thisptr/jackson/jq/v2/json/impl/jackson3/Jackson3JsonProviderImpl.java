@@ -148,7 +148,13 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 
 	@Override
 	public double asDoubleRounded(JsonNode node) {
-		return node.asDouble();
+		if (!node.isNumber())
+			throw new IllegalArgumentException("Cannot convert non-number to double");
+		if (node.isDouble() || node.isFloat())
+			return node.doubleValue();
+		// Jackson 3's DecimalNode conversion methods reject values outside the double range, while
+		// BigDecimal.doubleValue() has the required IEEE 754 overflow behavior.
+		return node.decimalValue().doubleValue();
 	}
 
 	@Override
@@ -174,154 +180,97 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public long asLong(JsonNode node) {
+	public @Nullable Long asLong(JsonNode node) {
 		if (!node.isNumber())
 			throw new IllegalArgumentException("Cannot convert non-number to long");
 		if (node.isIntegralNumber()) {
-			if (node.canConvertToLong())
-				return node.longValue();
-			throw new IllegalArgumentException("Value " + node + " cannot be represented as long");
+			if (!node.canConvertToLong())
+				return null;
+			return node.longValue();
 		}
-		if (node.isDouble()) {
+		// Widening a float to a double is exact, so both share this path.
+		if (node.isDouble() || node.isFloat()) {
 			double value = node.doubleValue();
-			if (Double.isNaN(value))
-				throw new IllegalArgumentException("Cannot convert NaN to long");
-			if (Double.isInfinite(value))
-				throw new IllegalArgumentException("Cannot convert Infinity to long");
-			if (value != Math.rint(value) || value < -0x1p63 || value >= 0x1p63)
-				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
+			if (!Double.isFinite(value) || value != Math.rint(value) || value < -0x1p63 || value >= 0x1p63)
+				return null;
 			return (long) value;
 		}
-		if (node.isFloat()) {
-			float value = node.floatValue();
-			if (Float.isNaN(value))
-				throw new IllegalArgumentException("Cannot convert NaN to long");
-			if (Float.isInfinite(value))
-				throw new IllegalArgumentException("Cannot convert Infinity to long");
-			if (value != Math.rint(value) || value < -0x1p63 || value >= 0x1p63)
-				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
-			return (long) value;
-		}
-		BigDecimal value = node.decimalValue();
 		try {
-			return value.longValueExact();
+			return node.decimalValue().longValueExact();
 		} catch (ArithmeticException e) {
-			throw new IllegalArgumentException("Value " + value + " cannot be represented as long", e);
+			return null;
 		}
 	}
 
 	@Override
-	public long asLongTruncated(JsonNode node) {
+	public @Nullable Long asLongTruncated(JsonNode node) {
 		if (!node.isNumber())
 			throw new IllegalArgumentException("Cannot convert non-number to long");
 		if (node.isIntegralNumber()) {
-			if (node.canConvertToLong())
-				return node.longValue();
-			throw new IllegalArgumentException("Value " + node + " cannot be represented as long");
+			if (!node.canConvertToLong())
+				return null;
+			return node.longValue();
 		}
-		if (node.isDouble()) {
+		if (node.isDouble() || node.isFloat()) {
 			double value = node.doubleValue();
-			if (Double.isNaN(value))
-				throw new IllegalArgumentException("Cannot convert NaN to long");
-			if (Double.isInfinite(value))
-				throw new IllegalArgumentException("Cannot convert Infinity to long");
+			if (!Double.isFinite(value))
+				return null;
 			double truncated = value < 0 ? Math.ceil(value) : Math.floor(value);
 			if (truncated < -0x1p63 || truncated >= 0x1p63)
-				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
+				return null;
 			return (long) truncated;
 		}
-		if (node.isFloat()) {
-			float value = node.floatValue();
-			if (Float.isNaN(value))
-				throw new IllegalArgumentException("Cannot convert NaN to long");
-			if (Float.isInfinite(value))
-				throw new IllegalArgumentException("Cannot convert Infinity to long");
-			double truncated = value < 0 ? Math.ceil(value) : Math.floor(value);
-			if (truncated < -0x1p63 || truncated >= 0x1p63)
-				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
-			return (long) truncated;
-		}
-		BigDecimal value = node.decimalValue().setScale(0, RoundingMode.DOWN);
 		try {
-			return value.longValueExact();
+			return node.decimalValue().setScale(0, RoundingMode.DOWN).longValueExact();
 		} catch (ArithmeticException e) {
-			throw new IllegalArgumentException("Value " + value + " cannot be represented as long", e);
+			return null;
 		}
 	}
 
 	@Override
-	public int asInt(JsonNode node) {
+	public @Nullable Integer asInt(JsonNode node) {
 		if (!node.isNumber())
 			throw new IllegalArgumentException("Cannot convert non-number to int");
 		if (node.isIntegralNumber()) {
-			if (node.canConvertToInt())
-				return node.intValue();
-			throw new IllegalArgumentException("Value " + node + " cannot be represented as int");
+			if (!node.canConvertToInt())
+				return null;
+			return node.intValue();
 		}
-		if (node.isDouble()) {
+		if (node.isDouble() || node.isFloat()) {
 			double value = node.doubleValue();
-			if (Double.isNaN(value))
-				throw new IllegalArgumentException("Cannot convert NaN to int");
-			if (Double.isInfinite(value))
-				throw new IllegalArgumentException("Cannot convert Infinity to int");
-			if (value != Math.rint(value) || value < Integer.MIN_VALUE || value > Integer.MAX_VALUE)
-				throw new IllegalArgumentException("Value " + value + " cannot be represented as int");
+			if (!Double.isFinite(value) || value != Math.rint(value) || value < Integer.MIN_VALUE || value > Integer.MAX_VALUE)
+				return null;
 			return (int) value;
 		}
-		if (node.isFloat()) {
-			float value = node.floatValue();
-			if (Float.isNaN(value))
-				throw new IllegalArgumentException("Cannot convert NaN to int");
-			if (Float.isInfinite(value))
-				throw new IllegalArgumentException("Cannot convert Infinity to int");
-			if (value != Math.rint(value) || value < Integer.MIN_VALUE || value > Integer.MAX_VALUE)
-				throw new IllegalArgumentException("Value " + value + " cannot be represented as int");
-			return (int) value;
-		}
-		BigDecimal value = node.decimalValue();
 		try {
-			return value.intValueExact();
+			return node.decimalValue().intValueExact();
 		} catch (ArithmeticException e) {
-			throw new IllegalArgumentException("Value " + value + " cannot be represented as int", e);
+			return null;
 		}
 	}
 
 	@Override
-	public int asIntTruncated(JsonNode node) {
+	public @Nullable Integer asIntTruncated(JsonNode node) {
 		if (!node.isNumber())
 			throw new IllegalArgumentException("Cannot convert non-number to int");
 		if (node.isIntegralNumber()) {
-			if (node.canConvertToInt())
-				return node.intValue();
-			throw new IllegalArgumentException("Value " + node + " cannot be represented as int");
+			if (!node.canConvertToInt())
+				return null;
+			return node.intValue();
 		}
-		if (node.isDouble()) {
+		if (node.isDouble() || node.isFloat()) {
 			double value = node.doubleValue();
-			if (Double.isNaN(value))
-				throw new IllegalArgumentException("Cannot convert NaN to int");
-			if (Double.isInfinite(value))
-				throw new IllegalArgumentException("Cannot convert Infinity to int");
+			if (!Double.isFinite(value))
+				return null;
 			double truncated = value < 0 ? Math.ceil(value) : Math.floor(value);
 			if (truncated < Integer.MIN_VALUE || truncated > Integer.MAX_VALUE)
-				throw new IllegalArgumentException("Value " + value + " cannot be represented as int");
+				return null;
 			return (int) truncated;
 		}
-		if (node.isFloat()) {
-			float value = node.floatValue();
-			if (Float.isNaN(value))
-				throw new IllegalArgumentException("Cannot convert NaN to int");
-			if (Float.isInfinite(value))
-				throw new IllegalArgumentException("Cannot convert Infinity to int");
-			double truncated = value < 0 ? Math.ceil(value) : Math.floor(value);
-			if (truncated < Integer.MIN_VALUE || truncated > Integer.MAX_VALUE)
-				throw new IllegalArgumentException("Value " + value + " cannot be represented as int");
-			return (int) truncated;
-		}
-		BigDecimal value = node.decimalValue().setScale(0, RoundingMode.DOWN);
 		try {
-			return value.intValueExact();
+			return node.decimalValue().setScale(0, RoundingMode.DOWN).intValueExact();
 		} catch (ArithmeticException e) {
-			throw new IllegalArgumentException("Value " + value + " cannot be represented as int", e);
+			return null;
 		}
 	}
 

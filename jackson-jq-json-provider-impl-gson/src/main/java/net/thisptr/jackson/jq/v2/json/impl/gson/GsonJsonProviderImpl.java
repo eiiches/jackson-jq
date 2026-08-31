@@ -179,20 +179,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 
 	@Override
 	public double asDoubleRounded(JsonElement node) {
-		if (node.isJsonPrimitive()) {
-			JsonPrimitive primitive = node.getAsJsonPrimitive();
-			if (primitive.isNumber()) {
-				return primitive.getAsDouble();
-			}
-			if (primitive.isString()) {
-				try {
-					return Double.parseDouble(primitive.getAsString());
-				} catch (NumberFormatException e) {
-					return Double.NaN;
-				}
-			}
-		}
-		return Double.NaN;
+		return requireNumber(node, "double").getAsDouble();
 	}
 
 	@Override
@@ -220,88 +207,85 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public long asLong(JsonElement node) {
-		if (!node.isJsonPrimitive() || !node.getAsJsonPrimitive().isNumber())
-			throw new IllegalArgumentException("Cannot convert non-number to long");
-		JsonPrimitive primitive = node.getAsJsonPrimitive();
+	public @Nullable Long asLong(JsonElement node) {
+		JsonPrimitive primitive = requireNumber(node, "long");
 		Number number = primitive.getAsNumber();
 		if (number instanceof Double || number instanceof Float) {
 			double value = number.doubleValue();
-			if (Double.isNaN(value))
-				throw new IllegalArgumentException("Cannot convert NaN to long");
-			if (Double.isInfinite(value))
-				throw new IllegalArgumentException("Cannot convert Infinity to long");
-			if (value != Math.rint(value) || value < -0x1p63 || value >= 0x1p63)
-				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
+			if (!Double.isFinite(value) || value != Math.rint(value) || value < -0x1p63 || value >= 0x1p63)
+				return null;
 			return (long) value;
 		}
-		BigDecimal value = requireFiniteNumber(node, "long");
+		BigDecimal value = finiteDecimal(primitive);
+		if (value == null)
+			return null;
 		try {
 			return value.longValueExact();
 		} catch (ArithmeticException e) {
-			throw cannotRepresent(value, "long", e);
+			return null;
 		}
 	}
 
 	@Override
-	public long asLongTruncated(JsonElement node) {
-		if (!node.isJsonPrimitive() || !node.getAsJsonPrimitive().isNumber())
-			throw new IllegalArgumentException("Cannot convert non-number to long");
-		JsonPrimitive primitive = node.getAsJsonPrimitive();
+	public @Nullable Long asLongTruncated(JsonElement node) {
+		JsonPrimitive primitive = requireNumber(node, "long");
 		Number number = primitive.getAsNumber();
 		if (number instanceof Double || number instanceof Float) {
 			double value = number.doubleValue();
-			if (Double.isNaN(value))
-				throw new IllegalArgumentException("Cannot convert NaN to long");
-			if (Double.isInfinite(value))
-				throw new IllegalArgumentException("Cannot convert Infinity to long");
+			if (!Double.isFinite(value))
+				return null;
 			double truncated = value < 0 ? Math.ceil(value) : Math.floor(value);
 			if (truncated < -0x1p63 || truncated >= 0x1p63)
-				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
+				return null;
 			return (long) truncated;
 		}
-		BigDecimal value = requireFiniteNumber(node, "long").setScale(0, RoundingMode.DOWN);
+		BigDecimal value = finiteDecimal(primitive);
+		if (value == null)
+			return null;
 		try {
-			return value.longValueExact();
+			return value.setScale(0, RoundingMode.DOWN).longValueExact();
 		} catch (ArithmeticException e) {
-			throw cannotRepresent(value, "long", e);
+			return null;
 		}
 	}
 
 	@Override
-	public int asInt(JsonElement node) {
-		BigDecimal value = requireFiniteNumber(node, "int");
+	public @Nullable Integer asInt(JsonElement node) {
+		BigDecimal value = finiteDecimal(requireNumber(node, "int"));
+		if (value == null)
+			return null;
 		try {
 			return value.intValueExact();
 		} catch (ArithmeticException e) {
-			throw cannotRepresent(value, "int", e);
+			return null;
 		}
 	}
 
 	@Override
-	public int asIntTruncated(JsonElement node) {
-		BigDecimal value = requireFiniteNumber(node, "int").setScale(0, RoundingMode.DOWN);
+	public @Nullable Integer asIntTruncated(JsonElement node) {
+		BigDecimal value = finiteDecimal(requireNumber(node, "int"));
+		if (value == null)
+			return null;
 		try {
-			return value.intValueExact();
+			return value.setScale(0, RoundingMode.DOWN).intValueExact();
 		} catch (ArithmeticException e) {
-			throw cannotRepresent(value, "int", e);
+			return null;
 		}
 	}
 
-	private static BigDecimal requireFiniteNumber(JsonElement node, String targetType) {
+	private static JsonPrimitive requireNumber(JsonElement node, String targetType) {
 		if (!node.isJsonPrimitive() || !node.getAsJsonPrimitive().isNumber())
 			throw new IllegalArgumentException("Cannot convert non-number to " + targetType);
-		JsonPrimitive primitive = node.getAsJsonPrimitive();
-		double value = primitive.getAsDouble();
-		if (Double.isNaN(value))
-			throw new IllegalArgumentException("Cannot convert NaN to " + targetType);
-		if (Double.isInfinite(value))
-			throw new IllegalArgumentException("Cannot convert Infinity to " + targetType);
-		return primitive.getAsBigDecimal();
+		return node.getAsJsonPrimitive();
 	}
 
-	private static IllegalArgumentException cannotRepresent(BigDecimal value, String targetType, ArithmeticException cause) {
-		return new IllegalArgumentException("Value " + value + " cannot be represented as " + targetType, cause);
+	/**
+	 * The value as a BigDecimal, or null for NaN and the infinities, which BigDecimal cannot hold.
+	 */
+	private static @Nullable BigDecimal finiteDecimal(JsonPrimitive primitive) {
+		if (!Double.isFinite(primitive.getAsDouble()))
+			return null;
+		return primitive.getAsBigDecimal();
 	}
 
 	@Override

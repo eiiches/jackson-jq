@@ -153,13 +153,19 @@ public interface JsonProvider<JsonNode> {
 	boolean asBoolean(JsonNode node);
 
 	/**
-	 * Returns the value of the node as a double, on a best-effort basis.
+	 * Returns a number node's value rounded to the nearest double.
 	 * <p>
-	 * Number nodes are converted directly, which may lose precision for values outside the range
-	 * exactly representable by {@code double}. String nodes are parsed as a number if possible.
+	 * Losing information is the specification here, not a failure: values needing more than a
+	 * {@code double}'s 53 bits of mantissa are rounded to nearest (ties to even), in either direction
+	 * -- {@code 2871948651097801136} comes back as {@code 2871948651097801216} -- and values beyond
+	 * {@link Double#MAX_VALUE} overflow to an infinity. Every number therefore has a result, so this
+	 * never returns {@code null}; use {@link #asBigDecimal(Object)} when the exact value is needed.
+	 * <p>
+	 * A returned {@link Double#NaN} means the value is NaN, and nothing else.
 	 *
-	 * @param node the JSON node
-	 * @return the double value, or {@link Double#NaN} if the node cannot be interpreted as a number
+	 * @param node the JSON number node
+	 * @return the value rounded to the nearest double
+	 * @throws IllegalArgumentException if the node is not a number
 	 */
 	double asDoubleRounded(JsonNode node);
 
@@ -189,52 +195,50 @@ public interface JsonProvider<JsonNode> {
 	String asString(JsonNode node);
 
 	/**
-	 * Returns the value of the node as a long.
+	 * Returns the exact value of a number node as a long.
 	 * <p>
-	 * This method has strict semantics and will throw an exception if the value
-	 * cannot be represented as a long without loss of information.
-	 *
-	 * @param node the JSON node
-	 * @return the long value
-	 * @throws IllegalArgumentException if the value is NaN, Infinity, or cannot be
-	 * represented as a long
-	 */
-	long asLong(JsonNode node);
-
-	/**
-	 * Returns the value of the node as a long after truncating its fractional part
-	 * toward zero.
+	 * A value a {@code long} cannot hold intact -- one with a fractional part, one out of range,
+	 * {@code NaN} or an infinity -- is reported as {@code null} rather than rounded or rejected, so
+	 * this doubles as the test for whether a number is a long.
 	 *
 	 * @param node the JSON number node
-	 * @return the truncated long value
-	 * @throws IllegalArgumentException if the node is not a number, is NaN or
-	 * Infinity, or the truncated value is outside the range of long
+	 * @return the long value, or {@code null} if it is not exactly representable as a long
+	 * @throws IllegalArgumentException if the node is not a number
 	 */
-	long asLongTruncated(JsonNode node);
+	@Nullable Long asLong(JsonNode node);
 
 	/**
-	 * Returns the value of the node as an int.
-	 * <p>
-	 * This method has strict semantics and will throw an exception if the value
-	 * cannot be represented as an int without loss of information.
-	 *
-	 * @param node the JSON node
-	 * @return the int value
-	 * @throws IllegalArgumentException if the value is NaN, Infinity, or outside
-	 * the range of int
-	 */
-	int asInt(JsonNode node);
-
-	/**
-	 * Returns the value of the node as an int after truncating its fractional part
-	 * toward zero.
+	 * Returns a number node's value as a long, truncating any fractional part toward zero.
 	 *
 	 * @param node the JSON number node
-	 * @return the truncated int value
-	 * @throws IllegalArgumentException if the node is not a number, is NaN or
-	 * Infinity, or the truncated value is outside the range of int
+	 * @return the truncated long value, or {@code null} if the value is NaN or an infinity, or if the
+	 * truncated value is outside the range of long
+	 * @throws IllegalArgumentException if the node is not a number
 	 */
-	int asIntTruncated(JsonNode node);
+	@Nullable Long asLongTruncated(JsonNode node);
+
+	/**
+	 * Returns the exact value of a number node as an int.
+	 * <p>
+	 * A value an {@code int} cannot hold intact -- one with a fractional part, one out of range,
+	 * {@code NaN} or an infinity -- is reported as {@code null} rather than rounded or rejected, so
+	 * this doubles as the test for whether a number is an int.
+	 *
+	 * @param node the JSON number node
+	 * @return the int value, or {@code null} if it is not exactly representable as an int
+	 * @throws IllegalArgumentException if the node is not a number
+	 */
+	@Nullable Integer asInt(JsonNode node);
+
+	/**
+	 * Returns a number node's value as an int, truncating any fractional part toward zero.
+	 *
+	 * @param node the JSON number node
+	 * @return the truncated int value, or {@code null} if the value is NaN or an infinity, or if the
+	 * truncated value is outside the range of int
+	 * @throws IllegalArgumentException if the node is not a number
+	 */
+	@Nullable Integer asIntTruncated(JsonNode node);
 
 	/**
 	 * Returns the binary value of the node.

@@ -122,17 +122,13 @@ public final class PathOperations {
 		assert jsonProvider.getNodeType(index) == JsonNodeType.NUMBER;
 		if (jsonProvider.getNodeType(parent) == JsonNodeType.ARRAY) {
 			double indexAsDouble = jsonProvider.asDoubleRounded(index);
-			if (Double.isNaN(indexAsDouble) || Double.isInfinite(indexAsDouble)) {
+			// NaN, the infinities and anything outside int range all address nothing.
+			Integer truncated = jsonProvider.asIntTruncated(index);
+			if (truncated == null) {
 				output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
 				return;
 			}
-			int indexAsInt;
-			try {
-				indexAsInt = jsonProvider.asIntTruncated(index);
-			} catch (IllegalArgumentException e) {
-				output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
-				return;
-			}
+			int indexAsInt = truncated;
 			if (version.compareTo(Versions.JQ_1_7) < 0 && indexAsDouble != indexAsInt) {
 				output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
 				return;
@@ -272,12 +268,10 @@ public final class PathOperations {
 			double indexAsDouble = jsonProvider.asDoubleRounded(index);
 			if (Double.isNaN(indexAsDouble) || Double.isInfinite(indexAsDouble))
 				throw new JsonQueryException("Cannot use " + (Double.isNaN(indexAsDouble) ? "nan" : "infinite") + " as array index");
-			int indexAsInt;
-			try {
-				indexAsInt = jsonProvider.asIntTruncated(index);
-			} catch (IllegalArgumentException e) {
-				throw new JsonQueryException("Array index too large", e);
-			}
+			Integer truncated = jsonProvider.asIntTruncated(index);
+			if (truncated == null)
+				throw new JsonQueryException("Array index too large");
+			int indexAsInt = truncated;
 			int resolvedIndex = indexAsInt < 0 ? indexAsInt + jsonProvider.size(in) : indexAsInt;
 			if (resolvedIndex < 0)
 				throw new JsonQueryException("Out of bounds negative array index");

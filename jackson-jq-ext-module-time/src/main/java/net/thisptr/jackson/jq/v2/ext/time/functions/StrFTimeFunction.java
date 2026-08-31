@@ -48,6 +48,9 @@ public class StrFTimeFunction implements Function {
 			@Override
 			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 				Preconditions.checkInputType(jsonProvider, "strftime", in, JsonNodeType.NUMBER);
+				Long epochSeconds = jsonProvider.asLongTruncated(in);
+				if (epochSeconds == null) // NaN, an infinity, or beyond long range.
+					throw new JsonQueryException("date \"" + jsonProvider.format(in) + "\" does not fit in a number of seconds since the epoch");
 				try {
 					args.get(0).apply(context, in, UntrackedPath.getInstance(), (fmt, opath) -> {
 						if (jsonProvider.getNodeType(fmt) != JsonNodeType.STRING)
@@ -58,10 +61,10 @@ public class StrFTimeFunction implements Function {
 								if (jsonProvider.getNodeType(tz) != JsonNodeType.STRING)
 									throw new JsonQueryException("Timezone must be a string");
 								sdf.setTimeZone(TimeZone.getTimeZone(jsonProvider.asString(tz)));
-								output.emit(jsonProvider.createString(sdf.format(jsonProvider.asLongTruncated(in))), UntrackedPath.getInstance());
+								output.emit(jsonProvider.createString(sdf.format(epochSeconds)), UntrackedPath.getInstance());
 							});
 						} else {
-							output.emit(jsonProvider.createString(sdf.format(jsonProvider.asLongTruncated(in))), UntrackedPath.getInstance());
+							output.emit(jsonProvider.createString(sdf.format(epochSeconds)), UntrackedPath.getInstance());
 						}
 					});
 				} catch (Exception e) {

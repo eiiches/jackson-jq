@@ -14,6 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 @AutoService(Function.class)
@@ -29,8 +30,10 @@ public class ImplodeFunction implements Function {
 			Iterator<JsonNode> iter = jsonProvider.elements(in);
 			while (iter.hasNext()) {
 				JsonNode ch = iter.next();
-				int intVal = jsonProvider.asIntTruncated(ch);
-				builder.append((char) intVal);
+				Integer codepoint = jsonProvider.asIntTruncated(ch);
+				if (codepoint == null) // NaN, an infinity, or beyond int range.
+					throw new JsonQueryException("Cannot use " + jsonProvider.format(ch) + " as a unicode codepoint");
+				builder.append((char) codepoint.intValue());
 			}
 
 			output.emit(jsonProvider.createString(builder.toString()), UntrackedPath.getInstance());

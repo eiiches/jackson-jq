@@ -176,16 +176,7 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 
 	@Override
 	public double asDoubleRounded(JsonValue node) {
-		if (node instanceof JsonNumber)
-			return ((JsonNumber) node).doubleValue();
-		if (node instanceof JsonString) {
-			try {
-				return Double.parseDouble(((JsonString) node).getString());
-			} catch (NumberFormatException e) {
-				return Double.NaN;
-			}
-		}
-		return Double.NaN;
+		return requireNumber(node, "double").doubleValue();
 	}
 
 	@Override
@@ -208,70 +199,78 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public long asLong(JsonValue node) {
-		if (node instanceof FloatingPointJsonNumber) {
-			double value = ((FloatingPointJsonNumber) node).doubleValue();
-			checkFinite(value, "long");
-			if (value != Math.rint(value) || value < -0x1p63 || value >= 0x1p63)
-				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
+	public @Nullable Long asLong(JsonValue node) {
+		JsonNumber number = requireNumber(node, "long");
+		if (number instanceof FloatingPointJsonNumber) {
+			double value = number.doubleValue();
+			if (!Double.isFinite(value) || value != Math.rint(value) || value < -0x1p63 || value >= 0x1p63)
+				return null;
 			return (long) value;
 		}
-		BigDecimal value = requireFiniteNumber(node, "long");
 		try {
-			return value.longValueExact();
+			return number.bigDecimalValue().longValueExact();
 		} catch (ArithmeticException e) {
-			throw cannotRepresent(value, "long", e);
+			return null;
 		}
 	}
 
 	@Override
-	public long asLongTruncated(JsonValue node) {
-		if (node instanceof FloatingPointJsonNumber) {
-			double value = ((FloatingPointJsonNumber) node).doubleValue();
-			checkFinite(value, "long");
+	public @Nullable Long asLongTruncated(JsonValue node) {
+		JsonNumber number = requireNumber(node, "long");
+		if (number instanceof FloatingPointJsonNumber) {
+			double value = number.doubleValue();
+			if (!Double.isFinite(value))
+				return null;
 			double truncated = value < 0 ? Math.ceil(value) : Math.floor(value);
 			if (truncated < -0x1p63 || truncated >= 0x1p63)
-				throw new IllegalArgumentException("Value " + value + " cannot be represented as long");
+				return null;
 			return (long) truncated;
 		}
-		BigDecimal value = requireFiniteNumber(node, "long").setScale(0, RoundingMode.DOWN);
 		try {
-			return value.longValueExact();
+			return number.bigDecimalValue().setScale(0, RoundingMode.DOWN).longValueExact();
 		} catch (ArithmeticException e) {
-			throw cannotRepresent(value, "long", e);
+			return null;
 		}
 	}
 
 	@Override
-	public int asInt(JsonValue node) {
-		BigDecimal value = requireFiniteNumber(node, "int");
+	public @Nullable Integer asInt(JsonValue node) {
+		BigDecimal value = finiteDecimal(requireNumber(node, "int"));
+		if (value == null)
+			return null;
 		try {
 			return value.intValueExact();
 		} catch (ArithmeticException e) {
-			throw cannotRepresent(value, "int", e);
+			return null;
 		}
 	}
 
 	@Override
-	public int asIntTruncated(JsonValue node) {
-		BigDecimal value = requireFiniteNumber(node, "int").setScale(0, RoundingMode.DOWN);
+	public @Nullable Integer asIntTruncated(JsonValue node) {
+		BigDecimal value = finiteDecimal(requireNumber(node, "int"));
+		if (value == null)
+			return null;
 		try {
-			return value.intValueExact();
+			return value.setScale(0, RoundingMode.DOWN).intValueExact();
 		} catch (ArithmeticException e) {
-			throw cannotRepresent(value, "int", e);
+			return null;
 		}
 	}
 
-	private static BigDecimal requireFiniteNumber(JsonValue node, String targetType) {
+	private static JsonNumber requireNumber(JsonValue node, String targetType) {
 		if (!(node instanceof JsonNumber))
 			throw new IllegalArgumentException("Cannot convert non-number to " + targetType);
-		JsonNumber number = (JsonNumber) node;
-		checkFinite(number.doubleValue(), targetType);
-		return number.bigDecimalValue();
+		return (JsonNumber) node;
 	}
 
-	private static IllegalArgumentException cannotRepresent(BigDecimal value, String targetType, ArithmeticException cause) {
-		return new IllegalArgumentException("Value " + value + " cannot be represented as " + targetType, cause);
+	/**
+	 * The value as a BigDecimal, or null for NaN and the infinities. JSON-P itself cannot represent
+	 * those; only our own wrapper can hold them.
+	 */
+	private static @Nullable BigDecimal finiteDecimal(JsonNumber number) {
+		if (number instanceof FloatingPointJsonNumber && !Double.isFinite(number.doubleValue()))
+			return null;
+		return number.bigDecimalValue();
 	}
 
 	@Override
@@ -569,13 +568,6 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 		if (exponentIndex >= 0 && text.charAt(exponentIndex + 1) != '-')
 			text = text.substring(0, exponentIndex + 1) + "+" + text.substring(exponentIndex + 1);
 		return text;
-	}
-
-	private static void checkFinite(double value, String targetType) {
-		if (Double.isNaN(value))
-			throw new IllegalArgumentException("Cannot convert NaN to " + targetType);
-		if (Double.isInfinite(value))
-			throw new IllegalArgumentException("Cannot convert Infinity to " + targetType);
 	}
 
 	private static boolean isJsonWhitespace(char ch) {

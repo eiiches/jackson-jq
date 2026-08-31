@@ -148,12 +148,10 @@ public class DelPathsFunction implements Function {
 			}
 			if (Double.isNaN(raw) || Double.isInfinite(raw))
 				throw new JsonQueryException("Cannot use " + (Double.isNaN(raw) ? "nan" : "infinite") + " as array index");
-			int index;
-			try {
-				index = jsonProvider.asIntTruncated(indexNode);
-			} catch (IllegalArgumentException e) {
-				continue;
-			}
+			Integer truncated = jsonProvider.asIntTruncated(indexNode);
+			if (truncated == null)
+				continue; // Out of int range, so out of bounds too.
+			int index = truncated;
 			int resolved = index < 0 ? index + size : index;
 			if (resolved < 0 || resolved >= size)
 				continue;

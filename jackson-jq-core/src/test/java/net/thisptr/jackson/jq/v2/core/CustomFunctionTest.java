@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,7 +34,7 @@ public class CustomFunctionTest {
 					public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version ver) {
 						return (frame, in, path, output) -> {
 							args.get(0).apply(frame, in, UntrackedPath.getInstance(), (numberNode, opath) -> {
-								int n = jsonProvider.asInt(numberNode);
+								int n = Objects.requireNonNull(jsonProvider.asInt(numberNode));
 								output.emit(jsonProvider.createNumber(n * 100), UntrackedPath.getInstance());
 							});
 						};
