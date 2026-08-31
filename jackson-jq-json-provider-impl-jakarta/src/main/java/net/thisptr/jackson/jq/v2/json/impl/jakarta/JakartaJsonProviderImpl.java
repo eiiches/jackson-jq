@@ -26,6 +26,7 @@ import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.NumberType;
 
 /**
  * A jackson-jq JSON provider backed by the Jakarta JSON Processing tree model.
@@ -131,6 +132,41 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 			default:
 				throw new IllegalStateException("Unknown JSON-P value type: " + node.getValueType());
 		}
+	}
+
+	@Override
+	public NumberType getNumberType(JsonValue node) {
+		if (!(node instanceof JsonNumber))
+			throw new IllegalArgumentException("Cannot get the number type of " + getNodeType(node));
+		// Our own wrapper always holds a double, so a value created from a float reports as DOUBLE.
+		if (node instanceof FloatingPointJsonNumber)
+			return NumberType.DOUBLE;
+		Number number;
+		try {
+			number = ((JsonNumber) node).numberValue();
+		} catch (UnsupportedOperationException e) {
+			// JsonNumber.numberValue() is a JSON-P 2.1 default method that throws unless the
+			// implementation overrides it. Parsson does; not every JSON-P provider has to.
+			return NumberType.UNKNOWN;
+		}
+		return numberTypeOf(number);
+	}
+
+	private static NumberType numberTypeOf(Number number) {
+		// Short and Byte join Integer, mirroring Jackson's ShortNode reporting as INT.
+		if (number instanceof Integer || number instanceof Short || number instanceof Byte)
+			return NumberType.INT;
+		if (number instanceof Long)
+			return NumberType.LONG;
+		if (number instanceof BigInteger)
+			return NumberType.BIG_INTEGER;
+		if (number instanceof BigDecimal)
+			return NumberType.BIG_DECIMAL;
+		if (number instanceof Double)
+			return NumberType.DOUBLE;
+		if (number instanceof Float)
+			return NumberType.FLOAT;
+		return NumberType.UNKNOWN;
 	}
 
 	@Override

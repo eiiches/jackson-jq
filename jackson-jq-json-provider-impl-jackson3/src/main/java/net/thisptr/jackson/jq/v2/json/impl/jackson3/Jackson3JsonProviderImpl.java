@@ -21,6 +21,7 @@ import tools.jackson.databind.node.FloatNode;
 import tools.jackson.databind.node.IntNode;
 import tools.jackson.databind.node.LongNode;
 import tools.jackson.databind.node.NullNode;
+import tools.jackson.databind.node.NumericNode;
 import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.databind.node.StringNode;
 
@@ -28,6 +29,7 @@ import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.NumberType;
 
 public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	private static final Jackson3JsonProviderImpl DEFAULT_INSTANCE = new Jackson3JsonProviderImpl(JsonMapper.builder().addModule(JsonQueryJacksonModule.getInstance()).build());
@@ -119,6 +121,23 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 			case OBJECT -> JsonNodeType.OBJECT;
 			case STRING -> JsonNodeType.STRING;
 			default -> throw new IllegalStateException("Unknown JsonNodeType: " + node.getNodeType());
+		};
+	}
+
+	@Override
+	public NumberType getNumberType(JsonNode node) {
+		// NumericNode is exactly what JsonNode.isNumber() covers.
+		if (!(node instanceof NumericNode))
+			throw new IllegalArgumentException("Cannot get the number type of " + getNodeType(node));
+		return switch (((NumericNode) node).numberType()) {
+			// Jackson maps ShortNode to INT too.
+			case INT -> NumberType.INT;
+			case LONG -> NumberType.LONG;
+			case BIG_INTEGER -> NumberType.BIG_INTEGER;
+			case BIG_DECIMAL -> NumberType.BIG_DECIMAL;
+			case DOUBLE -> NumberType.DOUBLE;
+			case FLOAT -> NumberType.FLOAT;
+			default -> NumberType.UNKNOWN;
 		};
 	}
 

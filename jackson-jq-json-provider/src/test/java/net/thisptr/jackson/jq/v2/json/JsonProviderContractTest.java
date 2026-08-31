@@ -751,4 +751,51 @@ public abstract class JsonProviderContractTest<T> {
 		assertThat(json).contains("\"<tag>\"");
 		assertThat(json).doesNotContain("\\u003c"); // Should not Unicode-escape <
 	}
+
+	// ================================
+	// getNumberType Tests
+	// ================================
+
+	@Test
+	void testGetNumberTypeOnNonNumberThrows() {
+		assertThatThrownBy(() -> provider.getNumberType(provider.createString("42"))).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.getNumberType(provider.createBoolean(true))).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.getNumberType(provider.createNull())).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.getNumberType(provider.createArray(Collections.emptyList()))).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> provider.getNumberType(provider.createObject(Collections.emptyMap()))).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	void testGetNumberTypeIsConsistentWithTheAccessors() {
+		// Whatever a provider reports, the matching accessor has to work on that node.
+		List<T> numbers = Arrays.asList(
+				provider.createNumber(42),
+				provider.createNumber(9999999999L),
+				provider.createNumber(3.14f),
+				provider.createNumber(3.14159),
+				provider.createNumber(new BigInteger("123456789012345678901234567890")),
+				provider.createNumber(new BigDecimal("1.5")),
+				provider.parse("1"),
+				provider.parse("1e10"));
+		for (T number : numbers) {
+			NumberType type = provider.getNumberType(number);
+			assertThat(type).isNotNull();
+			switch (type) {
+				case INT:
+					assertThat(provider.asInt(number)).isEqualTo(Objects.requireNonNull(provider.asBigDecimal(number)).intValueExact());
+					break;
+				case LONG:
+					assertThat(provider.asLong(number)).isEqualTo(Objects.requireNonNull(provider.asBigDecimal(number)).longValueExact());
+					break;
+				case BIG_INTEGER:
+				case BIG_DECIMAL:
+					assertThat(provider.asBigDecimal(number)).isNotNull();
+					break;
+				default:
+					// DOUBLE, FLOAT and UNKNOWN promise nothing beyond being numbers.
+					assertThat(provider.getNodeType(number)).isEqualTo(JsonNodeType.NUMBER);
+					break;
+			}
+		}
+	}
 }

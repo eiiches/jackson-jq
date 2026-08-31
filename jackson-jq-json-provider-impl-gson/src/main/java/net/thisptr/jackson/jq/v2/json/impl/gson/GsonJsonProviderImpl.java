@@ -29,6 +29,7 @@ import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.NumberType;
 
 public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	private static final GsonJsonProviderImpl DEFAULT_INSTANCE = new GsonJsonProviderImpl(GsonUtils.createJqCompatibleGson());
@@ -133,6 +134,32 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 			}
 		}
 		throw new IllegalStateException("Unknown JsonElement type: " + node.getClass());
+	}
+
+	@Override
+	public NumberType getNumberType(JsonElement node) {
+		if (!node.isJsonPrimitive() || !node.getAsJsonPrimitive().isNumber())
+			throw new IllegalArgumentException("Cannot get the number type of " + getNodeType(node));
+		return numberTypeOf(node.getAsJsonPrimitive().getAsNumber());
+	}
+
+	private static NumberType numberTypeOf(Number number) {
+		// Short and Byte join Integer, mirroring Jackson's ShortNode reporting as INT.
+		if (number instanceof Integer || number instanceof Short || number instanceof Byte)
+			return NumberType.INT;
+		if (number instanceof Long)
+			return NumberType.LONG;
+		if (number instanceof BigInteger)
+			return NumberType.BIG_INTEGER;
+		if (number instanceof BigDecimal)
+			return NumberType.BIG_DECIMAL;
+		if (number instanceof Double)
+			return NumberType.DOUBLE;
+		if (number instanceof Float)
+			return NumberType.FLOAT;
+		// Numbers straight from the parser are Gson's LazilyParsedNumber, which keeps the literal as
+		// text and so commits to no representation at all.
+		return NumberType.UNKNOWN;
 	}
 
 	@Override

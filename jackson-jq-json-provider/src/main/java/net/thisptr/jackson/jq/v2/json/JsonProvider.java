@@ -127,6 +127,22 @@ public interface JsonProvider<JsonNode> {
 	JsonNodeType getNodeType(JsonNode node);
 
 	/**
+	 * Returns the Java type this provider uses to represent the given number node.
+	 * <p>
+	 * Unlike {@link #asInt(Object)} and friends, this answers without converting the value, so it is
+	 * a cheap way to ask what a number actually is. The answer describes the representation rather
+	 * than the logical value, and is deliberately not promised to be the same across providers: a
+	 * provider that widens on construction, or that stores every number the same way, reports what it
+	 * actually holds. {@link NumberType#UNKNOWN} means the node is a number whose representation the
+	 * provider does not track.
+	 *
+	 * @param node the JSON number node
+	 * @return the representation of {@code node}
+	 * @throws IllegalArgumentException if the node is not a number
+	 */
+	NumberType getNumberType(JsonNode node);
+
+	/**
 	 * Returns the node's value under jq truthiness semantics: {@code null} and the boolean
 	 * {@code false} are falsy, every other value (including {@code 0}, {@code ""}, and empty
 	 * arrays/objects) is truthy.
