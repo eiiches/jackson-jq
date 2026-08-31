@@ -356,11 +356,6 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public boolean hasArrayElement(JsonValue node, int index) {
-		return node instanceof JsonArray && index >= 0 && index < ((JsonArray) node).size();
-	}
-
-	@Override
 	public JsonValue deepCopy(JsonValue node) {
 		return node;
 	}

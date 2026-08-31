@@ -370,11 +370,6 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public boolean hasArrayElement(JsonNode node, int index) {
-		return node.has(index);
-	}
-
-	@Override
 	public JsonNode deepCopy(JsonNode node) {
 		return node.deepCopy();
 	}

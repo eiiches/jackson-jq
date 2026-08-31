@@ -379,15 +379,6 @@ public interface JsonProvider<JsonNode> {
 	boolean hasObjectField(JsonNode node, String fieldName);
 
 	/**
-	 * Returns whether the given index is within range of the array node.
-	 *
-	 * @param node the JSON node
-	 * @param index the element index
-	 * @return {@code true} if {@code node} is an array and {@code index} is within its bounds
-	 */
-	boolean hasArrayElement(JsonNode node, int index);
-
-	/**
 	 * Returns a deep copy of the node, safe to mutate without affecting the original.
 	 * <p>
 	 * For providers whose native node type is already immutable, this may return the same instance.

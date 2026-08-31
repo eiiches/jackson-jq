@@ -381,15 +381,6 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public boolean hasArrayElement(JsonElement node, int index) {
-		if (node.isJsonArray()) {
-			JsonArray array = node.getAsJsonArray();
-			return index >= 0 && index < array.size();
-		}
-		return false;
-	}
-
-	@Override
 	public JsonElement deepCopy(JsonElement node) {
 		return node.deepCopy();
 	}

@@ -10,6 +10,12 @@
   - [true, true]
   v: '[1.5, )'
 
+- q: '[has(-1), has(0), has(2), has(3)]'
+  in: [0, 1, 2]
+  out:
+  - [false, true, true, false]
+  v: '[1.5, )'
+
 - q: '[has(1e20), has(nan)]'
   in: [0, 1, 2]
   out:
