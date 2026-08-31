@@ -158,7 +158,9 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 
 	@Override
 	public boolean getBoolean(JsonNode node) {
-		return node.asBoolean();
+		if (!node.isBoolean())
+			throw new IllegalArgumentException("Cannot get the boolean value of " + getNodeType(node));
+		return node.booleanValue();
 	}
 
 	@Override
@@ -207,7 +209,10 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 
 	@Override
 	public String getString(JsonNode node) {
-		return node.asText();
+		// Prefer isTextual()/textValue() over isString()/stringValue() for broader Jackson 2.x version compatibility
+		if (!node.isTextual())
+			throw new IllegalArgumentException("Cannot get the string value of " + getNodeType(node));
+		return node.textValue();
 	}
 
 	@Override

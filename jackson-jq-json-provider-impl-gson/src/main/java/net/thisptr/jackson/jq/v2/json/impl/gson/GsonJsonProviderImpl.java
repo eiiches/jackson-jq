@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -164,17 +163,9 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 
 	@Override
 	public boolean getBoolean(JsonElement node) {
-		if (node.isJsonPrimitive()) {
-			JsonPrimitive primitive = node.getAsJsonPrimitive();
-			if (primitive.isBoolean()) {
-				return primitive.getAsBoolean();
-			}
-		}
-		// jq semantics: null and false are falsy, everything else is truthy
-		if (node.isJsonNull()) {
-			return false;
-		}
-		return true;
+		if (!node.isJsonPrimitive() || !node.getAsJsonPrimitive().isBoolean())
+			throw new IllegalArgumentException("Cannot get the boolean value of " + getNodeType(node));
+		return node.getAsJsonPrimitive().getAsBoolean();
 	}
 
 	@Override
@@ -210,13 +201,9 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 
 	@Override
 	public String getString(JsonElement node) {
-		if (node.isJsonNull()) {
-			return "null";
-		}
-		if (node.isJsonPrimitive()) {
-			return node.getAsJsonPrimitive().getAsString();
-		}
-		return gson.toJson(node);
+		if (!node.isJsonPrimitive() || !node.getAsJsonPrimitive().isString())
+			throw new IllegalArgumentException("Cannot get the string value of " + getNodeType(node));
+		return node.getAsJsonPrimitive().getAsString();
 	}
 
 	@Override

@@ -9,7 +9,6 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -171,7 +170,10 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 
 	@Override
 	public boolean getBoolean(JsonValue node) {
-		return node.getValueType() != JsonValue.ValueType.FALSE && node.getValueType() != JsonValue.ValueType.NULL;
+		JsonValue.ValueType type = node.getValueType();
+		if (type != JsonValue.ValueType.TRUE && type != JsonValue.ValueType.FALSE)
+			throw new IllegalArgumentException("Cannot get the boolean value of " + getNodeType(node));
+		return type == JsonValue.ValueType.TRUE;
 	}
 
 	@Override
@@ -209,11 +211,9 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 
 	@Override
 	public String getString(JsonValue node) {
-		if (node instanceof JsonString)
-			return ((JsonString) node).getString();
-		if (node.getValueType() == JsonValue.ValueType.NULL)
-			return "null";
-		return node instanceof JsonArray || node instanceof JsonObject ? format(node) : node.toString();
+		if (!(node instanceof JsonString))
+			throw new IllegalArgumentException("Cannot get the string value of " + getNodeType(node));
+		return ((JsonString) node).getString();
 	}
 
 	@Override

@@ -143,7 +143,9 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 
 	@Override
 	public boolean getBoolean(JsonNode node) {
-		return node.asBoolean();
+		if (!node.isBoolean())
+			throw new IllegalArgumentException("Cannot get the boolean value of " + getNodeType(node));
+		return node.booleanValue();
 	}
 
 	@Override
@@ -194,11 +196,9 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 
 	@Override
 	public String getString(JsonNode node) {
-		// Jackson3's NullNode.asString() returns "" but we need "null" to match Jackson2 behavior
-		if (node.isNull()) {
-			return "null";
-		}
-		return node.asString();
+		if (!node.isString())
+			throw new IllegalArgumentException("Cannot get the string value of " + getNodeType(node));
+		return node.stringValue();
 	}
 
 	@Override

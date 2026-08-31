@@ -337,6 +337,32 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
+	void testGetStringRejectsNonStrings() {
+		List<T> nonStrings = Arrays.asList(
+				provider.createArray(Collections.emptyList()),
+				provider.createObject(Collections.emptyMap()),
+				provider.createNumber(1),
+				provider.createBoolean(true),
+				provider.createNull());
+
+		for (T node : nonStrings)
+			assertThatThrownBy(() -> provider.getString(node)).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	void testGetBooleanRejectsNonBooleans() {
+		List<T> nonBooleans = Arrays.asList(
+				provider.createArray(Collections.emptyList()),
+				provider.createObject(Collections.emptyMap()),
+				provider.createNumber(0),
+				provider.createString("abc"),
+				provider.createNull());
+
+		for (T node : nonBooleans)
+			assertThatThrownBy(() -> provider.getBoolean(node)).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
 	void testCreateObject() {
 		T node = provider.createObject(Collections.emptyMap());
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.OBJECT);
@@ -712,13 +738,6 @@ public abstract class JsonProviderContractTest<T> {
 	// ================================
 	// Special Number Handling Tests
 	// ================================
-
-	@Test
-	void testGetStringOnNullNode() {
-		// getString on a null node should return "null", not an empty string
-		T node = provider.createNull();
-		assertThat(provider.getString(node)).isEqualTo("null");
-	}
 
 	// ================================
 	// Serialization of Special Values

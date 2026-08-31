@@ -41,7 +41,7 @@ public class _SubImplFunction implements Function {
 				for (OnigUtils.Pattern pattern : precompiled.patterns()) {
 					List<JsonNode> match = match(jsonProvider, pattern, jsonProvider.getString(in));
 					for (int i = 0; i < precompiled.flagsMultiplicity(); i++)
-						replaceAndConcat(jsonProvider, frame, new ArrayDeque<>(), output, match, replaceExpr, in, flagsExpr);
+						replaceAndConcat(jsonProvider, frame, new ArrayDeque<>(), output, match, replaceExpr, in, flagsExpr, version);
 				}
 			});
 		}
@@ -60,14 +60,14 @@ public class _SubImplFunction implements Function {
 
 					// This just repeats same emit()s the number of times as the number of flags. This is to emulate jq behavior (which is probably a bug).
 					flagsExpr.apply(frame, in, UntrackedPath.getInstance(), (dummy, opath3) -> {
-						replaceAndConcat(jsonProvider, frame, new ArrayDeque<>(), output, match, replaceExpr, in, flagsExpr);
+						replaceAndConcat(jsonProvider, frame, new ArrayDeque<>(), output, match, replaceExpr, in, flagsExpr, version);
 					});
 				});
 			});
 		});
 	}
 
-	private <Context, JsonNode> void replaceAndConcat(JsonProvider<JsonNode> jsonProvider, Context context, Deque<String> stack, Output<JsonNode> output, List<JsonNode> match, Expression<Context, JsonNode> replaceExpr, JsonNode in, Expression<Context, JsonNode> flags) throws JsonQueryException {
+	private <Context, JsonNode> void replaceAndConcat(JsonProvider<JsonNode> jsonProvider, Context context, Deque<String> stack, Output<JsonNode> output, List<JsonNode> match, Expression<Context, JsonNode> replaceExpr, JsonNode in, Expression<Context, JsonNode> flags, Version version) throws JsonQueryException {
 		if (match.isEmpty()) {
 			StringBuilder sb = new StringBuilder();
 			for (String s : stack) {
@@ -82,12 +82,22 @@ public class _SubImplFunction implements Function {
 
 		if (jsonProvider.getNodeType(rhead) == JsonNodeType.STRING) {
 			stack.push(jsonProvider.getString(rhead));
-			replaceAndConcat(jsonProvider, context, stack, output, rtail, replaceExpr, in, flags);
+			replaceAndConcat(jsonProvider, context, stack, output, rtail, replaceExpr, in, flags, version);
 			stack.pop();
 		} else {
 			replaceExpr.apply(context, rhead, UntrackedPath.getInstance(), (replacement, opath) -> {
-				stack.push(jsonProvider.getString(replacement));
-				replaceAndConcat(jsonProvider, context, stack, output, rtail, replaceExpr, in, flags);
+				// jq concatenates the replacement onto the text preceding the match, so a null
+				// replacement contributes nothing and anything else non-string is a type error.
+				JsonNodeType replacementType = jsonProvider.getNodeType(replacement);
+				if (replacementType != JsonNodeType.STRING && replacementType != JsonNodeType.NULL) {
+					// jq names the preceding literal as the left operand. match() alternates
+					// [literal, captures, ..., literal], so a captures rhead always leaves one at
+					// the end of rtail. We replace right-to-left where jq goes left-to-right, so
+					// with several matches this names the last one's literal, not the first one's.
+					throw Preconditions.cannotBeAdded(jsonProvider, version, rtail.get(rtail.size() - 1), replacement);
+				}
+				stack.push(replacementType == JsonNodeType.STRING ? jsonProvider.getString(replacement) : "");
+				replaceAndConcat(jsonProvider, context, stack, output, rtail, replaceExpr, in, flags, version);
 				stack.pop();
 			});
 		}

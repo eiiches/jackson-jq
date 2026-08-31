@@ -143,12 +143,14 @@ public interface JsonProvider<JsonNode> {
 	NumberType getNumberType(JsonNode node);
 
 	/**
-	 * Returns the node's value under jq truthiness semantics: {@code null} and the boolean
-	 * {@code false} are falsy, every other value (including {@code 0}, {@code ""}, and empty
-	 * arrays/objects) is truthy.
+	 * Returns the value of a boolean node.
+	 * <p>
+	 * This is not jq's truthiness test, which accepts any node and treats everything other than
+	 * {@code null} and {@code false} as true.
 	 *
-	 * @param node the JSON node
-	 * @return {@code false} if the node is JSON {@code null} or boolean {@code false}, {@code true} otherwise
+	 * @param node the JSON boolean node
+	 * @return the boolean value
+	 * @throws IllegalArgumentException if the node is not a boolean
 	 */
 	boolean getBoolean(JsonNode node);
 
@@ -205,14 +207,14 @@ public interface JsonProvider<JsonNode> {
 	@Nullable BigInteger getNumberAsBigIntegerTruncated(JsonNode node);
 
 	/**
-	 * Returns the textual value of the node.
+	 * Returns the raw (unescaped) value of a string node.
 	 * <p>
-	 * String nodes return their raw (unescaped) value. The {@code null} node returns the literal
-	 * string {@code "null"}, not an empty string. For array and object nodes, the returned
-	 * representation is implementation-defined.
+	 * No other node type is converted; {@link #format(Object)} renders an arbitrary node as JSON
+	 * text.
 	 *
-	 * @param node the JSON node
-	 * @return the textual representation of the node
+	 * @param node the JSON string node
+	 * @return the string value
+	 * @throws IllegalArgumentException if the node is not a string
 	 */
 	String getString(JsonNode node);
 
@@ -324,7 +326,7 @@ public interface JsonProvider<JsonNode> {
 	/**
 	 * Returns the element at the given index.
 	 *
-	 * @param node the JSON node
+	 * @param node the JSON array node
 	 * @param index the element index
 	 * @return the element at {@code index}
 	 * @throws IllegalArgumentException if the node is not an array
@@ -348,7 +350,7 @@ public interface JsonProvider<JsonNode> {
 	/**
 	 * Returns the number of elements in an array.
 	 *
-	 * @param node the JSON node
+	 * @param node the JSON array node
 	 * @return the number of elements
 	 * @throws IllegalArgumentException if the node is not an array
 	 */
@@ -357,7 +359,7 @@ public interface JsonProvider<JsonNode> {
 	/**
 	 * Returns the number of fields in an object.
 	 *
-	 * @param node the JSON node
+	 * @param node the JSON object node
 	 * @return the number of fields
 	 * @throws IllegalArgumentException if the node is not an object
 	 */
