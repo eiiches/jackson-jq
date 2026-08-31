@@ -171,6 +171,28 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
+	public @Nullable BigInteger asBigInteger(JsonNode node) {
+		if (!node.isNumber())
+			throw new IllegalArgumentException("Cannot convert non-number to BigInteger");
+		BigDecimal value = asBigDecimal(node);
+		if (value == null)
+			return null;
+		try {
+			return value.toBigIntegerExact();
+		} catch (ArithmeticException e) {
+			return null;
+		}
+	}
+
+	@Override
+	public @Nullable BigInteger asBigIntegerTruncated(JsonNode node) {
+		if (!node.isNumber())
+			throw new IllegalArgumentException("Cannot convert non-number to BigInteger");
+		BigDecimal value = asBigDecimal(node);
+		return value == null ? null : value.toBigInteger();
+	}
+
+	@Override
 	public String asString(JsonNode node) {
 		// Jackson3's NullNode.asString() returns "" but we need "null" to match Jackson2 behavior
 		if (node.isNull()) {

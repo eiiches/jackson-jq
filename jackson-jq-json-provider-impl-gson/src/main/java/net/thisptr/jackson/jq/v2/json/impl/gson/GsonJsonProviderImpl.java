@@ -184,15 +184,28 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 
 	@Override
 	public @Nullable BigDecimal asBigDecimal(JsonElement node) {
-		if (!node.isJsonPrimitive() || !node.getAsJsonPrimitive().isNumber())
-			throw new IllegalArgumentException("Cannot convert non-number to BigDecimal");
-		JsonPrimitive primitive = node.getAsJsonPrimitive();
-		Number number = primitive.getAsNumber();
-		if ((number instanceof Double || number instanceof Float) && !Double.isFinite(number.doubleValue()))
-			return null;
+		JsonPrimitive primitive = requireNumber(node, "BigDecimal");
 		// Gson goes through Number.toString(), i.e. the shortest round-trip representation for
 		// Double/Float (e.g. 0.1 stays 0.1) and the original literal for parsed numbers.
-		return primitive.getAsBigDecimal();
+		return finiteDecimal(primitive);
+	}
+
+	@Override
+	public @Nullable BigInteger asBigInteger(JsonElement node) {
+		BigDecimal value = finiteDecimal(requireNumber(node, "BigInteger"));
+		if (value == null)
+			return null;
+		try {
+			return value.toBigIntegerExact();
+		} catch (ArithmeticException e) {
+			return null;
+		}
+	}
+
+	@Override
+	public @Nullable BigInteger asBigIntegerTruncated(JsonElement node) {
+		BigDecimal value = finiteDecimal(requireNumber(node, "BigInteger"));
+		return value == null ? null : value.toBigInteger();
 	}
 
 	@Override
@@ -283,7 +296,8 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	 * The value as a BigDecimal, or null for NaN and the infinities, which BigDecimal cannot hold.
 	 */
 	private static @Nullable BigDecimal finiteDecimal(JsonPrimitive primitive) {
-		if (!Double.isFinite(primitive.getAsDouble()))
+		Number number = primitive.getAsNumber();
+		if ((number instanceof Double || number instanceof Float) && !Double.isFinite(number.doubleValue()))
 			return null;
 		return primitive.getAsBigDecimal();
 	}

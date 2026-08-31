@@ -173,6 +173,8 @@ public abstract class JsonProviderContractTest<T> {
 		T positive = provider.createNumber(1.9);
 		T negative = provider.createNumber(-1.9);
 
+		assertThat(provider.asBigInteger(positive)).isNull();
+		assertThat(provider.asBigInteger(negative)).isNull();
 		assertThat(provider.asInt(positive)).isNull();
 		assertThat(provider.asInt(negative)).isNull();
 		assertThat(provider.asLong(positive)).isNull();
@@ -193,6 +195,8 @@ public abstract class JsonProviderContractTest<T> {
 	void testIntegralAccessorsReturnNullForNonFiniteValues() {
 		for (double value : new double[] { Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY }) {
 			T node = provider.createNumber(value);
+			assertThat(provider.asBigInteger(node)).isNull();
+			assertThat(provider.asBigIntegerTruncated(node)).isNull();
 			assertThat(provider.asInt(node)).isNull();
 			assertThat(provider.asLong(node)).isNull();
 			assertThat(provider.asIntTruncated(node)).isNull();
@@ -209,6 +213,8 @@ public abstract class JsonProviderContractTest<T> {
 				provider.createArray(Collections.emptyList()),
 				provider.createObject(Collections.emptyMap()));
 		for (T node : nonNumbers) {
+			assertThatThrownBy(() -> provider.asBigInteger(node)).isInstanceOf(IllegalArgumentException.class);
+			assertThatThrownBy(() -> provider.asBigIntegerTruncated(node)).isInstanceOf(IllegalArgumentException.class);
 			assertThatThrownBy(() -> provider.asInt(node)).isInstanceOf(IllegalArgumentException.class);
 			assertThatThrownBy(() -> provider.asLong(node)).isInstanceOf(IllegalArgumentException.class);
 			assertThatThrownBy(() -> provider.asIntTruncated(node)).isInstanceOf(IllegalArgumentException.class);
@@ -249,10 +255,27 @@ public abstract class JsonProviderContractTest<T> {
 		T positive = provider.createNumber(1.9);
 		T negative = provider.createNumber(-1.9);
 
+		assertThat(provider.asBigIntegerTruncated(positive)).isEqualTo(BigInteger.ONE);
+		assertThat(provider.asBigIntegerTruncated(negative)).isEqualTo(BigInteger.ONE.negate());
 		assertThat(provider.asIntTruncated(positive)).isEqualTo(1);
 		assertThat(provider.asIntTruncated(negative)).isEqualTo(-1);
 		assertThat(provider.asLongTruncated(positive)).isEqualTo(1L);
 		assertThat(provider.asLongTruncated(negative)).isEqualTo(-1L);
+	}
+
+	@Test
+	void testBigIntegerConversionsHaveNoRangeLimit() {
+		BigInteger hugeInteger = BigInteger.TEN.pow(400);
+		assertThat(provider.asBigInteger(provider.createNumber(hugeInteger))).isEqualTo(hugeInteger);
+		assertThat(provider.asBigInteger(provider.createNumber(new BigDecimal("1.000e400")))).isEqualTo(hugeInteger);
+		assertThat(provider.asBigInteger(provider.createNumber(1e100))).isEqualTo(BigInteger.TEN.pow(100));
+		assertThat(provider.asBigInteger(provider.createNumber(42.0f))).isEqualTo(BigInteger.valueOf(42));
+
+		BigDecimal hugeFraction = new BigDecimal(hugeInteger).add(new BigDecimal("0.9"));
+		assertThat(provider.asBigIntegerTruncated(provider.createNumber(hugeFraction))).isEqualTo(hugeInteger);
+		assertThat(provider.asBigIntegerTruncated(provider.createNumber(hugeFraction.negate()))).isEqualTo(hugeInteger.negate());
+		assertThat(provider.asBigIntegerTruncated(provider.createNumber(0.9))).isEqualTo(BigInteger.ZERO);
+		assertThat(provider.asBigIntegerTruncated(provider.createNumber(-0.9))).isEqualTo(BigInteger.ZERO);
 	}
 
 	@Test
@@ -771,6 +794,8 @@ public abstract class JsonProviderContractTest<T> {
 					assertThat(provider.asLong(number)).isEqualTo(Objects.requireNonNull(provider.asBigDecimal(number)).longValueExact());
 					break;
 				case BIG_INTEGER:
+					assertThat(provider.asBigInteger(number)).isEqualTo(Objects.requireNonNull(provider.asBigDecimal(number)).toBigIntegerExact());
+					break;
 				case BIG_DECIMAL:
 					assertThat(provider.asBigDecimal(number)).isNotNull();
 					break;

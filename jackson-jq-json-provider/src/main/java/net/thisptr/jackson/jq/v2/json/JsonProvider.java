@@ -183,6 +183,28 @@ public interface JsonProvider<JsonNode> {
 	@Nullable BigDecimal asBigDecimal(JsonNode node);
 
 	/**
+	 * Returns the exact value of a number node as a {@link BigInteger}.
+	 * <p>
+	 * A value a {@code BigInteger} cannot hold intact -- one with a fractional part, {@code NaN} or
+	 * an infinity -- is reported as {@code null}. There is no range limit.
+	 *
+	 * @param node the JSON number node
+	 * @return the integer value, or {@code null} if it is not exactly representable as a BigInteger
+	 * @throws IllegalArgumentException if the node is not a number
+	 */
+	@Nullable BigInteger asBigInteger(JsonNode node);
+
+	/**
+	 * Returns a number node's value as a {@link BigInteger}, truncating any fractional part toward
+	 * zero.
+	 *
+	 * @param node the JSON number node
+	 * @return the truncated integer value, or {@code null} if the value is NaN or an infinity
+	 * @throws IllegalArgumentException if the node is not a number
+	 */
+	@Nullable BigInteger asBigIntegerTruncated(JsonNode node);
+
+	/**
 	 * Returns the textual value of the node.
 	 * <p>
 	 * String nodes return their raw (unescaped) value. The {@code null} node returns the literal

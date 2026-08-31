@@ -190,6 +190,24 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
+	public @Nullable BigInteger asBigInteger(JsonValue node) {
+		BigDecimal value = finiteDecimal(requireNumber(node, "BigInteger"));
+		if (value == null)
+			return null;
+		try {
+			return value.toBigIntegerExact();
+		} catch (ArithmeticException e) {
+			return null;
+		}
+	}
+
+	@Override
+	public @Nullable BigInteger asBigIntegerTruncated(JsonValue node) {
+		BigDecimal value = finiteDecimal(requireNumber(node, "BigInteger"));
+		return value == null ? null : value.toBigInteger();
+	}
+
+	@Override
 	public String asString(JsonValue node) {
 		if (node instanceof JsonString)
 			return ((JsonString) node).getString();
