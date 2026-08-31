@@ -351,7 +351,16 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public int size(JsonNode node) {
+	public int getArrayLength(JsonNode node) {
+		if (!node.isArray())
+			throw new IllegalArgumentException("Expected an array node");
+		return node.size();
+	}
+
+	@Override
+	public int getObjectSize(JsonNode node) {
+		if (!node.isObject())
+			throw new IllegalArgumentException("Expected an object node");
 		return node.size();
 	}
 

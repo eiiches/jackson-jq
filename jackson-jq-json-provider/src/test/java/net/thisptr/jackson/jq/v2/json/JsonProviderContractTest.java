@@ -344,21 +344,21 @@ public abstract class JsonProviderContractTest<T> {
 	void testCreateObject() {
 		T node = provider.createObject(Collections.emptyMap());
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.OBJECT);
-		assertThat(provider.size(node)).isEqualTo(0);
+		assertThat(provider.getObjectSize(node)).isEqualTo(0);
 	}
 
 	@Test
 	void testCreateArray() {
 		T node = provider.createArray(Collections.emptyList());
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.ARRAY);
-		assertThat(provider.size(node)).isEqualTo(0);
+		assertThat(provider.getArrayLength(node)).isEqualTo(0);
 	}
 
 	@Test
 	void testCreateArrayFromValues() {
 		T node = provider.createArray(Arrays.asList(provider.createNumber(1), provider.createString("two")));
 
-		assertThat(provider.size(node)).isEqualTo(2);
+		assertThat(provider.getArrayLength(node)).isEqualTo(2);
 		assertThat(provider.getNumberAsIntExact(requireGet(node, 0))).isEqualTo(1);
 		assertThat(provider.getString(requireGet(node, 1))).isEqualTo("two");
 	}
@@ -370,9 +370,35 @@ public abstract class JsonProviderContractTest<T> {
 		values.put("two", provider.createString("two"));
 		T node = provider.createObject(values);
 
-		assertThat(provider.size(node)).isEqualTo(2);
+		assertThat(provider.getObjectSize(node)).isEqualTo(2);
 		assertThat(provider.getNumberAsIntExact(requireGetObjectField(node, "one"))).isEqualTo(1);
 		assertThat(provider.getString(requireGetObjectField(node, "two"))).isEqualTo("two");
+	}
+
+	@Test
+	void testGetArrayLengthRejectsNonArrays() {
+		List<T> nonArrays = Arrays.asList(
+				provider.createObject(Collections.emptyMap()),
+				provider.createString("value"),
+				provider.createNumber(1),
+				provider.createBoolean(true),
+				provider.createNull());
+
+		for (T node : nonArrays)
+			assertThatThrownBy(() -> provider.getArrayLength(node)).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	void testGetObjectSizeRejectsNonObjects() {
+		List<T> nonObjects = Arrays.asList(
+				provider.createArray(Collections.emptyList()),
+				provider.createString("value"),
+				provider.createNumber(1),
+				provider.createBoolean(true),
+				provider.createNull());
+
+		for (T node : nonObjects)
+			assertThatThrownBy(() -> provider.getObjectSize(node)).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	// ===================
@@ -486,7 +512,7 @@ public abstract class JsonProviderContractTest<T> {
 		T node = provider.parse("[1, 2, 3]");
 
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.ARRAY);
-		assertThat(provider.size(node)).isEqualTo(3);
+		assertThat(provider.getArrayLength(node)).isEqualTo(3);
 	}
 
 	@Test
@@ -564,7 +590,7 @@ public abstract class JsonProviderContractTest<T> {
 		// Verify structure
 		T retrievedNested = requireGetObjectField(outer, "outer");
 		T retrievedArray = requireGetObjectField(retrievedNested, "inner");
-		assertThat(provider.size(retrievedArray)).isEqualTo(3);
+		assertThat(provider.getArrayLength(retrievedArray)).isEqualTo(3);
 		assertThat(provider.getNumberAsIntExact(requireGet(retrievedArray, 1))).isEqualTo(2);
 	}
 

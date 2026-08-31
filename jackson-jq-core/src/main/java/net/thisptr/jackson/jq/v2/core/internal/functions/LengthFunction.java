@@ -38,8 +38,10 @@ public class LengthFunction implements Function {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type == JsonNodeType.STRING) {
 			return jsonProvider.createNumber(UnicodeUtils.lengthUtf32(jsonProvider.getString(in)));
-		} else if (type == JsonNodeType.ARRAY || type == JsonNodeType.OBJECT) {
-			return jsonProvider.createNumber(jsonProvider.size(in));
+		} else if (type == JsonNodeType.ARRAY) {
+			return jsonProvider.createNumber(jsonProvider.getArrayLength(in));
+		} else if (type == JsonNodeType.OBJECT) {
+			return jsonProvider.createNumber(jsonProvider.getObjectSize(in));
 		} else if (type == JsonNodeType.NULL) {
 			return jsonProvider.createNumber(0);
 		} else if (type == JsonNodeType.NUMBER) {

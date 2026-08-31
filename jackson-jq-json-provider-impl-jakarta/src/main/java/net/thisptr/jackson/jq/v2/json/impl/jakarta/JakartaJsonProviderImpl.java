@@ -337,12 +337,17 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public int size(JsonValue node) {
-		if (node instanceof JsonArray)
-			return ((JsonArray) node).size();
-		if (node instanceof JsonObject)
-			return ((JsonObject) node).size();
-		return 0;
+	public int getArrayLength(JsonValue node) {
+		if (!(node instanceof JsonArray))
+			throw new IllegalArgumentException("Expected an array node");
+		return ((JsonArray) node).size();
+	}
+
+	@Override
+	public int getObjectSize(JsonValue node) {
+		if (!(node instanceof JsonObject))
+			throw new IllegalArgumentException("Expected an object node");
+		return ((JsonObject) node).size();
 	}
 
 	@Override

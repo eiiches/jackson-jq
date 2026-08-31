@@ -133,8 +133,8 @@ public final class PathOperations {
 				output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
 				return;
 			}
-			int resolvedIndex = indexAsInt < 0 ? indexAsInt + jsonProvider.size(parent) : indexAsInt;
-			if (resolvedIndex < 0 || jsonProvider.size(parent) <= resolvedIndex) {
+			int resolvedIndex = indexAsInt < 0 ? indexAsInt + jsonProvider.getArrayLength(parent) : indexAsInt;
+			if (resolvedIndex < 0 || jsonProvider.getArrayLength(parent) <= resolvedIndex) {
 				output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
 				return;
 			}
@@ -148,8 +148,8 @@ public final class PathOperations {
 
 	public static <JsonNode> void resolveArrayIndex(JsonProvider<JsonNode> jsonProvider, JsonNode parent, Path<JsonNode> parentPath, Output<JsonNode> output, int index, boolean permissive, Version version) throws JsonQueryException {
 		if (jsonProvider.getNodeType(parent) == JsonNodeType.ARRAY) {
-			int resolvedIndex = index < 0 ? index + jsonProvider.size(parent) : index;
-			if (resolvedIndex < 0 || jsonProvider.size(parent) <= resolvedIndex) {
+			int resolvedIndex = index < 0 ? index + jsonProvider.getArrayLength(parent) : index;
+			if (resolvedIndex < 0 || jsonProvider.getArrayLength(parent) <= resolvedIndex) {
 				output.emit(jsonProvider.createNull(), parentPath.appendIndex(index));
 				return;
 			}
@@ -165,7 +165,7 @@ public final class PathOperations {
 		assert jsonProvider.getNodeType(start) == JsonNodeType.NULL || jsonProvider.getNodeType(start) == JsonNodeType.NUMBER;
 		assert jsonProvider.getNodeType(end) == JsonNodeType.NULL || jsonProvider.getNodeType(end) == JsonNodeType.NUMBER;
 		if (jsonProvider.getNodeType(parent) == JsonNodeType.ARRAY) {
-			Range range = Range.resolve(jsonProvider, start, end, jsonProvider.size(parent));
+			Range range = Range.resolve(jsonProvider, start, end, jsonProvider.getArrayLength(parent));
 			List<JsonNode> subarray = new ArrayList<>((int) (range.end - range.start));
 			for (long index = range.start; index < range.end; ++index)
 				subarray.add(jsonProvider.requireGet(parent, (int) index));
@@ -272,16 +272,16 @@ public final class PathOperations {
 			if (truncated == null)
 				throw new JsonQueryException("Array index too large");
 			int indexAsInt = truncated;
-			int resolvedIndex = indexAsInt < 0 ? indexAsInt + jsonProvider.size(in) : indexAsInt;
+			int resolvedIndex = indexAsInt < 0 ? indexAsInt + jsonProvider.getArrayLength(in) : indexAsInt;
 			if (resolvedIndex < 0)
 				throw new JsonQueryException("Out of bounds negative array index");
 
-			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.size(in) ? jsonProvider.requireGet(in, resolvedIndex) : null);
+			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.getArrayLength(in) ? jsonProvider.requireGet(in, resolvedIndex) : null);
 
-			List<JsonNode> out = new ArrayList<>(Math.max(jsonProvider.size(in), resolvedIndex + 1));
-			for (int i = 0; i < jsonProvider.size(in); ++i)
+			List<JsonNode> out = new ArrayList<>(Math.max(jsonProvider.getArrayLength(in), resolvedIndex + 1));
+			for (int i = 0; i < jsonProvider.getArrayLength(in); ++i)
 				out.add(jsonProvider.requireGet(in, i));
-			for (int i = jsonProvider.size(in); i <= resolvedIndex; ++i)
+			for (int i = jsonProvider.getArrayLength(in); i <= resolvedIndex; ++i)
 				out.add(jsonProvider.createNull());
 			out.set(resolvedIndex, newValue);
 			return jsonProvider.createArray(out);
@@ -293,16 +293,16 @@ public final class PathOperations {
 		if (in == null || jsonProvider.getNodeType(in) == JsonNodeType.NULL)
 			in = jsonProvider.createArray(Collections.emptyList());
 		if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
-			int resolvedIndex = index < 0 ? index + jsonProvider.size(in) : index;
+			int resolvedIndex = index < 0 ? index + jsonProvider.getArrayLength(in) : index;
 			if (resolvedIndex < 0)
 				throw new JsonQueryException("Out of bounds negative array index");
 
-			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.size(in) ? jsonProvider.requireGet(in, resolvedIndex) : null);
+			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.getArrayLength(in) ? jsonProvider.requireGet(in, resolvedIndex) : null);
 
-			List<JsonNode> out = new ArrayList<>(Math.max(jsonProvider.size(in), resolvedIndex + 1));
-			for (int i = 0; i < jsonProvider.size(in); ++i)
+			List<JsonNode> out = new ArrayList<>(Math.max(jsonProvider.getArrayLength(in), resolvedIndex + 1));
+			for (int i = 0; i < jsonProvider.getArrayLength(in); ++i)
 				out.add(jsonProvider.requireGet(in, i));
-			for (int i = jsonProvider.size(in); i <= resolvedIndex; ++i)
+			for (int i = jsonProvider.getArrayLength(in); i <= resolvedIndex; ++i)
 				out.add(jsonProvider.createNull());
 			out.set(resolvedIndex, newValue);
 			return jsonProvider.createArray(out);
@@ -316,7 +316,7 @@ public final class PathOperations {
 		if (in == null)
 			in = jsonProvider.createNull();
 		if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
-			Range range = Range.resolve(jsonProvider, start, end, jsonProvider.size(in));
+			Range range = Range.resolve(jsonProvider, start, end, jsonProvider.getArrayLength(in));
 
 			List<JsonNode> oldSlice = new ArrayList<>((int) (range.end - range.start));
 			for (long index = range.start; index < range.end; ++index)
@@ -325,13 +325,13 @@ public final class PathOperations {
 			if (jsonProvider.getNodeType(newValue) != JsonNodeType.ARRAY)
 				throw new JsonQueryTypeException("A slice of an array can only be assigned another array");
 
-			List<JsonNode> out = new ArrayList<>((int) range.start + jsonProvider.size(newValue) + (jsonProvider.size(in) - (int) range.end));
+			List<JsonNode> out = new ArrayList<>((int) range.start + jsonProvider.getArrayLength(newValue) + (jsonProvider.getArrayLength(in) - (int) range.end));
 			for (int index = 0; index < range.start; ++index)
 				out.add(jsonProvider.requireGet(in, index));
 			Iterator<JsonNode> iterator = jsonProvider.getArrayElements(newValue);
 			while (iterator.hasNext())
 				out.add(iterator.next());
-			for (long index = range.end; index < jsonProvider.size(in); ++index)
+			for (long index = range.end; index < jsonProvider.getArrayLength(in); ++index)
 				out.add(jsonProvider.requireGet(in, (int) index));
 			return jsonProvider.createArray(out);
 		}
@@ -352,10 +352,10 @@ public final class PathOperations {
 	private static <JsonNode> JsonNode indexOfAll(JsonProvider<JsonNode> jsonProvider, JsonNode sequence, JsonNode subsequence) {
 		JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
 		List<JsonNode> out = new ArrayList<>();
-		if (jsonProvider.size(subsequence) != 0) {
+		if (jsonProvider.getArrayLength(subsequence) != 0) {
 			shift:
-			for (int i = 0; i < jsonProvider.size(sequence) - jsonProvider.size(subsequence) + 1; ++i) {
-				for (int j = 0; j < jsonProvider.size(subsequence); ++j)
+			for (int i = 0; i < jsonProvider.getArrayLength(sequence) - jsonProvider.getArrayLength(subsequence) + 1; ++i) {
+				for (int j = 0; j < jsonProvider.getArrayLength(subsequence); ++j)
 					if (comparator.compare(jsonProvider.requireGet(sequence, i + j), jsonProvider.requireGet(subsequence, j)) != 0)
 						continue shift;
 				out.add(jsonProvider.createNumber(i));

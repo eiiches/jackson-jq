@@ -41,7 +41,7 @@ public class PlusOperator<JsonNode> implements BinaryOperator<JsonNode> {
 			}
 			return JsonNodeUtils.asNumericNode(jsonProvider, ld + rd);
 		} else if (ltype == JsonNodeType.ARRAY && rtype == JsonNodeType.ARRAY) {
-			List<JsonNode> values = new ArrayList<>(jsonProvider.size(lhs) + jsonProvider.size(rhs));
+			List<JsonNode> values = new ArrayList<>(jsonProvider.getArrayLength(lhs) + jsonProvider.getArrayLength(rhs));
 			Iterator<JsonNode> liter = jsonProvider.getArrayElements(lhs);
 			while (liter.hasNext())
 				values.add(liter.next());

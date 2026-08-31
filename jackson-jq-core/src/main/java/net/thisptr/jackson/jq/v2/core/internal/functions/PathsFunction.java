@@ -40,7 +40,7 @@ public class PathsFunction implements Function {
 
 		JsonNodeType inType = jsonProvider.getNodeType(in);
 		if (inType == JsonNodeType.ARRAY) {
-			int size = jsonProvider.size(in);
+			int size = jsonProvider.getArrayLength(in);
 			for (int i = 0; i < size; ++i) {
 				stack.add(jsonProvider.createNumber(i));
 				applyRecursive(context, jsonProvider, jsonProvider.requireGet(in, i), output, stack, predicate);

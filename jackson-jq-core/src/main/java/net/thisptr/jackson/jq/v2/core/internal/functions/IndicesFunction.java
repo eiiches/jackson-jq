@@ -52,8 +52,8 @@ public class IndicesFunction implements Function {
 					result.add(index);
 			}
 		} else if (needleType == JsonNodeType.ARRAY && haystackType == JsonNodeType.ARRAY) {
-			int needleSize = jsonProvider.size(needle);
-			int haystackSize = jsonProvider.size(haystack);
+			int needleSize = jsonProvider.getArrayLength(needle);
+			int haystackSize = jsonProvider.getArrayLength(haystack);
 			if (needleSize != 0) {
 				shift:
 				for (int i = 0; i < haystackSize - needleSize + 1; ++i) {
@@ -64,7 +64,7 @@ public class IndicesFunction implements Function {
 				}
 			}
 		} else if (haystackType == JsonNodeType.ARRAY) {
-			int haystackSize = jsonProvider.size(haystack);
+			int haystackSize = jsonProvider.getArrayLength(haystack);
 			for (int i = 0; i < haystackSize; ++i)
 				if (comparator.compare(jsonProvider.requireGet(haystack, i), needle) == 0)
 					result.add(i);

@@ -35,7 +35,7 @@ public class DelPathsFunction implements Function {
 				if (jsonProvider.getNodeType(paths) != JsonNodeType.ARRAY)
 					throw new JsonQueryException("Paths must be specified as an array");
 
-				List<List<JsonNode>> pathList = new ArrayList<>(jsonProvider.size(paths));
+				List<List<JsonNode>> pathList = new ArrayList<>(jsonProvider.getArrayLength(paths));
 				for (Iterator<JsonNode> it = jsonProvider.getArrayElements(paths); it.hasNext(); ) {
 					JsonNode path = it.next();
 					if (jsonProvider.getNodeType(path) != JsonNodeType.ARRAY)
@@ -132,7 +132,7 @@ public class DelPathsFunction implements Function {
 	}
 
 	private static <JsonNode> JsonNode deleteFromArray(JsonProvider<JsonNode> jsonProvider, JsonNode in, List<List<JsonNode>> numberPaths, List<List<JsonNode>> rangePaths, int depth, Version version) throws JsonQueryException {
-		int size = jsonProvider.size(in);
+		int size = jsonProvider.getArrayLength(in);
 
 		Set<Integer> deleteIndices = new HashSet<>();
 		Map<Integer, List<List<JsonNode>>> recurseIndices = new LinkedHashMap<>();

@@ -61,6 +61,6 @@ public class TestJsonNodeComparator<T> extends JsonNodeComparator<T> {
 			if (r1 != 0)
 				return r1;
 		}
-		return Integer.compare(jsonProvider.size(o1), jsonProvider.size(o2));
+		return Integer.compare(jsonProvider.getObjectSize(o1), jsonProvider.getObjectSize(o2));
 	}
 }

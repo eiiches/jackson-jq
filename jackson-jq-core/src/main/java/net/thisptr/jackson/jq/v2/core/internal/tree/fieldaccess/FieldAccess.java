@@ -68,7 +68,7 @@ public abstract class FieldAccess<JsonNode> implements Expression<StackFrame, Js
 			if (!permissive)
 				throw new JsonQueryException("Cannot iterate over null (null)");
 		} else if (jsonProvider.getNodeType(pobj) == JsonNodeType.ARRAY) {
-			for (int i = 0; i < jsonProvider.size(pobj); ++i)
+			for (int i = 0; i < jsonProvider.getArrayLength(pobj); ++i)
 				output.emit(jsonProvider.requireGet(pobj, i), ppath.appendIndex(i));
 		} else if (jsonProvider.getNodeType(pobj) == JsonNodeType.OBJECT) {
 			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectEntries(pobj);

@@ -40,7 +40,7 @@ public class AbstractKeysFunction implements Function {
 				output.emit(jsonProvider.createArray(result), UntrackedPath.getInstance());
 			} else if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
 				List<JsonNode> result = new ArrayList<>();
-				for (int i = 0; i < jsonProvider.size(in); ++i)
+				for (int i = 0; i < jsonProvider.getArrayLength(in); ++i)
 					result.add(jsonProvider.createNumber(i));
 				output.emit(jsonProvider.createArray(result), UntrackedPath.getInstance());
 			} else {

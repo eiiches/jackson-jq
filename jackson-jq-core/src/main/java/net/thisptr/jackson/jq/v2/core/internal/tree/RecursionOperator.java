@@ -51,7 +51,7 @@ public class RecursionOperator<JsonNode> implements Expression<StackFrame, JsonN
 				pathRecursive(frame, entry.getValue(), path.appendKey(entry.getKey()), output);
 			}
 		} else if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
-			for (int i = 0; i < jsonProvider.size(in); ++i)
+			for (int i = 0; i < jsonProvider.getArrayLength(in); ++i)
 				pathRecursive(frame, jsonProvider.requireGet(in, i), path.appendIndex(i), output);
 		}
 	}

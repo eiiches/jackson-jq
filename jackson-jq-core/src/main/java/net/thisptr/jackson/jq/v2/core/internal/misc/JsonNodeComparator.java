@@ -71,8 +71,8 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 	}
 
 	protected int compareArrayNode(JsonNode o1, JsonNode o2) {
-		int s1 = jsonProvider.size(o1);
-		int s2 = jsonProvider.size(o2);
+		int s1 = jsonProvider.getArrayLength(o1);
+		int s2 = jsonProvider.getArrayLength(o2);
 		int s = Math.min(s1, s2);
 		for (int i = 0; i < s; ++i) {
 			int rr = compare(jsonProvider.requireGet(o1, i), jsonProvider.requireGet(o2, i));

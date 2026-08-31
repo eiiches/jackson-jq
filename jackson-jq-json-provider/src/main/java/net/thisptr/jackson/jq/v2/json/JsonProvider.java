@@ -352,12 +352,22 @@ public interface JsonProvider<JsonNode> {
 	}
 
 	/**
-	 * Returns the number of elements in an array, or the number of fields in an object.
+	 * Returns the number of elements in an array.
 	 *
 	 * @param node the JSON node
-	 * @return the element/field count, or {@code 0} if {@code node} is neither an array nor an object
+	 * @return the number of elements
+	 * @throws IllegalArgumentException if the node is not an array
 	 */
-	int size(JsonNode node);
+	int getArrayLength(JsonNode node);
+
+	/**
+	 * Returns the number of fields in an object.
+	 *
+	 * @param node the JSON node
+	 * @return the number of fields
+	 * @throws IllegalArgumentException if the node is not an object
+	 */
+	int getObjectSize(JsonNode node);
 
 	/**
 	 * Returns whether the object node has the given field.

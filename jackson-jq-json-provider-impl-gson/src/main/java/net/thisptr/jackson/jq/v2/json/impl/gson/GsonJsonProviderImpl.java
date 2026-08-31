@@ -359,14 +359,17 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public int size(JsonElement node) {
-		if (node.isJsonArray()) {
-			return node.getAsJsonArray().size();
-		}
-		if (node.isJsonObject()) {
-			return node.getAsJsonObject().size();
-		}
-		return 0;
+	public int getArrayLength(JsonElement node) {
+		if (!node.isJsonArray())
+			throw new IllegalArgumentException("Expected an array node");
+		return node.getAsJsonArray().size();
+	}
+
+	@Override
+	public int getObjectSize(JsonElement node) {
+		if (!node.isJsonObject())
+			throw new IllegalArgumentException("Expected an object node");
+		return node.getAsJsonObject().size();
 	}
 
 	@Override

@@ -29,7 +29,7 @@ public class SortByFunction implements Function {
 			Preconditions.checkInputType(jsonProvider, "sort_by", items, JsonNodeType.ARRAY);
 
 			JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
-			List<Pair<JsonNode, JsonNode>> zipped = new ArrayList<>(jsonProvider.size(items));
+			List<Pair<JsonNode, JsonNode>> zipped = new ArrayList<>(jsonProvider.getArrayLength(items));
 			Iterator<JsonNode> iter = jsonProvider.getArrayElements(items);
 			while (iter.hasNext()) {
 				JsonNode item = iter.next();

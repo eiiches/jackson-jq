@@ -35,7 +35,7 @@ public class ReverseFunction implements Function {
 				return;
 			}
 			if (type == JsonNodeType.ARRAY) {
-				int size = jsonProvider.size(in);
+				int size = jsonProvider.getArrayLength(in);
 				for (int i = size - 1; i >= 0; --i)
 					result.add(jsonProvider.requireGet(in, i));
 				output.emit(jsonProvider.createArray(result), UntrackedPath.getInstance());
@@ -59,7 +59,7 @@ public class ReverseFunction implements Function {
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
 			}
 			if (type == JsonNodeType.OBJECT) {
-				if (jsonProvider.size(in) == 0) {
+				if (jsonProvider.getObjectSize(in) == 0) {
 					output.emit(emptyArray, UntrackedPath.getInstance());
 					return;
 				}

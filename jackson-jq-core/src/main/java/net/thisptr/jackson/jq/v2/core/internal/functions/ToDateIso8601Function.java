@@ -45,7 +45,7 @@ public class ToDateIso8601Function implements Function {
 					throw new JsonQueryException("error converting number of seconds since epoch to datetime", e);
 				}
 			} else if (jsonProvider.getNodeType(in) == JsonNodeType.ARRAY) {
-				int size = jsonProvider.size(in);
+				int size = jsonProvider.getArrayLength(in);
 				if (version.compareTo(Versions.JQ_1_8_0) < 0) {
 					if (size < 8)
 						throw new JsonQueryException("strftime/1 requires parsed datetime inputs");
