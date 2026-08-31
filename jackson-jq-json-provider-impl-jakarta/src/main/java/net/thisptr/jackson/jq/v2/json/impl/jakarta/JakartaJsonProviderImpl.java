@@ -330,10 +330,13 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public @Nullable JsonValue getArrayElement(JsonValue node, int index) {
-		if (node instanceof JsonArray && index >= 0 && index < ((JsonArray) node).size())
-			return ((JsonArray) node).get(index);
-		return null;
+	public JsonValue getArrayElement(JsonValue node, int index) {
+		if (!(node instanceof JsonArray))
+			throw new IllegalArgumentException("Expected an array node");
+		JsonArray array = (JsonArray) node;
+		if (index < 0 || index >= array.size())
+			throw new IndexOutOfBoundsException("Index " + index + " out of bounds for array length " + array.size());
+		return array.get(index);
 	}
 
 	@Override

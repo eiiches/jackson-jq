@@ -174,7 +174,7 @@ public class DelPathsFunction implements Function {
 			if (deleteIndices.contains(i) || inAnyRange(deleteRanges, i))
 				continue;
 			List<List<JsonNode>> sub = recurseIndices.get(i);
-			out.add(sub == null ? jsonProvider.requireGet(in, i) : delete(jsonProvider, jsonProvider.requireGet(in, i), sub, depth + 1, version));
+			out.add(sub == null ? jsonProvider.getArrayElement(in, i) : delete(jsonProvider, jsonProvider.getArrayElement(in, i), sub, depth + 1, version));
 		}
 		return jsonProvider.createArray(out);
 	}

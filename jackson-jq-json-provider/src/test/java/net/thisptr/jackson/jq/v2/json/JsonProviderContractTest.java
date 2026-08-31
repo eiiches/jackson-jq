@@ -38,10 +38,6 @@ public abstract class JsonProviderContractTest<T> {
 		return Objects.requireNonNull(provider.getObjectField(node, fieldName));
 	}
 
-	private T requireGet(T node, int index) {
-		return Objects.requireNonNull(provider.getArrayElement(node, index));
-	}
-
 	private static <T> Map<String, T> mapOf(String k1, T v1, String k2, T v2) {
 		Map<String, T> map = new LinkedHashMap<>();
 		map.put(k1, v1);
@@ -359,8 +355,8 @@ public abstract class JsonProviderContractTest<T> {
 		T node = provider.createArray(Arrays.asList(provider.createNumber(1), provider.createString("two")));
 
 		assertThat(provider.getArrayLength(node)).isEqualTo(2);
-		assertThat(provider.getNumberAsIntExact(requireGet(node, 0))).isEqualTo(1);
-		assertThat(provider.getString(requireGet(node, 1))).isEqualTo("two");
+		assertThat(provider.getNumberAsIntExact(provider.getArrayElement(node, 0))).isEqualTo(1);
+		assertThat(provider.getString(provider.getArrayElement(node, 1))).isEqualTo("two");
 	}
 
 	@Test
@@ -472,6 +468,29 @@ public abstract class JsonProviderContractTest<T> {
 		}
 
 		assertThat(elements).containsExactly("a", "b", "c");
+	}
+
+	@Test
+	void testGetArrayElement() {
+		T arr = provider.createArray(Arrays.asList(provider.createString("a"), provider.createString("b")));
+
+		assertThat(provider.getString(provider.getArrayElement(arr, 0))).isEqualTo("a");
+		assertThat(provider.getString(provider.getArrayElement(arr, 1))).isEqualTo("b");
+		assertThatThrownBy(() -> provider.getArrayElement(arr, -1)).isInstanceOf(IndexOutOfBoundsException.class);
+		assertThatThrownBy(() -> provider.getArrayElement(arr, 2)).isInstanceOf(IndexOutOfBoundsException.class);
+	}
+
+	@Test
+	void testGetArrayElementRejectsNonArrays() {
+		List<T> nonArrays = Arrays.asList(
+				provider.createObject(Collections.emptyMap()),
+				provider.createString("value"),
+				provider.createNumber(1),
+				provider.createBoolean(true),
+				provider.createNull());
+
+		for (T node : nonArrays)
+			assertThatThrownBy(() -> provider.getArrayElement(node, 0)).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
@@ -591,7 +610,7 @@ public abstract class JsonProviderContractTest<T> {
 		T retrievedNested = requireGetObjectField(outer, "outer");
 		T retrievedArray = requireGetObjectField(retrievedNested, "inner");
 		assertThat(provider.getArrayLength(retrievedArray)).isEqualTo(3);
-		assertThat(provider.getNumberAsIntExact(requireGet(retrievedArray, 1))).isEqualTo(2);
+		assertThat(provider.getNumberAsIntExact(provider.getArrayElement(retrievedArray, 1))).isEqualTo(2);
 	}
 
 	// ================================

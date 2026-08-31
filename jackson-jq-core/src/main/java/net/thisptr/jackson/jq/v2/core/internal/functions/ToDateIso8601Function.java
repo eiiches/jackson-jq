@@ -52,7 +52,7 @@ public class ToDateIso8601Function implements Function {
 					long[] fields = new long[6];
 					for (int i = 0; i < 8; i++) {
 						JsonNode elem = jsonProvider.getArrayElement(in, i);
-						if (elem == null || jsonProvider.getNodeType(elem) != JsonNodeType.NUMBER)
+						if (jsonProvider.getNodeType(elem) != JsonNodeType.NUMBER)
 							throw new JsonQueryException("strftime/1 requires parsed datetime inputs");
 						double rawVal = jsonProvider.getNumberAsDoubleRounded(elem);
 						double val = Double.isNaN(rawVal) ? Integer.MIN_VALUE : rawVal;
@@ -68,7 +68,7 @@ public class ToDateIso8601Function implements Function {
 					int checkLen = Math.min(size, 8);
 					for (int i = 0; i < checkLen; i++) {
 						JsonNode elem = jsonProvider.getArrayElement(in, i);
-						if (elem == null || jsonProvider.getNodeType(elem) != JsonNodeType.NUMBER)
+						if (jsonProvider.getNodeType(elem) != JsonNodeType.NUMBER)
 							throw new JsonQueryException("strftime/1 requires parsed datetime inputs");
 						double val = jsonProvider.getNumberAsDoubleRounded(elem);
 						if (Double.isNaN(val))

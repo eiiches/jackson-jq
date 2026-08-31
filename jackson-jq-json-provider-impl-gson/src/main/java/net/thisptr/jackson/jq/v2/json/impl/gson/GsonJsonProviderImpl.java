@@ -348,14 +348,13 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public @Nullable JsonElement getArrayElement(JsonElement node, int index) {
-		if (node.isJsonArray()) {
-			JsonArray array = node.getAsJsonArray();
-			if (index >= 0 && index < array.size()) {
-				return array.get(index);
-			}
-		}
-		return null;
+	public JsonElement getArrayElement(JsonElement node, int index) {
+		if (!node.isJsonArray())
+			throw new IllegalArgumentException("Expected an array node");
+		JsonArray array = node.getAsJsonArray();
+		if (index < 0 || index >= array.size())
+			throw new IndexOutOfBoundsException("Index " + index + " out of bounds for array length " + array.size());
+		return array.get(index);
 	}
 
 	@Override

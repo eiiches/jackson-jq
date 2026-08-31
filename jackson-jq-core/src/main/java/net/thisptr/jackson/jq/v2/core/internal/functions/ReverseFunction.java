@@ -37,7 +37,7 @@ public class ReverseFunction implements Function {
 			if (type == JsonNodeType.ARRAY) {
 				int size = jsonProvider.getArrayLength(in);
 				for (int i = size - 1; i >= 0; --i)
-					result.add(jsonProvider.requireGet(in, i));
+					result.add(jsonProvider.getArrayElement(in, i));
 				output.emit(jsonProvider.createArray(result), UntrackedPath.getInstance());
 				return;
 			}

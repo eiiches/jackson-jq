@@ -323,9 +323,11 @@ public interface JsonProvider<JsonNode> {
 	 *
 	 * @param node the JSON node
 	 * @param index the element index
-	 * @return the element at {@code index}, or {@code null} if {@code node} is not an array or {@code index} is out of range
+	 * @return the element at {@code index}
+	 * @throws IllegalArgumentException if the node is not an array
+	 * @throws IndexOutOfBoundsException if the index is out of range
 	 */
-	@Nullable JsonNode getArrayElement(JsonNode node, int index);
+	JsonNode getArrayElement(JsonNode node, int index);
 
 	/**
 	 * Like {@link #getObjectField(Object, String)}, but requires the field to be present.
@@ -337,18 +339,6 @@ public interface JsonProvider<JsonNode> {
 	 */
 	default JsonNode requireGet(JsonNode node, String fieldName) {
 		return Objects.requireNonNull(getObjectField(node, fieldName));
-	}
-
-	/**
-	 * Like {@link #getArrayElement(Object, int)}, but requires the index to be present.
-	 *
-	 * @param node the JSON node
-	 * @param index the element index
-	 * @return the element at {@code index}
-	 * @throws NullPointerException if {@code node} is not an array or {@code index} is out of range
-	 */
-	default JsonNode requireGet(JsonNode node, int index) {
-		return Objects.requireNonNull(getArrayElement(node, index));
 	}
 
 	/**

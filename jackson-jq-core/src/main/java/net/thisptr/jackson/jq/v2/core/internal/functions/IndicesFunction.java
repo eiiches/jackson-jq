@@ -58,7 +58,7 @@ public class IndicesFunction implements Function {
 				shift:
 				for (int i = 0; i < haystackSize - needleSize + 1; ++i) {
 					for (int j = 0; j < needleSize; ++j)
-						if (comparator.compare(jsonProvider.requireGet(haystack, i + j), jsonProvider.requireGet(needle, j)) != 0)
+						if (comparator.compare(jsonProvider.getArrayElement(haystack, i + j), jsonProvider.getArrayElement(needle, j)) != 0)
 							continue shift;
 					result.add(i);
 				}
@@ -66,7 +66,7 @@ public class IndicesFunction implements Function {
 		} else if (haystackType == JsonNodeType.ARRAY) {
 			int haystackSize = jsonProvider.getArrayLength(haystack);
 			for (int i = 0; i < haystackSize; ++i)
-				if (comparator.compare(jsonProvider.requireGet(haystack, i), needle) == 0)
+				if (comparator.compare(jsonProvider.getArrayElement(haystack, i), needle) == 0)
 					result.add(i);
 		} else {
 			throw new JsonQueryException("indices() is not applicable to " + haystackType);

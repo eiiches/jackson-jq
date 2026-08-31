@@ -38,6 +38,12 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		return matchers;
 	}
 
+	private JsonNode getArrayElementOrNull(JsonNode node, int index) {
+		if (jsonProvider.getNodeType(node) != JsonNodeType.ARRAY || index < 0 || index >= jsonProvider.getArrayLength(node))
+			return jsonProvider.createNull();
+		return jsonProvider.getArrayElement(node, index);
+	}
+
 	private void recursive(StackFrame frame, JsonNode in, Functional.Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
 			out.accept(accumulate);
@@ -49,9 +55,9 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(rindex)));
 
 		PatternMatcher<JsonNode> matcher = matchers.get(rindex);
-		JsonNode value = jsonProvider.getArrayElement(in, rindex);
+		JsonNode value = getArrayElementOrNull(in, rindex);
 
-		matcher.match(frame, value != null ? value : jsonProvider.createNull(), (match) -> {
+		matcher.match(frame, value, (match) -> {
 			recursive(frame, in, out, accumulate, index + 1);
 		}, accumulate);
 	}
@@ -77,10 +83,10 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(rindex)));
 
 		PatternMatcher<JsonNode> matcher = matchers.get(rindex);
-		JsonNode value = jsonProvider.getArrayElement(in, rindex);
+		JsonNode value = getArrayElementOrNull(in, rindex);
 		Path<JsonNode> valuePath = path.appendIndex(rindex);
 
-		matcher.matchWithPath(frame, value != null ? value : jsonProvider.createNull(), valuePath, (match) -> {
+		matcher.matchWithPath(frame, value, valuePath, (match) -> {
 			recursiveWithPath(frame, in, path, out, accumulate, index + 1);
 		}, accumulate);
 	}

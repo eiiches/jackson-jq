@@ -138,7 +138,7 @@ public final class PathOperations {
 				output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
 				return;
 			}
-			output.emit(jsonProvider.requireGet(parent, resolvedIndex), parentPath.appendIndex(jsonProvider, index));
+			output.emit(jsonProvider.getArrayElement(parent, resolvedIndex), parentPath.appendIndex(jsonProvider, index));
 		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.NULL) {
 			output.emit(jsonProvider.createNull(), parentPath.appendIndex(jsonProvider, index));
 		} else if (!permissive) {
@@ -153,7 +153,7 @@ public final class PathOperations {
 				output.emit(jsonProvider.createNull(), parentPath.appendIndex(index));
 				return;
 			}
-			output.emit(jsonProvider.requireGet(parent, resolvedIndex), parentPath.appendIndex(index));
+			output.emit(jsonProvider.getArrayElement(parent, resolvedIndex), parentPath.appendIndex(index));
 		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.NULL) {
 			output.emit(jsonProvider.createNull(), parentPath.appendIndex(index));
 		} else if (!permissive) {
@@ -168,7 +168,7 @@ public final class PathOperations {
 			Range range = Range.resolve(jsonProvider, start, end, jsonProvider.getArrayLength(parent));
 			List<JsonNode> subarray = new ArrayList<>((int) (range.end - range.start));
 			for (long index = range.start; index < range.end; ++index)
-				subarray.add(jsonProvider.requireGet(parent, (int) index));
+				subarray.add(jsonProvider.getArrayElement(parent, (int) index));
 			output.emit(jsonProvider.createArray(subarray), parentPath.appendIndexRange(jsonProvider, start, end));
 		} else if (jsonProvider.getNodeType(parent) == JsonNodeType.STRING) {
 			Range range = Range.resolve(jsonProvider, start, end, UnicodeUtils.lengthUtf32(jsonProvider.getString(parent)));
@@ -276,11 +276,11 @@ public final class PathOperations {
 			if (resolvedIndex < 0)
 				throw new JsonQueryException("Out of bounds negative array index");
 
-			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.getArrayLength(in) ? jsonProvider.requireGet(in, resolvedIndex) : null);
+			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.getArrayLength(in) ? jsonProvider.getArrayElement(in, resolvedIndex) : null);
 
 			List<JsonNode> out = new ArrayList<>(Math.max(jsonProvider.getArrayLength(in), resolvedIndex + 1));
 			for (int i = 0; i < jsonProvider.getArrayLength(in); ++i)
-				out.add(jsonProvider.requireGet(in, i));
+				out.add(jsonProvider.getArrayElement(in, i));
 			for (int i = jsonProvider.getArrayLength(in); i <= resolvedIndex; ++i)
 				out.add(jsonProvider.createNull());
 			out.set(resolvedIndex, newValue);
@@ -297,11 +297,11 @@ public final class PathOperations {
 			if (resolvedIndex < 0)
 				throw new JsonQueryException("Out of bounds negative array index");
 
-			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.getArrayLength(in) ? jsonProvider.requireGet(in, resolvedIndex) : null);
+			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.getArrayLength(in) ? jsonProvider.getArrayElement(in, resolvedIndex) : null);
 
 			List<JsonNode> out = new ArrayList<>(Math.max(jsonProvider.getArrayLength(in), resolvedIndex + 1));
 			for (int i = 0; i < jsonProvider.getArrayLength(in); ++i)
-				out.add(jsonProvider.requireGet(in, i));
+				out.add(jsonProvider.getArrayElement(in, i));
 			for (int i = jsonProvider.getArrayLength(in); i <= resolvedIndex; ++i)
 				out.add(jsonProvider.createNull());
 			out.set(resolvedIndex, newValue);
@@ -320,19 +320,19 @@ public final class PathOperations {
 
 			List<JsonNode> oldSlice = new ArrayList<>((int) (range.end - range.start));
 			for (long index = range.start; index < range.end; ++index)
-				oldSlice.add(jsonProvider.requireGet(in, (int) index));
+				oldSlice.add(jsonProvider.getArrayElement(in, (int) index));
 			JsonNode newValue = mutation.apply(jsonProvider.createArray(oldSlice));
 			if (jsonProvider.getNodeType(newValue) != JsonNodeType.ARRAY)
 				throw new JsonQueryTypeException("A slice of an array can only be assigned another array");
 
 			List<JsonNode> out = new ArrayList<>((int) range.start + jsonProvider.getArrayLength(newValue) + (jsonProvider.getArrayLength(in) - (int) range.end));
 			for (int index = 0; index < range.start; ++index)
-				out.add(jsonProvider.requireGet(in, index));
+				out.add(jsonProvider.getArrayElement(in, index));
 			Iterator<JsonNode> iterator = jsonProvider.getArrayElements(newValue);
 			while (iterator.hasNext())
 				out.add(iterator.next());
 			for (long index = range.end; index < jsonProvider.getArrayLength(in); ++index)
-				out.add(jsonProvider.requireGet(in, (int) index));
+				out.add(jsonProvider.getArrayElement(in, (int) index));
 			return jsonProvider.createArray(out);
 		}
 		if (jsonProvider.getNodeType(in) == JsonNodeType.STRING)
@@ -356,7 +356,7 @@ public final class PathOperations {
 			shift:
 			for (int i = 0; i < jsonProvider.getArrayLength(sequence) - jsonProvider.getArrayLength(subsequence) + 1; ++i) {
 				for (int j = 0; j < jsonProvider.getArrayLength(subsequence); ++j)
-					if (comparator.compare(jsonProvider.requireGet(sequence, i + j), jsonProvider.requireGet(subsequence, j)) != 0)
+					if (comparator.compare(jsonProvider.getArrayElement(sequence, i + j), jsonProvider.getArrayElement(subsequence, j)) != 0)
 						continue shift;
 				out.add(jsonProvider.createNumber(i));
 			}

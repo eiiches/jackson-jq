@@ -346,7 +346,11 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public @Nullable JsonNode getArrayElement(JsonNode node, int index) {
+	public JsonNode getArrayElement(JsonNode node, int index) {
+		if (!node.isArray())
+			throw new IllegalArgumentException("Expected an array node");
+		if (index < 0 || index >= node.size())
+			throw new IndexOutOfBoundsException("Index " + index + " out of bounds for array length " + node.size());
 		return node.get(index);
 	}
 
