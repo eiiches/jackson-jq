@@ -1,0 +1,9 @@
+- q: 'split("baz")'
+  in: ""
+  out:
+  - []
+  v: '[1.5, )'
+
+- q: 'split(empty)'
+  in: []
+  out: []

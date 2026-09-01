@@ -1,0 +1,13 @@
+# The replacement is concatenated onto the text preceding the match, so null contributes
+# nothing and any other non-string is a type error.
+- q: '"abcabc" | gsub("b"; null)'
+  in: null
+  out:
+  - "acac"
+  v: '[1.5, )'
+
+- q: 'try ("abc" | gsub("b"; 1)) catch .'
+  in: null
+  out:
+  - 'string ("a") and number (1) cannot be added'
+  v: '[1.5, )'

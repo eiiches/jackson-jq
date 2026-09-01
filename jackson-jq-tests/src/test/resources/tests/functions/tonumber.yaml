@@ -1,0 +1,213 @@
+# number input is passed through unchanged
+- q: 'tonumber'
+  in: 5
+  out:
+  - 5
+
+- q: 'tonumber'
+  in: 5.5
+  out:
+  - 5.5
+
+# basic string parsing
+- q: 'tonumber'
+  in: "5"
+  out:
+  - 5
+
+- q: 'tonumber'
+  in: "5.5"
+  out:
+  - 5.5
+
+- q: 'tonumber'
+  in: "-5"
+  out:
+  - -5
+
+- q: 'tonumber'
+  in: "+5"
+  out:
+  - 5
+
+- q: 'tonumber'
+  in: "01"
+  out:
+  - 1
+
+- q: 'tonumber'
+  in: "0001.5"
+  out:
+  - 1.5
+
+# jackson-jq parses strings via BigDecimal to preserve the exact literal value and scale, rather
+# than narrowing through double, on every version. Real jq only stopped narrowing in 1.7
+# (1.5/1.6 print 2871948651097801000 here), so the golden expectation is scoped to 1.7+.
+- q: 'tonumber'
+  in: "2871948651097801136"
+  out:
+  - 2871948651097801136
+  v: '[1.7, )'
+
+- q: 'tonumber'
+  in: "1.50"
+  out:
+  - 1.50
+
+# Number comparison is scale-insensitive (1.50 == 1.5, in real jq too), so the case above cannot
+# see the preserved scale; tostring can. Real jq only kept the extra precision from 1.7 on
+# (1.5/1.6 print 3.141592653589793).
+- q: 'tonumber | tostring'
+  in: "3.14159265358979323846264338327950288"
+  out:
+  - "3.14159265358979323846264338327950288"
+  v: '[1.7, )'
+
+# scientific notation
+- q: 'tonumber'
+  in: "1e2"
+  out:
+  - 100
+
+- q: 'tonumber'
+  in: "1e-2"
+  out:
+  - 0.01
+
+# special float literals (Infinity/NaN family, case-insensitive, optional leading sign) are
+# accepted on every supported version, unlike plain decimal numerals which go through BigDecimal
+# first.
+#
+# Internally these produce a raw (unclamped) IEEE-754 Infinity/NaN double; real jq only
+# substitutes a finite value (Infinity -> max/min double, NaN -> null) when *serializing* the
+# final result to JSON text (jsonProvider.format()), which AbstractJsonQueryTest's raw JsonNode
+# comparison never calls. So these are asserted via jq-level comparisons instead of a literal
+# `out:` value, which stays correct whether or not the harness applies that substitution.
+- q: '("Infinity" | tonumber) > 1e300'
+  out:
+  - true
+
+- q: '("Infinity" | tonumber) | type'
+  out:
+  - "number"
+
+- q: '("infinity" | tonumber) > 1e300'
+  out:
+  - true
+
+- q: '("+Infinity" | tonumber) > 1e300'
+  out:
+  - true
+
+- q: '("-Infinity" | tonumber) < -1e300'
+  out:
+  - true
+
+- q: '("NaN" | tonumber) | type'
+  out:
+  - "number"
+
+- q: '("NaN" | tonumber) | isnan'
+  out:
+  - true
+
+- q: '("NAN" | tonumber) | isnan'
+  out:
+  - true
+
+# jq 1.7 made "NaN" case-insensitive (in addition to the exact "NaN"/"NAN" spellings already
+# accepted before that); lowercase "nan" errors pre-1.7 and succeeds from 1.7 on.
+- q: 'try tonumber catch ("__ERROR__")'
+  in: "nan"
+  out:
+  - "__ERROR__"
+  v: '[1.5, 1.7)'
+
+- q: '("nan" | tonumber) | isnan'
+  out:
+  - true
+  v: '[1.7, )'
+
+# type errors
+- q: 'try tonumber catch ("__ERROR__")'
+  in: "foo"
+  out:
+  - "__ERROR__"
+
+- q: 'try tonumber catch ("__ERROR__")'
+  in: null
+  out:
+  - "__ERROR__"
+
+- q: 'try tonumber catch ("__ERROR__")'
+  in: true
+  out:
+  - "__ERROR__"
+
+- q: 'try tonumber catch ("__ERROR__")'
+  in: []
+  out:
+  - "__ERROR__"
+
+- q: 'try tonumber catch ("__ERROR__")'
+  in: {}
+  out:
+  - "__ERROR__"
+
+# empty / whitespace-only strings are always invalid
+- q: 'try tonumber catch ("__ERROR__")'
+  in: ""
+  out:
+  - "__ERROR__"
+
+- q: 'try tonumber catch ("__ERROR__")'
+  in: "  "
+  out:
+  - "__ERROR__"
+
+# jq 1.8 stopped accepting leading/trailing whitespace around an otherwise-valid numeral
+# (plain numerals and the Infinity/NaN family alike); earlier versions trim it.
+- q: 'tonumber'
+  in: "  5  "
+  out:
+  - 5
+  v: '[1.5, 1.8.0)'
+
+- q: 'try tonumber catch ("__ERROR__")'
+  in: "  5  "
+  out:
+  - "__ERROR__"
+  v: '[1.8.0, )'
+
+- q: '("  Infinity  " | tonumber) > 1e300'
+  out:
+  - true
+  v: '[1.5, 1.8.0)'
+
+- q: 'try tonumber catch ("__ERROR__")'
+  in: "  Infinity  "
+  out:
+  - "__ERROR__"
+  v: '[1.8.0, )'
+
+# real jq rejects anything outside its numeric-literal grammar; "1d" (a Java float suffix, not
+# valid jq numeral syntax) is always rejected.
+- q: 'try tonumber catch ("__ERROR__")'
+  in: "1d"
+  out:
+  - "__ERROR__"
+
+- q: 'try tonumber catch ("__ERROR__")'
+  in: "0x10"
+  out:
+  - "__ERROR__"
+
+- q: 'try tonumber catch ("__ERROR__")'
+  in: "1_000"
+  out:
+  - "__ERROR__"
+
+- q: 'try tonumber catch ("__ERROR__")'
+  in: ". "
+  out:
+  - "__ERROR__"

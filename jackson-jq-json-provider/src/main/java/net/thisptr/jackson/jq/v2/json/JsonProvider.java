@@ -1,0 +1,566 @@
+package net.thisptr.jackson.jq.v2.json;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+
+import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * Abstracts jq's JSON tree operations over a concrete JSON library, so that the jq engine can run
+ * against different JSON representations (e.g. Jackson's {@code JsonNode}, Gson's {@code JsonElement},
+ * or a Jakarta JSON-P {@code JsonValue}) without depending on any one of them directly.
+ * <p>
+ * The type parameter {@code JsonNode} is the native, immutable tree node type of the underlying JSON
+ * library; implementations wrap that library's parser/tree-model APIs. Nodes are expected to be
+ * treated as immutable by callers: mutating operations return new nodes rather than modifying
+ * existing ones in place.
+ * <p>
+ * Implementations are expected to be stateless and safe to share as singletons (see each
+ * implementation's {@code getInstance()} method).
+ *
+ * @param <JsonNode> the native JSON tree node type used by the underlying JSON library
+ */
+public interface JsonProvider<JsonNode> {
+	/**
+	 * Creates an array containing the supplied values.
+	 *
+	 * @param values the values to add
+	 * @return the created array
+	 */
+	JsonNode createArray(Iterable<? extends JsonNode> values);
+
+	/**
+	 * Creates an object containing the supplied members.
+	 *
+	 * @param values the members to add
+	 * @return the created object
+	 */
+	JsonNode createObject(Map<String, ? extends JsonNode> values);
+
+	/**
+	 * Creates a string node holding the given value.
+	 *
+	 * @param value the string value
+	 * @return the created string node
+	 */
+	JsonNode createString(String value);
+
+	/**
+	 * Creates a number node holding the given long value.
+	 *
+	 * @param value the numeric value
+	 * @return the created number node
+	 */
+	JsonNode createNumber(long value);
+
+	/**
+	 * Creates a number node holding the given int value.
+	 *
+	 * @param value the numeric value
+	 * @return the created number node
+	 */
+	JsonNode createNumber(int value);
+
+	/**
+	 * Creates a number node holding the given float value.
+	 *
+	 * @param value the numeric value
+	 * @return the created number node
+	 */
+	JsonNode createNumber(float value);
+
+	/**
+	 * Creates a number node holding the given double value.
+	 *
+	 * @param value the numeric value
+	 * @return the created number node
+	 */
+	JsonNode createNumber(double value);
+
+	/**
+	 * Creates a number node holding the given arbitrary-precision integer value.
+	 *
+	 * @param value the numeric value
+	 * @return the created number node
+	 */
+	JsonNode createNumber(BigInteger value);
+
+	/**
+	 * Creates a number node holding the given arbitrary-precision decimal value.
+	 *
+	 * @param value the numeric value
+	 * @return the created number node
+	 */
+	JsonNode createNumber(BigDecimal value);
+
+	/**
+	 * Creates a boolean node holding the given value.
+	 *
+	 * @param value the boolean value
+	 * @return the created boolean node
+	 */
+	JsonNode createBoolean(boolean value);
+
+	/**
+	 * Creates a JSON {@code null} node.
+	 *
+	 * @return the null node
+	 */
+	JsonNode createNull();
+
+	/**
+	 * Creates a binary node holding the given bytes.
+	 * <p>
+	 * Binary is not a JSON type, so only a provider whose underlying library has such a node (e.g.
+	 * Jackson's {@code BinaryNode}) can create one.
+	 *
+	 * @param bytes the binary value
+	 * @return the created binary node
+	 * @throws UnsupportedOperationException if the provider has no binary node type
+	 */
+	JsonNode createBinary(byte[] bytes);
+
+	/**
+	 * Classifies the given node into one of {@link JsonNodeType}'s categories.
+	 *
+	 * @param node the JSON node
+	 * @return the node's type
+	 */
+	JsonNodeType getNodeType(JsonNode node);
+
+	/**
+	 * Returns whether the node is a JSON object.
+	 * <p>
+	 * Equivalent to {@code getNodeType(node) == JsonNodeType.OBJECT}, but implementations are expected to
+	 * answer with the underlying library's own check, which is cheaper than classifying the node.
+	 *
+	 * @param node the JSON node
+	 * @return {@code true} if the node is a JSON object
+	 */
+	default boolean isObject(JsonNode node) {
+		return getNodeType(node) == JsonNodeType.OBJECT;
+	}
+
+	/**
+	 * Returns whether the node is a JSON array.
+	 * <p>
+	 * Equivalent to {@code getNodeType(node) == JsonNodeType.ARRAY}, but implementations are expected to
+	 * answer with the underlying library's own check, which is cheaper than classifying the node.
+	 *
+	 * @param node the JSON node
+	 * @return {@code true} if the node is a JSON array
+	 */
+	default boolean isArray(JsonNode node) {
+		return getNodeType(node) == JsonNodeType.ARRAY;
+	}
+
+	/**
+	 * Returns whether the node is a JSON string.
+	 * <p>
+	 * Equivalent to {@code getNodeType(node) == JsonNodeType.STRING}, but implementations are expected to
+	 * answer with the underlying library's own check, which is cheaper than classifying the node.
+	 *
+	 * @param node the JSON node
+	 * @return {@code true} if the node is a JSON string
+	 */
+	default boolean isString(JsonNode node) {
+		return getNodeType(node) == JsonNodeType.STRING;
+	}
+
+	/**
+	 * Returns whether the node is a JSON number.
+	 * <p>
+	 * Equivalent to {@code getNodeType(node) == JsonNodeType.NUMBER}, but implementations are expected to
+	 * answer with the underlying library's own check, which is cheaper than classifying the node.
+	 *
+	 * @param node the JSON node
+	 * @return {@code true} if the node is a JSON number
+	 */
+	default boolean isNumber(JsonNode node) {
+		return getNodeType(node) == JsonNodeType.NUMBER;
+	}
+
+	/**
+	 * Returns whether the node is a JSON boolean.
+	 * <p>
+	 * Equivalent to {@code getNodeType(node) == JsonNodeType.BOOLEAN}, but implementations are expected to
+	 * answer with the underlying library's own check, which is cheaper than classifying the node.
+	 *
+	 * @param node the JSON node
+	 * @return {@code true} if the node is a JSON boolean
+	 */
+	default boolean isBoolean(JsonNode node) {
+		return getNodeType(node) == JsonNodeType.BOOLEAN;
+	}
+
+	/**
+	 * Returns whether the node is the JSON {@code null} value.
+	 * <p>
+	 * Equivalent to {@code getNodeType(node) == JsonNodeType.NULL}, but implementations are expected to
+	 * answer with the underlying library's own check, which is cheaper than classifying the node.
+	 *
+	 * @param node the JSON node
+	 * @return {@code true} if the node is the JSON {@code null} value
+	 */
+	default boolean isNull(JsonNode node) {
+		return getNodeType(node) == JsonNodeType.NULL;
+	}
+
+	/**
+	 * Returns whether the node is a binary node.
+	 * <p>
+	 * Equivalent to {@code getNodeType(node) == JsonNodeType.BINARY}, but implementations are expected to
+	 * answer with the underlying library's own check, which is cheaper than classifying the node.
+	 * <p>
+	 * Binary is not a JSON type: a provider whose underlying library has no such node always answers
+	 * {@code false}.
+	 *
+	 * @param node the JSON node
+	 * @return {@code true} if the node is a binary node
+	 */
+	default boolean isBinary(JsonNode node) {
+		return getNodeType(node) == JsonNodeType.BINARY;
+	}
+
+	/**
+	 * Returns the Java type this provider uses to represent the given number node.
+	 * <p>
+	 * Unlike {@link #getNumberAsIntExact(Object)} and friends, this answers without converting the value, so it is
+	 * a cheap way to ask what a number actually is. The answer describes the representation rather
+	 * than the logical value, and is deliberately not promised to be the same across providers: a
+	 * provider that widens on construction, or that stores every number the same way, reports what it
+	 * actually holds. {@link NumberType#UNKNOWN} means the node is a number whose representation the
+	 * provider does not track.
+	 *
+	 * @param node the JSON number node
+	 * @return the representation of {@code node}
+	 * @throws IllegalArgumentException if the node is not a number
+	 */
+	NumberType getNumberType(JsonNode node);
+
+	/**
+	 * Returns the value of a boolean node.
+	 * <p>
+	 * This is not jq's truthiness test, which accepts any node and treats everything other than
+	 * {@code null} and {@code false} as true.
+	 *
+	 * @param node the JSON boolean node
+	 * @return the boolean value
+	 * @throws IllegalArgumentException if the node is not a boolean
+	 */
+	boolean getBoolean(JsonNode node);
+
+	/**
+	 * Returns a number node's value rounded to the nearest double.
+	 * <p>
+	 * Losing information is the specification here, not a failure: values needing more than a
+	 * {@code double}'s 53 bits of mantissa are rounded to nearest (ties to even), in either direction
+	 * -- {@code 2871948651097801136} comes back as {@code 2871948651097801216} -- and values beyond
+	 * {@link Double#MAX_VALUE} overflow to an infinity. Every number therefore has a result, so this
+	 * never returns {@code null}; use {@link #getNumberAsBigDecimalExact(Object)} when the exact value is needed.
+	 * <p>
+	 * A returned {@link Double#NaN} means the value is NaN, and nothing else.
+	 *
+	 * @param node the JSON number node
+	 * @return the value rounded to the nearest double
+	 * @throws IllegalArgumentException if the node is not a number
+	 */
+	double getNumberAsDoubleRounded(JsonNode node);
+
+	/**
+	 * Returns the exact value of a number node.
+	 * <p>
+	 * Unlike {@link #getNumberAsDoubleRounded(Object)}, this does not lose precision. {@link BigDecimal} cannot
+	 * represent the non-finite values jq can produce, so those are reported as {@code null} rather
+	 * than approximated.
+	 *
+	 * @param node the JSON number node
+	 * @return the exact value, or {@code null} if the value is NaN, Infinity or -Infinity
+	 * @throws IllegalArgumentException if the node is not a number
+	 */
+	@Nullable BigDecimal getNumberAsBigDecimalExact(JsonNode node);
+
+	/**
+	 * Returns the exact value of a number node as a {@link BigInteger}.
+	 * <p>
+	 * A value a {@code BigInteger} cannot hold intact -- one with a fractional part, {@code NaN} or
+	 * an infinity -- is reported as {@code null}. There is no range limit.
+	 *
+	 * @param node the JSON number node
+	 * @return the integer value, or {@code null} if it is not exactly representable as a BigInteger
+	 * @throws IllegalArgumentException if the node is not a number
+	 */
+	@Nullable BigInteger getNumberAsBigIntegerExact(JsonNode node);
+
+	/**
+	 * Returns a number node's value as a {@link BigInteger}, truncating any fractional part toward
+	 * zero.
+	 *
+	 * @param node the JSON number node
+	 * @return the truncated integer value, or {@code null} if the value is NaN or an infinity
+	 * @throws IllegalArgumentException if the node is not a number
+	 */
+	@Nullable BigInteger getNumberAsBigIntegerTruncated(JsonNode node);
+
+	/**
+	 * Returns the raw (unescaped) value of a string node.
+	 * <p>
+	 * No other node type is converted; {@link #format(Object)} renders an arbitrary node as JSON
+	 * text.
+	 *
+	 * @param node the JSON string node
+	 * @return the string value
+	 * @throws IllegalArgumentException if the node is not a string
+	 */
+	String getString(JsonNode node);
+
+	/**
+	 * Returns the exact value of a number node as a long.
+	 * <p>
+	 * A value a {@code long} cannot hold intact -- one with a fractional part, one out of range,
+	 * {@code NaN} or an infinity -- is reported as {@code null} rather than rounded or rejected, so
+	 * this doubles as the test for whether a number is a long.
+	 *
+	 * @param node the JSON number node
+	 * @return the long value, or {@code null} if it is not exactly representable as a long
+	 * @throws IllegalArgumentException if the node is not a number
+	 */
+	@Nullable Long getNumberAsLongExact(JsonNode node);
+
+	/**
+	 * Returns a number node's value as a long, truncating any fractional part toward zero.
+	 *
+	 * @param node the JSON number node
+	 * @return the truncated long value, or {@code null} if the value is NaN or an infinity, or if the
+	 * truncated value is outside the range of long
+	 * @throws IllegalArgumentException if the node is not a number
+	 */
+	@Nullable Long getNumberAsLongTruncated(JsonNode node);
+
+	/**
+	 * Returns the exact value of a number node as an int.
+	 * <p>
+	 * A value an {@code int} cannot hold intact -- one with a fractional part, one out of range,
+	 * {@code NaN} or an infinity -- is reported as {@code null} rather than rounded or rejected, so
+	 * this doubles as the test for whether a number is an int.
+	 *
+	 * @param node the JSON number node
+	 * @return the int value, or {@code null} if it is not exactly representable as an int
+	 * @throws IllegalArgumentException if the node is not a number
+	 */
+	@Nullable Integer getNumberAsIntExact(JsonNode node);
+
+	/**
+	 * Returns a number node's value as an int, truncating any fractional part toward zero.
+	 *
+	 * @param node the JSON number node
+	 * @return the truncated int value, or {@code null} if the value is NaN or an infinity, or if the
+	 * truncated value is outside the range of int
+	 * @throws IllegalArgumentException if the node is not a number
+	 */
+	@Nullable Integer getNumberAsIntTruncated(JsonNode node);
+
+	/**
+	 * Returns the value of a binary node.
+	 * <p>
+	 * Binary is not a JSON type; such a node can only enter the tree from a provider whose underlying
+	 * library has one (e.g. Jackson's {@code BinaryNode}). A provider without one never reports
+	 * {@link JsonNodeType#BINARY} from {@link #getNodeType(Object)}, so every call on it throws.
+	 *
+	 * @param node the JSON binary node
+	 * @return the binary value
+	 * @throws IllegalArgumentException if the node is not binary
+	 */
+	byte[] getBinaryAsByteArray(JsonNode node);
+
+	/**
+	 * Returns an iterator over the members (name/value pairs) of an object node.
+	 *
+	 * @param node the JSON object node
+	 * @return an iterator over the object's members
+	 * @throws IllegalArgumentException if the node is not an object
+	 */
+	Iterator<Map.Entry<String, JsonNode>> getObjectMembers(JsonNode node);
+
+	/**
+	 * Returns an iterator over the elements of an array node.
+	 *
+	 * @param node the JSON array node
+	 * @return an iterator over the array's elements
+	 * @throws IllegalArgumentException if the node is not an array
+	 */
+	Iterator<JsonNode> getArrayElements(JsonNode node);
+
+	/**
+	 * Returns an iterator over the member values of an object node, in the object's iteration order.
+	 *
+	 * @param node the JSON object node
+	 * @return an iterator over the object's member values
+	 * @throws IllegalArgumentException if the node is not an object
+	 */
+	Iterator<JsonNode> getObjectMemberValues(JsonNode node);
+
+	/**
+	 * Returns an iterator over the member names of an object node.
+	 *
+	 * @param node the JSON object node
+	 * @return an iterator over the object's member names
+	 * @throws IllegalArgumentException if the node is not an object
+	 */
+	Iterator<String> getObjectMemberNames(JsonNode node);
+
+	/**
+	 * Returns the value of the given member.
+	 *
+	 * @param node the JSON object node
+	 * @param name the member name
+	 * @return the member's value, or {@code null} if the object has no such member
+	 * @throws IllegalArgumentException if the node is not an object
+	 */
+	@Nullable JsonNode getObjectMember(JsonNode node, String name);
+
+	/**
+	 * Returns the element at the given index.
+	 *
+	 * @param node the JSON array node
+	 * @param index the element index
+	 * @return the element at {@code index}
+	 * @throws IllegalArgumentException if the node is not an array
+	 * @throws IndexOutOfBoundsException if the index is out of range
+	 */
+	JsonNode getArrayElement(JsonNode node, int index);
+
+	/**
+	 * Like {@link #getObjectMember(Object, String)}, but requires the member to be present.
+	 *
+	 * @param node the JSON object node
+	 * @param name the member name
+	 * @return the member's value
+	 * @throws IllegalArgumentException if the node is not an object
+	 * @throws NoSuchElementException if the object has no such member
+	 */
+	default JsonNode getObjectMemberOrThrow(JsonNode node, String name) {
+		JsonNode value = getObjectMember(node, name);
+		if (value == null)
+			throw new NoSuchElementException("No such member: " + name);
+		return value;
+	}
+
+	/**
+	 * Returns the number of elements in an array.
+	 *
+	 * @param node the JSON array node
+	 * @return the number of elements
+	 * @throws IllegalArgumentException if the node is not an array
+	 */
+	int getArrayLength(JsonNode node);
+
+	/**
+	 * Returns the number of members in an object.
+	 *
+	 * @param node the JSON object node
+	 * @return the number of members
+	 * @throws IllegalArgumentException if the node is not an object
+	 */
+	int getObjectMemberCount(JsonNode node);
+
+	/**
+	 * Returns whether the object node has the given member.
+	 *
+	 * @param node the JSON object node
+	 * @param name the member name
+	 * @return {@code true} if the object has a member named {@code name}, {@code false} otherwise
+	 * @throws IllegalArgumentException if the node is not an object
+	 */
+	boolean hasObjectMember(JsonNode node, String name);
+
+	/**
+	 * Returns a deep copy of the node, safe to mutate without affecting the original.
+	 * <p>
+	 * For providers whose native node type is already immutable, this may return the same instance.
+	 *
+	 * @param node the JSON node
+	 * @return a deep copy of {@code node}
+	 */
+	JsonNode deepCopy(JsonNode node);
+
+	/**
+	 * Serializes the node to a JSON string, following jq's serialization semantics rather than the
+	 * underlying JSON library's default: non-finite doubles are substituted with a finite value
+	 * ({@code NaN} becomes {@code null}; {@code Infinity}/{@code -Infinity} become the maximum/minimum
+	 * finite double), and HTML-significant characters ({@code <}, {@code >}, {@code &}, {@code '})
+	 * are not Unicode-escaped.
+	 *
+	 * @param node the JSON node
+	 * @return the JSON text representation of {@code node}
+	 */
+	String format(JsonNode node);
+
+	/**
+	 * Creates a parser reading a sequence of JSON values from the given UTF-8 stream.
+	 * <p>
+	 * The stream is read lazily as values are pulled, and is closed when the parser is closed.
+	 *
+	 * @param in the stream to read from
+	 * @return a parser over {@code in}
+	 */
+	JsonParser<JsonNode> createParser(InputStream in);
+
+	/**
+	 * Parses multiple JSON documents from a string.
+	 * Used for loading configuration files containing multiple JSON values.
+	 *
+	 * @param json the JSON text to parse
+	 * @return the parsed JSON nodes, in document order
+	 * @throws JsonException if any document fails to parse
+	 */
+	default List<JsonNode> parseAll(String json) {
+		List<JsonNode> result = new ArrayList<>();
+		try (JsonParser<JsonNode> parser = createParser(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)))) {
+			for (@Var JsonNode value = parser.next(); value != null; value = parser.next())
+				result.add(value);
+		}
+		return result;
+	}
+
+	/**
+	 * Parses a JSON string strictly: the string must contain exactly one JSON value, with no
+	 * leading/trailing garbage other than whitespace, and must not be empty or whitespace-only.
+	 *
+	 * @param json the JSON string to parse
+	 * @return the parsed JSON node
+	 * @throws JsonException if parsing fails, {@code json} is empty or whitespace-only, or trailing content exists
+	 */
+	default JsonNode parse(String json) {
+		try (JsonParser<JsonNode> parser = createParser(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)))) {
+			JsonNode value = parser.next();
+			if (value == null)
+				throw new JsonException("empty input");
+			if (parser.next() != null)
+				throw new JsonException("trailing content");
+			return value;
+		}
+	}
+
+	/**
+	 * Returns whether the given object is an instance of this provider's native node type.
+	 * <p>
+	 * Because the {@code JsonNode} type parameter is erased at runtime, code that only holds a
+	 * {@code JsonProvider<JsonNode>} cannot use {@code instanceof} against {@code JsonNode} directly;
+	 * this method exists as a runtime substitute.
+	 *
+	 * @param arg the object to check, possibly {@code null}
+	 * @return {@code true} if {@code arg} is an instance of this provider's node type
+	 */
+	// TODO: Remove this method.
+	boolean isJsonNodeInstance(@Nullable Object arg);
+}

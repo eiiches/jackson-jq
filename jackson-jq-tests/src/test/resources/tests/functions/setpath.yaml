@@ -1,0 +1,34 @@
+- q: 'setpath([]; 0)'
+  in: {"a": 0}
+  out:
+  - 0
+
+- q: 'setpath(89; empty)'
+  in: []
+  out: []
+  v: '[1.5, )'
+
+- q: '(try (setpath(scalars; floor)) catch ("__ERROR__"))'
+  in: [0, 14, 14, 14, 14, 0, 0, 0, 0]
+  out:
+  - "__ERROR__"
+  v: '[1.5, )'
+
+- q: 'try (setpath([{}]; 9)) catch .'
+  in: [1, 2, 3]
+  out:
+  - "Start and end indices of an array slice must be numbers"
+  v: '[1.5, 1.7)'
+
+- q: 'try (setpath([{}]; 9)) catch .'
+  in: [1, 2, 3]
+  out:
+  - "Array/string slice indices must be integers"
+  v: '[1.7, )'
+  failing: true
+
+- q: 'setpath([{"start": 1, "end": null}]; ["x"])'
+  in: [1, 2, 3]
+  out:
+  - [1, "x"]
+  v: '[1.5, )'

@@ -1,4 +1,0 @@
-- q: 'explode'
-  in: "\ud83d\ude04"
-  out:
-  - [ 128516 ]

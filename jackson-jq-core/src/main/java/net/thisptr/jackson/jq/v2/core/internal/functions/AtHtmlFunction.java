@@ -1,0 +1,42 @@
+package net.thisptr.jackson.jq.v2.core.internal.functions;
+
+import com.google.auto.service.AutoService;
+
+import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+
+@AutoService(Function.class)
+@FunctionRegistration(name = "@html", nargs = 0)
+public class AtHtmlFunction extends AbstractAtFormattingFunction {
+	@Override
+	public String convert(String text) {
+		StringBuilder builder = new StringBuilder();
+		for (int i = 0; i < text.length(); ++i) {
+			char ch = text.charAt(i);
+			switch (ch) {
+				case '<':
+					builder.append("&lt;");
+					break;
+				case '>':
+					builder.append("&gt;");
+					break;
+				case '\'':
+					builder.append("&apos;");
+					break;
+				case '"':
+					builder.append("&quot;");
+					break;
+				case '&':
+					builder.append("&amp;");
+					break;
+				case '\0':
+					builder.append("\\0");
+					break;
+				default:
+					builder.append(ch);
+					break;
+			}
+		}
+		return builder.toString();
+	}
+}

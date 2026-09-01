@@ -1,0 +1,48 @@
+- q: 'delpaths(empty)'
+  in: true
+  out: []
+  v: '[1.5, )'
+
+- q: 'delpaths([["a",{"start":0,"end":2}]])'
+  in: {}
+  out:
+  - {}
+  v: '[1.5, )'
+
+- q: 'delpaths([["a",[true]]])'
+  in: {}
+  out:
+  - {}
+  v: '[1.5, )'
+
+- q: 'try delpaths([[true]]) catch .'
+  in: {}
+  out:
+  - "Cannot delete boolean field of object"
+  v: '[1.5, )'
+  failing: true
+
+- q: 'delpaths([[1.9], [1e20]])'
+  in: [0, 1, 2]
+  out:
+  - [0, 2]
+  v: '[1.5, )'
+
+- q: 'try (delpaths([[{}]])) catch .'
+  in: [1, 2, 3]
+  out:
+  - "Start and end indices of an array slice must be numbers"
+  v: '[1.5, 1.7)'
+
+- q: 'try (delpaths([[{}]])) catch .'
+  in: [1, 2, 3]
+  out:
+  - "Array/string slice indices must be integers"
+  v: '[1.7, )'
+  failing: true
+
+- q: 'delpaths([[{"start": 1, "end": null}]])'
+  in: [1, 2, 3]
+  out:
+  - [1]
+  v: '[1.5, )'

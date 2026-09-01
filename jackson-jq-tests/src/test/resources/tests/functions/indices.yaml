@@ -1,0 +1,11 @@
+- q: 'indices(-1.0)'
+  in: null
+  out:
+  - null
+  v: '[1.5, )'
+
+- q: 'indices("")'
+  in: "x"
+  out:
+  - []
+  v: '[1.7, )'

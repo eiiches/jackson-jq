@@ -1,0 +1,71 @@
+package net.thisptr.jackson.jq.v2.core;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Supplier;
+
+import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+
+/**
+ * Per-invocation overrides for variables and functions registered in an {@link Environment}.
+ */
+public final class JsonQueryBindings<JsonNode> {
+	private static final JsonQueryBindings<?> EMPTY = new JsonQueryBindings<>(Collections.emptyMap(), Collections.emptyMap());
+
+	private final Map<String, Supplier<JsonNode>> variables;
+	private final Map<FunctionSignature, Function> functions;
+
+	private JsonQueryBindings(Map<String, Supplier<JsonNode>> variables, Map<FunctionSignature, Function> functions) {
+		this.variables = Collections.unmodifiableMap(new HashMap<>(variables));
+		this.functions = Collections.unmodifiableMap(new HashMap<>(functions));
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <JsonNode> JsonQueryBindings<JsonNode> empty() {
+		return (JsonQueryBindings<JsonNode>) EMPTY;
+	}
+
+	public static <JsonNode> Builder<JsonNode> builder() {
+		return new Builder<>();
+	}
+
+	public Map<String, Supplier<JsonNode>> variables() {
+		return variables;
+	}
+
+	public Map<FunctionSignature, Function> functions() {
+		return functions;
+	}
+
+	public static final class Builder<JsonNode> {
+		private final Map<String, Supplier<JsonNode>> variables = new HashMap<>();
+		private final Map<FunctionSignature, Function> functions = new HashMap<>();
+
+		public Builder<JsonNode> setVariable(String name, JsonNode value) {
+			Objects.requireNonNull(value, "value");
+			return setVariable(name, () -> value);
+		}
+
+		/**
+		 * Adds a variable whose supplier is evaluated whenever the variable is referenced.
+		 */
+		public Builder<JsonNode> setVariable(String name, Supplier<JsonNode> supplier) {
+			variables.put(Objects.requireNonNull(name, "name"), Objects.requireNonNull(supplier, "supplier"));
+			return this;
+		}
+
+		public Builder<JsonNode> setFunction(FunctionSignature nameAndArity, Function function) {
+			functions.put(Objects.requireNonNull(nameAndArity, "nameAndArity"), Objects.requireNonNull(function, "function"));
+			return this;
+		}
+
+		public JsonQueryBindings<JsonNode> build() {
+			if (variables.isEmpty() && functions.isEmpty())
+				return JsonQueryBindings.empty();
+			return new JsonQueryBindings<>(variables, functions);
+		}
+	}
+}

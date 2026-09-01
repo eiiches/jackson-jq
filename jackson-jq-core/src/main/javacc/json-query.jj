@@ -1,0 +1,1238 @@
+options {
+	STATIC = false;
+	LOOKAHEAD = 1;
+	DEBUG_PARSER = false;
+	UNICODE_INPUT = true;
+	JDK_VERSION = "1.7";
+}
+
+PARSER_BEGIN(AstParser)
+	package net.thisptr.jackson.jq.v2.internal.javacc;
+
+	import java.io.StringReader;
+	import java.util.ArrayDeque;
+	import java.util.Deque;
+	import java.util.List;
+	import java.util.ArrayList;
+
+	import net.thisptr.jackson.jq.v2.spi.Version;
+	import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.literal.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.matchers.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.PipedQueryAstNode.LabelPipeComponent;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode.ImportStatement;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode.ModuleDirective;
+	import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression;
+	import net.thisptr.jackson.jq.v2.internal.javacc.TokenMgrError;
+	import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+
+	@SuppressWarnings("unused")
+	public class AstParser {
+		private Version version;
+
+		public static AstNode parse(final String line, final Version version) throws JsonQueryException {
+			try {
+				final AstParser parser = new AstParser(new StringReader(line));
+				parser.version = version;
+				return parser.Start();
+			} catch (TokenMgrError e) {
+				throw new JsonQueryException("Cannot parse query: " + line, e);
+			} catch (Exception e) {
+				throw new JsonQueryException("Cannot parse query: " + line, e);
+			}
+		}
+	}
+PARSER_END(AstParser)
+
+TOKEN_MGR_DECLS:
+{
+	Deque<Integer> depthStack = new ArrayDeque<Integer>();
+	int depth = 0;
+	int stringInterpLevel = 0;
+}
+
+SKIP: { <SPACES: " " | "\t" | "\r" | "\n"> | <COMMENT: "#" (~["\n","\r"])* ("\n"|"\r"|"\r\n")?> }
+
+// TOKEN: { <OP_NOT: "not"> } is a normal built-in function
+TOKEN: { <OP_AND: "and"> }
+TOKEN: { <OP_OR: "or"> }
+TOKEN: { <OP_DEFAULT: "//"> }
+
+TOKEN: { <COMP_EQUAL: "=="> }
+TOKEN: { <COMP_NOT_EQUAL: "!="> }
+TOKEN: { <COMP_GREATER: ">"> }
+TOKEN: { <COMP_GREATER_EQUAL: ">="> }
+TOKEN: { <COMP_LESS: "<"> }
+TOKEN: { <COMP_LESS_EQUAL: "<="> }
+
+TOKEN: { <PLUS: "+"> }
+TOKEN: { <MINUS: "-"> }
+TOKEN: { <TIMES: "*"> }
+TOKEN: { <DIVIDE: "/"> }
+TOKEN: { <MODULO: "%"> }
+
+TOKEN: { <ASSIGN_OP: "="> }
+TOKEN: { <UPDATE_OP: "|="> }
+
+TOKEN: { <PLUS_EQUAL: "+="> }
+TOKEN: { <MINUS_EQUAL: "-="> }
+TOKEN: { <TIMES_EQUAL: "*="> }
+TOKEN: { <DIVIDE_EQUAL: "/="> }
+TOKEN: { <MODULO_EQUAL: "%="> }
+TOKEN: { <DEFAULT_EQUAL: "//="> }
+
+TOKEN: {
+	<OPEN_PAR: "(">
+	{
+		depth += 1;
+	}
+}
+
+TOKEN: {
+	<CLOSE_PAR: ")">
+	{
+		if (depth == 0) {
+			stringInterpLevel -= 1;
+			if (depthStack.isEmpty())
+				throw new IllegalStateException("Unexpected ')' at line " + input_stream.getBeginLine() + ", column " + input_stream.getBeginColumn() + ".");
+			depth = depthStack.pop();
+			SwitchTo(STATE_STRING);
+		} else {
+			depth -= 1;
+		}
+	}
+}
+
+TOKEN: { <SEMICOLON: ";"> }
+
+// We have to be careful about spaces after ".". jq-1.4 or newer does not allow spaces between "." and <identifier> in field accessors.
+// For example, '. foo' is an error while '.foo' is not. This distinction is important to parse "if . then . else empty end".
+// IDENTIFIER_AFTER_DOT and OTHERWISE_AFTER_DOT should not be re-ordered. The order matters.
+TOKEN: { <DOT: "."> : STATE_DOT }
+<STATE_DOT> TOKEN: {
+	<IDENTIFIER_AFTER_DOT: <IDENTIFIER>> : DEFAULT
+}
+<STATE_DOT> MORE: {
+	<OTHERWISE_AFTER_DOT: ""> : DEFAULT
+}
+
+TOKEN: { <RECURSION: ".."> }
+
+TOKEN: { <OPEN_BRACKET: "["> }
+TOKEN: { <CLOSE_BRACKET: "]"> }
+TOKEN: { <QUESTION: "?"> }
+
+TOKEN: { <DOLLAR: "$"> }
+TOKEN: { <PIPE: "|"> }
+TOKEN: { <ATSIGN: "@"> }
+
+TOKEN: { <OPEN_BRACE: "{"> }
+TOKEN: { <CLOSE_BRACE: "}"> }
+
+TOKEN: { <DOUBLE_COLON: "::"> }
+TOKEN: { <COLON: ":"> }
+TOKEN: { <COMMA: ","> }
+
+TOKEN: { <BOOLEAN_LITERAL_TRUE: "true"> }
+TOKEN: { <BOOLEAN_LITERAL_FALSE: "false"> }
+TOKEN: { <NULL_LITERAL: "null"> }
+TOKEN: { <INTEGER_LITERAL: (["1"-"9"] (["0"-"9"])*) | "0"> }
+TOKEN: {
+	<FLOAT_LITERAL: (("0" | ["1"-"9"] (<DIGIT>)*) ("." (["0"-"9"])+)? | "." (["0"-"9"])+) (<EXPONENT>)?>
+	| <#EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+>
+}
+
+TOKEN: {
+	<QUOTE: "\""> : STATE_STRING
+}
+
+<STATE_STRING> TOKEN: {
+	<ENDQUOTE: <QUOTE>> : DEFAULT
+	| <VISIBLE_CHAR:~["\"", "\\", "\b", "\f", "\n", "\r", "\t"]>
+}
+
+<STATE_STRING> MORE: {
+	"\\" : STATE_STRING_ESCAPE
+}
+
+<STATE_STRING_ESCAPE> TOKEN: {
+	<ESCAPE_CHAR: ["\"", "\\", "/", "b", "f", "n", "r", "t"]> : STATE_STRING
+}
+
+<STATE_STRING_ESCAPE> TOKEN: {
+	<OPEN_INTERP: <OPEN_PAR>>
+	{
+		stringInterpLevel += 1;
+		depthStack.push(depth);
+		depth = 0;
+		SwitchTo(DEFAULT);
+	}
+}
+
+<STATE_STRING_ESCAPE> TOKEN: {
+	<CODEPOINT_CHAR: "u" (["0"-"9", "a"-"f", "A"-"F"]){4}> : STATE_STRING
+}
+
+TOKEN: {
+	<KEYWORD_IF: "if">
+	| <KEYWORD_THEN: "then">
+	| <KEYWORD_ELIF: "elif">
+	| <KEYWORD_ELSE: "else">
+}
+TOKEN: {
+	<KEYWORD_END: "end">
+}
+
+TOKEN: {
+	<KEYWORD_AS: "as">
+}
+TOKEN: {
+	<KEYWORD_DEF: "def">
+}
+TOKEN: {
+	<KEYWORD_REDUCE: "reduce">
+	| <KEYWORD_FOREACH: "foreach">
+}
+
+TOKEN: {
+	<KEYWORD_TRY: "try">
+	| <KEYWORD_CATCH: "catch">
+}
+
+TOKEN: {
+	<KEYWORD_LABEL: "label">
+	| <KEYWORD_BREAK: "break">
+	| <KEYWORD_IMPORT: "import">
+	| <KEYWORD_INCLUDE: "include">
+	| <KEYWORD_MODULE: "module">
+}
+
+TOKEN: {
+	<IDENTIFIER: <LETTER> (<LETTER> | <DIGIT>)*>
+	| <#LETTER: ["a"-"z","A"-"Z","_"]>
+	| <#DIGIT: ["0"-"9"]>
+}
+
+String KeywordAsString():
+{
+	Token token;
+}
+{
+	(
+		token = <KEYWORD_IF>
+	|	token = <KEYWORD_THEN>
+	|	token = <KEYWORD_ELIF>
+	|	token = <KEYWORD_ELSE>
+	|	token = <KEYWORD_END>
+	|	token = <KEYWORD_AS>
+	|	token = <KEYWORD_DEF>
+	|	token = <BOOLEAN_LITERAL_TRUE>
+	|	token = <BOOLEAN_LITERAL_FALSE>
+	|	token = <OP_AND>
+	|	token = <OP_OR>
+	|	token = <NULL_LITERAL>
+	|	token = <KEYWORD_REDUCE>
+	|	token = <KEYWORD_FOREACH>
+	|	token = <KEYWORD_TRY>
+	|	token = <KEYWORD_CATCH>
+	|	token = <KEYWORD_LABEL>
+	|	token = <KEYWORD_BREAK>
+	|	token = <KEYWORD_IMPORT>
+	|	token = <KEYWORD_INCLUDE>
+	|	token = <KEYWORD_MODULE>
+	)
+	{ return token.image; }
+}
+
+String IdentifierAsString():
+{
+	Token token;
+}
+{
+	token = <IDENTIFIER>
+	{ return token.image; }
+}
+
+String KeywordOrIdentifier():
+{
+	String text;
+}
+{
+	(
+		text = KeywordAsString()
+	|
+		text = IdentifierAsString()
+	)
+	{ return text; }
+}
+
+ModuleDirective ModuleDirective():
+{
+	AstNode metadata;
+}
+{
+	<KEYWORD_MODULE>
+	(
+		metadata = Expression()
+	)
+	{ return new ModuleDirective(metadata); }
+}
+
+ImportStatement ImportStatement():
+{
+	AstNode pathExpr;
+	String path;
+	String name;
+	AstNode metadata = null;
+	boolean dollarImport = false;
+}
+{
+	<KEYWORD_IMPORT>
+	pathExpr = StringInterpolation()
+	{
+		if (!(pathExpr instanceof StringLiteralAstNode))
+			throw new IllegalStateException("Import path must be constant");
+		path = ((StringLiteralAstNode) pathExpr).value();
+	}
+	<KEYWORD_AS>
+	(
+		<DOLLAR>
+		{ dollarImport = true; }
+		name = IdentifierAsString()
+	|
+		name = IdentifierAsString()
+	)
+	(
+		metadata = Expression()
+	)?
+	{ return new ImportStatement(path, dollarImport, name, metadata); }
+}
+
+ImportStatement IncludeStatement():
+{
+	AstNode pathExpr;
+	String path;
+	AstNode metadata = null;
+}
+{
+	<KEYWORD_INCLUDE>
+	pathExpr = StringInterpolation()
+	{
+		if (!(pathExpr instanceof StringLiteralAstNode))
+			throw new IllegalStateException("Include path must be constant");
+		path = ((StringLiteralAstNode) pathExpr).value();
+	}
+	(
+		metadata = Expression()
+	)?
+	{ return new ImportStatement(path, false, null, metadata); }
+}
+
+AstNode Start():
+{
+	ImportStatement imp;
+	ModuleDirective moduleDirective = null;
+	final List<ImportStatement> imports = new ArrayList<ImportStatement>();
+	AstNode expr;
+}
+{
+	(
+		moduleDirective = ModuleDirective()
+		<SEMICOLON>
+	)?
+	(
+		(
+			imp = ImportStatement()
+		|
+			imp = IncludeStatement()
+		)
+		{ imports.add(imp); }
+		<SEMICOLON>
+	)*
+	expr = Expression()
+	<EOF>
+	{
+		if (moduleDirective == null && imports.isEmpty())
+			return expr;
+		return new TopLevelAstNode(moduleDirective, imports, expr);
+	}
+}
+
+AstNode Expression():
+{
+	PipedQueryAstNode.PipeComponent component;
+	List<PipedQueryAstNode.PipeComponent> components = new ArrayList<PipedQueryAstNode.PipeComponent>();
+}
+{
+	component = PipeComponent()
+	{ components.add(component); }
+	(
+		<PIPE>
+		component = PipeComponent()
+		{ components.add(component); }
+	)*
+	{
+		if (!component.canTerminatePipe()) {
+			if (components.size() > 1) {
+				throw new IllegalStateException("Pipe cannot be terminated by assignment or label: | " + component);
+			} else {
+				throw new IllegalStateException("Assignment or label must be followed by pipes: " + component);
+			}
+		}
+		if (components.size() == 1 && (component instanceof PipedQueryAstNode.TransformPipeComponent))
+			return ((PipedQueryAstNode.TransformPipeComponent) component).expr;
+		return new PipedQueryAstNode(components);
+	}
+}
+
+AstNode JsonQueryWithoutComma():
+{
+	PipedQueryAstNode.PipeComponent component;
+	List<PipedQueryAstNode.PipeComponent> components = new ArrayList<PipedQueryAstNode.PipeComponent>();
+}
+{
+	component = PipeComponentWithoutComma()
+	{ components.add(component); }
+	(
+		<PIPE>
+		component = PipeComponentWithoutComma()
+		{ components.add(component); }
+	)*
+	{
+		if (!component.canTerminatePipe()) {
+			if (components.size() > 1) {
+				throw new IllegalStateException("Pipe cannot be terminated by assignment or label: | " + component);
+			} else {
+				throw new IllegalStateException("Assignment or label must be followed by pipes: " + component);
+			}
+		}
+		if (components.size() == 1 && (component instanceof PipedQueryAstNode.TransformPipeComponent))
+			return ((PipedQueryAstNode.TransformPipeComponent) component).expr;
+		return new PipedQueryAstNode(components);
+	}
+}
+
+PipedQueryAstNode.PipeComponent PipeComponent():
+{
+	String name;
+	AstNode expr;
+	PatternMatcherAstNode matcher;
+}
+{
+	(
+		<KEYWORD_LABEL>
+		<DOLLAR>
+		name = IdentifierAsString()
+		{ return new LabelPipeComponent(name); }
+	|
+		expr = TupleExpression()
+		(
+			<KEYWORD_AS>
+			matcher = Matcher()
+			{ return new PipedQueryAstNode.AssignPipeComponent(expr, matcher); }
+		|
+			{ return new PipedQueryAstNode.TransformPipeComponent(expr); }
+		)
+	)
+}
+
+PipedQueryAstNode.PipeComponent PipeComponentWithoutComma():
+{
+	String name;
+	AstNode expr;
+	PatternMatcherAstNode matcher;
+}
+{
+	(
+		<KEYWORD_LABEL>
+		<DOLLAR>
+		name = IdentifierAsString()
+		{ return new LabelPipeComponent(name); }
+	|
+		expr = BinaryOperatorExpression()
+		(
+			<KEYWORD_AS>
+			matcher = Matcher()
+			{ return new PipedQueryAstNode.AssignPipeComponent(expr, matcher); }
+		|
+			{ return new PipedQueryAstNode.TransformPipeComponent(expr); }
+		)
+	)
+}
+
+AstNode TupleExpression():
+{
+	AstNode tmp;
+	final List<AstNode> qs = new ArrayList<AstNode>();
+}
+{
+	tmp = BinaryOperatorExpression()
+	{ qs.add(tmp); }
+	(
+		<COMMA>
+		tmp = BinaryOperatorExpression()
+		{ qs.add(tmp); }
+	)*
+	{
+		if (qs.size() == 1)
+			return qs.get(0);
+		return new TupleAstNode(qs);
+	}
+}
+
+AstNode BinaryOperatorExpression():
+{
+	Token t;
+	AstNode expr;
+	List<AstNode> exprs = new ArrayList<AstNode>();
+	List<BinaryOperatorExpression.Operator> operators = new ArrayList<BinaryOperatorExpression.Operator>();
+}
+{
+	expr = PrimaryExpression()
+	{ exprs.add(expr); }
+	(
+		(
+			t = <TIMES>
+			|
+			t = <DIVIDE>
+			|
+			t = <MODULO>
+			|
+			t = <PLUS>
+			|
+			t = <MINUS>
+			|
+			t = <COMP_EQUAL>
+			|
+			t = <COMP_NOT_EQUAL>
+			|
+			t = <COMP_GREATER>
+			|
+			t = <COMP_GREATER_EQUAL>
+			|
+			t = <COMP_LESS>
+			|
+			t = <COMP_LESS_EQUAL>
+			|
+			t = <OP_AND>
+			|
+			t = <OP_OR>
+			|
+			t = <OP_DEFAULT>
+			|
+			t = <ASSIGN_OP>
+			|
+			t = <UPDATE_OP>
+			|
+			t = <PLUS_EQUAL>
+			|
+			t = <MINUS_EQUAL>
+			|
+			t = <TIMES_EQUAL>
+			|
+			t = <DIVIDE_EQUAL>
+			|
+			t = <MODULO_EQUAL>
+			|
+			t = <DEFAULT_EQUAL>
+		)
+		{ operators.add(BinaryOperatorExpression.Operator.fromImage(t.image)); }
+		expr = PrimaryExpression()
+		{ exprs.add(expr); }
+	)*
+	{ return BinaryOperatorExpression.buildTree(exprs, operators); }
+}
+
+AstNode FunctionDefinition():
+{
+	final List<String> args = new ArrayList<String>();
+	Token fname;
+	String tmp;
+	AstNode body;
+}
+{
+	<KEYWORD_DEF>
+	fname = <IDENTIFIER>
+	(
+		<OPEN_PAR>
+		tmp = FunctionDefinitionParam()
+		{ args.add(tmp); }
+		(
+			<SEMICOLON>
+			tmp = FunctionDefinitionParam()
+			{ args.add(tmp); }
+		)*
+		<CLOSE_PAR>
+	)?
+	<COLON>
+	body = Expression()
+	<SEMICOLON>
+	{ return new FunctionDefinitionAstNode(fname.image, args, body); }
+}
+
+String FunctionDefinitionParam():
+{
+	Token param;
+	boolean isvar = false;
+}
+{
+	(
+		<DOLLAR>
+		{ isvar = true; }
+	)?
+	param = <IDENTIFIER>
+	{ return (isvar ? "$" : "") + param.image; }
+}
+
+AstNode PrimaryExpression():
+{
+	Token t;
+	AstNode tmp;
+	List<AstNode> exprs = new ArrayList<AstNode>();
+}
+{
+	(
+		tmp = FunctionDefinition()
+		{ exprs.add(tmp); }
+	)*
+	(
+		tmp = ThisObjectAccess()
+		(
+			<QUESTION>
+			{ tmp = new TryCatchAstNode.Question(tmp); }
+		)*
+	|
+		tmp = VariableAccess()
+		(
+			tmp = FieldAccessor(tmp)
+		)?
+		(
+			<QUESTION>
+			{ tmp = new TryCatchAstNode.Question(tmp); }
+		)*
+	|
+		(
+			tmp = ValueLiteral()
+		|
+			// StringInterpolation and FormattingFilter could both start with @filter_name, hence LOOKAHEAD(3).
+			LOOKAHEAD(3)
+			tmp = StringInterpolation()
+		|
+			tmp = FormattingFilter()
+		|
+			tmp = ArrayConstruction()
+		|
+			tmp = ObjectConstruction()
+		|
+			tmp = FunctionCall()
+		)
+		(
+			tmp = FieldAccessor(tmp)
+		)?
+		(
+			<QUESTION>
+			{ tmp = new TryCatchAstNode.Question(tmp); }
+		)*
+	|
+		<OPEN_PAR>
+		tmp = Expression()
+		<CLOSE_PAR>
+		{ tmp = new ParenAstNode(tmp); }
+		(
+			tmp = FieldAccessor(tmp)
+		)?
+		(
+			<QUESTION>
+			{ tmp = new TryCatchAstNode.Question(tmp); }
+		)*
+	|
+		<MINUS>
+		tmp = PrimaryExpression()
+		{ tmp = new NegativeExpressionAstNode(tmp); }
+	|
+		tmp = ConditionalExpression()
+	|
+		tmp = ReduceExpression()
+	|
+		tmp = RecursionOperator()
+	|
+		tmp = ForeachExpression()
+	|
+		tmp = TryCatchExpression()
+	|
+		tmp = BreakExpression()
+	)
+	{
+		exprs.add(tmp);
+		if (exprs.size() == 1)
+			return exprs.get(0);
+		return new SemicolonOperatorAstNode(exprs);
+	}
+}
+
+AstNode RecursionOperator():
+{
+}
+{
+	<RECURSION>
+	{ return new RecursionOperatorAstNode(); }
+}
+
+AstNode FormattingFilter():
+{
+	Token t;
+}
+{
+	<ATSIGN>
+	t = <IDENTIFIER>
+	{ return new FormattingFilterAstNode(t.image, version); }
+}
+
+AstNode TryCatchExpression():
+{
+	AstNode tryExpr, catchExpr = null;
+}
+{
+	<KEYWORD_TRY>
+	tryExpr = Expression()
+	(
+		<KEYWORD_CATCH>
+		catchExpr = PrimaryExpression()
+	)?
+	{ return new TryCatchAstNode(tryExpr, catchExpr); }
+}
+
+AstNode BreakExpression():
+{
+	String name;
+}
+{
+	<KEYWORD_BREAK>
+	<DOLLAR>
+	name = IdentifierAsString()
+	{ return new BreakExpressionAstNode(name); }
+}
+
+AstNode ForeachExpression():
+{
+	PatternMatcherAstNode matcher;
+	AstNode initExpr, updateExpr, extractExpr = null, iterExpr;
+}
+{
+	<KEYWORD_FOREACH>
+	iterExpr = PrimaryExpression()
+	<KEYWORD_AS>
+	matcher = Matcher()
+
+	<OPEN_PAR>
+	initExpr = Expression()
+	<SEMICOLON>
+	updateExpr = Expression()
+	(
+		<SEMICOLON>
+		extractExpr = Expression()
+	)?
+	<CLOSE_PAR>
+	{ return new ForeachExpressionAstNode(matcher, initExpr, updateExpr, extractExpr, iterExpr); }
+}
+
+AstNode ReduceExpression():
+{
+	PatternMatcherAstNode matcher;
+	AstNode tmpIterExpr, tmpInitExpr, tmpReduceExpr;
+}
+{
+	<KEYWORD_REDUCE>
+	tmpIterExpr = PrimaryExpression()
+	<KEYWORD_AS>
+	matcher = Matcher()
+	<OPEN_PAR>
+	tmpInitExpr = Expression()
+	<SEMICOLON>
+	tmpReduceExpr = Expression()
+	<CLOSE_PAR>
+	{ return new ReduceExpressionAstNode(matcher, tmpInitExpr, tmpReduceExpr, tmpIterExpr); }
+}
+
+AstNode VariableAccess():
+{
+	Token t;
+	AstNode tmp;
+	String moduleName = null;
+}
+{
+	<DOLLAR>
+	(
+		LOOKAHEAD(2) // both branches starts with <IDENTIFIER> with/without module name
+		moduleName = IdentifierAsString()
+		<DOUBLE_COLON>
+	)?
+	t = <IDENTIFIER>
+	{ return new VariableAccessAstNode(moduleName, t.image); }
+}
+
+AstNode ConditionalExpression():
+{
+	AstNode tmpPred;
+	AstNode tmpExpr;
+	final List<Pair<AstNode, AstNode>> switches = new ArrayList<Pair<AstNode, AstNode>>();
+	final AstNode otherwise;
+}
+{
+	<KEYWORD_IF>
+	tmpPred = Expression()
+	<KEYWORD_THEN>
+	tmpExpr = Expression()
+	{ switches.add(Pair.of(tmpPred, tmpExpr)); }
+	(
+		<KEYWORD_ELIF>
+		tmpPred = Expression()
+		<KEYWORD_THEN>
+		tmpExpr = Expression()
+		{ switches.add(Pair.of(tmpPred, tmpExpr)); }
+	)*
+	<KEYWORD_ELSE>
+	otherwise = Expression()
+	<KEYWORD_END>
+	{
+		return new ConditionalAstNode(switches, otherwise);
+	}
+}
+
+AstNode ObjectConstruction():
+{
+	final ObjectConstructionAstNode obj = new ObjectConstructionAstNode();
+}
+{
+	<OPEN_BRACE>
+	(
+		ObjectField(obj)
+		(
+			<COMMA>
+			ObjectField(obj)
+		)*
+	)?
+	<CLOSE_BRACE>
+	{ return obj; }
+}
+
+void ObjectField(final ObjectConstructionAstNode obj):
+{
+	String name;
+	AstNode value = null;
+	AstNode key = null;
+}
+{
+	// - {$a}               -- VariableKeyFieldConstruction
+	// - {a}                -- IdentifierKeyFieldConstruction
+	// - {"a"}, {"\(.a)"}   -- StringFieldConstruction
+	// - {a: 20}
+	// - {"a": 20}, {"\(.a)": 20}
+	// - {(1|tostring): 10} -- JsonQueryFieldConstruction
+	(
+		// {$name}
+		<DOLLAR>
+		name = KeywordOrIdentifier()
+		{ obj.add(new ObjectConstructionAstNode.VariableKeyFieldConstruction(name)); }
+	|
+		// {name}, {name: value}
+		name = KeywordOrIdentifier()
+		(
+			<COLON>
+			value = ObjectFieldValue()
+		)?
+		{ obj.add(new ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst(name, value)); }
+	|
+		// {"name"}, {"name": value}
+		key = StringInterpolation()
+		(
+			<COLON>
+			value = ObjectFieldValue()
+		)?
+		{ obj.add(new ObjectConstructionAstNode.StringKeyFieldConstructionAst(key, value)); }
+	|
+		// {(keyexpr): value}
+		<OPEN_PAR>
+		key = Expression()
+		<CLOSE_PAR>
+		<COLON>
+		value = ObjectFieldValue()
+		{ obj.add(new ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst(key, value)); }
+	)
+}
+
+Pair<AstNode, Boolean> ObjectFieldName():
+{
+	Token token;
+	AstNode expr;
+	String keywordAsString;
+	boolean parenthesized = false;
+}
+{
+	(
+		keywordAsString = KeywordAsString()
+		{ expr = new StringLiteralAstNode(keywordAsString); }
+	|
+		expr = StringInterpolation()
+	|
+		token = <IDENTIFIER>
+		{ expr = new StringLiteralAstNode(token.image); }
+	|
+		<OPEN_PAR>
+		expr = Expression()
+		<CLOSE_PAR>
+		{ parenthesized = true; }
+	)
+	{ return Pair.of(expr, parenthesized); }
+}
+
+AstNode ObjectFieldValue():
+{
+	AstNode expr;
+}
+{
+	(
+		<OPEN_PAR>
+		expr = Expression()
+		<CLOSE_PAR>
+		{ expr = new ParenAstNode(expr); }
+	|
+		expr = JsonQueryWithoutComma()
+	)
+	{ return expr; }
+}
+
+AstNode ArrayConstruction():
+{
+	AstNode tmp = null;
+}
+{
+	<OPEN_BRACKET>
+	(
+		tmp = Expression()
+	)?
+	<CLOSE_BRACKET>
+	{
+		if (tmp == null)
+			return new ArrayConstructionAstNode();
+		return new ArrayConstructionAstNode(tmp);
+	}
+}
+
+AstNode ValueLiteral():
+{
+	Token token;
+	String text;
+	AstNode tmp;
+}
+{
+	(
+		token = <INTEGER_LITERAL>
+		{ tmp = new LongLiteralAstNode(Long.parseLong(token.image)); }
+	|
+		token = <FLOAT_LITERAL>
+		{ tmp = new DoubleLiteralAstNode(Double.parseDouble(token.image)); }
+	|
+		<NULL_LITERAL>
+		{ tmp = new NullLiteralAstNode(); }
+	|
+		<BOOLEAN_LITERAL_TRUE>
+		{ tmp = new BooleanLiteralAstNode(true); }
+	|
+		<BOOLEAN_LITERAL_FALSE>
+		{ tmp = new BooleanLiteralAstNode(false); }
+	)
+	{ return tmp; }
+}
+
+AstNode FunctionCall():
+{
+	AstNode tmp;
+	final Token fname;
+	final List<AstNode> fargs = new ArrayList<AstNode>();
+	String moduleName = null;
+}
+{
+	(
+		LOOKAHEAD(2) // fname and module::fname both starts with <IDENTIFIER>
+		moduleName = IdentifierAsString()
+		<DOUBLE_COLON>
+	)?
+	fname = <IDENTIFIER>
+	(
+		<OPEN_PAR>
+		(
+			tmp = Expression()
+			{ fargs.add(tmp); }
+			(
+				<SEMICOLON>
+				tmp = Expression()
+				{ fargs.add(tmp); }
+			)*
+		)?
+		<CLOSE_PAR>
+	)?
+	{ return new FunctionCallAstNode(moduleName, fname.image, fargs, version); }
+}
+
+AstNode FieldAccessor(AstNode obj):
+{
+}
+{
+	(
+		<DOT>
+		(
+			obj = IdentifierFieldAccessor(obj)
+		|
+			obj = StringFieldAccessor(obj)
+		)
+	|
+		obj = BracketFieldAccessor(obj)
+	)+
+	{ return obj; }
+}
+
+AstNode ThisObjectAccess():
+{
+	Token identifier;
+	boolean permissive;
+	AstNode tmp = new ThisObjectAstNode();
+}
+{
+	<DOT>
+	(
+		(
+			tmp = IdentifierFieldAccessor(tmp)
+		|
+			tmp = StringFieldAccessor(tmp)
+		|
+			tmp = BracketFieldAccessor(tmp)
+		)
+		(
+			tmp = FieldAccessor(tmp)
+		)?
+	)?
+	{ return tmp; }
+}
+
+AstNode IdentifierFieldAccessor(AstNode obj):
+{
+	Token identifier;
+	boolean permissive = false;
+}
+{
+	identifier = <IDENTIFIER_AFTER_DOT>
+	(
+		<QUESTION>
+		{ permissive = true; }
+	)?
+	{ return new IdentifierFieldAccessAstNode(obj, identifier.image, permissive); }
+}
+
+AstNode StringFieldAccessor(AstNode obj):
+{
+	AstNode fieldName;
+	boolean permissive = false;
+}
+{
+	fieldName = StringInterpolation()
+	(
+		<QUESTION>
+		{ permissive = true; }
+	)?
+	{ return new StringFieldAccessAstNode(obj, fieldName, permissive); }
+}
+
+AstNode BracketFieldAccessor(AstNode obj):
+{
+	AstNode begin = null, end = null;
+	boolean rangeAccess = true;
+	boolean permissive = false;
+}
+{
+	<OPEN_BRACKET>
+	(
+		begin = Expression()
+		(
+			<COLON>
+			(
+				end = Expression()
+			|
+				{ /* empty */ }
+			)
+		|
+			{ rangeAccess = false; }
+		)
+	|
+		<COLON>
+		(
+			end = Expression()
+		)
+	)?
+	<CLOSE_BRACKET>
+	(
+		<QUESTION>
+		{ permissive = true; }
+	)?
+	{
+		if (rangeAccess) {
+			if (begin == null && end == null)
+				return new BracketExtractFieldAccessAstNode(obj, permissive);
+			return new BracketFieldAccessAstNode(obj, begin, end, permissive);
+		} else {
+			return new BracketFieldAccessAstNode(obj, begin, permissive);
+		}
+	}
+}
+
+AstNode StringInterpolation():
+{
+	Token t;
+	final StringBuilder builder = new StringBuilder();
+	final List<Pair<Integer, AstNode>> interpolations = new ArrayList<Pair<Integer, AstNode>>();
+	AstNode tmp;
+	AstNode formatter = null;
+}
+{
+	(
+		formatter = FormattingFilter()
+	)?
+	<QUOTE>
+	(
+		t = <VISIBLE_CHAR>
+		{ builder.append(t.image); }
+	|
+		t = <ESCAPE_CHAR>
+		{
+			if (t.image.charAt(0) != '\\')
+				throw new IllegalStateException("???");
+			final char c = t.image.charAt(1);
+			switch (c)
+			{
+				case '\"': builder.append('\"'); break;
+				case '\\': builder.append('\\'); break;
+				case 'b': builder.append((char) 0x08); break;
+				case 'f': builder.append((char) 0x0c); break;
+				case 'r': builder.append((char) 0x0d); break;
+				case 't': builder.append((char) 0x09); break;
+				case 'n': builder.append((char) 0x0a); break;
+				case '/': builder.append('/'); break;
+				default: {
+					throw new IllegalStateException("Unexpected escape char: " + c);
+				}
+			}
+		}
+	|
+		t = <CODEPOINT_CHAR>
+		{
+			if (t.image.charAt(0) != '\\' || t.image.charAt(1) != 'u')
+				throw new IllegalStateException("???");
+			builder.appendCodePoint(Integer.parseInt(t.image.substring(2), 16));
+		}
+	|
+		<OPEN_INTERP>
+		tmp = Expression()
+		<CLOSE_PAR>
+		{ interpolations.add(Pair.of(builder.length(), tmp)); }
+	)*
+	<ENDQUOTE>
+	{
+		if (interpolations.isEmpty() && formatter == null) {
+			return new StringLiteralAstNode(builder.toString());
+		} else {
+			return new StringInterpolationAstNode(builder.toString(), interpolations, formatter);
+		}
+	}
+}
+
+PatternMatcherAstNode Matcher():
+{
+	PatternMatcherAstNode matcher;
+}
+{
+	(
+		matcher = ValueMatcher()
+	|
+		matcher = ArrayMatcher()
+	|
+		matcher = ObjectMatcher()
+	)
+	{ return matcher; }
+}
+
+PatternMatcherAstNode ArrayMatcher():
+{
+	PatternMatcherAstNode matcher;
+	final List<PatternMatcherAstNode> matchers = new ArrayList<PatternMatcherAstNode>();
+}
+{
+	<OPEN_BRACKET>
+	matcher = Matcher()
+	{ matchers.add(matcher); }
+	(
+		<COMMA>
+		matcher = Matcher()
+		{ matchers.add(matcher); }
+	)*
+	<CLOSE_BRACKET>
+	{ return new ArrayMatcherAstNode(matchers); }
+}
+
+PatternMatcherAstNode ObjectMatcher():
+{
+	ObjectMatcherAstNode.FieldMatcher fmatcher;
+	final List<ObjectMatcherAstNode.FieldMatcher> matchers = new ArrayList<ObjectMatcherAstNode.FieldMatcher>();
+}
+{
+	<OPEN_BRACE>
+	fmatcher = ObjectMatcherField()
+	{ matchers.add(fmatcher); }
+	(
+		<COMMA>
+		fmatcher = ObjectMatcherField()
+		{ matchers.add(fmatcher); }
+	)*
+	<CLOSE_BRACE>
+	{ return new ObjectMatcherAstNode(matchers); }
+}
+
+ObjectMatcherAstNode.FieldMatcher ObjectMatcherField():
+{
+	AstNode nameExpr = null;
+	Pair<AstNode, Boolean> fieldName;
+	String name;
+	PatternMatcherAstNode matcher = null;
+	boolean dollar = false; // true if {$x} or {$x:...}; false if {x:...}
+	boolean parenthesizedName = false;
+}
+{
+	(
+		<DOLLAR>
+		{ dollar = true; }
+		name = KeywordOrIdentifier()
+		{ nameExpr = new StringLiteralAstNode(name); }
+		(
+			<COLON>
+			matcher = Matcher()
+		)?
+	|
+		fieldName = ObjectFieldName()
+		{ nameExpr = fieldName._1; parenthesizedName = fieldName._2; }
+		<COLON>
+		matcher = Matcher()
+	)
+	{ return new ObjectMatcherAstNode.FieldMatcher(dollar, nameExpr, matcher, parenthesizedName); }
+}
+
+PatternMatcherAstNode ValueMatcher():
+{
+	Token token;
+}
+{
+	<DOLLAR>
+	token = <IDENTIFIER>
+	{ return new ValueMatcherAstNode(token.image); }
+}

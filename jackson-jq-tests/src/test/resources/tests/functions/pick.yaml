@@ -1,0 +1,12 @@
+- q: 'pick(.a, .b.c, .x)'
+  in: {"a": 1, "b": {"c": 2, "d": 3}, "e": 4}
+  out:
+  - {"a": 1, "b": {"c": 2}, "x": null}
+  v: '[1.7, )'
+  comment: 'pick/1 is added in jq-1.7, so this test is only valid for versions 1.7 and above'
+
+- q: 'pick(.[2], .[0], .[0])'
+  in: [1, 2, 3, 4]
+  out:
+  - [1, null, 3]
+  v: '[1.7, )'

@@ -1,0 +1,386 @@
+# Implementation status
+
+jackson-jq aims to be compatible with jq. However, not every jq feature is available. Some features are intentionally omitted because they are not relevant to a Java library, while others are incomplete, contain bugs, or have not yet been implemented.
+
+The following table shows which features from the jq 1.5 manual are supported by jackson-jq. We try to keep this list accurate and up to date. If you find an omission or error, please file an issue.
+  
+| Language features / functions                                                                                                                                                                                                                                                                                                      | jackson-jq |
+|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|
+| [Basic filters](https://stedolan.github.io/jq/manual/v1.5/#Basicfilters)                                                                                                                                                                                                                                                           | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`.`](https://stedolan.github.io/jq/manual/v1.5/#&#46;)                                                                                                                                                                                                                                             | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`.foo`, `.foo.bar`](https://stedolan.github.io/jq/manual/v1.5/#&#46;foo&#44;&#46;foo&#46;bar)                                                                                                                                                                                                      | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`.foo?`](https://stedolan.github.io/jq/manual/v1.5/#&#46;foo&#63;)                                                                                                                                                                                                                                 | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`.[<string>]`, `.[2]`, `.[10:15]`](https://stedolan.github.io/jq/manual/v1.5/#&#46;&#91;&#60;string&#62;&#93;&#44;&#46;&#91;2&#93;&#44;&#46;&#91;10&#58;15&#93;)                                                                                                                                   | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`.[]`](https://stedolan.github.io/jq/manual/v1.5/#&#46;&#91;&#93;)                                                                                                                                                                                                                                 | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`.[]?`](https://stedolan.github.io/jq/manual/v1.5/#&#46;&#91;&#93;&#63;)                                                                                                                                                                                                                           | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`,`](https://stedolan.github.io/jq/manual/v1.5/#&#44;)                                                                                                                                                                                                                                             | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`ǀ`](https://stedolan.github.io/jq/manual/v1.5/#&#124;)                                                                                                                                                                                                                                            | ○          |
+| [Types and Values](https://stedolan.github.io/jq/manual/v1.5/#TypesandValues)                                                                                                                                                                                                                                                      | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Array construction &#45; `[]`](https://stedolan.github.io/jq/manual/v1.5/#Arrayconstruction&#45;&#91;&#93;)                                                                                                                                                                                        | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Objects &#45; `{}`](https://stedolan.github.io/jq/manual/v1.5/#Objects&#45;&#123;&#125;)                                                                                                                                                                                                           | ○<sup>*4</sup> |
+| [Builtin operators and functions](https://stedolan.github.io/jq/manual/v1.5/#Builtinoperatorsandfunctions)                                                                                                                                                                                                                         | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Addition &#45; `+`](https://stedolan.github.io/jq/manual/v1.5/#Addition&#45;&#43;)                                                                                                                                                                                                                 | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Subtraction &#45; `-`](https://stedolan.github.io/jq/manual/v1.5/#Subtraction&#45;&#45;)                                                                                                                                                                                                           | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Multiplication, division, modulo &#45; `*`, `/`, and `%`](https://stedolan.github.io/jq/manual/v1.5/#Multiplication&#44;division&#44;modulo&#45;&#42;&#44;&#47;&#44;and&#37;)                                                                                                                      | ○<sup>*5</sup> |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`length`](https://stedolan.github.io/jq/manual/v1.5/#length)                                                                                                                                                                                                                                       | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`keys`, `keys_unsorted`](https://stedolan.github.io/jq/manual/v1.5/#keys&#44;keys&#95;unsorted)                                                                                                                                                                                                    | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`has(key)`](https://stedolan.github.io/jq/manual/v1.5/#has&#40;key&#41;)                                                                                                                                                                                                                           | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`in`](https://stedolan.github.io/jq/manual/v1.5/#in)                                                                                                                                                                                                                                               | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`path(path_expression)`](https://stedolan.github.io/jq/manual/v1.5/#path&#40;path&#95;expression&#41;)                                                                                                                                                                                             | ○<sup>*7</sup> |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`del(path_expression)`](https://stedolan.github.io/jq/manual/v1.5/#del&#40;path&#95;expression&#41;)                                                                                                                                                                                               | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`to_entries`, `from_entries`, `with_entries`](https://stedolan.github.io/jq/manual/v1.5/#to&#95;entries&#44;from&#95;entries&#44;with&#95;entries)                                                                                                                                                 | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`select(boolean_expression)`](https://stedolan.github.io/jq/manual/v1.5/#select&#40;boolean&#95;expression&#41;)                                                                                                                                                                                   | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`arrays`, `objects`, `iterables`, `booleans`, `numbers`, `normals`, `finites`, `strings`, `nulls`, `values`, `scalars`](https://stedolan.github.io/jq/manual/v1.5/#arrays&#44;objects&#44;iterables&#44;booleans&#44;numbers&#44;normals&#44;finites&#44;strings&#44;nulls&#44;values&#44;scalars) | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`empty`](https://stedolan.github.io/jq/manual/v1.5/#empty)                                                                                                                                                                                                                                         | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`error(message)`](https://stedolan.github.io/jq/manual/v1.5/#error&#40;message&#41;)                                                                                                                                                                                                               | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`$__loc__`](https://stedolan.github.io/jq/manual/v1.5/#&#36;&#95;&#95;loc&#95;&#95;)                                                                                                                                                                                                               | ×          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`map(x)`, `map_values(x)`](https://stedolan.github.io/jq/manual/v1.5/#map&#40;x&#41;&#44;map&#95;values&#40;x&#41;)                                                                                                                                                                                | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`paths`, `paths(node_filter)`, `leaf_paths`](https://stedolan.github.io/jq/manual/v1.5/#paths&#44;paths&#40;node&#95;filter&#41;&#44;leaf&#95;paths)                                                                                                                                               | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`add`](https://stedolan.github.io/jq/manual/v1.5/#add)                                                                                                                                                                                                                                             | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`any`, `any(condition)`, `any(generator; condition)`](https://stedolan.github.io/jq/manual/v1.5/#any&#44;any&#40;condition&#41;&#44;any&#40;generator&#59;condition&#41;)                                                                                                                          | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`all`, `all(condition)`, `all(generator; condition)`](https://stedolan.github.io/jq/manual/v1.5/#all&#44;all&#40;condition&#41;&#44;all&#40;generator&#59;condition&#41;)                                                                                                                          | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`flatten`, `flatten(depth)`](https://stedolan.github.io/jq/manual/v1.5/#flatten&#44;flatten&#40;depth&#41;)                                                                                                                                                                                        | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`range(upto)`, `range(from;upto)` `range(from;upto;by)`](https://stedolan.github.io/jq/manual/v1.5/#range&#40;upto&#41;&#44;range&#40;from&#59;upto&#41;range&#40;from&#59;upto&#59;by&#41;)                                                                                                       | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`floor`](https://stedolan.github.io/jq/manual/v1.5/#floor)                                                                                                                                                                                                                                         | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`sqrt`](https://stedolan.github.io/jq/manual/v1.5/#sqrt)                                                                                                                                                                                                                                           | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`tonumber`](https://stedolan.github.io/jq/manual/v1.5/#tonumber)                                                                                                                                                                                                                                   | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`tostring`](https://stedolan.github.io/jq/manual/v1.5/#tostring)                                                                                                                                                                                                                                   | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`type`](https://stedolan.github.io/jq/manual/v1.5/#type)                                                                                                                                                                                                                                           | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`infinite`, `nan`, `isinfinite`, `isnan`, `isfinite`, `isnormal`](https://stedolan.github.io/jq/manual/v1.5/#infinite&#44;nan&#44;isinfinite&#44;isnan&#44;isfinite&#44;isnormal)                                                                                                                  | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`sort, sort_by(path_expression)`](https://stedolan.github.io/jq/manual/v1.5/#sort&#44;sort&#95;by&#40;path&#95;expression&#41;)                                                                                                                                                                    | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`group_by(path_expression)`](https://stedolan.github.io/jq/manual/v1.5/#group&#95;by&#40;path&#95;expression&#41;)                                                                                                                                                                                 | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`min`, `max`, `min_by(path_exp)`, `max_by(path_exp)`](https://stedolan.github.io/jq/manual/v1.5/#min&#44;max&#44;min&#95;by&#40;path&#95;exp&#41;&#44;max&#95;by&#40;path&#95;exp&#41;)                                                                                                            | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`unique`, `unique_by(path_exp)`](https://stedolan.github.io/jq/manual/v1.5/#unique&#44;unique&#95;by&#40;path&#95;exp&#41;)                                                                                                                                                                        | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`reverse`](https://stedolan.github.io/jq/manual/v1.5/#reverse)                                                                                                                                                                                                                                     | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`contains(element)`](https://stedolan.github.io/jq/manual/v1.5/#contains&#40;element&#41;)                                                                                                                                                                                                         | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`indices(s)`](https://stedolan.github.io/jq/manual/v1.5/#indices&#40;s&#41;)                                                                                                                                                                                                                       | ○<sup>*9</sup> |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`index(s)`, `rindex(s)`](https://stedolan.github.io/jq/manual/v1.5/#index&#40;s&#41;&#44;rindex&#40;s&#41;)                                                                                                                                                                                        | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`inside`](https://stedolan.github.io/jq/manual/v1.5/#inside)                                                                                                                                                                                                                                       | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`startswith(str)`](https://stedolan.github.io/jq/manual/v1.5/#startswith&#40;str&#41;)                                                                                                                                                                                                             | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`endswith(str)`](https://stedolan.github.io/jq/manual/v1.5/#endswith&#40;str&#41;)                                                                                                                                                                                                                 | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`combinations`, `combinations(n)`](https://stedolan.github.io/jq/manual/v1.5/#combinations&#44;combinations&#40;n&#41;)                                                                                                                                                                            | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`ltrimstr(str)`](https://stedolan.github.io/jq/manual/v1.5/#ltrimstr&#40;str&#41;)                                                                                                                                                                                                                 | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`rtrimstr(str)`](https://stedolan.github.io/jq/manual/v1.5/#rtrimstr&#40;str&#41;)                                                                                                                                                                                                                 | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`explode`](https://stedolan.github.io/jq/manual/v1.5/#explode)                                                                                                                                                                                                                                     | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`implode`](https://stedolan.github.io/jq/manual/v1.5/#implode)                                                                                                                                                                                                                                     | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`split`](https://stedolan.github.io/jq/manual/v1.5/#split)                                                                                                                                                                                                                                         | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`join(str)`](https://stedolan.github.io/jq/manual/v1.5/#join&#40;str&#41;)                                                                                                                                                                                                                         | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`ascii_downcase`, `ascii_upcase`](https://stedolan.github.io/jq/manual/v1.5/#ascii&#95;downcase&#44;ascii&#95;upcase)                                                                                                                                                                              | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`while(cond; update)`](https://stedolan.github.io/jq/manual/v1.5/#while&#40;cond&#59;update&#41;)                                                                                                                                                                                                  | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`until(cond; next)`](https://stedolan.github.io/jq/manual/v1.5/#until&#40;cond&#59;next&#41;)                                                                                                                                                                                                      | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`recurse(f)`, `recurse`, `recurse(f; condition)`, `recurse_down`](https://stedolan.github.io/jq/manual/v1.5/#recurse&#40;f&#41;&#44;recurse&#44;recurse&#40;f&#59;condition&#41;&#44;recurse&#95;down)                                                                                             | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`..`](https://stedolan.github.io/jq/manual/v1.5/#&#46;&#46;)                                                                                                                                                                                                                                       | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`env`](https://stedolan.github.io/jq/manual/v1.5/#env)                                                                                                                                                                                                                                             | ✕<sup>*6</sup> |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`transpose`](https://stedolan.github.io/jq/manual/v1.5/#transpose)                                                                                                                                                                                                                                 | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`bsearch(x)`](https://stedolan.github.io/jq/manual/v1.5/#bsearch&#40;x&#41;)                                                                                                                                                                                                                       | ×          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [String interpolation &#45; `\(foo)`](https://stedolan.github.io/jq/manual/v1.5/#Stringinterpolation&#45;&#92;&#40;foo&#41;)                                                                                                                                                                        | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Convert to&#47;from JSON](https://stedolan.github.io/jq/manual/v1.5/#Convertto&#47;fromJSON)                                                                                                                                                                                                       | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Format strings and escaping](https://stedolan.github.io/jq/manual/v1.5/#Formatstringsandescaping)                                                                                                                                                                                                  | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Dates](https://stedolan.github.io/jq/manual/v1.5/#Dates)                                                                                                                                                                                                                                           | ×          |
+| [Conditionals and Comparisons](https://stedolan.github.io/jq/manual/v1.5/#ConditionalsandComparisons)                                                                                                                                                                                                                              | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`==`, `!=`](https://stedolan.github.io/jq/manual/v1.5/#&#61;&#61;&#44;&#33;&#61;)                                                                                                                                                                                                                  | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [if&#45;then&#45;else](https://stedolan.github.io/jq/manual/v1.5/#if&#45;then&#45;else)                                                                                                                                                                                                             | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`>, >=, <=, <`](https://stedolan.github.io/jq/manual/v1.5/#&#62;&#44;&#62;&#61;&#44;&#60;&#61;&#44;&#60;)                                                                                                                                                                                          | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [and&#47;or&#47;not](https://stedolan.github.io/jq/manual/v1.5/#and&#47;or&#47;not)                                                                                                                                                                                                                 | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Alternative operator &#45; `//`](https://stedolan.github.io/jq/manual/v1.5/#Alternativeoperator&#45;&#47;&#47;)                                                                                                                                                                                    | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [try&#45;catch](https://stedolan.github.io/jq/manual/v1.5/#try&#45;catch)                                                                                                                                                                                                                           | ○<sup>*1</sup> |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Breaking out of control structures](https://stedolan.github.io/jq/manual/v1.5/#Breakingoutofcontrolstructures)                                                                                                                                                                                     | ○<sup>*2</sup> |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`?` operator](https://stedolan.github.io/jq/manual/v1.5/#&#63;operator)                                                                                                                                                                                                                            | ○          |
+| [Regular expressions &#40;PCRE&#41;](https://stedolan.github.io/jq/manual/v1.5/#Regularexpressions&#40;PCRE&#41;)                                                                                                                                                                                                                  | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`test(val)`, `test(regex; flags)`](https://stedolan.github.io/jq/manual/v1.5/#test&#40;val&#41;&#44;test&#40;regex&#59;flags&#41;)                                                                                                                                                                 | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`match(val)`, `match(regex; flags)`](https://stedolan.github.io/jq/manual/v1.5/#match&#40;val&#41;&#44;match&#40;regex&#59;flags&#41;)                                                                                                                                                             | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`capture(val)`, `capture(regex; flags)`](https://stedolan.github.io/jq/manual/v1.5/#capture&#40;val&#41;&#44;capture&#40;regex&#59;flags&#41;)                                                                                                                                                     | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`scan(regex)`, `scan(regex; flags)`](https://stedolan.github.io/jq/manual/v1.5/#scan&#40;regex&#41;&#44;scan&#40;regex&#59;flags&#41;)                                                                                                                                                             | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`split(regex; flags)`](https://stedolan.github.io/jq/manual/v1.5/#split&#40;regex&#59;flags&#41;)                                                                                                                                                                                                  | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`splits(regex)`, `splits(regex; flags)`](https://stedolan.github.io/jq/manual/v1.5/#splits&#40;regex&#41;&#44;splits&#40;regex&#59;flags&#41;)                                                                                                                                                     | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`sub(regex; tostring)` `sub(regex; string; flags)`](https://stedolan.github.io/jq/manual/v1.5/#sub&#40;regex&#59;tostring&#41;sub&#40;regex&#59;string&#59;flags&#41;)                                                                                                                             | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`gsub(regex; string)`, `gsub(regex; string; flags)`](https://stedolan.github.io/jq/manual/v1.5/#gsub&#40;regex&#59;string&#41;&#44;gsub&#40;regex&#59;string&#59;flags&#41;)                                                                                                                       | ○          |
+| [Advanced features](https://stedolan.github.io/jq/manual/v1.5/#Advancedfeatures)                                                                                                                                                                                                                                                   | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Variables](https://stedolan.github.io/jq/manual/v1.5/#Variables)                                                                                                                                                                                                                                   | ○<sup>*11</sup> |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Destructuring Alternative Operator: ?//](https://stedolan.github.io/jq/manual/v1.6/#DestructuringAlternativeOperator:?//)                                                                                                                                                                          | ✕ (#44)    |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Defining Functions](https://stedolan.github.io/jq/manual/v1.5/#DefiningFunctions)                                                                                                                                                                                                                  | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Reduce](https://stedolan.github.io/jq/manual/v1.5/#Reduce)                                                                                                                                                                                                                                         | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`limit(n; exp)`](https://stedolan.github.io/jq/manual/v1.5/#limit&#40;n&#59;exp&#41;)                                                                                                                                                                                                              | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`first(expr)`, `last(expr)`, `nth(n; expr)`](https://stedolan.github.io/jq/manual/v1.5/#first&#40;expr&#41;&#44;last&#40;expr&#41;&#44;nth&#40;n&#59;expr&#41;)                                                                                                                                    | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`first`, `last`, `nth(n)`](https://stedolan.github.io/jq/manual/v1.5/#first&#44;last&#44;nth&#40;n&#41;)                                                                                                                                                                                           | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`foreach`](https://stedolan.github.io/jq/manual/v1.5/#foreach)                                                                                                                                                                                                                                     | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Recursion](https://stedolan.github.io/jq/manual/v1.5/#Recursion)                                                                                                                                                                                                                                   | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Generators and iterators](https://stedolan.github.io/jq/manual/v1.5/#Generatorsanditerators)                                                                                                                                                                                                       | ○          |
+| [Math](https://stedolan.github.io/jq/manual/v1.5/#Math)                                                                                                                                                                                                                                                                            | △          |
+| [I&#47;O](https://stedolan.github.io/jq/manual/v1.5/#I&#47;O)                                                                                                                                                                                                                                                                      | N/A        |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`input`](https://stedolan.github.io/jq/manual/v1.5/#input)                                                                                                                                                                                                                                         | N/A        |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`inputs`](https://stedolan.github.io/jq/manual/v1.5/#inputs)                                                                                                                                                                                                                                       | N/A        |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`debug`](https://stedolan.github.io/jq/manual/v1.5/#debug)                                                                                                                                                                                                                                         | N/A        |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`input_filename`](https://stedolan.github.io/jq/manual/v1.5/#input&#95;filename)                                                                                                                                                                                                                   | N/A        |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`input_line_number`](https://stedolan.github.io/jq/manual/v1.5/#input&#95;line&#95;number)                                                                                                                                                                                                         | N/A        |
+| [Streaming](https://stedolan.github.io/jq/manual/v1.5/#Streaming)                                                                                                                                                                                                                                                                  | N/A        |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`truncate_stream(stream_expression)`](https://stedolan.github.io/jq/manual/v1.5/#truncate&#95;stream&#40;stream&#95;expression&#41;)                                                                                                                                                               | N/A        |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`fromstream(stream_expression)`](https://stedolan.github.io/jq/manual/v1.5/#fromstream&#40;stream&#95;expression&#41;)                                                                                                                                                                             | N/A        |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`tostream`](https://stedolan.github.io/jq/manual/v1.5/#tostream)                                                                                                                                                                                                                                   | N/A        |
+| [Assignment](https://stedolan.github.io/jq/manual/v1.5/#Assignment)                                                                                                                                                                                                                                                                | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`=`](https://stedolan.github.io/jq/manual/v1.5/#&#61;)                                                                                                                                                                                                                                             | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`ǀ=`](https://stedolan.github.io/jq/manual/v1.5/#&#124;&#61;)                                                                                                                                                                                                                                      | ○<sup>*8</sup> |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`+=`, `-=`, `*=`, `/=`, `%=`, `//=`](https://stedolan.github.io/jq/manual/v1.5/#&#43;&#61;&#44;&#45;&#61;&#44;&#42;&#61;&#44;&#47;&#61;&#44;&#37;&#61;&#44;&#47;&#47;&#61;)                                                                                                                        | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Complex assignments](https://stedolan.github.io/jq/manual/v1.5/#Complexassignments)                                                                                                                                                                                                                | ○          |
+| [Modules](https://stedolan.github.io/jq/manual/v1.5/#Modules)                                                                                                                                                                                                                                                                      | △          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`import RelativePathString as NAME [<metadata>];`](https://stedolan.github.io/jq/manual/v1.5/#importRelativePathStringasNAME&#91;&#60;metadata&#62;&#93;&#59;)                                                                                                                                     | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`include RelativePathString [<metadata>];`](https://stedolan.github.io/jq/manual/v1.5/#includeRelativePathString&#91;&#60;metadata&#62;&#93;&#59;)                                                                                                                                                 | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`import RelativePathString as $NAME [<metadata>];`](https://stedolan.github.io/jq/manual/v1.5/#importRelativePathStringas&#36;NAME&#91;&#60;metadata&#62;&#93;&#59;)                                                                                                                               | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`module <metadata>;`](https://stedolan.github.io/jq/manual/v1.5/#module&#60;metadata&#62;&#59;)                                                                                                                                                                                                    | ○          |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`modulemeta`](https://stedolan.github.io/jq/manual/v1.5/#modulemeta)                                                                                                                                                                                                                               | ×          |
+
+### Known compatibility issues and differences
+
+#### Category: By design
+
+<details>
+<summary>(*1) Error message wording</summary>
+
+##### Description
+
+Error messages differ between jq and jackson-jq and may also change between versions.
+
+##### Workaround
+
+None. jackson-jq does not aim to match jq's error messages.
+
+</details>
+
+<details>
+<summary>(*6) <code>env/0</code> is not provided.</summary>
+
+##### Description
+
+For security reasons, jackson-jq does not provide an implementation of `env/0`. If you need it, implement it yourself and register it with the `EnvironmentBuilder`.
+
+##### Workaround
+
+Register a custom `env/0` implementation with the `EnvironmentBuilder`:
+
+```java
+builder.addFunction(FunctionSignature.of("env", 0), new Function() {
+	@Override
+	public <T> Expression<T> bindArguments(JsonProvider<T> jsonProvider, List<Expression<T>> args, Version version) {
+		return (scope, in, ipath, output, ignoredRequirePath) -> {
+			T result = jsonProvider.createObject();
+			for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+				jsonProvider.set(result, entry.getKey(), jsonProvider.createString(entry.getValue()));
+			}
+			output.emit(result, null);
+		};
+	}
+});
+```
+
+</details>
+
+<details>
+<summary>(*4) Field order in JSON objects</summary>
+
+##### Description
+  
+jackson-jq does not preserve the order of keys in JSON objects. This was an intentional design choice, but we are gradually changing the behavior to improve compatibility with jq.
+
+##### Workaround
+
+Use an array if the order is important.
+
+</details>
+  
+<details>
+<summary>(*5) <code>0 / 0</code> is an error in jackson-jq.</summary>
+
+##### Description
+
+jq evaluates a literal `0 / 0` as NaN without reporting an error, whereas `0 | 0 / .` produces a division-by-zero error. jackson-jq reports an error in both cases.
+
+##### Examples
+
+```console
+$ jq -n '0 / 0'
+null
+$ jq -n '10 / 0'
+jq: error: Division by zero? at <top-level>, line 1:
+10 / 0
+jq: 1 compile error
+$ jq '. / 0' <<< 0
+jq: error (at <stdin>:1): number (0) and number (0) cannot be divided because the divisor is zero
+$ java -jar jackson-jq-cli-2.0.0-alpha1.jar -n '0 / 0'
+jq: error: number (0) and number (0) cannot be divided because the divisor is zero
+```
+
+##### Workaround
+
+If you need NaN, use `nan` instead of `0 / 0`.
+  
+</details>
+
+<details>
+<summary>(*8) <code>... |= empty</code> is an error in jackson-jq.</summary>
+
+##### Description
+
+jackson-jq always reports an error for `.foo |= empty` rather than producing an unexpected result. jq 1.5 and jq 1.6 produce different, incorrect results for `[1,2,3] | ((.[] | select(. > 1)) |= empty)`. [jq#897](https://github.com/stedolan/jq/issues/897) states that using `empty` on the right-hand side is undefined. You can call `_modify/2` directly to reproduce the exact behavior of jq 1.5 or jq 1.6.
+
+##### Examples
+
+```console
+$ jq-1.6 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
+[
+  1,
+  3
+]
+$ jq-1.5 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
+null
+$ jq-1.2 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
+[
+  1,
+  2,
+  3
+]
+$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.6 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
+jq: error: `|= empty` is undefined. See https://github.com/stedolan/jq/issues/897
+$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.5 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
+jq: error: `|= empty` is undefined. See https://github.com/stedolan/jq/issues/897
+```
+
+##### Workaround
+
+Use `_modify/2` to reproduce the original behavior.
+
+```console
+$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.6 -n '[1,2,3] | _modify((.[] | select(. > 1)); empty)'
+[ 1, 3 ]
+$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.5 -n '[1,2,3] | _modify((.[] | select(. > 1)); empty)'
+null
+```
+
+</details>
+  
+<details>
+<summary>(*7) Variables do not carry path information, even in jq 1.5 compatibility mode.</summary>
+
+##### Description
+  
+`path(.foo as $a | $a)` always reports an error because variables in jackson-jq do not carry path information. jq 1.5 preserved this information unintentionally, but jq 1.6 corrected the behavior. The [jq 1.6 documentation](https://stedolan.github.io/jq/manual/v1.6/#Assignment) explicitly describes such expressions as "not a valid or useful path expression." For this reason, jackson-jq does not reproduce the jq 1.5 behavior, even in jq 1.5 compatibility mode.
+
+##### Examples
+  
+jq 1.5
+
+```console
+$ jq-1.5 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
+["foo"]
+$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.5 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
+jq: error: Invalid path expression with result 1
+```
+
+jq 1.6
+
+```console
+$ jq-1.6 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
+jq: error (at <stdin>:1): Invalid path expression with result 1
+$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.6 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
+jq: error: Invalid path expression with result 1
+```
+
+##### Workaround
+
+None.
+
+</details>
+
+<details>
+<summary>(*2) <code>try (break $label) catch .</code> always produces <code>{"__jq": 0}</code>.</summary>
+
+##### Description
+
+In jackson-jq, <code>try (break $label) catch .</code> always produces <code>{"__jq": 0}</code>. However, `__jq` should contain the index of the label targeted by the `break` statement.
+
+##### Examples
+
+```console
+$ jq -n 'label $a | label $b | try (break $b) catch .'
+{
+  "__jq": 1
+}
+$ java -jar jackson-jq-cli-2.0.0-alpha1.jar -n 'label $a | label $b | try (break $b) catch .'
+{
+  "__jq" : 0
+}
+```
+
+##### Workaround
+
+None. If this limitation affects you, please tell us about your use case.
+
+</details>
+
+#### Category: Upstream bug fix
+
+<details>
+<summary>(*9) <code>indices("")</code> returns <code>[]</code> (empty array) in jackson-jq.</summary>
+
+##### Description
+
+The jq 1.5 and jq 1.6 implementations of `indices/1` contained a bug that caused `indices("")` to enter an infinite loop and eventually exhaust available memory. The bug was later [fixed upstream](https://github.com/stedolan/jq/commit/2660b04a731568c54eb4b91fe811d81cbbf3470b). jackson-jq does not reproduce this bug.
+
+##### Examples
+  
+```console
+$ jq-1.5 -n '"x" | indices("")' # hangs in an infinite loop
+^C
+$ jq-1.6 -n '"x" | indices("")' # hangs in an infinite loop
+^C
+$ jq-1.6-83-gb52fc10 -n '"x" | indices("")'
+[]
+$ java -jar jackson-jq-cli-2.0.0-alpha1.jar -n '"x" | indices("")'
+[ ]
+```
+
+</details>
+
+<details>
+<summary>(*11) Operator precedence in <code>1 + 3 as $a | ($a * 2)</code></summary>
+
+##### Description
+
+In jq < 1.8, the presence of `as $a` affected the precedence of `|` and other operators:
+
+```console
+$ jq-1.7 -n '1 + 3 | (. * 2)' # interpreted as (1 + 3) | (. * 2)
+8
+$ jq-1.7 -n '1 + 3 as $a | ($a * 2)' # interpreted as 1 + (3 as $a | ($a * 2))
+7
+```
+
+This bug was fixed upstream in jq 1.8 ([jqlang/jq#1928](https://github.com/jqlang/jq/issues/1928)). jackson-jq consistently interprets `1 + 3` as `(1 + 3)` (matching jq >= 1.8), even in jq 1.7 compatibility mode:
+
+```console
+$ jq-1.8 -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
+8
+$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.7 -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
+8
+```
+
+##### Examples
+
+```console
+$ jq-1.7 -n '1 + 3 as $a | ($a * 2)' # interpreted as 1 + (3 as $a | ($a * 2))
+7
+$ jq-1.8 -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
+8
+$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.7 -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
+8
+```
+
+##### Workaround
+
+Use explicit parentheses.
+
+##### Links
+
+* [jackson-jq#72](https://github.com/eiiches/jackson-jq/issues/72)
+* [jqlang/jq#1928](https://github.com/jqlang/jq/issues/1928)
+
+</details>

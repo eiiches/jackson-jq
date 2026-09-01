@@ -1,0 +1,5 @@
+- q: 'rindex(0.0)'
+  in: null
+  out:
+  - null
+  v: '[1.5, )'

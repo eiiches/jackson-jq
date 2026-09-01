@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>jackson-jq-json-provider-impl-jackson3</artifactId>
+	<name>${project.groupId}:${project.artifactId}</name>
+	<packaging>bundle</packaging>
+
+	<parent>
+		<groupId>net.thisptr.jackson.jq.v2</groupId>
+		<artifactId>jackson-jq-parent</artifactId>
+		<version>2.0.0-SNAPSHOT</version>
+	</parent>
+
+	<dependencies>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-json-provider</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>tools.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-json-provider</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Export-Package>net.thisptr.jackson.jq.v2.json.impl.jackson3</Export-Package>
+					</instructions>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<release>17</release>
+				</configuration>
+				<executions>
+					<execution>
+						<id>default-testCompile</id>
+						<configuration>
+							<useModulePath>false</useModulePath>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<useModulePath>false</useModulePath>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

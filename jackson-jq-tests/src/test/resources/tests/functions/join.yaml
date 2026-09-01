@@ -1,0 +1,16 @@
+- q: '(try (join("foo")) catch ("__ERROR__"))'
+  in: false
+  out:
+  - "__ERROR__"
+  v: '[1.5, )'
+
+- q: 'join(empty)'
+  in: 0.7853981633974483
+  out: []
+  v: '[1.5, )'
+
+- q: 'join(",")'
+  in: {a: "x", b: "y"}
+  out:
+  - "x,y"
+  v: '[1.5, )'

@@ -1,0 +1,27 @@
+package net.thisptr.jackson.jq.v2.core.internal.module;
+
+import org.jspecify.annotations.Nullable;
+
+import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
+import net.thisptr.jackson.jq.v2.spi.module.Module;
+
+// TODO: move to core
+public class NullModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
+
+	private static final NullModuleLoader<?> INSTANCE = new NullModuleLoader<>();
+
+	@SuppressWarnings("unchecked")
+	public static <JsonNode> NullModuleLoader<JsonNode> getInstance() {
+		return (NullModuleLoader<JsonNode>) INSTANCE;
+	}
+
+	@Override
+	public @Nullable Module loadModule(@Nullable Module caller, String path, @Nullable JsonNode metadata) {
+		return null;
+	}
+
+	@Override
+	public @Nullable JsonNode loadData(@Nullable Module caller, String path, @Nullable JsonNode metadata) {
+		return null;
+	}
+}

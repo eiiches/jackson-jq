@@ -1,0 +1,17 @@
+- q: 'reverse'
+  in: {}
+  out:
+  - []
+  v: '[1.5, )'
+
+- q: 'reverse'
+  in: null
+  out:
+  - []
+  v: '[1.5, )'
+
+- q: 'reverse'
+  in: ""
+  out:
+  - []
+  v: '[1.5, )'
