@@ -29,7 +29,6 @@ import org.jspecify.annotations.Nullable;
  *
  * @param <JsonNode> the native JSON tree node type used by the underlying JSON library
  */
-// FIXME: too many methods
 public interface JsonProvider<JsonNode> {
 	/**
 	 * Creates an array containing the supplied values.
@@ -562,6 +561,6 @@ public interface JsonProvider<JsonNode> {
 	 * @param arg the object to check, possibly {@code null}
 	 * @return {@code true} if {@code arg} is an instance of this provider's node type
 	 */
-	// TODO: We should instead add Class<JsonNode> getNodeClass().
+	// TODO: Remove this method.
 	boolean isJsonNodeInstance(@Nullable Object arg);
 }
