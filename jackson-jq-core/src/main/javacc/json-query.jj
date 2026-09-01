@@ -779,7 +779,7 @@ AstNode ConditionalExpression():
 	AstNode tmpPred;
 	AstNode tmpExpr;
 	final List<Pair<AstNode, AstNode>> switches = new ArrayList<Pair<AstNode, AstNode>>();
-	final AstNode otherwise;
+	AstNode otherwise = new ThisObjectAstNode();
 }
 {
 	<KEYWORD_IF>
@@ -794,8 +794,10 @@ AstNode ConditionalExpression():
 		tmpExpr = Expression()
 		{ switches.add(Pair.of(tmpPred, tmpExpr)); }
 	)*
-	<KEYWORD_ELSE>
-	otherwise = Expression()
+	(
+		<KEYWORD_ELSE>
+		otherwise = Expression()
+	)?
 	<KEYWORD_END>
 	{
 		return new ConditionalAstNode(switches, otherwise);
@@ -812,7 +814,12 @@ AstNode ObjectConstruction():
 		ObjectField(obj)
 		(
 			<COMMA>
-			ObjectField(obj)
+			(
+				ObjectField(obj)
+			|
+				<CLOSE_BRACE>
+				{ return obj; }
+			)
 		)*
 	)?
 	<CLOSE_BRACE>
