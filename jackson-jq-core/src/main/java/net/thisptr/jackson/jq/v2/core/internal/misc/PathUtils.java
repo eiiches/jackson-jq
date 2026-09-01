@@ -23,15 +23,27 @@ public class PathUtils {
 		return path instanceof UntrackedPath || path instanceof UnrepresentablePath;
 	}
 
-	private static <JsonNode> JsonNode parseArraySliceIndices(JsonProvider<JsonNode> jsonProvider, JsonNode startOrEnd) throws JsonQueryException {
-		if (startOrEnd == null)
-			return jsonProvider.createNull();
-		JsonNodeType type = jsonProvider.getNodeType(startOrEnd);
-		if (type == JsonNodeType.NUMBER)
-			return startOrEnd;
-		if (type == JsonNodeType.NULL)
-			return startOrEnd;
-		throw new JsonQueryException("Start and end indices of an array slice must be numbers");
+	/**
+	 * Returns the {@code start} or {@code end} bound of an array slice path segment, e.g. the
+	 * {@code {"start": 1, "end": 2}} in {@code getpath([{"start": 1, "end": 2}])}.
+	 * <p>
+	 * jq requires the field to be present; an explicit JSON {@code null} means an open bound, but a
+	 * missing field is an error.
+	 *
+	 * @param jsonProvider the JSON provider
+	 * @param sliceObj the object node describing the slice
+	 * @param fieldName {@code "start"} or {@code "end"}
+	 * @return the bound, either a number or JSON {@code null}
+	 * @throws JsonQueryException if the field is missing or is neither a number nor JSON {@code null}
+	 */
+	public static <JsonNode> JsonNode getSliceBound(JsonProvider<JsonNode> jsonProvider, JsonNode sliceObj, String fieldName) throws JsonQueryException {
+		JsonNode value = jsonProvider.getObjectField(sliceObj, fieldName);
+		if (value == null)
+			throw new JsonQueryException("Start and end indices of an array slice must be numbers");
+		JsonNodeType type = jsonProvider.getNodeType(value);
+		if (type != JsonNodeType.NUMBER && type != JsonNodeType.NULL)
+			throw new JsonQueryException("Start and end indices of an array slice must be numbers");
+		return value;
 	}
 
 	public static <JsonNode> Path<JsonNode> toPath(JsonProvider<JsonNode> jsonProvider, JsonNode pathObj) throws JsonQueryException {
@@ -42,8 +54,8 @@ public class PathUtils {
 			JsonNode segObj = it.next();
 			JsonNodeType type = jsonProvider.getNodeType(segObj);
 			if (type == JsonNodeType.OBJECT) {
-				JsonNode start = parseArraySliceIndices(jsonProvider, jsonProvider.requireGet(segObj, "start"));
-				JsonNode end = parseArraySliceIndices(jsonProvider, jsonProvider.requireGet(segObj, "end"));
+				JsonNode start = getSliceBound(jsonProvider, segObj, "start");
+				JsonNode end = getSliceBound(jsonProvider, segObj, "end");
 				path = path.appendIndexRange(jsonProvider, start, end);
 			} else if (type == JsonNodeType.NUMBER) {
 				path = path.appendIndex(jsonProvider, segObj);

@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -33,10 +34,6 @@ public abstract class JsonProviderContractTest<T> {
 	 * Create the JsonProvider instance to test.
 	 */
 	protected abstract JsonProvider<T> createProvider();
-
-	private T requireGetObjectField(T node, String fieldName) {
-		return Objects.requireNonNull(provider.getObjectField(node, fieldName));
-	}
 
 	private static <T> Map<String, T> mapOf(String k1, T v1, String k2, T v2) {
 		Map<String, T> map = new LinkedHashMap<>();
@@ -393,8 +390,8 @@ public abstract class JsonProviderContractTest<T> {
 		T node = provider.createObject(values);
 
 		assertThat(provider.getObjectSize(node)).isEqualTo(2);
-		assertThat(provider.getNumberAsIntExact(requireGetObjectField(node, "one"))).isEqualTo(1);
-		assertThat(provider.getString(requireGetObjectField(node, "two"))).isEqualTo("two");
+		assertThat(provider.getNumberAsIntExact(provider.getObjectFieldOrThrow(node, "one"))).isEqualTo(1);
+		assertThat(provider.getString(provider.getObjectFieldOrThrow(node, "two"))).isEqualTo("two");
 	}
 
 	@Test
@@ -571,19 +568,19 @@ public abstract class JsonProviderContractTest<T> {
 		T strVal = provider.getObjectField(obj, "str");
 		assertThat(strVal).isNotNull();
 		assertThat(provider.getString(Objects.requireNonNull(strVal))).isEqualTo("hello");
-		assertThat(provider.requireGet(obj, "str")).isNotNull();
+		assertThat(provider.getObjectFieldOrThrow(obj, "str")).isNotNull();
 
 		// Present explicit JSON null field
 		assertThat(provider.hasObjectField(obj, "nul")).isTrue();
 		T nullVal = provider.getObjectField(obj, "nul");
 		assertThat(nullVal).isNotNull();
 		assertThat(provider.getNodeType(Objects.requireNonNull(nullVal))).isEqualTo(JsonNodeType.NULL);
-		assertThat(provider.requireGet(obj, "nul")).isNotNull();
+		assertThat(provider.getObjectFieldOrThrow(obj, "nul")).isNotNull();
 
 		// Absent field
 		assertThat(provider.hasObjectField(obj, "missing")).isFalse();
 		assertThat(provider.getObjectField(obj, "missing")).isNull();
-		assertThatThrownBy(() -> provider.requireGet(obj, "missing")).isInstanceOf(NullPointerException.class);
+		assertThatThrownBy(() -> provider.getObjectFieldOrThrow(obj, "missing")).isInstanceOf(NoSuchElementException.class);
 	}
 
 	@Test
@@ -613,7 +610,7 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testRequireGetRejectsNonObjects() {
+	void testGetObjectFieldOrThrowRejectsNonObjects() {
 		List<T> nonObjects = Arrays.asList(
 				provider.createArray(Collections.emptyList()),
 				provider.createString("value"),
@@ -622,7 +619,7 @@ public abstract class JsonProviderContractTest<T> {
 				provider.createNull());
 
 		for (T node : nonObjects)
-			assertThatThrownBy(() -> provider.requireGet(node, "foo")).isInstanceOf(IllegalArgumentException.class);
+			assertThatThrownBy(() -> provider.getObjectFieldOrThrow(node, "foo")).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	// ===================
@@ -694,8 +691,8 @@ public abstract class JsonProviderContractTest<T> {
 		T node = provider.parse("{\"foo\": 123, \"bar\": true}");
 
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.OBJECT);
-		assertThat(provider.getNumberAsIntExact(requireGetObjectField(node, "foo"))).isEqualTo(123);
-		assertThat(provider.getBoolean(requireGetObjectField(node, "bar"))).isTrue();
+		assertThat(provider.getNumberAsIntExact(provider.getObjectFieldOrThrow(node, "foo"))).isEqualTo(123);
+		assertThat(provider.getBoolean(provider.getObjectFieldOrThrow(node, "bar"))).isTrue();
 	}
 
 	@Test
@@ -726,7 +723,7 @@ public abstract class JsonProviderContractTest<T> {
 		T copy = provider.deepCopy(original);
 
 		assertThat(provider.format(copy)).isEqualTo(provider.format(original));
-		assertThat(provider.getNumberAsIntExact(requireGetObjectField(requireGetObjectField(copy, "nested"), "value"))).isEqualTo(42);
+		assertThat(provider.getNumberAsIntExact(provider.getObjectFieldOrThrow(provider.getObjectFieldOrThrow(copy, "nested"), "value"))).isEqualTo(42);
 	}
 
 	// ===================
@@ -779,8 +776,8 @@ public abstract class JsonProviderContractTest<T> {
 		T outer = provider.createObject(Collections.singletonMap("outer", nested));
 
 		// Verify structure
-		T retrievedNested = requireGetObjectField(outer, "outer");
-		T retrievedArray = requireGetObjectField(retrievedNested, "inner");
+		T retrievedNested = provider.getObjectFieldOrThrow(outer, "outer");
+		T retrievedArray = provider.getObjectFieldOrThrow(retrievedNested, "inner");
 		assertThat(provider.getArrayLength(retrievedArray)).isEqualTo(3);
 		assertThat(provider.getNumberAsIntExact(provider.getArrayElement(retrievedArray, 1))).isEqualTo(2);
 	}
@@ -863,7 +860,7 @@ public abstract class JsonProviderContractTest<T> {
 		// parse with valid JSON should work
 		T node = provider.parse("{\"key\": \"value\"}");
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.OBJECT);
-		assertThat(provider.getString(requireGetObjectField(node, "key"))).isEqualTo("value");
+		assertThat(provider.getString(provider.getObjectFieldOrThrow(node, "key"))).isEqualTo("value");
 	}
 
 	// ================================

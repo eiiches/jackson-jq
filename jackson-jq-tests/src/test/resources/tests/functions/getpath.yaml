@@ -22,3 +22,43 @@
   out:
   - "Cannot index null with boolean (false)"
   v: '[1.8.2, )'
+
+# An array slice path segment must carry both "start" and "end". An explicit null means an open
+# bound, but a missing field is an error.
+- q: 'try (getpath([{}])) catch .'
+  in: [1, 2, 3]
+  out:
+  - "Start and end indices of an array slice must be numbers"
+  v: '[1.5, 1.7)'
+
+- q: 'try (getpath([{}])) catch .'
+  in: [1, 2, 3]
+  out:
+  - "Array/string slice indices must be integers"
+  v: '[1.7, )'
+  failing: true
+
+- q: 'try (getpath([{"start": 1}])) catch .'
+  in: [1, 2, 3]
+  out:
+  - "Start and end indices of an array slice must be numbers"
+  v: '[1.5, 1.7)'
+
+- q: 'try (getpath([{"start": 1}])) catch .'
+  in: [1, 2, 3]
+  out:
+  - "Array/string slice indices must be integers"
+  v: '[1.7, )'
+  failing: true
+
+- q: 'getpath([{"start": null, "end": null}])'
+  in: [1, 2, 3]
+  out:
+  - [1, 2, 3]
+  v: '[1.5, )'
+
+- q: 'getpath([{"start": 1, "end": null}])'
+  in: [1, 2, 3]
+  out:
+  - [2, 3]
+  v: '[1.5, )'

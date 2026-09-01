@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.NoSuchElementException;
 
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
@@ -419,10 +419,13 @@ public interface JsonProvider<JsonNode> {
 	 * @param fieldName the field name
 	 * @return the field's value
 	 * @throws IllegalArgumentException if the node is not an object
-	 * @throws NullPointerException if the object has no such field
+	 * @throws NoSuchElementException if the object has no such field
 	 */
-	default JsonNode requireGet(JsonNode node, String fieldName) {
-		return Objects.requireNonNull(getObjectField(node, fieldName));
+	default JsonNode getObjectFieldOrThrow(JsonNode node, String fieldName) {
+		JsonNode value = getObjectField(node, fieldName);
+		if (value == null)
+			throw new NoSuchElementException("No such field: " + fieldName);
+		return value;
 	}
 
 	/**

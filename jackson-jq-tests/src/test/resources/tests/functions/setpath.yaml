@@ -13,3 +13,22 @@
   out:
   - "__ERROR__"
   v: '[1.5, )'
+
+- q: 'try (setpath([{}]; 9)) catch .'
+  in: [1, 2, 3]
+  out:
+  - "Start and end indices of an array slice must be numbers"
+  v: '[1.5, 1.7)'
+
+- q: 'try (setpath([{}]; 9)) catch .'
+  in: [1, 2, 3]
+  out:
+  - "Array/string slice indices must be integers"
+  v: '[1.7, )'
+  failing: true
+
+- q: 'setpath([{"start": 1, "end": null}]; ["x"])'
+  in: [1, 2, 3]
+  out:
+  - [1, "x"]
+  v: '[1.5, )'
