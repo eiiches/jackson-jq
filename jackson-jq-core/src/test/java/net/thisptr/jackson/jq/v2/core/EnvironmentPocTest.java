@@ -245,7 +245,6 @@ public class EnvironmentPocTest {
 		env.compile("probe((1, 2))");
 
 		assertTrue(captured.get(0) instanceof ConstantExpression<?, ?>);
-		@SuppressWarnings("unchecked")
 		ConstantExpression<?, JsonNode> constant = (ConstantExpression<?, JsonNode>) captured.get(0);
 		assertEquals(Arrays.asList(MAPPER.readTree("1"), MAPPER.readTree("2")), constant.getConstantResults());
 	}

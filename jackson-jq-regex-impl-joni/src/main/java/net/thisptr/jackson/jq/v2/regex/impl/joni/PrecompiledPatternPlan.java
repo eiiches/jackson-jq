@@ -58,7 +58,6 @@ final class PrecompiledPatternPlan {
 		return new PrecompiledPatternPlan(Collections.unmodifiableList(patterns), flagsValues.size());
 	}
 
-	@SuppressWarnings("unchecked")
 	private static <JsonNode> @Nullable List<JsonNode> constantResults(Expression<?, JsonNode> expression) {
 		if (!(expression instanceof ConstantExpression<?, ?>))
 			return null;

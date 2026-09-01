@@ -8,10 +8,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jspecify.annotations.NullMarked;
+
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
-@SuppressWarnings("serial")
+@NullMarked
 public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Serializable {
 	protected final JsonProvider<JsonNode> jsonProvider;
 
@@ -19,31 +21,29 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 		this.jsonProvider = jsonProvider;
 	}
 
-	private static final JsonNodeType[][] ordering = new JsonNodeType[][] {
-			new JsonNodeType[] { JsonNodeType.NULL },
-			new JsonNodeType[] { JsonNodeType.BOOLEAN },
-			new JsonNodeType[] { JsonNodeType.NUMBER },
-			new JsonNodeType[] { JsonNodeType.STRING, JsonNodeType.BINARY },
-			new JsonNodeType[] { JsonNodeType.ARRAY },
-			new JsonNodeType[] { JsonNodeType.OBJECT },
+	private static final JsonNodeType[] TYPE_ORDER = new JsonNodeType[] {
+			JsonNodeType.NULL,
+			JsonNodeType.BOOLEAN,
+			JsonNodeType.NUMBER,
+			JsonNodeType.STRING,
+			JsonNodeType.BINARY,
+			JsonNodeType.ARRAY,
+			JsonNodeType.OBJECT,
 	};
 
-	private static final Map<JsonNodeType, Integer> orderValues = new HashMap<>();
+	private static final Map<JsonNodeType, Integer> TYPE_ORDER_MAP = new HashMap<>();
 
 	static {
-		for (int i = 0; i < ordering.length; i++)
-			for (JsonNodeType type : ordering[i])
-				orderValues.put(type, i);
+		for (int i = 0; i < TYPE_ORDER.length; i++)
+			TYPE_ORDER_MAP.put(TYPE_ORDER[i], i);
 	}
 
 	private int orderValue(JsonNode node) {
-		if (node == null)
-			return 0;
 		return orderValue(jsonProvider.getNodeType(node));
 	}
 
 	private static int orderValue(JsonNodeType type) {
-		Integer value = orderValues.get(type);
+		Integer value = TYPE_ORDER_MAP.get(type);
 		if (value == null)
 			throw new IllegalArgumentException("Unknown JsonNodeType: " + type);
 		return value;
@@ -109,41 +109,56 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 		return 0;
 	}
 
+	/**
+	 * Binary is not a JSON type, so such a node can only arrive as caller-supplied input. It gets its
+	 * own order class, between strings and arrays, and is compared byte by byte.
+	 */
+	protected int compareBinaryNode(JsonNode o1, JsonNode o2) {
+		byte[] b1 = jsonProvider.getBinaryAsByteArray(o1);
+		byte[] b2 = jsonProvider.getBinaryAsByteArray(o2);
+		int s = Math.min(b1.length, b2.length);
+		for (int i = 0; i < s; ++i) {
+			// Unsigned, so that 0xff sorts after 0x01 rather than before it.
+			int rr = Integer.compare(b1[i] & 0xff, b2[i] & 0xff);
+			if (rr != 0)
+				return rr;
+		}
+		return Integer.compare(b1.length, b2.length);
+	}
+
 	// null
 	// false
 	// true
 	// number
 	// string, in alphabetical order
+	// binary, in lexical byte order
 	// array, in lexical order
 	// object, first compared as arrays in sorted order, then their values
 	@Override
 	public int compare(JsonNode o1, JsonNode o2) {
-		int r = orderValue(o1) - orderValue(o2);
-		if (r != 0)
-			return r;
+		JsonNodeType type1 = jsonProvider.getNodeType(o1);
+		JsonNodeType type2 = jsonProvider.getNodeType(o2);
 
-		JsonNodeType type = o1 != null ? jsonProvider.getNodeType(o1) : null;
-		if (type == null || type == JsonNodeType.NULL)
-			return 0;
+		if (type1 != type2)
+			return Integer.compare(orderValue(o1), orderValue(o2));
 
-		if (type == JsonNodeType.BOOLEAN)
-			return Boolean.compare(jsonProvider.getBoolean(o1), jsonProvider.getBoolean(o2));
-
-		if (type == JsonNodeType.NUMBER) {
-			return compareNumberNode(o1, o2);
+		switch (type1) {
+			case NULL:
+				return 0;
+			case BOOLEAN:
+				return Boolean.compare(jsonProvider.getBoolean(o1), jsonProvider.getBoolean(o2));
+			case NUMBER:
+				return compareNumberNode(o1, o2);
+			case STRING:
+				return jsonProvider.getString(o1).compareTo(jsonProvider.getString(o2));
+			case BINARY:
+				return compareBinaryNode(o1, o2);
+			case ARRAY:
+				return compareArrayNode(o1, o2);
+			case OBJECT:
+				return compareObjectNode(o1, o2);
+			default:
+				throw new IllegalArgumentException("Unknown JsonNodeType: " + type1);
 		}
-
-		if (type == JsonNodeType.STRING || type == JsonNodeType.BINARY)
-			return jsonProvider.getString(o1).compareTo(jsonProvider.getString(o2));
-
-		if (type == JsonNodeType.ARRAY) {
-			return compareArrayNode(o1, o2);
-		}
-
-		if (type == JsonNodeType.OBJECT) {
-			return compareObjectNode(o1, o2);
-		}
-
-		throw new IllegalArgumentException("Unknown JsonNodeType: " + type);
 	}
 }
