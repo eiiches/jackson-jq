@@ -353,7 +353,7 @@ public interface JsonProvider<JsonNode> {
 	 * @throws RuntimeException if the node cannot be interpreted as binary data
 	 * @throws UnsupportedOperationException if the provider does not support binary values at all
 	 */
-	byte[] asByteArray(JsonNode node);
+	byte[] getBinaryAsByteArray(JsonNode node);
 
 	/**
 	 * Returns an iterator over the field name/value pairs of an object node.

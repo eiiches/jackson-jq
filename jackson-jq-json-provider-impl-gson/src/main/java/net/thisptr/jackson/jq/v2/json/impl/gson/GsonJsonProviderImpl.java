@@ -323,7 +323,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public byte[] asByteArray(JsonElement node) {
+	public byte[] getBinaryAsByteArray(JsonElement node) {
 		throw new UnsupportedOperationException("Binary data is not supported by Gson provider");
 	}
 

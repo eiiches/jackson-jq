@@ -57,7 +57,7 @@ public class Uuid35Function implements Function {
 					}
 					UUID uuid;
 					if (jsonProvider.getNodeType(in) == JsonNodeType.BINARY) {
-						uuid = UuidUtils.uuid3or5(namespace, jsonProvider.asByteArray(in), Uuid35Function.this.uuidVersion);
+						uuid = UuidUtils.uuid3or5(namespace, jsonProvider.getBinaryAsByteArray(in), Uuid35Function.this.uuidVersion);
 					} else {
 						uuid = UuidUtils.uuid3or5(namespace, jsonProvider.getString(in).getBytes(StandardCharsets.UTF_8), Uuid35Function.this.uuidVersion);
 					}

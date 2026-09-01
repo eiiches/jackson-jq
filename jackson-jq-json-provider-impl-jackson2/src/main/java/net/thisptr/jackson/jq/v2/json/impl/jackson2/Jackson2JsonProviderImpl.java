@@ -345,7 +345,7 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public byte[] asByteArray(JsonNode node) {
+	public byte[] getBinaryAsByteArray(JsonNode node) {
 		try {
 			return node.binaryValue();
 		} catch (IOException e) {

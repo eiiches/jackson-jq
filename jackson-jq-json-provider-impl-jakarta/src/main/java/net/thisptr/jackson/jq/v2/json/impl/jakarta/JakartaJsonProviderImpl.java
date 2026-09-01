@@ -325,7 +325,7 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public byte[] asByteArray(JsonValue node) {
+	public byte[] getBinaryAsByteArray(JsonValue node) {
 		throw new UnsupportedOperationException("Binary data is not supported by Jakarta JSON Processing");
 	}
 

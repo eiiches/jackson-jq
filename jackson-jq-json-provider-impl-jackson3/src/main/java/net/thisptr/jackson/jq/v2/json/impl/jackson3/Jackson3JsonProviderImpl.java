@@ -330,7 +330,7 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public byte[] asByteArray(JsonNode node) {
+	public byte[] getBinaryAsByteArray(JsonNode node) {
 		return node.binaryValue();
 	}
 
