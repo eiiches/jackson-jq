@@ -66,7 +66,7 @@ final class JqPrettyPrinter {
 	private static <N> void appendObject(JsonProvider<N> provider, StringBuilder out, N node, String indent, int depth) {
 		out.append('{');
 		@Var boolean empty = true;
-		for (Iterator<Map.Entry<String, N>> it = provider.getObjectEntries(node); it.hasNext(); ) {
+		for (Iterator<Map.Entry<String, N>> it = provider.getObjectMembers(node); it.hasNext(); ) {
 			Map.Entry<String, N> entry = it.next();
 			if (!empty)
 				out.append(',');

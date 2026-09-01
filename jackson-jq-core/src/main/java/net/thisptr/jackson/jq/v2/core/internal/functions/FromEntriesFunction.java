@@ -34,25 +34,25 @@ public class FromEntriesFunction implements Function {
 			Map<String, JsonNode> result = new LinkedHashMap<>();
 			Iterator<JsonNode> iter = inType == JsonNodeType.ARRAY
 					? jsonProvider.getArrayElements(in)
-					: jsonProvider.getObjectFieldValues(in);
+					: jsonProvider.getObjectMemberValues(in);
 			while (iter.hasNext()) {
 				JsonNode entry = iter.next();
 				if (!jsonProvider.isObject(entry))
 					throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, entry, jsonProvider.createString("key")));
 
-				@Var JsonNode key = jsonProvider.getObjectField(entry, "key");
+				@Var JsonNode key = jsonProvider.getObjectMember(entry, "key");
 				if (key == null)
-					key = jsonProvider.getObjectField(entry, "Key");
+					key = jsonProvider.getObjectMember(entry, "Key");
 				if (key == null)
-					key = jsonProvider.getObjectField(entry, "name");
+					key = jsonProvider.getObjectMember(entry, "name");
 				if (key == null)
-					key = jsonProvider.getObjectField(entry, "Name");
+					key = jsonProvider.getObjectMember(entry, "Name");
 				if (key == null || !jsonProvider.isString(key))
 					throw new JsonQueryTypeException(jsonProvider, version, "Cannot use %s as object key", key == null ? jsonProvider.createNull() : key);
 
-				@Var JsonNode value = jsonProvider.getObjectField(entry, "value");
+				@Var JsonNode value = jsonProvider.getObjectMember(entry, "value");
 				if (value == null)
-					value = jsonProvider.getObjectField(entry, "Value");
+					value = jsonProvider.getObjectMember(entry, "Value");
 
 				result.put(jsonProvider.getString(key), value == null ? jsonProvider.createNull() : value);
 			}

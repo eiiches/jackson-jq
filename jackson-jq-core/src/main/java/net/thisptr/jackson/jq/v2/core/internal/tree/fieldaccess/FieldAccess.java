@@ -71,7 +71,7 @@ public abstract class FieldAccess<JsonNode> implements Expression<StackFrame, Js
 			for (int i = 0; i < jsonProvider.getArrayLength(pobj); ++i)
 				output.emit(jsonProvider.getArrayElement(pobj, i), ppath.appendIndex(i));
 		} else if (jsonProvider.isObject(pobj)) {
-			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectEntries(pobj);
+			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectMembers(pobj);
 			while (iter.hasNext()) {
 				Map.Entry<String, JsonNode> entry = iter.next();
 				output.emit(entry.getValue(), ppath.appendKey(entry.getKey()));

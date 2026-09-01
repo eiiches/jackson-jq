@@ -348,7 +348,7 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public Iterator<Map.Entry<String, JsonNode>> getObjectEntries(JsonNode node) {
+	public Iterator<Map.Entry<String, JsonNode>> getObjectMembers(JsonNode node) {
 		if (!node.isObject())
 			throw new IllegalArgumentException("Expected an object node");
 		return node.properties().iterator();
@@ -362,24 +362,24 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public Iterator<JsonNode> getObjectFieldValues(JsonNode node) {
+	public Iterator<JsonNode> getObjectMemberValues(JsonNode node) {
 		if (!node.isObject())
 			throw new IllegalArgumentException("Expected an object node");
 		return node.iterator();
 	}
 
 	@Override
-	public Iterator<String> getObjectFieldNames(JsonNode node) {
+	public Iterator<String> getObjectMemberNames(JsonNode node) {
 		if (!node.isObject())
 			throw new IllegalArgumentException("Expected an object node");
 		return node.propertyNames().iterator();
 	}
 
 	@Override
-	public @Nullable JsonNode getObjectField(JsonNode node, String fieldName) {
+	public @Nullable JsonNode getObjectMember(JsonNode node, String name) {
 		if (!node.isObject())
 			throw new IllegalArgumentException("Expected an object node");
-		return node.get(fieldName);
+		return node.get(name);
 	}
 
 	@Override
@@ -399,17 +399,17 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public int getObjectSize(JsonNode node) {
+	public int getObjectMemberCount(JsonNode node) {
 		if (!node.isObject())
 			throw new IllegalArgumentException("Expected an object node");
 		return node.size();
 	}
 
 	@Override
-	public boolean hasObjectField(JsonNode node, String fieldName) {
+	public boolean hasObjectMember(JsonNode node, String name) {
 		if (!node.isObject())
 			throw new IllegalArgumentException("Expected an object node");
-		return node.has(fieldName);
+		return node.has(name);
 	}
 
 	@Override

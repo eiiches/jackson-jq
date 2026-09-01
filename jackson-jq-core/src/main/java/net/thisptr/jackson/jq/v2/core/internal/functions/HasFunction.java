@@ -30,7 +30,7 @@ public class HasFunction implements Function {
 				if (inType == JsonNodeType.OBJECT) {
 					if (keyType != JsonNodeType.STRING)
 						throw new JsonQueryException("argument 1 of has() must be string for object input");
-					output.emit(jsonProvider.createBoolean(jsonProvider.hasObjectField(in, jsonProvider.getString(keyName))), UntrackedPath.getInstance());
+					output.emit(jsonProvider.createBoolean(jsonProvider.hasObjectMember(in, jsonProvider.getString(keyName))), UntrackedPath.getInstance());
 				} else if (inType == JsonNodeType.ARRAY) {
 					if (keyType != JsonNodeType.NUMBER)
 						throw new JsonQueryException("argument 1 of has() must be int for array input");

@@ -340,7 +340,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public Iterator<Map.Entry<String, JsonElement>> getObjectEntries(JsonElement node) {
+	public Iterator<Map.Entry<String, JsonElement>> getObjectMembers(JsonElement node) {
 		if (!node.isJsonObject())
 			throw new IllegalArgumentException("Expected an object node");
 		return node.getAsJsonObject().entrySet().iterator();
@@ -354,7 +354,7 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public Iterator<JsonElement> getObjectFieldValues(JsonElement node) {
+	public Iterator<JsonElement> getObjectMemberValues(JsonElement node) {
 		if (!node.isJsonObject())
 			throw new IllegalArgumentException("Expected an object node");
 		return node.getAsJsonObject().entrySet().stream()
@@ -363,17 +363,17 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public Iterator<String> getObjectFieldNames(JsonElement node) {
+	public Iterator<String> getObjectMemberNames(JsonElement node) {
 		if (!node.isJsonObject())
 			throw new IllegalArgumentException("Expected an object node");
 		return node.getAsJsonObject().keySet().iterator();
 	}
 
 	@Override
-	public @Nullable JsonElement getObjectField(JsonElement node, String fieldName) {
+	public @Nullable JsonElement getObjectMember(JsonElement node, String name) {
 		if (!node.isJsonObject())
 			throw new IllegalArgumentException("Expected an object node");
-		return node.getAsJsonObject().get(fieldName);
+		return node.getAsJsonObject().get(name);
 	}
 
 	@Override
@@ -394,17 +394,17 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public int getObjectSize(JsonElement node) {
+	public int getObjectMemberCount(JsonElement node) {
 		if (!node.isJsonObject())
 			throw new IllegalArgumentException("Expected an object node");
 		return node.getAsJsonObject().size();
 	}
 
 	@Override
-	public boolean hasObjectField(JsonElement node, String fieldName) {
+	public boolean hasObjectMember(JsonElement node, String name) {
 		if (!node.isJsonObject())
 			throw new IllegalArgumentException("Expected an object node");
-		return node.getAsJsonObject().has(fieldName);
+		return node.getAsJsonObject().has(name);
 	}
 
 	@Override

@@ -27,17 +27,17 @@ public class PathUtils {
 	 * Returns the {@code start} or {@code end} bound of an array slice path segment, e.g. the
 	 * {@code {"start": 1, "end": 2}} in {@code getpath([{"start": 1, "end": 2}])}.
 	 * <p>
-	 * jq requires the field to be present; an explicit JSON {@code null} means an open bound, but a
-	 * missing field is an error.
+	 * jq requires the member to be present; an explicit JSON {@code null} means an open bound, but a
+	 * missing member is an error.
 	 *
 	 * @param jsonProvider the JSON provider
 	 * @param sliceObj the object node describing the slice
-	 * @param fieldName {@code "start"} or {@code "end"}
+	 * @param name {@code "start"} or {@code "end"}
 	 * @return the bound, either a number or JSON {@code null}
-	 * @throws JsonQueryException if the field is missing or is neither a number nor JSON {@code null}
+	 * @throws JsonQueryException if the member is missing or is neither a number nor JSON {@code null}
 	 */
-	public static <JsonNode> JsonNode getSliceBound(JsonProvider<JsonNode> jsonProvider, JsonNode sliceObj, String fieldName) throws JsonQueryException {
-		JsonNode value = jsonProvider.getObjectField(sliceObj, fieldName);
+	public static <JsonNode> JsonNode getSliceBound(JsonProvider<JsonNode> jsonProvider, JsonNode sliceObj, String name) throws JsonQueryException {
+		JsonNode value = jsonProvider.getObjectMember(sliceObj, name);
 		if (value == null)
 			throw new JsonQueryException("Start and end indices of an array slice must be numbers");
 		JsonNodeType type = jsonProvider.getNodeType(value);

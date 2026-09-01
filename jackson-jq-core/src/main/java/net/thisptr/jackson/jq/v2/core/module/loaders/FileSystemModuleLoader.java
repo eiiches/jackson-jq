@@ -207,7 +207,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 
 		JsonProvider<JsonNode> jsonProvider = this.jsonProvider;
 		if (metadata != null) {
-			JsonNode search = jsonProvider.getObjectField(metadata, "search");
+			JsonNode search = jsonProvider.getObjectMember(metadata, "search");
 			if (search != null) {
 				// disallow search overrides from top-level unnamed expression, which doesn't have a module path.
 				// i.e. import "foo" as foo {search: ./}; doesn't make sense. where is ./ ?

@@ -61,13 +61,13 @@ public class MultiplyOperator<JsonNode> implements BinaryOperator<JsonNode> {
 	private static <JsonNode> JsonNode mergeRecursive(JsonProvider<JsonNode> jsonProvider, JsonNode lhs, JsonNode rhs) {
 		Map<String, JsonNode> result = new LinkedHashMap<>();
 
-		Iterator<Map.Entry<String, JsonNode>> liter = jsonProvider.getObjectEntries(lhs);
+		Iterator<Map.Entry<String, JsonNode>> liter = jsonProvider.getObjectMembers(lhs);
 		while (liter.hasNext()) {
 			Map.Entry<String, JsonNode> e = liter.next();
 			result.put(e.getKey(), e.getValue());
 		}
 
-		Iterator<Map.Entry<String, JsonNode>> riter = jsonProvider.getObjectEntries(rhs);
+		Iterator<Map.Entry<String, JsonNode>> riter = jsonProvider.getObjectMembers(rhs);
 		while (riter.hasNext()) {
 			Map.Entry<String, JsonNode> e = riter.next();
 			JsonNode l = result.get(e.getKey());

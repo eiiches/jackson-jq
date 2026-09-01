@@ -62,7 +62,7 @@ public class SimpleModuleMeta implements ModuleMeta {
 		if (!jsonProvider.isObject(node))
 			throw new IllegalArgumentException("Module metadata must be an object");
 		Map<String, JsonNode> result = new LinkedHashMap<>();
-		Iterator<Map.Entry<String, JsonNode>> fields = jsonProvider.getObjectEntries(node);
+		Iterator<Map.Entry<String, JsonNode>> fields = jsonProvider.getObjectMembers(node);
 		while (fields.hasNext()) {
 			Map.Entry<String, JsonNode> entry = fields.next();
 			result.put(entry.getKey(), entry.getValue());

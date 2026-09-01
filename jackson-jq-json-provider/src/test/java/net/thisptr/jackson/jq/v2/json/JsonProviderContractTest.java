@@ -393,7 +393,7 @@ public abstract class JsonProviderContractTest<T> {
 	void testCreateObject() {
 		T node = provider.createObject(Collections.emptyMap());
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.OBJECT);
-		assertThat(provider.getObjectSize(node)).isEqualTo(0);
+		assertThat(provider.getObjectMemberCount(node)).isEqualTo(0);
 	}
 
 	@Test
@@ -419,9 +419,9 @@ public abstract class JsonProviderContractTest<T> {
 		values.put("two", provider.createString("two"));
 		T node = provider.createObject(values);
 
-		assertThat(provider.getObjectSize(node)).isEqualTo(2);
-		assertThat(provider.getNumberAsIntExact(provider.getObjectFieldOrThrow(node, "one"))).isEqualTo(1);
-		assertThat(provider.getString(provider.getObjectFieldOrThrow(node, "two"))).isEqualTo("two");
+		assertThat(provider.getObjectMemberCount(node)).isEqualTo(2);
+		assertThat(provider.getNumberAsIntExact(provider.getObjectMemberOrThrow(node, "one"))).isEqualTo(1);
+		assertThat(provider.getString(provider.getObjectMemberOrThrow(node, "two"))).isEqualTo("two");
 	}
 
 	@Test
@@ -438,7 +438,7 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testGetObjectSizeRejectsNonObjects() {
+	void testGetObjectMemberCountRejectsNonObjects() {
 		List<T> nonObjects = Arrays.asList(
 				provider.createArray(Collections.emptyList()),
 				provider.createString("value"),
@@ -447,7 +447,7 @@ public abstract class JsonProviderContractTest<T> {
 				provider.createNull());
 
 		for (T node : nonObjects)
-			assertThatThrownBy(() -> provider.getObjectSize(node)).isInstanceOf(IllegalArgumentException.class);
+			assertThatThrownBy(() -> provider.getObjectMemberCount(node)).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	// ====================
@@ -506,12 +506,12 @@ public abstract class JsonProviderContractTest<T> {
 	// ===================
 
 	@Test
-	void testGetObjectEntries() {
+	void testGetObjectMembers() {
 		T obj = provider.createObject(mapOf("x", provider.createNumber(10), "y", provider.createNumber(20)));
 
 		List<String> keys = new ArrayList<>();
 		List<Integer> values = new ArrayList<>();
-		Iterator<Map.Entry<String, T>> it = provider.getObjectEntries(obj);
+		Iterator<Map.Entry<String, T>> it = provider.getObjectMembers(obj);
 		while (it.hasNext()) {
 			Map.Entry<String, T> entry = it.next();
 			keys.add(entry.getKey());
@@ -523,7 +523,7 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testGetObjectEntriesRejectsNonObjects() {
+	void testGetObjectMembersRejectsNonObjects() {
 		List<T> nonObjects = Arrays.asList(
 				provider.createArray(Collections.emptyList()),
 				provider.createString("value"),
@@ -532,15 +532,15 @@ public abstract class JsonProviderContractTest<T> {
 				provider.createNull());
 
 		for (T node : nonObjects)
-			assertThatThrownBy(() -> provider.getObjectEntries(node)).isInstanceOf(IllegalArgumentException.class);
+			assertThatThrownBy(() -> provider.getObjectMembers(node)).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
-	void testGetObjectFieldNames() {
+	void testGetObjectMemberNames() {
 		T obj = provider.createObject(mapOf("foo", provider.createNull(), "bar", provider.createNull()));
 
 		List<String> names = new ArrayList<>();
-		Iterator<String> it = provider.getObjectFieldNames(obj);
+		Iterator<String> it = provider.getObjectMemberNames(obj);
 		while (it.hasNext()) {
 			names.add(it.next());
 		}
@@ -549,7 +549,7 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testGetObjectFieldNamesRejectsNonObjects() {
+	void testGetObjectMemberNamesRejectsNonObjects() {
 		List<T> nonObjects = Arrays.asList(
 				provider.createArray(Collections.emptyList()),
 				provider.createString("value"),
@@ -558,15 +558,15 @@ public abstract class JsonProviderContractTest<T> {
 				provider.createNull());
 
 		for (T node : nonObjects)
-			assertThatThrownBy(() -> provider.getObjectFieldNames(node)).isInstanceOf(IllegalArgumentException.class);
+			assertThatThrownBy(() -> provider.getObjectMemberNames(node)).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
-	void testGetObjectFieldValues() {
+	void testGetObjectMemberValues() {
 		T obj = provider.createObject(mapOf("a", provider.createNumber(1), "b", provider.createNumber(2), "c", provider.createNumber(3)));
 
 		List<Integer> values = new ArrayList<>();
-		Iterator<T> it = provider.getObjectFieldValues(obj);
+		Iterator<T> it = provider.getObjectMemberValues(obj);
 		while (it.hasNext()) {
 			values.add(provider.getNumberAsIntExact(it.next()));
 		}
@@ -575,7 +575,7 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
-	void testGetObjectFieldValuesRejectsNonObjects() {
+	void testGetObjectMemberValuesRejectsNonObjects() {
 		List<T> nonObjects = Arrays.asList(
 				provider.createArray(Collections.emptyList()),
 				provider.createString("value"),
@@ -584,38 +584,38 @@ public abstract class JsonProviderContractTest<T> {
 				provider.createNull());
 
 		for (T node : nonObjects)
-			assertThatThrownBy(() -> provider.getObjectFieldValues(node)).isInstanceOf(IllegalArgumentException.class);
+			assertThatThrownBy(() -> provider.getObjectMemberValues(node)).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
-	void testGetObjectFieldAndHasObjectField() {
+	void testGetObjectFieldAndHasObjectMember() {
 		Map<String, T> map = new LinkedHashMap<>();
 		map.put("str", provider.createString("hello"));
 		map.put("nul", provider.createNull());
 		T obj = provider.createObject(map);
 
 		// Present non-null field
-		assertThat(provider.hasObjectField(obj, "str")).isTrue();
-		T strVal = provider.getObjectField(obj, "str");
+		assertThat(provider.hasObjectMember(obj, "str")).isTrue();
+		T strVal = provider.getObjectMember(obj, "str");
 		assertThat(strVal).isNotNull();
 		assertThat(provider.getString(Objects.requireNonNull(strVal))).isEqualTo("hello");
-		assertThat(provider.getObjectFieldOrThrow(obj, "str")).isNotNull();
+		assertThat(provider.getObjectMemberOrThrow(obj, "str")).isNotNull();
 
 		// Present explicit JSON null field
-		assertThat(provider.hasObjectField(obj, "nul")).isTrue();
-		T nullVal = provider.getObjectField(obj, "nul");
+		assertThat(provider.hasObjectMember(obj, "nul")).isTrue();
+		T nullVal = provider.getObjectMember(obj, "nul");
 		assertThat(nullVal).isNotNull();
 		assertThat(provider.getNodeType(Objects.requireNonNull(nullVal))).isEqualTo(JsonNodeType.NULL);
-		assertThat(provider.getObjectFieldOrThrow(obj, "nul")).isNotNull();
+		assertThat(provider.getObjectMemberOrThrow(obj, "nul")).isNotNull();
 
 		// Absent field
-		assertThat(provider.hasObjectField(obj, "missing")).isFalse();
-		assertThat(provider.getObjectField(obj, "missing")).isNull();
-		assertThatThrownBy(() -> provider.getObjectFieldOrThrow(obj, "missing")).isInstanceOf(NoSuchElementException.class);
+		assertThat(provider.hasObjectMember(obj, "missing")).isFalse();
+		assertThat(provider.getObjectMember(obj, "missing")).isNull();
+		assertThatThrownBy(() -> provider.getObjectMemberOrThrow(obj, "missing")).isInstanceOf(NoSuchElementException.class);
 	}
 
 	@Test
-	void testGetObjectFieldRejectsNonObjects() {
+	void testGetObjectMemberRejectsNonObjects() {
 		List<T> nonObjects = Arrays.asList(
 				provider.createArray(Collections.emptyList()),
 				provider.createString("value"),
@@ -624,11 +624,11 @@ public abstract class JsonProviderContractTest<T> {
 				provider.createNull());
 
 		for (T node : nonObjects)
-			assertThatThrownBy(() -> provider.getObjectField(node, "foo")).isInstanceOf(IllegalArgumentException.class);
+			assertThatThrownBy(() -> provider.getObjectMember(node, "foo")).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
-	void testHasObjectFieldRejectsNonObjects() {
+	void testHasObjectMemberRejectsNonObjects() {
 		List<T> nonObjects = Arrays.asList(
 				provider.createArray(Collections.emptyList()),
 				provider.createString("value"),
@@ -637,11 +637,11 @@ public abstract class JsonProviderContractTest<T> {
 				provider.createNull());
 
 		for (T node : nonObjects)
-			assertThatThrownBy(() -> provider.hasObjectField(node, "foo")).isInstanceOf(IllegalArgumentException.class);
+			assertThatThrownBy(() -> provider.hasObjectMember(node, "foo")).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
-	void testGetObjectFieldOrThrowRejectsNonObjects() {
+	void testGetObjectMemberOrThrowRejectsNonObjects() {
 		List<T> nonObjects = Arrays.asList(
 				provider.createArray(Collections.emptyList()),
 				provider.createString("value"),
@@ -650,7 +650,7 @@ public abstract class JsonProviderContractTest<T> {
 				provider.createNull());
 
 		for (T node : nonObjects)
-			assertThatThrownBy(() -> provider.getObjectFieldOrThrow(node, "foo")).isInstanceOf(IllegalArgumentException.class);
+			assertThatThrownBy(() -> provider.getObjectMemberOrThrow(node, "foo")).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	// ===================
@@ -722,8 +722,8 @@ public abstract class JsonProviderContractTest<T> {
 		T node = provider.parse("{\"foo\": 123, \"bar\": true}");
 
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.OBJECT);
-		assertThat(provider.getNumberAsIntExact(provider.getObjectFieldOrThrow(node, "foo"))).isEqualTo(123);
-		assertThat(provider.getBoolean(provider.getObjectFieldOrThrow(node, "bar"))).isTrue();
+		assertThat(provider.getNumberAsIntExact(provider.getObjectMemberOrThrow(node, "foo"))).isEqualTo(123);
+		assertThat(provider.getBoolean(provider.getObjectMemberOrThrow(node, "bar"))).isTrue();
 	}
 
 	@Test
@@ -754,7 +754,7 @@ public abstract class JsonProviderContractTest<T> {
 		T copy = provider.deepCopy(original);
 
 		assertThat(provider.format(copy)).isEqualTo(provider.format(original));
-		assertThat(provider.getNumberAsIntExact(provider.getObjectFieldOrThrow(provider.getObjectFieldOrThrow(copy, "nested"), "value"))).isEqualTo(42);
+		assertThat(provider.getNumberAsIntExact(provider.getObjectMemberOrThrow(provider.getObjectMemberOrThrow(copy, "nested"), "value"))).isEqualTo(42);
 	}
 
 	// ===================
@@ -807,8 +807,8 @@ public abstract class JsonProviderContractTest<T> {
 		T outer = provider.createObject(Collections.singletonMap("outer", nested));
 
 		// Verify structure
-		T retrievedNested = provider.getObjectFieldOrThrow(outer, "outer");
-		T retrievedArray = provider.getObjectFieldOrThrow(retrievedNested, "inner");
+		T retrievedNested = provider.getObjectMemberOrThrow(outer, "outer");
+		T retrievedArray = provider.getObjectMemberOrThrow(retrievedNested, "inner");
 		assertThat(provider.getArrayLength(retrievedArray)).isEqualTo(3);
 		assertThat(provider.getNumberAsIntExact(provider.getArrayElement(retrievedArray, 1))).isEqualTo(2);
 	}
@@ -891,7 +891,7 @@ public abstract class JsonProviderContractTest<T> {
 		// parse with valid JSON should work
 		T node = provider.parse("{\"key\": \"value\"}");
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.OBJECT);
-		assertThat(provider.getString(provider.getObjectFieldOrThrow(node, "key"))).isEqualTo("value");
+		assertThat(provider.getString(provider.getObjectMemberOrThrow(node, "key"))).isEqualTo("value");
 	}
 
 	// ================================

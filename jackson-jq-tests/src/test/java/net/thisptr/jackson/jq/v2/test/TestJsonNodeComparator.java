@@ -47,8 +47,8 @@ public class TestJsonNodeComparator<T> extends JsonNodeComparator<T> {
 		if (!strictFieldOrder)
 			return super.compareObjectNode(o1, o2);
 
-		Iterator<Map.Entry<String, T>> it1 = jsonProvider.getObjectEntries(o1);
-		Iterator<Map.Entry<String, T>> it2 = jsonProvider.getObjectEntries(o2);
+		Iterator<Map.Entry<String, T>> it1 = jsonProvider.getObjectMembers(o1);
+		Iterator<Map.Entry<String, T>> it2 = jsonProvider.getObjectMembers(o2);
 		while (it1.hasNext() && it2.hasNext()) {
 			Map.Entry<String, T> entry1 = it1.next();
 			Map.Entry<String, T> entry2 = it2.next();
@@ -61,6 +61,6 @@ public class TestJsonNodeComparator<T> extends JsonNodeComparator<T> {
 			if (r1 != 0)
 				return r1;
 		}
-		return Integer.compare(jsonProvider.getObjectSize(o1), jsonProvider.getObjectSize(o2));
+		return Integer.compare(jsonProvider.getObjectMemberCount(o1), jsonProvider.getObjectMemberCount(o2));
 	}
 }

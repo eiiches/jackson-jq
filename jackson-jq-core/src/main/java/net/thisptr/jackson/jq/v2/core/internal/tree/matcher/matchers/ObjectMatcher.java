@@ -128,7 +128,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
 
 			JsonNode value = jsonProvider.isObject(in)
-					? jsonProvider.getObjectField(in, jsonProvider.getString(key))
+					? jsonProvider.getObjectMember(in, jsonProvider.getString(key))
 					: null;
 
 			if (fmatcher.dollar)
@@ -155,7 +155,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
 
 			JsonNode value = jsonProvider.isObject(in)
-					? jsonProvider.getObjectField(in, jsonProvider.getString(key))
+					? jsonProvider.getObjectMember(in, jsonProvider.getString(key))
 					: null;
 			Path<JsonNode> valuepath = inpath.appendKey(jsonProvider.getString(key));
 

@@ -58,10 +58,10 @@ public class ContainsFunction implements Function {
 			}
 			return true;
 		} else if (hType == JsonNodeType.OBJECT && nType == JsonNodeType.OBJECT) {
-			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectEntries(needle);
+			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectMembers(needle);
 			while (iter.hasNext()) {
 				Map.Entry<String, JsonNode> field = iter.next();
-				JsonNode tmp = jsonProvider.getObjectField(haystack, field.getKey());
+				JsonNode tmp = jsonProvider.getObjectMember(haystack, field.getKey());
 				if (tmp == null)
 					return false;
 				if (!contains(jsonProvider, field.getValue(), tmp))

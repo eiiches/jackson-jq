@@ -30,7 +30,7 @@ public class ToEntriesFunction implements Function {
 			JsonNodeType inType = jsonProvider.getNodeType(in);
 
 			if (inType == JsonNodeType.OBJECT) {
-				Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectEntries(in);
+				Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectMembers(in);
 				while (iter.hasNext()) {
 					Map.Entry<String, JsonNode> entry = iter.next();
 					Map<String, JsonNode> fields = new LinkedHashMap<>();

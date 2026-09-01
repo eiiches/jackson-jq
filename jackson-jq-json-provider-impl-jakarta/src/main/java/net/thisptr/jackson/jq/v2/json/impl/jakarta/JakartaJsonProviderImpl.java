@@ -342,7 +342,7 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public Iterator<Map.Entry<String, JsonValue>> getObjectEntries(JsonValue node) {
+	public Iterator<Map.Entry<String, JsonValue>> getObjectMembers(JsonValue node) {
 		if (!(node instanceof JsonObject))
 			throw new IllegalArgumentException("Expected an object node");
 		return ((JsonObject) node).entrySet().iterator();
@@ -356,24 +356,24 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public Iterator<JsonValue> getObjectFieldValues(JsonValue node) {
+	public Iterator<JsonValue> getObjectMemberValues(JsonValue node) {
 		if (!(node instanceof JsonObject))
 			throw new IllegalArgumentException("Expected an object node");
 		return ((JsonObject) node).values().iterator();
 	}
 
 	@Override
-	public Iterator<String> getObjectFieldNames(JsonValue node) {
+	public Iterator<String> getObjectMemberNames(JsonValue node) {
 		if (!(node instanceof JsonObject))
 			throw new IllegalArgumentException("Expected an object node");
 		return ((JsonObject) node).keySet().iterator();
 	}
 
 	@Override
-	public @Nullable JsonValue getObjectField(JsonValue node, String fieldName) {
+	public @Nullable JsonValue getObjectMember(JsonValue node, String name) {
 		if (!(node instanceof JsonObject))
 			throw new IllegalArgumentException("Expected an object node");
-		return ((JsonObject) node).get(fieldName);
+		return ((JsonObject) node).get(name);
 	}
 
 	@Override
@@ -394,17 +394,17 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public int getObjectSize(JsonValue node) {
+	public int getObjectMemberCount(JsonValue node) {
 		if (!(node instanceof JsonObject))
 			throw new IllegalArgumentException("Expected an object node");
 		return ((JsonObject) node).size();
 	}
 
 	@Override
-	public boolean hasObjectField(JsonValue node, String fieldName) {
+	public boolean hasObjectMember(JsonValue node, String name) {
 		if (!(node instanceof JsonObject))
 			throw new IllegalArgumentException("Expected an object node");
-		return ((JsonObject) node).containsKey(fieldName);
+		return ((JsonObject) node).containsKey(name);
 	}
 
 	@Override

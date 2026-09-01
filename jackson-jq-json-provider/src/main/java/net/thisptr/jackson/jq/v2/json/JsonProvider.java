@@ -40,9 +40,9 @@ public interface JsonProvider<JsonNode> {
 	JsonNode createArray(Iterable<? extends JsonNode> values);
 
 	/**
-	 * Creates an object containing the supplied fields.
+	 * Creates an object containing the supplied members.
 	 *
-	 * @param values the fields to add
+	 * @param values the members to add
 	 * @return the created object
 	 */
 	JsonNode createObject(Map<String, ? extends JsonNode> values);
@@ -384,13 +384,13 @@ public interface JsonProvider<JsonNode> {
 	byte[] getBinaryAsByteArray(JsonNode node);
 
 	/**
-	 * Returns an iterator over the field name/value pairs of an object node.
+	 * Returns an iterator over the members (name/value pairs) of an object node.
 	 *
 	 * @param node the JSON object node
-	 * @return an iterator over the object's entries
+	 * @return an iterator over the object's members
 	 * @throws IllegalArgumentException if the node is not an object
 	 */
-	Iterator<Map.Entry<String, JsonNode>> getObjectEntries(JsonNode node);
+	Iterator<Map.Entry<String, JsonNode>> getObjectMembers(JsonNode node);
 
 	/**
 	 * Returns an iterator over the elements of an array node.
@@ -402,32 +402,32 @@ public interface JsonProvider<JsonNode> {
 	Iterator<JsonNode> getArrayElements(JsonNode node);
 
 	/**
-	 * Returns an iterator over the field values of an object node, in the object's iteration order.
+	 * Returns an iterator over the member values of an object node, in the object's iteration order.
 	 *
 	 * @param node the JSON object node
-	 * @return an iterator over the object's field values
+	 * @return an iterator over the object's member values
 	 * @throws IllegalArgumentException if the node is not an object
 	 */
-	Iterator<JsonNode> getObjectFieldValues(JsonNode node);
+	Iterator<JsonNode> getObjectMemberValues(JsonNode node);
 
 	/**
-	 * Returns an iterator over the field names of an object node.
+	 * Returns an iterator over the member names of an object node.
 	 *
 	 * @param node the JSON object node
-	 * @return an iterator over the object's field names
+	 * @return an iterator over the object's member names
 	 * @throws IllegalArgumentException if the node is not an object
 	 */
-	Iterator<String> getObjectFieldNames(JsonNode node);
+	Iterator<String> getObjectMemberNames(JsonNode node);
 
 	/**
-	 * Returns the value of the given field.
+	 * Returns the value of the given member.
 	 *
 	 * @param node the JSON object node
-	 * @param fieldName the field name
-	 * @return the field's value, or {@code null} if the object has no such field
+	 * @param name the member name
+	 * @return the member's value, or {@code null} if the object has no such member
 	 * @throws IllegalArgumentException if the node is not an object
 	 */
-	@Nullable JsonNode getObjectField(JsonNode node, String fieldName);
+	@Nullable JsonNode getObjectMember(JsonNode node, String name);
 
 	/**
 	 * Returns the element at the given index.
@@ -441,18 +441,18 @@ public interface JsonProvider<JsonNode> {
 	JsonNode getArrayElement(JsonNode node, int index);
 
 	/**
-	 * Like {@link #getObjectField(Object, String)}, but requires the field to be present.
+	 * Like {@link #getObjectMember(Object, String)}, but requires the member to be present.
 	 *
 	 * @param node the JSON object node
-	 * @param fieldName the field name
-	 * @return the field's value
+	 * @param name the member name
+	 * @return the member's value
 	 * @throws IllegalArgumentException if the node is not an object
-	 * @throws NoSuchElementException if the object has no such field
+	 * @throws NoSuchElementException if the object has no such member
 	 */
-	default JsonNode getObjectFieldOrThrow(JsonNode node, String fieldName) {
-		JsonNode value = getObjectField(node, fieldName);
+	default JsonNode getObjectMemberOrThrow(JsonNode node, String name) {
+		JsonNode value = getObjectMember(node, name);
 		if (value == null)
-			throw new NoSuchElementException("No such field: " + fieldName);
+			throw new NoSuchElementException("No such member: " + name);
 		return value;
 	}
 
@@ -466,23 +466,23 @@ public interface JsonProvider<JsonNode> {
 	int getArrayLength(JsonNode node);
 
 	/**
-	 * Returns the number of fields in an object.
+	 * Returns the number of members in an object.
 	 *
 	 * @param node the JSON object node
-	 * @return the number of fields
+	 * @return the number of members
 	 * @throws IllegalArgumentException if the node is not an object
 	 */
-	int getObjectSize(JsonNode node);
+	int getObjectMemberCount(JsonNode node);
 
 	/**
-	 * Returns whether the object node has the given field.
+	 * Returns whether the object node has the given member.
 	 *
 	 * @param node the JSON object node
-	 * @param fieldName the field name
-	 * @return {@code true} if the object has a field named {@code fieldName}, {@code false} otherwise
+	 * @param name the member name
+	 * @return {@code true} if the object has a member named {@code name}, {@code false} otherwise
 	 * @throws IllegalArgumentException if the node is not an object
 	 */
-	boolean hasObjectField(JsonNode node, String fieldName);
+	boolean hasObjectMember(JsonNode node, String name);
 
 	/**
 	 * Returns a deep copy of the node, safe to mutate without affecting the original.

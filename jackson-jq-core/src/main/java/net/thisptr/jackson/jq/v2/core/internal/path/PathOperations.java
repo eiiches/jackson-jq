@@ -110,7 +110,7 @@ public final class PathOperations {
 		if (jsonProvider.isNull(parent)) {
 			output.emit(jsonProvider.createNull(), parentPath.appendKey(key));
 		} else if (jsonProvider.isObject(parent)) {
-			JsonNode node = jsonProvider.getObjectField(parent, key);
+			JsonNode node = jsonProvider.getObjectMember(parent, key);
 			output.emit(node == null ? jsonProvider.createNull() : node, parentPath.appendKey(key));
 		} else if (!permissive) {
 			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, parent, jsonProvider.createString(key)));
@@ -247,7 +247,7 @@ public final class PathOperations {
 			in = jsonProvider.createObject(Collections.emptyMap());
 		if (jsonProvider.isObject(in)) {
 			Map<String, JsonNode> values = new LinkedHashMap<>();
-			Iterator<Map.Entry<String, JsonNode>> iterator = jsonProvider.getObjectEntries(in);
+			Iterator<Map.Entry<String, JsonNode>> iterator = jsonProvider.getObjectMembers(in);
 			while (iterator.hasNext()) {
 				Map.Entry<String, JsonNode> entry = iterator.next();
 				values.put(entry.getKey(), entry.getValue());

@@ -83,8 +83,8 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 	}
 
 	protected int compareObjectNode(JsonNode o1, JsonNode o2) {
-		List<String> names1 = Lists.newArrayList(jsonProvider.getObjectFieldNames(o1));
-		List<String> names2 = Lists.newArrayList(jsonProvider.getObjectFieldNames(o2));
+		List<String> names1 = Lists.newArrayList(jsonProvider.getObjectMemberNames(o1));
+		List<String> names2 = Lists.newArrayList(jsonProvider.getObjectMemberNames(o2));
 
 		// compare by keys
 		Collections.sort(names1);
@@ -101,7 +101,7 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 
 		// compare by values (keys are sorted alphabetically)
 		for (String name : names1) {
-			int rrr = compare(jsonProvider.getObjectFieldOrThrow(o1, name), jsonProvider.getObjectFieldOrThrow(o2, name));
+			int rrr = compare(jsonProvider.getObjectMemberOrThrow(o1, name), jsonProvider.getObjectMemberOrThrow(o2, name));
 			if (rrr != 0)
 				return rrr;
 		}

@@ -120,7 +120,7 @@ public class DelPathsFunction implements Function {
 		}
 
 		Map<String, JsonNode> out = new LinkedHashMap<>();
-		Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectEntries(in);
+		Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectMembers(in);
 		while (iter.hasNext()) {
 			Map.Entry<String, JsonNode> entry = iter.next();
 			String key = entry.getKey();

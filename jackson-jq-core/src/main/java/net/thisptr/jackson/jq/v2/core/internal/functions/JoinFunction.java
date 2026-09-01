@@ -32,7 +32,7 @@ public class JoinFunction implements Function {
 				StringBuilder builder = new StringBuilder();
 				Iterator<JsonNode> iter = inType == JsonNodeType.ARRAY
 						? jsonProvider.getArrayElements(in)
-						: jsonProvider.getObjectFieldValues(in);
+						: jsonProvider.getObjectMemberValues(in);
 				while (iter.hasNext()) {
 					JsonNode item = iter.next();
 					if (isep != null) {
