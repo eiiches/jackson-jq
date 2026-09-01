@@ -13,6 +13,7 @@ import com.google.errorprone.annotations.Var;
 import org.joni.Matcher;
 import org.joni.Option;
 import org.joni.Region;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -41,7 +42,7 @@ public class _SubImplFunction implements Function {
 				for (OnigUtils.Pattern pattern : precompiled.patterns()) {
 					List<JsonNode> match = match(jsonProvider, pattern, jsonProvider.getString(in));
 					for (int i = 0; i < precompiled.flagsMultiplicity(); i++)
-						replaceAndConcat(jsonProvider, frame, new ArrayDeque<>(), output, match, replaceExpr, in, flagsExpr, version);
+						replaceAndConcat(jsonProvider, frame, output, match, replaceExpr, version);
 				}
 			});
 		}
@@ -60,46 +61,88 @@ public class _SubImplFunction implements Function {
 
 					// This just repeats same emit()s the number of times as the number of flags. This is to emulate jq behavior (which is probably a bug).
 					flagsExpr.apply(frame, in, UntrackedPath.getInstance(), (dummy, opath3) -> {
-						replaceAndConcat(jsonProvider, frame, new ArrayDeque<>(), output, match, replaceExpr, in, flagsExpr, version);
+						replaceAndConcat(jsonProvider, frame, output, match, replaceExpr, version);
 					});
 				});
 			});
 		});
 	}
 
-	private <Context, JsonNode> void replaceAndConcat(JsonProvider<JsonNode> jsonProvider, Context context, Deque<String> stack, Output<JsonNode> output, List<JsonNode> match, Expression<Context, JsonNode> replaceExpr, JsonNode in, Expression<Context, JsonNode> flags, Version version) throws JsonQueryException {
-		if (match.isEmpty()) {
-			StringBuilder sb = new StringBuilder();
-			for (String s : stack) {
-				sb.append(s);
+	private <Context, JsonNode> void replaceAndConcat(JsonProvider<JsonNode> jsonProvider, Context context, Output<JsonNode> output, List<JsonNode> match, Expression<Context, JsonNode> replaceExpr, Version version) throws JsonQueryException {
+		Deque<Frame> frames = new ArrayDeque<>();
+		frames.push(new Frame(match.size() - 1, null, null));
+
+		while (!frames.isEmpty()) {
+			Frame frame = frames.pop();
+			if (frame.pendingException != null) {
+				throw frame.pendingException;
 			}
-			output.emit(jsonProvider.createString(sb.toString()), UntrackedPath.getInstance());
-			return;
+			if (frame.index < 0) {
+				output.emit(jsonProvider.createString(concat(frame.parts)), UntrackedPath.getInstance());
+				continue;
+			}
+
+			JsonNode segment = match.get(frame.index);
+			if (jsonProvider.isString(segment)) {
+				frames.push(new Frame(frame.index - 1, new Part(jsonProvider.getString(segment), frame.parts), null));
+				continue;
+			}
+
+			List<String> replacements = new ArrayList<>();
+			@Var @Nullable JsonQueryException pendingException = null;
+			try {
+				replaceExpr.apply(context, segment, UntrackedPath.getInstance(), (replacement, opath) -> {
+					// jq concatenates the replacement onto the text preceding the match, so a null
+					// replacement contributes nothing and anything else non-string is a type error.
+					JsonNodeType replacementType = jsonProvider.getNodeType(replacement);
+					if (replacementType != JsonNodeType.STRING && replacementType != JsonNodeType.NULL) {
+						// jq names the preceding literal as the left operand. match() alternates
+						// [literal, captures, ..., literal], so a captures segment always has a
+						// preceding literal. We replace right-to-left where jq goes left-to-right,
+						// so with several matches this names the last one's literal, not the first one's.
+						throw Preconditions.cannotBeAdded(jsonProvider, version, match.get(frame.index - 1), replacement);
+					}
+					replacements.add(replacementType == JsonNodeType.STRING ? jsonProvider.getString(replacement) : "");
+				});
+			} catch (JsonQueryException e) {
+				pendingException = e;
+			}
+			if (pendingException != null) {
+				frames.push(new Frame(-1, null, pendingException));
+			}
+			for (int i = replacements.size() - 1; i >= 0; --i) {
+				frames.push(new Frame(frame.index - 1, new Part(replacements.get(i), frame.parts), null));
+			}
 		}
+	}
 
-		JsonNode rhead = match.get(match.size() - 1);
-		List<JsonNode> rtail = match.subList(0, match.size() - 1);
+	private static String concat(@Nullable Part parts) {
+		StringBuilder result = new StringBuilder();
+		for (@Nullable Part part = parts; part != null; part = part.next) {
+			result.append(part.value);
+		}
+		return result.toString();
+	}
 
-		if (jsonProvider.isString(rhead)) {
-			stack.push(jsonProvider.getString(rhead));
-			replaceAndConcat(jsonProvider, context, stack, output, rtail, replaceExpr, in, flags, version);
-			stack.pop();
-		} else {
-			replaceExpr.apply(context, rhead, UntrackedPath.getInstance(), (replacement, opath) -> {
-				// jq concatenates the replacement onto the text preceding the match, so a null
-				// replacement contributes nothing and anything else non-string is a type error.
-				JsonNodeType replacementType = jsonProvider.getNodeType(replacement);
-				if (replacementType != JsonNodeType.STRING && replacementType != JsonNodeType.NULL) {
-					// jq names the preceding literal as the left operand. match() alternates
-					// [literal, captures, ..., literal], so a captures rhead always leaves one at
-					// the end of rtail. We replace right-to-left where jq goes left-to-right, so
-					// with several matches this names the last one's literal, not the first one's.
-					throw Preconditions.cannotBeAdded(jsonProvider, version, rtail.get(rtail.size() - 1), replacement);
-				}
-				stack.push(replacementType == JsonNodeType.STRING ? jsonProvider.getString(replacement) : "");
-				replaceAndConcat(jsonProvider, context, stack, output, rtail, replaceExpr, in, flags, version);
-				stack.pop();
-			});
+	private static class Frame {
+		private final int index;
+		private final @Nullable Part parts;
+		private final @Nullable JsonQueryException pendingException;
+
+		private Frame(int index, @Nullable Part parts, @Nullable JsonQueryException pendingException) {
+			this.index = index;
+			this.parts = parts;
+			this.pendingException = pendingException;
+		}
+	}
+
+	private static class Part {
+		private final String value;
+		private final @Nullable Part next;
+
+		private Part(String value, @Nullable Part next) {
+			this.value = value;
+			this.next = next;
 		}
 	}
 
