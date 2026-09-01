@@ -56,7 +56,7 @@ public class Uuid35Function implements Function {
 						throw new JsonQueryException("namespace must be a valid UUID", e);
 					}
 					UUID uuid;
-					if (jsonProvider.getNodeType(in) == JsonNodeType.BINARY) {
+					if (jsonProvider.isBinary(in)) {
 						uuid = UuidUtils.uuid3or5(namespace, jsonProvider.getBinaryAsByteArray(in), Uuid35Function.this.uuidVersion);
 					} else {
 						uuid = UuidUtils.uuid3or5(namespace, jsonProvider.getString(in).getBytes(StandardCharsets.UTF_8), Uuid35Function.this.uuidVersion);

@@ -360,6 +360,36 @@ public abstract class JsonProviderContractTest<T> {
 	}
 
 	@Test
+	void testCreateBinary() {
+		byte[] bytes = { 0, 1, 127, -128 };
+		T node;
+		try {
+			node = provider.createBinary(bytes);
+		} catch (UnsupportedOperationException e) {
+			// Documented for a provider whose library has no binary node type. Every node it can
+			// create is then non-binary, which testGetBinaryAsByteArrayRejectsNonBinary covers.
+			return;
+		}
+		assertTypePredicates(node, JsonNodeType.BINARY);
+		assertThat(provider.getBinaryAsByteArray(node)).isEqualTo(bytes);
+	}
+
+	@Test
+	void testGetBinaryAsByteArrayRejectsNonBinary() {
+		// A provider with no binary node type rejects these the same way: none of them is binary.
+		List<T> nonBinary = Arrays.asList(
+				provider.createArray(Collections.emptyList()),
+				provider.createObject(Collections.emptyMap()),
+				provider.createNumber(1),
+				provider.createBoolean(true),
+				provider.createString("YWJj"), // valid base64, which Jackson 2 used to decode here
+				provider.createNull());
+
+		for (T node : nonBinary)
+			assertThatThrownBy(() -> provider.getBinaryAsByteArray(node)).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
 	void testCreateObject() {
 		T node = provider.createObject(Collections.emptyMap());
 		assertThat(provider.getNodeType(node)).isEqualTo(JsonNodeType.OBJECT);
@@ -432,6 +462,7 @@ public abstract class JsonProviderContractTest<T> {
 		assertThat(provider.isNumber(node)).as("isNumber(%s)", provider.format(node)).isEqualTo(expected == JsonNodeType.NUMBER);
 		assertThat(provider.isBoolean(node)).as("isBoolean(%s)", provider.format(node)).isEqualTo(expected == JsonNodeType.BOOLEAN);
 		assertThat(provider.isNull(node)).as("isNull(%s)", provider.format(node)).isEqualTo(expected == JsonNodeType.NULL);
+		assertThat(provider.isBinary(node)).as("isBinary(%s)", provider.format(node)).isEqualTo(expected == JsonNodeType.BINARY);
 	}
 
 	/**

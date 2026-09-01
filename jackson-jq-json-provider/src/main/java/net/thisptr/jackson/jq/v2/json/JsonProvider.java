@@ -119,6 +119,18 @@ public interface JsonProvider<JsonNode> {
 	JsonNode createNull();
 
 	/**
+	 * Creates a binary node holding the given bytes.
+	 * <p>
+	 * Binary is not a JSON type, so only a provider whose underlying library has such a node (e.g.
+	 * Jackson's {@code BinaryNode}) can create one.
+	 *
+	 * @param bytes the binary value
+	 * @return the created binary node
+	 * @throws UnsupportedOperationException if the provider has no binary node type
+	 */
+	JsonNode createBinary(byte[] bytes);
+
+	/**
 	 * Classifies the given node into one of {@link JsonNodeType}'s categories.
 	 *
 	 * @param node the JSON node
@@ -202,6 +214,22 @@ public interface JsonProvider<JsonNode> {
 	 */
 	default boolean isNull(JsonNode node) {
 		return getNodeType(node) == JsonNodeType.NULL;
+	}
+
+	/**
+	 * Returns whether the node is a binary node.
+	 * <p>
+	 * Equivalent to {@code getNodeType(node) == JsonNodeType.BINARY}, but implementations are expected to
+	 * answer with the underlying library's own check, which is cheaper than classifying the node.
+	 * <p>
+	 * Binary is not a JSON type: a provider whose underlying library has no such node always answers
+	 * {@code false}.
+	 *
+	 * @param node the JSON node
+	 * @return {@code true} if the node is a binary node
+	 */
+	default boolean isBinary(JsonNode node) {
+		return getNodeType(node) == JsonNodeType.BINARY;
 	}
 
 	/**
@@ -343,15 +371,15 @@ public interface JsonProvider<JsonNode> {
 	@Nullable Integer getNumberAsIntTruncated(JsonNode node);
 
 	/**
-	 * Returns the binary value of the node.
+	 * Returns the value of a binary node.
 	 * <p>
-	 * Not all providers support a distinct binary node type; some may attempt to decode a string
-	 * node (e.g. as base64) instead.
+	 * Binary is not a JSON type; such a node can only enter the tree from a provider whose underlying
+	 * library has one (e.g. Jackson's {@code BinaryNode}). A provider without one never reports
+	 * {@link JsonNodeType#BINARY} from {@link #getNodeType(Object)}, so every call on it throws.
 	 *
-	 * @param node the JSON node
-	 * @return the decoded bytes
-	 * @throws RuntimeException if the node cannot be interpreted as binary data
-	 * @throws UnsupportedOperationException if the provider does not support binary values at all
+	 * @param node the JSON binary node
+	 * @return the binary value
+	 * @throws IllegalArgumentException if the node is not binary
 	 */
 	byte[] getBinaryAsByteArray(JsonNode node);
 

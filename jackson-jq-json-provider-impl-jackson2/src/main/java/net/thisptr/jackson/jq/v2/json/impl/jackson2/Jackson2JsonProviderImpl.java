@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BigIntegerNode;
+import com.fasterxml.jackson.databind.node.BinaryNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.DecimalNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
@@ -111,6 +112,11 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
+	public JsonNode createBinary(byte[] bytes) {
+		return BinaryNode.valueOf(bytes);
+	}
+
+	@Override
 	public JsonNodeType getNodeType(JsonNode node) {
 		switch (node.getNodeType()) {
 			case ARRAY:
@@ -164,6 +170,11 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 	@Override
 	public boolean isNull(JsonNode node) {
 		return node.isNull();
+	}
+
+	@Override
+	public boolean isBinary(JsonNode node) {
+		return node.isBinary();
 	}
 
 	@Override
@@ -346,11 +357,10 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 
 	@Override
 	public byte[] getBinaryAsByteArray(JsonNode node) {
-		try {
-			return node.binaryValue();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		if (!(node instanceof BinaryNode))
+			throw new IllegalArgumentException("Cannot get the binary value of " + getNodeType(node));
+		// BinaryNode.binaryValue() does not declare the IOException that JsonNode.binaryValue() does.
+		return ((BinaryNode) node).binaryValue();
 	}
 
 	@Override

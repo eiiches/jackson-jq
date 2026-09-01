@@ -14,6 +14,7 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.BigIntegerNode;
+import tools.jackson.databind.node.BinaryNode;
 import tools.jackson.databind.node.BooleanNode;
 import tools.jackson.databind.node.DecimalNode;
 import tools.jackson.databind.node.DoubleNode;
@@ -111,6 +112,11 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
+	public JsonNode createBinary(byte[] bytes) {
+		return BinaryNode.valueOf(bytes);
+	}
+
+	@Override
 	public JsonNodeType getNodeType(JsonNode node) {
 		return switch (node.getNodeType()) {
 			case ARRAY -> JsonNodeType.ARRAY;
@@ -155,6 +161,11 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	@Override
 	public boolean isNull(JsonNode node) {
 		return node.isNull();
+	}
+
+	@Override
+	public boolean isBinary(JsonNode node) {
+		return node.isBinary();
 	}
 
 	@Override
@@ -331,6 +342,8 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 
 	@Override
 	public byte[] getBinaryAsByteArray(JsonNode node) {
+		if (!node.isBinary())
+			throw new IllegalArgumentException("Cannot get the binary value of " + getNodeType(node));
 		return node.binaryValue();
 	}
 

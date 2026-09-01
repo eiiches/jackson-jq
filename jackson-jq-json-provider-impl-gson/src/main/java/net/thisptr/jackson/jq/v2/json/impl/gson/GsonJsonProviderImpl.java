@@ -110,6 +110,11 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
+	public JsonElement createBinary(byte[] bytes) {
+		throw new UnsupportedOperationException("Gson has no binary node type");
+	}
+
+	@Override
 	public JsonNodeType getNodeType(JsonElement node) {
 		if (node.isJsonNull()) {
 			return JsonNodeType.NULL;
@@ -166,6 +171,12 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	@Override
 	public boolean isNull(JsonElement node) {
 		return node.isJsonNull();
+	}
+
+	@Override
+	public boolean isBinary(JsonElement node) {
+		// Gson has no binary node type.
+		return false;
 	}
 
 	@Override
@@ -324,7 +335,8 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 
 	@Override
 	public byte[] getBinaryAsByteArray(JsonElement node) {
-		throw new UnsupportedOperationException("Binary data is not supported by Gson provider");
+		// Gson has no binary node type, so no node is ever binary.
+		throw new IllegalArgumentException("Cannot get the binary value of " + getNodeType(node));
 	}
 
 	@Override

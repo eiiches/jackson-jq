@@ -113,6 +113,11 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
+	public JsonValue createBinary(byte[] bytes) {
+		throw new UnsupportedOperationException("JSON-P has no binary value type");
+	}
+
+	@Override
 	public JsonNodeType getNodeType(JsonValue node) {
 		switch (node.getValueType()) {
 			case ARRAY:
@@ -164,6 +169,12 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	@Override
 	public boolean isNull(JsonValue node) {
 		return node.getValueType() == JsonValue.ValueType.NULL;
+	}
+
+	@Override
+	public boolean isBinary(JsonValue node) {
+		// JSON-P has no binary value type.
+		return false;
 	}
 
 	@Override
@@ -326,7 +337,8 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 
 	@Override
 	public byte[] getBinaryAsByteArray(JsonValue node) {
-		throw new UnsupportedOperationException("Binary data is not supported by Jakarta JSON Processing");
+		// JSON-P has no binary value type, so no node is ever binary.
+		throw new IllegalArgumentException("Cannot get the binary value of " + getNodeType(node));
 	}
 
 	@Override
