@@ -65,14 +65,20 @@ Use the jackson-jq CLI to test queries quickly.
 $ curl -LO https://repo1.maven.org/maven2/net/thisptr/jackson/jq/v2/jackson-jq-cli/2.0.0-alpha1/jackson-jq-cli-2.0.0-alpha1.jar
 
 $ java -jar jackson-jq-cli-2.0.0-alpha1.jar --help
-usage: jackson-jq [OPTIONS...] QUERY
- -c,--compact      compact instead of pretty-printed output
- -h,--help         print this message
-    --json-provider <arg>
-                     JSON provider: jackson2, jackson3, gson, or jakarta (default: jackson3)
-    --jq <arg>     specify jq version
- -n,--null-input   use `null` as the single input value
- -r,--raw          output raw strings, not JSON texts
+ usage:  jackson-jq [OPTIONS...] QUERY [FILE...]
+
+        Options            Since                   Description
+ -c, --compact              --       compact instead of pretty-printed output
+ -r, --raw-output           --       output raw strings, not JSON texts
+ -n, --null-input           --       use `null` as the single input value
+ -R, --raw-input            --       read each line as string instead of JSON
+ -s, --slurp                --       read all inputs into an array and use it
+                                      as the single input value
+ -f, --from-file <arg>      --       load the filter from a file
+ --jq <arg>                 --       specify jq version
+ --json-provider <arg>      --       JSON provider: jackson2, jackson3, gson,
+                                      or jakarta (default: jackson3)
+ -h, --help                 --       print this message
 
 $ java -jar jackson-jq-cli-2.0.0-alpha1.jar '.foo'
 {"foo": 42}

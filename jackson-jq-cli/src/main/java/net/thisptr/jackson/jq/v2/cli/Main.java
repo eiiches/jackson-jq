@@ -1,9 +1,14 @@
 package net.thisptr.jackson.jq.v2.cli;
 
-import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +22,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.help.HelpFormatter;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
@@ -25,7 +31,6 @@ import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
-import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
@@ -46,6 +51,10 @@ public class Main {
 	 * jq indents with two spaces.
 	 */
 	private static final String PRETTY_INDENT = "  ";
+	/**
+	 * jq reads the standard input for an input file named as a single dash.
+	 */
+	private static final String STDIN_FILE_NAME = "-";
 	private static final Option OPT_COMPACT = Option.builder("c")
 			.longOpt("compact")
 			.desc("compact instead of pretty-printed output")
@@ -57,6 +66,19 @@ public class Main {
 	private static final Option OPT_NULL_INPUT = Option.builder("n")
 			.longOpt("null-input")
 			.desc("use `null` as the single input value")
+			.get();
+	private static final Option OPT_RAW_INPUT = Option.builder("R")
+			.longOpt("raw-input")
+			.desc("read each line as string instead of JSON")
+			.get();
+	private static final Option OPT_SLURP = Option.builder("s")
+			.longOpt("slurp")
+			.desc("read all inputs into an array and use it as the single input value")
+			.get();
+	private static final Option OPT_FROM_FILE = Option.builder("f")
+			.longOpt("from-file")
+			.desc("load the filter from a file")
+			.numberOfArgs(1)
 			.get();
 	private static final Option OPT_VERSION = Option.builder()
 			.longOpt("jq")
@@ -78,6 +100,9 @@ public class Main {
 		options.addOption(OPT_COMPACT);
 		options.addOption(OPT_RAW_OUTPUT);
 		options.addOption(OPT_NULL_INPUT);
+		options.addOption(OPT_RAW_INPUT);
+		options.addOption(OPT_SLURP);
+		options.addOption(OPT_FROM_FILE);
 		options.addOption(OPT_VERSION);
 		options.addOption(OPT_JSON_PROVIDER);
 		options.addOption(OPT_HELP);
@@ -100,10 +125,27 @@ public class Main {
 				System.exit(1);
 			}
 		}
-		if (rest.isEmpty() || command.hasOption(OPT_HELP.getOpt())) {
+		String queryFile = command.getOptionValue(OPT_FROM_FILE.getOpt());
+		if ((queryFile == null && rest.isEmpty()) || command.hasOption(OPT_HELP.getOpt())) {
 			HelpFormatter help = HelpFormatter.builder().get();
-			help.printHelp("jackson-jq [OPTIONS...] QUERY", null, options, null, false);
+			help.printHelp("jackson-jq [OPTIONS...] QUERY [FILE...]", null, options, null, false);
 			System.exit(0);
+		}
+		String query;
+		List<String> inputFiles;
+		if (queryFile != null) {
+			// jq reads the query from the file, so that every positional argument is an input file.
+			try {
+				query = new String(Files.readAllBytes(Paths.get(queryFile)), StandardCharsets.UTF_8);
+			} catch (IOException e) {
+				System.err.println("jq: error: Could not open " + queryFile + ": " + reason(e));
+				System.exit(1);
+				throw e;
+			}
+			inputFiles = rest;
+		} else {
+			query = rest.get(0);
+			inputFiles = rest.subList(1, rest.size());
 		}
 		String providerName = command.hasOption(OPT_JSON_PROVIDER.getLongOpt())
 				? command.getOptionValue(OPT_JSON_PROVIDER.getLongOpt())
@@ -116,7 +158,7 @@ public class Main {
 			System.exit(1);
 			throw e;
 		}
-		run(command, rest.get(0), version, jsonProvider);
+		run(command, query, inputFiles, version, jsonProvider);
 	}
 
 	static JsonProvider<?> resolveProvider(String name) {
@@ -134,7 +176,19 @@ public class Main {
 		}
 	}
 
-	private static <N> void run(CommandLine command, String query, Version version, JsonProvider<N> jsonProvider) throws Exception {
+	/**
+	 * Describes why a file could not be opened, in the wording jq inherits from strerror(3).
+	 */
+	@Nullable
+	private static String reason(IOException e) {
+		if (e instanceof NoSuchFileException)
+			return "No such file or directory";
+		if (e instanceof AccessDeniedException)
+			return "Permission denied";
+		return e.getMessage();
+	}
+
+	private static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider) throws Exception {
 		Environment<N> env = new EnvironmentBuilder<>(jsonProvider, version)
 				.defineFunction(FunctionSignature.of("env", 0), new Function() {
 					@Override
@@ -173,27 +227,54 @@ public class Main {
 		JsonQuery<N> jq = env.compile(query);
 		boolean compact = command.hasOption(OPT_COMPACT.getOpt());
 		boolean rawOutput = command.hasOption(OPT_RAW_OUTPUT.getOpt());
-		@Var InputStream is = System.in;
-		if (command.hasOption(OPT_NULL_INPUT.getOpt())) {
-			is = new ByteArrayInputStream("null".getBytes(StandardCharsets.UTF_8));
-		}
-		try (JsonParser<N> parser = jsonProvider.createParser(is)) {
-			for (@Var N tree = parser.next(); tree != null; tree = parser.next()) {
-				try {
-					jq.apply(tree, out -> {
-						if (jsonProvider.isString(out) && rawOutput) {
-							System.out.println(jsonProvider.getString(out));
-						} else if (compact) {
-							System.out.println(jsonProvider.format(out));
-						} else {
-							System.out.println(JqPrettyPrinter.print(jsonProvider, out, PRETTY_INDENT));
-						}
-					});
-				} catch (JsonQueryException e) {
-					System.err.println("jq: error: " + e.getMessage());
-					System.exit(1);
+		boolean nullInput = command.hasOption(OPT_NULL_INPUT.getOpt());
+		List<InputStream> streams = new ArrayList<>();
+		@Var boolean failed = false;
+		/*
+		 * jq still reads the input files with --null-input, so that input/inputs can consume them,
+		 * but jackson-jq has no such builtin and the files are simply left unread.
+		 */
+		if (!nullInput) {
+			if (inputFiles.isEmpty()) {
+				streams.add(System.in);
+			} else {
+				// jq reports the files it cannot open, processes the remaining ones and fails at the end.
+				for (String inputFile : inputFiles) {
+					try {
+						streams.add(openInput(inputFile));
+					} catch (IOException e) {
+						System.err.println("jq: error: Could not open file " + inputFile + ": " + reason(e));
+						failed = true;
+					}
 				}
 			}
 		}
+		InputSource<N> input = InputSources.create(jsonProvider, streams, nullInput,
+				command.hasOption(OPT_RAW_INPUT.getOpt()),
+				command.hasOption(OPT_SLURP.getOpt()));
+		input.readAll(tree -> {
+			try {
+				jq.apply(tree, out -> {
+					if (jsonProvider.isString(out) && rawOutput) {
+						System.out.println(jsonProvider.getString(out));
+					} else if (compact) {
+						System.out.println(jsonProvider.format(out));
+					} else {
+						System.out.println(JqPrettyPrinter.print(jsonProvider, out, PRETTY_INDENT));
+					}
+				});
+			} catch (JsonQueryException e) {
+				System.err.println("jq: error: " + e.getMessage());
+				System.exit(1);
+			}
+		});
+		if (failed)
+			System.exit(1);
+	}
+
+	private static InputStream openInput(String inputFile) throws IOException {
+		if (STDIN_FILE_NAME.equals(inputFile))
+			return System.in;
+		return Files.newInputStream(Paths.get(inputFile));
 	}
 }
