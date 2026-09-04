@@ -10,67 +10,14 @@ on:
         required: true
 
 jobs:
-  build:
-    runs-on: ubuntu-26.04
-    steps:
-    - uses: actions/checkout@v5.0.0
-      with:
-        fetch-depth: 0
-
-    - name: Set up JDK 26
-      uses: actions/setup-java@v5.0.0
-      with:
-        java-version: '26'
-        distribution: 'temurin'
-        cache: 'maven'
-
-    - name: Cache jq binaries
-      uses: actions/cache@v5.0.5
-      with:
-        path: ~/bin/jq-*
-        key: jq-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/download-jq-binaries.sh') }}
-
-    - name: Download jq binaries
-      run: scripts/download-jq-binaries.sh $HOME/bin
-
-    - name: Configure Maven
-      env:
-        M2_SETTINGS_XML: ${{ secrets.M2_SETTINGS_XML }}
-      run: |
-        set -euo pipefail
-        mkdir -p $HOME/.m2
-        echo "$M2_SETTINGS_XML" > $HOME/.m2/settings.xml
-
-    - name: Configure Git
-      run: |
-        set -euo pipefail
-        # https://github.com/orgs/community/discussions/26560
-        git config user.name 'github-actions[bot]'
-        git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-
-    - name: Release
-      run: |
-        set -euo pipefail
-        PATH="$HOME/bin:$PATH" scripts/release.sh ${{ github.event.inputs.release_version }} ${{ github.event.inputs.next_snapshot_version }}
-
-    - name: Configure GPG
-      env:
-        GPG_SECRET_KEY: ${{ secrets.GPG_SECRET_KEY }}
-      run: |
-        set -euo pipefail
-        echo "$GPG_SECRET_KEY" | gpg --batch --import
-        gpg --list-secret-keys
-
-    - name: Build & Deploy
-      env:
-        MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-      run: |
-        set -euo pipefail
-        git checkout master/2.x
-        PATH="$HOME/bin:$PATH" mvn -Prelease clean deploy
-
-    - name: Git Push
-      run: |
-        set -euo pipefail
-        git push --tags
-        git push --all
+  release:
+    permissions:
+      # git push --tags / --all. Stated rather than inherited from the repository default so
+      # that this and release-rehearsal's `contents: read` read as a deliberate pair.
+      contents: write
+    uses: ./.github/workflows/reusable-release.yaml
+    with:
+      release_version: ${{ github.event.inputs.release_version }}
+      next_snapshot_version: ${{ github.event.inputs.next_snapshot_version }}
+      push: true
+    secrets: inherit

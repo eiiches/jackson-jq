@@ -1,0 +1,19 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "jakarta",
+    testonly = True,
+    srcs = [
+        "JakartaJsonQueryTest.java",
+    ],
+    release = 11,
+    visibility = ["//tests:__pkg__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-jakarta",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+        "@maven//:jakarta_json_jakarta_json_api",
+        "@maven//:org_eclipse_parsson_parsson",
+    ],
+)

@@ -1,0 +1,16 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_module_info")
+
+jjq_java_module_info(
+    module_name = "net.thisptr.jackson.jq.v2.spi",
+    module_packages = [
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/annotations",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/exception",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/module",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/path",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/version",
+    ],
+    release = 9,
+    visibility = ["//jackson-jq-spi:__pkg__"],
+    deps = ["//jackson-jq-json-provider"],
+)

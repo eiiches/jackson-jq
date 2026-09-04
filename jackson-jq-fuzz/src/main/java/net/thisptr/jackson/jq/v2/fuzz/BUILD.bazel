@@ -1,0 +1,29 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "fuzz",
+    testonly = True,
+    srcs = [
+        "Generator.java",
+        "JacksonJqRunner.java",
+        "Main.java",
+        "RandomGenerator.java",
+        "ToleranceJsonNodeComparator.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-fuzz:__subpackages__"],
+    deps = [
+        "//jackson-jq-core",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/comparator",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-gson",
+        "//jackson-jq-json-provider-impl-jackson2",
+        "//jackson-jq-json-provider-impl-jackson3",
+        "//jackson-jq-spi",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/evaluator",
+        "@maven//:com_fasterxml_jackson_core_jackson_annotations",
+        "@maven//:com_fasterxml_jackson_core_jackson_core",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+        "@maven//:commons_cli_commons_cli",
+    ],
+)

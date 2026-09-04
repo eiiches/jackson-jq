@@ -1,0 +1,14 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "jakarta",
+    srcs = [
+        "JakartaJsonProviderImpl.java",
+    ],
+    release = 11,
+    visibility = ["//jackson-jq-json-provider-impl-jakarta:__subpackages__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "@maven//:jakarta_json_jakarta_json_api",
+    ],
+)

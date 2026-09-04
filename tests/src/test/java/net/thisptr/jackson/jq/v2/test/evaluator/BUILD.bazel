@@ -1,0 +1,42 @@
+load("@rules_jq//:defs.bzl", "jq_binaries_rootpath")
+load("//build-tools/bazel:defs.bzl", "jjq_java_library", "jjq_java_test_suite")
+
+jjq_java_library(
+    name = "evaluator",
+    testonly = True,
+    srcs = [
+        "Evaluator.java",
+        "JqExecutables.java",
+        "JqRunner.java",
+    ],
+    release = 8,
+    visibility = [
+        "//jackson-jq-fuzz/src/main/java/net/thisptr/jackson/jq/v2/fuzz:__pkg__",
+        "//tests:__subpackages__",
+    ],
+    deps = [
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/version",
+        "@maven//:com_fasterxml_jackson_core_jackson_core",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+jjq_java_test_suite(
+    size = "large",
+    srcs = [
+        "JqExecutablesTest.java",
+        "JqRunnerTest.java",
+    ],
+    data = ["@jq_binaries//:all"],
+    env = {"JQ_BIN_DIR": jq_binaries_rootpath()},
+    release = 8,
+    visibility = ["//tests:__subpackages__"],
+    deps = [
+        ":evaluator",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi",
+        "@maven//:com_fasterxml_jackson_core_jackson_core",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+        "@maven//:com_google_guava_guava",
+    ],
+)

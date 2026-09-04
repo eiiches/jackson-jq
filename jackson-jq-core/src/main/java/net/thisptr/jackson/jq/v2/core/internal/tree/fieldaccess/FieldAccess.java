@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.Set;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
-import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.PathUtils;
 import net.thisptr.jackson.jq.v2.core.internal.path.PathOperations;
@@ -16,9 +16,9 @@ import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public abstract class FieldAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	protected final JsonProvider<JsonNode> jsonProvider;

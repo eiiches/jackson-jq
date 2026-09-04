@@ -10,7 +10,7 @@ import java.util.Set;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.BinaryOpAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment.Assignment;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment.ComplexAlternativeAssignment;
@@ -28,7 +28,7 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.comparison.CompareL
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.comparison.CompareNotEqualTest;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public abstract class BinaryOperatorExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	protected final Expression<StackFrame, JsonNode> lhs;

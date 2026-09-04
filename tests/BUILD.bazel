@@ -1,0 +1,46 @@
+load("@rules_jq//:defs.bzl", "jq_binaries_rootpath")
+load(":test_case_suite.bzl", "test_case_suite")
+
+TEST_CASES = glob(["test-cases/**/*.yaml"])
+
+test_case_suite(
+    name = "verify-test-cases",
+    data = ["@jq_binaries//:all"],
+    env = {"JQ_BIN_DIR": jq_binaries_rootpath()},
+    test_cases = TEST_CASES,
+    test_class = "net.thisptr.jackson.jq.v2.test.verify.VerifyTestCasesTest",
+    test_library = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/verify",
+    visibility = ["//visibility:private"],
+)
+
+test_case_suite(
+    name = "jackson2-tests",
+    test_cases = TEST_CASES,
+    test_class = "net.thisptr.jackson.jq.v2.test.providers.jackson2.Jackson2JsonQueryTest",
+    test_library = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/providers/jackson2",
+    visibility = ["//visibility:private"],
+)
+
+test_case_suite(
+    name = "jackson3-tests",
+    test_cases = TEST_CASES,
+    test_class = "net.thisptr.jackson.jq.v2.test.providers.jackson3.Jackson3JsonQueryTest",
+    test_library = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/providers/jackson3",
+    visibility = ["//visibility:private"],
+)
+
+test_case_suite(
+    name = "gson-tests",
+    test_cases = TEST_CASES,
+    test_class = "net.thisptr.jackson.jq.v2.test.providers.gson.GsonJsonQueryTest",
+    test_library = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/providers/gson",
+    visibility = ["//visibility:private"],
+)
+
+test_case_suite(
+    name = "jakarta-tests",
+    test_cases = TEST_CASES,
+    test_class = "net.thisptr.jackson.jq.v2.test.providers.jakarta.JakartaJsonQueryTest",
+    test_library = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/providers/jakarta",
+    visibility = ["//visibility:private"],
+)

@@ -4,6 +4,7 @@ import java.util.List;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 /**
  * Factory for creating executable {@link Expression} instances.

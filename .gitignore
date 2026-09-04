@@ -6,3 +6,8 @@ dependency-reduced-pom.xml
 .idea/
 *.iml
 .vscode/
+__pycache__
+
+# Bazel convenience symlinks and local overrides
+/bazel-*
+.bazelrc.user

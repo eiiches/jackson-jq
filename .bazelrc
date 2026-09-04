@@ -1,0 +1,27 @@
+# jackson-jq Bazel configuration.
+#
+# Release levels are always passed explicitly as `--release N` in the per-target
+# javacopts (see build-tools/bazel/java_defs.bzl), exactly mirroring <release> in
+# the Maven build. JavaBuilder's ReleaseOptionNormalizer drops the toolchain's
+# -source/-target when --release is present, so no custom java_toolchain is needed.
+
+# Hermetic JDKs: do not depend on whatever `java` happens to be on PATH.
+build --java_runtime_version=remotejdk_21
+build --tool_java_runtime_version=remotejdk_21
+
+build --enable_platform_specific_config
+build --incompatible_strict_action_env
+build --experimental_strict_repo_env
+build --experimental_strict_java_deps=error
+# Pass through HOME and COURSIER_CACHE so rules_jvm_external can resolve the user's
+# Coursier cache path correctly under --experimental_strict_repo_env during pinning / fetching.
+common --repo_env=COURSIER_CACHE
+common --repo_env=HOME
+
+test --test_output=errors
+test --test_verbose_timeout_warnings
+
+# Local disk cache keeps rebuilds cheap across `bazel clean`.
+build --disk_cache=~/.cache/bazel-disk
+
+try-import %workspace%/.bazelrc.user

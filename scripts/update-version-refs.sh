@@ -16,17 +16,15 @@ versions_maven_plugin=org.codehaus.mojo:versions-maven-plugin:2.18.0
 update_project_version_refs() {
 	local target_version="$1"
 
-	mvn "${versions_maven_plugin}:set" -DnewVersion="$target_version" -DgenerateBackupPoms=false
+	if [[ ! "$target_version" =~ ^[0-9A-Za-z][0-9A-Za-z.-]*$ ]]; then
+		echo "Invalid version: $target_version" 1>&2
+		exit 1
+	fi
+	sed -i -E "s/^VERSION = \"[^\"]+\"$/VERSION = \"$target_version\"/" version.bzl
 
-	for pom in smoke-tests/{java8,jpms,graalvm,osgi}/pom.xml; do
+	for pom in smoke-tests/{java8,jpms,graalvm,osgi,quarkus}/pom.xml; do
 		mvn -f "$pom" "${versions_maven_plugin}:set-property" -Dproperty=jackson-jq.version -DnewVersion="$target_version" -DautoLinkItems=false -DgenerateBackupPoms=false
 	done
-}
-
-update_scm_tag() {
-	local tag="$1"
-
-	mvn "${versions_maven_plugin}:set-scm-tag" -DnewTag="$tag" -DgenerateBackupPoms=false
 }
 
 update_documentation_version_refs() {
@@ -44,13 +42,11 @@ case "$mode" in
 prepare-release)
 	release_version="$2"
 	update_project_version_refs "$release_version"
-	update_scm_tag "$release_version"
 	update_documentation_version_refs "$release_version"
 	;;
 prepare-next-development-iteration)
 	next_development_version="$2"
 	update_project_version_refs "$next_development_version"
-	update_scm_tag HEAD
 	;;
 *)
 	echo "Unknown mode: $mode" 1>&2

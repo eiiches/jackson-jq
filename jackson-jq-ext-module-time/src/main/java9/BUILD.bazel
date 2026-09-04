@@ -1,0 +1,16 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_module_info")
+
+jjq_java_module_info(
+    module_name = "net.thisptr.jackson.jq.v2.ext.module.time",
+    module_packages = [
+        "//jackson-jq-ext-module-time/src/main/java/net/thisptr/jackson/jq/v2/ext/time",
+        "//jackson-jq-ext-module-time/src/main/java/net/thisptr/jackson/jq/v2/ext/time/functions",
+        "//jackson-jq-ext-module-time/src/main/java/net/thisptr/jackson/jq/v2/ext/time/internal/misc",
+    ],
+    release = 9,
+    visibility = ["//jackson-jq-ext-module-time:__pkg__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi",
+    ],
+)

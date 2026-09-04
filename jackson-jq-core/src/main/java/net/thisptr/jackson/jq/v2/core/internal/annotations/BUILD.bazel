@@ -1,0 +1,9 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+# No dependencies - a source-retention annotation over java.lang.annotation only.
+jjq_java_library(
+    name = "annotations",
+    srcs = ["InterfaceAudience.java"],
+    release = 8,
+    visibility = ["//jackson-jq-core:__subpackages__"],
+)

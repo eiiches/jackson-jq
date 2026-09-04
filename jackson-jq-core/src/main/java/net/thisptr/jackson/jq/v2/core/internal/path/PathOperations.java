@@ -11,14 +11,13 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Versions;
+import net.thisptr.jackson.jq.v2.core.internal.comparator.JsonNodeComparator;
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
-import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
-import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Range;
 import net.thisptr.jackson.jq.v2.core.internal.misc.UnicodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.IndexOfPath;
 import net.thisptr.jackson.jq.v2.spi.path.IndexRangePath;
@@ -29,6 +28,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.RootPath;
 import net.thisptr.jackson.jq.v2.spi.path.StringKeyPath;
 import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 /**
  * Core operations over the data-only {@link Path} hierarchy.

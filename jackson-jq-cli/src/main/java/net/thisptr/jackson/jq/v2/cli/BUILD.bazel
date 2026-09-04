@@ -1,0 +1,32 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+# Aggregates every JSON provider and extension module; they are discovered at runtime
+# through ServiceLoader, so most of these are runtime-only from the CLI's point of view.
+jjq_java_library(
+    name = "cli",
+    srcs = [
+        "InputSource.java",
+        "InputSources.java",
+        "JqPrettyPrinter.java",
+        "Main.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-cli:__subpackages__"],
+    deps = [
+        "//jackson-jq-core",
+        "//jackson-jq-ext-module-debug",
+        "//jackson-jq-ext-module-random",
+        "//jackson-jq-ext-module-time",
+        "//jackson-jq-ext-module-uri",
+        "//jackson-jq-ext-module-uuid",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-gson",
+        "//jackson-jq-json-provider-impl-jackson2",
+        "//jackson-jq-json-provider-impl-jackson3",
+        "//jackson-jq-json-provider-impl-jakarta",
+        "//jackson-jq-regex-impl-joni",
+        "//jackson-jq-spi",
+        "@maven//:commons_cli_commons_cli",
+        "@maven//:org_eclipse_parsson_parsson",
+    ],
+)

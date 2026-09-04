@@ -9,28 +9,28 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
     - uses: actions/checkout@v5.0.0
-    - name: Set up JDK 26
-      uses: actions/setup-java@v5.0.0
+
+    - name: Set up Bazel
+      uses: bazel-contrib/setup-bazel@0.19.0
       with:
-        java-version: '26'
-        distribution: 'temurin'
-        cache: 'maven'
+        bazelisk-cache: true
+        disk-cache: ${{ runner.os }}-${{ runner.arch }}
+        repository-cache: true
+        cache-save: true
 
-    - name: Cache jq binaries
-      uses: actions/cache@v5.0.5
-      with:
-        path: ~/bin/jq-*
-        key: jq-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/download-jq-binaries.sh') }}
+    - name: Build and test
+      run: bazel test //...
 
-    - name: Download jq binaries
-      run: scripts/download-jq-binaries.sh $HOME/bin
+    # Built as a separate step: `bazel run` would put the credentials in Bazel's client
+    # environment, which Bazel writes verbatim into $(bazel info output_base)/java.log*.
+    # The built script needs no Bazel server, so running it directly keeps the secrets in
+    # this step's process only.
+    - name: Build publisher
+      run: bazel build //:maven_install
 
-    - name: Configure Maven
+    - name: Deploy snapshot
       env:
-        M2_SETTINGS_XML: ${{ secrets.M2_SETTINGS_XML }}
-      run: |
-        mkdir -p $HOME/.m2
-        echo "$M2_SETTINGS_XML" > $HOME/.m2/settings.xml
-
-    - name: Build & Deploy
-      run: 'PATH="$HOME/bin:$PATH" mvn clean deploy'
+        MAVEN_REPO: https://central.sonatype.com/repository/maven-snapshots/
+        MAVEN_USER: ${{ secrets.MAVEN_USER }}
+        MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+      run: bazel-bin/maven_install

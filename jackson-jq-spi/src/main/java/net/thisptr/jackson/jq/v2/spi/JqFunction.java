@@ -7,6 +7,8 @@ import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
+
 /**
  * A raw jq-language function definition, equivalent to {@code def name(args): body;}, contributed
  * by a {@link JqLibrary}.

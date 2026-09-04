@@ -1,0 +1,39 @@
+load("@rules_java//java:defs.bzl", "java_plugin")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "java_defs.bzl",
+    "pom.tpl",
+])
+
+# NullAway is not an annotation processor; it is an Error Prone *plugin check*, which
+# Error Prone discovers with ServiceLoader over the annotation processor path
+# (nullaway.jar ships META-INF/services/com.google.errorprone.bugpatterns.BugChecker).
+# processor_class = "" means "put these jars on the processorpath, declare no processor".
+#
+# guava and checker-qual are required, and their absence fails at compile time with
+# NoClassDefFoundError rather than at analysis time: JavaBuilder's
+# ClassloaderMaskingFileManager hides its own classpath from the processor classloader
+# except com.google.errorprone.*, com.google.common.{collect,base,regex}.* and
+# org.checkerframework.errorprone.dataflow.*, while NullAway reaches for
+# com.google.common.cache.CacheBuilder and org.checkerframework.dataflow.qual.*.
+java_plugin(
+    name = "nullaway",
+    processor_class = "",
+    deps = [
+        "@maven//:com_google_guava_guava",
+        "@maven//:com_uber_nullaway_nullaway",
+        "@maven//:org_checkerframework_checker_qual",
+        "@maven//:org_checkerframework_dataflow_nullaway",
+        "@maven//:org_jspecify_jspecify",
+    ],
+)
+
+# Generates the META-INF/services/* entries that both the OSGi bundle instructions and
+# the shaded CLI/fuzz jars depend on.
+java_plugin(
+    name = "auto_service",
+    processor_class = "com.google.auto.service.processor.AutoServiceProcessor",
+    deps = ["@maven//:com_google_auto_service_auto_service"],
+)

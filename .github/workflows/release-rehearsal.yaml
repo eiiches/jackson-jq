@@ -1,0 +1,32 @@
+# A full release rehearsal: prepares the branches, stages and signs the artifacts, and
+# uploads a real bundle to the Central Publisher Portal -- then stops. Nothing is pushed to
+# git, and the deployment is left in VALIDATED for a human to inspect and drop. Uploading as
+# USER_MANAGED means nothing reaches Maven Central unless someone publishes it by hand.
+name: 'release (rehearsal)'
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'release version to rehearse; e.g. 0.0.1 (a -test-<run> suffix is appended)'
+        required: true
+      next_snapshot_version:
+        description: 'next snapshot version; e.g. 0.0.2-SNAPSHOT'
+        required: true
+
+jobs:
+  release:
+    permissions:
+      # Read-only on purpose, and the real guarantee that a rehearsal cannot release:
+      # permissions can only be reduced down a workflow_call chain, so even if `push: false`
+      # were broken by a bad edit, `git push` would get a 403 rather than succeed.
+      contents: read
+    uses: ./.github/workflows/reusable-release.yaml
+    with:
+      # Marks the deployment as a rehearsal in the Portal and keeps every version unique, so
+      # one collides with neither a real release nor an earlier rehearsal. run_id is unique
+      # per run; run_attempt separates re-runs, which reuse the run_id. A timestamp would read
+      # better but Actions exposes no clock, so it would cost a whole extra job to call `date`.
+      release_version: ${{ github.event.inputs.release_version }}-test-${{ github.run_id }}-${{ github.run_attempt }}
+      next_snapshot_version: ${{ github.event.inputs.next_snapshot_version }}
+      push: false
+    secrets: inherit

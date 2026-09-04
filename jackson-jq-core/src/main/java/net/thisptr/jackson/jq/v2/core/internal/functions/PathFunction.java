@@ -6,18 +6,18 @@ import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
-import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
+import net.thisptr.jackson.jq.v2.core.internal.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.PathUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.RootPath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "path", nargs = 1)

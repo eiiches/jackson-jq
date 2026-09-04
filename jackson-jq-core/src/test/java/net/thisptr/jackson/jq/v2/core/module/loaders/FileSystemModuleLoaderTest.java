@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.module.loaders;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,18 +49,7 @@ public class FileSystemModuleLoaderTest {
 	 * </p>
 	 */
 	private ModuleLoader<JsonNode> setupModuleLoader(Path tempDir) throws IOException {
-		ClassLoaderUtils.walk("classpath_modules", (src, relativePath) -> {
-			try {
-				Path dest = tempDir.resolve(relativePath.toString());
-				if (Files.isDirectory(src)) {
-					Files.createDirectories(dest);
-				} else {
-					Files.copy(src, dest);
-				}
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		});
+		ClassLoaderUtils.copyResources(getClass().getClassLoader(), "classpath_modules", tempDir);
 		return new FileSystemModuleLoader<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6, tempDir);
 	}
 

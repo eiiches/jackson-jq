@@ -1,15 +1,7 @@
 version: 2
 updates:
-  - package-ecosystem: "maven"
+  - package-ecosystem: "bazel"
     directory: "/"
-    schedule:
-      interval: "daily"
-  - package-ecosystem: "maven"
-    directory: "/jackson-jq/"
-    schedule:
-      interval: "daily"
-  - package-ecosystem: "maven"
-    directory: "/jackson-jq-cli/"
     schedule:
       interval: "daily"
   - package-ecosystem: "maven"
@@ -25,7 +17,11 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "maven"
-    directory: "/jackson-jq-extra/"
+    directory: "/smoke-tests/java8/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "maven"
+    directory: "/smoke-tests/quarkus/"
     schedule:
       interval: "daily"
   - package-ecosystem: "github-actions"

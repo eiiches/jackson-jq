@@ -1,0 +1,16 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "jackson3",
+    srcs = [
+        "Jackson3JsonProviderImpl.java",
+        "JsonQueryJacksonModule.java",
+    ],
+    release = 17,
+    visibility = ["//jackson-jq-json-provider-impl-jackson3:__subpackages__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "@maven//:tools_jackson_core_jackson_core",
+        "@maven//:tools_jackson_core_jackson_databind",
+    ],
+)

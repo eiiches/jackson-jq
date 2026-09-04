@@ -1,0 +1,27 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_mrjar", "jjq_maven_artifact")
+
+package(default_visibility = ["//visibility:public"])
+
+# src/main/java9 (the JPMS source root) and src/main/java17 (the sealed Path variant)
+# are multi-release overlays assembled in the packaging step.
+jjq_java_mrjar(
+    name = "jackson-jq-spi-mrjar",
+    osgi = True,
+    packages = [
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/annotations",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/exception",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/module",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/path",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/version",
+    ],
+    release_overlays = {
+        9: ["//jackson-jq-spi/src/main/java9:module-info"],
+        17: ["//jackson-jq-spi/src/main/java17/net/thisptr/jackson/jq/v2/spi/path"],
+    },
+)
+
+jjq_maven_artifact(
+    name = "jackson-jq-spi",
+    artifact = ":jackson-jq-spi-mrjar",
+)

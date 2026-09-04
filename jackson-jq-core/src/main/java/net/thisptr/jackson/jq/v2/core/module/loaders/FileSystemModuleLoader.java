@@ -34,9 +34,9 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
-import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	private final List<Path> searchPaths;

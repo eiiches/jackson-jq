@@ -1,0 +1,17 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
+
+jjq_java_test_suite(
+    srcs = [
+        "JqPrettyPrinterTest.java",
+        "MainTest.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-cli:__subpackages__"],
+    deps = [
+        "//jackson-jq-cli/src/main/java/net/thisptr/jackson/jq/v2/cli",
+        "//jackson-jq-core",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi",
+        "@maven//:commons_cli_commons_cli",
+    ],
+)

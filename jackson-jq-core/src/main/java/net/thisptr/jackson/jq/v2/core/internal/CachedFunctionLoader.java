@@ -8,7 +8,7 @@ import net.thisptr.jackson.jq.v2.core.FunctionLoader;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
-import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 /**
  * A {@link FunctionLoader} that memoizes both function registries per {@link Version}, so a delegate

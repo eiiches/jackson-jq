@@ -1,0 +1,19 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "verify",
+    testonly = True,
+    srcs = ["VerifyTestCasesTest.java"],
+    release = 8,
+    visibility = ["//tests:__pkg__"],
+    deps = [
+        "//jackson-jq-json-provider-impl-jackson2",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/version",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/comparator",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/evaluator",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/testcase",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+        "@maven//:org_assertj_assertj_core",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+    ],
+)

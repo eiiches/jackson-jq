@@ -8,7 +8,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class JsonNodeUtils {
 	private JsonNodeUtils() {
@@ -46,51 +46,6 @@ public class JsonNodeUtils {
 
 	public static <JsonNode> String typeOf(JsonProvider<JsonNode> jsonProvider, JsonNode in) {
 		return jsonProvider.getNodeType(in).toString().toLowerCase(Locale.ROOT);
-	}
-
-	public static <JsonNode> String formatType(JsonProvider<JsonNode> jsonProvider, JsonNode in) {
-		JsonNodeType type = jsonProvider.getNodeType(in);
-		switch (type) {
-			case NULL:
-				return "null";
-			case BOOLEAN:
-				return jsonProvider.getBoolean(in) ? "true" : "false";
-			case NUMBER:
-				return jsonProvider.format(in);
-			case STRING:
-				return String.format("\"%s\"", jsonProvider.getString(in));
-			case ARRAY:
-				return "array";
-			case OBJECT:
-				return "object";
-			default:
-				throw new IllegalStateException("Unknown type: " + type);
-		}
-	}
-
-	public static <JsonNode> String formatTypes(JsonProvider<JsonNode> jsonProvider, List<JsonNode> in) {
-		StringBuilder sb = new StringBuilder();
-		for (JsonNode n : in) {
-			if (sb.length() > 0)
-				sb.append(", ");
-			sb.append(formatType(jsonProvider, n));
-		}
-		return sb.toString();
-	}
-
-	public static <JsonNode> String print(JsonProvider<JsonNode> jsonProvider, JsonNode in) {
-		return jsonProvider.format(in);
-	}
-
-	public static <JsonNode> boolean isIterable(JsonProvider<JsonNode> jsonProvider, JsonNode in) {
-		JsonNodeType type = jsonProvider.getNodeType(in);
-		return type == JsonNodeType.ARRAY || type == JsonNodeType.OBJECT;
-	}
-
-	public static <JsonNode> JsonNode nullToNullNode(JsonProvider<JsonNode> jsonProvider, @Nullable JsonNode value) {
-		if (value == null)
-			return jsonProvider.createNull();
-		return value;
 	}
 
 	public static <JsonNode> String toString(JsonProvider<JsonNode> jsonProvider, JsonNode node) {

@@ -1,0 +1,24 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_module_info")
+
+jjq_java_module_info(
+    module_name = "net.thisptr.jackson.jq.v2.core",
+    module_packages = [
+        "//jackson-jq-core:core-sources",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/impls/fieldaccess",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/impls/literal",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/impls/matcher",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/impls/matcher/matchers",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/comparator",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/exception",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/filters",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/functions",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/functions/math",
+    ],
+    release = 9,
+    visibility = ["//jackson-jq-core:__pkg__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi",
+    ],
+)

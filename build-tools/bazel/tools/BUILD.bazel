@@ -1,0 +1,108 @@
+load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_junit5_test")
+load("@rules_java//java:defs.bzl", "java_binary", "java_library")
+
+package(default_visibility = ["//visibility:public"])
+
+java_binary(
+    name = "javacc",
+    main_class = "javacc",
+    runtime_deps = ["@maven//:net_java_dev_javacc_javacc"],
+)
+
+java_library(
+    name = "multi_release_jar_lib",
+    srcs = ["MultiReleaseJar.java"],
+)
+
+java_binary(
+    name = "multi_release_jar",
+    main_class = "MultiReleaseJar",
+    runtime_deps = [":multi_release_jar_lib"],
+)
+
+java_junit5_test(
+    name = "multi_release_jar_test",
+    size = "small",
+    srcs = ["MultiReleaseJarTest.java"],
+    test_class = "MultiReleaseJarTest",
+    runtime_deps = JUNIT5_DEPS,
+    deps = [
+        ":multi_release_jar_lib",
+        "@maven//:org_assertj_assertj_core",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+    ],
+)
+
+java_library(
+    name = "bnd_manifest_lib",
+    srcs = ["BndManifest.java"],
+    deps = ["@maven//:biz_aQute_bnd_biz_aQute_bndlib"],
+)
+
+java_binary(
+    name = "bnd_manifest",
+    main_class = "BndManifest",
+    runtime_deps = [":bnd_manifest_lib"],
+)
+
+java_junit5_test(
+    name = "bnd_manifest_test",
+    size = "small",
+    srcs = ["BndManifestTest.java"],
+    test_class = "BndManifestTest",
+    runtime_deps = JUNIT5_DEPS,
+    deps = [
+        ":bnd_manifest_lib",
+        "@maven//:org_assertj_assertj_core",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+    ],
+)
+
+# Signs the staged Maven repository and uploads it to the Central Publisher Portal. Split
+# from the binary below only so the test can depend on the classes.
+#
+# --release 21 is not decoration: without javacopts a Java target compiles at rules_java's
+# default language version 11, and HttpRequest.BodyPublishers.concat is Java 16+. The
+# jackson-jq javacopts() helper is deliberately not used -- its Error Prone and NullAway
+# set is tuned for net.thisptr.jackson.jq, not for a default-package build tool.
+java_library(
+    name = "central_portal_upload_lib",
+    srcs = ["CentralPortalUpload.java"],
+    javacopts = [
+        "--release",
+        "21",
+    ],
+    deps = [
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+        "@maven//:commons_cli_commons_cli",
+    ],
+)
+
+# Run the deploy jar directly, never `bazel run`: Bazel writes its whole client environment
+# into $(bazel info output_base)/java.log*, so MAVEN_PASSWORD, CENTRAL_TOKEN and
+# GPG_PASSPHRASE must never reach the Bazel client. See build-tools/bazel/publish.bzl.
+java_binary(
+    name = "central_portal_upload",
+    main_class = "CentralPortalUpload",
+    runtime_deps = [":central_portal_upload_lib"],
+)
+
+# java_junit5_test rather than java_test_suite: the suite macro derives the test class from
+# the source path, which has no src/test/java root here and would mangle a default-package
+# class into build-tools.bazel.tools.CentralPortalUploadTest.
+java_junit5_test(
+    name = "central_portal_upload_test",
+    size = "small",
+    srcs = ["CentralPortalUploadTest.java"],
+    javacopts = [
+        "--release",
+        "21",
+    ],
+    test_class = "CentralPortalUploadTest",
+    runtime_deps = JUNIT5_DEPS,
+    deps = [
+        ":central_portal_upload_lib",
+        "@maven//:org_assertj_assertj_core",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+    ],
+)

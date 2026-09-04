@@ -1,0 +1,15 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "gson",
+    srcs = [
+        "GsonJsonProviderImpl.java",
+        "GsonUtils.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-json-provider-impl-gson:__subpackages__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "@maven//:com_google_code_gson_gson",
+    ],
+)

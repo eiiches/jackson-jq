@@ -26,7 +26,7 @@ git checkout -b "$release_branch" "$develop_branch"
 scripts/update-version-refs.sh prepare-release "$release_version"
 git add -u
 git commit -m "release: prepare release $release_version"
-mvn clean verify
+bazel test //...
 
 # merge release branch to develop
 git checkout "$develop_branch"

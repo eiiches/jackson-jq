@@ -2,13 +2,12 @@ package net.thisptr.jackson.jq.v2.spi.annotations;
 
 import java.lang.annotation.Target;
 
-import net.thisptr.jackson.jq.v2.spi.Version;
-
 /**
- * An annotation-compatible mirror of {@link Version}, needed because annotation attributes cannot
- * reference arbitrary objects such as {@code Version} directly. Intended only as a nested
- * annotation value (e.g. on {@link VersionRangeSpec#min()}/{@link VersionRangeSpec#max()}), never
- * applied directly to a program element.
+ * An annotation-compatible mirror of {@link net.thisptr.jackson.jq.v2.spi.Version Version}, needed
+ * because annotation attributes cannot reference arbitrary objects such as {@code Version}
+ * directly. Intended only as a nested annotation value (e.g. on
+ * {@link VersionRangeSpec#min()}/{@link VersionRangeSpec#max()}), never applied directly to a
+ * program element.
  */
 @Target({})
 public @interface VersionSpec {

@@ -1,0 +1,19 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_mrjar", "jjq_maven_artifact")
+
+package(default_visibility = ["//visibility:public"])
+
+jjq_java_mrjar(
+    name = "jackson-jq-ext-module-uuid-mrjar",
+    osgi = True,
+    packages = [
+        "//jackson-jq-ext-module-uuid/src/main/java/net/thisptr/jackson/jq/v2/ext/uuid",
+        "//jackson-jq-ext-module-uuid/src/main/java/net/thisptr/jackson/jq/v2/ext/uuid/functions",
+        "//jackson-jq-ext-module-uuid/src/main/java/net/thisptr/jackson/jq/v2/ext/uuid/internal/misc",
+    ],
+    release_overlays = {9: ["//jackson-jq-ext-module-uuid/src/main/java9:module-info"]},
+)
+
+jjq_maven_artifact(
+    name = "jackson-jq-ext-module-uuid",
+    artifact = ":jackson-jq-ext-module-uuid-mrjar",
+)
