@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ThisObjectAstNode;
 
 public class IdentifierFieldAccessAstNode extends FieldAccessAstNode {
 	private String field;
@@ -18,9 +17,10 @@ public class IdentifierFieldAccessAstNode extends FieldAccessAstNode {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		if (!(target instanceof ThisObjectAstNode))
-			builder.append(target.toString());
-		builder.append(".");
+		String targetString = target.toString();
+		builder.append(targetString);
+		if (!".".equals(targetString))
+			builder.append(".");
 		builder.append(field);
 		if (permissive)
 			builder.append("?");
