@@ -62,9 +62,8 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.BracketFiel
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.IdentifierFieldAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.StringFieldAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.BooleanLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.DoubleLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.LongLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.NullLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.NumericLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.StringLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.matchers.ArrayMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.matchers.ObjectMatcherAstNode;
@@ -165,8 +164,8 @@ public class Main {
 			generators.add(new RandomGenerator(1, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.MODULO_EQUAL, new IdentifierFieldAccessAstNode(new ThisObjectAstNode(), "foo", false), exprs.get(0))));
 			generators.add(new RandomGenerator(1, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.ASSIGN, new BracketExtractFieldAccessAstNode(new ThisObjectAstNode(), false), exprs.get(0))));
 			generators.add(new RandomGenerator(1, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.UDPATE, new BracketExtractFieldAccessAstNode(new ThisObjectAstNode(), false), exprs.get(0))));
-			generators.add(new RandomGenerator(1, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.ASSIGN, new BracketFieldAccessAstNode(new ThisObjectAstNode(), new LongLiteralAstNode(0), false), exprs.get(0))));
-			generators.add(new RandomGenerator(1, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.ASSIGN, new BracketFieldAccessAstNode(new ThisObjectAstNode(), new LongLiteralAstNode(0), new LongLiteralAstNode(1), false), exprs.get(0))));
+			generators.add(new RandomGenerator(1, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.ASSIGN, new BracketFieldAccessAstNode(new ThisObjectAstNode(), new NumericLiteralAstNode("0"), false), exprs.get(0))));
+			generators.add(new RandomGenerator(1, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.ASSIGN, new BracketFieldAccessAstNode(new ThisObjectAstNode(), new NumericLiteralAstNode("0"), new NumericLiteralAstNode("1"), false), exprs.get(0))));
 			generators.add(new RandomGenerator(1, (exprs) -> new BinaryOpAstNode(BinaryOperatorExpression.Operator.ASSIGN, new StringFieldAccessAstNode(new ThisObjectAstNode(), new StringLiteralAstNode("bar"), false), exprs.get(0))));
 
 			// Pipelines & Variable Bindings
@@ -190,7 +189,7 @@ public class Main {
 			generators.add(new RandomGenerator(3, (exprs) -> new ForeachExpressionAstNode(new ValueMatcherAstNode("x"), exprs.get(1), exprs.get(2), null, new ParenAstNode(exprs.get(0)))));
 			generators.add(new RandomGenerator(2, (exprs) -> new ForeachExpressionAstNode(new ValueMatcherAstNode("x"), exprs.get(1), new BinaryOpAstNode(BinaryOperatorExpression.Operator.PLUS, new ThisObjectAstNode(), new VariableAccessAstNode("x")), null, new ParenAstNode(exprs.get(0)))));
 			generators.add(new RandomGenerator(4, (exprs) -> new ForeachExpressionAstNode(new ValueMatcherAstNode("x"), exprs.get(1), exprs.get(2), exprs.get(3), new ParenAstNode(exprs.get(0)))));
-			generators.add(new RandomGenerator(2, (exprs) -> new ForeachExpressionAstNode(new ValueMatcherAstNode("x"), exprs.get(1), new BinaryOpAstNode(BinaryOperatorExpression.Operator.PLUS, new ThisObjectAstNode(), new VariableAccessAstNode("x")), new BinaryOpAstNode(BinaryOperatorExpression.Operator.TIMES, new ThisObjectAstNode(), new LongLiteralAstNode(2)), new ParenAstNode(exprs.get(0)))));
+			generators.add(new RandomGenerator(2, (exprs) -> new ForeachExpressionAstNode(new ValueMatcherAstNode("x"), exprs.get(1), new BinaryOpAstNode(BinaryOperatorExpression.Operator.PLUS, new ThisObjectAstNode(), new VariableAccessAstNode("x")), new BinaryOpAstNode(BinaryOperatorExpression.Operator.TIMES, new ThisObjectAstNode(), new NumericLiteralAstNode("2")), new ParenAstNode(exprs.get(0)))));
 
 			// Object Construction
 			generators.add(new RandomGenerator(0, (exprs) -> new ObjectConstructionAstNode()));
@@ -344,19 +343,19 @@ public class Main {
 		expressions.add(new ObjectConstructionAstNode());
 		expressions.add(new BooleanLiteralAstNode(true));
 		expressions.add(new BooleanLiteralAstNode(false));
-		expressions.add(new LongLiteralAstNode(-2));
-		expressions.add(new LongLiteralAstNode(-1));
-		expressions.add(new LongLiteralAstNode(0));
-		expressions.add(new LongLiteralAstNode(1));
-		expressions.add(new LongLiteralAstNode(2));
-		expressions.add(new LongLiteralAstNode(10));
-		expressions.add(new DoubleLiteralAstNode(-1.5));
-		expressions.add(new DoubleLiteralAstNode(-1.0));
-		expressions.add(new DoubleLiteralAstNode(-0.5));
-		expressions.add(new DoubleLiteralAstNode(0.0));
-		expressions.add(new DoubleLiteralAstNode(0.5));
-		expressions.add(new DoubleLiteralAstNode(1.0));
-		expressions.add(new DoubleLiteralAstNode(1.5));
+		expressions.add(new NumericLiteralAstNode("-2"));
+		expressions.add(new NumericLiteralAstNode("-1"));
+		expressions.add(new NumericLiteralAstNode("0"));
+		expressions.add(new NumericLiteralAstNode("1"));
+		expressions.add(new NumericLiteralAstNode("2"));
+		expressions.add(new NumericLiteralAstNode("10"));
+		expressions.add(new NumericLiteralAstNode("-1.5"));
+		expressions.add(new NumericLiteralAstNode("-1.0"));
+		expressions.add(new NumericLiteralAstNode("-0.5"));
+		expressions.add(new NumericLiteralAstNode("0.0"));
+		expressions.add(new NumericLiteralAstNode("0.5"));
+		expressions.add(new NumericLiteralAstNode("1.0"));
+		expressions.add(new NumericLiteralAstNode("1.5"));
 		expressions.add(new NullLiteralAstNode());
 		expressions.add(new StringLiteralAstNode(""));
 		expressions.add(new StringLiteralAstNode("foo"));

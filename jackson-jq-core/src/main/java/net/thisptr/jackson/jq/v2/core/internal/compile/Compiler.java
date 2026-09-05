@@ -43,9 +43,8 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.BracketFiel
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.IdentifierFieldAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.StringFieldAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.BooleanLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.DoubleLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.LongLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.NullLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.NumericLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.StringLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.PatternMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.matchers.ArrayMatcherAstNode;
@@ -97,9 +96,8 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketFieldAcce
 import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.IdentifierFieldAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.StringFieldAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.BooleanLiteral;
-import net.thisptr.jackson.jq.v2.core.internal.tree.literal.DoubleLiteral;
-import net.thisptr.jackson.jq.v2.core.internal.tree.literal.LongLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral;
+import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NumericLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ArrayMatcher;
@@ -582,12 +580,9 @@ public class Compiler {
 			return new BooleanLiteral<>(env.getJsonProvider(), ((BooleanLiteralAstNode) ast).value());
 		}
 
-		if (ast instanceof LongLiteralAstNode) {
-			return new LongLiteral<>(env.getJsonProvider(), ((LongLiteralAstNode) ast).value());
-		}
-
-		if (ast instanceof DoubleLiteralAstNode) {
-			return new DoubleLiteral<>(env.getJsonProvider(), ((DoubleLiteralAstNode) ast).value());
+		if (ast instanceof NumericLiteralAstNode) {
+			JsonProvider<JsonNode> jsonProvider = env.getJsonProvider();
+			return new NumericLiteral<>(jsonProvider, ((NumericLiteralAstNode) ast).value(jsonProvider));
 		}
 
 		if (ast instanceof NullLiteralAstNode) {

@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
+import net.thisptr.jackson.jq.v2.core.internal.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.ExpressionUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FreeVariables;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -25,6 +27,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -32,6 +35,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class EnvironmentPocTest {
+	/**
+	 * Results are compared by jq value, not by JsonNode identity: the node class a literal
+	 * compiles to is not what these tests are about.
+	 */
+	private static final Comparator<JsonNode> BY_JQ_VALUE = new JsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance());
+
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 	private static final JsonProvider<JsonNode> jsonProvider = Jackson2JsonProviderImpl.getInstance();
 
@@ -246,7 +255,7 @@ public class EnvironmentPocTest {
 
 		assertTrue(captured.get(0) instanceof ConstantExpression<?, ?>);
 		ConstantExpression<?, JsonNode> constant = (ConstantExpression<?, JsonNode>) captured.get(0);
-		assertEquals(Arrays.asList(MAPPER.readTree("1"), MAPPER.readTree("2")), constant.getConstantResults());
+		assertThat(constant.getConstantResults()).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("1"), MAPPER.readTree("2")));
 	}
 
 	@Test

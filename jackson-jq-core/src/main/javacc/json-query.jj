@@ -140,9 +140,8 @@ TOKEN: { <COMMA: ","> }
 TOKEN: { <BOOLEAN_LITERAL_TRUE: "true"> }
 TOKEN: { <BOOLEAN_LITERAL_FALSE: "false"> }
 TOKEN: { <NULL_LITERAL: "null"> }
-TOKEN: { <INTEGER_LITERAL: (["1"-"9"] (["0"-"9"])*) | "0"> }
 TOKEN: {
-	<FLOAT_LITERAL: (("0" | ["1"-"9"] (<DIGIT>)*) ("." (["0"-"9"])+)? | "." (["0"-"9"])+) (<EXPONENT>)?>
+	<NUMERIC_LITERAL: (("0" | ["1"-"9"] (<DIGIT>)*) ("." (["0"-"9"])+)? | "." (["0"-"9"])+) (<EXPONENT>)?>
 	| <#EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+>
 }
 
@@ -933,16 +932,12 @@ AstNode ArrayConstruction():
 AstNode ValueLiteral():
 {
 	Token token;
-	String text;
 	AstNode tmp;
 }
 {
 	(
-		token = <INTEGER_LITERAL>
-		{ tmp = new LongLiteralAstNode(Long.parseLong(token.image)); }
-	|
-		token = <FLOAT_LITERAL>
-		{ tmp = new DoubleLiteralAstNode(Double.parseDouble(token.image)); }
+		token = <NUMERIC_LITERAL>
+		{ tmp = new NumericLiteralAstNode(token.image); }
 	|
 		<NULL_LITERAL>
 		{ tmp = new NullLiteralAstNode(); }

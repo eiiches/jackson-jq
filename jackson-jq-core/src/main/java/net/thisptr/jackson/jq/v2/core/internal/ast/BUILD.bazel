@@ -10,7 +10,9 @@ jjq_java_library(
 
 # core.internal.ast.impls is inside the package cycle and cannot be its own target, but this
 # BUILD.bazel makes internal/ast a Bazel package, which hides impls/ from core-sources' glob.
-# Hand the subtree back so core-sources keeps compiling it.
+# Hand the subtree back so core-sources keeps compiling it. impls/literal is acyclic and has a
+# BUILD.bazel of its own, so this glob stops at it and core-sources depends on that target
+# instead.
 filegroup(
     name = "impls-srcs",
     srcs = glob(["impls/**/*.java"]),
