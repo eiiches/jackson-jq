@@ -2,9 +2,9 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.matcher;
 
 import java.util.Deque;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
-import net.thisptr.jackson.jq.v2.core.internal.misc.Functional;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -19,7 +19,7 @@ public interface PatternMatcher<JsonNode> {
 		}
 	}
 
-	void match(StackFrame frame, JsonNode in, Functional.Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate) throws JsonQueryException;
+	void match(StackFrame frame, JsonNode in, Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate) throws JsonQueryException;
 
 	class MatchWithPath<JsonNode> {
 		public final int slot;
