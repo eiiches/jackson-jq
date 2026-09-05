@@ -67,7 +67,6 @@ jjq_java_mrjar(
     osgi = True,
     packages = [
         ":core-sources",
-        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/annotations",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/impls/fieldaccess",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/impls/literal",
