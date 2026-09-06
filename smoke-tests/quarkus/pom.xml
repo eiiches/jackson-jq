@@ -151,6 +151,8 @@
 			<properties>
 				<skipITs>false</skipITs>
 				<quarkus.native.enabled>true</quarkus.native.enabled>
+				<!-- Quick build mode: these are smoke tests, so build time matters far more than peak runtime performance. -->
+				<quarkus.native.additional-build-args>-Ob</quarkus.native.additional-build-args>
 			</properties>
 			<build>
 				<plugins>

@@ -107,6 +107,8 @@
 					<mainClass>net.thisptr.jackson.jq.v2.smoketests.graalvm.GraalVmSmokeTest</mainClass>
 					<imageName>jackson-jq-graalvm-smoke-test</imageName>
 					<fallback>false</fallback>
+					<!-- Quick build mode (-Ob): these are smoke tests, so build time matters far more than peak runtime performance. -->
+					<quickBuild>true</quickBuild>
 				</configuration>
 			</plugin>
 			<plugin>
