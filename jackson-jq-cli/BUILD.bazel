@@ -1,24 +1,34 @@
-load("@rules_java//java:defs.bzl", "java_library")
-load("//build-tools/bazel:defs.bzl", "jackson_jq_uber_jar", "jjq_maven_artifact")
+load("@rules_java//java:defs.bzl", "java_binary", "java_import")
+load("//build-tools/bazel:defs.bzl", "jjq_maven_artifact")
 
 package(default_visibility = ["//visibility:public"])
 
-# The CLI aggregates every JSON provider, the regex implementation and all extension
-# modules; they are discovered at runtime through ServiceLoader.
-java_library(
-    name = "jackson-jq-cli-lib",
-    exports = ["//jackson-jq-cli/src/main/java/net/thisptr/jackson/jq/v2/cli"],
-)
-
-jackson_jq_uber_jar(
-    name = "cli",
+# The deploy jar is the counterpart of maven-shade-plugin: singlejar merges META-INF/services
+# the way shade's ServicesResourceTransformer did, and writes the jar deflated with normalized
+# timestamps, so nothing needs repacking afterwards.
+#
+# Note it intentionally does NOT carry META-INF/versions/9/module-info.class. Maven's shaded
+# jar does -- shade copies one arbitrary dependency's module descriptor (jackson-jq-core's)
+# into the uber jar, which would make the whole shaded artifact masquerade as that single
+# module on the module path. singlejar leaves it out on purpose.
+java_binary(
+    name = "jackson-jq-cli-bin",
     main_class = "net.thisptr.jackson.jq.v2.cli.Main",
-    runtime_deps = [":jackson-jq-cli-lib"],
+    runtime_deps = ["//jackson-jq-cli/src/main/java/net/thisptr/jackson/jq/v2/cli"],
 )
 
+# The uber jar as a Maven artifact: the deploy jar plus the CLI's own sources, and no deps at
+# all -- everything it would depend on is inside it, so the published pom lists nothing.
+java_import(
+    name = "jackson-jq-cli-uber-jar",
+    jars = [":jackson-jq-cli-bin_deploy.jar"],
+    srcjar = "//jackson-jq-cli/src/main/java/net/thisptr/jackson/jq/v2/cli:libcli-src.jar",
+)
+
+# `bazel run //jackson-jq-cli` runs the published jar; the same target carries the coordinates.
 jjq_maven_artifact(
     name = "jackson-jq-cli",
-    artifact = ":cli_uber_jar",
-    content = ["//jackson-jq-cli/src/main/java/net/thisptr/jackson/jq/v2/cli"],
+    artifact = ":jackson-jq-cli-uber-jar",
+    executable = True,
     publish_prebuilt = True,
 )

@@ -24,6 +24,7 @@ If you use Maven, add `jackson-jq-core` and the appropriate JSON provider to the
 	<groupId>net.thisptr.jackson.jq.v2</groupId>
 	<artifactId>jackson-jq-regex-impl-joni</artifactId>
 	<version>2.0.0-alpha1</version>
+	<scope>runtime</scope>
 </dependency>
 
 <!-- Choose one JSON provider that matches the JSON library your application uses -->

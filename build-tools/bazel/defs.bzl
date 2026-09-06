@@ -12,12 +12,13 @@ reassembles the per-package jars and release overlays into the single jar the mo
 """
 
 load("@contrib_rules_jvm//java:defs.bzl", "checkstyle_test", "java_test_suite")
-load("@rules_java//java:defs.bzl", "java_binary", "java_import", "java_library")
+load("@rules_java//java:defs.bzl", "java_import", "java_library")
 load("@rules_jvm_external//:defs.bzl", "maven_export")
 load("//:version.bzl", "VERSION")
 load("//build-tools/bazel:external_deps.bzl", "external_deps")
 load("//build-tools/bazel:java_defs.bzl", "JQ_PLUGINS", "javacopts")
 load("//build-tools/bazel:jpms.bzl", "java_compile_jars", "merge_package_jars", "overlay_jars")
+load("//build-tools/bazel:maven_artifact.bzl", "executable_maven_artifact", "maven_artifact")
 load("//build-tools/bazel:osgi.bzl", "osgi_bundle")
 load("//build-tools/bazel:publish.bzl", "publish_all", "publish_prebuilt_jar")
 
@@ -129,11 +130,6 @@ def jjq_java_mrjar(
         packages = packages,
         testonly = testonly,
     )
-    native.filegroup(
-        name = name + "-src",
-        srcs = [":" + name + "-src.jar"],
-        testonly = testonly,
-    )
 
     if release_overlays:
         overlay_jars(
@@ -160,111 +156,104 @@ def jjq_java_mrjar(
         )
         final_jar = ":" + name + "_osgi"
 
-    native.filegroup(
+    # The module's JavaInfo: the finished jar, the source jar merged from the same packages,
+    # and the external dependencies derived from them. `jjq_maven_artifact` reads all three off
+    # this one target.
+    #
+    # The deps are exported, not merely depended on, because `external_deps` merges every
+    # coordinate-carrying boundary it finds -- sibling jackson-jq modules included -- and the
+    # build has always let a dependent see those transitively. They are also what gives the
+    # generated pom Maven's `compile` scope rather than `runtime`.
+    java_import(
         name = name,
-        srcs = [final_jar],
+        jars = [final_jar],
+        srcjar = ":" + name + "-src.jar",
         testonly = testonly,
+        deps = derived_deps,
+        exports = derived_deps,
     )
 
 def jjq_maven_artifact(
         name,
         artifact,
         artifact_id = None,
-        content = [],
-        sources = None,
         doc_excluded_packages = [],
         pom_template = "//build-tools/bazel:pom.tpl",
-        publish = True,
         publish_prebuilt = False,
-        testonly = False):
+        executable = False):
     """Prepares a Maven artifact with coordinates and publication targets.
 
     Args:
-      name: target name (the module's JavaInfo target).
-      artifact: the finished jar to publish.
+      name: target name; the module's JavaInfo target, and what other modules depend on.
+      artifact: the target providing the artifact's JavaInfo -- its jar, its source jar, and
+        the dependency edges the pom is derived from.
       artifact_id: Maven artifactId when it differs from `name`.
-      content: compiled targets contributing to the artifact (for external dependency derivation).
-        If empty and artifact is a local label, defaults to the artifact's external deps.
-      sources: sources jar label (defaults to `<artifact>-src` if artifact is local).
       doc_excluded_packages: packages to exclude from generated javadocs.
       pom_template: template for pom.xml.
-      publish: whether to define publication targets.
-      publish_prebuilt: whether to publish the artifact as a prebuilt jar (e.g. uber jar)
-        without running maven_export's repacking.
-      testonly: whether this target is testonly.
+      publish_prebuilt: whether to publish the artifact's jar as built, without running
+        maven_export's repacking.
+      executable: whether the artifact is an executable uber jar. The module target then runs
+        it, so `bazel run //<module>` is the published CLI.
     """
+    if executable and not publish_prebuilt:
+        fail("executable = True publishes an uber jar as built; maven_export cannot repack " +
+             "one, so set publish_prebuilt = True.")
+
     module_coordinates = coordinates(artifact_id or name)
+    tags = ["maven_coordinates=" + module_coordinates]
 
-    if content:
-        external_deps(
-            name = name + "-external-deps",
-            content = content,
-            coordinates = module_coordinates,
-            tags = ["no-maven"],
-            testonly = testonly,
+    if executable:
+        executable_maven_artifact(
+            name = name,
+            exports = [artifact],
+            tags = tags,
         )
-        derived_deps = [":" + name + "-external-deps"]
-    elif artifact.startswith(":"):
-        derived_deps = [artifact + "-external-deps"]
     else:
-        derived_deps = []
+        maven_artifact(
+            name = name,
+            exports = [artifact],
+            tags = tags,
+        )
 
-    if sources == None:
-        if artifact.startswith(":") and artifact.endswith("-mrjar"):
-            sources = artifact + "-src"
-        elif publish_prebuilt and content:
-            native.filegroup(
-                name = name + "-direct-src",
-                srcs = [content[0]],
-                output_group = "_direct_source_jars",
-                testonly = testonly,
-            )
-            sources = ":" + name + "-direct-src"
-
-    java_import(
-        name = name,
-        jars = [artifact],
-        srcjar = sources,
-        tags = ["maven_coordinates=" + module_coordinates],
-        testonly = testonly,
-        deps = derived_deps,
-        exports = derived_deps,
-    )
-
-    if publish:
-        if publish_prebuilt:
-            publish_prebuilt_jar(
-                name = name,
-                artifact = artifact,
-                coordinates = module_coordinates,
-                excluded_packages = doc_excluded_packages,
-                javadoc_library = content[0] if content else ":" + name,
-                pom_library = ":" + name,
-                sources = sources,
-            )
-        else:
-            # Everything a module publishes -- artifact, sources, javadoc, pom -- is derived
-            # from the module target's JavaInfo. Merging it reproduces the finished jar entry
-            # for entry, including the OSGi manifest and the multi-release overlays.
-            #
-            # module-info.class is allowlisted because the merge drops every entry whose
-            # name a Maven dependency also uses, comparing names rather than contents. A
-            # multi-release module keeps its descriptor at META-INF/versions/N, a path no
-            # dependency collides on, but a module that is not multi-release keeps it at the
-            # jar root -- and would silently lose it to a dependency's own descriptor.
-            maven_export(
-                name = name + "_mvn",
-                allowed_duplicate_names = ["module-info.class"],
-                doc_excluded_packages = doc_excluded_packages,
-                lib_name = name,
-                maven_coordinates = module_coordinates,
-                pom_template = pom_template,
-                testonly = testonly,
-            )
-            publish_all(
-                name = name + ".publish",
-                publishers = [":" + name + "_mvn.publish"],
-            )
+    if publish_prebuilt:
+        # java_import republishes its srcjar as this output group, so the sources
+        # classifier comes off the artifact rather than being passed in beside it.
+        native.filegroup(
+            name = name + "-sources",
+            srcs = [artifact],
+            output_group = "_source_jars",
+        )
+        publish_prebuilt_jar(
+            name = name,
+            artifact = artifact,
+            coordinates = module_coordinates,
+            excluded_packages = doc_excluded_packages,
+            javadoc_library = artifact,
+            pom_library = ":" + name,
+            sources = ":" + name + "-sources",
+        )
+    else:
+        # Everything a module publishes -- artifact, sources, javadoc, pom -- is derived
+        # from the module target's JavaInfo. Merging it reproduces the finished jar entry
+        # for entry, including the OSGi manifest and the multi-release overlays.
+        #
+        # module-info.class is allowlisted because the merge drops every entry whose
+        # name a Maven dependency also uses, comparing names rather than contents. A
+        # multi-release module keeps its descriptor at META-INF/versions/N, a path no
+        # dependency collides on, but a module that is not multi-release keeps it at the
+        # jar root -- and would silently lose it to a dependency's own descriptor.
+        maven_export(
+            name = name + "_mvn",
+            allowed_duplicate_names = ["module-info.class"],
+            doc_excluded_packages = doc_excluded_packages,
+            lib_name = name,
+            maven_coordinates = module_coordinates,
+            pom_template = pom_template,
+        )
+        publish_all(
+            name = name + ".publish",
+            publishers = [":" + name + "_mvn.publish"],
+        )
 
 # A source directory is an implementation detail of its Maven module: it is visible to that
 # module and nothing else. Code outside depends on the module's own target instead, so the
@@ -458,53 +447,4 @@ def jjq_java_test_suite(
         name = name + "-checkstyle",
         srcs = srcs,
         config = "//build-tools/checkstyle:checkstyle-config",
-    )
-
-# Entries Bazel's deploy jar adds that the Maven shade configuration deliberately did
-# not ship: the build-data stamp (which leaks the internal Bazel target label) and
-# auto-service-annotations, which the pom marks <optional> ("unnecessary for runtime")
-# and shade excluded via artifactSet/excludes.
-_UBER_JAR_EXCLUDES = [
-    "build-data.properties",
-    "com/google/auto/service/AutoService.class",
-    "META-INF/maven/com.google.auto.service/auto-service-annotations/pom.properties",
-    "META-INF/maven/com.google.auto.service/auto-service-annotations/pom.xml",
-]
-
-def jackson_jq_uber_jar(name, main_class, runtime_deps, **kwargs):
-    """An executable uber jar, the counterpart of maven-shade-plugin.
-
-    java_binary's implicit *_deploy.jar already merges META-INF/services the way shade's
-    ServicesResourceTransformer did. This repacks it so the published artifact carries
-    neither Bazel's build-data stamp nor the compile-only auto-service annotations, and
-    is byte-stable across builds (--normalize).
-
-    Note the deploy jar intentionally does NOT carry META-INF/versions/9/module-info.class.
-    Maven's shaded jar does -- shade copies one arbitrary dependency's module descriptor
-    (jackson-jq-core's) into the uber jar, which would make the whole shaded artifact
-    masquerade as that single module on the module path. singlejar strips it on purpose.
-    """
-    java_binary(
-        name = name,
-        main_class = main_class,
-        runtime_deps = runtime_deps,
-        **kwargs
-    )
-
-    native.genrule(
-        name = name + "_uber_jar",
-        srcs = [name + "_deploy.jar"],
-        outs = [name + "-uber.jar"],
-        cmd = "$(execpath @bazel_tools//tools/jdk:singlejar)" +
-              " --output $@" +
-              " --sources $<" +
-              " --main_class " + main_class +
-              " --exclude_build_data" +
-              " --normalize" +
-              # singlejar stores entries uncompressed by default; the Maven shaded jar
-              # is deflated, and this is a distribution artifact.
-              " --compression" +
-              " --exclude_zip_entries " + " ".join(_UBER_JAR_EXCLUDES),
-        testonly = kwargs.get("testonly", False),
-        tools = ["@bazel_tools//tools/jdk:singlejar"],
     )
