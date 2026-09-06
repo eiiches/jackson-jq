@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
-import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TopLevelAstNode;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;

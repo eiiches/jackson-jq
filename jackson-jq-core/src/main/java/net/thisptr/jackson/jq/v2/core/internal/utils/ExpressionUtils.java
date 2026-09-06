@@ -8,13 +8,13 @@ import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstructionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ParenAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.TupleAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.literal.StringLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.literal.ValueLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ArrayConstructionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ObjectConstructionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ParenAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TupleAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.StringLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.ValueLiteralAstNode;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
 public class ExpressionUtils {

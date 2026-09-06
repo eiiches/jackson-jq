@@ -4,6 +4,26 @@ on:
     branches:
     - develop/2.x
 jobs:
+  lint:
+    runs-on: ubuntu-26.04
+    name: "Lint"
+    steps:
+    - uses: actions/checkout@v5.0.0
+
+    - name: Set up Bazel
+      uses: bazel-contrib/setup-bazel@0.19.0
+      with:
+        bazelisk-cache: true
+        disk-cache: ${{ runner.os }}-${{ runner.arch }}
+        repository-cache: true
+        cache-save: true
+
+    - name: Check Java formatting
+      run: bazel run //:idea-format -- --check
+
+    - name: Check Bazel formatting
+      run: bazel run //:buildifier_test
+
   build:
     runs-on: ubuntu-26.04
     name: "Build and Test"
@@ -17,26 +37,19 @@ jobs:
         distribution: 'temurin'
         cache: 'maven'
 
-    - name: Cache IntelliJ code formatter
-      uses: actions/cache@v5.0.5
+    - name: Set up Bazel
+      uses: bazel-contrib/setup-bazel@0.19.0
       with:
-        path: ~/.cache/jackson-jq/intellij-code-formatter
-        key: intellij-code-formatter-${{ runner.os }}-${{ hashFiles('scripts/idea-format.sh', 'scripts/IdeaFormatLauncher.java') }}
+        bazelisk-cache: true
+        disk-cache: ${{ runner.os }}-${{ runner.arch }}
+        repository-cache: true
+        cache-save: true
 
-    - name: Check Java formatting
-      run: scripts/idea-format.sh --check
+    - name: Build and test
+      run: bazel test //...
 
-    - name: Cache jq binaries
-      uses: actions/cache@v5.0.5
-      with:
-        path: ~/bin/jq-*
-        key: jq-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/download-jq-binaries.sh') }}
-
-    - name: Download jq binaries
-      run: scripts/download-jq-binaries.sh $HOME/bin
-
-    - name: Build, test, and install artifacts
-      run: 'PATH="$HOME/bin:$PATH" mvn clean install'
+    - name: Install artifacts for Maven consumers
+      run: bazel run //:maven_install
 
     - name: Set up JDK 8
       uses: actions/setup-java@v5.0.0
@@ -59,6 +72,36 @@ jobs:
     - name: Test JPMS compatibility
       run: mvn -f smoke-tests/jpms/pom.xml clean verify
 
+  # Split out of `build` because the native image builds dominate its wall-clock time.
+  # Neither job needs `bazel test //...`; the smoke tests only consume the published
+  # artifacts, so they build just those. `cache-save: false` leaves the shared disk cache
+  # to `build`, whose Bazel invocation is a superset of these.
+  quarkus:
+    runs-on: ubuntu-26.04
+    name: "Quarkus Smoke Test"
+    steps:
+    - uses: actions/checkout@v5.0.0
+
+    # Bazel ignores this JDK -- .bazelrc pins --java_runtime_version=remotejdk_21 -- but
+    # setting it up before Bazel keeps a mid-job JAVA_HOME change from restarting the server.
+    - name: Set up JDK 17
+      uses: actions/setup-java@v5.0.0
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'maven'
+
+    - name: Set up Bazel
+      uses: bazel-contrib/setup-bazel@0.19.0
+      with:
+        bazelisk-cache: true
+        disk-cache: ${{ runner.os }}-${{ runner.arch }}
+        repository-cache: true
+        cache-save: false
+
+    - name: Install artifacts for Maven consumers
+      run: bazel run //:maven_install
+
     - name: Test Quarkus compatibility (JVM)
       run: mvn -f smoke-tests/quarkus/pom.xml clean verify
 
@@ -68,8 +111,49 @@ jobs:
         java-version: '21'
         distribution: 'graalvm'
 
+    - name: Test Quarkus compatibility (native)
+      run: mvn -f smoke-tests/quarkus/pom.xml clean verify -Pnative
+
+  graalvm:
+    runs-on: ubuntu-26.04
+    name: "GraalVM Smoke Test"
+    steps:
+    - uses: actions/checkout@v5.0.0
+
+    - name: Set up GraalVM 21
+      uses: graalvm/setup-graalvm@v1
+      with:
+        java-version: '21'
+        distribution: 'graalvm'
+        cache: 'maven'
+
+    - name: Set up Bazel
+      uses: bazel-contrib/setup-bazel@0.19.0
+      with:
+        bazelisk-cache: true
+        disk-cache: ${{ runner.os }}-${{ runner.arch }}
+        repository-cache: true
+        cache-save: false
+
+    - name: Install artifacts for Maven consumers
+      run: bazel run //:maven_install
+
     - name: Test GraalVM compatibility
       run: mvn -f smoke-tests/graalvm/pom.xml clean verify
 
-    - name: Test Quarkus compatibility (native)
-      run: mvn -f smoke-tests/quarkus/pom.xml clean verify -Pnative
+  macos-arm64:
+    runs-on: macos-15
+    name: "Build and Test (macOS ARM64)"
+    steps:
+    - uses: actions/checkout@v5.0.0
+
+    - name: Set up Bazel
+      uses: bazel-contrib/setup-bazel@0.19.0
+      with:
+        bazelisk-cache: true
+        disk-cache: ${{ runner.os }}-${{ runner.arch }}
+        repository-cache: true
+        cache-save: true
+
+    - name: Build and test
+      run: bazel test //...

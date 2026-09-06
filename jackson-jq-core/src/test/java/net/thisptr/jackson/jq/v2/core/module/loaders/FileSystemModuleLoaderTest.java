@@ -1,10 +1,10 @@
 package net.thisptr.jackson.jq.v2.core.module.loaders;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -21,6 +21,7 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.Versions;
+import net.thisptr.jackson.jq.v2.core.internal.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 
@@ -28,6 +29,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class FileSystemModuleLoaderTest {
+	/**
+	 * Results are compared by jq value, not by JsonNode identity: the node class a literal
+	 * compiles to is not what these tests are about.
+	 */
+	private static final Comparator<JsonNode> BY_JQ_VALUE = new JsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance());
+
 	private Environment<JsonNode> env;
 
 	@TempDir
@@ -50,18 +57,7 @@ public class FileSystemModuleLoaderTest {
 	 * </p>
 	 */
 	private ModuleLoader<JsonNode> setupModuleLoader(Path tempDir) throws IOException {
-		ClassLoaderUtils.walk("classpath_modules", (src, relativePath) -> {
-			try {
-				Path dest = tempDir.resolve(relativePath.toString());
-				if (Files.isDirectory(src)) {
-					Files.createDirectories(dest);
-				} else {
-					Files.copy(src, dest);
-				}
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		});
+		ClassLoaderUtils.copyResources(getClass().getClassLoader(), "classpath_modules", tempDir);
 		return new FileSystemModuleLoader<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6, tempDir);
 	}
 
@@ -70,7 +66,7 @@ public class FileSystemModuleLoaderTest {
 		JsonQuery<JsonNode> expr = env.compile("import \"simple\" as simple; simple::one");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
-		assertThat(actual).isEqualTo(Arrays.asList(IntNode.valueOf(1)));
+		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(IntNode.valueOf(1)));
 	}
 
 	@Test
@@ -78,7 +74,7 @@ public class FileSystemModuleLoaderTest {
 		JsonQuery<JsonNode> expr = env.compile("import \"sibling_defs\" as m; m::exported_foo");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
-		assertThat(actual).isEqualTo(Arrays.asList(IntNode.valueOf(11)));
+		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(IntNode.valueOf(11)));
 	}
 
 	@Test
@@ -95,7 +91,7 @@ public class FileSystemModuleLoaderTest {
 		JsonQuery<JsonNode> expr = env.compile("import \"search_path_overrides/a\" as a; a::two");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
-		assertThat(actual).isEqualTo(Arrays.asList(IntNode.valueOf(2)));
+		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(IntNode.valueOf(2)));
 	}
 
 	@Test
@@ -103,7 +99,7 @@ public class FileSystemModuleLoaderTest {
 		JsonQuery<JsonNode> expr = env.compile("import \"repeated_path_components\" as a; a::one");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
-		assertThat(actual).isEqualTo(Arrays.asList(IntNode.valueOf(1)));
+		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(IntNode.valueOf(1)));
 
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr2 = env.compile("import \"repeated_path_components/repeated_path_components\" as a; a::one");
@@ -117,7 +113,7 @@ public class FileSystemModuleLoaderTest {
 		JsonQuery<JsonNode> expr = env.compile("import \"data_imports/a\" as $a; $a::a[]");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
-		assertThat(actual).isEqualTo(Arrays.asList(IntNode.valueOf(1), IntNode.valueOf(2)));
+		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(IntNode.valueOf(1), IntNode.valueOf(2)));
 	}
 
 	@Test

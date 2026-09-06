@@ -8,9 +8,9 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
-import net.thisptr.jackson.jq.v2.spi.Version;
-import net.thisptr.jackson.jq.v2.spi.VersionRange;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
+import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
 
 /**
  * Loads Java functions and raw jq function definitions through {@link ServiceLoader}.

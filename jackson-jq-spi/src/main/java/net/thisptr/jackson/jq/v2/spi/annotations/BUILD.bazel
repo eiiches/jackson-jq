@@ -1,0 +1,18 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+# Annotation mirrors of Version/VersionRange. Deliberately depends on nothing: the spi
+# package converts these to their runtime forms, so an edge back here would be a cycle.
+jjq_java_library(
+    name = "annotations",
+    srcs = [
+        "FunctionRegistration.java",
+        "FunctionRegistrations.java",
+        "ModuleRegistration.java",
+        "ModuleRegistrations.java",
+        "VersionRangeSpec.java",
+        "VersionSpec.java",
+        "package-info.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-spi:__subpackages__"],
+)

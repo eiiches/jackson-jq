@@ -1,0 +1,16 @@
+load("@contrib_rules_jvm//java:defs.bzl", "checkstyle_binary", "checkstyle_config")
+
+package(default_visibility = ["//visibility:public"])
+
+checkstyle_binary(
+    name = "checkstyle-cli",
+    testonly = True,
+    runtime_deps = ["@maven//:com_puppycrawl_tools_checkstyle"],
+)
+
+checkstyle_config(
+    name = "checkstyle-config",
+    testonly = True,
+    checkstyle_binary = ":checkstyle-cli",
+    config_file = "checkstyle.xml",
+)

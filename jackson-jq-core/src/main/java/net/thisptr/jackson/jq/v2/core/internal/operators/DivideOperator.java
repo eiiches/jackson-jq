@@ -5,14 +5,14 @@ import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
-import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Strings;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class DivideOperator<JsonNode> implements BinaryOperator<JsonNode> {
 	private final @Nullable Version version;

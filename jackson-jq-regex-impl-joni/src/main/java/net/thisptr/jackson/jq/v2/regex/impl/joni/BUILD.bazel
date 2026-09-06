@@ -1,0 +1,23 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "joni",
+    srcs = [
+        "OnigUtils.java",
+        "PrecompiledPatternPlan.java",
+        "Preconditions.java",
+        "RegexJqLibrary.java",
+        "UnicodeUtils.java",
+        "_MatchImplFunction.java",
+        "_SubImplFunction.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-regex-impl-joni:__subpackages__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "//jackson-jq-regex-impl-joni/src/main/java/net/thisptr/jackson/jq/v2/regex/impl/joni/internal",
+        "//jackson-jq-spi",
+        "@maven//:org_jruby_jcodings_jcodings",
+        "@maven//:org_jruby_joni_joni",
+    ],
+)

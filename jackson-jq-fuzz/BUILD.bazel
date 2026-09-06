@@ -1,0 +1,20 @@
+load("@rules_java//java:defs.bzl", "java_library")
+load("//build-tools/bazel:defs.bzl", "jackson_jq_uber_jar")
+
+package(default_visibility = ["//visibility:public"])
+
+# A randomized differential tester: generates random jq ASTs and compares jackson-jq's
+# result against a real jq subprocess. Reaches into core.internal.ast.*, so it runs on
+# the classpath only, never as a JPMS module.
+java_library(
+    name = "jackson-jq-fuzz",
+    testonly = True,
+    exports = ["//jackson-jq-fuzz/src/main/java/net/thisptr/jackson/jq/v2/fuzz"],
+)
+
+jackson_jq_uber_jar(
+    name = "fuzz",
+    testonly = True,
+    main_class = "net.thisptr.jackson.jq.v2.fuzz.Main",
+    runtime_deps = [":jackson-jq-fuzz"],
+)

@@ -1,0 +1,18 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+# The README's API walkthrough, compiled so it cannot drift from the public API. Not a
+# test suite: it has no assertions, only a main().
+jjq_java_library(
+    name = "examples",
+    testonly = True,
+    srcs = ["Usage.java"],
+    release = 8,
+    visibility = ["//jackson-jq-core:__subpackages__"],
+    deps = [
+        "//jackson-jq-core",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-jackson2",
+        "//jackson-jq-spi",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+    ],
+)

@@ -15,16 +15,17 @@ PARSER_BEGIN(AstParser)
 	import java.util.List;
 	import java.util.ArrayList;
 
-	import net.thisptr.jackson.jq.v2.spi.Version;
+	import net.thisptr.jackson.jq.v2.spi.version.Version;
 	import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.*;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.*;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.literal.*;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.*;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.matchers.*;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.PipedQueryAstNode.LabelPipeComponent;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode.ImportStatement;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode.ModuleDirective;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.matchers.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.PipedQueryAstNode.LabelPipeComponent;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TopLevelAstNode.ImportStatement;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TopLevelAstNode.ModuleDirective;
 	import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression;
 	import net.thisptr.jackson.jq.v2.internal.javacc.TokenMgrError;
 	import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -139,9 +140,8 @@ TOKEN: { <COMMA: ","> }
 TOKEN: { <BOOLEAN_LITERAL_TRUE: "true"> }
 TOKEN: { <BOOLEAN_LITERAL_FALSE: "false"> }
 TOKEN: { <NULL_LITERAL: "null"> }
-TOKEN: { <INTEGER_LITERAL: (["1"-"9"] (["0"-"9"])*) | "0"> }
 TOKEN: {
-	<FLOAT_LITERAL: (("0" | ["1"-"9"] (<DIGIT>)*) ("." (["0"-"9"])+)? | "." (["0"-"9"])+) (<EXPONENT>)?>
+	<NUMERIC_LITERAL: (("0" | ["1"-"9"] (<DIGIT>)*) ("." (["0"-"9"])+)? | "." (["0"-"9"])+) (<EXPONENT>)?>
 	| <#EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+>
 }
 
@@ -932,16 +932,12 @@ AstNode ArrayConstruction():
 AstNode ValueLiteral():
 {
 	Token token;
-	String text;
 	AstNode tmp;
 }
 {
 	(
-		token = <INTEGER_LITERAL>
-		{ tmp = new LongLiteralAstNode(Long.parseLong(token.image)); }
-	|
-		token = <FLOAT_LITERAL>
-		{ tmp = new DoubleLiteralAstNode(Double.parseDouble(token.image)); }
+		token = <NUMERIC_LITERAL>
+		{ tmp = new NumericLiteralAstNode(token.image); }
 	|
 		<NULL_LITERAL>
 		{ tmp = new NullLiteralAstNode(); }

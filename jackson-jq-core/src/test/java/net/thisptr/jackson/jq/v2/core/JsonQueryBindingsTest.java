@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -12,20 +13,27 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
+import net.thisptr.jackson.jq.v2.core.internal.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
-import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class JsonQueryBindingsTest {
+	/**
+	 * Results are compared by jq value, not by JsonNode identity: the node class a literal
+	 * compiles to is not what these tests are about.
+	 */
+	private static final Comparator<JsonNode> BY_JQ_VALUE = new JsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance());
+
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProviderImpl.getInstance();
 
@@ -36,9 +44,9 @@ public class JsonQueryBindingsTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$value");
 
-		assertEquals(Arrays.asList(MAPPER.readTree("1")), run(query, bindingsWithVariable("value", 1)));
-		assertEquals(Arrays.asList(MAPPER.readTree("2")), run(query, bindingsWithVariable("value", 2)));
-		assertEquals(Arrays.asList(MAPPER.readTree("3")), run(query, bindingsWithVariable("value", 3)));
+		assertThat(run(query, bindingsWithVariable("value", 1))).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("1")));
+		assertThat(run(query, bindingsWithVariable("value", 2))).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("2")));
+		assertThat(run(query, bindingsWithVariable("value", 3))).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("3")));
 	}
 
 	@Test
@@ -48,7 +56,7 @@ public class JsonQueryBindingsTest {
 				.defineVariable("value", () -> JSON_PROVIDER.createNumber(counter.incrementAndGet()))
 				.build();
 
-		assertEquals(Arrays.asList(MAPPER.readTree("[1,2]")), run(env.compile("[$value, $value]"), JsonQueryBindings.empty()));
+		assertThat(run(env.compile("[$value, $value]"), JsonQueryBindings.empty())).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[1,2]")));
 	}
 
 	@Test
@@ -63,7 +71,7 @@ public class JsonQueryBindingsTest {
 				.build();
 
 		assertEquals(0, overrideCounter.get());
-		assertEquals(Arrays.asList(MAPPER.readTree("[1,2]")), run(query, bindings));
+		assertThat(run(query, bindings)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[1,2]")));
 		assertEquals(2, overrideCounter.get());
 	}
 
@@ -112,8 +120,8 @@ public class JsonQueryBindingsTest {
 				.setFunction(key, constantFunction("override-function"))
 				.build();
 
-		assertEquals(Arrays.asList(MAPPER.readTree("[\"default-variable\",\"default-function\"]")), run(query, firstCall));
-		assertEquals(Arrays.asList(MAPPER.readTree("[\"override-variable\",\"override-function\"]")), run(query, secondCall));
+		assertThat(run(query, firstCall)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[\"default-variable\",\"default-function\"]")));
+		assertThat(run(query, secondCall)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[\"override-variable\",\"override-function\"]")));
 	}
 
 	@Test
@@ -171,7 +179,7 @@ public class JsonQueryBindingsTest {
 		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
 				.setFunction(builtinCollision, constantFunction("overridden"))
 				.build();
-		assertEquals(Arrays.asList(MAPPER.readTree("\"overridden\"")), run(query, bindings));
+		assertThat(run(query, bindings)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("\"overridden\"")));
 	}
 
 	@Test
@@ -181,7 +189,7 @@ public class JsonQueryBindingsTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("10 as $value | $value");
 
-		assertEquals(Arrays.asList(MAPPER.readTree("10")), run(query, bindingsWithVariable("value", 20)));
+		assertThat(run(query, bindingsWithVariable("value", 20))).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("10")));
 	}
 
 	@Test
@@ -197,7 +205,7 @@ public class JsonQueryBindingsTest {
 				.setFunction(zeroArg, constantFunction("override"))
 				.build();
 
-		assertEquals(Arrays.asList(MAPPER.readTree("[\"override\",\"one\"]")), run(query, bindings));
+		assertThat(run(query, bindings)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[\"override\",\"one\"]")));
 	}
 
 	@Test
@@ -211,7 +219,7 @@ public class JsonQueryBindingsTest {
 				.setFunction(variadic, constantFunction("override"))
 				.build();
 
-		assertEquals(Arrays.asList(MAPPER.readTree("[\"override\",\"override\"]")), run(query, bindings));
+		assertThat(run(query, bindings)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[\"override\",\"override\"]")));
 	}
 
 	@Test
@@ -228,7 +236,7 @@ public class JsonQueryBindingsTest {
 				futures.add(executor.submit(() -> run(query, bindingsWithVariable("value", value))));
 			}
 			for (int i = 0; i < futures.size(); i++)
-				assertEquals(Arrays.asList(JSON_PROVIDER.createNumber(i)), futures.get(i).get());
+				assertThat(futures.get(i).get()).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(JSON_PROVIDER.createNumber(i)));
 		} finally {
 			executor.shutdownNow();
 		}

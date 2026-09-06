@@ -1,0 +1,15 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
+
+jjq_java_test_suite(
+    srcs = [
+        "GsonJsonProviderContractTest.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-json-provider-impl-gson:__subpackages__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider:contract-test",
+        "//jackson-jq-json-provider-impl-gson/src/main/java/net/thisptr/jackson/jq/v2/json/impl/gson",
+        "@maven//:com_google_code_gson_gson",
+    ],
+)

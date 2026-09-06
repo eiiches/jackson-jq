@@ -1,0 +1,13 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "comparator",
+    testonly = True,
+    srcs = ["TestJsonNodeComparator.java"],
+    release = 8,
+    visibility = ["//tests:__subpackages__"],
+    deps = [
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/comparator",
+        "//jackson-jq-json-provider",
+    ],
+)

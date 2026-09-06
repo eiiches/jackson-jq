@@ -1,0 +1,9 @@
+"""Platform-specific jq binaries for Bazel tests."""
+
+module(
+    name = "rules_jq",
+    version = "0.0.0",
+)
+
+bazel_dep(name = "bazel_skylib", version = "1.9.2")
+bazel_dep(name = "platforms", version = "1.1.0")

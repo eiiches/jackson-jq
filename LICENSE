@@ -16,19 +16,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 
-jackson-jq/src/test/resources
------------------------------
+tests/test-cases
+----------------
 
 These files are generated from files in stedolan/jq repository:
 
 jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/CoreJqLibrary.java
 jackson-jq-regex-impl-joni/src/main/java/net/thisptr/jackson/jq/v2/regex/impl/joni/RegexJqLibrary.java
-jackson-jq/src/test/resources/jq-test-all-ng.json
-jackson-jq/src/test/resources/jq-test-all-ok.json
-jackson-jq/src/test/resources/jq-test-official-ng.json
-jackson-jq/src/test/resources/jq-test-official-ok.json
-jackson-jq/src/test/resources/compiler-test-ok.txt
-jackson-jq/src/test/resources/compiler-test-ng.txt
+tests/test-cases/jq-1.5.yaml
+tests/test-cases/jq-1.5-manual.yaml
+tests/test-cases/jq-1.5-onig.yaml
+tests/test-cases/jq-1.6.yaml
+tests/test-cases/jq-1.6-manual.yaml
+tests/test-cases/jq-1.6-onig.yaml
 
 Therefore, is a derivative work of jq and the following license terms apply:
 

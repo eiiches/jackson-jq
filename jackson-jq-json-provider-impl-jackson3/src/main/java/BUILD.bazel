@@ -1,0 +1,16 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_module_info")
+
+jjq_java_module_info(
+    module_name = "net.thisptr.jackson.jq.v2.json.impl.jackson3",
+    module_packages = [
+        "//jackson-jq-json-provider-impl-jackson3/src/main/java/net/thisptr/jackson/jq/v2/json/impl/jackson3",
+    ],
+    release = 17,
+    visibility = ["//jackson-jq-json-provider-impl-jackson3:__pkg__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "@maven//:com_fasterxml_jackson_core_jackson_annotations",
+        "@maven//:tools_jackson_core_jackson_core",
+        "@maven//:tools_jackson_core_jackson_databind",
+    ],
+)

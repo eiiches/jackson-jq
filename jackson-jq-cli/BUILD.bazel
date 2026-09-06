@@ -1,0 +1,24 @@
+load("@rules_java//java:defs.bzl", "java_library")
+load("//build-tools/bazel:defs.bzl", "jackson_jq_uber_jar", "jjq_maven_artifact")
+
+package(default_visibility = ["//visibility:public"])
+
+# The CLI aggregates every JSON provider, the regex implementation and all extension
+# modules; they are discovered at runtime through ServiceLoader.
+java_library(
+    name = "jackson-jq-cli-lib",
+    exports = ["//jackson-jq-cli/src/main/java/net/thisptr/jackson/jq/v2/cli"],
+)
+
+jackson_jq_uber_jar(
+    name = "cli",
+    main_class = "net.thisptr.jackson.jq.v2.cli.Main",
+    runtime_deps = [":jackson-jq-cli-lib"],
+)
+
+jjq_maven_artifact(
+    name = "jackson-jq-cli",
+    artifact = ":cli_uber_jar",
+    content = ["//jackson-jq-cli/src/main/java/net/thisptr/jackson/jq/v2/cli"],
+    publish_prebuilt = True,
+)

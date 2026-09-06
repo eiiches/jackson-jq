@@ -6,7 +6,7 @@ import java.util.List;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
-import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeComparator;
+import net.thisptr.jackson.jq.v2.core.internal.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.PathUtils;
 import net.thisptr.jackson.jq.v2.core.internal.operators.BinaryOperator;
@@ -16,11 +16,11 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.RootPath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class ComplexAssignment<JsonNode> extends BinaryOperatorExpression<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;

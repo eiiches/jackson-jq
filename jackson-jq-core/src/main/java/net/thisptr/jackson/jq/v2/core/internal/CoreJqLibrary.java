@@ -37,7 +37,7 @@ import com.google.auto.service.AutoService;
 import net.thisptr.jackson.jq.v2.spi.FunctionParameter;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
-import net.thisptr.jackson.jq.v2.spi.VersionRange;
+import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
 
 @AutoService(JqLibrary.class)
 public class CoreJqLibrary implements JqLibrary {

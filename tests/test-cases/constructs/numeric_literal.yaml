@@ -1,0 +1,25 @@
+# A numeric literal travels through the AST as the text the user wrote and is turned into a JSON
+# number when the query is compiled, so the exact form of the literal survives.
+#
+# How that exact form is *rendered* is up to the JSON provider, and the jakarta one still
+# normalises it, so the rendering is asserted in NumericLiteralTest against one provider rather
+# than here, where every provider has to agree.
+
+# Beyond the range of a Java long, so this used to fail to parse outright.
+- q: '99999999999999999999999'
+  out:
+  - 99999999999999999999999
+  v: '[1.7, )'
+
+# An exponent beyond the double range stays exact as a literal, but collapses to an infinity as
+# soon as anything reads it as a number.
+- q: '1e1000 | isinfinite'
+  out:
+  - true
+  v: '[1.5, )'
+
+# Arithmetic is unaffected: operators still go through double.
+- q: '[1.0 + 0, 1e2 + 0 | tostring]'
+  out:
+  - ["1", "100"]
+  v: '[1.5, )'

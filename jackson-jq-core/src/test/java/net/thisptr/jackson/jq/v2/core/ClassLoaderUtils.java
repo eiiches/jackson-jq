@@ -1,56 +1,75 @@
 package net.thisptr.jackson.jq.v2.core;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.JarURLConnection;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
-import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+public final class ClassLoaderUtils {
+	private ClassLoaderUtils() {
+	}
 
-public class ClassLoaderUtils {
-	private static final Logger log = LoggerFactory.getLogger(ClassLoaderUtils.class);
-
-	public static final FileSystem fileSystem = createFileSystem();
-
-	private static FileSystem createFileSystem() {
-		// This hack registers NativeImageResourceFileSystem when run via Native Image.
-		// https://github.com/oracle/graal/issues/7682
+	public static List<String> listResources(ClassLoader classLoader, String basePath) throws IOException {
+		URL resource = Objects.requireNonNull(classLoader.getResource(basePath), "Resource not found: " + basePath);
 		try {
-			FileSystem fileSystem = FileSystems.newFileSystem(
-					URI.create("resource:/"),
-					Collections.singletonMap("create", "true")
-			);
-			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-				try {
-					fileSystem.close();
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			}));
-			return fileSystem;
-		} catch (Exception e) {
-			log.info("Not running in native image, skipping");
+			if ("file".equals(resource.getProtocol()))
+				return listResources(Paths.get(resource.toURI()), basePath);
+			if ("jar".equals(resource.getProtocol()))
+				return listJarResources(resource, basePath);
+			throw new IOException("Unsupported resource protocol: " + resource.getProtocol());
+		} catch (URISyntaxException e) {
+			throw new IOException("Invalid resource URI: " + resource, e);
 		}
-		return FileSystems.getDefault();
 	}
 
-	public static Path resolve(String fileName) {
-		URL url = ClassLoaderUtils.class.getClassLoader().getResource(fileName);
-		return fileSystem.getPath(Objects.requireNonNull(url).getPath());
+	public static void copyResources(ClassLoader classLoader, String basePath, Path destination) throws IOException {
+		for (String resourceName : listResources(classLoader, basePath)) {
+			Path relativePath = Paths.get(resourceName.substring(basePath.length() + 1));
+			Path output = destination.resolve(relativePath.toString());
+			Files.createDirectories(Objects.requireNonNull(output.getParent()));
+			try (InputStream in = Objects.requireNonNull(
+					classLoader.getResourceAsStream(resourceName), "Resource not found: " + resourceName)) {
+				Files.copy(in, output, StandardCopyOption.REPLACE_EXISTING);
+			}
+		}
 	}
 
-	public static void walk(String basePath, BiConsumer<Path, Path> onWalk) throws IOException {
-		Path path = resolve(basePath);
-		try (Stream<Path> walk = Files.walk(path)) {
-			walk.forEach(p -> onWalk.accept(p, path.relativize(p)));
+	// Synchronized to prevent a race condition during parallel test execution: without synchronization,
+	// one thread may close the ZipFileSystem upon exiting try-with-resources while another thread
+	// is concurrently reading from it, causing ClosedFileSystemException.
+	private static synchronized List<String> listJarResources(URL resource, String basePath) throws IOException, URISyntaxException {
+		JarURLConnection connection = (JarURLConnection) resource.openConnection();
+		URI fileSystemUri = URI.create("jar:" + connection.getJarFileURL().toURI());
+		try {
+			try (FileSystem fileSystem = FileSystems.newFileSystem(fileSystemUri, Collections.emptyMap())) {
+				return listResources(fileSystem.getPath("/" + connection.getEntryName()), basePath);
+			}
+		} catch (FileSystemAlreadyExistsException e) {
+			FileSystem fileSystem = FileSystems.getFileSystem(fileSystemUri);
+			return listResources(fileSystem.getPath("/" + connection.getEntryName()), basePath);
+		}
+	}
+
+	private static List<String> listResources(Path root, String basePath) throws IOException {
+		try (Stream<Path> paths = Files.walk(root)) {
+			return paths.filter(Files::isRegularFile)
+					.map(root::relativize)
+					.map(path -> basePath + "/" + path.toString().replace('\\', '/'))
+					.collect(Collectors.toList());
 		}
 	}
 }

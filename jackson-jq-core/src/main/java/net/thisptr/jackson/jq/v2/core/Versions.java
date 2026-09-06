@@ -3,7 +3,7 @@ package net.thisptr.jackson.jq.v2.core;
 import java.util.Arrays;
 import java.util.List;
 
-import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class Versions {
 

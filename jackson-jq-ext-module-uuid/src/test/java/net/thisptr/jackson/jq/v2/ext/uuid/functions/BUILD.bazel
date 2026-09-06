@@ -1,0 +1,20 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
+
+jjq_java_test_suite(
+    srcs = [
+        "Uuid35FunctionTest.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-ext-module-uuid:__subpackages__"],
+    deps = [
+        # TestUtils, the shared helper java_test_suite builds from the parent test
+        # package's non-test sources.
+        "//jackson-jq-ext-module-uuid/src/test/java/net/thisptr/jackson/jq/v2/ext/uuid:tests-test-lib",
+        "//jackson-jq-core",
+        "//jackson-jq-ext-module-uuid",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-jackson2",
+        "//jackson-jq-spi",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+    ],
+)

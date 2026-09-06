@@ -1,0 +1,26 @@
+load("@rules_java//java:defs.bzl", "java_library")
+load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
+
+# The shared contract every JsonProvider implementation is tested against. Reached as
+# //jackson-jq-json-provider:contract-test.
+java_library(
+    name = "contract-test",
+    testonly = True,
+    srcs = ["JsonProviderContractTest.java"],
+    visibility = ["//jackson-jq-json-provider:__subpackages__"],
+    deps = [
+        "//jackson-jq-json-provider/src/main/java/net/thisptr/jackson/jq/v2/json",
+        "@maven//:org_assertj_assertj_core",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+    ],
+)
+
+jjq_java_test_suite(
+    srcs = [
+        "JsonProviderContractTest.java",
+    ],
+    release = 8,
+    test_suffixes_excludes = ["JsonProviderContractTest.java"],
+    visibility = ["//jackson-jq-json-provider:__subpackages__"],
+    deps = ["//jackson-jq-json-provider/src/main/java/net/thisptr/jackson/jq/v2/json"],
+)

@@ -1,0 +1,16 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "functions",
+    srcs = [
+        "Uuid35Function.java",
+        "Uuid4Function.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-ext-module-uuid:__subpackages__"],
+    deps = [
+        "//jackson-jq-ext-module-uuid/src/main/java/net/thisptr/jackson/jq/v2/ext/uuid/internal/misc",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi",
+    ],
+)

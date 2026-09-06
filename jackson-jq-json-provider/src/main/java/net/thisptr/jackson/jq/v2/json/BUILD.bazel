@@ -1,0 +1,17 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+# No dependencies - only uses java.util.
+jjq_java_library(
+    name = "json",
+    srcs = [
+        "JsonException.java",
+        "JsonNodeType.java",
+        "JsonParser.java",
+        "JsonProvider.java",
+        "NumberType.java",
+    ],
+    release = 8,
+    visibility = [
+        "//jackson-jq-json-provider:__subpackages__",
+    ],
+)

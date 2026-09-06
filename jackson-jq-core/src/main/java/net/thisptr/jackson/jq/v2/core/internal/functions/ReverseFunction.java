@@ -7,17 +7,17 @@ import java.util.List;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
-import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @AutoService(Function.class)
 @FunctionRegistration(name = "reverse", nargs = 0)

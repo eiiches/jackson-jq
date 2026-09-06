@@ -1,0 +1,14 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "uri",
+    srcs = [
+        "ModuleImpl.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-ext-module-uri:__subpackages__"],
+    deps = [
+        "//jackson-jq-ext-module-uri/src/main/java/net/thisptr/jackson/jq/v2/ext/uri/functions",
+        "//jackson-jq-spi",
+    ],
+)

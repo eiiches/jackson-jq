@@ -1,0 +1,20 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_mrjar", "jjq_maven_artifact")
+
+package(default_visibility = ["//visibility:public"])
+
+jjq_java_mrjar(
+    name = "jackson-jq-json-provider-mrjar",
+    osgi = True,
+    packages = ["//jackson-jq-json-provider/src/main/java/net/thisptr/jackson/jq/v2/json"],
+    release_overlays = {9: ["//jackson-jq-json-provider/src/main/java9:module-info"]},
+)
+
+jjq_maven_artifact(
+    name = "jackson-jq-json-provider",
+    artifact = ":jackson-jq-json-provider-mrjar",
+)
+
+alias(
+    name = "contract-test",
+    actual = "//jackson-jq-json-provider/src/test/java/net/thisptr/jackson/jq/v2/json:contract-test",
+)

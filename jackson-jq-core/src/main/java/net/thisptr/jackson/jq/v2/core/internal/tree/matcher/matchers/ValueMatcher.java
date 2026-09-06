@@ -2,9 +2,9 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
 
 import java.util.Deque;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
-import net.thisptr.jackson.jq.v2.core.internal.misc.Functional;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -27,7 +27,7 @@ public class ValueMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public void match(StackFrame frame, JsonNode in, Functional.Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate) throws JsonQueryException {
+	public void match(StackFrame frame, JsonNode in, Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate) throws JsonQueryException {
 		accumulate.addLast(new Match<>(slot, in));
 		out.accept(accumulate);
 		accumulate.removeLast();

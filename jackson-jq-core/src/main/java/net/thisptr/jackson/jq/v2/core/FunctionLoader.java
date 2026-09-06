@@ -5,7 +5,7 @@ import java.util.Map;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
-import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 /**
  * Supplies version-specific Java and jq function definitions to the compiler.

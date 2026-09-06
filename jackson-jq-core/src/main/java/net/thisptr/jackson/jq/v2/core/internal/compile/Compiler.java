@@ -16,41 +16,40 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.internal.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.BreakExpressionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ConditionalAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ForeachExpressionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.FormattingFilterAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.FunctionCallAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.FunctionDefinitionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.NegativeExpressionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstructionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ParenAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.PipedQueryAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.RecursionOperatorAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ReduceExpressionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.SemicolonOperatorAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.StringInterpolationAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.ThisObjectAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.TryCatchAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.TupleAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.VariableAccessAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.BracketExtractFieldAccessAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.BracketFieldAccessAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.IdentifierFieldAccessAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.fieldaccess.StringFieldAccessAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.literal.BooleanLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.literal.DoubleLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.literal.LongLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.literal.NullLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.literal.StringLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.PatternMatcherAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.matchers.ArrayMatcherAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.matchers.ObjectMatcherAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.matcher.matchers.ValueMatcherAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ArrayConstructionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.BinaryOpAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.BreakExpressionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ConditionalAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ForeachExpressionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.FormattingFilterAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.FunctionCallAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.FunctionDefinitionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.NegativeExpressionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ObjectConstructionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ParenAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.PipedQueryAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.RecursionOperatorAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ReduceExpressionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.SemicolonOperatorAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.StringInterpolationAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ThisObjectAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TopLevelAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TryCatchAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TupleAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.VariableAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.BracketExtractFieldAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.BracketFieldAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.IdentifierFieldAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.StringFieldAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.BooleanLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.NullLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.NumericLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.StringLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.PatternMatcherAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.matchers.ArrayMatcherAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.matchers.ObjectMatcherAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.matchers.ValueMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.AssignPipeComponent;
@@ -97,9 +96,8 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketFieldAcce
 import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.IdentifierFieldAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.StringFieldAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.BooleanLiteral;
-import net.thisptr.jackson.jq.v2.core.internal.tree.literal.DoubleLiteral;
-import net.thisptr.jackson.jq.v2.core.internal.tree.literal.LongLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral;
+import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NumericLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ArrayMatcher;
@@ -112,11 +110,11 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class Compiler {
 	private static final int MAX_PRECOMPUTED_RESULTS = 256;
@@ -582,12 +580,9 @@ public class Compiler {
 			return new BooleanLiteral<>(env.getJsonProvider(), ((BooleanLiteralAstNode) ast).value());
 		}
 
-		if (ast instanceof LongLiteralAstNode) {
-			return new LongLiteral<>(env.getJsonProvider(), ((LongLiteralAstNode) ast).value());
-		}
-
-		if (ast instanceof DoubleLiteralAstNode) {
-			return new DoubleLiteral<>(env.getJsonProvider(), ((DoubleLiteralAstNode) ast).value());
+		if (ast instanceof NumericLiteralAstNode) {
+			JsonProvider<JsonNode> jsonProvider = env.getJsonProvider();
+			return new NumericLiteral<>(jsonProvider, ((NumericLiteralAstNode) ast).value(jsonProvider));
 		}
 
 		if (ast instanceof NullLiteralAstNode) {

@@ -16,7 +16,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

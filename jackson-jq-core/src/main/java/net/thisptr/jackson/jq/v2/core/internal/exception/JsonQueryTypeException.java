@@ -4,10 +4,9 @@ import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.misc.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class JsonQueryTypeException extends JsonQueryException {
 	private static final long serialVersionUID = -2719442463094461632L;

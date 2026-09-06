@@ -7,8 +7,8 @@ import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 final class Preconditions {
 	private Preconditions() {

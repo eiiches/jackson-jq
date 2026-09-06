@@ -1,0 +1,18 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "gson",
+    testonly = True,
+    srcs = [
+        "GsonJsonQueryTest.java",
+    ],
+    release = 8,
+    visibility = ["//tests:__pkg__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-gson",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+        "@maven//:com_google_code_gson_gson",
+    ],
+)

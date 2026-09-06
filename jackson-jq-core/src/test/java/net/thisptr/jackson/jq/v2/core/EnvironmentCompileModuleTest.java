@@ -16,10 +16,10 @@ import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
-import net.thisptr.jackson.jq.v2.spi.Version;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleMeta;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

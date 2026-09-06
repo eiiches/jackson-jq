@@ -1,0 +1,102 @@
+# The release itself, shared by `release` and `release-rehearsal`. Everything a release does
+# lives here so the rehearsal cannot drift from the thing it rehearses; the only difference
+# between the two callers is whether the prepared branches and tag are pushed.
+#
+# Deliberately declares no `permissions:` of its own. Permissions can only be maintained or
+# reduced down a workflow_call chain, never elevated, so leaving them to the caller is what
+# lets `release-rehearsal` hand this job a read-only token.
+name: 'reusable-release'
+on:
+  workflow_call:
+    inputs:
+      release_version:
+        description: 'release version; e.g. 0.0.1'
+        required: true
+        type: string
+      next_snapshot_version:
+        description: 'next snapshot version; e.g. 0.0.2-SNAPSHOT'
+        required: true
+        type: string
+      push:
+        description: 'push the prepared branches and tag to the remote'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    steps:
+    - uses: actions/checkout@v5.0.0
+      with:
+        fetch-depth: 0
+
+    - name: Set up JDK 26
+      uses: actions/setup-java@v5.0.0
+      with:
+        java-version: '26'
+        distribution: 'temurin'
+        cache: 'maven'
+
+    - name: Set up Bazel
+      uses: bazel-contrib/setup-bazel@0.19.0
+      with:
+        bazelisk-cache: true
+        disk-cache: ${{ runner.os }}-${{ runner.arch }}
+        repository-cache: true
+        cache-save: true
+
+    - name: Configure Git
+      run: |
+        set -euo pipefail
+        git config user.name 'github-actions[bot]'
+        git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+    - name: Prepare release branches
+      env:
+        RELEASE_VERSION: ${{ inputs.release_version }}
+        NEXT_SNAPSHOT_VERSION: ${{ inputs.next_snapshot_version }}
+      run: scripts/release.sh "$RELEASE_VERSION" "$NEXT_SNAPSHOT_VERSION"
+
+    # Built as a separate step: `bazel run` would put the signing key in Bazel's client
+    # environment, which Bazel writes verbatim into $(bazel info output_base)/java.log*.
+    # Neither the staging script nor the uploader jar needs a Bazel server, so running them
+    # directly keeps the secrets in those steps' processes only.
+    - name: Build publisher
+      run: |
+        set -euo pipefail
+        git checkout master/2.x
+        bazel build //:maven_install //build-tools/bazel/tools:central_portal_upload_deploy.jar
+
+    - name: Stage release artifacts
+      env:
+        MAVEN_REPO: file://${{ runner.temp }}/central-staging
+      run: bazel-bin/maven_install
+
+    - name: Import signing key
+      env:
+        GPG_SECRET_KEY: ${{ secrets.GPG_SECRET_KEY }}
+      run: printf '%s' "$GPG_SECRET_KEY" | gpg --batch --import
+
+    # Signs the staged tree, then refuses to build a bundle if anything Central requires a
+    # signature for is missing one. Uploaded as USER_MANAGED, so the deployment stops at
+    # VALIDATED and reaches Maven Central only when a human publishes it.
+    - name: Sign and upload Central Portal bundle
+      env:
+        GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+        MAVEN_USER: ${{ secrets.MAVEN_USER }}
+        MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+        RELEASE_VERSION: ${{ inputs.release_version }}
+      run: >-
+        java -jar bazel-bin/build-tools/bazel/tools/central_portal_upload_deploy.jar
+        "${RUNNER_TEMP}/central-staging"
+        --name "jackson-jq-${RELEASE_VERSION}"
+
+    # The only step in the whole release that writes to the remote: scripts/release.sh
+    # creates the branches, commits and tag locally and pushes nothing.
+    - name: Git Push
+      if: ${{ inputs.push }}
+      run: |
+        set -euo pipefail
+        git push --tags
+        git push --all

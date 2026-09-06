@@ -11,7 +11,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.spi.Version;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public final class JacksonJqModuleSmokeTest {
 	private JacksonJqModuleSmokeTest() {
@@ -32,7 +32,7 @@ public final class JacksonJqModuleSmokeTest {
 
 		assertQuery(jsonProvider, env, "length", "[1,2]", 2);
 		assertQuery(jsonProvider, env, "test(\"a.c\")", "\"abc\"", true);
-		assertQuery(jsonProvider, env, "import \"jackson-jq/debug\" as debug; debug::dump_expr(1 + .) | .fields.lhs.class | endswith(\".LongLiteral\")", "null", true);
+		assertQuery(jsonProvider, env, "import \"jackson-jq/debug\" as debug; debug::dump_expr(1 + .) | .fields.lhs.class | endswith(\".NumericLiteral\")", "null", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/random\" as random; random::random | . >= 0 and . < 1", "null", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/time\" as time; 1477162342372 | time::strftime(\"yyyy-MM-dd HH:mm:ss.SSSXXX\"; \"UTC\")", "null", "2016-10-22 18:52:22.372Z");
 		assertQuery(jsonProvider, env, "import \"jackson-jq/uri\" as uri; uri::uridecode", "\"%66%6f%6f\"", "foo");
