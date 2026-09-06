@@ -31,17 +31,6 @@ publish_all(
 )
 
 buildifier(
-    name = "buildifier",
-    exclude_patterns = [
-        "./.git/*",
-        "./smoke-tests/*",
-        "./version.bzl",
-    ],
-    lint_mode = "fix",
-    mode = "fix",
-)
-
-buildifier(
     name = "buildifier_fix",
     exclude_patterns = [
         "./.git/*",

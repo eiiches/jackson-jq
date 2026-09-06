@@ -32,6 +32,12 @@ bazel run //:buildifier_test
 bazel test //...
 ```
 
+The CLI runs straight out of the checkout:
+
+```sh
+echo '{"foo": 42}' | bazelisk run //jackson-jq-cli -- '.foo'
+```
+
 To exercise the Maven consumer projects, publish the Bazel-built artifacts locally first:
 
 ```sh
