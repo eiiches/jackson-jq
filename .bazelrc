@@ -21,7 +21,4 @@ common --repo_env=HOME
 test --test_output=errors
 test --test_verbose_timeout_warnings
 
-# Local disk cache keeps rebuilds cheap across `bazel clean`.
-build --disk_cache=~/.cache/bazel-disk
-
 try-import %workspace%/.bazelrc.user

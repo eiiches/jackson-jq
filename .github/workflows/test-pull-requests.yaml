@@ -17,6 +17,9 @@ jobs:
         disk-cache: ${{ runner.os }}-${{ runner.arch }}
         repository-cache: true
         cache-save: true
+        bazelrc: |
+          ${{ vars.BAZELRC }}
+          ${{ secrets.SECRET_BAZELRC }}
 
     - name: Check Java formatting
       run: bazel run //:idea-format -- --check
@@ -44,6 +47,9 @@ jobs:
         disk-cache: ${{ runner.os }}-${{ runner.arch }}
         repository-cache: true
         cache-save: true
+        bazelrc: |
+          ${{ vars.BAZELRC }}
+          ${{ secrets.SECRET_BAZELRC }}
 
     - name: Build and test
       run: bazel test //...
@@ -98,6 +104,9 @@ jobs:
         disk-cache: ${{ runner.os }}-${{ runner.arch }}
         repository-cache: true
         cache-save: false
+        bazelrc: |
+          ${{ vars.BAZELRC }}
+          ${{ secrets.SECRET_BAZELRC }}
 
     - name: Install artifacts for Maven consumers
       run: bazel run //:maven_install
@@ -134,6 +143,9 @@ jobs:
         disk-cache: ${{ runner.os }}-${{ runner.arch }}
         repository-cache: true
         cache-save: false
+        bazelrc: |
+          ${{ vars.BAZELRC }}
+          ${{ secrets.SECRET_BAZELRC }}
 
     - name: Install artifacts for Maven consumers
       run: bazel run //:maven_install
@@ -154,6 +166,9 @@ jobs:
         disk-cache: ${{ runner.os }}-${{ runner.arch }}
         repository-cache: true
         cache-save: true
+        bazelrc: |
+          ${{ vars.BAZELRC }}
+          ${{ secrets.SECRET_BAZELRC }}
 
     - name: Build and test
       run: bazel test //...

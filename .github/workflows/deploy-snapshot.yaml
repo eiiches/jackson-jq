@@ -17,6 +17,9 @@ jobs:
         disk-cache: ${{ runner.os }}-${{ runner.arch }}
         repository-cache: true
         cache-save: true
+        bazelrc: |
+          ${{ vars.BAZELRC }}
+          ${{ secrets.SECRET_BAZELRC }}
 
     - name: Build and test
       run: bazel test //...
