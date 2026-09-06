@@ -52,7 +52,7 @@ jobs:
           ${{ secrets.SECRET_BAZELRC }}
 
     - name: Build and test
-      run: bazel test //...
+      run: bazel test --remote_download_outputs=minimal //...
 
     - name: Install artifacts for Maven consumers
       run: bazel run //:maven_install
@@ -171,4 +171,4 @@ jobs:
           ${{ secrets.SECRET_BAZELRC }}
 
     - name: Build and test
-      run: bazel test //...
+      run: bazel test --remote_download_outputs=minimal //...

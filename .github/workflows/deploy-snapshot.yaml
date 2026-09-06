@@ -22,7 +22,7 @@ jobs:
           ${{ secrets.SECRET_BAZELRC }}
 
     - name: Build and test
-      run: bazel test //...
+      run: bazel test --remote_download_outputs=minimal //...
 
     # Built as a separate step: `bazel run` would put the credentials in Bazel's client
     # environment, which Bazel writes verbatim into $(bazel info output_base)/java.log*.
