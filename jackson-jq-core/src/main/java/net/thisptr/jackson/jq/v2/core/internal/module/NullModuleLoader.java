@@ -5,7 +5,6 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
-// TODO: move to core
 public class NullModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 
 	private static final NullModuleLoader<?> INSTANCE = new NullModuleLoader<>();

@@ -13,9 +13,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.IntNode;
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.core.internal.Memory;
-import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
-import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
+import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
+import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.Tuple;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;

@@ -2,19 +2,10 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 
 jjq_java_library(
     name = "ast",
-    srcs = ["AstNode.java"],
+    srcs = [
+        "AstNode.java",
+    ],
     release = 8,
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = ["//jackson-jq-spi"],
-)
-
-# core.internal.ast.impls is inside the package cycle and cannot be its own target, but this
-# BUILD.bazel makes internal/ast a Bazel package, which hides impls/ from core-sources' glob.
-# Hand the subtree back so core-sources keeps compiling it. Acyclic packages below impls have
-# BUILD.bazel files of their own, so this glob stops at them and core-sources depends on their
-# targets instead.
-filegroup(
-    name = "impls-srcs",
-    srcs = glob(["impls/**/*.java"]),
-    visibility = ["//jackson-jq-core:__subpackages__"],
 )

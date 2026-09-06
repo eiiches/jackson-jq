@@ -1,0 +1,8 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "collection",
+    srcs = ["Lists.java"],
+    release = 8,
+    visibility = ["//jackson-jq-core:__subpackages__"],
+)

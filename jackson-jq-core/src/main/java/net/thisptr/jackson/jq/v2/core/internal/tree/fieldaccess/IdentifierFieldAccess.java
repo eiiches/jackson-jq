@@ -1,6 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 
-import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ThisObject;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -11,7 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-public class IdentifierFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
+public class IdentifierFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> {
 	private String field;
 
 	@Override

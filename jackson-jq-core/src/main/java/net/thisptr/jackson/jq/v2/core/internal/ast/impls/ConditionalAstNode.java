@@ -5,7 +5,7 @@ import java.util.List;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
+import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 
 public class ConditionalAstNode implements AstNode {
 	private AstNode otherwise;

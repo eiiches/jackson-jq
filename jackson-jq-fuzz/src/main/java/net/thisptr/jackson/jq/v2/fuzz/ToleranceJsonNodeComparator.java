@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.v2.fuzz;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import net.thisptr.jackson.jq.v2.core.internal.comparator.JsonNodeComparator;
+import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 
 /**

@@ -9,7 +9,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
  * attempt to decide what number the text denotes; that happens when the node is turned into an
  * {@link net.thisptr.jackson.jq.v2.spi.Expression}, or here in {@link #value(JsonProvider)}.
  */
-public class NumericLiteralAstNode extends ValueLiteralAstNode {
+public class NumericLiteralAstNode extends AbstractValueLiteralAstNode {
 	private final String text;
 
 	public NumericLiteralAstNode(String text) {

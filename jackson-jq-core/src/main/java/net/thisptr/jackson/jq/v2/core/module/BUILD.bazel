@@ -1,0 +1,20 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "module",
+    srcs = ["ModuleLoader.java"],
+    release = 8,
+    visibility = ["//jackson-jq-core:__subpackages__"],
+    deps = [
+        "//jackson-jq-spi",
+    ],
+)
+
+# core.module.loaders is inside the package cycle and cannot be its own target, but this
+# BUILD.bazel makes core/module a Bazel package, which hides loaders/ from core-sources' glob.
+# Hand the subtree back so core-sources keeps compiling it.
+filegroup(
+    name = "loaders-srcs",
+    srcs = glob(["loaders/**/*.java"]),
+    visibility = ["//jackson-jq-core:__subpackages__"],
+)

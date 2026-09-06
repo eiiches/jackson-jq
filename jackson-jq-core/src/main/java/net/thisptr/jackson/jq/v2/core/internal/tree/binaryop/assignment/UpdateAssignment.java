@@ -5,14 +5,14 @@ import java.util.List;
 
 import com.google.errorprone.annotations.Var;
 
-import net.thisptr.jackson.jq.v2.core.Versions;
-import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
-import net.thisptr.jackson.jq.v2.core.internal.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryUndefinedBehaviorException;
-import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
-import net.thisptr.jackson.jq.v2.core.internal.misc.PathUtils;
-import net.thisptr.jackson.jq.v2.core.internal.path.PathOperations;
-import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression;
+import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
+import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathOperations;
+import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathUtils;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.AbstractBinaryOperatorExpression;
+import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -23,7 +23,7 @@ import net.thisptr.jackson.jq.v2.spi.path.RootPath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-public class UpdateAssignment<JsonNode> extends BinaryOperatorExpression<JsonNode> {
+public class UpdateAssignment<JsonNode> extends AbstractBinaryOperatorExpression<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private Version version;
 	private final boolean inputFixed;

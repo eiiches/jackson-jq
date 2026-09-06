@@ -11,7 +11,7 @@ import java.util.Set;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.Memory;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 

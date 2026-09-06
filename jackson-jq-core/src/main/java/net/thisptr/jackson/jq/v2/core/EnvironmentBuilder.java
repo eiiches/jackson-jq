@@ -7,8 +7,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import net.thisptr.jackson.jq.v2.core.internal.CachedFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
+import net.thisptr.jackson.jq.v2.core.function.loaders.ClassPathFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.env.EnvironmentImpl;
+import net.thisptr.jackson.jq.v2.core.internal.function.loaders.CachedFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;

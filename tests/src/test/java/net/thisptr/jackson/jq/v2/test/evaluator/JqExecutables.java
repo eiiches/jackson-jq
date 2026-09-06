@@ -12,7 +12,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 /**
  * The single, explicit source of truth for which real {@code jq} binaries this test suite
  * expects to find on the host and what they're called. Deliberately independent of
- * {@link net.thisptr.jackson.jq.v2.core.Versions#versions()} (the core library's registry of
+ * {@link net.thisptr.jackson.jq.v2.core.version.Versions#versions()} (the core library's registry of
  * versions it implements), since binary naming is a test-environment concern, not a library one.
  */
 public final class JqExecutables {

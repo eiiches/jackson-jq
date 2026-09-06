@@ -1,30 +1,27 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast.impls;
 
 import java.util.List;
-import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
-public class TopLevelAstNode<JsonNode> implements AstNode {
-	private final List<ImportStatement<JsonNode>> imports;
+public class TopLevelAstNode implements AstNode {
+	private final List<ImportStatement> imports;
 	private final AstNode expr;
-	private final ModuleDirective<JsonNode> moduleDirective;
+	private final @Nullable ModuleDirective moduleDirective;
 
-	public TopLevelAstNode(ModuleDirective<JsonNode> moduleDirective, List<ImportStatement<JsonNode>> imports, AstNode expr) {
+	public TopLevelAstNode(@Nullable ModuleDirective moduleDirective, List<ImportStatement> imports, AstNode expr) {
 		this.moduleDirective = moduleDirective;
 		this.imports = imports;
 		this.expr = expr;
 	}
 
-	public ModuleDirective<JsonNode> moduleDirective() {
+	public @Nullable ModuleDirective moduleDirective() {
 		return moduleDirective;
 	}
 
-	public List<ImportStatement<JsonNode>> imports() {
+	public List<ImportStatement> imports() {
 		return imports;
 	}
 
@@ -39,7 +36,7 @@ public class TopLevelAstNode<JsonNode> implements AstNode {
 			s.append(moduleDirective);
 			s.append("; ");
 		}
-		for (ImportStatement<JsonNode> imp : imports) {
+		for (ImportStatement imp : imports) {
 			s.append(imp);
 			s.append("; ");
 		}
@@ -47,15 +44,13 @@ public class TopLevelAstNode<JsonNode> implements AstNode {
 		return s.toString();
 	}
 
-	public static class ImportStatement<JsonNode> {
+	public static class ImportStatement {
 		public final String path;
 		public final boolean dollarImport;
-		public final String name;
+		public final @Nullable String name;
 		private final @Nullable AstNode metadataExpr;
-		private @Nullable JsonNode metadata;
-		private boolean metadataEvaluated = false;
 
-		public ImportStatement(String path, boolean dollarImport, String name, @Nullable AstNode metadataExpr) {
+		public ImportStatement(String path, boolean dollarImport, @Nullable String name, @Nullable AstNode metadataExpr) {
 			this.path = path;
 			this.dollarImport = dollarImport;
 			this.name = name;
@@ -66,56 +61,31 @@ public class TopLevelAstNode<JsonNode> implements AstNode {
 			return metadataExpr;
 		}
 
-		public @Nullable JsonNode getMetadata(JsonProvider<JsonNode> jsonProvider) {
-			if (!metadataEvaluated) {
-				if (metadataExpr != null) {
-					this.metadata = ExpressionUtils.evaluateLiteralExpression(jsonProvider, metadataExpr);
-					if (metadata == null)
-						throw new IllegalArgumentException("Module metadata must be constant");
-					if (!jsonProvider.isObject(metadata))
-						throw new IllegalArgumentException("Module metadata must be an object");
-				} else {
-					this.metadata = null;
-				}
-				metadataEvaluated = true;
-			}
-			return metadata;
-		}
-
-		public String toString(JsonProvider<JsonNode> jsonProvider) {
-			StringBuilder s = new StringBuilder();
-			s.append("import ");
-			s.append(jsonProvider.createString(path).toString());
-			s.append(" as ");
-			if (dollarImport)
-				s.append('$');
-			s.append(name);
-			JsonNode md = getMetadata(jsonProvider);
-			if (md != null) {
-				s.append(' ');
-				s.append(md);
-			}
-			return s.toString();
-		}
-
 		@Override
 		public String toString() {
 			StringBuilder s = new StringBuilder();
-			s.append("import \"");
-			s.append(path);
-			s.append("\" as ");
-			if (dollarImport)
-				s.append('$');
-			s.append(name);
-			// Can't show metadata without JsonProvider
+			if (name == null) {
+				s.append("include \"");
+				s.append(path);
+				s.append("\"");
+			} else {
+				s.append("import \"");
+				s.append(path);
+				s.append("\" as ");
+				if (dollarImport)
+					s.append('$');
+				s.append(name);
+			}
+			if (metadataExpr != null) {
+				s.append(' ');
+				s.append(metadataExpr);
+			}
 			return s.toString();
 		}
 	}
 
-	public static class ModuleDirective<JsonNode> {
+	public static class ModuleDirective {
 		private final AstNode metadataExpr;
-		private @Nullable JsonNode metadata;
-		private boolean metadataEvaluated = false;
 
 		public ModuleDirective(AstNode metadataExpr) {
 			this.metadataExpr = metadataExpr;
@@ -125,22 +95,11 @@ public class TopLevelAstNode<JsonNode> implements AstNode {
 			return metadataExpr;
 		}
 
-		public JsonNode getMetadata(JsonProvider<JsonNode> jsonProvider) {
-			if (!metadataEvaluated) {
-				this.metadata = ExpressionUtils.evaluateLiteralExpression(jsonProvider, metadataExpr);
-				if (metadata == null)
-					throw new IllegalArgumentException("Module metadata must be constant");
-				if (!jsonProvider.isObject(metadata))
-					throw new IllegalArgumentException("Module metadata must be an object");
-				metadataEvaluated = true;
-			}
-			return Objects.requireNonNull(metadata);
-		}
-
 		@Override
 		public String toString() {
 			StringBuilder s = new StringBuilder();
-			s.append("module {...}");
+			s.append("module ");
+			s.append(metadataExpr);
 			return s.toString();
 		}
 	}

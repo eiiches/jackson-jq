@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.core.internal.utils.PathAndValue;
+import net.thisptr.jackson.jq.v2.core.internal.path.PathAndValue;
 import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;

@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
-public class StringLiteralAstNode extends ValueLiteralAstNode {
+public class StringLiteralAstNode extends AbstractValueLiteralAstNode {
 	private String text;
 
 	public StringLiteralAstNode(String text) {

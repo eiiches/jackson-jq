@@ -9,7 +9,7 @@ jjq_java_test_suite(
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
         "//jackson-jq-core",
-        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/comparator",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/json/comparator",
         "//jackson-jq-json-provider",
         "//jackson-jq-json-provider-impl-jackson2",
         "@maven//:com_fasterxml_jackson_core_jackson_databind",

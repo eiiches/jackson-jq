@@ -119,6 +119,6 @@ License
 This software is licensed under the Apache License, Version 2.0, with the following exceptions:
 
 * [tests/test-cases](tests/test-cases) contains test cases from [stedolan/jq](https://github.com/stedolan/jq).
-* [CoreJqLibrary.java](jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/CoreJqLibrary.java) and [RegexJqLibrary.java](jackson-jq-regex-impl-joni/src/main/java/net/thisptr/jackson/jq/v2/regex/impl/joni/RegexJqLibrary.java) contain function definitions extracted from [jqlang/jq](https://github.com/jqlang/jq).
+* [CoreJqLibrary.java](jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/builtins/library/CoreJqLibrary.java) and [RegexJqLibrary.java](jackson-jq-regex-impl-joni/src/main/java/net/thisptr/jackson/jq/v2/regex/impl/joni/RegexJqLibrary.java) contain function definitions extracted from [jqlang/jq](https://github.com/jqlang/jq).
 
 See [LICENSE](LICENSE) for details.

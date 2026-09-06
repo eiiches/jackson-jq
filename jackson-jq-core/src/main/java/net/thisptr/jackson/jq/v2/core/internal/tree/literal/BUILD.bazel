@@ -1,0 +1,20 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "literal",
+    srcs = [
+        "AbstractValueLiteral.java",
+        "BooleanLiteral.java",
+        "NullLiteral.java",
+        "NumericLiteral.java",
+        "StringLiteral.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-core:__subpackages__"],
+    deps = [
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/compile/freevars",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/memory",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi",
+    ],
+)

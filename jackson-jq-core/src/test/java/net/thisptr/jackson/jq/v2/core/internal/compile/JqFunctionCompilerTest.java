@@ -4,7 +4,7 @@ import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.core.Versions;
+import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.spi.FunctionParameter;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;

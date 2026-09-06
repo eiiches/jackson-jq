@@ -1,0 +1,20 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "utils",
+    srcs = [
+        "PathOperations.java",
+        "PathUtils.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-core:__subpackages__"],
+    deps = [
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/commons/range",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/commons/strings",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/exception",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/json/comparator",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/version",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi",
+    ],
+)

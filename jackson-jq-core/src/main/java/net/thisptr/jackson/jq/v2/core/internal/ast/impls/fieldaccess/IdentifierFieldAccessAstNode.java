@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 
-public class IdentifierFieldAccessAstNode extends FieldAccessAstNode {
+public class IdentifierFieldAccessAstNode extends AbstractFieldAccessAstNode {
 	private String field;
 
 	public IdentifierFieldAccessAstNode(AstNode obj, String field, boolean permissive) {

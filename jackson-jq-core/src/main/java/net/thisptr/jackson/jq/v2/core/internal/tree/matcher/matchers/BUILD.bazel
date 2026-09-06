@@ -1,0 +1,20 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "matchers",
+    srcs = [
+        "ArrayMatcher.java",
+        "ObjectMatcher.java",
+        "ValueMatcher.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-core:__subpackages__"],
+    deps = [
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/exception",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/memory",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/tree/literal",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/tree/matcher",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi",
+    ],
+)

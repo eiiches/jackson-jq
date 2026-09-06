@@ -3,9 +3,9 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "fieldaccess",
     srcs = [
+        "AbstractFieldAccessAstNode.java",
         "BracketExtractFieldAccessAstNode.java",
         "BracketFieldAccessAstNode.java",
-        "FieldAccessAstNode.java",
         "IdentifierFieldAccessAstNode.java",
         "StringFieldAccessAstNode.java",
     ],

@@ -1,0 +1,13 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "parser",
+    srcs = ["ShuntingYard.java"],
+    release = 8,
+    visibility = ["//jackson-jq-core:__subpackages__"],
+    deps = [
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/impls",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/operator",
+    ],
+)

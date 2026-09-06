@@ -5,7 +5,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.NullLiteralAstNode;
 
-public class BracketFieldAccessAstNode extends FieldAccessAstNode {
+public class BracketFieldAccessAstNode extends AbstractFieldAccessAstNode {
 	private AstNode startExpr;
 	private AstNode endExpr = new NullLiteralAstNode();
 	private boolean isRange;

@@ -2,7 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.literal;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
-public class NullLiteral<JsonNode> extends ValueLiteral<JsonNode> {
+public class NullLiteral<JsonNode> extends AbstractValueLiteral<JsonNode> {
 	public NullLiteral(JsonProvider<JsonNode> jsonProvider) {
 		super(jsonProvider);
 	}
