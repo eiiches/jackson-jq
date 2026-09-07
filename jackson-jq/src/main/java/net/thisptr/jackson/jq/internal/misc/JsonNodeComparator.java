@@ -1,11 +1,10 @@
 package net.thisptr.jackson.jq.internal.misc;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
@@ -18,7 +17,7 @@ public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
 		return defaultInstance;
 	}
 
-	private static JsonNodeType[][] ordering = new JsonNodeType[][] {
+	private static final JsonNodeType[][] ordering = new JsonNodeType[][] {
 			new JsonNodeType[] { JsonNodeType.NULL, JsonNodeType.MISSING },
 			new JsonNodeType[] { JsonNodeType.BOOLEAN },
 			new JsonNodeType[] { JsonNodeType.NUMBER },
@@ -27,11 +26,14 @@ public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
 			new JsonNodeType[] { JsonNodeType.OBJECT },
 	};
 
-	private static Map<JsonNodeType, Integer> orderValues = new HashMap<>();
+	private static final int UNSUPPORTED_ORDER_VALUE = -1;
+
+	private static final int[] orderValues = new int[JsonNodeType.values().length];
 	static {
+		Arrays.fill(orderValues, UNSUPPORTED_ORDER_VALUE);
 		for (int i = 0; i < ordering.length; i++)
 			for (final JsonNodeType type : ordering[i])
-				orderValues.put(type, i);
+				orderValues[type.ordinal()] = i;
 	}
 
 	private static int orderValue(final JsonNode node) {
@@ -41,8 +43,8 @@ public class JsonNodeComparator implements Comparator<JsonNode>, Serializable {
 	}
 
 	private static int orderValue(final JsonNodeType type) {
-		final Integer value = orderValues.get(type);
-		if (value == null)
+		final int value = orderValues[type.ordinal()];
+		if (value == UNSUPPORTED_ORDER_VALUE)
 			throw new IllegalArgumentException("Unknown JsonNodeType: " + type);
 		return value;
 	}
