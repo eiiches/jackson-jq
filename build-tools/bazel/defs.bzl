@@ -87,10 +87,16 @@ def jjq_java_mrjar(
     if content:
         external_deps(
             name = name + "-external-deps",
-            content = content,
             coordinates = module_coordinates,
+            # `exports`, not a name of its own: this is the one edge the IntelliJ Bazel aspect
+            # follows from the module target back to the packages the merged jar was built from.
+            # merge_package_jars hides them behind `packages`, which no IDE aspect reads, and the
+            # IDE blanks every class out of an in-project jar whose source it can see -- so
+            # without this edge nothing supplies them and cross-module references go unresolved.
+            exports = content,
             # Prevent rules_jvm_external from treating the dependency-only JavaInfo
-            # as content. MavenHintInfo carries the actual dependency metadata.
+            # as content. MavenHintInfo carries the actual dependency metadata, and the
+            # tag also stops has_maven_deps before it ever reads `exports` above.
             tags = ["no-maven"],
             testonly = testonly,
         )
