@@ -1,4 +1,13 @@
-"""Derives a module's external dependencies from its compiled content targets."""
+"""Derives a module's external dependencies from the targets its content is compiled from.
+
+The attribute holding that content is called `exports` because that is the one attribute name
+IntelliJ's Bazel aspect reads as an exported compile-time dependency edge. It is the IDE's only
+route from a module target back to the packages its merged jar was built from: without it the IDE
+sees a jar whose classes it deliberately hides -- their sources are in the project -- and no
+module that supplies them, so every cross-module reference goes unresolved. `no-maven` keeps
+rules_jvm_external's has_maven_deps aspect from ever reading the attribute, so it stays invisible
+to the generated poms and to the published artifacts.
+"""
 
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_java//java/common:java_common.bzl", "java_common")
@@ -54,7 +63,7 @@ _external_deps_aspect = aspect(
 
 def _external_deps_impl(ctx):
     deps_by_coordinates = {}
-    for content in ctx.attr.content:
+    for content in ctx.attr.exports:
         for dep in content[_ExternalDepsInfo].deps:
             if dep.coordinates != ctx.attr.coordinates:
                 deps_by_coordinates[dep.coordinates] = dep
@@ -70,10 +79,10 @@ def _external_deps_impl(ctx):
 external_deps = rule(
     implementation = _external_deps_impl,
     attrs = {
-        "content": attr.label_list(
+        "coordinates": attr.string(mandatory = True),
+        "exports": attr.label_list(
             aspects = [_external_deps_aspect],
             providers = [JavaInfo],
         ),
-        "coordinates": attr.string(mandatory = True),
     },
 )
