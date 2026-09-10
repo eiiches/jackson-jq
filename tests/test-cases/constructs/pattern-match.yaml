@@ -131,3 +131,25 @@
   out:
   - "__ERROR__"
   v: '[1.5, )'
+
+- q: 'try (("x"?) as {a: $a} | $a) catch "__ERROR__"'
+  in: null
+  out: []
+  v: '[1.5, 1.7)'
+
+- q: 'try (("x"?) as {a: $a} | $a) catch "__ERROR__"'
+  in: null
+  out:
+  - "__ERROR__"
+  v: '[1.7, )'
+
+- q: 'try ((try "x") as {a: $a} | $a) catch "__ERROR__"'
+  in: null
+  out: []
+  v: '[1.5, 1.7)'
+
+- q: 'try ((try "x") as {a: $a} | $a) catch "__ERROR__"'
+  in: null
+  out:
+  - "__ERROR__"
+  v: '[1.7, )'

@@ -439,7 +439,7 @@ public class Compiler {
 			TryCatchAstNode tc = (TryCatchAstNode) ast;
 			Expression<StackFrame, JsonNode> newTry = compileNonNull(env, context, tc.tryExpr());
 			if (tc instanceof TryCatchAstNode.Question) {
-				return new TryCatch<>(env.getJsonProvider(), newTry);
+				return new TryCatch<>(env.getJsonProvider(), newTry, env.getJqVersion());
 			}
 			// catchExpr sees the caught error message, not `.` -- its `.` is input-independent iff tryExpr's is.
 			boolean savedInputFixed = context.isInputFixed();
@@ -450,7 +450,7 @@ public class Compiler {
 			} finally {
 				context.setInputFixed(savedInputFixed);
 			}
-			return new TryCatch<>(env.getJsonProvider(), newTry, newCatch);
+			return new TryCatch<>(env.getJsonProvider(), newTry, newCatch, env.getJqVersion());
 		}
 
 		if (ast instanceof TupleAstNode) {
