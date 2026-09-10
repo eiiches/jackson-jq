@@ -307,7 +307,6 @@
   out:
   - "Array/string slice indices must be integers"
   v: '[1.7, )'
-  failing: true
 
 - q: 'try (.[1:"a"]) catch .'
   in: "string"
@@ -320,7 +319,6 @@
   out:
   - "Array/string slice indices must be integers"
   v: '[1.7, )'
-  failing: true
 
 - q: 'try (.[[20]]) catch .'
   in: 10

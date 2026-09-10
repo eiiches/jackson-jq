@@ -33,15 +33,12 @@ public class PathUtils {
 	 * @param jsonProvider the JSON provider
 	 * @param sliceObj the object node describing the slice
 	 * @param name {@code "start"} or {@code "end"}
-	 * @return the bound, either a number or JSON {@code null}
-	 * @throws JsonQueryException if the member is missing or is neither a number nor JSON {@code null}
+	 * @return the bound
+	 * @throws JsonQueryException if the member is missing
 	 */
 	public static <JsonNode> JsonNode getSliceBound(JsonProvider<JsonNode> jsonProvider, JsonNode sliceObj, String name) throws JsonQueryException {
 		JsonNode value = jsonProvider.getObjectMember(sliceObj, name);
 		if (value == null)
-			throw new JsonQueryException("Start and end indices of an array slice must be numbers");
-		JsonNodeType type = jsonProvider.getNodeType(value);
-		if (type != JsonNodeType.NUMBER && type != JsonNodeType.NULL)
 			throw new JsonQueryException("Start and end indices of an array slice must be numbers");
 		return value;
 	}

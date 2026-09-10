@@ -3,6 +3,18 @@
   out:
   - 0
 
+- q: 'try setpath([{"start": "x", "end": "y"}]; []) catch .'
+  in: null
+  out:
+  - "Start and end indices of an array slice must be numbers"
+  v: '[1.5, 1.7)'
+
+- q: 'try setpath([{"start": "x", "end": "y"}]; []) catch .'
+  in: null
+  out:
+  - "Array/string slice indices must be integers"
+  v: '[1.7, )'
+
 - q: 'setpath(89; empty)'
   in: []
   out: []

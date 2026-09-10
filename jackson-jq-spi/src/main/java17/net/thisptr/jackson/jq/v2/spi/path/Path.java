@@ -76,15 +76,14 @@ public abstract sealed class Path<JsonNode> permits IndexOfPath, IndexRangePath,
 	/**
 	 * Returns this path extended with a slice / range index step.
 	 *
-	 * @param jsonProvider the JSON provider used to validate the range bounds
+	 * @param jsonProvider the JSON provider associated with the range bounds
 	 * @param start the start index node
 	 * @param end the end index node
 	 * @return a path with this as its parent and {@code [start:end]} as its range
-	 * @throws net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException if either range bound is neither a number nor null
 	 */
 	@CheckReturnValue
 	public Path<JsonNode> appendIndexRange(JsonProvider<JsonNode> jsonProvider, JsonNode start, JsonNode end) {
-		return IndexRangePath.of(jsonProvider, this, start, end);
+		return IndexRangePath.of(this, start, end);
 	}
 
 	/**

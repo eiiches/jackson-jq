@@ -6,7 +6,6 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
-import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.ValueLiteral;
@@ -78,14 +77,7 @@ public class BracketFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> 
 			startExpr.apply(frame, in, UntrackedPath.getInstance(), (start, opath) -> {
 				endExpr.apply(frame, in, UntrackedPath.getInstance(), (end, opath2) -> {
 					target.apply(frame, in, path, (pobj, ppath) -> {
-						JsonNodeType startType = jsonProvider.getNodeType(start);
-						JsonNodeType endType = jsonProvider.getNodeType(end);
-						if ((startType == JsonNodeType.NUMBER || startType == JsonNodeType.NULL) && (endType == JsonNodeType.NUMBER || endType == JsonNodeType.NULL)) {
-							emitIndexRangePath(jsonProvider, permissive, start, end, pobj, ppath, output, !(path instanceof UntrackedPath), version);
-						} else {
-							if (!permissive)
-								throw new JsonQueryTypeException(jsonProvider, version, "Start and end indices of an %s slice must be numbers", jsonProvider.getNodeType(pobj));
-						}
+						emitIndexRangePath(jsonProvider, permissive, start, end, pobj, ppath, output, !(path instanceof UntrackedPath), version);
 					});
 				});
 			});

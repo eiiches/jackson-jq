@@ -3,6 +3,12 @@
   out:
   - "foo"
 
+- q: 'getpath([{"start": "x", "end": "y"}])'
+  in: null
+  out:
+  - null
+  v: '[1.5, )'
+
 - q: 'try (getpath([false, []])) catch .'
   out:
   - "Cannot index null with boolean"

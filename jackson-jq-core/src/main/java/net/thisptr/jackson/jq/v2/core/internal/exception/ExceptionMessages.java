@@ -54,6 +54,12 @@ public final class ExceptionMessages {
 		}
 	}
 
+	public static String invalidSliceBounds(Version version, JsonNodeType inType) {
+		if (version.compareTo(Version.of(1, 7)) >= 0)
+			return "Array/string slice indices must be integers";
+		return String.format("Start and end indices of an %s slice must be numbers", inType.toString().toLowerCase(Locale.ROOT));
+	}
+
 	@FormatMethod
 	public static <JsonNode> String format(JsonProvider<JsonNode> jsonProvider, Version version, @FormatString String format, Object... args) {
 		Object[] formattedArguments = new Object[args.length];

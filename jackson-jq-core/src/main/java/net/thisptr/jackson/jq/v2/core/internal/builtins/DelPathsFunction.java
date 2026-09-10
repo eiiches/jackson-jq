@@ -168,7 +168,10 @@ public class DelPathsFunction implements Function {
 			if (depth != path.size() - 1)
 				throw new JsonQueryException("Cannot index further into an array slice");
 			JsonNode rangeNode = path.get(depth);
-			deleteRanges.add(PathOperations.resolveRange(jsonProvider, PathUtils.getSliceBound(jsonProvider, rangeNode, "start"), PathUtils.getSliceBound(jsonProvider, rangeNode, "end"), size));
+			JsonNode start = PathUtils.getSliceBound(jsonProvider, rangeNode, "start");
+			JsonNode end = PathUtils.getSliceBound(jsonProvider, rangeNode, "end");
+			PathOperations.requireValidRangeBounds(jsonProvider, start, end, JsonNodeType.ARRAY, version);
+			deleteRanges.add(PathOperations.resolveRange(jsonProvider, start, end, size));
 		}
 
 		List<JsonNode> out = new ArrayList<>();
