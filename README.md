@@ -5,6 +5,9 @@ A pure-Java, embeddable [jq](http://stedolan.github.io/jq/) implementation with 
 
 [![GitHub Actions](https://github.com/eiiches/jackson-jq/workflows/test/badge.svg)](https://github.com/eiiches/jackson-jq/actions)
 
+> [!WARNING]
+> You are viewing the development branch for jackson-jq 2.x. Stable releases are currently published from the [1.x branch](https://github.com/eiiches/jackson-jq/tree/develop/1.x).
+
 
 Getting started
 ---------------
