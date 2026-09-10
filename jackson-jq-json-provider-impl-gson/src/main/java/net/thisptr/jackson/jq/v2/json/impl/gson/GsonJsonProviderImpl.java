@@ -529,8 +529,4 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 		}
 	}
 
-	@Override
-	public boolean isJsonNodeInstance(@Nullable Object arg) {
-		return arg instanceof JsonElement;
-	}
 }

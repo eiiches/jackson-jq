@@ -5,6 +5,7 @@ import java.util.List;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.v2.core.internal.commons.strings.UnicodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
@@ -42,7 +43,7 @@ public class LengthFunction implements Function {
 		} else if (type == JsonNodeType.NUMBER) {
 			return JsonNodeUtils.asNumericNode(jsonProvider, Math.abs(jsonProvider.getNumberAsDoubleRounded(in)));
 		} else {
-			throw new JsonQueryTypeException(jsonProvider, version, "%s has no length", in);
+			throw new JsonQueryTypeException("%s has no length", ExceptionMessages.describe(jsonProvider, version, in));
 		}
 	}
 }

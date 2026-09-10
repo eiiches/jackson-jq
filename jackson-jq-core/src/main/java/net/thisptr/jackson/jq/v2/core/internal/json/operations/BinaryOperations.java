@@ -30,7 +30,7 @@ public final class BinaryOperations {
 			double divisor = jsonProvider.getNumberAsDoubleRounded(rhs);
 			double dividend = jsonProvider.getNumberAsDoubleRounded(lhs);
 			if (divisor == 0.0)
-				throw new JsonQueryException(ExceptionMessages.format(jsonProvider, version, "%s and %s cannot be divided because the divisor is zero", lhs, rhs));
+				throw new JsonQueryException(String.format("%s and %s cannot be divided because the divisor is zero", ExceptionMessages.describe(jsonProvider, version, lhs), ExceptionMessages.describe(jsonProvider, version, rhs)));
 			return JsonNodeUtils.asNumericNode(jsonProvider, dividend / divisor);
 		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.STRING) {
 			List<JsonNode> result = new ArrayList<>();
@@ -38,7 +38,7 @@ public final class BinaryOperations {
 				result.add(jsonProvider.createString(token));
 			return jsonProvider.createArray(result);
 		} else {
-			throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot be divided", lhs, rhs);
+			throw new JsonQueryTypeException("%s and %s cannot be divided", ExceptionMessages.describe(jsonProvider, version, lhs), ExceptionMessages.describe(jsonProvider, version, rhs));
 		}
 	}
 
@@ -66,7 +66,7 @@ public final class BinaryOperations {
 			}
 			return jsonProvider.createArray(result);
 		} else {
-			throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot be subtracted", lhs, rhs);
+			throw new JsonQueryTypeException("%s and %s cannot be subtracted", ExceptionMessages.describe(jsonProvider, version, lhs), ExceptionMessages.describe(jsonProvider, version, rhs));
 		}
 	}
 
@@ -91,10 +91,10 @@ public final class BinaryOperations {
 					: (long) rhsDouble;
 
 			if (divisor == 0L)
-				throw new JsonQueryException(ExceptionMessages.format(jsonProvider, version, "%s and %s cannot be divided (remainder) because the divisor is zero", lhs, rhs));
+				throw new JsonQueryException(String.format("%s and %s cannot be divided (remainder) because the divisor is zero", ExceptionMessages.describe(jsonProvider, version, lhs), ExceptionMessages.describe(jsonProvider, version, rhs)));
 			return JsonNodeUtils.asNumericNode(jsonProvider, dividend % divisor);
 		} else {
-			throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot be divided (remainder)", lhs, rhs);
+			throw new JsonQueryTypeException("%s and %s cannot be divided (remainder)", ExceptionMessages.describe(jsonProvider, version, lhs), ExceptionMessages.describe(jsonProvider, version, rhs));
 		}
 	}
 
@@ -125,7 +125,7 @@ public final class BinaryOperations {
 		} else if (ltype == JsonNodeType.OBJECT && rtype == JsonNodeType.OBJECT) {
 			return mergeRecursive(jsonProvider, lhs, rhs);
 		} else {
-			throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot be multiplied", lhs, rhs);
+			throw new JsonQueryTypeException("%s and %s cannot be multiplied", ExceptionMessages.describe(jsonProvider, version, lhs), ExceptionMessages.describe(jsonProvider, version, rhs));
 		}
 	}
 
@@ -191,7 +191,7 @@ public final class BinaryOperations {
 		} else if (rtype == JsonNodeType.NULL) {
 			return lhs;
 		} else {
-			throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot be added", lhs, rhs);
+			throw new JsonQueryTypeException("%s and %s cannot be added", ExceptionMessages.describe(jsonProvider, version, lhs), ExceptionMessages.describe(jsonProvider, version, rhs));
 		}
 	}
 

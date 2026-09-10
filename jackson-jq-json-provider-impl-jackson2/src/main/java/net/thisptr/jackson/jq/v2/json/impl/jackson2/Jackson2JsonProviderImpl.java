@@ -487,8 +487,4 @@ public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
 		}
 	}
 
-	@Override
-	public boolean isJsonNodeInstance(@Nullable Object arg) {
-		return arg instanceof JsonNode;
-	}
 }

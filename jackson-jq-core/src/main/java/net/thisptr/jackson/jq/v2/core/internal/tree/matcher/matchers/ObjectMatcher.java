@@ -143,7 +143,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL) {
 			if (matchers.isEmpty())
-				throw new JsonQueryTypeException(jsonProvider, version, "Cannot index %s with string", type);
+				throw new JsonQueryTypeException("Cannot index %s with string", ExceptionMessages.typeName(type));
 		}
 
 		recursive(frame, in, out, accumulate, 0);
@@ -154,7 +154,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL) {
 			if (matchers.isEmpty())
-				throw new JsonQueryTypeException(jsonProvider, version, "Cannot index %s with string", type);
+				throw new JsonQueryTypeException("Cannot index %s with string", ExceptionMessages.typeName(type));
 		}
 
 		recursiveWithPath(frame, in, path, output, accumulate, 0);

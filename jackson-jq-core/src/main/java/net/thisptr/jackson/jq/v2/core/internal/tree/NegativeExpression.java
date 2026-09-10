@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 import java.util.Set;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
@@ -55,7 +56,7 @@ public class NegativeExpression<JsonNode> implements Expression<StackFrame, Json
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		value.apply(frame, in, UntrackedPath.getInstance(), (v, opath) -> {
 			if (!jsonProvider.isNumber(v))
-				throw new JsonQueryTypeException(jsonProvider, version, "%s cannot be negated", v);
+				throw new JsonQueryTypeException("%s cannot be negated", ExceptionMessages.describe(jsonProvider, version, v));
 			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, -jsonProvider.getNumberAsDoubleRounded(v)), UntrackedPath.getInstance());
 		});
 	}

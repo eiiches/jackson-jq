@@ -424,10 +424,6 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 		return new JsonPParser(delegate, new InputStreamReader(in, StandardCharsets.UTF_8));
 	}
 
-	@Override
-	public boolean isJsonNodeInstance(@Nullable Object arg) {
-		return arg instanceof JsonValue;
-	}
 
 	private JsonValue createFloatingPointNumber(double value) {
 		return new FloatingPointJsonNumber(value);

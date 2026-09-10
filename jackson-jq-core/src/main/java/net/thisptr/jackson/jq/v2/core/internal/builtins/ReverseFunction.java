@@ -66,9 +66,9 @@ public class ReverseFunction implements Function {
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
 			}
 			if (type == JsonNodeType.BOOLEAN) {
-				throw new JsonQueryTypeException(jsonProvider, version, "%s has no length", in);
+				throw new JsonQueryTypeException("%s has no length", ExceptionMessages.describe(jsonProvider, version, in));
 			}
-			throw new JsonQueryTypeException(jsonProvider, version, "%s cannot be reversed", in);
+			throw new JsonQueryTypeException("%s cannot be reversed", ExceptionMessages.describe(jsonProvider, version, in));
 		});
 	}
 }

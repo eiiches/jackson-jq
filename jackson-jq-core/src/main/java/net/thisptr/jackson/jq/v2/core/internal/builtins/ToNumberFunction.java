@@ -6,6 +6,7 @@ import java.util.List;
 import com.google.auto.service.AutoService;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
@@ -48,7 +49,7 @@ public class ToNumberFunction implements Function {
 				}
 				throw new JsonQueryException(new NumberFormatException(String.format("For input string: \"%s\"", raw)));
 			} else {
-				throw new JsonQueryTypeException(jsonProvider, version, "%s cannot be parsed as a number", in);
+				throw new JsonQueryTypeException("%s cannot be parsed as a number", ExceptionMessages.describe(jsonProvider, version, in));
 			}
 		});
 	}

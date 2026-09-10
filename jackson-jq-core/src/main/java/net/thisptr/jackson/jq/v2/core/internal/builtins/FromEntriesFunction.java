@@ -29,7 +29,7 @@ public class FromEntriesFunction implements Function {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 			JsonNodeType inType = jsonProvider.getNodeType(in);
 			if (inType != JsonNodeType.ARRAY && inType != JsonNodeType.OBJECT)
-				throw new JsonQueryTypeException(jsonProvider, version, "Cannot iterate over %s", in);
+				throw new JsonQueryTypeException("Cannot iterate over %s", ExceptionMessages.describe(jsonProvider, version, in));
 
 			Map<String, JsonNode> result = new LinkedHashMap<>();
 			Iterator<JsonNode> iter = inType == JsonNodeType.ARRAY
@@ -48,7 +48,7 @@ public class FromEntriesFunction implements Function {
 				if (key == null)
 					key = jsonProvider.getObjectMember(entry, "Name");
 				if (key == null || !jsonProvider.isString(key))
-					throw new JsonQueryTypeException(jsonProvider, version, "Cannot use %s as object key", key == null ? jsonProvider.createNull() : key);
+					throw new JsonQueryTypeException("Cannot use %s as object key", ExceptionMessages.describe(jsonProvider, version, key == null ? jsonProvider.createNull() : key));
 
 				@Var JsonNode value = jsonProvider.getObjectMember(entry, "value");
 				if (value == null)

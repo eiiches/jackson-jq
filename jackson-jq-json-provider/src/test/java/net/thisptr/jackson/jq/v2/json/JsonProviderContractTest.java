@@ -751,19 +751,6 @@ public interface JsonProviderContractTest<T> {
 	}
 
 	// ===================
-	// isJsonNodeInstance Tests
-	// ===================
-
-	@Test
-	default void testIsJsonNodeInstance() {
-		T node = getProvider().createNull();
-		assertThat(getProvider().isJsonNodeInstance(node)).isTrue();
-		assertThat(getProvider().isJsonNodeInstance("not a node")).isFalse();
-		assertThat(getProvider().isJsonNodeInstance(42)).isFalse();
-		assertThat(getProvider().isJsonNodeInstance(null)).isFalse();
-	}
-
-	// ===================
 	// Edge Cases
 	// ===================
 
