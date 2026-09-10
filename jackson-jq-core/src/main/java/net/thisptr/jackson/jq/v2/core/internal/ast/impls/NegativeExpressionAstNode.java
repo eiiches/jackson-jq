@@ -3,7 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.ast.impls;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 
 public class NegativeExpressionAstNode implements AstNode {
-	private AstNode value;
+	private final AstNode value;
 
 	public NegativeExpressionAstNode(AstNode value) {
 		this.value = value;

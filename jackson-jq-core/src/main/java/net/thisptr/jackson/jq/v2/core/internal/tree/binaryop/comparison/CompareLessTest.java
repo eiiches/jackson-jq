@@ -6,7 +6,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 
 public class CompareLessTest<JsonNode> extends AbstractComparisonExpression<JsonNode> {
 	public CompareLessTest(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs) {
-		super(jsonProvider, lhs, rhs, "<");
+		super(jsonProvider, lhs, rhs);
 	}
 
 	@Override

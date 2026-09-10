@@ -21,7 +21,7 @@ public class AlternativeOperatorExpression<JsonNode> extends AbstractBinaryOpera
 	}
 
 	public AlternativeOperatorExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> valueExpr, Expression<StackFrame, JsonNode> defaultExpr) {
-		super(valueExpr, defaultExpr, "//");
+		super(valueExpr, defaultExpr);
 		this.jsonProvider = jsonProvider;
 	}
 

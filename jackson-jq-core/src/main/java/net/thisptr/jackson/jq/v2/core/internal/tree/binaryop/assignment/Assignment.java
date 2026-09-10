@@ -32,7 +32,7 @@ public class Assignment<JsonNode> extends AbstractBinaryOperatorExpression<JsonN
 	}
 
 	public Assignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, boolean inputFixed) {
-		super(lhs, rhs, "=");
+		super(lhs, rhs);
 		this.jsonProvider = jsonProvider;
 		this.version = version;
 		this.inputFixed = inputFixed;

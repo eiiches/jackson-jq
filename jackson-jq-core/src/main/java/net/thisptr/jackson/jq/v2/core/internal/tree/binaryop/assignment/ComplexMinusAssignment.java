@@ -9,7 +9,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class ComplexMinusAssignment<JsonNode> extends AbstractComplexAssignment<JsonNode> {
 	public ComplexMinusAssignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, boolean inputFixed) {
-		super(jsonProvider, lhs, rhs, "-", version, inputFixed);
+		super(jsonProvider, lhs, rhs, version, inputFixed);
 	}
 
 	@Override

@@ -6,19 +6,16 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class FunctionCallAstNode implements AstNode {
 	private final String name;
 	private final List<AstNode> args;
-	private final Version version;
 	private final @Nullable String moduleName;
 
-	public FunctionCallAstNode(@Nullable String moduleName, String name, List<AstNode> args, Version version) {
+	public FunctionCallAstNode(@Nullable String moduleName, String name, List<AstNode> args) {
 		this.moduleName = moduleName;
 		this.name = name;
 		this.args = args;
-		this.version = version;
 	}
 
 	public String name() {

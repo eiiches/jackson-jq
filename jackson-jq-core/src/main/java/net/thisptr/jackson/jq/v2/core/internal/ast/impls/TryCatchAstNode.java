@@ -5,8 +5,8 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 
 public class TryCatchAstNode implements AstNode {
-	protected AstNode tryExpr;
-	protected @Nullable AstNode catchExpr;
+	protected final AstNode tryExpr;
+	protected final @Nullable AstNode catchExpr;
 
 	public TryCatchAstNode(AstNode tryExpr, @Nullable AstNode catchExpr) {
 		this.tryExpr = tryExpr;

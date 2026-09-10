@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.utils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -13,7 +14,9 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ArrayConstructionAstNod
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ObjectConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ParenAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TupleAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.AbstractValueLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.BooleanLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.NullLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.NumericLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.StringLiteralAstNode;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
@@ -90,8 +93,14 @@ public class ExpressionUtils {
 			}
 
 			return jsonProvider.createArray(result);
-		} else if (expr instanceof AbstractValueLiteralAstNode) {
-			return ((AbstractValueLiteralAstNode) expr).value(jsonProvider);
+		} else if (expr instanceof BooleanLiteralAstNode) {
+			return jsonProvider.createBoolean(((BooleanLiteralAstNode) expr).value());
+		} else if (expr instanceof NullLiteralAstNode) {
+			return jsonProvider.createNull();
+		} else if (expr instanceof NumericLiteralAstNode) {
+			return jsonProvider.createNumber(new BigDecimal(((NumericLiteralAstNode) expr).text()));
+		} else if (expr instanceof StringLiteralAstNode) {
+			return jsonProvider.createString(((StringLiteralAstNode) expr).value());
 		} else {
 			return null;
 		}

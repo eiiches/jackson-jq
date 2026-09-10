@@ -182,9 +182,4 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 				memory.setGlobal(entry.getValue(), factory);
 		}
 	}
-
-	@Override
-	public String toString() {
-		return inner.toString();
-	}
 }

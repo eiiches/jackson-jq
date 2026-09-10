@@ -5,7 +5,6 @@ import java.util.Set;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ThisObject;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -30,10 +29,6 @@ public class StringFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> {
 		this.field = field;
 	}
 
-	public Expression<StackFrame, JsonNode> key() {
-		return field;
-	}
-
 	@Override
 	public boolean dependsOnInput() {
 		return super.dependsOnInput() || field.dependsOnInput();
@@ -52,18 +47,6 @@ public class StringFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> {
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return FreeVariables.anyOpaque(target, field);
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		if (!(target instanceof ThisObject))
-			builder.append(target.toString());
-		builder.append(".");
-		builder.append(field);
-		if (permissive)
-			builder.append("?");
-		return builder.toString();
 	}
 
 	@Override

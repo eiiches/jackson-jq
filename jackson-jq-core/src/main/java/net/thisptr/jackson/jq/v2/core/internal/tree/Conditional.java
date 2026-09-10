@@ -21,8 +21,8 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class Conditional<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
-	private Expression<StackFrame, JsonNode> otherwise;
-	private List<Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>>> switches;
+	private final Expression<StackFrame, JsonNode> otherwise;
+	private final List<Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>>> switches;
 	private final boolean dependsOnInput;
 	private final boolean dependsOnExternalState;
 	private final Set<Integer> freeLocalSlots;
@@ -67,14 +67,6 @@ public class Conditional<JsonNode> implements Expression<StackFrame, JsonNode>, 
 		this.freeLocalSlots = slots;
 	}
 
-	public List<Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>>> switches() {
-		return switches;
-	}
-
-	public Expression<StackFrame, JsonNode> otherwise() {
-		return otherwise;
-	}
-
 	@Override
 	public boolean dependsOnInput() {
 		return dependsOnInput;
@@ -117,27 +109,5 @@ public class Conditional<JsonNode> implements Expression<StackFrame, JsonNode>, 
 				applyBranch(frame, in, path, output, switchIndex + 1);
 			}
 		}
-	}
-
-	@Override
-	public String toString() {
-		@Var String ifstr = "if";
-		StringBuilder builder = new StringBuilder();
-		for (Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>> sw : switches) {
-			builder.append(ifstr);
-			builder.append(" ");
-			builder.append(sw._1 != null ? sw._1 : "null");
-			builder.append(" ");
-			builder.append("then");
-			builder.append(" ");
-			builder.append(sw._2 != null ? sw._2 : "null");
-			builder.append(" ");
-			ifstr = "elif";
-		}
-		builder.append("else ");
-		builder.append(otherwise != null ? otherwise : "null");
-		builder.append(" ");
-		builder.append("end");
-		return builder.toString();
 	}
 }

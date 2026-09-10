@@ -12,7 +12,6 @@ jjq_java_library(
     deps = [
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/exception",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/memory",
-        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/tree/literal",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/tree/matcher",
         "//jackson-jq-json-provider",
         "//jackson-jq-spi",

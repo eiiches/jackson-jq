@@ -3,8 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.json;
 import java.util.List;
 import java.util.Locale;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.commons.collection.Lists;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -53,9 +51,9 @@ public class JsonNodeUtils {
 		return jsonProvider.format(node);
 	}
 
-	public static <JsonNode> String toString(JsonProvider<JsonNode> jsonProvider, JsonNode node, @Nullable Version version) {
+	public static <JsonNode> String toString(JsonProvider<JsonNode> jsonProvider, JsonNode node, Version version) {
 		String text = jsonProvider.format(node);
-		if (version != null && version.compareTo(Versions.JQ_1_7) < 0) {
+		if (version.compareTo(Versions.JQ_1_7) < 0) {
 			if (jsonProvider.isNumber(node)) {
 				return text.replace('E', 'e');
 			}

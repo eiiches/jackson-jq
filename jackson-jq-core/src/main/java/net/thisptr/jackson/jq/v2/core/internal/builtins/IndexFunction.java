@@ -5,6 +5,7 @@ import java.util.List;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
+import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathOperations;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -18,18 +19,9 @@ public class IndexFunction implements Function {
 	@Override
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
-			if (jsonProvider.isNull(in)) {
-				output.emit(jsonProvider.createNull(), UntrackedPath.getInstance());
-				return;
-			}
-
 			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (needle, opath) -> {
-				List<Integer> tmp = IndicesFunction.indices(jsonProvider, needle, in);
-				if (tmp.isEmpty()) {
-					output.emit(jsonProvider.createNull(), UntrackedPath.getInstance());
-				} else {
-					output.emit(jsonProvider.createNumber(tmp.get(0)), UntrackedPath.getInstance());
-				}
+				IndicesFunction.emitIndices(jsonProvider, needle, in, version,
+						(indices, path) -> PathOperations.resolveArrayIndex(jsonProvider, indices, UntrackedPath.getInstance(), output, 0, false, version));
 			});
 		});
 	}

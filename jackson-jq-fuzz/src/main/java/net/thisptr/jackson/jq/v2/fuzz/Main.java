@@ -177,15 +177,15 @@ public class Main {
 			generators.add(new RandomGenerator(2, (exprs) -> new PipedQueryAstNode(Arrays.asList(new PipedQueryAstNode.AssignPipeComponent(new ParenAstNode(exprs.get(0)), new ValueMatcherAstNode("x")), new PipedQueryAstNode.TransformPipeComponent(new ArrayConstructionAstNode(new TupleAstNode(Arrays.asList(new VariableAccessAstNode("x"), exprs.get(1)))))))));
 			generators.add(new RandomGenerator(3, (exprs) -> new PipedQueryAstNode(Arrays.asList(new PipedQueryAstNode.AssignPipeComponent(new ParenAstNode(exprs.get(0)), new ValueMatcherAstNode("x")), new PipedQueryAstNode.TransformPipeComponent(new ConditionalAstNode(Collections.singletonList(Pair.of(new VariableAccessAstNode("x"), exprs.get(1))), exprs.get(2)))))));
 			generators.add(new RandomGenerator(1, (exprs) -> new PipedQueryAstNode(Arrays.asList(new PipedQueryAstNode.AssignPipeComponent(new ParenAstNode(exprs.get(0)), new ArrayMatcherAstNode(Arrays.asList(new ValueMatcherAstNode("a"), new ValueMatcherAstNode("b")))), new PipedQueryAstNode.TransformPipeComponent(new ArrayConstructionAstNode(new TupleAstNode(Arrays.asList(new VariableAccessAstNode("b"), new VariableAccessAstNode("a")))))))));
-			generators.add(new RandomGenerator(1, (exprs) -> new PipedQueryAstNode(Arrays.asList(new PipedQueryAstNode.AssignPipeComponent(new ParenAstNode(exprs.get(0)), new ObjectMatcherAstNode(Arrays.asList(new ObjectMatcherAstNode.FieldMatcher(true, new StringLiteralAstNode("a"), null), new ObjectMatcherAstNode.FieldMatcher(true, new StringLiteralAstNode("b"), null)))), new PipedQueryAstNode.TransformPipeComponent(new ArrayConstructionAstNode(new TupleAstNode(Arrays.asList(new VariableAccessAstNode("a"), new VariableAccessAstNode("b")))))))));
-			generators.add(new RandomGenerator(1, (exprs) -> new PipedQueryAstNode(Arrays.asList(new PipedQueryAstNode.AssignPipeComponent(new ParenAstNode(exprs.get(0)), new ObjectMatcherAstNode(Arrays.asList(new ObjectMatcherAstNode.FieldMatcher(false, new StringLiteralAstNode("foo"), new ValueMatcherAstNode("a")), new ObjectMatcherAstNode.FieldMatcher(false, new StringLiteralAstNode("bar"), new ValueMatcherAstNode("b"))))), new PipedQueryAstNode.TransformPipeComponent(new ArrayConstructionAstNode(new TupleAstNode(Arrays.asList(new VariableAccessAstNode("a"), new VariableAccessAstNode("b")))))))));
+			generators.add(new RandomGenerator(1, (exprs) -> new PipedQueryAstNode(Arrays.asList(new PipedQueryAstNode.AssignPipeComponent(new ParenAstNode(exprs.get(0)), new ObjectMatcherAstNode(Arrays.asList(new ObjectMatcherAstNode.ConstantKeyFieldMatcher(true, "a", null), new ObjectMatcherAstNode.ConstantKeyFieldMatcher(true, "b", null)))), new PipedQueryAstNode.TransformPipeComponent(new ArrayConstructionAstNode(new TupleAstNode(Arrays.asList(new VariableAccessAstNode("a"), new VariableAccessAstNode("b")))))))));
+			generators.add(new RandomGenerator(1, (exprs) -> new PipedQueryAstNode(Arrays.asList(new PipedQueryAstNode.AssignPipeComponent(new ParenAstNode(exprs.get(0)), new ObjectMatcherAstNode(Arrays.asList(new ObjectMatcherAstNode.ConstantKeyFieldMatcher(false, "foo", new ValueMatcherAstNode("a")), new ObjectMatcherAstNode.ConstantKeyFieldMatcher(false, "bar", new ValueMatcherAstNode("b"))))), new PipedQueryAstNode.TransformPipeComponent(new ArrayConstructionAstNode(new TupleAstNode(Arrays.asList(new VariableAccessAstNode("a"), new VariableAccessAstNode("b")))))))));
 			generators.add(new RandomGenerator(3, (exprs) -> new PipedQueryAstNode(Arrays.asList(new PipedQueryAstNode.LabelPipeComponent("out"), new PipedQueryAstNode.TransformPipeComponent(new TupleAstNode(Arrays.asList(exprs.get(0), new ConditionalAstNode(Collections.singletonList(Pair.of(exprs.get(1), new BreakExpressionAstNode("out"))), exprs.get(2)))))))));
 
 			// Reduce & Foreach
 			generators.add(new RandomGenerator(3, (exprs) -> new ReduceExpressionAstNode(new ValueMatcherAstNode("x"), exprs.get(1), exprs.get(2), new ParenAstNode(exprs.get(0)))));
 			generators.add(new RandomGenerator(2, (exprs) -> new ReduceExpressionAstNode(new ValueMatcherAstNode("x"), exprs.get(1), new BinaryOpAstNode(BinaryOperator.PLUS, new ThisObjectAstNode(), new VariableAccessAstNode("x")), new ParenAstNode(exprs.get(0)))));
 			generators.add(new RandomGenerator(2, (exprs) -> new ReduceExpressionAstNode(new ArrayMatcherAstNode(Arrays.asList(new ValueMatcherAstNode("a"), new ValueMatcherAstNode("b"))), exprs.get(1), new BinaryOpAstNode(BinaryOperator.PLUS, new BinaryOpAstNode(BinaryOperator.PLUS, new ThisObjectAstNode(), new VariableAccessAstNode("a")), new VariableAccessAstNode("b")), new ParenAstNode(exprs.get(0)))));
-			generators.add(new RandomGenerator(2, (exprs) -> new ReduceExpressionAstNode(new ObjectMatcherAstNode(Arrays.asList(new ObjectMatcherAstNode.FieldMatcher(true, new StringLiteralAstNode("a"), null), new ObjectMatcherAstNode.FieldMatcher(true, new StringLiteralAstNode("b"), null))), exprs.get(1), new BinaryOpAstNode(BinaryOperator.PLUS, new BinaryOpAstNode(BinaryOperator.PLUS, new ThisObjectAstNode(), new VariableAccessAstNode("a")), new VariableAccessAstNode("b")), new ParenAstNode(exprs.get(0)))));
+			generators.add(new RandomGenerator(2, (exprs) -> new ReduceExpressionAstNode(new ObjectMatcherAstNode(Arrays.asList(new ObjectMatcherAstNode.ConstantKeyFieldMatcher(true, "a", null), new ObjectMatcherAstNode.ConstantKeyFieldMatcher(true, "b", null))), exprs.get(1), new BinaryOpAstNode(BinaryOperator.PLUS, new BinaryOpAstNode(BinaryOperator.PLUS, new ThisObjectAstNode(), new VariableAccessAstNode("a")), new VariableAccessAstNode("b")), new ParenAstNode(exprs.get(0)))));
 			generators.add(new RandomGenerator(3, (exprs) -> new ForeachExpressionAstNode(new ValueMatcherAstNode("x"), exprs.get(1), exprs.get(2), null, new ParenAstNode(exprs.get(0)))));
 			generators.add(new RandomGenerator(2, (exprs) -> new ForeachExpressionAstNode(new ValueMatcherAstNode("x"), exprs.get(1), new BinaryOpAstNode(BinaryOperator.PLUS, new ThisObjectAstNode(), new VariableAccessAstNode("x")), null, new ParenAstNode(exprs.get(0)))));
 			generators.add(new RandomGenerator(4, (exprs) -> new ForeachExpressionAstNode(new ValueMatcherAstNode("x"), exprs.get(1), exprs.get(2), exprs.get(3), new ParenAstNode(exprs.get(0)))));
@@ -288,32 +288,32 @@ public class Main {
 			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode("foo  bar", Collections.singletonList(Pair.of(4, exprs.get(0))), null)));
 			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode("", Collections.singletonList(Pair.of(0, exprs.get(0))), null)));
 			generators.add(new RandomGenerator(2, (exprs) -> new StringInterpolationAstNode(" - ", Arrays.asList(Pair.of(0, exprs.get(0)), Pair.of(3, exprs.get(1))), null)));
-			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode("foo ", Collections.singletonList(Pair.of(4, exprs.get(0))), new FormattingFilterAstNode("uri", version))));
-			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode("foo ", Collections.singletonList(Pair.of(4, exprs.get(0))), new FormattingFilterAstNode("json", version))));
+			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode("foo ", Collections.singletonList(Pair.of(4, exprs.get(0))), new FormattingFilterAstNode("uri"))));
+			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode("foo ", Collections.singletonList(Pair.of(4, exprs.get(0))), new FormattingFilterAstNode("json"))));
 
 			for (String fmt : Arrays.asList("base64", "json", "uri", "csv", "tsv", "sh", "html", "text")) {
-				generators.add(new RandomGenerator(0, (exprs) -> new FormattingFilterAstNode(fmt, version)));
+				generators.add(new RandomGenerator(0, (exprs) -> new FormattingFilterAstNode(fmt)));
 			}
 			if (version.compareTo(Versions.JQ_1_6) >= 0) {
-				generators.add(new RandomGenerator(0, (exprs) -> new FormattingFilterAstNode("base64d", version)));
+				generators.add(new RandomGenerator(0, (exprs) -> new FormattingFilterAstNode("base64d")));
 			}
 
 			// User-Defined Functions
 			generators.add(new RandomGenerator(1, (exprs) -> new SemicolonOperatorAstNode(Arrays.asList(
 					new FunctionDefinitionAstNode("f", Collections.emptyList(), exprs.get(0)),
-					new FunctionCallAstNode(null, "f", Collections.emptyList(), version)))));
+					new FunctionCallAstNode(null, "f", Collections.emptyList())))));
 			generators.add(new RandomGenerator(2, (exprs) -> new SemicolonOperatorAstNode(Arrays.asList(
 					new FunctionDefinitionAstNode("f", Collections.emptyList(), exprs.get(0)),
-					new PipedQueryAstNode(Arrays.asList(new PipedQueryAstNode.TransformPipeComponent(exprs.get(1)), new PipedQueryAstNode.TransformPipeComponent(new FunctionCallAstNode(null, "f", Collections.emptyList(), version))))))));
+					new PipedQueryAstNode(Arrays.asList(new PipedQueryAstNode.TransformPipeComponent(exprs.get(1)), new PipedQueryAstNode.TransformPipeComponent(new FunctionCallAstNode(null, "f", Collections.emptyList()))))))));
 			generators.add(new RandomGenerator(2, (exprs) -> new SemicolonOperatorAstNode(Arrays.asList(
 					new FunctionDefinitionAstNode("f", Collections.singletonList("a"), exprs.get(0)),
-					new FunctionCallAstNode(null, "f", Collections.singletonList(exprs.get(1)), version)))));
+					new FunctionCallAstNode(null, "f", Collections.singletonList(exprs.get(1)))))));
 			generators.add(new RandomGenerator(3, (exprs) -> new SemicolonOperatorAstNode(Arrays.asList(
 					new FunctionDefinitionAstNode("f", Collections.singletonList("a"), exprs.get(0)),
-					new PipedQueryAstNode(Arrays.asList(new PipedQueryAstNode.TransformPipeComponent(exprs.get(1)), new PipedQueryAstNode.TransformPipeComponent(new FunctionCallAstNode(null, "f", Collections.singletonList(exprs.get(2)), version))))))));
+					new PipedQueryAstNode(Arrays.asList(new PipedQueryAstNode.TransformPipeComponent(exprs.get(1)), new PipedQueryAstNode.TransformPipeComponent(new FunctionCallAstNode(null, "f", Collections.singletonList(exprs.get(2))))))))));
 			generators.add(new RandomGenerator(3, (exprs) -> new SemicolonOperatorAstNode(Arrays.asList(
 					new FunctionDefinitionAstNode("f", Arrays.asList("a", "b"), exprs.get(0)),
-					new FunctionCallAstNode(null, "f", Arrays.asList(exprs.get(1), exprs.get(2)), version)))));
+					new FunctionCallAstNode(null, "f", Arrays.asList(exprs.get(1), exprs.get(2)))))));
 
 			Set<String> exclusions = new HashSet<>(ALWAYS_EXCLUDED_FUNCTIONS);
 			exclusions.addAll(EXCLUDED_FUNCTIONS.getOrDefault(v, Collections.emptySet()));
@@ -326,9 +326,9 @@ public class Main {
 					String name = signature.split("/", 2)[0];
 					if (exclusions.contains(name))
 						return;
-					generators.add(new RandomGenerator(numArgs, (exprs) -> new FunctionCallAstNode(null, name, exprs, v)));
+					generators.add(new RandomGenerator(numArgs, (exprs) -> new FunctionCallAstNode(null, name, exprs)));
 				} else {
-					generators.add(new RandomGenerator(0, 10, (exprs) -> new FunctionCallAstNode(null, signature, exprs, v)));
+					generators.add(new RandomGenerator(0, 10, (exprs) -> new FunctionCallAstNode(null, signature, exprs)));
 				}
 			});
 			return generators;
@@ -369,7 +369,7 @@ public class Main {
 		expressions.add(new StringLiteralAstNode("value"));
 		expressions.add(new StringLiteralAstNode("{}"));
 		expressions.add(new StringLiteralAstNode("[]"));
-		expressions.add(new FunctionCallAstNode(null, "empty", Collections.emptyList(), version));
+		expressions.add(new FunctionCallAstNode(null, "empty", Collections.emptyList()));
 		expressions.add(new StringLiteralAstNode("\r"));
 		expressions.add(new StringLiteralAstNode("\n"));
 		expressions.add(new StringLiteralAstNode("\t"));

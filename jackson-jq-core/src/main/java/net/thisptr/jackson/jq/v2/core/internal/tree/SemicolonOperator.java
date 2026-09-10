@@ -3,8 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 import java.util.List;
 import java.util.Set;
 
-import com.google.errorprone.annotations.Var;
-
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -15,7 +13,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class SemicolonOperator<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
-	private List<Expression<StackFrame, JsonNode>> qs;
+	private final List<Expression<StackFrame, JsonNode>> qs;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -33,10 +31,6 @@ public class SemicolonOperator<JsonNode> implements Expression<StackFrame, JsonN
 		this.dependsOnExternalState = qs.stream().anyMatch(Expression::dependsOnExternalState);
 		this.freeLocalSlots = FreeVariables.unionAll(qs);
 		this.hasOpaqueVariableReference = FreeVariables.anyOpaqueIn(qs);
-	}
-
-	public List<Expression<StackFrame, JsonNode>> expressions() {
-		return qs;
 	}
 
 	@Override
@@ -67,17 +61,5 @@ public class SemicolonOperator<JsonNode> implements Expression<StackFrame, JsonN
 			q.apply(frame, in, UntrackedPath.getInstance(), (out, opath) -> {
 			});
 		qs.get(qs.size() - 1).apply(frame, in, path, output);
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		@Var String sep = "";
-		for (Expression<StackFrame, JsonNode> q : qs) {
-			builder.append(sep);
-			builder.append(q);
-			sep = "; ";
-		}
-		return builder.toString();
 	}
 }

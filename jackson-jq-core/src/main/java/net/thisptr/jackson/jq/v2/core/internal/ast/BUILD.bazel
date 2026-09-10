@@ -7,5 +7,4 @@ jjq_java_library(
     ],
     release = 8,
     visibility = ["//jackson-jq-core:__subpackages__"],
-    deps = ["//jackson-jq-spi"],
 )

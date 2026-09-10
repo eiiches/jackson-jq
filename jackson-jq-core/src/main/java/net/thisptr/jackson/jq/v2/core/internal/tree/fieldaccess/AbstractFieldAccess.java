@@ -12,7 +12,6 @@ import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathOperations;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathUtils;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -31,14 +30,6 @@ public abstract class AbstractFieldAccess<JsonNode> implements Expression<StackF
 		this.target = target;
 		this.permissive = permissive;
 		this.version = version;
-	}
-
-	public Expression<StackFrame, JsonNode> target() {
-		return target;
-	}
-
-	public boolean permissive() {
-		return permissive;
 	}
 
 	@Override
@@ -103,10 +94,6 @@ public abstract class AbstractFieldAccess<JsonNode> implements Expression<StackF
 	}
 
 	protected static <JsonNode> void emitIndexRangePath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode start, JsonNode end, JsonNode pobj, Path<JsonNode> ppath, Output<JsonNode> output, boolean tracking, Version version) throws JsonQueryException {
-		JsonNodeType startType = jsonProvider.getNodeType(start);
-		JsonNodeType endType = jsonProvider.getNodeType(end);
-		assert startType == JsonNodeType.NULL || startType == JsonNodeType.NUMBER;
-		assert endType == JsonNodeType.NULL || endType == JsonNodeType.NUMBER;
 		if (tracking && PathUtils.isLost(ppath)) {
 			Map<String, JsonNode> subpath = new LinkedHashMap<>();
 			subpath.put("start", start);

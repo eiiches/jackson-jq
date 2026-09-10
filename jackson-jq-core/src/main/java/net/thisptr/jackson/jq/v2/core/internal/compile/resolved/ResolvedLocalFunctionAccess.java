@@ -86,9 +86,4 @@ public class ResolvedLocalFunctionAccess<JsonNode> implements Expression<StackFr
 			throw new JsonQueryException("Function " + name + " is not defined");
 		factory.bindArguments(jsonProvider, args, version).apply(frame, in, ipath, output);
 	}
-
-	@Override
-	public String toString() {
-		return name;
-	}
 }

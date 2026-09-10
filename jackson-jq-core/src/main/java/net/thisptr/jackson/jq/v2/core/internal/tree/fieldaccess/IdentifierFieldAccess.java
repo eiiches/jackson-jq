@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ThisObject;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -26,22 +25,6 @@ public class IdentifierFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNod
 	public IdentifierFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> obj, String field, boolean permissive, Version version) {
 		super(jsonProvider, obj, permissive, version);
 		this.field = field;
-	}
-
-	public String field() {
-		return field;
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		if (!(target instanceof ThisObject))
-			builder.append(target.toString());
-		builder.append(".");
-		builder.append(field);
-		if (permissive)
-			builder.append("?");
-		return builder.toString();
 	}
 
 	@Override

@@ -12,9 +12,4 @@ public class Lists {
 			result.add(iter.next());
 		return result;
 	}
-
-	public static <T> List<T> newArrayList(Iterable<T> iter) {
-		return newArrayList(iter.iterator());
-	}
-
 }

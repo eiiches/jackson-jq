@@ -13,7 +13,7 @@ public class ModuloExpression<JsonNode> extends AbstractSimpleBinaryOperatorExpr
 	private final Version version;
 
 	public ModuloExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version) {
-		super(jsonProvider, lhs, rhs, "%");
+		super(jsonProvider, lhs, rhs);
 		this.version = Objects.requireNonNull(version, "version");
 	}
 

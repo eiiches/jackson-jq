@@ -19,14 +19,4 @@ public class AssignPipeComponent<JsonNode> implements PipeComponent<JsonNode> {
 		this.matcher = matcher;
 		this.boundSlots = boundSlots;
 	}
-
-	@Override
-	public boolean canTerminatePipe() {
-		return false;
-	}
-
-	@Override
-	public String toString() {
-		return expr + " as " + matcher;
-	}
 }

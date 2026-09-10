@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.compile;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -117,15 +118,13 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketExtractFi
 import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketFieldAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.IdentifierFieldAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.StringFieldAccess;
-import net.thisptr.jackson.jq.v2.core.internal.tree.literal.BooleanLiteral;
-import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral;
-import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NumericLiteral;
-import net.thisptr.jackson.jq.v2.core.internal.tree.literal.StringLiteral;
+import net.thisptr.jackson.jq.v2.core.internal.tree.literal.ValueLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ArrayMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ObjectMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
+import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -264,7 +263,7 @@ public class Compiler {
 					throw new JsonQueryException(String.format("Function %s::%s/%d does not exist", call.moduleName(), call.name(), compiledArgs.size()));
 				}
 				Expression<StackFrame, JsonNode> fn = factory.bindArguments(env.getJsonProvider(), compiledArgs, env.getJqVersion());
-				Expression<StackFrame, JsonNode> result = new ResolvedFunctionCall<>(call.moduleName() + "::" + call.name(), fn, fn.dependsOnExternalState(), fn.dependsOnInput(), inputFixed, compiledArgs);
+				Expression<StackFrame, JsonNode> result = new ResolvedFunctionCall<>(fn, fn.dependsOnExternalState(), fn.dependsOnInput(), inputFixed, compiledArgs);
 				return restoreFixedInput(result, inputFixed);
 			}
 
@@ -299,7 +298,7 @@ public class Compiler {
 				}
 			}
 			Expression<StackFrame, JsonNode> compiledInner = compileNonNull(env, context, currentModule, top.expr());
-			return new TopLevelExpression<>(top.moduleDirective(), Collections.emptyList(), compiledInner);
+			return new TopLevelExpression<>(compiledInner);
 		}
 
 		if (ast instanceof PipedQueryAstNode) {
@@ -440,7 +439,7 @@ public class Compiler {
 			TryCatchAstNode tc = (TryCatchAstNode) ast;
 			Expression<StackFrame, JsonNode> newTry = compileNonNull(env, context, tc.tryExpr());
 			if (tc instanceof TryCatchAstNode.Question) {
-				return new TryCatch.Question<>(env.getJsonProvider(), newTry);
+				return new TryCatch<>(env.getJsonProvider(), newTry, env.getJqVersion());
 			}
 			// catchExpr sees the caught error message, not `.` -- its `.` is input-independent iff tryExpr's is.
 			boolean savedInputFixed = context.isInputFixed();
@@ -451,7 +450,7 @@ public class Compiler {
 			} finally {
 				context.setInputFixed(savedInputFixed);
 			}
-			return new TryCatch<>(env.getJsonProvider(), newTry, newCatch);
+			return new TryCatch<>(env.getJsonProvider(), newTry, newCatch, env.getJqVersion());
 		}
 
 		if (ast instanceof TupleAstNode) {
@@ -569,9 +568,9 @@ public class Compiler {
 			@Var Expression<StackFrame, JsonNode> start = compile(env, context, bfa.startExpr());
 			@Var Expression<StackFrame, JsonNode> end = compile(env, context, bfa.endExpr());
 			if (start == null)
-				start = new NullLiteral<>(env.getJsonProvider());
+				start = new ValueLiteral<>(env.getJsonProvider().createNull());
 			if (end == null)
-				end = new NullLiteral<>(env.getJsonProvider());
+				end = new ValueLiteral<>(env.getJsonProvider().createNull());
 			if (bfa.isRange()) {
 				return new BracketFieldAccess<>(env.getJsonProvider(), target, start, end, bfa.permissive(), env.getJqVersion());
 			} else {
@@ -599,20 +598,19 @@ public class Compiler {
 		}
 
 		if (ast instanceof BooleanLiteralAstNode) {
-			return new BooleanLiteral<>(env.getJsonProvider(), ((BooleanLiteralAstNode) ast).value());
+			return new ValueLiteral<>(env.getJsonProvider().createBoolean(((BooleanLiteralAstNode) ast).value()));
 		}
 
 		if (ast instanceof NumericLiteralAstNode) {
-			JsonProvider<JsonNode> jsonProvider = env.getJsonProvider();
-			return new NumericLiteral<>(jsonProvider, ((NumericLiteralAstNode) ast).value(jsonProvider));
+			return new ValueLiteral<>(env.getJsonProvider().createNumber(new BigDecimal(((NumericLiteralAstNode) ast).text())));
 		}
 
 		if (ast instanceof NullLiteralAstNode) {
-			return new NullLiteral<>(env.getJsonProvider());
+			return new ValueLiteral<>(env.getJsonProvider().createNull());
 		}
 
 		if (ast instanceof StringLiteralAstNode) {
-			return new StringLiteral<>(env.getJsonProvider(), ((StringLiteralAstNode) ast).value());
+			return new ValueLiteral<>(env.getJsonProvider().createString(((StringLiteralAstNode) ast).value()));
 		}
 
 		if (ast instanceof ThisObjectAstNode) {
@@ -620,7 +618,7 @@ public class Compiler {
 		}
 
 		if (ast instanceof RecursionOperatorAstNode) {
-			return new RecursionOperator<>(env.getJsonProvider(), !context.isInputFixed());
+			return new RecursionOperator<>(env.getJsonProvider(), !context.isInputFixed(), env.getJqVersion().compareTo(Versions.JQ_1_6) >= 0);
 		}
 
 		if (ast instanceof BreakExpressionAstNode) {
@@ -769,7 +767,7 @@ public class Compiler {
 		if (factory == null)
 			throw new JsonQueryException(String.format("Function %s/%d does not exist", fullName, arity));
 		Expression<StackFrame, N> fn = factory.bindArguments(env.getJsonProvider(), compiledArgs, env.getJqVersion());
-		return new ResolvedFunctionCall<>(fullName, fn, fn.dependsOnExternalState(), fn.dependsOnInput(), context.isInputFixed(), compiledArgs);
+		return new ResolvedFunctionCall<>(fn, fn.dependsOnExternalState(), fn.dependsOnInput(), context.isInputFixed(), compiledArgs);
 	}
 
 	/**
@@ -877,13 +875,26 @@ public class Compiler {
 			ObjectMatcherAstNode om = (ObjectMatcherAstNode) matcher;
 			List<ObjectMatcher.FieldMatcher<N>> compiled = new ArrayList<>();
 			for (ObjectMatcherAstNode.FieldMatcher fm : om.matchers()) {
-				Expression<StackFrame, N> name = compileNonNull(env, context, fm.name());
-				PatternMatcher<N> sub = fm.rawMatcher() != null ? compileMatcher(env, context, fm.rawMatcher()) : null;
-				compiled.add(new ObjectMatcher.FieldMatcher<>(fm.dollar(), name, sub));
+				compiled.add(compileFieldMatcher(env, context, fm));
 			}
 			return new ObjectMatcher<>(env.getJsonProvider(), compiled, env.getJqVersion());
 		}
 		throw new IllegalStateException("Unknown matcher type: " + matcher.getClass());
+	}
+
+	private static <N> ObjectMatcher.FieldMatcher<N> compileFieldMatcher(Environment<N> env, CompileContext context, ObjectMatcherAstNode.FieldMatcher fm) throws JsonQueryException {
+		if (fm instanceof ObjectMatcherAstNode.ConstantKeyFieldMatcher) {
+			ObjectMatcherAstNode.ConstantKeyFieldMatcher ckfm = (ObjectMatcherAstNode.ConstantKeyFieldMatcher) fm;
+			Expression<StackFrame, N> name = new ValueLiteral<>(env.getJsonProvider().createString(ckfm.name()));
+			PatternMatcherAstNode sub = ckfm.matcher();
+			return new ObjectMatcher.FieldMatcher<>(ckfm.dollar(), ckfm.dollar() ? ckfm.name() : null, name, sub != null ? compileMatcher(env, context, sub) : null);
+		}
+		if (fm instanceof ObjectMatcherAstNode.ExpressionKeyFieldMatcher) {
+			ObjectMatcherAstNode.ExpressionKeyFieldMatcher ekfm = (ObjectMatcherAstNode.ExpressionKeyFieldMatcher) fm;
+			Expression<StackFrame, N> name = compileNonNull(env, context, ekfm.name());
+			return new ObjectMatcher.FieldMatcher<>(false, null, name, compileMatcher(env, context, ekfm.matcher()));
+		}
+		throw new IllegalStateException("Unknown field matcher type: " + fm.getClass());
 	}
 
 	public static <N> void bindAndApply(StackFrame callerFrame, StackFrame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<StackFrame, N>> fnArgs, N in, Path<N> path, Output<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
@@ -932,16 +943,18 @@ public class Compiler {
 			}
 		} else if (matcher instanceof ObjectMatcherAstNode) {
 			for (ObjectMatcherAstNode.FieldMatcher fm : ((ObjectMatcherAstNode) matcher).matchers()) {
-				if (fm.dollar() && fm.name() instanceof StringLiteralAstNode) {
-					out.add(((StringLiteralAstNode) fm.name()).value());
+				if (fm instanceof ObjectMatcherAstNode.ConstantKeyFieldMatcher) {
+					ObjectMatcherAstNode.ConstantKeyFieldMatcher ckfm = (ObjectMatcherAstNode.ConstantKeyFieldMatcher) fm;
+					if (ckfm.dollar())
+						out.add(ckfm.name());
 				}
-				if (fm.rawMatcher() != null) {
-					collectVariableNames(fm.rawMatcher(), out);
+				PatternMatcherAstNode sub = fm.matcher();
+				if (sub != null) {
+					collectVariableNames(sub, out);
 				}
 			}
 		}
 	}
-
 
 	public static <JsonNode> Expression<StackFrame, JsonNode> compileNonNull(Environment<JsonNode> env, CompileContext context, AstNode ast) throws JsonQueryException {
 		return compileNonNull(env, context, (Module) null, ast);

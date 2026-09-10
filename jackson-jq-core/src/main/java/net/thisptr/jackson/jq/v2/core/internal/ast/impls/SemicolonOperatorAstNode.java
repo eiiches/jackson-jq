@@ -7,7 +7,7 @@ import com.google.errorprone.annotations.Var;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 
 public class SemicolonOperatorAstNode implements AstNode {
-	private List<AstNode> qs;
+	private final List<AstNode> qs;
 
 	public SemicolonOperatorAstNode(List<AstNode> qs) {
 		this.qs = qs;

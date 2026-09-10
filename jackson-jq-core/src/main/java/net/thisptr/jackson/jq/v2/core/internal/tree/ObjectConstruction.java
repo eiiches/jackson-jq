@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.errorprone.annotations.Var;
-
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
@@ -90,18 +88,5 @@ public class ObjectConstruction<JsonNode> implements Expression<StackFrame, Json
 			applyRecursive(jsonProvider, frame, in, output, fields.subList(1, fields.size()), tmp);
 			tmp.remove(k);
 		});
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder("{");
-		@Var String sep = "";
-		for (FieldConstruction<JsonNode> field : fields) {
-			builder.append(sep);
-			builder.append(field);
-			sep = ",";
-		}
-		builder.append("}");
-		return builder.toString();
 	}
 }

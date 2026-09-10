@@ -61,13 +61,4 @@ public class IdentifierKeyFieldConstruction<JsonNode> implements FieldConstructi
 			value.apply(frame, in, UntrackedPath.getInstance(), (v, opath) -> consumer.accept(key, v));
 		}
 	}
-
-	@Override
-	public String toString() {
-		if (value == null) {
-			return key;
-		} else {
-			return key + ": " + value.toString();
-		}
-	}
 }

@@ -18,8 +18,8 @@ public abstract class AbstractSimpleBinaryOperatorExpression<JsonNode> extends A
 		return CardinalityUtils.multiply(lhs.getCardinality(), rhs.getCardinality());
 	}
 
-	public AbstractSimpleBinaryOperatorExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, String image) {
-		super(lhs, rhs, image);
+	public AbstractSimpleBinaryOperatorExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs) {
+		super(lhs, rhs);
 		this.jsonProvider = jsonProvider;
 	}
 

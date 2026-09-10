@@ -3,7 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.commons.strings.UnicodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
@@ -30,11 +29,7 @@ public class LengthFunction implements Function {
 		});
 	}
 
-	public <JsonNode> JsonNode length(JsonProvider<JsonNode> jsonProvider, JsonNode in) throws JsonQueryException {
-		return length(jsonProvider, in, null);
-	}
-
-	public <JsonNode> JsonNode length(JsonProvider<JsonNode> jsonProvider, JsonNode in, @Nullable Version version) throws JsonQueryException {
+	private <JsonNode> JsonNode length(JsonProvider<JsonNode> jsonProvider, JsonNode in, Version version) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type == JsonNodeType.STRING) {
 			return jsonProvider.createNumber(UnicodeUtils.lengthUtf32(jsonProvider.getString(in)));

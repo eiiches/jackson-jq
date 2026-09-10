@@ -1,9 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal;
 
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
-
 public class StringLiteralAstNode extends AbstractValueLiteralAstNode {
-	private String text;
+	private final String text;
 
 	public StringLiteralAstNode(String text) {
 		this.text = text;
@@ -14,11 +12,6 @@ public class StringLiteralAstNode extends AbstractValueLiteralAstNode {
 	 */
 	public String value() {
 		return text;
-	}
-
-	@Override
-	public <JsonNode> JsonNode value(JsonProvider<JsonNode> jsonProvider) {
-		return jsonProvider.createString(text);
 	}
 
 	@Override

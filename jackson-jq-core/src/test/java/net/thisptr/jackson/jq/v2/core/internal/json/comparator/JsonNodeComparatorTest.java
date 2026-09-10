@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.v2.core.internal.misc;
+package net.thisptr.jackson.jq.v2.core.internal.json.comparator;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

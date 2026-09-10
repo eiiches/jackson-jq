@@ -6,10 +6,9 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
-import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
-import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral;
+import net.thisptr.jackson.jq.v2.core.internal.tree.literal.ValueLiteral;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -40,28 +39,16 @@ public class BracketFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> 
 
 	public BracketFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> src, @Nullable Expression<StackFrame, JsonNode> atExpr, boolean permissive, Version version) {
 		super(jsonProvider, src, permissive, version);
-		this.startExpr = atExpr != null ? atExpr : new NullLiteral<>(jsonProvider);
-		this.endExpr = new NullLiteral<>(jsonProvider);
+		this.startExpr = atExpr != null ? atExpr : new ValueLiteral<>(jsonProvider.createNull());
+		this.endExpr = new ValueLiteral<>(jsonProvider.createNull());
 		this.isRange = false;
 	}
 
 	public BracketFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> src, @Nullable Expression<StackFrame, JsonNode> startExpr, @Nullable Expression<StackFrame, JsonNode> endExpr, boolean permissive, Version version) {
 		super(jsonProvider, src, permissive, version);
-		this.startExpr = startExpr != null ? startExpr : new NullLiteral<>(jsonProvider);
-		this.endExpr = endExpr != null ? endExpr : new NullLiteral<>(jsonProvider);
+		this.startExpr = startExpr != null ? startExpr : new ValueLiteral<>(jsonProvider.createNull());
+		this.endExpr = endExpr != null ? endExpr : new ValueLiteral<>(jsonProvider.createNull());
 		this.isRange = true;
-	}
-
-	public Expression<StackFrame, JsonNode> startExpr() {
-		return startExpr;
-	}
-
-	public Expression<StackFrame, JsonNode> endExpr() {
-		return endExpr;
-	}
-
-	public boolean isRange() {
-		return isRange;
 	}
 
 	@Override
@@ -85,28 +72,12 @@ public class BracketFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> 
 	}
 
 	@Override
-	public String toString() {
-		if (isRange) {
-			return String.format("%s[%s : %s]%s", target, startExpr == null ? "" : startExpr, endExpr == null ? "" : endExpr, permissive ? "?" : "");
-		} else {
-			return String.format("%s[%s]%s", target, startExpr, permissive ? "?" : "");
-		}
-	}
-
-	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		if (isRange) {
 			startExpr.apply(frame, in, UntrackedPath.getInstance(), (start, opath) -> {
 				endExpr.apply(frame, in, UntrackedPath.getInstance(), (end, opath2) -> {
 					target.apply(frame, in, path, (pobj, ppath) -> {
-						JsonNodeType startType = jsonProvider.getNodeType(start);
-						JsonNodeType endType = jsonProvider.getNodeType(end);
-						if ((startType == JsonNodeType.NUMBER || startType == JsonNodeType.NULL) && (endType == JsonNodeType.NUMBER || endType == JsonNodeType.NULL)) {
-							emitIndexRangePath(jsonProvider, permissive, start, end, pobj, ppath, output, !(path instanceof UntrackedPath), version);
-						} else {
-							if (!permissive)
-								throw new JsonQueryTypeException(jsonProvider, version, "Start and end indices of an %s slice must be numbers", jsonProvider.getNodeType(pobj));
-						}
+						emitIndexRangePath(jsonProvider, permissive, start, end, pobj, ppath, output, !(path instanceof UntrackedPath), version);
 					});
 				});
 			});

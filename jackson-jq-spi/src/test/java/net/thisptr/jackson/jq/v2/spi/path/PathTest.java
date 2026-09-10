@@ -21,7 +21,7 @@ public class PathTest {
 		path = StringKeyPath.of(path, "a");
 		path = NumberIndexPath.of(jsonProvider, path, jsonProvider.createNumber(2));
 		path = IntIndexPath.of(path, 4);
-		path = IndexRangePath.of(jsonProvider, path, jsonProvider.createNull(), jsonProvider.createNumber(3));
+		path = IndexRangePath.of(path, jsonProvider.createNull(), jsonProvider.createNumber(3));
 		JsonNode searchSequence = jsonProvider.createArray(Collections.singletonList(jsonProvider.createString("x")));
 		path = IndexOfPath.of(jsonProvider, path, searchSequence);
 
@@ -47,18 +47,14 @@ public class PathTest {
 	}
 
 	@Test
-	void rejectsInvalidArrayRangeBounds() {
+	void serializesNonNumericRangeBounds() {
 		Jackson2JsonProviderImpl jsonProvider = new Jackson2JsonProviderImpl(new ObjectMapper());
 		Path<JsonNode> parent = RootPath.getInstance();
-		JsonNode nullNode = jsonProvider.createNull();
-		JsonNode invalidBound = jsonProvider.createString("invalid");
+		JsonNode start = jsonProvider.createString("start");
+		JsonNode end = jsonProvider.createBoolean(false);
 
-		assertThatThrownBy(() -> IndexRangePath.of(jsonProvider, parent, invalidBound, nullNode))
-				.isInstanceOf(Exception.class)
-				.hasMessage("Start and end indices of an array slice must be numbers");
-		assertThatThrownBy(() -> IndexRangePath.of(jsonProvider, parent, nullNode, invalidBound))
-				.isInstanceOf(Exception.class)
-				.hasMessage("Start and end indices of an array slice must be numbers");
+		assertThat(IndexRangePath.of(parent, start, end).toJsonList(jsonProvider))
+				.containsExactly(jsonProvider.parse("{\"start\":\"start\",\"end\":false}"));
 	}
 
 	@Test
@@ -113,7 +109,7 @@ public class PathTest {
 		assertThat(parent.appendIndex(jsonProvider, jsonProvider.createNumber(1)).toJsonList(jsonProvider))
 				.isEqualTo(NumberIndexPath.of(jsonProvider, parent, jsonProvider.createNumber(1)).toJsonList(jsonProvider));
 		assertThat(parent.appendIndexRange(jsonProvider, jsonProvider.createNull(), jsonProvider.createNumber(1)).toJsonList(jsonProvider))
-				.isEqualTo(IndexRangePath.of(jsonProvider, parent, jsonProvider.createNull(), jsonProvider.createNumber(1)).toJsonList(jsonProvider));
+				.isEqualTo(IndexRangePath.of(parent, jsonProvider.createNull(), jsonProvider.createNumber(1)).toJsonList(jsonProvider));
 		JsonNode searchSequence = jsonProvider.createArray(Collections.emptyList());
 		assertThat(parent.appendIndexOf(jsonProvider, searchSequence).toJsonList(jsonProvider))
 				.isEqualTo(IndexOfPath.of(jsonProvider, parent, searchSequence).toJsonList(jsonProvider));

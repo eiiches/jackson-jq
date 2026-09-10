@@ -5,13 +5,15 @@ import java.util.List;
 
 import com.google.auto.service.AutoService;
 
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
-import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
+import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathOperations;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -23,23 +25,30 @@ public class IndicesFunction implements Function {
 	@Override
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
-			Preconditions.checkInputType(jsonProvider, "indices", in, JsonNodeType.STRING, JsonNodeType.ARRAY, JsonNodeType.NULL);
-
-			if (jsonProvider.isNull(in)) {
-				output.emit(jsonProvider.createNull(), UntrackedPath.getInstance());
-				return;
-			}
-
-			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (needle, opath) -> {
-				List<JsonNode> result = new ArrayList<>();
-				for (int index : indices(jsonProvider, needle, in))
-					result.add(jsonProvider.createNumber(index));
-				output.emit(jsonProvider.createArray(result), UntrackedPath.getInstance());
-			});
+			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (needle, opath) -> emitIndices(jsonProvider, needle, in, version, output));
 		});
 	}
 
-	public static <JsonNode> List<Integer> indices(JsonProvider<JsonNode> jsonProvider, JsonNode needle, JsonNode haystack) throws JsonQueryException {
+	static <JsonNode> void emitIndices(JsonProvider<JsonNode> jsonProvider, JsonNode needle, JsonNode haystack, Version version, Output<JsonNode> output) throws JsonQueryException {
+		JsonNodeType needleType = jsonProvider.getNodeType(needle);
+		JsonNodeType haystackType = jsonProvider.getNodeType(haystack);
+		if (haystackType == JsonNodeType.ARRAY || (needleType == JsonNodeType.STRING && haystackType == JsonNodeType.STRING)) {
+			List<JsonNode> result = new ArrayList<>();
+			for (int index : findIndices(jsonProvider, needle, haystack))
+				result.add(jsonProvider.createNumber(index));
+			output.emit(jsonProvider.createArray(result), UntrackedPath.getInstance());
+		} else if (needleType == JsonNodeType.STRING) {
+			PathOperations.resolveObjectField(jsonProvider, haystack, UntrackedPath.getInstance(), output, jsonProvider.getString(needle), false, version);
+		} else if (needleType == JsonNodeType.NUMBER) {
+			PathOperations.resolveArrayIndex(jsonProvider, haystack, UntrackedPath.getInstance(), output, needle, false, version);
+		} else if (needleType == JsonNodeType.ARRAY) {
+			PathOperations.resolveArrayIndexOf(jsonProvider, haystack, UntrackedPath.getInstance(), output, needle, false, version);
+		} else {
+			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, haystack, needle));
+		}
+	}
+
+	private static <JsonNode> List<Integer> findIndices(JsonProvider<JsonNode> jsonProvider, JsonNode needle, JsonNode haystack) {
 		JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
 		List<Integer> result = new ArrayList<>();
 		JsonNodeType needleType = jsonProvider.getNodeType(needle);
@@ -68,8 +77,6 @@ public class IndicesFunction implements Function {
 			for (int i = 0; i < haystackSize; ++i)
 				if (comparator.compare(jsonProvider.getArrayElement(haystack, i), needle) == 0)
 					result.add(i);
-		} else {
-			throw new JsonQueryException("indices() is not applicable to " + haystackType);
 		}
 		return result;
 	}

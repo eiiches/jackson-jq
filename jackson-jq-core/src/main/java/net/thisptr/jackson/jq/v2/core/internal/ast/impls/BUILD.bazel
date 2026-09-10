@@ -32,6 +32,5 @@ jjq_java_library(
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/impls/matcher",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/operator",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/commons/pair",
-        "//jackson-jq-spi",
     ],
 )

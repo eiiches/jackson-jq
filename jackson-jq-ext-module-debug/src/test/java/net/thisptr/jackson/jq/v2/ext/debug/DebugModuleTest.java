@@ -124,7 +124,7 @@ public class DebugModuleTest {
 		assertThat(result.get("depends_on_external_state").asBoolean()).isFalse();
 		assertThat(result.has("depends_on_variables")).isFalse();
 		JsonNode lhs = result.get("fields").get("lhs");
-		assertThat(lhs.get("class").asText()).endsWith(".NumericLiteral");
+		assertThat(lhs.get("class").asText()).endsWith(".ValueLiteral");
 		assertThat(lhs.get("cardinality").asText()).isEqualTo("one");
 		assertThat(lhs.get("depends_on_input").asBoolean()).isFalse();
 		assertThat(lhs.get("depends_on_external_state").asBoolean()).isFalse();
@@ -156,7 +156,7 @@ public class DebugModuleTest {
 		JsonNode expressions = container.get("elements");
 		assertThat(expressions.isArray()).isTrue();
 		assertThat(expressions).hasSize(2);
-		assertThat(expressions.get(0).get("class").asText()).endsWith(".NumericLiteral");
+		assertThat(expressions.get(0).get("class").asText()).endsWith(".ValueLiteral");
 		assertThat(expressions.get(1).get("class").asText()).endsWith(".ThisObject");
 	}
 

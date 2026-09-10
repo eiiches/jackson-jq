@@ -7,7 +7,7 @@ import com.google.errorprone.annotations.Var;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.PatternMatcherAstNode;
 
 public class ArrayMatcherAstNode implements PatternMatcherAstNode {
-	private List<PatternMatcherAstNode> matchers;
+	private final List<PatternMatcherAstNode> matchers;
 
 	public ArrayMatcherAstNode(List<PatternMatcherAstNode> matchers) {
 		this.matchers = matchers;

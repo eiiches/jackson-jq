@@ -44,11 +44,6 @@ public class ThisObject<JsonNode> implements Expression<StackFrame, JsonNode>, F
 	}
 
 	@Override
-	public String toString() {
-		return ".";
-	}
-
-	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		output.emit(in, ipath);
 	}

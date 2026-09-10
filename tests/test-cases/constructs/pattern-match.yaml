@@ -27,3 +27,129 @@
   out:
   - 1
   v: '[1.5, )'
+
+- q: '. as {a: $v} | $v'
+  in: {"a": 1}
+  out:
+  - 1
+  v: '[1.5, )'
+
+- q: '. as {if: $v} | $v'
+  in: {"if": 1}
+  out:
+  - 1
+  v: '[1.5, )'
+  comment: 'a keyword is a valid object pattern key'
+
+- q: '. as {"a": $v} | $v'
+  in: {"a": 1}
+  out:
+  - 1
+  v: '[1.5, )'
+
+- q: '. as {"\(.k)": $v} | $v'
+  in: {"k": "a", "a": 1}
+  out:
+  - 1
+  v: '[1.5, )'
+
+- q: '. as {@text "\(.k)": $v} | $v'
+  in: {"k": "a", "a": 1}
+  out:
+  - 1
+  v: '[1.5, )'
+
+- q: '. as {("a" + "b"): $v} | $v'
+  in: {"ab": 1}
+  out:
+  - 1
+  v: '[1.5, )'
+
+- q: '. as {$a} | $a'
+  in: {"a": 1}
+  out:
+  - 1
+  v: '[1.5, )'
+
+- q: '. as {$a: {$b}} | [$a, $b]'
+  in: {"a": {"b": 2}}
+  out:
+  - [{"b": 2}, 2]
+  v: '[1.6, )'
+
+- q: '[. as {("a", "b"): $v} | $v]'
+  in: {"a": 1, "b": 2}
+  out:
+  - [1, 2]
+  v: '[1.5, )'
+  comment: 'a key expression emitting multiple values matches once per value'
+
+- q: '[. as {"\(.k1, .k2)": $v} | $v]'
+  in: {"k1": "a", "k2": "b", "a": 1, "b": 2}
+  out:
+  - [1, 2]
+  v: '[1.5, )'
+
+- q: '[. as {(.k1, .k2): $v, c: {$d}} | [$v, $d]]'
+  in: {"k1": "a", "k2": "b", "a": 1, "b": 2, "c": {"d": 5}}
+  out:
+  - [[1, 5], [2, 5]]
+  v: '[1.5, )'
+
+- q: '[path(. as {a: $a} | $a)]'
+  in: {"a": 1}
+  out:
+  - [["a"]]
+  v: '[1.5, )'
+
+- q: '[path(. as {(.k): $a} | $a)]'
+  in: {"k": "a", "a": 1}
+  out:
+  - [["a"]]
+  v: '[1.5, )'
+
+- q: '. as {a: $v} | $v'
+  in: {}
+  out:
+  - null
+  v: '[1.5, )'
+
+- q: 'null as {a: $v} | $v'
+  in: null
+  out:
+  - null
+  v: '[1.5, )'
+
+- q: 'try (1 as {a: $v} | $v) catch "__ERROR__"'
+  in: null
+  out:
+  - "__ERROR__"
+  v: '[1.5, )'
+
+- q: 'try ([] as {a: $v} | $v) catch "__ERROR__"'
+  in: null
+  out:
+  - "__ERROR__"
+  v: '[1.5, )'
+
+- q: 'try (("x"?) as {a: $a} | $a) catch "__ERROR__"'
+  in: null
+  out: []
+  v: '[1.5, 1.7)'
+
+- q: 'try (("x"?) as {a: $a} | $a) catch "__ERROR__"'
+  in: null
+  out:
+  - "__ERROR__"
+  v: '[1.7, )'
+
+- q: 'try ((try "x") as {a: $a} | $a) catch "__ERROR__"'
+  in: null
+  out: []
+  v: '[1.5, 1.7)'
+
+- q: 'try ((try "x") as {a: $a} | $a) catch "__ERROR__"'
+  in: null
+  out:
+  - "__ERROR__"
+  v: '[1.7, )'

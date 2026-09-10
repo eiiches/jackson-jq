@@ -6,14 +6,4 @@ public class LabelPipeComponent<JsonNode> implements PipeComponent<JsonNode> {
 	public LabelPipeComponent(String name) {
 		this.name = name;
 	}
-
-	@Override
-	public boolean canTerminatePipe() {
-		return false;
-	}
-
-	@Override
-	public String toString() {
-		return "label $" + name;
-	}
 }

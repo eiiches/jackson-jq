@@ -22,11 +22,6 @@ public class BracketExtractFieldAccess<JsonNode> extends AbstractFieldAccess<Jso
 	}
 
 	@Override
-	public String toString() {
-		return String.format("%s[]%s", target, permissive ? "?" : "");
-	}
-
-	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		target.apply(frame, in, path, (pobj, ppath) -> {
 			emitAllPath(jsonProvider, permissive, pobj, ppath, output, !(path instanceof UntrackedPath), version);

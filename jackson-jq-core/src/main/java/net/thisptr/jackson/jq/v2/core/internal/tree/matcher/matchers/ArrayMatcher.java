@@ -6,9 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
@@ -22,20 +19,12 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private List<PatternMatcher<JsonNode>> matchers;
-	private final @Nullable Version version;
+	private final Version version;
 
-	public ArrayMatcher(JsonProvider<JsonNode> jsonProvider, List<PatternMatcher<JsonNode>> matchers) {
-		this(jsonProvider, matchers, null);
-	}
-
-	public ArrayMatcher(JsonProvider<JsonNode> jsonProvider, List<PatternMatcher<JsonNode>> matchers, @Nullable Version version) {
+	public ArrayMatcher(JsonProvider<JsonNode> jsonProvider, List<PatternMatcher<JsonNode>> matchers, Version version) {
 		this.jsonProvider = jsonProvider;
 		this.matchers = matchers;
 		this.version = version;
-	}
-
-	public List<PatternMatcher<JsonNode>> matchers() {
-		return matchers;
 	}
 
 	private JsonNode getArrayElementOrNull(JsonNode node, int index) {
@@ -107,18 +96,5 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		for (PatternMatcher<JsonNode> matcher : matchers)
 			resolved.add(matcher.resolveSlots(slots));
 		return new ArrayMatcher<>(jsonProvider, resolved, version);
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder("[");
-		@Var String sep = "";
-		for (PatternMatcher<JsonNode> matcher : matchers) {
-			sb.append(sep);
-			sb.append(matcher);
-			sep = ", ";
-		}
-		sb.append("]");
-		return sb.toString();
 	}
 }

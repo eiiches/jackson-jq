@@ -89,9 +89,4 @@ public class ResolvedCapturedVariableBoundArgumentAccess<JsonNode> implements Ex
 			output.emit((JsonNode) raw, UntrackedPath.getInstance());
 		}
 	}
-
-	@Override
-	public String toString() {
-		return "$" + name;
-	}
 }

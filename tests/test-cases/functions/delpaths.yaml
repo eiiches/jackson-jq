@@ -3,6 +3,12 @@
   out: []
   v: '[1.5, )'
 
+- q: 'delpaths([[{"start": "x", "end": "y"}]])'
+  in: null
+  out:
+  - null
+  v: '[1.5, )'
+
 - q: 'delpaths([["a",{"start":0,"end":2}]])'
   in: {}
   out:

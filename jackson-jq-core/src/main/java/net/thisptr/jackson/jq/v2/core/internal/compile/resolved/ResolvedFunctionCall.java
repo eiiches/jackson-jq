@@ -12,15 +12,13 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class ResolvedFunctionCall<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
-	private final String name;
 	private final Expression<StackFrame, JsonNode> function;
 	private final boolean dependsOnInput;
 	private final boolean dependsOnExternalState;
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public ResolvedFunctionCall(String name, Expression<StackFrame, JsonNode> function, boolean dependsOnExternalState, boolean dependsOnInput, boolean inputFixed, List<Expression<StackFrame, JsonNode>> args) {
-		this.name = name;
+	public ResolvedFunctionCall(Expression<StackFrame, JsonNode> function, boolean dependsOnExternalState, boolean dependsOnInput, boolean inputFixed, List<Expression<StackFrame, JsonNode>> args) {
 		this.function = function;
 		this.dependsOnInput = (dependsOnInput && !inputFixed) || args.stream().anyMatch(Expression::dependsOnInput);
 		this.dependsOnExternalState = dependsOnExternalState || args.stream().anyMatch(Expression::dependsOnExternalState);
@@ -60,10 +58,5 @@ public class ResolvedFunctionCall<JsonNode> implements Expression<StackFrame, Js
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		function.apply(frame, in, path, output);
-	}
-
-	@Override
-	public String toString() {
-		return name + "()";
 	}
 }

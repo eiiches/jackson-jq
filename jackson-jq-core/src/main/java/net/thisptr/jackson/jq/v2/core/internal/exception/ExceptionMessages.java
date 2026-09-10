@@ -5,7 +5,6 @@ import java.util.Locale;
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -15,8 +14,8 @@ public final class ExceptionMessages {
 	private ExceptionMessages() {
 	}
 
-	public static String truncate(String text, @Nullable Version version) {
-		if (version != null && version.compareTo(Version.of(1, 8, 2)) >= 0) {
+	public static String truncate(String text, Version version) {
+		if (version.compareTo(Version.of(1, 8, 2)) >= 0) {
 			if (text.length() <= 29)
 				return text;
 			@Var char delim = 0;
@@ -32,18 +31,18 @@ public final class ExceptionMessages {
 		}
 	}
 
-	public static <JsonNode> String cannotIndex(JsonProvider<JsonNode> jsonProvider, @Nullable Version version, JsonNode in, JsonNode accessor) {
+	public static <JsonNode> String cannotIndex(JsonProvider<JsonNode> jsonProvider, Version version, JsonNode in, JsonNode accessor) {
 		String inType = jsonProvider.getNodeType(in).toString().toLowerCase(Locale.ROOT);
 		return cannotIndex(jsonProvider, version, inType, accessor);
 	}
 
-	public static <JsonNode> String cannotIndex(JsonProvider<JsonNode> jsonProvider, @Nullable Version version, JsonNodeType inType, JsonNode accessor) {
+	public static <JsonNode> String cannotIndex(JsonProvider<JsonNode> jsonProvider, Version version, JsonNodeType inType, JsonNode accessor) {
 		return cannotIndex(jsonProvider, version, inType.toString().toLowerCase(Locale.ROOT), accessor);
 	}
 
-	public static <JsonNode> String cannotIndex(JsonProvider<JsonNode> jsonProvider, @Nullable Version version, String inType, JsonNode accessor) {
+	public static <JsonNode> String cannotIndex(JsonProvider<JsonNode> jsonProvider, Version version, String inType, JsonNode accessor) {
 		JsonNodeType accessorType = jsonProvider.getNodeType(accessor);
-		if (version != null && version.compareTo(Version.of(1, 8, 2)) >= 0) {
+		if (version.compareTo(Version.of(1, 8, 2)) >= 0) {
 			String formatted = truncate(jsonProvider.format(accessor), version);
 			return String.format("Cannot index %s with %s (%s)", inType, accessorType.toString().toLowerCase(Locale.ROOT), formatted);
 		} else {
@@ -55,8 +54,14 @@ public final class ExceptionMessages {
 		}
 	}
 
+	public static String invalidSliceBounds(Version version, JsonNodeType inType) {
+		if (version.compareTo(Version.of(1, 7)) >= 0)
+			return "Array/string slice indices must be integers";
+		return String.format("Start and end indices of an %s slice must be numbers", inType.toString().toLowerCase(Locale.ROOT));
+	}
+
 	@FormatMethod
-	public static <JsonNode> String format(JsonProvider<JsonNode> jsonProvider, @Nullable Version version, @FormatString String format, Object... args) {
+	public static <JsonNode> String format(JsonProvider<JsonNode> jsonProvider, Version version, @FormatString String format, Object... args) {
 		Object[] formattedArguments = new Object[args.length];
 		for (int i = 0; i < args.length; ++i) {
 			if (jsonProvider.isJsonNodeInstance(args[i])) {

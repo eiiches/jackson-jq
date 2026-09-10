@@ -62,9 +62,4 @@ public class ResolvedFixedVariableAccess<JsonNode> implements Expression<StackFr
 			throw new JsonQueryException(String.format("Variable $%s evaluated to null", name));
 		output.emit(val, UntrackedPath.getInstance());
 	}
-
-	@Override
-	public String toString() {
-		return "$" + name;
-	}
 }

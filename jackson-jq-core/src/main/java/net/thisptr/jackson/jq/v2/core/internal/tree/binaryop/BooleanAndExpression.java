@@ -20,7 +20,7 @@ public class BooleanAndExpression<JsonNode> extends AbstractBinaryOperatorExpres
 	}
 
 	public BooleanAndExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs) {
-		super(lhs, rhs, "and");
+		super(lhs, rhs);
 		this.jsonProvider = jsonProvider;
 	}
 

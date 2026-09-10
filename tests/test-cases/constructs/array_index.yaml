@@ -1,6 +1,18 @@
 - q: '[1, 2][:]'
   should_compile: false
 
+- q: '.[@base64 : "foo"]'
+  in: null
+  out:
+  - null
+  v: '[1.5, )'
+
+- q: '.["x":"y"]'
+  in: null
+  out:
+  - null
+  v: '[1.5, )'
+
 - q: '[0,1,2,3,4] | (.[1.5:2.5], .[1.5:-1.5], .[-1.5], .[1.5])'
   out:
   - [1, 2]
@@ -138,3 +150,14 @@
   in: [0, 1, 2, 3, 4]
   out:
   - [999, 1, 2, 3, 4]
+
+- q: 'try ((try "x")["bad":0]) catch "__ERROR__"'
+  in: null
+  out: []
+  v: '[1.5, 1.7)'
+
+- q: 'try ((try "x")["bad":0]) catch "__ERROR__"'
+  in: null
+  out:
+  - "__ERROR__"
+  v: '[1.7, )'

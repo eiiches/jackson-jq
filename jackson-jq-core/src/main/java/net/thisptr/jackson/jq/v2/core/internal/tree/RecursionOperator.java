@@ -16,10 +16,12 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class RecursionOperator<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final boolean dependsOnInput;
+	private final boolean visitsNullValues;
 
-	public RecursionOperator(JsonProvider<JsonNode> jsonProvider, boolean dependsOnInput) {
+	public RecursionOperator(JsonProvider<JsonNode> jsonProvider, boolean dependsOnInput, boolean visitsNullValues) {
 		this.jsonProvider = jsonProvider;
 		this.dependsOnInput = dependsOnInput;
+		this.visitsNullValues = visitsNullValues;
 	}
 
 	@Override
@@ -42,27 +44,26 @@ public class RecursionOperator<JsonNode> implements Expression<StackFrame, JsonN
 		return false;
 	}
 
-	private void pathRecursive(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+	private void pathRecursive(JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		output.emit(in, path);
 		if (jsonProvider.isObject(in)) {
 			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectMembers(in);
 			while (iter.hasNext()) {
 				Map.Entry<String, JsonNode> entry = iter.next();
-				pathRecursive(frame, entry.getValue(), path.appendKey(entry.getKey()), output);
+				if (visitsNullValues || !jsonProvider.isNull(entry.getValue()))
+					pathRecursive(entry.getValue(), path.appendKey(entry.getKey()), output);
 			}
 		} else if (jsonProvider.isArray(in)) {
-			for (int i = 0; i < jsonProvider.getArrayLength(in); ++i)
-				pathRecursive(frame, jsonProvider.getArrayElement(in, i), path.appendIndex(i), output);
+			for (int i = 0; i < jsonProvider.getArrayLength(in); ++i) {
+				JsonNode element = jsonProvider.getArrayElement(in, i);
+				if (visitsNullValues || !jsonProvider.isNull(element))
+					pathRecursive(element, path.appendIndex(i), output);
+			}
 		}
 	}
 
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
-		pathRecursive(frame, in, path, output);
-	}
-
-	@Override
-	public String toString() {
-		return "(..)";
+		pathRecursive(in, path, output);
 	}
 }

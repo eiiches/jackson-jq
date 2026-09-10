@@ -8,8 +8,8 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 
 public class ConditionalAstNode implements AstNode {
-	private AstNode otherwise;
-	private List<Pair<AstNode, AstNode>> switches;
+	private final AstNode otherwise;
+	private final List<Pair<AstNode, AstNode>> switches;
 
 	public ConditionalAstNode(List<Pair<AstNode, AstNode>> switches, AstNode otherwise) {
 		this.switches = switches;

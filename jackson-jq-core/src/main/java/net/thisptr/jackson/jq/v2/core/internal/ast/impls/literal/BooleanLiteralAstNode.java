@@ -1,9 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal;
 
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
-
 public class BooleanLiteralAstNode extends AbstractValueLiteralAstNode {
-	private boolean value;
+	private final boolean value;
 
 	public BooleanLiteralAstNode(boolean value) {
 		this.value = value;
@@ -11,11 +9,6 @@ public class BooleanLiteralAstNode extends AbstractValueLiteralAstNode {
 
 	public boolean value() {
 		return value;
-	}
-
-	@Override
-	public <JsonNode> JsonNode value(JsonProvider<JsonNode> jsonProvider) {
-		return jsonProvider.createBoolean(value);
 	}
 
 	@Override
