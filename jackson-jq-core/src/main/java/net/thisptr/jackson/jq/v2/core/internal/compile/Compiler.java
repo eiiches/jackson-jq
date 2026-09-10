@@ -124,6 +124,7 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ArrayMatche
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ObjectMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
+import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -617,7 +618,7 @@ public class Compiler {
 		}
 
 		if (ast instanceof RecursionOperatorAstNode) {
-			return new RecursionOperator<>(env.getJsonProvider(), !context.isInputFixed());
+			return new RecursionOperator<>(env.getJsonProvider(), !context.isInputFixed(), env.getJqVersion().compareTo(Versions.JQ_1_6) >= 0);
 		}
 
 		if (ast instanceof BreakExpressionAstNode) {

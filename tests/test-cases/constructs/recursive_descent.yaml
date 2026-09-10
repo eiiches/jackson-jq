@@ -1,0 +1,18 @@
+- q: '[..]'
+  in: {"a": null, "b": [null, 1]}
+  out:
+  - [{"a": null, "b": [null, 1]}, [null, 1], 1]
+  v: '[1.5, 1.6)'
+
+- q: '[..]'
+  in: {"a": null, "b": [null, 1]}
+  out:
+  - [{"a": null, "b": [null, 1]}, null, [null, 1], null, 1]
+  v: '[1.6, )'
+
+# A null root is emitted in every supported jq version. Only null-valued descendants changed in 1.6.
+- q: '[..]'
+  in: null
+  out:
+  - [null]
+  v: '[1.5, )'

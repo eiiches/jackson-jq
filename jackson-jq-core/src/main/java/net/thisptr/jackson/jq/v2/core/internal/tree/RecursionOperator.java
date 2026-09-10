@@ -16,10 +16,12 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 public class RecursionOperator<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final boolean dependsOnInput;
+	private final boolean visitsNullValues;
 
-	public RecursionOperator(JsonProvider<JsonNode> jsonProvider, boolean dependsOnInput) {
+	public RecursionOperator(JsonProvider<JsonNode> jsonProvider, boolean dependsOnInput, boolean visitsNullValues) {
 		this.jsonProvider = jsonProvider;
 		this.dependsOnInput = dependsOnInput;
+		this.visitsNullValues = visitsNullValues;
 	}
 
 	@Override
@@ -48,11 +50,15 @@ public class RecursionOperator<JsonNode> implements Expression<StackFrame, JsonN
 			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectMembers(in);
 			while (iter.hasNext()) {
 				Map.Entry<String, JsonNode> entry = iter.next();
-				pathRecursive(entry.getValue(), path.appendKey(entry.getKey()), output);
+				if (visitsNullValues || !jsonProvider.isNull(entry.getValue()))
+					pathRecursive(entry.getValue(), path.appendKey(entry.getKey()), output);
 			}
 		} else if (jsonProvider.isArray(in)) {
-			for (int i = 0; i < jsonProvider.getArrayLength(in); ++i)
-				pathRecursive(jsonProvider.getArrayElement(in, i), path.appendIndex(i), output);
+			for (int i = 0; i < jsonProvider.getArrayLength(in); ++i) {
+				JsonNode element = jsonProvider.getArrayElement(in, i);
+				if (visitsNullValues || !jsonProvider.isNull(element))
+					pathRecursive(element, path.appendIndex(i), output);
+			}
 		}
 	}
 
