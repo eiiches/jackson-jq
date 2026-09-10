@@ -20,10 +20,10 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
-	private Expression<StackFrame, JsonNode> iterExpr;
-	private Expression<StackFrame, JsonNode> reduceExpr;
-	private Expression<StackFrame, JsonNode> initExpr;
-	private PatternMatcher<JsonNode> matcher;
+	private final Expression<StackFrame, JsonNode> iterExpr;
+	private final Expression<StackFrame, JsonNode> reduceExpr;
+	private final Expression<StackFrame, JsonNode> initExpr;
+	private final PatternMatcher<JsonNode> matcher;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -51,22 +51,6 @@ public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNo
 		this.freeLocalSlots = FreeVariables.minus(
 				FreeVariables.union(initExpr, iterExpr, reduceExpr),
 				new ArrayList<>(matcherSlots));
-	}
-
-	public PatternMatcher<JsonNode> matcher() {
-		return matcher;
-	}
-
-	public Expression<StackFrame, JsonNode> initExpr() {
-		return initExpr;
-	}
-
-	public Expression<StackFrame, JsonNode> reduceExpr() {
-		return reduceExpr;
-	}
-
-	public Expression<StackFrame, JsonNode> iterExpr() {
-		return iterExpr;
 	}
 
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
@@ -113,10 +97,5 @@ public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNo
 			});
 			output.emit(accumulators[0], UntrackedPath.getInstance());
 		});
-	}
-
-	@Override
-	public String toString() {
-		return String.format("(reduce %s as %s (%s; %s))", iterExpr, matcher, initExpr, reduceExpr);
 	}
 }

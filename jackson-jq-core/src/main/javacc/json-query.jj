@@ -689,7 +689,7 @@ AstNode FormattingFilter():
 {
 	<ATSIGN>
 	t = <IDENTIFIER>
-	{ return new FormattingFilterAstNode(t.image, version); }
+	{ return new FormattingFilterAstNode(t.image); }
 }
 
 AstNode TryCatchExpression():
@@ -872,31 +872,6 @@ void ObjectField(final ObjectConstructionAstNode obj):
 	)
 }
 
-Pair<AstNode, Boolean> ObjectFieldName():
-{
-	Token token;
-	AstNode expr;
-	String keywordAsString;
-	boolean parenthesized = false;
-}
-{
-	(
-		keywordAsString = KeywordAsString()
-		{ expr = new StringLiteralAstNode(keywordAsString); }
-	|
-		expr = StringInterpolation()
-	|
-		token = <IDENTIFIER>
-		{ expr = new StringLiteralAstNode(token.image); }
-	|
-		<OPEN_PAR>
-		expr = Expression()
-		<CLOSE_PAR>
-		{ parenthesized = true; }
-	)
-	{ return Pair.of(expr, parenthesized); }
-}
-
 AstNode ObjectFieldValue():
 {
 	AstNode expr;
@@ -979,7 +954,7 @@ AstNode FunctionCall():
 		)?
 		<CLOSE_PAR>
 	)?
-	{ return new FunctionCallAstNode(moduleName, fname.image, fargs, version); }
+	{ return new FunctionCallAstNode(moduleName, fname.image, fargs); }
 }
 
 AstNode FieldAccessor(AstNode obj):
@@ -1205,30 +1180,45 @@ PatternMatcherAstNode ObjectMatcher():
 
 ObjectMatcherAstNode.FieldMatcher ObjectMatcherField():
 {
-	AstNode nameExpr = null;
-	Pair<AstNode, Boolean> fieldName;
+	AstNode nameExpr;
 	String name;
 	PatternMatcherAstNode matcher = null;
-	boolean dollar = false; // true if {$x} or {$x:...}; false if {x:...}
-	boolean parenthesizedName = false;
 }
 {
+	// - {$x}, {$x: matcher}         -- ConstantKeyFieldMatcher (dollar = true)
+	// - {x: matcher}                -- ConstantKeyFieldMatcher (dollar = false)
+	// - {"x": matcher}, {"\(.x)": matcher}, {(keyexpr): matcher}
+	//                               -- ExpressionKeyFieldMatcher
 	(
+		// {$x}, {$x: matcher}
 		<DOLLAR>
-		{ dollar = true; }
 		name = KeywordOrIdentifier()
-		{ nameExpr = new StringLiteralAstNode(name); }
 		(
 			<COLON>
 			matcher = Matcher()
 		)?
+		{ return new ObjectMatcherAstNode.ConstantKeyFieldMatcher(true, name, matcher); }
 	|
-		fieldName = ObjectFieldName()
-		{ nameExpr = fieldName._1; parenthesizedName = fieldName._2; }
+		// {x: matcher}
+		name = KeywordOrIdentifier()
 		<COLON>
 		matcher = Matcher()
+		{ return new ObjectMatcherAstNode.ConstantKeyFieldMatcher(false, name, matcher); }
+	|
+		// {"x": matcher}, {"\(.x)": matcher}
+		nameExpr = StringInterpolation()
+		<COLON>
+		matcher = Matcher()
+		{ return new ObjectMatcherAstNode.ExpressionKeyFieldMatcher(nameExpr, matcher); }
+	|
+		// {(keyexpr): matcher}
+		<OPEN_PAR>
+		nameExpr = Expression()
+		<CLOSE_PAR>
+		<COLON>
+		matcher = Matcher()
+		{ return new ObjectMatcherAstNode.ExpressionKeyFieldMatcher(new ParenAstNode(nameExpr), matcher); }
 	)
-	{ return new ObjectMatcherAstNode.FieldMatcher(dollar, nameExpr, matcher, parenthesizedName); }
 }
 
 PatternMatcherAstNode ValueMatcher():

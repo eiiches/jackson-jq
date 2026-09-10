@@ -9,14 +9,4 @@ public class TransformPipeComponent<JsonNode> implements PipeComponent<JsonNode>
 	public TransformPipeComponent(Expression<StackFrame, JsonNode> expr) {
 		this.expr = expr;
 	}
-
-	@Override
-	public boolean canTerminatePipe() {
-		return true;
-	}
-
-	@Override
-	public String toString() {
-		return expr.toString();
-	}
 }

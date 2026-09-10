@@ -33,14 +33,6 @@ public abstract class AbstractFieldAccess<JsonNode> implements Expression<StackF
 		this.version = version;
 	}
 
-	public Expression<StackFrame, JsonNode> target() {
-		return target;
-	}
-
-	public boolean permissive() {
-		return permissive;
-	}
-
 	@Override
 	public boolean dependsOnInput() {
 		return target.dependsOnInput();

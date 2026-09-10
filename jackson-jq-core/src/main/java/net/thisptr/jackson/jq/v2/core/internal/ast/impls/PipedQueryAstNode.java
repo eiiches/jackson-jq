@@ -8,7 +8,7 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.PatternMatcherAstNode;
 
 public class PipedQueryAstNode implements AstNode {
-	private List<PipeComponent> components;
+	private final List<PipeComponent> components;
 
 	public PipedQueryAstNode(List<PipeComponent> components) {
 		this.components = components;

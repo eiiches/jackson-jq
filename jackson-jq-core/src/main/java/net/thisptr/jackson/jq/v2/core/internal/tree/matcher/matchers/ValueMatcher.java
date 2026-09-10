@@ -22,10 +22,6 @@ public class ValueMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		this.slot = slot;
 	}
 
-	public String name() {
-		return name;
-	}
-
 	@Override
 	public void match(StackFrame frame, JsonNode in, Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate) throws JsonQueryException {
 		accumulate.addLast(new Match<>(slot, in));
@@ -46,10 +42,5 @@ public class ValueMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		if (resolvedSlot == null)
 			throw new IllegalStateException("No slot allocated for pattern variable $" + name);
 		return new ValueMatcher<>(name, resolvedSlot.intValue());
-	}
-
-	@Override
-	public String toString() {
-		return "$" + name;
 	}
 }

@@ -47,9 +47,4 @@ public class ResolvedGlobalFunctionAccess<JsonNode> implements Expression<StackF
 			throw new JsonQueryException("Function " + name + " is not defined");
 		factory.bindArguments(jsonProvider, args, version).apply(frame, in, path, output);
 	}
-
-	@Override
-	public String toString() {
-		return name;
-	}
 }

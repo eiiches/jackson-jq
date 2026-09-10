@@ -80,9 +80,4 @@ public class ResolvedCapturedVariableAccess<JsonNode> implements Expression<Stac
 			output.emit((JsonNode) raw, UntrackedPath.getInstance());
 		}
 	}
-
-	@Override
-	public String toString() {
-		return "$" + name;
-	}
 }

@@ -30,7 +30,7 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 	private final List<Pair<Integer, Expression<StackFrame, JsonNode>>> interpolations;
 	private final String template;
 	private final @Nullable Expression<StackFrame, JsonNode> formatter;
-	private final @Nullable Version version;
+	private final Version version;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -43,7 +43,7 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public StringInterpolation(JsonProvider<JsonNode> jsonProvider, String template, List<Pair<Integer, Expression<StackFrame, JsonNode>>> interpolations, @Nullable Expression<StackFrame, JsonNode> formatter, @Nullable Version version) {
+	public StringInterpolation(JsonProvider<JsonNode> jsonProvider, String template, List<Pair<Integer, Expression<StackFrame, JsonNode>>> interpolations, @Nullable Expression<StackFrame, JsonNode> formatter, Version version) {
 		this.jsonProvider = jsonProvider;
 		this.template = template;
 		this.interpolations = interpolations;
@@ -65,18 +65,6 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 		}
 		this.freeLocalSlots = slots;
 		this.hasOpaqueVariableReference = FreeVariables.anyOpaqueIn(interpValues) || (formatter != null && FreeVariables.opaqueIn(formatter));
-	}
-
-	public String template() {
-		return template;
-	}
-
-	public List<Pair<Integer, Expression<StackFrame, JsonNode>>> interpolations() {
-		return interpolations;
-	}
-
-	public @Nullable Expression<StackFrame, JsonNode> formatter() {
-		return formatter;
 	}
 
 	@Override
@@ -133,58 +121,6 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 					stack.pop();
 				}
 			});
-		}
-	}
-
-	@Override
-	public String toString() {
-		@Var int pos = 0;
-		StringBuilder builder = new StringBuilder();
-		if (formatter != null) {
-			builder.append(formatter);
-			builder.append(" ");
-		}
-		builder.append("\"");
-		for (Pair<Integer, Expression<StackFrame, JsonNode>> interpolation : interpolations) {
-			copyEscaped(builder, template, pos, interpolation._1);
-			pos = interpolation._1;
-			builder.append("\\(");
-			builder.append(interpolation._2);
-			builder.append(")");
-		}
-		copyEscaped(builder, template, pos, template.length());
-		builder.append("\"");
-		return builder.toString();
-	}
-
-	private static void copyEscaped(StringBuilder builder, String text, int begin, int end) {
-		for (int i = begin; i < end; ++i) {
-			char ch = text.charAt(i);
-			switch (ch) {
-				case '\\':
-					builder.append("\\\\");
-					break;
-				case '"':
-					builder.append("\\\"");
-					break;
-				case '\b':
-					builder.append("\\b");
-					break;
-				case '\f':
-					builder.append("\\f");
-					break;
-				case '\r':
-					builder.append("\\r");
-					break;
-				case '\t':
-					builder.append("\\t");
-					break;
-				case '\n':
-					builder.append("\\n");
-					break;
-				default:
-					builder.append(ch);
-			}
 		}
 	}
 }

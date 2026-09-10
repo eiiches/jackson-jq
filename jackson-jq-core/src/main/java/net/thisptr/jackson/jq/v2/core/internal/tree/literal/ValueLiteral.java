@@ -6,7 +6,6 @@ import java.util.Set;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -14,18 +13,16 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
-public abstract class AbstractValueLiteral<JsonNode> implements ConstantExpression<StackFrame, JsonNode>, FreeVariables {
-	protected final JsonProvider<JsonNode> jsonProvider;
+public class ValueLiteral<JsonNode> implements ConstantExpression<StackFrame, JsonNode>, FreeVariables {
+	private final JsonNode value;
 
-	protected AbstractValueLiteral(JsonProvider<JsonNode> jsonProvider) {
-		this.jsonProvider = jsonProvider;
+	public ValueLiteral(JsonNode value) {
+		this.value = value;
 	}
-
-	public abstract JsonNode value();
 
 	@Override
 	public List<JsonNode> getConstantResults() {
-		return Collections.singletonList(value());
+		return Collections.singletonList(value);
 	}
 
 	@Override
@@ -55,6 +52,6 @@ public abstract class AbstractValueLiteral<JsonNode> implements ConstantExpressi
 
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
-		output.emit(value(), UntrackedPath.getInstance());
+		output.emit(value, UntrackedPath.getInstance());
 	}
 }

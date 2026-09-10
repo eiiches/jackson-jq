@@ -67,13 +67,4 @@ public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<J
 			}
 		});
 	}
-
-	@Override
-	public String toString() {
-		if (value == null) {
-			return key.toString();
-		} else {
-			return key.toString() + ": " + value.toString();
-		}
-	}
 }

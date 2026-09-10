@@ -31,8 +31,8 @@ public abstract class AbstractComplexAssignment<JsonNode> extends AbstractBinary
 		return rhs.getCardinality();
 	}
 
-	public AbstractComplexAssignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, String image, Version version, boolean inputFixed) {
-		super(lhs, rhs, image + "=");
+	public AbstractComplexAssignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, boolean inputFixed) {
+		super(lhs, rhs);
 		this.jsonProvider = jsonProvider;
 		this.version = version;
 		this.inputFixed = inputFixed;

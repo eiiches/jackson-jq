@@ -4,10 +4,10 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.PatternMatcherAstNode;
 
 public class ReduceExpressionAstNode implements AstNode {
-	private AstNode iterExpr;
-	private AstNode reduceExpr;
-	private AstNode initExpr;
-	private PatternMatcherAstNode matcher;
+	private final AstNode iterExpr;
+	private final AstNode reduceExpr;
+	private final AstNode initExpr;
+	private final PatternMatcherAstNode matcher;
 
 	public ReduceExpressionAstNode(PatternMatcherAstNode matcher, AstNode initExpr, AstNode reduceExpr, AstNode iterExpr) {
 		this.matcher = matcher;

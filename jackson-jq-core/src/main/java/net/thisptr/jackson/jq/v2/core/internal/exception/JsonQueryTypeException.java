@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.v2.core.internal.exception;
 
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -24,7 +23,7 @@ public class JsonQueryTypeException extends JsonQueryException {
 	}
 
 	@FormatMethod
-	public JsonQueryTypeException(JsonProvider<?> jsonProvider, @Nullable Version version, @FormatString String format, Object... args) {
+	public JsonQueryTypeException(JsonProvider<?> jsonProvider, Version version, @FormatString String format, Object... args) {
 		super(ExceptionMessages.format(jsonProvider, version, format, args));
 	}
 }

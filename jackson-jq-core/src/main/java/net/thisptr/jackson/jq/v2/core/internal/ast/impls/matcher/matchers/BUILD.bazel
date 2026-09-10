@@ -11,7 +11,6 @@ jjq_java_library(
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast",
-        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/impls/literal",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/impls/matcher",
     ],
 )

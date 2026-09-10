@@ -74,9 +74,4 @@ public class ResolvedLocalVariableBoundArgumentAccess<JsonNode> implements Expre
 		}
 		throw new JsonQueryException(String.format("$%s is not defined", name));
 	}
-
-	@Override
-	public String toString() {
-		return "$" + name;
-	}
 }

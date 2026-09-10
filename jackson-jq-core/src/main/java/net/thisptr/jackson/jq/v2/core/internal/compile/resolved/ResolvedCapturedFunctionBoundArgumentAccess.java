@@ -100,9 +100,4 @@ public class ResolvedCapturedFunctionBoundArgumentAccess<JsonNode> implements Ex
 		}
 		factory.bindArguments(jsonProvider, args, version).apply(frame, in, path, output);
 	}
-
-	@Override
-	public String toString() {
-		return name;
-	}
 }

@@ -7,9 +7,9 @@ import com.google.errorprone.annotations.Var;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 
 public class FunctionDefinitionAstNode implements AstNode {
-	private AstNode body;
-	private String fname;
-	private List<String> args;
+	private final AstNode body;
+	private final String fname;
+	private final List<String> args;
 
 	public FunctionDefinitionAstNode(String fname, List<String> args, AstNode body) {
 		this.fname = fname;

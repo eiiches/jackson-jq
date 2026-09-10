@@ -69,11 +69,4 @@ public class ArrayConstruction<JsonNode> implements Expression<StackFrame, JsonN
 			q.apply(frame, in, UntrackedPath.getInstance(), (out, opath) -> values.add(out));
 		output.emit(jsonProvider.createArray(values), UntrackedPath.getInstance());
 	}
-
-	@Override
-	public String toString() {
-		if (q == null)
-			return "[]";
-		return String.format("[%s]", q);
-	}
 }

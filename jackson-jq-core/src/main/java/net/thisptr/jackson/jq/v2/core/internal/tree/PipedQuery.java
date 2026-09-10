@@ -24,7 +24,7 @@ import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class PipedQuery<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
-	private List<PipeComponent<JsonNode>> components;
+	private final List<PipeComponent<JsonNode>> components;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -92,10 +92,6 @@ public class PipedQuery<JsonNode> implements Expression<StackFrame, JsonNode>, F
 		this.freeLocalSlots = FreeVariables.minus(FreeVariables.unionAll(exprs), allBoundSlots);
 	}
 
-	public List<PipeComponent<JsonNode>> components() {
-		return components;
-	}
-
 	@Override
 	public boolean dependsOnInput() {
 		return dependsOnInput;
@@ -160,18 +156,5 @@ public class PipedQuery<JsonNode> implements Expression<StackFrame, JsonNode>, F
 		} else {
 			throw new IllegalStateException();
 		}
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder("(");
-		@Var String sep = "";
-		for (PipeComponent<JsonNode> component : components) {
-			builder.append(sep);
-			builder.append(component.toString());
-			sep = " | ";
-		}
-		builder.append(")");
-		return builder.toString();
 	}
 }

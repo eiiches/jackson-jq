@@ -34,7 +34,7 @@ public class UpdateAssignment<JsonNode> extends AbstractBinaryOperatorExpression
 	}
 
 	public UpdateAssignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, boolean inputFixed) {
-		super(lhs, rhs, "|=");
+		super(lhs, rhs);
 		this.jsonProvider = jsonProvider;
 		this.version = version;
 		this.inputFixed = inputFixed;

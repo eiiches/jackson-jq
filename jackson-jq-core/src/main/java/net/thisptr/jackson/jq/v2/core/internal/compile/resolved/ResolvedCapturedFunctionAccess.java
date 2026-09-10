@@ -86,9 +86,4 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<Stac
 		}
 		factory.bindArguments(jsonProvider, args, version).apply(frame, in, path, output);
 	}
-
-	@Override
-	public String toString() {
-		return name;
-	}
 }

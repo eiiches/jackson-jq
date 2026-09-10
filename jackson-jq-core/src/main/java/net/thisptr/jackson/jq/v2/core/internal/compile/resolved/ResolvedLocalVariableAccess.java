@@ -65,9 +65,4 @@ public class ResolvedLocalVariableAccess<JsonNode> implements Expression<StackFr
 		}
 		throw new JsonQueryException(String.format("$%s is not defined", name));
 	}
-
-	@Override
-	public String toString() {
-		return "$" + name;
-	}
 }

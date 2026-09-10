@@ -8,8 +8,8 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public abstract class AbstractComparisonExpression<JsonNode> extends AbstractSimpleBinaryOperatorExpression<JsonNode> {
-	public AbstractComparisonExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, String image) {
-		super(jsonProvider, lhs, rhs, image);
+	public AbstractComparisonExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs) {
+		super(jsonProvider, lhs, rhs);
 	}
 
 	protected abstract boolean test(int r);

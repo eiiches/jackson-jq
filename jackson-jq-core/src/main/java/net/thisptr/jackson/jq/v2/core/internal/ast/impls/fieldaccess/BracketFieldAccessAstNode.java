@@ -6,13 +6,14 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.NullLiteralAstNode;
 
 public class BracketFieldAccessAstNode extends AbstractFieldAccessAstNode {
-	private AstNode startExpr;
-	private AstNode endExpr = new NullLiteralAstNode();
-	private boolean isRange;
+	private final AstNode startExpr;
+	private final AstNode endExpr;
+	private final boolean isRange;
 
 	public BracketFieldAccessAstNode(AstNode src, @Nullable AstNode atExpr, boolean permissive) {
 		super(src, permissive);
 		this.startExpr = atExpr != null ? atExpr : new NullLiteralAstNode();
+		this.endExpr = new NullLiteralAstNode();
 		this.isRange = false;
 	}
 

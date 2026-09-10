@@ -24,9 +24,4 @@ public class BreakExpression<JsonNode> implements Expression<StackFrame, JsonNod
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		throw new JsonQueryBreakException(name);
 	}
-
-	@Override
-	public String toString() {
-		return "break $" + name;
-	}
 }

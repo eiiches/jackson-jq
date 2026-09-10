@@ -34,11 +34,6 @@ public class Tuple<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVa
 	}
 
 	@Override
-	public String toString() {
-		return qs.toString().replaceAll("^\\[", "(").replaceAll("\\]$", ")");
-	}
-
-	@Override
 	public boolean dependsOnInput() {
 		return dependsOnInput;
 	}

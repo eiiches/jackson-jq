@@ -22,11 +22,11 @@ import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
-	private Expression<StackFrame, JsonNode> iterExpr;
-	private Expression<StackFrame, JsonNode> updateExpr;
-	private Expression<StackFrame, JsonNode> initExpr;
-	private @Nullable Expression<StackFrame, JsonNode> extractExpr;
-	private PatternMatcher<JsonNode> matcher;
+	private final Expression<StackFrame, JsonNode> iterExpr;
+	private final Expression<StackFrame, JsonNode> updateExpr;
+	private final Expression<StackFrame, JsonNode> initExpr;
+	private final @Nullable Expression<StackFrame, JsonNode> extractExpr;
+	private final PatternMatcher<JsonNode> matcher;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -58,26 +58,6 @@ public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonN
 		this.freeLocalSlots = FreeVariables.minus(
 				FreeVariables.union(initExpr, iterExpr, updateExpr, extractExpr),
 				new ArrayList<>(matcherSlots));
-	}
-
-	public PatternMatcher<JsonNode> matcher() {
-		return matcher;
-	}
-
-	public Expression<StackFrame, JsonNode> initExpr() {
-		return initExpr;
-	}
-
-	public Expression<StackFrame, JsonNode> updateExpr() {
-		return updateExpr;
-	}
-
-	public @Nullable Expression<StackFrame, JsonNode> extractExpr() {
-		return extractExpr;
-	}
-
-	public Expression<StackFrame, JsonNode> iterExpr() {
-		return iterExpr;
 	}
 
 	@Override
@@ -133,14 +113,5 @@ public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonN
 				}, stack);
 			});
 		});
-	}
-
-	@Override
-	public String toString() {
-		if (extractExpr == null) {
-			return String.format("(foreach %s as %s (%s; %s))", iterExpr, matcher, initExpr, updateExpr);
-		} else {
-			return String.format("(foreach %s as %s (%s; %s; %s))", iterExpr, matcher, initExpr, updateExpr, extractExpr);
-		}
 	}
 }

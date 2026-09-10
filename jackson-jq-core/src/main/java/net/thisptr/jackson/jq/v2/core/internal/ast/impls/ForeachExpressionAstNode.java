@@ -6,11 +6,11 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.PatternMatcherAstNode;
 
 public class ForeachExpressionAstNode implements AstNode {
-	private AstNode iterExpr;
-	private AstNode updateExpr;
-	private AstNode initExpr;
-	private @Nullable AstNode extractExpr;
-	private PatternMatcherAstNode matcher;
+	private final AstNode iterExpr;
+	private final AstNode updateExpr;
+	private final AstNode initExpr;
+	private final @Nullable AstNode extractExpr;
+	private final PatternMatcherAstNode matcher;
 
 	public ForeachExpressionAstNode(PatternMatcherAstNode matcher, AstNode initExpr, AstNode updateExpr, @Nullable AstNode extractExpr, AstNode iterExpr) {
 		this.matcher = matcher;

@@ -17,8 +17,8 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class TryCatch<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
-	protected Expression<StackFrame, JsonNode> tryExpr;
-	protected @Nullable Expression<StackFrame, JsonNode> catchExpr;
+	private final Expression<StackFrame, JsonNode> tryExpr;
+	private final @Nullable Expression<StackFrame, JsonNode> catchExpr;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -35,14 +35,6 @@ public class TryCatch<JsonNode> implements Expression<StackFrame, JsonNode>, Fre
 
 	public TryCatch(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> tryExpr) {
 		this(jsonProvider, tryExpr, null);
-	}
-
-	public Expression<StackFrame, JsonNode> tryExpr() {
-		return tryExpr;
-	}
-
-	public @Nullable Expression<StackFrame, JsonNode> catchExpr() {
-		return catchExpr;
 	}
 
 	// catchExpr is already compiled under the correct shielded context (see Compiler's
@@ -75,26 +67,6 @@ public class TryCatch<JsonNode> implements Expression<StackFrame, JsonNode>, Fre
 			if (catchExpr != null) {
 				catchExpr.apply(frame, e.toJson(jsonProvider), path instanceof UntrackedPath ? UntrackedPath.getInstance() : UnrepresentablePath.getInstance(), output);
 			}
-		}
-	}
-
-	public static class Question<JsonNode> extends TryCatch<JsonNode> {
-		public Question(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> tryExpr) {
-			super(jsonProvider, tryExpr);
-		}
-
-		@Override
-		public String toString() {
-			return String.format("(%s)?", tryExpr);
-		}
-	}
-
-	@Override
-	public String toString() {
-		if (catchExpr != null) {
-			return String.format("(try (%s) catch (%s))", tryExpr, catchExpr);
-		} else {
-			return String.format("(try (%s))", tryExpr);
 		}
 	}
 }

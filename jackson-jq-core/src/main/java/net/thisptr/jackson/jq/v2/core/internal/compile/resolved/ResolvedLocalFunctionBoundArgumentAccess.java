@@ -96,9 +96,4 @@ public class ResolvedLocalFunctionBoundArgumentAccess<JsonNode> implements Expre
 			throw new JsonQueryException("Function " + name + " is not defined");
 		factory.bindArguments(jsonProvider, args, version).apply(frame, in, ipath, output);
 	}
-
-	@Override
-	public String toString() {
-		return name;
-	}
 }

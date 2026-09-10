@@ -13,7 +13,7 @@ public class PlusExpression<JsonNode> extends AbstractSimpleBinaryOperatorExpres
 	private final Version version;
 
 	public PlusExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version) {
-		super(jsonProvider, lhs, rhs, "+");
+		super(jsonProvider, lhs, rhs);
 		this.version = Objects.requireNonNull(version, "version");
 	}
 
