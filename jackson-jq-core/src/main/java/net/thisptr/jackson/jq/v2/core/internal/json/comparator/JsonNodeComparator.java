@@ -3,11 +3,10 @@ package net.thisptr.jackson.jq.v2.core.internal.json.comparator;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.jspecify.annotations.NullMarked;
 
@@ -32,20 +31,19 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 			JsonNodeType.OBJECT,
 	};
 
-	private static final Map<JsonNodeType, Integer> TYPE_ORDER_MAP = new HashMap<>();
+	private static final int UNSUPPORTED_ORDER_VALUE = -1;
+
+	private static final int[] TYPE_ORDER_VALUES = new int[JsonNodeType.values().length];
 
 	static {
+		Arrays.fill(TYPE_ORDER_VALUES, UNSUPPORTED_ORDER_VALUE);
 		for (int i = 0; i < TYPE_ORDER.length; i++)
-			TYPE_ORDER_MAP.put(TYPE_ORDER[i], i);
-	}
-
-	private int orderValue(JsonNode node) {
-		return orderValue(jsonProvider.getNodeType(node));
+			TYPE_ORDER_VALUES[TYPE_ORDER[i].ordinal()] = i;
 	}
 
 	private static int orderValue(JsonNodeType type) {
-		Integer value = TYPE_ORDER_MAP.get(type);
-		if (value == null)
+		int value = TYPE_ORDER_VALUES[type.ordinal()];
+		if (value == UNSUPPORTED_ORDER_VALUE)
 			throw new IllegalArgumentException("Unknown JsonNodeType: " + type);
 		return value;
 	}
@@ -143,7 +141,7 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 		JsonNodeType type2 = jsonProvider.getNodeType(o2);
 
 		if (type1 != type2)
-			return Integer.compare(orderValue(o1), orderValue(o2));
+			return Integer.compare(orderValue(type1), orderValue(type2));
 
 		switch (type1) {
 			case NULL:
