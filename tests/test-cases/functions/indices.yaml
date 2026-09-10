@@ -9,3 +9,35 @@
   out:
   - []
   v: '[1.7, )'
+
+- q: 'indices("a")'
+  in: {"a": 42}
+  out:
+  - 42
+  v: '[1.5, )'
+
+- q: 'indices("missing")'
+  in: {"a": 42}
+  out:
+  - null
+  v: '[1.5, )'
+
+- q: 'indices(("name") + ("Zm9v"))'
+  in:
+    foo: "foo -0.5 bar"
+    nameZm9v: "[]"
+  out:
+  - "[]"
+  v: '[1.5, )'
+
+- q: 'try indices(0) catch .'
+  in: {"a": 42}
+  out:
+  - "Cannot index object with number"
+  v: '[1.5, 1.8.2)'
+
+- q: 'try indices(0) catch .'
+  in: {"a": 42}
+  out:
+  - "Cannot index object with number (0)"
+  v: '[1.8.2, )'
