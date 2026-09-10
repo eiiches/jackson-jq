@@ -15,3 +15,58 @@
   in: [null]
   out: []
   v: '[1.5, 1.6)'
+
+# jq >= 1.7.1 defines paths(f) as `path(..|select(f))|select(length > 0)`, which evaluates f on
+# the root value as well. The empty path is still excluded from the output, so the only visible
+# difference is that errors raised by f on the root now propagate.
+- q: '[paths(endswith("foo"))]'
+  in: 0.5
+  out:
+  - []
+  v: '[1.5, 1.7.1)'
+
+- q: 'try [paths(endswith("foo"))] catch .'
+  in: 0.5
+  out:
+  - 'endswith() requires string inputs'
+  v: '[1.7.1, )'
+
+- q: '[paths(endswith("foo"))]'
+  in: {"a": "xfoo"}
+  out:
+  - [["a"]]
+  v: '[1.5, 1.7.1)'
+
+# The root is evaluated before any child path is emitted.
+- q: 'try [paths(endswith("foo"))] catch .'
+  in: {"a": "xfoo"}
+  out:
+  - 'endswith() requires string inputs'
+  v: '[1.7.1, )'
+
+# The root matches, but its (empty) path is still not emitted.
+- q: '[paths(endswith("foo"))]'
+  in: "xfoo"
+  out:
+  - []
+  v: '[1.5, )'
+
+# jq 1.5's `..` skips null-valued members, so paths/0 does not yield their paths; from 1.6 on it
+# does.
+- q: '[paths]'
+  in: {"a": null}
+  out:
+  - []
+  v: '[1.5, 1.6)'
+
+- q: '[paths]'
+  in: {"a": null}
+  out:
+  - [["a"]]
+  v: '[1.6, )'
+
+- q: '[paths]'
+  in: [null]
+  out:
+  - [[0]]
+  v: '[1.6, )'

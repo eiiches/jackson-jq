@@ -44,7 +44,9 @@ public class CoreJqLibrary implements JqLibrary {
 	private static final List<JqFunction> FUNCTIONS = Collections.unmodifiableList(Arrays.asList(
 			JqFunction.of("@text", args(), "tostring"),
 			JqFunction.of("@json", args(), "tojson"),
-			JqFunction.of("paths", args(), "paths(. != null)"),
+			// jq 1.5's `..` skips null-valued members, so their paths are not yielded; from 1.6 on it visits them.
+			JqFunction.of("paths", args(), "paths(true)", VersionRange.valueOf("[1.6, )")),
+			JqFunction.of("paths", args(), "paths(. != null)", VersionRange.valueOf("[, 1.6)")),
 			JqFunction.of("arrays", args(), "select(type == \"array\")"),
 			JqFunction.of("booleans", args(), "select(type == \"boolean\")"),
 			JqFunction.of("del", args("f"), "delpaths([path(f)])"),
