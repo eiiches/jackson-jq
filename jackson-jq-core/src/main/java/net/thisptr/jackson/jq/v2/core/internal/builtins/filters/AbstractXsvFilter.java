@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.google.errorprone.annotations.Var;
 
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
@@ -28,7 +29,7 @@ public abstract class AbstractXsvFilter implements Function {
 	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 			if (!jsonProvider.isArray(in))
-				throw new JsonQueryTypeException(jsonProvider, version, "%s cannot be %s-formatted, only array", in, name());
+				throw new JsonQueryTypeException("%s cannot be %s-formatted, only array", ExceptionMessages.describe(jsonProvider, version, in), name());
 
 			@Var boolean heading = true;
 			StringBuilder row = new StringBuilder();
@@ -46,7 +47,7 @@ public abstract class AbstractXsvFilter implements Function {
 				} else if (colType == JsonNodeType.BOOLEAN || colType == JsonNodeType.NUMBER) {
 					row.append(JsonNodeUtils.toString(jsonProvider, col, version));
 				} else {
-					throw new JsonQueryTypeException(jsonProvider, version, "%s is not valid in a csv row", col);
+					throw new JsonQueryTypeException("%s is not valid in a csv row", ExceptionMessages.describe(jsonProvider, version, col));
 				}
 
 				heading = false;

@@ -56,7 +56,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.ARRAY && type != JsonNodeType.NULL) {
 			if (matchers.isEmpty())
-				throw new JsonQueryTypeException(jsonProvider, version, "Cannot index %s with number", type);
+				throw new JsonQueryTypeException("Cannot index %s with number", ExceptionMessages.typeName(type));
 		}
 		recursive(frame, in, out, accumulate, 0);
 	}
@@ -85,7 +85,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.ARRAY && type != JsonNodeType.NULL) {
 			if (matchers.isEmpty())
-				throw new JsonQueryTypeException(jsonProvider, version, "Cannot index %s with number", type);
+				throw new JsonQueryTypeException("Cannot index %s with number", ExceptionMessages.typeName(type));
 		}
 		recursiveWithPath(frame, in, path, out, accumulate, 0);
 	}

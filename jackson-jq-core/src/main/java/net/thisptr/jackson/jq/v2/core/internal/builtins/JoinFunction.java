@@ -6,6 +6,7 @@ import java.util.List;
 import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
 
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
@@ -26,7 +27,7 @@ public class JoinFunction implements Function {
 			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (sep, opath) -> {
 				JsonNodeType inType = jsonProvider.getNodeType(in);
 				if (inType != JsonNodeType.ARRAY && inType != JsonNodeType.OBJECT)
-					throw new JsonQueryTypeException(jsonProvider, version, "Cannot iterate over %s", in);
+					throw new JsonQueryTypeException("Cannot iterate over %s", ExceptionMessages.describe(jsonProvider, version, in));
 
 				@Var JsonNode isep = null;
 				StringBuilder builder = new StringBuilder();
@@ -42,7 +43,7 @@ public class JoinFunction implements Function {
 						} else if (isepType == JsonNodeType.NULL) {
 							// append nothing
 						} else {
-							throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot be added", jsonProvider.createString(builder.toString()), isep);
+							throw new JsonQueryTypeException("%s and %s cannot be added", ExceptionMessages.describe(jsonProvider, version, jsonProvider.createString(builder.toString())), ExceptionMessages.describe(jsonProvider, version, isep));
 						}
 					}
 
@@ -55,8 +56,8 @@ public class JoinFunction implements Function {
 						builder.append(jsonProvider.format(item));
 					} else {
 						if (version.compareTo(Versions.JQ_1_6) >= 0)
-							throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot be added", jsonProvider.createString(builder.toString()), item);
-						throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot be added", sep, item);
+							throw new JsonQueryTypeException("%s and %s cannot be added", ExceptionMessages.describe(jsonProvider, version, jsonProvider.createString(builder.toString())), ExceptionMessages.describe(jsonProvider, version, item));
+						throw new JsonQueryTypeException("%s and %s cannot be added", ExceptionMessages.describe(jsonProvider, version, sep), ExceptionMessages.describe(jsonProvider, version, item));
 					}
 
 					isep = sep;

@@ -69,7 +69,7 @@ public abstract class AbstractFieldAccess<JsonNode> implements Expression<StackF
 			}
 		} else {
 			if (!permissive)
-				throw new JsonQueryTypeException(jsonProvider, version, "Cannot iterate over %s", pobj);
+				throw new JsonQueryTypeException("Cannot iterate over %s", ExceptionMessages.describe(jsonProvider, version, pobj));
 		}
 	}
 

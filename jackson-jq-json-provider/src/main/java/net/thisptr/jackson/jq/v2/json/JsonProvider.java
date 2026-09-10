@@ -550,17 +550,4 @@ public interface JsonProvider<JsonNode> {
 			return value;
 		}
 	}
-
-	/**
-	 * Returns whether the given object is an instance of this provider's native node type.
-	 * <p>
-	 * Because the {@code JsonNode} type parameter is erased at runtime, code that only holds a
-	 * {@code JsonProvider<JsonNode>} cannot use {@code instanceof} against {@code JsonNode} directly;
-	 * this method exists as a runtime substitute.
-	 *
-	 * @param arg the object to check, possibly {@code null}
-	 * @return {@code true} if {@code arg} is an instance of this provider's node type
-	 */
-	// TODO: Remove this method.
-	boolean isJsonNodeInstance(@Nullable Object arg);
 }

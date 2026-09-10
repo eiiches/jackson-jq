@@ -7,6 +7,7 @@ import java.util.Map;
 import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
 
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
@@ -28,7 +29,7 @@ public class ContainsFunction implements Function {
 			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (value, opath) -> {
 				if (jsonProvider.getNodeType(in) != jsonProvider.getNodeType(value)
 						|| (jsonProvider.isBoolean(in) && jsonProvider.getBoolean(in) != jsonProvider.getBoolean(value))) {
-					throw new JsonQueryTypeException(jsonProvider, version, "%s and %s cannot have their containment checked", in, value);
+					throw new JsonQueryTypeException("%s and %s cannot have their containment checked", ExceptionMessages.describe(jsonProvider, version, in), ExceptionMessages.describe(jsonProvider, version, value));
 				}
 				output.emit(jsonProvider.createBoolean(contains(jsonProvider, value, in)), UntrackedPath.getInstance());
 			});

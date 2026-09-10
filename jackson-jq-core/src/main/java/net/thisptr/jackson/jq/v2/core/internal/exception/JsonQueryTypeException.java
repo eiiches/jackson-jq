@@ -3,9 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.exception;
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class JsonQueryTypeException extends JsonQueryException {
 	private static final long serialVersionUID = -2719442463094461632L;
@@ -15,15 +13,11 @@ public class JsonQueryTypeException extends JsonQueryException {
 	}
 
 	/**
-	 * Simple format constructor without JsonProvider - uses default Object.toString() for arguments.
+	 * Formats the message with {@link String#format}; render JSON nodes with
+	 * {@link ExceptionMessages#describe} and node types with {@link ExceptionMessages#typeName} first.
 	 */
 	@FormatMethod
 	public JsonQueryTypeException(@FormatString String format, Object... args) {
 		super(String.format(format, args));
-	}
-
-	@FormatMethod
-	public JsonQueryTypeException(JsonProvider<?> jsonProvider, Version version, @FormatString String format, Object... args) {
-		super(ExceptionMessages.format(jsonProvider, version, format, args));
 	}
 }

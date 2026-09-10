@@ -8,6 +8,7 @@ import java.util.Map;
 
 import com.google.auto.service.AutoService;
 
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -48,7 +49,7 @@ public class ToEntriesFunction implements Function {
 					result.add(jsonProvider.createObject(fields));
 				}
 			} else {
-				throw new JsonQueryTypeException(jsonProvider, version, "%s has no keys", in);
+				throw new JsonQueryTypeException("%s has no keys", ExceptionMessages.describe(jsonProvider, version, in));
 			}
 
 			output.emit(jsonProvider.createArray(result), UntrackedPath.getInstance());

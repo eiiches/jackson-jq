@@ -5,6 +5,7 @@ import java.util.List;
 import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.v2.core.internal.commons.strings.UnicodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -27,7 +28,7 @@ public class Utf8ByteLengthFunction implements Function {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 
 			if (!jsonProvider.isString(in))
-				throw new JsonQueryTypeException(jsonProvider, version, "%s only strings have UTF-8 byte length", in);
+				throw new JsonQueryTypeException("%s only strings have UTF-8 byte length", ExceptionMessages.describe(jsonProvider, version, in));
 			output.emit(jsonProvider.createNumber(UnicodeUtils.lengthUtf8(jsonProvider.getString(in))), UntrackedPath.getInstance());
 		});
 	}

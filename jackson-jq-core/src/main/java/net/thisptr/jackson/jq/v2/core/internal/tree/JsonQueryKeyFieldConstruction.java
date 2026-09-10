@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 import java.util.Set;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
@@ -55,7 +56,7 @@ public class JsonQueryKeyFieldConstruction<JsonNode> implements FieldConstructio
 	public void evaluate(StackFrame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		key.apply(frame, in, UntrackedPath.getInstance(), (k, opath) -> {
 			if (!jsonProvider.isString(k))
-				throw new JsonQueryTypeException(jsonProvider, version, "Cannot use %s as object key", k);
+				throw new JsonQueryTypeException("Cannot use %s as object key", ExceptionMessages.describe(jsonProvider, version, k));
 			value.apply(frame, in, UntrackedPath.getInstance(), (v, opath2) -> consumer.accept(jsonProvider.getString(k), v));
 		});
 	}
