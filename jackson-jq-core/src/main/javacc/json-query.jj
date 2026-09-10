@@ -16,7 +16,7 @@ PARSER_BEGIN(AstParser)
 	import java.util.ArrayList;
 
 	import net.thisptr.jackson.jq.v2.spi.version.Version;
-	import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
+	import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.*;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.*;
@@ -26,7 +26,8 @@ PARSER_BEGIN(AstParser)
 	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.PipedQueryAstNode.LabelPipeComponent;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TopLevelAstNode.ImportStatement;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TopLevelAstNode.ModuleDirective;
-	import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.parser.ShuntingYard;
 	import net.thisptr.jackson.jq.v2.internal.javacc.TokenMgrError;
 	import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -488,7 +489,7 @@ AstNode BinaryOperatorExpression():
 	Token t;
 	AstNode expr;
 	List<AstNode> exprs = new ArrayList<AstNode>();
-	List<BinaryOperatorExpression.Operator> operators = new ArrayList<BinaryOperatorExpression.Operator>();
+	List<BinaryOperator> operators = new ArrayList<BinaryOperator>();
 }
 {
 	expr = PrimaryExpression()
@@ -539,11 +540,11 @@ AstNode BinaryOperatorExpression():
 			|
 			t = <DEFAULT_EQUAL>
 		)
-		{ operators.add(BinaryOperatorExpression.Operator.fromImage(t.image)); }
+		{ operators.add(BinaryOperator.fromString(t.image)); }
 		expr = PrimaryExpression()
 		{ exprs.add(expr); }
 	)*
-	{ return BinaryOperatorExpression.buildTree(exprs, operators); }
+	{ return ShuntingYard.buildTree(exprs, operators); }
 }
 
 AstNode FunctionDefinition():

@@ -32,6 +32,9 @@
 		<module name="ModifierOrder"/>
 		<module name="EqualsHashCode"/>
 		<module name="EmptyStatement"/>
+		<module name="AbstractClassName">
+			<property name="format" value="^Abstract.+$|^Path$"/>
+		</module>
 
 		<module name="CustomImportOrder">
 			<property name="customImportOrderRules"

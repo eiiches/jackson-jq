@@ -13,8 +13,8 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ArrayConstructionAstNod
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ObjectConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ParenAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TupleAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.AbstractValueLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.StringLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.ValueLiteralAstNode;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
 public class ExpressionUtils {
@@ -90,8 +90,8 @@ public class ExpressionUtils {
 			}
 
 			return jsonProvider.createArray(result);
-		} else if (expr instanceof ValueLiteralAstNode) {
-			return ((ValueLiteralAstNode) expr).value(jsonProvider);
+		} else if (expr instanceof AbstractValueLiteralAstNode) {
+			return ((AbstractValueLiteralAstNode) expr).value(jsonProvider);
 		} else {
 			return null;
 		}

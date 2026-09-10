@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.Iterator;
 import java.util.Map;
 
-import net.thisptr.jackson.jq.v2.core.internal.comparator.JsonNodeComparator;
+import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
 /**

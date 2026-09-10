@@ -4,11 +4,11 @@ import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
-import net.thisptr.jackson.jq.v2.core.internal.tree.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.NullLiteral;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -20,7 +20,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-public class BracketFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
+public class BracketFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> {
 	private Expression<StackFrame, JsonNode> startExpr;
 	private Expression<StackFrame, JsonNode> endExpr;
 	private boolean isRange;

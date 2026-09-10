@@ -10,7 +10,8 @@ import java.util.Set;
 
 import com.google.errorprone.annotations.Var;
 
-import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
+import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;

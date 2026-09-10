@@ -9,9 +9,9 @@ import java.util.function.Consumer;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;

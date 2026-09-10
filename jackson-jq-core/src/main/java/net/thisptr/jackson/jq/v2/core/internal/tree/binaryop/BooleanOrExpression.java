@@ -1,8 +1,8 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.binaryop;
 
-import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
-import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -11,7 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
-public class BooleanOrExpression<JsonNode> extends BinaryOperatorExpression<JsonNode> {
+public class BooleanOrExpression<JsonNode> extends AbstractBinaryOperatorExpression<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
 
 	@Override

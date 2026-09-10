@@ -4,7 +4,7 @@ import java.util.Deque;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;

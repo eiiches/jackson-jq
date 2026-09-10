@@ -1,0 +1,12 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "memory",
+    srcs = [
+        "Closure.java",
+        "Memory.java",
+        "StackFrame.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-core:__subpackages__"],
+)

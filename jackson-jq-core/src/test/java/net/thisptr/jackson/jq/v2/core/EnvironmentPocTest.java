@@ -12,10 +12,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.core.internal.FunctionBody;
-import net.thisptr.jackson.jq.v2.core.internal.comparator.JsonNodeComparator;
-import net.thisptr.jackson.jq.v2.core.internal.misc.ExpressionUtils;
-import net.thisptr.jackson.jq.v2.core.internal.tree.FreeVariables;
+import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
+import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
+import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
+import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
+import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
@@ -35,6 +36,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class EnvironmentPocTest {
+	private static boolean isConstantExpression(Expression<?, ?> expr) {
+		return !expr.dependsOnInput() && !expr.dependsOnExternalState() && !FreeVariables.dependsOnVariables(expr);
+	}
+
 	/**
 	 * Results are compared by jq value, not by JsonNode identity: the node class a literal
 	 * compiles to is not what these tests are about.
@@ -117,7 +122,7 @@ public class EnvironmentPocTest {
 		Function probe = new Function() {
 			@Override
 			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
-				captured.add(ExpressionUtils.isConstantExpression(args.get(0)));
+				captured.add(isConstantExpression(args.get(0)));
 				return (scope, in, path, output) -> output.emit(in, path);
 			}
 		};
@@ -168,7 +173,7 @@ public class EnvironmentPocTest {
 		Expression<?, JsonNode> onePipeRandom = captured.get(captured.size() - 1);
 		assertFalse(onePipeRandom.dependsOnInput());
 		assertTrue(onePipeRandom.dependsOnExternalState());
-		assertFalse(ExpressionUtils.isConstantExpression(onePipeRandom));
+		assertFalse(isConstantExpression(onePipeRandom));
 
 		// Deliberately NOT shielded (see plan): random's result is discarded, but the pipe as a
 		// whole still conservatively reports dependsOnExternalState()==true.
@@ -198,15 +203,15 @@ public class EnvironmentPocTest {
 		// $b (a global variable) is always free -- non-const regardless of what it happens to hold.
 		withProbe.compile("probe($b)");
 		assertTrue(FreeVariables.dependsOnVariables(captured.get(captured.size() - 1)));
-		assertFalse(ExpressionUtils.isConstantExpression(captured.get(captured.size() - 1)));
+		assertFalse(isConstantExpression(captured.get(captured.size() - 1)));
 
 		// The binding is *inside* the expression -- $b is not free here, so the whole thing is const.
 		withProbe.compile("probe(1 as $b | $b)");
-		assertTrue(ExpressionUtils.isConstantExpression(captured.get(captured.size() - 1)));
+		assertTrue(isConstantExpression(captured.get(captured.size() - 1)));
 
 		// `.` is still free even though the local $b binding is closed.
 		withProbe.compile("probe(. as $b | $b)");
-		assertFalse(ExpressionUtils.isConstantExpression(captured.get(captured.size() - 1)));
+		assertFalse(isConstantExpression(captured.get(captured.size() - 1)));
 	}
 
 	@Test
@@ -231,7 +236,7 @@ public class EnvironmentPocTest {
 		// Top-level `.` is not fixed, so this only resolves as constant if error(null)'s
 		// dependsOnInput() correctly reflects that its literal argument doesn't depend on input.
 		env.compile("probe(error(null))");
-		assertTrue(ExpressionUtils.isConstantExpression(captured.get(captured.size() - 1)));
+		assertTrue(isConstantExpression(captured.get(captured.size() - 1)));
 		assertTrue(captured.get(captured.size() - 1) instanceof ConstantExpression<?, ?>);
 	}
 
@@ -300,7 +305,7 @@ public class EnvironmentPocTest {
 
 		// A local def whose body is a literal, called with no arguments, is fully constant.
 		env.compile("probe(def f: 1; f)");
-		assertTrue(ExpressionUtils.isConstantExpression(captured.get(captured.size() - 1)));
+		assertTrue(isConstantExpression(captured.get(captured.size() - 1)));
 
 		// A local def whose body reads `.` propagates dependsOnInput to its call sites.
 		env.compile("probe(def f: .; f)");
@@ -309,7 +314,7 @@ public class EnvironmentPocTest {
 		// A one-hop capture ($x lives directly in the enclosing frame) is precisely subtracted by the
 		// outer `as` binding, same as a plain variable read -- the whole thing folds to constant.
 		env.compile("probe(1 as $x | def f: $x; f)");
-		assertTrue(ExpressionUtils.isConstantExpression(captured.get(captured.size() - 1)));
+		assertTrue(isConstantExpression(captured.get(captured.size() - 1)));
 
 		// A def that never references its own filter-typed parameter is still conservatively marked as
 		// depending on input once called, because the argument expression is composed in regardless of
@@ -352,7 +357,7 @@ public class EnvironmentPocTest {
 		// `outer` is still precisely known to depend on exactly $x's root-frame slot, and the enclosing
 		// `as` binding correctly closes over it -- constant, even through the nested def.
 		env.compile("probe(1 as $x | def outer: def inner: $x; inner; outer)");
-		assertTrue(ExpressionUtils.isConstantExpression(captured.get(captured.size() - 1)));
+		assertTrue(isConstantExpression(captured.get(captured.size() - 1)));
 
 		// A *captured* call (reaching `outer` itself through a closure hop, from inside another def) does
 		// stay conservatively opaque, though -- matching ResolvedCapturedVariableAccess's "defs stay

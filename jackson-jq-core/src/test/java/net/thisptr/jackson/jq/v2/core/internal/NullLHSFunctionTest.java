@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
-import net.thisptr.jackson.jq.v2.core.Versions;
+import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

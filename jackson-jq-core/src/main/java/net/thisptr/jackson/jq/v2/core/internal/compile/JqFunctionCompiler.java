@@ -12,8 +12,8 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
-import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
+import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;

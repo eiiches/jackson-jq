@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.ast.impls;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -10,14 +11,16 @@ import org.junit.jupiter.api.Test;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
-import net.thisptr.jackson.jq.v2.core.Versions;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
+import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
+import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class ParenAstNodeTest {
 	@Test
@@ -68,10 +71,10 @@ class ParenAstNodeTest {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	void parenthesizedModuleMetadataRemainsConstant() throws JsonQueryException {
-		TopLevelAstNode<JsonNode> topLevel = (TopLevelAstNode<JsonNode>) AstParser.parse("module ({name: \"test\"}); .", Versions.JQ_1_6);
-		JsonNode metadata = topLevel.moduleDirective().getMetadata(Jackson2JsonProviderImpl.getInstance());
+		TopLevelAstNode topLevel = (TopLevelAstNode) AstParser.parse("module ({name: \"test\"}); .", Versions.JQ_1_6);
+		assertNotNull(topLevel.moduleDirective());
+		JsonNode metadata = Compiler.evaluateMetadata(Jackson2JsonProviderImpl.getInstance(), Objects.requireNonNull(topLevel.moduleDirective()));
 		assertEquals("test", metadata.get("name").textValue());
 	}
 

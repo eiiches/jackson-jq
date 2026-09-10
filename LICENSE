@@ -21,7 +21,7 @@ tests/test-cases
 
 These files are generated from files in stedolan/jq repository:
 
-jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/CoreJqLibrary.java
+jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/builtins/library/CoreJqLibrary.java
 jackson-jq-regex-impl-joni/src/main/java/net/thisptr/jackson/jq/v2/regex/impl/joni/RegexJqLibrary.java
 tests/test-cases/jq-1.5.yaml
 tests/test-cases/jq-1.5-manual.yaml

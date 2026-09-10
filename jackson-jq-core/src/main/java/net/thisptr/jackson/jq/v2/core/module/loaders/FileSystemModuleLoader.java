@@ -21,13 +21,13 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
-import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
+import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
-import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
+import net.thisptr.jackson.jq.v2.core.internal.compile.RootExpression;
+import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModuleMeta;
-import net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;

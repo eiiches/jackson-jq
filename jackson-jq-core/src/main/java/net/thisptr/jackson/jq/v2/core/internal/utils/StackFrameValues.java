@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.utils;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.path.PathAndValue;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;

@@ -5,7 +5,8 @@ import java.util.List;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Closure;
+import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 
 public class ClosureSpec {
 	public static class CapturedVariableRef {

@@ -10,10 +10,11 @@ import java.util.Set;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
+import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
+import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
-import net.thisptr.jackson.jq.v2.core.internal.misc.JsonNodeUtils;
-import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;

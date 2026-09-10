@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
-import net.thisptr.jackson.jq.v2.core.FunctionLoader;
+import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Function;

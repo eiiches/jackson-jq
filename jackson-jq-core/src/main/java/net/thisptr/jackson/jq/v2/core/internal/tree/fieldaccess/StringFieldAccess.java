@@ -2,9 +2,9 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 
 import java.util.Set;
 
-import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
+import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
-import net.thisptr.jackson.jq.v2.core.internal.tree.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ThisObject;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -15,7 +15,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-public class StringFieldAccess<JsonNode> extends FieldAccess<JsonNode> {
+public class StringFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> {
 	private Expression<StackFrame, JsonNode> field;
 
 	@Override

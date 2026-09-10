@@ -2,7 +2,13 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 
 jjq_java_library(
     name = "literal",
-    srcs = glob(["*.java"]),
+    srcs = [
+        "AbstractValueLiteralAstNode.java",
+        "BooleanLiteralAstNode.java",
+        "NullLiteralAstNode.java",
+        "NumericLiteralAstNode.java",
+        "StringLiteralAstNode.java",
+    ],
     release = 8,
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [

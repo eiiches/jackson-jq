@@ -7,15 +7,16 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.core.ClassPathFunctionLoader;
-import net.thisptr.jackson.jq.v2.core.Versions;
-import net.thisptr.jackson.jq.v2.core.internal.functions.BuiltinsFunction;
-import net.thisptr.jackson.jq.v2.core.internal.functions.EmptyFunction;
-import net.thisptr.jackson.jq.v2.core.internal.functions.ErrorFunction;
-import net.thisptr.jackson.jq.v2.core.internal.functions.InfiniteFunction;
-import net.thisptr.jackson.jq.v2.core.internal.functions.NanFunction;
-import net.thisptr.jackson.jq.v2.core.internal.functions.NowFunction;
-import net.thisptr.jackson.jq.v2.core.internal.functions.RangeFunction;
+import net.thisptr.jackson.jq.v2.core.function.loaders.ClassPathFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.AbstractPureJsonArgumentFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.BuiltinsFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.EmptyFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.ErrorFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.InfiniteFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.NanFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.NowFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.RangeFunction;
+import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -62,7 +63,7 @@ public class FunctionContractTest {
 					pureArgs.add(pureExpression());
 				}
 				Expression<Object, JsonNode> expr = fn.bindArguments(jsonProvider, pureArgs, version);
-				if (fn instanceof EmptyFunction || fn instanceof BuiltinsFunction || fn instanceof NanFunction || fn instanceof InfiniteFunction || fn instanceof RangeFunction || fn instanceof PureJsonArgumentFunction) {
+				if (fn instanceof EmptyFunction || fn instanceof BuiltinsFunction || fn instanceof NanFunction || fn instanceof InfiniteFunction || fn instanceof RangeFunction || fn instanceof AbstractPureJsonArgumentFunction) {
 					assertThat(expr.dependsOnInput())
 							.as("%s/%d in %s (Pure) expr.dependsOnInput()", sig.name(), arity, version)
 							.isFalse();

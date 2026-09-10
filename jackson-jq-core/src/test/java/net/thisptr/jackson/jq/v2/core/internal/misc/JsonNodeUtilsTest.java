@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.misc;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
+import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 

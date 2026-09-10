@@ -214,7 +214,7 @@ public class DumpExprFunction implements Function {
 		private static boolean isStructural(Class<?> type) {
 			String name = type.getName();
 			return name.startsWith("net.thisptr.jackson.jq.v2.core.internal.tree.")
-					|| name.equals("net.thisptr.jackson.jq.v2.core.internal.misc.Pair")
+					|| name.equals("net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair")
 					|| name.equals("net.thisptr.jackson.jq.v2.core.internal.compile.BoundArgumentInfo")
 					|| name.equals("net.thisptr.jackson.jq.v2.core.internal.compile.ClosureSpec")
 					|| name.startsWith("net.thisptr.jackson.jq.v2.core.internal.compile.ClosureSpec$")

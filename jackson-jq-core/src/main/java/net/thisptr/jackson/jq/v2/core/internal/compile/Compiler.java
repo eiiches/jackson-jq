@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -14,8 +15,6 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
-import net.thisptr.jackson.jq.v2.core.internal.Memory;
-import net.thisptr.jackson.jq.v2.core.internal.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.BinaryOpAstNode;
@@ -50,14 +49,30 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.PatternMatcherA
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.matchers.ArrayMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.matchers.ObjectMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.matchers.ValueMatcherAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
+import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
+import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
+import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
+import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedCapturedFunctionAccess;
+import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedCapturedFunctionBoundArgumentAccess;
+import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedCapturedVariableAccess;
+import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedCapturedVariableBoundArgumentAccess;
+import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedFixedVariableAccess;
+import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedFunctionCall;
+import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedFunctionDefinition;
+import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedGlobalFunctionAccess;
+import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedGlobalVariableAccess;
+import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedLocalFunctionAccess;
+import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedLocalFunctionBoundArgumentAccess;
+import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedLocalVariableAccess;
+import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedLocalVariableBoundArgumentAccess;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
+import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.AssignPipeComponent;
 import net.thisptr.jackson.jq.v2.core.internal.tree.BreakExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.Conditional;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FixedInputExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ForeachExpression;
-import net.thisptr.jackson.jq.v2.core.internal.tree.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.tree.IdentifierKeyFieldConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.JsonQueryKeyFieldConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.LabelPipeComponent;
@@ -68,20 +83,6 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.PipedQuery;
 import net.thisptr.jackson.jq.v2.core.internal.tree.PrecomputedConstantExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RecursionOperator;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ReduceExpression;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionAccess;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedFunctionBoundArgumentAccess;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableAccess;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedCapturedVariableBoundArgumentAccess;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFixedVariableAccess;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionCall;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedFunctionDefinition;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalFunctionAccess;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedGlobalVariableAccess;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionAccess;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalFunctionBoundArgumentAccess;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableAccess;
-import net.thisptr.jackson.jq.v2.core.internal.tree.ResolvedLocalVariableBoundArgumentAccess;
-import net.thisptr.jackson.jq.v2.core.internal.tree.RootExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.SemicolonOperator;
 import net.thisptr.jackson.jq.v2.core.internal.tree.StringInterpolation;
 import net.thisptr.jackson.jq.v2.core.internal.tree.StringKeyFieldConstruction;
@@ -90,7 +91,28 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.TopLevelExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.TransformPipeComponent;
 import net.thisptr.jackson.jq.v2.core.internal.tree.TryCatch;
 import net.thisptr.jackson.jq.v2.core.internal.tree.Tuple;
-import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BinaryOperatorExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.AlternativeOperatorExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BooleanAndExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BooleanOrExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.DivideExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.MinusExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.ModuloExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.MultiplyExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.PlusExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment.Assignment;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment.ComplexAlternativeAssignment;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment.ComplexDivideAssignment;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment.ComplexMinusAssignment;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment.ComplexModuloAssignment;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment.ComplexMultiplyAssignment;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment.ComplexPlusAssignment;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment.UpdateAssignment;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.comparison.CompareEqualTest;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.comparison.CompareGreaterEqualTest;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.comparison.CompareGreaterTest;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.comparison.CompareLessEqualTest;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.comparison.CompareLessTest;
+import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.comparison.CompareNotEqualTest;
 import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketExtractFieldAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.BracketFieldAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.IdentifierFieldAccess;
@@ -103,6 +125,7 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ArrayMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ObjectMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatcher;
+import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -254,10 +277,9 @@ public class Compiler {
 		}
 
 		if (ast instanceof TopLevelAstNode) {
-			@SuppressWarnings("unchecked")
-			TopLevelAstNode<JsonNode> top = (TopLevelAstNode<JsonNode>) ast;
-			for (TopLevelAstNode.ImportStatement<JsonNode> imp : top.imports()) {
-				JsonNode metadata = imp.getMetadata(env.getJsonProvider());
+			TopLevelAstNode top = (TopLevelAstNode) ast;
+			for (TopLevelAstNode.ImportStatement imp : top.imports()) {
+				JsonNode metadata = evaluateMetadata(env.getJsonProvider(), imp);
 				if (imp.dollarImport) {
 					JsonNode data = env.getModuleLoader().loadData(currentModule, imp.path, metadata);
 					if (data == null) {
@@ -384,7 +406,7 @@ public class Compiler {
 			BinaryOpAstNode bin = (BinaryOpAstNode) ast;
 			Expression<StackFrame, JsonNode> lhs = compileNonNull(env, context, bin.lhs);
 			boolean savedInputFixed = context.isInputFixed();
-			if (bin.operator == BinaryOperatorExpression.Operator.UDPATE) {
+			if (bin.operator == BinaryOperator.UPDATE) {
 				// `|=`'s rhs is rebound to the value at the resolved path, not `.`.
 				context.setInputFixed(savedInputFixed && !lhs.dependsOnInput());
 			}
@@ -394,7 +416,7 @@ public class Compiler {
 			} finally {
 				context.setInputFixed(savedInputFixed);
 			}
-			return bin.operator.create(lhs, rhs, env.getJqVersion(), env.getJsonProvider(), savedInputFixed);
+			return compileBinaryOperator(bin.operator, lhs, rhs, env.getJqVersion(), env.getJsonProvider(), savedInputFixed);
 		}
 
 		if (ast instanceof NegativeExpressionAstNode) {
@@ -920,6 +942,7 @@ public class Compiler {
 		}
 	}
 
+
 	public static <JsonNode> Expression<StackFrame, JsonNode> compileNonNull(Environment<JsonNode> env, CompileContext context, AstNode ast) throws JsonQueryException {
 		return compileNonNull(env, context, (Module) null, ast);
 	}
@@ -929,5 +952,81 @@ public class Compiler {
 		if (compiled == null)
 			throw new JsonQueryException("Cannot resolve null expression");
 		return compiled;
+	}
+
+	public static <JsonNode> @Nullable JsonNode evaluateMetadata(JsonProvider<JsonNode> jsonProvider, @Nullable AstNode metadataExpr) {
+		if (metadataExpr == null)
+			return null;
+		JsonNode metadata = ExpressionUtils.evaluateLiteralExpression(jsonProvider, metadataExpr);
+		if (metadata == null)
+			throw new IllegalArgumentException("Module metadata must be constant");
+		if (!jsonProvider.isObject(metadata))
+			throw new IllegalArgumentException("Module metadata must be an object");
+		return metadata;
+	}
+
+	public static <JsonNode> @Nullable JsonNode evaluateMetadata(JsonProvider<JsonNode> jsonProvider, TopLevelAstNode.ImportStatement statement) {
+		return evaluateMetadata(jsonProvider, statement.metadataExpr());
+	}
+
+	public static <JsonNode> JsonNode evaluateMetadata(JsonProvider<JsonNode> jsonProvider, TopLevelAstNode.ModuleDirective directive) {
+		return Objects.requireNonNull(evaluateMetadata(jsonProvider, directive.metadataExpr()));
+	}
+
+	public static <JsonNode> Expression<StackFrame, JsonNode> compileBinaryOperator(
+			BinaryOperator operator,
+			Expression<StackFrame, JsonNode> lhs,
+			Expression<StackFrame, JsonNode> rhs,
+			Version version,
+			JsonProvider<JsonNode> jsonProvider,
+			boolean inputFixed) {
+		switch (operator) {
+			case ASSIGN:
+				return new Assignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+			case UPDATE:
+				return new UpdateAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+			case DEFAULT_EQUAL:
+				return new ComplexAlternativeAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+			case PLUS_EQUAL:
+				return new ComplexPlusAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+			case MINUS_EQUAL:
+				return new ComplexMinusAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+			case TIMES_EQUAL:
+				return new ComplexMultiplyAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+			case DIVIDE_EQUAL:
+				return new ComplexDivideAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+			case MODULO_EQUAL:
+				return new ComplexModuloAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+			case DEFAULT:
+				return new AlternativeOperatorExpression<>(jsonProvider, lhs, rhs);
+			case OR:
+				return new BooleanOrExpression<>(jsonProvider, lhs, rhs);
+			case AND:
+				return new BooleanAndExpression<>(jsonProvider, lhs, rhs);
+			case LESS_EQUAL:
+				return new CompareLessEqualTest<>(jsonProvider, lhs, rhs);
+			case LESS:
+				return new CompareLessTest<>(jsonProvider, lhs, rhs);
+			case GREATER_EQUAL:
+				return new CompareGreaterEqualTest<>(jsonProvider, lhs, rhs);
+			case GREATER:
+				return new CompareGreaterTest<>(jsonProvider, lhs, rhs);
+			case EQUAL:
+				return new CompareEqualTest<>(jsonProvider, lhs, rhs);
+			case NOT_EQUAL:
+				return new CompareNotEqualTest<>(jsonProvider, lhs, rhs);
+			case PLUS:
+				return new PlusExpression<>(jsonProvider, lhs, rhs, version);
+			case MINUS:
+				return new MinusExpression<>(jsonProvider, lhs, rhs, version);
+			case MODULO:
+				return new ModuloExpression<>(jsonProvider, lhs, rhs, version);
+			case DIVIDE:
+				return new DivideExpression<>(jsonProvider, lhs, rhs, version);
+			case TIMES:
+				return new MultiplyExpression<>(jsonProvider, lhs, rhs, version);
+			default:
+				throw new IllegalArgumentException("Unknown operator: " + operator);
+		}
 	}
 }

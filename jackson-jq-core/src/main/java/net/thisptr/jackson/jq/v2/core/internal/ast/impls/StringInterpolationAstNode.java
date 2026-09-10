@@ -6,7 +6,7 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.misc.Pair;
+import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 
 public class StringInterpolationAstNode implements AstNode {
 	private final List<Pair<Integer, AstNode>> interpolations;
