@@ -60,6 +60,7 @@ module net.thisptr.jackson.jq.v2.core {
 			net.thisptr.jackson.jq.v2.core.internal.builtins.IndexFunction,
 			net.thisptr.jackson.jq.v2.core.internal.builtins.IndicesFunction,
 			net.thisptr.jackson.jq.v2.core.internal.builtins.InfiniteFunction,
+			net.thisptr.jackson.jq.v2.core.internal.builtins.IsEmptyFunction,
 			net.thisptr.jackson.jq.v2.core.internal.builtins.IsInfiniteFunction,
 			net.thisptr.jackson.jq.v2.core.internal.builtins.IsNanFunction,
 			net.thisptr.jackson.jq.v2.core.internal.builtins.IsNormalFunction,

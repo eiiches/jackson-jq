@@ -31,6 +31,7 @@ jjq_java_library(
         "IndexFunction.java",
         "IndicesFunction.java",
         "InfiniteFunction.java",
+        "IsEmptyFunction.java",
         "IsInfiniteFunction.java",
         "IsNanFunction.java",
         "IsNormalFunction.java",
