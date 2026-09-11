@@ -39,3 +39,37 @@
   in: {"b": 1}
   out: []
   v: '[1.6, )'
+
+- q: '[walk(if type == "number" then (., . + 10) else . end)]'
+  in: {"b": 1}
+  out:
+  - [{"b": 11}]
+  v: '[1.6, 1.7)'
+  comment: 'jq 1.6 rebuilds the object with reduce, whose update keeps the last output of a generator f.'
+
+- q: '[walk(if type == "number" then (., . + 10) else . end)]'
+  in: {"b": 1}
+  out:
+  - [{"b": 1}]
+  v: '[1.7, )'
+  comment: 'jq 1.7 redefined walk/1 in terms of map_values, which keeps the first output of a generator f.'
+
+- q: '[walk(if type == "number" then (., . + 10) else . end)]'
+  in: [1, 2]
+  out:
+  - [[1, 11, 2, 12]]
+  v: '[1.6, )'
+  comment: 'Not version-dependent: both definitions descend into arrays with map, which collects every output.'
+
+- q: 'walk(if type == "number" then empty else . end)'
+  in: {"b": 1, "a": "x"}
+  out:
+  - {"a": "x"}
+  v: '[1.6, )'
+  comment: 'f may produce no output for a member, in which case the member is dropped. The [1.7, ) definition uses _modify(.[]; w) rather than map_values(w) so this does not hit the `|= empty` error.'
+
+- q: '[walk(if type == "object" then (., .) else . end)]'
+  in: {"b": {"c": 1}}
+  out:
+  - [{"b": {"c": 1}}, {"b": {"c": 1}}]
+  v: '[1.6, )'
