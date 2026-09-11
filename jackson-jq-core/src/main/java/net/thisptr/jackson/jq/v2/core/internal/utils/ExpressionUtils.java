@@ -9,15 +9,15 @@ import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ArrayConstructionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ObjectConstructionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ParenAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TupleAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.BooleanLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.NullLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.NumericLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.StringLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.BooleanLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.NullLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.NumericLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstructionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ParenAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.StringLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.TupleAstNode;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
 public class ExpressionUtils {

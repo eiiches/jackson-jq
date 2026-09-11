@@ -35,38 +35,38 @@ import org.apache.commons.cli.help.HelpFormatter;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.function.loaders.ClassPathFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ArrayConstructionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.BinaryOpAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.BreakExpressionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ConditionalAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ForeachExpressionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.FormattingFilterAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.FunctionCallAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.FunctionDefinitionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.NegativeExpressionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ObjectConstructionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ParenAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.PipedQueryAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.RecursionOperatorAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ReduceExpressionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.SemicolonOperatorAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.StringInterpolationAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.ThisObjectAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TryCatchAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TupleAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.VariableAccessAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.BracketExtractFieldAccessAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.BracketFieldAccessAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.IdentifierFieldAccessAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.StringFieldAccessAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.BooleanLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.NullLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.NumericLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.StringLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.matchers.ArrayMatcherAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.matchers.ObjectMatcherAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.matchers.ValueMatcherAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.BooleanLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.BracketExtractFieldAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.BracketFieldAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.BreakExpressionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ConditionalAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ForeachExpressionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.FormattingFilterAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.FunctionCallAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.FunctionDefinitionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.IdentifierFieldAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.NegativeExpressionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.NullLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.NumericLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstructionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectMatcherAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ParenAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.PipedQueryAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.RecursionOperatorAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ReduceExpressionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.SemicolonOperatorAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.StringFieldAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.StringInterpolationAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.StringLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ThisObjectAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.TryCatchAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.TupleAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.ValueMatcherAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.VariableAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
 import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
@@ -728,7 +728,7 @@ public class Main {
 					actual.values.forEach(v -> {
 						if (uniqueValues.add(v)) {
 							values.add(v);
-							expressions.add(new RawJsonValue(v));
+							expressions.add(toAstNode(v));
 						}
 					});
 					expressions.add(expr);
@@ -755,22 +755,31 @@ public class Main {
 		}
 	}
 
-	/**
-	 * Wraps a previously-computed constant value (e.g. an object or array) so it can be re-fed into
-	 * later generators, formatted the same way {@link JsonNode#toString()}
-	 * already renders it -- which happens to be valid jq literal syntax.
-	 */
-	private static class RawJsonValue implements AstNode {
-		private final JsonNode value;
-
-		RawJsonValue(JsonNode value) {
-			this.value = value;
+	private static AstNode toAstNode(JsonNode value) {
+		if (value.isNull())
+			return new NullLiteralAstNode();
+		if (value.isBoolean())
+			return new BooleanLiteralAstNode(value.booleanValue());
+		if (value.isNumber())
+			return new NumericLiteralAstNode(value.toString());
+		if (value.isTextual())
+			return new StringLiteralAstNode(value.textValue());
+		if (value.isArray()) {
+			List<AstNode> elements = new ArrayList<>();
+			for (JsonNode element : value)
+				elements.add(toAstNode(element));
+			return elements.isEmpty()
+					? new ArrayConstructionAstNode()
+					: new ArrayConstructionAstNode(new TupleAstNode(elements));
 		}
-
-		@Override
-		public String toString() {
-			return value.toString();
+		if (value.isObject()) {
+			ObjectConstructionAstNode object = new ObjectConstructionAstNode();
+			value.properties().forEach(field -> object.add(
+					new ObjectConstructionAstNode.StringKeyFieldConstructionAst(
+							new StringLiteralAstNode(field.getKey()), toAstNode(field.getValue()))));
+			return object;
 		}
+		throw new IllegalArgumentException("Unsupported JSON value: " + value);
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)

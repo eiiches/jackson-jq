@@ -12,7 +12,7 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TopLevelAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleMeta;

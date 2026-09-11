@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.impls.BinaryOpAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
 
 public class ShuntingYard {
