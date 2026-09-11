@@ -97,7 +97,7 @@ public class CoreJqLibrary implements JqLibrary {
 			JqFunction.of("until", args("cond", "next"), "def _until: if cond then . else (next|_until) end; _until"),
 			JqFunction.of("while", args("cond", "update"), "def _while: if cond then ., (update | _while) else empty end; _while"),
 			JqFunction.of("leaf_paths", args(), "paths(scalars)"),
-			JqFunction.of("walk", args("f"), ". as $in | if type == \"object\" then reduce keys[] as $key ( {}; . + { ($key):  ($in[$key] | walk(f)) } ) | f elif type == \"array\" then map( walk(f) ) | f else f end", VersionRange.valueOf("[1.6, )")),
+			JqFunction.of("walk", args("f"), ". as $in | if type == \"object\" then reduce keys_unsorted[] as $key ( {}; . + { ($key):  ($in[$key] | walk(f)) } ) | f elif type == \"array\" then map( walk(f) ) | f else f end", VersionRange.valueOf("[1.6, )")),
 			JqFunction.of("in", args("xs"), ". as $x | xs | has($x)"),
 			JqFunction.of("inside", args("xs"), ". as $x | xs | contains($x)"),
 			JqFunction.of("combinations", args(), "if length == 0 then [] else .[0][] as $x | (.[1:] | combinations) as $y | [$x] + $y end"),

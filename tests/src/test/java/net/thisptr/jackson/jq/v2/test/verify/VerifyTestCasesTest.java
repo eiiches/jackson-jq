@@ -47,7 +47,7 @@ public class VerifyTestCasesTest {
 		Evaluator.Result result = new JqRunner(e.executable, moduleSearchPath).evaluate(tc.q, tc.in, Duration.ofSeconds(2));
 		assertThat(result.error).as("%s", command).isNull();
 
-		Comparator<JsonNode> comparator = new TestJsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance(), !tc.ignoreFieldOrder, tc.numericalErrors);
+		Comparator<JsonNode> comparator = new TestJsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance(), true, tc.numericalErrors);
 		assertThat(tc.out).as("%s", command)
 				.usingElementComparator(comparator)
 				.isEqualTo(result.values);

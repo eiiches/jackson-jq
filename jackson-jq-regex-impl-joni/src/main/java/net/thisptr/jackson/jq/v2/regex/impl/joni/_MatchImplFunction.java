@@ -79,11 +79,30 @@ public class _MatchImplFunction implements Function {
 		public List<CaptureObject> captures = new ArrayList<>();
 	}
 
+	/**
+	 * Builds one element of the {@code captures} array.
+	 *
+	 * <p>The field order depends on the length of the capture, because jq's {@code f_match()}
+	 * writes {@code offset} and {@code string} first for a zero-length capture but {@code offset}
+	 * and {@code length} first otherwise, then writes the remaining field afterwards. Since jq
+	 * objects keep insertion order, a zero-length capture comes out as
+	 * {@code offset, string, length, name} and every other capture as
+	 * {@code offset, length, string, name}. A capture group that did not participate in the match
+	 * is reported with length 0, so it takes the former order too. jackson-jq reproduces this.
+	 */
 	private static <JsonNode> JsonNode captureToJson(JsonProvider<JsonNode> jsonProvider, CaptureObject capture) {
+		JsonNode length = jsonProvider.createNumber(capture.length);
+		JsonNode string = capture.string == null ? jsonProvider.createNull() : jsonProvider.createString(capture.string);
+
 		Map<String, JsonNode> node = new LinkedHashMap<>();
 		node.put("offset", jsonProvider.createNumber(capture.offset));
-		node.put("length", jsonProvider.createNumber(capture.length));
-		node.put("string", capture.string == null ? jsonProvider.createNull() : jsonProvider.createString(capture.string));
+		if (capture.length == 0) {
+			node.put("string", string);
+			node.put("length", length);
+		} else {
+			node.put("length", length);
+			node.put("string", string);
+		}
 		node.put("name", capture.name == null ? jsonProvider.createNull() : jsonProvider.createString(capture.name));
 		return jsonProvider.createObject(node);
 	}

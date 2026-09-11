@@ -84,7 +84,7 @@ public abstract class AbstractJsonQueryTest<T> {
 			expectedOut.add(parseTestNode(outNode));
 		}
 
-		Comparator<T> comparator = new TestJsonNodeComparator<>(getJsonProvider(), !tc.ignoreFieldOrder, tc.numericalErrors);
+		Comparator<T> comparator = new TestJsonNodeComparator<>(getJsonProvider(), true, tc.numericalErrors);
 
 		@Var boolean failed = false;
 		try {

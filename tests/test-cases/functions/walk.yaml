@@ -1,0 +1,41 @@
+- q: 'walk(.)'
+  in: {"b": 1, "a": 2}
+  out:
+  - {"b": 1, "a": 2}
+  v: '[1.6, )'
+  comment: 'jq rebuilds the object from keys_unsorted, so walk/1 keeps the input field order instead of sorting it.'
+
+- q: 'walk(.)'
+  in: {"b": {"y": 1, "x": 2}, "a": [{"n": 1, "m": 2}]}
+  out:
+  - {"b": {"y": 1, "x": 2}, "a": [{"n": 1, "m": 2}]}
+  v: '[1.6, )'
+
+- q: 'walk(if type == "object" then with_entries(.value += 1) else . end)'
+  in: {"b": 1, "a": 2}
+  out:
+  - {"b": 2, "a": 3}
+  v: '[1.6, )'
+
+- q: '[walk(.) | keys_unsorted]'
+  in: {"b": 1, "a": 2}
+  out:
+  - [["b", "a"]]
+  v: '[1.6, )'
+
+- q: 'walk(if type == "array" then sort else . end)'
+  in: [[4, 1, 7], [8, 5, 2], [3, 6, 9]]
+  out:
+  - [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
+  v: '[1.6, )'
+
+- q: 'walk(.)'
+  in: [1, "a", null, true]
+  out:
+  - [1, "a", null, true]
+  v: '[1.6, )'
+
+- q: 'walk(empty)'
+  in: {"b": 1}
+  out: []
+  v: '[1.6, )'

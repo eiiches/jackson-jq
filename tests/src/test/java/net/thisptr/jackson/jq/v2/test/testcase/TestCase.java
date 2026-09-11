@@ -43,9 +43,6 @@ public class TestCase {
 	@JsonProperty("numerical_errors")
 	public double numericalErrors = 0;
 
-	@JsonProperty("ignore_field_order")
-	public boolean ignoreFieldOrder = false;
-
 	/**
 	 * jq modules this test case needs on the module search path, keyed by path relative to the
 	 * search root (e.g. {@code "a.jq"}, {@code "lib/jq/e/e.jq"}), value is the raw file content.
