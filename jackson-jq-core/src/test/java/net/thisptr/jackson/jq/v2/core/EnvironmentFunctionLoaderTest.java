@@ -37,6 +37,11 @@ public class EnvironmentFunctionLoaderTest {
 		assertThat(loader.getJqFunctions(Versions.JQ_1_6))
 				.containsKey(FunctionSignature.of("map", 1))
 				.doesNotContainKey(FunctionSignature.of("length", 0));
+
+		// isempty/1 is a Java function, registered from 1.6 on.
+		assertThat(loader.getFunctions(Versions.JQ_1_6)).containsKey(FunctionSignature.of("isempty", 1));
+		assertThat(loader.getJqFunctions(Versions.JQ_1_6)).doesNotContainKey(FunctionSignature.of("isempty", 1));
+		assertThat(loader.getFunctions(Versions.JQ_1_5)).doesNotContainKey(FunctionSignature.of("isempty", 1));
 	}
 
 	private static Function constantFunction(String text) {

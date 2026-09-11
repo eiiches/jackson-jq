@@ -2159,18 +2159,15 @@
   out:
   - true
   v: '[1.6, )'
-  failing: true
 
 - q: 'isempty(range(3))'
   in: null
   out:
   - false
   v: '[1.6, )'
-  failing: true
 
 - q: 'isempty(1,error("foo"))'
   in: null
   out:
   - false
   v: '[1.6, )'
-  failing: true

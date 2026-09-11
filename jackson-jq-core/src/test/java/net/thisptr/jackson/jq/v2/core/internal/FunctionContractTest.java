@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.core.internal.builtins.BuiltinsFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.EmptyFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.ErrorFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.InfiniteFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.IsEmptyFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.NanFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.NowFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.RangeFunction;
@@ -63,7 +64,7 @@ public class FunctionContractTest {
 					pureArgs.add(pureExpression());
 				}
 				Expression<Object, JsonNode> expr = fn.bindArguments(jsonProvider, pureArgs, version);
-				if (fn instanceof EmptyFunction || fn instanceof BuiltinsFunction || fn instanceof NanFunction || fn instanceof InfiniteFunction || fn instanceof RangeFunction || fn instanceof AbstractPureJsonArgumentFunction) {
+				if (fn instanceof EmptyFunction || fn instanceof BuiltinsFunction || fn instanceof NanFunction || fn instanceof InfiniteFunction || fn instanceof RangeFunction || fn instanceof IsEmptyFunction || fn instanceof AbstractPureJsonArgumentFunction) {
 					assertThat(expr.dependsOnInput())
 							.as("%s/%d in %s (Pure) expr.dependsOnInput()", sig.name(), arity, version)
 							.isFalse();

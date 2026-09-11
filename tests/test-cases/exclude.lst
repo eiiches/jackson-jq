@@ -59,9 +59,4 @@ range(10;12)|IN(range(10))
 IN(range(10;20); range(10))
 IN(range(5;20); range(10))
 
-# isempty
-isempty(empty)
-isempty(range(3))
-isempty(1,error("foo"))
-
 # vim: ft=jq

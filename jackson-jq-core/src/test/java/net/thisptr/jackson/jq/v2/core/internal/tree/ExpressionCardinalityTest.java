@@ -20,6 +20,7 @@ import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -69,7 +70,11 @@ public class ExpressionCardinalityTest {
 	}
 
 	private static Cardinality cardinalityOf(String expression) {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_7)
+		return cardinalityOf(expression, Versions.JQ_1_7);
+	}
+
+	private static Cardinality cardinalityOf(String expression, Version jqVersion) {
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), jqVersion)
 				.build();
 		AstNode parsedAst = AstParser.parse(expression, env.getJqVersion());
 		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(env, (Module) null, parsedAst);
@@ -245,6 +250,9 @@ public class ExpressionCardinalityTest {
 		assertThat(cardinalityOf("path(.)")).isEqualTo(Cardinality.ONE);
 		assertThat(cardinalityOf("path(.a)")).isEqualTo(Cardinality.ONE);
 		assertThat(cardinalityOf("path(.a, .b)")).isEqualTo(Cardinality.UNKNOWN);
+		assertThat(cardinalityOf("isempty(.[])")).isEqualTo(Cardinality.ONE);
+		// Up to 1.6 a `try` inside the generator can make isempty emit twice; see IsEmptyFunction.
+		assertThat(cardinalityOf("isempty(.[])", Versions.JQ_1_6)).isEqualTo(Cardinality.UNKNOWN);
 		assertThat(cardinalityOf("@json")).isEqualTo(Cardinality.ONE);
 		assertThat(cardinalityOf("@base64")).isEqualTo(Cardinality.ONE);
 		assertThat(cardinalityOf("@csv")).isEqualTo(Cardinality.ONE);
