@@ -1,0 +1,38 @@
+version: 2
+updates:
+  - package-ecosystem: "bazel"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      bazel-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: "maven"
+    directories:
+      - "/smoke-tests/graalvm/"
+      - "/smoke-tests/java8/"
+      - "/smoke-tests/jpms/"
+      - "/smoke-tests/osgi/"
+      - "/smoke-tests/quarkus/"
+    schedule:
+      interval: "weekly"
+    groups:
+      smoke-test-dependencies:
+        patterns:
+          - "*"
+        group-by: "dependency-name"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
