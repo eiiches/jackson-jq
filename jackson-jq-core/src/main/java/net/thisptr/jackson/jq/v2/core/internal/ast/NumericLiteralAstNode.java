@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+
 /**
  * A numeric literal, holding the source text exactly as it was written. The parser makes no
  * attempt to decide what number the text denotes; that happens when the node is turned into an
@@ -9,7 +11,8 @@ package net.thisptr.jackson.jq.v2.core.internal.ast;
 public class NumericLiteralAstNode extends AbstractValueLiteralAstNode {
 	private final String text;
 
-	public NumericLiteralAstNode(String text) {
+	public NumericLiteralAstNode(SourceLocation location, String text) {
+		super(location);
 		this.text = text;
 	}
 

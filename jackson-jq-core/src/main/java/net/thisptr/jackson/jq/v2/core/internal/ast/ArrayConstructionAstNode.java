@@ -2,15 +2,18 @@ package net.thisptr.jackson.jq.v2.core.internal.ast;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class ArrayConstructionAstNode implements AstNode {
+
+public class ArrayConstructionAstNode extends AbstractAstNode {
 	public final @Nullable AstNode q;
 
-	public ArrayConstructionAstNode() {
-		this(null);
+	public ArrayConstructionAstNode(SourceLocation location) {
+		this(location, null);
 	}
 
-	public ArrayConstructionAstNode(@Nullable AstNode q) {
+	public ArrayConstructionAstNode(SourceLocation location, @Nullable AstNode q) {
+		super(location);
 		this.q = q;
 	}
 

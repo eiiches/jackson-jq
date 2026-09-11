@@ -1,9 +1,12 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+
 public class BooleanLiteralAstNode extends AbstractValueLiteralAstNode {
 	private final boolean value;
 
-	public BooleanLiteralAstNode(boolean value) {
+	public BooleanLiteralAstNode(SourceLocation location, boolean value) {
+		super(location);
 		this.value = value;
 	}
 

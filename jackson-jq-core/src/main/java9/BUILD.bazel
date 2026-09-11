@@ -4,6 +4,7 @@ jjq_java_module_info(
     module_name = "net.thisptr.jackson.jq.v2.core",
     module_packages = [
         "//jackson-jq-core:core-sources",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/diagnostic",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/operator",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/parser",

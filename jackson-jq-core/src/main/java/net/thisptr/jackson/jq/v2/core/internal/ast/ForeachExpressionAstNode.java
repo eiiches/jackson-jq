@@ -2,15 +2,18 @@ package net.thisptr.jackson.jq.v2.core.internal.ast;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class ForeachExpressionAstNode implements AstNode {
+
+public class ForeachExpressionAstNode extends AbstractAstNode {
 	private final AstNode iterExpr;
 	private final AstNode updateExpr;
 	private final AstNode initExpr;
 	private final @Nullable AstNode extractExpr;
 	private final PatternMatcherAstNode matcher;
 
-	public ForeachExpressionAstNode(PatternMatcherAstNode matcher, AstNode initExpr, AstNode updateExpr, @Nullable AstNode extractExpr, AstNode iterExpr) {
+	public ForeachExpressionAstNode(SourceLocation location, PatternMatcherAstNode matcher, AstNode initExpr, AstNode updateExpr, @Nullable AstNode extractExpr, AstNode iterExpr) {
+		super(location);
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.updateExpr = updateExpr;

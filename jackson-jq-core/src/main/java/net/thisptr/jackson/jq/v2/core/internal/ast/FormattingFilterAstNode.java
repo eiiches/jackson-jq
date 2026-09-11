@@ -1,10 +1,13 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class FormattingFilterAstNode implements AstNode {
+
+public class FormattingFilterAstNode extends AbstractAstNode {
 	private final String name;
 
-	public FormattingFilterAstNode(String name) {
+	public FormattingFilterAstNode(SourceLocation location, String name) {
+		super(location);
 		this.name = name;
 	}
 

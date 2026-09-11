@@ -5,14 +5,16 @@ import java.util.List;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 
-public class StringInterpolationAstNode implements AstNode {
+public class StringInterpolationAstNode extends AbstractAstNode {
 	private final List<Pair<Integer, AstNode>> interpolations;
 	private final String template;
 	private final @Nullable AstNode formatter;
 
-	public StringInterpolationAstNode(String template, List<Pair<Integer, AstNode>> interpolations, @Nullable AstNode formatter) {
+	public StringInterpolationAstNode(SourceLocation location, String template, List<Pair<Integer, AstNode>> interpolations, @Nullable AstNode formatter) {
+		super(location);
 		this.template = template;
 		this.interpolations = interpolations;
 		this.formatter = formatter;

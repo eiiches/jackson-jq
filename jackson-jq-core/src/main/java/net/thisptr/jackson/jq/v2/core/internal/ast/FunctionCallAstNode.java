@@ -5,13 +5,16 @@ import java.util.List;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class FunctionCallAstNode implements AstNode {
+
+public class FunctionCallAstNode extends AbstractAstNode {
 	private final String name;
 	private final List<AstNode> args;
 	private final @Nullable String moduleName;
 
-	public FunctionCallAstNode(@Nullable String moduleName, String name, List<AstNode> args) {
+	public FunctionCallAstNode(SourceLocation location, @Nullable String moduleName, String name, List<AstNode> args) {
+		super(location);
 		this.moduleName = moduleName;
 		this.name = name;
 		this.args = args;

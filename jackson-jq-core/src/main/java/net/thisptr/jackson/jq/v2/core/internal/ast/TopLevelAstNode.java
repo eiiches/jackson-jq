@@ -4,13 +4,16 @@ import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class TopLevelAstNode implements AstNode {
+
+public class TopLevelAstNode extends AbstractAstNode {
 	private final List<ImportStatement> imports;
 	private final AstNode expr;
 	private final @Nullable ModuleDirective moduleDirective;
 
-	public TopLevelAstNode(@Nullable ModuleDirective moduleDirective, List<ImportStatement> imports, AstNode expr) {
+	public TopLevelAstNode(SourceLocation location, @Nullable ModuleDirective moduleDirective, List<ImportStatement> imports, AstNode expr) {
+		super(location);
 		this.moduleDirective = moduleDirective;
 		this.imports = imports;
 		this.expr = expr;

@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+
 /**
  * A node produced directly by the parser, before compilation.
  * <p>
@@ -8,4 +10,11 @@ package net.thisptr.jackson.jq.v2.core.internal.ast;
  */
 public interface AstNode {
 	<R> R accept(AstVisitor<R> visitor);
+
+	/**
+	 * Returns the region of source text this node was parsed from.
+	 *
+	 * @return the source location
+	 */
+	SourceLocation location();
 }

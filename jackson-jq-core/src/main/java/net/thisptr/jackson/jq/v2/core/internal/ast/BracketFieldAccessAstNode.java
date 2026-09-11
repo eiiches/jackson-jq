@@ -2,23 +2,25 @@ package net.thisptr.jackson.jq.v2.core.internal.ast;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+
 
 public class BracketFieldAccessAstNode extends AbstractFieldAccessAstNode {
 	private final AstNode startExpr;
 	private final AstNode endExpr;
 	private final boolean isRange;
 
-	public BracketFieldAccessAstNode(AstNode src, @Nullable AstNode atExpr, boolean permissive) {
-		super(src, permissive);
-		this.startExpr = atExpr != null ? atExpr : new NullLiteralAstNode();
-		this.endExpr = new NullLiteralAstNode();
+	public BracketFieldAccessAstNode(SourceLocation location, AstNode src, @Nullable AstNode atExpr, boolean permissive) {
+		super(location, src, permissive);
+		this.startExpr = atExpr != null ? atExpr : new NullLiteralAstNode(location);
+		this.endExpr = new NullLiteralAstNode(location);
 		this.isRange = false;
 	}
 
-	public BracketFieldAccessAstNode(AstNode src, @Nullable AstNode startExpr, @Nullable AstNode endExpr, boolean permissive) {
-		super(src, permissive);
-		this.startExpr = startExpr != null ? startExpr : new NullLiteralAstNode();
-		this.endExpr = endExpr != null ? endExpr : new NullLiteralAstNode();
+	public BracketFieldAccessAstNode(SourceLocation location, AstNode src, @Nullable AstNode startExpr, @Nullable AstNode endExpr, boolean permissive) {
+		super(location, src, permissive);
+		this.startExpr = startExpr != null ? startExpr : new NullLiteralAstNode(location);
+		this.endExpr = endExpr != null ? endExpr : new NullLiteralAstNode(location);
 		this.isRange = true;
 	}
 

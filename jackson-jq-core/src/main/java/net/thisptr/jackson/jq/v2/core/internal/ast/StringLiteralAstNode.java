@@ -1,9 +1,12 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+
 public class StringLiteralAstNode extends AbstractValueLiteralAstNode {
 	private final String text;
 
-	public StringLiteralAstNode(String text) {
+	public StringLiteralAstNode(SourceLocation location, String text) {
+		super(location);
 		this.text = text;
 	}
 

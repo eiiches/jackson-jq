@@ -1,11 +1,13 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+
 
 public class IdentifierFieldAccessAstNode extends AbstractFieldAccessAstNode {
 	private final String field;
 
-	public IdentifierFieldAccessAstNode(AstNode obj, String field, boolean permissive) {
-		super(obj, permissive);
+	public IdentifierFieldAccessAstNode(SourceLocation location, AstNode obj, String field, boolean permissive) {
+		super(location, obj, permissive);
 		this.field = field;
 	}
 

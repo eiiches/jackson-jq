@@ -1,11 +1,14 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
-public class VariableBindingAstNode implements AstNode {
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+
+public class VariableBindingAstNode extends AbstractAstNode {
 	private final AstNode value;
 	private final PatternMatcherAstNode matcher;
 	private final AstNode body;
 
-	public VariableBindingAstNode(AstNode value, PatternMatcherAstNode matcher, AstNode body) {
+	public VariableBindingAstNode(SourceLocation location, AstNode value, PatternMatcherAstNode matcher, AstNode body) {
+		super(location);
 		this.value = value;
 		this.matcher = matcher;
 		this.body = body;

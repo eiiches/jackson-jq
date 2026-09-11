@@ -3,6 +3,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "ast",
     srcs = [
+        "AbstractAstNode.java",
         "AbstractFieldAccessAstNode.java",
         "AbstractValueLiteralAstNode.java",
         "ArrayConstructionAstNode.java",
@@ -46,6 +47,7 @@ jjq_java_library(
     release = 8,
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/diagnostic",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/operator",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/commons/pair",
     ],

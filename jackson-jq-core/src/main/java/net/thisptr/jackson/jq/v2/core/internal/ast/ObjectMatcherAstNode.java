@@ -5,11 +5,14 @@ import java.util.List;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class ObjectMatcherAstNode implements PatternMatcherAstNode {
+
+public class ObjectMatcherAstNode extends AbstractAstNode implements PatternMatcherAstNode {
 	private final List<FieldMatcher> matchers;
 
-	public ObjectMatcherAstNode(List<FieldMatcher> matchers) {
+	public ObjectMatcherAstNode(SourceLocation location, List<FieldMatcher> matchers) {
+		super(location);
 		this.matchers = matchers;
 	}
 
@@ -46,12 +49,13 @@ public class ObjectMatcherAstNode implements PatternMatcherAstNode {
 	 * <li>{@code {x: matcher}}: identifier / keyword key with a pattern</li>
 	 * </ul>
 	 */
-	public static class ConstantKeyFieldMatcher implements FieldMatcher {
+	public static class ConstantKeyFieldMatcher extends AbstractAstNode implements FieldMatcher {
 		private final boolean dollar;
 		private final String name;
 		private final @Nullable PatternMatcherAstNode matcher;
 
-		public ConstantKeyFieldMatcher(boolean dollar, String name, @Nullable PatternMatcherAstNode matcher) {
+		public ConstantKeyFieldMatcher(SourceLocation location, boolean dollar, String name, @Nullable PatternMatcherAstNode matcher) {
+			super(location);
 			if (!dollar && matcher == null)
 				throw new IllegalArgumentException("BUG: matcher must not be null when dollar = false");
 			this.dollar = dollar;
@@ -108,11 +112,12 @@ public class ObjectMatcherAstNode implements PatternMatcherAstNode {
 	 * are part of the name expression, which is a {@code ParenAstNode}</li>
 	 * </ul>
 	 */
-	public static class ExpressionKeyFieldMatcher implements FieldMatcher {
+	public static class ExpressionKeyFieldMatcher extends AbstractAstNode implements FieldMatcher {
 		private final AstNode name;
 		private final PatternMatcherAstNode matcher;
 
-		public ExpressionKeyFieldMatcher(AstNode name, PatternMatcherAstNode matcher) {
+		public ExpressionKeyFieldMatcher(SourceLocation location, AstNode name, PatternMatcherAstNode matcher) {
+			super(location);
 			this.name = name;
 			this.matcher = matcher;
 		}

@@ -52,6 +52,7 @@ jjq_java_library(
     release = 8,
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/diagnostic",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/function",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/function/loaders",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast",
@@ -93,6 +94,7 @@ jjq_java_mrjar(
     osgi = True,
     packages = [
         ":core-sources",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/diagnostic",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/function",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/function/loaders",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast",

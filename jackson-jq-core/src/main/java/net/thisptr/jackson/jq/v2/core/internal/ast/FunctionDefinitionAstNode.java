@@ -4,13 +4,16 @@ import java.util.List;
 
 import com.google.errorprone.annotations.Var;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class FunctionDefinitionAstNode implements AstNode {
+
+public class FunctionDefinitionAstNode extends AbstractAstNode {
 	private final AstNode body;
 	private final String fname;
 	private final List<String> args;
 
-	public FunctionDefinitionAstNode(String fname, List<String> args, AstNode body) {
+	public FunctionDefinitionAstNode(SourceLocation location, String fname, List<String> args, AstNode body) {
+		super(location);
 		this.fname = fname;
 		this.args = args;
 		this.body = body;

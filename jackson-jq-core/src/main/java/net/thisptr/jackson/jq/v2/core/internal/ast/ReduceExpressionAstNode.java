@@ -1,13 +1,16 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class ReduceExpressionAstNode implements AstNode {
+
+public class ReduceExpressionAstNode extends AbstractAstNode {
 	private final AstNode iterExpr;
 	private final AstNode reduceExpr;
 	private final AstNode initExpr;
 	private final PatternMatcherAstNode matcher;
 
-	public ReduceExpressionAstNode(PatternMatcherAstNode matcher, AstNode initExpr, AstNode reduceExpr, AstNode iterExpr) {
+	public ReduceExpressionAstNode(SourceLocation location, PatternMatcherAstNode matcher, AstNode initExpr, AstNode reduceExpr, AstNode iterExpr) {
+		super(location);
 		this.matcher = matcher;
 		this.initExpr = initExpr;
 		this.reduceExpr = reduceExpr;

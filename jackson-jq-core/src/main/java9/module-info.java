@@ -8,6 +8,7 @@ module net.thisptr.jackson.jq.v2.core {
 	requires static transitive org.jspecify;
 
 	exports net.thisptr.jackson.jq.v2.core;
+	exports net.thisptr.jackson.jq.v2.core.diagnostic;
 	exports net.thisptr.jackson.jq.v2.core.function;
 	exports net.thisptr.jackson.jq.v2.core.function.loaders;
 	exports net.thisptr.jackson.jq.v2.core.module;

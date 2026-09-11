@@ -1,10 +1,13 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
-public class LabelAstNode implements AstNode {
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+
+public class LabelAstNode extends AbstractAstNode {
 	private final String name;
 	private final AstNode body;
 
-	public LabelAstNode(String name, AstNode body) {
+	public LabelAstNode(SourceLocation location, String name, AstNode body) {
+		super(location);
 		this.name = name;
 		this.body = body;
 	}

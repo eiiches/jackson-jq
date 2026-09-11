@@ -1,10 +1,13 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class NegativeExpressionAstNode implements AstNode {
+
+public class NegativeExpressionAstNode extends AbstractAstNode {
 	private final AstNode value;
 
-	public NegativeExpressionAstNode(AstNode value) {
+	public NegativeExpressionAstNode(SourceLocation location, AstNode value) {
+		super(location);
 		this.value = value;
 	}
 

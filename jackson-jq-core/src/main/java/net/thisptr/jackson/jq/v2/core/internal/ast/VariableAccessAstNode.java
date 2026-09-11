@@ -2,18 +2,21 @@ package net.thisptr.jackson.jq.v2.core.internal.ast;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class VariableAccessAstNode implements AstNode {
+
+public class VariableAccessAstNode extends AbstractAstNode {
 	private final String name;
 	private final @Nullable String moduleName;
 
-	public VariableAccessAstNode(@Nullable String moduleName, String name) {
+	public VariableAccessAstNode(SourceLocation location, @Nullable String moduleName, String name) {
+		super(location);
 		this.moduleName = moduleName;
 		this.name = name;
 	}
 
-	public VariableAccessAstNode(String name) {
-		this(null, name);
+	public VariableAccessAstNode(SourceLocation location, String name) {
+		this(location, null, name);
 	}
 
 	public String name() {

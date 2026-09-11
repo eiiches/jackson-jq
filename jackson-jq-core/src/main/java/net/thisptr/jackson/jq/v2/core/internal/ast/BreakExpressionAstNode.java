@@ -1,10 +1,13 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class BreakExpressionAstNode implements AstNode {
+
+public class BreakExpressionAstNode extends AbstractAstNode {
 	private final String name;
 
-	public BreakExpressionAstNode(String name) {
+	public BreakExpressionAstNode(SourceLocation location, String name) {
+		super(location);
 		this.name = name;
 	}
 

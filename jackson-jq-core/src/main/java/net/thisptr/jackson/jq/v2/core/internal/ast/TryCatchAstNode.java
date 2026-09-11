@@ -2,18 +2,21 @@ package net.thisptr.jackson.jq.v2.core.internal.ast;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class TryCatchAstNode implements AstNode {
+
+public class TryCatchAstNode extends AbstractAstNode {
 	protected final AstNode tryExpr;
 	protected final @Nullable AstNode catchExpr;
 
-	public TryCatchAstNode(AstNode tryExpr, @Nullable AstNode catchExpr) {
+	public TryCatchAstNode(SourceLocation location, AstNode tryExpr, @Nullable AstNode catchExpr) {
+		super(location);
 		this.tryExpr = tryExpr;
 		this.catchExpr = catchExpr;
 	}
 
-	public TryCatchAstNode(AstNode tryExpr) {
-		this(tryExpr, null);
+	public TryCatchAstNode(SourceLocation location, AstNode tryExpr) {
+		this(location, tryExpr, null);
 	}
 
 	public AstNode tryExpr() {
@@ -30,8 +33,8 @@ public class TryCatchAstNode implements AstNode {
 	}
 
 	public static class Question extends TryCatchAstNode {
-		public Question(AstNode tryExpr) {
-			super(tryExpr);
+		public Question(SourceLocation location, AstNode tryExpr) {
+			super(location, tryExpr);
 		}
 
 		@Override

@@ -4,11 +4,14 @@ import java.util.List;
 
 import com.google.errorprone.annotations.Var;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class TupleAstNode implements AstNode {
+
+public class TupleAstNode extends AbstractAstNode {
 	public final List<AstNode> qs;
 
-	public TupleAstNode(List<AstNode> qs) {
+	public TupleAstNode(SourceLocation location, List<AstNode> qs) {
+		super(location);
 		this.qs = qs;
 	}
 

@@ -5,6 +5,7 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
@@ -34,7 +35,7 @@ public class ShuntingYard {
 					BinaryOperator op = stackOperators.pop();
 					AstNode rhs = stackExprs.pop();
 					AstNode lhs = stackExprs.pop();
-					stackExprs.push(new BinaryOpAstNode(op, lhs, rhs));
+					stackExprs.push(new BinaryOpAstNode(SourceLocation.span(lhs.location(), rhs.location()), op, lhs, rhs));
 				} else {
 					break;
 				}
@@ -47,7 +48,7 @@ public class ShuntingYard {
 			BinaryOperator op = stackOperators.pop();
 			AstNode rhs = stackExprs.pop();
 			AstNode lhs = stackExprs.pop();
-			stackExprs.push(new BinaryOpAstNode(op, lhs, rhs));
+			stackExprs.push(new BinaryOpAstNode(SourceLocation.span(lhs.location(), rhs.location()), op, lhs, rhs));
 		}
 
 		return stackExprs.pop();

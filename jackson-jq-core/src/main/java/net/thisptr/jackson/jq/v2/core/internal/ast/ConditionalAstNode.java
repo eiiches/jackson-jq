@@ -4,13 +4,15 @@ import java.util.List;
 
 import com.google.errorprone.annotations.Var;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 
-public class ConditionalAstNode implements AstNode {
+public class ConditionalAstNode extends AbstractAstNode {
 	private final AstNode otherwise;
 	private final List<Pair<AstNode, AstNode>> switches;
 
-	public ConditionalAstNode(List<Pair<AstNode, AstNode>> switches, AstNode otherwise) {
+	public ConditionalAstNode(SourceLocation location, List<Pair<AstNode, AstNode>> switches, AstNode otherwise) {
+		super(location);
 		this.switches = switches;
 		this.otherwise = otherwise;
 	}

@@ -1,20 +1,21 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class ObjectConstructionAstNode implements AstNode {
-	public final List<FieldConstructionAst> fields = new ArrayList<>();
 
-	public ObjectConstructionAstNode() {
-	}
+public class ObjectConstructionAstNode extends AbstractAstNode {
+	public final List<FieldConstructionAst> fields;
 
-	public void add(FieldConstructionAst field) {
-		fields.add(field);
+	public ObjectConstructionAstNode(SourceLocation location, List<FieldConstructionAst> fields) {
+		super(location);
+		this.fields = Collections.unmodifiableList(new ArrayList<>(fields));
 	}
 
 	@Override
@@ -41,17 +42,18 @@ public class ObjectConstructionAstNode implements AstNode {
 	public interface FieldConstructionAst extends AstNode {
 	}
 
-	public static class IdentifierKeyFieldConstructionAst implements FieldConstructionAst {
+	public static class IdentifierKeyFieldConstructionAst extends AbstractAstNode implements FieldConstructionAst {
 		public final String key;
 		public final @Nullable AstNode value;
 
-		public IdentifierKeyFieldConstructionAst(String key, @Nullable AstNode value) {
+		public IdentifierKeyFieldConstructionAst(SourceLocation location, String key, @Nullable AstNode value) {
+			super(location);
 			this.key = key;
 			this.value = value;
 		}
 
-		public IdentifierKeyFieldConstructionAst(String key) {
-			this(key, null);
+		public IdentifierKeyFieldConstructionAst(SourceLocation location, String key) {
+			this(location, key, null);
 		}
 
 		@Override
@@ -69,17 +71,18 @@ public class ObjectConstructionAstNode implements AstNode {
 		}
 	}
 
-	public static class StringKeyFieldConstructionAst implements FieldConstructionAst {
+	public static class StringKeyFieldConstructionAst extends AbstractAstNode implements FieldConstructionAst {
 		public final AstNode key;
 		public final @Nullable AstNode value;
 
-		public StringKeyFieldConstructionAst(AstNode key, @Nullable AstNode value) {
+		public StringKeyFieldConstructionAst(SourceLocation location, AstNode key, @Nullable AstNode value) {
+			super(location);
 			this.key = key;
 			this.value = value;
 		}
 
-		public StringKeyFieldConstructionAst(AstNode key) {
-			this(key, null);
+		public StringKeyFieldConstructionAst(SourceLocation location, AstNode key) {
+			this(location, key, null);
 		}
 
 		@Override
@@ -97,10 +100,11 @@ public class ObjectConstructionAstNode implements AstNode {
 		}
 	}
 
-	public static class VariableKeyFieldConstruction implements FieldConstructionAst {
+	public static class VariableKeyFieldConstruction extends AbstractAstNode implements FieldConstructionAst {
 		private final String name;
 
-		public VariableKeyFieldConstruction(String name) {
+		public VariableKeyFieldConstruction(SourceLocation location, String name) {
+			super(location);
 			this.name = name;
 		}
 
@@ -119,11 +123,12 @@ public class ObjectConstructionAstNode implements AstNode {
 		}
 	}
 
-	public static class JsonQueryKeyFieldConstructionAst implements FieldConstructionAst {
+	public static class JsonQueryKeyFieldConstructionAst extends AbstractAstNode implements FieldConstructionAst {
 		private final AstNode key;
 		private final AstNode value;
 
-		public JsonQueryKeyFieldConstructionAst(AstNode key, AstNode value) {
+		public JsonQueryKeyFieldConstructionAst(SourceLocation location, AstNode key, AstNode value) {
+			super(location);
 			this.key = key;
 			this.value = value;
 		}

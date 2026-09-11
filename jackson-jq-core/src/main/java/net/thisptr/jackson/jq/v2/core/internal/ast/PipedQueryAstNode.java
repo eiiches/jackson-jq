@@ -1,10 +1,13 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
-public class PipedQueryAstNode implements AstNode {
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+
+public class PipedQueryAstNode extends AbstractAstNode {
 	private final AstNode left;
 	private final AstNode right;
 
-	public PipedQueryAstNode(AstNode left, AstNode right) {
+	public PipedQueryAstNode(SourceLocation location, AstNode left, AstNode right) {
+		super(location);
 		this.left = left;
 		this.right = right;
 	}
