@@ -14,7 +14,7 @@ module(
 bazel_dep(name = "rules_java", version = "9.9.0")
 bazel_dep(name = "rules_jvm_external", version = "7.1")
 bazel_dep(name = "contrib_rules_jvm", version = "0.34.0")
-bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.3")
+bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.4")
 bazel_dep(name = "rules_jq", version = "0.0.0")
 local_path_override(
     module_name = "rules_jq",
