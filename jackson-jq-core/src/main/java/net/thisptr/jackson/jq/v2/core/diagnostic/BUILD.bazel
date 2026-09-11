@@ -8,8 +8,5 @@ jjq_java_library(
         "SourceLocation.java",
     ],
     release = 8,
-    visibility = [
-        "//jackson-jq-core:__subpackages__",
-        "//jackson-jq-fuzz:__subpackages__",
-    ],
+    visibility = ["//jackson-jq-core:__subpackages__"],
 )

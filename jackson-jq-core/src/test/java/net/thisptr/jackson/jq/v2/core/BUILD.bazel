@@ -3,6 +3,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
 jjq_java_test_suite(
     srcs = [
         "ClassLoaderUtils.java",
+        "CompileOptionsTest.java",
         "CustomFunctionTest.java",
         "EnvironmentAddImportedModuleTest.java",
         "EnvironmentCompileModuleTest.java",

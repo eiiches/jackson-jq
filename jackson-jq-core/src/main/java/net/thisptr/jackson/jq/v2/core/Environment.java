@@ -50,24 +50,73 @@ public interface Environment<JsonNode> {
 
 	Map<String, Module> getImportedModules();
 
-	// TODO: add `CompileOptions options`
+	/**
+	 * Compiles {@code expression} with default options.
+	 *
+	 * @param expression the jq expression to compile
+	 * @return the compiled query
+	 * @throws JsonQueryException if {@code expression} cannot be parsed or compiled
+	 */
 	default JsonQuery<JsonNode> compile(String expression) throws JsonQueryException {
-		return compile(expression, null);
+		return compile(expression, new CompileOptions(), null);
 	}
 
-	default JsonQuery<JsonNode> compile(String expression, @Nullable Module currentModule) throws JsonQueryException {
+	/**
+	 * Compiles {@code expression}.
+	 *
+	 * @param expression the jq expression to compile
+	 * @param options settings for this compilation, including who receives its diagnostics
+	 * @return the compiled query
+	 * @throws JsonQueryException if {@code expression} cannot be parsed or compiled
+	 */
+	default JsonQuery<JsonNode> compile(String expression, CompileOptions options) throws JsonQueryException {
+		return compile(expression, options, null);
+	}
+
+	/**
+	 * Compiles {@code expression} as if it were written inside {@code currentModule}, so that the
+	 * names that module imported resolve.
+	 *
+	 * @param expression the jq expression to compile
+	 * @param options settings for this compilation, including who receives its diagnostics
+	 * @param currentModule the module the expression belongs to, or {@code null} for a bare query
+	 * @return the compiled query
+	 * @throws JsonQueryException if {@code expression} cannot be parsed or compiled
+	 */
+	default JsonQuery<JsonNode> compile(String expression, CompileOptions options, @Nullable Module currentModule) throws JsonQueryException {
+		CompileOptions effectiveOptions = options.copy();
 		AstNode parsedAst = AstParser.parse(expression, getJqVersion());
-		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(this, currentModule, parsedAst);
+		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(this, effectiveOptions, currentModule, parsedAst);
 		if (!(compiledExpr instanceof RootExpression))
 			throw new IllegalStateException("Compiler did not produce a root expression");
 		RootExpression<JsonNode> rootExpr = (RootExpression<JsonNode>) compiledExpr;
 		return rootExpr::apply;
 	}
 
+	/**
+	 * Compiles a module's own source with default options.
+	 *
+	 * @param source the module source
+	 * @return the compiled module
+	 * @throws JsonQueryException if {@code source} cannot be parsed or compiled
+	 */
 	default Module compileModule(String source) throws JsonQueryException {
+		return compileModule(source, new CompileOptions());
+	}
+
+	/**
+	 * Compiles a module's own source.
+	 *
+	 * @param source the module source
+	 * @param options settings for this compilation, including who receives its diagnostics
+	 * @return the compiled module
+	 * @throws JsonQueryException if {@code source} cannot be parsed or compiled
+	 */
+	default Module compileModule(String source, CompileOptions options) throws JsonQueryException {
+		CompileOptions effectiveOptions = options.copy();
 		AstNode parsedAst = AstParser.parse(source + " null", getJqVersion());
 		SimpleModule module = new SimpleModule();
-		Expression<StackFrame, JsonNode> compiled = Compiler.compileModule(this, module, parsedAst);
+		Expression<StackFrame, JsonNode> compiled = Compiler.compileModule(this, effectiveOptions, module, parsedAst);
 		if (!(compiled instanceof RootExpression))
 			throw new IllegalStateException("Compiler did not produce a root expression");
 		Map<FunctionSignature, Function> exportedFunctions = ((RootExpression<JsonNode>) compiled).applyForModuleExports(getJsonProvider().createNull());

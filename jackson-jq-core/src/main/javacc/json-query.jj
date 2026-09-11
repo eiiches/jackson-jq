@@ -33,6 +33,10 @@ PARSER_BEGIN(AstParser)
 
 	@SuppressWarnings("unused")
 	public class AstParser {
+		// A javacc LL(1) state can expect a long tail of tokens; past a handful the list stops
+		// helping the reader find their typo.
+		private static final int MAX_EXPECTED_TOKENS_REPORTED = 5;
+
 		private Version version;
 
 		/** The region a single token covers. */
@@ -124,11 +128,66 @@ PARSER_BEGIN(AstParser)
 				final AstParser parser = new AstParser(new StringReader(line));
 				parser.version = version;
 				return parser.Start();
+			} catch (ParseException e) {
+				throw new JsonQueryException(describeSyntaxError(line, e), e);
 			} catch (TokenMgrError e) {
-				throw new JsonQueryException("Cannot parse query: " + line, e);
+				// The token manager reports its own line and column inside the message and exposes
+				// nothing structured to rebuild an excerpt from, so it is passed through as-is.
+				throw new JsonQueryException(e.getMessage(), e);
 			} catch (Exception e) {
-				throw new JsonQueryException("Cannot parse query: " + line, e);
+				// Semantic checks in the grammar actions throw plain runtime exceptions whose message
+				// is the whole explanation; anything with nothing to say falls back to naming the query.
+				final String message = e.getMessage();
+				throw new JsonQueryException(message != null && !message.isEmpty() ? message : "Cannot parse query: " + line, e);
 			}
+		}
+
+		/** Renders a parse failure the way jq renders its own, minus jq's source-name field. */
+		private static String describeSyntaxError(final String source, final ParseException e) {
+			final Token consumed = e.currentToken;
+			if (consumed == null || e.expectedTokenSequences == null || e.tokenImage == null)
+				return e.getMessage();
+
+			final Token offending = consumed.next != null ? consumed.next : consumed;
+			final SourceLocation location = loc(offending);
+
+			final StringBuilder message = new StringBuilder("syntax error, unexpected ");
+			message.append(describeToken(offending, e.tokenImage));
+
+			final List<String> expected = new ArrayList<String>();
+			for (int i = 0; i < e.expectedTokenSequences.length; ++i) {
+				if (e.expectedTokenSequences[i].length == 0)
+					continue;
+				final String kind = describeTokenKind(e.tokenImage[e.expectedTokenSequences[i][0]]);
+				if (!expected.contains(kind))
+					expected.add(kind);
+			}
+			for (int i = 0; i < expected.size() && i < MAX_EXPECTED_TOKENS_REPORTED; ++i)
+				message.append(i == 0 ? ", expecting " : " or ").append(expected.get(i));
+
+			message.append(" at ").append(location);
+			final String excerpt = location.excerpt(source);
+			if (excerpt != null)
+				message.append(":\n").append(excerpt);
+			return message.toString();
+		}
+
+		private static String describeToken(final Token token, final String[] tokenImage) {
+			if (token.kind == 0)
+				return "end of input";
+			return token.image != null && !token.image.isEmpty()
+					? "'" + token.image + "'"
+					: describeTokenKind(tokenImage[token.kind]);
+		}
+
+		/**
+		 * JavaCC spells a literal token as {@code "\":\""} and a named one as {@code "<IDENTIFIER>"}.
+		 * Literals are requoted the way jq quotes them; named ones are already readable.
+		 */
+		private static String describeTokenKind(final String image) {
+			if (image.length() >= 2 && image.charAt(0) == '"' && image.charAt(image.length() - 1) == '"')
+				return "'" + image.substring(1, image.length() - 1) + "'";
+			return image;
 		}
 	}
 PARSER_END(AstParser)

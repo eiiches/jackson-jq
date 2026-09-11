@@ -17,6 +17,7 @@ jjq_java_module_info(
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/commons/range",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/commons/strings",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/compile/freevars",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/diagnostics",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/exception",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/function/loaders",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/json",

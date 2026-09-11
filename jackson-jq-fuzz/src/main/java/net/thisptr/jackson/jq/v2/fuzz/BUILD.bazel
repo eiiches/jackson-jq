@@ -14,7 +14,6 @@ jjq_java_library(
     visibility = ["//jackson-jq-fuzz:__subpackages__"],
     deps = [
         "//jackson-jq-core",
-        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/diagnostic",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/commons/pair",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/json/comparator",
         "//jackson-jq-json-provider",

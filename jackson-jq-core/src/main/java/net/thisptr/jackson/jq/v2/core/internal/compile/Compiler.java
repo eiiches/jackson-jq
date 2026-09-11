@@ -15,7 +15,9 @@ import java.util.function.Supplier;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.diagnostic.DiagnosticListener;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
@@ -69,6 +71,7 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedLocalFun
 import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedLocalFunctionBoundArgumentAccess;
 import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedLocalVariableAccess;
 import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedLocalVariableBoundArgumentAccess;
+import net.thisptr.jackson.jq.v2.core.internal.diagnostics.PipeParenthesesCheck;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction;
@@ -194,11 +197,11 @@ public class Compiler {
 	}
 
 	public static <JsonNode> Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, AstNode ast) throws JsonQueryException {
-		return compile(env, (Module) null, ast);
+		return compile(env, new CompileOptions(), (Module) null, ast);
 	}
 
-	public static <JsonNode> Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
-		return compileRoot(env, currentModule, ast, false);
+	public static <JsonNode> Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileOptions options, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
+		return compileRoot(env, options, currentModule, ast, false);
 	}
 
 	/**
@@ -207,13 +210,20 @@ public class Compiler {
 	 * / {@link CompileContext#isRootScope()}) so {@link RootExpression#applyForModuleExports} can harvest their
 	 * real, correctly closure-bound {@link Function} values after running the module body once. This is how
 	 * {@code FileSystemModuleLoader.loadModuleActual} populates a file-based module's exported functions.
-	 * Ordinary query compilation must never do this -- use {@link #compile(Environment, Module, AstNode)}.
+	 * Ordinary query compilation must never do this -- use {@link #compile(Environment, CompileOptions, Module, AstNode)}.
 	 */
-	public static <JsonNode> Expression<StackFrame, JsonNode> compileModule(Environment<JsonNode> env, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
-		return compileRoot(env, currentModule, ast, true);
+	public static <JsonNode> Expression<StackFrame, JsonNode> compileModule(Environment<JsonNode> env, CompileOptions options, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
+		return compileRoot(env, options, currentModule, ast, true);
 	}
 
-	private static <JsonNode> Expression<StackFrame, JsonNode> compileRoot(Environment<JsonNode> env, @Nullable Module currentModule, AstNode ast, boolean exportTopLevelFunctions) throws JsonQueryException {
+	private static <JsonNode> Expression<StackFrame, JsonNode> compileRoot(Environment<JsonNode> env, CompileOptions options, @Nullable Module currentModule, AstNode ast, boolean exportTopLevelFunctions) throws JsonQueryException {
+		// Only whole queries and module sources are diagnosed. Function bodies that jq libraries
+		// bring along are compiled through the inner compile() below, never through here, so a
+		// caller never sees warnings about jq's own builtins.
+		DiagnosticListener diagnosticListener = options.getDiagnosticListener();
+		if (diagnosticListener != null)
+			PipeParenthesesCheck.run(ast, diagnosticListener);
+
 		CompileContext context = new CompileContext(exportTopLevelFunctions);
 		Expression<StackFrame, JsonNode> compiled = compile(env, context, currentModule, ast);
 		if (compiled == null)
