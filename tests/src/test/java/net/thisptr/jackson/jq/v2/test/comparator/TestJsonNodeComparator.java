@@ -12,7 +12,8 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
  *
  * <p>It adds two things to {@link JsonNodeComparator}: an optional numerical tolerance (the
  * {@code numerical_errors} test case property), and optional strict field ordering, which the jq
- * ordering deliberately ignores but the golden data is written to preserve.
+ * ordering deliberately ignores but the golden data is written to preserve. Every harness turns
+ * strict field ordering on, since jackson-jq reproduces jq's field order.
  *
  * <p>Written against {@link JsonProvider} rather than any one JSON library so that every
  * {@code AbstractJsonQueryTest} subclass shares one implementation.

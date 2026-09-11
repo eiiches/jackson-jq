@@ -17,7 +17,7 @@ The following table shows which features from the jq 1.5 manual are supported by
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [`ǀ`](https://stedolan.github.io/jq/manual/v1.5/#&#124;)                                                                                                                                                                                                                                            | ○          |
 | [Types and Values](https://stedolan.github.io/jq/manual/v1.5/#TypesandValues)                                                                                                                                                                                                                                                      | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Array construction &#45; `[]`](https://stedolan.github.io/jq/manual/v1.5/#Arrayconstruction&#45;&#91;&#93;)                                                                                                                                                                                        | ○          |
-| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Objects &#45; `{}`](https://stedolan.github.io/jq/manual/v1.5/#Objects&#45;&#123;&#125;)                                                                                                                                                                                                           | ○<sup>*4</sup> |
+| &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Objects &#45; `{}`](https://stedolan.github.io/jq/manual/v1.5/#Objects&#45;&#123;&#125;)                                                                                                                                                                                                           | ○          |
 | [Builtin operators and functions](https://stedolan.github.io/jq/manual/v1.5/#Builtinoperatorsandfunctions)                                                                                                                                                                                                                         | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Addition &#45; `+`](https://stedolan.github.io/jq/manual/v1.5/#Addition&#45;&#43;)                                                                                                                                                                                                                 | ○          |
 | &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Subtraction &#45; `-`](https://stedolan.github.io/jq/manual/v1.5/#Subtraction&#45;&#45;)                                                                                                                                                                                                           | ○          |
@@ -175,19 +175,6 @@ builder.addFunction(FunctionSignature.of("env", 0), new Function() {
 
 </details>
 
-<details>
-<summary>(*4) Field order in JSON objects</summary>
-
-##### Description
-  
-jackson-jq does not preserve the order of keys in JSON objects. This was an intentional design choice, but we are gradually changing the behavior to improve compatibility with jq.
-
-##### Workaround
-
-Use an array if the order is important.
-
-</details>
-  
 <details>
 <summary>(*5) <code>0 / 0</code> is an error in jackson-jq.</summary>
 

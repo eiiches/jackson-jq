@@ -37,7 +37,7 @@ class FormattedTestCase:
         root_node = yaml.nodes.MappingNode("tag:yaml.org,2002:map", [], flow_style=False)
         known_order = [
             "q", "in", "out", "v", "failing", "comment", "justification",
-            "modules", "ignore_field_order", "should_compile",
+            "modules", "should_compile",
             "numerical_errors", "ignore_true_jq_behavior",
         ]
         keys = [k for k in known_order if k in self.data]

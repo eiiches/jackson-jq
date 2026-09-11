@@ -97,7 +97,12 @@ public class CoreJqLibrary implements JqLibrary {
 			JqFunction.of("until", args("cond", "next"), "def _until: if cond then . else (next|_until) end; _until"),
 			JqFunction.of("while", args("cond", "update"), "def _while: if cond then ., (update | _while) else empty end; _while"),
 			JqFunction.of("leaf_paths", args(), "paths(scalars)"),
-			JqFunction.of("walk", args("f"), ". as $in | if type == \"object\" then reduce keys[] as $key ( {}; . + { ($key):  ($in[$key] | walk(f)) } ) | f elif type == \"array\" then map( walk(f) ) | f else f end", VersionRange.valueOf("[1.6, )")),
+			// jq 1.7 redefined walk/1 in terms of map_values, so a generator f keeps its first output per
+			// object member instead of its last. The [1.7, ) definition spells map_values(w) out as
+			// _modify(.[]; w), which is what .[] |= w desugars to, because jackson-jq rejects `|= empty`
+			// by design (see docs/compatibility.md) and f is allowed to produce no output here.
+			JqFunction.of("walk", args("f"), ". as $in | if type == \"object\" then reduce keys_unsorted[] as $key ( {}; . + { ($key):  ($in[$key] | walk(f)) } ) | f elif type == \"array\" then map( walk(f) ) | f else f end", VersionRange.valueOf("[1.6, 1.7)")),
+			JqFunction.of("walk", args("f"), "def w: if type == \"object\" then _modify(.[]; w) elif type == \"array\" then map(w) else . end | f; w", VersionRange.valueOf("[1.7, )")),
 			JqFunction.of("in", args("xs"), ". as $x | xs | has($x)"),
 			JqFunction.of("inside", args("xs"), ". as $x | xs | contains($x)"),
 			JqFunction.of("combinations", args(), "if length == 0 then [] else .[0][] as $x | (.[1:] | combinations) as $y | [$x] + $y end"),
