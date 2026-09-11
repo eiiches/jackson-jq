@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.compile.freevars;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -67,6 +68,16 @@ public interface FreeVariables {
 		return result == null ? Collections.emptySet() : result;
 	}
 
+	static Set<Integer> unionSets(Set<Integer> first, Set<Integer> second) {
+		if (first.isEmpty())
+			return second;
+		if (second.isEmpty())
+			return first;
+		Set<Integer> result = new HashSet<>(first);
+		result.addAll(second);
+		return result;
+	}
+
 	static Set<Integer> unionAll(List<? extends @Nullable Expression<?, ?>> exprs) {
 		@Var Set<Integer> result = null;
 		for (Expression<?, ?> e : exprs) {
@@ -95,7 +106,7 @@ public interface FreeVariables {
 	}
 
 	/** Subtracts the given slots from a set. Never mutates {@code slots}. */
-	static Set<Integer> minus(Set<Integer> slots, List<Integer> toRemove) {
+	static Set<Integer> minus(Set<Integer> slots, Collection<Integer> toRemove) {
 		if (slots.isEmpty() || toRemove.isEmpty())
 			return slots;
 		Set<Integer> result = new HashSet<>(slots);

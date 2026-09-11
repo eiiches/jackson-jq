@@ -31,6 +31,7 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.FormattingFilterAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.FunctionCallAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.FunctionDefinitionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.IdentifierFieldAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.LabelAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.NegativeExpressionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.NullLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.NumericLiteralAstNode;
@@ -51,6 +52,7 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.TryCatchAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.TupleAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ValueMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.VariableAccessAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.VariableBindingAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
 import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
@@ -70,7 +72,6 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedLocalVar
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction;
-import net.thisptr.jackson.jq.v2.core.internal.tree.AssignPipeComponent;
 import net.thisptr.jackson.jq.v2.core.internal.tree.BreakExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.Conditional;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FieldConstruction;
@@ -78,10 +79,9 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.FixedInputExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ForeachExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.IdentifierKeyFieldConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.JsonQueryKeyFieldConstruction;
-import net.thisptr.jackson.jq.v2.core.internal.tree.LabelPipeComponent;
+import net.thisptr.jackson.jq.v2.core.internal.tree.Label;
 import net.thisptr.jackson.jq.v2.core.internal.tree.NegativeExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ObjectConstruction;
-import net.thisptr.jackson.jq.v2.core.internal.tree.PipeComponent;
 import net.thisptr.jackson.jq.v2.core.internal.tree.PipedQuery;
 import net.thisptr.jackson.jq.v2.core.internal.tree.PrecomputedConstantExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RecursionOperator;
@@ -91,9 +91,9 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.StringInterpolation;
 import net.thisptr.jackson.jq.v2.core.internal.tree.StringKeyFieldConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ThisObject;
 import net.thisptr.jackson.jq.v2.core.internal.tree.TopLevelExpression;
-import net.thisptr.jackson.jq.v2.core.internal.tree.TransformPipeComponent;
 import net.thisptr.jackson.jq.v2.core.internal.tree.TryCatch;
 import net.thisptr.jackson.jq.v2.core.internal.tree.Tuple;
+import net.thisptr.jackson.jq.v2.core.internal.tree.VariableBinding;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.AlternativeOperatorExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BooleanAndExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BooleanOrExpression;
@@ -259,21 +259,10 @@ public class Compiler {
 		}
 	}
 
-	private static final class PipeState<N> {
-		final List<PipeComponent<N>> components = new ArrayList<>();
-		int pushedScopes;
-		boolean fixed;
-
-		PipeState(boolean fixed) {
-			this.fixed = fixed;
-		}
-	}
-
 	private static final class CompilationVisitor<N> implements AstVisitor<Object> {
 		private final Environment<N> env;
 		private final CompileContext context;
 		private final @Nullable Module currentModule;
-		private @Nullable PipeState<N> pipeState;
 
 		CompilationVisitor(Environment<N> env, CompileContext context, @Nullable Module currentModule) {
 			this.env = env;
@@ -377,71 +366,44 @@ public class Compiler {
 		@Override
 		public Expression<StackFrame, N> visit(PipedQueryAstNode piped) throws JsonQueryException {
 			boolean savedInputFixed = context.isInputFixed();
-			PipeState<N> savedPipeState = pipeState;
-			PipeState<N> state = new PipeState<>(savedInputFixed);
-			pipeState = state;
+			Expression<StackFrame, N> left = compileNonNull(env, context, currentModule, piped.left());
+			Expression<StackFrame, N> right;
+			context.setInputFixed(!left.dependsOnInput());
 			try {
-				for (PipedQueryAstNode.PipeComponent comp : piped.components()) {
-					comp.accept(this);
-				}
+				right = compileNonNull(env, context, currentModule, piped.right());
 			} finally {
 				context.setInputFixed(savedInputFixed);
-				for (int i = 0; i < state.pushedScopes; i++) {
-					context.popScope();
-				}
-				pipeState = savedPipeState;
 			}
-
-			return new PipedQuery<>(state.components);
+			return new PipedQuery<>(left, right);
 		}
 
 		@Override
-		public Void visit(PipedQueryAstNode.AssignPipeComponent assign) throws JsonQueryException {
-			PipeState<N> state = currentPipeState();
-			context.setInputFixed(state.fixed);
-			Expression<StackFrame, N> compiledExpr = compileNonNull(env, context, assign.expr);
-			CompiledMatcher<N> matcherResult = compileMatcher(assign.matcher);
+		public Expression<StackFrame, N> visit(VariableBindingAstNode binding) throws JsonQueryException {
+			boolean savedInputFixed = context.isInputFixed();
+			Expression<StackFrame, N> value = compileNonNull(env, context, currentModule, binding.value());
+			CompiledMatcher<N> matcherResult = compileMatcher(binding.matcher());
 
 			context.pushLocalScope();
-			state.pushedScopes++;
 			Map<String, Integer> slots = new HashMap<>();
-			for (String varName : matcherResult.variableNames) {
-				context.addLocalVariable(varName);
-				slots.put(varName, context.getVariableSlot(varName));
+			Expression<StackFrame, N> body;
+			try {
+				for (String varName : matcherResult.variableNames) {
+					context.addLocalVariable(varName);
+					slots.put(varName, context.getVariableSlot(varName));
+				}
+				context.setInputFixed(savedInputFixed);
+				body = compileNonNull(env, context, currentModule, binding.body());
+			} finally {
+				context.setInputFixed(savedInputFixed);
+				context.popScope();
 			}
 			PatternMatcher<N> compiledMatcher = matcherResult.matcher.resolveSlots(slots);
-
-			state.components.add(new AssignPipeComponent<>(compiledExpr, compiledMatcher, new HashSet<>(slots.values())));
-			// `.` doesn't change across an `as` binding -- `fixed` passes through unchanged.
-			// (Whether the bound variable itself is "free" is handled separately, by
-			// PipedQuery's free-variable analysis closing over the bound slots.)
-			return null;
+			return new VariableBinding<>(value, compiledMatcher, new HashSet<>(slots.values()), body);
 		}
 
 		@Override
-		public Void visit(PipedQueryAstNode.TransformPipeComponent transform) throws JsonQueryException {
-			PipeState<N> state = currentPipeState();
-			context.setInputFixed(state.fixed);
-			Expression<StackFrame, N> compiledExpr = compileNonNull(env, context, transform.expr);
-			state.components.add(new TransformPipeComponent<>(compiledExpr));
-			// This stage's output, now known, is the next stage's input.
-			state.fixed = !compiledExpr.dependsOnInput();
-			return null;
-		}
-
-		@Override
-		public Void visit(PipedQueryAstNode.LabelPipeComponent label) {
-			PipeState<N> state = currentPipeState();
-			state.components.add(new LabelPipeComponent<>(label.name));
-			// `label $out | ...` doesn't rebind `.` -- `fixed` passes through unchanged.
-			return null;
-		}
-
-		private PipeState<N> currentPipeState() {
-			PipeState<N> state = pipeState;
-			if (state == null)
-				throw new IllegalStateException("Pipe component visited outside a piped query");
-			return state;
+		public Expression<StackFrame, N> visit(LabelAstNode label) throws JsonQueryException {
+			return new Label<>(label.name(), compileNonNull(env, context, currentModule, label.body()));
 		}
 
 		@Override

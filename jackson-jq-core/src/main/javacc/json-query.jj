@@ -23,7 +23,6 @@ PARSER_BEGIN(AstParser)
 	import net.thisptr.jackson.jq.v2.core.internal.ast.*;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.*;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.*;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.PipedQueryAstNode.LabelPipeComponent;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode.ImportStatement;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode.ModuleDirective;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
@@ -34,6 +33,64 @@ PARSER_BEGIN(AstParser)
 	@SuppressWarnings("unused")
 	public class AstParser {
 		private Version version;
+
+		private static final class ParsedPipeComponent {
+			final AstNode expression;
+			final PatternMatcherAstNode matcher;
+			final String label;
+
+			private ParsedPipeComponent(AstNode expression, PatternMatcherAstNode matcher, String label) {
+				this.expression = expression;
+				this.matcher = matcher;
+				this.label = label;
+			}
+
+			static ParsedPipeComponent transform(AstNode expression) {
+				return new ParsedPipeComponent(expression, null, null);
+			}
+
+			static ParsedPipeComponent binding(AstNode expression, PatternMatcherAstNode matcher) {
+				return new ParsedPipeComponent(expression, matcher, null);
+			}
+
+			static ParsedPipeComponent label(String label) {
+				return new ParsedPipeComponent(null, null, label);
+			}
+
+			boolean isTransform() {
+				return expression != null && matcher == null;
+			}
+
+			@Override
+			public String toString() {
+				if (matcher != null)
+					return expression + " as " + matcher;
+				if (label != null)
+					return "label $" + label;
+				return expression.toString();
+			}
+		}
+
+		private static AstNode buildPipe(List<ParsedPipeComponent> components) {
+			ParsedPipeComponent last = components.get(components.size() - 1);
+			if (!last.isTransform()) {
+				if (components.size() > 1)
+					throw new IllegalStateException("Pipe cannot be terminated by assignment or label: | " + last);
+				throw new IllegalStateException("Assignment or label must be followed by pipes: " + last);
+			}
+
+			AstNode result = last.expression;
+			for (int i = components.size() - 2; i >= 0; --i) {
+				ParsedPipeComponent component = components.get(i);
+				if (component.matcher != null)
+					result = new VariableBindingAstNode(component.expression, component.matcher, result);
+				else if (component.label != null)
+					result = new LabelAstNode(component.label, result);
+				else
+					result = new PipedQueryAstNode(component.expression, result);
+			}
+			return result;
+		}
 
 		public static AstNode parse(final String line, final Version version) throws JsonQueryException {
 			try {
@@ -364,8 +421,8 @@ AstNode Start():
 
 AstNode Expression():
 {
-	PipedQueryAstNode.PipeComponent component;
-	List<PipedQueryAstNode.PipeComponent> components = new ArrayList<PipedQueryAstNode.PipeComponent>();
+	ParsedPipeComponent component;
+	List<ParsedPipeComponent> components = new ArrayList<ParsedPipeComponent>();
 }
 {
 	component = PipeComponent()
@@ -376,23 +433,14 @@ AstNode Expression():
 		{ components.add(component); }
 	)*
 	{
-		if (!component.canTerminatePipe()) {
-			if (components.size() > 1) {
-				throw new IllegalStateException("Pipe cannot be terminated by assignment or label: | " + component);
-			} else {
-				throw new IllegalStateException("Assignment or label must be followed by pipes: " + component);
-			}
-		}
-		if (components.size() == 1 && (component instanceof PipedQueryAstNode.TransformPipeComponent))
-			return ((PipedQueryAstNode.TransformPipeComponent) component).expr;
-		return new PipedQueryAstNode(components);
+		return buildPipe(components);
 	}
 }
 
 AstNode JsonQueryWithoutComma():
 {
-	PipedQueryAstNode.PipeComponent component;
-	List<PipedQueryAstNode.PipeComponent> components = new ArrayList<PipedQueryAstNode.PipeComponent>();
+	ParsedPipeComponent component;
+	List<ParsedPipeComponent> components = new ArrayList<ParsedPipeComponent>();
 }
 {
 	component = PipeComponentWithoutComma()
@@ -403,20 +451,11 @@ AstNode JsonQueryWithoutComma():
 		{ components.add(component); }
 	)*
 	{
-		if (!component.canTerminatePipe()) {
-			if (components.size() > 1) {
-				throw new IllegalStateException("Pipe cannot be terminated by assignment or label: | " + component);
-			} else {
-				throw new IllegalStateException("Assignment or label must be followed by pipes: " + component);
-			}
-		}
-		if (components.size() == 1 && (component instanceof PipedQueryAstNode.TransformPipeComponent))
-			return ((PipedQueryAstNode.TransformPipeComponent) component).expr;
-		return new PipedQueryAstNode(components);
+		return buildPipe(components);
 	}
 }
 
-PipedQueryAstNode.PipeComponent PipeComponent():
+ParsedPipeComponent PipeComponent():
 {
 	String name;
 	AstNode expr;
@@ -427,20 +466,20 @@ PipedQueryAstNode.PipeComponent PipeComponent():
 		<KEYWORD_LABEL>
 		<DOLLAR>
 		name = IdentifierAsString()
-		{ return new LabelPipeComponent(name); }
+		{ return ParsedPipeComponent.label(name); }
 	|
 		expr = TupleExpression()
 		(
 			<KEYWORD_AS>
 			matcher = Matcher()
-			{ return new PipedQueryAstNode.AssignPipeComponent(expr, matcher); }
+			{ return ParsedPipeComponent.binding(expr, matcher); }
 		|
-			{ return new PipedQueryAstNode.TransformPipeComponent(expr); }
+			{ return ParsedPipeComponent.transform(expr); }
 		)
 	)
 }
 
-PipedQueryAstNode.PipeComponent PipeComponentWithoutComma():
+ParsedPipeComponent PipeComponentWithoutComma():
 {
 	String name;
 	AstNode expr;
@@ -451,15 +490,15 @@ PipedQueryAstNode.PipeComponent PipeComponentWithoutComma():
 		<KEYWORD_LABEL>
 		<DOLLAR>
 		name = IdentifierAsString()
-		{ return new LabelPipeComponent(name); }
+		{ return ParsedPipeComponent.label(name); }
 	|
 		expr = BinaryOperatorExpression()
 		(
 			<KEYWORD_AS>
 			matcher = Matcher()
-			{ return new PipedQueryAstNode.AssignPipeComponent(expr, matcher); }
+			{ return ParsedPipeComponent.binding(expr, matcher); }
 		|
-			{ return new PipedQueryAstNode.TransformPipeComponent(expr); }
+			{ return ParsedPipeComponent.transform(expr); }
 		)
 	)
 }

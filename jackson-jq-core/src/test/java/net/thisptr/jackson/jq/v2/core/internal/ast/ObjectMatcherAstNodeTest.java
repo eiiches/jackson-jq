@@ -65,9 +65,8 @@ class ObjectMatcherAstNodeTest {
 	}
 
 	private static List<ObjectMatcherAstNode.FieldMatcher> parseObjectMatcher(String query) throws JsonQueryException {
-		PipedQueryAstNode piped = assertInstanceOf(PipedQueryAstNode.class, AstParser.parse(query, Versions.JQ_1_6));
-		PipedQueryAstNode.AssignPipeComponent assign = assertInstanceOf(PipedQueryAstNode.AssignPipeComponent.class, piped.components().get(0));
-		return assertInstanceOf(ObjectMatcherAstNode.class, assign.matcher).matchers();
+		VariableBindingAstNode binding = assertInstanceOf(VariableBindingAstNode.class, AstParser.parse(query, Versions.JQ_1_6));
+		return assertInstanceOf(ObjectMatcherAstNode.class, binding.matcher()).matchers();
 	}
 
 	private static void assertPrintedAs(String query) throws JsonQueryException {

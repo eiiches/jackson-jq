@@ -180,16 +180,11 @@ public class DebugModuleTest {
 	}
 
 	@Test
-	public void dumpExprReflectsPipeComponentsAndFunctionDefinitions() throws JsonQueryException {
+	public void dumpExprReflectsBindingsAndFunctionDefinitions() throws JsonQueryException {
 		JsonNode result = dumpExpr(". as $a | def f: $a; f");
-		JsonNode components = result.get("fields").get("components");
-		assertThat(components.get("object").asText()).startsWith(components.get("class").asText() + "@");
-		JsonNode firstComponent = components.get("elements").get(0);
-		assertThat(firstComponent.get("class").asText()).endsWith(".AssignPipeComponent");
-		assertThat(firstComponent.get("fields").get("expr").get("class").asText()).endsWith(".ThisObject");
-		JsonNode secondComponent = components.get("elements").get(1);
-		assertThat(secondComponent.get("class").asText()).endsWith(".TransformPipeComponent");
-		JsonNode semicolon = secondComponent.get("fields").get("expr");
+		assertThat(result.get("class").asText()).endsWith(".VariableBinding");
+		assertThat(result.get("fields").get("value").get("class").asText()).endsWith(".ThisObject");
+		JsonNode semicolon = result.get("fields").get("body");
 		assertThat(semicolon.get("class").asText()).endsWith(".SemicolonOperator");
 		JsonNode functionDefinition = semicolon.get("fields").get("qs").get("elements").get(0);
 		assertThat(functionDefinition.get("class").asText()).endsWith(".ResolvedFunctionDefinition");

@@ -41,7 +41,7 @@ public interface AstVisitor<R> {
 
 	R visit(ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst node);
 
-	R visit(PipedQueryAstNode.LabelPipeComponent node);
+	R visit(LabelAstNode node);
 
 	R visit(NegativeExpressionAstNode node);
 
@@ -75,8 +75,6 @@ public interface AstVisitor<R> {
 
 	R visit(TopLevelAstNode node);
 
-	R visit(PipedQueryAstNode.TransformPipeComponent node);
-
 	R visit(TryCatchAstNode node);
 
 	R visit(TryCatchAstNode.Question node);
@@ -89,5 +87,5 @@ public interface AstVisitor<R> {
 
 	R visit(VariableAccessAstNode node);
 
-	R visit(PipedQueryAstNode.AssignPipeComponent node);
+	R visit(VariableBindingAstNode node);
 }
