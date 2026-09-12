@@ -27,6 +27,7 @@ PARSER_BEGIN(AstParser)
 	import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode.ModuleDirective;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
 	import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.parser.ParsedInfixOperator;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.parser.ShuntingYard;
 	import net.thisptr.jackson.jq.v2.internal.javacc.TokenMgrError;
 	import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -60,68 +61,6 @@ PARSER_BEGIN(AstParser)
 		private SourceLocation locSince(AstNode begin) {
 			SourceLocation from = begin.location();
 			return SourceLocation.of(from.beginLine(), from.beginColumn(), token.endLine, token.endColumn);
-		}
-
-		private static final class ParsedPipeComponent {
-			final AstNode expression;
-			final PatternMatcherAstNode matcher;
-			final String label;
-			final SourceLocation location;
-
-			private ParsedPipeComponent(AstNode expression, PatternMatcherAstNode matcher, String label, SourceLocation location) {
-				this.expression = expression;
-				this.matcher = matcher;
-				this.label = label;
-				this.location = location;
-			}
-
-			static ParsedPipeComponent transform(AstNode expression, SourceLocation location) {
-				return new ParsedPipeComponent(expression, null, null, location);
-			}
-
-			static ParsedPipeComponent binding(AstNode expression, PatternMatcherAstNode matcher, SourceLocation location) {
-				return new ParsedPipeComponent(expression, matcher, null, location);
-			}
-
-			static ParsedPipeComponent label(String label, SourceLocation location) {
-				return new ParsedPipeComponent(null, null, label, location);
-			}
-
-			boolean isTransform() {
-				return expression != null && matcher == null;
-			}
-
-			@Override
-			public String toString() {
-				if (matcher != null)
-					return expression + " as " + matcher;
-				if (label != null)
-					return "label $" + label;
-				return expression.toString();
-			}
-		}
-
-		private static AstNode buildPipe(List<ParsedPipeComponent> components) {
-			ParsedPipeComponent last = components.get(components.size() - 1);
-			if (!last.isTransform()) {
-				if (components.size() > 1)
-					throw new IllegalStateException("Pipe cannot be terminated by assignment or label: | " + last);
-				throw new IllegalStateException("Assignment or label must be followed by pipes: " + last);
-			}
-
-			AstNode result = last.expression;
-			for (int i = components.size() - 2; i >= 0; --i) {
-				ParsedPipeComponent component = components.get(i);
-				AstNode head;
-				if (component.matcher != null)
-					head = new AsBindingAstNode(component.location, component.expression, component.matcher);
-				else if (component.label != null)
-					head = new LabelAstNode(component.location, component.label);
-				else
-					head = component.expression;
-				result = new PipeAstNode(SourceLocation.span(component.location, result.location()), head, result);
-			}
-			return result;
 		}
 
 		public static AstNode parse(final String line, final Version version) throws JsonQueryException {
@@ -509,168 +448,168 @@ AstNode Start():
 
 AstNode Expression():
 {
-	ParsedPipeComponent component;
-	List<ParsedPipeComponent> components = new ArrayList<ParsedPipeComponent>();
+	AstNode expr;
+	Token t;
+	PatternMatcherAstNode matcher;
+	List<AstNode> exprs = new ArrayList<AstNode>();
+	List<ParsedInfixOperator> operators = new ArrayList<ParsedInfixOperator>();
 }
 {
-	component = PipeComponent()
-	{ components.add(component); }
+	expr = PipeOperand()
+	{ exprs.add(expr); }
 	(
+		t = InfixOperatorToken()
+		{ operators.add(ParsedInfixOperator.of(BinaryOperator.fromString(t.image))); }
+		expr = PrimaryExpression()
+		{ exprs.add(expr); }
+	|
 		<PIPE>
-		component = PipeComponent()
-		{ components.add(component); }
+		{ operators.add(ParsedInfixOperator.of(BinaryOperator.PIPE)); }
+		expr = PipeOperand()
+		{ exprs.add(expr); }
+	|
+		<KEYWORD_AS>
+		matcher = Matcher()
+		(
+			<PIPE>
+			{ operators.add(ParsedInfixOperator.bindingPipe(matcher)); }
+			expr = PipeOperand()
+			{ exprs.add(expr); }
+		|
+			{
+				expr = ShuntingYard.buildTree(exprs, operators);
+				throw new IllegalStateException("Assignment or label must be followed by pipes: "
+						+ new AsBindingAstNode(SourceLocation.span(expr.location(), matcher.location()), expr, matcher));
+			}
+		)
 	)*
-	{
-		return buildPipe(components);
-	}
+	{ return ShuntingYard.buildTree(exprs, operators); }
 }
 
 AstNode JsonQueryWithoutComma():
 {
-	ParsedPipeComponent component;
-	List<ParsedPipeComponent> components = new ArrayList<ParsedPipeComponent>();
+	AstNode expr;
+	Token t;
+	PatternMatcherAstNode matcher;
+	List<AstNode> exprs = new ArrayList<AstNode>();
+	List<ParsedInfixOperator> operators = new ArrayList<ParsedInfixOperator>();
 }
 {
-	component = PipeComponentWithoutComma()
-	{ components.add(component); }
+	expr = PipeOperand()
+	{ exprs.add(expr); }
 	(
+		t = BinaryOperatorToken()
+		{ operators.add(ParsedInfixOperator.of(BinaryOperator.fromString(t.image))); }
+		expr = PrimaryExpression()
+		{ exprs.add(expr); }
+	|
 		<PIPE>
-		component = PipeComponentWithoutComma()
-		{ components.add(component); }
+		{ operators.add(ParsedInfixOperator.of(BinaryOperator.PIPE)); }
+		expr = PipeOperand()
+		{ exprs.add(expr); }
+	|
+		<KEYWORD_AS>
+		matcher = Matcher()
+		(
+			<PIPE>
+			{ operators.add(ParsedInfixOperator.bindingPipe(matcher)); }
+			expr = PipeOperand()
+			{ exprs.add(expr); }
+		|
+			{
+				expr = ShuntingYard.buildTree(exprs, operators);
+				throw new IllegalStateException("Assignment or label must be followed by pipes: "
+						+ new AsBindingAstNode(SourceLocation.span(expr.location(), matcher.location()), expr, matcher));
+			}
+		)
 	)*
-	{
-		return buildPipe(components);
-	}
+	{ return ShuntingYard.buildTree(exprs, operators); }
 }
 
-ParsedPipeComponent PipeComponent():
+AstNode PipeOperand():
 {
 	final Token start = getToken(1);
 	String name;
 	AstNode expr;
-	PatternMatcherAstNode matcher;
 }
 {
 	(
 		<KEYWORD_LABEL>
 		<DOLLAR>
 		name = IdentifierAsString()
-		{ return ParsedPipeComponent.label(name, locSince(start)); }
+		{ return new LabelAstNode(locSince(start), name); }
 	|
-		expr = CommaExpression()
-		(
-			<KEYWORD_AS>
-			matcher = Matcher()
-			{ return ParsedPipeComponent.binding(expr, matcher, locSince(start)); }
-		|
-			{ return ParsedPipeComponent.transform(expr, expr.location()); }
-		)
+		expr = PrimaryExpression()
+		{ return expr; }
 	)
 }
 
-ParsedPipeComponent PipeComponentWithoutComma():
-{
-	final Token start = getToken(1);
-	String name;
-	AstNode expr;
-	PatternMatcherAstNode matcher;
-}
-{
-	(
-		<KEYWORD_LABEL>
-		<DOLLAR>
-		name = IdentifierAsString()
-		{ return ParsedPipeComponent.label(name, locSince(start)); }
-	|
-		expr = BinaryOperatorExpression()
-		(
-			<KEYWORD_AS>
-			matcher = Matcher()
-			{ return ParsedPipeComponent.binding(expr, matcher, locSince(start)); }
-		|
-			{ return ParsedPipeComponent.transform(expr, expr.location()); }
-		)
-	)
-}
-
-AstNode CommaExpression():
-{
-	AstNode result;
-	AstNode tmp;
-}
-{
-	result = BinaryOperatorExpression()
-	(
-		<COMMA>
-		tmp = BinaryOperatorExpression()
-		{ result = new CommaAstNode(SourceLocation.span(result.location(), tmp.location()), result, tmp); }
-	)*
-	{
-		return result;
-	}
-}
-
-AstNode BinaryOperatorExpression():
+Token InfixOperatorToken():
 {
 	Token t;
-	AstNode expr;
-	List<AstNode> exprs = new ArrayList<AstNode>();
-	List<BinaryOperator> operators = new ArrayList<BinaryOperator>();
 }
 {
-	expr = PrimaryExpression()
-	{ exprs.add(expr); }
+	(
+		t = BinaryOperatorToken()
+	|
+		t = <COMMA>
+	)
+	{ return t; }
+}
+
+Token BinaryOperatorToken():
+{
+	Token t;
+}
+{
 	(
 		(
 			t = <TIMES>
-			|
+		|
 			t = <DIVIDE>
-			|
+		|
 			t = <MODULO>
-			|
+		|
 			t = <PLUS>
-			|
+		|
 			t = <MINUS>
-			|
+		|
 			t = <COMP_EQUAL>
-			|
+		|
 			t = <COMP_NOT_EQUAL>
-			|
+		|
 			t = <COMP_GREATER>
-			|
+		|
 			t = <COMP_GREATER_EQUAL>
-			|
+		|
 			t = <COMP_LESS>
-			|
+		|
 			t = <COMP_LESS_EQUAL>
-			|
+		|
 			t = <OP_AND>
-			|
+		|
 			t = <OP_OR>
-			|
+		|
 			t = <OP_DEFAULT>
-			|
+		|
 			t = <ASSIGN_OP>
-			|
+		|
 			t = <UPDATE_OP>
-			|
+		|
 			t = <PLUS_EQUAL>
-			|
+		|
 			t = <MINUS_EQUAL>
-			|
+		|
 			t = <TIMES_EQUAL>
-			|
+		|
 			t = <DIVIDE_EQUAL>
-			|
+		|
 			t = <MODULO_EQUAL>
-			|
+		|
 			t = <DEFAULT_EQUAL>
 		)
-		{ operators.add(BinaryOperator.fromString(t.image)); }
-		expr = PrimaryExpression()
-		{ exprs.add(expr); }
-	)*
-	{ return ShuntingYard.buildTree(exprs, operators); }
+	)
+	{ return t; }
 }
 
 AstNode FunctionDefinition():

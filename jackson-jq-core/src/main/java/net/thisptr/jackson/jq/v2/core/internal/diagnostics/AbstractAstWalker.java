@@ -12,7 +12,6 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.BooleanLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BracketExtractFieldAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BracketFieldAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BreakExpressionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.CommaAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ConditionalAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ForeachExpressionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.FormattingFilterAstNode;
@@ -26,7 +25,6 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.NumericLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ParenAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.PipeAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.RecursionOperatorAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ReduceExpressionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.SemicolonOperatorAstNode;
@@ -221,13 +219,6 @@ public abstract class AbstractAstWalker implements AstVisitor<Void> {
 	}
 
 	@Override
-	public Void visit(PipeAstNode node) {
-		walk(node.left());
-		walk(node.right());
-		return null;
-	}
-
-	@Override
 	public Void visit(RecursionOperatorAstNode node) {
 		return null;
 	}
@@ -301,13 +292,6 @@ public abstract class AbstractAstWalker implements AstVisitor<Void> {
 	@Override
 	public Void visit(TryCatchAstNode.Question node) {
 		return visit((TryCatchAstNode) node);
-	}
-
-	@Override
-	public Void visit(CommaAstNode node) {
-		walk(node.left());
-		walk(node.right());
-		return null;
 	}
 
 	@Override

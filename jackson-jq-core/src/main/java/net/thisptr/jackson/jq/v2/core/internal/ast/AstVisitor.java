@@ -57,8 +57,6 @@ public interface AstVisitor<R> {
 
 	R visit(ParenAstNode node);
 
-	R visit(PipeAstNode node);
-
 	R visit(RecursionOperatorAstNode node);
 
 	R visit(ReduceExpressionAstNode node);
@@ -80,8 +78,6 @@ public interface AstVisitor<R> {
 	R visit(TryCatchAstNode node);
 
 	R visit(TryCatchAstNode.Question node);
-
-	R visit(CommaAstNode node);
 
 	R visit(ValueMatcherAstNode node);
 

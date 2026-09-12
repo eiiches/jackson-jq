@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * An {@code as} binding and a {@code label} are pipe heads: what they scope is the right-hand side
- * of the {@code |} they head, so they only compile as a {@link net.thisptr.jackson.jq.v2.core.internal.ast.PipeAstNode}'s
+ * of the {@code |} they head, so they only compile as a {@link net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode}'s
  * left side. The grammar rejects a head that no {@code |} follows, so these cover the compiler's own
  * guard against an AST built by hand -- which the fuzzer does.
  */

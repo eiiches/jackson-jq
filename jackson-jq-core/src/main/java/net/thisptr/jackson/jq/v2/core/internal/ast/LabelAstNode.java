@@ -4,7 +4,7 @@ import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
 /**
  * The {@code label $out} head of a pipe. What the label breaks out of is the right-hand side of the
- * {@link PipeAstNode} it heads, not a child of its own.
+ * {@link BinaryOpAstNode} for the pipe it heads, not a child of its own.
  */
 public class LabelAstNode extends AbstractAstNode {
 	private final String name;

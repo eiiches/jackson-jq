@@ -4,7 +4,7 @@ import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
 /**
  * The {@code f as $x} head of a pipe. The body it scopes is the right-hand side of the
- * {@link PipeAstNode} it heads, not a child of its own.
+ * {@link BinaryOpAstNode} for the pipe it heads, not a child of its own.
  */
 public class AsBindingAstNode extends AbstractAstNode {
 	private final AstNode value;

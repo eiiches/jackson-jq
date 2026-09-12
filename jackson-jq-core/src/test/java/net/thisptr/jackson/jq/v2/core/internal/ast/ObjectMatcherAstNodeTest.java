@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -65,8 +66,9 @@ class ObjectMatcherAstNodeTest {
 	}
 
 	private static List<ObjectMatcherAstNode.FieldMatcher> parseObjectMatcher(String query) throws JsonQueryException {
-		PipeAstNode pipe = assertInstanceOf(PipeAstNode.class, AstParser.parse(query, Versions.JQ_1_6));
-		AsBindingAstNode binding = assertInstanceOf(AsBindingAstNode.class, pipe.left());
+		BinaryOpAstNode pipe = assertInstanceOf(BinaryOpAstNode.class, AstParser.parse(query, Versions.JQ_1_6));
+		assertEquals(BinaryOperator.BINDING_PIPE, pipe.operator);
+		AsBindingAstNode binding = assertInstanceOf(AsBindingAstNode.class, pipe.lhs);
 		return assertInstanceOf(ObjectMatcherAstNode.class, binding.matcher()).matchers();
 	}
 

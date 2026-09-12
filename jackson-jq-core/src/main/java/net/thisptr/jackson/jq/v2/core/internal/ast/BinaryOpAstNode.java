@@ -22,8 +22,9 @@ public class BinaryOpAstNode extends AbstractAstNode {
 
 	@Override
 	public String toString() {
+		if (operator == BinaryOperator.COMMA)
+			return String.format("%s, %s", lhs, rhs);
 		return String.format("%s %s %s", lhs, operator, rhs);
 	}
 }
-
 

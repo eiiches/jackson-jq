@@ -4,8 +4,8 @@ import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
 import net.thisptr.jackson.jq.v2.core.diagnostic.DiagnosticListener;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AsBindingAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.CommaAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.PipeAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
 
 /**
  * Warns about a {@code ,} written as an operand of a {@code |} without parentheses, as in
@@ -35,11 +35,13 @@ public final class PipeParenthesesCheck extends AbstractAstWalker {
 
 	// Each side is reported before being descended into, so the warnings come out in source order.
 	@Override
-	public Void visit(PipeAstNode node) {
-		check(node.left());
-		walk(node.left());
-		check(node.right());
-		walk(node.right());
+	public Void visit(BinaryOpAstNode node) {
+		if (node.operator != BinaryOperator.PIPE && node.operator != BinaryOperator.BINDING_PIPE)
+			return super.visit(node);
+		check(node.lhs);
+		walk(node.lhs);
+		check(node.rhs);
+		walk(node.rhs);
 		return null;
 	}
 
@@ -53,7 +55,7 @@ public final class PipeParenthesesCheck extends AbstractAstWalker {
 	}
 
 	private void check(AstNode operand) {
-		if (!(operand instanceof CommaAstNode))
+		if (!(operand instanceof BinaryOpAstNode) || ((BinaryOpAstNode) operand).operator != BinaryOperator.COMMA)
 			return;
 		listener.report(Diagnostic.warning(
 				"`,` binds tighter than `|`: write `(" + operand + ")` to make the grouping explicit",

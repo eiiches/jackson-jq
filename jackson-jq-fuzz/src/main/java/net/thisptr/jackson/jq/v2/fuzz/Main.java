@@ -45,7 +45,6 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.BooleanLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BracketExtractFieldAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BracketFieldAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BreakExpressionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.CommaAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ConditionalAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ForeachExpressionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.FormattingFilterAstNode;
@@ -59,7 +58,6 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.NumericLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ParenAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.PipeAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.RecursionOperatorAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ReduceExpressionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.SemicolonOperatorAstNode;
@@ -176,17 +174,17 @@ public class Main {
 			generators.add(new RandomGenerator(1, (exprs) -> new BinaryOpAstNode(SYNTHETIC, BinaryOperator.ASSIGN, new StringFieldAccessAstNode(SYNTHETIC, new ThisObjectAstNode(SYNTHETIC), new StringLiteralAstNode(SYNTHETIC, "bar"), false), exprs.get(0))));
 
 			// Pipelines & Variable Bindings
-			generators.add(new RandomGenerator(2, (exprs) -> new PipeAstNode(SYNTHETIC, exprs.get(0), exprs.get(1))));
-			generators.add(new RandomGenerator(3, (exprs) -> new PipeAstNode(SYNTHETIC, exprs.get(0), new PipeAstNode(SYNTHETIC, exprs.get(1), exprs.get(2)))));
-			generators.add(new RandomGenerator(2, (exprs) -> new PipeAstNode(SYNTHETIC, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ValueMatcherAstNode(SYNTHETIC, "x")), exprs.get(1))));
-			generators.add(new RandomGenerator(1, (exprs) -> new PipeAstNode(SYNTHETIC, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ValueMatcherAstNode(SYNTHETIC, "x")), new VariableAccessAstNode(SYNTHETIC, "x"))));
-			generators.add(new RandomGenerator(2, (exprs) -> new PipeAstNode(SYNTHETIC, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ValueMatcherAstNode(SYNTHETIC, "x")), new BinaryOpAstNode(SYNTHETIC, BinaryOperator.PLUS, new VariableAccessAstNode(SYNTHETIC, "x"), exprs.get(1)))));
-			generators.add(new RandomGenerator(2, (exprs) -> new PipeAstNode(SYNTHETIC, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ValueMatcherAstNode(SYNTHETIC, "x")), new ArrayConstructionAstNode(SYNTHETIC, new CommaAstNode(SYNTHETIC, new VariableAccessAstNode(SYNTHETIC, "x"), exprs.get(1))))));
-			generators.add(new RandomGenerator(3, (exprs) -> new PipeAstNode(SYNTHETIC, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ValueMatcherAstNode(SYNTHETIC, "x")), new ConditionalAstNode(SYNTHETIC, Collections.singletonList(Pair.of(new VariableAccessAstNode(SYNTHETIC, "x"), exprs.get(1))), exprs.get(2)))));
-			generators.add(new RandomGenerator(1, (exprs) -> new PipeAstNode(SYNTHETIC, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ArrayMatcherAstNode(SYNTHETIC, Arrays.asList(new ValueMatcherAstNode(SYNTHETIC, "a"), new ValueMatcherAstNode(SYNTHETIC, "b")))), new ArrayConstructionAstNode(SYNTHETIC, new CommaAstNode(SYNTHETIC, new VariableAccessAstNode(SYNTHETIC, "b"), new VariableAccessAstNode(SYNTHETIC, "a"))))));
-			generators.add(new RandomGenerator(1, (exprs) -> new PipeAstNode(SYNTHETIC, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ObjectMatcherAstNode(SYNTHETIC, Arrays.asList(new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, true, "a", null), new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, true, "b", null)))), new ArrayConstructionAstNode(SYNTHETIC, new CommaAstNode(SYNTHETIC, new VariableAccessAstNode(SYNTHETIC, "a"), new VariableAccessAstNode(SYNTHETIC, "b"))))));
-			generators.add(new RandomGenerator(1, (exprs) -> new PipeAstNode(SYNTHETIC, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ObjectMatcherAstNode(SYNTHETIC, Arrays.asList(new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, false, "foo", new ValueMatcherAstNode(SYNTHETIC, "a")), new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, false, "bar", new ValueMatcherAstNode(SYNTHETIC, "b"))))), new ArrayConstructionAstNode(SYNTHETIC, new CommaAstNode(SYNTHETIC, new VariableAccessAstNode(SYNTHETIC, "a"), new VariableAccessAstNode(SYNTHETIC, "b"))))));
-			generators.add(new RandomGenerator(3, (exprs) -> new PipeAstNode(SYNTHETIC, new LabelAstNode(SYNTHETIC, "out"), new CommaAstNode(SYNTHETIC, exprs.get(0), new ConditionalAstNode(SYNTHETIC, Collections.singletonList(Pair.of(exprs.get(1), new BreakExpressionAstNode(SYNTHETIC, "out"))), exprs.get(2))))));
+			generators.add(new RandomGenerator(2, (exprs) -> binary(BinaryOperator.PIPE, exprs.get(0), exprs.get(1))));
+			generators.add(new RandomGenerator(3, (exprs) -> binary(BinaryOperator.PIPE, exprs.get(0), binary(BinaryOperator.PIPE, exprs.get(1), exprs.get(2)))));
+			generators.add(new RandomGenerator(2, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ValueMatcherAstNode(SYNTHETIC, "x")), exprs.get(1))));
+			generators.add(new RandomGenerator(1, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ValueMatcherAstNode(SYNTHETIC, "x")), new VariableAccessAstNode(SYNTHETIC, "x"))));
+			generators.add(new RandomGenerator(2, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ValueMatcherAstNode(SYNTHETIC, "x")), new BinaryOpAstNode(SYNTHETIC, BinaryOperator.PLUS, new VariableAccessAstNode(SYNTHETIC, "x"), exprs.get(1)))));
+			generators.add(new RandomGenerator(2, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ValueMatcherAstNode(SYNTHETIC, "x")), new ArrayConstructionAstNode(SYNTHETIC, binary(BinaryOperator.COMMA, new VariableAccessAstNode(SYNTHETIC, "x"), exprs.get(1))))));
+			generators.add(new RandomGenerator(3, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ValueMatcherAstNode(SYNTHETIC, "x")), new ConditionalAstNode(SYNTHETIC, Collections.singletonList(Pair.of(new VariableAccessAstNode(SYNTHETIC, "x"), exprs.get(1))), exprs.get(2)))));
+			generators.add(new RandomGenerator(1, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ArrayMatcherAstNode(SYNTHETIC, Arrays.asList(new ValueMatcherAstNode(SYNTHETIC, "a"), new ValueMatcherAstNode(SYNTHETIC, "b")))), new ArrayConstructionAstNode(SYNTHETIC, binary(BinaryOperator.COMMA, new VariableAccessAstNode(SYNTHETIC, "b"), new VariableAccessAstNode(SYNTHETIC, "a"))))));
+			generators.add(new RandomGenerator(1, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ObjectMatcherAstNode(SYNTHETIC, Arrays.asList(new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, true, "a", null), new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, true, "b", null)))), new ArrayConstructionAstNode(SYNTHETIC, binary(BinaryOperator.COMMA, new VariableAccessAstNode(SYNTHETIC, "a"), new VariableAccessAstNode(SYNTHETIC, "b"))))));
+			generators.add(new RandomGenerator(1, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ObjectMatcherAstNode(SYNTHETIC, Arrays.asList(new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, false, "foo", new ValueMatcherAstNode(SYNTHETIC, "a")), new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, false, "bar", new ValueMatcherAstNode(SYNTHETIC, "b"))))), new ArrayConstructionAstNode(SYNTHETIC, binary(BinaryOperator.COMMA, new VariableAccessAstNode(SYNTHETIC, "a"), new VariableAccessAstNode(SYNTHETIC, "b"))))));
+			generators.add(new RandomGenerator(3, (exprs) -> binary(BinaryOperator.PIPE, new LabelAstNode(SYNTHETIC, "out"), binary(BinaryOperator.COMMA, exprs.get(0), new ConditionalAstNode(SYNTHETIC, Collections.singletonList(Pair.of(exprs.get(1), new BreakExpressionAstNode(SYNTHETIC, "out"))), exprs.get(2))))));
 
 			// Reduce & Foreach
 			generators.add(new RandomGenerator(3, (exprs) -> new ReduceExpressionAstNode(SYNTHETIC, new ValueMatcherAstNode(SYNTHETIC, "x"), exprs.get(1), exprs.get(2), new ParenAstNode(SYNTHETIC, exprs.get(0)))));
@@ -271,13 +269,13 @@ public class Main {
 					new FunctionCallAstNode(SYNTHETIC, null, "f", Collections.emptyList())))));
 			generators.add(new RandomGenerator(2, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, Arrays.asList(
 					new FunctionDefinitionAstNode(SYNTHETIC, "f", Collections.emptyList(), exprs.get(0)),
-					new PipeAstNode(SYNTHETIC, exprs.get(1), new FunctionCallAstNode(SYNTHETIC, null, "f", Collections.emptyList()))))));
+					binary(BinaryOperator.PIPE, exprs.get(1), new FunctionCallAstNode(SYNTHETIC, null, "f", Collections.emptyList()))))));
 			generators.add(new RandomGenerator(2, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, Arrays.asList(
 					new FunctionDefinitionAstNode(SYNTHETIC, "f", Collections.singletonList("a"), exprs.get(0)),
 					new FunctionCallAstNode(SYNTHETIC, null, "f", Collections.singletonList(exprs.get(1)))))));
 			generators.add(new RandomGenerator(3, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, Arrays.asList(
 					new FunctionDefinitionAstNode(SYNTHETIC, "f", Collections.singletonList("a"), exprs.get(0)),
-					new PipeAstNode(SYNTHETIC, exprs.get(1), new FunctionCallAstNode(SYNTHETIC, null, "f", Collections.singletonList(exprs.get(2))))))));
+					binary(BinaryOperator.PIPE, exprs.get(1), new FunctionCallAstNode(SYNTHETIC, null, "f", Collections.singletonList(exprs.get(2))))))));
 			generators.add(new RandomGenerator(3, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, Arrays.asList(
 					new FunctionDefinitionAstNode(SYNTHETIC, "f", Arrays.asList("a", "b"), exprs.get(0)),
 					new FunctionCallAstNode(SYNTHETIC, null, "f", Arrays.asList(exprs.get(1), exprs.get(2)))))));
@@ -726,8 +724,12 @@ public class Main {
 	private static AstNode comma(List<AstNode> exprs) {
 		@Var AstNode result = exprs.get(0);
 		for (int i = 1; i < exprs.size(); ++i)
-			result = new CommaAstNode(SYNTHETIC, result, exprs.get(i));
+			result = binary(BinaryOperator.COMMA, result, exprs.get(i));
 		return result;
+	}
+
+	private static BinaryOpAstNode binary(BinaryOperator operator, AstNode lhs, AstNode rhs) {
+		return new BinaryOpAstNode(SYNTHETIC, operator, lhs, rhs);
 	}
 
 	private static AstNode toAstNode(JsonNode value) {

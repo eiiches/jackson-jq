@@ -4,6 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum BinaryOperator {
+	PIPE("|", 8, Associativity.RIGHT),
+	BINDING_PIPE("|", 8, Associativity.RIGHT),
+	COMMA(",", 7, Associativity.LEFT),
 	ASSIGN("=", 6, Associativity.RIGHT),
 	UPDATE("|=", 6, Associativity.RIGHT),
 	DEFAULT_EQUAL("//=", 6, Associativity.RIGHT),
@@ -44,8 +47,11 @@ public enum BinaryOperator {
 	private static final Map<String, BinaryOperator> lookup = new HashMap<>();
 
 	static {
-		for (BinaryOperator op : BinaryOperator.values())
+		for (BinaryOperator op : BinaryOperator.values()) {
+			if (op == BINDING_PIPE)
+				continue;
 			lookup.put(op.image, op);
+		}
 	}
 
 	public static BinaryOperator fromString(String image) {

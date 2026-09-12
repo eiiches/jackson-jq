@@ -30,7 +30,6 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.BooleanLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BracketExtractFieldAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BracketFieldAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BreakExpressionAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.CommaAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ConditionalAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ForeachExpressionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.FormattingFilterAstNode;
@@ -45,7 +44,6 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ParenAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.PatternMatcherAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.PipeAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.RecursionOperatorAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ReduceExpressionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.SemicolonOperatorAstNode;
@@ -382,20 +380,19 @@ public class Compiler {
 		 * a head is not an expression feeding values into the right side, so the input-fixing rule for
 		 * an ordinary left operand -- and {@link PipedQuery}'s path shielding -- do not apply to it.
 		 */
-		@Override
-		public Expression<StackFrame, N> visit(PipeAstNode piped) throws JsonQueryException {
-			AstNode left = piped.left();
+		private Expression<StackFrame, N> compilePipe(BinaryOpAstNode piped) throws JsonQueryException {
+			AstNode left = piped.lhs;
 			if (left instanceof AsBindingAstNode)
-				return compileAsBinding((AsBindingAstNode) left, piped.right());
+				return compileAsBinding((AsBindingAstNode) left, piped.rhs);
 			if (left instanceof LabelAstNode)
-				return compileLabel((LabelAstNode) left, piped.right());
+				return compileLabel((LabelAstNode) left, piped.rhs);
 
 			boolean savedInputFixed = context.isInputFixed();
 			Expression<StackFrame, N> compiledLeft = compileNonNull(env, context, currentModule, left);
 			Expression<StackFrame, N> right;
 			context.setInputFixed(!compiledLeft.dependsOnInput());
 			try {
-				right = compileNonNull(env, context, currentModule, piped.right());
+				right = compileNonNull(env, context, currentModule, piped.rhs);
 			} finally {
 				context.setInputFixed(savedInputFixed);
 			}
@@ -493,6 +490,14 @@ public class Compiler {
 
 		@Override
 		public Expression<StackFrame, N> visit(BinaryOpAstNode bin) throws JsonQueryException {
+			if (bin.operator == BinaryOperator.PIPE || bin.operator == BinaryOperator.BINDING_PIPE)
+				return compilePipe(bin);
+			if (bin.operator == BinaryOperator.COMMA) {
+				List<Expression<StackFrame, N>> operands = new ArrayList<>();
+				compileCommaOperands(bin, operands);
+				return new Comma<>(operands);
+			}
+
 			Expression<StackFrame, N> lhs = compileNonNull(env, context, bin.lhs);
 			boolean savedInputFixed = context.isInputFixed();
 			if (bin.operator == BinaryOperator.UPDATE) {
@@ -553,23 +558,16 @@ public class Compiler {
 		 * is a loop rather than a stack frame per comma. Parentheses are transparent here, just as they
 		 * are when compiled normally.
 		 */
-		@Override
-		public Expression<StackFrame, N> visit(CommaAstNode comma) throws JsonQueryException {
-			List<Expression<StackFrame, N>> operands = new ArrayList<>();
-			compileCommaOperands(comma, operands);
-			return new Comma<>(operands);
-		}
-
 		// Walked with an explicit stack rather than by recursion: the chain is as long as the query has
 		// commas, and compiling `[1, 2, ..., n]` must not cost n frames either.
-		private void compileCommaOperands(CommaAstNode comma, List<Expression<StackFrame, N>> operands) throws JsonQueryException {
+		private void compileCommaOperands(BinaryOpAstNode comma, List<Expression<StackFrame, N>> operands) throws JsonQueryException {
 			Deque<AstNode> pending = new ArrayDeque<>();
 			pending.push(comma);
 			while (!pending.isEmpty()) {
 				AstNode operand = pending.pop();
-				if (operand instanceof CommaAstNode) {
-					pending.push(((CommaAstNode) operand).right());
-					pending.push(((CommaAstNode) operand).left());
+				if (operand instanceof BinaryOpAstNode && ((BinaryOpAstNode) operand).operator == BinaryOperator.COMMA) {
+					pending.push(((BinaryOpAstNode) operand).rhs);
+					pending.push(((BinaryOpAstNode) operand).lhs);
 					continue;
 				}
 				if (operand instanceof ParenAstNode) {

@@ -13,13 +13,14 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BooleanLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.CommaAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.NullLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.NumericLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ParenAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.StringLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
 public class ExpressionUtils {
@@ -106,10 +107,10 @@ public class ExpressionUtils {
 		pending.push(expr);
 		while (!pending.isEmpty()) {
 			AstNode element = pending.pop();
-			if (element instanceof CommaAstNode) {
-				CommaAstNode comma = (CommaAstNode) element;
-				pending.push(comma.right());
-				pending.push(comma.left());
+			if (element instanceof BinaryOpAstNode && ((BinaryOpAstNode) element).operator == BinaryOperator.COMMA) {
+				BinaryOpAstNode comma = (BinaryOpAstNode) element;
+				pending.push(comma.rhs);
+				pending.push(comma.lhs);
 				continue;
 			}
 			if (element instanceof ParenAstNode) {
