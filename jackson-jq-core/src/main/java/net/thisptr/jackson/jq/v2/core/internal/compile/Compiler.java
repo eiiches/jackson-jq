@@ -20,6 +20,7 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.diagnostic.DiagnosticListener;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayMatcherAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.AsBindingAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstVisitor;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
@@ -41,7 +42,7 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ParenAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.PatternMatcherAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.PipedQueryAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.PipeAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.RecursionOperatorAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ReduceExpressionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.SemicolonOperatorAstNode;
@@ -54,7 +55,6 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.TryCatchAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.TupleAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ValueMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.VariableAccessAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.VariableBindingAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
 import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
@@ -373,22 +373,34 @@ public class Compiler {
 			return new TopLevelExpression<>(compiledInner);
 		}
 
+		/**
+		 * A {@code |}. The AST mirrors the syntax, so an {@code as} binding or a {@code label} is the
+		 * pipe's left side rather than a node owning the rest of the query; the tree nodes they compile
+		 * into do own their body, and this is where the two shapes meet. The fold has to be explicit:
+		 * a head is not an expression feeding values into the right side, so the input-fixing rule for
+		 * an ordinary left operand -- and {@link PipedQuery}'s path shielding -- do not apply to it.
+		 */
 		@Override
-		public Expression<StackFrame, N> visit(PipedQueryAstNode piped) throws JsonQueryException {
+		public Expression<StackFrame, N> visit(PipeAstNode piped) throws JsonQueryException {
+			AstNode left = piped.left();
+			if (left instanceof AsBindingAstNode)
+				return compileAsBinding((AsBindingAstNode) left, piped.right());
+			if (left instanceof LabelAstNode)
+				return compileLabel((LabelAstNode) left, piped.right());
+
 			boolean savedInputFixed = context.isInputFixed();
-			Expression<StackFrame, N> left = compileNonNull(env, context, currentModule, piped.left());
+			Expression<StackFrame, N> compiledLeft = compileNonNull(env, context, currentModule, left);
 			Expression<StackFrame, N> right;
-			context.setInputFixed(!left.dependsOnInput());
+			context.setInputFixed(!compiledLeft.dependsOnInput());
 			try {
 				right = compileNonNull(env, context, currentModule, piped.right());
 			} finally {
 				context.setInputFixed(savedInputFixed);
 			}
-			return new PipedQuery<>(left, right);
+			return new PipedQuery<>(compiledLeft, right);
 		}
 
-		@Override
-		public Expression<StackFrame, N> visit(VariableBindingAstNode binding) throws JsonQueryException {
+		private Expression<StackFrame, N> compileAsBinding(AsBindingAstNode binding, AstNode bodyAst) throws JsonQueryException {
 			boolean savedInputFixed = context.isInputFixed();
 			Expression<StackFrame, N> value = compileNonNull(env, context, currentModule, binding.value());
 			CompiledMatcher<N> matcherResult = compileMatcher(binding.matcher());
@@ -402,7 +414,7 @@ public class Compiler {
 					slots.put(varName, context.getVariableSlot(varName));
 				}
 				context.setInputFixed(savedInputFixed);
-				body = compileNonNull(env, context, currentModule, binding.body());
+				body = compileNonNull(env, context, currentModule, bodyAst);
 			} finally {
 				context.setInputFixed(savedInputFixed);
 				context.popScope();
@@ -411,9 +423,20 @@ public class Compiler {
 			return new VariableBinding<>(value, compiledMatcher, new HashSet<>(slots.values()), body);
 		}
 
+		private Expression<StackFrame, N> compileLabel(LabelAstNode label, AstNode bodyAst) throws JsonQueryException {
+			return new Label<>(label.name(), compileNonNull(env, context, currentModule, bodyAst));
+		}
+
+		// Reached only for an AST that the parser cannot produce: the grammar rejects a pipe head that
+		// no `|` follows, so a bare head here means a hand-built tree.
+		@Override
+		public Expression<StackFrame, N> visit(AsBindingAstNode binding) throws JsonQueryException {
+			throw new JsonQueryException(String.format("`%s` must be followed by `|`", binding));
+		}
+
 		@Override
 		public Expression<StackFrame, N> visit(LabelAstNode label) throws JsonQueryException {
-			return new Label<>(label.name(), compileNonNull(env, context, currentModule, label.body()));
+			throw new JsonQueryException(String.format("`%s` must be followed by `|`", label));
 		}
 
 		@Override

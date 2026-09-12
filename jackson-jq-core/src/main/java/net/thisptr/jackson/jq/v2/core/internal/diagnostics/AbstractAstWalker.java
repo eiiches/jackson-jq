@@ -4,6 +4,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayMatcherAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.AsBindingAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstVisitor;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
@@ -24,7 +25,7 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.NumericLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ParenAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.PipedQueryAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.PipeAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.RecursionOperatorAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ReduceExpressionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.SemicolonOperatorAstNode;
@@ -37,7 +38,6 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.TryCatchAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.TupleAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ValueMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.VariableAccessAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.VariableBindingAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 
 /**
@@ -68,6 +68,13 @@ public abstract class AbstractAstWalker implements AstVisitor<Void> {
 	public Void visit(ArrayMatcherAstNode node) {
 		for (AstNode matcher : node.matchers())
 			walk(matcher);
+		return null;
+	}
+
+	@Override
+	public Void visit(AsBindingAstNode node) {
+		walk(node.value());
+		walk(node.matcher());
 		return null;
 	}
 
@@ -174,7 +181,6 @@ public abstract class AbstractAstWalker implements AstVisitor<Void> {
 
 	@Override
 	public Void visit(LabelAstNode node) {
-		walk(node.body());
 		return null;
 	}
 
@@ -215,7 +221,7 @@ public abstract class AbstractAstWalker implements AstVisitor<Void> {
 	}
 
 	@Override
-	public Void visit(PipedQueryAstNode node) {
+	public Void visit(PipeAstNode node) {
 		walk(node.left());
 		walk(node.right());
 		return null;
@@ -316,14 +322,6 @@ public abstract class AbstractAstWalker implements AstVisitor<Void> {
 
 	@Override
 	public Void visit(VariableAccessAstNode node) {
-		return null;
-	}
-
-	@Override
-	public Void visit(VariableBindingAstNode node) {
-		walk(node.value());
-		walk(node.matcher());
-		walk(node.body());
 		return null;
 	}
 }

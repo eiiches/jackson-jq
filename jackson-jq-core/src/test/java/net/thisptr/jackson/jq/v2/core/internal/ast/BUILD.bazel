@@ -6,7 +6,7 @@ jjq_java_test_suite(
         "ObjectMatcherAstNodeTest.java",
         "ParenAstNodeTest.java",
         "ParseErrorTest.java",
-        "PipedQueryAstNodeTest.java",
+        "PipeAstNodeTest.java",
         "SourceLocationTest.java",
     ],
     release = 8,

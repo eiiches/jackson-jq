@@ -65,7 +65,8 @@ class ObjectMatcherAstNodeTest {
 	}
 
 	private static List<ObjectMatcherAstNode.FieldMatcher> parseObjectMatcher(String query) throws JsonQueryException {
-		VariableBindingAstNode binding = assertInstanceOf(VariableBindingAstNode.class, AstParser.parse(query, Versions.JQ_1_6));
+		PipeAstNode pipe = assertInstanceOf(PipeAstNode.class, AstParser.parse(query, Versions.JQ_1_6));
+		AsBindingAstNode binding = assertInstanceOf(AsBindingAstNode.class, pipe.left());
 		return assertInstanceOf(ObjectMatcherAstNode.class, binding.matcher()).matchers();
 	}
 

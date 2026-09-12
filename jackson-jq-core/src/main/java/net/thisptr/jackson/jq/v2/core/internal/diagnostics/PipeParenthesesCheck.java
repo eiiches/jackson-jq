@@ -2,11 +2,10 @@ package net.thisptr.jackson.jq.v2.core.internal.diagnostics;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
 import net.thisptr.jackson.jq.v2.core.diagnostic.DiagnosticListener;
+import net.thisptr.jackson.jq.v2.core.internal.ast.AsBindingAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.LabelAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.PipedQueryAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.PipeAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.TupleAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.VariableBindingAstNode;
 
 /**
  * Warns about a {@code ,} written as an operand of a {@code |} without parentheses, as in
@@ -34,25 +33,22 @@ public final class PipeParenthesesCheck extends AbstractAstWalker {
 		new PipeParenthesesCheck(listener).walk(ast);
 	}
 
+	// Each side is reported before being descended into, so the warnings come out in source order.
 	@Override
-	public Void visit(PipedQueryAstNode node) {
+	public Void visit(PipeAstNode node) {
 		check(node.left());
+		walk(node.left());
 		check(node.right());
-		return super.visit(node);
+		walk(node.right());
+		return null;
 	}
 
-	// `f as $x | body` and `label $out | body` are the pipe's other two shapes: both are written
-	// with a `|`, so a bare comma on either side of it reads exactly as ambiguously.
+	// The value an `as` binding matches is the one operand a pipe head has of its own, and it sits
+	// left of a `|` just as ambiguously as any other left operand. What follows the `|` is the
+	// pipe's right side, checked there.
 	@Override
-	public Void visit(VariableBindingAstNode node) {
+	public Void visit(AsBindingAstNode node) {
 		check(node.value());
-		check(node.body());
-		return super.visit(node);
-	}
-
-	@Override
-	public Void visit(LabelAstNode node) {
-		check(node.body());
 		return super.visit(node);
 	}
 

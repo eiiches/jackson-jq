@@ -112,13 +112,14 @@ PARSER_BEGIN(AstParser)
 			AstNode result = last.expression;
 			for (int i = components.size() - 2; i >= 0; --i) {
 				ParsedPipeComponent component = components.get(i);
-				SourceLocation location = SourceLocation.span(component.location, result.location());
+				AstNode head;
 				if (component.matcher != null)
-					result = new VariableBindingAstNode(location, component.expression, component.matcher, result);
+					head = new AsBindingAstNode(component.location, component.expression, component.matcher);
 				else if (component.label != null)
-					result = new LabelAstNode(location, component.label, result);
+					head = new LabelAstNode(component.location, component.label);
 				else
-					result = new PipedQueryAstNode(location, component.expression, result);
+					head = component.expression;
+				result = new PipeAstNode(SourceLocation.span(component.location, result.location()), head, result);
 			}
 			return result;
 		}

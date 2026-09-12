@@ -18,8 +18,8 @@ class AstVisitorTest {
 		assertEquals("Question", new TryCatchAstNode.Question(at, new ThisObjectAstNode(at)).accept(visitor));
 		assertEquals("ValueMatcherAstNode", new ValueMatcherAstNode(at, "value").accept(visitor));
 		assertEquals("ConstantKeyFieldMatcher", new ObjectMatcherAstNode.ConstantKeyFieldMatcher(at, true, "value", null).accept(visitor));
-		assertEquals("LabelAstNode", new LabelAstNode(at, "done", new ThisObjectAstNode(at)).accept(visitor));
-		assertEquals("VariableBindingAstNode", new VariableBindingAstNode(at, new ThisObjectAstNode(at), new ValueMatcherAstNode(at, "value"), new ThisObjectAstNode(at)).accept(visitor));
+		assertEquals("LabelAstNode", new LabelAstNode(at, "done").accept(visitor));
+		assertEquals("AsBindingAstNode", new AsBindingAstNode(at, new ThisObjectAstNode(at), new ValueMatcherAstNode(at, "value")).accept(visitor));
 		assertEquals("VariableKeyFieldConstruction", new ObjectConstructionAstNode.VariableKeyFieldConstruction(at, "value").accept(visitor));
 	}
 

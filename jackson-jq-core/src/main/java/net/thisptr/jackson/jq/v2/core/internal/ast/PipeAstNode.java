@@ -2,11 +2,15 @@ package net.thisptr.jackson.jq.v2.core.internal.ast;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class PipedQueryAstNode extends AbstractAstNode {
+/**
+ * A {@code |}. The left side is an ordinary expression, or one of the two pipe heads that scope
+ * everything after the {@code |}: {@link AsBindingAstNode} or {@link LabelAstNode}.
+ */
+public class PipeAstNode extends AbstractAstNode {
 	private final AstNode left;
 	private final AstNode right;
 
-	public PipedQueryAstNode(SourceLocation location, AstNode left, AstNode right) {
+	public PipeAstNode(SourceLocation location, AstNode left, AstNode right) {
 		super(location);
 		this.left = left;
 		this.right = right;

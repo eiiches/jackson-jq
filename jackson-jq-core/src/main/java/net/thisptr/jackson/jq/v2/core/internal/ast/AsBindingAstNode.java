@@ -2,16 +2,18 @@ package net.thisptr.jackson.jq.v2.core.internal.ast;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-public class VariableBindingAstNode extends AbstractAstNode {
+/**
+ * The {@code f as $x} head of a pipe. The body it scopes is the right-hand side of the
+ * {@link PipeAstNode} it heads, not a child of its own.
+ */
+public class AsBindingAstNode extends AbstractAstNode {
 	private final AstNode value;
 	private final PatternMatcherAstNode matcher;
-	private final AstNode body;
 
-	public VariableBindingAstNode(SourceLocation location, AstNode value, PatternMatcherAstNode matcher, AstNode body) {
+	public AsBindingAstNode(SourceLocation location, AstNode value, PatternMatcherAstNode matcher) {
 		super(location);
 		this.value = value;
 		this.matcher = matcher;
-		this.body = body;
 	}
 
 	public AstNode value() {
@@ -22,10 +24,6 @@ public class VariableBindingAstNode extends AbstractAstNode {
 		return matcher;
 	}
 
-	public AstNode body() {
-		return body;
-	}
-
 	@Override
 	public <R> R accept(AstVisitor<R> visitor) {
 		return visitor.visit(this);
@@ -33,6 +31,6 @@ public class VariableBindingAstNode extends AbstractAstNode {
 
 	@Override
 	public String toString() {
-		return value + " as " + matcher + " | " + body;
+		return value + " as " + matcher;
 	}
 }

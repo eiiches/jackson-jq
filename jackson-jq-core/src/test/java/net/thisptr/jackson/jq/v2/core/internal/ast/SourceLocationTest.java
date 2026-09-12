@@ -13,10 +13,24 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 class SourceLocationTest {
 	@Test
 	void everyNodeCoversExactlyTheTextItWasParsedFrom() throws JsonQueryException {
-		PipedQueryAstNode pipe = assertInstanceOf(PipedQueryAstNode.class, parse(".foo | .bar"));
+		PipeAstNode pipe = assertInstanceOf(PipeAstNode.class, parse(".foo | .bar"));
 		assertThat(pipe.location()).isEqualTo(SourceLocation.of(1, 1, 1, 11));
 		assertThat(pipe.left().location()).isEqualTo(SourceLocation.of(1, 1, 1, 4));
 		assertThat(pipe.right().location()).isEqualTo(SourceLocation.of(1, 8, 1, 11));
+	}
+
+	// A pipe head covers only the text of the head itself; the body it scopes belongs to the pipe.
+	@Test
+	void aPipeHeadCoversOnlyItself() throws JsonQueryException {
+		PipeAstNode binding = assertInstanceOf(PipeAstNode.class, parse(". as $x | $x"));
+		assertThat(binding.location()).isEqualTo(SourceLocation.of(1, 1, 1, 12));
+		assertThat(binding.left().location()).isEqualTo(SourceLocation.of(1, 1, 1, 7));
+		assertThat(binding.right().location()).isEqualTo(SourceLocation.of(1, 11, 1, 12));
+
+		PipeAstNode label = assertInstanceOf(PipeAstNode.class, parse("label $out | ."));
+		assertThat(label.location()).isEqualTo(SourceLocation.of(1, 1, 1, 14));
+		assertThat(label.left().location()).isEqualTo(SourceLocation.of(1, 1, 1, 10));
+		assertThat(label.right().location()).isEqualTo(SourceLocation.of(1, 14, 1, 14));
 	}
 
 	// A field access covers the target it applies to, not just its own name: `.foo` starts at the
@@ -41,7 +55,7 @@ class SourceLocationTest {
 
 	@Test
 	void aCommaBindsTighterThanAPipe() throws JsonQueryException {
-		PipedQueryAstNode pipe = assertInstanceOf(PipedQueryAstNode.class, parse("a, b | ."));
+		PipeAstNode pipe = assertInstanceOf(PipeAstNode.class, parse("a, b | ."));
 		TupleAstNode tuple = assertInstanceOf(TupleAstNode.class, pipe.left());
 		assertThat(tuple.location()).isEqualTo(SourceLocation.of(1, 1, 1, 4));
 		assertThat(pipe.right().location()).isEqualTo(SourceLocation.of(1, 8, 1, 8));
@@ -49,7 +63,7 @@ class SourceLocationTest {
 
 	@Test
 	void locationsTrackLineNumbers() throws JsonQueryException {
-		PipedQueryAstNode pipe = assertInstanceOf(PipedQueryAstNode.class, parse(".foo\n| .bar"));
+		PipeAstNode pipe = assertInstanceOf(PipeAstNode.class, parse(".foo\n| .bar"));
 		assertThat(pipe.right().location()).isEqualTo(SourceLocation.of(2, 3, 2, 6));
 	}
 

@@ -11,6 +11,8 @@ public interface AstVisitor<R> {
 
 	R visit(ArrayMatcherAstNode node);
 
+	R visit(AsBindingAstNode node);
+
 	R visit(BinaryOpAstNode node);
 
 	R visit(BooleanLiteralAstNode node);
@@ -55,7 +57,7 @@ public interface AstVisitor<R> {
 
 	R visit(ParenAstNode node);
 
-	R visit(PipedQueryAstNode node);
+	R visit(PipeAstNode node);
 
 	R visit(RecursionOperatorAstNode node);
 
@@ -87,5 +89,4 @@ public interface AstVisitor<R> {
 
 	R visit(VariableAccessAstNode node);
 
-	R visit(VariableBindingAstNode node);
 }
