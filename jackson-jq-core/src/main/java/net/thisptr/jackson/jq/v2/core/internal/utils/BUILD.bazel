@@ -10,8 +10,7 @@ jjq_java_library(
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast",
-        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/impls",
-        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/impls/literal",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast/operator",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/path",
         "//jackson-jq-json-provider",
         "//jackson-jq-spi",

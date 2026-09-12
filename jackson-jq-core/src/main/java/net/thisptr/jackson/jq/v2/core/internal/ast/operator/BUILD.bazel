@@ -4,6 +4,10 @@ jjq_java_library(
     name = "operator",
     srcs = [
         "BinaryOperator.java",
+        "BinaryOperatorInfo.java",
+        "BinaryOperatorTable.java",
+        "Jq15BinaryOperatorTable.java",
+        "Jq18BinaryOperatorTable.java",
     ],
     release = 8,
     visibility = ["//jackson-jq-core:__subpackages__"],

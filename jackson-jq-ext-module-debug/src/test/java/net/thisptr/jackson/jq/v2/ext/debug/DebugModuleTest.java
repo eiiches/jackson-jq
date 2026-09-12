@@ -151,13 +151,27 @@ public class DebugModuleTest {
 	@Test
 	public void dumpExprRecursesIntoContainers() throws JsonQueryException {
 		JsonNode result = dumpExpr("(1, .)");
-		JsonNode container = result.get("fields").get("qs");
+		JsonNode container = result.get("fields").get("operands");
 		assertThat(container.get("object").asText()).startsWith(container.get("class").asText() + "@");
 		JsonNode expressions = container.get("elements");
 		assertThat(expressions.isArray()).isTrue();
 		assertThat(expressions).hasSize(2);
 		assertThat(expressions.get(0).get("class").asText()).endsWith(".ValueLiteral");
 		assertThat(expressions.get(1).get("class").asText()).endsWith(".ThisObject");
+	}
+
+	// `,` is a binary AST node, but a chain of them compiles to a single n-ary Comma so that
+	// evaluating it costs one stack frame rather than one per comma. Parentheses are transparent.
+	// The operands read `.` so that the chain is not folded away as a constant argument first.
+	@Test
+	public void dumpExprFlattensACommaChain() throws JsonQueryException {
+		assertThat(commaOperandsOf(dumpExpr("(.a, .b, .c, .d)"))).hasSize(4);
+		assertThat(commaOperandsOf(dumpExpr("(.a, ((.b, .c)), .d)"))).hasSize(4);
+	}
+
+	private static JsonNode commaOperandsOf(JsonNode dumped) {
+		assertThat(dumped.get("class").asText()).endsWith(".Comma");
+		return dumped.get("fields").get("operands").get("elements");
 	}
 
 	@Test
@@ -180,16 +194,11 @@ public class DebugModuleTest {
 	}
 
 	@Test
-	public void dumpExprReflectsPipeComponentsAndFunctionDefinitions() throws JsonQueryException {
+	public void dumpExprReflectsBindingsAndFunctionDefinitions() throws JsonQueryException {
 		JsonNode result = dumpExpr(". as $a | def f: $a; f");
-		JsonNode components = result.get("fields").get("components");
-		assertThat(components.get("object").asText()).startsWith(components.get("class").asText() + "@");
-		JsonNode firstComponent = components.get("elements").get(0);
-		assertThat(firstComponent.get("class").asText()).endsWith(".AssignPipeComponent");
-		assertThat(firstComponent.get("fields").get("expr").get("class").asText()).endsWith(".ThisObject");
-		JsonNode secondComponent = components.get("elements").get(1);
-		assertThat(secondComponent.get("class").asText()).endsWith(".TransformPipeComponent");
-		JsonNode semicolon = secondComponent.get("fields").get("expr");
+		assertThat(result.get("class").asText()).endsWith(".VariableBinding");
+		assertThat(result.get("fields").get("value").get("class").asText()).endsWith(".ThisObject");
+		JsonNode semicolon = result.get("fields").get("body");
 		assertThat(semicolon.get("class").asText()).endsWith(".SemicolonOperator");
 		JsonNode functionDefinition = semicolon.get("fields").get("qs").get("elements").get(0);
 		assertThat(functionDefinition.get("class").asText()).endsWith(".ResolvedFunctionDefinition");

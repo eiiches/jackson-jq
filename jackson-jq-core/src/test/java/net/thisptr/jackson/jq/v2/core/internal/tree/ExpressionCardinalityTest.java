@@ -7,6 +7,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
+import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
@@ -19,7 +20,6 @@ import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -77,7 +77,7 @@ public class ExpressionCardinalityTest {
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), jqVersion)
 				.build();
 		AstNode parsedAst = AstParser.parse(expression, env.getJqVersion());
-		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(env, (Module) null, parsedAst);
+		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(env, new CompileOptions(), null, parsedAst);
 		return compiledExpr.getCardinality();
 	}
 
@@ -132,7 +132,7 @@ public class ExpressionCardinalityTest {
 	}
 
 	@Test
-	public void testTuple() {
+	public void testComma() {
 		assertThat(cardinalityOf("1, 2")).isEqualTo(Cardinality.UNKNOWN);
 		assertThat(cardinalityOf("1, empty")).isEqualTo(Cardinality.ONE);
 		assertThat(cardinalityOf("empty, empty")).isEqualTo(Cardinality.ZERO);

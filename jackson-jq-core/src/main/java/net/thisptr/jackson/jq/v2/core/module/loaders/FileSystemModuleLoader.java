@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
@@ -141,7 +142,10 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 				.setModuleLoader(parentModuleLoader != null ? parentModuleLoader : this)
 				.build();
 		AstNode ast = AstParser.parse(moduleString + " null", version);
-		Expression<StackFrame, JsonNode> compiled = Compiler.compileModule(moduleEnv, module, ast);
+		// A module read off the search path is somebody else's library, so it is compiled with
+		// default options -- the caller asked for diagnostics about their own query, not about
+		// the jq files it happens to import.
+		Expression<StackFrame, JsonNode> compiled = Compiler.compileModule(moduleEnv, new CompileOptions(), module, ast);
 		if (!(compiled instanceof RootExpression))
 			throw new IllegalStateException("Compiler did not produce a root expression");
 

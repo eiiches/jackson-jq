@@ -242,6 +242,38 @@ class MainTest {
 				.isEqualTo("\"x\\nyz\\n\"\n");
 	}
 
+	// jq itself emits no warnings, so this must stay on stderr: stdout has to remain exactly what
+	// jq would print.
+	@Test
+	void warnsOnStderrAboutACommaOperandOfAPipe() throws Exception {
+		assertThat(run("{\"a\":1,\"b\":2}", "--compact", ".a, .b | .")).isEqualTo("1\n2\n");
+		assertThat(runStderr("{\"a\":1,\"b\":2}", "--compact", ".a, .b | ."))
+				.isEqualTo("jq: warning: `,` binds tighter than `|`: write `(.a, .b)` to make the grouping explicit"
+						+ " at line 1, column 1:\n"
+						+ "    .a, .b | .\n"
+						+ "    ^\n");
+	}
+
+	@Test
+	void warnsOnStderrAboutABindingPipeAfterAComma() throws Exception {
+		assertThat(run("null", "--compact", "1 + 1, 2 as $a | $a + 1")).isEqualTo("2\n3\n");
+		assertThat(runStderr("null", "--compact", "1 + 1, 2 as $a | $a + 1"))
+				.isEqualTo("jq: warning: `as` binds only `2`: write `(2 as $a | $a + 1)` to make the grouping explicit"
+						+ " at line 1, column 8:\n"
+						+ "    1 + 1, 2 as $a | $a + 1\n"
+						+ "           ^\n");
+	}
+
+	@Test
+	void suppressesWarningsOnRequest() throws Exception {
+		assertThat(runStderr("{\"a\":1,\"b\":2}", "--compact", "--no-warnings", ".a, .b | .")).isEmpty();
+	}
+
+	@Test
+	void saysNothingWhenTheGroupingIsExplicit() throws Exception {
+		assertThat(runStderr("{\"a\":1,\"b\":2}", "--compact", "(.a, .b) | .")).isEmpty();
+	}
+
 	@Test
 	void rejectsUnknownJsonProvider() {
 		assertThatIllegalArgumentException()
@@ -255,18 +287,41 @@ class MainTest {
 		return file;
 	}
 
-	private static synchronized String run(String input, String... args) throws Exception {
+	private static String run(String input, String... args) throws Exception {
+		return capture(input, args).out;
+	}
+
+	private static String runStderr(String input, String... args) throws Exception {
+		return capture(input, args).err;
+	}
+
+	private static final class Captured {
+		final String out;
+		final String err;
+
+		Captured(String out, String err) {
+			this.out = out;
+			this.err = err;
+		}
+	}
+
+	private static synchronized Captured capture(String input, String... args) throws Exception {
 		InputStream originalIn = System.in;
 		PrintStream originalOut = System.out;
+		PrintStream originalErr = System.err;
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		ByteArrayOutputStream errors = new ByteArrayOutputStream();
 		try {
 			System.setIn(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
 			System.setOut(new PrintStream(output));
+			System.setErr(new PrintStream(errors));
 			Main.main(args);
-			return new String(output.toByteArray(), StandardCharsets.UTF_8);
+			return new Captured(new String(output.toByteArray(), StandardCharsets.UTF_8),
+					new String(errors.toByteArray(), StandardCharsets.UTF_8));
 		} finally {
 			System.setIn(originalIn);
 			System.setOut(originalOut);
+			System.setErr(originalErr);
 		}
 	}
 }

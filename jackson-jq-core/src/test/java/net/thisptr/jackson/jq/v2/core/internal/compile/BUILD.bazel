@@ -4,11 +4,14 @@ jjq_java_test_suite(
     srcs = [
         "CompileContextInlinedFunctionScopeTest.java",
         "JqFunctionCompilerTest.java",
+        "PipeHeadCompilationTest.java",
     ],
     release = 8,
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
         "//jackson-jq-core",
+        "//jackson-jq-json-provider-impl-jackson2",
         "//jackson-jq-spi",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
     ],
 )

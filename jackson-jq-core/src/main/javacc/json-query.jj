@@ -18,33 +18,122 @@ PARSER_BEGIN(AstParser)
 	import net.thisptr.jackson.jq.v2.spi.version.Version;
 	import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.*;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.fieldaccess.*;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.literal.*;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.*;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.matcher.matchers.*;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.PipedQueryAstNode.LabelPipeComponent;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TopLevelAstNode.ImportStatement;
-	import net.thisptr.jackson.jq.v2.core.internal.ast.impls.TopLevelAstNode.ModuleDirective;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.*;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode.ImportStatement;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode.ModuleDirective;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperatorTable;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.operator.Jq15BinaryOperatorTable;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.operator.Jq18BinaryOperatorTable;
+	import net.thisptr.jackson.jq.v2.core.version.Versions;
+	import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.parser.ParsedInfixOperator;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.parser.ShuntingYard;
 	import net.thisptr.jackson.jq.v2.internal.javacc.TokenMgrError;
 	import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 	@SuppressWarnings("unused")
 	public class AstParser {
-		private Version version;
+		// A javacc LL(1) state can expect a long tail of tokens; past a handful the list stops
+		// helping the reader find their typo.
+		private static final int MAX_EXPECTED_TOKENS_REPORTED = 5;
+
+		private BinaryOperatorTable binaryOperatorTable;
+
+		/** The region a single token covers. */
+		private static SourceLocation loc(Token t) {
+			return SourceLocation.of(t.beginLine, t.beginColumn, t.endLine, t.endColumn);
+		}
+
+		/**
+		 * The region from the start of the production currently being parsed through the token it
+		 * has most recently consumed -- i.e. everything the production has matched so far.
+		 */
+		private SourceLocation locSince(Token start) {
+			return SourceLocation.of(start.beginLine, start.beginColumn, token.endLine, token.endColumn);
+		}
+
+		/**
+		 * The region from the start of an already-parsed node through the token most recently
+		 * consumed. Used by the accessor productions, which are handed the target they apply to and
+		 * must cover it as well as their own text -- `.foo` starts where `.` does, not where `foo` does.
+		 */
+		private SourceLocation locSince(AstNode begin) {
+			SourceLocation from = begin.location();
+			return SourceLocation.of(from.beginLine(), from.beginColumn(), token.endLine, token.endColumn);
+		}
 
 		public static AstNode parse(final String line, final Version version) throws JsonQueryException {
 			try {
 				final AstParser parser = new AstParser(new StringReader(line));
-				parser.version = version;
+				parser.binaryOperatorTable = version.compareTo(Versions.JQ_1_8_0) < 0
+						? Jq15BinaryOperatorTable.INSTANCE
+						: Jq18BinaryOperatorTable.INSTANCE;
 				return parser.Start();
+			} catch (ParseException e) {
+				throw new JsonQueryException(describeSyntaxError(line, e), e);
 			} catch (TokenMgrError e) {
-				throw new JsonQueryException("Cannot parse query: " + line, e);
+				// The token manager reports its own line and column inside the message and exposes
+				// nothing structured to rebuild an excerpt from, so it is passed through as-is.
+				throw new JsonQueryException(e.getMessage(), e);
 			} catch (Exception e) {
-				throw new JsonQueryException("Cannot parse query: " + line, e);
+				// Semantic checks in the grammar actions throw plain runtime exceptions whose message
+				// is the whole explanation; anything with nothing to say falls back to naming the query.
+				final String message = e.getMessage();
+				throw new JsonQueryException(message != null && !message.isEmpty() ? message : "Cannot parse query: " + line, e);
 			}
+		}
+
+		/** Renders a parse failure the way jq renders its own, minus jq's source-name field. */
+		private static String describeSyntaxError(final String source, final ParseException e) {
+			final Token consumed = e.currentToken;
+			if (consumed == null || e.expectedTokenSequences == null || e.tokenImage == null)
+				return e.getMessage();
+
+			final Token offending = consumed.next != null ? consumed.next : consumed;
+			final SourceLocation location = loc(offending);
+
+			final StringBuilder message = new StringBuilder("syntax error, unexpected ");
+			message.append(describeToken(offending, e.tokenImage));
+
+			final List<String> expected = new ArrayList<String>();
+			for (int i = 0; i < e.expectedTokenSequences.length; ++i) {
+				if (e.expectedTokenSequences[i].length == 0)
+					continue;
+				final String kind = describeTokenKind(e.tokenImage[e.expectedTokenSequences[i][0]]);
+				if (!expected.contains(kind))
+					expected.add(kind);
+			}
+			for (int i = 0; i < expected.size() && i < MAX_EXPECTED_TOKENS_REPORTED; ++i)
+				message.append(i == 0 ? ", expecting " : " or ").append(expected.get(i));
+
+			message.append(" at ").append(location);
+			final String excerpt = location.excerpt(source);
+			if (excerpt != null)
+				message.append(":\n").append(excerpt);
+			return message.toString();
+		}
+
+		private static String describeToken(final Token token, final String[] tokenImage) {
+			if (token.kind == 0)
+				return "end of input";
+			return token.image != null && !token.image.isEmpty()
+					? "'" + token.image + "'"
+					: describeTokenKind(tokenImage[token.kind]);
+		}
+
+		/**
+		 * JavaCC spells a literal token as {@code "\":\""} and a named one as {@code "<IDENTIFIER>"}.
+		 * Literals are requoted the way jq quotes them; named ones are already readable.
+		 */
+		private static String describeTokenKind(final String image) {
+			if (image.length() >= 2 && image.charAt(0) == '"' && image.charAt(image.length() - 1) == '"')
+				return "'" + image.substring(1, image.length() - 1) + "'";
+			return image;
 		}
 	}
 PARSER_END(AstParser)
@@ -334,6 +423,7 @@ ImportStatement IncludeStatement():
 
 AstNode Start():
 {
+	final Token start = getToken(1);
 	ImportStatement imp;
 	ModuleDirective moduleDirective = null;
 	final List<ImportStatement> imports = new ArrayList<ImportStatement>();
@@ -358,197 +448,179 @@ AstNode Start():
 	{
 		if (moduleDirective == null && imports.isEmpty())
 			return expr;
-		return new TopLevelAstNode(moduleDirective, imports, expr);
+		return new TopLevelAstNode(locSince(start), moduleDirective, imports, expr);
 	}
 }
 
 AstNode Expression():
 {
-	PipedQueryAstNode.PipeComponent component;
-	List<PipedQueryAstNode.PipeComponent> components = new ArrayList<PipedQueryAstNode.PipeComponent>();
+	AstNode expr;
+	Token t;
+	PatternMatcherAstNode matcher;
+	List<AstNode> exprs = new ArrayList<AstNode>();
+	List<ParsedInfixOperator> operators = new ArrayList<ParsedInfixOperator>();
 }
 {
-	component = PipeComponent()
-	{ components.add(component); }
+	expr = PipeOperand()
+	{ exprs.add(expr); }
 	(
+		t = InfixOperatorToken()
+		{ operators.add(ParsedInfixOperator.of(BinaryOperator.fromString(t.image))); }
+		expr = PrimaryExpression()
+		{ exprs.add(expr); }
+	|
 		<PIPE>
-		component = PipeComponent()
-		{ components.add(component); }
-	)*
-	{
-		if (!component.canTerminatePipe()) {
-			if (components.size() > 1) {
-				throw new IllegalStateException("Pipe cannot be terminated by assignment or label: | " + component);
-			} else {
-				throw new IllegalStateException("Assignment or label must be followed by pipes: " + component);
+		{ operators.add(ParsedInfixOperator.of(BinaryOperator.PIPE)); }
+		expr = PipeOperand()
+		{ exprs.add(expr); }
+	|
+		<KEYWORD_AS>
+		matcher = Matcher()
+		(
+			<PIPE>
+			{ operators.add(ParsedInfixOperator.bindingPipe(matcher)); }
+			expr = PipeOperand()
+			{ exprs.add(expr); }
+		|
+			{
+				expr = ShuntingYard.buildTree(exprs, operators, binaryOperatorTable);
+				throw new IllegalStateException("Assignment or label must be followed by pipes: "
+						+ new AsBindingAstNode(SourceLocation.span(expr.location(), matcher.location()), expr, matcher));
 			}
-		}
-		if (components.size() == 1 && (component instanceof PipedQueryAstNode.TransformPipeComponent))
-			return ((PipedQueryAstNode.TransformPipeComponent) component).expr;
-		return new PipedQueryAstNode(components);
-	}
+		)
+	)*
+	{ return ShuntingYard.buildTree(exprs, operators, binaryOperatorTable); }
 }
 
 AstNode JsonQueryWithoutComma():
 {
-	PipedQueryAstNode.PipeComponent component;
-	List<PipedQueryAstNode.PipeComponent> components = new ArrayList<PipedQueryAstNode.PipeComponent>();
+	AstNode expr;
+	Token t;
+	PatternMatcherAstNode matcher;
+	List<AstNode> exprs = new ArrayList<AstNode>();
+	List<ParsedInfixOperator> operators = new ArrayList<ParsedInfixOperator>();
 }
 {
-	component = PipeComponentWithoutComma()
-	{ components.add(component); }
+	expr = PipeOperand()
+	{ exprs.add(expr); }
 	(
+		t = BinaryOperatorToken()
+		{ operators.add(ParsedInfixOperator.of(BinaryOperator.fromString(t.image))); }
+		expr = PrimaryExpression()
+		{ exprs.add(expr); }
+	|
 		<PIPE>
-		component = PipeComponentWithoutComma()
-		{ components.add(component); }
-	)*
-	{
-		if (!component.canTerminatePipe()) {
-			if (components.size() > 1) {
-				throw new IllegalStateException("Pipe cannot be terminated by assignment or label: | " + component);
-			} else {
-				throw new IllegalStateException("Assignment or label must be followed by pipes: " + component);
+		{ operators.add(ParsedInfixOperator.of(BinaryOperator.PIPE)); }
+		expr = PipeOperand()
+		{ exprs.add(expr); }
+	|
+		<KEYWORD_AS>
+		matcher = Matcher()
+		(
+			<PIPE>
+			{ operators.add(ParsedInfixOperator.bindingPipe(matcher)); }
+			expr = PipeOperand()
+			{ exprs.add(expr); }
+		|
+			{
+				expr = ShuntingYard.buildTree(exprs, operators, binaryOperatorTable);
+				throw new IllegalStateException("Assignment or label must be followed by pipes: "
+						+ new AsBindingAstNode(SourceLocation.span(expr.location(), matcher.location()), expr, matcher));
 			}
-		}
-		if (components.size() == 1 && (component instanceof PipedQueryAstNode.TransformPipeComponent))
-			return ((PipedQueryAstNode.TransformPipeComponent) component).expr;
-		return new PipedQueryAstNode(components);
-	}
-}
-
-PipedQueryAstNode.PipeComponent PipeComponent():
-{
-	String name;
-	AstNode expr;
-	PatternMatcherAstNode matcher;
-}
-{
-	(
-		<KEYWORD_LABEL>
-		<DOLLAR>
-		name = IdentifierAsString()
-		{ return new LabelPipeComponent(name); }
-	|
-		expr = TupleExpression()
-		(
-			<KEYWORD_AS>
-			matcher = Matcher()
-			{ return new PipedQueryAstNode.AssignPipeComponent(expr, matcher); }
-		|
-			{ return new PipedQueryAstNode.TransformPipeComponent(expr); }
 		)
-	)
-}
-
-PipedQueryAstNode.PipeComponent PipeComponentWithoutComma():
-{
-	String name;
-	AstNode expr;
-	PatternMatcherAstNode matcher;
-}
-{
-	(
-		<KEYWORD_LABEL>
-		<DOLLAR>
-		name = IdentifierAsString()
-		{ return new LabelPipeComponent(name); }
-	|
-		expr = BinaryOperatorExpression()
-		(
-			<KEYWORD_AS>
-			matcher = Matcher()
-			{ return new PipedQueryAstNode.AssignPipeComponent(expr, matcher); }
-		|
-			{ return new PipedQueryAstNode.TransformPipeComponent(expr); }
-		)
-	)
-}
-
-AstNode TupleExpression():
-{
-	AstNode tmp;
-	final List<AstNode> qs = new ArrayList<AstNode>();
-}
-{
-	tmp = BinaryOperatorExpression()
-	{ qs.add(tmp); }
-	(
-		<COMMA>
-		tmp = BinaryOperatorExpression()
-		{ qs.add(tmp); }
 	)*
-	{
-		if (qs.size() == 1)
-			return qs.get(0);
-		return new TupleAstNode(qs);
-	}
+	{ return ShuntingYard.buildTree(exprs, operators, binaryOperatorTable); }
 }
 
-AstNode BinaryOperatorExpression():
+AstNode PipeOperand():
+{
+	final Token start = getToken(1);
+	String name;
+	AstNode expr;
+}
+{
+	(
+		<KEYWORD_LABEL>
+		<DOLLAR>
+		name = IdentifierAsString()
+		{ return new LabelAstNode(locSince(start), name); }
+	|
+		expr = PrimaryExpression()
+		{ return expr; }
+	)
+}
+
+Token InfixOperatorToken():
 {
 	Token t;
-	AstNode expr;
-	List<AstNode> exprs = new ArrayList<AstNode>();
-	List<BinaryOperator> operators = new ArrayList<BinaryOperator>();
 }
 {
-	expr = PrimaryExpression()
-	{ exprs.add(expr); }
+	(
+		t = BinaryOperatorToken()
+	|
+		t = <COMMA>
+	)
+	{ return t; }
+}
+
+Token BinaryOperatorToken():
+{
+	Token t;
+}
+{
 	(
 		(
 			t = <TIMES>
-			|
+		|
 			t = <DIVIDE>
-			|
+		|
 			t = <MODULO>
-			|
+		|
 			t = <PLUS>
-			|
+		|
 			t = <MINUS>
-			|
+		|
 			t = <COMP_EQUAL>
-			|
+		|
 			t = <COMP_NOT_EQUAL>
-			|
+		|
 			t = <COMP_GREATER>
-			|
+		|
 			t = <COMP_GREATER_EQUAL>
-			|
+		|
 			t = <COMP_LESS>
-			|
+		|
 			t = <COMP_LESS_EQUAL>
-			|
+		|
 			t = <OP_AND>
-			|
+		|
 			t = <OP_OR>
-			|
+		|
 			t = <OP_DEFAULT>
-			|
+		|
 			t = <ASSIGN_OP>
-			|
+		|
 			t = <UPDATE_OP>
-			|
+		|
 			t = <PLUS_EQUAL>
-			|
+		|
 			t = <MINUS_EQUAL>
-			|
+		|
 			t = <TIMES_EQUAL>
-			|
+		|
 			t = <DIVIDE_EQUAL>
-			|
+		|
 			t = <MODULO_EQUAL>
-			|
+		|
 			t = <DEFAULT_EQUAL>
 		)
-		{ operators.add(BinaryOperator.fromString(t.image)); }
-		expr = PrimaryExpression()
-		{ exprs.add(expr); }
-	)*
-	{ return ShuntingYard.buildTree(exprs, operators); }
+	)
+	{ return t; }
 }
 
 AstNode FunctionDefinition():
 {
+	final Token start = getToken(1);
 	final List<String> args = new ArrayList<String>();
 	Token fname;
 	String tmp;
@@ -571,7 +643,7 @@ AstNode FunctionDefinition():
 	<COLON>
 	body = Expression()
 	<SEMICOLON>
-	{ return new FunctionDefinitionAstNode(fname.image, args, body); }
+	{ return new FunctionDefinitionAstNode(locSince(start), fname.image, args, body); }
 }
 
 String FunctionDefinitionParam():
@@ -590,6 +662,7 @@ String FunctionDefinitionParam():
 
 AstNode PrimaryExpression():
 {
+	final Token start = getToken(1);
 	Token t;
 	AstNode tmp;
 	List<AstNode> exprs = new ArrayList<AstNode>();
@@ -603,7 +676,7 @@ AstNode PrimaryExpression():
 		tmp = ThisObjectAccess()
 		(
 			<QUESTION>
-			{ tmp = new TryCatchAstNode.Question(tmp); }
+			{ tmp = new TryCatchAstNode.Question(locSince(start), tmp); }
 		)*
 	|
 		tmp = VariableAccess()
@@ -612,7 +685,7 @@ AstNode PrimaryExpression():
 		)?
 		(
 			<QUESTION>
-			{ tmp = new TryCatchAstNode.Question(tmp); }
+			{ tmp = new TryCatchAstNode.Question(locSince(start), tmp); }
 		)*
 	|
 		(
@@ -635,24 +708,24 @@ AstNode PrimaryExpression():
 		)?
 		(
 			<QUESTION>
-			{ tmp = new TryCatchAstNode.Question(tmp); }
+			{ tmp = new TryCatchAstNode.Question(locSince(start), tmp); }
 		)*
 	|
 		<OPEN_PAR>
 		tmp = Expression()
 		<CLOSE_PAR>
-		{ tmp = new ParenAstNode(tmp); }
+		{ tmp = new ParenAstNode(locSince(start), tmp); }
 		(
 			tmp = FieldAccessor(tmp)
 		)?
 		(
 			<QUESTION>
-			{ tmp = new TryCatchAstNode.Question(tmp); }
+			{ tmp = new TryCatchAstNode.Question(locSince(start), tmp); }
 		)*
 	|
 		<MINUS>
 		tmp = PrimaryExpression()
-		{ tmp = new NegativeExpressionAstNode(tmp); }
+		{ tmp = new NegativeExpressionAstNode(locSince(start), tmp); }
 	|
 		tmp = ConditionalExpression()
 	|
@@ -670,30 +743,33 @@ AstNode PrimaryExpression():
 		exprs.add(tmp);
 		if (exprs.size() == 1)
 			return exprs.get(0);
-		return new SemicolonOperatorAstNode(exprs);
+		return new SemicolonOperatorAstNode(locSince(start), exprs);
 	}
 }
 
 AstNode RecursionOperator():
 {
+	final Token start = getToken(1);
 }
 {
 	<RECURSION>
-	{ return new RecursionOperatorAstNode(); }
+	{ return new RecursionOperatorAstNode(locSince(start)); }
 }
 
 AstNode FormattingFilter():
 {
+	final Token start = getToken(1);
 	Token t;
 }
 {
 	<ATSIGN>
 	t = <IDENTIFIER>
-	{ return new FormattingFilterAstNode(t.image); }
+	{ return new FormattingFilterAstNode(locSince(start), t.image); }
 }
 
 AstNode TryCatchExpression():
 {
+	final Token start = getToken(1);
 	AstNode tryExpr, catchExpr = null;
 }
 {
@@ -703,22 +779,24 @@ AstNode TryCatchExpression():
 		<KEYWORD_CATCH>
 		catchExpr = PrimaryExpression()
 	)?
-	{ return new TryCatchAstNode(tryExpr, catchExpr); }
+	{ return new TryCatchAstNode(locSince(start), tryExpr, catchExpr); }
 }
 
 AstNode BreakExpression():
 {
+	final Token start = getToken(1);
 	String name;
 }
 {
 	<KEYWORD_BREAK>
 	<DOLLAR>
 	name = IdentifierAsString()
-	{ return new BreakExpressionAstNode(name); }
+	{ return new BreakExpressionAstNode(locSince(start), name); }
 }
 
 AstNode ForeachExpression():
 {
+	final Token start = getToken(1);
 	PatternMatcherAstNode matcher;
 	AstNode initExpr, updateExpr, extractExpr = null, iterExpr;
 }
@@ -737,11 +815,12 @@ AstNode ForeachExpression():
 		extractExpr = Expression()
 	)?
 	<CLOSE_PAR>
-	{ return new ForeachExpressionAstNode(matcher, initExpr, updateExpr, extractExpr, iterExpr); }
+	{ return new ForeachExpressionAstNode(locSince(start), matcher, initExpr, updateExpr, extractExpr, iterExpr); }
 }
 
 AstNode ReduceExpression():
 {
+	final Token start = getToken(1);
 	PatternMatcherAstNode matcher;
 	AstNode tmpIterExpr, tmpInitExpr, tmpReduceExpr;
 }
@@ -755,11 +834,12 @@ AstNode ReduceExpression():
 	<SEMICOLON>
 	tmpReduceExpr = Expression()
 	<CLOSE_PAR>
-	{ return new ReduceExpressionAstNode(matcher, tmpInitExpr, tmpReduceExpr, tmpIterExpr); }
+	{ return new ReduceExpressionAstNode(locSince(start), matcher, tmpInitExpr, tmpReduceExpr, tmpIterExpr); }
 }
 
 AstNode VariableAccess():
 {
+	final Token start = getToken(1);
 	Token t;
 	AstNode tmp;
 	String moduleName = null;
@@ -772,15 +852,16 @@ AstNode VariableAccess():
 		<DOUBLE_COLON>
 	)?
 	t = <IDENTIFIER>
-	{ return new VariableAccessAstNode(moduleName, t.image); }
+	{ return new VariableAccessAstNode(locSince(start), moduleName, t.image); }
 }
 
 AstNode ConditionalExpression():
 {
+	final Token start = getToken(1);
 	AstNode tmpPred;
 	AstNode tmpExpr;
 	final List<Pair<AstNode, AstNode>> switches = new ArrayList<Pair<AstNode, AstNode>>();
-	AstNode otherwise = new ThisObjectAstNode();
+	AstNode otherwise = new ThisObjectAstNode(loc(getToken(1)));
 }
 {
 	<KEYWORD_IF>
@@ -801,34 +882,36 @@ AstNode ConditionalExpression():
 	)?
 	<KEYWORD_END>
 	{
-		return new ConditionalAstNode(switches, otherwise);
+		return new ConditionalAstNode(locSince(start), switches, otherwise);
 	}
 }
 
 AstNode ObjectConstruction():
 {
-	final ObjectConstructionAstNode obj = new ObjectConstructionAstNode();
+	final Token start = getToken(1);
+	final List<ObjectConstructionAstNode.FieldConstructionAst> fields = new ArrayList<ObjectConstructionAstNode.FieldConstructionAst>();
 }
 {
 	<OPEN_BRACE>
 	(
-		ObjectField(obj)
+		ObjectField(fields)
 		(
 			<COMMA>
 			(
-				ObjectField(obj)
+				ObjectField(fields)
 			|
 				<CLOSE_BRACE>
-				{ return obj; }
+				{ return new ObjectConstructionAstNode(locSince(start), fields); }
 			)
 		)*
 	)?
 	<CLOSE_BRACE>
-	{ return obj; }
+	{ return new ObjectConstructionAstNode(locSince(start), fields); }
 }
 
-void ObjectField(final ObjectConstructionAstNode obj):
+void ObjectField(final List<ObjectConstructionAstNode.FieldConstructionAst> fields):
 {
+	final Token start = getToken(1);
 	String name;
 	AstNode value = null;
 	AstNode key = null;
@@ -844,7 +927,7 @@ void ObjectField(final ObjectConstructionAstNode obj):
 		// {$name}
 		<DOLLAR>
 		name = KeywordOrIdentifier()
-		{ obj.add(new ObjectConstructionAstNode.VariableKeyFieldConstruction(name)); }
+		{ fields.add(new ObjectConstructionAstNode.VariableKeyFieldConstruction(locSince(start), name)); }
 	|
 		// {name}, {name: value}
 		name = KeywordOrIdentifier()
@@ -852,7 +935,7 @@ void ObjectField(final ObjectConstructionAstNode obj):
 			<COLON>
 			value = ObjectFieldValue()
 		)?
-		{ obj.add(new ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst(name, value)); }
+		{ fields.add(new ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst(locSince(start), name, value)); }
 	|
 		// {"name"}, {"name": value}
 		key = StringInterpolation()
@@ -860,7 +943,7 @@ void ObjectField(final ObjectConstructionAstNode obj):
 			<COLON>
 			value = ObjectFieldValue()
 		)?
-		{ obj.add(new ObjectConstructionAstNode.StringKeyFieldConstructionAst(key, value)); }
+		{ fields.add(new ObjectConstructionAstNode.StringKeyFieldConstructionAst(locSince(start), key, value)); }
 	|
 		// {(keyexpr): value}
 		<OPEN_PAR>
@@ -868,12 +951,13 @@ void ObjectField(final ObjectConstructionAstNode obj):
 		<CLOSE_PAR>
 		<COLON>
 		value = ObjectFieldValue()
-		{ obj.add(new ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst(key, value)); }
+		{ fields.add(new ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst(locSince(start), key, value)); }
 	)
 }
 
 AstNode ObjectFieldValue():
 {
+	final Token start = getToken(1);
 	AstNode expr;
 }
 {
@@ -881,7 +965,7 @@ AstNode ObjectFieldValue():
 		<OPEN_PAR>
 		expr = Expression()
 		<CLOSE_PAR>
-		{ expr = new ParenAstNode(expr); }
+		{ expr = new ParenAstNode(locSince(start), expr); }
 	|
 		expr = JsonQueryWithoutComma()
 	)
@@ -890,6 +974,7 @@ AstNode ObjectFieldValue():
 
 AstNode ArrayConstruction():
 {
+	final Token start = getToken(1);
 	AstNode tmp = null;
 }
 {
@@ -900,35 +985,37 @@ AstNode ArrayConstruction():
 	<CLOSE_BRACKET>
 	{
 		if (tmp == null)
-			return new ArrayConstructionAstNode();
-		return new ArrayConstructionAstNode(tmp);
+			return new ArrayConstructionAstNode(locSince(start));
+		return new ArrayConstructionAstNode(locSince(start), tmp);
 	}
 }
 
 AstNode ValueLiteral():
 {
+	final Token start = getToken(1);
 	Token token;
 	AstNode tmp;
 }
 {
 	(
 		token = <NUMERIC_LITERAL>
-		{ tmp = new NumericLiteralAstNode(token.image); }
+		{ tmp = new NumericLiteralAstNode(locSince(start), token.image); }
 	|
 		<NULL_LITERAL>
-		{ tmp = new NullLiteralAstNode(); }
+		{ tmp = new NullLiteralAstNode(locSince(start)); }
 	|
 		<BOOLEAN_LITERAL_TRUE>
-		{ tmp = new BooleanLiteralAstNode(true); }
+		{ tmp = new BooleanLiteralAstNode(locSince(start), true); }
 	|
 		<BOOLEAN_LITERAL_FALSE>
-		{ tmp = new BooleanLiteralAstNode(false); }
+		{ tmp = new BooleanLiteralAstNode(locSince(start), false); }
 	)
 	{ return tmp; }
 }
 
 AstNode FunctionCall():
 {
+	final Token start = getToken(1);
 	AstNode tmp;
 	final Token fname;
 	final List<AstNode> fargs = new ArrayList<AstNode>();
@@ -954,7 +1041,7 @@ AstNode FunctionCall():
 		)?
 		<CLOSE_PAR>
 	)?
-	{ return new FunctionCallAstNode(moduleName, fname.image, fargs); }
+	{ return new FunctionCallAstNode(locSince(start), moduleName, fname.image, fargs); }
 }
 
 AstNode FieldAccessor(AstNode obj):
@@ -976,9 +1063,10 @@ AstNode FieldAccessor(AstNode obj):
 
 AstNode ThisObjectAccess():
 {
+	final Token start = getToken(1);
 	Token identifier;
 	boolean permissive;
-	AstNode tmp = new ThisObjectAstNode();
+	AstNode tmp = new ThisObjectAstNode(loc(getToken(1)));
 }
 {
 	<DOT>
@@ -999,6 +1087,7 @@ AstNode ThisObjectAccess():
 
 AstNode IdentifierFieldAccessor(AstNode obj):
 {
+	final Token start = getToken(1);
 	Token identifier;
 	boolean permissive = false;
 }
@@ -1008,11 +1097,12 @@ AstNode IdentifierFieldAccessor(AstNode obj):
 		<QUESTION>
 		{ permissive = true; }
 	)?
-	{ return new IdentifierFieldAccessAstNode(obj, identifier.image, permissive); }
+	{ return new IdentifierFieldAccessAstNode(locSince(obj), obj, identifier.image, permissive); }
 }
 
 AstNode StringFieldAccessor(AstNode obj):
 {
+	final Token start = getToken(1);
 	AstNode fieldName;
 	boolean permissive = false;
 }
@@ -1022,11 +1112,12 @@ AstNode StringFieldAccessor(AstNode obj):
 		<QUESTION>
 		{ permissive = true; }
 	)?
-	{ return new StringFieldAccessAstNode(obj, fieldName, permissive); }
+	{ return new StringFieldAccessAstNode(locSince(obj), obj, fieldName, permissive); }
 }
 
 AstNode BracketFieldAccessor(AstNode obj):
 {
+	final Token start = getToken(1);
 	AstNode begin = null, end = null;
 	boolean rangeAccess = true;
 	boolean permissive = false;
@@ -1059,16 +1150,17 @@ AstNode BracketFieldAccessor(AstNode obj):
 	{
 		if (rangeAccess) {
 			if (begin == null && end == null)
-				return new BracketExtractFieldAccessAstNode(obj, permissive);
-			return new BracketFieldAccessAstNode(obj, begin, end, permissive);
+				return new BracketExtractFieldAccessAstNode(locSince(obj), obj, permissive);
+			return new BracketFieldAccessAstNode(locSince(obj), obj, begin, end, permissive);
 		} else {
-			return new BracketFieldAccessAstNode(obj, begin, permissive);
+			return new BracketFieldAccessAstNode(locSince(obj), obj, begin, permissive);
 		}
 	}
 }
 
 AstNode StringInterpolation():
 {
+	final Token start = getToken(1);
 	Token t;
 	final StringBuilder builder = new StringBuilder();
 	final List<Pair<Integer, AstNode>> interpolations = new ArrayList<Pair<Integer, AstNode>>();
@@ -1120,9 +1212,9 @@ AstNode StringInterpolation():
 	<ENDQUOTE>
 	{
 		if (interpolations.isEmpty() && formatter == null) {
-			return new StringLiteralAstNode(builder.toString());
+			return new StringLiteralAstNode(locSince(start), builder.toString());
 		} else {
-			return new StringInterpolationAstNode(builder.toString(), interpolations, formatter);
+			return new StringInterpolationAstNode(locSince(start), builder.toString(), interpolations, formatter);
 		}
 	}
 }
@@ -1144,6 +1236,7 @@ PatternMatcherAstNode Matcher():
 
 PatternMatcherAstNode ArrayMatcher():
 {
+	final Token start = getToken(1);
 	PatternMatcherAstNode matcher;
 	final List<PatternMatcherAstNode> matchers = new ArrayList<PatternMatcherAstNode>();
 }
@@ -1157,11 +1250,12 @@ PatternMatcherAstNode ArrayMatcher():
 		{ matchers.add(matcher); }
 	)*
 	<CLOSE_BRACKET>
-	{ return new ArrayMatcherAstNode(matchers); }
+	{ return new ArrayMatcherAstNode(locSince(start), matchers); }
 }
 
 PatternMatcherAstNode ObjectMatcher():
 {
+	final Token start = getToken(1);
 	ObjectMatcherAstNode.FieldMatcher fmatcher;
 	final List<ObjectMatcherAstNode.FieldMatcher> matchers = new ArrayList<ObjectMatcherAstNode.FieldMatcher>();
 }
@@ -1175,11 +1269,12 @@ PatternMatcherAstNode ObjectMatcher():
 		{ matchers.add(fmatcher); }
 	)*
 	<CLOSE_BRACE>
-	{ return new ObjectMatcherAstNode(matchers); }
+	{ return new ObjectMatcherAstNode(locSince(start), matchers); }
 }
 
 ObjectMatcherAstNode.FieldMatcher ObjectMatcherField():
 {
+	final Token start = getToken(1);
 	AstNode nameExpr;
 	String name;
 	PatternMatcherAstNode matcher = null;
@@ -1197,19 +1292,19 @@ ObjectMatcherAstNode.FieldMatcher ObjectMatcherField():
 			<COLON>
 			matcher = Matcher()
 		)?
-		{ return new ObjectMatcherAstNode.ConstantKeyFieldMatcher(true, name, matcher); }
+		{ return new ObjectMatcherAstNode.ConstantKeyFieldMatcher(locSince(start), true, name, matcher); }
 	|
 		// {x: matcher}
 		name = KeywordOrIdentifier()
 		<COLON>
 		matcher = Matcher()
-		{ return new ObjectMatcherAstNode.ConstantKeyFieldMatcher(false, name, matcher); }
+		{ return new ObjectMatcherAstNode.ConstantKeyFieldMatcher(locSince(start), false, name, matcher); }
 	|
 		// {"x": matcher}, {"\(.x)": matcher}
 		nameExpr = StringInterpolation()
 		<COLON>
 		matcher = Matcher()
-		{ return new ObjectMatcherAstNode.ExpressionKeyFieldMatcher(nameExpr, matcher); }
+		{ return new ObjectMatcherAstNode.ExpressionKeyFieldMatcher(locSince(start), nameExpr, matcher); }
 	|
 		// {(keyexpr): matcher}
 		<OPEN_PAR>
@@ -1217,16 +1312,17 @@ ObjectMatcherAstNode.FieldMatcher ObjectMatcherField():
 		<CLOSE_PAR>
 		<COLON>
 		matcher = Matcher()
-		{ return new ObjectMatcherAstNode.ExpressionKeyFieldMatcher(new ParenAstNode(nameExpr), matcher); }
+		{ return new ObjectMatcherAstNode.ExpressionKeyFieldMatcher(locSince(start), new ParenAstNode(locSince(start), nameExpr), matcher); }
 	)
 }
 
 PatternMatcherAstNode ValueMatcher():
 {
+	final Token start = getToken(1);
 	Token token;
 }
 {
 	<DOLLAR>
 	token = <IDENTIFIER>
-	{ return new ValueMatcherAstNode(token.image); }
+	{ return new ValueMatcherAstNode(locSince(start), token.image); }
 }

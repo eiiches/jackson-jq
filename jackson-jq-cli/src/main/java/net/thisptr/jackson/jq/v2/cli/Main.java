@@ -24,9 +24,11 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.help.HelpFormatter;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
@@ -90,6 +92,10 @@ public class Main {
 			.desc("JSON provider: jackson2, jackson3, gson, or jakarta (default: jackson3)")
 			.numberOfArgs(1)
 			.get();
+	private static final Option OPT_NO_WARNINGS = Option.builder()
+			.longOpt("no-warnings")
+			.desc("suppress compile warnings")
+			.get();
 	private static final Option OPT_HELP = Option.builder("h")
 			.longOpt("help")
 			.desc("print this message")
@@ -105,6 +111,7 @@ public class Main {
 		options.addOption(OPT_FROM_FILE);
 		options.addOption(OPT_VERSION);
 		options.addOption(OPT_JSON_PROVIDER);
+		options.addOption(OPT_NO_WARNINGS);
 		options.addOption(OPT_HELP);
 		CommandLine command;
 		List<String> rest;
@@ -188,6 +195,18 @@ public class Main {
 		return e.getMessage();
 	}
 
+	private static <N> JsonQuery<N> compileOrExit(Environment<N> env, String query, CompileOptions options) {
+		try {
+			return env.compile(query, options);
+		} catch (JsonQueryException e) {
+			// The message already carries the position and a caret line; a stack trace on top of it
+			// only buries the one line the user needs.
+			System.err.println("jq: error: " + e.getMessage());
+			System.exit(1);
+			throw e;
+		}
+	}
+
 	private static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider) throws Exception {
 		Environment<N> env = new EnvironmentBuilder<>(jsonProvider, version)
 				.defineFunction(FunctionSignature.of("env", 0), new Function() {
@@ -224,7 +243,23 @@ public class Main {
 						ClassPathModuleLoader.getInstance(),
 						new FileSystemModuleLoader<>(jsonProvider, version, FileSystems.getDefault().getPath("").toAbsolutePath())))
 				.build();
-		JsonQuery<N> jq = env.compile(query);
+		/*
+		 * jq itself emits no warnings at all, so this is purely additive: it goes to stderr, leaving
+		 * stdout and the exit code byte-for-byte what jq would produce.
+		 */
+		CompileOptions compileOptions = new CompileOptions();
+		if (!command.hasOption(OPT_NO_WARNINGS.getLongOpt())) {
+			compileOptions.setDiagnosticListener(diagnostic -> {
+				SourceLocation location = diagnostic.location();
+				String excerpt = location != null ? location.excerpt(query) : null;
+				System.err.println("jq: warning: " + diagnostic.message()
+						+ (location != null ? " at " + location : "")
+						+ (excerpt != null ? ":" : ""));
+				if (excerpt != null)
+					System.err.println(excerpt);
+			});
+		}
+		JsonQuery<N> jq = compileOrExit(env, query, compileOptions);
 		boolean compact = command.hasOption(OPT_COMPACT.getOpt());
 		boolean rawOutput = command.hasOption(OPT_RAW_OUTPUT.getOpt());
 		boolean nullInput = command.hasOption(OPT_NULL_INPUT.getOpt());

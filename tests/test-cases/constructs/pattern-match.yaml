@@ -153,3 +153,23 @@
   out:
   - "__ERROR__"
   v: '[1.7, )'
+
+- q: '["0", {} as {foo: $a} | $a]'
+  in: null
+  out:
+  - ["0", null]
+  v: '[1.5, )'
+
+- q: '[{foo: 1}, {foo: 2} as {foo: $a} | $a]'
+  in: null
+  out:
+  - [{"foo": 1}, 2]
+  v: '[1.5, )'
+  comment: 'an unparenthesized comma leaves earlier branches outside the binding'
+
+- q: '[({foo: 1}, {foo: 2}) as {foo: $a} | $a]'
+  in: null
+  out:
+  - [1, 2]
+  v: '[1.5, )'
+  comment: 'parentheses make the binding match every emitted value'

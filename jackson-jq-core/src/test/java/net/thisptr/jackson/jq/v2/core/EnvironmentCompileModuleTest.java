@@ -125,6 +125,40 @@ public class EnvironmentCompileModuleTest {
 		assertThat(Objects.requireNonNull(metadata.get("version")).asInt()).isEqualTo(1);
 	}
 
+	// Metadata is folded by ExpressionUtils.evaluateLiteralExpression, which has to walk a `,` as a
+	// left-nested binary node to read an array literal's elements in order.
+	@Test
+	public void testCompileModuleFoldsArrayMetadata() throws Exception {
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
+
+		Module module = env.compileModule("module { \"tags\": [\"a\", (\"b\", \"c\")], \"nested\": [1, [2, 3], 4], \"solo\": [\"only\"], \"none\": [] }; def one: 1;");
+
+		Map<String, JsonNode> metadata = module.getModuleMeta().getMetadata(env.getJsonProvider());
+		assertThat(Objects.requireNonNull(metadata.get("tags")).toString()).isEqualTo("[\"a\",\"b\",\"c\"]");
+		assertThat(Objects.requireNonNull(metadata.get("nested")).toString()).isEqualTo("[1,[2,3],4]");
+		assertThat(Objects.requireNonNull(metadata.get("solo")).toString()).isEqualTo("[\"only\"]");
+		assertThat(Objects.requireNonNull(metadata.get("none")).toString()).isEqualTo("[]");
+	}
+
+	@Test
+	public void testCompileModuleFoldsLongArrayMetadataWithoutOverflowingTheStack() throws Exception {
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
+		StringBuilder source = new StringBuilder("module { \"values\": [");
+		for (int i = 0; i < 10_000; i++) {
+			if (i != 0)
+				source.append(',');
+			source.append(i);
+		}
+		source.append("] }; def one: 1;");
+
+		Module module = env.compileModule(source.toString());
+
+		JsonNode values = Objects.requireNonNull(module.getModuleMeta().getMetadata(env.getJsonProvider()).get("values"));
+		assertThat(values).hasSize(10_000);
+		assertThat(values.get(0).asInt()).isZero();
+		assertThat(values.get(9_999).asInt()).isEqualTo(9_999);
+	}
+
 	@Test
 	public void testCompileModuleExposesDependencies() throws Exception {
 		InMemoryModuleLoader moduleLoader = new InMemoryModuleLoader(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
