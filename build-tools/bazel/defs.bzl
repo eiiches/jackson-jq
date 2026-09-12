@@ -390,6 +390,7 @@ def jjq_java_test_suite(
         resource_strip_prefix = None,
         data = [],
         env = {},
+        jvm_flags = [],
         size = None,
         test_suffixes_excludes = []):
     """The checkstyle-checked JUnit 5 tests for a single Java source directory.
@@ -416,6 +417,7 @@ def jjq_java_test_suite(
         src/test/resources.
       data: runtime data dependencies.
       env: environment variables for tests.
+      jvm_flags: JVM flags for each generated test.
       size: test size (small, medium, large, enormous).
       test_suffixes_excludes: patterns excluded from runner execution.
     """
@@ -432,6 +434,7 @@ def jjq_java_test_suite(
         resource_strip_prefix = resource_strip_prefix,
         data = data,
         env = env,
+        jvm_flags = jvm_flags,
         size = size,
         test_suffixes_excludes = test_suffixes_excludes,
         visibility = visibility,
