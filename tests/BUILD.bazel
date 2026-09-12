@@ -30,6 +30,14 @@ test_case_suite(
 )
 
 test_case_suite(
+    name = "fastjson2-tests",
+    test_cases = TEST_CASES,
+    test_class = "net.thisptr.jackson.jq.v2.test.providers.fastjson2.Fastjson2JsonQueryTest",
+    test_library = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/providers/fastjson2",
+    visibility = ["//visibility:private"],
+)
+
+test_case_suite(
     name = "gson-tests",
     test_cases = TEST_CASES,
     test_class = "net.thisptr.jackson.jq.v2.test.providers.gson.GsonJsonQueryTest",

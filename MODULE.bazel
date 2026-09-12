@@ -82,6 +82,11 @@ maven.artifact(
     version = "2.11.0",
 )
 maven.artifact(
+    artifact = "fastjson2",
+    group = "com.alibaba.fastjson2",
+    version = "2.0.64",
+)
+maven.artifact(
     artifact = "jakarta.json-api",
     group = "jakarta.json",
     version = "2.1.3",

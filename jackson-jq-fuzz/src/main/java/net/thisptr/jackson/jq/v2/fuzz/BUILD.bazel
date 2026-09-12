@@ -17,6 +17,7 @@ jjq_java_library(
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/commons/pair",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/json/comparator",
         "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-fastjson2",
         "//jackson-jq-json-provider-impl-gson",
         "//jackson-jq-json-provider-impl-jackson2",
         "//jackson-jq-json-provider-impl-jackson3",

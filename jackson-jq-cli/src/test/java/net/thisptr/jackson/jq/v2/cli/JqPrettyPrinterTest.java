@@ -14,7 +14,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class JqPrettyPrinterTest {
-	private static final String[] PROVIDERS = { "jackson2", "jackson3", "gson", "jakarta" };
+	private static final String[] PROVIDERS = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" };
 
 	/**
 	 * Nesting, empty containers, and characters jq leaves unescaped.
@@ -22,7 +22,7 @@ class JqPrettyPrinterTest {
 	private static final String FIXTURE = "{\"a\":[1,2,{\"b\":null}],\"c\":{},\"d\":[],\"e\":\"<&>\"}";
 
 	@ParameterizedTest
-	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void printsNestedValuesLikeJq(String provider) {
 		assertThat(print(provider, FIXTURE)).isEqualTo(""
 				+ "{\n"
@@ -40,7 +40,7 @@ class JqPrettyPrinterTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void keepsEmptyContainersOnOneLine(String provider) {
 		assertThat(print(provider, "{}")).isEqualTo("{}");
 		assertThat(print(provider, "[]")).isEqualTo("[]");
@@ -53,14 +53,14 @@ class JqPrettyPrinterTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void printsScalarsExactlyAsFormatDoes(String provider) {
 		for (String json : new String[] { "1", "\"x\"", "null", "true", "1.5", "\"日本語\"", "\"<>&'\\\"\"" })
 			assertScalarMatchesFormat(Main.resolveProvider(provider), json);
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void keepsJqNumberFormattingOfParsedNumbers(String provider) {
 		// Scalars go through the provider's own format(), so indenting cannot change a number.
 		assertThat(print(provider, "{\"exp\":1e10,\"whole\":1.0}")).isEqualTo(""
@@ -71,7 +71,7 @@ class JqPrettyPrinterTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void keepsJqNumberFormattingOfNonFiniteDoubles(String provider) {
 		assertThat(printNonFinite(Main.resolveProvider(provider))).isEqualTo(""
 				+ "{\n"
@@ -81,7 +81,7 @@ class JqPrettyPrinterTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void honoursTheGivenIndent(String provider) {
 		assertThat(printWith(Main.resolveProvider(provider), "{\"a\":[1]}", "\t")).isEqualTo(""
 				+ "{\n"
