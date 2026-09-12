@@ -62,14 +62,12 @@ class CompileOptionsTest {
 				.containsExactly(SourceLocation.of(1, 11, 1, 14), SourceLocation.of(1, 14, 1, 17));
 	}
 
-	// The value an `as` binding matches sits left of the `|`, so it is reported before what the
-	// binding scopes -- the warnings stay in source order.
 	@Test
-	void warnsOnBothSidesOfAPipeHeadInSourceOrder() throws JsonQueryException {
+	void respectsBindingPipePrecedence() throws JsonQueryException {
 		environment().compile("1, 2 as $x | 3, 4", options);
 
 		assertThat(reported).extracting(Diagnostic::location)
-				.containsExactly(SourceLocation.of(1, 1, 1, 4), SourceLocation.of(1, 14, 1, 17));
+				.containsExactly(SourceLocation.of(1, 14, 1, 17));
 	}
 
 	@Test

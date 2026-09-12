@@ -26,6 +26,10 @@ PARSER_BEGIN(AstParser)
 	import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode.ImportStatement;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode.ModuleDirective;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperatorTable;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.operator.Jq15BinaryOperatorTable;
+	import net.thisptr.jackson.jq.v2.core.internal.ast.operator.Jq18BinaryOperatorTable;
+	import net.thisptr.jackson.jq.v2.core.version.Versions;
 	import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.parser.ParsedInfixOperator;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.parser.ShuntingYard;
@@ -38,7 +42,7 @@ PARSER_BEGIN(AstParser)
 		// helping the reader find their typo.
 		private static final int MAX_EXPECTED_TOKENS_REPORTED = 5;
 
-		private Version version;
+		private BinaryOperatorTable binaryOperatorTable;
 
 		/** The region a single token covers. */
 		private static SourceLocation loc(Token t) {
@@ -66,7 +70,9 @@ PARSER_BEGIN(AstParser)
 		public static AstNode parse(final String line, final Version version) throws JsonQueryException {
 			try {
 				final AstParser parser = new AstParser(new StringReader(line));
-				parser.version = version;
+				parser.binaryOperatorTable = version.compareTo(Versions.JQ_1_8_0) < 0
+						? Jq15BinaryOperatorTable.INSTANCE
+						: Jq18BinaryOperatorTable.INSTANCE;
 				return parser.Start();
 			} catch (ParseException e) {
 				throw new JsonQueryException(describeSyntaxError(line, e), e);
@@ -477,13 +483,13 @@ AstNode Expression():
 			{ exprs.add(expr); }
 		|
 			{
-				expr = ShuntingYard.buildTree(exprs, operators);
+				expr = ShuntingYard.buildTree(exprs, operators, binaryOperatorTable);
 				throw new IllegalStateException("Assignment or label must be followed by pipes: "
 						+ new AsBindingAstNode(SourceLocation.span(expr.location(), matcher.location()), expr, matcher));
 			}
 		)
 	)*
-	{ return ShuntingYard.buildTree(exprs, operators); }
+	{ return ShuntingYard.buildTree(exprs, operators, binaryOperatorTable); }
 }
 
 AstNode JsonQueryWithoutComma():
@@ -517,13 +523,13 @@ AstNode JsonQueryWithoutComma():
 			{ exprs.add(expr); }
 		|
 			{
-				expr = ShuntingYard.buildTree(exprs, operators);
+				expr = ShuntingYard.buildTree(exprs, operators, binaryOperatorTable);
 				throw new IllegalStateException("Assignment or label must be followed by pipes: "
 						+ new AsBindingAstNode(SourceLocation.span(expr.location(), matcher.location()), expr, matcher));
 			}
 		)
 	)*
-	{ return ShuntingYard.buildTree(exprs, operators); }
+	{ return ShuntingYard.buildTree(exprs, operators, binaryOperatorTable); }
 }
 
 AstNode PipeOperand():

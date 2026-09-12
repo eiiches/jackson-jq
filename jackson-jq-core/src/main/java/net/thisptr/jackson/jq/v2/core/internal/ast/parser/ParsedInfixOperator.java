@@ -36,12 +36,8 @@ public final class ParsedInfixOperator {
 		return new ParsedInfixOperator(BinaryOperator.BINDING_PIPE, matcher);
 	}
 
-	int precedence() {
-		return operator.precedence;
-	}
-
-	BinaryOperator.Associativity associativity() {
-		return operator.associativity;
+	BinaryOperator operator() {
+		return operator;
 	}
 
 	AstNode createNode(AstNode lhs, AstNode rhs) {

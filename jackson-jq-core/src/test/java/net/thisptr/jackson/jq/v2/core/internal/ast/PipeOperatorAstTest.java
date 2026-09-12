@@ -6,6 +6,7 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -64,11 +65,42 @@ class PipeOperatorAstTest {
 	}
 
 	@Test
-	void bindingPipeOwnsTheFullyReducedLeftOperand() throws JsonQueryException {
-		BinaryOpAstNode pipe = assertOperator(BinaryOperator.BINDING_PIPE, AstParser.parse("1 + 3 as $a | $a * 2", Versions.JQ_1_6));
+	void bindingPipeBindsMoreTightlyThanBinaryOperatorsBeforeJq18() throws JsonQueryException {
+		BinaryOpAstNode plus = assertOperator(BinaryOperator.PLUS, AstParser.parse("1 + 3 as $a | $a * 2", Versions.JQ_1_7_1));
+		BinaryOpAstNode pipe = assertOperator(BinaryOperator.BINDING_PIPE, plus.rhs);
+		AsBindingAstNode binding = assertInstanceOf(AsBindingAstNode.class, pipe.lhs);
+		assertEquals("3", binding.value().toString());
+		assertOperator(BinaryOperator.TIMES, pipe.rhs);
+	}
+
+	@Test
+	void versionsBeforeJq15UseTheJq15OperatorTable() throws JsonQueryException {
+		BinaryOpAstNode plus = assertOperator(BinaryOperator.PLUS, AstParser.parse("1 + 3 as $a | $a * 2", Version.of(1, 4)));
+		assertOperator(BinaryOperator.BINDING_PIPE, plus.rhs);
+	}
+
+	@Test
+	void bindingPipeOwnsBinaryOperatorsOnTheLeftSinceJq18() throws JsonQueryException {
+		BinaryOpAstNode pipe = assertOperator(BinaryOperator.BINDING_PIPE, AstParser.parse("1 + 3 as $a | $a * 2", Versions.JQ_1_8_0));
 		AsBindingAstNode binding = assertInstanceOf(AsBindingAstNode.class, pipe.lhs);
 		assertOperator(BinaryOperator.PLUS, binding.value());
 		assertOperator(BinaryOperator.TIMES, pipe.rhs);
+	}
+
+	@Test
+	void commaRemainsOutsideTheBindingValueSinceJq18() throws JsonQueryException {
+		BinaryOpAstNode comma = assertOperator(BinaryOperator.COMMA, AstParser.parse("1, 2 as $a | [$a]", Versions.JQ_1_8_0));
+		BinaryOpAstNode pipe = assertOperator(BinaryOperator.BINDING_PIPE, comma.rhs);
+		AsBindingAstNode binding = assertInstanceOf(AsBindingAstNode.class, pipe.lhs);
+		assertEquals("2", binding.value().toString());
+	}
+
+	@Test
+	void bindingPipeOwnsAllOperatorsOnTheRight() throws JsonQueryException {
+		for (Version version : Versions.versions()) {
+			BinaryOpAstNode pipe = assertOperator(BinaryOperator.BINDING_PIPE, AstParser.parse("1 as $a | [$a], [$a + 1]", version));
+			assertOperator(BinaryOperator.COMMA, pipe.rhs);
+		}
 	}
 
 	private static BinaryOpAstNode assertOperator(BinaryOperator operator, AstNode node) {
