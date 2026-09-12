@@ -133,15 +133,36 @@ public class EnvironmentFunctionLoaderTest {
 		assertThat(execute(env, "greet")).extracting(JsonNode::asText).containsExactly("from-jq");
 	}
 
+	/**
+	 * The loader tier resolves exactly like the environment tier: an exact-signature Java function
+	 * beats an exact-signature jq definition. Which language a function is written in is a detail of
+	 * how it was supplied, so it must not decide the winner differently in one tier than in the other.
+	 */
 	@Test
-	public void jqFunctionWinsOverLoadedJavaFunctionWithSameExactSignature() throws Exception {
+	public void loadedJavaFunctionWinsOverLoaderJqFunctionWithSameExactSignature() throws Exception {
 		FunctionSignature key = FunctionSignature.of("greet", 0);
 		JqFunction jqFunction = JqFunction.of("greet", Collections.emptyList(), "\"from-jq\"");
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.setFunctionLoader(functionLoader(Collections.singletonMap(key, constantFunction("from-java")), Collections.singletonMap(key, jqFunction)))
 				.build();
 
-		assertThat(execute(env, "greet")).extracting(JsonNode::asText).containsExactly("from-jq");
+		assertThat(execute(env, "greet")).extracting(JsonNode::asText).containsExactly("from-java");
+	}
+
+	/**
+	 * The other half of that rule, and the half the Java-first ordering must not disturb: exact still
+	 * beats variadic, so a loader jq definition wins over a variadic loader Java function.
+	 */
+	@Test
+	public void exactLoaderJqFunctionWinsOverLoaderJavaVariadicFunction() throws Exception {
+		JqFunction jqFunction = JqFunction.of("greet", Collections.emptyList(), "\"exact-jq\"");
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+				.setFunctionLoader(functionLoader(
+						Collections.singletonMap(FunctionSignature.ofVariadic("greet"), constantFunction("variadic-java")),
+						Collections.singletonMap(FunctionSignature.of("greet", 0), jqFunction)))
+				.build();
+
+		assertThat(execute(env, "greet")).extracting(JsonNode::asText).containsExactly("exact-jq");
 	}
 
 	@Test

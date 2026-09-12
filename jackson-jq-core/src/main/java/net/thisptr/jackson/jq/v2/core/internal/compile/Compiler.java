@@ -335,9 +335,7 @@ public class Compiler {
 				if (factory == null) {
 					throw new JsonQueryException(String.format("Function %s::%s/%d does not exist", call.moduleName(), call.name(), compiledArgs.size()));
 				}
-				Expression<StackFrame, N> fn = factory.bindArguments(env.getJsonProvider(), compiledArgs, env.getJqVersion());
-				Expression<StackFrame, N> result = new ResolvedFunctionCall<>(fn, fn.dependsOnExternalState(), fn.dependsOnInput(), inputFixed, compiledArgs);
-				return restoreFixedInput(result, inputFixed);
+				return restoreFixedInput(bindFunctionCall(env, factory, compiledArgs, inputFixed), inputFixed);
 			}
 
 			return restoreFixedInput(compileFunctionCall(env, context, call.name(), compiledArgs), inputFixed);
@@ -885,6 +883,12 @@ public class Compiler {
 	 * at runtime) global, then a defined/builtin (fixed at compile time) global. Declared is checked before
 	 * environment-defined, jq-library, or Java builtin registries so that a declared signature coinciding
 	 * with a real builtin still requires a binding rather than silently falling back to the builtin.
+	 * <p>
+	 * The defined/builtin step searches the environment's own registries first and the {@code FunctionLoader}'s
+	 * second, and within each of those two tiers applies the same rule: exact-signature Java function, then
+	 * exact-signature jq definition, then variadic Java function. Whether a function is written in Java or in
+	 * jq is a detail of how it was supplied, so it must not decide the winner differently in one tier than in
+	 * the other; keep the two blocks below symmetric.
 	 */
 	private static <N> Expression<StackFrame, N> compileFunctionCall(Environment<N> env, CompileContext context, String fullName, List<Expression<StackFrame, N>> compiledArgs) throws JsonQueryException {
 		int arity = compiledArgs.size();
@@ -913,26 +917,37 @@ public class Compiler {
 		}
 
 		FunctionSignature exact = FunctionSignature.of(fullName, arity);
-		@Var Function factory = env.getFunctions().get(exact);
+
+		Map<FunctionSignature, Function> envFunctions = env.getFunctions();
+		@Var Function factory = envFunctions.get(exact);
 		if (factory == null) {
 			JqFunction jqFunction = env.getJqFunctions().get(exact);
 			if (jqFunction != null)
 				return JqFunctionCompiler.compile(env, context, exact, jqFunction, JqFunctionCompiler.Origin.ENVIRONMENT, compiledArgs);
-			factory = env.getFunctions().get(exact.asVariadic());
+			factory = envFunctions.get(exact.asVariadic());
 		}
+		if (factory != null)
+			return bindFunctionCall(env, factory, compiledArgs, context.isInputFixed());
+
+		Map<FunctionSignature, Function> loadedFunctions = env.getFunctionLoader().getFunctions(env.getJqVersion());
+		factory = loadedFunctions.get(exact);
 		if (factory == null) {
 			JqFunction jqFunction = env.getFunctionLoader().getJqFunctions(env.getJqVersion()).get(exact);
 			if (jqFunction != null)
 				return JqFunctionCompiler.compile(env, context, exact, jqFunction, JqFunctionCompiler.Origin.LOADER, compiledArgs);
-			Map<FunctionSignature, Function> loadedFunctions = env.getFunctionLoader().getFunctions(env.getJqVersion());
-			factory = loadedFunctions.get(exact);
-			if (factory == null)
-				factory = loadedFunctions.get(exact.asVariadic());
+			factory = loadedFunctions.get(exact.asVariadic());
 		}
 		if (factory == null)
 			throw new JsonQueryException(String.format("Function %s/%d does not exist", fullName, arity));
+		return bindFunctionCall(env, factory, compiledArgs, context.isInputFixed());
+	}
+
+	/**
+	 * Binds a resolved Java {@link Function} to the call's already-compiled arguments.
+	 */
+	private static <N> Expression<StackFrame, N> bindFunctionCall(Environment<N> env, Function factory, List<Expression<StackFrame, N>> compiledArgs, boolean inputFixed) {
 		Expression<StackFrame, N> fn = factory.bindArguments(env.getJsonProvider(), compiledArgs, env.getJqVersion());
-		return new ResolvedFunctionCall<>(fn, fn.dependsOnExternalState(), fn.dependsOnInput(), context.isInputFixed(), compiledArgs);
+		return new ResolvedFunctionCall<>(fn, fn.dependsOnExternalState(), fn.dependsOnInput(), inputFixed, compiledArgs);
 	}
 
 	/**
