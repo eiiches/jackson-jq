@@ -5,6 +5,7 @@ jjq_java_library(
     srcs = [
         "ArrayConstruction.java",
         "BreakExpression.java",
+        "Comma.java",
         "Conditional.java",
         "FieldConstruction.java",
         "FixedInputExpression.java",
@@ -24,7 +25,6 @@ jjq_java_library(
         "ThisObject.java",
         "TopLevelExpression.java",
         "TryCatch.java",
-        "Tuple.java",
         "VariableBinding.java",
     ],
     release = 8,

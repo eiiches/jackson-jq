@@ -132,7 +132,7 @@ public class ExpressionCardinalityTest {
 	}
 
 	@Test
-	public void testTuple() {
+	public void testComma() {
 		assertThat(cardinalityOf("1, 2")).isEqualTo(Cardinality.UNKNOWN);
 		assertThat(cardinalityOf("1, empty")).isEqualTo(Cardinality.ONE);
 		assertThat(cardinalityOf("empty, empty")).isEqualTo(Cardinality.ZERO);

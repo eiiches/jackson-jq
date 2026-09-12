@@ -4,8 +4,8 @@ import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
 import net.thisptr.jackson.jq.v2.core.diagnostic.DiagnosticListener;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AsBindingAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.CommaAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.PipeAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.TupleAstNode;
 
 /**
  * Warns about a {@code ,} written as an operand of a {@code |} without parentheses, as in
@@ -53,7 +53,7 @@ public final class PipeParenthesesCheck extends AbstractAstWalker {
 	}
 
 	private void check(AstNode operand) {
-		if (!(operand instanceof TupleAstNode))
+		if (!(operand instanceof CommaAstNode))
 			return;
 		listener.report(Diagnostic.warning(
 				"`,` binds tighter than `|`: write `(" + operand + ")` to make the grouping explicit",

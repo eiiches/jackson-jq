@@ -557,7 +557,7 @@ ParsedPipeComponent PipeComponent():
 		name = IdentifierAsString()
 		{ return ParsedPipeComponent.label(name, locSince(start)); }
 	|
-		expr = TupleExpression()
+		expr = CommaExpression()
 		(
 			<KEYWORD_AS>
 			matcher = Matcher()
@@ -593,24 +593,20 @@ ParsedPipeComponent PipeComponentWithoutComma():
 	)
 }
 
-AstNode TupleExpression():
+AstNode CommaExpression():
 {
-	final Token start = getToken(1);
+	AstNode result;
 	AstNode tmp;
-	final List<AstNode> qs = new ArrayList<AstNode>();
 }
 {
-	tmp = BinaryOperatorExpression()
-	{ qs.add(tmp); }
+	result = BinaryOperatorExpression()
 	(
 		<COMMA>
 		tmp = BinaryOperatorExpression()
-		{ qs.add(tmp); }
+		{ result = new CommaAstNode(SourceLocation.span(result.location(), tmp.location()), result, tmp); }
 	)*
 	{
-		if (qs.size() == 1)
-			return qs.get(0);
-		return new TupleAstNode(locSince(start), qs);
+		return result;
 	}
 }
 

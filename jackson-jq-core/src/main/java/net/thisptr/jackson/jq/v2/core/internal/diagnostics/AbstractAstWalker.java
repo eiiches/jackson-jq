@@ -12,6 +12,7 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.BooleanLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BracketExtractFieldAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BracketFieldAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BreakExpressionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.CommaAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ConditionalAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ForeachExpressionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.FormattingFilterAstNode;
@@ -35,7 +36,6 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.StringLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ThisObjectAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.TryCatchAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.TupleAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ValueMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.VariableAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
@@ -304,9 +304,9 @@ public abstract class AbstractAstWalker implements AstVisitor<Void> {
 	}
 
 	@Override
-	public Void visit(TupleAstNode node) {
-		for (AstNode q : node.qs)
-			walk(q);
+	public Void visit(CommaAstNode node) {
+		walk(node.left());
+		walk(node.right());
 		return null;
 	}
 

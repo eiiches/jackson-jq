@@ -1,8 +1,10 @@
 package net.thisptr.jackson.jq.v2.core.internal.utils;
 
 import java.math.BigDecimal;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,12 +14,12 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BooleanLiteralAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.CommaAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.NullLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.NumericLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ObjectConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ParenAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.StringLiteralAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.TupleAstNode;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
 public class ExpressionUtils {
@@ -70,27 +72,13 @@ public class ExpressionUtils {
 
 			return jsonProvider.createObject(fields);
 		} else if (expr instanceof ArrayConstructionAstNode) {
-			List<JsonNode> result = new ArrayList<>();
-
-			AstNode tuple = ((ArrayConstructionAstNode) expr).q;
-			if (tuple == null)
+			AstNode elements = ((ArrayConstructionAstNode) expr).q;
+			if (elements == null)
 				return jsonProvider.createArray(Collections.emptyList()); // empty
 
-			if (tuple instanceof TupleAstNode) {
-				List<AstNode> values = ((TupleAstNode) tuple).qs;
-				for (AstNode valueExpr : values) {
-					JsonNode value = evaluateLiteralExpression(jsonProvider, valueExpr);
-					if (value == null)
-						return null;
-
-					result.add(value);
-				}
-			} else {
-				JsonNode value = evaluateLiteralExpression(jsonProvider, tuple);
-				if (value == null)
-					return null;
-				result.add(value);
-			}
+			List<JsonNode> result = new ArrayList<>();
+			if (!collectLiteralElements(jsonProvider, elements, result))
+				return null;
 
 			return jsonProvider.createArray(result);
 		} else if (expr instanceof BooleanLiteralAstNode) {
@@ -104,6 +92,37 @@ public class ExpressionUtils {
 		} else {
 			return null;
 		}
+	}
+
+	/**
+	 * Appends the values of a {@code ,}-separated element list to {@code out}, in source order.
+	 * A {@code ,} is a left-nested binary node, so an explicit stack avoids consuming one Java stack
+	 * frame per element. Parentheses are transparent, as they are during normal compilation.
+	 *
+	 * @return false if any element is not a constant, leaving {@code out} in an unspecified state
+	 */
+	private static <JsonNode> boolean collectLiteralElements(JsonProvider<JsonNode> jsonProvider, AstNode expr, List<JsonNode> out) {
+		Deque<AstNode> pending = new ArrayDeque<>();
+		pending.push(expr);
+		while (!pending.isEmpty()) {
+			AstNode element = pending.pop();
+			if (element instanceof CommaAstNode) {
+				CommaAstNode comma = (CommaAstNode) element;
+				pending.push(comma.right());
+				pending.push(comma.left());
+				continue;
+			}
+			if (element instanceof ParenAstNode) {
+				pending.push(((ParenAstNode) element).value());
+				continue;
+			}
+
+			JsonNode value = evaluateLiteralExpression(jsonProvider, element);
+			if (value == null)
+				return false;
+			out.add(value);
+		}
+		return true;
 	}
 
 }

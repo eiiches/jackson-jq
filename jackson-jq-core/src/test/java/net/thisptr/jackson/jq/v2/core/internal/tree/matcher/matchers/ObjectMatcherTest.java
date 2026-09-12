@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.core.internal.tree.Tuple;
+import net.thisptr.jackson.jq.v2.core.internal.tree.Comma;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.ValueLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
@@ -34,7 +34,7 @@ public class ObjectMatcherTest {
 		JsonNode in = new ObjectMapper().readTree("{\"outer\":{\"a\": 1, \"b\": 2}, \"c\": 3}");
 		PatternMatcher<JsonNode> matcher = new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
 				new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("outer")), new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
-						new ObjectMatcher.FieldMatcher<>(false, null, new Tuple<>(Arrays.<Expression<StackFrame, JsonNode>>asList(new ValueLiteral<>(JSON_PROVIDER.createString("a")), new ValueLiteral<>(JSON_PROVIDER.createString("b")))), new ValueMatcher<>("x"))), Versions.JQ_1_8_2)),
+						new ObjectMatcher.FieldMatcher<>(false, null, new Comma<>(Arrays.<Expression<StackFrame, JsonNode>>asList(new ValueLiteral<>(JSON_PROVIDER.createString("a")), new ValueLiteral<>(JSON_PROVIDER.createString("b")))), new ValueMatcher<>("x"))), Versions.JQ_1_8_2)),
 				new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("c")), new ValueMatcher<>("y"))), Versions.JQ_1_8_2)
 				.resolveSlots(slots("x", 3, "y", 5));
 
@@ -59,7 +59,7 @@ public class ObjectMatcherTest {
 		PatternMatcher<JsonNode> matcher = new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
 				new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("outer")), new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
 						new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("a")), new ValueMatcher<>("x"))), Versions.JQ_1_8_2)),
-				new ObjectMatcher.FieldMatcher<>(false, null, new Tuple<>(Arrays.<Expression<StackFrame, JsonNode>>asList(new ValueLiteral<>(JSON_PROVIDER.createString("b")), new ValueLiteral<>(JSON_PROVIDER.createString("c")))), new ValueMatcher<>("y"))), Versions.JQ_1_8_2)
+				new ObjectMatcher.FieldMatcher<>(false, null, new Comma<>(Arrays.<Expression<StackFrame, JsonNode>>asList(new ValueLiteral<>(JSON_PROVIDER.createString("b")), new ValueLiteral<>(JSON_PROVIDER.createString("c")))), new ValueMatcher<>("y"))), Versions.JQ_1_8_2)
 				.resolveSlots(slots("x", 7, "y", 11));
 
 		List<List<Pair<Integer, JsonNode>>> matches = new ArrayList<>();

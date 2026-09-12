@@ -81,7 +81,7 @@ public interface AstVisitor<R> {
 
 	R visit(TryCatchAstNode.Question node);
 
-	R visit(TupleAstNode node);
+	R visit(CommaAstNode node);
 
 	R visit(ValueMatcherAstNode node);
 

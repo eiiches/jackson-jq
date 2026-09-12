@@ -151,13 +151,27 @@ public class DebugModuleTest {
 	@Test
 	public void dumpExprRecursesIntoContainers() throws JsonQueryException {
 		JsonNode result = dumpExpr("(1, .)");
-		JsonNode container = result.get("fields").get("qs");
+		JsonNode container = result.get("fields").get("operands");
 		assertThat(container.get("object").asText()).startsWith(container.get("class").asText() + "@");
 		JsonNode expressions = container.get("elements");
 		assertThat(expressions.isArray()).isTrue();
 		assertThat(expressions).hasSize(2);
 		assertThat(expressions.get(0).get("class").asText()).endsWith(".ValueLiteral");
 		assertThat(expressions.get(1).get("class").asText()).endsWith(".ThisObject");
+	}
+
+	// `,` is a binary AST node, but a chain of them compiles to a single n-ary Comma so that
+	// evaluating it costs one stack frame rather than one per comma. Parentheses are transparent.
+	// The operands read `.` so that the chain is not folded away as a constant argument first.
+	@Test
+	public void dumpExprFlattensACommaChain() throws JsonQueryException {
+		assertThat(commaOperandsOf(dumpExpr("(.a, .b, .c, .d)"))).hasSize(4);
+		assertThat(commaOperandsOf(dumpExpr("(.a, ((.b, .c)), .d)"))).hasSize(4);
+	}
+
+	private static JsonNode commaOperandsOf(JsonNode dumped) {
+		assertThat(dumped.get("class").asText()).endsWith(".Comma");
+		return dumped.get("fields").get("operands").get("elements");
 	}
 
 	@Test

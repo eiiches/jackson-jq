@@ -56,8 +56,8 @@ class SourceLocationTest {
 	@Test
 	void aCommaBindsTighterThanAPipe() throws JsonQueryException {
 		PipeAstNode pipe = assertInstanceOf(PipeAstNode.class, parse("a, b | ."));
-		TupleAstNode tuple = assertInstanceOf(TupleAstNode.class, pipe.left());
-		assertThat(tuple.location()).isEqualTo(SourceLocation.of(1, 1, 1, 4));
+		CommaAstNode comma = assertInstanceOf(CommaAstNode.class, pipe.left());
+		assertThat(comma.location()).isEqualTo(SourceLocation.of(1, 1, 1, 4));
 		assertThat(pipe.right().location()).isEqualTo(SourceLocation.of(1, 8, 1, 8));
 	}
 

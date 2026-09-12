@@ -1,8 +1,10 @@
 package net.thisptr.jackson.jq.v2.core.internal.compile;
 
 import java.math.BigDecimal;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +30,7 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.BooleanLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BracketExtractFieldAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BracketFieldAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BreakExpressionAstNode;
+import net.thisptr.jackson.jq.v2.core.internal.ast.CommaAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ConditionalAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ForeachExpressionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.FormattingFilterAstNode;
@@ -52,7 +55,6 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.StringLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ThisObjectAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.TryCatchAstNode;
-import net.thisptr.jackson.jq.v2.core.internal.ast.TupleAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ValueMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.VariableAccessAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
@@ -76,6 +78,7 @@ import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.BreakExpression;
+import net.thisptr.jackson.jq.v2.core.internal.tree.Comma;
 import net.thisptr.jackson.jq.v2.core.internal.tree.Conditional;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FieldConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FixedInputExpression;
@@ -95,7 +98,6 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.StringKeyFieldConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ThisObject;
 import net.thisptr.jackson.jq.v2.core.internal.tree.TopLevelExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.TryCatch;
-import net.thisptr.jackson.jq.v2.core.internal.tree.Tuple;
 import net.thisptr.jackson.jq.v2.core.internal.tree.VariableBinding;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.AlternativeOperatorExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.BooleanAndExpression;
@@ -544,13 +546,38 @@ public class Compiler {
 			return new TryCatch<>(env.getJsonProvider(), expression, env.getJqVersion());
 		}
 
+		/**
+		 * A {@code ,}. The AST mirrors the syntax, so {@code a, b, c} is a left-nested chain of binary
+		 * nodes, but the nesting means nothing at evaluation time -- every operand sees the same input
+		 * and the same path. The whole chain is flattened into one {@link Comma} so that evaluating it
+		 * is a loop rather than a stack frame per comma. Parentheses are transparent here, just as they
+		 * are when compiled normally.
+		 */
 		@Override
-		public Expression<StackFrame, N> visit(TupleAstNode tuple) throws JsonQueryException {
-			List<Expression<StackFrame, N>> newQs = new ArrayList<>();
-			for (AstNode q : tuple.qs) {
-				newQs.add(compileNonNull(env, context, q));
+		public Expression<StackFrame, N> visit(CommaAstNode comma) throws JsonQueryException {
+			List<Expression<StackFrame, N>> operands = new ArrayList<>();
+			compileCommaOperands(comma, operands);
+			return new Comma<>(operands);
+		}
+
+		// Walked with an explicit stack rather than by recursion: the chain is as long as the query has
+		// commas, and compiling `[1, 2, ..., n]` must not cost n frames either.
+		private void compileCommaOperands(CommaAstNode comma, List<Expression<StackFrame, N>> operands) throws JsonQueryException {
+			Deque<AstNode> pending = new ArrayDeque<>();
+			pending.push(comma);
+			while (!pending.isEmpty()) {
+				AstNode operand = pending.pop();
+				if (operand instanceof CommaAstNode) {
+					pending.push(((CommaAstNode) operand).right());
+					pending.push(((CommaAstNode) operand).left());
+					continue;
+				}
+				if (operand instanceof ParenAstNode) {
+					pending.push(((ParenAstNode) operand).value());
+					continue;
+				}
+				operands.add(compileNonNull(env, context, operand));
 			}
-			return new Tuple<>(newQs);
 		}
 
 		@Override
