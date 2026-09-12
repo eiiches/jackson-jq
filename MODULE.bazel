@@ -15,6 +15,7 @@ bazel_dep(name = "rules_java", version = "9.9.0")
 bazel_dep(name = "rules_jvm_external", version = "7.1")
 bazel_dep(name = "contrib_rules_jvm", version = "0.34.0")
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.4")
+bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "rules_jq", version = "0.0.0")
 local_path_override(
     module_name = "rules_jq",
@@ -367,6 +368,10 @@ register_toolchains(
 )
 
 register_toolchains("//build-tools/bazel:toolchain_jdk_26_definition")
+
+jep540_sources_repository = use_repo_rule("//third-party/jep540:sources.bzl", "jep540_sources_repository")
+
+jep540_sources_repository(name = "jep540_sources")
 
 # Real jq binaries for the conformance tests. The rules package owns the release
 # catalog so tests do not depend on whichever jq executables happen to be on PATH.

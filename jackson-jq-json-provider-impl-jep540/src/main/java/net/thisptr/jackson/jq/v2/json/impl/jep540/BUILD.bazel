@@ -1,0 +1,12 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "jep540",
+    srcs = ["Jep540JsonProviderImpl.java"],
+    release = 26,
+    visibility = ["//jackson-jq-json-provider-impl-jep540:__subpackages__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "@jep540_sources//:jdk_incubator_json",
+    ],
+)

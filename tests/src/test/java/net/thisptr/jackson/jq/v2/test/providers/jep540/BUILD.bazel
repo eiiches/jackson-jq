@@ -1,0 +1,16 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "jep540",
+    testonly = True,
+    srcs = ["Jep540JsonQueryTest.java"],
+    release = 26,
+    visibility = ["//tests:__pkg__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-jep540",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test",
+        "@jep540_sources//:jdk_incubator_json",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+    ],
+)

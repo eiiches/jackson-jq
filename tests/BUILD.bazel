@@ -52,3 +52,12 @@ test_case_suite(
     test_library = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/providers/jakarta",
     visibility = ["//visibility:private"],
 )
+
+test_case_suite(
+    name = "jep540-tests",
+    jvm_flags = ["--enable-preview"],
+    test_cases = TEST_CASES,
+    test_class = "net.thisptr.jackson.jq.v2.test.providers.jep540.Jep540JsonQueryTest",
+    test_library = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/providers/jep540",
+    visibility = ["//visibility:private"],
+)

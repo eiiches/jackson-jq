@@ -28,6 +28,10 @@ publish_all(
         "//jackson-jq-json-provider-impl-jackson2:jackson-jq-json-provider-impl-jackson2.publish",
         "//jackson-jq-json-provider-impl-jackson3:jackson-jq-json-provider-impl-jackson3.publish",
         "//jackson-jq-json-provider-impl-jakarta:jackson-jq-json-provider-impl-jakarta.publish",
+        # Experimental: builds and tests, but is not published. It compiles against an
+        # unstable jdk.incubator.json pinned to an OpenJDK commit, and only runs on a JDK 26
+        # started with --add-modules jdk.incubator.json.
+        # "//jackson-jq-json-provider-impl-jep540:jackson-jq-json-provider-impl-jep540.publish",
         "//jackson-jq-regex-impl-joni:jackson-jq-regex-impl-joni.publish",
         "//jackson-jq-spi:jackson-jq-spi.publish",
     ],
