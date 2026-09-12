@@ -22,6 +22,7 @@ import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
+import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 
@@ -131,13 +132,17 @@ public class FileSystemModuleLoaderTest {
 			JsonQuery<JsonNode> expr = env.compile("import \"module_not_exist\" as a; a::one");
 			expr.apply(NullNode.getInstance(), value -> {
 			});
-		}).hasMessageContaining("module not found");
+		}).isInstanceOf(ModuleNotFoundException.class)
+				.hasMessage("module not found: module_not_exist")
+				.extracting(e -> ((ModuleNotFoundException) e).getPath()).isEqualTo("module_not_exist");
 
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"module_not_exist\" as $a; $a::a");
 			expr.apply(NullNode.getInstance(), value -> {
 			});
-		}).hasMessageContaining("module not found");
+		}).isInstanceOf(ModuleNotFoundException.class)
+				.hasMessage("module not found: module_not_exist")
+				.extracting(e -> ((ModuleNotFoundException) e).getPath()).isEqualTo("module_not_exist");
 	}
 
 	@Test

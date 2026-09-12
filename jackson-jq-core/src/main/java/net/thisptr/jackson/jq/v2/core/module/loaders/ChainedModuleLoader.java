@@ -3,10 +3,19 @@ package net.thisptr.jackson.jq.v2.core.module.loaders;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
+import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
+/**
+ * Asks each loader in turn, and answers with the first one that resolves the path.
+ * <p>
+ * Only {@link ModuleNotFoundException} moves the chain along. A loader that did resolve the path
+ * and then failed -- a module file with a syntax error, say -- throws a plain
+ * {@link JsonQueryException}, and that aborts the chain rather than being masked by a later
+ * loader's answer or by a misleading "module not found".
+ */
 public class ChainedModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	private final ModuleLoader<JsonNode>[] loaders;
 
@@ -16,22 +25,26 @@ public class ChainedModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	}
 
 	@Override
-	public @Nullable Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
+	public Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		for (ModuleLoader<JsonNode> loader : loaders) {
-			Module module = loader.loadModule(caller, path, metadata);
-			if (module != null)
-				return module;
+			try {
+				return loader.loadModule(caller, path, metadata);
+			} catch (ModuleNotFoundException e) {
+				/* this loader doesn't have it; try the next one */
+			}
 		}
-		return null;
+		throw new ModuleNotFoundException(path);
 	}
 
 	@Override
-	public Maybe<JsonNode> loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
+	public JsonNode loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		for (ModuleLoader<JsonNode> loader : loaders) {
-			Maybe<JsonNode> data = loader.loadData(caller, path, metadata);
-			if (data.isPresent())
-				return data;
+			try {
+				return loader.loadData(caller, path, metadata);
+			} catch (ModuleNotFoundException e) {
+				/* this loader doesn't have it; try the next one */
+			}
 		}
-		return Maybe.absent();
+		throw new ModuleNotFoundException(path);
 	}
 }

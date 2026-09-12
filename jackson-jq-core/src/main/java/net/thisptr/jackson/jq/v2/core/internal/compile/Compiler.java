@@ -353,18 +353,12 @@ public class Compiler {
 			for (TopLevelAstNode.ImportStatement imp : top.imports()) {
 				Maybe<N> metadata = evaluateMetadata(env.getJsonProvider(), imp);
 				if (imp.dollarImport) {
-					Maybe<N> data = env.getModuleLoader().loadData(currentModule, imp.path, metadata);
-					if (data.isAbsent()) {
-						throw new JsonQueryException(String.format("module not found: %s", imp.path));
-					}
+					N data = env.getModuleLoader().loadData(currentModule, imp.path, metadata);
 					if (imp.name != null) {
-						context.addImportedVariableDefault(imp.name, data.get());
+						context.addImportedVariableDefault(imp.name, data);
 					}
 				} else {
 					Module mod = env.getModuleLoader().loadModule(currentModule, imp.path, metadata);
-					if (mod == null) {
-						throw new JsonQueryException(String.format("module not found: %s", imp.path));
-					}
 					if (imp.name != null) {
 						context.addImportedModule(imp.name, mod);
 					}

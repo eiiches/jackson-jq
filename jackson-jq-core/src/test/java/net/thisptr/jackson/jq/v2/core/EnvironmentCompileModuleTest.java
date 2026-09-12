@@ -13,6 +13,7 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
+import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
@@ -52,10 +53,10 @@ public class EnvironmentCompileModuleTest {
 		}
 
 		@Override
-		public @Nullable Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
+		public Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 			String source = sources.get(path);
 			if (source == null)
-				return null;
+				throw new ModuleNotFoundException(path);
 			Environment<JsonNode> moduleEnv = new EnvironmentBuilder<>(jsonProvider, jqVersion)
 					.setModuleLoader(this)
 					.build();
@@ -63,9 +64,11 @@ public class EnvironmentCompileModuleTest {
 		}
 
 		@Override
-		public Maybe<JsonNode> loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) {
+		public JsonNode loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) {
 			JsonNode data = datas.get(path);
-			return data == null ? Maybe.absent() : Maybe.of(data);
+			if (data == null)
+				throw new ModuleNotFoundException(path);
+			return data;
 		}
 	}
 

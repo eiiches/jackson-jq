@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.module;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
+import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
@@ -16,12 +17,12 @@ public class NullModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	}
 
 	@Override
-	public @Nullable Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) {
-		return null;
+	public Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) {
+		throw new ModuleNotFoundException(path);
 	}
 
 	@Override
-	public Maybe<JsonNode> loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) {
-		return Maybe.absent();
+	public JsonNode loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) {
+		throw new ModuleNotFoundException(path);
 	}
 }

@@ -30,6 +30,7 @@ import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModuleMeta;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
+import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
@@ -241,10 +242,10 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	}
 
 	@Override
-	public @Nullable Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
+	public Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
 		if (paths == null)
-			return null;
+			throw new ModuleNotFoundException(path);
 		List<Path> searchPaths = paths._1;
 		String relativePath = paths._2;
 
@@ -264,14 +265,14 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 			}
 		}
 
-		return null;
+		throw new ModuleNotFoundException(path);
 	}
 
 	@Override
-	public Maybe<JsonNode> loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
+	public JsonNode loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
 		if (paths == null)
-			return Maybe.absent();
+			throw new ModuleNotFoundException(path);
 		List<Path> searchPaths = paths._1;
 		String relativePath = paths._2;
 
@@ -282,14 +283,14 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 					return loadDataActual(searchPath, relativePath);
 				});
 				if (data.isPresent())
-					return data;
+					return data.get();
 			} catch (CompletionException e) {
 				Throwable cause = e.getCause();
 				throw new JsonQueryException(String.format("failed to load data %s: %s", path, cause == null ? e.getMessage() : cause.getMessage()), e);
 			}
 		}
 
-		return Maybe.absent();
+		throw new ModuleNotFoundException(path);
 	}
 
 	private Maybe<JsonNode> loadDataActual(Path searchPath, String path) throws IOException {
