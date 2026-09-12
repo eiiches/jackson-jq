@@ -14,6 +14,7 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -305,7 +306,7 @@ final class JqFunctionCompiler {
 		if (paramName.kind() == FunctionParameter.Kind.VALUE) {
 			int slot = baseSlot + valueParamIndex;
 			paramExpression.apply(callerFrame, in, path, (value, valuePath) -> {
-				functionFrame.set(slot, value);
+				functionFrame.set(slot, StackFrameValues.toSlot(value));
 				bindAndApply(callerFrame, functionFrame, baseSlot, paramNames, args, valueParamIndex + 1, in, path, output, bodyTask);
 			});
 		} else {

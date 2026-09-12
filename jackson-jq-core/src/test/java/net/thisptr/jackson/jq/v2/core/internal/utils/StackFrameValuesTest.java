@@ -39,6 +39,31 @@ public class StackFrameValuesTest {
 	}
 
 	@Test
+	void roundTripsAPlainValueThroughASlot() {
+		PathAndValue<String> result = StackFrameValues.asPathAndValue(StackFrameValues.toSlot("value"));
+
+		assertNotNull(result);
+		assertSame(UntrackedPath.getInstance(), result.getPath());
+		assertSame("value", result.getValue());
+	}
+
+	// A provider representing JSON null as Java null binds exactly this. It must not be stored as a
+	// bare null, which a slot reads as an unset variable. NullAway cannot express such a value, which
+	// is the whole reason the slot encoding exists.
+	@SuppressWarnings("NullAway")
+	@Test
+	void roundTripsAJavaNullValueThroughASlotAsAValue() {
+		Object slot = StackFrameValues.toSlot((String) null);
+		assertNotNull(slot);
+
+		PathAndValue<String> result = StackFrameValues.asPathAndValue(slot);
+
+		assertNotNull(result);
+		assertSame(UntrackedPath.getInstance(), result.getPath());
+		assertNull(result.getValue());
+	}
+
+	@Test
 	void returnsNullForFunctionRawValue() {
 		Function factory = new Function() {
 			@Override

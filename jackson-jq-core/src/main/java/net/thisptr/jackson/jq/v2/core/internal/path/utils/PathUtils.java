@@ -6,6 +6,7 @@ import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.RootPath;
@@ -37,10 +38,10 @@ public class PathUtils {
 	 * @throws JsonQueryException if the member is missing
 	 */
 	public static <JsonNode> JsonNode getSliceBound(JsonProvider<JsonNode> jsonProvider, JsonNode sliceObj, String name) throws JsonQueryException {
-		JsonNode value = jsonProvider.getObjectMember(sliceObj, name);
-		if (value == null)
+		Maybe<JsonNode> value = jsonProvider.getObjectMember(sliceObj, name);
+		if (value.isAbsent())
 			throw new JsonQueryException("Start and end indices of an array slice must be numbers");
-		return value;
+		return value.get();
 	}
 
 	public static <JsonNode> Path<JsonNode> toPath(JsonProvider<JsonNode> jsonProvider, JsonNode pathObj) throws JsonQueryException {

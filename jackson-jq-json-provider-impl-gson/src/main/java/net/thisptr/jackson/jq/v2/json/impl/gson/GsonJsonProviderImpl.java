@@ -28,6 +28,7 @@ import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.NumberType;
 
 public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
@@ -370,10 +371,21 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 	}
 
 	@Override
-	public @Nullable JsonElement getObjectMember(JsonElement node, String name) {
+	public Maybe<JsonElement> getObjectMember(JsonElement node, String name) {
 		if (!node.isJsonObject())
 			throw new IllegalArgumentException("Expected an object node");
-		return node.getAsJsonObject().get(name);
+		JsonElement value = node.getAsJsonObject().get(name);
+		if (value == null)
+			return Maybe.absent();
+		return Maybe.of(value);
+	}
+
+	@Override
+	public JsonElement getObjectMemberOrDefault(JsonElement node, String name, JsonElement defaultValue) {
+		if (!node.isJsonObject())
+			throw new IllegalArgumentException("Expected an object node");
+		JsonElement value = node.getAsJsonObject().get(name);
+		return value != null ? value : defaultValue;
 	}
 
 	@Override
@@ -495,9 +507,11 @@ public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
 		}
 
 		@Override
-		public @Nullable JsonElement next() {
+		public Maybe<JsonElement> next() {
 			try {
-				return hasNext() ? parser.next() : null;
+				if (!hasNext())
+					return Maybe.absent();
+				return Maybe.of(parser.next());
 			} catch (JsonParseException e) {
 				throw new JsonException(e);
 			}

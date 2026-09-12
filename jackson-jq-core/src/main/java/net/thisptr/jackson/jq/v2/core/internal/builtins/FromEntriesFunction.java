@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -40,21 +41,21 @@ public class FromEntriesFunction implements Function {
 				if (!jsonProvider.isObject(entry))
 					throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, entry, jsonProvider.createString("key")));
 
-				@Var JsonNode key = jsonProvider.getObjectMember(entry, "key");
-				if (key == null)
+				@Var Maybe<JsonNode> key = jsonProvider.getObjectMember(entry, "key");
+				if (key.isAbsent())
 					key = jsonProvider.getObjectMember(entry, "Key");
-				if (key == null)
+				if (key.isAbsent())
 					key = jsonProvider.getObjectMember(entry, "name");
-				if (key == null)
+				if (key.isAbsent())
 					key = jsonProvider.getObjectMember(entry, "Name");
-				if (key == null || !jsonProvider.isString(key))
-					throw new JsonQueryTypeException("Cannot use %s as object key", ExceptionMessages.describe(jsonProvider, version, key == null ? jsonProvider.createNull() : key));
+				if (key.isAbsent() || !jsonProvider.isString(key.get()))
+					throw new JsonQueryTypeException("Cannot use %s as object key", ExceptionMessages.describe(jsonProvider, version, key.orElse(jsonProvider.createNull())));
 
-				@Var JsonNode value = jsonProvider.getObjectMember(entry, "value");
-				if (value == null)
+				@Var Maybe<JsonNode> value = jsonProvider.getObjectMember(entry, "value");
+				if (value.isAbsent())
 					value = jsonProvider.getObjectMember(entry, "Value");
 
-				result.put(jsonProvider.getString(key), value == null ? jsonProvider.createNull() : value);
+				result.put(jsonProvider.getString(key.get()), value.orElse(jsonProvider.createNull()));
 			}
 
 			output.emit(jsonProvider.createObject(result), UntrackedPath.getInstance());

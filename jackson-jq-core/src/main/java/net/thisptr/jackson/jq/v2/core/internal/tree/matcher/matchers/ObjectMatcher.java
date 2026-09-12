@@ -96,13 +96,14 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			if (!jsonProvider.isObject(in) && !jsonProvider.isNull(in))
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
 
+			JsonNode nullNode = jsonProvider.createNull();
 			JsonNode value = jsonProvider.isObject(in)
-					? jsonProvider.getObjectMember(in, jsonProvider.getString(key))
-					: null;
+					? jsonProvider.getObjectMemberOrDefault(in, jsonProvider.getString(key), nullNode)
+					: nullNode;
 
 			if (fmatcher.dollar)
-				accumulate.addLast(new Match<>(fmatcher.slot, value != null ? value : jsonProvider.createNull()));
-			fmatcher.matcher().match(frame, value != null ? value : jsonProvider.createNull(), (match) -> {
+				accumulate.addLast(new Match<>(fmatcher.slot, value));
+			fmatcher.matcher().match(frame, value, (match) -> {
 				recursive(frame, in, out, accumulate, index + 1);
 			}, accumulate);
 			if (fmatcher.dollar)
@@ -123,14 +124,15 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			if (!jsonProvider.isObject(in) && !jsonProvider.isNull(in))
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
 
+			JsonNode nullNode = jsonProvider.createNull();
 			JsonNode value = jsonProvider.isObject(in)
-					? jsonProvider.getObjectMember(in, jsonProvider.getString(key))
-					: null;
+					? jsonProvider.getObjectMemberOrDefault(in, jsonProvider.getString(key), nullNode)
+					: nullNode;
 			Path<JsonNode> valuepath = inpath.appendKey(jsonProvider.getString(key));
 
 			if (fmatcher.dollar)
-				accumulate.addLast(new MatchWithPath<>(fmatcher.slot, value != null ? value : jsonProvider.createNull(), valuepath));
-			fmatcher.matcher().matchWithPath(frame, value != null ? value : jsonProvider.createNull(), valuepath, (match) -> {
+				accumulate.addLast(new MatchWithPath<>(fmatcher.slot, value, valuepath));
+			fmatcher.matcher().matchWithPath(frame, value, valuepath, (match) -> {
 				recursiveWithPath(frame, in, inpath, output, accumulate, index + 1);
 			}, accumulate);
 			if (fmatcher.dollar)

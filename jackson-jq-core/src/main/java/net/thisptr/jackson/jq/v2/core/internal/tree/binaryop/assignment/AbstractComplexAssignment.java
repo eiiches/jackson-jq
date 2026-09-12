@@ -59,7 +59,7 @@ public abstract class AbstractComplexAssignment<JsonNode> extends AbstractBinary
 			});
 			@Var JsonNode out = in;
 			for (Path<JsonNode> lpath : lpaths)
-				out = PathOperations.mutate(jsonProvider, lpath, out, (lval) -> eval(lval == null ? jsonProvider.createNull() : lval, rval), version);
+				out = PathOperations.mutate(jsonProvider, lpath, out, (lval) -> eval(lval, rval), version);
 			output.emit(out, UntrackedPath.getInstance());
 		});
 	}

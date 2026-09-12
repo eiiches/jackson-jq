@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -51,7 +52,7 @@ public class EnvironmentCompileModuleTest {
 		}
 
 		@Override
-		public @Nullable Module loadModule(@Nullable Module caller, String path, @Nullable JsonNode metadata) throws JsonQueryException {
+		public @Nullable Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 			String source = sources.get(path);
 			if (source == null)
 				return null;
@@ -62,8 +63,9 @@ public class EnvironmentCompileModuleTest {
 		}
 
 		@Override
-		public @Nullable JsonNode loadData(@Nullable Module caller, String path, @Nullable JsonNode metadata) {
-			return datas.get(path);
+		public Maybe<JsonNode> loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) {
+			JsonNode data = datas.get(path);
+			return data == null ? Maybe.absent() : Maybe.of(data);
 		}
 	}
 

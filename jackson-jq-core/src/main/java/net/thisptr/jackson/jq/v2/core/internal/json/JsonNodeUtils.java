@@ -14,7 +14,7 @@ public class JsonNodeUtils {
 	}
 
 	public static <JsonNode> boolean asBoolean(JsonProvider<JsonNode> jsonProvider, JsonNode n) {
-		if (n == null || jsonProvider.isNull(n))
+		if (jsonProvider.isNull(n))
 			return false;
 		if (jsonProvider.isBoolean(n))
 			return jsonProvider.getBoolean(n);

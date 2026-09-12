@@ -8,6 +8,7 @@ jjq_java_library(
         "JsonNodeType.java",
         "JsonParser.java",
         "JsonProvider.java",
+        "Maybe.java",
         "NumberType.java",
     ],
     release = 8,

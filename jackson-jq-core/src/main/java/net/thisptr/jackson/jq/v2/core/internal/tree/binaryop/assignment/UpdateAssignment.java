@@ -59,7 +59,7 @@ public class UpdateAssignment<JsonNode> extends AbstractBinaryOperatorExpression
 
 			out[0] = PathOperations.mutate(jsonProvider, lpath, out[0], (lval_) -> {
 				List<JsonNode> rvals = new ArrayList<>();
-				rhs.apply(frame, lval_ == null ? jsonProvider.createNull() : lval_, UntrackedPath.getInstance(), (v, opath) -> rvals.add(v));
+				rhs.apply(frame, lval_, UntrackedPath.getInstance(), (v, opath) -> rvals.add(v));
 				if (rvals.isEmpty())
 					throw new JsonQueryUndefinedBehaviorException("`|= empty` is undefined. See https://github.com/stedolan/jq/issues/897");
 				if (version.compareTo(Versions.JQ_1_6) >= 0) {

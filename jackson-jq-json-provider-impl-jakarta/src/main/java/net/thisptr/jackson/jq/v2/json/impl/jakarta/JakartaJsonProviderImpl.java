@@ -25,6 +25,7 @@ import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.NumberType;
 
 /**
@@ -370,10 +371,21 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	@Override
-	public @Nullable JsonValue getObjectMember(JsonValue node, String name) {
+	public Maybe<JsonValue> getObjectMember(JsonValue node, String name) {
 		if (!(node instanceof JsonObject))
 			throw new IllegalArgumentException("Expected an object node");
-		return ((JsonObject) node).get(name);
+		JsonValue value = ((JsonObject) node).get(name);
+		if (value == null)
+			return Maybe.absent();
+		return Maybe.of(value);
+	}
+
+	@Override
+	public JsonValue getObjectMemberOrDefault(JsonValue node, String name, JsonValue defaultValue) {
+		if (!(node instanceof JsonObject))
+			throw new IllegalArgumentException("Expected an object node");
+		JsonValue value = ((JsonObject) node).get(name);
+		return value != null ? value : defaultValue;
 	}
 
 	@Override
@@ -463,19 +475,19 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 		}
 
 		@Override
-		public @Nullable JsonValue next() {
+		public Maybe<JsonValue> next() {
 			try {
 				// Parsson reports hasNext() == true on a fresh parser without reading the input, so end
 				// of input has to be detected here rather than by asking the parser.
 				if (!skipWhitespace())
-					return null;
+					return Maybe.absent();
 				try (jakarta.json.stream.JsonParser parser = delegate.createParser(new Window())) {
 					parser.next();
 					JsonValue value = parser.getValue();
 					// The offset counts the characters of this one value, which came out of buf and so
 					// always fits in an int.
 					start += (int) parser.getLocation().getStreamOffset();
-					return value;
+					return Maybe.of(value);
 				}
 			} catch (IOException | jakarta.json.JsonException e) {
 				throw new JsonException(e);

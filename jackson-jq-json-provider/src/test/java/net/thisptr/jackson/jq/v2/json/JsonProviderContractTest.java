@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Contract test for {@link JsonProvider} implementations.
- * Each provider implementation should extend this class and implement {@link #getProvider()}.
+ * Each provider implementation should implement this interface and implement {@link #getProvider()}.
  *
  * @param <T> The JSON node type used by the provider
  */
@@ -587,24 +587,30 @@ public interface JsonProviderContractTest<T> {
 		map.put("nul", getProvider().createNull());
 		T obj = getProvider().createObject(map);
 
+		T fallback = getProvider().createString("fallback");
+
 		// Present non-null field
 		assertThat(getProvider().hasObjectMember(obj, "str")).isTrue();
-		T strVal = getProvider().getObjectMember(obj, "str");
-		assertThat(strVal).isNotNull();
-		assertThat(getProvider().getString(Objects.requireNonNull(strVal))).isEqualTo("hello");
-		assertThat(getProvider().getObjectMemberOrThrow(obj, "str")).isNotNull();
+		Maybe<T> strVal = getProvider().getObjectMember(obj, "str");
+		assertThat(strVal.isPresent()).isTrue();
+		assertThat(getProvider().getString(strVal.get())).isEqualTo("hello");
+		assertThat(getProvider().getString(getProvider().getObjectMemberOrThrow(obj, "str"))).isEqualTo("hello");
+		assertThat(getProvider().getString(getProvider().getObjectMemberOrDefault(obj, "str", fallback))).isEqualTo("hello");
 
-		// Present explicit JSON null field
+		// Present explicit JSON null field. It reads as present, never as absent -- the distinction a
+		// provider representing JSON null as Java null would otherwise lose.
 		assertThat(getProvider().hasObjectMember(obj, "nul")).isTrue();
-		T nullVal = getProvider().getObjectMember(obj, "nul");
-		assertThat(nullVal).isNotNull();
-		assertThat(getProvider().getNodeType(Objects.requireNonNull(nullVal))).isEqualTo(JsonNodeType.NULL);
-		assertThat(getProvider().getObjectMemberOrThrow(obj, "nul")).isNotNull();
+		Maybe<T> nullVal = getProvider().getObjectMember(obj, "nul");
+		assertThat(nullVal.isPresent()).isTrue();
+		assertThat(getProvider().getNodeType(nullVal.get())).isEqualTo(JsonNodeType.NULL);
+		assertThat(getProvider().getNodeType(getProvider().getObjectMemberOrThrow(obj, "nul"))).isEqualTo(JsonNodeType.NULL);
+		assertThat(getProvider().getNodeType(getProvider().getObjectMemberOrDefault(obj, "nul", fallback))).isEqualTo(JsonNodeType.NULL);
 
 		// Absent field
 		assertThat(getProvider().hasObjectMember(obj, "missing")).isFalse();
-		assertThat(getProvider().getObjectMember(obj, "missing")).isNull();
+		assertThat(getProvider().getObjectMember(obj, "missing").isAbsent()).isTrue();
 		assertThatThrownBy(() -> getProvider().getObjectMemberOrThrow(obj, "missing")).isInstanceOf(NoSuchElementException.class);
+		assertThat(getProvider().getObjectMemberOrDefault(obj, "missing", fallback)).isSameAs(fallback);
 	}
 
 	@Test
@@ -631,6 +637,20 @@ public interface JsonProviderContractTest<T> {
 
 		for (T node : nonObjects)
 			assertThatThrownBy(() -> getProvider().hasObjectMember(node, "foo")).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	default void testGetObjectMemberOrDefaultRejectsNonObjects() {
+		List<T> nonObjects = Arrays.asList(
+				getProvider().createArray(Collections.emptyList()),
+				getProvider().createString("value"),
+				getProvider().createNumber(1),
+				getProvider().createBoolean(true),
+				getProvider().createNull());
+		T fallback = getProvider().createString("fallback");
+
+		for (T node : nonObjects)
+			assertThatThrownBy(() -> getProvider().getObjectMemberOrDefault(node, "foo", fallback)).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
@@ -881,10 +901,21 @@ public interface JsonProviderContractTest<T> {
 	default List<String> parseStream(String json) {
 		List<String> result = new ArrayList<>();
 		try (JsonParser<T> parser = getProvider().createParser(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)))) {
-			for (T value = parser.next(); value != null; value = parser.next())
-				result.add(getProvider().format(value));
+			for (Maybe<T> value = parser.next(); value.isPresent(); value = parser.next())
+				result.add(getProvider().format(value.get()));
 		}
 		return result;
+	}
+
+	@Test
+	default void testCreateParserReportsAbsentAtEndOfInput() {
+		// A JSON null document is a value, so it must not be confused with the end of the input.
+		try (JsonParser<T> parser = getProvider().createParser(new ByteArrayInputStream("null".getBytes(StandardCharsets.UTF_8)))) {
+			Maybe<T> first = parser.next();
+			assertThat(first.isPresent()).isTrue();
+			assertThat(getProvider().getNodeType(first.get())).isEqualTo(JsonNodeType.NULL);
+			assertThat(parser.next().isAbsent()).isTrue();
+		}
 	}
 
 	@Test
@@ -925,11 +956,11 @@ public interface JsonProviderContractTest<T> {
 	}
 
 	@Test
-	default void testCreateParserKeepsReturningNullAfterExhaustion() {
+	default void testCreateParserKeepsReportingAbsentAfterExhaustion() {
 		try (JsonParser<T> parser = getProvider().createParser(new ByteArrayInputStream("1".getBytes(StandardCharsets.UTF_8)))) {
-			assertThat(parser.next()).isNotNull();
-			assertThat(parser.next()).isNull();
-			assertThat(parser.next()).isNull();
+			assertThat(parser.next().isPresent()).isTrue();
+			assertThat(parser.next().isAbsent()).isTrue();
+			assertThat(parser.next().isAbsent()).isTrue();
 		}
 	}
 

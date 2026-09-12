@@ -40,6 +40,7 @@ jjq_java_library(
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/path",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/path/utils",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/tree/matcher",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/utils",
         "//jackson-jq-json-provider",
         "//jackson-jq-spi",
     ],

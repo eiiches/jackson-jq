@@ -9,8 +9,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.BinaryOpAstNode;
@@ -22,6 +20,7 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.ParenAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.StringLiteralAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.operator.BinaryOperator;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.Maybe;
 
 public class ExpressionUtils {
 
@@ -30,9 +29,9 @@ public class ExpressionUtils {
 	 *
 	 * @param jsonProvider the JSON provider
 	 * @param expr the AST node to evaluate
-	 * @return null if expr is not a constant
+	 * @return the constant value, or {@link Maybe#absent()} if expr is not a constant
 	 */
-	public static <JsonNode> @Nullable JsonNode evaluateLiteralExpression(JsonProvider<JsonNode> jsonProvider, AstNode expr) {
+	public static <JsonNode> Maybe<JsonNode> evaluateLiteralExpression(JsonProvider<JsonNode> jsonProvider, AstNode expr) {
 		if (expr instanceof ParenAstNode) {
 			return evaluateLiteralExpression(jsonProvider, ((ParenAstNode) expr).value());
 		} else if (expr instanceof ObjectConstructionAstNode) {
@@ -45,53 +44,53 @@ public class ExpressionUtils {
 					AstNode valueExpr = f.value;
 
 					if (valueExpr == null) // this field depends on input and is not a constant
-						return null;
+						return Maybe.absent();
 
-					JsonNode v = evaluateLiteralExpression(jsonProvider, valueExpr);
-					if (v == null)
-						return null;
+					Maybe<JsonNode> v = evaluateLiteralExpression(jsonProvider, valueExpr);
+					if (v.isAbsent())
+						return Maybe.absent();
 
-					fields.put(k, v);
+					fields.put(k, v.get());
 				} else if (field instanceof ObjectConstructionAstNode.StringKeyFieldConstructionAst) {
 					ObjectConstructionAstNode.StringKeyFieldConstructionAst f = (ObjectConstructionAstNode.StringKeyFieldConstructionAst) field;
 					AstNode valueExpr = f.value;
 					if (!(f.key instanceof StringLiteralAstNode)) // then the key is string interpolation and not a constant
-						return null;
+						return Maybe.absent();
 					if (valueExpr == null) // this field depends on input and is not a constant
-						return null;
+						return Maybe.absent();
 					String k = ((StringLiteralAstNode) f.key).value();
 
-					JsonNode v = evaluateLiteralExpression(jsonProvider, valueExpr);
-					if (v == null)
-						return null;
+					Maybe<JsonNode> v = evaluateLiteralExpression(jsonProvider, valueExpr);
+					if (v.isAbsent())
+						return Maybe.absent();
 
-					fields.put(k, v);
+					fields.put(k, v.get());
 				} else {
-					return null;
+					return Maybe.absent();
 				}
 			}
 
-			return jsonProvider.createObject(fields);
+			return Maybe.of(jsonProvider.createObject(fields));
 		} else if (expr instanceof ArrayConstructionAstNode) {
 			AstNode elements = ((ArrayConstructionAstNode) expr).q;
 			if (elements == null)
-				return jsonProvider.createArray(Collections.emptyList()); // empty
+				return Maybe.of(jsonProvider.createArray(Collections.emptyList())); // empty
 
 			List<JsonNode> result = new ArrayList<>();
 			if (!collectLiteralElements(jsonProvider, elements, result))
-				return null;
+				return Maybe.absent();
 
-			return jsonProvider.createArray(result);
+			return Maybe.of(jsonProvider.createArray(result));
 		} else if (expr instanceof BooleanLiteralAstNode) {
-			return jsonProvider.createBoolean(((BooleanLiteralAstNode) expr).value());
+			return Maybe.of(jsonProvider.createBoolean(((BooleanLiteralAstNode) expr).value()));
 		} else if (expr instanceof NullLiteralAstNode) {
-			return jsonProvider.createNull();
+			return Maybe.of(jsonProvider.createNull());
 		} else if (expr instanceof NumericLiteralAstNode) {
-			return jsonProvider.createNumber(new BigDecimal(((NumericLiteralAstNode) expr).text()));
+			return Maybe.of(jsonProvider.createNumber(new BigDecimal(((NumericLiteralAstNode) expr).text())));
 		} else if (expr instanceof StringLiteralAstNode) {
-			return jsonProvider.createString(((StringLiteralAstNode) expr).value());
+			return Maybe.of(jsonProvider.createString(((StringLiteralAstNode) expr).value()));
 		} else {
-			return null;
+			return Maybe.absent();
 		}
 	}
 
@@ -118,10 +117,10 @@ public class ExpressionUtils {
 				continue;
 			}
 
-			JsonNode value = evaluateLiteralExpression(jsonProvider, element);
-			if (value == null)
+			Maybe<JsonNode> value = evaluateLiteralExpression(jsonProvider, element);
+			if (value.isAbsent())
 				return false;
-			out.add(value);
+			out.add(value.get());
 		}
 		return true;
 	}

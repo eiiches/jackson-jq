@@ -29,21 +29,21 @@ public class JoinFunction implements Function {
 				if (inType != JsonNodeType.ARRAY && inType != JsonNodeType.OBJECT)
 					throw new JsonQueryTypeException("Cannot iterate over %s", ExceptionMessages.describe(jsonProvider, version, in));
 
-				@Var JsonNode isep = null;
+				@Var boolean first = true;
 				StringBuilder builder = new StringBuilder();
 				Iterator<JsonNode> iter = inType == JsonNodeType.ARRAY
 						? jsonProvider.getArrayElements(in)
 						: jsonProvider.getObjectMemberValues(in);
 				while (iter.hasNext()) {
 					JsonNode item = iter.next();
-					if (isep != null) {
-						JsonNodeType isepType = jsonProvider.getNodeType(isep);
+					if (!first) {
+						JsonNodeType isepType = jsonProvider.getNodeType(sep);
 						if (isepType == JsonNodeType.STRING) {
-							builder.append(jsonProvider.getString(isep));
+							builder.append(jsonProvider.getString(sep));
 						} else if (isepType == JsonNodeType.NULL) {
 							// append nothing
 						} else {
-							throw new JsonQueryTypeException("%s and %s cannot be added", ExceptionMessages.describe(jsonProvider, version, jsonProvider.createString(builder.toString())), ExceptionMessages.describe(jsonProvider, version, isep));
+							throw new JsonQueryTypeException("%s and %s cannot be added", ExceptionMessages.describe(jsonProvider, version, jsonProvider.createString(builder.toString())), ExceptionMessages.describe(jsonProvider, version, sep));
 						}
 					}
 
@@ -60,7 +60,7 @@ public class JoinFunction implements Function {
 						throw new JsonQueryTypeException("%s and %s cannot be added", ExceptionMessages.describe(jsonProvider, version, sep), ExceptionMessages.describe(jsonProvider, version, item));
 					}
 
-					isep = sep;
+					first = false;
 				}
 				output.emit(jsonProvider.createString(builder.toString()), UntrackedPath.getInstance());
 			});

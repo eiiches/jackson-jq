@@ -18,6 +18,7 @@ java_library(
 jjq_java_test_suite(
     srcs = [
         "JsonProviderContractTest.java",
+        "MaybeTest.java",
     ],
     release = 8,
     test_suffixes_excludes = ["JsonProviderContractTest.java"],

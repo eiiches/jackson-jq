@@ -2,8 +2,6 @@ package net.thisptr.jackson.jq.v2.json;
 
 import java.io.Closeable;
 
-import org.jspecify.annotations.Nullable;
-
 /**
  * Reads a sequence of JSON values from a stream, one value at a time.
  * <p>
@@ -16,12 +14,15 @@ import org.jspecify.annotations.Nullable;
 public interface JsonParser<JsonNode> extends Closeable {
 	/**
 	 * Reads the next JSON value from the stream.
+	 * <p>
+	 * End of input is reported as {@link Maybe#absent()} rather than as a {@code null} value, so
+	 * that a JSON {@code null} document still reads as a value on a provider whose underlying
+	 * library represents JSON {@code null} as Java {@code null}.
 	 *
-	 * @return the next value, or {@code null} once the input is exhausted
+	 * @return the next value, or {@link Maybe#absent()} once the input is exhausted
 	 * @throws JsonException if the input is not well-formed JSON, or cannot be read
 	 */
-	@Nullable
-	JsonNode next();
+	Maybe<JsonNode> next();
 
 	/**
 	 * Releases this parser and closes the underlying stream.
