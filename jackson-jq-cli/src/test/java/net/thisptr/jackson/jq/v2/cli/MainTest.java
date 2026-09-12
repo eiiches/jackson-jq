@@ -255,6 +255,16 @@ class MainTest {
 	}
 
 	@Test
+	void warnsOnStderrAboutABindingPipeAfterAComma() throws Exception {
+		assertThat(run("null", "--compact", "1 + 1, 2 as $a | $a + 1")).isEqualTo("2\n3\n");
+		assertThat(runStderr("null", "--compact", "1 + 1, 2 as $a | $a + 1"))
+				.isEqualTo("jq: warning: `as` binds only `2`: write `(2 as $a | $a + 1)` to make the grouping explicit"
+						+ " at line 1, column 8:\n"
+						+ "    1 + 1, 2 as $a | $a + 1\n"
+						+ "           ^\n");
+	}
+
+	@Test
 	void suppressesWarningsOnRequest() throws Exception {
 		assertThat(runStderr("{\"a\":1,\"b\":2}", "--compact", "--no-warnings", ".a, .b | .")).isEmpty();
 	}
