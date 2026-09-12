@@ -34,6 +34,7 @@ import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.fastjson2.Fastjson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
@@ -89,7 +90,7 @@ public class Main {
 			.get();
 	private static final Option OPT_JSON_PROVIDER = Option.builder()
 			.longOpt("json-provider")
-			.desc("JSON provider: jackson2, jackson3, gson, or jakarta (default: jackson3)")
+			.desc("JSON provider: jackson2, jackson3, fastjson2, gson, or jakarta (default: jackson3)")
 			.numberOfArgs(1)
 			.get();
 	private static final Option OPT_NO_WARNINGS = Option.builder()
@@ -174,12 +175,14 @@ public class Main {
 				return Jackson2JsonProviderImpl.getInstance();
 			case "jackson3":
 				return Jackson3JsonProviderImpl.getInstance();
+			case "fastjson2":
+				return Fastjson2JsonProviderImpl.getInstance();
 			case "gson":
 				return GsonJsonProviderImpl.getInstance();
 			case "jakarta":
 				return JakartaJsonProviderImpl.getInstance();
 			default:
-				throw new IllegalArgumentException("unknown --json-provider: " + name + " (expected one of: jackson2, jackson3, gson, jakarta)");
+				throw new IllegalArgumentException("unknown --json-provider: " + name + " (expected one of: jackson2, jackson3, fastjson2, gson, jakarta)");
 		}
 	}
 

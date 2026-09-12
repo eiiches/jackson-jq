@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -40,13 +41,13 @@ public class EnvironmentAddImportedModuleTest {
 		}
 
 		@Override
-		public @Nullable Module loadModule(@Nullable Module caller, String path, @Nullable JsonNode metadata) {
+		public @Nullable Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) {
 			return modules.get(path);
 		}
 
 		@Override
-		public @Nullable JsonNode loadData(@Nullable Module caller, String path, @Nullable JsonNode metadata) {
-			return null;
+		public Maybe<JsonNode> loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) {
+			return Maybe.absent();
 		}
 	}
 

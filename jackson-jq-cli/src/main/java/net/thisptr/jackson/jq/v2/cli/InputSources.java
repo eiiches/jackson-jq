@@ -14,6 +14,7 @@ import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.Maybe;
 
 /**
  * Builds the {@link InputSource} selected by jq's input options.
@@ -52,8 +53,8 @@ final class InputSources {
 		return consumer -> {
 			for (InputStream stream : streams) {
 				try (JsonParser<N> parser = provider.createParser(stream)) {
-					for (@Var N value = parser.next(); value != null; value = parser.next())
-						consumer.accept(value);
+					for (@Var Maybe<N> value = parser.next(); value.isPresent(); value = parser.next())
+						consumer.accept(value.get());
 				}
 			}
 		};
@@ -127,8 +128,8 @@ final class InputSources {
 		List<N> values = new ArrayList<>();
 		for (InputStream stream : streams) {
 			try (JsonParser<N> parser = provider.createParser(stream)) {
-				for (@Var N value = parser.next(); value != null; value = parser.next())
-					values.add(value);
+				for (@Var Maybe<N> value = parser.next(); value.isPresent(); value = parser.next())
+					values.add(value.get());
 			}
 		}
 		return values;

@@ -73,6 +73,7 @@ import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.fastjson2.Fastjson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
@@ -450,10 +451,12 @@ public class Main {
 				return Jackson2JsonProviderImpl.getInstance();
 			case "jackson3":
 				return Jackson3JsonProviderImpl.getInstance();
+			case "fastjson2":
+				return Fastjson2JsonProviderImpl.getInstance();
 			case "gson":
 				return GsonJsonProviderImpl.getInstance();
 			default:
-				throw new IllegalArgumentException("unknown --provider: " + name + " (expected one of: jackson2, jackson3, gson)");
+				throw new IllegalArgumentException("unknown --provider: " + name + " (expected one of: jackson2, jackson3, fastjson2, gson)");
 		}
 	}
 
@@ -475,7 +478,7 @@ public class Main {
 
 	private static final Option OPT_JSON_PROVIDER = Option.builder()
 			.longOpt("json-provider")
-			.desc("JSON provider backing jackson-jq's own evaluation: jackson2, jackson3, or gson (default: jackson2)")
+			.desc("JSON provider backing jackson-jq's own evaluation: jackson2, jackson3, fastjson2, or gson (default: jackson2)")
 			.numberOfArgs(1)
 			.get();
 

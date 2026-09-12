@@ -141,11 +141,13 @@ public final class BinaryOperations {
 		Iterator<Map.Entry<String, JsonNode>> riter = jsonProvider.getObjectMembers(rhs);
 		while (riter.hasNext()) {
 			Map.Entry<String, JsonNode> e = riter.next();
-			JsonNode l = result.get(e.getKey());
+			@Var JsonNode l = result.get(e.getKey());
+			if (l == null) // no such member
+				l = jsonProvider.createNull();
 			JsonNode r = e.getValue();
 
 			@Var JsonNode resolved = r;
-			if (l != null && jsonProvider.isObject(l) && jsonProvider.isObject(r))
+			if (jsonProvider.isObject(l) && jsonProvider.isObject(r))
 				resolved = mergeRecursive(jsonProvider, l, r);
 			result.put(e.getKey(), resolved);
 		}

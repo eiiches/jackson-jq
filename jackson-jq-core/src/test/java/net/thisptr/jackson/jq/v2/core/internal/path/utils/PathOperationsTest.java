@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.internal.commons.range.LongRange;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
+import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.path.IntIndexPath;
@@ -144,7 +145,8 @@ public class PathOperationsTest {
 				RootPath.<JsonNode>getInstance().appendKey("d"),
 				JSON_PROVIDER.parse("{\"a\":1,\"b\":2}"),
 				oldValue -> {
-					assertThat(oldValue).isNull();
+					// A location that holds nothing yet is presented as a JSON null, never as Java null.
+					assertThat(JSON_PROVIDER.getNodeType(oldValue)).isEqualTo(JsonNodeType.NULL);
 					return JSON_PROVIDER.createNumber(4);
 				},
 				Versions.JQ_1_8_2);

@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
@@ -62,10 +63,10 @@ public class ContainsFunction implements Function {
 			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectMembers(needle);
 			while (iter.hasNext()) {
 				Map.Entry<String, JsonNode> field = iter.next();
-				JsonNode tmp = jsonProvider.getObjectMember(haystack, field.getKey());
-				if (tmp == null)
+				Maybe<JsonNode> tmp = jsonProvider.getObjectMember(haystack, field.getKey());
+				if (tmp.isAbsent())
 					return false;
-				if (!contains(jsonProvider, field.getValue(), tmp))
+				if (!contains(jsonProvider, field.getValue(), tmp.get()))
 					return false;
 			}
 			return true;

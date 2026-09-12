@@ -16,7 +16,8 @@ def test_case_suite(
         test_library,
         visibility,
         data = [],
-        env = {}):
+        env = {},
+        jvm_flags = []):
     """Creates one standalone java_test per YAML test-case resource.
 
     Args:
@@ -27,6 +28,7 @@ def test_case_suite(
       visibility: Visibility of the generated tests and aggregate suite.
       data: Runtime data required by the test.
       env: Environment variables for every generated test.
+      jvm_flags: JVM flags for every generated test.
     """
     tests = []
     seen = {}
@@ -44,6 +46,7 @@ def test_case_suite(
             data = data,
             env = env,
             main_class = test_class,
+            jvm_flags = jvm_flags,
             resource_strip_prefix = native.package_name() + "/" + _RESOURCE_PREFIX,
             resources = [test_case],
             runtime_deps = [

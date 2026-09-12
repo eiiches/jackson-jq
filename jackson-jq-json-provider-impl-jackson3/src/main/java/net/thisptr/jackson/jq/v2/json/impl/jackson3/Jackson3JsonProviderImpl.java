@@ -30,6 +30,7 @@ import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.NumberType;
 
 public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
@@ -376,10 +377,21 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 	}
 
 	@Override
-	public @Nullable JsonNode getObjectMember(JsonNode node, String name) {
+	public Maybe<JsonNode> getObjectMember(JsonNode node, String name) {
 		if (!node.isObject())
 			throw new IllegalArgumentException("Expected an object node");
-		return node.get(name);
+		JsonNode value = node.get(name);
+		if (value == null)
+			return Maybe.absent();
+		return Maybe.of(value);
+	}
+
+	@Override
+	public JsonNode getObjectMemberOrDefault(JsonNode node, String name, JsonNode defaultValue) {
+		if (!node.isObject())
+			throw new IllegalArgumentException("Expected an object node");
+		JsonNode value = node.get(name);
+		return value != null ? value : defaultValue;
 	}
 
 	@Override
@@ -447,13 +459,14 @@ public class Jackson3JsonProviderImpl implements JsonProvider<JsonNode> {
 		}
 
 		@Override
-		public @Nullable JsonNode next() {
+		public Maybe<JsonNode> next() {
 			try {
 				// readValueAsTree() binds the token the parser already sits on, so without advancing
 				// first it would return the same value forever.
 				if (parser.nextToken() == null)
-					return null;
-				return parser.readValueAsTree();
+					return Maybe.absent();
+				JsonNode value = parser.readValueAsTree();
+				return Maybe.of(value);
 			} catch (JacksonException e) {
 				throw new JsonException(e);
 			}

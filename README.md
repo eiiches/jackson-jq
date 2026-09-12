@@ -80,8 +80,9 @@ $ java -jar jackson-jq-cli-2.0.0-alpha1.jar --help
                                       as the single input value
  -f, --from-file <arg>      --       load the filter from a file
  --jq <arg>                 --       specify jq version
- --json-provider <arg>      --       JSON provider: jackson2, jackson3, gson,
-                                      or jakarta (default: jackson3)
+ --json-provider <arg>      --       JSON provider: jackson2, jackson3,
+                                      fastjson2, gson, or jakarta (default:
+                                      jackson3)
  -h, --help                 --       print this message
 
 $ java -jar jackson-jq-cli-2.0.0-alpha1.jar '.foo'

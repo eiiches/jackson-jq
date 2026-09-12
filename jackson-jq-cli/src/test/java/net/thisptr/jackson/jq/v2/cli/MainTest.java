@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 class MainTest {
 	@ParameterizedTest
-	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void evaluatesWithSelectedJsonProvider(String provider) throws Exception {
 		assertThat(run("{\"foo\":41}", "--json-provider", provider, "--compact", ".foo + 1"))
 				.isEqualTo("42\n");
@@ -43,21 +43,21 @@ class MainTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void readsMultipleInputDocumentsWithSelectedJsonProvider(String provider) throws Exception {
 		assertThat(run("1 2\n{\"a\":3}\n[4,5] \"six\" null true", "--json-provider", provider, "--compact", "."))
 				.isEqualTo("1\n2\n{\"a\":3}\n[4,5]\n\"six\"\nnull\ntrue\n");
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void treatsTopLevelArrayAsOneDocument(String provider) throws Exception {
 		assertThat(run("[1,2,3]", "--json-provider", provider, "--compact", "length"))
 				.isEqualTo("3\n");
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void prettyPrintsLikeJqByDefault(String provider) throws Exception {
 		assertThat(run("{\"a\":[1,2,{\"b\":null}],\"c\":{},\"d\":[],\"e\":\"<&>\"}", "--json-provider", provider, "."))
 				.isEqualTo(""
@@ -76,7 +76,7 @@ class MainTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void prettyPrintsScalarsAndEmptyContainersOnOneLine(String provider) throws Exception {
 		assertThat(run("1 \"two\" null true [] {}", "--json-provider", provider, "."))
 				.isEqualTo("1\n\"two\"\nnull\ntrue\n[]\n{}\n");
@@ -137,7 +137,7 @@ class MainTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void readsEachLineAsStringWithRawInput(String provider) throws Exception {
 		assertThat(run("a\nb\nc\n", "--json-provider", provider, "--raw-input", "--compact", "."))
 				.isEqualTo("\"a\"\n\"b\"\n\"c\"\n");
@@ -180,21 +180,21 @@ class MainTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void collectsAllInputsIntoArrayWithSlurp(String provider) throws Exception {
 		assertThat(run("1 2\n[3]", "--json-provider", provider, "--slurp", "--compact", "."))
 				.isEqualTo("[1,2,[3]]\n");
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void producesEmptyArrayForEmptySlurpedInput(String provider) throws Exception {
 		assertThat(run("", "--json-provider", provider, "-s", "--compact", "."))
 				.isEqualTo("[]\n");
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "jackson2", "jackson3", "gson", "jakarta" })
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void readsWholeInputAsOneStringWithRawInputAndSlurp(String provider) throws Exception {
 		assertThat(run("a\nb\n", "--json-provider", provider, "--raw-input", "--slurp", "--compact", "."))
 				.isEqualTo("\"a\\nb\\n\"\n");
@@ -278,7 +278,7 @@ class MainTest {
 	void rejectsUnknownJsonProvider() {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> Main.resolveProvider("unknown"))
-				.withMessage("unknown --json-provider: unknown (expected one of: jackson2, jackson3, gson, jakarta)");
+				.withMessage("unknown --json-provider: unknown (expected one of: jackson2, jackson3, fastjson2, gson, jakarta)");
 	}
 
 	private static Path write(Path dir, String name, String content) throws Exception {

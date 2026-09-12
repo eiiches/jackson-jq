@@ -31,16 +31,18 @@ public abstract class AbstractMaxByFunction implements Function {
 			Preconditions.checkInputType(jsonProvider, fname, in, JsonNodeType.ARRAY);
 
 			@Var JsonNode maxItem = jsonProvider.createNull();
-			@Var JsonNode maxValue = null;
+			@Var JsonNode maxValue = jsonProvider.createNull();
+			@Var boolean seen = false;
 			Iterator<JsonNode> iter = jsonProvider.getArrayElements(in);
 			while (iter.hasNext()) {
 				JsonNode i = iter.next();
 				List<JsonNode> valueList = new ArrayList<>();
 				args.get(0).apply(frame, i, UntrackedPath.getInstance(), (v, opath) -> valueList.add(v));
 				JsonNode value = JsonNodeUtils.asArrayNode(jsonProvider, valueList);
-				if (maxValue == null || !isLarger(jsonProvider, maxValue, value)) {
+				if (!seen || !isLarger(jsonProvider, maxValue, value)) {
 					maxValue = value;
 					maxItem = i;
+					seen = true;
 				}
 			}
 

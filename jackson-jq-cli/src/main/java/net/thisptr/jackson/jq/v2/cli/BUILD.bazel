@@ -20,6 +20,7 @@ jjq_java_library(
         "//jackson-jq-ext-module-uri",
         "//jackson-jq-ext-module-uuid",
         "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-fastjson2",
         "//jackson-jq-json-provider-impl-gson",
         "//jackson-jq-json-provider-impl-jackson2",
         "//jackson-jq-json-provider-impl-jackson3",

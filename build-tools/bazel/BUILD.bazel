@@ -1,4 +1,5 @@
 load("@rules_java//java:defs.bzl", "java_plugin")
+load("@rules_java//toolchains:default_java_toolchain.bzl", "DEFAULT_TOOLCHAIN_CONFIGURATION", "default_java_toolchain")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -6,6 +7,19 @@ exports_files([
     "java_defs.bzl",
     "pom.tpl",
 ])
+
+# rules_java 9.9.0 supplies remote JDK 26 neither as a runtime nor as a language
+# toolchain. Keep its JavaBuilder/Error Prone configuration, but run it on the
+# JDK selected by --tool_java_runtime_version.
+default_java_toolchain(
+    name = "toolchain_jdk_26",
+    configuration = dict(
+        DEFAULT_TOOLCHAIN_CONFIGURATION,
+        java_runtime = "@bazel_tools//tools/jdk:current_java_runtime",
+    ),
+    source_version = "26",
+    target_version = "26",
+)
 
 # NullAway is not an annotation processor; it is an Error Prone *plugin check*, which
 # Error Prone discovers with ServiceLoader over the annotation processor path

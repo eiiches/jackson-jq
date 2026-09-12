@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.path.PathAndValue;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
+import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -95,7 +96,7 @@ public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonN
 					for (Iterator<PatternMatcher.MatchWithPath<JsonNode>> it = vars.descendingIterator(); it.hasNext(); ) {
 						PatternMatcher.MatchWithPath<JsonNode> var = it.next();
 						if (var.slot >= 0) {
-							frame.set(var.slot, var.path instanceof UntrackedPath ? var.value : new PathAndValue<>(var.path, var.value));
+							frame.set(var.slot, var.path instanceof UntrackedPath ? StackFrameValues.toSlot(var.value) : new PathAndValue<>(var.path, var.value));
 						}
 					}
 

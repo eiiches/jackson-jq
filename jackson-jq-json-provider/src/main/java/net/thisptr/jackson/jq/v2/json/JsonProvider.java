@@ -420,13 +420,35 @@ public interface JsonProvider<JsonNode> {
 
 	/**
 	 * Returns the value of the given member.
+	 * <p>
+	 * The result is {@link Maybe#absent()} if the object has no such member. A present JSON
+	 * {@code null} member is reported as a present value, even for a provider whose underlying
+	 * library represents JSON {@code null} as Java {@code null}; see {@link Maybe}.
 	 *
 	 * @param node the JSON object node
 	 * @param name the member name
-	 * @return the member's value, or {@code null} if the object has no such member
+	 * @return the member's value, or {@link Maybe#absent()} if the object has no such member
 	 * @throws IllegalArgumentException if the node is not an object
 	 */
-	@Nullable JsonNode getObjectMember(JsonNode node, String name);
+	Maybe<JsonNode> getObjectMember(JsonNode node, String name);
+
+	/**
+	 * Returns the value of the given member, or {@code defaultValue} if the object has no such
+	 * member.
+	 * <p>
+	 * This answers the common "the member, or a stand-in" question without the {@link Maybe} that
+	 * {@link #getObjectMember(Object, String)} allocates, which matters on jq's field-access path.
+	 * Implementations are expected to override it with a direct lookup on the underlying library.
+	 *
+	 * @param node the JSON object node
+	 * @param name the member name
+	 * @param defaultValue the value to return when the object has no such member
+	 * @return the member's value, or {@code defaultValue}
+	 * @throws IllegalArgumentException if the node is not an object
+	 */
+	default JsonNode getObjectMemberOrDefault(JsonNode node, String name, JsonNode defaultValue) {
+		return getObjectMember(node, name).orElse(defaultValue);
+	}
 
 	/**
 	 * Returns the element at the given index.
@@ -449,10 +471,10 @@ public interface JsonProvider<JsonNode> {
 	 * @throws NoSuchElementException if the object has no such member
 	 */
 	default JsonNode getObjectMemberOrThrow(JsonNode node, String name) {
-		JsonNode value = getObjectMember(node, name);
-		if (value == null)
+		Maybe<JsonNode> value = getObjectMember(node, name);
+		if (value.isAbsent())
 			throw new NoSuchElementException("No such member: " + name);
-		return value;
+		return value.get();
 	}
 
 	/**
@@ -526,8 +548,8 @@ public interface JsonProvider<JsonNode> {
 	default List<JsonNode> parseAll(String json) {
 		List<JsonNode> result = new ArrayList<>();
 		try (JsonParser<JsonNode> parser = createParser(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)))) {
-			for (@Var JsonNode value = parser.next(); value != null; value = parser.next())
-				result.add(value);
+			for (@Var Maybe<JsonNode> value = parser.next(); value.isPresent(); value = parser.next())
+				result.add(value.get());
 		}
 		return result;
 	}
@@ -542,12 +564,12 @@ public interface JsonProvider<JsonNode> {
 	 */
 	default JsonNode parse(String json) {
 		try (JsonParser<JsonNode> parser = createParser(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)))) {
-			JsonNode value = parser.next();
-			if (value == null)
+			Maybe<JsonNode> value = parser.next();
+			if (value.isAbsent())
 				throw new JsonException("empty input");
-			if (parser.next() != null)
+			if (parser.next().isPresent())
 				throw new JsonException("trailing content");
-			return value;
+			return value.get();
 		}
 	}
 }

@@ -5,9 +5,12 @@
 # the Maven build. JavaBuilder's ReleaseOptionNormalizer drops the toolchain's
 # -source/-target when --release is present, so no custom java_toolchain is needed.
 
-# Hermetic JDKs: do not depend on whatever `java` happens to be on PATH.
-build --java_runtime_version=remotejdk_21
-build --tool_java_runtime_version=remotejdk_21
+# Hermetic JDKs: do not depend on whatever `java` happens to be on PATH. JDK 26 is required to
+# compile the unpublished JEP 540 sources, which use the preview LazyConstant API.
+build --java_runtime_version=remotejdk_26
+build --tool_java_runtime_version=remotejdk_26
+build --java_language_version=26
+build --tool_java_language_version=26
 
 build --enable_platform_specific_config
 build --incompatible_strict_action_env

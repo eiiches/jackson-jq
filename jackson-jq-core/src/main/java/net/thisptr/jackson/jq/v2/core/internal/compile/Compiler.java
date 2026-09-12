@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -129,8 +128,10 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ArrayMatche
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ObjectMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
+import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -350,14 +351,14 @@ public class Compiler {
 		@Override
 		public Expression<StackFrame, N> visit(TopLevelAstNode top) throws JsonQueryException {
 			for (TopLevelAstNode.ImportStatement imp : top.imports()) {
-				N metadata = evaluateMetadata(env.getJsonProvider(), imp);
+				Maybe<N> metadata = evaluateMetadata(env.getJsonProvider(), imp);
 				if (imp.dollarImport) {
-					N data = env.getModuleLoader().loadData(currentModule, imp.path, metadata);
-					if (data == null) {
+					Maybe<N> data = env.getModuleLoader().loadData(currentModule, imp.path, metadata);
+					if (data.isAbsent()) {
 						throw new JsonQueryException(String.format("module not found: %s", imp.path));
 					}
 					if (imp.name != null) {
-						context.addImportedVariableDefault(imp.name, data);
+						context.addImportedVariableDefault(imp.name, data.get());
 					}
 				} else {
 					Module mod = env.getModuleLoader().loadModule(currentModule, imp.path, metadata);
@@ -1058,7 +1059,7 @@ public class Compiler {
 		int slot = paramSlots.get(index);
 		if (argName.startsWith("$")) {
 			argExpr.apply(callerFrame, in, path, (val, p) -> {
-				currentFrame.set(slot, val);
+				currentFrame.set(slot, StackFrameValues.toSlot(val));
 				bindValueParams(callerFrame, currentFrame, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
 			});
 		} else {
@@ -1077,23 +1078,23 @@ public class Compiler {
 		return compiled;
 	}
 
-	public static <JsonNode> @Nullable JsonNode evaluateMetadata(JsonProvider<JsonNode> jsonProvider, @Nullable AstNode metadataExpr) {
+	public static <JsonNode> Maybe<JsonNode> evaluateMetadata(JsonProvider<JsonNode> jsonProvider, @Nullable AstNode metadataExpr) {
 		if (metadataExpr == null)
-			return null;
-		JsonNode metadata = ExpressionUtils.evaluateLiteralExpression(jsonProvider, metadataExpr);
-		if (metadata == null)
+			return Maybe.absent();
+		Maybe<JsonNode> metadata = ExpressionUtils.evaluateLiteralExpression(jsonProvider, metadataExpr);
+		if (metadata.isAbsent())
 			throw new IllegalArgumentException("Module metadata must be constant");
-		if (!jsonProvider.isObject(metadata))
+		if (!jsonProvider.isObject(metadata.get()))
 			throw new IllegalArgumentException("Module metadata must be an object");
 		return metadata;
 	}
 
-	public static <JsonNode> @Nullable JsonNode evaluateMetadata(JsonProvider<JsonNode> jsonProvider, TopLevelAstNode.ImportStatement statement) {
+	public static <JsonNode> Maybe<JsonNode> evaluateMetadata(JsonProvider<JsonNode> jsonProvider, TopLevelAstNode.ImportStatement statement) {
 		return evaluateMetadata(jsonProvider, statement.metadataExpr());
 	}
 
 	public static <JsonNode> JsonNode evaluateMetadata(JsonProvider<JsonNode> jsonProvider, TopLevelAstNode.ModuleDirective directive) {
-		return Objects.requireNonNull(evaluateMetadata(jsonProvider, directive.metadataExpr()));
+		return evaluateMetadata(jsonProvider, directive.metadataExpr()).get();
 	}
 
 	public static <JsonNode> Expression<StackFrame, JsonNode> compileBinaryOperator(

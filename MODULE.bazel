@@ -15,6 +15,7 @@ bazel_dep(name = "rules_java", version = "9.9.0")
 bazel_dep(name = "rules_jvm_external", version = "7.1")
 bazel_dep(name = "contrib_rules_jvm", version = "0.34.0")
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.4")
+bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "rules_jq", version = "0.0.0")
 local_path_override(
     module_name = "rules_jq",
@@ -80,6 +81,11 @@ maven.artifact(
     artifact = "gson",
     group = "com.google.code.gson",
     version = "2.11.0",
+)
+maven.artifact(
+    artifact = "fastjson2",
+    group = "com.alibaba.fastjson2",
+    version = "2.0.64",
 )
 maven.artifact(
     artifact = "jakarta.json-api",
@@ -228,6 +234,144 @@ maven.artifact(
     version = SLF4J_VERSION,
 )
 use_repo(maven, "maven")
+
+# -- JDK 26 toolchains --------------------------------------------------------
+# rules_java 9.9.0 predates JDK 26 toolchain declarations. Register the current
+# Temurin JDK explicitly so the JEP 540 prototype can be compiled without using
+# a machine-local JDK.
+java_repository = use_extension("@rules_java//toolchains:extensions.bzl", "java_repository")
+java_repository.remote(
+    name = "remotejdk26_linux",
+    prefix = "remotejdk",
+    sha256 = "451c12e68747bcfa2fb5a2c16b00483fedb9fa6d77bc962d30957f76ac17044d",
+    strip_prefix = "jdk-26.0.2.1+1",
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    urls = ["https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26.0.2.1%2B1/OpenJDK26U-jdk_x64_linux_hotspot_26.0.2.1_1.tar.gz"],
+    version = "26",
+)
+java_repository.remote(
+    name = "remotejdk26_linux_aarch64",
+    prefix = "remotejdk",
+    sha256 = "9f6ad9856a7dd880061adaf88db3c4da0642113d59b7960a892f0e551c0c948c",
+    strip_prefix = "jdk-26.0.2.1+1",
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+    urls = ["https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26.0.2.1%2B1/OpenJDK26U-jdk_aarch64_linux_hotspot_26.0.2.1_1.tar.gz"],
+    version = "26",
+)
+java_repository.remote(
+    name = "remotejdk26_linux_ppc64le",
+    prefix = "remotejdk",
+    sha256 = "34e0030c9b972b93cd11c3fb77211ae64c6a7d9c2ba10665730ee9f56ab29722",
+    strip_prefix = "jdk-26.0.2.1+1",
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:ppc64le",
+    ],
+    urls = ["https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26.0.2.1%2B1/OpenJDK26U-jdk_ppc64le_linux_hotspot_26.0.2.1_1.tar.gz"],
+    version = "26",
+)
+java_repository.remote(
+    name = "remotejdk26_linux_riscv64",
+    prefix = "remotejdk",
+    sha256 = "21812edf2d5f60e4de776d264b88d36863076e5f9e1e47e7ff66f3f939079998",
+    strip_prefix = "jdk-26.0.2.1+1",
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:riscv64",
+    ],
+    urls = ["https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26.0.2.1%2B1/OpenJDK26U-jdk_riscv64_linux_hotspot_26.0.2.1_1.tar.gz"],
+    version = "26",
+)
+java_repository.remote(
+    name = "remotejdk26_linux_s390x",
+    prefix = "remotejdk",
+    sha256 = "165602f7c4c3daeb8a71fa0dc1d1437f4707b702b8c3d3876d399e11241db34a",
+    strip_prefix = "jdk-26.0.2.1+1",
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:s390x",
+    ],
+    urls = ["https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26.0.2.1%2B1/OpenJDK26U-jdk_s390x_linux_hotspot_26.0.2.1_1.tar.gz"],
+    version = "26",
+)
+java_repository.remote(
+    name = "remotejdk26_macos",
+    prefix = "remotejdk",
+    sha256 = "e1b58af4ef2089f6de66bdadd5c77a661adfad8340d5b8e19771a76ab5f02188",
+    strip_prefix = "jdk-26.0.2.1+1/Contents/Home",
+    target_compatible_with = [
+        "@platforms//os:macos",
+        "@platforms//cpu:x86_64",
+    ],
+    urls = ["https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26.0.2.1%2B1/OpenJDK26U-jdk_x64_mac_hotspot_26.0.2.1_1.tar.gz"],
+    version = "26",
+)
+java_repository.remote(
+    name = "remotejdk26_macos_aarch64",
+    prefix = "remotejdk",
+    sha256 = "8c77a069a150c5b1c80280269ba062463053ebb7619ddef38dcfe3921fc60bdd",
+    strip_prefix = "jdk-26.0.2.1+1/Contents/Home",
+    target_compatible_with = [
+        "@platforms//os:macos",
+        "@platforms//cpu:aarch64",
+    ],
+    urls = ["https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26.0.2.1%2B1/OpenJDK26U-jdk_aarch64_mac_hotspot_26.0.2.1_1.tar.gz"],
+    version = "26",
+)
+java_repository.remote(
+    name = "remotejdk26_win",
+    prefix = "remotejdk",
+    sha256 = "cf914bf4cc6bf9cedcabec216165bafd10331c5b4d4f2e424b55f6a2e68a1cf5",
+    strip_prefix = "jdk-26.0.2.1+1",
+    target_compatible_with = [
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
+    ],
+    urls = ["https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26.0.2.1%2B1/OpenJDK26U-jdk_x64_windows_hotspot_26.0.2.1_1.zip"],
+    version = "26",
+)
+use_repo(
+    java_repository,
+    "remotejdk26_linux",
+    "remotejdk26_linux_aarch64",
+    "remotejdk26_linux_aarch64_toolchain_config_repo",
+    "remotejdk26_linux_ppc64le",
+    "remotejdk26_linux_ppc64le_toolchain_config_repo",
+    "remotejdk26_linux_riscv64",
+    "remotejdk26_linux_riscv64_toolchain_config_repo",
+    "remotejdk26_linux_s390x",
+    "remotejdk26_linux_s390x_toolchain_config_repo",
+    "remotejdk26_linux_toolchain_config_repo",
+    "remotejdk26_macos",
+    "remotejdk26_macos_aarch64",
+    "remotejdk26_macos_aarch64_toolchain_config_repo",
+    "remotejdk26_macos_toolchain_config_repo",
+    "remotejdk26_win",
+    "remotejdk26_win_toolchain_config_repo",
+)
+
+register_toolchains(
+    "@remotejdk26_linux_aarch64_toolchain_config_repo//:all",
+    "@remotejdk26_linux_ppc64le_toolchain_config_repo//:all",
+    "@remotejdk26_linux_riscv64_toolchain_config_repo//:all",
+    "@remotejdk26_linux_s390x_toolchain_config_repo//:all",
+    "@remotejdk26_linux_toolchain_config_repo//:all",
+    "@remotejdk26_macos_aarch64_toolchain_config_repo//:all",
+    "@remotejdk26_macos_toolchain_config_repo//:all",
+    "@remotejdk26_win_toolchain_config_repo//:all",
+)
+
+register_toolchains("//build-tools/bazel:toolchain_jdk_26_definition")
+
+jep540_sources_repository = use_repo_rule("//third-party/jep540:sources.bzl", "jep540_sources_repository")
+
+jep540_sources_repository(name = "jep540_sources")
 
 # Real jq binaries for the conformance tests. The rules package owns the release
 # catalog so tests do not depend on whichever jq executables happen to be on PATH.

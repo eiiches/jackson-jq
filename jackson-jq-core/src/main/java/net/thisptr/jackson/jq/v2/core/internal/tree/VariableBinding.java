@@ -10,6 +10,7 @@ import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.path.PathAndValue;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
+import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -70,7 +71,7 @@ public class VariableBinding<JsonNode> implements Expression<StackFrame, JsonNod
 				for (Iterator<PatternMatcher.MatchWithPath<JsonNode>> it = variables.descendingIterator(); it.hasNext(); ) {
 					PatternMatcher.MatchWithPath<JsonNode> variable = it.next();
 					if (variable.slot >= 0)
-						frame.set(variable.slot, variable.path instanceof UntrackedPath ? variable.value : new PathAndValue<>(variable.path, variable.value));
+						frame.set(variable.slot, variable.path instanceof UntrackedPath ? StackFrameValues.toSlot(variable.value) : new PathAndValue<>(variable.path, variable.value));
 				}
 				body.apply(frame, in, path, output);
 			}, accumulate);

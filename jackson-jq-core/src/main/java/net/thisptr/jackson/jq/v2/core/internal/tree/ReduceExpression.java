@@ -10,6 +10,7 @@ import java.util.Set;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
+import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -86,7 +87,7 @@ public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNo
 					for (Iterator<PatternMatcher.Match<JsonNode>> it = vars.descendingIterator(); it.hasNext(); ) {
 						PatternMatcher.Match<JsonNode> var = it.next();
 						if (var.slot >= 0) {
-							frame.set(var.slot, var.value);
+							frame.set(var.slot, StackFrameValues.toSlot(var.value));
 						}
 					}
 					// We only use the last value from reduce expression.

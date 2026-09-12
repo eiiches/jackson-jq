@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.commons.range.LongRange;
 import net.thisptr.jackson.jq.v2.core.internal.commons.strings.UnicodeUtils;
@@ -39,11 +38,16 @@ public final class PathOperations {
 	public interface Mutation<JsonNode> {
 		/**
 		 * Computes the replacement for the node currently at a path location.
+		 * <p>
+		 * A location that holds nothing yet -- a missing member, an index past the end of an array --
+		 * is presented as a JSON {@code null}, not as Java {@code null}: no {@code JsonNode}-typed
+		 * value in the engine uses Java {@code null} to mean "nothing is here".
 		 *
+		 * @param node the node currently at the location, or a JSON {@code null} if there is none
 		 * @return the new value; deletion is not expressed through {@link #mutate}, see
 		 * {@code DelPathsFunction}
 		 */
-		JsonNode apply(@Nullable JsonNode node) throws JsonQueryException;
+		JsonNode apply(JsonNode node) throws JsonQueryException;
 	}
 
 	private PathOperations() {
@@ -111,8 +115,7 @@ public final class PathOperations {
 		if (jsonProvider.isNull(parent)) {
 			output.emit(jsonProvider.createNull(), parentPath.appendKey(key));
 		} else if (jsonProvider.isObject(parent)) {
-			JsonNode node = jsonProvider.getObjectMember(parent, key);
-			output.emit(node == null ? jsonProvider.createNull() : node, parentPath.appendKey(key));
+			output.emit(jsonProvider.getObjectMemberOrDefault(parent, key, jsonProvider.createNull()), parentPath.appendKey(key));
 		} else if (!permissive) {
 			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, parent, jsonProvider.createString(key)));
 		}
@@ -288,8 +291,8 @@ public final class PathOperations {
 		throw unsupported(path);
 	}
 
-	private static <JsonNode> JsonNode mutateObjectField(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, String key, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
-		if (in == null || jsonProvider.isNull(in))
+	private static <JsonNode> JsonNode mutateObjectField(JsonProvider<JsonNode> jsonProvider, @Var JsonNode in, String key, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
+		if (jsonProvider.isNull(in))
 			in = jsonProvider.createObject(Collections.emptyMap());
 		if (jsonProvider.isObject(in)) {
 			Map<String, JsonNode> values = new LinkedHashMap<>();
@@ -298,16 +301,19 @@ public final class PathOperations {
 				Map.Entry<String, JsonNode> entry = iterator.next();
 				values.put(entry.getKey(), entry.getValue());
 			}
-			JsonNode newValue = mutation.apply(values.get(key));
+			@Var JsonNode oldValue = values.get(key);
+			if (oldValue == null) // no such member
+				oldValue = jsonProvider.createNull();
+			JsonNode newValue = mutation.apply(oldValue);
 			values.put(key, newValue);
 			return jsonProvider.createObject(values);
 		}
 		throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createString(key)));
 	}
 
-	private static <JsonNode> JsonNode mutateArrayIndex(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, JsonNode index, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
+	private static <JsonNode> JsonNode mutateArrayIndex(JsonProvider<JsonNode> jsonProvider, @Var JsonNode in, JsonNode index, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
 		assert jsonProvider.isNumber(index);
-		if (in == null || jsonProvider.isNull(in))
+		if (jsonProvider.isNull(in))
 			in = jsonProvider.createArray(Collections.emptyList());
 		if (jsonProvider.isArray(in)) {
 			double indexAsDouble = jsonProvider.getNumberAsDoubleRounded(index);
@@ -321,7 +327,7 @@ public final class PathOperations {
 			if (resolvedIndex < 0)
 				throw new JsonQueryException("Out of bounds negative array index");
 
-			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.getArrayLength(in) ? jsonProvider.getArrayElement(in, resolvedIndex) : null);
+			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.getArrayLength(in) ? jsonProvider.getArrayElement(in, resolvedIndex) : jsonProvider.createNull());
 
 			List<JsonNode> out = new ArrayList<>(Math.max(jsonProvider.getArrayLength(in), resolvedIndex + 1));
 			for (int i = 0; i < jsonProvider.getArrayLength(in); ++i)
@@ -334,15 +340,15 @@ public final class PathOperations {
 		throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, index));
 	}
 
-	private static <JsonNode> JsonNode mutateArrayIndex(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, int index, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
-		if (in == null || jsonProvider.isNull(in))
+	private static <JsonNode> JsonNode mutateArrayIndex(JsonProvider<JsonNode> jsonProvider, @Var JsonNode in, int index, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
+		if (jsonProvider.isNull(in))
 			in = jsonProvider.createArray(Collections.emptyList());
 		if (jsonProvider.isArray(in)) {
 			int resolvedIndex = index < 0 ? index + jsonProvider.getArrayLength(in) : index;
 			if (resolvedIndex < 0)
 				throw new JsonQueryException("Out of bounds negative array index");
 
-			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.getArrayLength(in) ? jsonProvider.getArrayElement(in, resolvedIndex) : null);
+			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.getArrayLength(in) ? jsonProvider.getArrayElement(in, resolvedIndex) : jsonProvider.createNull());
 
 			List<JsonNode> out = new ArrayList<>(Math.max(jsonProvider.getArrayLength(in), resolvedIndex + 1));
 			for (int i = 0; i < jsonProvider.getArrayLength(in); ++i)
@@ -355,9 +361,7 @@ public final class PathOperations {
 		throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(index)));
 	}
 
-	private static <JsonNode> JsonNode mutateArrayRangeIndex(JsonProvider<JsonNode> jsonProvider, @Var @Nullable JsonNode in, JsonNode start, JsonNode end, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
-		if (in == null)
-			in = jsonProvider.createNull();
+	private static <JsonNode> JsonNode mutateArrayRangeIndex(JsonProvider<JsonNode> jsonProvider, JsonNode in, JsonNode start, JsonNode end, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
 		JsonNodeType inType = jsonProvider.getNodeType(in);
 		if (inType == JsonNodeType.ARRAY || inType == JsonNodeType.STRING || inType == JsonNodeType.NULL)
 			requireValidRangeBounds(jsonProvider, start, end, inType == JsonNodeType.NULL ? JsonNodeType.ARRAY : inType, version);

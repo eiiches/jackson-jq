@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.module.loaders;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
+import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
@@ -15,7 +16,7 @@ public class ChainedModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	}
 
 	@Override
-	public @Nullable Module loadModule(@Nullable Module caller, String path, @Nullable JsonNode metadata) throws JsonQueryException {
+	public @Nullable Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		for (ModuleLoader<JsonNode> loader : loaders) {
 			Module module = loader.loadModule(caller, path, metadata);
 			if (module != null)
@@ -25,12 +26,12 @@ public class ChainedModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	}
 
 	@Override
-	public @Nullable JsonNode loadData(@Nullable Module caller, String path, @Nullable JsonNode metadata) throws JsonQueryException {
+	public Maybe<JsonNode> loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		for (ModuleLoader<JsonNode> loader : loaders) {
-			JsonNode data = loader.loadData(caller, path, metadata);
-			if (data != null)
+			Maybe<JsonNode> data = loader.loadData(caller, path, metadata);
+			if (data.isPresent())
 				return data;
 		}
-		return null;
+		return Maybe.absent();
 	}
 }

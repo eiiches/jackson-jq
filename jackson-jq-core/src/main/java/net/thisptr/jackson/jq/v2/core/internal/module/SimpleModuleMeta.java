@@ -15,6 +15,7 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.TopLevelAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleMeta;
 
 public class SimpleModuleMeta implements ModuleMeta {
@@ -56,13 +57,13 @@ public class SimpleModuleMeta implements ModuleMeta {
 	static <JsonNode> Map<String, JsonNode> evaluateMetadata(JsonProvider<JsonNode> jsonProvider, @Nullable AstNode expr) {
 		if (expr == null)
 			return Collections.emptyMap();
-		JsonNode node = ExpressionUtils.evaluateLiteralExpression(jsonProvider, expr);
-		if (node == null)
+		Maybe<JsonNode> node = ExpressionUtils.evaluateLiteralExpression(jsonProvider, expr);
+		if (node.isAbsent())
 			throw new IllegalArgumentException("Module metadata must be constant");
-		if (!jsonProvider.isObject(node))
+		if (!jsonProvider.isObject(node.get()))
 			throw new IllegalArgumentException("Module metadata must be an object");
 		Map<String, JsonNode> result = new LinkedHashMap<>();
-		Iterator<Map.Entry<String, JsonNode>> fields = jsonProvider.getObjectMembers(node);
+		Iterator<Map.Entry<String, JsonNode>> fields = jsonProvider.getObjectMembers(node.get());
 		while (fields.hasNext()) {
 			Map.Entry<String, JsonNode> entry = fields.next();
 			result.put(entry.getKey(), entry.getValue());

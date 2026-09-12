@@ -7,6 +7,7 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Closure;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.path.PathAndValue;
+import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -61,23 +62,15 @@ public class ResolvedCapturedVariableAccess<JsonNode> implements Expression<Stac
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		Closure closure = (Closure) frame.get(frameClosureSlot);
 		if (closure == null) {
 			throw new JsonQueryException("Variable $" + name + " is not defined (no closure)");
 		}
-		Object raw = closure.get(closureSlot);
-		if (raw == null) {
+		PathAndValue<JsonNode> pv = StackFrameValues.asPathAndValue(closure.get(closureSlot));
+		if (pv == null) {
 			throw new JsonQueryException("Variable $" + name + " is not defined");
 		}
-		if (raw instanceof PathAndValue) {
-			PathAndValue<JsonNode> pv = (PathAndValue<JsonNode>) raw;
-			if (pv.getValue() != null) {
-				output.emit(pv.getValue(), path instanceof UntrackedPath ? UntrackedPath.getInstance() : pv.getPath());
-			}
-		} else {
-			output.emit((JsonNode) raw, UntrackedPath.getInstance());
-		}
+		output.emit(pv.getValue(), path instanceof UntrackedPath ? UntrackedPath.getInstance() : pv.getPath());
 	}
 }

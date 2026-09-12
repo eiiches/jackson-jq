@@ -59,10 +59,8 @@ public class ResolvedLocalVariableAccess<JsonNode> implements Expression<StackFr
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		PathAndValue<JsonNode> val = StackFrameValues.asPathAndValue(frame.get(slot));
-		if (val != null && val.getValue() != null) {
-			output.emit(val.getValue(), path instanceof UntrackedPath ? UntrackedPath.getInstance() : val.getPath());
-			return;
-		}
-		throw new JsonQueryException(String.format("$%s is not defined", name));
+		if (val == null)
+			throw new JsonQueryException(String.format("$%s is not defined", name));
+		output.emit(val.getValue(), path instanceof UntrackedPath ? UntrackedPath.getInstance() : val.getPath());
 	}
 }

@@ -32,6 +32,7 @@ import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModuleMeta;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
@@ -113,7 +114,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 
 	// modules with the same path may exist in different search paths
 	private final ConcurrentHashMap<Pair<Path /* searchPath */, String /* relativePath */>, TryOnce<Module>> loadedModules = new ConcurrentHashMap<>();
-	private final ConcurrentHashMap<Pair<Path /* searchPath */, String /* relativePath */>, TryOnce<JsonNode>> loadedData = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Pair<Path /* searchPath */, String /* relativePath */>, TryOnce<Maybe<JsonNode>>> loadedData = new ConcurrentHashMap<>();
 
 	private final class FileSystemModule extends SimpleModule {
 		private Path modulePath;
@@ -198,7 +199,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		}
 	}
 
-	private @Nullable Pair<List<Path>, String> resolvePathsFromImportDirective(@Nullable Module caller, String path, @Nullable JsonNode metadata) throws JsonQueryException {
+	private @Nullable Pair<List<Path>, String> resolvePathsFromImportDirective(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		@Var List<Path> searchPaths = this.searchPaths;
 		@Var String relativePath = path;
 
@@ -210,19 +211,19 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		}
 
 		JsonProvider<JsonNode> jsonProvider = this.jsonProvider;
-		if (metadata != null) {
-			JsonNode search = jsonProvider.getObjectMember(metadata, "search");
-			if (search != null) {
+		if (metadata.isPresent()) {
+			Maybe<JsonNode> search = jsonProvider.getObjectMember(metadata.get(), "search");
+			if (search.isPresent()) {
 				// disallow search overrides from top-level unnamed expression, which doesn't have a module path.
 				// i.e. import "foo" as foo {search: ./}; doesn't make sense. where is ./ ?
 				if (callerModule == null)
 					throw new JsonQueryException("search path can only be overriden from imported modules, but not from a top-level unnamed module");
 
 				// jq does ignore non-textual search overrides, but i want it to fail fast.
-				if (!jsonProvider.isString(search))
+				if (!jsonProvider.isString(search.get()))
 					throw new JsonQueryException("search path overrides must be a string");
 
-				@Var Path searchPathOverride = callerModule.modulePath.getFileSystem().getPath(jsonProvider.getString(search));
+				@Var Path searchPathOverride = callerModule.modulePath.getFileSystem().getPath(jsonProvider.getString(search.get()));
 				searchPathOverride = Objects.requireNonNull(callerModule.modulePath.getParent()).resolve(searchPathOverride).normalize();
 
 				// still, the search path must be within the original search path
@@ -240,7 +241,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	}
 
 	@Override
-	public @Nullable Module loadModule(@Nullable Module caller, String path, @Nullable JsonNode metadata) throws JsonQueryException {
+	public @Nullable Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
 		if (paths == null)
 			return null;
@@ -267,20 +268,20 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	}
 
 	@Override
-	public @Nullable JsonNode loadData(@Nullable Module caller, String path, @Nullable JsonNode metadata) throws JsonQueryException {
+	public Maybe<JsonNode> loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
 		if (paths == null)
-			return null;
+			return Maybe.absent();
 		List<Path> searchPaths = paths._1;
 		String relativePath = paths._2;
 
 		for (Path searchPath : searchPaths) {
-			TryOnce<JsonNode> tryOnce = loadedData.computeIfAbsent(Pair.of(searchPath, relativePath), p -> new TryOnce<>());
+			TryOnce<Maybe<JsonNode>> tryOnce = loadedData.computeIfAbsent(Pair.of(searchPath, relativePath), p -> new TryOnce<>());
 			try {
-				JsonNode data = tryOnce.tryOnce(() -> {
+				Maybe<JsonNode> data = tryOnce.tryOnce(() -> {
 					return loadDataActual(searchPath, relativePath);
 				});
-				if (data != null)
+				if (data.isPresent())
 					return data;
 			} catch (CompletionException e) {
 				Throwable cause = e.getCause();
@@ -288,16 +289,16 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 			}
 		}
 
-		return null;
+		return Maybe.absent();
 	}
 
-	private @Nullable JsonNode loadDataActual(Path searchPath, String path) throws IOException {
+	private Maybe<JsonNode> loadDataActual(Path searchPath, String path) throws IOException {
 		ModuleFile moduleFile = loadModuleFile(searchPath, path, "json");
 		if (moduleFile == null)
-			return null;
+			return Maybe.absent();
 
 		JsonProvider<JsonNode> jsonProvider = this.jsonProvider;
 		List<JsonNode> values = jsonProvider.parseAll(new String(moduleFile.bytes, StandardCharsets.UTF_8));
-		return jsonProvider.createArray(values);
+		return Maybe.of(jsonProvider.createArray(values));
 	}
 }

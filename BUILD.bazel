@@ -21,10 +21,17 @@ publish_all(
         "//jackson-jq-ext-module-uri:jackson-jq-ext-module-uri.publish",
         "//jackson-jq-ext-module-uuid:jackson-jq-ext-module-uuid.publish",
         "//jackson-jq-json-provider:jackson-jq-json-provider.publish",
+        # Experimental: retained to exercise provider compatibility with JSON models that use
+        # Java null, but excluded from releases until demand warrants long-term support.
+        # "//jackson-jq-json-provider-impl-fastjson2:jackson-jq-json-provider-impl-fastjson2.publish",
         "//jackson-jq-json-provider-impl-gson:jackson-jq-json-provider-impl-gson.publish",
         "//jackson-jq-json-provider-impl-jackson2:jackson-jq-json-provider-impl-jackson2.publish",
         "//jackson-jq-json-provider-impl-jackson3:jackson-jq-json-provider-impl-jackson3.publish",
         "//jackson-jq-json-provider-impl-jakarta:jackson-jq-json-provider-impl-jakarta.publish",
+        # Experimental: builds and tests, but is not published. It compiles against an
+        # unstable jdk.incubator.json pinned to an OpenJDK commit, and only runs on a JDK 26
+        # started with --add-modules jdk.incubator.json.
+        # "//jackson-jq-json-provider-impl-jep540:jackson-jq-json-provider-impl-jep540.publish",
         "//jackson-jq-regex-impl-joni:jackson-jq-regex-impl-joni.publish",
         "//jackson-jq-spi:jackson-jq-spi.publish",
     ],
