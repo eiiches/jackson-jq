@@ -8,10 +8,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -270,6 +276,38 @@ class MainTest {
 	}
 
 	@Test
+	void configuresRuntimeLimits() throws Exception {
+		RuntimeOptions options = Main.createRuntimeOptions(parseLimits(
+				"--max-string-length", "11",
+				"--max-array-length", "12",
+				"--max-object-member-count", "13"));
+
+		assertThat(options.getRuntimeLimits().getMaxStringLength()).isEqualTo(11);
+		assertThat(options.getRuntimeLimits().getMaxArrayLength()).isEqualTo(12);
+		assertThat(options.getRuntimeLimits().getMaxObjectMemberCount()).isEqualTo(13);
+	}
+
+	@Test
+	void runtimeLimitsDefaultToUnlimited() throws Exception {
+		RuntimeOptions options = Main.createRuntimeOptions(parseLimits());
+
+		assertThat(options.getRuntimeLimits().getMaxStringLength()).isEqualTo(Integer.MAX_VALUE);
+		assertThat(options.getRuntimeLimits().getMaxArrayLength()).isEqualTo(Integer.MAX_VALUE);
+		assertThat(options.getRuntimeLimits().getMaxObjectMemberCount()).isEqualTo(Integer.MAX_VALUE);
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "--max-string-length", "--max-array-length", "--max-object-member-count" })
+	void rejectsInvalidRuntimeLimits(String option) throws Exception {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> Main.createRuntimeOptions(parseLimits(option, "-1")))
+				.withMessage("invalid " + option + ": -1 (expected a non-negative integer)");
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> Main.createRuntimeOptions(parseLimits(option, "many")))
+				.withMessage("invalid " + option + ": many (expected a non-negative integer)");
+	}
+
+	@Test
 	void saysNothingWhenTheGroupingIsExplicit() throws Exception {
 		assertThat(runStderr("{\"a\":1,\"b\":2}", "--compact", "(.a, .b) | .")).isEmpty();
 	}
@@ -285,6 +323,14 @@ class MainTest {
 		Path file = dir.resolve(name);
 		Files.write(file, content.getBytes(StandardCharsets.UTF_8));
 		return file;
+	}
+
+	private static CommandLine parseLimits(String... args) throws Exception {
+		Options options = new Options();
+		options.addOption(Option.builder().longOpt("max-string-length").numberOfArgs(1).get());
+		options.addOption(Option.builder().longOpt("max-array-length").numberOfArgs(1).get());
+		options.addOption(Option.builder().longOpt("max-object-member-count").numberOfArgs(1).get());
+		return new DefaultParser().parse(options, args);
 	}
 
 	private static String run(String input, String... args) throws Exception {

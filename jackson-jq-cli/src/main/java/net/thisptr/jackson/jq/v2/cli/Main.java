@@ -28,6 +28,7 @@ import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
@@ -98,6 +99,21 @@ public class Main {
 			.longOpt("no-warnings")
 			.desc("suppress compile warnings")
 			.get();
+	private static final Option OPT_MAX_STRING_LENGTH = Option.builder()
+			.longOpt("max-string-length")
+			.desc("maximum length of strings produced during evaluation (default: unlimited)")
+			.numberOfArgs(1)
+			.get();
+	private static final Option OPT_MAX_ARRAY_LENGTH = Option.builder()
+			.longOpt("max-array-length")
+			.desc("maximum number of elements in arrays produced during evaluation (default: unlimited)")
+			.numberOfArgs(1)
+			.get();
+	private static final Option OPT_MAX_OBJECT_MEMBER_COUNT = Option.builder()
+			.longOpt("max-object-member-count")
+			.desc("maximum number of members in objects produced during evaluation (default: unlimited)")
+			.numberOfArgs(1)
+			.get();
 	private static final Option OPT_HELP = Option.builder("h")
 			.longOpt("help")
 			.desc("print this message")
@@ -114,6 +130,9 @@ public class Main {
 		options.addOption(OPT_VERSION);
 		options.addOption(OPT_JSON_PROVIDER);
 		options.addOption(OPT_NO_WARNINGS);
+		options.addOption(OPT_MAX_STRING_LENGTH);
+		options.addOption(OPT_MAX_ARRAY_LENGTH);
+		options.addOption(OPT_MAX_OBJECT_MEMBER_COUNT);
 		options.addOption(OPT_HELP);
 		CommandLine command;
 		List<String> rest;
@@ -167,7 +186,36 @@ public class Main {
 			System.exit(1);
 			throw e;
 		}
-		run(command, query, inputFiles, version, jsonProvider);
+		RuntimeOptions runtimeOptions;
+		try {
+			runtimeOptions = createRuntimeOptions(command);
+		} catch (IllegalArgumentException e) {
+			System.err.println(e.getMessage());
+			System.exit(1);
+			throw e;
+		}
+		run(command, query, inputFiles, version, jsonProvider, runtimeOptions);
+	}
+
+	static RuntimeOptions createRuntimeOptions(CommandLine command) {
+		return new RuntimeOptions()
+				.setMaxStringLength(parseLimit(command, OPT_MAX_STRING_LENGTH))
+				.setMaxArrayLength(parseLimit(command, OPT_MAX_ARRAY_LENGTH))
+				.setMaxObjectMemberCount(parseLimit(command, OPT_MAX_OBJECT_MEMBER_COUNT));
+	}
+
+	private static int parseLimit(CommandLine command, Option option) {
+		String value = command.getOptionValue(option.getLongOpt());
+		if (value == null)
+			return Integer.MAX_VALUE;
+		try {
+			int limit = Integer.parseInt(value);
+			if (limit < 0)
+				throw new NumberFormatException();
+			return limit;
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("invalid --" + option.getLongOpt() + ": " + value + " (expected a non-negative integer)", e);
+		}
 	}
 
 	static JsonProvider<?> resolveProvider(String name) {
@@ -211,7 +259,8 @@ public class Main {
 		}
 	}
 
-	private static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider) throws Exception {
+	private static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider,
+								RuntimeOptions runtimeOptions) throws Exception {
 		Environment<N> env = new EnvironmentBuilder<>(jsonProvider, version)
 				.defineFunction(FunctionSignature.of("env", 0), new Function() {
 					@Override
@@ -293,7 +342,7 @@ public class Main {
 				command.hasOption(OPT_SLURP.getOpt()));
 		input.readAll(tree -> {
 			try {
-				jq.apply(tree, out -> {
+				jq.apply(tree, runtimeOptions, out -> {
 					if (jsonProvider.isString(out) && rawOutput) {
 						System.out.println(jsonProvider.getString(out));
 					} else if (compact) {
