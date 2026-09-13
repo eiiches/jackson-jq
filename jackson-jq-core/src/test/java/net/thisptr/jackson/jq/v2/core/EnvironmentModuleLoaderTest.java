@@ -4,7 +4,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
@@ -31,12 +30,12 @@ public class EnvironmentModuleLoaderTest {
 	 */
 	private static final class StubModuleLoader implements ModuleLoader<JsonNode> {
 		@Override
-		public Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) {
+		public Module loadModule(String path, Maybe<JsonNode> metadata) {
 			throw new ModuleNotFoundException(path);
 		}
 
 		@Override
-		public JsonNode loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) {
+		public JsonNode loadData(String path, Maybe<JsonNode> metadata) {
 			throw new ModuleNotFoundException(path);
 		}
 	}
