@@ -22,7 +22,8 @@ public interface JsonQuery<JsonNode> {
 	 * @param options settings for this invocation, including the limits it runs under
 	 * @param bindings values for the variables and functions the {@link Environment} declared without one
 	 * @param output receives each output value
-	 * @throws JsonQueryException if the query fails, or if {@code bindings} does not match what the query was compiled against
+	 * @throws JsonQueryException if the query fails, or if {@code bindings} does not match what the query was compiled against;
+	 * other runtime exceptions and stack overflows during evaluation are wrapped in a {@code JsonQueryException}
 	 * @throws RuntimeLimitExceededException if the query exceeds a limit set by {@code options}
 	 */
 	void apply(JsonNode in, RuntimeOptions options, RuntimeBindings<JsonNode> bindings, Consumer<? super JsonNode> output) throws JsonQueryException;
@@ -33,7 +34,8 @@ public interface JsonQuery<JsonNode> {
 	 * @param in the input JSON node, bound to {@code .}
 	 * @param options settings for this invocation, including the limits it runs under
 	 * @param output receives each output value
-	 * @throws JsonQueryException if the query fails, or if it references a variable or function that was declared without a value
+	 * @throws JsonQueryException if the query fails, or if it references a variable or function that was declared without a value;
+	 * other runtime exceptions and stack overflows during evaluation are wrapped in a {@code JsonQueryException}
 	 * @throws RuntimeLimitExceededException if the query exceeds a limit set by {@code options}
 	 */
 	default void apply(JsonNode in, RuntimeOptions options, Consumer<? super JsonNode> output) throws JsonQueryException {
@@ -46,7 +48,8 @@ public interface JsonQuery<JsonNode> {
 	 * @param in the input JSON node, bound to {@code .}
 	 * @param bindings values for the variables and functions the {@link Environment} declared without one
 	 * @param output receives each output value
-	 * @throws JsonQueryException if the query fails, or if {@code bindings} does not match what the query was compiled against
+	 * @throws JsonQueryException if the query fails, or if {@code bindings} does not match what the query was compiled against;
+	 * other runtime exceptions and stack overflows during evaluation are wrapped in a {@code JsonQueryException}
 	 */
 	default void apply(JsonNode in, RuntimeBindings<JsonNode> bindings, Consumer<? super JsonNode> output) throws JsonQueryException {
 		apply(in, RuntimeOptions.getDefaultInstance(), bindings, output);
@@ -57,7 +60,8 @@ public interface JsonQuery<JsonNode> {
 	 *
 	 * @param in the input JSON node, bound to {@code .}
 	 * @param output receives each output value
-	 * @throws JsonQueryException if the query fails, or if it references a variable or function that was declared without a value
+	 * @throws JsonQueryException if the query fails, or if it references a variable or function that was declared without a value;
+	 * other runtime exceptions and stack overflows during evaluation are wrapped in a {@code JsonQueryException}
 	 */
 	default void apply(JsonNode in, Consumer<? super JsonNode> output) throws JsonQueryException {
 		apply(in, RuntimeOptions.getDefaultInstance(), RuntimeBindings.getDefaultInstance(), output);

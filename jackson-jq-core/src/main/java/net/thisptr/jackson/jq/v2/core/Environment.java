@@ -61,7 +61,8 @@ public interface Environment<JsonNode> {
 	 *
 	 * @param expression the jq expression to compile
 	 * @return the compiled query
-	 * @throws JsonQueryException if {@code expression} cannot be parsed or compiled
+	 * @throws JsonQueryException if {@code expression} cannot be parsed or compiled; other runtime
+	 * exceptions and stack overflows during compilation are wrapped in a {@code JsonQueryException}
 	 */
 	default JsonQuery<JsonNode> compile(String expression) throws JsonQueryException {
 		return compile(expression, CompileOptions.getDefaultInstance(), null);
@@ -73,7 +74,8 @@ public interface Environment<JsonNode> {
 	 * @param expression the jq expression to compile
 	 * @param options settings for this compilation, including who receives its diagnostics
 	 * @return the compiled query
-	 * @throws JsonQueryException if {@code expression} cannot be parsed or compiled
+	 * @throws JsonQueryException if {@code expression} cannot be parsed or compiled; other runtime
+	 * exceptions and stack overflows during compilation are wrapped in a {@code JsonQueryException}
 	 */
 	default JsonQuery<JsonNode> compile(String expression, CompileOptions options) throws JsonQueryException {
 		return compile(expression, options, null);
@@ -87,17 +89,34 @@ public interface Environment<JsonNode> {
 	 * @param options settings for this compilation, including who receives its diagnostics
 	 * @param currentModule the module the expression belongs to, or {@code null} for a bare query
 	 * @return the compiled query
-	 * @throws JsonQueryException if {@code expression} cannot be parsed or compiled
+	 * @throws JsonQueryException if {@code expression} cannot be parsed or compiled; other runtime
+	 * exceptions and stack overflows during compilation are wrapped in a {@code JsonQueryException}
 	 */
 	default JsonQuery<JsonNode> compile(String expression, CompileOptions options, @Nullable JqModule currentModule) throws JsonQueryException {
-		AstNode parsedAst = AstParser.parse(expression, getJqVersion());
-		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(this, options, ModuleScope.<JsonNode>root(this).inside(currentModule), parsedAst);
-		if (!(compiledExpr instanceof RootExpression))
-			throw new IllegalStateException("Compiler did not produce a root expression");
-		RootExpression<JsonNode> rootExpr = (RootExpression<JsonNode>) compiledExpr;
-		return (in, runtimeOptions, bindings, output) -> {
-			RuntimeLimits runtimeLimits = new RuntimeLimitsImpl(runtimeOptions.getMaxArrayLength(), runtimeOptions.getMaxObjectMemberCount(), runtimeOptions.getMaxStringLength());
-			rootExpr.apply(in, runtimeLimits, bindings, output);
-		};
+		try {
+			AstNode parsedAst = AstParser.parse(expression, getJqVersion());
+			Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(this, options, ModuleScope.<JsonNode>root(this).inside(currentModule), parsedAst);
+			if (!(compiledExpr instanceof RootExpression))
+				throw new IllegalStateException("Compiler did not produce a root expression");
+			RootExpression<JsonNode> rootExpr = (RootExpression<JsonNode>) compiledExpr;
+			return (in, runtimeOptions, bindings, output) -> {
+				try {
+					RuntimeLimits runtimeLimits = new RuntimeLimitsImpl(runtimeOptions.getMaxArrayLength(), runtimeOptions.getMaxObjectMemberCount(), runtimeOptions.getMaxStringLength());
+					rootExpr.apply(in, runtimeLimits, bindings, output);
+				} catch (JsonQueryException e) {
+					throw e;
+				} catch (StackOverflowError e) {
+					throw new JsonQueryException("Stack overflow during evaluation", e);
+				} catch (RuntimeException e) {
+					throw new JsonQueryException("Unexpected exception during evaluation", e);
+				}
+			};
+		} catch (JsonQueryException e) {
+			throw e;
+		} catch (StackOverflowError e) {
+			throw new JsonQueryException("Stack overflow during compilation", e);
+		} catch (RuntimeException e) {
+			throw new JsonQueryException("Unexpected exception during compilation", e);
+		}
 	}
 }
