@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class JsonQueryBindingsTest {
+public class RuntimeBindingsTest {
 	/**
 	 * Results are compared by jq value, not by JsonNode identity: the node class a literal
 	 * compiles to is not what these tests are about.
@@ -58,7 +58,7 @@ public class JsonQueryBindingsTest {
 				.defineVariable("value", () -> JSON_PROVIDER.createNumber(counter.incrementAndGet()))
 				.build();
 
-		assertThat(run(env.compile("[$value, $value]"), JsonQueryBindings.empty())).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[1,2]")));
+		assertThat(run(env.compile("[$value, $value]"))).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[1,2]")));
 	}
 
 	@Test
@@ -68,7 +68,7 @@ public class JsonQueryBindingsTest {
 				.declareVariable("value")
 				.build();
 		JsonQuery<JsonNode> query = env.compile("def values: [$value, $value]; values");
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("value", () -> JSON_PROVIDER.createNumber(overrideCounter.incrementAndGet()))
 				.build();
 
@@ -83,7 +83,7 @@ public class JsonQueryBindingsTest {
 		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("value", () -> JSON_PROVIDER.createNumber(counter.incrementAndGet()))
 				.build();
 
@@ -96,7 +96,7 @@ public class JsonQueryBindingsTest {
 		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("value", () -> null)
 				.build();
 
@@ -113,11 +113,11 @@ public class JsonQueryBindingsTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("def wrapper: [$value, custom]; wrapper");
 
-		JsonQueryBindings<JsonNode> firstCall = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> firstCall = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("value", JSON_PROVIDER.createString("default-variable"))
 				.setFunction(key, constantFunction("default-function"))
 				.build();
-		JsonQueryBindings<JsonNode> secondCall = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> secondCall = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("value", JSON_PROVIDER.createString("override-variable"))
 				.setFunction(key, constantFunction("override-function"))
 				.build();
@@ -137,7 +137,7 @@ public class JsonQueryBindingsTest {
 				() -> run(query, bindingsWithVariable("unknown", 1)));
 		assertThat(variableError).hasMessageContaining("$unknown");
 
-		JsonQueryBindings<JsonNode> functionBindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> functionBindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setFunction(FunctionSignature.of("unknown", 0), constantFunction("unused"))
 				.build();
 		JsonQueryException functionError = assertThrows(JsonQueryException.class, () -> run(query, functionBindings));
@@ -163,7 +163,7 @@ public class JsonQueryBindingsTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$value");
 
-		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(query, JsonQueryBindings.empty()));
+		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(query));
 		assertThat(error).hasMessageContaining("$value").hasMessageContaining("must be supplied");
 	}
 
@@ -175,10 +175,10 @@ public class JsonQueryBindingsTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("length");
 
-		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(query, JsonQueryBindings.empty()));
+		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(query));
 		assertThat(error).hasMessageContaining("length").hasMessageContaining("must be supplied");
 
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setFunction(builtinCollision, constantFunction("overridden"))
 				.build();
 		assertThat(run(query, bindings)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("\"overridden\"")));
@@ -203,7 +203,7 @@ public class JsonQueryBindingsTest {
 				.defineFunction(oneArg, constantFunction("one"))
 				.build();
 		JsonQuery<JsonNode> query = env.compile("[custom, custom(.)]");
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setFunction(zeroArg, constantFunction("override"))
 				.build();
 
@@ -217,7 +217,7 @@ public class JsonQueryBindingsTest {
 				.declareFunction(variadic)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("[custom, custom(.)]");
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setFunction(variadic, constantFunction("override"))
 				.build();
 
@@ -244,8 +244,8 @@ public class JsonQueryBindingsTest {
 		}
 	}
 
-	private static JsonQueryBindings<JsonNode> bindingsWithVariable(String name, int value) {
-		return JsonQueryBindings.<JsonNode>builder().setVariable(name, JSON_PROVIDER.createNumber(value)).build();
+	private static RuntimeBindings<JsonNode> bindingsWithVariable(String name, int value) {
+		return RuntimeBindings.<JsonNode>newBuilder().setVariable(name, JSON_PROVIDER.createNumber(value)).build();
 	}
 
 	private static Function constantFunction(String value) {
@@ -257,7 +257,13 @@ public class JsonQueryBindingsTest {
 		};
 	}
 
-	private static List<JsonNode> run(JsonQuery<JsonNode> query, JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {
+	private static List<JsonNode> run(JsonQuery<JsonNode> query) throws JsonQueryException {
+		List<JsonNode> result = new ArrayList<>();
+		query.apply(JSON_PROVIDER.createNull(), result::add);
+		return result;
+	}
+
+	private static List<JsonNode> run(JsonQuery<JsonNode> query, RuntimeBindings<JsonNode> bindings) throws JsonQueryException {
 		List<JsonNode> result = new ArrayList<>();
 		query.apply(JSON_PROVIDER.createNull(), bindings, result::add);
 		return result;

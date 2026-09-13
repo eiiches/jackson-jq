@@ -18,7 +18,7 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 /**
  * Reference to an {@code EnvironmentBuilder.declareVariable}-registered variable -- no compile-time value,
  * so it's read from {@code StackFrame.getEnclosingMemory()}'s flat global-slots array (populated once per
- * top-level {@code apply()} call from {@code JsonQueryBindings}, before the query body runs). The same
+ * top-level {@code apply()} call from {@code RuntimeBindings}, before the query body runs). The same
  * {@code globalIndex} is valid from any {@code def}-nesting depth, since one {@code StackMemory} backs
  * exactly one top-level {@code apply()} call -- no closure capture needed.
  */

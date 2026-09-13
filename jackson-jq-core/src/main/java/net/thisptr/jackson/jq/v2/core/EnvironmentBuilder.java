@@ -65,7 +65,7 @@ public final class EnvironmentBuilder<JsonNode> {
 
 	/**
 	 * Declares {@code name} as a valid global variable with no value -- every query that references it
-	 * must be supplied a value via {@link JsonQueryBindings} on every {@code apply()} call, or that call
+	 * must be supplied a value via {@link RuntimeBindings} on every {@code apply()} call, or that call
 	 * fails immediately.
 	 */
 	public EnvironmentBuilder<JsonNode> declareVariable(String name) {
@@ -76,7 +76,7 @@ public final class EnvironmentBuilder<JsonNode> {
 
 	/**
 	 * Declares {@code signature} as a valid global function with no implementation -- every query that
-	 * calls it must be supplied an implementation via {@link JsonQueryBindings} on every {@code apply()}
+	 * calls it must be supplied an implementation via {@link RuntimeBindings} on every {@code apply()}
 	 * call, or that call fails immediately.
 	 */
 	public EnvironmentBuilder<JsonNode> declareFunction(FunctionSignature signature) {
@@ -87,7 +87,7 @@ public final class EnvironmentBuilder<JsonNode> {
 
 	/**
 	 * Defines {@code name} with a fixed {@code supplier}, evaluated on every reference. This value is
-	 * baked into the compiled query and can never be overridden by {@link JsonQueryBindings}.
+	 * baked into the compiled query and can never be overridden by {@link RuntimeBindings}.
 	 */
 	public EnvironmentBuilder<JsonNode> defineVariable(String name, Supplier<JsonNode> supplier) {
 		requireUnusedVariableName(name);
@@ -97,7 +97,7 @@ public final class EnvironmentBuilder<JsonNode> {
 
 	/**
 	 * Defines {@code name} with a fixed {@code value}. Like {@link #defineVariable}, this can never be
-	 * overridden by {@link JsonQueryBindings}.
+	 * overridden by {@link RuntimeBindings}.
 	 */
 	public EnvironmentBuilder<JsonNode> defineConstant(String name, JsonNode value) {
 		requireUnusedVariableName(name);
@@ -107,7 +107,7 @@ public final class EnvironmentBuilder<JsonNode> {
 
 	/**
 	 * Defines {@code nameAndArity} with a fixed {@code function}. Like {@link #defineVariable}, this can
-	 * never be overridden by {@link JsonQueryBindings}.
+	 * never be overridden by {@link RuntimeBindings}.
 	 */
 	public EnvironmentBuilder<JsonNode> defineFunction(FunctionSignature nameAndArity, Function function) {
 		requireUnusedFunctionSignature(nameAndArity);
@@ -118,7 +118,7 @@ public final class EnvironmentBuilder<JsonNode> {
 	/**
 	 * Defines a jq function whose exact signature is derived from its name and parameter count. The
 	 * function is compiled against the completed environment and can never be overridden by
-	 * {@link JsonQueryBindings}.
+	 * {@link RuntimeBindings}.
 	 */
 	public EnvironmentBuilder<JsonNode> defineJqFunction(JqFunction function) {
 		Objects.requireNonNull(function, "function");

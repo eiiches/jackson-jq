@@ -282,18 +282,18 @@ class MainTest {
 				"--max-array-length", "12",
 				"--max-object-member-count", "13"));
 
-		assertThat(options.getRuntimeLimits().getMaxStringLength()).isEqualTo(11);
-		assertThat(options.getRuntimeLimits().getMaxArrayLength()).isEqualTo(12);
-		assertThat(options.getRuntimeLimits().getMaxObjectMemberCount()).isEqualTo(13);
+		assertThat(options.getMaxStringLength()).isEqualTo(11);
+		assertThat(options.getMaxArrayLength()).isEqualTo(12);
+		assertThat(options.getMaxObjectMemberCount()).isEqualTo(13);
 	}
 
 	@Test
 	void runtimeLimitsDefaultToUnlimited() throws Exception {
 		RuntimeOptions options = Main.createRuntimeOptions(parseLimits());
 
-		assertThat(options.getRuntimeLimits().getMaxStringLength()).isEqualTo(Integer.MAX_VALUE);
-		assertThat(options.getRuntimeLimits().getMaxArrayLength()).isEqualTo(Integer.MAX_VALUE);
-		assertThat(options.getRuntimeLimits().getMaxObjectMemberCount()).isEqualTo(Integer.MAX_VALUE);
+		assertThat(options.getMaxStringLength()).isEqualTo(Integer.MAX_VALUE);
+		assertThat(options.getMaxArrayLength()).isEqualTo(Integer.MAX_VALUE);
+		assertThat(options.getMaxObjectMemberCount()).isEqualTo(Integer.MAX_VALUE);
 	}
 
 	@ParameterizedTest

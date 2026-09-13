@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * closure-capture machinery that a real cross-thread frame-sharing bug would corrupt.
  *
  * <p>The query is parameterized by a declared {@code $seed} variable, supplied per invocation via
- * {@link JsonQueryBindings}, alternating between two distinguishable values. A single fixed input would be
+ * {@link RuntimeBindings}, alternating between two distinguishable values. A single fixed input would be
  * a blind spot: if one thread's frame leaked into another's, both would still expect the same result. With
  * two distinguishable patterns, a leak would surface as one pattern's call producing the other pattern's
  * result.
@@ -91,7 +91,7 @@ public class JsonQueryConcurrentReuseTest {
 	}
 
 	private static List<JsonNode> run(JsonQuery<JsonNode> query, int seed) throws JsonQueryException {
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("seed", JSON_PROVIDER.createNumber(seed))
 				.build();
 		List<JsonNode> result = new ArrayList<>();

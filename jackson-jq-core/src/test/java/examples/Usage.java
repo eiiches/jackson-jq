@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
-import net.thisptr.jackson.jq.v2.core.JsonQueryBindings;
+import net.thisptr.jackson.jq.v2.core.RuntimeBindings;
 import net.thisptr.jackson.jq.v2.core.internal.commons.strings.Strings;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
@@ -60,7 +60,7 @@ public class Usage {
 								Paths.get(Usage.class.getClassLoader().getResource("classpath_modules").toURI())) // or in the classpath resources
 				))
 				// declareVariable(...) declares a custom variable that can be used from jq expressions, with
-				// no value -- a value must be supplied via JsonQueryBindings on every apply() call.
+				// no value -- a value must be supplied via RuntimeBindings on every apply() call.
 				.declareVariable("param")
 				.build();
 
@@ -71,12 +71,12 @@ public class Usage {
 		JsonNode in = MAPPER.readTree("{\"ids\":\"12,15,23\",\"name\":\"jackson\",\"timestamp\":1418785331123}");
 
 		// A compiled query is reused with different variable and function bindings for each invocation.
-		JsonQueryBindings<JsonNode> firstBindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> firstBindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("param", jsonProvider.createNumber(42))
 				.build();
 		q.apply(in, firstBindings, System.out::println); // => 84
 
-		JsonQueryBindings<JsonNode> secondBindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> secondBindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("param", () -> jsonProvider.createNumber(7)) // suppliers are evaluated on each reference
 				.build();
 		q.apply(in, secondBindings, System.out::println); // => 14

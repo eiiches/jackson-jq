@@ -199,7 +199,7 @@ public class Compiler {
 	}
 
 	public static <JsonNode> Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, AstNode ast) throws JsonQueryException {
-		return compile(env, new CompileOptions(), (Module) null, ast);
+		return compile(env, CompileOptions.newBuilder().build(), (Module) null, ast);
 	}
 
 	public static <JsonNode> Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileOptions options, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {

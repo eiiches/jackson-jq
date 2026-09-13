@@ -225,7 +225,7 @@ public class EnvironmentFunctionLoaderTest {
 				.declareVariable("suffix")
 				.defineJqFunction(countdown)
 				.build();
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setFunction(helperSignature, constantFunction("declared"))
 				.setVariable("suffix", env.getJsonProvider().createString("-value"))
 				.build();
@@ -351,7 +351,7 @@ public class EnvironmentFunctionLoaderTest {
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
 				.defineJqFunction(JqFunction.of("greet", Collections.emptyList(), "\"fixed\""))
 				.build();
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setFunction(signature, constantFunction("override"))
 				.build();
 

@@ -77,7 +77,7 @@ public class ExpressionCardinalityTest {
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), jqVersion)
 				.build();
 		AstNode parsedAst = AstParser.parse(expression, env.getJqVersion());
-		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(env, new CompileOptions(), null, parsedAst);
+		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(env, CompileOptions.newBuilder().build(), null, parsedAst);
 		return compiledExpr.getCardinality();
 	}
 

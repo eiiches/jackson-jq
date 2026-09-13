@@ -17,7 +17,6 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
-import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
@@ -35,25 +34,25 @@ public class RuntimeOptionsTest {
 	}
 
 	private static RuntimeOptions maxArrayLength(int n) {
-		return new RuntimeOptions().setMaxArrayLength(n);
+		return RuntimeOptions.newBuilder().setMaxArrayLength(n).build();
 	}
 
 	private static RuntimeOptions maxObjectMemberCount(int n) {
-		return new RuntimeOptions().setMaxObjectMemberCount(n);
+		return RuntimeOptions.newBuilder().setMaxObjectMemberCount(n).build();
 	}
 
 	private static RuntimeOptions maxStringLength(int n) {
-		return new RuntimeOptions().setMaxStringLength(n);
+		return RuntimeOptions.newBuilder().setMaxStringLength(n).build();
 	}
 
 	// --- defaults -----------------------------------------------------------------------------
 
 	@Test
 	public void defaultsAreUnlimited() throws Exception {
-		RuntimeOptions defaults = new RuntimeOptions();
-		assertThat(defaults.getRuntimeLimits().getMaxArrayLength()).isEqualTo(Integer.MAX_VALUE);
-		assertThat(defaults.getRuntimeLimits().getMaxObjectMemberCount()).isEqualTo(Integer.MAX_VALUE);
-		assertThat(defaults.getRuntimeLimits().getMaxStringLength()).isEqualTo(Integer.MAX_VALUE);
+		RuntimeOptions defaults = RuntimeOptions.newBuilder().build();
+		assertThat(defaults.getMaxArrayLength()).isEqualTo(Integer.MAX_VALUE);
+		assertThat(defaults.getMaxObjectMemberCount()).isEqualTo(Integer.MAX_VALUE);
+		assertThat(defaults.getMaxStringLength()).isEqualTo(Integer.MAX_VALUE);
 
 		assertThat(run("[range(0; 100000)] | length", defaults)).containsExactly(Jackson2JsonProviderImpl.getInstance().createNumber(100000));
 		// The no-options overloads must behave identically.
@@ -64,32 +63,10 @@ public class RuntimeOptionsTest {
 
 	@Test
 	public void eachSetterLeavesTheOtherLimitsAlone() {
-		RuntimeOptions options = new RuntimeOptions().setMaxObjectMemberCount(7).setMaxStringLength(5).setMaxArrayLength(3);
-		assertThat(options.getRuntimeLimits().getMaxArrayLength()).isEqualTo(3);
-		assertThat(options.getRuntimeLimits().getMaxObjectMemberCount()).isEqualTo(7);
-		assertThat(options.getRuntimeLimits().getMaxStringLength()).isEqualTo(5);
-	}
-
-	@Test
-	public void setRuntimeLimitsAcceptsACallerSuppliedImplementation() throws Exception {
-		RuntimeLimits custom = new RuntimeLimits() {
-			@Override
-			public int getMaxArrayLength() {
-				return 2;
-			}
-
-			@Override
-			public int getMaxObjectMemberCount() {
-				return Integer.MAX_VALUE;
-			}
-
-			@Override
-			public int getMaxStringLength() {
-				return Integer.MAX_VALUE;
-			}
-		};
-		assertThatThrownBy(() -> run("[1, 2, 3]", new RuntimeOptions().setRuntimeLimits(custom)))
-				.isInstanceOf(RuntimeLimitExceededException.class);
+		RuntimeOptions options = RuntimeOptions.newBuilder().setMaxObjectMemberCount(7).setMaxStringLength(5).setMaxArrayLength(3).build();
+		assertThat(options.getMaxArrayLength()).isEqualTo(3);
+		assertThat(options.getMaxObjectMemberCount()).isEqualTo(7);
+		assertThat(options.getMaxStringLength()).isEqualTo(5);
 	}
 
 	// --- maxArrayLength -----------------------------------------------------------------------
@@ -230,7 +207,7 @@ public class RuntimeOptionsTest {
 	public void lengthIsCountedInUtf16CodeUnits() throws Exception {
 		// An astral character is two chars but one codepoint, so the limit is stricter than jq's
 		// length would suggest -- and length itself must keep reporting codepoints.
-		assertThat(run("\"\uD83D\uDE00\" | length", new RuntimeOptions())).extracting(Object::toString).containsExactly("1");
+		assertThat(run("\"\uD83D\uDE00\" | length", RuntimeOptions.newBuilder().build())).extracting(Object::toString).containsExactly("1");
 		assertThatCode(() -> run("\"\uD83D\uDE00\" + \"\"", maxStringLength(2))).doesNotThrowAnyException();
 		assertThatThrownBy(() -> run("\"\uD83D\uDE00\" + \"\"", maxStringLength(1)))
 				.isInstanceOf(RuntimeLimitExceededException.class);
@@ -274,7 +251,7 @@ public class RuntimeOptionsTest {
 				Callable<Boolean> task = () -> {
 					List<JsonNode> out = new ArrayList<>();
 					try {
-						query.apply(Jackson2JsonProviderImpl.getInstance().createNull(), tight ? maxArrayLength(10) : new RuntimeOptions(), out::add);
+						query.apply(Jackson2JsonProviderImpl.getInstance().createNull(), tight ? maxArrayLength(10) : RuntimeOptions.newBuilder().build(), out::add);
 						return false;
 					} catch (RuntimeLimitExceededException e) {
 						return true;

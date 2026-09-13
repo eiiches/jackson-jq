@@ -20,7 +20,7 @@ class CompileOptionsTest {
 	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProviderImpl.getInstance();
 
 	private final List<Diagnostic> reported = new ArrayList<>();
-	private final CompileOptions options = new CompileOptions().setDiagnosticListener(reported::add);
+	private final CompileOptions options = CompileOptions.newBuilder().setDiagnosticListener(reported::add).build();
 
 	private Environment<JsonNode> environment() {
 		return environment(Versions.JQ_1_7);
@@ -160,7 +160,7 @@ class CompileOptionsTest {
 
 	@Test
 	void producesNoDiagnosticsWithoutAListener() throws JsonQueryException {
-		environment().compile("1, 2 | .", new CompileOptions());
+		environment().compile("1, 2 | .", CompileOptions.newBuilder().build());
 		environment().compile("1, 2 | .");
 
 		assertThat(reported).isEmpty();
@@ -174,14 +174,12 @@ class CompileOptionsTest {
 	}
 
 	@Test
-	void readsItsSettingsOnceAtCompileTime() throws JsonQueryException {
+	void canBeReusedForManyCompilations() throws JsonQueryException {
 		environment().compile("1, 2 | .", options);
 		assertThat(reported).hasSize(1);
 
-		// Reusing the same options object for a second query is fine, and silencing it afterwards
-		// does not retroactively unreport anything.
-		options.setDiagnosticListener(null);
+		// The options are immutable, so the same object drives every later compilation identically.
 		environment().compile("3, 4 | .", options);
-		assertThat(reported).hasSize(1);
+		assertThat(reported).hasSize(2);
 	}
 }

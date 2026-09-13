@@ -198,10 +198,11 @@ public class Main {
 	}
 
 	static RuntimeOptions createRuntimeOptions(CommandLine command) {
-		return new RuntimeOptions()
+		return RuntimeOptions.newBuilder()
 				.setMaxStringLength(parseLimit(command, OPT_MAX_STRING_LENGTH))
 				.setMaxArrayLength(parseLimit(command, OPT_MAX_ARRAY_LENGTH))
-				.setMaxObjectMemberCount(parseLimit(command, OPT_MAX_OBJECT_MEMBER_COUNT));
+				.setMaxObjectMemberCount(parseLimit(command, OPT_MAX_OBJECT_MEMBER_COUNT))
+				.build();
 	}
 
 	private static int parseLimit(CommandLine command, Option option) {
@@ -300,9 +301,9 @@ public class Main {
 		 * jq itself emits no warnings at all, so this is purely additive: it goes to stderr, leaving
 		 * stdout and the exit code byte-for-byte what jq would produce.
 		 */
-		CompileOptions compileOptions = new CompileOptions();
+		CompileOptions.Builder compileOptionsBuilder = CompileOptions.newBuilder();
 		if (!command.hasOption(OPT_NO_WARNINGS.getLongOpt())) {
-			compileOptions.setDiagnosticListener(diagnostic -> {
+			compileOptionsBuilder.setDiagnosticListener(diagnostic -> {
 				SourceLocation location = diagnostic.location();
 				String excerpt = location != null ? location.excerpt(query) : null;
 				System.err.println("jq: warning: " + diagnostic.message()
@@ -312,6 +313,7 @@ public class Main {
 					System.err.println(excerpt);
 			});
 		}
+		CompileOptions compileOptions = compileOptionsBuilder.build();
 		JsonQuery<N> jq = compileOrExit(env, query, compileOptions);
 		boolean compact = command.hasOption(OPT_COMPACT.getOpt());
 		boolean rawOutput = command.hasOption(OPT_RAW_OUTPUT.getOpt());

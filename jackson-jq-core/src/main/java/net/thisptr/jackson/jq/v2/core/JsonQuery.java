@@ -25,7 +25,7 @@ public interface JsonQuery<JsonNode> {
 	 * @throws JsonQueryException if the query fails, or if {@code bindings} does not match what the query was compiled against
 	 * @throws RuntimeLimitExceededException if the query exceeds a limit set by {@code options}
 	 */
-	void apply(JsonNode in, RuntimeOptions options, JsonQueryBindings<JsonNode> bindings, Consumer<? super JsonNode> output) throws JsonQueryException;
+	void apply(JsonNode in, RuntimeOptions options, RuntimeBindings<JsonNode> bindings, Consumer<? super JsonNode> output) throws JsonQueryException;
 
 	/**
 	 * Runs this query against {@code in} with no bindings.
@@ -37,7 +37,7 @@ public interface JsonQuery<JsonNode> {
 	 * @throws RuntimeLimitExceededException if the query exceeds a limit set by {@code options}
 	 */
 	default void apply(JsonNode in, RuntimeOptions options, Consumer<? super JsonNode> output) throws JsonQueryException {
-		apply(in, options, JsonQueryBindings.empty(), output);
+		apply(in, options, RuntimeBindings.getDefaultInstance(), output);
 	}
 
 	/**
@@ -48,8 +48,8 @@ public interface JsonQuery<JsonNode> {
 	 * @param output receives each output value
 	 * @throws JsonQueryException if the query fails, or if {@code bindings} does not match what the query was compiled against
 	 */
-	default void apply(JsonNode in, JsonQueryBindings<JsonNode> bindings, Consumer<? super JsonNode> output) throws JsonQueryException {
-		apply(in, RuntimeOptions.DEFAULT, bindings, output);
+	default void apply(JsonNode in, RuntimeBindings<JsonNode> bindings, Consumer<? super JsonNode> output) throws JsonQueryException {
+		apply(in, RuntimeOptions.getDefaultInstance(), bindings, output);
 	}
 
 	/**
@@ -60,6 +60,6 @@ public interface JsonQuery<JsonNode> {
 	 * @throws JsonQueryException if the query fails, or if it references a variable or function that was declared without a value
 	 */
 	default void apply(JsonNode in, Consumer<? super JsonNode> output) throws JsonQueryException {
-		apply(in, RuntimeOptions.DEFAULT, JsonQueryBindings.empty(), output);
+		apply(in, RuntimeOptions.getDefaultInstance(), RuntimeBindings.getDefaultInstance(), output);
 	}
 }

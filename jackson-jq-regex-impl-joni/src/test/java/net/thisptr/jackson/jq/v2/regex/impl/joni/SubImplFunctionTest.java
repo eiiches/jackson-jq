@@ -76,14 +76,14 @@ public class SubImplFunctionTest {
 	public void gsubIsBoundedByTheMaxStringLength() throws Exception {
 		// Every input here is tiny; it is the replacement that multiplies them out -- four matches of
 		// one character each, replaced by ten, make forty.
-		assertThatThrownBy(() -> apply("gsub(\"a\"; \"xxxxxxxxxx\")", "aaaa", new RuntimeOptions().setMaxStringLength(39)))
+		assertThatThrownBy(() -> apply("gsub(\"a\"; \"xxxxxxxxxx\")", "aaaa", RuntimeOptions.newBuilder().setMaxStringLength(39).build()))
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum string length of 39");
-		assertThatCode(() -> apply("gsub(\"a\"; \"xxxxxxxxxx\")", "aaaa", new RuntimeOptions().setMaxStringLength(40))).doesNotThrowAnyException();
+		assertThatCode(() -> apply("gsub(\"a\"; \"xxxxxxxxxx\")", "aaaa", RuntimeOptions.newBuilder().setMaxStringLength(40).build())).doesNotThrowAnyException();
 	}
 
 	private static List<JsonNode> apply(String queryText, String input) throws Exception {
-		return apply(queryText, input, new RuntimeOptions());
+		return apply(queryText, input, RuntimeOptions.newBuilder().build());
 	}
 
 	private static List<JsonNode> apply(String queryText, String input, RuntimeOptions options) throws Exception {
@@ -91,7 +91,7 @@ public class SubImplFunctionTest {
 	}
 
 	private static List<JsonNode> apply(String queryText, String input, Version version) throws Exception {
-		return apply(queryText, input, new RuntimeOptions(), version);
+		return apply(queryText, input, RuntimeOptions.newBuilder().build(), version);
 	}
 
 	private static List<JsonNode> apply(String queryText, String input, RuntimeOptions options, Version version) throws Exception {

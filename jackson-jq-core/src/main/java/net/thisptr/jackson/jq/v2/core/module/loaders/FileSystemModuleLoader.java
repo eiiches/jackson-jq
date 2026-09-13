@@ -147,7 +147,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		// A module read off the search path is somebody else's library, so it is compiled with
 		// default options -- the caller asked for diagnostics about their own query, not about
 		// the jq files it happens to import.
-		Expression<StackFrame, JsonNode> compiled = Compiler.compileModule(moduleEnv, new CompileOptions(), module, ast);
+		Expression<StackFrame, JsonNode> compiled = Compiler.compileModule(moduleEnv, CompileOptions.newBuilder().build(), module, ast);
 		if (!(compiled instanceof RootExpression))
 			throw new IllegalStateException("Compiler did not produce a root expression");
 
