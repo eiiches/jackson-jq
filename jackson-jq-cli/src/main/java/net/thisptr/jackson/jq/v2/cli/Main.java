@@ -310,7 +310,7 @@ public class Main {
 			});
 		}
 		CompileOptions compileOptions = compileOptionsBuilder.build();
-		JsonQuery<N> jq = compileOrExit(env, query, compileOptions);
+		JsonQuery<N> jq = compileOrExit(env, query, compileOptions).withRuntimeOptions(runtimeOptions);
 		boolean compact = command.hasOption(OPT_COMPACT.getOpt());
 		boolean rawOutput = command.hasOption(OPT_RAW_OUTPUT.getOpt());
 		boolean nullInput = command.hasOption(OPT_NULL_INPUT.getOpt());
@@ -340,7 +340,7 @@ public class Main {
 				command.hasOption(OPT_SLURP.getOpt()));
 		input.readAll(tree -> {
 			try {
-				jq.apply(tree, runtimeOptions, out -> {
+				jq.apply(tree, out -> {
 					if (jsonProvider.isString(out) && rawOutput) {
 						System.out.println(jsonProvider.getString(out));
 					} else if (compact) {

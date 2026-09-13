@@ -231,7 +231,7 @@ public class EnvironmentFunctionLoaderTest {
 				.build();
 		List<JsonNode> out = new ArrayList<>();
 
-		env.compile("countdown(2)").apply(env.getJsonProvider().createNull(), bindings, out::add);
+		env.compile("countdown(2)").withRuntimeBindings(bindings).apply(env.getJsonProvider().createNull(), out::add);
 
 		assertThat(out).extracting(JsonNode::asText).containsExactly("declared-value");
 	}
@@ -355,8 +355,7 @@ public class EnvironmentFunctionLoaderTest {
 				.setFunction(signature, constantFunction("override"))
 				.build();
 
-		assertThatThrownBy(() -> env.compile("greet").apply(env.getJsonProvider().createNull(), bindings, value -> {
-		}))
+		assertThatThrownBy(() -> env.compile("greet").withRuntimeBindings(bindings))
 				.hasMessageContaining("fixed value in the Environment");
 	}
 

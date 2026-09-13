@@ -33,14 +33,14 @@ public class RuntimeVariableTest {
 				.setVariable("multiplier", IntNode.valueOf(2))
 				.build();
 		List<JsonNode> fixedOutput = new ArrayList<>();
-		query.apply(input, fixedBindings, fixedOutput::add);
+		query.withRuntimeBindings(fixedBindings).apply(input, fixedOutput::add);
 		assertThat(fixedOutput).containsExactly(IntNode.valueOf(42));
 
 		RuntimeBindings<JsonNode> suppliedBindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("multiplier", () -> MAPPER.valueToTree(3))
 				.build();
 		List<JsonNode> suppliedOutput = new ArrayList<>();
-		query.apply(input, suppliedBindings, suppliedOutput::add);
+		query.withRuntimeBindings(suppliedBindings).apply(input, suppliedOutput::add);
 		assertThat(suppliedOutput).containsExactly(IntNode.valueOf(63));
 	}
 }

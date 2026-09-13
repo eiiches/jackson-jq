@@ -29,7 +29,7 @@ public class RuntimeOptionsTest {
 
 	private static List<JsonNode> run(String q, RuntimeOptions options) throws Exception {
 		List<JsonNode> out = new ArrayList<>();
-		ENV.compile(q).apply(Jackson2JsonProvider.getInstance().createNull(), options, out::add);
+		ENV.compile(q).withRuntimeOptions(options).apply(Jackson2JsonProvider.getInstance().createNull(), out::add);
 		return out;
 	}
 
@@ -234,7 +234,7 @@ public class RuntimeOptionsTest {
 
 		JsonQuery<JsonNode> query = env.compile("observed_max_array_length");
 		List<JsonNode> out = new ArrayList<>();
-		query.apply(Jackson2JsonProvider.getInstance().createNull(), maxArrayLength(12), out::add);
+		query.withRuntimeOptions(maxArrayLength(12)).apply(Jackson2JsonProvider.getInstance().createNull(), out::add);
 		assertThat(out).containsExactly(Jackson2JsonProvider.getInstance().createNumber(12));
 	}
 
@@ -251,7 +251,8 @@ public class RuntimeOptionsTest {
 				Callable<Boolean> task = () -> {
 					List<JsonNode> out = new ArrayList<>();
 					try {
-						query.apply(Jackson2JsonProvider.getInstance().createNull(), tight ? maxArrayLength(10) : RuntimeOptions.newBuilder().build(), out::add);
+						query.withRuntimeOptions(tight ? maxArrayLength(10) : RuntimeOptions.newBuilder().build())
+								.apply(Jackson2JsonProvider.getInstance().createNull(), out::add);
 						return false;
 					} catch (RuntimeLimitExceededException e) {
 						return true;

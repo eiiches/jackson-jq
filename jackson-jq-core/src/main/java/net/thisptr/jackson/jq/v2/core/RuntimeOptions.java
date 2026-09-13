@@ -1,10 +1,10 @@
 package net.thisptr.jackson.jq.v2.core;
 
 /**
- * Settings for a single call to {@link JsonQuery#apply(Object, RuntimeOptions, RuntimeBindings, java.util.function.Consumer)}.
+ * Settings a query runs under, applied with {@link JsonQuery#withRuntimeOptions(RuntimeOptions)}.
  * <p>
- * Instances are immutable, so one can be reused for any number of invocations, including concurrent
- * ones. Build one with {@link #newBuilder()}.
+ * Instances are immutable, so one can be reused for any number of queries and invocations, including
+ * concurrent ones. Build one with {@link #newBuilder()}.
  */
 public final class RuntimeOptions {
 	private static final RuntimeOptions DEFAULT = new RuntimeOptions(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
@@ -17,12 +17,6 @@ public final class RuntimeOptions {
 		this.maxArrayLength = maxArrayLength;
 		this.maxObjectMemberCount = maxObjectMemberCount;
 		this.maxStringLength = maxStringLength;
-	}
-
-	// Package-private: JsonQuery's no-options overloads need an instance to pass to apply(), but
-	// callers never do -- they use the apply() overloads that take no options.
-	static RuntimeOptions getDefaultInstance() {
-		return DEFAULT;
 	}
 
 	/**

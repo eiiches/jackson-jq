@@ -10,60 +10,54 @@ import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
  * <p>
  * A query may produce zero, one, or many output values for a single input; each is handed to
  * {@code output} in the order jq itself would print them, before {@code apply} returns.
+ * <p>
+ * Instances are immutable and safe to use from several threads at once.
+ * {@link #withRuntimeOptions} and {@link #withRuntimeBindings} do not modify the query they are called
+ * on: each returns a new query carrying that setting, sharing the compiled expression with the original.
+ * There is no terminal build step -- every query along the way, configured or not, can be applied as it
+ * is:
+ *
+ * <pre>{@code
+ * JsonQuery<JsonNode> query = env.compile(".foo")
+ *         .withRuntimeOptions(options)
+ *         .withRuntimeBindings(bindings);
+ * for (JsonNode in : inputs)
+ *     query.apply(in, output::add);
+ * }</pre>
  *
  * @param <JsonNode> the JSON node type
  */
 public interface JsonQuery<JsonNode> {
 
 	/**
+	 * Returns a query that runs under {@code options}, replacing any previously set options.
+	 *
+	 * @param options settings for each invocation, including the limits it runs under
+	 * @return a new query; this one is left unchanged
+	 */
+	JsonQuery<JsonNode> withRuntimeOptions(RuntimeOptions options);
+
+	/**
+	 * Returns a query that runs with {@code bindings}, replacing any previously set bindings.
+	 * <p>
+	 * The bindings are checked against the query as this is called, so a binding the query cannot accept
+	 * is reported here rather than on the first input.
+	 *
+	 * @param bindings values for the variables and functions the {@link Environment} declared without one
+	 * @return a new query; this one is left unchanged
+	 * @throws JsonQueryException if {@code bindings} does not match what the query was compiled against
+	 */
+	JsonQuery<JsonNode> withRuntimeBindings(RuntimeBindings<JsonNode> bindings) throws JsonQueryException;
+
+	/**
 	 * Runs this query against {@code in}, passing every output value to {@code output}.
 	 *
 	 * @param in the input JSON node, bound to {@code .}
-	 * @param options settings for this invocation, including the limits it runs under
-	 * @param bindings values for the variables and functions the {@link Environment} declared without one
 	 * @param output receives each output value
-	 * @throws JsonQueryException if the query fails, or if {@code bindings} does not match what the query was compiled against;
-	 * other runtime exceptions and stack overflows during evaluation are wrapped in a {@code JsonQueryException}
-	 * @throws RuntimeLimitExceededException if the query exceeds a limit set by {@code options}
+	 * @throws JsonQueryException if the query fails, or if it references a variable or function that was
+	 * declared without a value and {@link #withRuntimeBindings} did not supply one; other runtime
+	 * exceptions and stack overflows during evaluation are wrapped in a {@code JsonQueryException}
+	 * @throws RuntimeLimitExceededException if the query exceeds a limit set by {@link #withRuntimeOptions}
 	 */
-	void apply(JsonNode in, RuntimeOptions options, RuntimeBindings<JsonNode> bindings, Consumer<? super JsonNode> output) throws JsonQueryException;
-
-	/**
-	 * Runs this query against {@code in} with no bindings.
-	 *
-	 * @param in the input JSON node, bound to {@code .}
-	 * @param options settings for this invocation, including the limits it runs under
-	 * @param output receives each output value
-	 * @throws JsonQueryException if the query fails, or if it references a variable or function that was declared without a value;
-	 * other runtime exceptions and stack overflows during evaluation are wrapped in a {@code JsonQueryException}
-	 * @throws RuntimeLimitExceededException if the query exceeds a limit set by {@code options}
-	 */
-	default void apply(JsonNode in, RuntimeOptions options, Consumer<? super JsonNode> output) throws JsonQueryException {
-		apply(in, options, RuntimeBindings.getDefaultInstance(), output);
-	}
-
-	/**
-	 * Runs this query against {@code in} with default options.
-	 *
-	 * @param in the input JSON node, bound to {@code .}
-	 * @param bindings values for the variables and functions the {@link Environment} declared without one
-	 * @param output receives each output value
-	 * @throws JsonQueryException if the query fails, or if {@code bindings} does not match what the query was compiled against;
-	 * other runtime exceptions and stack overflows during evaluation are wrapped in a {@code JsonQueryException}
-	 */
-	default void apply(JsonNode in, RuntimeBindings<JsonNode> bindings, Consumer<? super JsonNode> output) throws JsonQueryException {
-		apply(in, RuntimeOptions.getDefaultInstance(), bindings, output);
-	}
-
-	/**
-	 * Runs this query against {@code in} with default options and no bindings.
-	 *
-	 * @param in the input JSON node, bound to {@code .}
-	 * @param output receives each output value
-	 * @throws JsonQueryException if the query fails, or if it references a variable or function that was declared without a value;
-	 * other runtime exceptions and stack overflows during evaluation are wrapped in a {@code JsonQueryException}
-	 */
-	default void apply(JsonNode in, Consumer<? super JsonNode> output) throws JsonQueryException {
-		apply(in, RuntimeOptions.getDefaultInstance(), RuntimeBindings.getDefaultInstance(), output);
-	}
+	void apply(JsonNode in, Consumer<? super JsonNode> output) throws JsonQueryException;
 }
