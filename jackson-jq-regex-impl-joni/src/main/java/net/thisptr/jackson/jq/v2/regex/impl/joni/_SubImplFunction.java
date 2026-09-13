@@ -8,7 +8,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
 import org.joni.Matcher;
 import org.joni.Option;
@@ -28,7 +27,6 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-@AutoService(Function.class)
 @FunctionRegistration(name = "_sub_impl", nargs = 3)
 public class _SubImplFunction implements Function {
 	@Override

@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins;
 
 import java.util.List;
 
-import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
@@ -20,7 +19,6 @@ import net.thisptr.jackson.jq.v2.spi.path.RootPath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-@AutoService(Function.class)
 @FunctionRegistration(name = "path", nargs = 1)
 public class PathFunction implements Function {
 

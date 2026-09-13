@@ -86,7 +86,6 @@ JQ_JAVACOPTS = LINT_OPTS + ERROR_PRONE_OPTS + NULLAWAY_OPTS + ERROR_PRONE_EXCLUD
 
 JQ_PLUGINS = [
     "//build-tools/bazel:nullaway",
-    "//build-tools/bazel:auto_service",
 ]
 
 def javacopts(release = 8, extra = []):

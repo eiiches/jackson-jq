@@ -30,7 +30,6 @@ def coordinates(artifact_id):
 
 # Dependencies the Maven parent pom gives to every module.
 INHERITED_DEPS = [
-    "@maven//:com_google_auto_service_auto_service_annotations",
     "@maven//:com_google_errorprone_error_prone_annotations",
     "@maven//:org_jspecify_jspecify",
 ]

@@ -7,8 +7,6 @@
     "com.fasterxml.jackson.core:jackson-core": -2136216747,
     "com.fasterxml.jackson.core:jackson-databind": -647579619,
     "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml": 1804531274,
-    "com.google.auto.service:auto-service": -1729498094,
-    "com.google.auto.service:auto-service-annotations": -843120535,
     "com.google.code.findbugs:jsr305": 495355163,
     "com.google.code.gson:gson": -1136023703,
     "com.google.errorprone:error_prone_annotations": 911823543,
@@ -52,12 +50,6 @@
     "com.fasterxml.jackson.core:jackson-databind:jar:sources": 779577142,
     "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml": 1998256097,
     "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:sources": 597390101,
-    "com.google.auto.service:auto-service": -146094598,
-    "com.google.auto.service:auto-service-annotations": 262983930,
-    "com.google.auto.service:auto-service-annotations:jar:sources": -1392999316,
-    "com.google.auto.service:auto-service:jar:sources": -1296332334,
-    "com.google.auto:auto-common": -1659028823,
-    "com.google.auto:auto-common:jar:sources": -542679945,
     "com.google.code.findbugs:jsr305": 870839855,
     "com.google.code.findbugs:jsr305:jar:sources": -935881202,
     "com.google.code.gson:gson": 232429063,
@@ -218,27 +210,6 @@
         "sources": "09425e7d5a89546558263f18fd97492a6d045df1dd2a6ff575d0ed85b6d7b81e"
       },
       "version": "2.22.1"
-    },
-    "com.google.auto.service:auto-service": {
-      "shasums": {
-        "jar": "1f48f451503e623daba7d9ed368cca0f81e1e3815653a4560113e12c0129ebd5",
-        "sources": "6965a4761538f4073befe2967e11e7f6f2ce674a5c527de3c91e3ba88ec07432"
-      },
-      "version": "1.1.1"
-    },
-    "com.google.auto.service:auto-service-annotations": {
-      "shasums": {
-        "jar": "16a76dd00a2650568447f5d6e3a9e2c809d9a42367d56b45215cfb89731f4d24",
-        "sources": "371bc06d861278f8048157b5172fd5e830410cdd9cddf1cca02cd9ead7b64fff"
-      },
-      "version": "1.1.1"
-    },
-    "com.google.auto:auto-common": {
-      "shasums": {
-        "jar": "f43f29fe2a6ebaf04b2598cdeec32a4e346d49a9404e990f5fc19c19f3a28d0e",
-        "sources": "6802fc6e48f84cacadab9418bc8eba732f4c6a4189fc8569b1f619cb88112b25"
-      },
-      "version": "1.2.1"
     },
     "com.google.code.findbugs:jsr305": {
       "shasums": {
@@ -641,14 +612,6 @@
       "com.fasterxml.jackson.core:jackson-databind",
       "org.yaml:snakeyaml"
     ],
-    "com.google.auto.service:auto-service": [
-      "com.google.auto.service:auto-service-annotations",
-      "com.google.auto:auto-common",
-      "com.google.guava:guava"
-    ],
-    "com.google.auto:auto-common": [
-      "com.google.guava:guava"
-    ],
     "com.google.code.gson:gson": [
       "com.google.errorprone:error_prone_annotations"
     ],
@@ -985,15 +948,6 @@
       "com.fasterxml.jackson.dataformat.yaml",
       "com.fasterxml.jackson.dataformat.yaml.snakeyaml.error",
       "com.fasterxml.jackson.dataformat.yaml.util"
-    ],
-    "com.google.auto.service:auto-service": [
-      "com.google.auto.service.processor"
-    ],
-    "com.google.auto.service:auto-service-annotations": [
-      "com.google.auto.service"
-    ],
-    "com.google.auto:auto-common": [
-      "com.google.auto.common"
     ],
     "com.google.code.findbugs:jsr305": [
       "javax.annotation",
@@ -1642,12 +1596,6 @@
       "com.fasterxml.jackson.core:jackson-databind:jar:sources",
       "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml",
       "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:sources",
-      "com.google.auto.service:auto-service",
-      "com.google.auto.service:auto-service-annotations",
-      "com.google.auto.service:auto-service-annotations:jar:sources",
-      "com.google.auto.service:auto-service:jar:sources",
-      "com.google.auto:auto-common",
-      "com.google.auto:auto-common:jar:sources",
       "com.google.code.findbugs:jsr305",
       "com.google.code.findbugs:jsr305:jar:sources",
       "com.google.code.gson:gson",
@@ -1792,16 +1740,6 @@
       ],
       "com.fasterxml.jackson.core.ObjectCodec": [
         "com.fasterxml.jackson.dataformat.yaml.YAMLMapper"
-      ]
-    },
-    "com.google.auto.service:auto-service": {
-      "javax.annotation.processing.Processor": [
-        "com.google.auto.service.processor.AutoServiceProcessor"
-      ]
-    },
-    "com.google.auto.service:auto-service:jar:sources": {
-      "javax.annotation.processing.Processor": [
-        "com.google.auto.service.processor.AutoServiceProcessor"
       ]
     },
     "com.uber.nullaway:nullaway": {

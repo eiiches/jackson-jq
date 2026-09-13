@@ -3,8 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.auto.service.AutoService;
-
 import net.thisptr.jackson.jq.v2.core.internal.commons.strings.Strings;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
@@ -16,7 +14,6 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-@AutoService(Function.class)
 @FunctionRegistration(name = "split", nargs = 1)
 public class SplitFunction implements Function {
 	@Override

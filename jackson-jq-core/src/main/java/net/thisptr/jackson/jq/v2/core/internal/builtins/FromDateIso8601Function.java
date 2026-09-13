@@ -4,8 +4,6 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
-import com.google.auto.service.AutoService;
-
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
@@ -20,7 +18,6 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-@AutoService(Function.class)
 @FunctionRegistration(name = "fromdateiso8601", nargs = 0)
 public class FromDateIso8601Function implements Function {
 	@Override

@@ -2,8 +2,6 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins.math;
 
 import java.util.List;
 
-import com.google.auto.service.AutoService;
-
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -32,7 +30,6 @@ public class MathFunctions {
 		protected abstract double f(double f);
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "atan", nargs = 0)
 	public static class AtanFunction extends AbstractMathFunction {
 		@Override
@@ -41,7 +38,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "tan", nargs = 0)
 	public static class TanFunction extends AbstractMathFunction {
 		@Override
@@ -50,7 +46,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "tanh", nargs = 0)
 	public static class TanhFunction extends AbstractMathFunction {
 		@Override
@@ -59,7 +54,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "acos", nargs = 0)
 	public static class AcosFunction extends AbstractMathFunction {
 		@Override
@@ -68,7 +62,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "cos", nargs = 0)
 	public static class CosFunction extends AbstractMathFunction {
 		@Override
@@ -77,7 +70,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "cosh", nargs = 0)
 	public static class CoshFunction extends AbstractMathFunction {
 		@Override
@@ -86,7 +78,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "floor", nargs = 0)
 	public static class FloorFunction extends AbstractMathFunction {
 		@Override
@@ -95,7 +86,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "ceil", nargs = 0, version = @VersionRangeSpec(
 			min = @VersionSpec(major = 1, minor = 6, patch = 0)
 	))
@@ -106,7 +96,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "round", nargs = 0, version = @VersionRangeSpec(
 			min = @VersionSpec(major = 1, minor = 6, patch = 0)
 	))
@@ -117,7 +106,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "asin", nargs = 0)
 	public static class AsinFunction extends AbstractMathFunction {
 		@Override
@@ -126,7 +114,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "sin", nargs = 0)
 	public static class SinFunction extends AbstractMathFunction {
 		@Override
@@ -135,7 +122,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "sinh", nargs = 0)
 	public static class SinhFunction extends AbstractMathFunction {
 		@Override
@@ -144,7 +130,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "cbrt", nargs = 0)
 	public static class CbrtFunction extends AbstractMathFunction {
 		@Override
@@ -153,7 +138,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "sqrt", nargs = 0)
 	public static class SqrtFunction extends AbstractMathFunction {
 		@Override
@@ -162,7 +146,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "log2", nargs = 0)
 	public static class Log2Function extends AbstractMathFunction {
 		@Override
@@ -171,7 +154,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "log", nargs = 0)
 	public static class LogFunction extends AbstractMathFunction {
 		@Override
@@ -180,7 +162,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "log10", nargs = 0)
 	public static class Log10Function extends AbstractMathFunction {
 		@Override
@@ -189,7 +170,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "log1p", nargs = 0, version = @VersionRangeSpec(
 			min = @VersionSpec(major = 1, minor = 6, patch = 0)
 	))
@@ -200,7 +180,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "exp", nargs = 0)
 	public static class ExpFunction extends AbstractMathFunction {
 		@Override
@@ -209,7 +188,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "expm1", nargs = 0, version = @VersionRangeSpec(
 			min = @VersionSpec(major = 1, minor = 6, patch = 0)
 	))
@@ -220,7 +198,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "exp2", nargs = 0)
 	public static class Exp2Function extends AbstractMathFunction {
 		@Override
@@ -229,7 +206,6 @@ public class MathFunctions {
 		}
 	}
 
-	@AutoService(Function.class)
 	@FunctionRegistration(name = "exp10", nargs = 0, version = @VersionRangeSpec(
 			min = @VersionSpec(major = 1, minor = 6, patch = 0)
 	))

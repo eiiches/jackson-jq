@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.auto.service.AutoService;
-
 import net.thisptr.jackson.jq.v2.core.internal.commons.strings.Strings;
 import net.thisptr.jackson.jq.v2.core.internal.exception.IllegalJsonInputException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
@@ -20,7 +18,6 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-@AutoService(Function.class)
 @FunctionRegistration(name = "@sh", nargs = 0)
 public class AtShFunction implements Function {
 	@Override

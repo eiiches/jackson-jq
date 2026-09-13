@@ -6,8 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.auto.service.AutoService;
-
 import net.thisptr.jackson.jq.v2.core.function.loaders.ClassPathFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -22,7 +20,6 @@ import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-@AutoService(Function.class)
 @FunctionRegistration(name = "builtins", nargs = 0, version = @VersionRangeSpec(
 		min = @VersionSpec(major = 1, minor = 6, patch = 0)
 ))

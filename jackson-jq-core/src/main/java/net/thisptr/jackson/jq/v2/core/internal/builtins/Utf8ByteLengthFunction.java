@@ -2,8 +2,6 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins;
 
 import java.util.List;
 
-import com.google.auto.service.AutoService;
-
 import net.thisptr.jackson.jq.v2.core.internal.commons.strings.UnicodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
@@ -19,7 +17,6 @@ import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-@AutoService(Function.class)
 @FunctionRegistration(name = "utf8bytelength", nargs = 0, version = @VersionRangeSpec(
 		min = @VersionSpec(major = 1, minor = 6, patch = 0)
 ))

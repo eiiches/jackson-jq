@@ -3,8 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.auto.service.AutoService;
-
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -17,7 +15,6 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-@AutoService(Function.class)
 @FunctionRegistration(name = "explode", nargs = 0)
 public class ExplodeFunction implements Function {
 	@Override

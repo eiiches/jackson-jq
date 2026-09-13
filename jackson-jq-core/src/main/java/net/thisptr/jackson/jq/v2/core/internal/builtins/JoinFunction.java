@@ -3,7 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
@@ -21,7 +20,6 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-@AutoService(Function.class)
 @FunctionRegistration(name = "join", nargs = 1)
 public class JoinFunction implements Function {
 	@Override

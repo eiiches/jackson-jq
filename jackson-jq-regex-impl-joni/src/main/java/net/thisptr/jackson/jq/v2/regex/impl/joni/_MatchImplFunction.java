@@ -6,7 +6,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.auto.service.AutoService;
 import com.google.errorprone.annotations.Var;
 import org.joni.Matcher;
 import org.joni.Option;
@@ -23,7 +22,6 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-@AutoService(Function.class)
 @FunctionRegistration(name = "_match_impl", nargs = 3)
 public class _MatchImplFunction implements Function {
 	@Override

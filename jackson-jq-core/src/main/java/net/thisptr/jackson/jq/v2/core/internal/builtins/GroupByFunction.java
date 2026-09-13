@@ -5,8 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TreeMap;
 
-import com.google.auto.service.AutoService;
-
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
@@ -21,7 +19,6 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-@AutoService(Function.class)
 @FunctionRegistration(name = "group_by", nargs = 1)
 public class GroupByFunction implements Function {
 	@Override

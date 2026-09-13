@@ -4,12 +4,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Provides;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -40,7 +43,8 @@ import java.util.zip.ZipEntry;
  *
  * <p>All input jars are merged into the root namespace. For {@code META-INF/services/*},
  * service provider lines are merged in order with duplicates removed. Duplicate class or
- * resource files with identical content are deduplicated.
+ * resource files with identical content are deduplicated. Providers declared by the effective
+ * {@code module-info.class} are added to the corresponding root service files.
  *
  * <p>An overlay whose file is a jar contributes all of its entries; any other file is
  * placed at {@code META-INF/versions/N/<file name>}. Output is deterministic: entries are
@@ -131,6 +135,10 @@ public final class MultiReleaseJar {
 			}
 		}
 
+		ModuleDescriptor descriptor = ModuleInfo.read(entries);
+		if (descriptor != null)
+			addModuleServices(descriptor, services);
+
 		// Write merged services into entries
 		for (Map.Entry<String, Set<String>> service : services.entrySet()) {
 			StringBuilder sb = new StringBuilder();
@@ -167,6 +175,15 @@ public final class MultiReleaseJar {
 				jar.write(entry.getValue());
 				jar.closeEntry();
 			}
+		}
+	}
+
+	static void addModuleServices(ModuleDescriptor descriptor, Map<String, Set<String>> services) {
+		List<Provides> providesClauses = new ArrayList<>(descriptor.provides());
+		providesClauses.sort(Comparator.comparing(Provides::service));
+		for (Provides provides : providesClauses) {
+			services.computeIfAbsent(SERVICES_PREFIX + provides.service(), ignored -> new LinkedHashSet<>())
+					.addAll(provides.providers());
 		}
 	}
 

@@ -3,8 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.auto.service.AutoService;
-
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
@@ -19,7 +17,6 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-@AutoService(Function.class)
 @FunctionRegistration(name = "implode", nargs = 0)
 public class ImplodeFunction implements Function {
 	@Override

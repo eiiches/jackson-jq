@@ -3,7 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins;
 import java.math.BigDecimal;
 import java.util.List;
 
-import com.google.auto.service.AutoService;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
@@ -20,7 +19,6 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-@AutoService(Function.class)
 @FunctionRegistration(name = "tonumber", nargs = 0)
 public class ToNumberFunction implements Function {
 	@Override
