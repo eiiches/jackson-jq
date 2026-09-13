@@ -11,3 +11,9 @@
   out:
   - 'string ("a") and number (1) cannot be added'
   v: '[1.5, )'
+
+- q: '[("abc" | gsub(""; "X")), ("" | gsub(""; "X")), ("abc" | gsub("(?=b)"; "X")), ("aaa" | gsub("a*"; "X"))]'
+  in: null
+  out:
+  - ["XaXbXcX", "X", "aXbc", "XX"]
+  v: '[1.7, )'

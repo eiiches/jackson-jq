@@ -14,6 +14,7 @@ import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -41,6 +42,13 @@ public class SubImplFunctionTest {
 		List<JsonNode> out = apply("gsub(\"a\"; \"\")", repeat("a", 10000));
 
 		assertThat(out).extracting(JSON_PROVIDER::getString).containsExactly("");
+	}
+
+	@Test
+	public void gsubAdvancesPastZeroWidthMatchesByCodePointInEveryVersion() throws Exception {
+		for (Version version : Versions.versions()) {
+			assertThat(apply("gsub(\"\"; \"X\")", "a😀b", version)).extracting(JSON_PROVIDER::getString).containsExactly("XaX😀XbX");
+		}
 	}
 
 	@Test
@@ -79,7 +87,15 @@ public class SubImplFunctionTest {
 	}
 
 	private static List<JsonNode> apply(String queryText, String input, RuntimeOptions options) throws Exception {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_8_2).build();
+		return apply(queryText, input, options, Versions.JQ_1_8_2);
+	}
+
+	private static List<JsonNode> apply(String queryText, String input, Version version) throws Exception {
+		return apply(queryText, input, new RuntimeOptions(), version);
+	}
+
+	private static List<JsonNode> apply(String queryText, String input, RuntimeOptions options, Version version) throws Exception {
+		Environment<JsonNode> environment = new EnvironmentBuilder<>(JSON_PROVIDER, version).build();
 		JsonQuery<JsonNode> query = environment.compile(queryText);
 		List<JsonNode> out = new ArrayList<>();
 		query.apply(JSON_PROVIDER.createString(input), options, out::add);

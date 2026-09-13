@@ -160,12 +160,13 @@ public class _SubImplFunction implements Function {
 
 		byte[] inputBytes = inputText.getBytes(StandardCharsets.UTF_8);
 		Matcher m = pattern.regex.matcher(inputBytes);
-		@Var int offset = 0;
-		do {
-			if (m.search(offset, inputBytes.length, Option.NONE) < 0)
+		@Var int literalOffset = 0;
+		@Var int searchOffset = 0;
+		while (true) {
+			if (m.search(searchOffset, inputBytes.length, Option.NONE) < 0)
 				break;
 
-			result.add(jsonProvider.createString(new String(inputBytes, offset, m.getBegin() - offset, StandardCharsets.UTF_8)));
+			result.add(jsonProvider.createString(new String(inputBytes, literalOffset, m.getBegin() - literalOffset, StandardCharsets.UTF_8)));
 
 			Map<String, JsonNode> captures = new LinkedHashMap<>();
 			Region regions = m.getRegion();
@@ -185,10 +186,20 @@ public class _SubImplFunction implements Function {
 
 			result.add(jsonProvider.createObject(captures));
 
-			offset = m.getEnd();
-		} while (pattern.global && offset != inputBytes.length);
+			literalOffset = m.getEnd();
+			if (!pattern.global)
+				break;
 
-		result.add(jsonProvider.createString(new String(inputBytes, offset, inputBytes.length - offset, StandardCharsets.UTF_8)));
+			if (m.getBegin() != m.getEnd()) {
+				searchOffset = m.getEnd();
+				continue;
+			}
+			if (m.getEnd() == inputBytes.length)
+				break;
+			searchOffset = m.getEnd() + UnicodeUtils.utf8CharLength(inputBytes[m.getEnd()]);
+		}
+
+		result.add(jsonProvider.createString(new String(inputBytes, literalOffset, inputBytes.length - literalOffset, StandardCharsets.UTF_8)));
 		return result;
 	}
 }
