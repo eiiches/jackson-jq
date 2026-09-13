@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.json.JsonValue;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.jakarta.JakartaJsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jakarta.JakartaJsonProvider;
 import net.thisptr.jackson.jq.v2.test.AbstractJsonQueryTest;
 
 /**
@@ -17,11 +17,11 @@ public class JakartaJsonQueryTest extends AbstractJsonQueryTest<JsonValue> {
 
 	@Override
 	protected JsonProvider<JsonValue> getJsonProvider() {
-		return JakartaJsonProviderImpl.getInstance();
+		return JakartaJsonProvider.getInstance();
 	}
 
 	@Override
 	protected JsonValue parseTestNode(JsonNode node) {
-		return JakartaJsonProviderImpl.getInstance().parse(node.toString());
+		return JakartaJsonProvider.getInstance().parse(node.toString());
 	}
 }

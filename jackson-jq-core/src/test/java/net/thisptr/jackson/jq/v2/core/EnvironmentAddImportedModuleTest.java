@@ -16,7 +16,7 @@ import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
@@ -58,10 +58,10 @@ public class EnvironmentAddImportedModuleTest {
 
 	@Test
 	public void testImportedModuleUsableWithoutImportStatement() throws Exception {
-		Environment<JsonNode> tempEnv = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
+		Environment<JsonNode> tempEnv = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
 		Module mathModule = tempEnv.compileModule("def square($x): $x * $x;");
 
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.addImportedModule("math", mathModule)
 				.build();
 
@@ -75,14 +75,14 @@ public class EnvironmentAddImportedModuleTest {
 
 	@Test
 	public void testExplicitImportShadowsBuilderRegisteredModule() throws Exception {
-		Environment<JsonNode> tempEnv = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
+		Environment<JsonNode> tempEnv = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
 		Module builderModule = tempEnv.compileModule("def bar: 1;");
 		Module loaderModule = tempEnv.compileModule("def bar: 2;");
 
 		InMemoryModuleLoader moduleLoader = new InMemoryModuleLoader();
 		moduleLoader.put("foo", loaderModule);
 
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.setModuleLoader(moduleLoader)
 				.addImportedModule("foo", builderModule)
 				.build();
@@ -110,7 +110,7 @@ public class EnvironmentAddImportedModuleTest {
 			}
 		};
 
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.addImportedModule("m", variadicModule)
 				.build();
 
@@ -124,7 +124,7 @@ public class EnvironmentAddImportedModuleTest {
 
 	@Test
 	public void testUnregisteredModuleAliasStillFails() {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
 
 		assertThatThrownBy(() -> env.compile("bogus::bar"))
 				.isInstanceOf(JsonQueryException.class);

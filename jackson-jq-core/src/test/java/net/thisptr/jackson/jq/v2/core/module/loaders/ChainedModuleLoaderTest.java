@@ -15,7 +15,7 @@ import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.Maybe;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
@@ -81,7 +81,7 @@ public class ChainedModuleLoaderTest {
 		}
 	}
 
-	private static final Module MODULE = new EnvironmentBuilder<JsonNode>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+	private static final Module MODULE = new EnvironmentBuilder<JsonNode>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 			.build()
 			.compileModule("def one: 1;");
 	private static final JsonNode DATA = IntNode.valueOf(7);
@@ -125,7 +125,7 @@ public class ChainedModuleLoaderTest {
 	public void testImportThroughChainResolvesFromSecondLoader() throws Exception {
 		ModuleLoader<JsonNode> chain = new ChainedModuleLoader<>(new MissingModuleLoader(), new FixedModuleLoader(MODULE, DATA));
 
-		JsonQuery<JsonNode> expr = new EnvironmentBuilder<JsonNode>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+		JsonQuery<JsonNode> expr = new EnvironmentBuilder<JsonNode>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.setModuleLoader(chain)
 				.build()
 				.compile("import \"foo\" as foo; import \"bar\" as $bar; [foo::one, $bar::bar]");

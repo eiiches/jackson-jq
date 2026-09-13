@@ -13,7 +13,7 @@ import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.RuntimeBindings;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
-import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,7 +22,7 @@ public class RuntimeVariableTest {
 
 	@Test
 	public void reusesQueryWithDifferentBindings() {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProviderImpl.getInstance(), Versions.JQ_1_8_2)
+		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2)
 				.declareVariable("multiplier")
 				.build();
 

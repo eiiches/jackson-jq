@@ -31,19 +31,19 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.NumberType;
 
-public class GsonJsonProviderImpl implements JsonProvider<JsonElement> {
-	private static final GsonJsonProviderImpl DEFAULT_INSTANCE = new GsonJsonProviderImpl(GsonUtils.createJqCompatibleGson());
+public class GsonJsonProvider implements JsonProvider<JsonElement> {
+	private static final GsonJsonProvider DEFAULT_INSTANCE = new GsonJsonProvider(GsonUtils.createJqCompatibleGson());
 
 	private final Gson gson;
 
-	public GsonJsonProviderImpl(Gson gson) {
+	public GsonJsonProvider(Gson gson) {
 		this.gson = gson;
 	}
 
 	/**
 	 * Returns a singleton instance using a default Gson.
 	 */
-	public static GsonJsonProviderImpl getInstance() {
+	public static GsonJsonProvider getInstance() {
 		return DEFAULT_INSTANCE;
 	}
 

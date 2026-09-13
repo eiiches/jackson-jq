@@ -18,7 +18,7 @@ import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -45,10 +45,10 @@ public class EnvironmentPocTest {
 	 * Results are compared by jq value, not by JsonNode identity: the node class a literal
 	 * compiles to is not what these tests are about.
 	 */
-	private static final Comparator<JsonNode> BY_JQ_VALUE = new JsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance());
+	private static final Comparator<JsonNode> BY_JQ_VALUE = new JsonNodeComparator<>(Jackson2JsonProvider.getInstance());
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
-	private static final JsonProvider<JsonNode> jsonProvider = Jackson2JsonProviderImpl.getInstance();
+	private static final JsonProvider<JsonNode> jsonProvider = Jackson2JsonProvider.getInstance();
 
 	private static FunctionLoader javaFunctionLoader(FunctionSignature signature, Function function) {
 		return new FunctionLoader() {

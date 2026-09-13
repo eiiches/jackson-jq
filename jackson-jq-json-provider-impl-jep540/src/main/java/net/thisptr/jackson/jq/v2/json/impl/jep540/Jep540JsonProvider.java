@@ -37,8 +37,8 @@ import net.thisptr.jackson.jq.v2.json.NumberType;
 /**
  * A jackson-jq JSON provider backed by JEP 540's {@code jdk.incubator.json} API.
  */
-public final class Jep540JsonProviderImpl implements JsonProvider<JsonValue> {
-	private Jep540JsonProviderImpl() {
+public final class Jep540JsonProvider implements JsonProvider<JsonValue> {
+	private Jep540JsonProvider() {
 	}
 
 	/**
@@ -46,7 +46,7 @@ public final class Jep540JsonProviderImpl implements JsonProvider<JsonValue> {
 	 *
 	 * @return the shared provider
 	 */
-	public static Jep540JsonProviderImpl getInstance() {
+	public static Jep540JsonProvider getInstance() {
 		return DefaultInstanceHolder.INSTANCE;
 	}
 
@@ -457,7 +457,7 @@ public final class Jep540JsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	private static final class DefaultInstanceHolder {
-		private static final Jep540JsonProviderImpl INSTANCE = new Jep540JsonProviderImpl();
+		private static final Jep540JsonProvider INSTANCE = new Jep540JsonProvider();
 	}
 
 	/**

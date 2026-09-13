@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.version.Versions;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
@@ -25,11 +25,11 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class RuntimeOptionsTest {
-	private static final Environment<JsonNode> ENV = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_8_2).build();
+	private static final Environment<JsonNode> ENV = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
 
 	private static List<JsonNode> run(String q, RuntimeOptions options) throws Exception {
 		List<JsonNode> out = new ArrayList<>();
-		ENV.compile(q).apply(Jackson2JsonProviderImpl.getInstance().createNull(), options, out::add);
+		ENV.compile(q).apply(Jackson2JsonProvider.getInstance().createNull(), options, out::add);
 		return out;
 	}
 
@@ -54,11 +54,11 @@ public class RuntimeOptionsTest {
 		assertThat(defaults.getMaxObjectMemberCount()).isEqualTo(Integer.MAX_VALUE);
 		assertThat(defaults.getMaxStringLength()).isEqualTo(Integer.MAX_VALUE);
 
-		assertThat(run("[range(0; 100000)] | length", defaults)).containsExactly(Jackson2JsonProviderImpl.getInstance().createNumber(100000));
+		assertThat(run("[range(0; 100000)] | length", defaults)).containsExactly(Jackson2JsonProvider.getInstance().createNumber(100000));
 		// The no-options overloads must behave identically.
 		List<JsonNode> out = new ArrayList<>();
-		ENV.compile("[range(0; 100000)] | length").apply(Jackson2JsonProviderImpl.getInstance().createNull(), out::add);
-		assertThat(out).containsExactly(Jackson2JsonProviderImpl.getInstance().createNumber(100000));
+		ENV.compile("[range(0; 100000)] | length").apply(Jackson2JsonProvider.getInstance().createNull(), out::add);
+		assertThat(out).containsExactly(Jackson2JsonProvider.getInstance().createNumber(100000));
 	}
 
 	@Test
@@ -223,7 +223,7 @@ public class RuntimeOptionsTest {
 
 	@Test
 	public void aCustomFunctionSeesTheLimitsThroughItsContext() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_8_2)
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
 				.defineFunction(FunctionSignature.of("observed_max_array_length", 0), new Function() {
 					@Override
 					public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, net.thisptr.jackson.jq.v2.spi.version.Version ver) {
@@ -234,8 +234,8 @@ public class RuntimeOptionsTest {
 
 		JsonQuery<JsonNode> query = env.compile("observed_max_array_length");
 		List<JsonNode> out = new ArrayList<>();
-		query.apply(Jackson2JsonProviderImpl.getInstance().createNull(), maxArrayLength(12), out::add);
-		assertThat(out).containsExactly(Jackson2JsonProviderImpl.getInstance().createNumber(12));
+		query.apply(Jackson2JsonProvider.getInstance().createNull(), maxArrayLength(12), out::add);
+		assertThat(out).containsExactly(Jackson2JsonProvider.getInstance().createNumber(12));
 	}
 
 	// --- concurrency --------------------------------------------------------------------------
@@ -251,7 +251,7 @@ public class RuntimeOptionsTest {
 				Callable<Boolean> task = () -> {
 					List<JsonNode> out = new ArrayList<>();
 					try {
-						query.apply(Jackson2JsonProviderImpl.getInstance().createNull(), tight ? maxArrayLength(10) : RuntimeOptions.newBuilder().build(), out::add);
+						query.apply(Jackson2JsonProvider.getInstance().createNull(), tight ? maxArrayLength(10) : RuntimeOptions.newBuilder().build(), out::add);
 						return false;
 					} catch (RuntimeLimitExceededException e) {
 						return true;

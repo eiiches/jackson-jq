@@ -6,12 +6,12 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.JsonProviderContractTest;
 
 /**
- * Contract tests for {@link JakartaJsonProviderImpl}.
+ * Contract tests for {@link JakartaJsonProvider}.
  */
 public class JakartaJsonProviderContractTest implements JsonProviderContractTest<JsonValue> {
 
 	@Override
 	public JsonProvider<JsonValue> getProvider() {
-		return JakartaJsonProviderImpl.getInstance();
+		return JakartaJsonProvider.getInstance();
 	}
 }

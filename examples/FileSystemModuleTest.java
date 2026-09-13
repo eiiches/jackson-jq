@@ -21,7 +21,7 @@ import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
-import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -36,7 +36,7 @@ public class FileSystemModuleTest {
 				.rlocation("jackson_jq/examples/modules/math.jq"));
 		Path moduleDirectory = Objects.requireNonNull(Paths.get(moduleFile).getParent());
 
-		Jackson3JsonProviderImpl jsonProvider = Jackson3JsonProviderImpl.getInstance();
+		Jackson3JsonProvider jsonProvider = Jackson3JsonProvider.getInstance();
 		Environment<JsonNode> environment = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_8_2)
 				.setModuleLoader(new ChainedModuleLoader<>(
 						ClassPathModuleLoader.<JsonNode>getInstance(),

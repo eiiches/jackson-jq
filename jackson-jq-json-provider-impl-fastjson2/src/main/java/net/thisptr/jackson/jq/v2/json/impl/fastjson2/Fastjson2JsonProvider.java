@@ -31,13 +31,13 @@ import net.thisptr.jackson.jq.v2.json.NumberType;
  * deliberately not annotated {@code @Nullable}: in this provider Java {@code null} is a JSON value,
  * not an absence signal.
  */
-public class Fastjson2JsonProviderImpl implements JsonProvider<Object> {
-	private static final Fastjson2JsonProviderImpl DEFAULT_INSTANCE = new Fastjson2JsonProviderImpl();
+public class Fastjson2JsonProvider implements JsonProvider<Object> {
+	private static final Fastjson2JsonProvider DEFAULT_INSTANCE = new Fastjson2JsonProvider();
 
 	/**
 	 * Returns the shared default provider.
 	 */
-	public static Fastjson2JsonProviderImpl getInstance() {
+	public static Fastjson2JsonProvider getInstance() {
 		return DEFAULT_INSTANCE;
 	}
 

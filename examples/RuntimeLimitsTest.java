@@ -12,7 +12,7 @@ import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
-import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,7 +23,7 @@ public class RuntimeLimitsTest {
 
 	@Test
 	public void limitsArrayLength() {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProviderImpl.getInstance(), Versions.JQ_1_8_2).build();
+		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
 		JsonQuery<JsonNode> query = environment.compile(". + [4]");
 
 		RuntimeOptions options = RuntimeOptions.newBuilder()
@@ -40,7 +40,7 @@ public class RuntimeLimitsTest {
 
 	@Test
 	public void limitsObjectMemberCount() {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProviderImpl.getInstance(), Versions.JQ_1_8_2).build();
+		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
 		JsonQuery<JsonNode> query = environment.compile(". + {d: 4}");
 
 		RuntimeOptions options = RuntimeOptions.newBuilder()
@@ -57,7 +57,7 @@ public class RuntimeLimitsTest {
 
 	@Test
 	public void limitsStringLength() {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProviderImpl.getInstance(), Versions.JQ_1_8_2).build();
+		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
 		JsonQuery<JsonNode> query = environment.compile(". + \"d\"");
 
 		RuntimeOptions options = RuntimeOptions.newBuilder()

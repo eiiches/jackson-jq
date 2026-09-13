@@ -35,11 +35,11 @@ import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.fastjson2.Fastjson2JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.json.impl.jakarta.JakartaJsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.fastjson2.Fastjson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.jakarta.JakartaJsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -222,15 +222,15 @@ public class Main {
 	static JsonProvider<?> resolveProvider(String name) {
 		switch (name) {
 			case "jackson2":
-				return Jackson2JsonProviderImpl.getInstance();
+				return Jackson2JsonProvider.getInstance();
 			case "jackson3":
-				return Jackson3JsonProviderImpl.getInstance();
+				return Jackson3JsonProvider.getInstance();
 			case "fastjson2":
-				return Fastjson2JsonProviderImpl.getInstance();
+				return Fastjson2JsonProvider.getInstance();
 			case "gson":
-				return GsonJsonProviderImpl.getInstance();
+				return GsonJsonProvider.getInstance();
 			case "jakarta":
-				return JakartaJsonProviderImpl.getInstance();
+				return JakartaJsonProvider.getInstance();
 			default:
 				throw new IllegalArgumentException("unknown --json-provider: " + name + " (expected one of: jackson2, jackson3, fastjson2, gson, jakarta)");
 		}

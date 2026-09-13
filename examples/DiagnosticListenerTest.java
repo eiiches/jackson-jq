@@ -16,7 +16,7 @@ import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
-import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,7 +25,7 @@ public class DiagnosticListenerTest {
 
 	@Test
 	public void receivesCompileDiagnostics() {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProviderImpl.getInstance(), Versions.JQ_1_8_2).build();
+		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
 		String source = "1, 2 | .";
 		List<Diagnostic> diagnostics = new ArrayList<>();
 		CompileOptions options = CompileOptions.newBuilder()

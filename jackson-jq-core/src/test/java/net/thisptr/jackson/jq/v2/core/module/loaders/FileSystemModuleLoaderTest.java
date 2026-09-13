@@ -24,7 +24,7 @@ import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparato
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -34,7 +34,7 @@ public class FileSystemModuleLoaderTest {
 	 * Results are compared by jq value, not by JsonNode identity: the node class a literal
 	 * compiles to is not what these tests are about.
 	 */
-	private static final Comparator<JsonNode> BY_JQ_VALUE = new JsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance());
+	private static final Comparator<JsonNode> BY_JQ_VALUE = new JsonNodeComparator<>(Jackson2JsonProvider.getInstance());
 
 	private Environment<JsonNode> env;
 
@@ -45,7 +45,7 @@ public class FileSystemModuleLoaderTest {
 	public void beforeEach() throws IOException {
 		ModuleLoader<JsonNode> moduleLoader = setupModuleLoader(Objects.requireNonNull(tempDir));
 
-		env = new EnvironmentBuilder<JsonNode>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+		env = new EnvironmentBuilder<JsonNode>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.setModuleLoader(moduleLoader)
 				.build();
 	}
@@ -59,7 +59,7 @@ public class FileSystemModuleLoaderTest {
 	 */
 	private ModuleLoader<JsonNode> setupModuleLoader(Path tempDir) throws IOException {
 		ClassLoaderUtils.copyResources(getClass().getClassLoader(), "classpath_modules", tempDir);
-		return new FileSystemModuleLoader<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6, tempDir);
+		return new FileSystemModuleLoader<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6, tempDir);
 	}
 
 	@Test

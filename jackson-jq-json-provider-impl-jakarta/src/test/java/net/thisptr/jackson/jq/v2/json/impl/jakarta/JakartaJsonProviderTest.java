@@ -11,8 +11,8 @@ import net.thisptr.jackson.jq.v2.json.JsonException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class JakartaJsonProviderImplTest {
-	private final JakartaJsonProviderImpl provider = JakartaJsonProviderImpl.getInstance();
+class JakartaJsonProviderTest {
+	private final JakartaJsonProvider provider = JakartaJsonProvider.getInstance();
 
 	@Test
 	void deepCopyIsNoOpForImmutableValues() {

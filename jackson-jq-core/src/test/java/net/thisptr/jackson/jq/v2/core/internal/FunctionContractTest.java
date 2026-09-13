@@ -19,7 +19,7 @@ import net.thisptr.jackson.jq.v2.core.internal.builtins.NowFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.RangeFunction;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
@@ -51,7 +51,7 @@ public class FunctionContractTest {
 
 	@Test
 	public void allCoreFunctionsReturnCorrectExpressionFlags() {
-		JsonProvider<JsonNode> jsonProvider = Jackson2JsonProviderImpl.getInstance();
+		JsonProvider<JsonNode> jsonProvider = Jackson2JsonProvider.getInstance();
 		for (Version version : Versions.versions()) {
 			Map<FunctionSignature, Function> functions = ClassPathFunctionLoader.getInstance().getFunctions(version);
 			assertThat(functions).isNotEmpty();

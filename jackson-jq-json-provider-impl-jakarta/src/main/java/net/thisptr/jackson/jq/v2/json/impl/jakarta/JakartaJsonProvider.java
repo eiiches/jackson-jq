@@ -31,7 +31,7 @@ import net.thisptr.jackson.jq.v2.json.NumberType;
 /**
  * A jackson-jq JSON provider backed by the Jakarta JSON Processing tree model.
  */
-public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
+public class JakartaJsonProvider implements JsonProvider<JsonValue> {
 	private final jakarta.json.spi.JsonProvider delegate;
 
 	/**
@@ -39,7 +39,7 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	 *
 	 * @param delegate the underlying JSON-P provider
 	 */
-	public JakartaJsonProviderImpl(jakarta.json.spi.JsonProvider delegate) {
+	public JakartaJsonProvider(jakarta.json.spi.JsonProvider delegate) {
 		this.delegate = Objects.requireNonNull(delegate);
 	}
 
@@ -48,7 +48,7 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	 *
 	 * @return the default adapter
 	 */
-	public static JakartaJsonProviderImpl getInstance() {
+	public static JakartaJsonProvider getInstance() {
 		return DefaultInstanceHolder.INSTANCE;
 	}
 
@@ -658,7 +658,7 @@ public class JakartaJsonProviderImpl implements JsonProvider<JsonValue> {
 	}
 
 	private static class DefaultInstanceHolder {
-		private static final JakartaJsonProviderImpl INSTANCE = new JakartaJsonProviderImpl(jakarta.json.spi.JsonProvider.provider());
+		private static final JakartaJsonProvider INSTANCE = new JakartaJsonProvider(jakarta.json.spi.JsonProvider.provider());
 	}
 
 	private static class FloatingPointJsonNumber implements JsonNumber {

@@ -3,7 +3,7 @@ package net.thisptr.jackson.jq.v2.fuzz;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 
 /**
  * A {@link JsonNodeComparator} that treats two numbers as equal if they're within a small relative or
@@ -18,7 +18,7 @@ public class ToleranceJsonNodeComparator extends JsonNodeComparator<JsonNode> {
 	private static final double RELATIVE_EPSILON = 1e-9;
 
 	public ToleranceJsonNodeComparator() {
-		super(Jackson2JsonProviderImpl.getInstance());
+		super(Jackson2JsonProvider.getInstance());
 	}
 
 	@Override

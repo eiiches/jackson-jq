@@ -17,7 +17,7 @@ import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
@@ -74,9 +74,9 @@ public class EnvironmentCompileModuleTest {
 
 	@Test
 	public void testCustomModuleLoaderUsingCompileModule() throws Exception {
-		InMemoryModuleLoader moduleLoader = new InMemoryModuleLoader(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
+		InMemoryModuleLoader moduleLoader = new InMemoryModuleLoader(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6);
 		moduleLoader.put("foo", "def bar: 42;");
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.setModuleLoader(moduleLoader)
 				.build();
 
@@ -90,7 +90,7 @@ public class EnvironmentCompileModuleTest {
 
 	@Test
 	public void testCompileModuleExposesAllTopLevelDefs() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
 
 		Module module = env.compileModule("def one: 1; def two: 2; def three($x): $x;");
 
@@ -102,11 +102,11 @@ public class EnvironmentCompileModuleTest {
 
 	@Test
 	public void testCompileModuleExposesUsableFunctions() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
 
 		Module module = env.compileModule("def one: 1; def two: 2; def three($x): $x;");
 
-		Environment<JsonNode> queryEnv = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> queryEnv = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.addImportedModule("m", module)
 				.build();
 		JsonQuery<JsonNode> expr = queryEnv.compile("m::three(41) + 1");
@@ -119,7 +119,7 @@ public class EnvironmentCompileModuleTest {
 
 	@Test
 	public void testCompileModuleExposesMetadata() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
 
 		Module module = env.compileModule("module { \"author\": \"Alice\", \"version\": 1 }; def one: 1;");
 
@@ -134,7 +134,7 @@ public class EnvironmentCompileModuleTest {
 	// left-nested binary node to read an array literal's elements in order.
 	@Test
 	public void testCompileModuleFoldsArrayMetadata() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
 
 		Module module = env.compileModule("module { \"tags\": [\"a\", (\"b\", \"c\")], \"nested\": [1, [2, 3], 4], \"solo\": [\"only\"], \"none\": [] }; def one: 1;");
 
@@ -147,7 +147,7 @@ public class EnvironmentCompileModuleTest {
 
 	@Test
 	public void testCompileModuleFoldsLongArrayMetadataWithoutOverflowingTheStack() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
 		StringBuilder source = new StringBuilder("module { \"values\": [");
 		for (int i = 0; i < 10_000; i++) {
 			if (i != 0)
@@ -166,11 +166,11 @@ public class EnvironmentCompileModuleTest {
 
 	@Test
 	public void testCompileModuleExposesDependencies() throws Exception {
-		InMemoryModuleLoader moduleLoader = new InMemoryModuleLoader(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6);
+		InMemoryModuleLoader moduleLoader = new InMemoryModuleLoader(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6);
 		moduleLoader.put("foo/bar", "def bar: 1;");
 		moduleLoader.put("helpers", "def helper: 1;");
-		moduleLoader.putData("data/nums", Jackson2JsonProviderImpl.getInstance().createArray(Collections.emptyList()));
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+		moduleLoader.putData("data/nums", Jackson2JsonProvider.getInstance().createArray(Collections.emptyList()));
+		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.setModuleLoader(moduleLoader)
 				.build();
 

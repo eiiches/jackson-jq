@@ -14,7 +14,7 @@ import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -62,7 +62,7 @@ class ParenAstNodeTest {
 
 	@Test
 	void parenthesizedExpressionsCompileTransparently() throws JsonQueryException {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
+		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
 		JsonQuery<JsonNode> query = environment.compile("((1 + 2))");
 		List<JsonNode> output = new ArrayList<>();
 		query.apply(NullNode.getInstance(), output::add);
@@ -73,7 +73,7 @@ class ParenAstNodeTest {
 	void parenthesizedModuleMetadataRemainsConstant() throws JsonQueryException {
 		TopLevelAstNode topLevel = (TopLevelAstNode) AstParser.parse("module ({name: \"test\"}); .", Versions.JQ_1_6);
 		assertNotNull(topLevel.moduleDirective());
-		JsonNode metadata = Compiler.evaluateMetadata(Jackson2JsonProviderImpl.getInstance(), Objects.requireNonNull(topLevel.moduleDirective()));
+		JsonNode metadata = Compiler.evaluateMetadata(Jackson2JsonProvider.getInstance(), Objects.requireNonNull(topLevel.moduleDirective()));
 		assertEquals("test", metadata.get("name").textValue());
 	}
 
