@@ -51,7 +51,7 @@ public class JsonQueryConcurrentReuseTest {
 
 	@Test
 	public void producesResultsMatchingTheirOwnBindingsWhenReusedConcurrently() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("seed")
 				.build();
 		JsonQuery<JsonNode> query = env.compile(QUERY);

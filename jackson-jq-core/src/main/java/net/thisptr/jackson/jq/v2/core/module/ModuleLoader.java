@@ -11,8 +11,8 @@ import net.thisptr.jackson.jq.v2.spi.module.Module;
  * <p>
  * A loader that cannot resolve a path throws {@link ModuleNotFoundException}; a loader that
  * resolved it but then failed to read or compile what it found throws some other
- * {@link JsonQueryException}. {@code ChainedModuleLoader} depends on the difference: the former
- * moves on to the next loader in the chain, the latter aborts the chain.
+ * {@link JsonQueryException}. An environment asks its module loaders in turn, and the difference
+ * decides what happens next: the former moves on to the next loader, the latter aborts the search.
  *
  * @param <JsonNode> the JSON node type
  */

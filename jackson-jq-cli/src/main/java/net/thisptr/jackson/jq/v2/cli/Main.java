@@ -30,8 +30,6 @@ import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
-import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
-import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -262,7 +260,7 @@ public class Main {
 
 	private static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider,
 								RuntimeOptions runtimeOptions) throws Exception {
-		Environment<N> env = new EnvironmentBuilder<>(jsonProvider, version)
+		Environment<N> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
 				.defineFunction(FunctionSignature.of("env", 0), new Function() {
 					@Override
 					public <Context extends RuntimeContext, N2> Expression<Context, N2> bindArguments(JsonProvider<N2> jsonProv, List<Expression<Context, N2>> fnArgs, Version ver) {
@@ -293,9 +291,7 @@ public class Main {
 						};
 					}
 				})
-				.setModuleLoader(new ChainedModuleLoader<N>(
-						ClassPathModuleLoader.getInstance(),
-						new FileSystemModuleLoader<>(jsonProvider, version, FileSystems.getDefault().getPath("").toAbsolutePath())))
+				.addModuleLoader(new FileSystemModuleLoader<>(jsonProvider, version, FileSystems.getDefault().getPath("").toAbsolutePath()))
 				.build();
 		/*
 		 * jq itself emits no warnings at all, so this is purely additive: it goes to stderr, leaving

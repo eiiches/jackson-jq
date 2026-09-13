@@ -1,15 +1,11 @@
 load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
 
 jjq_java_test_suite(
-    srcs = [
-        "FileSystemModuleLoaderTest.java",
-    ],
+    srcs = ["ChainedModuleLoaderTest.java"],
     release = 8,
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
         "//jackson-jq-core",
-        "//jackson-jq-core:test-resources",
-        "//jackson-jq-core/src/test/java/net/thisptr/jackson/jq/v2/core:tests-test-lib",
         "//jackson-jq-json-provider",
         "//jackson-jq-json-provider-impl-jackson2",
         "//jackson-jq-spi",

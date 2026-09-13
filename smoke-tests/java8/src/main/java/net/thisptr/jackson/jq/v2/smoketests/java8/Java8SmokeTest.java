@@ -6,7 +6,6 @@ import java.util.List;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
-import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
@@ -24,8 +23,7 @@ public final class Java8SmokeTest {
 
 	private static <JsonNode> void testWithJsonProvider(JsonProvider<JsonNode> jsonProvider) throws Exception {
 		Version version = Version.valueOf("1.6");
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, version)
-				.setModuleLoader(new ClassPathModuleLoader<JsonNode>(Java8SmokeTest.class.getClassLoader()))
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version, Java8SmokeTest.class.getClassLoader())
 				.build();
 
 		assertQuery(jsonProvider, env, "length", "[1,2]", 2);

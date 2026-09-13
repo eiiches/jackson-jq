@@ -30,7 +30,7 @@ public class CustomFunctionTest {
 		ObjectMapper mapper = new ObjectMapper();
 		Version version = Versions.JQ_1_6;
 
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), version)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), version)
 				.defineFunction(FunctionSignature.of("times100", 1), new Function() {
 					@Override
 					public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version ver) {

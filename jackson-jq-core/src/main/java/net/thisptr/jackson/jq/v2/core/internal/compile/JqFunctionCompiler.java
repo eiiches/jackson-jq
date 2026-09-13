@@ -163,7 +163,7 @@ final class JqFunctionCompiler {
 		private <N> Environment<N> resolveEnvironment(Environment<N> callingEnvironment) {
 			return origin == Origin.ENVIRONMENT
 					? callingEnvironment
-					: new EnvironmentBuilder<>(callingEnvironment.getJsonProvider(), version)
+					: EnvironmentBuilder.withDefaultLoaders(callingEnvironment.getJsonProvider(), version)
 					.setFunctionLoader(callingEnvironment.getFunctionLoader())
 					.build();
 		}

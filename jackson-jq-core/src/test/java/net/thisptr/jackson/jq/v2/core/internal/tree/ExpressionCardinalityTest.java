@@ -74,7 +74,7 @@ public class ExpressionCardinalityTest {
 	}
 
 	private static Cardinality cardinalityOf(String expression, Version jqVersion) {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), jqVersion)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), jqVersion)
 				.build();
 		AstNode parsedAst = AstParser.parse(expression, env.getJqVersion());
 		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(env, CompileOptions.newBuilder().build(), null, parsedAst);

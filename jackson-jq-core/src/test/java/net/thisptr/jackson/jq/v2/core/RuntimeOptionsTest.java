@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class RuntimeOptionsTest {
-	private static final Environment<JsonNode> ENV = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
+	private static final Environment<JsonNode> ENV = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
 
 	private static List<JsonNode> run(String q, RuntimeOptions options) throws Exception {
 		List<JsonNode> out = new ArrayList<>();
@@ -223,7 +223,7 @@ public class RuntimeOptionsTest {
 
 	@Test
 	public void aCustomFunctionSeesTheLimitsThroughItsContext() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
 				.defineFunction(FunctionSignature.of("observed_max_array_length", 0), new Function() {
 					@Override
 					public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, net.thisptr.jackson.jq.v2.spi.version.Version ver) {

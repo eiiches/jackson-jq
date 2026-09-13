@@ -45,13 +45,8 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	private final List<Path> searchPaths;
 	private final Version version;
 	private final JsonProvider<JsonNode> jsonProvider;
-	private final @Nullable ModuleLoader<JsonNode> parentModuleLoader;
 
 	public FileSystemModuleLoader(JsonProvider<JsonNode> jsonProvider, Version version, Path... searchPaths) {
-		this(jsonProvider, null, version, searchPaths);
-	}
-
-	public FileSystemModuleLoader(JsonProvider<JsonNode> jsonProvider, @Nullable ModuleLoader<JsonNode> parentModuleLoader, Version version, Path... searchPaths) {
 		List<Path> absoluteSearchPaths = new ArrayList<>();
 		for (Path searchPath : searchPaths) {
 			if (!searchPath.isAbsolute())
@@ -60,7 +55,6 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		}
 		this.searchPaths = absoluteSearchPaths;
 		this.jsonProvider = jsonProvider;
-		this.parentModuleLoader = parentModuleLoader;
 		this.version = version;
 	}
 
@@ -140,8 +134,12 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 
 		FileSystemModule module = new FileSystemModule(moduleFile.searchPath, moduleFile.modulePath);
 
-		Environment<JsonNode> moduleEnv = new EnvironmentBuilder<>(jsonProvider, version)
-				.setModuleLoader(parentModuleLoader != null ? parentModuleLoader : this)
+		// A module's own imports resolve through this same loader: it is the only one this loader
+		// knows about. Reaching the rest of the importing environment's loaders needs them passed
+		// down through ModuleLoader.loadModule, which they are not.
+		Environment<JsonNode> moduleEnv = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
+				.clearModuleLoaders()
+				.addModuleLoader(this)
 				.build();
 		AstNode ast = AstParser.parse(moduleString + " null", version);
 		// A module read off the search path is somebody else's library, so it is compiled with

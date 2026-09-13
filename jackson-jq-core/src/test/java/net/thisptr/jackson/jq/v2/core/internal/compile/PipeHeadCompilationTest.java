@@ -26,7 +26,7 @@ class PipeHeadCompilationTest {
 	private static final SourceLocation AT = SourceLocation.of(1, 1);
 
 	private static Environment<JsonNode> environment() {
-		return new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
+		return EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
 	}
 
 	@Test

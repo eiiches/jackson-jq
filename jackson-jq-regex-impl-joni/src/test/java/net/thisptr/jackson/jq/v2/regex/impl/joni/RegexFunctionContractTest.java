@@ -60,7 +60,7 @@ public class RegexFunctionContractTest {
 
 	@Test
 	public void valueParameterSpecializationPreservesMultipleArgumentOutputs() {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7).build();
 		JsonQuery<JsonNode> query = environment.compile("splits((\"a\", \"b\"))");
 		List<JsonNode> output = new ArrayList<>();
 		query.apply(JSON_PROVIDER.createString("aba"), output::add);
@@ -69,7 +69,7 @@ public class RegexFunctionContractTest {
 
 	@Test
 	public void invalidConstantRegexFailsAtCompileTime() {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7).build();
 		assertThatThrownBy(() -> environment.compile("test(\"[\"; \"\")"))
 				.isInstanceOf(RuntimeException.class);
 	}

@@ -62,7 +62,7 @@ class ParenAstNodeTest {
 
 	@Test
 	void parenthesizedExpressionsCompileTransparently() throws JsonQueryException {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
 		JsonQuery<JsonNode> query = environment.compile("((1 + 2))");
 		List<JsonNode> output = new ArrayList<>();
 		query.apply(NullNode.getInstance(), output::add);

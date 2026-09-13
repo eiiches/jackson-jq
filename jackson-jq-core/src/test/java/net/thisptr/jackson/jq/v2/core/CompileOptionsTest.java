@@ -27,7 +27,7 @@ class CompileOptionsTest {
 	}
 
 	private static Environment<JsonNode> environment(Version version) {
-		return new EnvironmentBuilder<>(JSON_PROVIDER, version).build();
+		return EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, version).build();
 	}
 
 	@Test

@@ -23,7 +23,7 @@ public class RuntimeLimitsTest {
 
 	@Test
 	public void limitsArrayLength() {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
 		JsonQuery<JsonNode> query = environment.compile(". + [4]");
 
 		RuntimeOptions options = RuntimeOptions.newBuilder()
@@ -40,7 +40,7 @@ public class RuntimeLimitsTest {
 
 	@Test
 	public void limitsObjectMemberCount() {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
 		JsonQuery<JsonNode> query = environment.compile(". + {d: 4}");
 
 		RuntimeOptions options = RuntimeOptions.newBuilder()
@@ -57,7 +57,7 @@ public class RuntimeLimitsTest {
 
 	@Test
 	public void limitsStringLength() {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
 		JsonQuery<JsonNode> query = environment.compile(". + \"d\"");
 
 		RuntimeOptions options = RuntimeOptions.newBuilder()

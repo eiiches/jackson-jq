@@ -21,7 +21,7 @@ public class MinimalTest {
 
 	@Test
 	public void evaluatesQuery() {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
 
 		JsonQuery<JsonNode> query = environment.compile(".name");
 

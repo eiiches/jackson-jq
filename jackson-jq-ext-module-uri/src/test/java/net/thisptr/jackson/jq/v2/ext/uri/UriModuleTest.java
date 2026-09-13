@@ -47,7 +47,7 @@ public class UriModuleTest {
 	}
 
 	private List<JsonNode> run(String expression) throws JsonQueryException {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/uri\" as ext; " + expression);
 		List<JsonNode> results = new ArrayList<>();

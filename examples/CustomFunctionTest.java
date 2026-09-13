@@ -29,7 +29,7 @@ public class CustomFunctionTest {
 
 	@Test
 	public void evaluatesCustomFunction() {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2)
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2)
 				.defineFunction(FunctionSignature.of("times100", 1), new Function() {
 					@Override
 					public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> arguments, Version jqVersion) {

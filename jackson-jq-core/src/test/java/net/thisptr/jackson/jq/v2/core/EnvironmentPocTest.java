@@ -66,7 +66,7 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testAddFunctionAndExecute() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7)
 				.defineFunction(FunctionSignature.of("examplefn", 1), new Function() {
 					@Override
 					public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version version) {
@@ -89,7 +89,7 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testAddVariableAndExecute() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7)
 				.defineVariable("var", () -> jsonProvider.createNumber(42))
 				.build();
 
@@ -128,7 +128,7 @@ public class EnvironmentPocTest {
 			}
 		};
 
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7)
 				.setFunctionLoader(testLoader)
 				.defineFunction(FunctionSignature.of("probe", 1), probe)
 				.build();
@@ -165,7 +165,7 @@ public class EnvironmentPocTest {
 			}
 		};
 
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7)
 				.setFunctionLoader(testLoader)
 				.defineFunction(FunctionSignature.of("probe", 1), probe)
 				.build();
@@ -196,7 +196,7 @@ public class EnvironmentPocTest {
 				return (scope, in, path, output) -> output.emit(in, path);
 			}
 		};
-		Environment<JsonNode> withProbe = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
+		Environment<JsonNode> withProbe = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7)
 				.defineVariable("b", () -> jsonProvider.createNumber(1))
 				.defineFunction(FunctionSignature.of("probe", 1), probe)
 				.build();
@@ -230,7 +230,7 @@ public class EnvironmentPocTest {
 				return (scope, in, path, output) -> output.emit(in, path);
 			}
 		};
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7)
 				.defineFunction(FunctionSignature.of("probe", 1), probe)
 				.build();
 
@@ -253,7 +253,7 @@ public class EnvironmentPocTest {
 				return (scope, in, path, output) -> output.emit(in, path);
 			}
 		};
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7)
 				.defineFunction(FunctionSignature.of("probe", 1), probe)
 				.build();
 
@@ -276,7 +276,7 @@ public class EnvironmentPocTest {
 				return (scope, in, path, output) -> output.emit(in, path);
 			}
 		};
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7)
 				.defineFunction(FunctionSignature.of("probe", 1), probe)
 				.build();
 
@@ -300,7 +300,7 @@ public class EnvironmentPocTest {
 				return (scope, in, path, output) -> output.emit(in, path);
 			}
 		};
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7)
 				.defineFunction(FunctionSignature.of("probe", 1), probe)
 				.build();
 
@@ -328,7 +328,7 @@ public class EnvironmentPocTest {
 		// never touches CompileContext's closureSpec machinery at all (globals bypass the local/captured
 		// scope-stack lookup entirely), so it can only be caught by also consulting the body's own
 		// free-variable metadata directly (see Compiler.java's FunctionDefinitionAstNode branch).
-		Environment<JsonNode> withGlobal = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
+		Environment<JsonNode> withGlobal = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7)
 				.defineVariable("g", () -> jsonProvider.createNumber(1))
 				.defineFunction(FunctionSignature.of("probe", 1), probe)
 				.build();
@@ -348,7 +348,7 @@ public class EnvironmentPocTest {
 				return (scope, in, path, output) -> output.emit(in, path);
 			}
 		};
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7)
 				.defineFunction(FunctionSignature.of("probe", 1), probe)
 				.build();
 
@@ -369,7 +369,7 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testSelfRecursiveLocalDefCompilesAndStaysConservative() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7).build();
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7).build();
 
 		// The recursive call to `f` inside its own body has no FunctionDependsOnInfo available yet (it's
 		// still being compiled), so it correctly falls back to the conservative default rather than
@@ -384,7 +384,7 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testUndefinedFunctionThrowsAtCompileTime() {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7).build();
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7).build();
 
 		JsonQueryException ex = assertThrows(JsonQueryException.class, () -> {
 			env.compile("nonExistentFunc(.)");
@@ -396,7 +396,7 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testUndefinedVariableThrowsAtCompileTime() {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7).build();
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7).build();
 
 		JsonQueryException ex = assertThrows(JsonQueryException.class, () -> {
 			env.compile("$undefinedVar");
@@ -408,7 +408,7 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testLocalDefDoesNotLeakIntoGlobalFunctionTable() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7).build();
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7).build();
 
 		// First compile: defines and immediately uses a local `foo` -- must work.
 		JsonQuery<JsonNode> q1 = env.compile("def foo: 1; foo");
@@ -428,7 +428,7 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testLocalDefWithCaptureDoesNotLeakEitherAndFailsCleanlyAfterwards() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7).build();
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7).build();
 
 		env.compile("1 as $x | def bar: $x; bar");
 
@@ -441,7 +441,7 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testLocalAstVariableResolution() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7).build();
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7).build();
 
 		JsonQuery<JsonNode> q = env.compile(". as $x | $x");
 

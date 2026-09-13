@@ -21,7 +21,7 @@ public class NullLHSFunctionTest {
 	@Test
 	public void test() throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_5).build();
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_5).build();
 		ObjectNode input = mapper.createObjectNode().set("input", mapper.createArrayNode().add(1));
 		List<JsonNode> output = new ArrayList<>();
 		env.compile(".output+=[.input[0]+1]").apply(input, output::add);

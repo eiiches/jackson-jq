@@ -14,7 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class TestUtils {
 	public static List<JsonNode> runQuery(String queryText, JsonNode in, Version version) throws JsonQueryException {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), version)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), version)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/uuid\" as uuid; " + queryText);
 		List<JsonNode> results = new ArrayList<>();

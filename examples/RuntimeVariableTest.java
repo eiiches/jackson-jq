@@ -22,7 +22,7 @@ public class RuntimeVariableTest {
 
 	@Test
 	public void reusesQueryWithDifferentBindings() {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2)
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2)
 				.declareVariable("multiplier")
 				.build();
 

@@ -17,7 +17,6 @@ import org.junit.jupiter.api.function.Executable;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
-import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
@@ -60,11 +59,11 @@ public abstract class AbstractJsonQueryTest<T> {
 	protected abstract T parseTestNode(JsonNode node);
 
 	private void test(TestCase tc, Version version, @Nullable Path moduleSearchPath) throws Throwable {
-		EnvironmentBuilder<T> envBuilder = new EnvironmentBuilder<>(getJsonProvider(), version);
+		EnvironmentBuilder<T> envBuilder = EnvironmentBuilder.withDefaultLoaders(getJsonProvider(), version);
 		if (moduleSearchPath != null) {
-			envBuilder.setModuleLoader(new ChainedModuleLoader<>(
-					new FileSystemModuleLoader<>(envBuilder.getJsonProvider(), version, moduleSearchPath),
-					ClassPathModuleLoader.getInstance()));
+			envBuilder.clearModuleLoaders()
+					.addModuleLoader(new FileSystemModuleLoader<>(envBuilder.getJsonProvider(), version, moduleSearchPath))
+					.addModuleLoader(ClassPathModuleLoader.getInstance());
 		}
 		Environment<T> env = envBuilder
 				.defineVariable("ENV", () -> envBuilder.getJsonProvider().createObject(Collections.singletonMap("PAGER", envBuilder.getJsonProvider().createString("less"))))

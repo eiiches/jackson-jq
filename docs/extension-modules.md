@@ -1,6 +1,6 @@
 # Using extension modules
 
-Additional functions that are not part of jq are available through separate extension modules. Add only the dependencies your application needs and configure its `Environment` with a `ClassPathModuleLoader` (see [FileSystemModuleTest.java](../examples/FileSystemModuleTest.java) for an example that chains classpath and filesystem module loaders).
+Additional functions that are not part of jq are available through separate extension modules. Add only the dependencies your application needs and configure its `Environment` with a `ClassPathModuleLoader` -- `EnvironmentBuilder.withDefaultLoaders(...)` installs one already, over this library's own class loader or over one you name. An environment can hold several loaders, asked in the order they were added: `addModuleLoader(...)` appends one (see [FileSystemModuleTest.java](../examples/FileSystemModuleTest.java), which searches the classpath and then the filesystem), and `clearModuleLoaders()` drops the default when the search order should be entirely yours.
 
 | Maven artifact | jq module | Functions |
 | --- | --- | --- |

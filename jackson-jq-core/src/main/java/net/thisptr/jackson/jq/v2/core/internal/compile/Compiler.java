@@ -73,6 +73,7 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedLocalVar
 import net.thisptr.jackson.jq.v2.core.internal.diagnostics.PipeParenthesesCheck;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.module.ChainedModuleLoader;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.BreakExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.Comma;
@@ -129,6 +130,7 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ObjectMatch
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
 import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
+import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
@@ -349,15 +351,16 @@ public class Compiler {
 
 		@Override
 		public Expression<StackFrame, N> visit(TopLevelAstNode top) throws JsonQueryException {
+			ModuleLoader<N> moduleLoader = new ChainedModuleLoader<>(env.getModuleLoaders());
 			for (TopLevelAstNode.ImportStatement imp : top.imports()) {
 				Maybe<N> metadata = evaluateMetadata(env.getJsonProvider(), imp);
 				if (imp.dollarImport) {
-					N data = env.getModuleLoader().loadData(currentModule, imp.path, metadata);
+					N data = moduleLoader.loadData(currentModule, imp.path, metadata);
 					if (imp.name != null) {
 						context.addImportedVariableDefault(imp.name, data);
 					}
 				} else {
-					Module mod = env.getModuleLoader().loadModule(currentModule, imp.path, metadata);
+					Module mod = moduleLoader.loadModule(currentModule, imp.path, metadata);
 					if (imp.name != null) {
 						context.addImportedModule(imp.name, mod);
 					}

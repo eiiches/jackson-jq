@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RandomModuleTest {
 	@Test
 	public void returnsAValueInTheExpectedRange() throws JsonQueryException {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.build();
 
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/random\" as ext; ext::random");

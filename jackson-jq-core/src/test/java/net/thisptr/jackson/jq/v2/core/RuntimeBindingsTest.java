@@ -41,7 +41,7 @@ public class RuntimeBindingsTest {
 
 	@Test
 	public void reusesCompiledQueryWithDifferentVariableBindings() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$value");
@@ -54,7 +54,7 @@ public class RuntimeBindingsTest {
 	@Test
 	public void evaluatesDefaultSupplierForEveryReference() throws Exception {
 		AtomicInteger counter = new AtomicInteger();
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.defineVariable("value", () -> JSON_PROVIDER.createNumber(counter.incrementAndGet()))
 				.build();
 
@@ -64,7 +64,7 @@ public class RuntimeBindingsTest {
 	@Test
 	public void evaluatesOverrideSupplierForEveryReferenceAndThroughClosure() throws Exception {
 		AtomicInteger overrideCounter = new AtomicInteger();
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
 		JsonQuery<JsonNode> query = env.compile("def values: [$value, $value]; values");
@@ -80,7 +80,7 @@ public class RuntimeBindingsTest {
 	@Test
 	public void doesNotEvaluateUnusedOverrideSupplier() throws Exception {
 		AtomicInteger counter = new AtomicInteger();
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
 		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
@@ -93,7 +93,7 @@ public class RuntimeBindingsTest {
 
 	@Test
 	public void reportsNullValueFromOverrideSupplier() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
 		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
@@ -107,7 +107,7 @@ public class RuntimeBindingsTest {
 	@Test
 	public void overridesFunctionPerInvocationAndThroughClosure() throws Exception {
 		FunctionSignature key = FunctionSignature.of("custom", 0);
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.declareFunction(key)
 				.build();
@@ -128,7 +128,7 @@ public class RuntimeBindingsTest {
 
 	@Test
 	public void rejectsUnknownOverrides() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.defineConstant("known", JSON_PROVIDER.createNull())
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$known");
@@ -146,7 +146,7 @@ public class RuntimeBindingsTest {
 
 	@Test
 	public void rejectsOverrideOfFixedValue() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.defineConstant("known", JSON_PROVIDER.createNumber(1))
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$known");
@@ -158,7 +158,7 @@ public class RuntimeBindingsTest {
 
 	@Test
 	public void rejectsMissingDeclaredVariable() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$value");
@@ -170,7 +170,7 @@ public class RuntimeBindingsTest {
 	@Test
 	public void declaredFunctionColludingWithABuiltinStillRequiresABinding() throws Exception {
 		FunctionSignature builtinCollision = FunctionSignature.of("length", 0);
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareFunction(builtinCollision)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("length");
@@ -186,7 +186,7 @@ public class RuntimeBindingsTest {
 
 	@Test
 	public void localVariableShadowsGlobalBinding() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
 		JsonQuery<JsonNode> query = env.compile("10 as $value | $value");
@@ -198,7 +198,7 @@ public class RuntimeBindingsTest {
 	public void overridesOnlyDeclaredFunctionSignatureLeavingDefinedOneFixed() throws Exception {
 		FunctionSignature zeroArg = FunctionSignature.of("custom", 0);
 		FunctionSignature oneArg = FunctionSignature.of("custom", 1);
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareFunction(zeroArg)
 				.defineFunction(oneArg, constantFunction("one"))
 				.build();
@@ -213,7 +213,7 @@ public class RuntimeBindingsTest {
 	@Test
 	public void overridesVariadicFunctionUsingRegisteredSignature() throws Exception {
 		FunctionSignature variadic = FunctionSignature.ofVariadic("custom");
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareFunction(variadic)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("[custom, custom(.)]");
@@ -226,7 +226,7 @@ public class RuntimeBindingsTest {
 
 	@Test
 	public void isolatesBindingsAcrossConcurrentInvocations() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$value");

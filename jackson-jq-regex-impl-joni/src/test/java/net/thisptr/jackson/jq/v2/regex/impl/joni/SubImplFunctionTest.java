@@ -95,7 +95,7 @@ public class SubImplFunctionTest {
 	}
 
 	private static List<JsonNode> apply(String queryText, String input, RuntimeOptions options, Version version) throws Exception {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(JSON_PROVIDER, version).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, version).build();
 		JsonQuery<JsonNode> query = environment.compile(queryText);
 		List<JsonNode> out = new ArrayList<>();
 		query.apply(JSON_PROVIDER.createString(input), options, out::add);

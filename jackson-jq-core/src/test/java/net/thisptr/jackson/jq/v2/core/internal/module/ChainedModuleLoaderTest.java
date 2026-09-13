@@ -1,6 +1,7 @@
-package net.thisptr.jackson.jq.v2.core.module.loaders;
+package net.thisptr.jackson.jq.v2.core.internal.module;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -81,7 +82,7 @@ public class ChainedModuleLoaderTest {
 		}
 	}
 
-	private static final Module MODULE = new EnvironmentBuilder<JsonNode>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+	private static final Module MODULE = EnvironmentBuilder.<JsonNode>withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 			.build()
 			.compileModule("def one: 1;");
 	private static final JsonNode DATA = IntNode.valueOf(7);
@@ -89,7 +90,7 @@ public class ChainedModuleLoaderTest {
 
 	@Test
 	public void testMissLoaderFallsThroughToNextLoader() throws Exception {
-		ModuleLoader<JsonNode> chain = new ChainedModuleLoader<>(new MissingModuleLoader(), new FixedModuleLoader(MODULE, DATA));
+		ModuleLoader<JsonNode> chain = new ChainedModuleLoader<>(Arrays.asList(new MissingModuleLoader(), new FixedModuleLoader(MODULE, DATA)));
 
 		assertThat(chain.loadModule(null, "foo", NO_METADATA)).isSameAs(MODULE);
 		assertThat(chain.loadData(null, "foo", NO_METADATA)).isSameAs(DATA);
@@ -97,7 +98,7 @@ public class ChainedModuleLoaderTest {
 
 	@Test
 	public void testFailingLoaderAbortsChain() throws Exception {
-		ModuleLoader<JsonNode> chain = new ChainedModuleLoader<>(new FailingModuleLoader(), new FixedModuleLoader(MODULE, DATA));
+		ModuleLoader<JsonNode> chain = new ChainedModuleLoader<>(Arrays.asList(new FailingModuleLoader(), new FixedModuleLoader(MODULE, DATA)));
 
 		assertThatThrownBy(() -> chain.loadModule(null, "foo", NO_METADATA))
 				.isInstanceOf(JsonQueryException.class)
@@ -111,7 +112,7 @@ public class ChainedModuleLoaderTest {
 
 	@Test
 	public void testAllLoadersMissing() throws Exception {
-		ModuleLoader<JsonNode> chain = new ChainedModuleLoader<>(new MissingModuleLoader(), new MissingModuleLoader());
+		ModuleLoader<JsonNode> chain = new ChainedModuleLoader<>(Arrays.asList(new MissingModuleLoader(), new MissingModuleLoader()));
 
 		assertThatThrownBy(() -> chain.loadModule(null, "foo", NO_METADATA))
 				.isInstanceOf(ModuleNotFoundException.class)
@@ -121,12 +122,16 @@ public class ChainedModuleLoaderTest {
 				.hasMessage("module not found: foo");
 	}
 
+	/**
+	 * The same fall-through, reached the way an application reaches it: an {@code Environment} with
+	 * more than one module loader.
+	 */
 	@Test
 	public void testImportThroughChainResolvesFromSecondLoader() throws Exception {
-		ModuleLoader<JsonNode> chain = new ChainedModuleLoader<>(new MissingModuleLoader(), new FixedModuleLoader(MODULE, DATA));
-
-		JsonQuery<JsonNode> expr = new EnvironmentBuilder<JsonNode>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
-				.setModuleLoader(chain)
+		JsonQuery<JsonNode> expr = EnvironmentBuilder.<JsonNode>withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+				.clearModuleLoaders()
+				.addModuleLoader(new MissingModuleLoader())
+				.addModuleLoader(new FixedModuleLoader(MODULE, DATA))
 				.build()
 				.compile("import \"foo\" as foo; import \"bar\" as $bar; [foo::one, $bar::bar]");
 

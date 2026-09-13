@@ -7,7 +7,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
  * <p>
  * This is the "I don't have it" answer, as opposed to "I have it but loading it failed": a loader
  * that found the module and then failed to read or compile it throws a plain
- * {@link JsonQueryException} instead. {@code ChainedModuleLoader} relies on the distinction to
+ * {@link JsonQueryException} instead. An environment searching its module loaders relies on the distinction to
  * decide whether to try the next loader or to give up.
  */
 public class ModuleNotFoundException extends JsonQueryException {

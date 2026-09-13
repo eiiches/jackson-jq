@@ -1,7 +1,9 @@
 package net.thisptr.jackson.jq.v2.core;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -29,8 +31,8 @@ public final class EnvironmentBuilder<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final Version jqVersion;
 
-	private ModuleLoader<JsonNode> moduleLoader = new ClassPathModuleLoader<>(EnvironmentBuilder.class.getClassLoader());
-	private FunctionLoader functionLoader = new CachedFunctionLoader(new ClassPathFunctionLoader(EnvironmentBuilder.class.getClassLoader()));
+	private final List<ModuleLoader<JsonNode>> moduleLoaders = new ArrayList<>();
+	private FunctionLoader functionLoader;
 
 	private final Set<String> declaredVariables = new HashSet<>();
 	private final Set<FunctionSignature> declaredFunctions = new HashSet<>();
@@ -40,9 +42,38 @@ public final class EnvironmentBuilder<JsonNode> {
 	private final Map<String, JsonNode> constants = new HashMap<>();
 	private final Map<String, Module> importedModules = new HashMap<>();
 
-	public EnvironmentBuilder(JsonProvider<JsonNode> jsonProvider, Version jqVersion) {
+	private EnvironmentBuilder(JsonProvider<JsonNode> jsonProvider, Version jqVersion, FunctionLoader functionLoader) {
 		this.jsonProvider = jsonProvider;
 		this.jqVersion = jqVersion;
+		this.functionLoader = new CachedFunctionLoader(functionLoader);
+	}
+
+	/**
+	 * Starts a builder that already knows how to find what is on the classpath: a
+	 * {@link ClassPathModuleLoader} for {@code import}ed modules, and a {@link ClassPathFunctionLoader}
+	 * for functions -- which is where the jq builtins come from. Drop either with
+	 * {@link #clearModuleLoaders()} or {@link #setFunctionLoader}.
+	 * <p>
+	 * Both discover their providers through this class's own {@link ClassLoader}. Where that is not
+	 * the one that can see the application's providers -- an OSGi bundle, a JPMS layer, a plugin
+	 * class loader -- name the right one with {@link #withDefaultLoaders(JsonProvider, Version, ClassLoader)}.
+	 */
+	public static <JsonNode> EnvironmentBuilder<JsonNode> withDefaultLoaders(JsonProvider<JsonNode> jsonProvider, Version jqVersion) {
+		return withDefaultLoaders(jsonProvider, jqVersion, EnvironmentBuilder.class.getClassLoader());
+	}
+
+	/**
+	 * Same as {@link #withDefaultLoaders(JsonProvider, Version)}, but both default loaders discover
+	 * their providers through {@code classLoader} instead of this class's own.
+	 *
+	 * @param classLoader the class loader both {@link ClassPathModuleLoader} and
+	 * {@link ClassPathFunctionLoader} search for providers
+	 */
+	public static <JsonNode> EnvironmentBuilder<JsonNode> withDefaultLoaders(JsonProvider<JsonNode> jsonProvider, Version jqVersion, ClassLoader classLoader) {
+		EnvironmentBuilder<JsonNode> builder = new EnvironmentBuilder<>(Objects.requireNonNull(jsonProvider, "jsonProvider"), Objects.requireNonNull(jqVersion, "jqVersion"),
+				new ClassPathFunctionLoader(classLoader));
+		builder.addModuleLoader(new ClassPathModuleLoader<>(classLoader));
+		return builder;
 	}
 
 	public JsonProvider<JsonNode> getJsonProvider() {
@@ -53,8 +84,24 @@ public final class EnvironmentBuilder<JsonNode> {
 		return jqVersion;
 	}
 
-	public EnvironmentBuilder<JsonNode> setModuleLoader(ModuleLoader<JsonNode> moduleLoader) {
-		this.moduleLoader = moduleLoader;
+	/**
+	 * Appends a loader to the ones this environment consults. They are asked in the order they were
+	 * added, and the first one to resolve an {@code import}/{@code include} path answers it; a loader
+	 * that resolved the path and then failed aborts the search rather than deferring to the next.
+	 */
+	public EnvironmentBuilder<JsonNode> addModuleLoader(ModuleLoader<JsonNode> moduleLoader) {
+		moduleLoaders.add(Objects.requireNonNull(moduleLoader, "moduleLoader"));
+		return this;
+	}
+
+	/**
+	 * Removes every module loader added so far, including the default one
+	 * {@link #withDefaultLoaders} installed -- the way to take over the search order completely.
+	 * An environment left with no module loaders fails every {@code import} and {@code include} with
+	 * {@code ModuleNotFoundException}.
+	 */
+	public EnvironmentBuilder<JsonNode> clearModuleLoaders() {
+		moduleLoaders.clear();
 		return this;
 	}
 
@@ -157,7 +204,7 @@ public final class EnvironmentBuilder<JsonNode> {
 	}
 
 	public Environment<JsonNode> build() {
-		return new EnvironmentImpl<>(jsonProvider, jqVersion, moduleLoader, functionLoader,
+		return new EnvironmentImpl<>(jsonProvider, jqVersion, moduleLoaders, functionLoader,
 				declaredVariables, declaredFunctions, variables, functions, jqFunctions, constants, importedModules);
 	}
 }

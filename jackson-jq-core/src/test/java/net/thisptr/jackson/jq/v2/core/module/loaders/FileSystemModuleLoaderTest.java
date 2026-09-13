@@ -45,8 +45,9 @@ public class FileSystemModuleLoaderTest {
 	public void beforeEach() throws IOException {
 		ModuleLoader<JsonNode> moduleLoader = setupModuleLoader(Objects.requireNonNull(tempDir));
 
-		env = new EnvironmentBuilder<JsonNode>(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
-				.setModuleLoader(moduleLoader)
+		env = EnvironmentBuilder.<JsonNode>withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+				.clearModuleLoaders()
+				.addModuleLoader(moduleLoader)
 				.build();
 	}
 

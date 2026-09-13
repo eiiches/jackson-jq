@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -34,7 +35,10 @@ public interface Environment<JsonNode> {
 
 	Version getJqVersion();
 
-	ModuleLoader<JsonNode> getModuleLoader();
+	/**
+	 * The module loaders this environment consults, in the order they are asked.
+	 */
+	List<ModuleLoader<JsonNode>> getModuleLoaders();
 
 	FunctionLoader getFunctionLoader();
 

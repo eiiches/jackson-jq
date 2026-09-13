@@ -1,8 +1,10 @@
 package net.thisptr.jackson.jq.v2.core.internal.env;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -23,7 +25,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final Version jqVersion;
-	private final ModuleLoader<JsonNode> moduleLoader;
+	private final List<ModuleLoader<JsonNode>> moduleLoaders;
 	private final FunctionLoader functionLoader;
 	private final Set<String> declaredVariables;
 	private final Set<FunctionSignature> declaredFunctions;
@@ -34,14 +36,14 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	private final Map<String, Module> importedModules;
 
 	public EnvironmentImpl(JsonProvider<JsonNode> jsonProvider, Version jqVersion,
-						   ModuleLoader<JsonNode> moduleLoader, FunctionLoader functionLoader,
+						   List<ModuleLoader<JsonNode>> moduleLoaders, FunctionLoader functionLoader,
 						   Set<String> declaredVariables, Set<FunctionSignature> declaredFunctions,
 						   Map<String, Supplier<JsonNode>> variables, Map<FunctionSignature, Function> functions,
 						   Map<FunctionSignature, JqFunction> jqFunctions,
 						   Map<String, JsonNode> constants, Map<String, Module> importedModules) {
 		this.jsonProvider = jsonProvider;
 		this.jqVersion = jqVersion;
-		this.moduleLoader = moduleLoader;
+		this.moduleLoaders = new ArrayList<>(moduleLoaders);
 		this.functionLoader = functionLoader;
 		this.declaredVariables = new HashSet<>(declaredVariables);
 		this.declaredFunctions = new HashSet<>(declaredFunctions);
@@ -63,8 +65,8 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	}
 
 	@Override
-	public ModuleLoader<JsonNode> getModuleLoader() {
-		return moduleLoader;
+	public List<ModuleLoader<JsonNode>> getModuleLoaders() {
+		return Collections.unmodifiableList(moduleLoaders);
 	}
 
 	@Override

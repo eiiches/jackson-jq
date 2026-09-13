@@ -1,4 +1,6 @@
-package net.thisptr.jackson.jq.v2.core.module.loaders;
+package net.thisptr.jackson.jq.v2.core.internal.module;
+
+import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
@@ -9,7 +11,8 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
 /**
- * Asks each loader in turn, and answers with the first one that resolves the path.
+ * Asks an {@code Environment}'s module loaders in turn, and answers with the first one that
+ * resolves the path.
  * <p>
  * Only {@link ModuleNotFoundException} moves the chain along. A loader that did resolve the path
  * and then failed -- a module file with a syntax error, say -- throws a plain
@@ -17,10 +20,9 @@ import net.thisptr.jackson.jq.v2.spi.module.Module;
  * loader's answer or by a misleading "module not found".
  */
 public class ChainedModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
-	private final ModuleLoader<JsonNode>[] loaders;
+	private final List<ModuleLoader<JsonNode>> loaders;
 
-	@SafeVarargs
-	public ChainedModuleLoader(ModuleLoader<JsonNode>... loaders) {
+	public ChainedModuleLoader(List<ModuleLoader<JsonNode>> loaders) {
 		this.loaders = loaders;
 	}
 

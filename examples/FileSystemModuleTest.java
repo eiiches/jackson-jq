@@ -17,8 +17,6 @@ import tools.jackson.databind.node.IntNode;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
-import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
-import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
@@ -37,10 +35,8 @@ public class FileSystemModuleTest {
 		Path moduleDirectory = Objects.requireNonNull(Paths.get(moduleFile).getParent());
 
 		Jackson3JsonProvider jsonProvider = Jackson3JsonProvider.getInstance();
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_8_2)
-				.setModuleLoader(new ChainedModuleLoader<>(
-						ClassPathModuleLoader.<JsonNode>getInstance(),
-						new FileSystemModuleLoader<>(jsonProvider, Versions.JQ_1_8_2, moduleDirectory)))
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_8_2)
+				.addModuleLoader(new FileSystemModuleLoader<>(jsonProvider, Versions.JQ_1_8_2, moduleDirectory))
 				.build();
 
 		JsonQuery<JsonNode> query = environment.compile("import \"math\" as math; math::double");
