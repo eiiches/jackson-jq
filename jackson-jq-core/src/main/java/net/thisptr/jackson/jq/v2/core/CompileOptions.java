@@ -20,7 +20,7 @@ public final class CompileOptions {
 		this.diagnosticListener = diagnosticListener;
 	}
 
-	// Package-private: Environment's no-options overloads need an instance to pass to compile(), but
+	// Package-private: Environment's no-options overload needs an instance to pass to compile(), but
 	// callers never do -- they use the compile() overloads that take no options.
 	static CompileOptions getDefaultInstance() {
 		return DEFAULT;
