@@ -19,6 +19,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.diagnostic.DiagnosticListener;
+import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AsBindingAstNode;
@@ -890,11 +891,15 @@ public class Compiler {
 	 * environment-defined, jq-library, or Java builtin registries so that a declared signature coinciding
 	 * with a real builtin still requires a binding rather than silently falling back to the builtin.
 	 * <p>
-	 * The defined/builtin step searches the environment's own registries first and the {@code FunctionLoader}'s
-	 * second, and within each of those two tiers applies the same rule: exact-signature Java function, then
-	 * exact-signature jq definition, then variadic Java function. Whether a function is written in Java or in
-	 * jq is a detail of how it was supplied, so it must not decide the winner differently in one tier than in
-	 * the other; keep the two blocks below symmetric.
+	 * The defined/builtin step searches the environment's own registries first and then each
+	 * {@code FunctionLoader} in the order it was added, and within every one of those tiers applies the same
+	 * rule: exact-signature Java function, then exact-signature jq definition, then variadic Java function.
+	 * Whether a function is written in Java or in jq is a detail of how it was supplied, so it must not decide
+	 * the winner differently in one tier than in another; keep the two blocks below symmetric.
+	 * <p>
+	 * A loader tier is consulted whole before the next one is asked, exactly as a module loader is: the first
+	 * loader that supplies the name at any of those three steps answers the call, so an earlier loader's
+	 * variadic function beats a later loader's exact one.
 	 */
 	private static <N> Expression<StackFrame, N> compileFunctionCall(Environment<N> env, CompileContext context, String fullName, List<Expression<StackFrame, N>> compiledArgs) throws JsonQueryException {
 		int arity = compiledArgs.size();
@@ -935,17 +940,20 @@ public class Compiler {
 		if (factory != null)
 			return bindFunctionCall(env, factory, compiledArgs, context.isInputFixed());
 
-		Map<FunctionSignature, Function> loadedFunctions = env.getFunctionLoader().getFunctions(env.getJqVersion());
-		factory = loadedFunctions.get(exact);
-		if (factory == null) {
-			JqFunction jqFunction = env.getFunctionLoader().getJqFunctions(env.getJqVersion()).get(exact);
-			if (jqFunction != null)
-				return JqFunctionCompiler.compile(env, context, exact, jqFunction, JqFunctionCompiler.Origin.LOADER, compiledArgs);
-			factory = loadedFunctions.get(exact.asVariadic());
+		for (FunctionLoader loader : env.getFunctionLoaders()) {
+			Map<FunctionSignature, Function> loadedFunctions = loader.getFunctions(env.getJqVersion());
+			@Var
+			Function loaded = loadedFunctions.get(exact);
+			if (loaded == null) {
+				JqFunction jqFunction = loader.getJqFunctions(env.getJqVersion()).get(exact);
+				if (jqFunction != null)
+					return JqFunctionCompiler.compile(env, context, exact, jqFunction, JqFunctionCompiler.Origin.LOADER, compiledArgs);
+				loaded = loadedFunctions.get(exact.asVariadic());
+			}
+			if (loaded != null)
+				return bindFunctionCall(env, loaded, compiledArgs, context.isInputFixed());
 		}
-		if (factory == null)
-			throw new JsonQueryException(String.format("Function %s/%d does not exist", fullName, arity));
-		return bindFunctionCall(env, factory, compiledArgs, context.isInputFixed());
+		throw new JsonQueryException(String.format("Function %s/%d does not exist", fullName, arity));
 	}
 
 	/**

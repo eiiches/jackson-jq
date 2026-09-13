@@ -28,7 +28,14 @@ public interface Environment<JsonNode> {
 	 */
 	List<ModuleLoader<JsonNode>> getModuleLoaders();
 
-	FunctionLoader getFunctionLoader();
+	/**
+	 * The function loaders this environment consults, in the order they are asked.
+	 * <p>
+	 * These are not the instances handed to {@code EnvironmentBuilder.addFunctionLoader}: each is
+	 * wrapped in a memoizing decorator private to this environment, because a loader is asked for a
+	 * whole registry on every unresolved call and discovering one can be expensive.
+	 */
+	List<FunctionLoader> getFunctionLoaders();
 
 	Set<String> getDeclaredVariables();
 

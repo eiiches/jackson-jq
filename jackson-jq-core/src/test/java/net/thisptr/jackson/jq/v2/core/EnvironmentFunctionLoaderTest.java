@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
 import net.thisptr.jackson.jq.v2.core.function.loaders.ClassPathFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
@@ -19,6 +21,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionParameter;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
+import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
@@ -26,7 +29,7 @@ import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-// proves setFunctionLoader() actually takes effect on the built Environment.
+// proves addFunctionLoader() actually takes effect on the built Environment.
 public class EnvironmentFunctionLoaderTest {
 	@Test
 	public void classPathLoaderKeepsJavaAndJqDefinitionsSeparate() {
@@ -80,9 +83,9 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void setFunctionLoaderAfterConstructionTakesEffect() throws Exception {
+	public void addFunctionLoaderAfterConstructionTakesEffect() throws Exception {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
-				.setFunctionLoader(constantLoader(FunctionSignature.of("greet", 0), "hello"))
+				.addFunctionLoader(constantLoader(FunctionSignature.of("greet", 0), "hello"))
 				.build();
 
 		JsonQuery<JsonNode> query = env.compile("greet");
@@ -93,25 +96,34 @@ public class EnvironmentFunctionLoaderTest {
 		assertThat(out.get(0).asText()).isEqualTo("hello");
 	}
 
+	/**
+	 * A loader is appended after the default {@link ClassPathFunctionLoader}, and the first loader to
+	 * supply a name answers -- so an added loader extends the builtins, it does not shadow them.
+	 */
 	@Test
-	public void setFunctionLoaderOverridesBuiltin() throws Exception {
+	public void addedFunctionLoaderDoesNotShadowABuiltin() throws Exception {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
-				.setFunctionLoader(constantLoader(FunctionSignature.of("not", 0), "overridden"))
+				.addFunctionLoader(constantLoader(FunctionSignature.of("not", 0), "overridden"))
 				.build();
 
-		JsonQuery<JsonNode> query = env.compile("true | not");
-		List<JsonNode> out = new ArrayList<>();
-		query.apply(env.getJsonProvider().createNull(), out::add);
-
-		assertThat(out).hasSize(1);
-		assertThat(out.get(0).asText()).isEqualTo("overridden");
+		assertThat(execute(env, "true | not")).extracting(JsonNode::asBoolean).containsExactly(false);
 	}
 
 	@Test
-	public void explicitAddFunctionWinsOverFunctionLoader() throws Exception {
+	public void clearFunctionLoadersLetsALoaderSupplyABuiltinName() throws Exception {
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+				.clearFunctionLoaders()
+				.addFunctionLoader(constantLoader(FunctionSignature.of("not", 0), "overridden"))
+				.build();
+
+		assertThat(execute(env, "true | not")).extracting(JsonNode::asText).containsExactly("overridden");
+	}
+
+	@Test
+	public void explicitDefineFunctionWinsOverFunctionLoader() throws Exception {
 		FunctionSignature key = FunctionSignature.of("greet", 0);
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
-				.setFunctionLoader(constantLoader(key, "from-loader"))
+				.addFunctionLoader(constantLoader(key, "from-loader"))
 				.defineFunction(key, constantFunction("from-explicit"))
 				.build();
 
@@ -128,7 +140,7 @@ public class EnvironmentFunctionLoaderTest {
 		FunctionSignature key = FunctionSignature.of("greet", 0);
 		JqFunction jqFunction = JqFunction.of("greet", Collections.emptyList(), "\"from-jq\"");
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
-				.setFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(key, jqFunction)))
+				.addFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(key, jqFunction)))
 				.build();
 
 		assertThat(execute(env, "greet")).extracting(JsonNode::asText).containsExactly("from-jq");
@@ -144,7 +156,7 @@ public class EnvironmentFunctionLoaderTest {
 		FunctionSignature key = FunctionSignature.of("greet", 0);
 		JqFunction jqFunction = JqFunction.of("greet", Collections.emptyList(), "\"from-jq\"");
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
-				.setFunctionLoader(functionLoader(Collections.singletonMap(key, constantFunction("from-java")), Collections.singletonMap(key, jqFunction)))
+				.addFunctionLoader(functionLoader(Collections.singletonMap(key, constantFunction("from-java")), Collections.singletonMap(key, jqFunction)))
 				.build();
 
 		assertThat(execute(env, "greet")).extracting(JsonNode::asText).containsExactly("from-java");
@@ -158,7 +170,7 @@ public class EnvironmentFunctionLoaderTest {
 	public void exactLoaderJqFunctionWinsOverLoaderJavaVariadicFunction() throws Exception {
 		JqFunction jqFunction = JqFunction.of("greet", Collections.emptyList(), "\"exact-jq\"");
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
-				.setFunctionLoader(functionLoader(
+				.addFunctionLoader(functionLoader(
 						Collections.singletonMap(FunctionSignature.ofVariadic("greet"), constantFunction("variadic-java")),
 						Collections.singletonMap(FunctionSignature.of("greet", 0), jqFunction)))
 				.build();
@@ -171,7 +183,7 @@ public class EnvironmentFunctionLoaderTest {
 		FunctionSignature key = FunctionSignature.of("greet", 0);
 		JqFunction jqFunction = JqFunction.of("greet", Collections.emptyList(), "\"from-jq\"");
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
-				.setFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(key, jqFunction)))
+				.addFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(key, jqFunction)))
 				.defineFunction(key, constantFunction("from-explicit"))
 				.build();
 
@@ -184,7 +196,7 @@ public class EnvironmentFunctionLoaderTest {
 		JqFunction jqFunction = JqFunction.of("countdown", Collections.singletonList(FunctionParameter.ofValue("n")),
 				"if $n <= 0 then 0 else countdown($n - 1) end");
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
-				.setFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(key, jqFunction)))
+				.addFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(key, jqFunction)))
 				.build();
 
 		assertThat(execute(env, "countdown(3)")).extracting(JsonNode::asInt).containsExactly(0);
@@ -242,7 +254,7 @@ public class EnvironmentFunctionLoaderTest {
 		JqFunction loaded = JqFunction.of("greet", Collections.emptyList(), "\"from-loader\"");
 		JqFunction defined = JqFunction.of("greet", Collections.emptyList(), "\"from-environment\"");
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
-				.setFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(key, loaded)))
+				.addFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(key, loaded)))
 				.defineJqFunction(defined)
 				.build();
 
@@ -254,7 +266,7 @@ public class EnvironmentFunctionLoaderTest {
 		FunctionSignature key = FunctionSignature.of("loaded", 0);
 		JqFunction loaded = JqFunction.of("loaded", Collections.emptyList(), "environment_only");
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
-				.setFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(key, loaded)))
+				.addFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(key, loaded)))
 				.defineFunction(FunctionSignature.of("environment_only", 0), constantFunction("visible"))
 				.build();
 
@@ -393,5 +405,149 @@ public class EnvironmentFunctionLoaderTest {
 				.hasMessageContaining("does not support jq");
 		assertThat(builder.defineJqFunction(compatible).build().getJqFunctions())
 				.containsKey(FunctionSignature.of("current", 0));
+	}
+
+	private static EnvironmentBuilder<JsonNode> builder() {
+		return EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6);
+	}
+
+	/**
+	 * Stands in for a real loader: what matters here is only how many end up in the environment, so
+	 * this one supplies nothing.
+	 */
+	private static FunctionLoader emptyLoader() {
+		return functionLoader(Collections.emptyMap(), Collections.emptyMap());
+	}
+
+	@Test
+	public void testDefaultEnvironmentHasTheClassPathFunctionLoader() {
+		assertThat(builder().build().getFunctionLoaders()).hasSize(1);
+	}
+
+	@Test
+	public void testAddedLoadersFollowTheDefaultInOrder() {
+		assertThat(builder().addFunctionLoader(emptyLoader()).addFunctionLoader(emptyLoader()).build().getFunctionLoaders())
+				.hasSize(3);
+	}
+
+	@Test
+	public void testClearFunctionLoadersTakesOverTheOrder() {
+		assertThat(builder().clearFunctionLoaders().addFunctionLoader(emptyLoader()).addFunctionLoader(emptyLoader()).build().getFunctionLoaders())
+				.hasSize(2);
+	}
+
+	@Test
+	public void testFunctionLoadersAreNotModifiableThroughTheEnvironment() {
+		List<FunctionLoader> loaders = builder().build().getFunctionLoaders();
+
+		assertThatThrownBy(() -> loaders.add(emptyLoader())).isInstanceOf(UnsupportedOperationException.class);
+	}
+
+	/**
+	 * The function-side counterpart of an environment with no module loaders: the builtins are the
+	 * default loader's, so dropping it leaves nothing but what the environment itself defines.
+	 */
+	@Test
+	public void testEnvironmentWithNoFunctionLoadersHasNoBuiltins() {
+		Environment<JsonNode> env = builder().clearFunctionLoaders().build();
+
+		assertThat(env.getFunctionLoaders()).isEmpty();
+		assertThatThrownBy(() -> env.compile("length"))
+				.hasMessageContaining("Function length/0 does not exist");
+	}
+
+	@Test
+	public void earlierFunctionLoaderWinsOverALaterOneWithTheSameSignature() throws Exception {
+		FunctionSignature key = FunctionSignature.of("greet", 0);
+		Environment<JsonNode> env = builder()
+				.addFunctionLoader(constantLoader(key, "from-first"))
+				.addFunctionLoader(constantLoader(key, "from-second"))
+				.build();
+
+		assertThat(execute(env, "greet")).extracting(JsonNode::asText).containsExactly("from-first");
+	}
+
+	@Test
+	public void aLaterFunctionLoaderIsConsultedForASignatureTheEarlierOneLacks() throws Exception {
+		Environment<JsonNode> env = builder()
+				.addFunctionLoader(constantLoader(FunctionSignature.of("greet", 0), "hello"))
+				.addFunctionLoader(constantLoader(FunctionSignature.of("farewell", 0), "bye"))
+				.build();
+
+		assertThat(execute(env, "[greet, farewell]")).flatExtracting(node -> Arrays.asList(node.get(0).asText(), node.get(1).asText()))
+				.containsExactly("hello", "bye");
+	}
+
+	/**
+	 * A loader is a tier of its own, asked whole before the next one is: the first loader that supplies
+	 * the name at any of its three steps answers the call. So an earlier loader's variadic function
+	 * beats a later loader's exact one -- the same "first loader to resolve wins" rule module loaders
+	 * follow, deliberately preferred over letting exactness cross a loader boundary.
+	 */
+	@Test
+	public void anEarlierLoadersVariadicFunctionWinsOverALaterLoadersExactFunction() throws Exception {
+		Environment<JsonNode> env = builder()
+				.addFunctionLoader(constantLoader(FunctionSignature.ofVariadic("greet"), "variadic-first"))
+				.addFunctionLoader(constantLoader(FunctionSignature.of("greet", 0), "exact-second"))
+				.build();
+
+		assertThat(execute(env, "greet")).extracting(JsonNode::asText).containsExactly("variadic-first");
+	}
+
+	/**
+	 * A loader's jq definition compiles against a throwaway environment carrying the caller's loaders
+	 * (JqFunctionCompiler#resolveEnvironment), so its body must reach a function only a *different*
+	 * loader supplies -- not just the one it came from.
+	 */
+	@Test
+	public void aLoaderJqFunctionBodyResolvesAgainstEveryFunctionLoader() throws Exception {
+		JqFunction greet = JqFunction.of("greet", Collections.emptyList(), "helper");
+		Environment<JsonNode> env = builder()
+				.addFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(FunctionSignature.of("greet", 0), greet)))
+				.addFunctionLoader(constantLoader(FunctionSignature.of("helper", 0), "from-other-loader"))
+				.build();
+
+		assertThat(execute(env, "greet")).extracting(JsonNode::asText).containsExactly("from-other-loader");
+	}
+
+	/**
+	 * The same propagation, through the other derived environment: a module's source compiles against
+	 * ModuleResolver#moduleEnvironment, which must carry the whole list too.
+	 */
+	@Test
+	public void aModuleBodyResolvesAgainstEveryFunctionLoader() throws Exception {
+		Environment<JsonNode> env = builder()
+				.addFunctionLoader(constantLoader(FunctionSignature.of("helper", 0), "from-loader"))
+				.addImportedModule("lib", new SourceModule("def greet: helper;"))
+				.build();
+
+		assertThat(execute(env, "lib::greet")).extracting(JsonNode::asText).containsExactly("from-loader");
+	}
+
+	/**
+	 * Minimal jq-source module: {@code addImportedModule} takes either kind, and this one makes the
+	 * compiler go through ModuleResolver to compile it.
+	 */
+	private static final class SourceModule implements JqModule<JsonNode> {
+		private final String source;
+
+		SourceModule(String source) {
+			this.source = source;
+		}
+
+		@Override
+		public String getSource() {
+			return source;
+		}
+
+		@Override
+		public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
+			throw new ModuleNotFoundException(importPath);
+		}
+
+		@Override
+		public JsonNode relativeData(String importPath, String searchPath) {
+			throw new ModuleNotFoundException(importPath);
+		}
 	}
 }
