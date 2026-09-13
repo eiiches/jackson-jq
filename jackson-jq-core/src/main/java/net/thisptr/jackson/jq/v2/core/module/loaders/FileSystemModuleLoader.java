@@ -7,297 +7,224 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
 
-import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.CompileOptions;
-import net.thisptr.jackson.jq.v2.core.Environment;
-import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
-import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
-import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
-import net.thisptr.jackson.jq.v2.core.internal.compile.RootExpression;
-import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
-import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModuleMeta;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
-import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
-import net.thisptr.jackson.jq.v2.spi.Expression;
-import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
-import net.thisptr.jackson.jq.v2.spi.version.Version;
 
+/**
+ * Reads modules and data off the filesystem, searching a fixed list of absolute search paths.
+ * <p>
+ * Each module it returns remembers the search path it was found under, which is what an import
+ * relative to that module resolves against -- and what such an import may not escape.
+ * <p>
+ * <b>What the boundary means.</b> No path this loader opens is outside the search path it was
+ * resolved under: an import path may not be absolute, may not contain a {@code ..} component, may
+ * not name the search path itself, and every candidate file is checked against the search path
+ * before the filesystem is touched. A {@code {search: ...}} override is bounded the same way,
+ * against the search path the importing module was found under.
+ * <p>
+ * That check is on the paths, not on what the filesystem does with them: a symlink inside the
+ * search path is followed wherever it points, exactly as jq does. A symlink in the tree is the
+ * operator's doing, and anyone able to put one there could equally put a {@code .jq} file there,
+ * which is executable code rather than a read. A search path whose contents are not trusted is
+ * therefore not a sandbox, and was never one.
+ */
 public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	private final List<Path> searchPaths;
-	private final Version version;
 	private final JsonProvider<JsonNode> jsonProvider;
 
-	public FileSystemModuleLoader(JsonProvider<JsonNode> jsonProvider, Version version, Path... searchPaths) {
+	public FileSystemModuleLoader(JsonProvider<JsonNode> jsonProvider, Path... searchPaths) {
 		List<Path> absoluteSearchPaths = new ArrayList<>();
 		for (Path searchPath : searchPaths) {
 			if (!searchPath.isAbsolute())
 				throw new RuntimeException("Search path must be absolute");
-			absoluteSearchPaths.add(searchPath);
+			// Containment is decided by startsWith against these, which only means anything if they
+			// are normalized: /a/b/../c and /a/c must not be two different boundaries.
+			absoluteSearchPaths.add(searchPath.normalize());
 		}
 		this.searchPaths = absoluteSearchPaths;
 		this.jsonProvider = jsonProvider;
-		this.version = version;
 	}
 
-	private static Path resolveModulePath(Path searchPath, String path) {
-		Path modulePath = searchPath.getFileSystem().getPath(path);
+	/**
+	 * A module file this loader read. It knows both where it is and which search path it was found
+	 * under, which is everything an import written inside it needs to resolve.
+	 */
+	private static final class FileSystemJqModule<JsonNode> implements JqModule<JsonNode> {
+		private final Path searchPath;
+		private final Path modulePath;
+		private final String source;
+		private final JsonProvider<JsonNode> jsonProvider;
+
+		FileSystemJqModule(Path searchPath, Path modulePath, String source, JsonProvider<JsonNode> jsonProvider) {
+			this.searchPath = searchPath;
+			this.modulePath = modulePath;
+			this.source = source;
+			this.jsonProvider = jsonProvider;
+		}
+
+		@Override
+		public String getSource() {
+			return source;
+		}
+
+		/**
+		 * Resolves {@code searchPath} against this module's own directory, then {@code importPath}
+		 * against that -- {@code {search: "./"}} meaning "next to this file".
+		 * <p>
+		 * jq's C code has no equivalent bound: {@code build_lib_search_chain} concatenates and
+		 * leaves it there. Refusing to leave the search path the importing module was found under is
+		 * this loader's own hardening.
+		 */
+		private Path resolveOverride(String importPath, String override) throws JsonQueryException {
+			Path overridePath = modulePath.getFileSystem().getPath(override);
+			Path resolvedOverride = Objects.requireNonNull(modulePath.getParent()).resolve(overridePath).normalize();
+			if (!resolvedOverride.startsWith(searchPath))
+				throw new JsonQueryException("search path overrides from import metadata must stay within the original search path of the caller module");
+			return resolveModulePath(resolvedOverride, importPath);
+		}
+
+		@Override
+		public JqModule<JsonNode> relativeImport(String importPath, String searchPathOverride) throws JsonQueryException {
+			Path resolvedPath = resolveOverride(importPath, searchPathOverride);
+			Path filePath = findFile(searchPath, resolvedPath, "jq");
+			if (filePath == null)
+				throw new ModuleNotFoundException(importPath);
+			// Still the caller's search path: a module reached through an override belongs to the
+			// same tree, so its own relative imports are bounded the same way.
+			return new FileSystemJqModule<>(searchPath, filePath, read(filePath, "module", importPath), jsonProvider);
+		}
+
+		@Override
+		public JsonNode relativeData(String importPath, String searchPathOverride) throws JsonQueryException {
+			Path resolvedPath = resolveOverride(importPath, searchPathOverride);
+			Path filePath = findFile(searchPath, resolvedPath, "json");
+			if (filePath == null)
+				throw new ModuleNotFoundException(importPath);
+			return parseData(jsonProvider, filePath, importPath);
+		}
+
+		/**
+		 * Two instances of the same module file are the same module, however they were reached: the
+		 * compiler compiles each distinct module once and detects cycles by re-entry.
+		 */
+		@Override
+		public boolean equals(@Nullable Object o) {
+			if (!(o instanceof FileSystemJqModule))
+				return false;
+			return modulePath.equals(((FileSystemJqModule<?>) o).modulePath);
+		}
+
+		@Override
+		public int hashCode() {
+			return modulePath.hashCode();
+		}
+
+		@Override
+		public String toString() {
+			return modulePath.toString();
+		}
+	}
+
+	/**
+	 * Resolves an import path against a directory, refusing anything that could name a file outside
+	 * it. Like jq's {@code validate_relpath}, a {@code ..} component is refused outright rather than
+	 * normalized away, so no import path can be written that even points at the parent.
+	 */
+	private static Path resolveModulePath(Path base, String path) throws JsonQueryException {
+		Path modulePath = base.getFileSystem().getPath(path);
 		if (modulePath.isAbsolute())
-			throw new RuntimeException("Import path must be relative");
+			throw new JsonQueryException("import path must be relative: " + path);
+
+		for (Path component : modulePath) {
+			if ("..".equals(component.toString()))
+				throw new JsonQueryException("import path must not traverse to parent directories: " + path);
+		}
 
 		if (modulePath.getParent() != null && modulePath.getFileName().equals(modulePath.getParent().getFileName()))
-			throw new RuntimeException("module names must not have equal consecutive components: " + path);
+			throw new JsonQueryException("module names must not have equal consecutive components: " + path);
 
-		Path resolvedPath = searchPath.resolve(modulePath).normalize();
-		if (!resolvedPath.startsWith(searchPath))
-			throw new RuntimeException("Import path must be within the search path");
+		Path resolvedPath = base.resolve(modulePath).normalize();
+		// A module is a file *under* the directory, never the directory itself: findFile looks at a
+		// sibling of what it is given, and the sibling of the directory itself lies outside it.
+		if (!resolvedPath.startsWith(base) || resolvedPath.equals(base))
+			throw new JsonQueryException("import path must be within the search path: " + path);
 
 		return resolvedPath;
 	}
 
-	private static @Nullable ModuleFile loadModuleFile(Path searchPath, String path, String ext) throws IOException {
-		Path resolvedPath = resolveModulePath(searchPath, path);
+	/**
+	 * jq looks for a module both as {@code <name>.<ext>} and as {@code <name>/<name>.<ext>}. The
+	 * first of those is a *sibling* of the resolved path, so both candidates are checked against
+	 * {@code searchPath} before the filesystem is touched.
+	 */
+	private static @Nullable Path findFile(Path searchPath, Path resolvedPath, String ext) {
+		Path fileName = resolvedPath.getFileName();
+		if (fileName == null)
+			return null;
 
-		Path moduleFilePath = resolvedPath.resolveSibling(resolvedPath.getFileName() + "." + ext);
-		try {
-			byte[] moduleBytes = Files.readAllBytes(moduleFilePath);
-			return new ModuleFile(searchPath, moduleFilePath, moduleBytes);
-		} catch (FileNotFoundException | NoSuchFileException e) {
-			/* continue */
-		}
+		Path siblingPath = resolvedPath.resolveSibling(fileName + "." + ext);
+		if (isReadableWithin(searchPath, siblingPath))
+			return siblingPath;
 
-		Path moduleFilePath2 = resolvedPath.resolve(resolvedPath.getFileName() + "." + ext);
-		try {
-			byte[] moduleBytes = Files.readAllBytes(moduleFilePath2);
-			return new ModuleFile(searchPath, moduleFilePath2, moduleBytes);
-		} catch (FileNotFoundException | NoSuchFileException e) {
-			/* continue */
-		}
+		Path nestedPath = resolvedPath.resolve(fileName + "." + ext);
+		if (isReadableWithin(searchPath, nestedPath))
+			return nestedPath;
 
 		return null;
 	}
 
-	private static final class ModuleFile {
-		Path searchPath;
-		Path modulePath;
-		byte[] bytes;
+	/**
+	 * The last word on what this loader may open. Every path it resolves is bounded before it gets
+	 * here, so this is the backstop that keeps a future slip in that arithmetic from turning into a
+	 * read outside the search path.
+	 */
+	private static boolean isReadableWithin(Path searchPath, Path filePath) {
+		return filePath.normalize().startsWith(searchPath) && Files.isReadable(filePath);
+	}
 
-		ModuleFile(Path searchPath, Path modulePath, byte[] bytes) {
-			this.searchPath = searchPath;
-			this.modulePath = modulePath;
-			this.bytes = bytes;
+	private static String read(Path filePath, String what, String path) throws JsonQueryException {
+		try {
+			return new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
+		} catch (FileNotFoundException | NoSuchFileException e) {
+			// Readable a moment ago, gone now: report it as missing rather than as a read failure.
+			throw new ModuleNotFoundException(path, e);
+		} catch (IOException e) {
+			throw new JsonQueryException(String.format("failed to load %s %s: %s", what, path, e.getMessage()), e);
 		}
 	}
 
-	// modules with the same path may exist in different search paths
-	private final ConcurrentHashMap<Pair<Path /* searchPath */, String /* relativePath */>, TryOnce<Module>> loadedModules = new ConcurrentHashMap<>();
-	private final ConcurrentHashMap<Pair<Path /* searchPath */, String /* relativePath */>, TryOnce<Maybe<JsonNode>>> loadedData = new ConcurrentHashMap<>();
-
-	private final class FileSystemModule extends SimpleModule {
-		private Path modulePath;
-		private Path searchPath;
-
-		FileSystemModule(Path searchPath, Path modulePath) {
-			this.modulePath = modulePath;
-			this.searchPath = searchPath;
-		}
-
-		private FileSystemModuleLoader<JsonNode> loader() {
-			return FileSystemModuleLoader.this;
-		}
-	}
-
-	private @Nullable Module loadModuleActual(Path searchPath, String path) throws IOException {
-		ModuleFile moduleFile = loadModuleFile(searchPath, path, "jq");
-		if (moduleFile == null)
-			return null;
-
-		String moduleString = new String(moduleFile.bytes, StandardCharsets.UTF_8);
-
-		FileSystemModule module = new FileSystemModule(moduleFile.searchPath, moduleFile.modulePath);
-
-		// A module's own imports resolve through this same loader: it is the only one this loader
-		// knows about. Reaching the rest of the importing environment's loaders needs them passed
-		// down through ModuleLoader.loadModule, which they are not.
-		Environment<JsonNode> moduleEnv = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
-				.clearModuleLoaders()
-				.addModuleLoader(this)
-				.build();
-		AstNode ast = AstParser.parse(moduleString + " null", version);
-		// A module read off the search path is somebody else's library, so it is compiled with
-		// default options -- the caller asked for diagnostics about their own query, not about
-		// the jq files it happens to import.
-		Expression<StackFrame, JsonNode> compiled = Compiler.compileModule(moduleEnv, CompileOptions.newBuilder().build(), module, ast);
-		if (!(compiled instanceof RootExpression))
-			throw new IllegalStateException("Compiler did not produce a root expression");
-
-		Map<FunctionSignature, Function> exportedFunctions = ((RootExpression<JsonNode>) compiled).applyForModuleExports(jsonProvider.createNull());
-		exportedFunctions.forEach((key, factory) -> {
-			if (key.arity() != null)
-				module.addFunction(key, factory);
-		});
-		module.setModuleMeta(SimpleModuleMeta.fromAst(ast));
-		return module;
-	}
-
-	private static final class TryOnce<T> {
-		private CompletableFuture<T> f = new CompletableFuture<>();
-		private Thread taskThread;
-
-		@Var
-		private boolean taskStarted;
-
-		TryOnce() {
-			this.taskThread = Thread.currentThread();
-		}
-
-		private static class RecursiveInvocationException extends IllegalStateException {
-			private static final long serialVersionUID = 1L;
-		}
-
-		T tryOnce(Callable<T> task) throws CompletionException, RecursiveInvocationException {
-			if (f.isDone())
-				return f.join();
-
-			if (Thread.currentThread() == taskThread) {
-				// if task is already started BUT not completed, tryOnce is being called recursively
-				if (taskStarted)
-					throw new RecursiveInvocationException();
-				taskStarted = true;
-
-				// perform the task
-				try {
-					f.complete(task.call());
-				} catch (Throwable th) {
-					f.completeExceptionally(th);
-				}
-
-				return f.join(); // return the result we just computed
-			}
-
-			// wait for the task thread to complete
-			return f.join();
-		}
-	}
-
-	private @Nullable Pair<List<Path>, String> resolvePathsFromImportDirective(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
-		@Var List<Path> searchPaths = this.searchPaths;
-		@Var String relativePath = path;
-
-		@Var FileSystemModule callerModule = null;
-		if (caller != null && caller.getClass() == FileSystemModule.class) {
-			callerModule = (FileSystemModule) caller;
-			if (callerModule.loader() != this) // Imports from a FileSystemModule should be handled by the same loader
-				return null;
-		}
-
-		JsonProvider<JsonNode> jsonProvider = this.jsonProvider;
-		if (metadata.isPresent()) {
-			Maybe<JsonNode> search = jsonProvider.getObjectMember(metadata.get(), "search");
-			if (search.isPresent()) {
-				// disallow search overrides from top-level unnamed expression, which doesn't have a module path.
-				// i.e. import "foo" as foo {search: ./}; doesn't make sense. where is ./ ?
-				if (callerModule == null)
-					throw new JsonQueryException("search path can only be overriden from imported modules, but not from a top-level unnamed module");
-
-				// jq does ignore non-textual search overrides, but i want it to fail fast.
-				if (!jsonProvider.isString(search.get()))
-					throw new JsonQueryException("search path overrides must be a string");
-
-				@Var Path searchPathOverride = callerModule.modulePath.getFileSystem().getPath(jsonProvider.getString(search.get()));
-				searchPathOverride = Objects.requireNonNull(callerModule.modulePath.getParent()).resolve(searchPathOverride).normalize();
-
-				// still, the search path must be within the original search path
-				if (!searchPathOverride.startsWith(callerModule.searchPath))
-					throw new JsonQueryException("search path overrides from import metadata must stay within the original search path of the caller module");
-
-				Path resolvedModulePath = resolveModulePath(searchPathOverride, path);
-
-				relativePath = callerModule.searchPath.relativize(resolvedModulePath).toString();
-				searchPaths = Collections.singletonList(callerModule.searchPath);
-			}
-		}
-
-		return Pair.of(searchPaths, relativePath);
+	private static <JsonNode> JsonNode parseData(JsonProvider<JsonNode> jsonProvider, Path filePath, String path) throws JsonQueryException {
+		List<JsonNode> values = jsonProvider.parseAll(read(filePath, "data", path));
+		return jsonProvider.createArray(values);
 	}
 
 	@Override
-	public Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
-		Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
-		if (paths == null)
-			throw new ModuleNotFoundException(path);
-		List<Path> searchPaths = paths._1;
-		String relativePath = paths._2;
-
+	public Module loadModule(String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		for (Path searchPath : searchPaths) {
-			TryOnce<Module> tryOnce = loadedModules.computeIfAbsent(Pair.of(searchPath, relativePath), p -> new TryOnce<>());
-			try {
-				Module module = tryOnce.tryOnce(() -> {
-					return loadModuleActual(searchPath, relativePath);
-				});
-				if (module != null)
-					return module;
-			} catch (TryOnce.RecursiveInvocationException e) {
-				throw new JsonQueryException(String.format("module %s is imported recursively", path));
-			} catch (CompletionException e) {
-				Throwable cause = e.getCause();
-				throw new JsonQueryException(String.format("failed to load module %s: %s", path, cause == null ? e.getMessage() : cause.getMessage()), e);
-			}
+			Path filePath = findFile(searchPath, resolveModulePath(searchPath, path), "jq");
+			if (filePath != null)
+				return new FileSystemJqModule<>(searchPath, filePath, read(filePath, "module", path), jsonProvider);
 		}
-
 		throw new ModuleNotFoundException(path);
 	}
 
 	@Override
-	public JsonNode loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
-		Pair<List<Path>, String> paths = resolvePathsFromImportDirective(caller, path, metadata);
-		if (paths == null)
-			throw new ModuleNotFoundException(path);
-		List<Path> searchPaths = paths._1;
-		String relativePath = paths._2;
-
+	public JsonNode loadData(String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		for (Path searchPath : searchPaths) {
-			TryOnce<Maybe<JsonNode>> tryOnce = loadedData.computeIfAbsent(Pair.of(searchPath, relativePath), p -> new TryOnce<>());
-			try {
-				Maybe<JsonNode> data = tryOnce.tryOnce(() -> {
-					return loadDataActual(searchPath, relativePath);
-				});
-				if (data.isPresent())
-					return data.get();
-			} catch (CompletionException e) {
-				Throwable cause = e.getCause();
-				throw new JsonQueryException(String.format("failed to load data %s: %s", path, cause == null ? e.getMessage() : cause.getMessage()), e);
-			}
+			Path filePath = findFile(searchPath, resolveModulePath(searchPath, path), "json");
+			if (filePath != null)
+				return parseData(jsonProvider, filePath, path);
 		}
-
 		throw new ModuleNotFoundException(path);
-	}
-
-	private Maybe<JsonNode> loadDataActual(Path searchPath, String path) throws IOException {
-		ModuleFile moduleFile = loadModuleFile(searchPath, path, "json");
-		if (moduleFile == null)
-			return Maybe.absent();
-
-		JsonProvider<JsonNode> jsonProvider = this.jsonProvider;
-		List<JsonNode> values = jsonProvider.parseAll(new String(moduleFile.bytes, StandardCharsets.UTF_8));
-		return Maybe.of(jsonProvider.createArray(values));
 	}
 }

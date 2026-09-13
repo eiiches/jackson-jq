@@ -62,7 +62,7 @@ public abstract class AbstractJsonQueryTest<T> {
 		EnvironmentBuilder<T> envBuilder = EnvironmentBuilder.withDefaultLoaders(getJsonProvider(), version);
 		if (moduleSearchPath != null) {
 			envBuilder.clearModuleLoaders()
-					.addModuleLoader(new FileSystemModuleLoader<>(envBuilder.getJsonProvider(), version, moduleSearchPath))
+					.addModuleLoader(new FileSystemModuleLoader<>(envBuilder.getJsonProvider(), moduleSearchPath))
 					.addModuleLoader(ClassPathModuleLoader.getInstance());
 		}
 		Environment<T> env = envBuilder

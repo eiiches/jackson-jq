@@ -36,7 +36,7 @@ public class FileSystemModuleTest {
 
 		Jackson3JsonProvider jsonProvider = Jackson3JsonProvider.getInstance();
 		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_8_2)
-				.addModuleLoader(new FileSystemModuleLoader<>(jsonProvider, Versions.JQ_1_8_2, moduleDirectory))
+				.addModuleLoader(new FileSystemModuleLoader<>(jsonProvider, moduleDirectory))
 				.build();
 
 		JsonQuery<JsonNode> query = environment.compile("import \"math\" as math; math::double");

@@ -73,7 +73,6 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedLocalVar
 import net.thisptr.jackson.jq.v2.core.internal.diagnostics.PipeParenthesesCheck;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.core.internal.module.ChainedModuleLoader;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction;
 import net.thisptr.jackson.jq.v2.core.internal.tree.BreakExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.Comma;
@@ -130,7 +129,6 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ObjectMatch
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.utils.ExpressionUtils;
 import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
-import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
@@ -142,6 +140,7 @@ import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -201,11 +200,11 @@ public class Compiler {
 	}
 
 	public static <JsonNode> Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, AstNode ast) throws JsonQueryException {
-		return compile(env, CompileOptions.newBuilder().build(), (Module) null, ast);
+		return compile(env, CompileOptions.newBuilder().build(), ModuleScope.root(env), ast);
 	}
 
-	public static <JsonNode> Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileOptions options, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
-		return compileRoot(env, options, currentModule, ast, false);
+	public static <JsonNode> Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, AstNode ast) throws JsonQueryException {
+		return compileRoot(env, options, scope, ast, false);
 	}
 
 	/**
@@ -213,14 +212,14 @@ public class Compiler {
 	 * tracks the module's genuinely top-level {@code def}s (see {@link CompileContext#exportsTopLevelFunctions()}
 	 * / {@link CompileContext#isRootScope()}) so {@link RootExpression#applyForModuleExports} can harvest their
 	 * real, correctly closure-bound {@link Function} values after running the module body once. This is how
-	 * {@code FileSystemModuleLoader.loadModuleActual} populates a file-based module's exported functions.
-	 * Ordinary query compilation must never do this -- use {@link #compile(Environment, CompileOptions, Module, AstNode)}.
+	 * {@link ModuleResolver#compileSource} populates an imported module's exported functions.
+	 * Ordinary query compilation must never do this -- use {@link #compile(Environment, CompileOptions, ModuleScope, AstNode)}.
 	 */
-	public static <JsonNode> Expression<StackFrame, JsonNode> compileModule(Environment<JsonNode> env, CompileOptions options, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
-		return compileRoot(env, options, currentModule, ast, true);
+	public static <JsonNode> Expression<StackFrame, JsonNode> compileModule(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, AstNode ast) throws JsonQueryException {
+		return compileRoot(env, options, scope, ast, true);
 	}
 
-	private static <JsonNode> Expression<StackFrame, JsonNode> compileRoot(Environment<JsonNode> env, CompileOptions options, @Nullable Module currentModule, AstNode ast, boolean exportTopLevelFunctions) throws JsonQueryException {
+	private static <JsonNode> Expression<StackFrame, JsonNode> compileRoot(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, AstNode ast, boolean exportTopLevelFunctions) throws JsonQueryException {
 		// Only whole queries and module sources are diagnosed. Function bodies that jq libraries
 		// bring along are compiled through the inner compile() below, never through here, so a
 		// caller never sees warnings about jq's own builtins.
@@ -229,7 +228,7 @@ public class Compiler {
 			PipeParenthesesCheck.run(ast, diagnosticListener);
 
 		CompileContext context = new CompileContext(exportTopLevelFunctions);
-		Expression<StackFrame, JsonNode> compiled = compile(env, context, currentModule, ast);
+		Expression<StackFrame, JsonNode> compiled = compile(env, context, scope, ast);
 		if (compiled == null)
 			throw new JsonQueryException("Cannot resolve null expression");
 		Set<String> definedVariables = new HashSet<>(env.getVariables().keySet());
@@ -244,13 +243,13 @@ public class Compiler {
 	}
 
 	public static <JsonNode> @Nullable Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileContext context, @Nullable AstNode ast) throws JsonQueryException {
-		return compile(env, context, (Module) null, ast);
+		return compile(env, context, ModuleScope.root(env), ast);
 	}
 
-	public static <JsonNode> @Nullable Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, @Nullable AstNode ast) throws JsonQueryException {
+	public static <JsonNode> @Nullable Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileContext context, ModuleScope<JsonNode> scope, @Nullable AstNode ast) throws JsonQueryException {
 		if (ast == null)
 			return null;
-		return new CompilationVisitor<>(env, context, currentModule).compileExpression(ast);
+		return new CompilationVisitor<>(env, context, scope).compileExpression(ast);
 	}
 
 	private static final class CompiledMatcher<N> {
@@ -276,12 +275,12 @@ public class Compiler {
 	private static final class CompilationVisitor<N> implements AstVisitor<Object> {
 		private final Environment<N> env;
 		private final CompileContext context;
-		private final @Nullable Module currentModule;
+		private final ModuleScope<N> scope;
 
-		CompilationVisitor(Environment<N> env, CompileContext context, @Nullable Module currentModule) {
+		CompilationVisitor(Environment<N> env, CompileContext context, ModuleScope<N> scope) {
 			this.env = env;
 			this.context = context;
-			this.currentModule = currentModule;
+			this.scope = scope;
 		}
 
 		private Expression<StackFrame, N> compileExpression(AstNode ast) throws JsonQueryException {
@@ -313,7 +312,7 @@ public class Compiler {
 
 		@Override
 		public Expression<StackFrame, N> visit(ParenAstNode paren) throws JsonQueryException {
-			return compileNonNull(env, context, currentModule, paren.value());
+			return compileNonNull(env, context, scope, paren.value());
 		}
 
 		@Override
@@ -323,7 +322,7 @@ public class Compiler {
 			context.setInputFixed(false);
 			try {
 				for (AstNode arg : call.args()) {
-					compiledArgs.add(compile(env, context, currentModule, arg));
+					compiledArgs.add(compile(env, context, scope, arg));
 				}
 			} finally {
 				context.setInputFixed(inputFixed);
@@ -331,9 +330,13 @@ public class Compiler {
 			compiledArgs = Collections.unmodifiableList(precomputeConstantArguments(env, context, compiledArgs));
 
 			if (call.moduleName() != null) {
-				@Var Module mod = context.getImportedModule(call.moduleName());
-				if (mod == null)
-					mod = env.getImportedModules().get(call.moduleName());
+				@Var JavaModule mod = context.getImportedModule(call.moduleName());
+				if (mod == null) {
+					// An environment may have been handed either kind of module; jq source is
+					// compiled here, the first time a query actually calls into it.
+					Module imported = env.getImportedModules().get(call.moduleName());
+					mod = imported != null ? scope.materialize(imported) : null;
+				}
 				Function factory = mod != null ? lookupFunction(mod.getFunctions(), call.name(), compiledArgs.size()) : null;
 				if (factory == null) {
 					throw new JsonQueryException(String.format("Function %s::%s/%d does not exist", call.moduleName(), call.name(), compiledArgs.size()));
@@ -351,22 +354,21 @@ public class Compiler {
 
 		@Override
 		public Expression<StackFrame, N> visit(TopLevelAstNode top) throws JsonQueryException {
-			ModuleLoader<N> moduleLoader = new ChainedModuleLoader<>(env.getModuleLoaders());
 			for (TopLevelAstNode.ImportStatement imp : top.imports()) {
 				Maybe<N> metadata = evaluateMetadata(env.getJsonProvider(), imp);
 				if (imp.dollarImport) {
-					N data = moduleLoader.loadData(currentModule, imp.path, metadata);
+					N data = scope.resolveData(imp.path, metadata);
 					if (imp.name != null) {
 						context.addImportedVariableDefault(imp.name, data);
 					}
 				} else {
-					Module mod = moduleLoader.loadModule(currentModule, imp.path, metadata);
+					JavaModule mod = scope.resolveModule(imp.path, metadata);
 					if (imp.name != null) {
 						context.addImportedModule(imp.name, mod);
 					}
 				}
 			}
-			Expression<StackFrame, N> compiledInner = compileNonNull(env, context, currentModule, top.expr());
+			Expression<StackFrame, N> compiledInner = compileNonNull(env, context, scope, top.expr());
 			return new TopLevelExpression<>(compiledInner);
 		}
 
@@ -385,11 +387,11 @@ public class Compiler {
 				return compileLabel((LabelAstNode) left, piped.rhs);
 
 			boolean savedInputFixed = context.isInputFixed();
-			Expression<StackFrame, N> compiledLeft = compileNonNull(env, context, currentModule, left);
+			Expression<StackFrame, N> compiledLeft = compileNonNull(env, context, scope, left);
 			Expression<StackFrame, N> right;
 			context.setInputFixed(!compiledLeft.dependsOnInput());
 			try {
-				right = compileNonNull(env, context, currentModule, piped.rhs);
+				right = compileNonNull(env, context, scope, piped.rhs);
 			} finally {
 				context.setInputFixed(savedInputFixed);
 			}
@@ -398,7 +400,7 @@ public class Compiler {
 
 		private Expression<StackFrame, N> compileAsBinding(AsBindingAstNode binding, AstNode bodyAst) throws JsonQueryException {
 			boolean savedInputFixed = context.isInputFixed();
-			Expression<StackFrame, N> value = compileNonNull(env, context, currentModule, binding.value());
+			Expression<StackFrame, N> value = compileNonNull(env, context, scope, binding.value());
 			CompiledMatcher<N> matcherResult = compileMatcher(binding.matcher());
 
 			context.pushLocalScope();
@@ -410,7 +412,7 @@ public class Compiler {
 					slots.put(varName, context.getVariableSlot(varName));
 				}
 				context.setInputFixed(savedInputFixed);
-				body = compileNonNull(env, context, currentModule, bodyAst);
+				body = compileNonNull(env, context, scope, bodyAst);
 			} finally {
 				context.setInputFixed(savedInputFixed);
 				context.popScope();
@@ -420,7 +422,7 @@ public class Compiler {
 		}
 
 		private Expression<StackFrame, N> compileLabel(LabelAstNode label, AstNode bodyAst) throws JsonQueryException {
-			return new Label<>(label.name(), compileNonNull(env, context, currentModule, bodyAst));
+			return new Label<>(label.name(), compileNonNull(env, context, scope, bodyAst));
 		}
 
 		// Reached only for an AST that the parser cannot produce: the grammar rejects a pipe head that
@@ -1081,11 +1083,11 @@ public class Compiler {
 	}
 
 	public static <JsonNode> Expression<StackFrame, JsonNode> compileNonNull(Environment<JsonNode> env, CompileContext context, AstNode ast) throws JsonQueryException {
-		return compileNonNull(env, context, (Module) null, ast);
+		return compileNonNull(env, context, ModuleScope.root(env), ast);
 	}
 
-	public static <JsonNode> Expression<StackFrame, JsonNode> compileNonNull(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
-		Expression<StackFrame, JsonNode> compiled = compile(env, context, currentModule, ast);
+	public static <JsonNode> Expression<StackFrame, JsonNode> compileNonNull(Environment<JsonNode> env, CompileContext context, ModuleScope<JsonNode> scope, AstNode ast) throws JsonQueryException {
+		Expression<StackFrame, JsonNode> compiled = compile(env, context, scope, ast);
 		if (compiled == null)
 			throw new JsonQueryException("Cannot resolve null expression");
 		return compiled;

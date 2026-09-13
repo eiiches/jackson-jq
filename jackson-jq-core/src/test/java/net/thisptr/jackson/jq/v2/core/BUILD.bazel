@@ -6,7 +6,6 @@ jjq_java_test_suite(
         "CompileOptionsTest.java",
         "CustomFunctionTest.java",
         "EnvironmentAddImportedModuleTest.java",
-        "EnvironmentCompileModuleTest.java",
         "EnvironmentFunctionLoaderTest.java",
         "EnvironmentPocTest.java",
         "JsonQueryConcurrentReuseTest.java",

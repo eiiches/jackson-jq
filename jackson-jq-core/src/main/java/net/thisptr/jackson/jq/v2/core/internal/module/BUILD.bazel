@@ -3,7 +3,6 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "module",
     srcs = [
-        "ChainedModuleLoader.java",
         "SimpleModule.java",
         "SimpleModuleMeta.java",
     ],

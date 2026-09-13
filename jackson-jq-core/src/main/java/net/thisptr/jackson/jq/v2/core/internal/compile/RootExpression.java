@@ -124,8 +124,8 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 	 * own, correctly closure-bound {@link Function} into a fresh root frame -- exactly as an ordinary,
 	 * non-exported call to {@link net.thisptr.jackson.jq.v2.core.internal.compile.Compiler#compile} would),
 	 * and returns the resulting {@link Function} for every module-level {@code def} this was compiled with
-	 * {@link net.thisptr.jackson.jq.v2.core.internal.compile.Compiler#compileModule}. Used by
-	 * {@code FileSystemModuleLoader} to harvest a file-based module's exported functions; ordinary
+	 * {@link net.thisptr.jackson.jq.v2.core.internal.compile.Compiler#compileModule}. Used by the module
+	 * resolver to harvest an imported module's exported functions; ordinary
 	 * (non-module) compiles carry an empty {@code rootFunctionSlots} map and this always returns empty.
 	 */
 	public Map<FunctionSignature, Function> applyForModuleExports(JsonNode in) throws JsonQueryException {

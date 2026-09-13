@@ -5,10 +5,10 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 /**
  * Reports that a {@link ModuleLoader} could not resolve an imported path.
  * <p>
- * This is the "I don't have it" answer, as opposed to "I have it but loading it failed": a loader
- * that found the module and then failed to read or compile it throws a plain
- * {@link JsonQueryException} instead. An environment searching its module loaders relies on the distinction to
- * decide whether to try the next loader or to give up.
+ * This is the "I don't have it" answer, as opposed to "I have it but reading it failed": a loader
+ * that found the module and then failed to read it throws a plain {@link JsonQueryException}
+ * instead. The compiler, searching the environment's module loaders in turn, relies on the
+ * distinction to decide whether to try the next loader or to give up.
  */
 public class ModuleNotFoundException extends JsonQueryException {
 	private static final long serialVersionUID = 1L;

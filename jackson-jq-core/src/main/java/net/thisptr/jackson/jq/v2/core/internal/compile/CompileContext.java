@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
-import net.thisptr.jackson.jq.v2.spi.module.Module;
+import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 
 public class CompileContext {
 	private static class ScopeFrame {
@@ -94,7 +94,7 @@ public class CompileContext {
 
 	private final boolean exportTopLevelFunctions;
 	private final Map<FunctionSignature, Integer> rootFunctionSlots;
-	private final Map<String, Module> importedModules;
+	private final Map<String, JavaModule> importedModules;
 	private final Map<String, Object> importedVariableDefaults;
 
 	// Whether the `.` currently being compiled against is known, at compile time, to always be the
@@ -184,11 +184,11 @@ public class CompileContext {
 		return new CompileContext(false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), Collections.unmodifiableSet(nestedGenericJqFunctions), shareGlobalState ? globalState : new GlobalState());
 	}
 
-	public void addImportedModule(String alias, Module module) {
+	public void addImportedModule(String alias, JavaModule module) {
 		importedModules.put(alias, module);
 	}
 
-	public @Nullable Module getImportedModule(String alias) {
+	public @Nullable JavaModule getImportedModule(String alias) {
 		return importedModules.get(alias);
 	}
 

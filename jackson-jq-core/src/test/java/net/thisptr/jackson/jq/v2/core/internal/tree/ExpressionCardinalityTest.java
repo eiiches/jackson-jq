@@ -12,6 +12,7 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
+import net.thisptr.jackson.jq.v2.core.internal.compile.ModuleScope;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.ValueLiteral;
@@ -77,7 +78,7 @@ public class ExpressionCardinalityTest {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), jqVersion)
 				.build();
 		AstNode parsedAst = AstParser.parse(expression, env.getJqVersion());
-		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(env, CompileOptions.newBuilder().build(), null, parsedAst);
+		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(env, CompileOptions.newBuilder().build(), ModuleScope.root(env), parsedAst);
 		return compiledExpr.getCardinality();
 	}
 

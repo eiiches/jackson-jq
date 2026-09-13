@@ -291,7 +291,7 @@ public class Main {
 						};
 					}
 				})
-				.addModuleLoader(new FileSystemModuleLoader<>(jsonProvider, version, FileSystems.getDefault().getPath("").toAbsolutePath()))
+				.addModuleLoader(new FileSystemModuleLoader<>(jsonProvider, FileSystems.getDefault().getPath("").toAbsolutePath()))
 				.build();
 		/*
 		 * jq itself emits no warnings at all, so this is purely additive: it goes to stderr, leaving

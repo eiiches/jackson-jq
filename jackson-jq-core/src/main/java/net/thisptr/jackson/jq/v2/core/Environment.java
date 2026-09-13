@@ -10,11 +10,10 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
+import net.thisptr.jackson.jq.v2.core.internal.compile.ModuleScope;
 import net.thisptr.jackson.jq.v2.core.internal.compile.RootExpression;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
-import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
-import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModuleMeta;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -24,6 +23,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
@@ -80,8 +80,8 @@ public interface Environment<JsonNode> {
 	}
 
 	/**
-	 * Compiles {@code expression} as if it were written inside {@code currentModule}, so that the
-	 * names that module imported resolve.
+	 * Compiles {@code expression} as if it were written inside {@code currentModule}, so that an
+	 * import relative to that module resolves the way it would from inside it.
 	 *
 	 * @param expression the jq expression to compile
 	 * @param options settings for this compilation, including who receives its diagnostics
@@ -89,9 +89,9 @@ public interface Environment<JsonNode> {
 	 * @return the compiled query
 	 * @throws JsonQueryException if {@code expression} cannot be parsed or compiled
 	 */
-	default JsonQuery<JsonNode> compile(String expression, CompileOptions options, @Nullable Module currentModule) throws JsonQueryException {
+	default JsonQuery<JsonNode> compile(String expression, CompileOptions options, @Nullable JqModule currentModule) throws JsonQueryException {
 		AstNode parsedAst = AstParser.parse(expression, getJqVersion());
-		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(this, options, currentModule, parsedAst);
+		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(this, options, ModuleScope.<JsonNode>root(this).inside(currentModule), parsedAst);
 		if (!(compiledExpr instanceof RootExpression))
 			throw new IllegalStateException("Compiler did not produce a root expression");
 		RootExpression<JsonNode> rootExpr = (RootExpression<JsonNode>) compiledExpr;
@@ -99,39 +99,5 @@ public interface Environment<JsonNode> {
 			RuntimeLimits runtimeLimits = new RuntimeLimitsImpl(runtimeOptions.getMaxArrayLength(), runtimeOptions.getMaxObjectMemberCount(), runtimeOptions.getMaxStringLength());
 			rootExpr.apply(in, runtimeLimits, bindings, output);
 		};
-	}
-
-	/**
-	 * Compiles a module's own source with default options.
-	 *
-	 * @param source the module source
-	 * @return the compiled module
-	 * @throws JsonQueryException if {@code source} cannot be parsed or compiled
-	 */
-	default Module compileModule(String source) throws JsonQueryException {
-		return compileModule(source, CompileOptions.getDefaultInstance());
-	}
-
-	/**
-	 * Compiles a module's own source.
-	 *
-	 * @param source the module source
-	 * @param options settings for this compilation, including who receives its diagnostics
-	 * @return the compiled module
-	 * @throws JsonQueryException if {@code source} cannot be parsed or compiled
-	 */
-	default Module compileModule(String source, CompileOptions options) throws JsonQueryException {
-		AstNode parsedAst = AstParser.parse(source + " null", getJqVersion());
-		SimpleModule module = new SimpleModule();
-		Expression<StackFrame, JsonNode> compiled = Compiler.compileModule(this, options, module, parsedAst);
-		if (!(compiled instanceof RootExpression))
-			throw new IllegalStateException("Compiler did not produce a root expression");
-		Map<FunctionSignature, Function> exportedFunctions = ((RootExpression<JsonNode>) compiled).applyForModuleExports(getJsonProvider().createNull());
-		exportedFunctions.forEach((key, factory) -> {
-			if (key.arity() != null)
-				module.addFunction(key, factory);
-		});
-		module.setModuleMeta(SimpleModuleMeta.fromAst(parsedAst));
-		return module;
 	}
 }

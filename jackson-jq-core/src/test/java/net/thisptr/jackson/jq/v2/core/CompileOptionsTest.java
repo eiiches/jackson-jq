@@ -167,13 +167,6 @@ class CompileOptionsTest {
 	}
 
 	@Test
-	void diagnosesModuleSourceToo() throws JsonQueryException {
-		environment().compileModule("def f: 1, 2 | .;", options);
-
-		assertThat(reported).extracting(Diagnostic::location).containsExactly(SourceLocation.of(1, 8, 1, 11));
-	}
-
-	@Test
 	void canBeReusedForManyCompilations() throws JsonQueryException {
 		environment().compile("1, 2 | .", options);
 		assertThat(reported).hasSize(1);

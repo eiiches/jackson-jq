@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.json.Maybe;
@@ -38,9 +36,7 @@ public class ClassPathModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 	}
 
 	@Override
-	public Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
-		// Note: we can't get jsonProvider here without having access to scope
-		// For now, assume metadata checking for hasSearchPathOverride is handled by other loaders
+	public Module loadModule(String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		Module module = pathAndModules.get(path);
 		if (module == null)
 			throw new ModuleNotFoundException(path);
@@ -49,11 +45,7 @@ public class ClassPathModuleLoader<JsonNode> implements ModuleLoader<JsonNode> {
 
 	// Registered modules are Java objects, not files; this loader has no data files to serve.
 	@Override
-	public JsonNode loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) {
+	public JsonNode loadData(String path, Maybe<JsonNode> metadata) {
 		throw new ModuleNotFoundException(path);
-	}
-
-	public Map<String, Module> loadAllModules() {
-		return new HashMap<>(pathAndModules);
 	}
 }

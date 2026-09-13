@@ -8,7 +8,6 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
@@ -22,6 +21,8 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
+import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -43,7 +44,7 @@ public class EnvironmentAddImportedModuleTest {
 		}
 
 		@Override
-		public Module loadModule(@Nullable Module caller, String path, Maybe<JsonNode> metadata) {
+		public Module loadModule(String path, Maybe<JsonNode> metadata) {
 			Module module = modules.get(path);
 			if (module == null)
 				throw new ModuleNotFoundException(path);
@@ -51,18 +52,42 @@ public class EnvironmentAddImportedModuleTest {
 		}
 
 		@Override
-		public JsonNode loadData(@Nullable Module caller, String path, Maybe<JsonNode> metadata) {
+		public JsonNode loadData(String path, Maybe<JsonNode> metadata) {
 			throw new ModuleNotFoundException(path);
+		}
+	}
+
+	/**
+	 * A module added to an environment may be jq source rather than Java: the compiler compiles it
+	 * the first time a query calls into it.
+	 */
+	private static final class SourceModule implements JqModule<JsonNode> {
+		private final String source;
+
+		SourceModule(String source) {
+			this.source = source;
+		}
+
+		@Override
+		public String getSource() {
+			return source;
+		}
+
+		@Override
+		public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
+			throw new ModuleNotFoundException(importPath);
+		}
+
+		@Override
+		public JsonNode relativeData(String importPath, String searchPath) {
+			throw new ModuleNotFoundException(importPath);
 		}
 	}
 
 	@Test
 	public void testImportedModuleUsableWithoutImportStatement() throws Exception {
-		Environment<JsonNode> tempEnv = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
-		Module mathModule = tempEnv.compileModule("def square($x): $x * $x;");
-
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
-				.addImportedModule("math", mathModule)
+				.addImportedModule("math", new SourceModule("def square($x): $x * $x;"))
 				.build();
 
 		JsonQuery<JsonNode> expr = env.compile("math::square(5)");
@@ -75,9 +100,8 @@ public class EnvironmentAddImportedModuleTest {
 
 	@Test
 	public void testExplicitImportShadowsBuilderRegisteredModule() throws Exception {
-		Environment<JsonNode> tempEnv = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
-		Module builderModule = tempEnv.compileModule("def bar: 1;");
-		Module loaderModule = tempEnv.compileModule("def bar: 2;");
+		SourceModule builderModule = new SourceModule("def bar: 1;");
+		SourceModule loaderModule = new SourceModule("def bar: 2;");
 
 		InMemoryModuleLoader moduleLoader = new InMemoryModuleLoader();
 		moduleLoader.put("foo", loaderModule);
@@ -104,7 +128,7 @@ public class EnvironmentAddImportedModuleTest {
 				return (frame, in, path, output) -> output.emit(fprovider.createNumber(fargs.size()), UntrackedPath.getInstance());
 			}
 		};
-		Module variadicModule = new Module() {
+		JavaModule variadicModule = new JavaModule() {
 			@Override
 			public Map<FunctionSignature, Function> getFunctions() {
 				return Collections.singletonMap(FunctionSignature.ofVariadic("greet"), countArgs);

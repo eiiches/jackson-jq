@@ -198,6 +198,12 @@ public final class EnvironmentBuilder<JsonNode> {
 			throw new IllegalArgumentException("Function " + signature + " was already defined via defineJqFunction()");
 	}
 
+	/**
+	 * Makes {@code module}'s functions callable as {@code name::func(...)} without the query having
+	 * to {@code import} it. Either kind will do: a {@link JavaModule} is used as it stands, and a
+	 * {@link net.thisptr.jackson.jq.v2.spi.module.JqModule} is compiled the first time a query
+	 * actually calls into it.
+	 */
 	public EnvironmentBuilder<JsonNode> addImportedModule(String name, Module module) {
 		importedModules.put(name, module);
 		return this;
