@@ -9,14 +9,19 @@ import org.junit.jupiter.api.Test;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class SubImplFunctionTest {
-	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProviderImpl.getInstance();
+	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProvider.getInstance();
 
 	@Test
 	public void gsubUsesCaptureObjectsForReplacementExpression() throws Exception {
@@ -40,6 +45,13 @@ public class SubImplFunctionTest {
 	}
 
 	@Test
+	public void gsubAdvancesPastZeroWidthMatchesByCodePointInEveryVersion() throws Exception {
+		for (Version version : Versions.versions()) {
+			assertThat(apply("gsub(\"\"; \"X\")", "a😀b", version)).extracting(JSON_PROVIDER::getString).containsExactly("XaX😀XbX");
+		}
+	}
+
+	@Test
 	public void subEmitsSuccessfulReplacementBranchesBeforeReplacementError() throws Exception {
 		List<JsonNode> out = apply("try sub(\"a\"; \"1\", \"2\", error(\"bar\"); \"g\") catch .", "abcabc");
 
@@ -60,11 +72,33 @@ public class SubImplFunctionTest {
 		assertThat(out).extracting(JSON_PROVIDER::getString).containsExactly("1bcabc", "2bcabc", "1bcabc", "2bcabc", "baz");
 	}
 
+	@Test
+	public void gsubIsBoundedByTheMaxStringLength() throws Exception {
+		// Every input here is tiny; it is the replacement that multiplies them out -- four matches of
+		// one character each, replaced by ten, make forty.
+		assertThatThrownBy(() -> apply("gsub(\"a\"; \"xxxxxxxxxx\")", "aaaa", RuntimeOptions.newBuilder().setMaxStringLength(39).build()))
+				.isInstanceOf(RuntimeLimitExceededException.class)
+				.hasMessageContaining("maximum string length of 39");
+		assertThatCode(() -> apply("gsub(\"a\"; \"xxxxxxxxxx\")", "aaaa", RuntimeOptions.newBuilder().setMaxStringLength(40).build())).doesNotThrowAnyException();
+	}
+
 	private static List<JsonNode> apply(String queryText, String input) throws Exception {
-		Environment<JsonNode> environment = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_8_2).build();
+		return apply(queryText, input, RuntimeOptions.newBuilder().build());
+	}
+
+	private static List<JsonNode> apply(String queryText, String input, RuntimeOptions options) throws Exception {
+		return apply(queryText, input, options, Versions.JQ_1_8_2);
+	}
+
+	private static List<JsonNode> apply(String queryText, String input, Version version) throws Exception {
+		return apply(queryText, input, RuntimeOptions.newBuilder().build(), version);
+	}
+
+	private static List<JsonNode> apply(String queryText, String input, RuntimeOptions options, Version version) throws Exception {
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, version).build();
 		JsonQuery<JsonNode> query = environment.compile(queryText);
 		List<JsonNode> out = new ArrayList<>();
-		query.apply(JSON_PROVIDER.createString(input), out::add);
+		query.apply(JSON_PROVIDER.createString(input), options, out::add);
 		return out;
 	}
 

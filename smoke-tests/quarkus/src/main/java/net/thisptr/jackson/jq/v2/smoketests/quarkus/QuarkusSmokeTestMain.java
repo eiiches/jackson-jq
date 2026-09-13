@@ -9,28 +9,26 @@ import io.quarkus.runtime.annotations.QuarkusMain;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
-import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @QuarkusMain
 public class QuarkusSmokeTestMain implements QuarkusApplication {
 	@Override
 	public int run(String... args) throws Exception {
-		testWithJsonProvider(Jackson2JsonProviderImpl.getInstance());
-		testWithJsonProvider(Jackson3JsonProviderImpl.getInstance());
-		testWithJsonProvider(GsonJsonProviderImpl.getInstance());
+		testWithJsonProvider(Jackson2JsonProvider.getInstance());
+		testWithJsonProvider(Jackson3JsonProvider.getInstance());
+		testWithJsonProvider(GsonJsonProvider.getInstance());
 		System.out.println("Quarkus compatibility test passed for Jackson 2, Jackson 3, Gson, and all extension modules");
 		return 0;
 	}
 
 	private static <JsonNode> void testWithJsonProvider(JsonProvider<JsonNode> jsonProvider) throws Exception {
 		Version version = Version.valueOf("1.6");
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, version)
-				.setModuleLoader(new ClassPathModuleLoader<JsonNode>(QuarkusSmokeTestMain.class.getClassLoader()))
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version, QuarkusSmokeTestMain.class.getClassLoader())
 				.build();
 
 		assertQuery(jsonProvider, env, "length", "[1,2]", 2);

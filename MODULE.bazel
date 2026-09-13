@@ -131,16 +131,6 @@ maven.artifact(
     group = "com.google.errorprone",
     version = ERROR_PRONE_VERSION,
 )
-maven.artifact(
-    artifact = "auto-service",
-    group = "com.google.auto.service",
-    version = "1.1.1",
-)
-maven.artifact(
-    artifact = "auto-service-annotations",
-    group = "com.google.auto.service",
-    version = "1.1.1",
-)
 
 # -- Error Prone plugin path --------------------------------------------------
 # NullAway is loaded as an Error Prone *plugin check* off the annotation

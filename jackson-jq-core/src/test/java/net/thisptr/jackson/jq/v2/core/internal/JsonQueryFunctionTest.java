@@ -15,7 +15,7 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,12 +25,12 @@ public class JsonQueryFunctionTest {
 	 * Results are compared by jq value, not by JsonNode identity: the node class a literal
 	 * compiles to is not what these tests are about.
 	 */
-	private static final Comparator<JsonNode> BY_JQ_VALUE = new JsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance());
+	private static final Comparator<JsonNode> BY_JQ_VALUE = new JsonNodeComparator<>(Jackson2JsonProvider.getInstance());
 
 	@Test
 	public void test() throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_5).build();
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_5).build();
 
 		assertThat(eval(env, "def inc(x): x + 1; inc(1)", NullNode.getInstance())).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(mapper.readTree("2")));
 		assertThat(eval(env, "def fib(x): if x == 0 then 0 elif x == 1 then 1 else fib(x-1) + fib(x-2) end; fib(5)", NullNode.getInstance())).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(mapper.readTree("5")));
@@ -40,7 +40,7 @@ public class JsonQueryFunctionTest {
 	@Test
 	public void twoHopNestedVariableCapture() throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_5).build();
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_5).build();
 
 		assertThat(eval(env, "def a($x): def b: def c: $x; c; b; a(1)", NullNode.getInstance())).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(mapper.readTree("1")));
 	}
@@ -48,7 +48,7 @@ public class JsonQueryFunctionTest {
 	@Test
 	public void twoHopNestedFunctionCapture() throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_5).build();
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_5).build();
 
 		assertThat(eval(env, "def a(f): def b: def c: f; c; b; a(1+1)", NullNode.getInstance())).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(mapper.readTree("2")));
 	}
@@ -56,7 +56,7 @@ public class JsonQueryFunctionTest {
 	@Test
 	public void selfRecursiveFunctionNestedInsideAnotherDef() throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_5).build();
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_5).build();
 
 		assertThat(eval(env, "def outer: def fact: if . <= 1 then 1 else . * ((. - 1) | fact) end; 5 | fact; outer", NullNode.getInstance())).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(mapper.readTree("120")));
 	}
@@ -64,7 +64,7 @@ public class JsonQueryFunctionTest {
 	@Test
 	public void writingAFrameSlotAfterAnUnrelatedNestedCallPops() throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_5).build();
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_5).build();
 
 		assertThat(eval(env, "def outer($a): def inner: $a; inner, (2 as $b | $b); outer(5)", NullNode.getInstance())).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(mapper.readTree("5"), mapper.readTree("2")));
 	}
@@ -72,7 +72,7 @@ public class JsonQueryFunctionTest {
 	@Test
 	public void computedPatternKeyUsesOuterScopeBeforeShadowingBinding() throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_5).build();
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_5).build();
 
 		assertThat(eval(env, "\"a\" as $x | {\"a\": 1} as {($x): $x} | $x", NullNode.getInstance())).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(mapper.readTree("1")));
 	}
@@ -80,7 +80,7 @@ public class JsonQueryFunctionTest {
 	@Test
 	public void reduceAndForeachUseResolvedPatternSlots() throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_5).build();
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_5).build();
 
 		assertThat(eval(env, "reduce [[1,2],[3,4]][] as [$a,$b] (0; . + $a + $b)", NullNode.getInstance())).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(mapper.readTree("10")));
 		assertThat(eval(env, "[foreach [[1,2],[3,4]][] as [$a,$b] (0; . + $a + $b)]", NullNode.getInstance())).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(mapper.readTree("[3,10]")));

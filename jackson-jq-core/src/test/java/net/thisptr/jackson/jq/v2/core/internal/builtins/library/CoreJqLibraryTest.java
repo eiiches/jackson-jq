@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -26,21 +26,21 @@ public class CoreJqLibraryTest {
 
 	@Test
 	public void appliesVersionRanges() {
-		Environment<JsonNode> env15 = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_5).build();
+		Environment<JsonNode> env15 = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_5).build();
 		assertThatCode(() -> env15.compile("paths")).doesNotThrowAnyException();
 		assertThatCode(() -> env15.compile("first(empty)")).doesNotThrowAnyException();
 		assertThatThrownBy(() -> env15.compile("walk(.)")).isInstanceOf(JsonQueryException.class);
 		assertThatThrownBy(() -> env15.compile("pick(.)")).isInstanceOf(JsonQueryException.class);
 		assertThatThrownBy(() -> env15.compile("trimstr(\"a\")")).isInstanceOf(JsonQueryException.class);
 
-		Environment<JsonNode> env17 = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_7).build();
+		Environment<JsonNode> env17 = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_7).build();
 		assertThatCode(() -> env17.compile("paths")).doesNotThrowAnyException();
 		assertThatCode(() -> env17.compile("first(empty)")).doesNotThrowAnyException();
 		assertThatCode(() -> env17.compile("walk(.)")).doesNotThrowAnyException();
 		assertThatCode(() -> env17.compile("pick(.)")).doesNotThrowAnyException();
 		assertThatThrownBy(() -> env17.compile("trimstr(\"a\")")).isInstanceOf(JsonQueryException.class);
 
-		Environment<JsonNode> env18 = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_8_0).build();
+		Environment<JsonNode> env18 = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_0).build();
 		assertThatCode(() -> env18.compile("trimstr(\"a\")")).doesNotThrowAnyException();
 		assertThatCode(() -> env18.compile("ltrimstr(\"a\")")).doesNotThrowAnyException();
 		assertThatCode(() -> env18.compile("rtrimstr(\"a\")")).doesNotThrowAnyException();

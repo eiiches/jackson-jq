@@ -16,6 +16,7 @@ import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -127,7 +128,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<StackFra
 		Function factory = new Function() {
 			@Override
 			@SuppressWarnings("unchecked")
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jp, List<Expression<Context, N>> fnArgs, Version version) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> jp, List<Expression<Context, N>> fnArgs, Version version) {
 				Expression<StackFrame, N> effectiveBody = (Expression<StackFrame, N>) (Expression<?, ?>) resolvedBody;
 				List<Expression<StackFrame, N>> effectiveFnArgs = (List<Expression<StackFrame, N>>) (List<?>) fnArgs;
 				return (callerFrame, input, path, out) -> {

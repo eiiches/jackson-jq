@@ -12,12 +12,13 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
+import net.thisptr.jackson.jq.v2.core.internal.compile.ModuleScope;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.ValueLiteral;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -74,10 +75,10 @@ public class ExpressionCardinalityTest {
 	}
 
 	private static Cardinality cardinalityOf(String expression, Version jqVersion) {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), jqVersion)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), jqVersion)
 				.build();
 		AstNode parsedAst = AstParser.parse(expression, env.getJqVersion());
-		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(env, new CompileOptions(), null, parsedAst);
+		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(env, CompileOptions.newBuilder().build(), ModuleScope.root(env), parsedAst);
 		return compiledExpr.getCardinality();
 	}
 
@@ -126,8 +127,8 @@ public class ExpressionCardinalityTest {
 	@Test
 	public void testSemicolonOperator() {
 		assertThat(new SemicolonOperator<JsonNode>(Collections.emptyList()).getCardinality()).isEqualTo(Cardinality.ZERO);
-		assertThat(new SemicolonOperator<JsonNode>(Collections.singletonList(new ValueLiteral<>(Jackson2JsonProviderImpl.getInstance().createNumber(1)))).getCardinality()).isEqualTo(Cardinality.ONE);
-		assertThat(new SemicolonOperator<JsonNode>(Arrays.asList(new ValueLiteral<>(Jackson2JsonProviderImpl.getInstance().createNumber(1)), new BreakExpression<JsonNode>("out"))).getCardinality()).isEqualTo(Cardinality.ZERO);
+		assertThat(new SemicolonOperator<JsonNode>(Collections.singletonList(new ValueLiteral<>(Jackson2JsonProvider.getInstance().createNumber(1)))).getCardinality()).isEqualTo(Cardinality.ONE);
+		assertThat(new SemicolonOperator<JsonNode>(Arrays.asList(new ValueLiteral<>(Jackson2JsonProvider.getInstance().createNumber(1)), new BreakExpression<JsonNode>("out"))).getCardinality()).isEqualTo(Cardinality.ZERO);
 		assertThat(cardinalityOf("def f: 1; f")).isEqualTo(Cardinality.UNKNOWN);
 	}
 

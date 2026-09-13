@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,13 +28,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * closure-capture machinery that a real cross-thread frame-sharing bug would corrupt.
  *
  * <p>The query is parameterized by a declared {@code $seed} variable, supplied per invocation via
- * {@link JsonQueryBindings}, alternating between two distinguishable values. A single fixed input would be
+ * {@link RuntimeBindings}, alternating between two distinguishable values. A single fixed input would be
  * a blind spot: if one thread's frame leaked into another's, both would still expect the same result. With
  * two distinguishable patterns, a leak would surface as one pattern's call producing the other pattern's
  * result.
  */
 public class JsonQueryConcurrentReuseTest {
-	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProviderImpl.getInstance();
+	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProvider.getInstance();
 
 	private static final String QUERY =
 			"def id(x): x; " +
@@ -51,7 +51,7 @@ public class JsonQueryConcurrentReuseTest {
 
 	@Test
 	public void producesResultsMatchingTheirOwnBindingsWhenReusedConcurrently() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("seed")
 				.build();
 		JsonQuery<JsonNode> query = env.compile(QUERY);
@@ -91,7 +91,7 @@ public class JsonQueryConcurrentReuseTest {
 	}
 
 	private static List<JsonNode> run(JsonQuery<JsonNode> query, int seed) throws JsonQueryException {
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("seed", JSON_PROVIDER.createNumber(seed))
 				.build();
 		List<JsonNode> result = new ArrayList<>();

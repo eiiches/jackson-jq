@@ -13,11 +13,12 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -25,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class TimeModuleTest {
-	private static <T, Context> Expression<Context, T> pureExpression() {
+	private static <T, Context extends RuntimeContext> Expression<Context, T> pureExpression() {
 		return new Expression<Context, T>() {
 			@Override
 			public boolean dependsOnInput() {
@@ -88,29 +89,29 @@ public class TimeModuleTest {
 	public void functionContract() {
 		ModuleImpl module = new ModuleImpl();
 		Function strftime1 = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("strftime", 1)));
-		Expression<Object, JsonNode> strftime1Expr = strftime1.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.singletonList(pureExpression()), Versions.JQ_1_6);
+		Expression<RuntimeContext, JsonNode> strftime1Expr = strftime1.bindArguments(Jackson2JsonProvider.getInstance(), Collections.singletonList(pureExpression()), Versions.JQ_1_6);
 		assertThat(strftime1Expr.dependsOnInput()).isTrue();
 		assertThat(strftime1Expr.dependsOnExternalState()).isTrue();
 		Function strftime2 = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("strftime", 2)));
-		Expression<Object, JsonNode> strftime2Expr = strftime2.bindArguments(Jackson2JsonProviderImpl.getInstance(), Arrays.asList(pureExpression(), pureExpression()), Versions.JQ_1_6);
+		Expression<RuntimeContext, JsonNode> strftime2Expr = strftime2.bindArguments(Jackson2JsonProvider.getInstance(), Arrays.asList(pureExpression(), pureExpression()), Versions.JQ_1_6);
 		assertThat(strftime2Expr.dependsOnInput()).isTrue();
 		assertThat(strftime2Expr.dependsOnExternalState()).isFalse();
 		Function strptime1 = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("strptime", 1)));
-		Expression<Object, JsonNode> strptime1Expr = strptime1.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.singletonList(pureExpression()), Versions.JQ_1_6);
+		Expression<RuntimeContext, JsonNode> strptime1Expr = strptime1.bindArguments(Jackson2JsonProvider.getInstance(), Collections.singletonList(pureExpression()), Versions.JQ_1_6);
 		assertThat(strptime1Expr.dependsOnInput()).isTrue();
 		assertThat(strptime1Expr.dependsOnExternalState()).isTrue();
 		Function strptime2 = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("strptime", 2)));
-		Expression<Object, JsonNode> strptime2Expr = strptime2.bindArguments(Jackson2JsonProviderImpl.getInstance(), Arrays.asList(pureExpression(), pureExpression()), Versions.JQ_1_6);
+		Expression<RuntimeContext, JsonNode> strptime2Expr = strptime2.bindArguments(Jackson2JsonProvider.getInstance(), Arrays.asList(pureExpression(), pureExpression()), Versions.JQ_1_6);
 		assertThat(strptime2Expr.dependsOnInput()).isTrue();
 		assertThat(strptime2Expr.dependsOnExternalState()).isFalse();
 		Function timestamp = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("timestamp", 0)));
-		Expression<Object, JsonNode> timestampExpr = timestamp.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.emptyList(), Versions.JQ_1_6);
+		Expression<RuntimeContext, JsonNode> timestampExpr = timestamp.bindArguments(Jackson2JsonProvider.getInstance(), Collections.emptyList(), Versions.JQ_1_6);
 		assertThat(timestampExpr.dependsOnInput()).isFalse();
 		assertThat(timestampExpr.dependsOnExternalState()).isTrue();
 	}
 
 	private List<JsonNode> run(String expression) throws JsonQueryException {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/time\" as ext; " + expression);
 		List<JsonNode> results = new ArrayList<>();

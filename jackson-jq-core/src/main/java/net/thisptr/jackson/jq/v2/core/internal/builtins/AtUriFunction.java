@@ -4,9 +4,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import com.google.auto.service.AutoService;
-
-import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -17,7 +14,6 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
  * <li>mark = "-" | "_" | "." | "!" | "~" | "*" | "'" | "(" | ")"</li>
  * </ul>
  */
-@AutoService(Function.class)
 @FunctionRegistration(name = "@uri", nargs = 0)
 public class AtUriFunction extends AbstractAtFormattingFunction {
 	@Override

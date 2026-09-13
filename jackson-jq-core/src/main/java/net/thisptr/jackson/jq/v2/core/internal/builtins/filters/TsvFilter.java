@@ -1,11 +1,8 @@
 package net.thisptr.jackson.jq.v2.core.internal.builtins.filters;
 
-import com.google.auto.service.AutoService;
 
-import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 
-@AutoService(Function.class)
 @FunctionRegistration(name = "@tsv", nargs = 0)
 public class TsvFilter extends AbstractXsvFilter {
 	@Override

@@ -14,7 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 /**
  * Call to an {@code EnvironmentBuilder.declareFunction}-registered function -- no compile-time
  * implementation, so the {@link Function} is read from {@code StackFrame.getEnclosingMemory()}'s flat
- * global-slots array (populated once per top-level {@code apply()} call from {@code JsonQueryBindings})
+ * global-slots array (populated once per top-level {@code apply()} call from {@code RuntimeBindings})
  * and bound against the call's arguments fresh on every evaluation.
  */
 public class ResolvedGlobalFunctionAccess<JsonNode> implements Expression<StackFrame, JsonNode> {

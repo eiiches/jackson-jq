@@ -3,7 +3,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "jackson2",
     srcs = [
-        "Jackson2JsonProviderImpl.java",
+        "Jackson2JsonProvider.java",
         "JsonQueryJacksonModule.java",
     ],
     release = 8,

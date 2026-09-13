@@ -7,9 +7,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.module.ModuleDescriptor;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -25,6 +31,14 @@ class MultiReleaseJarTest {
 	Path tempDir;
 
 	private Path createJar(String name, Manifest manifest, String... entryNameAndContents) throws IOException {
+		Map<String, byte[]> entries = new LinkedHashMap<>();
+		for (int i = 0; i < entryNameAndContents.length; i += 2) {
+			entries.put(entryNameAndContents[i], entryNameAndContents[i + 1].getBytes(StandardCharsets.UTF_8));
+		}
+		return createJar(name, manifest, entries);
+	}
+
+	private Path createJar(String name, Manifest manifest, Map<String, byte[]> entries) throws IOException {
 		Path jarPath = tempDir.resolve(name);
 		try (OutputStream out = Files.newOutputStream(jarPath);
 			 JarOutputStream jar = new JarOutputStream(out)) {
@@ -34,16 +48,22 @@ class MultiReleaseJarTest {
 				manifest.write(jar);
 				jar.closeEntry();
 			}
-			for (int i = 0; i < entryNameAndContents.length; i += 2) {
-				String entryName = entryNameAndContents[i];
-				String content = entryNameAndContents[i + 1];
-				JarEntry entry = new JarEntry(entryName);
+			for (Map.Entry<String, byte[]> jarEntry : entries.entrySet()) {
+				JarEntry entry = new JarEntry(jarEntry.getKey());
 				jar.putNextEntry(entry);
-				jar.write(content.getBytes(StandardCharsets.UTF_8));
+				jar.write(jarEntry.getValue());
 				jar.closeEntry();
 			}
 		}
 		return jarPath;
+	}
+
+	private static byte[] moduleInfo(Class<?> type) throws IOException {
+		try (InputStream in = type.getModule().getResourceAsStream("module-info.class")) {
+			if (in == null)
+				throw new IOException("module-info.class is missing from " + type.getModule().getName());
+			return in.readAllBytes();
+		}
 	}
 
 	private String readEntry(Path jarPath, String entryName) throws IOException {
@@ -89,8 +109,7 @@ class MultiReleaseJarTest {
 	void mergesOverlaysAndSetsMultiRelease() throws IOException {
 		Path base = createJar("base.jar", null,
 				"net/thisptr/A.class", "class A v8");
-		Path overlay = createJar("overlay.jar", null,
-				"module-info.class", "module-info bytecode");
+		Path overlay = createJar("overlay.jar", null, Map.of("module-info.class", moduleInfo(Object.class)));
 
 		Path output = tempDir.resolve("out-mr.jar");
 		MultiReleaseJar.main(new String[] {
@@ -101,13 +120,35 @@ class MultiReleaseJarTest {
 		});
 
 		assertThat(readEntry(output, "net/thisptr/A.class")).isEqualTo("class A v8\n");
-		assertThat(readEntry(output, "META-INF/versions/9/module-info.class")).isEqualTo("module-info bytecode\n");
+		assertThat(readEntry(output, "META-INF/services/java.nio.file.spi.FileSystemProvider"))
+				.isEqualTo("jdk.internal.jrtfs.JrtFileSystemProvider\n");
 
 		try (JarFile jar = new JarFile(output.toFile())) {
 			Manifest manifest = jar.getManifest();
 			assertThat(manifest).isNotNull();
 			assertThat(manifest.getMainAttributes().getValue("Multi-Release")).isEqualTo("true");
 		}
+	}
+
+	@Test
+	void addsDeclaredProvidersToExistingServices() {
+		ModuleDescriptor descriptor = ModuleDescriptor.newModule("net.thisptr.sample")
+				.provides("net.thisptr.zeta.Service", List.of("net.thisptr.ZetaImpl"))
+				.provides("net.thisptr.alpha.Service", List.of("net.thisptr.FirstImpl", "net.thisptr.SecondImpl"))
+				.build();
+		Map<String, Set<String>> services = new LinkedHashMap<>();
+		services.put("META-INF/services/net.thisptr.alpha.Service",
+				new LinkedHashSet<>(List.of("net.thisptr.ExistingImpl", "net.thisptr.FirstImpl")));
+
+		MultiReleaseJar.addModuleServices(descriptor, services);
+
+		assertThat(services.keySet()).containsExactly(
+				"META-INF/services/net.thisptr.alpha.Service",
+				"META-INF/services/net.thisptr.zeta.Service");
+		assertThat(services.get("META-INF/services/net.thisptr.alpha.Service"))
+				.containsExactly("net.thisptr.ExistingImpl", "net.thisptr.FirstImpl", "net.thisptr.SecondImpl");
+		assertThat(services.get("META-INF/services/net.thisptr.zeta.Service"))
+				.containsExactly("net.thisptr.ZetaImpl");
 	}
 
 	@Test

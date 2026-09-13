@@ -7,10 +7,10 @@ import java.util.Objects;
 
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
-import net.thisptr.jackson.jq.v2.spi.module.Module;
+import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 import net.thisptr.jackson.jq.v2.spi.module.ModuleMeta;
 
-public class SimpleModule implements Module {
+public class SimpleModule implements JavaModule {
 	private final Map<FunctionSignature, Function> functions = new HashMap<>();
 	private ModuleMeta moduleMeta;
 

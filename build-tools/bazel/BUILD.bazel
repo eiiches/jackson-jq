@@ -43,11 +43,3 @@ java_plugin(
         "@maven//:org_jspecify_jspecify",
     ],
 )
-
-# Generates the META-INF/services/* entries that both the OSGi bundle instructions and
-# the shaded CLI/fuzz jars depend on.
-java_plugin(
-    name = "auto_service",
-    processor_class = "com.google.auto.service.processor.AutoServiceProcessor",
-    deps = ["@maven//:com_google_auto_service_auto_service"],
-)

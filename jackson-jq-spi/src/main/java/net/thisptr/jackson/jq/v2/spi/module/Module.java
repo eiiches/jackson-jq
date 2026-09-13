@@ -1,34 +1,32 @@
 package net.thisptr.jackson.jq.v2.spi.module;
 
-import java.util.Map;
-
-import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
-
 /**
- * Represents a jq module that provides functions and metadata.
+ * A jq module: a named unit that contributes functions to the queries that {@code import} it.
  * <p>
- * Implementations are discovered via {@link java.util.ServiceLoader}, the same as
- * {@link net.thisptr.jackson.jq.v2.spi.JqLibrary}; see the
+ * A module is one of exactly two kinds, and every module implements one of the two sub-interfaces
+ * rather than this one:
+ * <ul>
+ * <li>{@link JavaModule} -- functions already implemented in Java. This is what a module author
+ * ships and registers for {@link java.util.ServiceLoader} discovery; see the
  * {@code net.thisptr.jackson.jq.v2.spi.annotations} package for the classpath, JPMS, and OSGi
- * registration requirements this entails. Implementations must be safe to hold as a singleton and
- * to call {@link #getFunctions()}/{@link #getModuleMeta()} from multiple threads concurrently.
+ * registration requirements that entails.</li>
+ * <li>{@link JqModule} -- jq source that has not been compiled yet. This is what a module loader
+ * returns when it finds a {@code .jq} file; the compiler resolves its imports and compiles it.</li>
+ * </ul>
+ * Implementations must be safe to hold as a singleton and to use from multiple threads
+ * concurrently.
+ * <p>
+ * There is no third kind, and nothing implements this interface directly: Java 17 and later seal it
+ * to those two via {@code permits}.
  */
 public interface Module {
 
 	/**
-	 * Returns all functions exported by this module, keyed by name and arity.
+	 * Returns the metadata associated with this module, such as its {@code module {...};} directive
+	 * and its declared dependencies.
 	 * <p>
-	 * The returned map is an immutable, stable snapshot: repeated calls may return the same
-	 * instance, and callers may cache the result rather than calling this method again.
-	 *
-	 * @return an unmodifiable map of function signatures to their factories
-	 */
-	Map<FunctionSignature, Function> getFunctions();
-
-	/**
-	 * Returns the metadata associated with this module, such as dependencies,
-	 * definitions, and module-level metadata.
+	 * A {@link JqModule} has not been parsed yet, so it reports no metadata; the compiled module the
+	 * compiler produces from it does.
 	 *
 	 * @return the {@link ModuleMeta} of this module
 	 */

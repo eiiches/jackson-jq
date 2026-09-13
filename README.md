@@ -56,7 +56,7 @@ If you use Maven, add `jackson-jq-core` and the appropriate JSON provider to the
 ```
 
 
-See [jackson-jq-core/src/test/java/examples/Usage.java](jackson-jq-core/src/test/java/examples/Usage.java) for an example of using the API.
+See the JUnit 5 test cases in the [examples](examples) directory for examples of using the API.
 
 Command-line interface
 ----------------------

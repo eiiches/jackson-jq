@@ -11,9 +11,10 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RandomModuleTest {
 	@Test
 	public void returnsAValueInTheExpectedRange() throws JsonQueryException {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.build();
 
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/random\" as ext; ext::random");
@@ -42,7 +43,7 @@ public class RandomModuleTest {
 	public void functionContract() {
 		ModuleImpl module = new ModuleImpl();
 		module.getFunctions().values().forEach(fn -> {
-			Expression<Object, JsonNode> expr = fn.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.emptyList(), Versions.JQ_1_6);
+			Expression<RuntimeContext, JsonNode> expr = fn.bindArguments(Jackson2JsonProvider.getInstance(), Collections.emptyList(), Versions.JQ_1_6);
 			assertThat(expr.dependsOnInput()).isFalse();
 			assertThat(expr.dependsOnExternalState()).isTrue();
 		});

@@ -138,7 +138,9 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -198,11 +200,11 @@ public class Compiler {
 	}
 
 	public static <JsonNode> Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, AstNode ast) throws JsonQueryException {
-		return compile(env, new CompileOptions(), (Module) null, ast);
+		return compile(env, CompileOptions.newBuilder().build(), ModuleScope.root(env), ast);
 	}
 
-	public static <JsonNode> Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileOptions options, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
-		return compileRoot(env, options, currentModule, ast, false);
+	public static <JsonNode> Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, AstNode ast) throws JsonQueryException {
+		return compileRoot(env, options, scope, ast, false);
 	}
 
 	/**
@@ -210,14 +212,14 @@ public class Compiler {
 	 * tracks the module's genuinely top-level {@code def}s (see {@link CompileContext#exportsTopLevelFunctions()}
 	 * / {@link CompileContext#isRootScope()}) so {@link RootExpression#applyForModuleExports} can harvest their
 	 * real, correctly closure-bound {@link Function} values after running the module body once. This is how
-	 * {@code FileSystemModuleLoader.loadModuleActual} populates a file-based module's exported functions.
-	 * Ordinary query compilation must never do this -- use {@link #compile(Environment, CompileOptions, Module, AstNode)}.
+	 * {@link ModuleResolver#compileSource} populates an imported module's exported functions.
+	 * Ordinary query compilation must never do this -- use {@link #compile(Environment, CompileOptions, ModuleScope, AstNode)}.
 	 */
-	public static <JsonNode> Expression<StackFrame, JsonNode> compileModule(Environment<JsonNode> env, CompileOptions options, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
-		return compileRoot(env, options, currentModule, ast, true);
+	public static <JsonNode> Expression<StackFrame, JsonNode> compileModule(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, AstNode ast) throws JsonQueryException {
+		return compileRoot(env, options, scope, ast, true);
 	}
 
-	private static <JsonNode> Expression<StackFrame, JsonNode> compileRoot(Environment<JsonNode> env, CompileOptions options, @Nullable Module currentModule, AstNode ast, boolean exportTopLevelFunctions) throws JsonQueryException {
+	private static <JsonNode> Expression<StackFrame, JsonNode> compileRoot(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, AstNode ast, boolean exportTopLevelFunctions) throws JsonQueryException {
 		// Only whole queries and module sources are diagnosed. Function bodies that jq libraries
 		// bring along are compiled through the inner compile() below, never through here, so a
 		// caller never sees warnings about jq's own builtins.
@@ -226,7 +228,7 @@ public class Compiler {
 			PipeParenthesesCheck.run(ast, diagnosticListener);
 
 		CompileContext context = new CompileContext(exportTopLevelFunctions);
-		Expression<StackFrame, JsonNode> compiled = compile(env, context, currentModule, ast);
+		Expression<StackFrame, JsonNode> compiled = compile(env, context, scope, ast);
 		if (compiled == null)
 			throw new JsonQueryException("Cannot resolve null expression");
 		Set<String> definedVariables = new HashSet<>(env.getVariables().keySet());
@@ -241,13 +243,13 @@ public class Compiler {
 	}
 
 	public static <JsonNode> @Nullable Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileContext context, @Nullable AstNode ast) throws JsonQueryException {
-		return compile(env, context, (Module) null, ast);
+		return compile(env, context, ModuleScope.root(env), ast);
 	}
 
-	public static <JsonNode> @Nullable Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, @Nullable AstNode ast) throws JsonQueryException {
+	public static <JsonNode> @Nullable Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileContext context, ModuleScope<JsonNode> scope, @Nullable AstNode ast) throws JsonQueryException {
 		if (ast == null)
 			return null;
-		return new CompilationVisitor<>(env, context, currentModule).compileExpression(ast);
+		return new CompilationVisitor<>(env, context, scope).compileExpression(ast);
 	}
 
 	private static final class CompiledMatcher<N> {
@@ -273,12 +275,12 @@ public class Compiler {
 	private static final class CompilationVisitor<N> implements AstVisitor<Object> {
 		private final Environment<N> env;
 		private final CompileContext context;
-		private final @Nullable Module currentModule;
+		private final ModuleScope<N> scope;
 
-		CompilationVisitor(Environment<N> env, CompileContext context, @Nullable Module currentModule) {
+		CompilationVisitor(Environment<N> env, CompileContext context, ModuleScope<N> scope) {
 			this.env = env;
 			this.context = context;
-			this.currentModule = currentModule;
+			this.scope = scope;
 		}
 
 		private Expression<StackFrame, N> compileExpression(AstNode ast) throws JsonQueryException {
@@ -310,7 +312,7 @@ public class Compiler {
 
 		@Override
 		public Expression<StackFrame, N> visit(ParenAstNode paren) throws JsonQueryException {
-			return compileNonNull(env, context, currentModule, paren.value());
+			return compileNonNull(env, context, scope, paren.value());
 		}
 
 		@Override
@@ -320,7 +322,7 @@ public class Compiler {
 			context.setInputFixed(false);
 			try {
 				for (AstNode arg : call.args()) {
-					compiledArgs.add(compile(env, context, currentModule, arg));
+					compiledArgs.add(compile(env, context, scope, arg));
 				}
 			} finally {
 				context.setInputFixed(inputFixed);
@@ -328,16 +330,18 @@ public class Compiler {
 			compiledArgs = Collections.unmodifiableList(precomputeConstantArguments(env, context, compiledArgs));
 
 			if (call.moduleName() != null) {
-				@Var Module mod = context.getImportedModule(call.moduleName());
-				if (mod == null)
-					mod = env.getImportedModules().get(call.moduleName());
+				@Var JavaModule mod = context.getImportedModule(call.moduleName());
+				if (mod == null) {
+					// An environment may have been handed either kind of module; jq source is
+					// compiled here, the first time a query actually calls into it.
+					Module imported = env.getImportedModules().get(call.moduleName());
+					mod = imported != null ? scope.materialize(imported) : null;
+				}
 				Function factory = mod != null ? lookupFunction(mod.getFunctions(), call.name(), compiledArgs.size()) : null;
 				if (factory == null) {
 					throw new JsonQueryException(String.format("Function %s::%s/%d does not exist", call.moduleName(), call.name(), compiledArgs.size()));
 				}
-				Expression<StackFrame, N> fn = factory.bindArguments(env.getJsonProvider(), compiledArgs, env.getJqVersion());
-				Expression<StackFrame, N> result = new ResolvedFunctionCall<>(fn, fn.dependsOnExternalState(), fn.dependsOnInput(), inputFixed, compiledArgs);
-				return restoreFixedInput(result, inputFixed);
+				return restoreFixedInput(bindFunctionCall(env, factory, compiledArgs, inputFixed), inputFixed);
 			}
 
 			return restoreFixedInput(compileFunctionCall(env, context, call.name(), compiledArgs), inputFixed);
@@ -353,24 +357,18 @@ public class Compiler {
 			for (TopLevelAstNode.ImportStatement imp : top.imports()) {
 				Maybe<N> metadata = evaluateMetadata(env.getJsonProvider(), imp);
 				if (imp.dollarImport) {
-					Maybe<N> data = env.getModuleLoader().loadData(currentModule, imp.path, metadata);
-					if (data.isAbsent()) {
-						throw new JsonQueryException(String.format("module not found: %s", imp.path));
-					}
+					N data = scope.resolveData(imp.path, metadata);
 					if (imp.name != null) {
-						context.addImportedVariableDefault(imp.name, data.get());
+						context.addImportedVariableDefault(imp.name, data);
 					}
 				} else {
-					Module mod = env.getModuleLoader().loadModule(currentModule, imp.path, metadata);
-					if (mod == null) {
-						throw new JsonQueryException(String.format("module not found: %s", imp.path));
-					}
+					JavaModule mod = scope.resolveModule(imp.path, metadata);
 					if (imp.name != null) {
 						context.addImportedModule(imp.name, mod);
 					}
 				}
 			}
-			Expression<StackFrame, N> compiledInner = compileNonNull(env, context, currentModule, top.expr());
+			Expression<StackFrame, N> compiledInner = compileNonNull(env, context, scope, top.expr());
 			return new TopLevelExpression<>(compiledInner);
 		}
 
@@ -389,11 +387,11 @@ public class Compiler {
 				return compileLabel((LabelAstNode) left, piped.rhs);
 
 			boolean savedInputFixed = context.isInputFixed();
-			Expression<StackFrame, N> compiledLeft = compileNonNull(env, context, currentModule, left);
+			Expression<StackFrame, N> compiledLeft = compileNonNull(env, context, scope, left);
 			Expression<StackFrame, N> right;
 			context.setInputFixed(!compiledLeft.dependsOnInput());
 			try {
-				right = compileNonNull(env, context, currentModule, piped.rhs);
+				right = compileNonNull(env, context, scope, piped.rhs);
 			} finally {
 				context.setInputFixed(savedInputFixed);
 			}
@@ -402,7 +400,7 @@ public class Compiler {
 
 		private Expression<StackFrame, N> compileAsBinding(AsBindingAstNode binding, AstNode bodyAst) throws JsonQueryException {
 			boolean savedInputFixed = context.isInputFixed();
-			Expression<StackFrame, N> value = compileNonNull(env, context, currentModule, binding.value());
+			Expression<StackFrame, N> value = compileNonNull(env, context, scope, binding.value());
 			CompiledMatcher<N> matcherResult = compileMatcher(binding.matcher());
 
 			context.pushLocalScope();
@@ -414,7 +412,7 @@ public class Compiler {
 					slots.put(varName, context.getVariableSlot(varName));
 				}
 				context.setInputFixed(savedInputFixed);
-				body = compileNonNull(env, context, currentModule, bodyAst);
+				body = compileNonNull(env, context, scope, bodyAst);
 			} finally {
 				context.setInputFixed(savedInputFixed);
 				context.popScope();
@@ -424,7 +422,7 @@ public class Compiler {
 		}
 
 		private Expression<StackFrame, N> compileLabel(LabelAstNode label, AstNode bodyAst) throws JsonQueryException {
-			return new Label<>(label.name(), compileNonNull(env, context, currentModule, bodyAst));
+			return new Label<>(label.name(), compileNonNull(env, context, scope, bodyAst));
 		}
 
 		// Reached only for an AST that the parser cannot produce: the grammar rejects a pipe head that
@@ -891,6 +889,12 @@ public class Compiler {
 	 * at runtime) global, then a defined/builtin (fixed at compile time) global. Declared is checked before
 	 * environment-defined, jq-library, or Java builtin registries so that a declared signature coinciding
 	 * with a real builtin still requires a binding rather than silently falling back to the builtin.
+	 * <p>
+	 * The defined/builtin step searches the environment's own registries first and the {@code FunctionLoader}'s
+	 * second, and within each of those two tiers applies the same rule: exact-signature Java function, then
+	 * exact-signature jq definition, then variadic Java function. Whether a function is written in Java or in
+	 * jq is a detail of how it was supplied, so it must not decide the winner differently in one tier than in
+	 * the other; keep the two blocks below symmetric.
 	 */
 	private static <N> Expression<StackFrame, N> compileFunctionCall(Environment<N> env, CompileContext context, String fullName, List<Expression<StackFrame, N>> compiledArgs) throws JsonQueryException {
 		int arity = compiledArgs.size();
@@ -919,26 +923,37 @@ public class Compiler {
 		}
 
 		FunctionSignature exact = FunctionSignature.of(fullName, arity);
-		@Var Function factory = env.getFunctions().get(exact);
+
+		Map<FunctionSignature, Function> envFunctions = env.getFunctions();
+		@Var Function factory = envFunctions.get(exact);
 		if (factory == null) {
 			JqFunction jqFunction = env.getJqFunctions().get(exact);
 			if (jqFunction != null)
 				return JqFunctionCompiler.compile(env, context, exact, jqFunction, JqFunctionCompiler.Origin.ENVIRONMENT, compiledArgs);
-			factory = env.getFunctions().get(exact.asVariadic());
+			factory = envFunctions.get(exact.asVariadic());
 		}
+		if (factory != null)
+			return bindFunctionCall(env, factory, compiledArgs, context.isInputFixed());
+
+		Map<FunctionSignature, Function> loadedFunctions = env.getFunctionLoader().getFunctions(env.getJqVersion());
+		factory = loadedFunctions.get(exact);
 		if (factory == null) {
 			JqFunction jqFunction = env.getFunctionLoader().getJqFunctions(env.getJqVersion()).get(exact);
 			if (jqFunction != null)
 				return JqFunctionCompiler.compile(env, context, exact, jqFunction, JqFunctionCompiler.Origin.LOADER, compiledArgs);
-			Map<FunctionSignature, Function> loadedFunctions = env.getFunctionLoader().getFunctions(env.getJqVersion());
-			factory = loadedFunctions.get(exact);
-			if (factory == null)
-				factory = loadedFunctions.get(exact.asVariadic());
+			factory = loadedFunctions.get(exact.asVariadic());
 		}
 		if (factory == null)
 			throw new JsonQueryException(String.format("Function %s/%d does not exist", fullName, arity));
+		return bindFunctionCall(env, factory, compiledArgs, context.isInputFixed());
+	}
+
+	/**
+	 * Binds a resolved Java {@link Function} to the call's already-compiled arguments.
+	 */
+	private static <N> Expression<StackFrame, N> bindFunctionCall(Environment<N> env, Function factory, List<Expression<StackFrame, N>> compiledArgs, boolean inputFixed) {
 		Expression<StackFrame, N> fn = factory.bindArguments(env.getJsonProvider(), compiledArgs, env.getJqVersion());
-		return new ResolvedFunctionCall<>(fn, fn.dependsOnExternalState(), fn.dependsOnInput(), context.isInputFixed(), compiledArgs);
+		return new ResolvedFunctionCall<>(fn, fn.dependsOnExternalState(), fn.dependsOnInput(), inputFixed, compiledArgs);
 	}
 
 	/**
@@ -1039,7 +1054,7 @@ public class Compiler {
 				currentFrame.set(slot, new Function() {
 					@Override
 					@SuppressWarnings("unchecked")
-					public <Context, N1> Expression<Context, N1> bindArguments(JsonProvider<N1> jp, List<Expression<Context, N1>> emptyArgs, Version v) {
+					public <Context extends RuntimeContext, N1> Expression<Context, N1> bindArguments(JsonProvider<N1> jp, List<Expression<Context, N1>> emptyArgs, Version v) {
 						Expression<StackFrame, N1> effectiveExpr = (Expression<StackFrame, N1>) (Expression<?, ?>) pExpr;
 						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(callerFrame, inVal, pVal, outVal);
 					}
@@ -1068,11 +1083,11 @@ public class Compiler {
 	}
 
 	public static <JsonNode> Expression<StackFrame, JsonNode> compileNonNull(Environment<JsonNode> env, CompileContext context, AstNode ast) throws JsonQueryException {
-		return compileNonNull(env, context, (Module) null, ast);
+		return compileNonNull(env, context, ModuleScope.root(env), ast);
 	}
 
-	public static <JsonNode> Expression<StackFrame, JsonNode> compileNonNull(Environment<JsonNode> env, CompileContext context, @Nullable Module currentModule, AstNode ast) throws JsonQueryException {
-		Expression<StackFrame, JsonNode> compiled = compile(env, context, currentModule, ast);
+	public static <JsonNode> Expression<StackFrame, JsonNode> compileNonNull(Environment<JsonNode> env, CompileContext context, ModuleScope<JsonNode> scope, AstNode ast) throws JsonQueryException {
+		Expression<StackFrame, JsonNode> compiled = compile(env, context, scope, ast);
 		if (compiled == null)
 			throw new JsonQueryException("Cannot resolve null expression");
 		return compiled;

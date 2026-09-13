@@ -14,12 +14,14 @@ import org.junit.jupiter.api.Test;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -29,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class DebugModuleTest {
 	@Test
 	public void emitsScopeAndInputInformation() throws JsonQueryException {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::debug_scope");
 		List<JsonNode> results = new ArrayList<>();
@@ -52,7 +54,7 @@ public class DebugModuleTest {
 	public void functionContract() {
 		ModuleImpl module = new ModuleImpl();
 		module.getFunctions().forEach((signature, fn) -> {
-			Expression<Object, JsonNode> expr = fn.bindArguments(Jackson2JsonProviderImpl.getInstance(), dummyArgs(signature.arity()), Versions.JQ_1_6);
+			Expression<RuntimeContext, JsonNode> expr = fn.bindArguments(Jackson2JsonProvider.getInstance(), dummyArgs(signature.arity()), Versions.JQ_1_6);
 			assertThat(expr.dependsOnExternalState()).isFalse();
 		});
 	}
@@ -61,7 +63,7 @@ public class DebugModuleTest {
 	public void debugScopeDependsOnFlags() {
 		ModuleImpl module = new ModuleImpl();
 		Function fn = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("debug_scope", 0)));
-		Expression<Object, JsonNode> expr = fn.bindArguments(Jackson2JsonProviderImpl.getInstance(), dummyArgs(0), Versions.JQ_1_6);
+		Expression<RuntimeContext, JsonNode> expr = fn.bindArguments(Jackson2JsonProvider.getInstance(), dummyArgs(0), Versions.JQ_1_6);
 		assertThat(expr.dependsOnInput()).isTrue();
 	}
 
@@ -69,7 +71,7 @@ public class DebugModuleTest {
 	public void debugExprIsItselfConstant() {
 		ModuleImpl module = new ModuleImpl();
 		Function fn = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("debug_expr", 1)));
-		Expression<Object, JsonNode> expr = fn.bindArguments(Jackson2JsonProviderImpl.getInstance(), dummyArgs(1), Versions.JQ_1_6);
+		Expression<RuntimeContext, JsonNode> expr = fn.bindArguments(Jackson2JsonProvider.getInstance(), dummyArgs(1), Versions.JQ_1_6);
 		assertThat(expr.dependsOnInput()).isFalse();
 		assertThat(expr.dependsOnExternalState()).isFalse();
 	}
@@ -92,8 +94,8 @@ public class DebugModuleTest {
 
 	@Test
 	public void debugExprOmitsVariableDependency() throws JsonQueryException {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
-				.defineVariable("x", () -> Jackson2JsonProviderImpl.getInstance().createNumber(1))
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+				.defineVariable("x", () -> Jackson2JsonProvider.getInstance().createNumber(1))
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::debug_expr($x)");
 		List<JsonNode> results = new ArrayList<>();
@@ -106,7 +108,7 @@ public class DebugModuleTest {
 
 	@Test
 	public void debugExprNeverEvaluatesItsArgument() throws JsonQueryException {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::debug_expr(error(\"boom\"))");
 		List<JsonNode> results = new ArrayList<>();
@@ -207,7 +209,7 @@ public class DebugModuleTest {
 
 	@Test
 	public void dumpExprNeverEvaluatesItsArgument() throws JsonQueryException {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::dump_expr(error(\"boom\"))");
 		List<JsonNode> results = new ArrayList<>();
@@ -216,7 +218,7 @@ public class DebugModuleTest {
 	}
 
 	private static JsonNode debugExpr(String filter) throws JsonQueryException {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::debug_expr(" + filter + ")");
 		List<JsonNode> results = new ArrayList<>();
@@ -226,7 +228,7 @@ public class DebugModuleTest {
 	}
 
 	private static JsonNode dumpExpr(String filter) throws JsonQueryException {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::dump_expr(" + filter + ")");
 		List<JsonNode> results = new ArrayList<>();
@@ -239,15 +241,15 @@ public class DebugModuleTest {
 		ModuleImpl module = new ModuleImpl();
 		Function fn = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("dump_expr", 1)));
 		@SuppressWarnings("unchecked")
-		Expression<Object, JsonNode> castArg = (Expression<Object, JsonNode>) argument;
-		Expression<Object, JsonNode> expression = fn.bindArguments(Jackson2JsonProviderImpl.getInstance(), Arrays.asList(castArg), Versions.JQ_1_6);
+		Expression<RuntimeContext, JsonNode> castArg = (Expression<RuntimeContext, JsonNode>) argument;
+		Expression<RuntimeContext, JsonNode> expression = fn.bindArguments(Jackson2JsonProvider.getInstance(), Arrays.asList(castArg), Versions.JQ_1_6);
 		List<JsonNode> results = new ArrayList<>();
-		expression.apply(new Object(), Jackson2JsonProviderImpl.getInstance().createNull(), UntrackedPath.getInstance(), (val, path) -> results.add(val));
+		expression.apply(() -> RuntimeLimitsImpl.UNLIMITED, Jackson2JsonProvider.getInstance().createNull(), UntrackedPath.getInstance(), (val, path) -> results.add(val));
 		assertThat(results).hasSize(1);
 		return results.get(0);
 	}
 
-	private static <Context> List<Expression<Context, JsonNode>> dummyArgs(@Nullable Integer arity) {
+	private static <Context extends RuntimeContext> List<Expression<Context, JsonNode>> dummyArgs(@Nullable Integer arity) {
 		int n = arity == null ? 0 : arity;
 		List<Expression<Context, JsonNode>> args = new ArrayList<>();
 		for (int i = 0; i < n; ++i) {
@@ -261,7 +263,7 @@ public class DebugModuleTest {
 		return args;
 	}
 
-	private static final class CyclicExpression implements Expression<Object, JsonNode> {
+	private static final class CyclicExpression implements Expression<RuntimeContext, JsonNode> {
 		private final Map<Object, Object> mapping = Collections.singletonMap(new Object() {
 			@Override
 			public String toString() {
@@ -274,7 +276,7 @@ public class DebugModuleTest {
 				return "opaque-value";
 			}
 		};
-		private final Expression<Object, JsonNode> self = this;
+		private final Expression<RuntimeContext, JsonNode> self = this;
 		private final List<Object> values = Arrays.asList(this, "scalar-value");
 
 		@Override
@@ -288,7 +290,7 @@ public class DebugModuleTest {
 		}
 
 		@Override
-		public void apply(Object frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) {
+		public void apply(RuntimeContext frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) {
 			throw new AssertionError("The argument must not be evaluated");
 		}
 	}

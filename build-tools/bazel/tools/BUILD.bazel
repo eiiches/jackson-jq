@@ -10,8 +10,14 @@ java_binary(
 )
 
 java_library(
+    name = "module_info_lib",
+    srcs = ["ModuleInfo.java"],
+)
+
+java_library(
     name = "multi_release_jar_lib",
     srcs = ["MultiReleaseJar.java"],
+    deps = [":module_info_lib"],
 )
 
 java_binary(
@@ -36,7 +42,10 @@ java_junit5_test(
 java_library(
     name = "bnd_manifest_lib",
     srcs = ["BndManifest.java"],
-    deps = ["@maven//:biz_aQute_bnd_biz_aQute_bndlib"],
+    deps = [
+        ":module_info_lib",
+        "@maven//:biz_aQute_bnd_biz_aQute_bndlib",
+    ],
 )
 
 java_binary(

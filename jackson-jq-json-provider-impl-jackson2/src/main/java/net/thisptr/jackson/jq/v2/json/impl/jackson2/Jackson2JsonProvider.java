@@ -33,19 +33,19 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.NumberType;
 
-public class Jackson2JsonProviderImpl implements JsonProvider<JsonNode> {
-	private static final Jackson2JsonProviderImpl DEFAULT_INSTANCE = new Jackson2JsonProviderImpl(new ObjectMapper().registerModule(JsonQueryJacksonModule.getInstance()));
+public class Jackson2JsonProvider implements JsonProvider<JsonNode> {
+	private static final Jackson2JsonProvider DEFAULT_INSTANCE = new Jackson2JsonProvider(new ObjectMapper().registerModule(JsonQueryJacksonModule.getInstance()));
 
 	private final ObjectMapper mapper;
 
-	public Jackson2JsonProviderImpl(ObjectMapper mapper) {
+	public Jackson2JsonProvider(ObjectMapper mapper) {
 		this.mapper = mapper;
 	}
 
 	/**
 	 * Returns a singleton instance using a default ObjectMapper.
 	 */
-	public static Jackson2JsonProviderImpl getInstance() {
+	public static Jackson2JsonProvider getInstance() {
 		return DEFAULT_INSTANCE;
 	}
 

@@ -5,12 +5,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
 import net.thisptr.jackson.jq.v2.test.AbstractJsonQueryTest;
 
 /**
  * Concrete implementation of AbstractJsonQueryTest for Gson.
- * Runs the standard jq test suite using GsonJsonProviderImpl.
+ * Runs the standard jq test suite using GsonJsonProvider.
  */
 public class GsonJsonQueryTest extends AbstractJsonQueryTest<JsonElement> {
 	public static void main(String[] args) throws Exception {
@@ -19,7 +19,7 @@ public class GsonJsonQueryTest extends AbstractJsonQueryTest<JsonElement> {
 
 	@Override
 	protected JsonProvider<JsonElement> getJsonProvider() {
-		return GsonJsonProviderImpl.getInstance();
+		return GsonJsonProvider.getInstance();
 	}
 
 	@Override

@@ -1,17 +1,14 @@
 import java.io.File;
-import java.io.InputStream;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import aQute.bnd.osgi.Builder;
@@ -76,37 +73,8 @@ public final class BndManifest {
 
 	static ModuleDescriptor readModuleDescriptor(File jarFile) throws Exception {
 		try (JarFile jar = new JarFile(jarFile)) {
-			JarEntry moduleInfoEntry = null;
-			int highestVersion = -1;
-
-			Enumeration<JarEntry> entries = jar.entries();
-			while (entries.hasMoreElements()) {
-				JarEntry entry = entries.nextElement();
-				String name = entry.getName();
-				if ("module-info.class".equals(name)) {
-					if (moduleInfoEntry == null) {
-						moduleInfoEntry = entry;
-					}
-				} else if (name.startsWith("META-INF/versions/") && name.endsWith("/module-info.class")) {
-					String versionStr = name.substring("META-INF/versions/".length(), name.length() - "/module-info.class".length());
-					try {
-						int version = Integer.parseInt(versionStr);
-						if (version > highestVersion) {
-							highestVersion = version;
-							moduleInfoEntry = entry;
-						}
-					} catch (NumberFormatException ignored) {
-					}
-				}
-			}
-
-			if (moduleInfoEntry != null) {
-				try (InputStream in = jar.getInputStream(moduleInfoEntry)) {
-					return ModuleDescriptor.read(in);
-				}
-			}
+			return ModuleInfo.read(jar);
 		}
-		return null;
 	}
 
 	static void deriveOsgiHeaders(ModuleDescriptor descriptor, Map<String, String> properties) {

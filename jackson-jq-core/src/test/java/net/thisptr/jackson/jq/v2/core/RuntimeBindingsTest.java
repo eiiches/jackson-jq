@@ -16,10 +16,11 @@ import org.junit.jupiter.api.Test;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -28,19 +29,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class JsonQueryBindingsTest {
+public class RuntimeBindingsTest {
 	/**
 	 * Results are compared by jq value, not by JsonNode identity: the node class a literal
 	 * compiles to is not what these tests are about.
 	 */
-	private static final Comparator<JsonNode> BY_JQ_VALUE = new JsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance());
+	private static final Comparator<JsonNode> BY_JQ_VALUE = new JsonNodeComparator<>(Jackson2JsonProvider.getInstance());
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
-	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProviderImpl.getInstance();
+	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProvider.getInstance();
 
 	@Test
 	public void reusesCompiledQueryWithDifferentVariableBindings() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$value");
@@ -53,21 +54,21 @@ public class JsonQueryBindingsTest {
 	@Test
 	public void evaluatesDefaultSupplierForEveryReference() throws Exception {
 		AtomicInteger counter = new AtomicInteger();
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.defineVariable("value", () -> JSON_PROVIDER.createNumber(counter.incrementAndGet()))
 				.build();
 
-		assertThat(run(env.compile("[$value, $value]"), JsonQueryBindings.empty())).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[1,2]")));
+		assertThat(run(env.compile("[$value, $value]"))).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[1,2]")));
 	}
 
 	@Test
 	public void evaluatesOverrideSupplierForEveryReferenceAndThroughClosure() throws Exception {
 		AtomicInteger overrideCounter = new AtomicInteger();
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
 		JsonQuery<JsonNode> query = env.compile("def values: [$value, $value]; values");
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("value", () -> JSON_PROVIDER.createNumber(overrideCounter.incrementAndGet()))
 				.build();
 
@@ -79,10 +80,10 @@ public class JsonQueryBindingsTest {
 	@Test
 	public void doesNotEvaluateUnusedOverrideSupplier() throws Exception {
 		AtomicInteger counter = new AtomicInteger();
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("value", () -> JSON_PROVIDER.createNumber(counter.incrementAndGet()))
 				.build();
 
@@ -92,10 +93,10 @@ public class JsonQueryBindingsTest {
 
 	@Test
 	public void reportsNullValueFromOverrideSupplier() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("value", () -> null)
 				.build();
 
@@ -106,17 +107,17 @@ public class JsonQueryBindingsTest {
 	@Test
 	public void overridesFunctionPerInvocationAndThroughClosure() throws Exception {
 		FunctionSignature key = FunctionSignature.of("custom", 0);
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.declareFunction(key)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("def wrapper: [$value, custom]; wrapper");
 
-		JsonQueryBindings<JsonNode> firstCall = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> firstCall = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("value", JSON_PROVIDER.createString("default-variable"))
 				.setFunction(key, constantFunction("default-function"))
 				.build();
-		JsonQueryBindings<JsonNode> secondCall = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> secondCall = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("value", JSON_PROVIDER.createString("override-variable"))
 				.setFunction(key, constantFunction("override-function"))
 				.build();
@@ -127,7 +128,7 @@ public class JsonQueryBindingsTest {
 
 	@Test
 	public void rejectsUnknownOverrides() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.defineConstant("known", JSON_PROVIDER.createNull())
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$known");
@@ -136,7 +137,7 @@ public class JsonQueryBindingsTest {
 				() -> run(query, bindingsWithVariable("unknown", 1)));
 		assertThat(variableError).hasMessageContaining("$unknown");
 
-		JsonQueryBindings<JsonNode> functionBindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> functionBindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setFunction(FunctionSignature.of("unknown", 0), constantFunction("unused"))
 				.build();
 		JsonQueryException functionError = assertThrows(JsonQueryException.class, () -> run(query, functionBindings));
@@ -145,7 +146,7 @@ public class JsonQueryBindingsTest {
 
 	@Test
 	public void rejectsOverrideOfFixedValue() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.defineConstant("known", JSON_PROVIDER.createNumber(1))
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$known");
@@ -157,27 +158,27 @@ public class JsonQueryBindingsTest {
 
 	@Test
 	public void rejectsMissingDeclaredVariable() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$value");
 
-		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(query, JsonQueryBindings.empty()));
+		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(query));
 		assertThat(error).hasMessageContaining("$value").hasMessageContaining("must be supplied");
 	}
 
 	@Test
 	public void declaredFunctionColludingWithABuiltinStillRequiresABinding() throws Exception {
 		FunctionSignature builtinCollision = FunctionSignature.of("length", 0);
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareFunction(builtinCollision)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("length");
 
-		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(query, JsonQueryBindings.empty()));
+		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(query));
 		assertThat(error).hasMessageContaining("length").hasMessageContaining("must be supplied");
 
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setFunction(builtinCollision, constantFunction("overridden"))
 				.build();
 		assertThat(run(query, bindings)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("\"overridden\"")));
@@ -185,7 +186,7 @@ public class JsonQueryBindingsTest {
 
 	@Test
 	public void localVariableShadowsGlobalBinding() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
 		JsonQuery<JsonNode> query = env.compile("10 as $value | $value");
@@ -197,12 +198,12 @@ public class JsonQueryBindingsTest {
 	public void overridesOnlyDeclaredFunctionSignatureLeavingDefinedOneFixed() throws Exception {
 		FunctionSignature zeroArg = FunctionSignature.of("custom", 0);
 		FunctionSignature oneArg = FunctionSignature.of("custom", 1);
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareFunction(zeroArg)
 				.defineFunction(oneArg, constantFunction("one"))
 				.build();
 		JsonQuery<JsonNode> query = env.compile("[custom, custom(.)]");
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setFunction(zeroArg, constantFunction("override"))
 				.build();
 
@@ -212,11 +213,11 @@ public class JsonQueryBindingsTest {
 	@Test
 	public void overridesVariadicFunctionUsingRegisteredSignature() throws Exception {
 		FunctionSignature variadic = FunctionSignature.ofVariadic("custom");
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareFunction(variadic)
 				.build();
 		JsonQuery<JsonNode> query = env.compile("[custom, custom(.)]");
-		JsonQueryBindings<JsonNode> bindings = JsonQueryBindings.<JsonNode>builder()
+		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setFunction(variadic, constantFunction("override"))
 				.build();
 
@@ -225,7 +226,7 @@ public class JsonQueryBindingsTest {
 
 	@Test
 	public void isolatesBindingsAcrossConcurrentInvocations() throws Exception {
-		Environment<JsonNode> env = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_7)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$value");
@@ -243,20 +244,26 @@ public class JsonQueryBindingsTest {
 		}
 	}
 
-	private static JsonQueryBindings<JsonNode> bindingsWithVariable(String name, int value) {
-		return JsonQueryBindings.<JsonNode>builder().setVariable(name, JSON_PROVIDER.createNumber(value)).build();
+	private static RuntimeBindings<JsonNode> bindingsWithVariable(String name, int value) {
+		return RuntimeBindings.<JsonNode>newBuilder().setVariable(name, JSON_PROVIDER.createNumber(value)).build();
 	}
 
 	private static Function constantFunction(String value) {
 		return new Function() {
 			@Override
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version version) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version version) {
 				return (frame, in, path, output) -> output.emit(jsonProvider.createString(value), UntrackedPath.getInstance());
 			}
 		};
 	}
 
-	private static List<JsonNode> run(JsonQuery<JsonNode> query, JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {
+	private static List<JsonNode> run(JsonQuery<JsonNode> query) throws JsonQueryException {
+		List<JsonNode> result = new ArrayList<>();
+		query.apply(JSON_PROVIDER.createNull(), result::add);
+		return result;
+	}
+
+	private static List<JsonNode> run(JsonQuery<JsonNode> query, RuntimeBindings<JsonNode> bindings) throws JsonQueryException {
 		List<JsonNode> result = new ArrayList<>();
 		query.apply(JSON_PROVIDER.createNull(), bindings, result::add);
 		return result;

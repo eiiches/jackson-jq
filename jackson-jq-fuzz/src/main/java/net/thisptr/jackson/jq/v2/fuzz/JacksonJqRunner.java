@@ -66,7 +66,7 @@ public class JacksonJqRunner<N> implements Evaluator {
 			@Override
 			public void run() {
 				try {
-					Environment<N> env = new EnvironmentBuilder<>(jsonProvider, jqVersion).build();
+					Environment<N> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, jqVersion).build();
 					JsonQuery<N> jq = env.compile(exprText);
 					N nativeIn = jsonProvider.parse(in.toString());
 					result.set(doEvaluate(jq, nativeIn));

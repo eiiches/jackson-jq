@@ -8,6 +8,7 @@ import net.thisptr.jackson.jq.v2.core.internal.path.PathAndValue;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
@@ -67,7 +68,7 @@ public class StackFrameValuesTest {
 	void returnsNullForFunctionRawValue() {
 		Function factory = new Function() {
 			@Override
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version version) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version version) {
 				throw new UnsupportedOperationException();
 			}
 		};
@@ -77,7 +78,7 @@ public class StackFrameValuesTest {
 
 	@Test
 	void returnsNullForExpressionRawValue() {
-		Expression<Object, String> expression = (frame, in, path, output) -> {
+		Expression<RuntimeContext, String> expression = (frame, in, path, output) -> {
 			throw new UnsupportedOperationException();
 		};
 

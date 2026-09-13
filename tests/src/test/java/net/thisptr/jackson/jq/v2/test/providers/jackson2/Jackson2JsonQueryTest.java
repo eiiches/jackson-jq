@@ -3,12 +3,12 @@ package net.thisptr.jackson.jq.v2.test.providers.jackson2;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.test.AbstractJsonQueryTest;
 
 /**
  * Concrete implementation of AbstractJsonQueryTest for Jackson 2.
- * Runs the standard jq test suite using Jackson2JsonProviderImpl.
+ * Runs the standard jq test suite using Jackson2JsonProvider.
  */
 public class Jackson2JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 	public static void main(String[] args) throws Exception {
@@ -17,7 +17,7 @@ public class Jackson2JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 
 	@Override
 	protected JsonProvider<JsonNode> getJsonProvider() {
-		return Jackson2JsonProviderImpl.getInstance();
+		return Jackson2JsonProvider.getInstance();
 	}
 
 	@Override

@@ -14,10 +14,12 @@ import net.thisptr.jackson.jq.v2.core.internal.commons.strings.UnicodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
+import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.IndexOfPath;
 import net.thisptr.jackson.jq.v2.spi.path.IndexRangePath;
@@ -242,56 +244,56 @@ public final class PathOperations {
 		}
 	}
 
-	public static <JsonNode> JsonNode mutate(JsonProvider<JsonNode> jsonProvider, Path<JsonNode> path, JsonNode in, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
-		return mutateUnchecked(jsonProvider, path, in, mutation, version);
+	public static <JsonNode> JsonNode mutate(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, Path<JsonNode> path, JsonNode in, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
+		return mutateUnchecked(jsonProvider, limits, path, in, mutation, version);
 	}
 
 	// The casts are safe because every concrete path retains the JsonNode type of its parent and component.
-	private static <JsonNode> JsonNode mutateUnchecked(JsonProvider<JsonNode> jsonProvider, Path<JsonNode> path, JsonNode in, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
+	private static <JsonNode> JsonNode mutateUnchecked(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, Path<JsonNode> path, JsonNode in, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
 		if (path instanceof RootPath<?>)
 			return mutation.apply(in);
 		if (path instanceof UnrepresentablePath<?>)
 			throw new JsonQueryException("Invalid path expression");
 		if (path instanceof StringKeyPath<?>) {
 			StringKeyPath<JsonNode> objectPath = (StringKeyPath<JsonNode>) path;
-			return mutateUnchecked(jsonProvider, objectPath.getParentPath(), in, oldValue -> {
-				return mutateObjectField(jsonProvider, oldValue, objectPath.getKey(), mutation, version);
+			return mutateUnchecked(jsonProvider, limits, objectPath.getParentPath(), in, oldValue -> {
+				return mutateObjectField(jsonProvider, limits, oldValue, objectPath.getKey(), mutation, version);
 			}, version);
 		}
 		if (path instanceof NumberIndexPath<?>) {
 			NumberIndexPath<JsonNode> indexPath = (NumberIndexPath<JsonNode>) path;
-			return mutateUnchecked(jsonProvider, indexPath.getParentPath(), in, oldValue -> {
-				return mutateArrayIndex(jsonProvider, oldValue, indexPath.getIndex(), mutation, version);
+			return mutateUnchecked(jsonProvider, limits, indexPath.getParentPath(), in, oldValue -> {
+				return mutateArrayIndex(jsonProvider, limits, oldValue, indexPath.getIndex(), mutation, version);
 			}, version);
 		}
 		if (path instanceof IntIndexPath<?>) {
 			IntIndexPath<JsonNode> indexPath = (IntIndexPath<JsonNode>) path;
-			return mutateUnchecked(jsonProvider, indexPath.getParentPath(), in, oldValue -> {
-				return mutateArrayIndex(jsonProvider, oldValue, indexPath.getIndex(), mutation, version);
+			return mutateUnchecked(jsonProvider, limits, indexPath.getParentPath(), in, oldValue -> {
+				return mutateArrayIndex(jsonProvider, limits, oldValue, indexPath.getIndex(), mutation, version);
 			}, version);
 		}
 		if (path instanceof IndexRangePath<?>) {
 			IndexRangePath<JsonNode> rangePath = (IndexRangePath<JsonNode>) path;
-			return mutateUnchecked(jsonProvider, rangePath.getParentPath(), in, oldValue -> {
-				return mutateArrayRangeIndex(jsonProvider, oldValue, rangePath.getStartIndex(), rangePath.getEndIndex(), mutation, version);
+			return mutateUnchecked(jsonProvider, limits, rangePath.getParentPath(), in, oldValue -> {
+				return mutateArrayRangeIndex(jsonProvider, limits, oldValue, rangePath.getStartIndex(), rangePath.getEndIndex(), mutation, version);
 			}, version);
 		}
 		if (path instanceof IndexOfPath<?>) {
 			IndexOfPath<JsonNode> indexOfPath = (IndexOfPath<JsonNode>) path;
-			return mutateUnchecked(jsonProvider, indexOfPath.getParentPath(), in, oldValue -> {
+			return mutateUnchecked(jsonProvider, limits, indexOfPath.getParentPath(), in, oldValue -> {
 				throw new JsonQueryException("Cannot update field at array index of array");
 			}, version);
 		}
 		if (path instanceof InvalidPath<?>) {
 			InvalidPath<JsonNode> invalidPath = (InvalidPath<JsonNode>) path;
-			return mutateUnchecked(jsonProvider, invalidPath.getParentPath(), in, oldValue -> {
+			return mutateUnchecked(jsonProvider, limits, invalidPath.getParentPath(), in, oldValue -> {
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, invalidPath.getIndex()));
 			}, version);
 		}
 		throw unsupported(path);
 	}
 
-	private static <JsonNode> JsonNode mutateObjectField(JsonProvider<JsonNode> jsonProvider, @Var JsonNode in, String key, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
+	private static <JsonNode> JsonNode mutateObjectField(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, @Var JsonNode in, String key, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
 		if (jsonProvider.isNull(in))
 			in = jsonProvider.createObject(Collections.emptyMap());
 		if (jsonProvider.isObject(in)) {
@@ -306,12 +308,13 @@ public final class PathOperations {
 				oldValue = jsonProvider.createNull();
 			JsonNode newValue = mutation.apply(oldValue);
 			values.put(key, newValue);
+			RuntimeLimitChecks.checkObjectSize(limits, values.size());
 			return jsonProvider.createObject(values);
 		}
 		throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createString(key)));
 	}
 
-	private static <JsonNode> JsonNode mutateArrayIndex(JsonProvider<JsonNode> jsonProvider, @Var JsonNode in, JsonNode index, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
+	private static <JsonNode> JsonNode mutateArrayIndex(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, @Var JsonNode in, JsonNode index, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
 		assert jsonProvider.isNumber(index);
 		if (jsonProvider.isNull(in))
 			in = jsonProvider.createArray(Collections.emptyList());
@@ -327,6 +330,8 @@ public final class PathOperations {
 			if (resolvedIndex < 0)
 				throw new JsonQueryException("Out of bounds negative array index");
 
+			RuntimeLimitChecks.checkArraySize(limits, Math.max(jsonProvider.getArrayLength(in), resolvedIndex + 1L));
+
 			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.getArrayLength(in) ? jsonProvider.getArrayElement(in, resolvedIndex) : jsonProvider.createNull());
 
 			List<JsonNode> out = new ArrayList<>(Math.max(jsonProvider.getArrayLength(in), resolvedIndex + 1));
@@ -340,13 +345,15 @@ public final class PathOperations {
 		throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, index));
 	}
 
-	private static <JsonNode> JsonNode mutateArrayIndex(JsonProvider<JsonNode> jsonProvider, @Var JsonNode in, int index, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
+	private static <JsonNode> JsonNode mutateArrayIndex(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, @Var JsonNode in, int index, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
 		if (jsonProvider.isNull(in))
 			in = jsonProvider.createArray(Collections.emptyList());
 		if (jsonProvider.isArray(in)) {
 			int resolvedIndex = index < 0 ? index + jsonProvider.getArrayLength(in) : index;
 			if (resolvedIndex < 0)
 				throw new JsonQueryException("Out of bounds negative array index");
+
+			RuntimeLimitChecks.checkArraySize(limits, Math.max(jsonProvider.getArrayLength(in), resolvedIndex + 1L));
 
 			JsonNode newValue = mutation.apply(resolvedIndex < jsonProvider.getArrayLength(in) ? jsonProvider.getArrayElement(in, resolvedIndex) : jsonProvider.createNull());
 
@@ -361,7 +368,7 @@ public final class PathOperations {
 		throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(index)));
 	}
 
-	private static <JsonNode> JsonNode mutateArrayRangeIndex(JsonProvider<JsonNode> jsonProvider, JsonNode in, JsonNode start, JsonNode end, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
+	private static <JsonNode> JsonNode mutateArrayRangeIndex(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, JsonNode in, JsonNode start, JsonNode end, Mutation<JsonNode> mutation, Version version) throws JsonQueryException {
 		JsonNodeType inType = jsonProvider.getNodeType(in);
 		if (inType == JsonNodeType.ARRAY || inType == JsonNodeType.STRING || inType == JsonNodeType.NULL)
 			requireValidRangeBounds(jsonProvider, start, end, inType == JsonNodeType.NULL ? JsonNodeType.ARRAY : inType, version);
@@ -374,6 +381,8 @@ public final class PathOperations {
 			JsonNode newValue = mutation.apply(jsonProvider.createArray(oldSlice));
 			if (!jsonProvider.isArray(newValue))
 				throw new JsonQueryTypeException("A slice of an array can only be assigned another array");
+
+			RuntimeLimitChecks.checkArraySize(limits, range.startInclusive + jsonProvider.getArrayLength(newValue) + (jsonProvider.getArrayLength(in) - range.endExclusive));
 
 			List<JsonNode> out = new ArrayList<>((int) range.startInclusive + jsonProvider.getArrayLength(newValue) + (jsonProvider.getArrayLength(in) - (int) range.endExclusive));
 			for (int index = 0; index < range.startInclusive; ++index)

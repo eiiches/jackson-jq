@@ -32,13 +32,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.google.auto.service.AutoService;
-
 import net.thisptr.jackson.jq.v2.spi.FunctionParameter;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 
-@AutoService(JqLibrary.class)
 public class RegexJqLibrary implements JqLibrary {
 	private static final List<JqFunction> FUNCTIONS = Collections.unmodifiableList(Arrays.asList(
 			JqFunction.of("match", args("re", "mode"), "_match_impl(re; mode; false)|.[]"),

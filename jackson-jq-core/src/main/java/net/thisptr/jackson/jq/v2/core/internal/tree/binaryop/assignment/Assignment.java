@@ -15,6 +15,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.RootPath;
@@ -62,8 +63,9 @@ public class Assignment<JsonNode> extends AbstractBinaryOperatorExpression<JsonN
 				lpaths.add(lpath);
 			});
 			@Var JsonNode out = in;
+			RuntimeLimits limits = frame.getRuntimeLimits();
 			for (Path<JsonNode> lpath : lpaths)
-				out = PathOperations.mutate(jsonProvider, lpath, out, (lval_) -> rval, version);
+				out = PathOperations.mutate(jsonProvider, limits, lpath, out, (lval_) -> rval, version);
 			output.emit(out, UntrackedPath.getInstance());
 		});
 	}

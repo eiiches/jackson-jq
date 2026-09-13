@@ -12,9 +12,10 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
  * {@link Function#bindArguments} for the corresponding guarantee from the producer side.
  *
  * @param <JsonNode> the JSON node type
- * @param <Context> an opaque object representing execution state that has to be passed on when evaluating function arguments
+ * @param <Context> the execution state that has to be passed on when evaluating function arguments; opaque
+ * apart from the {@link RuntimeLimits} it exposes
  */
-public interface Expression<Context, JsonNode> {
+public interface Expression<Context extends RuntimeContext, JsonNode> {
 	/**
 	 * Returns the number of values this expression is known to emit for one input on normal
 	 * completion.

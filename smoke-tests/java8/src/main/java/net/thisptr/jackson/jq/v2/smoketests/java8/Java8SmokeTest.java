@@ -6,10 +6,9 @@ import java.util.List;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
-import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public final class Java8SmokeTest {
@@ -17,15 +16,14 @@ public final class Java8SmokeTest {
 	}
 
 	public static void main(String[] args) throws Exception {
-		testWithJsonProvider(Jackson2JsonProviderImpl.getInstance());
-		testWithJsonProvider(GsonJsonProviderImpl.getInstance());
+		testWithJsonProvider(Jackson2JsonProvider.getInstance());
+		testWithJsonProvider(GsonJsonProvider.getInstance());
 		System.out.println("Java 8 compatibility test passed for Jackson 2, Gson, and all extension modules");
 	}
 
 	private static <JsonNode> void testWithJsonProvider(JsonProvider<JsonNode> jsonProvider) throws Exception {
 		Version version = Version.valueOf("1.6");
-		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, version)
-				.setModuleLoader(new ClassPathModuleLoader<JsonNode>(Java8SmokeTest.class.getClassLoader()))
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version, Java8SmokeTest.class.getClassLoader())
 				.build();
 
 		assertQuery(jsonProvider, env, "length", "[1,2]", 2);

@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.function.Executable;
 
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.test.comparator.TestJsonNodeComparator;
 import net.thisptr.jackson.jq.v2.test.evaluator.Evaluator;
 import net.thisptr.jackson.jq.v2.test.evaluator.JqExecutables;
@@ -47,7 +47,7 @@ public class VerifyTestCasesTest {
 		Evaluator.Result result = new JqRunner(e.executable, moduleSearchPath).evaluate(tc.q, tc.in, Duration.ofSeconds(2));
 		assertThat(result.error).as("%s", command).isNull();
 
-		Comparator<JsonNode> comparator = new TestJsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance(), true, tc.numericalErrors);
+		Comparator<JsonNode> comparator = new TestJsonNodeComparator<>(Jackson2JsonProvider.getInstance(), true, tc.numericalErrors);
 		assertThat(tc.out).as("%s", command)
 				.usingElementComparator(comparator)
 				.isEqualTo(result.values);

@@ -30,7 +30,6 @@ def coordinates(artifact_id):
 
 # Dependencies the Maven parent pom gives to every module.
 INHERITED_DEPS = [
-    "@maven//:com_google_auto_service_auto_service_annotations",
     "@maven//:com_google_errorprone_error_prone_annotations",
     "@maven//:org_jspecify_jspecify",
 ]
@@ -391,6 +390,7 @@ def jjq_java_test_suite(
         data = [],
         env = {},
         jvm_flags = [],
+        package = None,
         size = None,
         test_suffixes_excludes = []):
     """The checkstyle-checked JUnit 5 tests for a single Java source directory.
@@ -418,6 +418,7 @@ def jjq_java_test_suite(
       data: runtime data dependencies.
       env: environment variables for tests.
       jvm_flags: JVM flags for each generated test.
+      package: explicit Java package when it cannot be inferred from the Bazel package path.
       size: test size (small, medium, large, enormous).
       test_suffixes_excludes: patterns excluded from runner execution.
     """
@@ -435,6 +436,7 @@ def jjq_java_test_suite(
         data = data,
         env = env,
         jvm_flags = jvm_flags,
+        package = package,
         size = size,
         test_suffixes_excludes = test_suffixes_excludes,
         visibility = visibility,

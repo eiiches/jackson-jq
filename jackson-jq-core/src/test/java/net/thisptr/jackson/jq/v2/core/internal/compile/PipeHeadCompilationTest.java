@@ -11,7 +11,7 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.LabelAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ThisObjectAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ValueMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,7 +26,7 @@ class PipeHeadCompilationTest {
 	private static final SourceLocation AT = SourceLocation.of(1, 1);
 
 	private static Environment<JsonNode> environment() {
-		return new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), Versions.JQ_1_6).build();
+		return EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
 	}
 
 	@Test

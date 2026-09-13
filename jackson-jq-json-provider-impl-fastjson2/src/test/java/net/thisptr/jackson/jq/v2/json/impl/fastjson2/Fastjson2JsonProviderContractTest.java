@@ -10,12 +10,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Contract tests for {@link Fastjson2JsonProviderImpl}.
+ * Contract tests for {@link Fastjson2JsonProvider}.
  */
 public class Fastjson2JsonProviderContractTest implements JsonProviderContractTest<Object> {
 	@Override
 	public JsonProvider<Object> getProvider() {
-		return Fastjson2JsonProviderImpl.getInstance();
+		return Fastjson2JsonProvider.getInstance();
 	}
 
 	@Test

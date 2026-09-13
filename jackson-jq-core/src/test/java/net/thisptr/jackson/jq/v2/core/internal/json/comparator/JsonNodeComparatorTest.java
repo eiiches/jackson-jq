@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,7 +27,7 @@ public class JsonNodeComparatorTest {
 		JsonNode j10 = mapper.readTree("10");
 		JsonNode jhoge = mapper.readTree("\"hoge\"");
 
-		JsonNodeComparator<JsonNode> sut = new JsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance());
+		JsonNodeComparator<JsonNode> sut = new JsonNodeComparator<>(Jackson2JsonProvider.getInstance());
 		assertTrue(sut.compare(j3, j10) < 0);
 		assertTrue(sut.compare(j3, jhoge) < 0);
 		assertTrue(sut.compare(j10, jhoge) < 0);
@@ -49,7 +49,7 @@ public class JsonNodeComparatorTest {
 		JsonNode j3 = IntNode.valueOf(3);
 		JsonNode jhoge = TextNode.valueOf("hoge");
 
-		JsonNodeComparator<JsonNode> sut = new JsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance());
+		JsonNodeComparator<JsonNode> sut = new JsonNodeComparator<>(Jackson2JsonProvider.getInstance());
 		assertEquals(0, sut.compare(binary, BinaryNode.valueOf(new byte[] { 1, 2 })));
 		assertTrue(sut.compare(binary, binaryLonger) < 0);
 		// 0xff sorts after 0x01, i.e. the bytes are compared unsigned.

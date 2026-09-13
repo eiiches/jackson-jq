@@ -12,31 +12,33 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 /**
  * Per-invocation overrides for variables and functions registered in an {@link Environment}.
  */
-public final class JsonQueryBindings<JsonNode> {
-	private static final JsonQueryBindings<?> EMPTY = new JsonQueryBindings<>(Collections.emptyMap(), Collections.emptyMap());
+public final class RuntimeBindings<JsonNode> {
+	private static final RuntimeBindings<?> EMPTY = new RuntimeBindings<>(Collections.emptyMap(), Collections.emptyMap());
 
 	private final Map<String, Supplier<JsonNode>> variables;
 	private final Map<FunctionSignature, Function> functions;
 
-	private JsonQueryBindings(Map<String, Supplier<JsonNode>> variables, Map<FunctionSignature, Function> functions) {
+	private RuntimeBindings(Map<String, Supplier<JsonNode>> variables, Map<FunctionSignature, Function> functions) {
 		this.variables = Collections.unmodifiableMap(new HashMap<>(variables));
 		this.functions = Collections.unmodifiableMap(new HashMap<>(functions));
 	}
 
+	// Package-private: JsonQuery's no-bindings overloads need an instance to pass to apply(), but
+	// callers never do -- they use the apply() overloads that take no bindings.
 	@SuppressWarnings("unchecked")
-	public static <JsonNode> JsonQueryBindings<JsonNode> empty() {
-		return (JsonQueryBindings<JsonNode>) EMPTY;
+	static <JsonNode> RuntimeBindings<JsonNode> getDefaultInstance() {
+		return (RuntimeBindings<JsonNode>) EMPTY;
 	}
 
-	public static <JsonNode> Builder<JsonNode> builder() {
+	public static <JsonNode> Builder<JsonNode> newBuilder() {
 		return new Builder<>();
 	}
 
-	public Map<String, Supplier<JsonNode>> variables() {
+	public Map<String, Supplier<JsonNode>> getVariables() {
 		return variables;
 	}
 
-	public Map<FunctionSignature, Function> functions() {
+	public Map<FunctionSignature, Function> getFunctions() {
 		return functions;
 	}
 
@@ -62,10 +64,10 @@ public final class JsonQueryBindings<JsonNode> {
 			return this;
 		}
 
-		public JsonQueryBindings<JsonNode> build() {
+		public RuntimeBindings<JsonNode> build() {
 			if (variables.isEmpty() && functions.isEmpty())
-				return JsonQueryBindings.empty();
-			return new JsonQueryBindings<>(variables, functions);
+				return RuntimeBindings.getDefaultInstance();
+			return new RuntimeBindings<>(variables, functions);
 		}
 	}
 }

@@ -12,7 +12,7 @@ import java.util.List;
  * @param <Context> the evaluation context type
  * @param <JsonNode> the JSON node type
  */
-public interface ConstantExpression<Context, JsonNode> extends Expression<Context, JsonNode> {
+public interface ConstantExpression<Context extends RuntimeContext, JsonNode> extends Expression<Context, JsonNode> {
 	/**
 	 * Returns all values emitted by this expression, in emission order.
 	 *

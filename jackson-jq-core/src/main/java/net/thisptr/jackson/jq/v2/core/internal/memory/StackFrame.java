@@ -2,7 +2,10 @@ package net.thisptr.jackson.jq.v2.core.internal.memory;
 
 import org.jspecify.annotations.Nullable;
 
-public class StackFrame {
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
+
+public class StackFrame implements RuntimeContext {
 	private final Memory stack;
 	private final int size;
 	private final int offset;
@@ -19,6 +22,11 @@ public class StackFrame {
 
 	public Memory getEnclosingMemory() {
 		return stack;
+	}
+
+	@Override
+	public RuntimeLimits getRuntimeLimits() {
+		return stack.getRuntimeLimits();
 	}
 
 	public @Nullable Object get(int index) {

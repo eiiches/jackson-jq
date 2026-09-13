@@ -8,10 +8,12 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -65,8 +67,13 @@ public class ArrayConstruction<JsonNode> implements Expression<StackFrame, JsonN
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		List<JsonNode> values = new ArrayList<>();
-		if (q != null)
-			q.apply(frame, in, UntrackedPath.getInstance(), (out, opath) -> values.add(out));
+		if (q != null) {
+			RuntimeLimits limits = frame.getRuntimeLimits();
+			q.apply(frame, in, UntrackedPath.getInstance(), (out, opath) -> {
+				RuntimeLimitChecks.checkArraySize(limits, values.size() + 1L);
+				values.add(out);
+			});
+		}
 		output.emit(jsonProvider.createArray(values), UntrackedPath.getInstance());
 	}
 }

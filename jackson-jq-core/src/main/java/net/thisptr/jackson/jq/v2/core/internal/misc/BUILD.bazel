@@ -4,6 +4,8 @@ jjq_java_library(
     name = "misc",
     srcs = [
         "CardinalityUtils.java",
+        "RuntimeLimitChecks.java",
+        "RuntimeLimitsImpl.java",
     ],
     release = 8,
     visibility = ["//jackson-jq-core:__subpackages__"],

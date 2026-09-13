@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.errorprone.annotations.Var;
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class PathTest {
 	@Test
 	void serializesEveryRepresentablePathType() throws Exception {
-		Jackson2JsonProviderImpl jsonProvider = new Jackson2JsonProviderImpl(new ObjectMapper());
+		Jackson2JsonProvider jsonProvider = new Jackson2JsonProvider(new ObjectMapper());
 		@Var Path<JsonNode> path = RootPath.getInstance();
 		path = StringKeyPath.of(path, "a");
 		path = NumberIndexPath.of(jsonProvider, path, jsonProvider.createNumber(2));
@@ -38,7 +38,7 @@ public class PathTest {
 
 	@Test
 	void rejectsInvalidPath() {
-		Jackson2JsonProviderImpl jsonProvider = new Jackson2JsonProviderImpl(new ObjectMapper());
+		Jackson2JsonProvider jsonProvider = new Jackson2JsonProvider(new ObjectMapper());
 		Path<JsonNode> path = InvalidPath.of(RootPath.getInstance(), jsonProvider.createBoolean(false));
 
 		assertThatThrownBy(() -> path.toJsonList(jsonProvider))
@@ -48,7 +48,7 @@ public class PathTest {
 
 	@Test
 	void serializesNonNumericRangeBounds() {
-		Jackson2JsonProviderImpl jsonProvider = new Jackson2JsonProviderImpl(new ObjectMapper());
+		Jackson2JsonProvider jsonProvider = new Jackson2JsonProvider(new ObjectMapper());
 		Path<JsonNode> parent = RootPath.getInstance();
 		JsonNode start = jsonProvider.createString("start");
 		JsonNode end = jsonProvider.createBoolean(false);
@@ -59,7 +59,7 @@ public class PathTest {
 
 	@Test
 	void rejectsInvalidArrayIndexOfSearchSequence() {
-		Jackson2JsonProviderImpl jsonProvider = new Jackson2JsonProviderImpl(new ObjectMapper());
+		Jackson2JsonProvider jsonProvider = new Jackson2JsonProvider(new ObjectMapper());
 
 		assertThatThrownBy(() -> IndexOfPath.of(jsonProvider, RootPath.getInstance(), jsonProvider.createString("invalid")))
 				.isInstanceOf(Exception.class)
@@ -68,7 +68,7 @@ public class PathTest {
 
 	@Test
 	void rejectsLostPath() {
-		Jackson2JsonProviderImpl jsonProvider = new Jackson2JsonProviderImpl(new ObjectMapper());
+		Jackson2JsonProvider jsonProvider = new Jackson2JsonProvider(new ObjectMapper());
 
 		assertThatThrownBy(() -> UnrepresentablePath.<JsonNode>getInstance().toJsonList(jsonProvider))
 				.isInstanceOf(Exception.class)
@@ -77,7 +77,7 @@ public class PathTest {
 
 	@Test
 	void rejectsUntrackedPath() {
-		Jackson2JsonProviderImpl jsonProvider = new Jackson2JsonProviderImpl(new ObjectMapper());
+		Jackson2JsonProvider jsonProvider = new Jackson2JsonProvider(new ObjectMapper());
 
 		assertThatThrownBy(() -> UntrackedPath.<JsonNode>getInstance().toJsonList(jsonProvider))
 				.isInstanceOf(Exception.class)
@@ -86,7 +86,7 @@ public class PathTest {
 
 	@Test
 	void untrackedPathIgnoresEveryChainStep() {
-		Jackson2JsonProviderImpl jsonProvider = new Jackson2JsonProviderImpl(new ObjectMapper());
+		Jackson2JsonProvider jsonProvider = new Jackson2JsonProvider(new ObjectMapper());
 		UntrackedPath<JsonNode> untracked = UntrackedPath.getInstance();
 
 		assertThat(untracked.appendKey("a")).isSameAs(untracked);
@@ -99,7 +99,7 @@ public class PathTest {
 
 	@Test
 	void defaultChainMethodsMatchTheirStaticFactories() {
-		Jackson2JsonProviderImpl jsonProvider = new Jackson2JsonProviderImpl(new ObjectMapper());
+		Jackson2JsonProvider jsonProvider = new Jackson2JsonProvider(new ObjectMapper());
 		Path<JsonNode> parent = RootPath.<JsonNode>getInstance().appendKey("a");
 
 		assertThat(parent.appendKey("b").toJsonList(jsonProvider))

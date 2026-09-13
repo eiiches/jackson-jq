@@ -10,24 +10,24 @@ import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CompileOptionsTest {
-	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProviderImpl.getInstance();
+	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProvider.getInstance();
 
 	private final List<Diagnostic> reported = new ArrayList<>();
-	private final CompileOptions options = new CompileOptions().setDiagnosticListener(reported::add);
+	private final CompileOptions options = CompileOptions.newBuilder().setDiagnosticListener(reported::add).build();
 
 	private Environment<JsonNode> environment() {
 		return environment(Versions.JQ_1_7);
 	}
 
 	private static Environment<JsonNode> environment(Version version) {
-		return new EnvironmentBuilder<>(JSON_PROVIDER, version).build();
+		return EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, version).build();
 	}
 
 	@Test
@@ -160,28 +160,19 @@ class CompileOptionsTest {
 
 	@Test
 	void producesNoDiagnosticsWithoutAListener() throws JsonQueryException {
-		environment().compile("1, 2 | .", new CompileOptions());
+		environment().compile("1, 2 | .", CompileOptions.newBuilder().build());
 		environment().compile("1, 2 | .");
 
 		assertThat(reported).isEmpty();
 	}
 
 	@Test
-	void diagnosesModuleSourceToo() throws JsonQueryException {
-		environment().compileModule("def f: 1, 2 | .;", options);
-
-		assertThat(reported).extracting(Diagnostic::location).containsExactly(SourceLocation.of(1, 8, 1, 11));
-	}
-
-	@Test
-	void readsItsSettingsOnceAtCompileTime() throws JsonQueryException {
+	void canBeReusedForManyCompilations() throws JsonQueryException {
 		environment().compile("1, 2 | .", options);
 		assertThat(reported).hasSize(1);
 
-		// Reusing the same options object for a second query is fine, and silencing it afterwards
-		// does not retroactively unreport anything.
-		options.setDiagnosticListener(null);
+		// The options are immutable, so the same object drives every later compilation identically.
 		environment().compile("3, 4 | .", options);
-		assertThat(reported).hasSize(1);
+		assertThat(reported).hasSize(2);
 	}
 }

@@ -9,4 +9,8 @@ jjq_java_library(
     ],
     release = 8,
     visibility = ["//jackson-jq-core:__subpackages__"],
+    deps = [
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/misc",
+        "//jackson-jq-spi",
+    ],
 )

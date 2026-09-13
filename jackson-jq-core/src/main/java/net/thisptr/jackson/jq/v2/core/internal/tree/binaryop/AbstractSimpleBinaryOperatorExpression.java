@@ -6,6 +6,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -23,13 +24,13 @@ public abstract class AbstractSimpleBinaryOperatorExpression<JsonNode> extends A
 		this.jsonProvider = jsonProvider;
 	}
 
-	protected abstract JsonNode doEval(JsonNode lhs, JsonNode rhs) throws JsonQueryException;
+	protected abstract JsonNode doEval(RuntimeLimits limits, JsonNode lhs, JsonNode rhs) throws JsonQueryException;
 
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		rhs.apply(frame, in, UntrackedPath.getInstance(), (r, opath) -> {
 			lhs.apply(frame, in, UntrackedPath.getInstance(), (l, opath2) -> {
-				output.emit(doEval(l, r), UntrackedPath.getInstance());
+				output.emit(doEval(frame.getRuntimeLimits(), l, r), UntrackedPath.getInstance());
 			});
 		});
 	}

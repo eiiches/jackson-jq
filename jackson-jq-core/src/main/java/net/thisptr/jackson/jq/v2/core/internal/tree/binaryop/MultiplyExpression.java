@@ -6,6 +6,7 @@ import net.thisptr.jackson.jq.v2.core.internal.json.operations.BinaryOperations;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
@@ -18,7 +19,7 @@ public class MultiplyExpression<JsonNode> extends AbstractSimpleBinaryOperatorEx
 	}
 
 	@Override
-	protected JsonNode doEval(JsonNode lhs, JsonNode rhs) throws JsonQueryException {
-		return BinaryOperations.multiply(jsonProvider, lhs, rhs, version);
+	protected JsonNode doEval(RuntimeLimits limits, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
+		return BinaryOperations.multiply(jsonProvider, limits, lhs, rhs, version);
 	}
 }

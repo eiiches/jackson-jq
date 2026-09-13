@@ -5,11 +5,12 @@ import java.util.List;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class FunctionBody {
-	public static class Builder<Context, JsonNode> {
+	public static class Builder<Context extends RuntimeContext, JsonNode> {
 		private boolean dependsOnExternalState;
 		private boolean dependsOnInput;
 		private Cardinality cardinality = Cardinality.UNKNOWN;
@@ -59,7 +60,7 @@ public class FunctionBody {
 		}
 	}
 
-	public static <Context, JsonNode> Builder<Context, JsonNode> builder(List<Expression<Context, JsonNode>> boundArguments) {
+	public static <Context extends RuntimeContext, JsonNode> Builder<Context, JsonNode> builder(List<Expression<Context, JsonNode>> boundArguments) {
 		return new Builder<>(boundArguments);
 	}
 }

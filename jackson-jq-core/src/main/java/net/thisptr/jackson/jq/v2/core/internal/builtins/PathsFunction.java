@@ -5,8 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.google.auto.service.AutoService;
-
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
@@ -15,16 +13,16 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-@AutoService(Function.class)
 @FunctionRegistration(name = "paths", nargs = 1)
 public class PathsFunction implements Function {
 	@Override
-	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		/*
 		 * jq redefined paths/1 in 1.7.1:
 		 *
@@ -43,7 +41,7 @@ public class PathsFunction implements Function {
 		});
 	}
 
-	private static <Context, JsonNode> void applyRecursive(Context context, JsonProvider<JsonNode> jsonProvider, JsonNode in, Output<JsonNode> output, List<JsonNode> stack, Expression<Context, JsonNode> predicate, boolean appliesToRoot) throws JsonQueryException {
+	private static <Context extends RuntimeContext, JsonNode> void applyRecursive(Context context, JsonProvider<JsonNode> jsonProvider, JsonNode in, Output<JsonNode> output, List<JsonNode> stack, Expression<Context, JsonNode> predicate, boolean appliesToRoot) throws JsonQueryException {
 		if (!stack.isEmpty()) {
 			predicate.apply(context, in, UntrackedPath.getInstance(), (shouldInclude, opath) -> {
 				if (JsonNodeUtils.asBoolean(jsonProvider, shouldInclude))

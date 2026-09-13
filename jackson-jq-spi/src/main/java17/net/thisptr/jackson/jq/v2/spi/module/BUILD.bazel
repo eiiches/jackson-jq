@@ -1,0 +1,21 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+# The sealed variant of the module types: Module names its two permitted kinds, which in turn
+# declare themselves non-sealed because implementing them is the whole point. Sources are the base
+# ones with nothing changed but those modifiers.
+jjq_java_library(
+    name = "module",
+    srcs = [
+        "JavaModule.java",
+        "JqModule.java",
+        "Module.java",
+    ],
+    release = 17,
+    visibility = ["//jackson-jq-spi:__subpackages__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/exception",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/module",
+    ],
+)

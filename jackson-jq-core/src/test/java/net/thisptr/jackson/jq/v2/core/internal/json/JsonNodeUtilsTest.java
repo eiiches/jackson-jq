@@ -4,12 +4,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class JsonNodeUtilsTest {
-	private final JsonProvider<JsonNode> jsonProvider = Jackson2JsonProviderImpl.getInstance();
+	private final JsonProvider<JsonNode> jsonProvider = Jackson2JsonProvider.getInstance();
 
 	@Test
 	void testDoubleAtLongUpperBoundaryRemainsDouble() {

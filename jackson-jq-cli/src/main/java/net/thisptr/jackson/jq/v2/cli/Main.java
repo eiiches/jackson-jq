@@ -28,22 +28,22 @@ import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
-import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
-import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.fastjson2.Fastjson2JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.json.impl.jakarta.JakartaJsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.fastjson2.Fastjson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.jakarta.JakartaJsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -97,6 +97,21 @@ public class Main {
 			.longOpt("no-warnings")
 			.desc("suppress compile warnings")
 			.get();
+	private static final Option OPT_MAX_STRING_LENGTH = Option.builder()
+			.longOpt("max-string-length")
+			.desc("maximum length of strings produced during evaluation (default: unlimited)")
+			.numberOfArgs(1)
+			.get();
+	private static final Option OPT_MAX_ARRAY_LENGTH = Option.builder()
+			.longOpt("max-array-length")
+			.desc("maximum number of elements in arrays produced during evaluation (default: unlimited)")
+			.numberOfArgs(1)
+			.get();
+	private static final Option OPT_MAX_OBJECT_MEMBER_COUNT = Option.builder()
+			.longOpt("max-object-member-count")
+			.desc("maximum number of members in objects produced during evaluation (default: unlimited)")
+			.numberOfArgs(1)
+			.get();
 	private static final Option OPT_HELP = Option.builder("h")
 			.longOpt("help")
 			.desc("print this message")
@@ -113,6 +128,9 @@ public class Main {
 		options.addOption(OPT_VERSION);
 		options.addOption(OPT_JSON_PROVIDER);
 		options.addOption(OPT_NO_WARNINGS);
+		options.addOption(OPT_MAX_STRING_LENGTH);
+		options.addOption(OPT_MAX_ARRAY_LENGTH);
+		options.addOption(OPT_MAX_OBJECT_MEMBER_COUNT);
 		options.addOption(OPT_HELP);
 		CommandLine command;
 		List<String> rest;
@@ -166,21 +184,51 @@ public class Main {
 			System.exit(1);
 			throw e;
 		}
-		run(command, query, inputFiles, version, jsonProvider);
+		RuntimeOptions runtimeOptions;
+		try {
+			runtimeOptions = createRuntimeOptions(command);
+		} catch (IllegalArgumentException e) {
+			System.err.println(e.getMessage());
+			System.exit(1);
+			throw e;
+		}
+		run(command, query, inputFiles, version, jsonProvider, runtimeOptions);
+	}
+
+	static RuntimeOptions createRuntimeOptions(CommandLine command) {
+		return RuntimeOptions.newBuilder()
+				.setMaxStringLength(parseLimit(command, OPT_MAX_STRING_LENGTH))
+				.setMaxArrayLength(parseLimit(command, OPT_MAX_ARRAY_LENGTH))
+				.setMaxObjectMemberCount(parseLimit(command, OPT_MAX_OBJECT_MEMBER_COUNT))
+				.build();
+	}
+
+	private static int parseLimit(CommandLine command, Option option) {
+		String value = command.getOptionValue(option.getLongOpt());
+		if (value == null)
+			return Integer.MAX_VALUE;
+		try {
+			int limit = Integer.parseInt(value);
+			if (limit < 0)
+				throw new NumberFormatException();
+			return limit;
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("invalid --" + option.getLongOpt() + ": " + value + " (expected a non-negative integer)", e);
+		}
 	}
 
 	static JsonProvider<?> resolveProvider(String name) {
 		switch (name) {
 			case "jackson2":
-				return Jackson2JsonProviderImpl.getInstance();
+				return Jackson2JsonProvider.getInstance();
 			case "jackson3":
-				return Jackson3JsonProviderImpl.getInstance();
+				return Jackson3JsonProvider.getInstance();
 			case "fastjson2":
-				return Fastjson2JsonProviderImpl.getInstance();
+				return Fastjson2JsonProvider.getInstance();
 			case "gson":
-				return GsonJsonProviderImpl.getInstance();
+				return GsonJsonProvider.getInstance();
 			case "jakarta":
-				return JakartaJsonProviderImpl.getInstance();
+				return JakartaJsonProvider.getInstance();
 			default:
 				throw new IllegalArgumentException("unknown --json-provider: " + name + " (expected one of: jackson2, jackson3, fastjson2, gson, jakarta)");
 		}
@@ -210,11 +258,12 @@ public class Main {
 		}
 	}
 
-	private static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider) throws Exception {
-		Environment<N> env = new EnvironmentBuilder<>(jsonProvider, version)
+	private static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider,
+								RuntimeOptions runtimeOptions) throws Exception {
+		Environment<N> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
 				.defineFunction(FunctionSignature.of("env", 0), new Function() {
 					@Override
-					public <Context, N2> Expression<Context, N2> bindArguments(JsonProvider<N2> jsonProv, List<Expression<Context, N2>> fnArgs, Version ver) {
+					public <Context extends RuntimeContext, N2> Expression<Context, N2> bindArguments(JsonProvider<N2> jsonProv, List<Expression<Context, N2>> fnArgs, Version ver) {
 						return new Expression<Context, N2>() {
 							@Override
 							public Cardinality getCardinality() {
@@ -242,17 +291,15 @@ public class Main {
 						};
 					}
 				})
-				.setModuleLoader(new ChainedModuleLoader<N>(
-						ClassPathModuleLoader.getInstance(),
-						new FileSystemModuleLoader<>(jsonProvider, version, FileSystems.getDefault().getPath("").toAbsolutePath())))
+				.addModuleLoader(new FileSystemModuleLoader<>(jsonProvider, FileSystems.getDefault().getPath("").toAbsolutePath()))
 				.build();
 		/*
 		 * jq itself emits no warnings at all, so this is purely additive: it goes to stderr, leaving
 		 * stdout and the exit code byte-for-byte what jq would produce.
 		 */
-		CompileOptions compileOptions = new CompileOptions();
+		CompileOptions.Builder compileOptionsBuilder = CompileOptions.newBuilder();
 		if (!command.hasOption(OPT_NO_WARNINGS.getLongOpt())) {
-			compileOptions.setDiagnosticListener(diagnostic -> {
+			compileOptionsBuilder.setDiagnosticListener(diagnostic -> {
 				SourceLocation location = diagnostic.location();
 				String excerpt = location != null ? location.excerpt(query) : null;
 				System.err.println("jq: warning: " + diagnostic.message()
@@ -262,6 +309,7 @@ public class Main {
 					System.err.println(excerpt);
 			});
 		}
+		CompileOptions compileOptions = compileOptionsBuilder.build();
 		JsonQuery<N> jq = compileOrExit(env, query, compileOptions);
 		boolean compact = command.hasOption(OPT_COMPACT.getOpt());
 		boolean rawOutput = command.hasOption(OPT_RAW_OUTPUT.getOpt());
@@ -292,7 +340,7 @@ public class Main {
 				command.hasOption(OPT_SLURP.getOpt()));
 		input.readAll(tree -> {
 			try {
-				jq.apply(tree, out -> {
+				jq.apply(tree, runtimeOptions, out -> {
 					if (jsonProvider.isString(out) && rawOutput) {
 						System.out.println(jsonProvider.getString(out));
 					} else if (compact) {

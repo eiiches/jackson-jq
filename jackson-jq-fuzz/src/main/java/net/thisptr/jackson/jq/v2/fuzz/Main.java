@@ -73,10 +73,10 @@ import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.fastjson2.Fastjson2JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProviderImpl;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
-import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.json.impl.fastjson2.Fastjson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
@@ -448,13 +448,13 @@ public class Main {
 	private static JsonProvider<?> resolveProvider(String name) {
 		switch (name) {
 			case "jackson2":
-				return Jackson2JsonProviderImpl.getInstance();
+				return Jackson2JsonProvider.getInstance();
 			case "jackson3":
-				return Jackson3JsonProviderImpl.getInstance();
+				return Jackson3JsonProvider.getInstance();
 			case "fastjson2":
-				return Fastjson2JsonProviderImpl.getInstance();
+				return Fastjson2JsonProvider.getInstance();
 			case "gson":
-				return GsonJsonProviderImpl.getInstance();
+				return GsonJsonProvider.getInstance();
 			default:
 				throw new IllegalArgumentException("unknown --provider: " + name + " (expected one of: jackson2, jackson3, fastjson2, gson)");
 		}
@@ -577,7 +577,7 @@ public class Main {
 		List<AstNode> expressions = createInitialExpressions(version);
 
 		List<JsonNode> values = new ArrayList<>();
-		Set<JsonNode> uniqueValues = new TreeSet<>(new JsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance()));
+		Set<JsonNode> uniqueValues = new TreeSet<>(new JsonNodeComparator<>(Jackson2JsonProvider.getInstance()));
 		for (JsonNode initialVal : Arrays.asList(
 				NullNode.getInstance(),
 				BooleanNode.TRUE,
@@ -601,7 +601,7 @@ public class Main {
 
 		JsonNodeComparator<JsonNode> nodeComparator = ignoreFloatErrors
 				? new ToleranceJsonNodeComparator()
-				: new JsonNodeComparator<>(Jackson2JsonProviderImpl.getInstance());
+				: new JsonNodeComparator<>(Jackson2JsonProvider.getInstance());
 
 		Evaluator actualEvaluator = createJacksonJqRunner(jsonProvider, version);
 

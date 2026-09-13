@@ -12,6 +12,8 @@ jjq_java_library(
         "JqFunction.java",
         "JqLibrary.java",
         "Output.java",
+        "RuntimeContext.java",
+        "RuntimeLimits.java",
         "package-info.java",
     ],
     release = 8,
