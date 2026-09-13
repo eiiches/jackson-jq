@@ -7,6 +7,7 @@ jjq_java_test_suite(
         "CustomFunctionTest.java",
         "DiagnosticListenerTest.java",
         "FileSystemModuleTest.java",
+        "InMemoryJqModuleTest.java",
         "MinimalTest.java",
         "RuntimeLimitsTest.java",
         "RuntimeVariableTest.java",
