@@ -1,0 +1,26 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
+
+jjq_java_test_suite(
+    name = "tests",
+    size = "small",
+    srcs = [
+        "CustomFunctionTest.java",
+        "DiagnosticListenerTest.java",
+        "FileSystemModuleTest.java",
+        "MinimalTest.java",
+        "RuntimeLimitsTest.java",
+        "RuntimeVariableTest.java",
+    ],
+    data = ["modules/math.jq"],
+    package = "examples",
+    release = 17,
+    visibility = ["//visibility:public"],
+    deps = [
+        "//jackson-jq-core",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-jackson3",
+        "//jackson-jq-spi",
+        "@bazel_tools//tools/java/runfiles",
+        "@maven//:tools_jackson_core_jackson_databind",
+    ],
+)

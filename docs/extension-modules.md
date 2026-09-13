@@ -1,6 +1,6 @@
 # Using extension modules
 
-Additional functions that are not part of jq are available through separate extension modules. Add only the dependencies your application needs and configure its `Environment` with a `ClassPathModuleLoader` (see [jackson-jq-core/src/test/java/examples/Usage.java](../jackson-jq-core/src/test/java/examples/Usage.java)).
+Additional functions that are not part of jq are available through separate extension modules. Add only the dependencies your application needs and configure its `Environment` with a `ClassPathModuleLoader` (see [FileSystemModuleTest.java](../examples/FileSystemModuleTest.java) for an example that chains classpath and filesystem module loaders).
 
 | Maven artifact | jq module | Functions |
 | --- | --- | --- |

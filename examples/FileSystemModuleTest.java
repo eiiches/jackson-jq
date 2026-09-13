@@ -1,0 +1,53 @@
+package examples;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import com.google.devtools.build.runfiles.AutoBazelRepository;
+import com.google.devtools.build.runfiles.Runfiles;
+import org.junit.jupiter.api.Test;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.IntNode;
+
+import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
+import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.module.loaders.ChainedModuleLoader;
+import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
+import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
+import net.thisptr.jackson.jq.v2.core.version.Versions;
+import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProviderImpl;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@AutoBazelRepository
+public class FileSystemModuleTest {
+	private static final ObjectMapper MAPPER = new ObjectMapper();
+
+	@Test
+	public void loadsModuleFromFileSystem() throws IOException {
+		String moduleFile = Objects.requireNonNull(Runfiles.preload()
+				.withSourceRepository(AutoBazelRepository_FileSystemModuleTest.NAME)
+				.rlocation("jackson_jq/examples/modules/math.jq"));
+		Path moduleDirectory = Objects.requireNonNull(Paths.get(moduleFile).getParent());
+
+		Jackson3JsonProviderImpl jsonProvider = Jackson3JsonProviderImpl.getInstance();
+		Environment<JsonNode> environment = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_8_2)
+				.setModuleLoader(new ChainedModuleLoader<>(
+						ClassPathModuleLoader.<JsonNode>getInstance(),
+						new FileSystemModuleLoader<>(jsonProvider, Versions.JQ_1_8_2, moduleDirectory)))
+				.build();
+
+		JsonQuery<JsonNode> query = environment.compile("import \"math\" as math; math::double");
+
+		JsonNode input = MAPPER.readTree("21");
+		List<JsonNode> output = new ArrayList<>();
+		query.apply(input, output::add);
+		assertThat(output).containsExactly(IntNode.valueOf(42));
+	}
+}
