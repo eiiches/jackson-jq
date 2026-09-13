@@ -12,6 +12,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
@@ -49,7 +50,7 @@ public class IsEmptyFunction implements Function {
 	}
 
 	@Override
-	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		// Up to jq 1.6 a `try` inside the generator swallows the short-circuit and re-enters its
 		// catch body, which emits a second value -- reproducing jq 1.6's `//`-based definition.
 		// From 1.7 on TryCatch tunnels downstream errors, so exactly one value is emitted.

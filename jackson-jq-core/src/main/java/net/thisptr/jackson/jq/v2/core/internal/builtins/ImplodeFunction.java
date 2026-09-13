@@ -7,11 +7,13 @@ import com.google.auto.service.AutoService;
 
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
+import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -21,7 +23,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 @FunctionRegistration(name = "implode", nargs = 0)
 public class ImplodeFunction implements Function {
 	@Override
-	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 
 			Preconditions.checkInputArrayType(jsonProvider, "implode", in, JsonNodeType.NUMBER);
@@ -36,6 +38,7 @@ public class ImplodeFunction implements Function {
 				builder.append((char) codepoint.intValue());
 			}
 
+			RuntimeLimitChecks.checkStringLength(scope.getRuntimeLimits(), builder.length());
 			output.emit(jsonProvider.createString(builder.toString()), UntrackedPath.getInstance());
 		});
 	}

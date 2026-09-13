@@ -11,6 +11,7 @@ import java.util.function.Supplier;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.JsonQueryBindings;
+import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -18,6 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -97,16 +99,18 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 
 	@Override
 	public void apply(StackFrame parentFrame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
-		apply(parentFrame, in, path, output, JsonQueryBindings.empty());
+		// Nested use: the enclosing invocation's Memory -- and hence its limits -- is reused, so the
+		// RuntimeLimits argument is never read.
+		apply(parentFrame, in, path, output, JsonQueryBindings.empty(), parentFrame.getRuntimeLimits());
 	}
 
-	public void apply(JsonNode in, JsonQueryBindings<JsonNode> bindings, Consumer<? super JsonNode> output) throws JsonQueryException {
-		apply((StackFrame) null, in, UntrackedPath.getInstance(), (v, p) -> output.accept(v), bindings);
+	public void apply(JsonNode in, RuntimeOptions options, JsonQueryBindings<JsonNode> bindings, Consumer<? super JsonNode> output) throws JsonQueryException {
+		apply((StackFrame) null, in, UntrackedPath.getInstance(), (v, p) -> output.accept(v), bindings, options.getRuntimeLimits());
 	}
 
-	private void apply(@Nullable StackFrame parentFrame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output, JsonQueryBindings<JsonNode> bindings) throws JsonQueryException {
+	private void apply(@Nullable StackFrame parentFrame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output, JsonQueryBindings<JsonNode> bindings, RuntimeLimits runtimeLimits) throws JsonQueryException {
 		validateBindings(bindings);
-		Memory memory = parentFrame != null ? parentFrame.getEnclosingMemory() : new Memory(globalCount);
+		Memory memory = parentFrame != null ? parentFrame.getEnclosingMemory() : new Memory(globalCount, runtimeLimits);
 		StackFrame rootFrame = memory.pushFrame(frameSize);
 		try {
 			initializeGlobals(memory, bindings);

@@ -12,12 +12,13 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ModuleDiscoveryTest {
-	private static <T, Context> Expression<Context, T> pureExpression() {
+	private static <T, Context extends RuntimeContext> Expression<Context, T> pureExpression() {
 		return new Expression<Context, T>() {
 			@Override
 			public boolean dependsOnInput() {
@@ -48,15 +49,15 @@ public class ModuleDiscoveryTest {
 	public void functionContract() {
 		ModuleImpl module = new ModuleImpl();
 		Function uuid3 = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("uuid3", 1)));
-		Expression<Object, JsonNode> uuid3Expr = uuid3.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.singletonList(pureExpression()), Versions.JQ_1_6);
+		Expression<RuntimeContext, JsonNode> uuid3Expr = uuid3.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.singletonList(pureExpression()), Versions.JQ_1_6);
 		assertThat(uuid3Expr.dependsOnInput()).isTrue();
 		assertThat(uuid3Expr.dependsOnExternalState()).isFalse();
 		Function uuid5 = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("uuid5", 1)));
-		Expression<Object, JsonNode> uuid5Expr = uuid5.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.singletonList(pureExpression()), Versions.JQ_1_6);
+		Expression<RuntimeContext, JsonNode> uuid5Expr = uuid5.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.singletonList(pureExpression()), Versions.JQ_1_6);
 		assertThat(uuid5Expr.dependsOnInput()).isTrue();
 		assertThat(uuid5Expr.dependsOnExternalState()).isFalse();
 		Function uuid4 = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("uuid4", 0)));
-		Expression<Object, JsonNode> uuid4Expr = uuid4.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.emptyList(), Versions.JQ_1_6);
+		Expression<RuntimeContext, JsonNode> uuid4Expr = uuid4.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.emptyList(), Versions.JQ_1_6);
 		assertThat(uuid4Expr.dependsOnInput()).isFalse();
 		assertThat(uuid4Expr.dependsOnExternalState()).isTrue();
 	}

@@ -14,6 +14,7 @@ import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,7 +40,7 @@ public class UriModuleTest {
 	public void functionContract() {
 		ModuleImpl module = new ModuleImpl();
 		module.getFunctions().values().forEach(fn -> {
-			Expression<Object, JsonNode> expr = fn.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.emptyList(), Versions.JQ_1_6);
+			Expression<RuntimeContext, JsonNode> expr = fn.bindArguments(Jackson2JsonProviderImpl.getInstance(), Collections.emptyList(), Versions.JQ_1_6);
 			assertThat(expr.dependsOnInput()).isTrue();
 			assertThat(expr.dependsOnExternalState()).isFalse();
 		});

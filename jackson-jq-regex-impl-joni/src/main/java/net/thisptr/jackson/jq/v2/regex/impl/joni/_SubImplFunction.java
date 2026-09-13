@@ -21,6 +21,8 @@ import net.thisptr.jackson.jq.v2.regex.impl.joni.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -30,7 +32,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 @FunctionRegistration(name = "_sub_impl", nargs = 3)
 public class _SubImplFunction implements Function {
 	@Override
-	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		Expression<Context, JsonNode> regexExpr = args.get(0);
 		Expression<Context, JsonNode> replaceExpr = args.get(1);
 		Expression<Context, JsonNode> flagsExpr = args.get(2);
@@ -68,7 +70,7 @@ public class _SubImplFunction implements Function {
 		});
 	}
 
-	private <Context, JsonNode> void replaceAndConcat(JsonProvider<JsonNode> jsonProvider, Context context, Output<JsonNode> output, List<JsonNode> match, Expression<Context, JsonNode> replaceExpr, Version version) throws JsonQueryException {
+	private <Context extends RuntimeContext, JsonNode> void replaceAndConcat(JsonProvider<JsonNode> jsonProvider, Context context, Output<JsonNode> output, List<JsonNode> match, Expression<Context, JsonNode> replaceExpr, Version version) throws JsonQueryException {
 		Deque<Frame> frames = new ArrayDeque<>();
 		frames.push(new Frame(match.size() - 1, null, null));
 
@@ -78,7 +80,7 @@ public class _SubImplFunction implements Function {
 				throw frame.pendingException;
 			}
 			if (frame.index < 0) {
-				output.emit(jsonProvider.createString(concat(frame.parts)), UntrackedPath.getInstance());
+				output.emit(jsonProvider.createString(concat(context.getRuntimeLimits(), frame.parts)), UntrackedPath.getInstance());
 				continue;
 			}
 
@@ -116,8 +118,15 @@ public class _SubImplFunction implements Function {
 		}
 	}
 
-	private static String concat(@Nullable Part parts) {
-		StringBuilder result = new StringBuilder();
+	private static String concat(RuntimeLimits limits, @Nullable Part parts) {
+		// The replacement can be arbitrarily longer than what it replaces -- gsub(""; $big) is the
+		// extreme case -- so measure the chain before allocating a buffer for it.
+		@Var long length = 0;
+		for (@Nullable Part part = parts; part != null; part = part.next)
+			length += part.value.length();
+		RuntimeLimitChecks.checkStringLength(limits, length);
+
+		StringBuilder result = new StringBuilder((int) length);
 		for (@Nullable Part part = parts; part != null; part = part.next) {
 			result.append(part.value);
 		}

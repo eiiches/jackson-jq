@@ -14,8 +14,10 @@ import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
+import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
@@ -98,7 +100,7 @@ public final class BinaryOperations {
 		}
 	}
 
-	public static <JsonNode> JsonNode multiply(JsonProvider<JsonNode> jsonProvider, JsonNode lhs, JsonNode rhs, Version version) throws JsonQueryException {
+	public static <JsonNode> JsonNode multiply(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, JsonNode lhs, JsonNode rhs, Version version) throws JsonQueryException {
 		JsonNodeType ltype = jsonProvider.getNodeType(lhs);
 		JsonNodeType rtype = jsonProvider.getNodeType(rhs);
 		if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.NUMBER) {
@@ -109,27 +111,30 @@ public final class BinaryOperations {
 			}
 			return JsonNodeUtils.asNumericNode(jsonProvider, ld * rd);
 		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.NUMBER) {
-			double count = jsonProvider.getNumberAsDoubleRounded(rhs);
-			if (count <= 0)
-				return jsonProvider.createNull();
-			if (count < 2)
-				return lhs;
-			return jsonProvider.createString(Strings.repeat(jsonProvider.getString(lhs), (int) count));
+			return repeat(jsonProvider, limits, lhs, jsonProvider.getNumberAsDoubleRounded(rhs));
 		} else if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.STRING) {
-			double count = jsonProvider.getNumberAsDoubleRounded(lhs);
-			if (count <= 0)
-				return jsonProvider.createNull();
-			if (count < 2)
-				return rhs;
-			return jsonProvider.createString(Strings.repeat(jsonProvider.getString(rhs), (int) count));
+			return repeat(jsonProvider, limits, rhs, jsonProvider.getNumberAsDoubleRounded(lhs));
 		} else if (ltype == JsonNodeType.OBJECT && rtype == JsonNodeType.OBJECT) {
-			return mergeRecursive(jsonProvider, lhs, rhs);
+			return mergeRecursive(jsonProvider, limits, lhs, rhs);
 		} else {
 			throw new JsonQueryTypeException("%s and %s cannot be multiplied", ExceptionMessages.describe(jsonProvider, version, lhs), ExceptionMessages.describe(jsonProvider, version, rhs));
 		}
 	}
 
-	private static <JsonNode> JsonNode mergeRecursive(JsonProvider<JsonNode> jsonProvider, JsonNode lhs, JsonNode rhs) {
+	private static <JsonNode> JsonNode repeat(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, JsonNode str, double count) {
+		if (count <= 0)
+			return jsonProvider.createNull();
+		if (count < 2)
+			return str;
+		String text = jsonProvider.getString(str);
+		// A count beyond int range saturates to Integer.MAX_VALUE, which the check below rejects for
+		// any non-empty string long before Strings.repeat could overflow its capacity.
+		int n = (int) count;
+		RuntimeLimitChecks.checkStringLength(limits, (long) text.length() * n);
+		return jsonProvider.createString(Strings.repeat(text, n));
+	}
+
+	private static <JsonNode> JsonNode mergeRecursive(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, JsonNode lhs, JsonNode rhs) {
 		Map<String, JsonNode> result = new LinkedHashMap<>();
 
 		Iterator<Map.Entry<String, JsonNode>> liter = jsonProvider.getObjectMembers(lhs);
@@ -148,13 +153,14 @@ public final class BinaryOperations {
 
 			@Var JsonNode resolved = r;
 			if (jsonProvider.isObject(l) && jsonProvider.isObject(r))
-				resolved = mergeRecursive(jsonProvider, l, r);
+				resolved = mergeRecursive(jsonProvider, limits, l, r);
 			result.put(e.getKey(), resolved);
 		}
+		RuntimeLimitChecks.checkObjectSize(limits, result.size());
 		return jsonProvider.createObject(result);
 	}
 
-	public static <JsonNode> JsonNode plus(JsonProvider<JsonNode> jsonProvider, JsonNode lhs, JsonNode rhs, Version version) throws JsonQueryException {
+	public static <JsonNode> JsonNode plus(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, JsonNode lhs, JsonNode rhs, Version version) throws JsonQueryException {
 		JsonNodeType ltype = jsonProvider.getNodeType(lhs);
 		JsonNodeType rtype = jsonProvider.getNodeType(rhs);
 		if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.NUMBER) {
@@ -165,6 +171,7 @@ public final class BinaryOperations {
 			}
 			return JsonNodeUtils.asNumericNode(jsonProvider, ld + rd);
 		} else if (ltype == JsonNodeType.ARRAY && rtype == JsonNodeType.ARRAY) {
+			RuntimeLimitChecks.checkArraySize(limits, (long) jsonProvider.getArrayLength(lhs) + jsonProvider.getArrayLength(rhs));
 			List<JsonNode> values = new ArrayList<>(jsonProvider.getArrayLength(lhs) + jsonProvider.getArrayLength(rhs));
 			Iterator<JsonNode> liter = jsonProvider.getArrayElements(lhs);
 			while (liter.hasNext())
@@ -174,7 +181,10 @@ public final class BinaryOperations {
 				values.add(riter.next());
 			return jsonProvider.createArray(values);
 		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.STRING) {
-			return jsonProvider.createString(jsonProvider.getString(lhs) + jsonProvider.getString(rhs));
+			String l = jsonProvider.getString(lhs);
+			String r = jsonProvider.getString(rhs);
+			RuntimeLimitChecks.checkStringLength(limits, (long) l.length() + r.length());
+			return jsonProvider.createString(l + r);
 		} else if (ltype == JsonNodeType.OBJECT && rtype == JsonNodeType.OBJECT) {
 			Map<String, JsonNode> values = new LinkedHashMap<>();
 			Iterator<Map.Entry<String, JsonNode>> liter = jsonProvider.getObjectMembers(lhs);
@@ -187,6 +197,7 @@ public final class BinaryOperations {
 				Map.Entry<String, JsonNode> e = riter.next();
 				values.put(e.getKey(), e.getValue());
 			}
+			RuntimeLimitChecks.checkObjectSize(limits, values.size());
 			return jsonProvider.createObject(values);
 		} else if (ltype == JsonNodeType.NULL) {
 			return rhs;

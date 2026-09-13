@@ -9,11 +9,15 @@ import org.junit.jupiter.api.Test;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
+import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class SubImplFunctionTest {
 	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProviderImpl.getInstance();
@@ -60,11 +64,25 @@ public class SubImplFunctionTest {
 		assertThat(out).extracting(JSON_PROVIDER::getString).containsExactly("1bcabc", "2bcabc", "1bcabc", "2bcabc", "baz");
 	}
 
+	@Test
+	public void gsubIsBoundedByTheMaxStringLength() throws Exception {
+		// Every input here is tiny; it is the replacement that multiplies them out -- four matches of
+		// one character each, replaced by ten, make forty.
+		assertThatThrownBy(() -> apply("gsub(\"a\"; \"xxxxxxxxxx\")", "aaaa", new RuntimeOptions().setMaxStringLength(39)))
+				.isInstanceOf(RuntimeLimitExceededException.class)
+				.hasMessageContaining("maximum string length of 39");
+		assertThatCode(() -> apply("gsub(\"a\"; \"xxxxxxxxxx\")", "aaaa", new RuntimeOptions().setMaxStringLength(40))).doesNotThrowAnyException();
+	}
+
 	private static List<JsonNode> apply(String queryText, String input) throws Exception {
+		return apply(queryText, input, new RuntimeOptions());
+	}
+
+	private static List<JsonNode> apply(String queryText, String input, RuntimeOptions options) throws Exception {
 		Environment<JsonNode> environment = new EnvironmentBuilder<>(JSON_PROVIDER, Versions.JQ_1_8_2).build();
 		JsonQuery<JsonNode> query = environment.compile(queryText);
 		List<JsonNode> out = new ArrayList<>();
-		query.apply(JSON_PROVIDER.createString(input), out::add);
+		query.apply(JSON_PROVIDER.createString(input), options, out::add);
 		return out;
 	}
 

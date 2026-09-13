@@ -24,13 +24,14 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class FunctionContractTest {
-	private static <Context> Expression<Context, JsonNode> pureExpression() {
+	private static <Context extends RuntimeContext> Expression<Context, JsonNode> pureExpression() {
 		return new Expression<Context, JsonNode>() {
 			@Override
 			public boolean dependsOnInput() {
@@ -59,11 +60,11 @@ public class FunctionContractTest {
 				Function fn = entry.getValue();
 				int arity = sig.arity() != null ? sig.arity() : 0;
 				// Test with pure dummy args
-				List<Expression<Object, JsonNode>> pureArgs = new ArrayList<>();
+				List<Expression<RuntimeContext, JsonNode>> pureArgs = new ArrayList<>();
 				for (int i = 0; i < arity; i++) {
 					pureArgs.add(pureExpression());
 				}
-				Expression<Object, JsonNode> expr = fn.bindArguments(jsonProvider, pureArgs, version);
+				Expression<RuntimeContext, JsonNode> expr = fn.bindArguments(jsonProvider, pureArgs, version);
 				if (fn instanceof EmptyFunction || fn instanceof BuiltinsFunction || fn instanceof NanFunction || fn instanceof InfiniteFunction || fn instanceof RangeFunction || fn instanceof IsEmptyFunction || fn instanceof AbstractPureJsonArgumentFunction) {
 					assertThat(expr.dependsOnInput())
 							.as("%s/%d in %s (Pure) expr.dependsOnInput()", sig.name(), arity, version)
@@ -102,9 +103,9 @@ public class FunctionContractTest {
 				// If the function takes arguments, test propagating dependsOnInput and dependsOnExternalState from args
 				if (arity > 0) {
 					// Test arg with dependsOnInput=true
-					List<Expression<Object, JsonNode>> inputArgs = new ArrayList<>();
+					List<Expression<RuntimeContext, JsonNode>> inputArgs = new ArrayList<>();
 					for (int i = 0; i < arity; i++) {
-						inputArgs.add(new Expression<Object, JsonNode>() {
+						inputArgs.add(new Expression<RuntimeContext, JsonNode>() {
 							@Override
 							public boolean dependsOnInput() {
 								return true;
@@ -116,18 +117,18 @@ public class FunctionContractTest {
 							}
 
 							@Override
-							public void apply(Object frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) {
+							public void apply(RuntimeContext frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) {
 							}
 						});
 					}
-					Expression<Object, JsonNode> inputExpr = fn.bindArguments(jsonProvider, inputArgs, version);
+					Expression<RuntimeContext, JsonNode> inputExpr = fn.bindArguments(jsonProvider, inputArgs, version);
 					assertThat(inputExpr.dependsOnInput())
 							.as("%s/%d with input-dependent args in %s expr.dependsOnInput()", sig.name(), arity, version)
 							.isTrue();
 					// Test arg with dependsOnExternalState=true
-					List<Expression<Object, JsonNode>> externalStateArgs = new ArrayList<>();
+					List<Expression<RuntimeContext, JsonNode>> externalStateArgs = new ArrayList<>();
 					for (int i = 0; i < arity; i++) {
-						externalStateArgs.add(new Expression<Object, JsonNode>() {
+						externalStateArgs.add(new Expression<RuntimeContext, JsonNode>() {
 							@Override
 							public boolean dependsOnInput() {
 								return false;
@@ -139,11 +140,11 @@ public class FunctionContractTest {
 							}
 
 							@Override
-							public void apply(Object frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) {
+							public void apply(RuntimeContext frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) {
 							}
 						});
 					}
-					Expression<Object, JsonNode> externalStateExpr = fn.bindArguments(jsonProvider, externalStateArgs, version);
+					Expression<RuntimeContext, JsonNode> externalStateExpr = fn.bindArguments(jsonProvider, externalStateArgs, version);
 					assertThat(externalStateExpr.dependsOnExternalState())
 							.as("%s/%d with external-state args in %s expr.dependsOnExternalState()", sig.name(), arity, version)
 							.isTrue();

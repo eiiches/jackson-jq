@@ -15,6 +15,8 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -27,7 +29,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 public class RangeFunction implements Function {
 
 	@Override
-	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).build((frame, in, ipath, output) -> {
 			if (args.size() == 1) {
 				args.get(0).apply(frame, in, UntrackedPath.getInstance(), (end, opath) -> {
@@ -50,7 +52,7 @@ public class RangeFunction implements Function {
 				args.get(0).apply(frame, in, UntrackedPath.getInstance(), (start, opath) -> {
 					args.get(1).apply(frame, in, UntrackedPath.getInstance(), (end, opath2) -> {
 						args.get(2).apply(frame, in, UntrackedPath.getInstance(), (incr, opath3) -> {
-							range3(jsonProvider, output, start, end, incr, version);
+							range3(jsonProvider, frame.getRuntimeLimits(), output, start, end, incr, version);
 						});
 					});
 				});
@@ -73,7 +75,7 @@ public class RangeFunction implements Function {
 		return JsonNodeUtils.asNumericNode(jsonProvider, i);
 	}
 
-	private static <JsonNode> void range3(JsonProvider<JsonNode> jsonProvider, Output<JsonNode> output, JsonNode start, JsonNode end, JsonNode incr, Version version) throws JsonQueryException {
+	private static <JsonNode> void range3(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, Output<JsonNode> output, JsonNode start, JsonNode end, JsonNode incr, Version version) throws JsonQueryException {
 		JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
 		int dir = Integer.signum(comparator.compare(jsonProvider.createNumber(0), incr));
 		if (dir == 0)
@@ -81,7 +83,7 @@ public class RangeFunction implements Function {
 		@Var JsonNode cur = start;
 		while (Integer.signum(comparator.compare(cur, end)) == dir) {
 			output.emit(cur, UntrackedPath.getInstance());
-			cur = BinaryOperations.plus(jsonProvider, cur, incr, version);
+			cur = BinaryOperations.plus(jsonProvider, limits, cur, incr, version);
 		}
 	}
 }

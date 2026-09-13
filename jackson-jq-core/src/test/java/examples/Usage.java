@@ -23,6 +23,7 @@ import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
@@ -41,7 +42,7 @@ public class Usage {
 				// You can also define a custom function. E.g.
 				.defineFunction(FunctionSignature.of("repeat", 1), new Function() {
 					@Override
-					public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version jqVersion) {
+					public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version jqVersion) {
 						return (frame, in, path, output) -> {
 							args.get(0).apply(frame, in, UntrackedPath.getInstance(), (time, opath) -> {
 								output.emit(jsonProvider.createString(Strings.repeat(jsonProvider.getString(in), jsonProvider.getNumberAsIntExact(time))), UntrackedPath.getInstance());

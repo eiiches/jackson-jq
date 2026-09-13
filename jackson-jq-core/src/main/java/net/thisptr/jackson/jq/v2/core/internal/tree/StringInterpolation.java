@@ -15,11 +15,13 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
+import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -95,15 +97,16 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 
 	private void recurse(StackFrame frame, JsonNode in, Output<JsonNode> output, Deque<Pair<Integer, JsonNode>> stack, List<Pair<Integer, Expression<StackFrame, JsonNode>>> interpolations) throws JsonQueryException {
 		if (interpolations.isEmpty()) {
+			RuntimeLimits limits = frame.getRuntimeLimits();
 			StringBuilder builder = new StringBuilder();
 			@Var int pos = 0;
 			for (Pair<Integer, JsonNode> head : stack) {
-				builder.append(template.substring(pos, head._1));
+				append(limits, builder, template.substring(pos, head._1));
 				pos = head._1;
 				JsonNodeType nodeType = jsonProvider.getNodeType(head._2);
-				builder.append(nodeType == JsonNodeType.STRING ? jsonProvider.getString(head._2) : JsonNodeUtils.toString(jsonProvider, head._2, version));
+				append(limits, builder, nodeType == JsonNodeType.STRING ? jsonProvider.getString(head._2) : JsonNodeUtils.toString(jsonProvider, head._2, version));
 			}
-			builder.append(template.substring(pos));
+			append(limits, builder, template.substring(pos));
 			output.emit(jsonProvider.createString(builder.toString()), UntrackedPath.getInstance());
 		} else {
 			Pair<Integer, Expression<StackFrame, JsonNode>> rhead = interpolations.get(interpolations.size() - 1);
@@ -122,5 +125,10 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 				}
 			});
 		}
+	}
+
+	private static void append(RuntimeLimits limits, StringBuilder builder, String piece) {
+		RuntimeLimitChecks.checkStringLength(limits, (long) builder.length() + piece.length());
+		builder.append(piece);
 	}
 }

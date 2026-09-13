@@ -20,6 +20,7 @@ import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -30,7 +31,7 @@ public class UriParseFunction implements Function {
 	private static final Pattern EQUAL = Pattern.compile(Pattern.quote("="));
 
 	@Override
-	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return new Expression<Context, JsonNode>() {
 			@Override
 			public Cardinality getCardinality() {

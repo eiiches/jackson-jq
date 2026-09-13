@@ -35,11 +35,12 @@ public interface Function {
 	 * copying it; attempting to mutate it throws {@link UnsupportedOperationException}.
 	 *
 	 * @param <JsonNode> the JSON node type
-	 * @param <Context> an opaque object representing execution state that has to be passed on when evaluating function arguments
+	 * @param <Context> the execution state that has to be passed on when evaluating function arguments; opaque
+	 * apart from the {@link RuntimeContext#getRuntimeLimits() limits} it exposes
 	 * @param jsonProvider the JSON provider
 	 * @param args the argument expressions to bind
 	 * @param jqVersion the jq compatibility version
 	 * @return the bound expression
 	 */
-	<Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version jqVersion) throws JsonQueryException;
+	<Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version jqVersion) throws JsonQueryException;
 }

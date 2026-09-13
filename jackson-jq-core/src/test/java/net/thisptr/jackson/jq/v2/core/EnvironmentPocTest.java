@@ -24,6 +24,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -68,7 +69,7 @@ public class EnvironmentPocTest {
 		Environment<JsonNode> env = new EnvironmentBuilder<>(jsonProvider, Versions.JQ_1_7)
 				.defineFunction(FunctionSignature.of("examplefn", 1), new Function() {
 					@Override
-					public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version version) {
+					public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version version) {
 						return (scope, in, path, output) -> {
 							String text = provider.getString(in);
 							output.emit(provider.createString("hello:" + text), path);
@@ -112,7 +113,7 @@ public class EnvironmentPocTest {
 		// Expression -- Compiler.java reads these flags off the bound Expression.
 		Function increment = new Function() {
 			@Override
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
 				return FunctionBody.<Context, N>builder(args).usesInput(true).build((scope, in, path, output) -> output.emit(provider.createNumber(Objects.requireNonNull(provider.getNumberAsLongExact(in)) + 1), UntrackedPath.getInstance()));
 			}
 		};
@@ -121,7 +122,7 @@ public class EnvironmentPocTest {
 		List<Boolean> captured = new ArrayList<>();
 		Function probe = new Function() {
 			@Override
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
 				captured.add(isConstantExpression(args.get(0)));
 				return (scope, in, path, output) -> output.emit(in, path);
 			}
@@ -147,7 +148,7 @@ public class EnvironmentPocTest {
 		// (dependsOnExternalState=true), like a real `random`/`now`.
 		Function random = new Function() {
 			@Override
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
 				return FunctionBody.<Context, N>builder(args).usesExternalState(true).build((scope, in, path, output) -> output.emit(provider.createNumber(0), UntrackedPath.getInstance()));
 			}
 		};
@@ -156,7 +157,7 @@ public class EnvironmentPocTest {
 		List<Expression<?, JsonNode>> captured = new ArrayList<>();
 		Function probe = new Function() {
 			@Override
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
 				@SuppressWarnings("unchecked")
 				Expression<?, JsonNode> arg = (Expression<?, JsonNode>) args.get(0);
 				captured.add(arg);
@@ -188,7 +189,7 @@ public class EnvironmentPocTest {
 		List<Expression<?, JsonNode>> captured = new ArrayList<>();
 		Function probe = new Function() {
 			@Override
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
 				@SuppressWarnings("unchecked")
 				Expression<?, JsonNode> arg = (Expression<?, JsonNode>) args.get(0);
 				captured.add(arg);
@@ -222,7 +223,7 @@ public class EnvironmentPocTest {
 		List<Expression<?, JsonNode>> captured = new ArrayList<>();
 		Function probe = new Function() {
 			@Override
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
 				@SuppressWarnings("unchecked")
 				Expression<?, JsonNode> arg = (Expression<?, JsonNode>) args.get(0);
 				captured.add(arg);
@@ -245,7 +246,7 @@ public class EnvironmentPocTest {
 		List<Expression<?, JsonNode>> captured = new ArrayList<>();
 		Function probe = new Function() {
 			@Override
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
 				@SuppressWarnings("unchecked")
 				Expression<?, JsonNode> arg = (Expression<?, JsonNode>) args.get(0);
 				captured.add(arg);
@@ -268,7 +269,7 @@ public class EnvironmentPocTest {
 		List<Expression<?, JsonNode>> captured = new ArrayList<>();
 		Function probe = new Function() {
 			@Override
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
 				@SuppressWarnings("unchecked")
 				Expression<?, JsonNode> arg = (Expression<?, JsonNode>) args.get(0);
 				captured.add(arg);
@@ -292,7 +293,7 @@ public class EnvironmentPocTest {
 		List<Expression<?, JsonNode>> captured = new ArrayList<>();
 		Function probe = new Function() {
 			@Override
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
 				@SuppressWarnings("unchecked")
 				Expression<?, JsonNode> arg = (Expression<?, JsonNode>) args.get(0);
 				captured.add(arg);
@@ -340,7 +341,7 @@ public class EnvironmentPocTest {
 		List<Expression<?, JsonNode>> captured = new ArrayList<>();
 		Function probe = new Function() {
 			@Override
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> provider, List<Expression<Context, N>> args, Version ver) {
 				@SuppressWarnings("unchecked")
 				Expression<?, JsonNode> arg = (Expression<?, JsonNode>) args.get(0);
 				captured.add(arg);

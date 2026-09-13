@@ -10,9 +10,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ExpressionTest {
 	@Test
 	public void cardinalityDefaultsToUnknown() {
-		Expression<Object, Object> expression = new Expression<Object, Object>() {
+		Expression<RuntimeContext, Object> expression = new Expression<RuntimeContext, Object>() {
 			@Override
-			public void apply(Object state, Object in, @Nullable Path<Object> ipath, Output<Object> output) {
+			public void apply(RuntimeContext state, Object in, @Nullable Path<Object> ipath, Output<Object> output) {
 			}
 		};
 

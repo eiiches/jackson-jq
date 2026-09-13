@@ -20,6 +20,8 @@ public class Strings {
 	}
 
 	public static String repeat(String pat, int n) {
+		if (pat.isEmpty())
+			return "";
 		StringBuilder builder = new StringBuilder(pat.length() * n);
 		for (int i = 0; i < n; ++i)
 			builder.append(pat);

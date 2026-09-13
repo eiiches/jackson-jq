@@ -6,6 +6,7 @@ import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -20,7 +21,7 @@ public abstract class AbstractStartsEndsWithFunction implements Function {
 	protected abstract boolean doCheck(String text, String needle);
 
 	@Override
-	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		return FunctionBody.builder(args).usesInput(true).cardinality(args.get(0).getCardinality()).build((frame, in, ipath, output) -> {
 			args.get(0).apply(frame, in, UntrackedPath.getInstance(), (needle, opath) -> {
 				if (!jsonProvider.isString(needle) || !jsonProvider.isString(in))

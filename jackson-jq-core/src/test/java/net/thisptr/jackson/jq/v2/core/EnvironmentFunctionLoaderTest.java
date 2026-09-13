@@ -18,6 +18,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionParameter;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
@@ -47,7 +48,7 @@ public class EnvironmentFunctionLoaderTest {
 	private static Function constantFunction(String text) {
 		return new Function() {
 			@Override
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version version) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version version) {
 				return (frame, in, path, output) -> output.emit(jsonProvider.createString(text), UntrackedPath.getInstance());
 			}
 		};

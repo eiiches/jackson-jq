@@ -20,6 +20,7 @@ import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -250,7 +251,7 @@ public class JsonQueryBindingsTest {
 	private static Function constantFunction(String value) {
 		return new Function() {
 			@Override
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version version) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version version) {
 				return (frame, in, path, output) -> output.emit(jsonProvider.createString(value), UntrackedPath.getInstance());
 			}
 		};

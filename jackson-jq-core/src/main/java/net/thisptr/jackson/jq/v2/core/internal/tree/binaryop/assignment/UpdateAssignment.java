@@ -57,7 +57,7 @@ public class UpdateAssignment<JsonNode> extends AbstractBinaryOperatorExpression
 			if (PathUtils.isLost(lpath))
 				throw new JsonQueryException(String.format("Invalid path expression with result %s", JsonNodeUtils.toString(jsonProvider, lval)));
 
-			out[0] = PathOperations.mutate(jsonProvider, lpath, out[0], (lval_) -> {
+			out[0] = PathOperations.mutate(jsonProvider, frame.getRuntimeLimits(), lpath, out[0], (lval_) -> {
 				List<JsonNode> rvals = new ArrayList<>();
 				rhs.apply(frame, lval_, UntrackedPath.getInstance(), (v, opath) -> rvals.add(v));
 				if (rvals.isEmpty())

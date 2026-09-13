@@ -138,6 +138,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -1048,7 +1049,7 @@ public class Compiler {
 				currentFrame.set(slot, new Function() {
 					@Override
 					@SuppressWarnings("unchecked")
-					public <Context, N1> Expression<Context, N1> bindArguments(JsonProvider<N1> jp, List<Expression<Context, N1>> emptyArgs, Version v) {
+					public <Context extends RuntimeContext, N1> Expression<Context, N1> bindArguments(JsonProvider<N1> jp, List<Expression<Context, N1>> emptyArgs, Version v) {
 						Expression<StackFrame, N1> effectiveExpr = (Expression<StackFrame, N1>) (Expression<?, ?>) pExpr;
 						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(callerFrame, inVal, pVal, outVal);
 					}

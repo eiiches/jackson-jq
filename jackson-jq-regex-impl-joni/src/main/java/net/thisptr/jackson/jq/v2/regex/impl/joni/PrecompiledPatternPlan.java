@@ -10,6 +10,7 @@ import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 final class PrecompiledPatternPlan {
@@ -31,15 +32,15 @@ final class PrecompiledPatternPlan {
 		return flagsMultiplicity;
 	}
 
-	public static <Context, JsonNode> @Nullable PrecompiledPatternPlan flagsThenRegex(JsonProvider<JsonNode> jsonProvider, Expression<Context, JsonNode> regexExpr, Expression<Context, JsonNode> flagsExpr, boolean nullableFlags) {
+	public static <Context extends RuntimeContext, JsonNode> @Nullable PrecompiledPatternPlan flagsThenRegex(JsonProvider<JsonNode> jsonProvider, Expression<Context, JsonNode> regexExpr, Expression<Context, JsonNode> flagsExpr, boolean nullableFlags) {
 		return create(jsonProvider, regexExpr, flagsExpr, nullableFlags, true);
 	}
 
-	public static <Context, JsonNode> @Nullable PrecompiledPatternPlan regexThenFlags(JsonProvider<JsonNode> jsonProvider, Expression<Context, JsonNode> regexExpr, Expression<Context, JsonNode> flagsExpr, boolean nullableFlags) {
+	public static <Context extends RuntimeContext, JsonNode> @Nullable PrecompiledPatternPlan regexThenFlags(JsonProvider<JsonNode> jsonProvider, Expression<Context, JsonNode> regexExpr, Expression<Context, JsonNode> flagsExpr, boolean nullableFlags) {
 		return create(jsonProvider, regexExpr, flagsExpr, nullableFlags, false);
 	}
 
-	private static <Context, JsonNode> @Nullable PrecompiledPatternPlan create(JsonProvider<JsonNode> jsonProvider, Expression<Context, JsonNode> regexExpr, Expression<Context, JsonNode> flagsExpr, boolean nullableFlags, boolean flagsFirst) {
+	private static <Context extends RuntimeContext, JsonNode> @Nullable PrecompiledPatternPlan create(JsonProvider<JsonNode> jsonProvider, Expression<Context, JsonNode> regexExpr, Expression<Context, JsonNode> flagsExpr, boolean nullableFlags, boolean flagsFirst) {
 		List<JsonNode> regexValues = constantResults(regexExpr);
 		List<JsonNode> flagsValues = constantResults(flagsExpr);
 		if (regexValues == null || flagsValues == null || regexValues.size() > MAX_VALUES || flagsValues.size() > MAX_VALUES || exceedsProductLimit(regexValues.size(), flagsValues.size()))

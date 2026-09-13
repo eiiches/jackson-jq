@@ -4,6 +4,7 @@ jjq_java_library(
     name = "exception",
     srcs = [
         "JsonQueryException.java",
+        "RuntimeLimitExceededException.java",
         "package-info.java",
     ],
     release = 8,

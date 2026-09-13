@@ -15,6 +15,7 @@ import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
@@ -32,7 +33,7 @@ public class CustomFunctionTest {
 		Environment<JsonNode> env = new EnvironmentBuilder<>(Jackson2JsonProviderImpl.getInstance(), version)
 				.defineFunction(FunctionSignature.of("times100", 1), new Function() {
 					@Override
-					public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version ver) {
+					public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version ver) {
 						return (frame, in, path, output) -> {
 							args.get(0).apply(frame, in, UntrackedPath.getInstance(), (numberNode, opath) -> {
 								int n = Objects.requireNonNull(jsonProvider.getNumberAsIntExact(numberNode));

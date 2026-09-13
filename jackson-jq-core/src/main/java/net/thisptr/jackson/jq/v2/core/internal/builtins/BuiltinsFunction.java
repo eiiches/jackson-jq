@@ -15,6 +15,7 @@ import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
@@ -27,7 +28,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 ))
 public class BuiltinsFunction implements Function {
 	@Override
-	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		List<String> builtins = new ArrayList<>();
 		Set<FunctionSignature> signatures = new HashSet<>(ClassPathFunctionLoader.getInstance().getFunctions(version).keySet());
 		signatures.addAll(ClassPathFunctionLoader.getInstance().getJqFunctions(version).keySet());

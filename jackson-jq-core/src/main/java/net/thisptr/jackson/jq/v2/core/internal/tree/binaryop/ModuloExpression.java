@@ -6,6 +6,7 @@ import net.thisptr.jackson.jq.v2.core.internal.json.operations.BinaryOperations;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
@@ -18,7 +19,7 @@ public class ModuloExpression<JsonNode> extends AbstractSimpleBinaryOperatorExpr
 	}
 
 	@Override
-	protected JsonNode doEval(JsonNode lhs, JsonNode rhs) throws JsonQueryException {
+	protected JsonNode doEval(RuntimeLimits limits, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
 		return BinaryOperations.modulo(jsonProvider, lhs, rhs, version);
 	}
 }

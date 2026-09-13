@@ -15,6 +15,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.RootPath;
@@ -38,7 +39,7 @@ public abstract class AbstractComplexAssignment<JsonNode> extends AbstractBinary
 		this.inputFixed = inputFixed;
 	}
 
-	protected abstract JsonNode eval(JsonNode lhs, JsonNode rhs) throws JsonQueryException;
+	protected abstract JsonNode eval(RuntimeLimits limits, JsonNode lhs, JsonNode rhs) throws JsonQueryException;
 
 	@Override
 	public boolean dependsOnInput() {
@@ -58,8 +59,9 @@ public abstract class AbstractComplexAssignment<JsonNode> extends AbstractBinary
 				lpaths.add(lpath);
 			});
 			@Var JsonNode out = in;
+			RuntimeLimits limits = frame.getRuntimeLimits();
 			for (Path<JsonNode> lpath : lpaths)
-				out = PathOperations.mutate(jsonProvider, lpath, out, (lval) -> eval(lval, rval), version);
+				out = PathOperations.mutate(jsonProvider, limits, lpath, out, (lval) -> eval(limits, lval, rval), version);
 			output.emit(out, UntrackedPath.getInstance());
 		});
 	}

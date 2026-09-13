@@ -7,6 +7,7 @@ jjq_java_library(
         "PrecompiledPatternPlan.java",
         "Preconditions.java",
         "RegexJqLibrary.java",
+        "RuntimeLimitChecks.java",
         "UnicodeUtils.java",
         "_MatchImplFunction.java",
         "_SubImplFunction.java",

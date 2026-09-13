@@ -5,6 +5,9 @@ import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
+
 public class Memory {
 	// Visible for StackFrame
 	final List<Object> memory = new ArrayList<>();
@@ -17,12 +20,26 @@ public class Memory {
 	// depth via StackFrame#getEnclosingMemory(), since exactly one StackMemory backs one top-level call.
 	private final Object[] globals;
 
+	// The budgets this top-level apply() runs under -- frame-independent, like `globals`, and reachable
+	// from any frame via StackFrame#getRuntimeLimits(), which is how Expression/Function implementations
+	// (including third-party ones) see them.
+	private final RuntimeLimits runtimeLimits;
+
 	public Memory() {
 		this(0);
 	}
 
 	public Memory(int globalCount) {
+		this(globalCount, RuntimeLimitsImpl.UNLIMITED);
+	}
+
+	public Memory(int globalCount, RuntimeLimits runtimeLimits) {
 		this.globals = new Object[globalCount];
+		this.runtimeLimits = runtimeLimits;
+	}
+
+	public RuntimeLimits getRuntimeLimits() {
+		return runtimeLimits;
 	}
 
 	public @Nullable Object getGlobal(int index) {

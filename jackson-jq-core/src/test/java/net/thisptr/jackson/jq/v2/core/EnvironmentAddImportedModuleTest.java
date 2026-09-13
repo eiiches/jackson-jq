@@ -20,6 +20,7 @@ import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProviderImpl;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -98,7 +99,7 @@ public class EnvironmentAddImportedModuleTest {
 	public void testModuleQualifiedCallFallsBackToVariadicFunction() throws Exception {
 		Function countArgs = new Function() {
 			@Override
-			public <Context, N> Expression<Context, N> bindArguments(JsonProvider<N> fprovider, List<Expression<Context, N>> fargs, Version ver) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> fprovider, List<Expression<Context, N>> fargs, Version ver) {
 				return (frame, in, path, output) -> output.emit(fprovider.createNumber(fargs.size()), UntrackedPath.getInstance());
 			}
 		};

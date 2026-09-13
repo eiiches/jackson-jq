@@ -44,6 +44,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -214,7 +215,7 @@ public class Main {
 		Environment<N> env = new EnvironmentBuilder<>(jsonProvider, version)
 				.defineFunction(FunctionSignature.of("env", 0), new Function() {
 					@Override
-					public <Context, N2> Expression<Context, N2> bindArguments(JsonProvider<N2> jsonProv, List<Expression<Context, N2>> fnArgs, Version ver) {
+					public <Context extends RuntimeContext, N2> Expression<Context, N2> bindArguments(JsonProvider<N2> jsonProv, List<Expression<Context, N2>> fnArgs, Version ver) {
 						return new Expression<Context, N2>() {
 							@Override
 							public Cardinality getCardinality() {

@@ -24,6 +24,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionParameter;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.Output;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -318,7 +319,7 @@ final class JqFunctionCompiler {
 		return new Function() {
 			@Override
 			@SuppressWarnings("unchecked")
-			public <Context, N1> Expression<Context, N1> bindArguments(JsonProvider<N1> jsonProvider, List<Expression<Context, N1>> args, Version version) {
+			public <Context extends RuntimeContext, N1> Expression<Context, N1> bindArguments(JsonProvider<N1> jsonProvider, List<Expression<Context, N1>> args, Version version) {
 				Expression<StackFrame, N1> effectiveExpression = (Expression<StackFrame, N1>) (Expression<?, ?>) expression;
 				return (frame, in, path, output) -> effectiveExpression.apply(callerFrame, in, path, output);
 			}

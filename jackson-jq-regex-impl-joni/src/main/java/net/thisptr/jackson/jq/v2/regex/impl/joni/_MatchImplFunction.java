@@ -18,6 +18,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.regex.impl.joni.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -26,7 +27,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 @FunctionRegistration(name = "_match_impl", nargs = 3)
 public class _MatchImplFunction implements Function {
 	@Override
-	public <Context, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
 		Expression<Context, JsonNode> regexExpr = args.get(0);
 		Expression<Context, JsonNode> flagsExpr = args.get(1);
 		Expression<Context, JsonNode> testExpr = args.get(2);
