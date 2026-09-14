@@ -1,0 +1,177 @@
+package net.thisptr.jackson.jq.v2.benchmark;
+
+import java.util.Arrays;
+import java.util.regex.Pattern;
+
+import com.google.errorprone.annotations.Var;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.options.CommandLineOptions;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
+
+import net.thisptr.jackson.jq.v2.core.version.Versions;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.fastjson2.Fastjson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
+import net.thisptr.jackson.jq.v2.json.impl.jakarta.JakartaJsonProvider;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
+
+public class Main {
+	private static final String DEFAULT_JSON_PROVIDER = "jackson3";
+	private static final String DEFAULT_JQ_VERSION = "1.8.2";
+
+	public static void main(String[] args) throws Exception {
+		Configuration configuration;
+		try {
+			configuration = parseArguments(args);
+			if (!configuration.help) {
+				// Validate these in the launcher as well as in forked benchmark workers.
+				resolveProvider(configuration.jsonProviderName);
+				resolveVersion(configuration.jqVersion);
+			}
+		} catch (IllegalArgumentException e) {
+			System.err.println(e.getMessage());
+			printUsage();
+			System.exit(1);
+			return;
+		}
+		if (configuration.help) {
+			printUsage();
+			return;
+		}
+
+		Options jmhCommandLine = new CommandLineOptions(configuration.jmhArguments);
+		Options options = new OptionsBuilder()
+				.parent(jmhCommandLine)
+				.include("^" + Pattern.quote(JacksonJqBenchmark.class.getName()) + "\\.")
+				.param("jqExpression", configuration.jqExpression)
+				.param("jsonInput", configuration.jsonInput)
+				.param("jsonProviderName", configuration.jsonProviderName)
+				.param("jqVersion", configuration.jqVersion)
+				.shouldFailOnError(true)
+				.build();
+		new Runner(options).run();
+	}
+
+	private static Configuration parseArguments(String[] args) {
+		@Var String jsonProviderName = DEFAULT_JSON_PROVIDER;
+		@Var String jqVersion = DEFAULT_JQ_VERSION;
+		@Var int index = 0;
+		while (index < args.length) {
+			String argument = args[index];
+			if ("--help".equals(argument))
+				return Configuration.help();
+			if ("--".equals(argument)) {
+				index++;
+				break;
+			}
+			if ("--json-provider".equals(argument)) {
+				jsonProviderName = optionValue(args, ++index, argument);
+				index++;
+				continue;
+			}
+			if (argument.startsWith("--json-provider=")) {
+				jsonProviderName = inlineOptionValue(argument, "--json-provider=");
+				index++;
+				continue;
+			}
+			if ("--jq-version".equals(argument)) {
+				jqVersion = optionValue(args, ++index, argument);
+				index++;
+				continue;
+			}
+			if (argument.startsWith("--jq-version=")) {
+				jqVersion = inlineOptionValue(argument, "--jq-version=");
+				index++;
+				continue;
+			}
+			if (argument.startsWith("-"))
+				throw new IllegalArgumentException("unknown benchmark option: " + argument);
+			break;
+		}
+
+		if (args.length - index < 2)
+			throw new IllegalArgumentException("a jq expression and JSON input are required");
+		String jqExpression = args[index++];
+		String jsonInput = args[index++];
+		String[] jmhArguments = Arrays.copyOfRange(args, index, args.length);
+		return new Configuration(jsonProviderName, jqVersion, jqExpression, jsonInput, jmhArguments, false);
+	}
+
+	private static String optionValue(String[] args, int index, String option) {
+		if (index >= args.length || args[index].isEmpty())
+			throw new IllegalArgumentException("missing value for " + option);
+		return args[index];
+	}
+
+	private static String inlineOptionValue(String argument, String prefix) {
+		String value = argument.substring(prefix.length());
+		if (value.isEmpty())
+			throw new IllegalArgumentException("missing value for " + prefix.substring(0, prefix.length() - 1));
+		return value;
+	}
+
+	// Every returned provider is used only with JSON nodes created by that same provider.
+	@SuppressWarnings("unchecked")
+	static JsonProvider<Object> resolveProvider(String name) {
+		switch (name) {
+			case "jackson2":
+				return (JsonProvider<Object>) (JsonProvider<?>) Jackson2JsonProvider.getInstance();
+			case "jackson3":
+				return (JsonProvider<Object>) (JsonProvider<?>) Jackson3JsonProvider.getInstance();
+			case "fastjson2":
+				return (JsonProvider<Object>) (JsonProvider<?>) Fastjson2JsonProvider.getInstance();
+			case "gson":
+				return (JsonProvider<Object>) (JsonProvider<?>) GsonJsonProvider.getInstance();
+			case "jakarta":
+				return (JsonProvider<Object>) (JsonProvider<?>) JakartaJsonProvider.getInstance();
+			default:
+				throw new IllegalArgumentException("unknown --json-provider: " + name
+						+ " (expected one of: jackson2, jackson3, fastjson2, gson, jakarta)");
+		}
+	}
+
+	static Version resolveVersion(String value) {
+		Version version = Version.valueOf(value);
+		if (!Versions.versions().contains(version))
+			throw new IllegalArgumentException("unsupported --jq-version: " + value + " (expected one of: "
+					+ Versions.versions() + ")");
+		return version;
+	}
+
+	private static void printUsage() {
+		System.err.println("Usage: jackson-jq-benchmark [OPTIONS] QUERY JSON [JMH_OPTIONS...]");
+		System.err.println("  --json-provider NAME  jackson2, jackson3, fastjson2, gson, or jakarta (default: jackson3)");
+		System.err.println("  --jq-version VERSION  jq compatibility version (default: 1.8.2)");
+		System.err.println("  --help                show this help");
+		System.err.println("Use -- before QUERY when the jq expression starts with '-'.");
+		System.err.println("Arguments after JSON are passed to JMH; use -h there for JMH help.");
+	}
+
+	private static class Configuration {
+		private final String jsonProviderName;
+		private final String jqVersion;
+		private final String jqExpression;
+		private final String jsonInput;
+		private final String[] jmhArguments;
+		private final boolean help;
+
+		private Configuration(String jsonProviderName, String jqVersion, String jqExpression, String jsonInput, String[] jmhArguments, boolean help) {
+			this.jsonProviderName = jsonProviderName;
+			this.jqVersion = jqVersion;
+			this.jqExpression = jqExpression;
+			this.jsonInput = jsonInput;
+			this.jmhArguments = jmhArguments;
+			this.help = help;
+		}
+
+		private static Configuration help() {
+			return new Configuration("", "", "", "", new String[0], true);
+		}
+	}
+
+	private Main() {
+	}
+}

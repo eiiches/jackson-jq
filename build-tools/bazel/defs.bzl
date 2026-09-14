@@ -275,6 +275,7 @@ def jjq_java_library(
         srcs,
         release,
         deps = [],
+        annotation_processors = [],
         checkstyle_srcs = None,
         **kwargs):
     """The checkstyle-checked java_library for a single Java source directory.
@@ -291,6 +292,7 @@ def jjq_java_library(
         source set is supported for intentionally unsplit modules.
       release: required --release level for this source directory.
       deps: what this directory depends on, beyond the inherited annotations.
+      annotation_processors: additional java_plugin targets used to compile this library.
       checkstyle_srcs: handwritten Java sources to check; defaults to `srcs`.
       **kwargs: passed through to java_library.
     """
@@ -298,7 +300,7 @@ def jjq_java_library(
         name = name,
         srcs = srcs,
         javacopts = javacopts(release),
-        plugins = JQ_PLUGINS,
+        plugins = JQ_PLUGINS + annotation_processors,
         visibility = visibility,
         deps = deps + INHERITED_DEPS,
         **kwargs

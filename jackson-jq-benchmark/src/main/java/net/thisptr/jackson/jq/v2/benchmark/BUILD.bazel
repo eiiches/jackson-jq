@@ -1,0 +1,28 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "benchmark",
+    testonly = True,
+    srcs = [
+        "JacksonJqBenchmark.java",
+        "Main.java",
+    ],
+    annotation_processors = ["//jackson-jq-benchmark:jmh-generator"],
+    release = 17,
+    visibility = ["//jackson-jq-benchmark:__subpackages__"],
+    runtime_deps = [
+        "//jackson-jq-regex-impl-joni",
+        "@maven//:org_eclipse_parsson_parsson",
+    ],
+    deps = [
+        "//jackson-jq-core",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-fastjson2",
+        "//jackson-jq-json-provider-impl-gson",
+        "//jackson-jq-json-provider-impl-jackson2",
+        "//jackson-jq-json-provider-impl-jackson3",
+        "//jackson-jq-json-provider-impl-jakarta",
+        "//jackson-jq-spi",
+        "@maven//:org_openjdk_jmh_jmh_core",
+    ],
+)

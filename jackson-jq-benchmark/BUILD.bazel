@@ -1,0 +1,17 @@
+load("@rules_java//java:defs.bzl", "java_binary", "java_plugin")
+
+package(default_visibility = ["//visibility:public"])
+
+java_plugin(
+    name = "jmh-generator",
+    testonly = True,
+    processor_class = "org.openjdk.jmh.generators.BenchmarkProcessor",
+    deps = ["@maven//:org_openjdk_jmh_jmh_generator_annprocess"],
+)
+
+java_binary(
+    name = "jackson-jq-benchmark",
+    testonly = True,
+    main_class = "net.thisptr.jackson.jq.v2.benchmark.Main",
+    runtime_deps = ["//jackson-jq-benchmark/src/main/java/net/thisptr/jackson/jq/v2/benchmark"],
+)

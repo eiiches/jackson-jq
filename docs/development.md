@@ -38,6 +38,33 @@ The CLI runs straight out of the checkout:
 echo '{"foo": 42}' | bazelisk run //jackson-jq-cli -- '.foo'
 ```
 
+Running benchmarks
+------------------
+
+The JMH benchmark measures query compilation and application separately. The jq expression and
+one JSON input are literal arguments; environment construction and JSON parsing happen outside the
+measured methods. By default, it uses the Jackson 3 provider and jq 1.8.2 compatibility semantics:
+
+```sh
+bazelisk run //jackson-jq-benchmark -- '.items | map(.price) | add' '{"items":[{"price":10},{"price":20}]}'
+```
+
+Select another provider or supported jq version before the expression. Arguments after the JSON
+input are passed to JMH and can override its run settings:
+
+```sh
+bazelisk run //jackson-jq-benchmark -- \
+	--json-provider gson \
+	--jq-version 1.7 \
+	'.foo' \
+	'{"foo":42}' \
+	-f 3
+```
+
+Supported providers are `jackson2`, `jackson3`, `fastjson2`, `gson`, and `jakarta`. Run the target
+with `--help` for benchmark usage, or provide an expression and input followed by `-h` for JMH's
+options.
+
 To exercise the Maven consumer projects, publish the Bazel-built artifacts locally first:
 
 ```sh

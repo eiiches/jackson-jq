@@ -32,6 +32,8 @@ SLF4J_VERSION = "2.0.18"
 
 ERROR_PRONE_VERSION = "2.50.0"
 
+JMH_VERSION = "1.37"
+
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
     name = "maven",
@@ -157,6 +159,18 @@ maven.artifact(
 )
 
 # -- build tools --------------------------------------------------------------
+maven.artifact(
+    testonly = True,
+    artifact = "jmh-core",
+    group = "org.openjdk.jmh",
+    version = JMH_VERSION,
+)
+maven.artifact(
+    testonly = True,
+    artifact = "jmh-generator-annprocess",
+    group = "org.openjdk.jmh",
+    version = JMH_VERSION,
+)
 maven.artifact(
     artifact = "javacc",
     group = "net.java.dev.javacc",
