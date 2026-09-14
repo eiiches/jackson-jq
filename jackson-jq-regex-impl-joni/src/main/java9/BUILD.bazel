@@ -1,0 +1,17 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_module_info")
+
+jjq_java_module_info(
+    module_name = "net.thisptr.jackson.jq.v2.regex.impl.joni",
+    module_packages = [
+        "//jackson-jq-regex-impl-joni/src/main/java/net/thisptr/jackson/jq/v2/regex/impl/joni",
+        "//jackson-jq-regex-impl-joni/src/main/java/net/thisptr/jackson/jq/v2/regex/impl/joni/internal",
+    ],
+    release = 9,
+    visibility = ["//jackson-jq-regex-impl-joni:__pkg__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi",
+        "@maven//:org_jruby_jcodings_jcodings",
+        "@maven//:org_jruby_joni_joni",
+    ],
+)

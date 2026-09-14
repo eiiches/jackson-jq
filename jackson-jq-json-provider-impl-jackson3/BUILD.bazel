@@ -1,0 +1,20 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_mrjar", "jjq_maven_artifact")
+
+package(default_visibility = ["//visibility:public"])
+
+# module-info.java lives in src/main/java here (not a multi-release overlay), so this
+# module compiles as a real JPMS module at release 17.
+jjq_java_mrjar(
+    name = "jackson-jq-json-provider-impl-jackson3-mrjar",
+    multi_release = False,
+    osgi = True,
+    packages = [
+        "//jackson-jq-json-provider-impl-jackson3/src/main/java:module-info",
+        "//jackson-jq-json-provider-impl-jackson3/src/main/java/net/thisptr/jackson/jq/v2/json/impl/jackson3",
+    ],
+)
+
+jjq_maven_artifact(
+    name = "jackson-jq-json-provider-impl-jackson3",
+    artifact = ":jackson-jq-json-provider-impl-jackson3-mrjar",
+)

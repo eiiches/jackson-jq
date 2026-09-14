@@ -1,0 +1,7 @@
+- q: 'empty and error("foo")'
+  out: []
+  comment: 'lhs is evaluated first'
+
+- q: 'try (error("foo") and empty) catch .'
+  out:
+  - "foo"

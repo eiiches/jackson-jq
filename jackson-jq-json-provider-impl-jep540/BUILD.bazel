@@ -1,0 +1,25 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_mrjar", "jjq_maven_artifact")
+
+package(default_visibility = ["//visibility:public"])
+
+# module-info.java is in src/main/java (not a multi-release overlay), so the descriptor sits at the
+# jar root; release 26 because `requires jdk.incubator.json` reads a v70 module-info.class off the
+# module path. osgi stays off -- the generated Import-Package would name a package no OSGi
+# container can wire.
+jjq_java_mrjar(
+    name = "jackson-jq-json-provider-impl-jep540-mrjar",
+    multi_release = False,
+    packages = [
+        "//jackson-jq-json-provider-impl-jep540/src/main/java:module-info",
+        "//jackson-jq-json-provider-impl-jep540/src/main/java/net/thisptr/jackson/jq/v2/json/impl/jep540",
+    ],
+)
+
+# jdk.incubator.json reaches javadoc as a compile-only boundary -- see the paired tags in
+# //third-party/jep540:sources.bzl. It is on javadoc's classpath, so the imports resolve, but in
+# neither the jar, the source jar, nor the pom. A pom declaring no dependency for it is correct:
+# a JDK module is not a Maven artifact.
+jjq_maven_artifact(
+    name = "jackson-jq-json-provider-impl-jep540",
+    artifact = ":jackson-jq-json-provider-impl-jep540-mrjar",
+)

@@ -1,0 +1,17 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "functions",
+    srcs = [
+        "StrFTimeFunction.java",
+        "StrPTimeFunction.java",
+        "TimestampFunction.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-ext-module-time:__subpackages__"],
+    deps = [
+        "//jackson-jq-ext-module-time/src/main/java/net/thisptr/jackson/jq/v2/ext/time/internal/misc",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi",
+    ],
+)

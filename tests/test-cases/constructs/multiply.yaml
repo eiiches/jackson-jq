@@ -1,0 +1,58 @@
+- q: '(1 * "bar")'
+  in: [[0.0], true]
+  out:
+  - "bar"
+
+- q: '(0 * ("baz" * 1.0))'
+  in: 2
+  out:
+  - null
+  v: '[1.5, 1.7)'
+
+- q: '(0 * ("baz" * 1.0))'
+  in: 2
+  out:
+  - ""
+  v: '[1.7, )'
+  failing: true
+
+- q: '("baz" * 0.5)'
+  in: "bar"
+  out:
+  - "baz"
+  v: '[1.5, 1.7)'
+
+- q: '("baz" * 0.5)'
+  in: "bar"
+  out:
+  - ""
+  v: '[1.7, )'
+  failing: true
+
+- q: '3 * "foo"'
+  out:
+  - "foofoofoo"
+
+- q: '"foo" * -3'
+  out:
+  - null
+
+- q: 'error("foo") * empty'
+  out: []
+  comment: 'rhs is evaluated first'
+
+- q: 'try (empty * error("foo")) catch .'
+  out:
+  - "foo"
+
+- q: '(try ((-1.5 * "baz")) catch ("__ERROR__"))'
+  out:
+  - "__ERROR__"
+  v: '[1.5, 1.8.0)'
+  failing: true
+  justification: jq interprets this as -(1.5 * baz) while jackson-jq as (-1.5) * baz. Defer resolution to future versions.
+
+- q: '(try ((-1.5 * "baz")) catch ("__ERROR__"))'
+  out:
+  - null
+  v: '[1.8.0, )'

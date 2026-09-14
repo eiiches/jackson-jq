@@ -1,0 +1,16 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "functions",
+    srcs = [
+        "UriDecodeFunction.java",
+        "UriParseFunction.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-ext-module-uri:__subpackages__"],
+    deps = [
+        "//jackson-jq-ext-module-uri/src/main/java/net/thisptr/jackson/jq/v2/ext/uri/internal/misc",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi",
+    ],
+)

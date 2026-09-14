@@ -1,0 +1,46 @@
+load("@rules_java//java:defs.bzl", "java_binary", "java_import", "java_library")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["idea-code-style.xml"])
+
+java_import(
+    name = "intellij_code_formatter_jar",
+    jars = ["@intellij_code_formatter//file:intellij-code-formatter.jar"],
+)
+
+java_library(
+    name = "idea_format_stubs",
+    srcs = ["idea-format-stubs/com/intellij/ide/todo/TodoConfiguration.java"],
+    javacopts = [
+        "--release",
+        "21",
+    ],
+)
+
+java_binary(
+    name = "idea-format",
+    srcs = ["IdeaFormatLauncher.java"],
+    data = [":idea-code-style.xml"],
+    javacopts = [
+        "--release",
+        "21",
+    ],
+    jvm_flags = [
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+        "--add-opens=java.base/java.io=ALL-UNNAMED",
+        "--add-opens=java.base/java.util=ALL-UNNAMED",
+        "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+        "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
+        "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+        "--add-opens=java.desktop/javax.swing=ALL-UNNAMED",
+        "-Djava.awt.headless=true",
+    ],
+    main_class = "IdeaFormatLauncher",
+    deps = [
+        ":idea_format_stubs",
+        ":intellij_code_formatter_jar",
+        "@maven//:commons_cli_commons_cli",
+    ],
+)

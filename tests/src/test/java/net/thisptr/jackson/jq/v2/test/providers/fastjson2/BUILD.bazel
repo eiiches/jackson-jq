@@ -1,0 +1,15 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "fastjson2",
+    testonly = True,
+    srcs = ["Fastjson2JsonQueryTest.java"],
+    release = 8,
+    visibility = ["//tests:__pkg__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-fastjson2",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+    ],
+)

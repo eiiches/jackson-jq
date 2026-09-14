@@ -1,0 +1,31 @@
+<code_scheme name="jackson-jq" version="173">
+  <JavaCodeStyleSettings>
+    <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="999999999" />
+    <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="99999999" />
+    <option name="IMPORT_LAYOUT_TABLE">
+      <value>
+        <package name="java" withSubpackages="true" static="false" />
+        <package name="javax" withSubpackages="true" static="false" />
+        <emptyLine />
+        <package name="" withSubpackages="true" static="false" />
+        <emptyLine />
+        <package name="" withSubpackages="true" static="false" module="true" />
+        <package name="net.thisptr.jackson.jq" withSubpackages="true" static="false" />
+        <emptyLine />
+        <package name="" withSubpackages="true" static="true" />
+      </value>
+    </option>
+    <option name="JD_ALIGN_PARAM_COMMENTS" value="false" />
+    <option name="JD_ALIGN_EXCEPTION_COMMENTS" value="false" />
+  </JavaCodeStyleSettings>
+  <ScalaCodeStyleSettings>
+    <option name="MULTILINE_STRING_CLOSING_QUOTES_ON_NEW_LINE" value="true" />
+  </ScalaCodeStyleSettings>
+  <codeStyleSettings language="JAVA">
+    <option name="SPACE_WITHIN_ARRAY_INITIALIZER_BRACES" value="true" />
+    <option name="SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE" value="true" />
+    <indentOptions>
+      <option name="USE_TAB_CHARACTER" value="true" />
+    </indentOptions>
+  </codeStyleSettings>
+</code_scheme>

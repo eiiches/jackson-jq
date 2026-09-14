@@ -1,0 +1,62 @@
+load("@buildifier_prebuilt//:rules.bzl", "buildifier")
+load("//build-tools/bazel:publish.bzl", "publish_all")
+
+exports_files([
+    "version.bzl",
+])
+
+alias(
+    name = "idea-format",
+    actual = "//build-tools/idea-format:idea-format",
+)
+
+publish_all(
+    name = "maven_install",
+    publishers = [
+        "//jackson-jq-cli:jackson-jq-cli.publish",
+        "//jackson-jq-core:jackson-jq-core.publish",
+        "//jackson-jq-ext-module-debug:jackson-jq-ext-module-debug.publish",
+        "//jackson-jq-ext-module-random:jackson-jq-ext-module-random.publish",
+        "//jackson-jq-ext-module-time:jackson-jq-ext-module-time.publish",
+        "//jackson-jq-ext-module-uri:jackson-jq-ext-module-uri.publish",
+        "//jackson-jq-ext-module-uuid:jackson-jq-ext-module-uuid.publish",
+        "//jackson-jq-json-provider:jackson-jq-json-provider.publish",
+        # Experimental: retained to exercise provider compatibility with JSON models that use
+        # Java null, but excluded from releases until demand warrants long-term support.
+        # "//jackson-jq-json-provider-impl-fastjson2:jackson-jq-json-provider-impl-fastjson2.publish",
+        "//jackson-jq-json-provider-impl-gson:jackson-jq-json-provider-impl-gson.publish",
+        "//jackson-jq-json-provider-impl-jackson2:jackson-jq-json-provider-impl-jackson2.publish",
+        "//jackson-jq-json-provider-impl-jackson3:jackson-jq-json-provider-impl-jackson3.publish",
+        "//jackson-jq-json-provider-impl-jakarta:jackson-jq-json-provider-impl-jakarta.publish",
+        # Experimental: builds and tests, but is not published. It compiles against an
+        # unstable jdk.incubator.json pinned to an OpenJDK commit, and only runs on a JDK 26
+        # started with --add-modules jdk.incubator.json.
+        # "//jackson-jq-json-provider-impl-jep540:jackson-jq-json-provider-impl-jep540.publish",
+        "//jackson-jq-regex-impl-joni:jackson-jq-regex-impl-joni.publish",
+        "//jackson-jq-spi:jackson-jq-spi.publish",
+    ],
+)
+
+buildifier(
+    name = "buildifier_fix",
+    exclude_patterns = [
+        "./.git/*",
+        "./smoke-tests/*",
+        "./version.bzl",
+        "./.bazelbsp",
+    ],
+    lint_mode = "fix",
+    mode = "fix",
+)
+
+buildifier(
+    name = "buildifier_test",
+    exclude_patterns = [
+        "./.git/*",
+        "./smoke-tests/*",
+        "./version.bzl",
+        "./.bazelbsp",
+    ],
+    lint_mode = "warn",
+    mode = "check",
+)

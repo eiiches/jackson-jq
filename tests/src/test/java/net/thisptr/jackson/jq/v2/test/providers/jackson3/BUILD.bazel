@@ -1,0 +1,18 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "jackson3",
+    testonly = True,
+    srcs = [
+        "Jackson3JsonQueryTest.java",
+    ],
+    release = 17,
+    visibility = ["//tests:__pkg__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-jackson3",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+        "@maven//:tools_jackson_core_jackson_databind",
+    ],
+)

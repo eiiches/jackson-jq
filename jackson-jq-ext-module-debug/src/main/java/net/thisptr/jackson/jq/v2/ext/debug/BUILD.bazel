@@ -1,0 +1,14 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "debug",
+    srcs = [
+        "ModuleImpl.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-ext-module-debug:__subpackages__"],
+    deps = [
+        "//jackson-jq-ext-module-debug/src/main/java/net/thisptr/jackson/jq/v2/ext/debug/functions",
+        "//jackson-jq-spi",
+    ],
+)

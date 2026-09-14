@@ -1,0 +1,15 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_mrjar", "jjq_maven_artifact")
+
+package(default_visibility = ["//visibility:public"])
+
+jjq_java_mrjar(
+    name = "jackson-jq-json-provider-impl-jackson2-mrjar",
+    osgi = True,
+    packages = ["//jackson-jq-json-provider-impl-jackson2/src/main/java/net/thisptr/jackson/jq/v2/json/impl/jackson2"],
+    release_overlays = {9: ["//jackson-jq-json-provider-impl-jackson2/src/main/java9:module-info"]},
+)
+
+jjq_maven_artifact(
+    name = "jackson-jq-json-provider-impl-jackson2",
+    artifact = ":jackson-jq-json-provider-impl-jackson2-mrjar",
+)

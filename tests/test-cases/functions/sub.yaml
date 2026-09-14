@@ -1,0 +1,31 @@
+# The replacement is concatenated onto the text preceding the match, so null contributes
+# nothing and any other non-string is a type error.
+- q: '"abc" | sub("b"; null)'
+  in: null
+  out:
+  - "ac"
+  v: '[1.5, )'
+
+- q: 'try ("abc" | sub("b"; 1)) catch .'
+  in: null
+  out:
+  - 'string ("a") and number (1) cannot be added'
+  v: '[1.5, )'
+
+- q: 'try ("abc" | sub("b"; true)) catch .'
+  in: null
+  out:
+  - 'string ("a") and boolean (true) cannot be added'
+  v: '[1.5, )'
+
+- q: 'try ("abc" | sub("b"; [1])) catch .'
+  in: null
+  out:
+  - 'string ("a") and array ([1]) cannot be added'
+  v: '[1.5, )'
+
+- q: 'try ("xxbyy" | sub("b"; {})) catch .'
+  in: null
+  out:
+  - 'string ("xx") and object ({}) cannot be added'
+  v: '[1.5, )'

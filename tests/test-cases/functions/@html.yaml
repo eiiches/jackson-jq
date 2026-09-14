@@ -1,0 +1,29 @@
+- q: '@html'
+  in: 0.0
+  out:
+  - "0"
+  v: '[1.5, 1.7)'
+
+- q: '@html'
+  in: 0.0
+  out:
+  - "0.0"
+  v: '[1.7, )'
+  failing: true
+
+- q: '@html'
+  in: [0.0]
+  out:
+  - "[0]"
+  v: '[1.5, 1.7)'
+
+- q: '@html'
+  in: [0.0]
+  out:
+  - "[0.0]"
+  v: '[1.7, )'
+  failing: true
+
+- q: '[range(0; 128)] | implode | @html'
+  out:
+  - "\\0\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F !&quot;#$%&amp;&apos;()*+,-./0123456789:;&lt;=&gt;?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7F"

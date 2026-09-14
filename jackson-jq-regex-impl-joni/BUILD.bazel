@@ -1,0 +1,19 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_mrjar", "jjq_maven_artifact")
+
+package(default_visibility = ["//visibility:public"])
+
+jjq_java_mrjar(
+    name = "jackson-jq-regex-impl-joni-mrjar",
+    osgi = True,
+    packages = [
+        "//jackson-jq-regex-impl-joni/src/main/java/net/thisptr/jackson/jq/v2/regex/impl/joni",
+        "//jackson-jq-regex-impl-joni/src/main/java/net/thisptr/jackson/jq/v2/regex/impl/joni/internal",
+    ],
+    release_overlays = {9: ["//jackson-jq-regex-impl-joni/src/main/java9:module-info"]},
+    resources = ["src/main/resources/META-INF/native-image/native-image.properties"],
+)
+
+jjq_maven_artifact(
+    name = "jackson-jq-regex-impl-joni",
+    artifact = ":jackson-jq-regex-impl-joni-mrjar",
+)

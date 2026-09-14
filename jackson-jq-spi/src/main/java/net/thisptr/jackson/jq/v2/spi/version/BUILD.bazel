@@ -1,0 +1,15 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "version",
+    srcs = [
+        "Version.java",
+        "VersionRange.java",
+    ],
+    release = 8,
+    visibility = [
+        "//jackson-jq-spi:__subpackages__",
+        "//tests:__subpackages__",
+    ],
+    deps = ["//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/annotations"],
+)

@@ -1,0 +1,26 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
+
+jjq_java_test_suite(
+    srcs = [
+        "ClassLoaderUtils.java",
+        "CompileOptionsTest.java",
+        "CustomFunctionTest.java",
+        "EnvironmentAddImportedModuleTest.java",
+        "EnvironmentFunctionLoaderTest.java",
+        "EnvironmentModuleLoaderTest.java",
+        "EnvironmentPocTest.java",
+        "JsonQueryConcurrentReuseTest.java",
+        "JsonQueryTest.java",
+        "RuntimeBindingsTest.java",
+        "RuntimeOptionsTest.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-core:__subpackages__"],
+    deps = [
+        "//jackson-jq-core",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-jackson2",
+        "//jackson-jq-spi",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+    ],
+)

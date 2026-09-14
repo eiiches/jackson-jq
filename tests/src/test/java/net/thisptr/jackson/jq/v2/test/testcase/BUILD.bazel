@@ -1,0 +1,21 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "testcase",
+    testonly = True,
+    srcs = [
+        "ModuleFixtures.java",
+        "TestCase.java",
+        "TestCaseLoader.java",
+        "VersionRangeDeserializer.java",
+    ],
+    release = 8,
+    visibility = ["//tests:__subpackages__"],
+    deps = [
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/version",
+        "@maven//:com_fasterxml_jackson_core_jackson_annotations",
+        "@maven//:com_fasterxml_jackson_core_jackson_core",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+        "@maven//:com_fasterxml_jackson_dataformat_jackson_dataformat_yaml",
+    ],
+)

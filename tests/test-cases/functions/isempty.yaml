@@ -1,0 +1,94 @@
+- q: 'isempty(empty)'
+  in: null
+  out:
+  - true
+  v: '[1.6, )'
+
+- q: 'isempty(.[])'
+  in: []
+  out:
+  - true
+  v: '[1.6, )'
+
+- q: 'isempty(.[])'
+  in: [1, 2, 3]
+  out:
+  - false
+  v: '[1.6, )'
+
+- q: 'isempty(range(3))'
+  in: null
+  out:
+  - false
+  v: '[1.6, )'
+
+- q: '[.[] | isempty(select(. > 1))]'
+  in: [1, 2]
+  out:
+  - [true, false]
+  v: '[1.6, )'
+
+- q: 'isempty(isempty(empty))'
+  in: null
+  out:
+  - false
+  v: '[1.6, )'
+
+- q: 'isempty(isempty(1))'
+  in: null
+  out:
+  - false
+  v: '[1.6, )'
+  comment: 'Nesting works because IsEmptyFunction short-circuits on a per-invocation identity token rather than on a `label` name.'
+
+- q: 'isempty(1, error("foo"))'
+  in: null
+  out:
+  - false
+  v: '[1.6, )'
+  comment: 'isempty stops at the first output, so error("foo") is never evaluated.'
+
+- q: 'try isempty(error("foo")) catch .'
+  in: null
+  out:
+  - "foo"
+  v: '[1.6, )'
+
+- q: 'isempty(error("foo")?)'
+  in: null
+  out:
+  - true
+  v: '[1.6, )'
+
+- q: 'isempty((1, 2)?)'
+  in: null
+  out:
+  - false
+  v: '[1.6, )'
+
+- q: 'try path(isempty(.a)) catch .'
+  in: {"a": 1}
+  out:
+  - "Invalid path expression with result false"
+  v: '[1.6, )'
+
+- q: '[isempty(try (1, 2) catch .)]'
+  in: null
+  out:
+  - [false, false]
+  v: '[1.6, 1.7)'
+  comment: 'Two outputs. IsEmptyFunction does not branch on version; TryCatch does. Before 1.7 a `try` also catches errors raised downstream of it (TryCatch.applyLegacy), so it intercepts the short-circuit and runs its catch body, which emits again and re-triggers it. jq 1.6 behaves the same way for the same reason: its isempty is `0 == ((label $go | g | (1, break $go)) // 0)`, and the `try` swallows that break too.'
+
+- q: '[isempty(try (1, 2) catch .)]'
+  in: null
+  out:
+  - [false]
+  v: '[1.7, )'
+  comment: 'One output. From 1.7 on TryCatch tunnels downstream errors through nested `try`s and rethrows them at their own boundary (DOWNSTREAM_ERRORS_ESCAPE_SINCE), so the short-circuit escapes the `try` rather than being caught by it. jq 1.7 made the matching change and redefined isempty as `first((g|false), true)`.'
+
+- q: 'isempty((1?), error("y"))'
+  in: null
+  out:
+  - false
+  v: '[1.7, )'
+  comment: 'From 1.7 on the break escapes the `?`, so error("y") is never evaluated. jq 1.6 raises "y" and then emits false.'

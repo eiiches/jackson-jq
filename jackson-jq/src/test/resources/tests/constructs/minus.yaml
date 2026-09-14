@@ -1,6 +1,0 @@
-# rhs is evaluated first
-- q: 'error("foo") - empty'
-  out: []
-- q: 'try (empty - error("foo")) catch .'
-  out:
-  - foo

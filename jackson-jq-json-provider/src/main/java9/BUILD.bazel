@@ -1,0 +1,10 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_module_info")
+
+jjq_java_module_info(
+    module_name = "net.thisptr.jackson.jq.v2.json",
+    module_packages = [
+        "//jackson-jq-json-provider/src/main/java/net/thisptr/jackson/jq/v2/json",
+    ],
+    release = 9,
+    visibility = ["//jackson-jq-json-provider:__pkg__"],
+)

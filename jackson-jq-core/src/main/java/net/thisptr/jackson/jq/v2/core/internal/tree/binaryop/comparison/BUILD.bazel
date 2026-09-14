@@ -1,0 +1,23 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "comparison",
+    srcs = [
+        "AbstractComparisonExpression.java",
+        "CompareEqualTest.java",
+        "CompareGreaterEqualTest.java",
+        "CompareGreaterTest.java",
+        "CompareLessEqualTest.java",
+        "CompareLessTest.java",
+        "CompareNotEqualTest.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-core:__subpackages__"],
+    deps = [
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/json/comparator",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/memory",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/tree/binaryop",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi",
+    ],
+)

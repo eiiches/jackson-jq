@@ -1,0 +1,5 @@
+load(":defs.bzl", "jq_binaries")
+
+package(default_visibility = ["//visibility:public"])
+
+jq_binaries(name = "all")

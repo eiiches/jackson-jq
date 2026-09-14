@@ -1,0 +1,15 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "misc",
+    srcs = [
+        "Preconditions.java",
+        "UuidUtils.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-ext-module-uuid:__subpackages__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi",
+    ],
+)

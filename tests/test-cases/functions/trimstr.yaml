@@ -1,0 +1,35 @@
+- q: 'try trimstr("foo") catch .'
+  in: 4
+  out:
+  - "startswith() requires string inputs"
+  v: '[1.8.0, )'
+
+- q: 'try trimstr(123) catch .'
+  in: "abc"
+  out:
+  - "startswith() requires string inputs"
+  v: '[1.8.0, )'
+
+- q: 'trimstr("foo")'
+  in: "foobarfoo"
+  out:
+  - "bar"
+  v: '[1.8.0, )'
+
+- q: 'trimstr("a")'
+  in: "aba"
+  out:
+  - "b"
+  v: '[1.8.0, )'
+
+- q: 'trimstr("")'
+  in: "foobar"
+  out:
+  - ""
+  v: '[1.8.0, 1.8.2)'
+
+- q: 'trimstr("")'
+  in: "foobar"
+  out:
+  - "foobar"
+  v: '[1.8.2, )'

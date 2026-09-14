@@ -1,0 +1,19 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_mrjar", "jjq_maven_artifact")
+
+package(default_visibility = ["//visibility:public"])
+
+# As with the jackson3 provider, module-info.java is in src/main/java; release 11.
+jjq_java_mrjar(
+    name = "jackson-jq-json-provider-impl-jakarta-mrjar",
+    multi_release = False,
+    osgi = True,
+    packages = [
+        "//jackson-jq-json-provider-impl-jakarta/src/main/java:module-info",
+        "//jackson-jq-json-provider-impl-jakarta/src/main/java/net/thisptr/jackson/jq/v2/json/impl/jakarta",
+    ],
+)
+
+jjq_maven_artifact(
+    name = "jackson-jq-json-provider-impl-jakarta",
+    artifact = ":jackson-jq-json-provider-impl-jakarta-mrjar",
+)

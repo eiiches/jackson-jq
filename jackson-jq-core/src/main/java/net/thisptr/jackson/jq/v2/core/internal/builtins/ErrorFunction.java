@@ -1,0 +1,36 @@
+package net.thisptr.jackson.jq.v2.core.internal.builtins;
+
+import java.util.List;
+
+import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryUserException;
+import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
+import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
+import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+
+@FunctionRegistration(name = "error", nargs = 0)
+@FunctionRegistration(name = "error", nargs = 1)
+public class ErrorFunction implements Function {
+	@Override
+	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
+		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
+		return FunctionBody.builder(args).usesInput(args.isEmpty()).cardinality(Cardinality.ZERO).build((frame, in, ipath, output) -> {
+			if (args.isEmpty()) {
+				if (jsonProvider.isNull(in))
+					return;
+				throw new JsonQueryUserException(jsonProvider, in);
+			} else {
+				args.get(0).apply(frame, in, UntrackedPath.getInstance(), (out, opath) -> {
+					if (jsonProvider.isNull(out))
+						return;
+					throw new JsonQueryUserException(jsonProvider, out);
+				});
+			}
+		});
+	}
+}

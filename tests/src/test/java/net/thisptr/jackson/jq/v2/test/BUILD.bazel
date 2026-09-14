@@ -1,0 +1,26 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+# The shared conformance harness.
+jjq_java_library(
+    name = "test",
+    testonly = True,
+    srcs = [
+        "AbstractJsonQueryTest.java",
+    ],
+    release = 8,
+    visibility = [
+        "//tests:__subpackages__",
+    ],
+    runtime_deps = ["//jackson-jq-regex-impl-joni"],
+    deps = [
+        "//jackson-jq-core",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/exception",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/comparator",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/testcase",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+        "@maven//:org_assertj_assertj_core",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+    ],
+)

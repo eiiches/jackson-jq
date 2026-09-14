@@ -1,0 +1,62 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>jackson-jq-osgi-integration-tests</artifactId>
+	<name>${project.groupId}:${project.artifactId}</name>
+	<packaging>bundle</packaging>
+
+	<parent>
+		<groupId>net.thisptr.jackson.jq.v2.smoketests</groupId>
+		<artifactId>jackson-jq-osgi-integration-tests-parent</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
+	<dependencies>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-core</artifactId>
+			<version>${jackson-jq.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-json-provider-impl-jackson2</artifactId>
+			<version>${jackson-jq.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-json-provider-impl-jackson3</artifactId>
+			<version>${jackson-jq.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-json-provider-impl-gson</artifactId>
+			<version>${jackson-jq.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.framework</artifactId>
+			<version>7.0.5</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Bundle-SymbolicName>net.thisptr.jackson.jq.v2.smoketests.osgi.application</Bundle-SymbolicName>
+						<Private-Package>net.thisptr.jackson.jq.v2.smoketests.osgi</Private-Package>
+						<Test-Cases>net.thisptr.jackson.jq.v2.smoketests.osgi.JacksonJqBundleTest</Test-Cases>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

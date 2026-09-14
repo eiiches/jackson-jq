@@ -1,0 +1,9 @@
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "MODULE.bazel",
+    "defs.bzl",
+    "extensions.bzl",
+    "jq.BUILD.bazel",
+    "repositories.bzl",
+])

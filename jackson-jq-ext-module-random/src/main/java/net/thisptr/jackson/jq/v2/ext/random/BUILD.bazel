@@ -1,0 +1,14 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "random",
+    srcs = [
+        "ModuleImpl.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-ext-module-random:__subpackages__"],
+    deps = [
+        "//jackson-jq-ext-module-random/src/main/java/net/thisptr/jackson/jq/v2/ext/random/functions",
+        "//jackson-jq-spi",
+    ],
+)

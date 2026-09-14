@@ -1,0 +1,11 @@
+package net.thisptr.jackson.jq.v2.core.internal.exception;
+
+import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+
+public class JsonQueryUndefinedBehaviorException extends JsonQueryException {
+	private static final long serialVersionUID = 6910999258451981582L;
+
+	public JsonQueryUndefinedBehaviorException(String msg) {
+		super(msg);
+	}
+}

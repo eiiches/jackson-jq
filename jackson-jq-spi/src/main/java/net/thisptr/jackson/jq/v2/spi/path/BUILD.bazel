@@ -1,0 +1,24 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "path",
+    srcs = [
+        "IndexOfPath.java",
+        "IndexRangePath.java",
+        "IntIndexPath.java",
+        "InvalidPath.java",
+        "NumberIndexPath.java",
+        "Path.java",
+        "RootPath.java",
+        "StringKeyPath.java",
+        "UnrepresentablePath.java",
+        "UntrackedPath.java",
+        "package-info.java",
+    ],
+    release = 8,
+    visibility = ["//jackson-jq-spi:__subpackages__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/exception",
+    ],
+)

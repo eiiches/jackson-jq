@@ -1,0 +1,5 @@
+- q: 'builtins | contains(["length/0"])'
+  in: null
+  out:
+  - true
+  v: '[1.6, )'

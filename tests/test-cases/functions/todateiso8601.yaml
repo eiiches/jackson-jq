@@ -1,0 +1,64 @@
+- q: 'todateiso8601'
+  in: 1696032000
+  out:
+  - "2023-09-30T00:00:00Z"
+
+- q: 'todateiso8601'
+  in: [2023, 8, 30, 0, 0, 0, 6, 272]
+  out:
+  - "2023-09-30T00:00:00Z"
+  v: '[1.5.0, )'
+
+- q: 'todateiso8601'
+  in: [49, 57, 55, 48, 45, 48, 49, 45, 48, 49, 84, 48, 48, 58, 48, 48, 58, 49, 57, 90]
+  out:
+  - "49-58-55T48:45:48Z"
+  v: '[1.5.0, 1.8.0)'
+
+- q: 'todateiso8601'
+  in: [49, 57, 55, 48, 45, 48, 49, 45, 48, 49, 84, 48, 48, 58, 48, 48, 58, 49, 57, 90]
+  out:
+  - "53-11-26T00:45:48Z"
+  v: '[1.8.0, )'
+
+- q: 'try todateiso8601 catch .'
+  in: [2023, 8, 30]
+  out:
+  - "strftime/1 requires parsed datetime inputs"
+  v: '[1.5.0, 1.8.0)'
+
+- q: 'todateiso8601'
+  in: [2023, 8, 30]
+  out:
+  - "2023-09-30T00:00:00Z"
+  v: '[1.8.0, )'
+
+- q: 'try todateiso8601 catch .'
+  in: [2023, "8", 30, 0, 0, 0, 6, 272]
+  out:
+  - "strftime/1 requires parsed datetime inputs"
+  v: '[1.5.0, )'
+
+- q: 'try (nan | todateiso8601) catch .'
+  out:
+  - "error converting number of seconds since epoch to datetime"
+  v: '[1.7.0, )'
+  comment: 'jq 1.5/1.6 crash (native assertion failure) on this input rather than erroring cleanly, so this is verified against real jq for 1.7.0 and above only; jackson-jq raises the same error consistently on every supported version'
+
+- q: 'try (infinite | todateiso8601) catch .'
+  out:
+  - "error converting number of seconds since epoch to datetime"
+  v: '[1.7.0, )'
+  comment: 'jq 1.5/1.6 crash (native assertion failure) on this input rather than erroring cleanly, so this is verified against real jq for 1.7.0 and above only; jackson-jq raises the same error consistently on every supported version'
+
+- q: 'try (-infinite | todateiso8601) catch .'
+  out:
+  - "error converting number of seconds since epoch to datetime"
+  v: '[1.7.0, )'
+  comment: 'jq 1.5/1.6 crash (native assertion failure) on this input rather than erroring cleanly, so this is verified against real jq for 1.7.0 and above only; jackson-jq raises the same error consistently on every supported version'
+
+- q: 'try (1e300 | todateiso8601) catch .'
+  out:
+  - "error converting number of seconds since epoch to datetime"
+  v: '[1.7.0, )'
+  comment: 'jq 1.5/1.6 crash (native assertion failure) on this input rather than erroring cleanly, so this is verified against real jq for 1.7.0 and above only; jackson-jq raises the same error consistently on every supported version'
