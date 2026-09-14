@@ -10,7 +10,7 @@
 		<jackson-jq.version>2.0.0-SNAPSHOT</jackson-jq.version>
 		<quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
 		<quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
-		<quarkus.platform.version>3.38.1</quarkus.platform.version>
+		<quarkus.platform.version>3.39.2</quarkus.platform.version>
 		<surefire-plugin.version>3.6.0</surefire-plugin.version>
 		<maven.compiler.release>17</maven.compiler.release>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
