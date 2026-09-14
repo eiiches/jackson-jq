@@ -31,13 +31,6 @@ public final class ModuleScope<JsonNode> {
 		return new ModuleScope<>(new ModuleResolver<>(env), null);
 	}
 
-	/**
-	 * The same compilation, but inside {@code module} -- so its imports resolve relative to it.
-	 */
-	public ModuleScope<JsonNode> inside(@Nullable JqModule<JsonNode> module) {
-		return module == null ? this : new ModuleScope<>(resolver, module);
-	}
-
 	public JavaModule resolveModule(String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		return resolver.resolveModule(currentModule, path, metadata);
 	}

@@ -98,17 +98,22 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 
 	@Override
 	public void apply(StackFrame parentFrame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
+		validateBindings(null);
 		// Nested use: the enclosing invocation's Memory -- and hence its limits -- is reused, so the
 		// RuntimeLimits argument is never read.
 		apply(parentFrame, in, path, output, null, parentFrame.getRuntimeLimits());
 	}
 
+	/**
+	 * Top-level entry point. The caller is responsible for having run {@link #validateBindings} against
+	 * {@code bindings}; {@link net.thisptr.jackson.jq.v2.core.JsonQuery#withRuntimeBindings} does so once, when the
+	 * query carrying them is built.
+	 */
 	public void apply(JsonNode in, RuntimeLimits runtimeLimits, RuntimeBindings<JsonNode> bindings, Consumer<? super JsonNode> output) throws JsonQueryException {
 		apply((StackFrame) null, in, UntrackedPath.getInstance(), (v, p) -> output.accept(v), bindings, runtimeLimits);
 	}
 
 	private void apply(@Nullable StackFrame parentFrame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output, @Nullable RuntimeBindings<JsonNode> bindings, RuntimeLimits runtimeLimits) throws JsonQueryException {
-		validateBindings(bindings);
 		Memory memory = parentFrame != null ? parentFrame.getEnclosingMemory() : new Memory(globalCount, runtimeLimits);
 		StackFrame rootFrame = memory.pushFrame(frameSize);
 		try {
@@ -148,7 +153,7 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 		}
 	}
 
-	private void validateBindings(@Nullable RuntimeBindings<JsonNode> bindings) throws JsonQueryException {
+	public void validateBindings(@Nullable RuntimeBindings<JsonNode> bindings) throws JsonQueryException {
 		Map<String, Supplier<JsonNode>> variables = bindings != null ? bindings.getVariables() : Collections.emptyMap();
 		Map<FunctionSignature, Function> functions = bindings != null ? bindings.getFunctions() : Collections.emptyMap();
 		for (String name : variables.keySet()) {
@@ -167,11 +172,11 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 		}
 		for (String name : globalVariableIndices.keySet()) {
 			if (!variables.containsKey(name))
-				throw new JsonQueryException("Variable $" + name + " must be supplied when calling apply(), because it was declared without a value in the Environment");
+				throw new JsonQueryException("Variable $" + name + " must be supplied via withRuntimeBindings(), because it was declared without a value in the Environment");
 		}
 		for (FunctionSignature key : globalFunctionIndices.keySet()) {
 			if (!functions.containsKey(key))
-				throw new JsonQueryException("Function " + key + " must be supplied when calling apply(), because it was declared without a value in the Environment");
+				throw new JsonQueryException("Function " + key + " must be supplied via withRuntimeBindings(), because it was declared without a value in the Environment");
 		}
 	}
 

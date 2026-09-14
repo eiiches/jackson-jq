@@ -32,7 +32,7 @@ public class RuntimeLimitsTest {
 
 		JsonNode input = MAPPER.readTree("[1, 2, 3]");
 		List<JsonNode> output = new ArrayList<>();
-		assertThatThrownBy(() -> query.apply(input, options, output::add))
+		assertThatThrownBy(() -> query.withRuntimeOptions(options).apply(input, output::add))
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum array size of 3");
 		assertThat(output).isEmpty();
@@ -49,7 +49,7 @@ public class RuntimeLimitsTest {
 
 		JsonNode input = MAPPER.readTree("{\"a\": 1, \"b\": 2, \"c\": 3}");
 		List<JsonNode> output = new ArrayList<>();
-		assertThatThrownBy(() -> query.apply(input, options, output::add))
+		assertThatThrownBy(() -> query.withRuntimeOptions(options).apply(input, output::add))
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum object size of 3");
 		assertThat(output).isEmpty();
@@ -66,7 +66,7 @@ public class RuntimeLimitsTest {
 
 		JsonNode input = MAPPER.readTree("\"abc\"");
 		List<JsonNode> output = new ArrayList<>();
-		assertThatThrownBy(() -> query.apply(input, options, output::add))
+		assertThatThrownBy(() -> query.withRuntimeOptions(options).apply(input, output::add))
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum string length of 3");
 		assertThat(output).isEmpty();

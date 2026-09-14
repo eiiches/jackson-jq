@@ -161,11 +161,12 @@ final class JqFunctionCompiler {
 		}
 
 		private <N> Environment<N> resolveEnvironment(Environment<N> callingEnvironment) {
-			return origin == Origin.ENVIRONMENT
-					? callingEnvironment
-					: EnvironmentBuilder.withDefaultLoaders(callingEnvironment.getJsonProvider(), version)
-					.setFunctionLoader(callingEnvironment.getFunctionLoader())
-					.build();
+			if (origin == Origin.ENVIRONMENT)
+				return callingEnvironment;
+			EnvironmentBuilder<N> builder = EnvironmentBuilder.<N>withDefaultLoaders(callingEnvironment.getJsonProvider(), version)
+					.clearFunctionLoaders();
+			callingEnvironment.getFunctionLoaders().forEach(builder::addFunctionLoader);
+			return builder.build();
 		}
 
 		// baseSlot is unused by name/slot resolution here -- CompileContext.addLocalVariable/addLocalFunction

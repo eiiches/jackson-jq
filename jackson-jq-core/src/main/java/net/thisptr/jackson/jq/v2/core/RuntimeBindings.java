@@ -10,7 +10,10 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 
 /**
- * Per-invocation overrides for variables and functions registered in an {@link Environment}.
+ * Values for the variables and functions an {@link Environment} registered, applied with
+ * {@link JsonQuery#withRuntimeBindings(RuntimeBindings)}.
+ * <p>
+ * Instances are immutable. Build one with {@link #newBuilder()}.
  */
 public final class RuntimeBindings<JsonNode> {
 	private static final RuntimeBindings<?> EMPTY = new RuntimeBindings<>(Collections.emptyMap(), Collections.emptyMap());
@@ -21,13 +24,6 @@ public final class RuntimeBindings<JsonNode> {
 	private RuntimeBindings(Map<String, Supplier<JsonNode>> variables, Map<FunctionSignature, Function> functions) {
 		this.variables = Collections.unmodifiableMap(new HashMap<>(variables));
 		this.functions = Collections.unmodifiableMap(new HashMap<>(functions));
-	}
-
-	// Package-private: JsonQuery's no-bindings overloads need an instance to pass to apply(), but
-	// callers never do -- they use the apply() overloads that take no bindings.
-	@SuppressWarnings("unchecked")
-	static <JsonNode> RuntimeBindings<JsonNode> getDefaultInstance() {
-		return (RuntimeBindings<JsonNode>) EMPTY;
 	}
 
 	public static <JsonNode> Builder<JsonNode> newBuilder() {
@@ -64,9 +60,10 @@ public final class RuntimeBindings<JsonNode> {
 			return this;
 		}
 
+		@SuppressWarnings("unchecked") // EMPTY holds no values, so it is safe at any JsonNode type.
 		public RuntimeBindings<JsonNode> build() {
 			if (variables.isEmpty() && functions.isEmpty())
-				return RuntimeBindings.getDefaultInstance();
+				return (RuntimeBindings<JsonNode>) EMPTY;
 			return new RuntimeBindings<>(variables, functions);
 		}
 	}

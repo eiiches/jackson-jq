@@ -192,18 +192,20 @@ public final class ModuleResolver<JsonNode> {
 
 	/**
 	 * The environment an imported module compiles against: the importing environment's JSON
-	 * provider, jq version and function loader -- so a custom {@code FunctionLoader} reaches modules
-	 * too -- but none of its globals, which belong to the query, not to the library it imports. It
-	 * needs no module loaders: this resolver, not that environment, resolves the module's imports.
+	 * provider, jq version and function loaders -- so a custom {@code FunctionLoader} reaches modules
+	 * too, in the same order -- but none of its globals, which belong to the query, not to the library
+	 * it imports. It needs no module loaders: this resolver, not that environment, resolves the
+	 * module's imports.
 	 */
 	private Environment<JsonNode> moduleEnvironment() {
 		@Var
 		Environment<JsonNode> cached = moduleEnv;
 		if (cached == null) {
-			cached = EnvironmentBuilder.withDefaultLoaders(env.getJsonProvider(), env.getJqVersion())
+			EnvironmentBuilder<JsonNode> builder = EnvironmentBuilder.withDefaultLoaders(env.getJsonProvider(), env.getJqVersion())
 					.clearModuleLoaders()
-					.setFunctionLoader(env.getFunctionLoader())
-					.build();
+					.clearFunctionLoaders();
+			env.getFunctionLoaders().forEach(builder::addFunctionLoader);
+			cached = builder.build();
 			moduleEnv = cached;
 		}
 		return cached;

@@ -9,13 +9,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
+import net.thisptr.jackson.jq.v2.core.internal.compile.QueryCompiler;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
+import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
@@ -26,7 +30,7 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final Version jqVersion;
 	private final List<ModuleLoader<JsonNode>> moduleLoaders;
-	private final FunctionLoader functionLoader;
+	private final List<FunctionLoader> functionLoaders;
 	private final Set<String> declaredVariables;
 	private final Set<FunctionSignature> declaredFunctions;
 	private final Map<String, Supplier<JsonNode>> variables;
@@ -36,7 +40,7 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	private final Map<String, Module> importedModules;
 
 	public EnvironmentImpl(JsonProvider<JsonNode> jsonProvider, Version jqVersion,
-						   List<ModuleLoader<JsonNode>> moduleLoaders, FunctionLoader functionLoader,
+						   List<ModuleLoader<JsonNode>> moduleLoaders, List<FunctionLoader> functionLoaders,
 						   Set<String> declaredVariables, Set<FunctionSignature> declaredFunctions,
 						   Map<String, Supplier<JsonNode>> variables, Map<FunctionSignature, Function> functions,
 						   Map<FunctionSignature, JqFunction> jqFunctions,
@@ -44,7 +48,7 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 		this.jsonProvider = jsonProvider;
 		this.jqVersion = jqVersion;
 		this.moduleLoaders = new ArrayList<>(moduleLoaders);
-		this.functionLoader = functionLoader;
+		this.functionLoaders = new ArrayList<>(functionLoaders);
 		this.declaredVariables = new HashSet<>(declaredVariables);
 		this.declaredFunctions = new HashSet<>(declaredFunctions);
 		this.variables = new HashMap<>(variables);
@@ -70,8 +74,8 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	}
 
 	@Override
-	public FunctionLoader getFunctionLoader() {
-		return functionLoader;
+	public List<FunctionLoader> getFunctionLoaders() {
+		return Collections.unmodifiableList(functionLoaders);
 	}
 
 	@Override
@@ -107,5 +111,10 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	@Override
 	public Map<String, Module> getImportedModules() {
 		return Collections.unmodifiableMap(importedModules);
+	}
+
+	@Override
+	public JsonQuery<JsonNode> compile(String expression, CompileOptions options) throws JsonQueryException {
+		return QueryCompiler.compile(this, expression, options);
 	}
 }

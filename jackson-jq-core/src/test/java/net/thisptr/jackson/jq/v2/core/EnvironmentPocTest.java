@@ -129,7 +129,7 @@ public class EnvironmentPocTest {
 		};
 
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7)
-				.setFunctionLoader(testLoader)
+				.addFunctionLoader(testLoader)
 				.defineFunction(FunctionSignature.of("probe", 1), probe)
 				.build();
 
@@ -166,7 +166,7 @@ public class EnvironmentPocTest {
 		};
 
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7)
-				.setFunctionLoader(testLoader)
+				.addFunctionLoader(testLoader)
 				.defineFunction(FunctionSignature.of("probe", 1), probe)
 				.build();
 

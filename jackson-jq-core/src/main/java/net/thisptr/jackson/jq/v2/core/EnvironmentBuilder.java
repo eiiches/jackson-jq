@@ -32,7 +32,7 @@ public final class EnvironmentBuilder<JsonNode> {
 	private final Version jqVersion;
 
 	private final List<ModuleLoader<JsonNode>> moduleLoaders = new ArrayList<>();
-	private FunctionLoader functionLoader;
+	private final List<FunctionLoader> functionLoaders = new ArrayList<>();
 
 	private final Set<String> declaredVariables = new HashSet<>();
 	private final Set<FunctionSignature> declaredFunctions = new HashSet<>();
@@ -42,17 +42,16 @@ public final class EnvironmentBuilder<JsonNode> {
 	private final Map<String, JsonNode> constants = new HashMap<>();
 	private final Map<String, Module> importedModules = new HashMap<>();
 
-	private EnvironmentBuilder(JsonProvider<JsonNode> jsonProvider, Version jqVersion, FunctionLoader functionLoader) {
+	private EnvironmentBuilder(JsonProvider<JsonNode> jsonProvider, Version jqVersion) {
 		this.jsonProvider = jsonProvider;
 		this.jqVersion = jqVersion;
-		this.functionLoader = new CachedFunctionLoader(functionLoader);
 	}
 
 	/**
 	 * Starts a builder that already knows how to find what is on the classpath: a
 	 * {@link ClassPathModuleLoader} for {@code import}ed modules, and a {@link ClassPathFunctionLoader}
 	 * for functions -- which is where the jq builtins come from. Drop either with
-	 * {@link #clearModuleLoaders()} or {@link #setFunctionLoader}.
+	 * {@link #clearModuleLoaders()} or {@link #clearFunctionLoaders()}.
 	 * <p>
 	 * Both discover their providers through this class's own {@link ClassLoader}. Where that is not
 	 * the one that can see the application's providers -- an OSGi bundle, a JPMS layer, a plugin
@@ -70,9 +69,9 @@ public final class EnvironmentBuilder<JsonNode> {
 	 * {@link ClassPathFunctionLoader} search for providers
 	 */
 	public static <JsonNode> EnvironmentBuilder<JsonNode> withDefaultLoaders(JsonProvider<JsonNode> jsonProvider, Version jqVersion, ClassLoader classLoader) {
-		EnvironmentBuilder<JsonNode> builder = new EnvironmentBuilder<>(Objects.requireNonNull(jsonProvider, "jsonProvider"), Objects.requireNonNull(jqVersion, "jqVersion"),
-				new ClassPathFunctionLoader(classLoader));
+		EnvironmentBuilder<JsonNode> builder = new EnvironmentBuilder<>(Objects.requireNonNull(jsonProvider, "jsonProvider"), Objects.requireNonNull(jqVersion, "jqVersion"));
 		builder.addModuleLoader(new ClassPathModuleLoader<>(classLoader));
+		builder.addFunctionLoader(new ClassPathFunctionLoader(classLoader));
 		return builder;
 	}
 
@@ -105,8 +104,33 @@ public final class EnvironmentBuilder<JsonNode> {
 		return this;
 	}
 
-	public EnvironmentBuilder<JsonNode> setFunctionLoader(FunctionLoader functionLoader) {
-		this.functionLoader = new CachedFunctionLoader(Objects.requireNonNull(functionLoader, "functionLoader"));
+	/**
+	 * Appends a loader to the ones this environment consults. They are asked in the order they were
+	 * added, and the first one to supply the called signature answers it -- so a loader added after
+	 * the default {@link ClassPathFunctionLoader} extends the builtins rather than shadowing them.
+	 * To shadow a name, define it on the environment itself with {@link #defineFunction} or
+	 * {@link #defineJqFunction}, which beat every loader, or take over the search order with
+	 * {@link #clearFunctionLoaders()}.
+	 */
+	public EnvironmentBuilder<JsonNode> addFunctionLoader(FunctionLoader functionLoader) {
+		Objects.requireNonNull(functionLoader, "functionLoader");
+		// A loader is asked for a whole registry on every call it has to resolve, and discovering one
+		// can be expensive, so each gets memoized per jq version for as long as this environment lives.
+		// Already-memoized loaders -- what Environment.getFunctionLoaders() hands back, which is how
+		// the compiler passes a query's loaders down to an imported module -- are taken as they are,
+		// so that the module shares the caller's caches instead of starting cold behind a second layer.
+		functionLoaders.add(functionLoader instanceof CachedFunctionLoader ? functionLoader : new CachedFunctionLoader(functionLoader));
+		return this;
+	}
+
+	/**
+	 * Removes every function loader added so far, including the default one
+	 * {@link #withDefaultLoaders} installed -- the way to take over the search order completely.
+	 * An environment left with no function loaders has no jq builtins: every call it cannot resolve
+	 * from its own definitions fails with "Function name/arity does not exist".
+	 */
+	public EnvironmentBuilder<JsonNode> clearFunctionLoaders() {
+		functionLoaders.clear();
 		return this;
 	}
 
@@ -210,7 +234,7 @@ public final class EnvironmentBuilder<JsonNode> {
 	}
 
 	public Environment<JsonNode> build() {
-		return new EnvironmentImpl<>(jsonProvider, jqVersion, moduleLoaders, functionLoader,
+		return new EnvironmentImpl<>(jsonProvider, jqVersion, moduleLoaders, functionLoaders,
 				declaredVariables, declaredFunctions, variables, functions, jqFunctions, constants, importedModules);
 	}
 }
