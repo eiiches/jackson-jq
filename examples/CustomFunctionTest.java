@@ -1,6 +1,5 @@
 package examples;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -44,8 +43,7 @@ public class CustomFunctionTest {
 		JsonQuery<JsonNode> query = environment.compile("times100(.value)");
 
 		JsonNode input = MAPPER.readTree("{\"value\":5}");
-		List<JsonNode> output = new ArrayList<>();
-		query.apply(input, output::add);
+		List<JsonNode> output = query.apply(input);
 		assertThat(output).containsExactly(IntNode.valueOf(500));
 	}
 }

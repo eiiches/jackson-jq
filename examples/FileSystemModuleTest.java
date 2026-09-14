@@ -3,7 +3,6 @@ package examples;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -42,8 +41,7 @@ public class FileSystemModuleTest {
 		JsonQuery<JsonNode> query = environment.compile("import \"math\" as math; math::double");
 
 		JsonNode input = MAPPER.readTree("21");
-		List<JsonNode> output = new ArrayList<>();
-		query.apply(input, output::add);
+		List<JsonNode> output = query.apply(input);
 		assertThat(output).containsExactly(IntNode.valueOf(42));
 	}
 }

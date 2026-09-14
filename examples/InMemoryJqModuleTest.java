@@ -1,6 +1,5 @@
 package examples;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -106,8 +105,7 @@ public class InMemoryJqModuleTest {
 
 		JsonQuery<JsonNode> query = environment.compile("import \"greeting\" as greeting; greeting::shout(21)");
 
-		List<JsonNode> output = new ArrayList<>();
-		query.apply(jsonProvider.createNull(), output::add);
+		List<JsonNode> output = query.apply(jsonProvider.createNull());
 		assertThat(output).containsExactly(StringNode.valueOf("n=42!"));
 	}
 }
