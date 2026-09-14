@@ -61,6 +61,32 @@ $ java -jar jackson-jq-cli-1.6.5.jar --jq 1.6 'join("-")' # jq-1.6 can join any 
 
 Homebrew (or Linuxbrew) users can alternatively run `brew tap eiiches/jackson-jq && brew install jackson-jq` to install the CLI. `jackson-jq` will be available on your $PATH.
 
+Running benchmarks
+------------------
+
+The JMH benchmark module measures query compilation and application separately. Build its executable
+JAR together with jackson-jq:
+
+```sh
+mvn -pl jackson-jq-benchmark -am package
+```
+
+The jq expression and one Jackson JSON input are literal arguments. The default compatibility version
+is jq 1.7; select another supported version before the expression. Arguments after the JSON input are
+passed to JMH:
+
+```sh
+java -jar jackson-jq-benchmark/target/benchmarks.jar \
+	--jq-version 1.7 \
+	'test("[a-z]+")' \
+	'"foo"' \
+	-f 3
+```
+
+Jackson parsing, built-in loading, scope construction, and setup compilation happen outside the
+measured methods. Run the JAR with `--help` for benchmark usage, or provide an expression and input
+followed by `-h` for JMH's options.
+
 Branches and versioning
 -----------------------
 
