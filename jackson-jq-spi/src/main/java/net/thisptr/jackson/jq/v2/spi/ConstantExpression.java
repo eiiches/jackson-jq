@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * An expression whose complete, input-independent result has been computed ahead of time.
  * <p>
- * Consumers may use this interface during {@link Function#bindArguments} to specialize costly
+ * Consumers may use this interface during {@link Function#bind} to specialize costly
  * operations. The returned list is ordered and must not be modified. Its JSON nodes must also be
  * treated as read-only.
  *

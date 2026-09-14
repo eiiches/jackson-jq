@@ -11,7 +11,7 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Closure;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -19,7 +19,6 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
-import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class ResolvedFunctionDefinition<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final int slot;
@@ -128,7 +127,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<StackFra
 		Function factory = new Function() {
 			@Override
 			@SuppressWarnings("unchecked")
-			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> jp, List<Expression<Context, N>> fnArgs, Version version) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> fnArgs) {
 				Expression<StackFrame, N> effectiveBody = (Expression<StackFrame, N>) (Expression<?, ?>) resolvedBody;
 				List<Expression<StackFrame, N>> effectiveFnArgs = (List<Expression<StackFrame, N>>) (List<?>) fnArgs;
 				return (callerFrame, input, path, out) -> {

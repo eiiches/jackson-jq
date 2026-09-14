@@ -7,9 +7,9 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 /**
  * An executable jq expression.
  * <p>
- * Instances (however produced, e.g. via {@link Function#bindArguments}) must be safe for
+ * Instances (however produced, e.g. via {@link Function#bind}) must be safe for
  * concurrent, repeated calls to {@link #apply} for the lifetime of the compiled query -- see
- * {@link Function#bindArguments} for the corresponding guarantee from the producer side.
+ * {@link Function#bind} for the corresponding guarantee from the producer side.
  *
  * @param <JsonNode> the JSON node type
  * @param <Context> the execution state that has to be passed on when evaluating function arguments; opaque

@@ -12,7 +12,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.version.Versions;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
@@ -226,7 +228,8 @@ public class RuntimeOptionsTest {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
 				.defineFunction(FunctionSignature.of("observed_max_array_length", 0), new Function() {
 					@Override
-					public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(net.thisptr.jackson.jq.v2.json.JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, net.thisptr.jackson.jq.v2.spi.version.Version ver) {
+					public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> args) {
+						JsonProvider<N> jsonProvider = bindCtx.getJsonProvider();
 						return (context, in, path, output) -> output.emit(jsonProvider.createNumber(context.getRuntimeLimits().getMaxArrayLength()), UntrackedPath.getInstance());
 					}
 				})

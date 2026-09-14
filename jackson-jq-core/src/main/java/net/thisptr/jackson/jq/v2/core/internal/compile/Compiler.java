@@ -133,6 +133,7 @@ import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -342,7 +343,7 @@ public class Compiler {
 				if (factory == null) {
 					throw new JsonQueryException(String.format("Function %s::%s/%d does not exist", call.moduleName(), call.name(), compiledArgs.size()));
 				}
-				return restoreFixedInput(bindFunctionCall(env, factory, compiledArgs, inputFixed), inputFixed);
+				return restoreFixedInput(bindFunctionCall(bindContextOf(env), factory, compiledArgs, inputFixed), inputFixed);
 			}
 
 			return restoreFixedInput(compileFunctionCall(env, context, call.name(), compiledArgs), inputFixed);
@@ -903,6 +904,7 @@ public class Compiler {
 	 */
 	private static <N> Expression<StackFrame, N> compileFunctionCall(Environment<N> env, CompileContext context, String fullName, List<Expression<StackFrame, N>> compiledArgs) throws JsonQueryException {
 		int arity = compiledArgs.size();
+		BindContext<N> bindContext = bindContextOf(env);
 		if (context.isLocalFunction(fullName, arity)) {
 			SymbolLocation loc = context.getFunctionLocation(fullName, arity);
 			int slot = loc != null ? loc.slot : 0;
@@ -913,18 +915,18 @@ public class Compiler {
 				return precomputed;
 			if (loc != null && !loc.isLocal) {
 				return boundArgumentInfo != null
-						? new ResolvedCapturedFunctionBoundArgumentAccess<>(env.getJsonProvider(), env.getJqVersion(), fullName, slot, context.getCurrentFunctionClosureSlot(), compiledArgs, boundArgumentInfo, context.isInputFixed())
-						: new ResolvedCapturedFunctionAccess<>(env.getJsonProvider(), env.getJqVersion(), fullName, slot, context.getCurrentFunctionClosureSlot(), compiledArgs, info, context.isInputFixed());
+						? new ResolvedCapturedFunctionBoundArgumentAccess<>(bindContext, fullName, slot, context.getCurrentFunctionClosureSlot(), compiledArgs, boundArgumentInfo, context.isInputFixed())
+						: new ResolvedCapturedFunctionAccess<>(bindContext, fullName, slot, context.getCurrentFunctionClosureSlot(), compiledArgs, info, context.isInputFixed());
 			}
 			return boundArgumentInfo != null
-					? new ResolvedLocalFunctionBoundArgumentAccess<>(env.getJsonProvider(), env.getJqVersion(), fullName, slot, compiledArgs, boundArgumentInfo, context.isInputFixed())
-					: new ResolvedLocalFunctionAccess<>(env.getJsonProvider(), env.getJqVersion(), fullName, slot, compiledArgs, info, context.isInputFixed());
+					? new ResolvedLocalFunctionBoundArgumentAccess<>(bindContext, fullName, slot, compiledArgs, boundArgumentInfo, context.isInputFixed())
+					: new ResolvedLocalFunctionAccess<>(bindContext, fullName, slot, compiledArgs, info, context.isInputFixed());
 		}
 
 		FunctionSignature declaredKey = resolveDeclaredFunctionKey(env, fullName, arity);
 		if (declaredKey != null) {
 			int globalIndex = context.getOrAssignGlobalFunctionIndex(declaredKey);
-			return new ResolvedGlobalFunctionAccess<>(env.getJsonProvider(), env.getJqVersion(), fullName, globalIndex, compiledArgs);
+			return new ResolvedGlobalFunctionAccess<>(bindContext, fullName, globalIndex, compiledArgs);
 		}
 
 		FunctionSignature exact = FunctionSignature.of(fullName, arity);
@@ -938,7 +940,7 @@ public class Compiler {
 			factory = envFunctions.get(exact.asVariadic());
 		}
 		if (factory != null)
-			return bindFunctionCall(env, factory, compiledArgs, context.isInputFixed());
+			return bindFunctionCall(bindContext, factory, compiledArgs, context.isInputFixed());
 
 		for (FunctionLoader loader : env.getFunctionLoaders()) {
 			Map<FunctionSignature, Function> loadedFunctions = loader.getFunctions(env.getJqVersion());
@@ -951,16 +953,39 @@ public class Compiler {
 				loaded = loadedFunctions.get(exact.asVariadic());
 			}
 			if (loaded != null)
-				return bindFunctionCall(env, loaded, compiledArgs, context.isInputFixed());
+				return bindFunctionCall(bindContext, loaded, compiledArgs, context.isInputFixed());
 		}
 		throw new JsonQueryException(String.format("Function %s/%d does not exist", fullName, arity));
 	}
 
 	/**
+	 * The bind-time view of {@code env}, as every {@link Function} in a query compiled against it sees it.
+	 * <p>
+	 * One is built per call site while compiling and then held by the bound expression, so the run-time
+	 * bind path -- {@code Resolved*FunctionAccess.apply}, which re-binds on every evaluation -- allocates
+	 * nothing.
+	 */
+	private static <N> BindContext<N> bindContextOf(Environment<N> env) {
+		JsonProvider<N> jsonProvider = env.getJsonProvider();
+		Version jqVersion = env.getJqVersion();
+		return new BindContext<N>() {
+			@Override
+			public JsonProvider<N> getJsonProvider() {
+				return jsonProvider;
+			}
+
+			@Override
+			public Version getJqVersion() {
+				return jqVersion;
+			}
+		};
+	}
+
+	/**
 	 * Binds a resolved Java {@link Function} to the call's already-compiled arguments.
 	 */
-	private static <N> Expression<StackFrame, N> bindFunctionCall(Environment<N> env, Function factory, List<Expression<StackFrame, N>> compiledArgs, boolean inputFixed) {
-		Expression<StackFrame, N> fn = factory.bindArguments(env.getJsonProvider(), compiledArgs, env.getJqVersion());
+	private static <N> Expression<StackFrame, N> bindFunctionCall(BindContext<N> bindContext, Function factory, List<Expression<StackFrame, N>> compiledArgs, boolean inputFixed) throws JsonQueryException {
+		Expression<StackFrame, N> fn = factory.bind(bindContext, compiledArgs);
 		return new ResolvedFunctionCall<>(fn, fn.dependsOnExternalState(), fn.dependsOnInput(), inputFixed, compiledArgs);
 	}
 
@@ -1062,7 +1087,7 @@ public class Compiler {
 				currentFrame.set(slot, new Function() {
 					@Override
 					@SuppressWarnings("unchecked")
-					public <Context extends RuntimeContext, N1> Expression<Context, N1> bindArguments(JsonProvider<N1> jp, List<Expression<Context, N1>> emptyArgs, Version v) {
+					public <Context extends RuntimeContext, N1> Expression<Context, N1> bind(BindContext<N1> bindCtx, List<Expression<Context, N1>> emptyArgs) {
 						Expression<StackFrame, N1> effectiveExpr = (Expression<StackFrame, N1>) (Expression<?, ?>) pExpr;
 						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(callerFrame, inVal, pVal, outVal);
 					}

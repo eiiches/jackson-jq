@@ -6,6 +6,7 @@ import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -14,13 +15,13 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
-import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class MathFunctions {
 
 	public abstract static class AbstractMathFunction implements Function {
 		@Override
-		public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+		public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
+			JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
 			return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 				Preconditions.checkInputType(jsonProvider, "mathfunc", in, JsonNodeType.NUMBER);
 				output.emit(jsonProvider.createNumber(f(jsonProvider.getNumberAsDoubleRounded(in))), UntrackedPath.getInstance());

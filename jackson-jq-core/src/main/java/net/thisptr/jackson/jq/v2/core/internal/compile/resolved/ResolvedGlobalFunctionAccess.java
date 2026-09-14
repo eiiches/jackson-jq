@@ -3,13 +3,12 @@ package net.thisptr.jackson.jq.v2.core.internal.compile.resolved;
 import java.util.List;
 
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
-import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 /**
  * Call to an {@code EnvironmentBuilder.declareFunction}-registered function -- no compile-time
@@ -18,15 +17,13 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
  * and bound against the call's arguments fresh on every evaluation.
  */
 public class ResolvedGlobalFunctionAccess<JsonNode> implements Expression<StackFrame, JsonNode> {
-	private final JsonProvider<JsonNode> jsonProvider;
-	private final Version version;
+	private final BindContext<JsonNode> bindContext;
 	private final String name;
 	private final int globalIndex;
 	private final List<Expression<StackFrame, JsonNode>> args;
 
-	public ResolvedGlobalFunctionAccess(JsonProvider<JsonNode> jsonProvider, Version version, String name, int globalIndex, List<Expression<StackFrame, JsonNode>> args) {
-		this.jsonProvider = jsonProvider;
-		this.version = version;
+	public ResolvedGlobalFunctionAccess(BindContext<JsonNode> bindContext, String name, int globalIndex, List<Expression<StackFrame, JsonNode>> args) {
+		this.bindContext = bindContext;
 		this.name = name;
 		this.globalIndex = globalIndex;
 		this.args = args;
@@ -45,6 +42,6 @@ public class ResolvedGlobalFunctionAccess<JsonNode> implements Expression<StackF
 		Function factory = (Function) frame.getEnclosingMemory().getGlobal(globalIndex);
 		if (factory == null)
 			throw new JsonQueryException("Function " + name + " is not defined");
-		factory.bindArguments(jsonProvider, args, version).apply(frame, in, path, output);
+		factory.bind(bindContext, args).apply(frame, in, path, output);
 	}
 }
