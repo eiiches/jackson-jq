@@ -159,15 +159,16 @@ For security reasons, jackson-jq does not provide an implementation of `env/0`. 
 Register a custom `env/0` implementation with the `EnvironmentBuilder`:
 
 ```java
-builder.addFunction(FunctionSignature.of("env", 0), new Function() {
+builder.defineFunction(FunctionSignature.of("env", 0), new Function() {
 	@Override
-	public <T> Expression<T> bindArguments(JsonProvider<T> jsonProvider, List<Expression<T>> args, Version version) {
-		return (scope, in, ipath, output, ignoredRequirePath) -> {
-			T result = jsonProvider.createObject();
+	public <Context extends RuntimeContext, T> Expression<Context, T> bind(BindContext<T> bindCtx, List<Expression<Context, T>> args) {
+		JsonProvider<T> jsonProvider = bindCtx.getJsonProvider();
+		return (context, in, ipath, output) -> {
+			Map<String, T> result = new HashMap<>();
 			for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
-				jsonProvider.set(result, entry.getKey(), jsonProvider.createString(entry.getValue()));
+				result.put(entry.getKey(), jsonProvider.createString(entry.getValue()));
 			}
-			output.emit(result, null);
+			output.emit(jsonProvider.createObject(result), UntrackedPath.getInstance());
 		};
 	}
 });

@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -28,7 +29,9 @@ public class ToDateIso8601Function implements Function {
 	// GregorianCalendar requires java.util.Date for setGregorianChange to configure pure proleptic Gregorian calendar.
 	@SuppressWarnings("JavaUtilDate")
 	@Override
-	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
+		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
+		Version version = bindCtx.getJqVersion();
 		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "todateiso8601", in, JsonNodeType.NUMBER, JsonNodeType.ARRAY);
 

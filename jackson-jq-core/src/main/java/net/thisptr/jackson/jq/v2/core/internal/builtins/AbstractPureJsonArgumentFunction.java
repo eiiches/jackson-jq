@@ -6,13 +6,13 @@ import java.util.List;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
-import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public abstract class AbstractPureJsonArgumentFunction implements Function {
 	protected abstract <JsonNode> JsonNode fn(JsonProvider<JsonNode> jsonProvider, List<JsonNode> args) throws JsonQueryException;
@@ -31,7 +31,8 @@ public abstract class AbstractPureJsonArgumentFunction implements Function {
 	}
 
 	@Override
-	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bindArguments(JsonProvider<JsonNode> jsonProvider, List<Expression<Context, JsonNode>> args, Version version) {
+	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
+		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
 		return FunctionBody.builder(args).cardinality(CardinalityUtils.multiply(args, Expression::getCardinality)).build((frame, in, ipath, output) -> {
 			List<List<JsonNode>> _args = new ArrayList<>(args.size());
 			for (Expression<Context, JsonNode> arg : args) {

@@ -20,6 +20,7 @@ import net.thisptr.jackson.jq.v2.core.internal.builtins.RangeFunction;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
@@ -31,6 +32,20 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class FunctionContractTest {
+	private static BindContext<JsonNode> bindContext(JsonProvider<JsonNode> jsonProvider, Version version) {
+		return new BindContext<JsonNode>() {
+			@Override
+			public JsonProvider<JsonNode> getJsonProvider() {
+				return jsonProvider;
+			}
+
+			@Override
+			public Version getJqVersion() {
+				return version;
+			}
+		};
+	}
+
 	private static <Context extends RuntimeContext> Expression<Context, JsonNode> pureExpression() {
 		return new Expression<Context, JsonNode>() {
 			@Override
@@ -64,7 +79,7 @@ public class FunctionContractTest {
 				for (int i = 0; i < arity; i++) {
 					pureArgs.add(pureExpression());
 				}
-				Expression<RuntimeContext, JsonNode> expr = fn.bindArguments(jsonProvider, pureArgs, version);
+				Expression<RuntimeContext, JsonNode> expr = fn.bind(bindContext(jsonProvider, version), pureArgs);
 				if (fn instanceof EmptyFunction || fn instanceof BuiltinsFunction || fn instanceof NanFunction || fn instanceof InfiniteFunction || fn instanceof RangeFunction || fn instanceof IsEmptyFunction || fn instanceof AbstractPureJsonArgumentFunction) {
 					assertThat(expr.dependsOnInput())
 							.as("%s/%d in %s (Pure) expr.dependsOnInput()", sig.name(), arity, version)
@@ -121,7 +136,7 @@ public class FunctionContractTest {
 							}
 						});
 					}
-					Expression<RuntimeContext, JsonNode> inputExpr = fn.bindArguments(jsonProvider, inputArgs, version);
+					Expression<RuntimeContext, JsonNode> inputExpr = fn.bind(bindContext(jsonProvider, version), inputArgs);
 					assertThat(inputExpr.dependsOnInput())
 							.as("%s/%d with input-dependent args in %s expr.dependsOnInput()", sig.name(), arity, version)
 							.isTrue();
@@ -144,7 +159,7 @@ public class FunctionContractTest {
 							}
 						});
 					}
-					Expression<RuntimeContext, JsonNode> externalStateExpr = fn.bindArguments(jsonProvider, externalStateArgs, version);
+					Expression<RuntimeContext, JsonNode> externalStateExpr = fn.bind(bindContext(jsonProvider, version), externalStateArgs);
 					assertThat(externalStateExpr.dependsOnExternalState())
 							.as("%s/%d with external-state args in %s expr.dependsOnExternalState()", sig.name(), arity, version)
 							.isTrue();

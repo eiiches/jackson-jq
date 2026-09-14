@@ -17,6 +17,7 @@ import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -320,7 +321,7 @@ final class JqFunctionCompiler {
 		return new Function() {
 			@Override
 			@SuppressWarnings("unchecked")
-			public <Context extends RuntimeContext, N1> Expression<Context, N1> bindArguments(JsonProvider<N1> jsonProvider, List<Expression<Context, N1>> args, Version version) {
+			public <Context extends RuntimeContext, N1> Expression<Context, N1> bind(BindContext<N1> bindCtx, List<Expression<Context, N1>> args) {
 				Expression<StackFrame, N1> effectiveExpression = (Expression<StackFrame, N1>) (Expression<?, ?>) expression;
 				return (frame, in, path, output) -> effectiveExpression.apply(callerFrame, in, path, output);
 			}

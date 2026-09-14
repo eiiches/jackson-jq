@@ -16,7 +16,9 @@ import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
@@ -25,10 +27,23 @@ import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DebugModuleTest {
+	private static final BindContext<JsonNode> BIND_CONTEXT = new BindContext<JsonNode>() {
+		@Override
+		public JsonProvider<JsonNode> getJsonProvider() {
+			return Jackson2JsonProvider.getInstance();
+		}
+
+		@Override
+		public Version getJqVersion() {
+			return Versions.JQ_1_6;
+		}
+	};
+
 	@Test
 	public void emitsScopeAndInputInformation() throws JsonQueryException {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
@@ -54,7 +69,7 @@ public class DebugModuleTest {
 	public void functionContract() {
 		ModuleImpl module = new ModuleImpl();
 		module.getFunctions().forEach((signature, fn) -> {
-			Expression<RuntimeContext, JsonNode> expr = fn.bindArguments(Jackson2JsonProvider.getInstance(), dummyArgs(signature.arity()), Versions.JQ_1_6);
+			Expression<RuntimeContext, JsonNode> expr = fn.bind(BIND_CONTEXT, dummyArgs(signature.arity()));
 			assertThat(expr.dependsOnExternalState()).isFalse();
 		});
 	}
@@ -63,7 +78,7 @@ public class DebugModuleTest {
 	public void debugScopeDependsOnFlags() {
 		ModuleImpl module = new ModuleImpl();
 		Function fn = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("debug_scope", 0)));
-		Expression<RuntimeContext, JsonNode> expr = fn.bindArguments(Jackson2JsonProvider.getInstance(), dummyArgs(0), Versions.JQ_1_6);
+		Expression<RuntimeContext, JsonNode> expr = fn.bind(BIND_CONTEXT, dummyArgs(0));
 		assertThat(expr.dependsOnInput()).isTrue();
 	}
 
@@ -71,7 +86,7 @@ public class DebugModuleTest {
 	public void debugExprIsItselfConstant() {
 		ModuleImpl module = new ModuleImpl();
 		Function fn = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("debug_expr", 1)));
-		Expression<RuntimeContext, JsonNode> expr = fn.bindArguments(Jackson2JsonProvider.getInstance(), dummyArgs(1), Versions.JQ_1_6);
+		Expression<RuntimeContext, JsonNode> expr = fn.bind(BIND_CONTEXT, dummyArgs(1));
 		assertThat(expr.dependsOnInput()).isFalse();
 		assertThat(expr.dependsOnExternalState()).isFalse();
 	}
@@ -242,7 +257,7 @@ public class DebugModuleTest {
 		Function fn = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("dump_expr", 1)));
 		@SuppressWarnings("unchecked")
 		Expression<RuntimeContext, JsonNode> castArg = (Expression<RuntimeContext, JsonNode>) argument;
-		Expression<RuntimeContext, JsonNode> expression = fn.bindArguments(Jackson2JsonProvider.getInstance(), Arrays.asList(castArg), Versions.JQ_1_6);
+		Expression<RuntimeContext, JsonNode> expression = fn.bind(BIND_CONTEXT, Arrays.asList(castArg));
 		List<JsonNode> results = new ArrayList<>();
 		expression.apply(() -> RuntimeLimitsImpl.UNLIMITED, Jackson2JsonProvider.getInstance().createNull(), UntrackedPath.getInstance(), (val, path) -> results.add(val));
 		assertThat(results).hasSize(1);

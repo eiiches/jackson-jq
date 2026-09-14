@@ -15,6 +15,7 @@ import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionParameter;
@@ -51,7 +52,8 @@ public class EnvironmentFunctionLoaderTest {
 	private static Function constantFunction(String text) {
 		return new Function() {
 			@Override
-			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version version) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> args) {
+				JsonProvider<N> jsonProvider = bindCtx.getJsonProvider();
 				return (frame, in, path, output) -> output.emit(jsonProvider.createString(text), UntrackedPath.getInstance());
 			}
 		};

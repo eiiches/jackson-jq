@@ -6,14 +6,13 @@ import java.util.Set;
 import net.thisptr.jackson.jq.v2.core.internal.compile.BoundArgumentInfo;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
-import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 /**
  * Like {@link ResolvedLocalFunctionAccess}, but for a local function the compiler has bound to a
@@ -24,8 +23,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
  * one has no use for it.
  */
 public class ResolvedLocalFunctionBoundArgumentAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
-	private final JsonProvider<JsonNode> jsonProvider;
-	private final Version version;
+	private final BindContext<JsonNode> bindContext;
 	private final String name;
 	private final int slot;
 	private final List<Expression<StackFrame, JsonNode>> args;
@@ -35,9 +33,8 @@ public class ResolvedLocalFunctionBoundArgumentAccess<JsonNode> implements Expre
 	private final boolean hasOpaqueVariableReference;
 	private final BoundArgumentInfo boundArgumentInfo;
 
-	public ResolvedLocalFunctionBoundArgumentAccess(JsonProvider<JsonNode> jsonProvider, Version version, String name, int slot, List<Expression<StackFrame, JsonNode>> args, BoundArgumentInfo boundArgumentInfo, boolean inputFixed) {
-		this.jsonProvider = jsonProvider;
-		this.version = version;
+	public ResolvedLocalFunctionBoundArgumentAccess(BindContext<JsonNode> bindContext, String name, int slot, List<Expression<StackFrame, JsonNode>> args, BoundArgumentInfo boundArgumentInfo, boolean inputFixed) {
+		this.bindContext = bindContext;
 		this.name = name;
 		this.slot = slot;
 		this.args = args;
@@ -94,6 +91,6 @@ public class ResolvedLocalFunctionBoundArgumentAccess<JsonNode> implements Expre
 		Function factory = (Function) frame.get(slot);
 		if (factory == null)
 			throw new JsonQueryException("Function " + name + " is not defined");
-		factory.bindArguments(jsonProvider, args, version).apply(frame, in, ipath, output);
+		factory.bind(bindContext, args).apply(frame, in, ipath, output);
 	}
 }

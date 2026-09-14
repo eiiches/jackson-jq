@@ -10,17 +10,15 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.compile.FunctionDependsOnInfo;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
-import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class ResolvedLocalFunctionAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
-	private final JsonProvider<JsonNode> jsonProvider;
-	private final Version version;
+	private final BindContext<JsonNode> bindContext;
 	private final String name;
 	private final int slot;
 	private final List<Expression<StackFrame, JsonNode>> args;
@@ -29,9 +27,8 @@ public class ResolvedLocalFunctionAccess<JsonNode> implements Expression<StackFr
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public ResolvedLocalFunctionAccess(JsonProvider<JsonNode> jsonProvider, Version version, String name, int slot, List<Expression<StackFrame, JsonNode>> args, @Nullable FunctionDependsOnInfo info, boolean inputFixed) {
-		this.jsonProvider = jsonProvider;
-		this.version = version;
+	public ResolvedLocalFunctionAccess(BindContext<JsonNode> bindContext, String name, int slot, List<Expression<StackFrame, JsonNode>> args, @Nullable FunctionDependsOnInfo info, boolean inputFixed) {
+		this.bindContext = bindContext;
 		this.name = name;
 		this.slot = slot;
 		this.args = args;
@@ -84,6 +81,6 @@ public class ResolvedLocalFunctionAccess<JsonNode> implements Expression<StackFr
 		Function factory = (Function) frame.get(slot);
 		if (factory == null)
 			throw new JsonQueryException("Function " + name + " is not defined");
-		factory.bindArguments(jsonProvider, args, version).apply(frame, in, ipath, output);
+		factory.bind(bindContext, args).apply(frame, in, ipath, output);
 	}
 }

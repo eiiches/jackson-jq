@@ -7,14 +7,13 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.BoundArgumentInfo;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Closure;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
-import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 /**
  * Like {@link ResolvedCapturedFunctionAccess}, but for a captured function the compiler has bound to a
@@ -25,8 +24,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
  * one has no use for it.
  */
 public class ResolvedCapturedFunctionBoundArgumentAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
-	private final JsonProvider<JsonNode> jsonProvider;
-	private final Version version;
+	private final BindContext<JsonNode> bindContext;
 	private final String name;
 	private final int closureSlot;
 	private final int frameClosureSlot;
@@ -36,9 +34,8 @@ public class ResolvedCapturedFunctionBoundArgumentAccess<JsonNode> implements Ex
 	private final Set<Integer> freeLocalSlots;
 	private final BoundArgumentInfo boundArgumentInfo;
 
-	public ResolvedCapturedFunctionBoundArgumentAccess(JsonProvider<JsonNode> jsonProvider, Version version, String name, int closureSlot, int frameClosureSlot, List<Expression<StackFrame, JsonNode>> args, BoundArgumentInfo boundArgumentInfo, boolean inputFixed) {
-		this.jsonProvider = jsonProvider;
-		this.version = version;
+	public ResolvedCapturedFunctionBoundArgumentAccess(BindContext<JsonNode> bindContext, String name, int closureSlot, int frameClosureSlot, List<Expression<StackFrame, JsonNode>> args, BoundArgumentInfo boundArgumentInfo, boolean inputFixed) {
+		this.bindContext = bindContext;
 		this.name = name;
 		this.closureSlot = closureSlot;
 		this.frameClosureSlot = frameClosureSlot;
@@ -98,6 +95,6 @@ public class ResolvedCapturedFunctionBoundArgumentAccess<JsonNode> implements Ex
 		if (factory == null) {
 			throw new JsonQueryException("Function " + name + " is not defined");
 		}
-		factory.bindArguments(jsonProvider, args, version).apply(frame, in, path, output);
+		factory.bind(bindContext, args).apply(frame, in, path, output);
 	}
 }

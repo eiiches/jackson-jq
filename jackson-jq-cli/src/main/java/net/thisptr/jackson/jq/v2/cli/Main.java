@@ -38,6 +38,7 @@ import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jakarta.JakartaJsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -263,7 +264,8 @@ public class Main {
 		Environment<N> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
 				.defineFunction(FunctionSignature.of("env", 0), new Function() {
 					@Override
-					public <Context extends RuntimeContext, N2> Expression<Context, N2> bindArguments(JsonProvider<N2> jsonProv, List<Expression<Context, N2>> fnArgs, Version ver) {
+					public <Context extends RuntimeContext, N2> Expression<Context, N2> bind(BindContext<N2> bindCtx, List<Expression<Context, N2>> fnArgs) {
+						JsonProvider<N2> jsonProv = bindCtx.getJsonProvider();
 						return new Expression<Context, N2>() {
 							@Override
 							public Cardinality getCardinality() {

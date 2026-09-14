@@ -5,12 +5,11 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.internal.path.PathAndValue;
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
-import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -68,7 +67,7 @@ public class StackFrameValuesTest {
 	void returnsNullForFunctionRawValue() {
 		Function factory = new Function() {
 			@Override
-			public <Context extends RuntimeContext, N> Expression<Context, N> bindArguments(JsonProvider<N> jsonProvider, List<Expression<Context, N>> args, Version version) {
+			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> args) {
 				throw new UnsupportedOperationException();
 			}
 		};
