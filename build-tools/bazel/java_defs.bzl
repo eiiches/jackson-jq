@@ -77,9 +77,9 @@ NULLAWAY_OPTS = [
     "-XepOpt:NullAway:TreatGeneratedAsUnannotated=true",
 ]
 
-# Generated parser sources are exempt, as in the Maven build.
+# Generated parser and JMH harness sources are exempt, as in the Maven build.
 ERROR_PRONE_EXCLUDED_PATHS = [
-    "-XepExcludedPaths:.*/generated-sources/.*",
+    "-XepExcludedPaths:.*/(generated-sources|jmh_generated)/.*",
 ]
 
 JQ_JAVACOPTS = LINT_OPTS + ERROR_PRONE_OPTS + NULLAWAY_OPTS + ERROR_PRONE_EXCLUDED_PATHS
