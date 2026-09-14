@@ -1,8 +1,5 @@
 package examples;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -15,7 +12,6 @@ import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class RuntimeLimitsTest {
@@ -31,11 +27,9 @@ public class RuntimeLimitsTest {
 				.build();
 
 		JsonNode input = MAPPER.readTree("[1, 2, 3]");
-		List<JsonNode> output = new ArrayList<>();
-		assertThatThrownBy(() -> query.withRuntimeOptions(options).apply(input, output::add))
+		assertThatThrownBy(() -> query.withRuntimeOptions(options).apply(input))
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum array size of 3");
-		assertThat(output).isEmpty();
 	}
 
 	@Test
@@ -48,11 +42,9 @@ public class RuntimeLimitsTest {
 				.build();
 
 		JsonNode input = MAPPER.readTree("{\"a\": 1, \"b\": 2, \"c\": 3}");
-		List<JsonNode> output = new ArrayList<>();
-		assertThatThrownBy(() -> query.withRuntimeOptions(options).apply(input, output::add))
+		assertThatThrownBy(() -> query.withRuntimeOptions(options).apply(input))
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum object size of 3");
-		assertThat(output).isEmpty();
 	}
 
 	@Test
@@ -65,10 +57,8 @@ public class RuntimeLimitsTest {
 				.build();
 
 		JsonNode input = MAPPER.readTree("\"abc\"");
-		List<JsonNode> output = new ArrayList<>();
-		assertThatThrownBy(() -> query.withRuntimeOptions(options).apply(input, output::add))
+		assertThatThrownBy(() -> query.withRuntimeOptions(options).apply(input))
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum string length of 3");
-		assertThat(output).isEmpty();
 	}
 }

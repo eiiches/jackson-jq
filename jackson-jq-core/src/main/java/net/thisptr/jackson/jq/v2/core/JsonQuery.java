@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -21,8 +23,15 @@ import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
  * JsonQuery<JsonNode> query = env.compile(".foo")
  *         .withRuntimeOptions(options)
  *         .withRuntimeBindings(bindings);
+ * List<JsonNode> output = query.apply(in);
+ * }</pre>
+ * <p>
+ * Pass a {@link Consumer} instead to receive each output value as it is produced, rather than holding the
+ * whole result in memory:
+ *
+ * <pre>{@code
  * for (JsonNode in : inputs)
- *     query.apply(in, output::add);
+ *     query.apply(in, System.out::println);
  * }</pre>
  *
  * @param <JsonNode> the JSON node type
@@ -60,4 +69,27 @@ public interface JsonQuery<JsonNode> {
 	 * @throws RuntimeLimitExceededException if the query exceeds a limit set by {@link #withRuntimeOptions}
 	 */
 	void apply(JsonNode in, Consumer<? super JsonNode> output) throws JsonQueryException;
+
+	/**
+	 * Runs this query against {@code in} and collects every output value into a list.
+	 * <p>
+	 * Use {@link #apply(Object, Consumer)} instead for a query whose output is large or unbounded: it hands
+	 * over each value as it is produced, where this one holds them all until the query is done.
+	 * <p>
+	 * If the query fails partway through, the values it produced before failing are discarded along with the
+	 * list.
+	 *
+	 * @param in the input JSON node, bound to {@code .}
+	 * @return a new list, owned by the caller and safe to modify, holding the output values in the order jq
+	 * itself would print them
+	 * @throws JsonQueryException if the query fails, or if it references a variable or function that was
+	 * declared without a value and {@link #withRuntimeBindings} did not supply one; other runtime
+	 * exceptions and stack overflows during evaluation are wrapped in a {@code JsonQueryException}
+	 * @throws RuntimeLimitExceededException if the query exceeds a limit set by {@link #withRuntimeOptions}
+	 */
+	default List<JsonNode> apply(JsonNode in) throws JsonQueryException {
+		List<JsonNode> output = new ArrayList<>();
+		apply(in, output::add);
+		return output;
+	}
 }

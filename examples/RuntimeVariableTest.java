@@ -1,6 +1,5 @@
 package examples;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -27,20 +26,21 @@ public class RuntimeVariableTest {
 				.build();
 
 		JsonQuery<JsonNode> query = environment.compile(".value * $multiplier");
+
 		JsonNode input = MAPPER.readTree("{\"value\":21}");
 
-		RuntimeBindings<JsonNode> fixedBindings = RuntimeBindings.<JsonNode>newBuilder()
-				.setVariable("multiplier", IntNode.valueOf(2))
-				.build();
-		List<JsonNode> fixedOutput = new ArrayList<>();
-		query.withRuntimeBindings(fixedBindings).apply(input, fixedOutput::add);
+		List<JsonNode> fixedOutput = query
+				.withRuntimeBindings(RuntimeBindings.<JsonNode>newBuilder()
+						.setVariable("multiplier", IntNode.valueOf(2))
+						.build())
+				.apply(input);
 		assertThat(fixedOutput).containsExactly(IntNode.valueOf(42));
 
-		RuntimeBindings<JsonNode> suppliedBindings = RuntimeBindings.<JsonNode>newBuilder()
-				.setVariable("multiplier", () -> MAPPER.valueToTree(3))
-				.build();
-		List<JsonNode> suppliedOutput = new ArrayList<>();
-		query.withRuntimeBindings(suppliedBindings).apply(input, suppliedOutput::add);
+		List<JsonNode> suppliedOutput = query
+				.withRuntimeBindings(RuntimeBindings.<JsonNode>newBuilder()
+						.setVariable("multiplier", () -> MAPPER.valueToTree(3))
+						.build())
+				.apply(input);
 		assertThat(suppliedOutput).containsExactly(IntNode.valueOf(63));
 	}
 }

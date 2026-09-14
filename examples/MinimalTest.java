@@ -30,4 +30,15 @@ public class MinimalTest {
 		query.apply(input, output::add);
 		assertThat(output).containsExactly(StringNode.valueOf("foo"));
 	}
+
+	@Test
+	public void collectsOutputIntoList() {
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
+
+		JsonQuery<JsonNode> query = environment.compile(".name");
+
+		JsonNode input = MAPPER.readTree("{\"name\":\"foo\"}");
+		List<JsonNode> output = query.apply(input);
+		assertThat(output).containsExactly(StringNode.valueOf("foo"));
+	}
 }

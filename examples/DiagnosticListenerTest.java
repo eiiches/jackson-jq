@@ -41,8 +41,7 @@ public class DiagnosticListenerTest {
 		});
 
 		JsonNode input = NullNode.getInstance();
-		List<JsonNode> output = new ArrayList<>();
-		query.apply(input, output::add);
+		List<JsonNode> output = query.apply(input);
 		assertThat(output).extracting(JsonNode::intValue).containsExactly(1, 2);
 	}
 }
