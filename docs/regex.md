@@ -6,7 +6,7 @@ Regex functions (`test`, `match`, `capture`, `scan`, `sub`, `gsub`, `splits`, an
 <dependency>
 	<groupId>net.thisptr.jackson.jq.v2</groupId>
 	<artifactId>jackson-jq-regex-impl-joni</artifactId>
-	<version>2.0.0-alpha1</version>
+	<version>2.0.0-alpha2</version>
 </dependency>
 ```
 

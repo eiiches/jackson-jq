@@ -15,7 +15,7 @@ For example, add the UUID extension:
 <dependency>
 	<groupId>net.thisptr.jackson.jq.v2</groupId>
 	<artifactId>jackson-jq-ext-module-uuid</artifactId>
-	<version>2.0.0-SNAPSHOT</version>
+	<version>2.0.0-alpha2</version>
 </dependency>
 ```
 
