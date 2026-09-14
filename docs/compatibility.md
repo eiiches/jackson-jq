@@ -194,7 +194,7 @@ jq: error: Division by zero? at <top-level>, line 1:
 jq: 1 compile error
 $ jq '. / 0' <<< 0
 jq: error (at <stdin>:1): number (0) and number (0) cannot be divided because the divisor is zero
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar -n '0 / 0'
+$ java -jar jackson-jq-cli-2.0.0-alpha2.jar -n '0 / 0'
 jq: error: number (0) and number (0) cannot be divided because the divisor is zero
 ```
 
@@ -227,9 +227,9 @@ $ jq-1.2 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
   2,
   3
 ]
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.6 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
+$ java -jar jackson-jq-cli-2.0.0-alpha2.jar --jq 1.6 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
 jq: error: `|= empty` is undefined. See https://github.com/stedolan/jq/issues/897
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.5 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
+$ java -jar jackson-jq-cli-2.0.0-alpha2.jar --jq 1.5 -n '[1,2,3] | ((.[] | select(. > 1)) |= empty)'
 jq: error: `|= empty` is undefined. See https://github.com/stedolan/jq/issues/897
 ```
 
@@ -238,9 +238,9 @@ jq: error: `|= empty` is undefined. See https://github.com/stedolan/jq/issues/89
 Use `_modify/2` to reproduce the original behavior.
 
 ```console
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.6 -n '[1,2,3] | _modify((.[] | select(. > 1)); empty)'
+$ java -jar jackson-jq-cli-2.0.0-alpha2.jar --jq 1.6 -n '[1,2,3] | _modify((.[] | select(. > 1)); empty)'
 [ 1, 3 ]
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.5 -n '[1,2,3] | _modify((.[] | select(. > 1)); empty)'
+$ java -jar jackson-jq-cli-2.0.0-alpha2.jar --jq 1.5 -n '[1,2,3] | _modify((.[] | select(. > 1)); empty)'
 null
 ```
 
@@ -260,7 +260,7 @@ jq 1.5
 ```console
 $ jq-1.5 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
 ["foo"]
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.5 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
+$ java -jar jackson-jq-cli-2.0.0-alpha2.jar --jq 1.5 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
 jq: error: Invalid path expression with result 1
 ```
 
@@ -269,7 +269,7 @@ jq 1.6
 ```console
 $ jq-1.6 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
 jq: error (at <stdin>:1): Invalid path expression with result 1
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.6 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
+$ java -jar jackson-jq-cli-2.0.0-alpha2.jar --jq 1.6 -c 'path(.foo as $a | $a)' <<< '{"foo": 1}'
 jq: error: Invalid path expression with result 1
 ```
 
@@ -293,7 +293,7 @@ $ jq -n 'label $a | label $b | try (break $b) catch .'
 {
   "__jq": 1
 }
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar -n 'label $a | label $b | try (break $b) catch .'
+$ java -jar jackson-jq-cli-2.0.0-alpha2.jar -n 'label $a | label $b | try (break $b) catch .'
 {
   "__jq" : 0
 }
@@ -323,7 +323,7 @@ $ jq-1.6 -n '"x" | indices("")' # hangs in an infinite loop
 ^C
 $ jq-1.6-83-gb52fc10 -n '"x" | indices("")'
 []
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar -n '"x" | indices("")'
+$ java -jar jackson-jq-cli-2.0.0-alpha2.jar -n '"x" | indices("")'
 [ ]
 ```
 
@@ -348,7 +348,7 @@ This bug was fixed upstream in jq 1.8 ([jqlang/jq#1928](https://github.com/jqlan
 ```console
 $ jq-1.8 -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
 8
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.7 -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
+$ java -jar jackson-jq-cli-2.0.0-alpha2.jar --jq 1.7 -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
 8
 ```
 
@@ -359,7 +359,7 @@ $ jq-1.7 -n '1 + 3 as $a | ($a * 2)' # interpreted as 1 + (3 as $a | ($a * 2))
 7
 $ jq-1.8 -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
 8
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.7 -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
+$ java -jar jackson-jq-cli-2.0.0-alpha2.jar --jq 1.7 -n '1 + 3 as $a | ($a * 2)' # interpreted as (1 + 3) as $a | ($a * 2)
 8
 ```
 

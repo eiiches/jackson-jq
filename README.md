@@ -19,14 +19,14 @@ If you use Maven, add `jackson-jq-core` and the appropriate JSON provider to the
 <dependency>
 	<groupId>net.thisptr.jackson.jq.v2</groupId>
 	<artifactId>jackson-jq-core</artifactId>
-	<version>2.0.0-alpha1</version>
+	<version>2.0.0-alpha2</version>
 </dependency>
 
 <!-- Optional: add this dependency if your application uses regex functions -->
 <dependency>
 	<groupId>net.thisptr.jackson.jq.v2</groupId>
 	<artifactId>jackson-jq-regex-impl-joni</artifactId>
-	<version>2.0.0-alpha1</version>
+	<version>2.0.0-alpha2</version>
 	<scope>runtime</scope>
 </dependency>
 
@@ -34,24 +34,24 @@ If you use Maven, add `jackson-jq-core` and the appropriate JSON provider to the
 <dependency>
 	<groupId>net.thisptr.jackson.jq.v2</groupId>
 	<artifactId>jackson-jq-json-provider-impl-jackson2</artifactId>
-	<version>2.0.0-alpha1</version>
+	<version>2.0.0-alpha2</version>
 </dependency>
 <dependency>
     <!-- Requires Java 17. -->
 	<groupId>net.thisptr.jackson.jq.v2</groupId>
 	<artifactId>jackson-jq-json-provider-impl-jackson3</artifactId>
-	<version>2.0.0-alpha1</version>
+	<version>2.0.0-alpha2</version>
 </dependency>
 <dependency>
 	<groupId>net.thisptr.jackson.jq.v2</groupId>
 	<artifactId>jackson-jq-json-provider-impl-gson</artifactId>
-	<version>2.0.0-alpha1</version>
+	<version>2.0.0-alpha2</version>
 </dependency>
 <dependency>
     <!-- Requires Java 11 and JSON-P 2.1 implementation such as `org.eclipse.parsson:parsson`. -->
 	<groupId>net.thisptr.jackson.jq.v2</groupId>
 	<artifactId>jackson-jq-json-provider-impl-jakarta</artifactId>
-	<version>2.0.0-alpha1</version>
+	<version>2.0.0-alpha2</version>
 </dependency>
 ```
 
@@ -66,9 +66,9 @@ Use the jackson-jq CLI to test queries quickly.
 *jackson-jq is primarily a Java library. The CLI is intended only for debugging and testing, not for production use. Its command-line options may change without notice.*
 
 ```sh
-$ curl -LO https://repo1.maven.org/maven2/net/thisptr/jackson/jq/v2/jackson-jq-cli/2.0.0-alpha1/jackson-jq-cli-2.0.0-alpha1.jar
+$ curl -LO https://repo1.maven.org/maven2/net/thisptr/jackson/jq/v2/jackson-jq-cli/2.0.0-alpha2/jackson-jq-cli-2.0.0-alpha2.jar
 
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --help
+$ java -jar jackson-jq-cli-2.0.0-alpha2.jar --help
  usage:  jackson-jq [OPTIONS...] QUERY [FILE...]
 
         Options            Since                   Description
@@ -85,7 +85,7 @@ $ java -jar jackson-jq-cli-2.0.0-alpha1.jar --help
                                       jackson3)
  -h, --help                 --       print this message
 
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar '.foo'
+$ java -jar jackson-jq-cli-2.0.0-alpha2.jar '.foo'
 {"foo": 42}
 42
 ```
@@ -93,11 +93,11 @@ $ java -jar jackson-jq-cli-2.0.0-alpha1.jar '.foo'
 To test a query against a specific jq version, use the `--jq` option:
 
 ```sh
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.5 'join("-")'
+$ java -jar jackson-jq-cli-2.0.0-alpha2.jar --jq 1.5 'join("-")'
 ["1", 2]
 jq: error: string ("-") and number (2) cannot be added
 
-$ java -jar jackson-jq-cli-2.0.0-alpha1.jar --jq 1.6 'join("-")' # jq-1.6 can join any values, not only strings
+$ java -jar jackson-jq-cli-2.0.0-alpha2.jar --jq 1.6 'join("-")' # jq-1.6 can join any values, not only strings
 ["1", 2]
 "1-2"
 ```
