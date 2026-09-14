@@ -6,22 +6,23 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 
 
 public class FunctionCallAstNode extends AbstractAstNode {
-	private final String name;
+	private final FunctionSignature signature;
 	private final List<AstNode> args;
 	private final @Nullable String moduleName;
 
-	public FunctionCallAstNode(SourceLocation location, @Nullable String moduleName, String name, List<AstNode> args) {
+	public FunctionCallAstNode(SourceLocation location, @Nullable String moduleName, FunctionSignature signature, List<AstNode> args) {
 		super(location);
 		this.moduleName = moduleName;
-		this.name = name;
+		this.signature = signature;
 		this.args = args;
 	}
 
-	public String name() {
-		return name;
+	public FunctionSignature signature() {
+		return signature;
 	}
 
 	public List<AstNode> args() {
@@ -44,7 +45,7 @@ public class FunctionCallAstNode extends AbstractAstNode {
 			builder.append(moduleName);
 			builder.append("::");
 		}
-		builder.append(name);
+		builder.append(signature.name());
 		if (!args.isEmpty()) {
 			builder.append("(");
 			@Var String sep = "";

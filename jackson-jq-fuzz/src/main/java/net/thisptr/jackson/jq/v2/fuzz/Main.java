@@ -77,6 +77,7 @@ import net.thisptr.jackson.jq.v2.json.impl.fastjson2.Fastjson2JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
@@ -254,47 +255,44 @@ public class Main {
 			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode(SYNTHETIC, "foo  bar", Collections.singletonList(Pair.of(4, exprs.get(0))), null)));
 			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode(SYNTHETIC, "", Collections.singletonList(Pair.of(0, exprs.get(0))), null)));
 			generators.add(new RandomGenerator(2, (exprs) -> new StringInterpolationAstNode(SYNTHETIC, " - ", Arrays.asList(Pair.of(0, exprs.get(0)), Pair.of(3, exprs.get(1))), null)));
-			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode(SYNTHETIC, "foo ", Collections.singletonList(Pair.of(4, exprs.get(0))), new FormattingFilterAstNode(SYNTHETIC, "uri"))));
-			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode(SYNTHETIC, "foo ", Collections.singletonList(Pair.of(4, exprs.get(0))), new FormattingFilterAstNode(SYNTHETIC, "json"))));
+			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode(SYNTHETIC, "foo ", Collections.singletonList(Pair.of(4, exprs.get(0))), formattingFilter("uri"))));
+			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode(SYNTHETIC, "foo ", Collections.singletonList(Pair.of(4, exprs.get(0))), formattingFilter("json"))));
 
 			for (String fmt : Arrays.asList("base64", "json", "uri", "csv", "tsv", "sh", "html", "text")) {
-				generators.add(new RandomGenerator(0, (exprs) -> new FormattingFilterAstNode(SYNTHETIC, fmt)));
+				generators.add(new RandomGenerator(0, (exprs) -> formattingFilter(fmt)));
 			}
 			if (version.compareTo(Versions.JQ_1_6) >= 0) {
-				generators.add(new RandomGenerator(0, (exprs) -> new FormattingFilterAstNode(SYNTHETIC, "base64d")));
+				generators.add(new RandomGenerator(0, (exprs) -> formattingFilter("base64d")));
 			}
 
 			// User-Defined Functions
 			generators.add(new RandomGenerator(1, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, Arrays.asList(
-					new FunctionDefinitionAstNode(SYNTHETIC, "f", Collections.emptyList(), exprs.get(0)),
-					new FunctionCallAstNode(SYNTHETIC, null, "f", Collections.emptyList())))));
+					functionDefinition("f", Collections.emptyList(), exprs.get(0)),
+					functionCall("f", Collections.emptyList())))));
 			generators.add(new RandomGenerator(2, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, Arrays.asList(
-					new FunctionDefinitionAstNode(SYNTHETIC, "f", Collections.emptyList(), exprs.get(0)),
-					binary(BinaryOperator.PIPE, exprs.get(1), new FunctionCallAstNode(SYNTHETIC, null, "f", Collections.emptyList()))))));
+					functionDefinition("f", Collections.emptyList(), exprs.get(0)),
+					binary(BinaryOperator.PIPE, exprs.get(1), functionCall("f", Collections.emptyList()))))));
 			generators.add(new RandomGenerator(2, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, Arrays.asList(
-					new FunctionDefinitionAstNode(SYNTHETIC, "f", Collections.singletonList("a"), exprs.get(0)),
-					new FunctionCallAstNode(SYNTHETIC, null, "f", Collections.singletonList(exprs.get(1)))))));
+					functionDefinition("f", Collections.singletonList("a"), exprs.get(0)),
+					functionCall("f", Collections.singletonList(exprs.get(1)))))));
 			generators.add(new RandomGenerator(3, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, Arrays.asList(
-					new FunctionDefinitionAstNode(SYNTHETIC, "f", Collections.singletonList("a"), exprs.get(0)),
-					binary(BinaryOperator.PIPE, exprs.get(1), new FunctionCallAstNode(SYNTHETIC, null, "f", Collections.singletonList(exprs.get(2))))))));
+					functionDefinition("f", Collections.singletonList("a"), exprs.get(0)),
+					binary(BinaryOperator.PIPE, exprs.get(1), functionCall("f", Collections.singletonList(exprs.get(2))))))));
 			generators.add(new RandomGenerator(3, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, Arrays.asList(
-					new FunctionDefinitionAstNode(SYNTHETIC, "f", Arrays.asList("a", "b"), exprs.get(0)),
-					new FunctionCallAstNode(SYNTHETIC, null, "f", Arrays.asList(exprs.get(1), exprs.get(2)))))));
+					functionDefinition("f", Arrays.asList("a", "b"), exprs.get(0)),
+					functionCall("f", Arrays.asList(exprs.get(1), exprs.get(2)))))));
 
 			Set<String> exclusions = new HashSet<>(ALWAYS_EXCLUDED_FUNCTIONS);
 			exclusions.addAll(EXCLUDED_FUNCTIONS.getOrDefault(v, Collections.emptySet()));
-			ClassPathFunctionLoader.getInstance().getFunctions(v).forEach((nameAndArity, factory) -> {
-				String signature = nameAndArity.toString();
-				if (exclusions.contains(signature))
+			ClassPathFunctionLoader.getInstance().getFunctions(v).forEach((signature, factory) -> {
+				String name = signature.name();
+				if (exclusions.contains(signature.toString()) || exclusions.contains(name))
 					return;
-				if (signature.contains("/")) {
-					int numArgs = Integer.parseInt(signature.split("/", 2)[1]);
-					String name = signature.split("/", 2)[0];
-					if (exclusions.contains(name))
-						return;
-					generators.add(new RandomGenerator(numArgs, (exprs) -> new FunctionCallAstNode(SYNTHETIC, null, name, exprs)));
+				Integer arity = signature.arity();
+				if (arity != null) {
+					generators.add(new RandomGenerator(arity, (exprs) -> functionCall(name, exprs)));
 				} else {
-					generators.add(new RandomGenerator(0, 10, (exprs) -> new FunctionCallAstNode(SYNTHETIC, null, signature, exprs)));
+					generators.add(new RandomGenerator(0, 10, (exprs) -> functionCall(name, exprs)));
 				}
 			});
 			return generators;
@@ -335,7 +333,7 @@ public class Main {
 		expressions.add(new StringLiteralAstNode(SYNTHETIC, "value"));
 		expressions.add(new StringLiteralAstNode(SYNTHETIC, "{}"));
 		expressions.add(new StringLiteralAstNode(SYNTHETIC, "[]"));
-		expressions.add(new FunctionCallAstNode(SYNTHETIC, null, "empty", Collections.emptyList()));
+		expressions.add(functionCall("empty", Collections.emptyList()));
 		expressions.add(new StringLiteralAstNode(SYNTHETIC, "\r"));
 		expressions.add(new StringLiteralAstNode(SYNTHETIC, "\n"));
 		expressions.add(new StringLiteralAstNode(SYNTHETIC, "\t"));
@@ -733,6 +731,18 @@ public class Main {
 
 	private static BinaryOpAstNode binary(BinaryOperator operator, AstNode lhs, AstNode rhs) {
 		return new BinaryOpAstNode(SYNTHETIC, operator, lhs, rhs);
+	}
+
+	private static FormattingFilterAstNode formattingFilter(String name) {
+		return new FormattingFilterAstNode(SYNTHETIC, FunctionSignature.of("@" + name, 0));
+	}
+
+	private static FunctionDefinitionAstNode functionDefinition(String name, List<String> args, AstNode body) {
+		return new FunctionDefinitionAstNode(SYNTHETIC, FunctionSignature.of(name, args.size()), args, body);
+	}
+
+	private static FunctionCallAstNode functionCall(String name, List<AstNode> args) {
+		return new FunctionCallAstNode(SYNTHETIC, null, FunctionSignature.of(name, args.size()), args);
 	}
 
 	private static AstNode toAstNode(JsonNode value) {

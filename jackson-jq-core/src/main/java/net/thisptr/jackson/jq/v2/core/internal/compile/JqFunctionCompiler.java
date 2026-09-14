@@ -186,10 +186,12 @@ final class JqFunctionCompiler {
 						context.addLocalVariable(arg.name(), info);
 					else
 						context.addLocalVariable(arg.name());
-				} else if (info != null) {
-					context.addLocalFunction(arg.name(), 0, info);
 				} else {
-					context.addLocalFunction(arg.name(), 0);
+					FunctionSignature signature = FunctionSignature.of(arg.name(), 0);
+					if (info != null)
+						context.addLocalFunction(signature, info);
+					else
+						context.addLocalFunction(signature);
 				}
 			}
 		}

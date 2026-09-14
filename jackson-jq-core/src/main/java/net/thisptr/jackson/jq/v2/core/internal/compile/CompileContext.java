@@ -340,30 +340,29 @@ public class CompileContext {
 		scopes.get(scopes.size() - 1).variableBoundArguments.put(name, boundArgumentInfo);
 	}
 
-	public void addLocalFunction(String name, int arity) {
+	public void addLocalFunction(FunctionSignature signature) {
 		if (scopes.isEmpty())
 			pushFunctionScope();
 		ScopeFrame top = scopes.get(scopes.size() - 1);
-		FunctionSignature key = FunctionSignature.of(name, arity);
-		top.functions.add(key);
-		getOrAssignFunctionSlotInTop(key);
+		top.functions.add(signature);
+		getOrAssignFunctionSlotInTop(signature);
 	}
 
-	public void addLocalFunction(String name, int arity, BoundArgumentInfo boundArgumentInfo) {
-		addLocalFunction(name, arity);
-		scopes.get(scopes.size() - 1).functionBoundArguments.put(FunctionSignature.of(name, arity), boundArgumentInfo);
+	public void addLocalFunction(FunctionSignature signature, BoundArgumentInfo boundArgumentInfo) {
+		addLocalFunction(signature);
+		scopes.get(scopes.size() - 1).functionBoundArguments.put(signature, boundArgumentInfo);
 	}
 
 	/**
 	 * Records precomputed {@code dependsOn*()} facts (see {@link FunctionDependsOnInfo}) for the local
-	 * function {@code name}/{@code arity} just declared in the current (top) scope -- called once its
+	 * function {@code signature} just declared in the current (top) scope -- called once its
 	 * {@code ResolvedFunctionDefinition} finishes compiling, after popping back out of its body's own
 	 * function scope, so this lands in the same {@code ScopeFrame} {@link #addLocalFunction} registered it
 	 * in.
 	 */
-	public void recordFunctionDependsOnInfo(String name, int arity, FunctionDependsOnInfo info) {
+	public void recordFunctionDependsOnInfo(FunctionSignature signature, FunctionDependsOnInfo info) {
 		ScopeFrame top = scopes.get(scopes.size() - 1);
-		top.functionDependsOnInfo.put(FunctionSignature.of(name, arity), info);
+		top.functionDependsOnInfo.put(signature, info);
 	}
 
 	private int getOrAssignVariableSlotInTop(String name) {
@@ -422,10 +421,6 @@ public class CompileContext {
 		return getVariableLocation(name) != null;
 	}
 
-	public boolean isLocalFunction(String name, int arity) {
-		return getFunctionLocation(name, arity) != null;
-	}
-
 	public int getVariableSlot(String name) {
 		SymbolLocation loc = getVariableLocation(name);
 		if (loc != null)
@@ -433,8 +428,8 @@ public class CompileContext {
 		return 0;
 	}
 
-	public int getFunctionSlot(String name, int arity) {
-		SymbolLocation loc = getFunctionLocation(name, arity);
+	public int getFunctionSlot(FunctionSignature signature) {
+		SymbolLocation loc = getFunctionLocation(signature);
 		if (loc != null)
 			return loc.slot;
 		return 0;
@@ -520,8 +515,7 @@ public class CompileContext {
 		return null;
 	}
 
-	public @Nullable SymbolLocation getFunctionLocation(String name, int arity) {
-		FunctionSignature key = FunctionSignature.of(name, arity);
+	public @Nullable SymbolLocation getFunctionLocation(FunctionSignature key) {
 		int currentDepth = scopes.size() - 1;
 		ScopeFrame current = scopes.get(currentDepth);
 

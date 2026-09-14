@@ -1,18 +1,19 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 
 
 public class FormattingFilterAstNode extends AbstractAstNode {
-	private final String name;
+	private final FunctionSignature signature;
 
-	public FormattingFilterAstNode(SourceLocation location, String name) {
+	public FormattingFilterAstNode(SourceLocation location, FunctionSignature signature) {
 		super(location);
-		this.name = name;
+		this.signature = signature;
 	}
 
-	public String name() {
-		return name;
+	public FunctionSignature signature() {
+		return signature;
 	}
 
 	@Override
@@ -22,6 +23,6 @@ public class FormattingFilterAstNode extends AbstractAstNode {
 
 	@Override
 	public String toString() {
-		return "@" + name;
+		return signature.name();
 	}
 }

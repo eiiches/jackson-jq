@@ -16,6 +16,7 @@ PARSER_BEGIN(AstParser)
 	import java.util.ArrayList;
 
 	import net.thisptr.jackson.jq.v2.spi.version.Version;
+	import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 	import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.*;
@@ -643,7 +644,7 @@ AstNode FunctionDefinition():
 	<COLON>
 	body = Expression()
 	<SEMICOLON>
-	{ return new FunctionDefinitionAstNode(locSince(start), fname.image, args, body); }
+	{ return new FunctionDefinitionAstNode(locSince(start), FunctionSignature.of(fname.image, args.size()), args, body); }
 }
 
 String FunctionDefinitionParam():
@@ -764,7 +765,7 @@ AstNode FormattingFilter():
 {
 	<ATSIGN>
 	t = <IDENTIFIER>
-	{ return new FormattingFilterAstNode(locSince(start), t.image); }
+	{ return new FormattingFilterAstNode(locSince(start), FunctionSignature.of("@" + t.image, 0)); }
 }
 
 AstNode TryCatchExpression():
@@ -1041,7 +1042,7 @@ AstNode FunctionCall():
 		)?
 		<CLOSE_PAR>
 	)?
-	{ return new FunctionCallAstNode(locSince(start), moduleName, fname.image, fargs); }
+	{ return new FunctionCallAstNode(locSince(start), moduleName, FunctionSignature.of(fname.image, fargs.size()), fargs); }
 }
 
 AstNode FieldAccessor(AstNode obj):
