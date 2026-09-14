@@ -2,39 +2,79 @@ Applied to the javacc 7.0.13 output by //build-tools/bazel:javacc.bzl.
 
 javacc reports end of input by throwing java.io.IOException out of FillBuff(), and
 AstParserTokenManager swallows it at every catch site to produce the EOF token. Allocating that
-exception per throw is the single largest cost of parsing a short query, because fillInStackTrace()
-walks AstParser's whole recursive-descent stack. Only the EOF sentinel is shared here; an
+exception is the largest single cost of parsing a short query, because fillInStackTrace() walks
+AstParser's whole recursive-descent stack. Two changes here: the sentinel becomes one shared
+instance, and FillBuff() latches end of input so that the probes readChar() makes past the end
+stop calling read() on the stream it just closed -- a closed Reader answers with a freshly
+allocated IOException of its own, which is the same cost coming back through the JDK. An
 IOException from a genuine read failure is still the one the reader threw.
 
 Regenerate this file whenever the javacc version pinned in MODULE.bazel changes: build
 //jackson-jq-core:ast_parser_srcs, copy the generated SimpleCharStream.java into a/ and an edited
-b/, and run `diff -u --label a/SimpleCharStream.java --label b/SimpleCharStream.java`.
+b/, and run `diff -U 5 --label a/SimpleCharStream.java --label b/SimpleCharStream.java`. The extra
+context is not decoration: the ReInit() hunk is indistinguishable from the constructor above it
+at the default of 3 lines.
 
 --- a/SimpleCharStream.java
 +++ b/SimpleCharStream.java
-@@ -87,6 +87,16 @@
+@@ -85,10 +85,29 @@
+     bufsize += 2048;
+     available = bufsize;
      tokenBegin = 0;
    }
  
 +  /**
-+   * javacc signals end of input by throwing from every readChar() past the end of the input, and
-+   * the recursive-descent parser's stack is deep when that happens, so filling in a stack trace
-+   * per throw costs more than the rest of tokenizing a short query. The signal carries no state
-+   * and never escapes AstParserTokenManager, which swallows it at every catch site, so one shared
-+   * instance does the same job. The stack trace it holds is the one captured at class
-+   * initialization and is meaningless; nothing reads it.
++   * javacc signals end of input by throwing, and the recursive-descent parser's stack is deep
++   * when that happens, so filling in a stack trace per throw costs more than the rest of
++   * tokenizing a short query. The signal carries no state and never escapes
++   * AstParserTokenManager, which swallows it at every catch site, so one shared instance does
++   * the same job. The stack trace it holds is the one captured at class initialization and is
++   * meaningless; nothing reads it.
 +   */
 +  private static final java.io.IOException END_OF_INPUT = new java.io.IOException();
++
++  /**
++   * Whether inputStream has already reported end of input and been closed. readChar() keeps
++   * probing past the end, and without this latch each probe would call read() on the closed
++   * stream, which answers with a freshly allocated IOException of its own -- exactly the cost
++   * END_OF_INPUT exists to avoid. Reset wherever inputStream is; the constructors get false
++   * from the field initializer.
++   */
++  private boolean atEof;
 +
    protected void FillBuff() throws java.io.IOException
    {
      if (maxNextCharInd == available)
-@@ -116,7 +126,7 @@
+     {
+       if (available == bufsize)
+@@ -111,14 +130,17 @@
+         available = tokenBegin;
+     }
+ 
+     int i;
+     try {
++      if (atEof)
++        throw END_OF_INPUT;
        if ((i = inputStream.read(buffer, maxNextCharInd, available - maxNextCharInd)) == -1)
        {
++        atEof = true;
          inputStream.close();
 -        throw new java.io.IOException();
 +        throw END_OF_INPUT;
        }
        else
          maxNextCharInd += i;
+       return;
+     }
+@@ -279,10 +301,11 @@
+   /** Reinitialise. */
+   public void ReInit(java.io.Reader dstream, int startline,
+   int startcolumn, int buffersize)
+   {
+     inputStream = dstream;
++    atEof = false;
+     line = startline;
+     column = startcolumn - 1;
+ 
+     if (buffer == null || buffersize != buffer.length)
+     {
