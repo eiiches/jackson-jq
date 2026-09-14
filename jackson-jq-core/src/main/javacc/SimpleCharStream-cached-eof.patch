@@ -1,0 +1,40 @@
+Applied to the javacc 7.0.13 output by //build-tools/bazel:javacc.bzl.
+
+javacc reports end of input by throwing java.io.IOException out of FillBuff(), and
+AstParserTokenManager swallows it at every catch site to produce the EOF token. Allocating that
+exception per throw is the single largest cost of parsing a short query, because fillInStackTrace()
+walks AstParser's whole recursive-descent stack. Only the EOF sentinel is shared here; an
+IOException from a genuine read failure is still the one the reader threw.
+
+Regenerate this file whenever the javacc version pinned in MODULE.bazel changes: build
+//jackson-jq-core:ast_parser_srcs, copy the generated SimpleCharStream.java into a/ and an edited
+b/, and run `diff -u --label a/SimpleCharStream.java --label b/SimpleCharStream.java`.
+
+--- a/SimpleCharStream.java
++++ b/SimpleCharStream.java
+@@ -87,6 +87,16 @@
+     tokenBegin = 0;
+   }
+ 
++  /**
++   * javacc signals end of input by throwing from every readChar() past the end of the input, and
++   * the recursive-descent parser's stack is deep when that happens, so filling in a stack trace
++   * per throw costs more than the rest of tokenizing a short query. The signal carries no state
++   * and never escapes AstParserTokenManager, which swallows it at every catch site, so one shared
++   * instance does the same job. The stack trace it holds is the one captured at class
++   * initialization and is meaningless; nothing reads it.
++   */
++  private static final java.io.IOException END_OF_INPUT = new java.io.IOException();
++
+   protected void FillBuff() throws java.io.IOException
+   {
+     if (maxNextCharInd == available)
+@@ -116,7 +126,7 @@
+       if ((i = inputStream.read(buffer, maxNextCharInd, available - maxNextCharInd)) == -1)
+       {
+         inputStream.close();
+-        throw new java.io.IOException();
++        throw END_OF_INPUT;
+       }
+       else
+         maxNextCharInd += i;
