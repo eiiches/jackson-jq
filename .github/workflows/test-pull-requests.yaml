@@ -106,10 +106,10 @@ jobs:
     - name: Test Quarkus compatibility (JVM)
       run: mvn -f smoke-tests/quarkus/pom.xml clean verify
 
-    - name: Set up GraalVM 21
+    - name: Set up GraalVM 25.3
       uses: graalvm/setup-graalvm@0426e2e191540e8514dff98dc52a5f5146a2a276 # v1.6.6
       with:
-        java-version: '21'
+        version: '25.3'
         distribution: 'graalvm'
 
     - name: Test Quarkus compatibility (native)
@@ -122,10 +122,10 @@ jobs:
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-    - name: Set up GraalVM 21
+    - name: Set up GraalVM 25.3
       uses: graalvm/setup-graalvm@0426e2e191540e8514dff98dc52a5f5146a2a276 # v1.6.6
       with:
-        java-version: '21'
+        version: '25.3'
         distribution: 'graalvm'
         cache: 'maven'
 
