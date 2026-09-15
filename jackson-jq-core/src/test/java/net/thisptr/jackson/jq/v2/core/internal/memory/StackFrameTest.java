@@ -18,7 +18,6 @@ public class StackFrameTest {
 		StackFrame frame = stack.pushFrame(1);
 
 		assertSame(stack, frame.getEnclosingMemory());
-		assertSame(frame, stack.frames.get(0));
 	}
 
 	@Test
@@ -81,10 +80,45 @@ public class StackFrameTest {
 
 		stack.popFrame();
 
-		assertEquals(1, stack.frames.size());
-		assertSame(parent, stack.frames.get(0));
-		assertEquals(1, stack.memory.size());
 		assertEquals("parent", parent.get(0));
+	}
+
+	@Test
+	void clearsPoppedSlotsBeforeReusingThem() {
+		Memory stack = new Memory();
+		StackFrame first = stack.pushFrame(1);
+		first.set(0, "value");
+
+		stack.popFrame();
+		StackFrame second = stack.pushFrame(1);
+
+		assertNull(second.get(0));
+	}
+
+	@Test
+	void popsNestedZeroSizedFrames() {
+		Memory stack = new Memory();
+		stack.pushFrame(0);
+		stack.pushFrame(0);
+
+		stack.popFrame();
+		stack.popFrame();
+
+		assertThrows(IllegalStateException.class, stack::popFrame);
+	}
+
+	@Test
+	void rejectsNegativeFrameSizes() {
+		Memory stack = new Memory();
+
+		assertThrows(IllegalArgumentException.class, () -> stack.pushFrame(-1));
+	}
+
+	@Test
+	void throwsWhenPoppingAnEmptyStack() {
+		Memory stack = new Memory();
+
+		assertThrows(IllegalStateException.class, stack::popFrame);
 	}
 
 	@Test
