@@ -27,11 +27,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * captured argument as a generator/closure. This exercises the per-call frame-slot allocation and
  * closure-capture machinery that a real cross-thread frame-sharing bug would corrupt.
  *
- * <p>The query is parameterized by a declared {@code $seed} variable, supplied per invocation via
- * {@link RuntimeBindings}, alternating between two distinguishable values. A single fixed input would be
- * a blind spot: if one thread's frame leaked into another's, both would still expect the same result. With
- * two distinguishable patterns, a leak would surface as one pattern's call producing the other pattern's
- * result.
+ * <p>The query is parameterized by a declared {@code $seed} variable. Two immutable query views supply
+ * distinguishable values via {@link RuntimeBindings}, and each view's prepared global bindings are reused
+ * concurrently. A single fixed value would be a blind spot: if one view's state leaked into another, both
+ * would still expect the same result. With two distinguishable patterns, a leak surfaces as one pattern's
+ * call producing the other pattern's result.
  */
 public class JsonQueryConcurrentReuseTest {
 	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProvider.getInstance();
@@ -55,9 +55,11 @@ public class JsonQueryConcurrentReuseTest {
 				.declareVariable("seed")
 				.build();
 		JsonQuery<JsonNode> query = env.compile(QUERY);
+		JsonQuery<JsonNode> queryA = withSeed(query, SEED_A);
+		JsonQuery<JsonNode> queryB = withSeed(query, SEED_B);
 
-		List<JsonNode> goldenA = run(query, SEED_A);
-		List<JsonNode> goldenB = run(query, SEED_B);
+		List<JsonNode> goldenA = run(queryA);
+		List<JsonNode> goldenB = run(queryB);
 		assertThat(goldenA).as("sanity check: pattern A must produce output").isNotEmpty();
 		assertThat(goldenB).as("sanity check: pattern B must produce output").isNotEmpty();
 		assertThat(goldenA).as("the two patterns must differ, or cross-invocation corruption would be undetectable")
@@ -70,7 +72,8 @@ public class JsonQueryConcurrentReuseTest {
 			for (int i = 0; i < TOTAL_INVOCATIONS; i++) {
 				int seed = (i % 2 == 0) ? SEED_A : SEED_B;
 				seeds.add(seed);
-				futures.add(executor.submit(() -> run(query, seed)));
+				JsonQuery<JsonNode> selectedQuery = seed == SEED_A ? queryA : queryB;
+				futures.add(executor.submit(() -> run(selectedQuery)));
 			}
 
 			List<String> mismatches = new ArrayList<>();
@@ -90,12 +93,16 @@ public class JsonQueryConcurrentReuseTest {
 		}
 	}
 
-	private static List<JsonNode> run(JsonQuery<JsonNode> query, int seed) throws JsonQueryException {
+	private static JsonQuery<JsonNode> withSeed(JsonQuery<JsonNode> query, int seed) throws JsonQueryException {
 		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setVariable("seed", JSON_PROVIDER.createNumber(seed))
 				.build();
+		return query.withRuntimeBindings(bindings);
+	}
+
+	private static List<JsonNode> run(JsonQuery<JsonNode> query) throws JsonQueryException {
 		List<JsonNode> result = new ArrayList<>();
-		query.withRuntimeBindings(bindings).apply(JSON_PROVIDER.createNull(), result::add);
+		query.apply(JSON_PROVIDER.createNull(), result::add);
 		return result;
 	}
 }

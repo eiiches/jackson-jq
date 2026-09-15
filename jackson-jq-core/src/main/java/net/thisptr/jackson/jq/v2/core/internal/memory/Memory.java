@@ -15,9 +15,10 @@ public class Memory {
 	// @VisibleForTesting
 	final List<StackFrame> frames = new ArrayList<>();
 
-	// Flat, frame-independent storage for one top-level apply() call's declared-global values -- unlike
-	// `memory`, never grows/shrinks with pushFrame/popFrame. Reachable from any frame at any def-nesting
-	// depth via StackFrame#getEnclosingMemory(), since exactly one StackMemory backs one top-level call.
+	// Flat, frame-independent storage for declared-global values. A prepared array is shared by every
+	// invocation of one immutable query view and is never written during execution. Unlike `memory`, it never
+	// grows/shrinks with pushFrame/popFrame. Reachable from any frame at any def-nesting depth via
+	// StackFrame#getEnclosingMemory().
 	private final Object[] globals;
 
 	// The budgets this top-level apply() runs under -- frame-independent, like `globals`, and reachable
@@ -34,7 +35,15 @@ public class Memory {
 	}
 
 	public Memory(int globalCount, RuntimeLimits runtimeLimits) {
-		this.globals = new Object[globalCount];
+		this(new Object[globalCount], runtimeLimits);
+	}
+
+	public Memory(Object[] globals) {
+		this(globals, RuntimeLimitsImpl.UNLIMITED);
+	}
+
+	public Memory(Object[] globals, RuntimeLimits runtimeLimits) {
+		this.globals = globals;
 		this.runtimeLimits = runtimeLimits;
 	}
 
@@ -46,12 +55,6 @@ public class Memory {
 		if (index < 0 || index >= globals.length)
 			throw new IndexOutOfBoundsException("global " + index + " out of bounds for global count " + globals.length);
 		return globals[index];
-	}
-
-	public void setGlobal(int index, @Nullable Object value) {
-		if (index < 0 || index >= globals.length)
-			throw new IndexOutOfBoundsException("global " + index + " out of bounds for global count " + globals.length);
-		globals[index] = value;
 	}
 
 	public StackFrame pushFrame(int size) {

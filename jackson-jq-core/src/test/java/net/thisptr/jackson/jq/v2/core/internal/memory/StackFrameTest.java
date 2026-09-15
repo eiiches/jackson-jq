@@ -88,11 +88,8 @@ public class StackFrameTest {
 	}
 
 	@Test
-	void readsAndWritesGlobalSlots() {
-		Memory stack = new Memory(2);
-
-		stack.setGlobal(0, "first");
-		stack.setGlobal(1, "second");
+	void readsPreparedGlobalSlots() {
+		Memory stack = new Memory(new Object[] { "first", "second" });
 
 		assertEquals("first", stack.getGlobal(0));
 		assertEquals("second", stack.getGlobal(1));
@@ -103,7 +100,6 @@ public class StackFrameTest {
 		Memory stack = new Memory();
 
 		assertThrows(IndexOutOfBoundsException.class, () -> stack.getGlobal(0));
-		assertThrows(IndexOutOfBoundsException.class, () -> stack.setGlobal(0, "value"));
 	}
 
 	@Test
@@ -111,15 +107,12 @@ public class StackFrameTest {
 		Memory stack = new Memory(1);
 
 		assertThrows(IndexOutOfBoundsException.class, () -> stack.getGlobal(1));
-		assertThrows(IndexOutOfBoundsException.class, () -> stack.setGlobal(1, "value"));
 		assertThrows(IndexOutOfBoundsException.class, () -> stack.getGlobal(-1));
-		assertThrows(IndexOutOfBoundsException.class, () -> stack.setGlobal(-1, "value"));
 	}
 
 	@Test
 	void globalsAreIndependentOfFramePushAndPop() {
-		Memory stack = new Memory(1);
-		stack.setGlobal(0, "global-value");
+		Memory stack = new Memory(new Object[] { "global-value" });
 
 		StackFrame frame = stack.pushFrame(1);
 		frame.set(0, "frame-value");

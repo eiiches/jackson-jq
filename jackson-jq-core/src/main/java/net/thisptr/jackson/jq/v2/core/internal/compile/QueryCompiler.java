@@ -3,7 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.compile;
 import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
-import net.thisptr.jackson.jq.v2.core.RuntimeBindings;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
@@ -25,9 +24,7 @@ public final class QueryCompiler {
 			if (!(compiledExpr instanceof RootExpression))
 				throw new IllegalStateException("Compiler did not produce a root expression");
 			RootExpression<JsonNode> rootExpr = (RootExpression<JsonNode>) compiledExpr;
-			// Builder#build() hands back the shared empty instance when nothing was set on it.
-			RuntimeBindings<JsonNode> noBindings = RuntimeBindings.<JsonNode>newBuilder().build();
-			return new CompiledJsonQuery<>(rootExpr, RuntimeLimitsImpl.UNLIMITED, noBindings, false);
+			return new CompiledJsonQuery<>(rootExpr, RuntimeLimitsImpl.UNLIMITED);
 		} catch (JsonQueryException e) {
 			throw e;
 		} catch (StackOverflowError e) {
