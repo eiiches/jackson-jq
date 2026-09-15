@@ -339,14 +339,14 @@ public class Compiler {
 					Module imported = env.getImportedModules().get(call.moduleName());
 					mod = imported != null ? scope.materialize(imported) : null;
 				}
-				Function factory = mod != null ? lookupFunction(mod.getFunctions(), call.name(), compiledArgs.size()) : null;
+				Function factory = mod != null ? lookupFunction(mod.getFunctions(), call.signature()) : null;
 				if (factory == null) {
-					throw new JsonQueryException(String.format("Function %s::%s/%d does not exist", call.moduleName(), call.name(), compiledArgs.size()));
+					throw new JsonQueryException(String.format("Function %s::%s does not exist", call.moduleName(), call.signature()));
 				}
 				return restoreFixedInput(bindFunctionCall(bindContextOf(env), factory, compiledArgs, inputFixed), inputFixed);
 			}
 
-			return restoreFixedInput(compileFunctionCall(env, context, call.name(), compiledArgs), inputFixed);
+			return restoreFixedInput(compileFunctionCall(env, context, call.signature(), compiledArgs), inputFixed);
 		}
 
 		@Override
@@ -653,8 +653,7 @@ public class Compiler {
 
 		@Override
 		public Expression<StackFrame, N> visit(FormattingFilterAstNode ff) throws JsonQueryException {
-			String fname = ff.name().startsWith("@") ? ff.name() : "@" + ff.name();
-			return compileFunctionCall(env, context, fname, Collections.emptyList());
+			return compileFunctionCall(env, context, ff.signature(), Collections.emptyList());
 		}
 
 		@Override
@@ -752,7 +751,8 @@ public class Compiler {
 		@Override
 		public Expression<StackFrame, N> visit(FunctionDefinitionAstNode fd) throws JsonQueryException {
 			boolean isTopLevelDefinition = context.isRootScope();
-			context.addLocalFunction(fd.fname(), fd.args().size());
+			FunctionSignature signature = fd.signature();
+			context.addLocalFunction(signature);
 
 			List<Integer> paramSlots = new ArrayList<>();
 			int fnSize;
@@ -766,8 +766,9 @@ public class Compiler {
 						context.addLocalVariable(arg.substring(1));
 						paramSlots.add(context.getVariableSlot(arg.substring(1)));
 					} else {
-						context.addLocalFunction(arg, 0);
-						paramSlots.add(context.getFunctionSlot(arg, 0));
+						FunctionSignature parameterSignature = FunctionSignature.of(arg, 0);
+						context.addLocalFunction(parameterSignature);
+						paramSlots.add(context.getFunctionSlot(parameterSignature));
 					}
 				}
 				ownClosureSlot = context.reserveClosureSlot();
@@ -779,10 +780,10 @@ public class Compiler {
 			}
 			int definerClosureSlot = context.getCurrentFunctionClosureSlot();
 
-			SymbolLocation loc = context.getFunctionLocation(fd.fname(), fd.args().size());
+			SymbolLocation loc = context.getFunctionLocation(signature);
 			int slot = loc != null ? loc.slot : 0;
 			if (context.exportsTopLevelFunctions() && isTopLevelDefinition) {
-				context.recordRootFunctionSlot(FunctionSignature.of(fd.fname(), fd.args().size()), slot);
+				context.recordRootFunctionSlot(signature, slot);
 			}
 			ResolvedFunctionDefinition<N> resolvedDef = new ResolvedFunctionDefinition<>(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody, ownClosureSlot, definerClosureSlot);
 			// freeLocalSlots always come from resolvedDef's own closureSpec, which is already precise for
@@ -806,7 +807,7 @@ public class Compiler {
 			boolean hasOpaqueVariableReference = resolvedDef.hasOpaqueVariableReference()
 					|| !closureSpec.capturedFunctions().isEmpty()
 					|| (closureSpec.capturedVariables().isEmpty() && FreeVariables.dependsOnVariables(compiledBody));
-			context.recordFunctionDependsOnInfo(fd.fname(), fd.args().size(),
+			context.recordFunctionDependsOnInfo(signature,
 					new FunctionDependsOnInfo(compiledBody.dependsOnInput(), compiledBody.dependsOnExternalState(), resolvedDef.freeLocalSlots(), hasOpaqueVariableReference));
 			return resolvedDef;
 		}
@@ -865,23 +866,21 @@ public class Compiler {
 	 * Looks up a function by name/arity in a single map: exact-arity match first, then variadic-arity
 	 * fallback (a registration accepting any arity).
 	 */
-	private static @Nullable Function lookupFunction(Map<FunctionSignature, Function> functions, String fname, int nargs) {
-		FunctionSignature key = FunctionSignature.of(fname, nargs);
-		Function factory = functions.get(key);
+	private static @Nullable Function lookupFunction(Map<FunctionSignature, Function> functions, FunctionSignature signature) {
+		Function factory = functions.get(signature);
 		if (factory != null)
 			return factory;
-		return functions.get(key.asVariadic());
+		return functions.get(signature.asVariadic());
 	}
 
 	/**
 	 * Exact-then-variadic lookup of {@code name}/{@code arity} against {@code env.getDeclaredFunctions()},
 	 * mirroring {@link #lookupFunction}'s exact-then-variadic pattern for the defined/builtin registries.
 	 */
-	private static @Nullable FunctionSignature resolveDeclaredFunctionKey(Environment<?> env, String name, int arity) {
-		FunctionSignature exact = FunctionSignature.of(name, arity);
-		if (env.getDeclaredFunctions().contains(exact))
-			return exact;
-		FunctionSignature variadic = exact.asVariadic();
+	private static @Nullable FunctionSignature resolveDeclaredFunctionKey(Environment<?> env, FunctionSignature signature) {
+		if (env.getDeclaredFunctions().contains(signature))
+			return signature;
+		FunctionSignature variadic = signature.asVariadic();
 		return env.getDeclaredFunctions().contains(variadic) ? variadic : null;
 	}
 
@@ -902,18 +901,18 @@ public class Compiler {
 	 * loader that supplies the name at any of those three steps answers the call, so an earlier loader's
 	 * variadic function beats a later loader's exact one.
 	 */
-	private static <N> Expression<StackFrame, N> compileFunctionCall(Environment<N> env, CompileContext context, String fullName, List<Expression<StackFrame, N>> compiledArgs) throws JsonQueryException {
-		int arity = compiledArgs.size();
+	private static <N> Expression<StackFrame, N> compileFunctionCall(Environment<N> env, CompileContext context, FunctionSignature signature, List<Expression<StackFrame, N>> compiledArgs) throws JsonQueryException {
+		String fullName = signature.name();
 		BindContext<N> bindContext = bindContextOf(env);
-		if (context.isLocalFunction(fullName, arity)) {
-			SymbolLocation loc = context.getFunctionLocation(fullName, arity);
-			int slot = loc != null ? loc.slot : 0;
-			FunctionDependsOnInfo info = loc != null ? loc.dependsOnInfo : null;
-			BoundArgumentInfo boundArgumentInfo = loc != null ? loc.boundArgumentInfo : null;
+		SymbolLocation loc = context.getFunctionLocation(signature);
+		if (loc != null) {
+			int slot = loc.slot;
+			FunctionDependsOnInfo info = loc.dependsOnInfo;
+			BoundArgumentInfo boundArgumentInfo = loc.boundArgumentInfo;
 			Expression<StackFrame, N> precomputed = boundArgumentInfo != null && compiledArgs.isEmpty() ? precomputedBoundArgument(boundArgumentInfo) : null;
 			if (precomputed != null)
 				return precomputed;
-			if (loc != null && !loc.isLocal) {
+			if (!loc.isLocal) {
 				return boundArgumentInfo != null
 						? new ResolvedCapturedFunctionBoundArgumentAccess<>(bindContext, fullName, slot, context.getCurrentFunctionClosureSlot(), compiledArgs, boundArgumentInfo, context.isInputFixed())
 						: new ResolvedCapturedFunctionAccess<>(bindContext, fullName, slot, context.getCurrentFunctionClosureSlot(), compiledArgs, info, context.isInputFixed());
@@ -923,21 +922,19 @@ public class Compiler {
 					: new ResolvedLocalFunctionAccess<>(bindContext, fullName, slot, compiledArgs, info, context.isInputFixed());
 		}
 
-		FunctionSignature declaredKey = resolveDeclaredFunctionKey(env, fullName, arity);
+		FunctionSignature declaredKey = resolveDeclaredFunctionKey(env, signature);
 		if (declaredKey != null) {
 			int globalIndex = context.getOrAssignGlobalFunctionIndex(declaredKey);
 			return new ResolvedGlobalFunctionAccess<>(bindContext, fullName, globalIndex, compiledArgs);
 		}
 
-		FunctionSignature exact = FunctionSignature.of(fullName, arity);
-
 		Map<FunctionSignature, Function> envFunctions = env.getFunctions();
-		@Var Function factory = envFunctions.get(exact);
+		@Var Function factory = envFunctions.get(signature);
 		if (factory == null) {
-			JqFunction jqFunction = env.getJqFunctions().get(exact);
+			JqFunction jqFunction = env.getJqFunctions().get(signature);
 			if (jqFunction != null)
-				return JqFunctionCompiler.compile(env, context, exact, jqFunction, JqFunctionCompiler.Origin.ENVIRONMENT, compiledArgs);
-			factory = envFunctions.get(exact.asVariadic());
+				return JqFunctionCompiler.compile(env, context, signature, jqFunction, JqFunctionCompiler.Origin.ENVIRONMENT, compiledArgs);
+			factory = envFunctions.get(signature.asVariadic());
 		}
 		if (factory != null)
 			return bindFunctionCall(bindContext, factory, compiledArgs, context.isInputFixed());
@@ -945,17 +942,17 @@ public class Compiler {
 		for (FunctionLoader loader : env.getFunctionLoaders()) {
 			Map<FunctionSignature, Function> loadedFunctions = loader.getFunctions(env.getJqVersion());
 			@Var
-			Function loaded = loadedFunctions.get(exact);
+			Function loaded = loadedFunctions.get(signature);
 			if (loaded == null) {
-				JqFunction jqFunction = loader.getJqFunctions(env.getJqVersion()).get(exact);
+				JqFunction jqFunction = loader.getJqFunctions(env.getJqVersion()).get(signature);
 				if (jqFunction != null)
-					return JqFunctionCompiler.compile(env, context, exact, jqFunction, JqFunctionCompiler.Origin.LOADER, compiledArgs);
-				loaded = loadedFunctions.get(exact.asVariadic());
+					return JqFunctionCompiler.compile(env, context, signature, jqFunction, JqFunctionCompiler.Origin.LOADER, compiledArgs);
+				loaded = loadedFunctions.get(signature.asVariadic());
 			}
 			if (loaded != null)
 				return bindFunctionCall(bindContext, loaded, compiledArgs, context.isInputFixed());
 		}
-		throw new JsonQueryException(String.format("Function %s/%d does not exist", fullName, arity));
+		throw new JsonQueryException(String.format("Function %s does not exist", signature));
 	}
 
 	/**

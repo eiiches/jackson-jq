@@ -21,21 +21,21 @@ public final class FunctionSignature {
 	private final @Nullable Integer arity;
 
 	private FunctionSignature(String name, @Nullable Integer arity) {
-		validateName(name);
-		validateArity(arity);
 		this.name = name;
 		this.arity = arity;
 	}
 
-	private static void validateName(String name) {
+	private static String validateName(String name) {
 		Objects.requireNonNull(name, "name");
 		if (!FUNCTION_NAME_PATTERN.matcher(name).matches())
 			throw new IllegalArgumentException("Invalid function name: " + name);
+		return name;
 	}
 
-	private static void validateArity(@Nullable Integer arity) {
-		if (arity != null && arity < 0)
+	private static int validateArity(int arity) {
+		if (arity < 0)
 			throw new IllegalArgumentException("Invalid arity (must be non-negative): " + arity);
+		return arity;
 	}
 
 	/**
@@ -46,7 +46,7 @@ public final class FunctionSignature {
 	 * @throws IllegalArgumentException if {@code name} is not a valid jq function name
 	 */
 	public static FunctionSignature ofVariadic(String name) {
-		return new FunctionSignature(name, null);
+		return new FunctionSignature(validateName(name), null);
 	}
 
 	/**
@@ -59,7 +59,7 @@ public final class FunctionSignature {
 	 * {@code arity} is negative
 	 */
 	public static FunctionSignature of(String name, int arity) {
-		return new FunctionSignature(name, arity);
+		return new FunctionSignature(validateName(name), validateArity(arity));
 	}
 
 	/**
@@ -143,7 +143,7 @@ public final class FunctionSignature {
 	 * @throws IllegalArgumentException if {@code arity} is negative
 	 */
 	public FunctionSignature withArity(int arity) {
-		return new FunctionSignature(name, arity);
+		return new FunctionSignature(name, validateArity(arity));
 	}
 
 	/**
@@ -152,6 +152,6 @@ public final class FunctionSignature {
 	 * @return the variadic signature
 	 */
 	public FunctionSignature asVariadic() {
-		return arity == null ? this : ofVariadic(name);
+		return arity == null ? this : new FunctionSignature(name, null);
 	}
 }

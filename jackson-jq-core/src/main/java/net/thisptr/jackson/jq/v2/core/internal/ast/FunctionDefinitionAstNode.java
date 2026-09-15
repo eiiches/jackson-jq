@@ -5,22 +5,23 @@ import java.util.List;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 
 
 public class FunctionDefinitionAstNode extends AbstractAstNode {
 	private final AstNode body;
-	private final String fname;
+	private final FunctionSignature signature;
 	private final List<String> args;
 
-	public FunctionDefinitionAstNode(SourceLocation location, String fname, List<String> args, AstNode body) {
+	public FunctionDefinitionAstNode(SourceLocation location, FunctionSignature signature, List<String> args, AstNode body) {
 		super(location);
-		this.fname = fname;
+		this.signature = signature;
 		this.args = args;
 		this.body = body;
 	}
 
-	public String fname() {
-		return fname;
+	public FunctionSignature signature() {
+		return signature;
 	}
 
 	public List<String> args() {
@@ -39,7 +40,7 @@ public class FunctionDefinitionAstNode extends AbstractAstNode {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder("def ");
-		builder.append(fname);
+		builder.append(signature.name());
 		if (!args.isEmpty()) {
 			builder.append("(");
 			@Var String sep = "";

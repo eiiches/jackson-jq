@@ -17,6 +17,7 @@ javacc(
     ],
     grammar = "src/main/javacc/json-query.jj",
     package = "net.thisptr.jackson.jq.v2.internal.javacc",
+    patches = ["src/main/javacc/SimpleCharStream-cached-eof.patch"],
 )
 
 # The jq module fixtures the module-loader tests read off the classpath. They belong to no
