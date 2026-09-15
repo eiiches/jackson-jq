@@ -1,18 +1,16 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
 
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
 
-import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
+import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.SlotResolver;
+import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -42,13 +40,19 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		private final @Nullable String variableName;
 		private final Expression<StackFrame, JsonNode> name;
 		private final @Nullable PatternMatcher<JsonNode> matcher;
-		private final int slot;
+
+		/**
+		 * The frame slot the field's own {@code $}-binding writes, or -1 when there is none -- either
+		 * because this is not a {@code $}-field, or because a previous occurrence of the same variable
+		 * shadows it (see {@link SlotResolver#claim}).
+		 */
+		private final int writeSlot;
 
 		public FieldMatcher(boolean dollar, @Nullable String variableName, Expression<StackFrame, JsonNode> name, @Nullable PatternMatcher<JsonNode> matcher) {
 			this(dollar, variableName, name, matcher, -1);
 		}
 
-		private FieldMatcher(boolean dollar, @Nullable String variableName, Expression<StackFrame, JsonNode> name, @Nullable PatternMatcher<JsonNode> matcher, int slot) {
+		private FieldMatcher(boolean dollar, @Nullable String variableName, Expression<StackFrame, JsonNode> name, @Nullable PatternMatcher<JsonNode> matcher, int writeSlot) {
 			if (dollar && variableName == null)
 				throw new IllegalArgumentException("BUG: variableName must not be null when dollar = true");
 			if (!dollar && matcher == null)
@@ -57,35 +61,28 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			this.variableName = variableName;
 			this.name = name;
 			this.matcher = matcher;
-			this.slot = slot;
+			this.writeSlot = writeSlot;
 		}
 
-		public PatternMatcher<JsonNode> matcher() {
-			if (matcher == null) {
-				if (variableName == null)
-					throw new IllegalStateException("BUG: variableName is null when matcher is null");
-				return new ValueMatcher<>(variableName, slot);
-			}
-			return matcher;
+		private FieldMatcher<JsonNode> resolveSlots(SlotResolver resolver) {
+			// The field's own binding is claimed before the sub-pattern's, because that is the order
+			// recursive() writes them in.
+			int resolvedSlot = resolveWriteSlot(resolver);
+			return new FieldMatcher<>(dollar, variableName, name, matcher != null ? matcher.resolveSlots(resolver) : null, resolvedSlot);
 		}
 
-		private FieldMatcher<JsonNode> resolveSlots(Map<String, Integer> slots) {
-			@Var int resolvedSlot = slot;
-			if (dollar) {
-				if (variableName == null)
-					throw new IllegalStateException("BUG: variableName is null when dollar = true");
-				Integer value = slots.get(variableName);
-				if (value == null)
-					throw new IllegalStateException("No practical slot allocated for pattern variable $" + variableName);
-				resolvedSlot = value.intValue();
-			}
-			return new FieldMatcher<>(dollar, variableName, name, matcher != null ? matcher.resolveSlots(slots) : null, resolvedSlot);
+		private int resolveWriteSlot(SlotResolver resolver) {
+			if (!dollar)
+				return -1;
+			if (variableName == null)
+				throw new IllegalStateException("BUG: variableName is null when dollar = true");
+			return resolver.claim(variableName);
 		}
 	}
 
-	private void recursive(StackFrame frame, JsonNode in, Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate, int index) throws JsonQueryException {
+	private void recursive(StackFrame frame, JsonNode in, OnMatch onMatch, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
-			out.accept(accumulate);
+			onMatch.matched();
 			return;
 		}
 
@@ -101,19 +98,19 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 					? jsonProvider.getObjectMemberOrDefault(in, jsonProvider.getString(key), nullNode)
 					: nullNode;
 
-			if (fmatcher.dollar)
-				accumulate.addLast(new Match<>(fmatcher.slot, value));
-			fmatcher.matcher().match(frame, value, (match) -> {
-				recursive(frame, in, out, accumulate, index + 1);
-			}, accumulate);
-			if (fmatcher.dollar)
-				accumulate.removeLast();
+			if (fmatcher.writeSlot >= 0)
+				frame.set(fmatcher.writeSlot, StackFrameValues.toSlot(value));
+			if (fmatcher.matcher != null) {
+				fmatcher.matcher.match(frame, value, () -> recursive(frame, in, onMatch, index + 1));
+			} else {
+				recursive(frame, in, onMatch, index + 1);
+			}
 		});
 	}
 
-	private void recursiveWithPath(StackFrame frame, JsonNode in, Path<JsonNode> inpath, MatchOutput<JsonNode> output, Deque<MatchWithPath<JsonNode>> accumulate, int index) throws JsonQueryException {
+	private void recursiveWithPath(StackFrame frame, JsonNode in, Path<JsonNode> inpath, OnMatch onMatch, int index) throws JsonQueryException {
 		if (index >= matchers.size()) {
-			output.emit(accumulate);
+			onMatch.matched();
 			return;
 		}
 
@@ -130,43 +127,43 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 					: nullNode;
 			Path<JsonNode> valuepath = inpath.appendKey(jsonProvider.getString(key));
 
-			if (fmatcher.dollar)
-				accumulate.addLast(new MatchWithPath<>(fmatcher.slot, value, valuepath));
-			fmatcher.matcher().matchWithPath(frame, value, valuepath, (match) -> {
-				recursiveWithPath(frame, in, inpath, output, accumulate, index + 1);
-			}, accumulate);
-			if (fmatcher.dollar)
-				accumulate.removeLast();
+			if (fmatcher.writeSlot >= 0)
+				frame.set(fmatcher.writeSlot, StackFrameValues.toSlot(value, valuepath));
+			if (fmatcher.matcher != null) {
+				fmatcher.matcher.matchWithPath(frame, value, valuepath, () -> recursiveWithPath(frame, in, inpath, onMatch, index + 1));
+			} else {
+				recursiveWithPath(frame, in, inpath, onMatch, index + 1);
+			}
 		});
 	}
 
 	@Override
-	public void match(StackFrame frame, JsonNode in, Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate) throws JsonQueryException {
+	public void match(StackFrame frame, JsonNode in, OnMatch onMatch) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL) {
 			if (matchers.isEmpty())
 				throw new JsonQueryTypeException("Cannot index %s with string", ExceptionMessages.typeName(type));
 		}
 
-		recursive(frame, in, out, accumulate, 0);
+		recursive(frame, in, onMatch, 0);
 	}
 
 	@Override
-	public void matchWithPath(StackFrame frame, JsonNode in, Path<JsonNode> path, MatchOutput<JsonNode> output, Deque<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
+	public void matchWithPath(StackFrame frame, JsonNode in, Path<JsonNode> path, OnMatch onMatch) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL) {
 			if (matchers.isEmpty())
 				throw new JsonQueryTypeException("Cannot index %s with string", ExceptionMessages.typeName(type));
 		}
 
-		recursiveWithPath(frame, in, path, output, accumulate, 0);
+		recursiveWithPath(frame, in, path, onMatch, 0);
 	}
 
 	@Override
-	public PatternMatcher<JsonNode> resolveSlots(Map<String, Integer> slots) {
+	public PatternMatcher<JsonNode> resolveSlots(SlotResolver resolver) {
 		List<FieldMatcher<JsonNode>> resolved = new ArrayList<>(matchers.size());
 		for (FieldMatcher<JsonNode> matcher : matchers)
-			resolved.add(matcher.resolveSlots(slots));
+			resolved.add(matcher.resolveSlots(resolver));
 		return new ObjectMatcher<>(jsonProvider, resolved, version);
 	}
 }

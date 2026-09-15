@@ -125,6 +125,7 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.IdentifierFieldA
 import net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess.StringFieldAccess;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.ValueLiteral;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
+import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.SlotResolver;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ArrayMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ObjectMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ValueMatcher;
@@ -419,7 +420,7 @@ public class Compiler {
 				context.setInputFixed(savedInputFixed);
 				context.popScope();
 			}
-			PatternMatcher<N> compiledMatcher = matcherResult.matcher.resolveSlots(slots);
+			PatternMatcher<N> compiledMatcher = matcherResult.matcher.resolveSlots(new SlotResolver(slots));
 			return new VariableBinding<>(value, compiledMatcher, new HashSet<>(slots.values()), body);
 		}
 
@@ -594,7 +595,7 @@ public class Compiler {
 					context.addLocalVariable(varName);
 					slots.put(varName, context.getVariableSlot(varName));
 				}
-				compiledMatcher = compiledMatcher.resolveSlots(slots);
+				compiledMatcher = compiledMatcher.resolveSlots(new SlotResolver(slots));
 				// reduceExpr sees the accumulator, not `.` -- its `.` is input-independent iff iterExpr and initExpr's both are.
 				boolean savedInputFixed = context.isInputFixed();
 				context.setInputFixed(!compiledIter.dependsOnInput() && !compiledInit.dependsOnInput());
@@ -625,7 +626,7 @@ public class Compiler {
 					context.addLocalVariable(varName);
 					slots.put(varName, context.getVariableSlot(varName));
 				}
-				compiledMatcher = compiledMatcher.resolveSlots(slots);
+				compiledMatcher = compiledMatcher.resolveSlots(new SlotResolver(slots));
 				// updateExpr sees the accumulator, not `.` -- its `.` is input-independent iff iterExpr and initExpr's both are.
 				boolean savedInputFixed = context.isInputFixed();
 				context.setInputFixed(!compiledIter.dependsOnInput() && !compiledInit.dependsOnInput());

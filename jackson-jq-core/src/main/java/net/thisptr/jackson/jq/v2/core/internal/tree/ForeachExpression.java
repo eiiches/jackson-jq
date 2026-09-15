@@ -1,9 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -11,9 +8,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
-import net.thisptr.jackson.jq.v2.core.internal.path.PathAndValue;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
-import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -90,29 +85,22 @@ public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonN
 			@SuppressWarnings("unchecked")
 			Path<JsonNode>[] accumulatorPaths = (Path<JsonNode>[]) new Path<?>[] { accumulatorPath };
 
-			iterExpr.apply(frame, in, ipath, (item, itemPath) -> {
-				Deque<PatternMatcher.MatchWithPath<JsonNode>> stack = new ArrayDeque<>();
-				matcher.matchWithPath(frame, item, itemPath, (Deque<PatternMatcher.MatchWithPath<JsonNode>> vars) -> {
-					for (Iterator<PatternMatcher.MatchWithPath<JsonNode>> it = vars.descendingIterator(); it.hasNext(); ) {
-						PatternMatcher.MatchWithPath<JsonNode> var = it.next();
-						if (var.slot >= 0) {
-							frame.set(var.slot, var.path instanceof UntrackedPath ? StackFrameValues.toSlot(var.value) : new PathAndValue<>(var.path, var.value));
-						}
+			// The matcher binds its variables straight into the frame, so by the time onMatch runs
+			// updateExpr can simply read them.
+			PatternMatcher.OnMatch onMatch = () -> {
+				updateExpr.apply(frame, accumulators[0], extractExpr != null ? UntrackedPath.getInstance() : accumulatorPaths[0], (newaccumulator, newaccumulatorPath) -> {
+					if (extractExpr != null) {
+						extractExpr.apply(frame, newaccumulator, !(ipath instanceof UntrackedPath) && newaccumulatorPath instanceof UntrackedPath ? UnrepresentablePath.getInstance() : newaccumulatorPath, output);
+					} else {
+						output.emit(newaccumulator, newaccumulatorPath);
 					}
-
-					updateExpr.apply(frame, accumulators[0], extractExpr != null ? UntrackedPath.getInstance() : accumulatorPaths[0], (newaccumulator, newaccumulatorPath) -> {
-						if (extractExpr != null) {
-							extractExpr.apply(frame, newaccumulator, !(ipath instanceof UntrackedPath) && newaccumulatorPath instanceof UntrackedPath ? UnrepresentablePath.getInstance() : newaccumulatorPath, output);
-						} else {
-							output.emit(newaccumulator, newaccumulatorPath);
-						}
-						accumulators[0] = newaccumulator;
-						accumulatorPaths[0] = !(ipath instanceof UntrackedPath) && newaccumulatorPath instanceof UntrackedPath
-								? UnrepresentablePath.getInstance()
-								: newaccumulatorPath;
-					});
-				}, stack);
-			});
+					accumulators[0] = newaccumulator;
+					accumulatorPaths[0] = !(ipath instanceof UntrackedPath) && newaccumulatorPath instanceof UntrackedPath
+							? UnrepresentablePath.getInstance()
+							: newaccumulatorPath;
+				});
+			};
+			iterExpr.apply(frame, in, ipath, (item, itemPath) -> matcher.matchWithPath(frame, item, itemPath, onMatch));
 		});
 	}
 }

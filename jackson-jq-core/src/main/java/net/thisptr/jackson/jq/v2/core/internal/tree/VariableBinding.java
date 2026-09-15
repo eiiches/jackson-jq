@@ -1,16 +1,11 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Iterator;
 import java.util.Set;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
-import net.thisptr.jackson.jq.v2.core.internal.path.PathAndValue;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
-import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -64,17 +59,10 @@ public class VariableBinding<JsonNode> implements Expression<StackFrame, JsonNod
 
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
-		value.apply(frame, in, UntrackedPath.getInstance(), (matchedValue, ignoredPath) -> {
-			Deque<PatternMatcher.MatchWithPath<JsonNode>> accumulate = new ArrayDeque<>();
-			matcher.matchWithPath(frame, matchedValue, path, (Deque<PatternMatcher.MatchWithPath<JsonNode>> variables) -> {
-				// Set values in reverse order since if there is a variable name clash, jq only uses the first match.
-				for (Iterator<PatternMatcher.MatchWithPath<JsonNode>> it = variables.descendingIterator(); it.hasNext(); ) {
-					PatternMatcher.MatchWithPath<JsonNode> variable = it.next();
-					if (variable.slot >= 0)
-						frame.set(variable.slot, variable.path instanceof UntrackedPath ? StackFrameValues.toSlot(variable.value) : new PathAndValue<>(variable.path, variable.value));
-				}
-				body.apply(frame, in, path, output);
-			}, accumulate);
-		});
+		// The matcher binds its variables straight into the frame, so by the time onMatch runs the body
+		// can simply read them.
+		PatternMatcher.OnMatch onMatch = () -> body.apply(frame, in, path, output);
+		value.apply(frame, in, UntrackedPath.getInstance(),
+				(matchedValue, ignoredPath) -> matcher.matchWithPath(frame, matchedValue, path, onMatch));
 	}
 }
