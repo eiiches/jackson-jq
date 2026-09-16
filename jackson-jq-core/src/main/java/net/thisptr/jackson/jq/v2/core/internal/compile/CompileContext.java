@@ -93,6 +93,11 @@ public class CompileContext {
 	private final GlobalState globalState;
 
 	private final boolean exportTopLevelFunctions;
+	// Whether a `def` compiled in this context draws on RuntimeOptions#setMaxUserDefinedFunctionCalls.
+	// True only for the root context of a query the caller wrote (Compiler#compile); false for a module
+	// source (Compiler#compileModule) and for every jq-library function body (the create*JqFunctionContext
+	// factories below), so an internal `def` -- recurse's `def r`, say -- never spends the caller's budget.
+	private final boolean meterUserDefinedFunctionCalls;
 	private final Map<FunctionSignature, Integer> rootFunctionSlots;
 	private final Map<String, JavaModule> importedModules;
 	private final Map<String, Object> importedVariableDefaults;
@@ -114,15 +119,15 @@ public class CompileContext {
 	}
 
 	public CompileContext() {
-		this(false);
+		this(false, false);
 	}
 
-	public CompileContext(boolean exportTopLevelFunctions) {
-		this(exportTopLevelFunctions, new JqFunctionCompiler.State(), Collections.emptySet(), Collections.emptySet(), new GlobalState());
+	public CompileContext(boolean exportTopLevelFunctions, boolean meterUserDefinedFunctionCalls) {
+		this(exportTopLevelFunctions, meterUserDefinedFunctionCalls, new JqFunctionCompiler.State(), Collections.emptySet(), Collections.emptySet(), new GlobalState());
 	}
 
-	private CompileContext(boolean exportTopLevelFunctions, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState) {
-		this(newRootScopes(), exportTopLevelFunctions, jqFunctionState, activeJqFunctions, genericJqFunctions, globalState);
+	private CompileContext(boolean exportTopLevelFunctions, boolean meterUserDefinedFunctionCalls, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState) {
+		this(newRootScopes(), exportTopLevelFunctions, meterUserDefinedFunctionCalls, jqFunctionState, activeJqFunctions, genericJqFunctions, globalState);
 	}
 
 	// Shares `scopes` with the caller rather than starting a fresh list -- used only to build an inlined
@@ -130,13 +135,14 @@ public class CompileContext {
 	// separate CompileContext object (its own activeJqFunctions/genericJqFunctions fork), but needs to
 	// keep allocating slots in whatever frame is already live on the caller's own scope stack rather than
 	// starting a brand-new one.
-	private CompileContext(List<ScopeFrame> scopes, boolean exportTopLevelFunctions, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState) {
+	private CompileContext(List<ScopeFrame> scopes, boolean exportTopLevelFunctions, boolean meterUserDefinedFunctionCalls, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState) {
 		this.scopes = scopes;
 		this.jqFunctionState = jqFunctionState;
 		this.activeJqFunctions = activeJqFunctions;
 		this.genericJqFunctions = genericJqFunctions;
 		this.globalState = globalState;
 		this.exportTopLevelFunctions = exportTopLevelFunctions;
+		this.meterUserDefinedFunctionCalls = meterUserDefinedFunctionCalls;
 		this.rootFunctionSlots = new HashMap<>();
 		this.importedModules = new HashMap<>();
 		this.importedVariableDefaults = new HashMap<>();
@@ -163,7 +169,7 @@ public class CompileContext {
 	CompileContext createJqFunctionContext(JqFunctionCompiler.DefinitionKey key, boolean shareGlobalState) {
 		Set<JqFunctionCompiler.DefinitionKey> nestedActiveJqFunctions = new HashSet<>(activeJqFunctions);
 		nestedActiveJqFunctions.add(key);
-		return new CompileContext(false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState());
+		return new CompileContext(false, false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState());
 	}
 
 	// Like createJqFunctionContext, but shares this context's own `scopes` list instead of starting a
@@ -173,7 +179,7 @@ public class CompileContext {
 	CompileContext createInlinedJqFunctionContext(JqFunctionCompiler.DefinitionKey key, boolean shareGlobalState) {
 		Set<JqFunctionCompiler.DefinitionKey> nestedActiveJqFunctions = new HashSet<>(activeJqFunctions);
 		nestedActiveJqFunctions.add(key);
-		return new CompileContext(scopes, false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState());
+		return new CompileContext(scopes, false, false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState());
 	}
 
 	CompileContext createGenericJqFunctionContext(JqFunctionCompiler.DefinitionKey key, boolean shareGlobalState) {
@@ -181,7 +187,7 @@ public class CompileContext {
 		nestedActiveJqFunctions.add(key);
 		Set<JqFunctionCompiler.DefinitionKey> nestedGenericJqFunctions = new HashSet<>(genericJqFunctions);
 		nestedGenericJqFunctions.add(key);
-		return new CompileContext(false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), Collections.unmodifiableSet(nestedGenericJqFunctions), shareGlobalState ? globalState : new GlobalState());
+		return new CompileContext(false, false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), Collections.unmodifiableSet(nestedGenericJqFunctions), shareGlobalState ? globalState : new GlobalState());
 	}
 
 	public void addImportedModule(String alias, JavaModule module) {
@@ -213,6 +219,17 @@ public class CompileContext {
 	 */
 	public boolean exportsTopLevelFunctions() {
 		return exportTopLevelFunctions;
+	}
+
+	/**
+	 * Whether a {@code def} compiled in this context counts against
+	 * {@code RuntimeOptions.Builder#setMaxUserDefinedFunctionCalls(long)}. True only while compiling the jq
+	 * text the caller handed to {@code Environment.compile()}; a module source and every jq-library function
+	 * body compile their own {@code def}s unmetered, so the budget means the same thing no matter which
+	 * builtins a query happens to use.
+	 */
+	public boolean metersUserDefinedFunctionCalls() {
+		return meterUserDefinedFunctionCalls;
 	}
 
 	/**

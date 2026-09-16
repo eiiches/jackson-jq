@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
 import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 
@@ -41,8 +42,18 @@ public class Memory {
 
 	// The budgets this top-level apply() runs under -- frame-independent, like `globals`, and reachable
 	// from any frame via StackFrame#getRuntimeLimits(), which is how Expression/Function implementations
-	// (including third-party ones) see them.
-	private final RuntimeLimits runtimeLimits;
+	// (including third-party ones) see them. Declared as the engine's own RuntimeLimitsImpl rather than the
+	// SPI interface because the user-defined function call budget is deliberately not on the interface.
+	private final RuntimeLimitsImpl runtimeLimits;
+
+	// Read out of runtimeLimits once so counting a call is a plain field compare rather than a virtual call.
+	private final long maxUserDefinedFunctionCalls;
+
+	// How many query-text `def` bodies this one top-level apply() has run so far. Unlike `globals` and
+	// `runtimeLimits` this accumulates, which is why it belongs here and not on the (immutable, shared)
+	// limits: a Memory is built fresh per invocation, so every invocation starts the budget over and
+	// concurrent invocations of one compiled query never see each other's tally.
+	private long userDefinedFunctionCalls;
 
 	public Memory() {
 		this(0);
@@ -52,7 +63,7 @@ public class Memory {
 		this(globalCount, RuntimeLimitsImpl.UNLIMITED);
 	}
 
-	public Memory(int globalCount, RuntimeLimits runtimeLimits) {
+	public Memory(int globalCount, RuntimeLimitsImpl runtimeLimits) {
 		this(new Object[globalCount], runtimeLimits);
 	}
 
@@ -60,13 +71,28 @@ public class Memory {
 		this(globals, RuntimeLimitsImpl.UNLIMITED);
 	}
 
-	public Memory(Object[] globals, RuntimeLimits runtimeLimits) {
+	public Memory(Object[] globals, RuntimeLimitsImpl runtimeLimits) {
 		this.globals = globals;
 		this.runtimeLimits = runtimeLimits;
+		this.maxUserDefinedFunctionCalls = runtimeLimits.getMaxUserDefinedFunctionCalls();
 	}
 
 	public RuntimeLimits getRuntimeLimits() {
 		return runtimeLimits;
+	}
+
+	/**
+	 * Charges one execution of a query-text {@code def} body against this invocation's budget.
+	 * <p>
+	 * Called only from {@code ResolvedFunctionDefinition}, and only for a {@code def} the compiler marked as
+	 * coming from the query text -- builtins, jq-library bodies and imported modules compile to the same node
+	 * but are not metered.
+	 *
+	 * @throws net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException if the budget is exhausted
+	 */
+	public void countUserDefinedFunctionCall() {
+		if (++userDefinedFunctionCalls > maxUserDefinedFunctionCalls)
+			throw RuntimeLimitChecks.userDefinedFunctionCallsExceeded(maxUserDefinedFunctionCalls);
 	}
 
 	public @Nullable Object getGlobal(int index) {

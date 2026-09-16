@@ -207,7 +207,7 @@ public class Compiler {
 	}
 
 	public static <JsonNode> Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, AstNode ast) throws JsonQueryException {
-		return compileRoot(env, options, scope, ast, false);
+		return compileRoot(env, options, scope, ast, /* exportTopLevelFunctions */ false, /* meterUserDefinedFunctionCalls */ true);
 	}
 
 	/**
@@ -219,10 +219,10 @@ public class Compiler {
 	 * Ordinary query compilation must never do this -- use {@link #compile(Environment, CompileOptions, ModuleScope, AstNode)}.
 	 */
 	public static <JsonNode> Expression<StackFrame, JsonNode> compileModule(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, AstNode ast) throws JsonQueryException {
-		return compileRoot(env, options, scope, ast, true);
+		return compileRoot(env, options, scope, ast, /* exportTopLevelFunctions */ true, /* meterUserDefinedFunctionCalls */ false);
 	}
 
-	private static <JsonNode> Expression<StackFrame, JsonNode> compileRoot(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, AstNode ast, boolean exportTopLevelFunctions) throws JsonQueryException {
+	private static <JsonNode> Expression<StackFrame, JsonNode> compileRoot(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, AstNode ast, boolean exportTopLevelFunctions, boolean meterUserDefinedFunctionCalls) throws JsonQueryException {
 		// Only whole queries and module sources are diagnosed. Function bodies that jq libraries
 		// bring along are compiled through the inner compile() below, never through here, so a
 		// caller never sees warnings about jq's own builtins.
@@ -230,7 +230,7 @@ public class Compiler {
 		if (diagnosticListener != null)
 			PipeParenthesesCheck.run(ast, diagnosticListener);
 
-		CompileContext context = new CompileContext(exportTopLevelFunctions);
+		CompileContext context = new CompileContext(exportTopLevelFunctions, meterUserDefinedFunctionCalls);
 		Expression<StackFrame, JsonNode> compiled = compile(env, context, scope, ast);
 		if (compiled == null)
 			throw new JsonQueryException("Cannot resolve null expression");
@@ -786,7 +786,7 @@ public class Compiler {
 			if (context.exportsTopLevelFunctions() && isTopLevelDefinition) {
 				context.recordRootFunctionSlot(signature, slot);
 			}
-			ResolvedFunctionDefinition<N> resolvedDef = new ResolvedFunctionDefinition<>(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody, ownClosureSlot, definerClosureSlot);
+			ResolvedFunctionDefinition<N> resolvedDef = new ResolvedFunctionDefinition<>(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody, ownClosureSlot, definerClosureSlot, context.metersUserDefinedFunctionCalls());
 			// freeLocalSlots always come from resolvedDef's own closureSpec, which is already precise for
 			// calls to *this* def -- including through nested defs in its body: resolving a deeper def's
 			// own capture threads an entry through every intermediate function-boundary scope's

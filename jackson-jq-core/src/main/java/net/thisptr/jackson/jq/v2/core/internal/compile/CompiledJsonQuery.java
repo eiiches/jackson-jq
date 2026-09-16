@@ -9,7 +9,6 @@ import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.RuntimeBindings;
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
-import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 /**
@@ -19,7 +18,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
  */
 final class CompiledJsonQuery<JsonNode> implements JsonQuery<JsonNode> {
 	private final RootExpression<JsonNode> rootExpr;
-	private final RuntimeLimits runtimeLimits;
+	private final RuntimeLimitsImpl runtimeLimits;
 	/*
 	 * A null value means that this query references a declared global but withRuntimeBindings() has not supplied
 	 * it. The query compile() returns must retain that state so the caller can bind it before apply(); apply()
@@ -27,11 +26,11 @@ final class CompiledJsonQuery<JsonNode> implements JsonQuery<JsonNode> {
 	 */
 	private final Object @Nullable [] globals;
 
-	CompiledJsonQuery(RootExpression<JsonNode> rootExpr, RuntimeLimits runtimeLimits) {
+	CompiledJsonQuery(RootExpression<JsonNode> rootExpr, RuntimeLimitsImpl runtimeLimits) {
 		this(rootExpr, runtimeLimits, rootExpr.prepareEmptyBindings());
 	}
 
-	private CompiledJsonQuery(RootExpression<JsonNode> rootExpr, RuntimeLimits runtimeLimits, Object @Nullable [] globals) {
+	private CompiledJsonQuery(RootExpression<JsonNode> rootExpr, RuntimeLimitsImpl runtimeLimits, Object @Nullable [] globals) {
 		this.rootExpr = rootExpr;
 		this.runtimeLimits = runtimeLimits;
 		this.globals = globals;
@@ -40,7 +39,7 @@ final class CompiledJsonQuery<JsonNode> implements JsonQuery<JsonNode> {
 	@Override
 	public JsonQuery<JsonNode> withRuntimeOptions(RuntimeOptions options) {
 		Objects.requireNonNull(options, "options");
-		RuntimeLimits limits = new RuntimeLimitsImpl(options.getMaxArrayLength(), options.getMaxObjectMemberCount(), options.getMaxStringLength());
+		RuntimeLimitsImpl limits = new RuntimeLimitsImpl(options.getMaxArrayLength(), options.getMaxObjectMemberCount(), options.getMaxStringLength(), options.getMaxUserDefinedFunctionCalls());
 		return new CompiledJsonQuery<>(rootExpr, limits, globals);
 	}
 

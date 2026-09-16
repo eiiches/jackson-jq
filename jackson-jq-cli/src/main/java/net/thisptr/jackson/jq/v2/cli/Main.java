@@ -113,6 +113,11 @@ public class Main {
 			.desc("maximum number of members in objects produced during evaluation (default: unlimited)")
 			.numberOfArgs(1)
 			.get();
+	private static final Option OPT_MAX_USER_DEFINED_FUNCTION_CALLS = Option.builder()
+			.longOpt("max-user-defined-function-calls")
+			.desc("maximum number of calls to functions defined in the query during evaluation (default: unlimited)")
+			.numberOfArgs(1)
+			.get();
 	private static final Option OPT_HELP = Option.builder("h")
 			.longOpt("help")
 			.desc("print this message")
@@ -132,6 +137,7 @@ public class Main {
 		options.addOption(OPT_MAX_STRING_LENGTH);
 		options.addOption(OPT_MAX_ARRAY_LENGTH);
 		options.addOption(OPT_MAX_OBJECT_MEMBER_COUNT);
+		options.addOption(OPT_MAX_USER_DEFINED_FUNCTION_CALLS);
 		options.addOption(OPT_HELP);
 		CommandLine command;
 		List<String> rest;
@@ -201,6 +207,7 @@ public class Main {
 				.setMaxStringLength(parseLimit(command, OPT_MAX_STRING_LENGTH))
 				.setMaxArrayLength(parseLimit(command, OPT_MAX_ARRAY_LENGTH))
 				.setMaxObjectMemberCount(parseLimit(command, OPT_MAX_OBJECT_MEMBER_COUNT))
+				.setMaxUserDefinedFunctionCalls(parseLongLimit(command, OPT_MAX_USER_DEFINED_FUNCTION_CALLS))
 				.build();
 	}
 
@@ -210,6 +217,20 @@ public class Main {
 			return Integer.MAX_VALUE;
 		try {
 			int limit = Integer.parseInt(value);
+			if (limit < 0)
+				throw new NumberFormatException();
+			return limit;
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("invalid --" + option.getLongOpt() + ": " + value + " (expected a non-negative integer)", e);
+		}
+	}
+
+	private static long parseLongLimit(CommandLine command, Option option) {
+		String value = command.getOptionValue(option.getLongOpt());
+		if (value == null)
+			return Long.MAX_VALUE;
+		try {
+			long limit = Long.parseLong(value);
 			if (limit < 0)
 				throw new NumberFormatException();
 			return limit;

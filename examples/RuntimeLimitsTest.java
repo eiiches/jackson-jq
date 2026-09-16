@@ -61,4 +61,20 @@ public class RuntimeLimitsTest {
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum string length of 3");
 	}
+
+	@Test
+	public void limitsUserDefinedFunctionCalls() {
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
+		// Without a budget this recurses until the Java stack runs out.
+		JsonQuery<JsonNode> query = environment.compile("def countdown: if . > 0 then . - 1 | countdown else . end; countdown");
+
+		RuntimeOptions options = RuntimeOptions.newBuilder()
+				.setMaxUserDefinedFunctionCalls(3)
+				.build();
+
+		JsonNode input = MAPPER.readTree("1000000");
+		assertThatThrownBy(() -> query.withRuntimeOptions(options).apply(input))
+				.isInstanceOf(RuntimeLimitExceededException.class)
+				.hasMessageContaining("maximum of 3 user-defined function calls");
+	}
 }

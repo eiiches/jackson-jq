@@ -280,11 +280,13 @@ class MainTest {
 		RuntimeOptions options = Main.createRuntimeOptions(parseLimits(
 				"--max-string-length", "11",
 				"--max-array-length", "12",
-				"--max-object-member-count", "13"));
+				"--max-object-member-count", "13",
+				"--max-user-defined-function-calls", "14"));
 
 		assertThat(options.getMaxStringLength()).isEqualTo(11);
 		assertThat(options.getMaxArrayLength()).isEqualTo(12);
 		assertThat(options.getMaxObjectMemberCount()).isEqualTo(13);
+		assertThat(options.getMaxUserDefinedFunctionCalls()).isEqualTo(14);
 	}
 
 	@Test
@@ -294,10 +296,11 @@ class MainTest {
 		assertThat(options.getMaxStringLength()).isEqualTo(Integer.MAX_VALUE);
 		assertThat(options.getMaxArrayLength()).isEqualTo(Integer.MAX_VALUE);
 		assertThat(options.getMaxObjectMemberCount()).isEqualTo(Integer.MAX_VALUE);
+		assertThat(options.getMaxUserDefinedFunctionCalls()).isEqualTo(Long.MAX_VALUE);
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "--max-string-length", "--max-array-length", "--max-object-member-count" })
+	@ValueSource(strings = { "--max-string-length", "--max-array-length", "--max-object-member-count", "--max-user-defined-function-calls" })
 	void rejectsInvalidRuntimeLimits(String option) throws Exception {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> Main.createRuntimeOptions(parseLimits(option, "-1")))
@@ -330,6 +333,7 @@ class MainTest {
 		options.addOption(Option.builder().longOpt("max-string-length").numberOfArgs(1).get());
 		options.addOption(Option.builder().longOpt("max-array-length").numberOfArgs(1).get());
 		options.addOption(Option.builder().longOpt("max-object-member-count").numberOfArgs(1).get());
+		options.addOption(Option.builder().longOpt("max-user-defined-function-calls").numberOfArgs(1).get());
 		return new DefaultParser().parse(options, args);
 	}
 

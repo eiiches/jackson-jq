@@ -14,12 +14,12 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.RuntimeBindings;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -110,7 +110,7 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 	 * {@link net.thisptr.jackson.jq.v2.core.JsonQuery#withRuntimeBindings} does so once, when the query carrying
 	 * them is built.
 	 */
-	public void apply(JsonNode in, RuntimeLimits runtimeLimits, Object[] globals, Consumer<? super JsonNode> output) throws JsonQueryException {
+	public void apply(JsonNode in, RuntimeLimitsImpl runtimeLimits, Object[] globals, Consumer<? super JsonNode> output) throws JsonQueryException {
 		apply(new Memory(globals, runtimeLimits), in, UntrackedPath.getInstance(), (v, p) -> output.accept(v));
 	}
 

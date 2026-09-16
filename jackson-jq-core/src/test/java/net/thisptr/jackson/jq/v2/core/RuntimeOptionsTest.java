@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
+import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
@@ -20,6 +21,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
+import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +49,10 @@ public class RuntimeOptionsTest {
 		return RuntimeOptions.newBuilder().setMaxStringLength(n).build();
 	}
 
+	private static RuntimeOptions maxUserDefinedFunctionCalls(long n) {
+		return RuntimeOptions.newBuilder().setMaxUserDefinedFunctionCalls(n).build();
+	}
+
 	// --- defaults -----------------------------------------------------------------------------
 
 	@Test
@@ -55,6 +61,7 @@ public class RuntimeOptionsTest {
 		assertThat(defaults.getMaxArrayLength()).isEqualTo(Integer.MAX_VALUE);
 		assertThat(defaults.getMaxObjectMemberCount()).isEqualTo(Integer.MAX_VALUE);
 		assertThat(defaults.getMaxStringLength()).isEqualTo(Integer.MAX_VALUE);
+		assertThat(defaults.getMaxUserDefinedFunctionCalls()).isEqualTo(Long.MAX_VALUE);
 
 		assertThat(run("[range(0; 100000)] | length", defaults)).containsExactly(Jackson2JsonProvider.getInstance().createNumber(100000));
 		// The no-options overloads must behave identically.
@@ -65,10 +72,11 @@ public class RuntimeOptionsTest {
 
 	@Test
 	public void eachSetterLeavesTheOtherLimitsAlone() {
-		RuntimeOptions options = RuntimeOptions.newBuilder().setMaxObjectMemberCount(7).setMaxStringLength(5).setMaxArrayLength(3).build();
+		RuntimeOptions options = RuntimeOptions.newBuilder().setMaxObjectMemberCount(7).setMaxStringLength(5).setMaxArrayLength(3).setMaxUserDefinedFunctionCalls(9).build();
 		assertThat(options.getMaxArrayLength()).isEqualTo(3);
 		assertThat(options.getMaxObjectMemberCount()).isEqualTo(7);
 		assertThat(options.getMaxStringLength()).isEqualTo(5);
+		assertThat(options.getMaxUserDefinedFunctionCalls()).isEqualTo(9);
 	}
 
 	// --- maxArrayLength -----------------------------------------------------------------------
@@ -221,6 +229,93 @@ public class RuntimeOptionsTest {
 		assertThatCode(() -> run("\"aaaaa\"", maxStringLength(1))).doesNotThrowAnyException();
 	}
 
+	// --- maxUserDefinedFunctionCalls ----------------------------------------------------------
+
+	@Test
+	public void userDefinedFunctionCallsAreBounded() throws Exception {
+		assertThatCode(() -> run("def f: .; [f, f, f]", maxUserDefinedFunctionCalls(3))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run("def f: .; [f, f, f]", maxUserDefinedFunctionCalls(2)))
+				.isInstanceOf(RuntimeLimitExceededException.class)
+				.hasMessageContaining("maximum of 2 user-defined function calls");
+	}
+
+	@Test
+	public void nestedDefinitionsInTheQueryAreAlsoCounted() throws Exception {
+		// `def g` is written in the query text just as much as `def f` is, so both draw on the budget:
+		// one call of f plus one of g.
+		assertThatCode(() -> run("def f: def g: .; g; f", maxUserDefinedFunctionCalls(2))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run("def f: def g: .; g; f", maxUserDefinedFunctionCalls(1)))
+				.isInstanceOf(RuntimeLimitExceededException.class);
+	}
+
+	@Test
+	public void runawayRecursionIsBoundedInsteadOfOverflowingTheStack() {
+		// Without a budget this exhausts the Java stack. The limit is well under the depth that takes,
+		// so the caller gets a limit failure rather than a stack overflow.
+		assertThatThrownBy(() -> run("def f: f; f", maxUserDefinedFunctionCalls(100)))
+				.isInstanceOf(RuntimeLimitExceededException.class)
+				.hasMessageContaining("maximum of 100 user-defined function calls");
+	}
+
+	@Test
+	public void valueParametersCountPerBodyExecution() throws Exception {
+		// A $-parameter binds each value its argument produces in turn, so one call site runs the body twice.
+		assertThatCode(() -> run("def f($a): $a; [f(1, 2)]", maxUserDefinedFunctionCalls(2))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run("def f($a): $a; [f(1, 2)]", maxUserDefinedFunctionCalls(1)))
+				.isInstanceOf(RuntimeLimitExceededException.class);
+	}
+
+	@Test
+	public void builtinsDoNotDrawOnTheBudget() throws Exception {
+		// Even at zero: how a builtin is implemented -- Java, or jq source with its own internal `def`
+		// like recurse's `def r` or while's `def _while` -- must not change what the caller's number means.
+		assertThatCode(() -> run("[1, 2, 3] | map(. + 1)", maxUserDefinedFunctionCalls(0))).doesNotThrowAnyException();
+		assertThatCode(() -> run("[1, 2, 3] | add", maxUserDefinedFunctionCalls(0))).doesNotThrowAnyException();
+		assertThatCode(() -> run("1 | [recurse(if . < 5 then . + 1 else empty end)]", maxUserDefinedFunctionCalls(0))).doesNotThrowAnyException();
+		assertThatCode(() -> run("1 | [while(. < 5; . + 1)]", maxUserDefinedFunctionCalls(0))).doesNotThrowAnyException();
+		assertThatCode(() -> run("1 | until(. > 4; . + 1)", maxUserDefinedFunctionCalls(0))).doesNotThrowAnyException();
+	}
+
+	@Test
+	public void importedModuleFunctionsDoNotDrawOnTheBudget() throws Exception {
+		// A module's `def`s are the module author's, not the caller's -- they compile to the same node as a
+		// query-text def but must stay off the budget, exactly like a jq-source builtin.
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
+				.addImportedModule("math", new JqModule<JsonNode>() {
+					@Override
+					public String getSource() {
+						return "def square($x): $x * $x;";
+					}
+
+					@Override
+					public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
+						throw new ModuleNotFoundException(importPath);
+					}
+
+					@Override
+					public JsonNode relativeData(String importPath, String searchPath) {
+						throw new ModuleNotFoundException(importPath);
+					}
+				})
+				.build();
+
+		List<JsonNode> out = new ArrayList<>();
+		env.compile("math::square(5)").withRuntimeOptions(maxUserDefinedFunctionCalls(0))
+				.apply(Jackson2JsonProvider.getInstance().createNull(), out::add);
+		assertThat(out).containsExactly(Jackson2JsonProvider.getInstance().createNumber(25));
+	}
+
+	@Test
+	public void theBudgetStartsOverOnEachInvocation() throws Exception {
+		// The tally lives on the per-apply() Memory, so spending it all does not poison the next input.
+		JsonQuery<JsonNode> query = ENV.compile("def f: .; [f, f]").withRuntimeOptions(maxUserDefinedFunctionCalls(2));
+		for (int i = 0; i < 3; ++i) {
+			List<JsonNode> out = new ArrayList<>();
+			query.apply(Jackson2JsonProvider.getInstance().createNull(), out::add);
+			assertThat(out).hasSize(1);
+		}
+	}
+
 	// --- the SPI path -------------------------------------------------------------------------
 
 	@Test
@@ -242,6 +337,36 @@ public class RuntimeOptionsTest {
 	}
 
 	// --- concurrency --------------------------------------------------------------------------
+
+	@Test
+	public void oneCompiledQueryHonoursPerInvocationCallBudgets() throws Exception {
+		// The call tally is mutable per-invocation state, unlike the size limits, so prove it neither leaks
+		// between threads nor accumulates across invocations: every tight task must fail and every unlimited
+		// one must succeed, however they interleave.
+		JsonQuery<JsonNode> query = ENV.compile("def f: .; [f, f, f]");
+		ExecutorService executor = Executors.newFixedThreadPool(4);
+		try {
+			List<Future<Boolean>> futures = new ArrayList<>();
+			for (int i = 0; i < 64; ++i) {
+				boolean tight = i % 2 == 0;
+				Callable<Boolean> task = () -> {
+					List<JsonNode> out = new ArrayList<>();
+					try {
+						query.withRuntimeOptions(tight ? maxUserDefinedFunctionCalls(2) : RuntimeOptions.newBuilder().build())
+								.apply(Jackson2JsonProvider.getInstance().createNull(), out::add);
+						return false;
+					} catch (RuntimeLimitExceededException e) {
+						return true;
+					}
+				};
+				futures.add(executor.submit(task));
+			}
+			for (int i = 0; i < futures.size(); ++i)
+				assertThat(futures.get(i).get()).isEqualTo(i % 2 == 0);
+		} finally {
+			executor.shutdownNow();
+		}
+	}
 
 	@Test
 	public void oneCompiledQueryHonoursPerInvocationLimits() throws Exception {
