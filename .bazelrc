@@ -16,6 +16,9 @@ build --enable_platform_specific_config
 build --incompatible_strict_action_env
 build --experimental_strict_repo_env
 build --experimental_strict_java_deps=error
+# Preserve Maven artifact filenames because JPMS derives automatic module names from them.
+# Manifest stamping adds a `processed_` prefix, changing `re2j-1.8.jar` from `re2j` to `processed.re2j`.
+build --@rules_jvm_external//settings:stamp_manifest=false
 # Pass through HOME and COURSIER_CACHE so rules_jvm_external can resolve the user's
 # Coursier cache path correctly under --experimental_strict_repo_env during pinning / fetching.
 common --repo_env=COURSIER_CACHE

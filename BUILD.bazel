@@ -17,6 +17,7 @@ publish_all(
         "//jackson-jq-core:jackson-jq-core.publish",
         "//jackson-jq-ext-module-debug:jackson-jq-ext-module-debug.publish",
         "//jackson-jq-ext-module-random:jackson-jq-ext-module-random.publish",
+        "//jackson-jq-ext-module-re2:jackson-jq-ext-module-re2.publish",
         "//jackson-jq-ext-module-time:jackson-jq-ext-module-time.publish",
         "//jackson-jq-ext-module-uri:jackson-jq-ext-module-uri.publish",
         "//jackson-jq-ext-module-uuid:jackson-jq-ext-module-uuid.publish",

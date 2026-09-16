@@ -17,7 +17,7 @@ load("@rules_jvm_external//:defs.bzl", "maven_export")
 load("//:version.bzl", "VERSION")
 load("//build-tools/bazel:external_deps.bzl", "external_deps")
 load("//build-tools/bazel:java_defs.bzl", "JQ_PLUGINS", "javacopts")
-load("//build-tools/bazel:jpms.bzl", "java_compile_jars", "merge_package_jars", "overlay_jars")
+load("//build-tools/bazel:jpms.bzl", "java_class_jars", "java_compile_jars", "merge_package_jars", "overlay_jars")
 load("//build-tools/bazel:maven_artifact.bzl", "executable_maven_artifact", "maven_artifact")
 load("//build-tools/bazel:osgi.bzl", "osgi_bundle")
 load("//build-tools/bazel:publish.bzl", "publish_all", "publish_prebuilt_jar")
@@ -329,7 +329,7 @@ def jjq_java_module_info(
 
     Constructs:
     - `--patch-module <module_name>=<pkg1_compile_jar>:<pkg2_compile_jar>:...`
-    - `--module-path <dep1_compile_jar>:<dep2_compile_jar>:...`
+    - `--module-path <dep1_class_jar>:<dep2_class_jar>:...`
 
     Args:
       module_name: JPMS module name declared in module-info.java.
@@ -355,7 +355,7 @@ def jjq_java_module_info(
     dep_targets = []
     for index, dep in enumerate(all_deps):
         target = "%s-dep-%s" % (name, index)
-        java_compile_jars(
+        java_class_jars(
             name = target,
             library = dep,
         )

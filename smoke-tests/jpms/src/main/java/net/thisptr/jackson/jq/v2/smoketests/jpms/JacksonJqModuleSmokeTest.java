@@ -32,6 +32,7 @@ public final class JacksonJqModuleSmokeTest {
 		assertQuery(jsonProvider, env, "test(\"a.c\")", "\"abc\"", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/debug\" as debug; debug::dump_expr(1 + .) | .fields.lhs.class | endswith(\".ValueLiteral\")", "null", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/random\" as random; random::random | . >= 0 and . < 1", "null", true);
+		assertQuery(jsonProvider, env, "import \"jackson-jq/re2\" as re; re::test(\"a.c\")", "\"abc\"", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/time\" as time; 1477162342372 | time::strftime(\"yyyy-MM-dd HH:mm:ss.SSSXXX\"; \"UTC\")", "null", "2016-10-22 18:52:22.372Z");
 		assertQuery(jsonProvider, env, "import \"jackson-jq/uri\" as uri; uri::uridecode", "\"%66%6f%6f\"", "foo");
 		assertQuery(jsonProvider, env, "import \"jackson-jq/uuid\" as uuid; uuid::uuid5(\"6ba7b810-9dad-11d1-80b4-00c04fd430c8\")", "\"example.com\"", "cfbff0d1-9375-5685-968c-48ce8b15ae17");

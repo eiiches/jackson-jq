@@ -112,6 +112,11 @@ maven.artifact(
     version = "2.2.6",
 )
 maven.artifact(
+    artifact = "re2j",
+    group = "com.google.re2j",
+    version = "1.8",
+)
+maven.artifact(
     artifact = "commons-cli",
     group = "commons-cli",
     version = "1.10.0",

@@ -31,6 +31,24 @@
 		</dependency>
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-re2</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>runtime</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>com.google.re2j</groupId>
+					<artifactId>re2j</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2.smoketests</groupId>
+			<artifactId>jackson-jq-osgi-re2j-wrapper</artifactId>
+			<version>${project.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
 			<artifactId>jackson-jq-ext-module-time</artifactId>
 			<version>${jackson-jq.version}</version>
 			<scope>runtime</scope>

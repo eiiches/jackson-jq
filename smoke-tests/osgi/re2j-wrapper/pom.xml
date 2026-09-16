@@ -1,0 +1,38 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>jackson-jq-osgi-re2j-wrapper</artifactId>
+	<name>${project.groupId}:${project.artifactId}</name>
+	<packaging>bundle</packaging>
+
+	<parent>
+		<groupId>net.thisptr.jackson.jq.v2.smoketests</groupId>
+		<artifactId>jackson-jq-osgi-integration-tests-parent</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.google.re2j</groupId>
+			<artifactId>re2j</artifactId>
+			<version>1.8</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Bundle-SymbolicName>net.thisptr.jackson.jq.v2.smoketests.osgi.re2j</Bundle-SymbolicName>
+						<Embed-Dependency>re2j;inline=true</Embed-Dependency>
+						<_exportcontents>com.google.re2j</_exportcontents>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
