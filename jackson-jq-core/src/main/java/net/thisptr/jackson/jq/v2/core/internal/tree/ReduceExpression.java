@@ -1,16 +1,12 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
-import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -81,21 +77,15 @@ public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNo
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
 			JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
-			iterExpr.apply(frame, in, UntrackedPath.getInstance(), (item, opath2) -> {
-				Deque<PatternMatcher.Match<JsonNode>> stack = new ArrayDeque<>();
-				matcher.match(frame, item, (Deque<PatternMatcher.Match<JsonNode>> vars) -> {
-					for (Iterator<PatternMatcher.Match<JsonNode>> it = vars.descendingIterator(); it.hasNext(); ) {
-						PatternMatcher.Match<JsonNode> var = it.next();
-						if (var.slot >= 0) {
-							frame.set(var.slot, StackFrameValues.toSlot(var.value));
-						}
-					}
-					// We only use the last value from reduce expression.
-					List<JsonNode> reduceResult = new ArrayList<>();
-					reduceExpr.apply(frame, accumulators[0], UntrackedPath.getInstance(), (v, opath3) -> reduceResult.add(v));
-					accumulators[0] = reduceResult.isEmpty() ? jsonProvider.createNull() : reduceResult.get(reduceResult.size() - 1);
-				}, stack);
-			});
+			// The matcher binds its variables straight into the frame, so by the time onMatch runs
+			// reduceExpr can simply read them.
+			PatternMatcher.OnMatch onMatch = () -> {
+				// We only use the last value from reduce expression.
+				List<JsonNode> reduceResult = new ArrayList<>();
+				reduceExpr.apply(frame, accumulators[0], UntrackedPath.getInstance(), (v, opath3) -> reduceResult.add(v));
+				accumulators[0] = reduceResult.isEmpty() ? jsonProvider.createNull() : reduceResult.get(reduceResult.size() - 1);
+			};
+			iterExpr.apply(frame, in, UntrackedPath.getInstance(), (item, opath2) -> matcher.match(frame, item, onMatch));
 			output.emit(accumulators[0], UntrackedPath.getInstance());
 		});
 	}

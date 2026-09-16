@@ -17,10 +17,10 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 /**
  * Reference to an {@code EnvironmentBuilder.declareVariable}-registered variable -- no compile-time value,
- * so it's read from {@code StackFrame.getEnclosingMemory()}'s flat global-slots array (populated once per
- * top-level {@code apply()} call from {@code RuntimeBindings}, before the query body runs). The same
- * {@code globalIndex} is valid from any {@code def}-nesting depth, since one {@code StackMemory} backs
- * exactly one top-level {@code apply()} call -- no closure capture needed.
+ * so it's read from {@code StackFrame.getEnclosingMemory()}'s flat global-slots array (prepared when the
+ * immutable query view is built and shared read-only by its invocations). The same {@code globalIndex} is
+ * valid from any {@code def}-nesting depth, since one {@code StackMemory} backs exactly one top-level
+ * {@code apply()} call -- no closure capture needed.
  */
 public class ResolvedGlobalVariableAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final String name;

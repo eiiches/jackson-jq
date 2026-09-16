@@ -16,6 +16,10 @@ public class StackFrame implements RuntimeContext {
 		this.size = size;
 	}
 
+	int offset() {
+		return offset;
+	}
+
 	public int size() {
 		return size;
 	}
@@ -32,12 +36,12 @@ public class StackFrame implements RuntimeContext {
 	public @Nullable Object get(int index) {
 		if (index < 0 || index >= size)
 			throw new IndexOutOfBoundsException("slot " + index + " out of bounds for frame size " + size);
-		return stack.memory.get(offset + index);
+		return stack.slots[offset + index];
 	}
 
 	public void set(int index, @Nullable Object value) {
 		if (index < 0 || index >= size)
 			throw new IndexOutOfBoundsException("slot " + index + " out of bounds for frame size " + size);
-		stack.memory.set(offset + index, value);
+		stack.slots[offset + index] = value;
 	}
 }

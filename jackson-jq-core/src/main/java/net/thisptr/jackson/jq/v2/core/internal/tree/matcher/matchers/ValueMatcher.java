@@ -1,16 +1,18 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
 
-import java.util.Deque;
-import java.util.Map;
-import java.util.function.Consumer;
-
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
+import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.SlotResolver;
+import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class ValueMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	private final String name;
+
+	/**
+	 * The frame slot to bind, or -1 for an occurrence a previous one shadows (see {@link SlotResolver#claim}).
+	 */
 	private final int slot;
 
 	public ValueMatcher(String name) {
@@ -23,24 +25,21 @@ public class ValueMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public void match(StackFrame frame, JsonNode in, Consumer<Deque<Match<JsonNode>>> out, Deque<Match<JsonNode>> accumulate) throws JsonQueryException {
-		accumulate.addLast(new Match<>(slot, in));
-		out.accept(accumulate);
-		accumulate.removeLast();
+	public void match(StackFrame frame, JsonNode in, OnMatch onMatch) throws JsonQueryException {
+		if (slot >= 0)
+			frame.set(slot, StackFrameValues.toSlot(in));
+		onMatch.matched();
 	}
 
 	@Override
-	public void matchWithPath(StackFrame frame, JsonNode in, Path<JsonNode> path, MatchOutput<JsonNode> output, Deque<MatchWithPath<JsonNode>> accumulate) throws JsonQueryException {
-		accumulate.addLast(new MatchWithPath<>(slot, in, path));
-		output.emit(accumulate);
-		accumulate.removeLast();
+	public void matchWithPath(StackFrame frame, JsonNode in, Path<JsonNode> path, OnMatch onMatch) throws JsonQueryException {
+		if (slot >= 0)
+			frame.set(slot, StackFrameValues.toSlot(in, path));
+		onMatch.matched();
 	}
 
 	@Override
-	public PatternMatcher<JsonNode> resolveSlots(Map<String, Integer> slots) {
-		Integer resolvedSlot = slots.get(name);
-		if (resolvedSlot == null)
-			throw new IllegalStateException("No slot allocated for pattern variable $" + name);
-		return new ValueMatcher<>(name, resolvedSlot.intValue());
+	public PatternMatcher<JsonNode> resolveSlots(SlotResolver resolver) {
+		return new ValueMatcher<>(name, resolver.claim(name));
 	}
 }

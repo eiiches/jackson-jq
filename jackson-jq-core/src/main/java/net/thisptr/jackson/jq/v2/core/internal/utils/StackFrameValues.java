@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.path.PathAndValue;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 /**
@@ -36,6 +37,19 @@ public final class StackFrameValues {
 	 */
 	public static <JsonNode> Object toSlot(JsonNode value) {
 		return value == null ? JSON_NULL : value;
+	}
+
+	/**
+	 * Encodes a bound value, along with the path it was reached by, for storage in a stack frame slot.
+	 *
+	 * @param value the bound value; Java {@code null} if the provider represents JSON {@code null}
+	 * that way
+	 * @param path the path {@code value} was reached by; an untracked path is not worth pairing up
+	 * and the value goes in on its own, exactly as {@link #toSlot(Object)} would store it
+	 * @return the object to store in the slot, never Java {@code null}
+	 */
+	public static <JsonNode> Object toSlot(JsonNode value, Path<JsonNode> path) {
+		return path instanceof UntrackedPath ? toSlot(value) : new PathAndValue<>(path, value);
 	}
 
 	/**

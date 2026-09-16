@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.RuntimeBindings;
@@ -24,6 +25,8 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode> {
+	private static final Object[] EMPTY_GLOBALS = new Object[0];
+
 	private final int frameSize;
 
 	@Override
@@ -47,7 +50,7 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 	private final Expression<StackFrame, JsonNode> inner;
 	// Names/signatures with a fixed, compile-time-baked value
 	// (defineVariable/defineConstant/defineFunction/defineJqFunction)
-	// -- used only to pick the right validateBindings() error message; the actual values are already bound
+	// -- used only to pick the right prepareBindings() error message; the actual values are already bound
 	// directly into `inner`'s tree, not stored here.
 	private final Set<String> definedVariables;
 	private final Set<FunctionSignature> definedFunctions;
@@ -98,26 +101,22 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 
 	@Override
 	public void apply(StackFrame parentFrame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
-		validateBindings(null);
-		// Nested use: the enclosing invocation's Memory -- and hence its limits -- is reused, so the
-		// RuntimeLimits argument is never read.
-		apply(parentFrame, in, path, output, null, parentFrame.getRuntimeLimits());
+		prepareBindings(null);
+		apply(parentFrame.getEnclosingMemory(), in, path, output);
 	}
 
 	/**
-	 * Top-level entry point. The caller is responsible for having run {@link #validateBindings} against
-	 * {@code bindings}; {@link net.thisptr.jackson.jq.v2.core.JsonQuery#withRuntimeBindings} does so once, when the
-	 * query carrying them is built.
+	 * Top-level entry point. {@code globals} must have been produced by {@link #prepareBindings};
+	 * {@link net.thisptr.jackson.jq.v2.core.JsonQuery#withRuntimeBindings} does so once, when the query carrying
+	 * them is built.
 	 */
-	public void apply(JsonNode in, RuntimeLimits runtimeLimits, RuntimeBindings<JsonNode> bindings, Consumer<? super JsonNode> output) throws JsonQueryException {
-		apply((StackFrame) null, in, UntrackedPath.getInstance(), (v, p) -> output.accept(v), bindings, runtimeLimits);
+	public void apply(JsonNode in, RuntimeLimits runtimeLimits, Object[] globals, Consumer<? super JsonNode> output) throws JsonQueryException {
+		apply(new Memory(globals, runtimeLimits), in, UntrackedPath.getInstance(), (v, p) -> output.accept(v));
 	}
 
-	private void apply(@Nullable StackFrame parentFrame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output, @Nullable RuntimeBindings<JsonNode> bindings, RuntimeLimits runtimeLimits) throws JsonQueryException {
-		Memory memory = parentFrame != null ? parentFrame.getEnclosingMemory() : new Memory(globalCount, runtimeLimits);
+	private void apply(Memory memory, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		StackFrame rootFrame = memory.pushFrame(frameSize);
 		try {
-			initializeGlobals(memory, bindings);
 			inner.apply(rootFrame, in, path, output);
 		} finally {
 			memory.popFrame();
@@ -137,7 +136,6 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 		Memory memory = new Memory(globalCount);
 		StackFrame rootFrame = memory.pushFrame(frameSize);
 		try {
-			initializeGlobals(memory, null);
 			inner.apply(rootFrame, in, UntrackedPath.getInstance(), (v, p) -> {
 			});
 			Map<FunctionSignature, Function> result = new HashMap<>();
@@ -153,45 +151,61 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 		}
 	}
 
-	public void validateBindings(@Nullable RuntimeBindings<JsonNode> bindings) throws JsonQueryException {
-		Map<String, Supplier<JsonNode>> variables = bindings != null ? bindings.getVariables() : Collections.emptyMap();
-		Map<FunctionSignature, Function> functions = bindings != null ? bindings.getFunctions() : Collections.emptyMap();
-		for (String name : variables.keySet()) {
-			if (declaredVariables.contains(name))
-				continue;
-			if (definedVariables.contains(name))
-				throw new JsonQueryException("Variable $" + name + " cannot be overridden because it has a fixed value in the Environment");
-			throw new JsonQueryException("Variable $" + name + " cannot be overridden because it was not defined when the query was compiled");
-		}
-		for (FunctionSignature key : functions.keySet()) {
-			if (declaredFunctions.contains(key))
-				continue;
-			if (definedFunctions.contains(key))
-				throw new JsonQueryException("Function " + key + " cannot be overridden because it has a fixed value in the Environment");
-			throw new JsonQueryException("Function " + key + " cannot be overridden because it was not defined when the query was compiled");
-		}
-		for (String name : globalVariableIndices.keySet()) {
-			if (!variables.containsKey(name))
-				throw new JsonQueryException("Variable $" + name + " must be supplied via withRuntimeBindings(), because it was declared without a value in the Environment");
-		}
-		for (FunctionSignature key : globalFunctionIndices.keySet()) {
-			if (!functions.containsKey(key))
-				throw new JsonQueryException("Function " + key + " must be supplied via withRuntimeBindings(), because it was declared without a value in the Environment");
-		}
+	public Object @Nullable [] prepareEmptyBindings() {
+		return globalCount == 0 ? EMPTY_GLOBALS : null;
 	}
 
-	private void initializeGlobals(Memory memory, @Nullable RuntimeBindings<JsonNode> bindings) {
-		if (bindings == null)
-			return;
-		for (Map.Entry<String, Integer> entry : globalVariableIndices.entrySet()) {
-			Supplier<JsonNode> supplier = bindings.getVariables().get(entry.getKey());
-			if (supplier != null)
-				memory.setGlobal(entry.getValue(), supplier);
+	public Object[] prepareBindings(@Nullable RuntimeBindings<JsonNode> bindings) throws JsonQueryException {
+		Map<String, Supplier<JsonNode>> variables = bindings != null ? bindings.getVariables() : Collections.emptyMap();
+		Map<FunctionSignature, Function> functions = bindings != null ? bindings.getFunctions() : Collections.emptyMap();
+		Object[] globals = globalCount == 0 ? EMPTY_GLOBALS : new Object[globalCount];
+		@Var int populatedGlobalCount = 0;
+		if (!variables.isEmpty()) {
+			for (Map.Entry<String, Supplier<JsonNode>> entry : variables.entrySet()) {
+				String name = entry.getKey();
+				if (declaredVariables.contains(name)) {
+					Integer index = globalVariableIndices.get(name);
+					if (index != null) {
+						globals[index] = entry.getValue();
+						populatedGlobalCount++;
+					}
+					continue;
+				}
+				if (definedVariables.contains(name))
+					throw new JsonQueryException("Variable $" + name + " cannot be overridden because it has a fixed value in the Environment");
+				throw new JsonQueryException("Variable $" + name + " cannot be overridden because it was not defined when the query was compiled");
+			}
 		}
-		for (Map.Entry<FunctionSignature, Integer> entry : globalFunctionIndices.entrySet()) {
-			Function factory = bindings.getFunctions().get(entry.getKey());
-			if (factory != null)
-				memory.setGlobal(entry.getValue(), factory);
+		if (!functions.isEmpty()) {
+			for (Map.Entry<FunctionSignature, Function> entry : functions.entrySet()) {
+				FunctionSignature key = entry.getKey();
+				if (declaredFunctions.contains(key)) {
+					Integer index = globalFunctionIndices.get(key);
+					if (index != null) {
+						globals[index] = entry.getValue();
+						populatedGlobalCount++;
+					}
+					continue;
+				}
+				if (definedFunctions.contains(key))
+					throw new JsonQueryException("Function " + key + " cannot be overridden because it has a fixed value in the Environment");
+				throw new JsonQueryException("Function " + key + " cannot be overridden because it was not defined when the query was compiled");
+			}
 		}
+		if (populatedGlobalCount != globalCount) {
+			if (!globalVariableIndices.isEmpty()) {
+				for (Map.Entry<String, Integer> entry : globalVariableIndices.entrySet()) {
+					if (globals[entry.getValue()] == null)
+						throw new JsonQueryException("Variable $" + entry.getKey() + " must be supplied via withRuntimeBindings(), because it was declared without a value in the Environment");
+				}
+			}
+			if (!globalFunctionIndices.isEmpty()) {
+				for (Map.Entry<FunctionSignature, Integer> entry : globalFunctionIndices.entrySet()) {
+					if (globals[entry.getValue()] == null)
+						throw new JsonQueryException("Function " + entry.getKey() + " must be supplied via withRuntimeBindings(), because it was declared without a value in the Environment");
+				}
+			}
+		}
+		return globals;
 	}
 }

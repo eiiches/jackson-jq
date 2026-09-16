@@ -173,3 +173,38 @@
   - [1, 2]
   v: '[1.5, )'
   comment: 'parentheses make the binding match every emitted value'
+
+- q: '. as {b: $x, a: [$x, $y]} | [$x, $y]'
+  in: {"a": [1, 2], "b": 3}
+  out:
+  - [3, 2]
+  v: '[1.5, )'
+  comment: 'array elements are matched back to front, so .a[0] loses to the earlier .b'
+
+- q: '. as [{("x", "y"): $v}, $v] | $v'
+  in: [{"x": 1, "y": 2}, 9]
+  out:
+  - 9
+  - 9
+  v: '[1.5, )'
+  comment: 'the shadowed occurrence still branches over both keys, it just does not bind'
+
+- q: '. as [$v, {("x", "y"): $v}] | $v'
+  in: [9, {"x": 1, "y": 2}]
+  out:
+  - 1
+  - 2
+  v: '[1.5, )'
+  comment: 'and here the branching occurrence is the one that wins, since it is matched first'
+
+- q: 'reduce .[] as [$x, $x] (0; . + $x)'
+  in: [[1, 2], [3, 4]]
+  out:
+  - 6
+  v: '[1.5, )'
+
+- q: 'foreach .[] as {a: $x, b: $x} (0; . + $x)'
+  in: [{"a": 1, "b": 2}]
+  out:
+  - 1
+  v: '[1.5, )'

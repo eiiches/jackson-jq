@@ -31,10 +31,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 @SuppressWarnings("NullAway")
 public class JacksonJqBenchmark {
 	@Param({ "" })
-	public String jqExpression = "";
-
-	@Param({ "" })
-	public String jsonInput = "";
+	public String benchmarkId = "";
 
 	@Param({ "jackson3" })
 	public String jsonProviderName = "jackson3";
@@ -45,14 +42,24 @@ public class JacksonJqBenchmark {
 	private Environment<Object> environment;
 	private JsonQuery<Object> compiledQuery;
 	private Object input;
+	private String jqExpression;
 
 	@Setup
 	public void setup() {
+		jqExpression = requiredProperty(Main.QUERY_PROPERTY);
+		String jsonInput = requiredProperty(Main.INPUT_PROPERTY);
 		JsonProvider<Object> jsonProvider = Main.resolveProvider(jsonProviderName);
 		Version version = Main.resolveVersion(jqVersion);
 		environment = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version).build();
 		input = jsonProvider.parse(jsonInput);
 		compiledQuery = environment.compile(jqExpression);
+	}
+
+	private static String requiredProperty(String name) {
+		String value = System.getProperty(name);
+		if (value == null)
+			throw new IllegalStateException("missing system property: " + name);
+		return value;
 	}
 
 	@Benchmark
