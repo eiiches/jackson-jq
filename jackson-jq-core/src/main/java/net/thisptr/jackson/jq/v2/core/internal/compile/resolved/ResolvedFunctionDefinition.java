@@ -37,7 +37,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<StackFra
 	private final int ownClosureSlot;
 	private final int definerClosureSlot;
 	// Whether each execution of this body draws on RuntimeOptions#setMaxUserDefinedFunctionCalls. Set by the
-	// compiler (CompileContext#metersUserDefinedFunctionCalls): true for a `def` the caller wrote, false for
+	// compiler (CompileContext#metersRuntimeBudgets): true for a `def` the caller wrote, false for
 	// one the engine brought along inside a module or a jq-library body, which compile to this same node.
 	private final boolean metered;
 	private final Set<Integer> freeLocalSlots;

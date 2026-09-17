@@ -5,6 +5,7 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathOperations;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -19,17 +20,19 @@ public class IdentifierKeyFieldConstruction<JsonNode> implements FieldConstructi
 	public final String key;
 	public final @Nullable Expression<StackFrame, JsonNode> value;
 	private final Version version;
+	private final int valueOutputIndex;
 
 	@Override
 	public Cardinality getCardinality() {
 		return value == null ? Cardinality.ONE : value.getCardinality();
 	}
 
-	public IdentifierKeyFieldConstruction(JsonProvider<JsonNode> jsonProvider, String key, @Nullable Expression<StackFrame, JsonNode> value, Version version) {
+	public IdentifierKeyFieldConstruction(JsonProvider<JsonNode> jsonProvider, String key, @Nullable Expression<StackFrame, JsonNode> value, Version version, int valueOutputIndex) {
 		this.jsonProvider = jsonProvider;
 		this.key = key;
 		this.value = value;
 		this.version = version;
+		this.valueOutputIndex = valueOutputIndex;
 	}
 
 	// `{foo}` shorthand implicitly reads `in` when value is absent.
@@ -58,7 +61,11 @@ public class IdentifierKeyFieldConstruction<JsonNode> implements FieldConstructi
 		if (value == null) {
 			PathOperations.resolveObjectField(jsonProvider, in, UntrackedPath.getInstance(), (v, path) -> consumer.accept(key, v), key, false, version);
 		} else {
-			value.apply(frame, in, UntrackedPath.getInstance(), (v, opath) -> consumer.accept(key, v));
+			Memory memory = frame.getEnclosingMemory();
+			value.apply(frame, in, UntrackedPath.getInstance(), (v, opath) -> {
+				memory.countOutput(valueOutputIndex);
+				consumer.accept(key, v);
+			});
 		}
 	}
 }

@@ -118,6 +118,11 @@ public class Main {
 			.desc("maximum number of calls to functions defined in the query during evaluation (default: unlimited)")
 			.numberOfArgs(1)
 			.get();
+	private static final Option OPT_MAX_OUTPUTS_PER_EXPRESSION = Option.builder()
+			.longOpt("max-outputs-per-expression")
+			.desc("maximum number of values a single expression in the query may produce during evaluation (default: unlimited)")
+			.numberOfArgs(1)
+			.get();
 	private static final Option OPT_HELP = Option.builder("h")
 			.longOpt("help")
 			.desc("print this message")
@@ -138,6 +143,7 @@ public class Main {
 		options.addOption(OPT_MAX_ARRAY_LENGTH);
 		options.addOption(OPT_MAX_OBJECT_MEMBER_COUNT);
 		options.addOption(OPT_MAX_USER_DEFINED_FUNCTION_CALLS);
+		options.addOption(OPT_MAX_OUTPUTS_PER_EXPRESSION);
 		options.addOption(OPT_HELP);
 		CommandLine command;
 		List<String> rest;
@@ -208,6 +214,7 @@ public class Main {
 				.setMaxArrayLength(parseLimit(command, OPT_MAX_ARRAY_LENGTH))
 				.setMaxObjectMemberCount(parseLimit(command, OPT_MAX_OBJECT_MEMBER_COUNT))
 				.setMaxUserDefinedFunctionCalls(parseLongLimit(command, OPT_MAX_USER_DEFINED_FUNCTION_CALLS))
+				.setMaxOutputsPerExpression(parseLongLimit(command, OPT_MAX_OUTPUTS_PER_EXPRESSION))
 				.build();
 	}
 

@@ -34,8 +34,8 @@ public class ObjectMatcherTest {
 		JsonNode in = new ObjectMapper().readTree("{\"outer\":{\"a\": 1, \"b\": 2}, \"c\": 3}");
 		PatternMatcher<JsonNode> matcher = new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
 				new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("outer")), new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
-						new ObjectMatcher.FieldMatcher<>(false, null, new Comma<>(Arrays.<Expression<StackFrame, JsonNode>>asList(new ValueLiteral<>(JSON_PROVIDER.createString("a")), new ValueLiteral<>(JSON_PROVIDER.createString("b")))), new ValueMatcher<>("x"))), Versions.JQ_1_8_2)),
-				new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("c")), new ValueMatcher<>("y"))), Versions.JQ_1_8_2)
+						new ObjectMatcher.FieldMatcher<>(false, null, new Comma<>(Arrays.<Expression<StackFrame, JsonNode>>asList(new ValueLiteral<>(JSON_PROVIDER.createString("a")), new ValueLiteral<>(JSON_PROVIDER.createString("b")))), new ValueMatcher<>("x"), Memory.NO_OUTPUT_COUNTER)), Versions.JQ_1_8_2), Memory.NO_OUTPUT_COUNTER),
+				new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("c")), new ValueMatcher<>("y"), Memory.NO_OUTPUT_COUNTER)), Versions.JQ_1_8_2)
 				.resolveSlots(new SlotResolver(slots("x", 3, "y", 5)));
 
 		assertEquals(Arrays.asList(
@@ -48,8 +48,8 @@ public class ObjectMatcherTest {
 		JsonNode in = new ObjectMapper().readTree("{\"outer\":{\"a\": 1}, \"b\": 2, \"c\": 3}");
 		PatternMatcher<JsonNode> matcher = new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
 				new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("outer")), new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
-						new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("a")), new ValueMatcher<>("x"))), Versions.JQ_1_8_2)),
-				new ObjectMatcher.FieldMatcher<>(false, null, new Comma<>(Arrays.<Expression<StackFrame, JsonNode>>asList(new ValueLiteral<>(JSON_PROVIDER.createString("b")), new ValueLiteral<>(JSON_PROVIDER.createString("c")))), new ValueMatcher<>("y"))), Versions.JQ_1_8_2)
+						new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("a")), new ValueMatcher<>("x"), Memory.NO_OUTPUT_COUNTER)), Versions.JQ_1_8_2), Memory.NO_OUTPUT_COUNTER),
+				new ObjectMatcher.FieldMatcher<>(false, null, new Comma<>(Arrays.<Expression<StackFrame, JsonNode>>asList(new ValueLiteral<>(JSON_PROVIDER.createString("b")), new ValueLiteral<>(JSON_PROVIDER.createString("c")))), new ValueMatcher<>("y"), Memory.NO_OUTPUT_COUNTER)), Versions.JQ_1_8_2)
 				.resolveSlots(new SlotResolver(slots("x", 7, "y", 11)));
 
 		assertEquals(Arrays.asList(

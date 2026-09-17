@@ -12,6 +12,8 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
+import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 
@@ -93,11 +95,19 @@ public class CompileContext {
 	private final GlobalState globalState;
 
 	private final boolean exportTopLevelFunctions;
-	// Whether a `def` compiled in this context draws on RuntimeOptions#setMaxUserDefinedFunctionCalls.
-	// True only for the root context of a query the caller wrote (Compiler#compile); false for a module
-	// source (Compiler#compileModule) and for every jq-library function body (the create*JqFunctionContext
-	// factories below), so an internal `def` -- recurse's `def r`, say -- never spends the caller's budget.
-	private final boolean meterUserDefinedFunctionCalls;
+	// Whether code compiled in this context draws on the per-invocation budgets a caller sets --
+	// RuntimeOptions#setMaxUserDefinedFunctionCalls for a `def`, #setMaxOutputsPerExpression for an
+	// expression's output. True only for the root context of a query the caller wrote (Compiler#compile);
+	// false for a module source (Compiler#compileModule) and for every jq-library function body (the
+	// create*JqFunctionContext factories below), so an internal `def` -- recurse's `def r`, say -- never
+	// spends the caller's budget, and neither does anything it emits along the way.
+	private final boolean meterRuntimeBudgets;
+
+	// Next free index into Memory#outputCounts, handed out one per metered expression by
+	// allocateOutputCounter(). Only a metered context ever allocates, so the numbering covers exactly one
+	// top-level compile's query-text expressions and the array Memory sizes from it is never indexed by a
+	// node compiled anywhere else.
+	private int nextOutputCounter;
 	private final Map<FunctionSignature, Integer> rootFunctionSlots;
 	private final Map<String, JavaModule> importedModules;
 	private final Map<String, Object> importedVariableDefaults;
@@ -122,12 +132,12 @@ public class CompileContext {
 		this(false, false);
 	}
 
-	public CompileContext(boolean exportTopLevelFunctions, boolean meterUserDefinedFunctionCalls) {
-		this(exportTopLevelFunctions, meterUserDefinedFunctionCalls, new JqFunctionCompiler.State(), Collections.emptySet(), Collections.emptySet(), new GlobalState());
+	public CompileContext(boolean exportTopLevelFunctions, boolean meterRuntimeBudgets) {
+		this(exportTopLevelFunctions, meterRuntimeBudgets, new JqFunctionCompiler.State(), Collections.emptySet(), Collections.emptySet(), new GlobalState());
 	}
 
-	private CompileContext(boolean exportTopLevelFunctions, boolean meterUserDefinedFunctionCalls, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState) {
-		this(newRootScopes(), exportTopLevelFunctions, meterUserDefinedFunctionCalls, jqFunctionState, activeJqFunctions, genericJqFunctions, globalState);
+	private CompileContext(boolean exportTopLevelFunctions, boolean meterRuntimeBudgets, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState) {
+		this(newRootScopes(), exportTopLevelFunctions, meterRuntimeBudgets, jqFunctionState, activeJqFunctions, genericJqFunctions, globalState);
 	}
 
 	// Shares `scopes` with the caller rather than starting a fresh list -- used only to build an inlined
@@ -135,14 +145,14 @@ public class CompileContext {
 	// separate CompileContext object (its own activeJqFunctions/genericJqFunctions fork), but needs to
 	// keep allocating slots in whatever frame is already live on the caller's own scope stack rather than
 	// starting a brand-new one.
-	private CompileContext(List<ScopeFrame> scopes, boolean exportTopLevelFunctions, boolean meterUserDefinedFunctionCalls, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState) {
+	private CompileContext(List<ScopeFrame> scopes, boolean exportTopLevelFunctions, boolean meterRuntimeBudgets, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState) {
 		this.scopes = scopes;
 		this.jqFunctionState = jqFunctionState;
 		this.activeJqFunctions = activeJqFunctions;
 		this.genericJqFunctions = genericJqFunctions;
 		this.globalState = globalState;
 		this.exportTopLevelFunctions = exportTopLevelFunctions;
-		this.meterUserDefinedFunctionCalls = meterUserDefinedFunctionCalls;
+		this.meterRuntimeBudgets = meterRuntimeBudgets;
 		this.rootFunctionSlots = new HashMap<>();
 		this.importedModules = new HashMap<>();
 		this.importedVariableDefaults = new HashMap<>();
@@ -222,14 +232,73 @@ public class CompileContext {
 	}
 
 	/**
-	 * Whether a {@code def} compiled in this context counts against
-	 * {@code RuntimeOptions.Builder#setMaxUserDefinedFunctionCalls(long)}. True only while compiling the jq
-	 * text the caller handed to {@code Environment.compile()}; a module source and every jq-library function
-	 * body compile their own {@code def}s unmetered, so the budget means the same thing no matter which
+	 * Whether code compiled in this context counts against the per-invocation budgets a caller sets --
+	 * {@code RuntimeOptions.Builder#setMaxUserDefinedFunctionCalls(long)} for a {@code def},
+	 * {@code RuntimeOptions.Builder#setMaxOutputsPerExpression(long)} for an expression's output. True only
+	 * while compiling the jq text the caller handed to {@code Environment.compile()}; a module source and
+	 * every jq-library function body compile unmetered, so a budget means the same thing no matter which
 	 * builtins a query happens to use.
 	 */
-	public boolean metersUserDefinedFunctionCalls() {
-		return meterUserDefinedFunctionCalls;
+	public boolean metersRuntimeBudgets() {
+		return meterRuntimeBudgets;
+	}
+
+	/**
+	 * Reserves this compile's next {@code Memory#outputCounts} index, for one expression whose output is to
+	 * be tallied against {@code RuntimeOptions.Builder#setMaxOutputsPerExpression(long)}.
+	 *
+	 * @return the reserved index
+	 */
+	public int allocateOutputCounter() {
+		return nextOutputCounter++;
+	}
+
+	/**
+	 * Reserves the output counter index that {@code child}'s consumer will charge, so it can count the values
+	 * it consumes in the sink it already builds.
+	 * <p>
+	 * Each expression has exactly one consumer, so each is asked about exactly once and the index is simply
+	 * the next one -- nothing has to be remembered per child.
+	 * <p>
+	 * Returns {@link Memory#NO_OUTPUT_COUNTER}, which costs nothing to charge, in three cases: an absent
+	 * child, so a consumer with an optional child needs no special case; an unmetered context (a module
+	 * source, a jq-library body), so no counting is compiled in there at all; and a child that cannot emit
+	 * more than one value per input. That last one is the same reasoning the engine already applies to
+	 * arguments in reverse: such a child runs only as often as whatever feeds it emits, and walking that
+	 * chain up ends either at the root, at a generator, or at an argument -- all of which are counted -- so
+	 * its own tally can never be the first to exceed the budget. Skipping it keeps {@code .foo}-shaped work
+	 * free of counting entirely.
+	 *
+	 * @param child the expression whose values the caller consumes, or {@code null}
+	 * @return the index to charge, or {@link Memory#NO_OUTPUT_COUNTER}
+	 */
+	public int outputCounterOf(@Nullable Expression<?, ?> child) {
+		if (child == null || !meterRuntimeBudgets || child.getCardinality() != Cardinality.UNKNOWN)
+			return Memory.NO_OUTPUT_COUNTER;
+		return nextOutputCounter++;
+	}
+
+	/**
+	 * {@link #outputCounterOf(Expression)} for a list of children, in order.
+	 *
+	 * @param children the expressions whose values the caller consumes
+	 * @return one index per child
+	 */
+	public int[] outputCountersOf(List<? extends @Nullable Expression<?, ?>> children) {
+		int[] indices = new int[children.size()];
+		for (int i = 0; i < indices.length; ++i)
+			indices[i] = outputCounterOf(children.get(i));
+		return indices;
+	}
+
+	/**
+	 * Returns how many output counters this compile reserved, which is the size of the
+	 * {@code Memory#outputCounts} array an invocation of the resulting query needs.
+	 *
+	 * @return the number of reserved output counters
+	 */
+	public int getOutputCounterCount() {
+		return nextOutputCounter;
 	}
 
 	/**

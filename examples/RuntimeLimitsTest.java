@@ -77,4 +77,20 @@ public class RuntimeLimitsTest {
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum of 3 user-defined function calls");
 	}
+
+	@Test
+	public void limitsOutputsPerExpression() {
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
+		// Without a budget this streams ten million values before producing its single answer.
+		JsonQuery<JsonNode> query = environment.compile("reduce range(0; 10000000) as $x (0; . + 1)");
+
+		RuntimeOptions options = RuntimeOptions.newBuilder()
+				.setMaxOutputsPerExpression(100)
+				.build();
+
+		JsonNode input = MAPPER.readTree("null");
+		assertThatThrownBy(() -> query.withRuntimeOptions(options).apply(input))
+				.isInstanceOf(RuntimeLimitExceededException.class)
+				.hasMessageContaining("maximum of 100 outputs per expression");
+	}
 }

@@ -7,18 +7,20 @@ package net.thisptr.jackson.jq.v2.core;
  * concurrent ones. Build one with {@link #newBuilder()}.
  */
 public final class RuntimeOptions {
-	private static final RuntimeOptions DEFAULT = new RuntimeOptions(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE);
+	private static final RuntimeOptions DEFAULT = new RuntimeOptions(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE);
 
 	private final int maxArrayLength;
 	private final int maxObjectMemberCount;
 	private final int maxStringLength;
 	private final long maxUserDefinedFunctionCalls;
+	private final long maxOutputsPerExpression;
 
-	private RuntimeOptions(int maxArrayLength, int maxObjectMemberCount, int maxStringLength, long maxUserDefinedFunctionCalls) {
+	private RuntimeOptions(int maxArrayLength, int maxObjectMemberCount, int maxStringLength, long maxUserDefinedFunctionCalls, long maxOutputsPerExpression) {
 		this.maxArrayLength = maxArrayLength;
 		this.maxObjectMemberCount = maxObjectMemberCount;
 		this.maxStringLength = maxStringLength;
 		this.maxUserDefinedFunctionCalls = maxUserDefinedFunctionCalls;
+		this.maxOutputsPerExpression = maxOutputsPerExpression;
 	}
 
 	/**
@@ -80,6 +82,31 @@ public final class RuntimeOptions {
 	}
 
 	/**
+	 * Returns the largest number of values a single expression may emit during one evaluation.
+	 * <p>
+	 * The budget is per expression, not per query: every expression written in the query text handed to
+	 * {@code Environment.compile()} gets its own tally, and the evaluation fails as soon as any one of
+	 * them exceeds this number. A tally covers the whole invocation rather than one input value, so an
+	 * expression that is re-evaluated -- the right-hand side of a pipe, say -- accumulates across every
+	 * re-evaluation: at a budget of 1000, {@code range(600)} passes but {@code range(600) | range(600)}
+	 * fails, because the right-hand {@code range} runs 600 times and emits 360000 values in all.
+	 * <p>
+	 * Values emitted by builtins -- whether implemented in Java or in jq itself -- and by functions reached
+	 * through an imported module are charged to the query-text expression that calls them, never to the
+	 * library's own internals, so the number set here means the same thing regardless of how the engine
+	 * happens to implement any particular builtin.
+	 * <p>
+	 * Expressions that cannot emit more than one value per input, such as {@code .foo} or a literal, are
+	 * not tallied. They can only be evaluated as often as some enclosing generator emits, and that
+	 * generator exceeds the budget no later than they would.
+	 *
+	 * @return the maximum number of values one expression may emit, or {@link Long#MAX_VALUE} for no limit
+	 */
+	public long getMaxOutputsPerExpression() {
+		return maxOutputsPerExpression;
+	}
+
+	/**
 	 * Builds a {@link RuntimeOptions}.
 	 */
 	public static final class Builder {
@@ -87,6 +114,7 @@ public final class RuntimeOptions {
 		private int maxObjectMemberCount = Integer.MAX_VALUE;
 		private int maxStringLength = Integer.MAX_VALUE;
 		private long maxUserDefinedFunctionCalls = Long.MAX_VALUE;
+		private long maxOutputsPerExpression = Long.MAX_VALUE;
 
 		private Builder() {
 		}
@@ -163,14 +191,34 @@ public final class RuntimeOptions {
 		}
 
 		/**
+		 * Sets the largest number of values a single expression may emit during one evaluation.
+		 * <p>
+		 * By default nothing is bounded, so a runaway query such as {@code range(1e9) | empty} or
+		 * {@code reduce range(0; 10000000) as $x (0; . + 1)} runs to completion, which is how jq itself
+		 * behaves. Only expressions written in the query text are tallied, and each keeps its own count for
+		 * the whole invocation; see {@link RuntimeOptions#getMaxOutputsPerExpression()} for exactly what
+		 * draws on the budget.
+		 *
+		 * @param maxOutputsPerExpression the maximum number of values one expression may emit; {@link Long#MAX_VALUE} for no limit
+		 * @return this, for chaining
+		 * @throws IllegalArgumentException if {@code maxOutputsPerExpression} is negative
+		 */
+		public Builder setMaxOutputsPerExpression(long maxOutputsPerExpression) {
+			if (maxOutputsPerExpression < 0)
+				throw new IllegalArgumentException("maxOutputsPerExpression must not be negative");
+			this.maxOutputsPerExpression = maxOutputsPerExpression;
+			return this;
+		}
+
+		/**
 		 * Builds the options.
 		 *
 		 * @return the options, never {@code null}
 		 */
 		public RuntimeOptions build() {
-			if (maxArrayLength == Integer.MAX_VALUE && maxObjectMemberCount == Integer.MAX_VALUE && maxStringLength == Integer.MAX_VALUE && maxUserDefinedFunctionCalls == Long.MAX_VALUE)
+			if (maxArrayLength == Integer.MAX_VALUE && maxObjectMemberCount == Integer.MAX_VALUE && maxStringLength == Integer.MAX_VALUE && maxUserDefinedFunctionCalls == Long.MAX_VALUE && maxOutputsPerExpression == Long.MAX_VALUE)
 				return DEFAULT;
-			return new RuntimeOptions(maxArrayLength, maxObjectMemberCount, maxStringLength, maxUserDefinedFunctionCalls);
+			return new RuntimeOptions(maxArrayLength, maxObjectMemberCount, maxStringLength, maxUserDefinedFunctionCalls, maxOutputsPerExpression);
 		}
 	}
 }

@@ -25,6 +25,12 @@ import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
  * moving both markers back to the parent boundary, so the unused capacity can be reused without retaining references.
  */
 public class Memory {
+	/**
+	 * Stands in for the counter index of an expression that is not there, or that nothing counts. Charging it
+	 * is a no-op.
+	 */
+	public static final int NO_OUTPUT_COUNTER = -1;
+
 	private static final Object[] EMPTY_SLOTS = new Object[0];
 	private static final int MINIMUM_GROWN_CAPACITY = 16;
 
@@ -55,6 +61,15 @@ public class Memory {
 	// concurrent invocations of one compiled query never see each other's tally.
 	private long userDefinedFunctionCalls;
 
+	// Read out of runtimeLimits once, for the same reason as maxUserDefinedFunctionCalls.
+	private final long maxOutputsPerExpression;
+
+	// One tally per query-text expression the compiler handed an output counter index to (see
+	// CompileContext#allocateOutputCounter), accumulating for the whole of this top-level apply(). Null --
+	// not an all-zero array -- whenever nothing is metered, so that the wrapper the compiler inserted can
+	// tell in one load that it has nothing to do and pass its output sink straight through.
+	private final long @Nullable [] outputCounts;
+
 	public Memory() {
 		this(0);
 	}
@@ -72,9 +87,15 @@ public class Memory {
 	}
 
 	public Memory(Object[] globals, RuntimeLimitsImpl runtimeLimits) {
+		this(globals, runtimeLimits, 0);
+	}
+
+	public Memory(Object[] globals, RuntimeLimitsImpl runtimeLimits, int outputCounterCount) {
 		this.globals = globals;
 		this.runtimeLimits = runtimeLimits;
 		this.maxUserDefinedFunctionCalls = runtimeLimits.getMaxUserDefinedFunctionCalls();
+		this.maxOutputsPerExpression = runtimeLimits.getMaxOutputsPerExpression();
+		this.outputCounts = maxOutputsPerExpression != Long.MAX_VALUE && outputCounterCount > 0 ? new long[outputCounterCount] : null;
 	}
 
 	public RuntimeLimits getRuntimeLimits() {
@@ -93,6 +114,40 @@ public class Memory {
 	public void countUserDefinedFunctionCall() {
 		if (++userDefinedFunctionCalls > maxUserDefinedFunctionCalls)
 			throw RuntimeLimitChecks.userDefinedFunctionCallsExceeded(maxUserDefinedFunctionCalls);
+	}
+
+	/**
+	 * Whether {@link #countOutput(int)} has anything to count -- false unless a budget was configured and the
+	 * compiled query has at least one metered expression.
+	 *
+	 * @return {@code true} if expression outputs are being tallied
+	 */
+	public boolean metersOutputs() {
+		return outputCounts != null;
+	}
+
+	/**
+	 * Charges one value emitted by the query-text expression holding {@code index} against its own budget.
+	 * <p>
+	 * Called from whichever sink receives the expression's values -- the consuming node's own lambda for
+	 * everything the engine consumes itself, {@code MeteredOutputExpression} for an argument handed to a
+	 * function, {@code RootExpression} for the query's final output. The count is per expression and runs
+	 * for the whole invocation, so an expression re-evaluated once per value of an enclosing generator
+	 * accumulates across all of those evaluations.
+	 * <p>
+	 * {@code index} may be {@link #NO_OUTPUT_COUNTER}, which costs nothing: a consumer whose child is absent
+	 * (an optional {@code catch}, {@code foreach}'s extract, a bare {@code .[]}'s missing bounds) asks for an
+	 * index anyway and gets that one back, so the call sites stay uniform.
+	 *
+	 * @param index the expression's output counter index, or {@link #NO_OUTPUT_COUNTER}
+	 * @throws net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException if the budget is exhausted
+	 */
+	public void countOutput(int index) {
+		long[] counts = outputCounts;
+		if (counts == null || index < 0)
+			return;
+		if (++counts[index] > maxOutputsPerExpression)
+			throw RuntimeLimitChecks.outputsPerExpressionExceeded(maxOutputsPerExpression);
 	}
 
 	public @Nullable Object getGlobal(int index) {

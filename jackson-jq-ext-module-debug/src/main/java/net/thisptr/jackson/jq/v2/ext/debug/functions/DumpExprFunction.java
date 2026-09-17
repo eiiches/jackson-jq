@@ -6,13 +6,16 @@ import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
@@ -65,7 +68,42 @@ public class DumpExprFunction implements Function {
 		}
 
 		private JsonNode dump(Expression<?, JsonNode> expression) {
-			return serialize(expression);
+			return serialize(unwrap(expression));
+		}
+
+		/**
+		 * Strips the instrumentation the compiler puts around a function argument, so that what is dumped is
+		 * the expression the caller wrote.
+		 * <p>
+		 * Every argument handed to a function is wrapped so that what it emits can be charged against
+		 * {@code RuntimeOptions.Builder#setMaxOutputsPerExpression(long)} -- the compiler cannot know that
+		 * {@code dump_expr} never evaluates its argument. The wrapper forwards every question asked of it, so
+		 * it is invisible to the engine, but it would otherwise be the first thing reported here. Matched by
+		 * name because this module sees core only through reflection.
+		 */
+		private static Object unwrap(Object value) {
+			@Var Object current = value;
+			while (current != null && TRANSPARENT_WRAPPERS.contains(current.getClass().getName())) {
+				Object inner = fieldValue(current, "inner");
+				if (inner == null)
+					break;
+				current = inner;
+			}
+			return current;
+		}
+
+		private static @Nullable Object fieldValue(Object owner, String name) {
+			for (Field field : instanceFields(owner.getClass())) {
+				if (!field.getName().equals(name))
+					continue;
+				try {
+					field.setAccessible(true);
+					return field.get(owner);
+				} catch (ReflectiveOperationException | RuntimeException e) {
+					return null;
+				}
+			}
+			return null;
 		}
 
 		private JsonNode serialize(@Nullable Object value) {
@@ -212,6 +250,12 @@ public class DumpExprFunction implements Function {
 			fields.sort(Comparator.comparing(Field::getName).thenComparing(field -> field.getDeclaringClass().getName()));
 			return fields;
 		}
+
+		private static final Set<String> TRANSPARENT_WRAPPERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+				"net.thisptr.jackson.jq.v2.core.internal.compile.MeteredOutputExpression",
+				"net.thisptr.jackson.jq.v2.core.internal.compile.MeteredConstantOutputExpression",
+				"net.thisptr.jackson.jq.v2.core.internal.compile.opt.MeteredOutputExpression",
+				"net.thisptr.jackson.jq.v2.core.internal.compile.opt.MeteredConstantOutputExpression")));
 
 		private static boolean isStructural(Class<?> type) {
 			String name = type.getName();

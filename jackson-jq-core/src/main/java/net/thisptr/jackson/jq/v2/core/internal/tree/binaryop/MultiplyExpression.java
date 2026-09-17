@@ -13,8 +13,8 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 public class MultiplyExpression<JsonNode> extends AbstractSimpleBinaryOperatorExpression<JsonNode> {
 	private final Version version;
 
-	public MultiplyExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version) {
-		super(jsonProvider, lhs, rhs);
+	public MultiplyExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, int lhsOutputIndex, int rhsOutputIndex) {
+		super(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 		this.version = Objects.requireNonNull(version, "version");
 	}
 

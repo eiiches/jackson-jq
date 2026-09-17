@@ -8,6 +8,7 @@ import com.google.errorprone.annotations.Var;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryUndefinedBehaviorException;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathOperations;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathUtils;
@@ -33,8 +34,8 @@ public class UpdateAssignment<JsonNode> extends AbstractBinaryOperatorExpression
 		return Cardinality.ONE;
 	}
 
-	public UpdateAssignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, boolean inputFixed) {
-		super(lhs, rhs);
+	public UpdateAssignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, boolean inputFixed, int lhsOutputIndex, int rhsOutputIndex) {
+		super(lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 		this.jsonProvider = jsonProvider;
 		this.version = version;
 		this.inputFixed = inputFixed;
@@ -49,7 +50,9 @@ public class UpdateAssignment<JsonNode> extends AbstractBinaryOperatorExpression
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		@SuppressWarnings("unchecked")
 		JsonNode[] out = (JsonNode[]) new Object[] { in };
+		Memory memory = frame.getEnclosingMemory();
 		lhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
+			memory.countOutput(lhsOutputIndex);
 			@Var Path<JsonNode> lpath = lpath0;
 			// `VALUE | path(VALUE) => []`
 			if (PathUtils.isLost(lpath) && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)
@@ -59,7 +62,10 @@ public class UpdateAssignment<JsonNode> extends AbstractBinaryOperatorExpression
 
 			out[0] = PathOperations.mutate(jsonProvider, frame.getRuntimeLimits(), lpath, out[0], (lval_) -> {
 				List<JsonNode> rvals = new ArrayList<>();
-				rhs.apply(frame, lval_, UntrackedPath.getInstance(), (v, opath) -> rvals.add(v));
+				rhs.apply(frame, lval_, UntrackedPath.getInstance(), (v, opath) -> {
+					memory.countOutput(rhsOutputIndex);
+					rvals.add(v);
+				});
 				if (rvals.isEmpty())
 					throw new JsonQueryUndefinedBehaviorException("`|= empty` is undefined. See https://github.com/stedolan/jq/issues/897");
 				if (version.compareTo(Versions.JQ_1_6) >= 0) {

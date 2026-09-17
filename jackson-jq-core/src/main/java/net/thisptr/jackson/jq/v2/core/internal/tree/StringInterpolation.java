@@ -13,6 +13,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
@@ -33,6 +34,9 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 	private final String template;
 	private final @Nullable Expression<StackFrame, JsonNode> formatter;
 	private final Version version;
+	// One counter per interpolated expression, plus one for the @format applied to each.
+	private final int[] interpolationOutputIndices;
+	private final int formatterOutputIndex;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -45,12 +49,14 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public StringInterpolation(JsonProvider<JsonNode> jsonProvider, String template, List<Pair<Integer, Expression<StackFrame, JsonNode>>> interpolations, @Nullable Expression<StackFrame, JsonNode> formatter, Version version) {
+	public StringInterpolation(JsonProvider<JsonNode> jsonProvider, String template, List<Pair<Integer, Expression<StackFrame, JsonNode>>> interpolations, @Nullable Expression<StackFrame, JsonNode> formatter, Version version, int[] interpolationOutputIndices, int formatterOutputIndex) {
 		this.jsonProvider = jsonProvider;
 		this.template = template;
 		this.interpolations = interpolations;
 		this.formatter = formatter;
 		this.version = version;
+		this.interpolationOutputIndices = interpolationOutputIndices;
+		this.formatterOutputIndex = formatterOutputIndex;
 		// formatter is already compiled under the correct shielded context (see Compiler's
 		// StringInterpolationAstNode handling), so this is just a flat OR, same as everywhere else.
 		List<Expression<StackFrame, JsonNode>> interpValues = new ArrayList<>(interpolations.size());
@@ -111,9 +117,12 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 		} else {
 			Pair<Integer, Expression<StackFrame, JsonNode>> rhead = interpolations.get(interpolations.size() - 1);
 			List<Pair<Integer, Expression<StackFrame, JsonNode>>> rtail = interpolations.subList(0, interpolations.size() - 1);
+			Memory memory = frame.getEnclosingMemory();
 			rhead._2.apply(frame, in, UntrackedPath.getInstance(), (interpolated, opath) -> {
+				memory.countOutput(interpolationOutputIndices[interpolations.size() - 1]);
 				if (formatter != null) {
 					formatter.apply(frame, interpolated, UntrackedPath.getInstance(), (formatted, opath2) -> {
+						memory.countOutput(formatterOutputIndex);
 						stack.push(Pair.of(rhead._1, formatted));
 						recurse(frame, in, output, stack, rtail);
 						stack.pop();

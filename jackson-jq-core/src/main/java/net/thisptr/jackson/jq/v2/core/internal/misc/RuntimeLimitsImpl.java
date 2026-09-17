@@ -10,14 +10,15 @@ public final class RuntimeLimitsImpl implements RuntimeLimits {
 	/**
 	 * Bounds nothing -- the behaviour of every release before limits existed.
 	 */
-	public static final RuntimeLimitsImpl UNLIMITED = new RuntimeLimitsImpl(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE);
+	public static final RuntimeLimitsImpl UNLIMITED = new RuntimeLimitsImpl(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE);
 
 	private final int maxArrayLength;
 	private final int maxObjectMemberCount;
 	private final int maxStringLength;
 	private final long maxUserDefinedFunctionCalls;
+	private final long maxOutputsPerExpression;
 
-	public RuntimeLimitsImpl(int maxArrayLength, int maxObjectMemberCount, int maxStringLength, long maxUserDefinedFunctionCalls) {
+	public RuntimeLimitsImpl(int maxArrayLength, int maxObjectMemberCount, int maxStringLength, long maxUserDefinedFunctionCalls, long maxOutputsPerExpression) {
 		if (maxArrayLength < 0)
 			throw new IllegalArgumentException("maxArrayLength must not be negative");
 		if (maxObjectMemberCount < 0)
@@ -26,10 +27,13 @@ public final class RuntimeLimitsImpl implements RuntimeLimits {
 			throw new IllegalArgumentException("maxStringLength must not be negative");
 		if (maxUserDefinedFunctionCalls < 0)
 			throw new IllegalArgumentException("maxUserDefinedFunctionCalls must not be negative");
+		if (maxOutputsPerExpression < 0)
+			throw new IllegalArgumentException("maxOutputsPerExpression must not be negative");
 		this.maxArrayLength = maxArrayLength;
 		this.maxObjectMemberCount = maxObjectMemberCount;
 		this.maxStringLength = maxStringLength;
 		this.maxUserDefinedFunctionCalls = maxUserDefinedFunctionCalls;
+		this.maxOutputsPerExpression = maxOutputsPerExpression;
 	}
 
 	@Override
@@ -52,8 +56,8 @@ public final class RuntimeLimitsImpl implements RuntimeLimits {
 	 * <p>
 	 * Engine-only: deliberately absent from {@link RuntimeLimits}, because the engine enforces this at the
 	 * {@code def} call site itself and no {@code Expression}/{@code Function} implementation could act on
-	 * it. Enforced by {@code Memory#countUserDefinedFunctionCall}, the one limit that counts rather than
-	 * sizes.
+	 * it. Enforced by {@code Memory#countUserDefinedFunctionCall}, one of the two limits that count rather
+	 * than size.
 	 *
 	 * @return the maximum number of user-defined function calls, or {@link Long#MAX_VALUE} for no limit
 	 */
@@ -61,8 +65,23 @@ public final class RuntimeLimitsImpl implements RuntimeLimits {
 		return maxUserDefinedFunctionCalls;
 	}
 
+	/**
+	 * Returns the largest number of values one query-text expression may emit during one evaluation.
+	 * <p>
+	 * Engine-only, for the same reason as {@link #getMaxUserDefinedFunctionCalls()}: the engine tallies
+	 * each expression's output at the node boundary the compiler put there, and an
+	 * {@code Expression}/{@code Function} implementation could neither see its own tally nor act on it --
+	 * whatever it emits is already charged to the query-text expression that called it. Enforced by
+	 * {@code Memory#countOutput}.
+	 *
+	 * @return the maximum number of values one expression may emit, or {@link Long#MAX_VALUE} for no limit
+	 */
+	public long getMaxOutputsPerExpression() {
+		return maxOutputsPerExpression;
+	}
+
 	@Override
 	public String toString() {
-		return "RuntimeLimits(maxArrayLength=" + maxArrayLength + ", maxObjectMemberCount=" + maxObjectMemberCount + ", maxStringLength=" + maxStringLength + ", maxUserDefinedFunctionCalls=" + maxUserDefinedFunctionCalls + ")";
+		return "RuntimeLimits(maxArrayLength=" + maxArrayLength + ", maxObjectMemberCount=" + maxObjectMemberCount + ", maxStringLength=" + maxStringLength + ", maxUserDefinedFunctionCalls=" + maxUserDefinedFunctionCalls + ", maxOutputsPerExpression=" + maxOutputsPerExpression + ")";
 	}
 }

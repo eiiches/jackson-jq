@@ -9,8 +9,8 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class ComplexModuloAssignment<JsonNode> extends AbstractComplexAssignment<JsonNode> {
-	public ComplexModuloAssignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, boolean inputFixed) {
-		super(jsonProvider, lhs, rhs, version, inputFixed);
+	public ComplexModuloAssignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, boolean inputFixed, int lhsOutputIndex, int rhsOutputIndex) {
+		super(jsonProvider, lhs, rhs, version, inputFixed, lhsOutputIndex, rhsOutputIndex);
 	}
 
 	@Override

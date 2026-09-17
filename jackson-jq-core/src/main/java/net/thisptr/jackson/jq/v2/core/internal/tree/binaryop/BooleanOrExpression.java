@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.binaryop;
 
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -19,19 +20,22 @@ public class BooleanOrExpression<JsonNode> extends AbstractBinaryOperatorExpress
 		return CardinalityUtils.multiply(lhs.getCardinality(), rhs.getCardinality());
 	}
 
-	public BooleanOrExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs) {
-		super(lhs, rhs);
+	public BooleanOrExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, int lhsOutputIndex, int rhsOutputIndex) {
+		super(lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 		this.jsonProvider = jsonProvider;
 	}
 
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+		Memory memory = frame.getEnclosingMemory();
 		lhs.apply(frame, in, UntrackedPath.getInstance(), (l, opath) -> {
+			memory.countOutput(lhsOutputIndex);
 			if (JsonNodeUtils.asBoolean(jsonProvider, l)) {
 				output.emit(jsonProvider.createBoolean(true), UntrackedPath.getInstance());
 				return;
 			}
 			rhs.apply(frame, in, UntrackedPath.getInstance(), (r, opath2) -> {
+				memory.countOutput(rhsOutputIndex);
 				output.emit(jsonProvider.createBoolean(JsonNodeUtils.asBoolean(jsonProvider, r)), UntrackedPath.getInstance());
 			});
 		});

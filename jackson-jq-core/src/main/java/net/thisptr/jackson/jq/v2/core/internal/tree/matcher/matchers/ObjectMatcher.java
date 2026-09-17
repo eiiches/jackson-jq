@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.SlotResolver;
@@ -48,11 +49,18 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		 */
 		private final int writeSlot;
 
-		public FieldMatcher(boolean dollar, @Nullable String variableName, Expression<StackFrame, JsonNode> name, @Nullable PatternMatcher<JsonNode> matcher) {
-			this(dollar, variableName, name, matcher, -1);
+		/**
+		 * Output counter for the key expression, which this matcher evaluates through a sink of its own --
+		 * once per object matched, so it accumulates like any other re-evaluated expression. Carried through
+		 * {@link #resolveSlots} the same way {@link #writeSlot} is.
+		 */
+		private final int nameOutputIndex;
+
+		public FieldMatcher(boolean dollar, @Nullable String variableName, Expression<StackFrame, JsonNode> name, @Nullable PatternMatcher<JsonNode> matcher, int nameOutputIndex) {
+			this(dollar, variableName, name, matcher, -1, nameOutputIndex);
 		}
 
-		private FieldMatcher(boolean dollar, @Nullable String variableName, Expression<StackFrame, JsonNode> name, @Nullable PatternMatcher<JsonNode> matcher, int writeSlot) {
+		private FieldMatcher(boolean dollar, @Nullable String variableName, Expression<StackFrame, JsonNode> name, @Nullable PatternMatcher<JsonNode> matcher, int writeSlot, int nameOutputIndex) {
 			if (dollar && variableName == null)
 				throw new IllegalArgumentException("BUG: variableName must not be null when dollar = true");
 			if (!dollar && matcher == null)
@@ -62,13 +70,14 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			this.name = name;
 			this.matcher = matcher;
 			this.writeSlot = writeSlot;
+			this.nameOutputIndex = nameOutputIndex;
 		}
 
 		private FieldMatcher<JsonNode> resolveSlots(SlotResolver resolver) {
 			// The field's own binding is claimed before the sub-pattern's, because that is the order
 			// recursive() writes them in.
 			int resolvedSlot = resolveWriteSlot(resolver);
-			return new FieldMatcher<>(dollar, variableName, name, matcher != null ? matcher.resolveSlots(resolver) : null, resolvedSlot);
+			return new FieldMatcher<>(dollar, variableName, name, matcher != null ? matcher.resolveSlots(resolver) : null, resolvedSlot, nameOutputIndex);
 		}
 
 		private int resolveWriteSlot(SlotResolver resolver) {
@@ -87,7 +96,9 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		}
 
 		FieldMatcher<JsonNode> fmatcher = matchers.get(index);
+		Memory memory = frame.getEnclosingMemory();
 		fmatcher.name.apply(frame, in, UntrackedPath.getInstance(), (key, opath) -> {
+			memory.countOutput(fmatcher.nameOutputIndex);
 			if (!jsonProvider.isString(key))
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
 			if (!jsonProvider.isObject(in) && !jsonProvider.isNull(in))
@@ -115,7 +126,9 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		}
 
 		FieldMatcher<JsonNode> fmatcher = matchers.get(index);
+		Memory memory = frame.getEnclosingMemory();
 		fmatcher.name.apply(frame, in, UntrackedPath.getInstance(), (key, opath) -> {
+			memory.countOutput(fmatcher.nameOutputIndex);
 			if (!jsonProvider.isString(key))
 				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, key));
 			if (!jsonProvider.isObject(in) && !jsonProvider.isNull(in))
