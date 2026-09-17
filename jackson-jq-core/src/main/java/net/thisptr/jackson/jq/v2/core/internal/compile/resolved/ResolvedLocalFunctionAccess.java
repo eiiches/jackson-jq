@@ -10,6 +10,8 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.compile.FunctionDependsOnInfo;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
+import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -17,7 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ResolvedLocalFunctionAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class ResolvedLocalFunctionAccess<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final BindContext<JsonNode> bindContext;
 	private final String name;
 	private final int slot;
@@ -26,19 +28,23 @@ public class ResolvedLocalFunctionAccess<JsonNode> implements Expression<StackFr
 	private final boolean dependsOnExternalState;
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
+	private final @Nullable FunctionDependsOnInfo info;
 
-	public ResolvedLocalFunctionAccess(BindContext<JsonNode> bindContext, String name, int slot, List<Expression<StackFrame, JsonNode>> args, @Nullable FunctionDependsOnInfo info, boolean inputFixed) {
+	public ResolvedLocalFunctionAccess(BindContext<JsonNode> bindContext, String name, int slot, List<Expression<StackFrame, JsonNode>> args, @Nullable FunctionDependsOnInfo info) {
 		this.bindContext = bindContext;
 		this.name = name;
 		this.slot = slot;
 		this.args = args;
+		this.info = info;
 		boolean ownInput = info != null ? info.dependsOnInput() : true;
 		boolean ownExternal = info != null ? info.dependsOnExternalState() : true;
-		this.dependsOnInput = (ownInput && !inputFixed) || args.stream().anyMatch(Expression::dependsOnInput);
+		this.dependsOnInput = ownInput || args.stream().anyMatch(Expression::dependsOnInput);
 		this.dependsOnExternalState = ownExternal || args.stream().anyMatch(Expression::dependsOnExternalState);
-		// The callee lives in the same frame this call runs in -- no closure hop needed to find it, so its
-		// freeLocalSlots (already numbered relative to that shared frame) are directly comparable/unionable.
+		// The callee lives in the same frame this call runs in. Its own slot is a dependency too: evaluating
+		// the call in the folder's empty frame would otherwise turn the speculative "not defined" failure
+		// into a folded jq error before the enclosing def has installed the function.
 		Set<Integer> free = new HashSet<>(info != null ? info.freeLocalSlots() : Collections.emptySet());
+		free.add(slot);
 		free.addAll(FreeVariables.unionAll(args));
 		this.freeLocalSlots = free;
 		this.hasOpaqueVariableReference = info == null || info.hasOpaqueVariableReference() || FreeVariables.anyOpaqueIn(args);
@@ -74,6 +80,12 @@ public class ResolvedLocalFunctionAccess<JsonNode> implements Expression<StackFr
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		List<Expression<StackFrame, JsonNode>> rewritten = ExpressionRewriter.rewriteAll(args, rewriter);
+		return rewritten == args ? this : new ResolvedLocalFunctionAccess<>(bindContext, name, slot, rewritten, info);
 	}
 
 	@Override

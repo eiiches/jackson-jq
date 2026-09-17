@@ -26,6 +26,11 @@ public class BooleanAndExpression<JsonNode> extends AbstractBinaryOperatorExpres
 	}
 
 	@Override
+	protected Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenLhs, Expression<StackFrame, JsonNode> rewrittenRhs) {
+		return new BooleanAndExpression<>(jsonProvider, rewrittenLhs, rewrittenRhs, lhsOutputIndex, rhsOutputIndex);
+	}
+
+	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		Memory memory = frame.getEnclosingMemory();
 		lhs.apply(frame, in, UntrackedPath.getInstance(), (l, opath) -> {

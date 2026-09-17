@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -13,7 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
-public class SemicolonOperator<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class SemicolonOperator<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final List<Expression<StackFrame, JsonNode>> qs;
 
 	@Override
@@ -25,15 +26,21 @@ public class SemicolonOperator<JsonNode> implements Expression<StackFrame, JsonN
 	private final boolean dependsOnExternalState;
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
+	private final Set<Integer> definedFunctionSlots;
 	// One counter per discarded operand. The last one needs none: it emits this expression's own values.
 	private final int[] discardedOutputIndices;
 
 	public SemicolonOperator(List<Expression<StackFrame, JsonNode>> qs, int[] discardedOutputIndices) {
+		this(qs, Collections.emptySet(), discardedOutputIndices);
+	}
+
+	public SemicolonOperator(List<Expression<StackFrame, JsonNode>> qs, Set<Integer> definedFunctionSlots, int[] discardedOutputIndices) {
 		this.discardedOutputIndices = discardedOutputIndices;
+		this.definedFunctionSlots = definedFunctionSlots;
 		this.qs = qs;
 		this.dependsOnInput = qs.stream().anyMatch(Expression::dependsOnInput);
 		this.dependsOnExternalState = qs.stream().anyMatch(Expression::dependsOnExternalState);
-		this.freeLocalSlots = FreeVariables.unionAll(qs);
+		this.freeLocalSlots = FreeVariables.minus(FreeVariables.unionAll(qs), definedFunctionSlots);
 		this.hasOpaqueVariableReference = FreeVariables.anyOpaqueIn(qs);
 	}
 
@@ -55,6 +62,12 @@ public class SemicolonOperator<JsonNode> implements Expression<StackFrame, JsonN
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		List<Expression<StackFrame, JsonNode>> rewritten = ExpressionRewriter.rewriteAll(qs, rewriter);
+		return rewritten == qs ? this : new SemicolonOperator<>(rewritten, definedFunctionSlots, discardedOutputIndices);
 	}
 
 	@Override

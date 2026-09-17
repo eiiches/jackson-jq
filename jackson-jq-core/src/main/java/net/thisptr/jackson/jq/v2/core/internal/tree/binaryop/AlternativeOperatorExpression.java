@@ -27,6 +27,11 @@ public class AlternativeOperatorExpression<JsonNode> extends AbstractBinaryOpera
 	}
 
 	@Override
+	protected Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenLhs, Expression<StackFrame, JsonNode> rewrittenRhs) {
+		return new AlternativeOperatorExpression<>(jsonProvider, rewrittenLhs, rewrittenRhs, lhsOutputIndex, rhsOutputIndex);
+	}
+
+	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		AtomicBoolean emitted = new AtomicBoolean();
 		Memory memory = frame.getEnclosingMemory();

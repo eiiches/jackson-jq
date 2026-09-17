@@ -18,9 +18,9 @@ public class ResolvedFunctionCall<JsonNode> implements Expression<StackFrame, Js
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public ResolvedFunctionCall(Expression<StackFrame, JsonNode> function, boolean dependsOnExternalState, boolean dependsOnInput, boolean inputFixed, List<Expression<StackFrame, JsonNode>> args) {
+	public ResolvedFunctionCall(Expression<StackFrame, JsonNode> function, boolean dependsOnExternalState, boolean dependsOnInput, List<Expression<StackFrame, JsonNode>> args) {
 		this.function = function;
-		this.dependsOnInput = (dependsOnInput && !inputFixed) || args.stream().anyMatch(Expression::dependsOnInput);
+		this.dependsOnInput = dependsOnInput || args.stream().anyMatch(Expression::dependsOnInput);
 		this.dependsOnExternalState = dependsOnExternalState || args.stream().anyMatch(Expression::dependsOnExternalState);
 		this.freeLocalSlots = FreeVariables.unionAll(args);
 		this.hasOpaqueVariableReference = FreeVariables.anyOpaqueIn(args);

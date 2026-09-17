@@ -16,8 +16,13 @@ import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-public class TryCatch<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
-	private static final Version DOWNSTREAM_ERRORS_ESCAPE_SINCE = Version.of(1, 7);
+public class TryCatch<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
+	/**
+	 * The first jq version in which an error raised by whatever consumes a {@code try}'s values escapes it
+	 * instead of being caught. Before this, a {@code try} depends on its consumer, which is what makes it a
+	 * constant-folding barrier -- see {@code CompileContext#markFoldBarrier()}.
+	 */
+	public static final Version DOWNSTREAM_ERRORS_ESCAPE_SINCE = Version.of(1, 7);
 
 	private static final class DownstreamException extends JsonQueryException {
 		private static final long serialVersionUID = 1L;
@@ -59,7 +64,9 @@ public class TryCatch<JsonNode> implements Expression<StackFrame, JsonNode>, Fre
 	// TryCatchAstNode handling), so this is just a flat OR, same as everywhere else.
 	@Override
 	public boolean dependsOnInput() {
-		return tryExpr.dependsOnInput() || (catchExpr != null && catchExpr.dependsOnInput());
+		// catchExpr sees the caught error rather than `.`, so its own input dependency is discharged by
+		// tryExpr's -- the same rule PipedQuery applies to its right side.
+		return tryExpr.dependsOnInput();
 	}
 
 	@Override
@@ -75,6 +82,13 @@ public class TryCatch<JsonNode> implements Expression<StackFrame, JsonNode>, Fre
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return FreeVariables.anyOpaque(tryExpr, catchExpr);
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		Expression<StackFrame, JsonNode> rewrittenTry = rewriter.rewrite(tryExpr);
+		Expression<StackFrame, JsonNode> rewrittenCatch = catchExpr != null ? rewriter.rewrite(catchExpr) : null;
+		return rewrittenTry == tryExpr && rewrittenCatch == catchExpr ? this : new TryCatch<>(jsonProvider, rewrittenTry, rewrittenCatch, version);
 	}
 
 	@Override

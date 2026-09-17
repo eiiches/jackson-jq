@@ -1,0 +1,149 @@
+# Constant folding must not be observable.
+#
+# The compiler evaluates a constant expression once, while compiling, and emits the values it found
+# instead of running the expression again. Every case here is a shape where doing so could change what
+# the query means -- an expression evaluated for its path rather than its value, an error whose timing
+# matters, a `def` whose installed function is read from outside the folded node, a generator whose
+# order or count must survive. Each output was checked against jq 1.5, 1.6, 1.7.1 and 1.8.2, all of
+# which agree.
+
+# `path` hands its argument a tracked path, and a constant is not a path expression. The error has to
+# come from evaluation, not from the folder, and it has to name the folded value.
+- q: 'try path(1 + 1) catch .'
+  in: null
+  out:
+  - "Invalid path expression with result 2"
+  v: '[1.5, )'
+
+- q: 'try path("a" + "b") catch .'
+  in: null
+  out:
+  - "Invalid path expression with result \"ab\""
+  v: '[1.5, )'
+
+# An update operator evaluates its left side for paths too.
+- q: 'try ((1, 2) |= . + 1) catch .'
+  in: null
+  out:
+  - "Invalid path expression with result 1"
+  v: '[1.5, )'
+
+# A constant subexpression inside a genuine path expression must leave the path alone.
+- q: 'try ([1, 2, 3] | path(.[0])) catch .'
+  in: null
+  out:
+  - [0]
+  v: '[1.5, )'
+
+- q: '[1, 2, 3] | del(.[0])'
+  in: null
+  out:
+  - [2, 3]
+  v: '[1.5, )'
+
+- q: '[1, 2] | .[0:0] = [1, 2, 3]'
+  in: null
+  out:
+  - [1, 2, 3, 1, 2]
+  v: '[1.5, )'
+
+# A constant error still fails when the query runs, so a `catch` around it still sees it.
+- q: 'try error("x" + "y") catch .'
+  in: null
+  out:
+  - "xy"
+  v: '[1.5, )'
+
+# Values emitted before a constant error remain visible, in order, before the error is caught.
+- q: 'try (1, 2, error("boom")) catch .'
+  in: null
+  out:
+  - 1
+  - 2
+  - "boom"
+  v: '[1.5, )'
+
+- q: '[try (1, 2) catch .]'
+  in: null
+  out:
+  - [1, 2]
+  v: '[1.5, )'
+
+# A `def`'s function lands in the enclosing frame, and the call that reads it sits outside the
+# expression that installed it.
+- q: 'def f: 1 + 1; f'
+  in: null
+  out:
+  - 2
+  v: '[1.5, )'
+
+- q: '1 as $x | def f: $x + 1; f'
+  in: null
+  out:
+  - 2
+  v: '[1.5, )'
+
+# `break` unwinds past its consumer, so a folded `label` body must still stop the stream.
+- q: 'label $out | (1, 2, break $out, 3)'
+  in: null
+  out:
+  - 1
+  - 2
+  v: '[1.5, )'
+
+# Generator count and order survive folding.
+- q: '[range(0; 3)]'
+  in: null
+  out:
+  - [0, 1, 2]
+  v: '[1.5, )'
+
+- q: '[limit(2; 1, 2, 3)]'
+  in: null
+  out:
+  - [1, 2]
+  v: '[1.5, )'
+
+- q: '[first(1, 2, 3)]'
+  in: null
+  out:
+  - [1]
+  v: '[1.5, )'
+
+- q: '(1, 2) as $x | $x + 1'
+  in: null
+  out:
+  - 2
+  - 3
+  v: '[1.5, )'
+
+- q: '"\(1 + 1)-\("a" + "b")"'
+  in: null
+  out:
+  - "2-ab"
+  v: '[1.5, )'
+
+- q: '[{a: 1, b: 2} | to_entries[] | .key]'
+  in: null
+  out:
+  - ["a", "b"]
+  v: '[1.5, )'
+
+# A constant inside an input-dependent expression folds on its own; the enclosing one does not.
+- q: '[.[] | 1 + 1]'
+  in: [1, 2]
+  out:
+  - [2, 2]
+  v: '[1.5, )'
+
+- q: '[paths]'
+  in: null
+  out:
+  - []
+  v: '[1.5, )'
+
+- q: '[.[]?]'
+  in: null
+  out:
+  - []
+  v: '[1.5, )'

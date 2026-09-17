@@ -9,6 +9,8 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.FunctionDependsOnInfo;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Closure;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
+import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -16,7 +18,7 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class ResolvedCapturedFunctionAccess<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final BindContext<JsonNode> bindContext;
 	private final String name;
 	private final int closureSlot;
@@ -25,16 +27,18 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<Stac
 	private final boolean dependsOnInput;
 	private final boolean dependsOnExternalState;
 	private final Set<Integer> freeLocalSlots;
+	private final @Nullable FunctionDependsOnInfo info;
 
-	public ResolvedCapturedFunctionAccess(BindContext<JsonNode> bindContext, String name, int closureSlot, int frameClosureSlot, List<Expression<StackFrame, JsonNode>> args, @Nullable FunctionDependsOnInfo info, boolean inputFixed) {
+	public ResolvedCapturedFunctionAccess(BindContext<JsonNode> bindContext, String name, int closureSlot, int frameClosureSlot, List<Expression<StackFrame, JsonNode>> args, @Nullable FunctionDependsOnInfo info) {
 		this.bindContext = bindContext;
 		this.name = name;
 		this.closureSlot = closureSlot;
 		this.frameClosureSlot = frameClosureSlot;
 		this.args = args;
+		this.info = info;
 		boolean ownInput = info != null ? info.dependsOnInput() : true;
 		boolean ownExternal = info != null ? info.dependsOnExternalState() : true;
-		this.dependsOnInput = (ownInput && !inputFixed) || args.stream().anyMatch(Expression::dependsOnInput);
+		this.dependsOnInput = ownInput || args.stream().anyMatch(Expression::dependsOnInput);
 		this.dependsOnExternalState = ownExternal || args.stream().anyMatch(Expression::dependsOnExternalState);
 		// Finding the callee itself already crosses a closure hop -- stay unconditionally opaque for the
 		// "own" contribution (matching ResolvedCapturedVariableAccess's "defs stay conservative"
@@ -72,6 +76,12 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements Expression<Stac
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return true;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		List<Expression<StackFrame, JsonNode>> rewritten = ExpressionRewriter.rewriteAll(args, rewriter);
+		return rewritten == args ? this : new ResolvedCapturedFunctionAccess<>(bindContext, name, closureSlot, frameClosureSlot, rewritten, info);
 	}
 
 	@Override

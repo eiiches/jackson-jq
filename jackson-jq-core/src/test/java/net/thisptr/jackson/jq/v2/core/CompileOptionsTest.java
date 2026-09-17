@@ -15,6 +15,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CompileOptionsTest {
 	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProvider.getInstance();
@@ -175,4 +176,60 @@ class CompileOptionsTest {
 		environment().compile("3, 4 | .", options);
 		assertThat(reported).hasSize(2);
 	}
+	// --- constant folding ---------------------------------------------------------------------
+
+	@Test
+	void constantFoldingIsOnByDefaultAndBoundedByDefault() {
+		ConstantFoldingOptions folding = CompileOptions.newBuilder().build().getConstantFoldingOptions();
+
+		assertThat(folding.isEnabled()).isTrue();
+		assertThat(folding.getMaxResults()).isEqualTo(256);
+
+		// Not RuntimeOptions' own default, which bounds nothing: an unbounded compile-time evaluation
+		// could run forever. See ConstantFoldingOptions.Builder#setRuntimeOptions.
+		RuntimeOptions runtimeOptions = folding.getRuntimeOptions();
+		assertThat(runtimeOptions.getMaxArrayLength()).isEqualTo(256);
+		assertThat(runtimeOptions.getMaxObjectMemberCount()).isEqualTo(256);
+		assertThat(runtimeOptions.getMaxStringLength()).isEqualTo(4096);
+		assertThat(runtimeOptions.getMaxOutputsPerExpression()).isEqualTo(256);
+		assertThat(runtimeOptions.getMaxUserDefinedFunctionCalls()).isEqualTo(256);
+		assertThat(runtimeOptions).isNotEqualTo(RuntimeOptions.newBuilder().build());
+	}
+
+	@Test
+	void optionsLeftAtTheirDefaultsShareOneInstance() {
+		assertThat(CompileOptions.newBuilder().build()).isSameAs(CompileOptions.newBuilder().build());
+		assertThat(ConstantFoldingOptions.newBuilder().build()).isSameAs(ConstantFoldingOptions.newBuilder().build());
+
+		// Setting a folding option to its default value still yields the shared default.
+		assertThat(CompileOptions.newBuilder()
+				.setConstantFoldingOptions(ConstantFoldingOptions.newBuilder().build())
+				.build()).isSameAs(CompileOptions.newBuilder().build());
+
+		assertThat(CompileOptions.newBuilder()
+				.setConstantFoldingOptions(ConstantFoldingOptions.newBuilder().setMaxResults(8).build())
+				.build()).isNotSameAs(CompileOptions.newBuilder().build());
+	}
+
+	@Test
+	void oneConstantFoldingOptionsCompilesAnyNumberOfQueries() throws JsonQueryException {
+		CompileOptions options = CompileOptions.newBuilder()
+				.setConstantFoldingOptions(ConstantFoldingOptions.newBuilder().setEnabled(false).build())
+				.build();
+		Environment<JsonNode> env = environment();
+
+		assertThat(env.compile("1 + 1", options)).isNotNull();
+		assertThat(env.compile("2 + 2", options)).isNotNull();
+		assertThat(options.getConstantFoldingOptions().isEnabled()).isFalse();
+	}
+
+	@Test
+	void aNegativeMaxResultsIsRejected() {
+		// The null guards on setRuntimeOptions/setConstantFoldingOptions are not asserted here: NullAway
+		// rejects the call at compile time, so only a caller outside its reach can reach them.
+		assertThatThrownBy(() -> ConstantFoldingOptions.newBuilder().setMaxResults(-1))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("maxResults");
+	}
+
 }

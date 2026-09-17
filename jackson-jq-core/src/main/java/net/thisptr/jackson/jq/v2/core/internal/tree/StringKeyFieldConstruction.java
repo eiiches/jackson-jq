@@ -60,6 +60,15 @@ public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<J
 	}
 
 	@Override
+	public FieldConstruction<JsonNode> rewriteExpressions(ExpressionRewriter<JsonNode> rewriter) {
+		Expression<StackFrame, JsonNode> rewrittenKey = rewriter.rewrite(key);
+		Expression<StackFrame, JsonNode> rewrittenValue = value != null ? rewriter.rewrite(value) : null;
+		return rewrittenKey == key && rewrittenValue == value
+				? this
+				: new StringKeyFieldConstruction<>(jsonProvider, rewrittenKey, rewrittenValue, version, keyOutputIndex, valueOutputIndex);
+	}
+
+	@Override
 	public void evaluate(StackFrame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		Memory memory = frame.getEnclosingMemory();
 		key.apply(frame, in, UntrackedPath.getInstance(), (k, opath) -> {

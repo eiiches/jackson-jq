@@ -19,6 +19,11 @@ public class ModuloExpression<JsonNode> extends AbstractSimpleBinaryOperatorExpr
 	}
 
 	@Override
+	protected Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenLhs, Expression<StackFrame, JsonNode> rewrittenRhs) {
+		return new ModuloExpression<>(jsonProvider, rewrittenLhs, rewrittenRhs, version, lhsOutputIndex, rhsOutputIndex);
+	}
+
+	@Override
 	protected JsonNode doEval(RuntimeLimits limits, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
 		return BinaryOperations.modulo(jsonProvider, lhs, rhs, version);
 	}

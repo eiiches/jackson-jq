@@ -11,7 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class Label<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class Label<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final String name;
 	private final Expression<StackFrame, JsonNode> body;
 	private final boolean dependsOnInput;
@@ -51,6 +51,12 @@ public class Label<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVa
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(body);
+		return rewritten == body ? this : new Label<>(name, rewritten);
 	}
 
 	@Override

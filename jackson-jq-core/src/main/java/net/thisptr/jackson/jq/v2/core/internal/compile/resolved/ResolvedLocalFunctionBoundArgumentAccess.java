@@ -1,11 +1,14 @@
 package net.thisptr.jackson.jq.v2.core.internal.compile.resolved;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.BoundArgumentInfo;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
+import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -22,7 +25,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
  * {@code FunctionDependsOnInfo} never applies once it's constant-inlined, so unlike the base class this
  * one has no use for it.
  */
-public class ResolvedLocalFunctionBoundArgumentAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class ResolvedLocalFunctionBoundArgumentAccess<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final BindContext<JsonNode> bindContext;
 	private final String name;
 	private final int slot;
@@ -33,7 +36,7 @@ public class ResolvedLocalFunctionBoundArgumentAccess<JsonNode> implements Expre
 	private final boolean hasOpaqueVariableReference;
 	private final BoundArgumentInfo boundArgumentInfo;
 
-	public ResolvedLocalFunctionBoundArgumentAccess(BindContext<JsonNode> bindContext, String name, int slot, List<Expression<StackFrame, JsonNode>> args, BoundArgumentInfo boundArgumentInfo, boolean inputFixed) {
+	public ResolvedLocalFunctionBoundArgumentAccess(BindContext<JsonNode> bindContext, String name, int slot, List<Expression<StackFrame, JsonNode>> args, BoundArgumentInfo boundArgumentInfo) {
 		this.bindContext = bindContext;
 		this.name = name;
 		this.slot = slot;
@@ -41,11 +44,11 @@ public class ResolvedLocalFunctionBoundArgumentAccess<JsonNode> implements Expre
 		this.boundArgumentInfo = boundArgumentInfo;
 		boolean ownInput = boundArgumentInfo.dependsOnInput();
 		boolean ownExternal = boundArgumentInfo.dependsOnExternalState();
-		this.dependsOnInput = (ownInput && !inputFixed) || args.stream().anyMatch(Expression::dependsOnInput);
+		this.dependsOnInput = ownInput || args.stream().anyMatch(Expression::dependsOnInput);
 		this.dependsOnExternalState = ownExternal || args.stream().anyMatch(Expression::dependsOnExternalState);
-		// The callee lives in the same frame this call runs in -- no closure hop needed to find it, so its
-		// freeLocalSlots (already numbered relative to that shared frame) are directly comparable/unionable.
-		this.freeLocalSlots = FreeVariables.unionAll(args);
+		Set<Integer> free = new HashSet<>(FreeVariables.unionAll(args));
+		free.add(slot);
+		this.freeLocalSlots = free;
 		this.hasOpaqueVariableReference = boundArgumentInfo.dependsOnVariables() || FreeVariables.anyOpaqueIn(args);
 	}
 
@@ -84,6 +87,12 @@ public class ResolvedLocalFunctionBoundArgumentAccess<JsonNode> implements Expre
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		List<Expression<StackFrame, JsonNode>> rewritten = ExpressionRewriter.rewriteAll(args, rewriter);
+		return rewritten == args ? this : new ResolvedLocalFunctionBoundArgumentAccess<>(bindContext, name, slot, rewritten, boundArgumentInfo);
 	}
 
 	@Override

@@ -28,7 +28,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-public class StringInterpolation<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class StringInterpolation<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final List<Pair<Integer, Expression<StackFrame, JsonNode>>> interpolations;
 	private final String template;
@@ -62,8 +62,9 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 		List<Expression<StackFrame, JsonNode>> interpValues = new ArrayList<>(interpolations.size());
 		for (Pair<Integer, Expression<StackFrame, JsonNode>> p : interpolations)
 			interpValues.add(p._2);
-		this.dependsOnInput = interpValues.stream().anyMatch(Expression::dependsOnInput)
-				|| (formatter != null && formatter.dependsOnInput());
+		// The formatter sees each interpolated value rather than `.`, so its own input dependency is
+		// discharged by the interpolation expressions'.
+		this.dependsOnInput = interpValues.stream().anyMatch(Expression::dependsOnInput);
 		this.dependsOnExternalState = interpValues.stream().anyMatch(Expression::dependsOnExternalState)
 				|| (formatter != null && formatter.dependsOnExternalState());
 		@Var Set<Integer> slots = FreeVariables.unionAll(interpValues);
@@ -93,6 +94,25 @@ public class StringInterpolation<JsonNode> implements Expression<StackFrame, Jso
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		@Var List<Pair<Integer, Expression<StackFrame, JsonNode>>> rewrittenInterpolations = null;
+		for (int i = 0; i < interpolations.size(); i++) {
+			Pair<Integer, Expression<StackFrame, JsonNode>> interpolation = interpolations.get(i);
+			Expression<StackFrame, JsonNode> replacement = rewriter.rewrite(interpolation._2);
+			if (rewrittenInterpolations == null && replacement != interpolation._2)
+				rewrittenInterpolations = new ArrayList<>(interpolations);
+			if (rewrittenInterpolations != null)
+				rewrittenInterpolations.set(i, Pair.of(interpolation._1, replacement));
+		}
+		Expression<StackFrame, JsonNode> rewrittenFormatter = formatter != null ? rewriter.rewrite(formatter) : null;
+		return rewrittenInterpolations == null && rewrittenFormatter == formatter
+				? this
+				: new StringInterpolation<>(jsonProvider, template,
+				rewrittenInterpolations != null ? rewrittenInterpolations : interpolations,
+				rewrittenFormatter, version, interpolationOutputIndices, formatterOutputIndex);
 	}
 
 	@Override

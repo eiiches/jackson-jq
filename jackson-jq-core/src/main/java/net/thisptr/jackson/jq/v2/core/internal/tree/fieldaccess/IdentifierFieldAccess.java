@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -12,7 +13,7 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class IdentifierFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> {
-	private String field;
+	private final String field;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -26,6 +27,12 @@ public class IdentifierFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNod
 	public IdentifierFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> obj, String field, boolean permissive, Version version, int targetOutputIndex) {
 		super(jsonProvider, obj, permissive, version, targetOutputIndex);
 		this.field = field;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(target);
+		return rewritten == target ? this : new IdentifierFieldAccess<>(jsonProvider, rewritten, field, permissive, version, targetOutputIndex);
 	}
 
 	@Override

@@ -12,6 +12,8 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Closure;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
+import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -21,7 +23,7 @@ import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class ResolvedFunctionDefinition<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final int slot;
 	private final ClosureSpec closureSpec;
 
@@ -125,6 +127,14 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<StackFra
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(resolvedBody);
+		return rewritten == resolvedBody
+				? this
+				: new ResolvedFunctionDefinition<>(slot, closureSpec, fnSize, paramNames, paramSlots, rewritten, ownClosureSlot, definerClosureSlot, metered);
 	}
 
 	@Override

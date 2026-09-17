@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.v2.core.internal.compile;
+package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.List;
 

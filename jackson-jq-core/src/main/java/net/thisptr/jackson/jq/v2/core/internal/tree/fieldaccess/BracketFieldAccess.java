@@ -9,6 +9,7 @@ import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.ValueLiteral;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -21,9 +22,9 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class BracketFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> {
-	private Expression<StackFrame, JsonNode> startExpr;
-	private Expression<StackFrame, JsonNode> endExpr;
-	private boolean isRange;
+	private final Expression<StackFrame, JsonNode> startExpr;
+	private final Expression<StackFrame, JsonNode> endExpr;
+	private final boolean isRange;
 	private final int startOutputIndex;
 	private final int endOutputIndex;
 
@@ -56,6 +57,18 @@ public class BracketFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> 
 		this.isRange = true;
 		this.startOutputIndex = startOutputIndex;
 		this.endOutputIndex = endOutputIndex;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		Expression<StackFrame, JsonNode> rewrittenTarget = rewriter.rewrite(target);
+		Expression<StackFrame, JsonNode> rewrittenStart = rewriter.rewrite(startExpr);
+		Expression<StackFrame, JsonNode> rewrittenEnd = isRange ? rewriter.rewrite(endExpr) : endExpr;
+		if (rewrittenTarget == target && rewrittenStart == startExpr && rewrittenEnd == endExpr)
+			return this;
+		return isRange
+				? new BracketFieldAccess<>(jsonProvider, rewrittenTarget, rewrittenStart, rewrittenEnd, permissive, version, targetOutputIndex, startOutputIndex, endOutputIndex)
+				: new BracketFieldAccess<>(jsonProvider, rewrittenTarget, rewrittenStart, permissive, version, targetOutputIndex, startOutputIndex);
 	}
 
 	@Override

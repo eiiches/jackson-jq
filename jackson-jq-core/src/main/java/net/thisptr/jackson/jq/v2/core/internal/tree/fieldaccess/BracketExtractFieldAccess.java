@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -20,6 +21,12 @@ public class BracketExtractFieldAccess<JsonNode> extends AbstractFieldAccess<Jso
 
 	public BracketExtractFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> src, boolean permissive, Version version, int targetOutputIndex) {
 		super(jsonProvider, src, permissive, version, targetOutputIndex);
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(target);
+		return rewritten == target ? this : new BracketExtractFieldAccess<>(jsonProvider, rewritten, permissive, version, targetOutputIndex);
 	}
 
 	@Override

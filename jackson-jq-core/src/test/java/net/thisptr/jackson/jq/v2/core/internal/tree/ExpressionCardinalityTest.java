@@ -26,6 +26,15 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * The per-node cardinality rules.
+ * <p>
+ * A note on reading these: an expression whose every operand is constant is evaluated at compile time and
+ * replaced by a literal, so what {@link #cardinalityOf} then reports is the folded literal's own count, not
+ * the rule under test. Assertions that mean to pin a node's rule therefore use {@code .} for at least one
+ * operand wherever the folded answer would be sharper. {@link #foldingSharpensAConservativeRule} covers the
+ * other side.
+ */
 public class ExpressionCardinalityTest {
 
 	@Test
@@ -166,9 +175,11 @@ public class ExpressionCardinalityTest {
 		assertThat(cardinalityOf("1 // 2")).isEqualTo(Cardinality.ONE);
 		assertThat(cardinalityOf("empty // 2")).isEqualTo(Cardinality.ONE);
 		assertThat(cardinalityOf("empty // empty")).isEqualTo(Cardinality.ZERO);
-		assertThat(cardinalityOf("1 // empty")).isEqualTo(Cardinality.UNKNOWN);
+		// `.` rather than a literal on the left: with both sides constant the whole expression
+		// constant-folds, and the folded literal answers ONE -- see foldingSharpensAConservativeRule.
+		assertThat(cardinalityOf(". // empty")).isEqualTo(Cardinality.UNKNOWN);
 		assertThat(cardinalityOf("(1, 2) // 3")).isEqualTo(Cardinality.UNKNOWN);
-		assertThat(cardinalityOf("(empty, 1) // empty")).isEqualTo(Cardinality.UNKNOWN);
+		assertThat(cardinalityOf("(empty, .) // empty")).isEqualTo(Cardinality.UNKNOWN);
 	}
 
 	@Test
@@ -178,15 +189,32 @@ public class ExpressionCardinalityTest {
 		assertThat(cardinalityOf("if (1, 2) then 1 else 2 end")).isEqualTo(Cardinality.UNKNOWN);
 		assertThat(cardinalityOf("if 1 then (1, 2) else 3 end")).isEqualTo(Cardinality.UNKNOWN);
 		assertThat(cardinalityOf("if 1 then 2 elif 3 then 4 else 5 end")).isEqualTo(Cardinality.ONE);
-		assertThat(cardinalityOf("if 1 then 2 else empty end")).isEqualTo(Cardinality.UNKNOWN);
+		assertThat(cardinalityOf("if . then 2 else empty end")).isEqualTo(Cardinality.UNKNOWN);
 	}
 
 	@Test
 	public void testTryCatch() {
 		assertThat(cardinalityOf("try empty catch empty")).isEqualTo(Cardinality.ZERO);
-		assertThat(cardinalityOf("try 1 catch 2")).isEqualTo(Cardinality.UNKNOWN);
+		assertThat(cardinalityOf("try . catch 2")).isEqualTo(Cardinality.UNKNOWN);
 		assertThat(cardinalityOf("try empty")).isEqualTo(Cardinality.ZERO);
-		assertThat(cardinalityOf("try 1")).isEqualTo(Cardinality.UNKNOWN);
+		assertThat(cardinalityOf("try .")).isEqualTo(Cardinality.UNKNOWN);
+	}
+
+	/**
+	 * The conservative rules above are what a node answers from its children. A constant expression does not
+	 * have to stop there: the compiler evaluates it and the resulting literal knows exactly how many values
+	 * it has, which is sharper than any of these rules can be.
+	 */
+	@Test
+	public void foldingSharpensAConservativeRule() {
+		assertThat(cardinalityOf("1 // empty")).isEqualTo(Cardinality.ONE);
+		assertThat(cardinalityOf("if 1 then 2 else empty end")).isEqualTo(Cardinality.ONE);
+		assertThat(cardinalityOf("try 1 catch 2")).isEqualTo(Cardinality.ONE);
+		assertThat(cardinalityOf("try 1")).isEqualTo(Cardinality.ONE);
+		assertThat(cardinalityOf("(empty, 1) // empty")).isEqualTo(Cardinality.ONE);
+		assertThat(cardinalityOf("try error(\"x\") catch 2")).isEqualTo(Cardinality.ONE);
+		// A `def` anywhere in the subtree blocks the fold, so this keeps the unfolded answer.
+		assertThat(cardinalityOf("def f: 1; f")).isEqualTo(Cardinality.UNKNOWN);
 	}
 
 	@Test

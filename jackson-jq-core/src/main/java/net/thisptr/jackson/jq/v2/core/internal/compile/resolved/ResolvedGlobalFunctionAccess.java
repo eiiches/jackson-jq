@@ -3,6 +3,8 @@ package net.thisptr.jackson.jq.v2.core.internal.compile.resolved;
 import java.util.List;
 
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
+import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -16,7 +18,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
  * global-slots array (prepared when the immutable query view is built and shared read-only by its invocations)
  * and bound against the call's arguments fresh on every evaluation.
  */
-public class ResolvedGlobalFunctionAccess<JsonNode> implements Expression<StackFrame, JsonNode> {
+public class ResolvedGlobalFunctionAccess<JsonNode> implements RewritableExpression<JsonNode> {
 	private final BindContext<JsonNode> bindContext;
 	private final String name;
 	private final int globalIndex;
@@ -35,6 +37,12 @@ public class ResolvedGlobalFunctionAccess<JsonNode> implements Expression<StackF
 
 	public List<Expression<StackFrame, JsonNode>> args() {
 		return args;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		List<Expression<StackFrame, JsonNode>> rewritten = ExpressionRewriter.rewriteAll(args, rewriter);
+		return rewritten == args ? this : new ResolvedGlobalFunctionAccess<>(bindContext, name, globalIndex, rewritten);
 	}
 
 	@Override

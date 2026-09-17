@@ -9,6 +9,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
@@ -32,9 +33,30 @@ public class RuntimeOptionsTest {
 	private static final Environment<JsonNode> ENV = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2).build();
 
 	private static List<JsonNode> run(String q, RuntimeOptions options) throws Exception {
+		return run(q, options, Jackson2JsonProvider.getInstance().createNull());
+	}
+
+	/**
+	 * Runs {@code q} against {@code in}.
+	 * <p>
+	 * Every size-limit case below passes the value under test as input rather than writing it into the query,
+	 * because a query that is constant throughout is evaluated once at compile time and folded to its result
+	 * -- so it never reaches evaluation, and these budgets meter evaluation. Taking the value as input is what
+	 * keeps each case testing the limit rather than the folder. See {@link RuntimeOptions} on what the budgets
+	 * do and do not cover, and {@link #constantWorkIsBoundedByTheCompilerNotByTheseLimits}.
+	 */
+	private static List<JsonNode> run(String q, RuntimeOptions options, JsonNode in) throws Exception {
 		List<JsonNode> out = new ArrayList<>();
-		ENV.compile(q).withRuntimeOptions(options).apply(Jackson2JsonProvider.getInstance().createNull(), out::add);
+		ENV.compile(q).withRuntimeOptions(options).apply(in, out::add);
 		return out;
+	}
+
+	private static JsonNode in(String json) {
+		try {
+			return new ObjectMapper().readTree(json);
+		} catch (Exception e) {
+			throw new IllegalArgumentException(json, e);
+		}
 	}
 
 	private static RuntimeOptions maxArrayLength(int n) {
@@ -89,16 +111,16 @@ public class RuntimeOptionsTest {
 
 	@Test
 	public void arrayConstructionIsBounded() throws Exception {
-		assertThatCode(() -> run("[range(0; 100)]", maxArrayLength(100))).doesNotThrowAnyException();
-		assertThatThrownBy(() -> run("[range(0; 101)]", maxArrayLength(100)))
+		assertThatCode(() -> run("[range(0; .)]", maxArrayLength(100), in("100"))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run("[range(0; .)]", maxArrayLength(100), in("101")))
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum array size of 100");
 	}
 
 	@Test
 	public void arrayConcatenationIsBounded() throws Exception {
-		assertThatCode(() -> run("reduce range(0; 100) as $i ([]; . + [$i])", maxArrayLength(100))).doesNotThrowAnyException();
-		assertThatThrownBy(() -> run("reduce range(0; 101) as $i ([]; . + [$i])", maxArrayLength(100)))
+		assertThatCode(() -> run("reduce range(0; .) as $i ([]; . + [$i])", maxArrayLength(100), in("100"))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run("reduce range(0; .) as $i ([]; . + [$i])", maxArrayLength(100), in("101")))
 				.isInstanceOf(RuntimeLimitExceededException.class);
 	}
 
@@ -121,37 +143,37 @@ public class RuntimeOptionsTest {
 
 	@Test
 	public void sliceAssignmentIsBounded() throws Exception {
-		assertThatThrownBy(() -> run("[1, 2] | .[0:0] = [1, 2, 3]", maxArrayLength(4)))
+		assertThatThrownBy(() -> run(".[0:0] = [1, 2, 3]", maxArrayLength(4), in("[1, 2]")))
 				.isInstanceOf(RuntimeLimitExceededException.class);
-		assertThatCode(() -> run("[1, 2] | .[0:0] = [1, 2]", maxArrayLength(4))).doesNotThrowAnyException();
+		assertThatCode(() -> run(".[0:0] = [1, 2]", maxArrayLength(4), in("[1, 2]"))).doesNotThrowAnyException();
 	}
 
 	// --- maxObjectMemberCount ------------------------------------------------------------------
 
 	@Test
 	public void objectMergeIsBounded() throws Exception {
-		assertThatCode(() -> run("reduce range(0; 50) as $i ({}; . + {($i|tostring): $i})", maxObjectMemberCount(50))).doesNotThrowAnyException();
-		assertThatThrownBy(() -> run("reduce range(0; 51) as $i ({}; . + {($i|tostring): $i})", maxObjectMemberCount(50)))
+		assertThatCode(() -> run("reduce range(0; .) as $i ({}; . + {($i|tostring): $i})", maxObjectMemberCount(50), in("50"))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run("reduce range(0; .) as $i ({}; . + {($i|tostring): $i})", maxObjectMemberCount(50), in("51")))
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum object size of 50");
 	}
 
 	@Test
 	public void recursiveObjectMergeIsBounded() throws Exception {
-		assertThatThrownBy(() -> run("{a: 1, b: 2} * {c: 3}", maxObjectMemberCount(2)))
+		assertThatThrownBy(() -> run("{a: 1, b: .} * {c: 3}", maxObjectMemberCount(2), in("2")))
 				.isInstanceOf(RuntimeLimitExceededException.class);
 	}
 
 	@Test
 	public void objectFieldAssignmentIsBounded() throws Exception {
-		assertThatThrownBy(() -> run("reduce range(0; 51) as $i ({}; setpath([$i|tostring]; $i))", maxObjectMemberCount(50)))
+		assertThatThrownBy(() -> run("reduce range(0; .) as $i ({}; setpath([$i|tostring]; $i))", maxObjectMemberCount(50), in("51")))
 				.isInstanceOf(RuntimeLimitExceededException.class);
 	}
 
 	@Test
 	public void fromEntriesIsBounded() throws Exception {
 		// from_entries turns an array into an object, so maxArrayLength does not bound the result.
-		assertThatThrownBy(() -> run("[range(0; 51) | {key: (.|tostring), value: .}] | from_entries", maxObjectMemberCount(50)))
+		assertThatThrownBy(() -> run("[range(0; .) | {key: (.|tostring), value: .}] | from_entries", maxObjectMemberCount(50), in("51")))
 				.isInstanceOf(RuntimeLimitExceededException.class);
 	}
 
@@ -159,8 +181,8 @@ public class RuntimeOptionsTest {
 
 	@Test
 	public void stringConcatenationIsBounded() throws Exception {
-		assertThatCode(() -> run("reduce range(0; 100) as $i (\"\"; . + \"x\")", maxStringLength(100))).doesNotThrowAnyException();
-		assertThatThrownBy(() -> run("reduce range(0; 101) as $i (\"\"; . + \"x\")", maxStringLength(100)))
+		assertThatCode(() -> run("reduce range(0; .) as $i (\"\"; . + \"x\")", maxStringLength(100), in("100"))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run("reduce range(0; .) as $i (\"\"; . + \"x\")", maxStringLength(100), in("101")))
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum string length of 100");
 	}
@@ -178,44 +200,44 @@ public class RuntimeOptionsTest {
 
 	@Test
 	public void stringInterpolationIsBounded() throws Exception {
-		assertThatCode(() -> run("\"aaa\" | \"\\(.)\\(.)\"", maxStringLength(6))).doesNotThrowAnyException();
-		assertThatThrownBy(() -> run("\"aaa\" | \"\\(.)\\(.)\"", maxStringLength(5)))
+		assertThatCode(() -> run("\"\\(.)\\(.)\"", maxStringLength(6), in("\"aaa\""))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run("\"\\(.)\\(.)\"", maxStringLength(5), in("\"aaa\"")))
 				.isInstanceOf(RuntimeLimitExceededException.class);
 	}
 
 	@Test
 	public void joinIsBounded() throws Exception {
-		assertThatCode(() -> run("[\"aaa\", \"bbb\"] | join(\"-\")", maxStringLength(7))).doesNotThrowAnyException();
-		assertThatThrownBy(() -> run("[\"aaa\", \"bbb\"] | join(\"-\")", maxStringLength(6)))
+		assertThatCode(() -> run("join(\"-\")", maxStringLength(7), in("[\"aaa\", \"bbb\"]"))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run("join(\"-\")", maxStringLength(6), in("[\"aaa\", \"bbb\"]")))
 				.isInstanceOf(RuntimeLimitExceededException.class);
 	}
 
 	@Test
 	public void implodeIsBounded() throws Exception {
-		assertThatThrownBy(() -> run("[range(0; 101) | 65] | implode", maxStringLength(100)))
+		assertThatThrownBy(() -> run("[range(0; .) | 65] | implode", maxStringLength(100), in("101")))
 				.isInstanceOf(RuntimeLimitExceededException.class);
 	}
 
 	@Test
 	public void formattingFunctionsAreBounded() throws Exception {
 		// "aaaa" | @base64 is "YWFhYQ==", eight characters.
-		assertThatCode(() -> run("\"aaaa\" | @base64", maxStringLength(8))).doesNotThrowAnyException();
-		assertThatThrownBy(() -> run("\"aaaa\" | @base64", maxStringLength(7)))
+		assertThatCode(() -> run("@base64", maxStringLength(8), in("\"aaaa\""))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run("@base64", maxStringLength(7), in("\"aaaa\"")))
 				.isInstanceOf(RuntimeLimitExceededException.class);
 	}
 
 	@Test
 	public void xsvFormattingIsBounded() throws Exception {
 		// ["aaa", "bbb"] | @csv is "\"aaa\",\"bbb\"", eleven characters.
-		assertThatCode(() -> run("[\"aaa\", \"bbb\"] | @csv", maxStringLength(11))).doesNotThrowAnyException();
-		assertThatThrownBy(() -> run("[\"aaa\", \"bbb\"] | @csv", maxStringLength(10)))
+		assertThatCode(() -> run("@csv", maxStringLength(11), in("[\"aaa\", \"bbb\"]"))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run("@csv", maxStringLength(10), in("[\"aaa\", \"bbb\"]")))
 				.isInstanceOf(RuntimeLimitExceededException.class);
 	}
 
 	@Test
 	public void tojsonIsBounded() throws Exception {
-		assertThatCode(() -> run("[1, 2, 3] | tojson", maxStringLength(7))).doesNotThrowAnyException();
-		assertThatThrownBy(() -> run("[1, 2, 3] | tojson", maxStringLength(6)))
+		assertThatCode(() -> run("tojson", maxStringLength(7), in("[1, 2, 3]"))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run("tojson", maxStringLength(6), in("[1, 2, 3]")))
 				.isInstanceOf(RuntimeLimitExceededException.class);
 	}
 
@@ -224,8 +246,8 @@ public class RuntimeOptionsTest {
 		// An astral character is two chars but one codepoint, so the limit is stricter than jq's
 		// length would suggest -- and length itself must keep reporting codepoints.
 		assertThat(run("\"\uD83D\uDE00\" | length", RuntimeOptions.newBuilder().build())).extracting(Object::toString).containsExactly("1");
-		assertThatCode(() -> run("\"\uD83D\uDE00\" + \"\"", maxStringLength(2))).doesNotThrowAnyException();
-		assertThatThrownBy(() -> run("\"\uD83D\uDE00\" + \"\"", maxStringLength(1)))
+		assertThatCode(() -> run(". + \"\"", maxStringLength(2), in("\"\uD83D\uDE00\""))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run(". + \"\"", maxStringLength(1), in("\"\uD83D\uDE00\"")))
 				.isInstanceOf(RuntimeLimitExceededException.class);
 	}
 
@@ -233,6 +255,34 @@ public class RuntimeOptionsTest {
 	public void literalsAndInputsAreNotBounded() throws Exception {
 		// The limit bounds strings evaluation produces, not the ones it is handed.
 		assertThatCode(() -> run("\"aaaaa\"", maxStringLength(1))).doesNotThrowAnyException();
+	}
+
+	// --- what these budgets do not cover -------------------------------------------------------
+
+	/**
+	 * These budgets meter evaluation, and a constant expression is not evaluated: the compiler runs it once
+	 * and keeps the result, so a query that is constant throughout does its work before any
+	 * {@link RuntimeOptions} exists. What bounds that work instead is the compiler's own fixed budget, which
+	 * is deliberately small -- past it the fold is abandoned and the expression goes back on the evaluation
+	 * path, where these limits apply to it in full.
+	 */
+	@Test
+	public void constantWorkIsBoundedByTheCompilerNotByTheseLimits() throws Exception {
+		// Built at compile time, so maxArrayLength never sees it. The same query with the size taken from
+		// the input throws -- that is arrayConstructionIsBounded, two tests up.
+		assertThatCode(() -> run("[range(0; 101)]", maxArrayLength(100))).doesNotThrowAnyException();
+
+		// Past the compiler's budget the fold is abandoned, and the limit bites after all.
+		assertThatThrownBy(() -> run("[range(0; 300)]", maxArrayLength(100)))
+				.isInstanceOf(RuntimeLimitExceededException.class)
+				.hasMessageContaining("maximum array size of 100");
+
+		// Abandoning a fold is never a compilation failure, and it is what keeps compile() from doing unbounded
+		// work on a constant expression: this returns promptly rather than draining a billion values, and it
+		// compiles to the same query it always did.
+		long started = System.nanoTime();
+		assertThatCode(() -> ENV.compile("last(range(0; 1e9))")).doesNotThrowAnyException();
+		assertThat(TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - started)).isLessThan(5);
 	}
 
 	// --- maxUserDefinedFunctionCalls ----------------------------------------------------------
@@ -487,7 +537,7 @@ public class RuntimeOptionsTest {
 
 	@Test
 	public void oneCompiledQueryHonoursPerInvocationLimits() throws Exception {
-		JsonQuery<JsonNode> query = ENV.compile("[range(0; 50)] | length");
+		JsonQuery<JsonNode> query = ENV.compile("[range(0; .)] | length");
 		ExecutorService executor = Executors.newFixedThreadPool(4);
 		try {
 			List<Future<Boolean>> futures = new ArrayList<>();
@@ -497,7 +547,7 @@ public class RuntimeOptionsTest {
 					List<JsonNode> out = new ArrayList<>();
 					try {
 						query.withRuntimeOptions(tight ? maxArrayLength(10) : RuntimeOptions.newBuilder().build())
-								.apply(Jackson2JsonProvider.getInstance().createNull(), out::add);
+								.apply(in("50"), out::add);
 						return false;
 					} catch (RuntimeLimitExceededException e) {
 						return true;

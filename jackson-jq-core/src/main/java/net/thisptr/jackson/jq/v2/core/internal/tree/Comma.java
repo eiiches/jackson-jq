@@ -20,7 +20,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
  * outputs are simply concatenated -- so evaluating {@code a, b, c, ...} is one loop instead of a
  * stack frame per comma.
  */
-public class Comma<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class Comma<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final List<Expression<StackFrame, JsonNode>> operands;
 	private final boolean dependsOnInput;
 	private final boolean dependsOnExternalState;
@@ -58,6 +58,12 @@ public class Comma<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVa
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		List<Expression<StackFrame, JsonNode>> rewritten = ExpressionRewriter.rewriteAll(operands, rewriter);
+		return rewritten == operands ? this : new Comma<>(rewritten);
 	}
 
 	// Every operand gets the caller's path unchanged -- a comma does not re-root `.` the way a pipe

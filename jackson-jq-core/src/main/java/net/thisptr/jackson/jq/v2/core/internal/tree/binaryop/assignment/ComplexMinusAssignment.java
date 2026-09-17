@@ -9,8 +9,13 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class ComplexMinusAssignment<JsonNode> extends AbstractComplexAssignment<JsonNode> {
-	public ComplexMinusAssignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, boolean inputFixed, int lhsOutputIndex, int rhsOutputIndex) {
-		super(jsonProvider, lhs, rhs, version, inputFixed, lhsOutputIndex, rhsOutputIndex);
+	public ComplexMinusAssignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, int lhsOutputIndex, int rhsOutputIndex) {
+		super(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+	}
+
+	@Override
+	protected Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenLhs, Expression<StackFrame, JsonNode> rewrittenRhs) {
+		return new ComplexMinusAssignment<>(jsonProvider, rewrittenLhs, rewrittenRhs, version, lhsOutputIndex, rhsOutputIndex);
 	}
 
 	@Override

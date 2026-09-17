@@ -11,6 +11,8 @@ import java.util.Set;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.ConstantFoldingOptions;
+import net.thisptr.jackson.jq.v2.core.internal.compile.opt.FoldPlanner;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -108,36 +110,31 @@ public class CompileContext {
 	// top-level compile's query-text expressions and the array Memory sizes from it is never indexed by a
 	// node compiled anywhere else.
 	private int nextOutputCounter;
+
+	// What the compilation has folded so far, and the budget it is folding within. Per compilation rather
+	// than per node, because Compiler builds a fresh CompilationVisitor for every node it lowers while this
+	// one object is threaded through all of them -- including the child contexts the
+	// create*JqFunctionContext factories fork, which share it so the tally covers the whole compilation.
+	private final FoldPlanner foldPlanner;
+
 	private final Map<FunctionSignature, Integer> rootFunctionSlots;
 	private final Map<String, JavaModule> importedModules;
 	private final Map<String, Object> importedVariableDefaults;
-
-	// Whether the `.` currently being compiled against is known, at compile time, to always be the
-	// same fixed value -- e.g. the output of an earlier, already-constant pipe stage. Saved/restored
-	// (like a scope push/pop) around the handful of constructs that rebind what `.` means for a child
-	// expression (pipe stage transitions, try/catch's catch, string-interpolation's formatter,
-	// reduce/foreach's update expression, |='s rhs). Read by Compiler when constructing the few node
-	// types that read `.` themselves or fall back to the raw input (see Expression#dependsOnInput).
-	private boolean inputFixed = false;
-
-	public boolean isInputFixed() {
-		return inputFixed;
-	}
-
-	public void setInputFixed(boolean inputFixed) {
-		this.inputFixed = inputFixed;
-	}
 
 	public CompileContext() {
 		this(false, false);
 	}
 
 	public CompileContext(boolean exportTopLevelFunctions, boolean meterRuntimeBudgets) {
-		this(exportTopLevelFunctions, meterRuntimeBudgets, new JqFunctionCompiler.State(), Collections.emptySet(), Collections.emptySet(), new GlobalState());
+		this(exportTopLevelFunctions, meterRuntimeBudgets, ConstantFoldingOptions.newBuilder().build());
 	}
 
-	private CompileContext(boolean exportTopLevelFunctions, boolean meterRuntimeBudgets, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState) {
-		this(newRootScopes(), exportTopLevelFunctions, meterRuntimeBudgets, jqFunctionState, activeJqFunctions, genericJqFunctions, globalState);
+	public CompileContext(boolean exportTopLevelFunctions, boolean meterRuntimeBudgets, ConstantFoldingOptions constantFoldingOptions) {
+		this(exportTopLevelFunctions, meterRuntimeBudgets, new JqFunctionCompiler.State(), Collections.emptySet(), Collections.emptySet(), new GlobalState(), new FoldPlanner(constantFoldingOptions));
+	}
+
+	private CompileContext(boolean exportTopLevelFunctions, boolean meterRuntimeBudgets, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState, FoldPlanner foldPlanner) {
+		this(newRootScopes(), exportTopLevelFunctions, meterRuntimeBudgets, jqFunctionState, activeJqFunctions, genericJqFunctions, globalState, foldPlanner);
 	}
 
 	// Shares `scopes` with the caller rather than starting a fresh list -- used only to build an inlined
@@ -145,8 +142,9 @@ public class CompileContext {
 	// separate CompileContext object (its own activeJqFunctions/genericJqFunctions fork), but needs to
 	// keep allocating slots in whatever frame is already live on the caller's own scope stack rather than
 	// starting a brand-new one.
-	private CompileContext(List<ScopeFrame> scopes, boolean exportTopLevelFunctions, boolean meterRuntimeBudgets, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState) {
+	private CompileContext(List<ScopeFrame> scopes, boolean exportTopLevelFunctions, boolean meterRuntimeBudgets, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState, FoldPlanner foldPlanner) {
 		this.scopes = scopes;
+		this.foldPlanner = foldPlanner;
 		this.jqFunctionState = jqFunctionState;
 		this.activeJqFunctions = activeJqFunctions;
 		this.genericJqFunctions = genericJqFunctions;
@@ -179,7 +177,7 @@ public class CompileContext {
 	CompileContext createJqFunctionContext(JqFunctionCompiler.DefinitionKey key, boolean shareGlobalState) {
 		Set<JqFunctionCompiler.DefinitionKey> nestedActiveJqFunctions = new HashSet<>(activeJqFunctions);
 		nestedActiveJqFunctions.add(key);
-		return new CompileContext(false, false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState());
+		return new CompileContext(false, false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState(), foldPlanner);
 	}
 
 	// Like createJqFunctionContext, but shares this context's own `scopes` list instead of starting a
@@ -189,7 +187,7 @@ public class CompileContext {
 	CompileContext createInlinedJqFunctionContext(JqFunctionCompiler.DefinitionKey key, boolean shareGlobalState) {
 		Set<JqFunctionCompiler.DefinitionKey> nestedActiveJqFunctions = new HashSet<>(activeJqFunctions);
 		nestedActiveJqFunctions.add(key);
-		return new CompileContext(scopes, false, false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState());
+		return new CompileContext(scopes, false, false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState(), foldPlanner);
 	}
 
 	CompileContext createGenericJqFunctionContext(JqFunctionCompiler.DefinitionKey key, boolean shareGlobalState) {
@@ -197,7 +195,7 @@ public class CompileContext {
 		nestedActiveJqFunctions.add(key);
 		Set<JqFunctionCompiler.DefinitionKey> nestedGenericJqFunctions = new HashSet<>(genericJqFunctions);
 		nestedGenericJqFunctions.add(key);
-		return new CompileContext(false, false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), Collections.unmodifiableSet(nestedGenericJqFunctions), shareGlobalState ? globalState : new GlobalState());
+		return new CompileContext(false, false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), Collections.unmodifiableSet(nestedGenericJqFunctions), shareGlobalState ? globalState : new GlobalState(), foldPlanner);
 	}
 
 	public void addImportedModule(String alias, JavaModule module) {
@@ -289,6 +287,36 @@ public class CompileContext {
 		for (int i = 0; i < indices.length; ++i)
 			indices[i] = outputCounterOf(children.get(i));
 		return indices;
+	}
+
+	/**
+	 * Records a node whose presence makes every subtree containing it unfoldable.
+	 * <p>
+	 * A barrier is a node that is not a function of its own subtree, so evaluating that subtree ahead of time
+	 * does not reproduce what it does. There are two:
+	 * <ul>
+	 * <li>a {@code def} -- it registers its name in the <em>enclosing</em> lexical scope and writes its
+	 * {@code Function} into the enclosing frame, so an expression compiled <em>after</em> the subtree can call
+	 * it ({@code def f: 1; f}, and {@code def f: 1; . as $x | f} where the call is the {@code as} body).
+	 * Folding would evaluate the install and discard it, leaving the later call an empty slot;</li>
+	 * <li>a {@code try} or {@code ?} before jq 1.7 -- in that mode it catches errors raised
+	 * <em>downstream</em> of it as well as inside it ({@code TryCatch.applyLegacy}), so what it does depends
+	 * on who consumes its values. A fold consumes them with the compiler's own collector, which is not that
+	 * consumer.</li>
+	 * </ul>
+	 */
+	public void markFoldBarrier() {
+		if (meterRuntimeBudgets)
+			foldPlanner.markBarrier();
+	}
+
+	/**
+	 * The compilation-wide constant-folding pass.
+	 *
+	 * @return this compilation's planner, never {@code null}
+	 */
+	public FoldPlanner foldPlanner() {
+		return foldPlanner;
 	}
 
 	/**

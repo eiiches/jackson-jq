@@ -26,24 +26,32 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class UpdateAssignment<JsonNode> extends AbstractBinaryOperatorExpression<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
-	private Version version;
-	private final boolean inputFixed;
+	private final Version version;
 
 	@Override
 	public Cardinality getCardinality() {
 		return Cardinality.ONE;
 	}
 
-	public UpdateAssignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, boolean inputFixed, int lhsOutputIndex, int rhsOutputIndex) {
+	public UpdateAssignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, int lhsOutputIndex, int rhsOutputIndex) {
 		super(lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 		this.jsonProvider = jsonProvider;
 		this.version = version;
-		this.inputFixed = inputFixed;
 	}
 
 	@Override
+	protected Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenLhs, Expression<StackFrame, JsonNode> rewrittenRhs) {
+		return new UpdateAssignment<>(jsonProvider, rewrittenLhs, rewrittenRhs, version, lhsOutputIndex, rhsOutputIndex);
+	}
+
+	// Always: an assignment applies its lhs path to the base `.` and falls back to the raw, unmodified
+	// input when the lhs matches no paths, so it reads `.` even when neither child does. An enclosing
+	// construct that rebinds `.` to a fixed value discharges this the same way it discharges any other
+	// input dependency. External-state and free-variable dependencies need no override: they are fully
+	// covered by super's `lhs || rhs`.
+	@Override
 	public boolean dependsOnInput() {
-		return !inputFixed || super.dependsOnInput();
+		return true;
 	}
 
 	@Override

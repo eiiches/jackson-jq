@@ -20,7 +20,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
-public class Conditional<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class Conditional<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final Expression<StackFrame, JsonNode> otherwise;
 	private final List<Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>>> switches;
@@ -90,6 +90,24 @@ public class Conditional<JsonNode> implements Expression<StackFrame, JsonNode>, 
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		@Var List<Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>>> rewrittenSwitches = null;
+		for (int i = 0; i < switches.size(); i++) {
+			Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>> sw = switches.get(i);
+			Expression<StackFrame, JsonNode> condition = rewriter.rewrite(sw._1);
+			Expression<StackFrame, JsonNode> branch = rewriter.rewrite(sw._2);
+			if (rewrittenSwitches == null && (condition != sw._1 || branch != sw._2))
+				rewrittenSwitches = new ArrayList<>(switches);
+			if (rewrittenSwitches != null)
+				rewrittenSwitches.set(i, Pair.of(condition, branch));
+		}
+		Expression<StackFrame, JsonNode> rewrittenOtherwise = rewriter.rewrite(otherwise);
+		return rewrittenSwitches == null && rewrittenOtherwise == otherwise
+				? this
+				: new Conditional<>(jsonProvider, rewrittenSwitches != null ? rewrittenSwitches : switches, rewrittenOtherwise, conditionOutputIndices);
 	}
 
 	@Override

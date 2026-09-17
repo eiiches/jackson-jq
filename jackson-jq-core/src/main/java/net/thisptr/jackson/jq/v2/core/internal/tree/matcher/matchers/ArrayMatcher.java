@@ -3,6 +3,9 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.UnaryOperator;
+
+import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
@@ -11,13 +14,14 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.SlotResolver;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
-	private List<PatternMatcher<JsonNode>> matchers;
+	private final List<PatternMatcher<JsonNode>> matchers;
 	private final Version version;
 
 	public ArrayMatcher(JsonProvider<JsonNode> jsonProvider, List<PatternMatcher<JsonNode>> matchers, Version version) {
@@ -94,5 +98,19 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			resolved.add(matchers.get(i).resolveSlots(resolver));
 		Collections.reverse(resolved);
 		return new ArrayMatcher<>(jsonProvider, resolved, version);
+	}
+
+	@Override
+	public PatternMatcher<JsonNode> rewriteExpressions(UnaryOperator<Expression<StackFrame, JsonNode>> rewriter) {
+		@Var List<PatternMatcher<JsonNode>> rewritten = null;
+		for (int i = 0; i < matchers.size(); i++) {
+			PatternMatcher<JsonNode> matcher = matchers.get(i);
+			PatternMatcher<JsonNode> replacement = matcher.rewriteExpressions(rewriter);
+			if (rewritten == null && replacement != matcher)
+				rewritten = new ArrayList<>(matchers);
+			if (rewritten != null)
+				rewritten.set(i, replacement);
+		}
+		return rewritten == null ? this : new ArrayMatcher<>(jsonProvider, rewritten, version);
 	}
 }

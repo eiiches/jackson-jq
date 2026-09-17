@@ -19,6 +19,11 @@ public class PlusExpression<JsonNode> extends AbstractSimpleBinaryOperatorExpres
 	}
 
 	@Override
+	protected Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenLhs, Expression<StackFrame, JsonNode> rewrittenRhs) {
+		return new PlusExpression<>(jsonProvider, rewrittenLhs, rewrittenRhs, version, lhsOutputIndex, rhsOutputIndex);
+	}
+
+	@Override
 	protected JsonNode doEval(RuntimeLimits limits, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
 		return BinaryOperations.plus(jsonProvider, limits, lhs, rhs, version);
 	}

@@ -10,6 +10,11 @@ public class CompareLessTest<JsonNode> extends AbstractComparisonExpression<Json
 	}
 
 	@Override
+	protected Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenLhs, Expression<StackFrame, JsonNode> rewrittenRhs) {
+		return new CompareLessTest<>(jsonProvider, rewrittenLhs, rewrittenRhs, lhsOutputIndex, rhsOutputIndex);
+	}
+
+	@Override
 	protected boolean test(int r) {
 		return r < 0;
 	}
