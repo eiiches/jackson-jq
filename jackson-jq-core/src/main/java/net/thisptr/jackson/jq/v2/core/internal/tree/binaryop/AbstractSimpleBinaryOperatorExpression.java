@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.binaryop;
 
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -19,8 +20,8 @@ public abstract class AbstractSimpleBinaryOperatorExpression<JsonNode> extends A
 		return CardinalityUtils.multiply(lhs.getCardinality(), rhs.getCardinality());
 	}
 
-	public AbstractSimpleBinaryOperatorExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs) {
-		super(lhs, rhs);
+	public AbstractSimpleBinaryOperatorExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, int lhsOutputIndex, int rhsOutputIndex) {
+		super(lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 		this.jsonProvider = jsonProvider;
 	}
 
@@ -28,8 +29,11 @@ public abstract class AbstractSimpleBinaryOperatorExpression<JsonNode> extends A
 
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+		Memory memory = frame.getEnclosingMemory();
 		rhs.apply(frame, in, UntrackedPath.getInstance(), (r, opath) -> {
+			memory.countOutput(rhsOutputIndex);
 			lhs.apply(frame, in, UntrackedPath.getInstance(), (l, opath2) -> {
+				memory.countOutput(lhsOutputIndex);
 				output.emit(doEval(frame.getRuntimeLimits(), l, r), UntrackedPath.getInstance());
 			});
 		});

@@ -6,6 +6,7 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -20,16 +21,18 @@ public class NegativeExpression<JsonNode> implements Expression<StackFrame, Json
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final Expression<StackFrame, JsonNode> value;
 	private final Version version;
+	private final int valueOutputIndex;
 
 	@Override
 	public Cardinality getCardinality() {
 		return value.getCardinality();
 	}
 
-	public NegativeExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> value, Version version) {
+	public NegativeExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> value, Version version, int valueOutputIndex) {
 		this.jsonProvider = jsonProvider;
 		this.value = value;
 		this.version = version;
+		this.valueOutputIndex = valueOutputIndex;
 	}
 
 	@Override
@@ -54,7 +57,9 @@ public class NegativeExpression<JsonNode> implements Expression<StackFrame, Json
 
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+		Memory memory = frame.getEnclosingMemory();
 		value.apply(frame, in, UntrackedPath.getInstance(), (v, opath) -> {
+			memory.countOutput(valueOutputIndex);
 			if (!jsonProvider.isNumber(v))
 				throw new JsonQueryTypeException("%s cannot be negated", ExceptionMessages.describe(jsonProvider, version, v));
 			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, -jsonProvider.getNumberAsDoubleRounded(v)), UntrackedPath.getInstance());

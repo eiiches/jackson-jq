@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.internal.compile.ModuleScope;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.ValueLiteral;
@@ -126,9 +127,9 @@ public class ExpressionCardinalityTest {
 
 	@Test
 	public void testSemicolonOperator() {
-		assertThat(new SemicolonOperator<JsonNode>(Collections.emptyList()).getCardinality()).isEqualTo(Cardinality.ZERO);
-		assertThat(new SemicolonOperator<JsonNode>(Collections.singletonList(new ValueLiteral<>(Jackson2JsonProvider.getInstance().createNumber(1)))).getCardinality()).isEqualTo(Cardinality.ONE);
-		assertThat(new SemicolonOperator<JsonNode>(Arrays.asList(new ValueLiteral<>(Jackson2JsonProvider.getInstance().createNumber(1)), new BreakExpression<JsonNode>("out"))).getCardinality()).isEqualTo(Cardinality.ZERO);
+		assertThat(new SemicolonOperator<JsonNode>(Collections.emptyList(), new int[0]).getCardinality()).isEqualTo(Cardinality.ZERO);
+		assertThat(new SemicolonOperator<JsonNode>(Collections.singletonList(new ValueLiteral<>(Jackson2JsonProvider.getInstance().createNumber(1))), new int[0]).getCardinality()).isEqualTo(Cardinality.ONE);
+		assertThat(new SemicolonOperator<JsonNode>(Arrays.asList(new ValueLiteral<>(Jackson2JsonProvider.getInstance().createNumber(1)), new BreakExpression<JsonNode>("out")), new int[] { Memory.NO_OUTPUT_COUNTER }).getCardinality()).isEqualTo(Cardinality.ZERO);
 		assertThat(cardinalityOf("def f: 1; f")).isEqualTo(Cardinality.UNKNOWN);
 	}
 

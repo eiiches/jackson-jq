@@ -7,6 +7,7 @@ import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathOperations;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathUtils;
@@ -32,8 +33,8 @@ public class Assignment<JsonNode> extends AbstractBinaryOperatorExpression<JsonN
 		return rhs.getCardinality();
 	}
 
-	public Assignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, boolean inputFixed) {
-		super(lhs, rhs);
+	public Assignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, boolean inputFixed, int lhsOutputIndex, int rhsOutputIndex) {
+		super(lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 		this.jsonProvider = jsonProvider;
 		this.version = version;
 		this.inputFixed = inputFixed;
@@ -51,9 +52,12 @@ public class Assignment<JsonNode> extends AbstractBinaryOperatorExpression<JsonN
 
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+		Memory memory = frame.getEnclosingMemory();
 		rhs.apply(frame, in, UntrackedPath.getInstance(), (rval, opath) -> {
+			memory.countOutput(rhsOutputIndex);
 			List<Path<JsonNode>> lpaths = new ArrayList<>();
 			lhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
+				memory.countOutput(lhsOutputIndex);
 				@Var Path<JsonNode> lpath = lpath0;
 				// `VALUE | path(VALUE) => []`
 				if (PathUtils.isLost(lpath) && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)

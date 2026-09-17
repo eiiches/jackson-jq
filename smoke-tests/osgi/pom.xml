@@ -41,6 +41,7 @@
 
 	<modules>
 		<module>joni-wrapper</module>
+		<module>re2j-wrapper</module>
 		<module>application</module>
 		<module>runtime</module>
 	</modules>

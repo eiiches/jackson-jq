@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
 import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 
@@ -24,6 +25,12 @@ import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
  * moving both markers back to the parent boundary, so the unused capacity can be reused without retaining references.
  */
 public class Memory {
+	/**
+	 * Stands in for the counter index of an expression that is not there, or that nothing counts. Charging it
+	 * is a no-op.
+	 */
+	public static final int NO_OUTPUT_COUNTER = -1;
+
 	private static final Object[] EMPTY_SLOTS = new Object[0];
 	private static final int MINIMUM_GROWN_CAPACITY = 16;
 
@@ -41,8 +48,27 @@ public class Memory {
 
 	// The budgets this top-level apply() runs under -- frame-independent, like `globals`, and reachable
 	// from any frame via StackFrame#getRuntimeLimits(), which is how Expression/Function implementations
-	// (including third-party ones) see them.
-	private final RuntimeLimits runtimeLimits;
+	// (including third-party ones) see them. Declared as the engine's own RuntimeLimitsImpl rather than the
+	// SPI interface because the user-defined function call budget is deliberately not on the interface.
+	private final RuntimeLimitsImpl runtimeLimits;
+
+	// Read out of runtimeLimits once so counting a call is a plain field compare rather than a virtual call.
+	private final long maxUserDefinedFunctionCalls;
+
+	// How many query-text `def` bodies this one top-level apply() has run so far. Unlike `globals` and
+	// `runtimeLimits` this accumulates, which is why it belongs here and not on the (immutable, shared)
+	// limits: a Memory is built fresh per invocation, so every invocation starts the budget over and
+	// concurrent invocations of one compiled query never see each other's tally.
+	private long userDefinedFunctionCalls;
+
+	// Read out of runtimeLimits once, for the same reason as maxUserDefinedFunctionCalls.
+	private final long maxOutputsPerExpression;
+
+	// One tally per query-text expression the compiler handed an output counter index to (see
+	// CompileContext#allocateOutputCounter), accumulating for the whole of this top-level apply(). Null --
+	// not an all-zero array -- whenever nothing is metered, so that the wrapper the compiler inserted can
+	// tell in one load that it has nothing to do and pass its output sink straight through.
+	private final long @Nullable [] outputCounts;
 
 	public Memory() {
 		this(0);
@@ -52,7 +78,7 @@ public class Memory {
 		this(globalCount, RuntimeLimitsImpl.UNLIMITED);
 	}
 
-	public Memory(int globalCount, RuntimeLimits runtimeLimits) {
+	public Memory(int globalCount, RuntimeLimitsImpl runtimeLimits) {
 		this(new Object[globalCount], runtimeLimits);
 	}
 
@@ -60,13 +86,68 @@ public class Memory {
 		this(globals, RuntimeLimitsImpl.UNLIMITED);
 	}
 
-	public Memory(Object[] globals, RuntimeLimits runtimeLimits) {
+	public Memory(Object[] globals, RuntimeLimitsImpl runtimeLimits) {
+		this(globals, runtimeLimits, 0);
+	}
+
+	public Memory(Object[] globals, RuntimeLimitsImpl runtimeLimits, int outputCounterCount) {
 		this.globals = globals;
 		this.runtimeLimits = runtimeLimits;
+		this.maxUserDefinedFunctionCalls = runtimeLimits.getMaxUserDefinedFunctionCalls();
+		this.maxOutputsPerExpression = runtimeLimits.getMaxOutputsPerExpression();
+		this.outputCounts = maxOutputsPerExpression != Long.MAX_VALUE && outputCounterCount > 0 ? new long[outputCounterCount] : null;
 	}
 
 	public RuntimeLimits getRuntimeLimits() {
 		return runtimeLimits;
+	}
+
+	/**
+	 * Charges one execution of a query-text {@code def} body against this invocation's budget.
+	 * <p>
+	 * Called only from {@code ResolvedFunctionDefinition}, and only for a {@code def} the compiler marked as
+	 * coming from the query text -- builtins, jq-library bodies and imported modules compile to the same node
+	 * but are not metered.
+	 *
+	 * @throws net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException if the budget is exhausted
+	 */
+	public void countUserDefinedFunctionCall() {
+		if (++userDefinedFunctionCalls > maxUserDefinedFunctionCalls)
+			throw RuntimeLimitChecks.userDefinedFunctionCallsExceeded(maxUserDefinedFunctionCalls);
+	}
+
+	/**
+	 * Whether {@link #countOutput(int)} has anything to count -- false unless a budget was configured and the
+	 * compiled query has at least one metered expression.
+	 *
+	 * @return {@code true} if expression outputs are being tallied
+	 */
+	public boolean metersOutputs() {
+		return outputCounts != null;
+	}
+
+	/**
+	 * Charges one value emitted by the query-text expression holding {@code index} against its own budget.
+	 * <p>
+	 * Called from whichever sink receives the expression's values -- the consuming node's own lambda for
+	 * everything the engine consumes itself, {@code MeteredOutputExpression} for an argument handed to a
+	 * function, {@code RootExpression} for the query's final output. The count is per expression and runs
+	 * for the whole invocation, so an expression re-evaluated once per value of an enclosing generator
+	 * accumulates across all of those evaluations.
+	 * <p>
+	 * {@code index} may be {@link #NO_OUTPUT_COUNTER}, which costs nothing: a consumer whose child is absent
+	 * (an optional {@code catch}, {@code foreach}'s extract, a bare {@code .[]}'s missing bounds) asks for an
+	 * index anyway and gets that one back, so the call sites stay uniform.
+	 *
+	 * @param index the expression's output counter index, or {@link #NO_OUTPUT_COUNTER}
+	 * @throws net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException if the budget is exhausted
+	 */
+	public void countOutput(int index) {
+		long[] counts = outputCounts;
+		if (counts == null || index < 0)
+			return;
+		if (++counts[index] > maxOutputsPerExpression)
+			throw RuntimeLimitChecks.outputsPerExpressionExceeded(maxOutputsPerExpression);
 	}
 
 	public @Nullable Object getGlobal(int index) {

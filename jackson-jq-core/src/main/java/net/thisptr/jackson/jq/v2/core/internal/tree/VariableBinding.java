@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 import java.util.Set;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
@@ -21,8 +22,11 @@ public class VariableBinding<JsonNode> implements Expression<StackFrame, JsonNod
 	private final boolean dependsOnExternalState;
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
+	// Counter for the bound expression. `body` needs none: it emits this binding's own values.
+	private final int valueOutputIndex;
 
-	public VariableBinding(Expression<StackFrame, JsonNode> value, PatternMatcher<JsonNode> matcher, Set<Integer> boundSlots, Expression<StackFrame, JsonNode> body) {
+	public VariableBinding(Expression<StackFrame, JsonNode> value, PatternMatcher<JsonNode> matcher, Set<Integer> boundSlots, Expression<StackFrame, JsonNode> body, int valueOutputIndex) {
+		this.valueOutputIndex = valueOutputIndex;
 		this.value = value;
 		this.matcher = matcher;
 		this.body = body;
@@ -62,7 +66,11 @@ public class VariableBinding<JsonNode> implements Expression<StackFrame, JsonNod
 		// The matcher binds its variables straight into the frame, so by the time onMatch runs the body
 		// can simply read them.
 		PatternMatcher.OnMatch onMatch = () -> body.apply(frame, in, path, output);
+		Memory memory = frame.getEnclosingMemory();
 		value.apply(frame, in, UntrackedPath.getInstance(),
-				(matchedValue, ignoredPath) -> matcher.matchWithPath(frame, matchedValue, path, onMatch));
+				(matchedValue, ignoredPath) -> {
+					memory.countOutput(valueOutputIndex);
+					matcher.matchWithPath(frame, matchedValue, path, onMatch);
+				});
 	}
 }

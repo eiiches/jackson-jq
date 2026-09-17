@@ -280,11 +280,15 @@ class MainTest {
 		RuntimeOptions options = Main.createRuntimeOptions(parseLimits(
 				"--max-string-length", "11",
 				"--max-array-length", "12",
-				"--max-object-member-count", "13"));
+				"--max-object-member-count", "13",
+				"--max-user-defined-function-calls", "14",
+				"--max-outputs-per-expression", "15"));
 
 		assertThat(options.getMaxStringLength()).isEqualTo(11);
 		assertThat(options.getMaxArrayLength()).isEqualTo(12);
 		assertThat(options.getMaxObjectMemberCount()).isEqualTo(13);
+		assertThat(options.getMaxUserDefinedFunctionCalls()).isEqualTo(14);
+		assertThat(options.getMaxOutputsPerExpression()).isEqualTo(15);
 	}
 
 	@Test
@@ -294,10 +298,12 @@ class MainTest {
 		assertThat(options.getMaxStringLength()).isEqualTo(Integer.MAX_VALUE);
 		assertThat(options.getMaxArrayLength()).isEqualTo(Integer.MAX_VALUE);
 		assertThat(options.getMaxObjectMemberCount()).isEqualTo(Integer.MAX_VALUE);
+		assertThat(options.getMaxUserDefinedFunctionCalls()).isEqualTo(Long.MAX_VALUE);
+		assertThat(options.getMaxOutputsPerExpression()).isEqualTo(Long.MAX_VALUE);
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "--max-string-length", "--max-array-length", "--max-object-member-count" })
+	@ValueSource(strings = { "--max-string-length", "--max-array-length", "--max-object-member-count", "--max-user-defined-function-calls", "--max-outputs-per-expression" })
 	void rejectsInvalidRuntimeLimits(String option) throws Exception {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> Main.createRuntimeOptions(parseLimits(option, "-1")))
@@ -330,6 +336,8 @@ class MainTest {
 		options.addOption(Option.builder().longOpt("max-string-length").numberOfArgs(1).get());
 		options.addOption(Option.builder().longOpt("max-array-length").numberOfArgs(1).get());
 		options.addOption(Option.builder().longOpt("max-object-member-count").numberOfArgs(1).get());
+		options.addOption(Option.builder().longOpt("max-user-defined-function-calls").numberOfArgs(1).get());
+		options.addOption(Option.builder().longOpt("max-outputs-per-expression").numberOfArgs(1).get());
 		return new DefaultParser().parse(options, args);
 	}
 

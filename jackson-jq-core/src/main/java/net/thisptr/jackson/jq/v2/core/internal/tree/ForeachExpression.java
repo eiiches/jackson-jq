@@ -6,6 +6,7 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
@@ -23,6 +24,10 @@ public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonN
 	private final Expression<StackFrame, JsonNode> initExpr;
 	private final @Nullable Expression<StackFrame, JsonNode> extractExpr;
 	private final PatternMatcher<JsonNode> matcher;
+	// `extractExpr` needs no counter: when present it emits this foreach's own values.
+	private final int initOutputIndex;
+	private final int updateOutputIndex;
+	private final int iterOutputIndex;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -36,8 +41,11 @@ public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonN
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression<StackFrame, JsonNode> initExpr, Expression<StackFrame, JsonNode> updateExpr, @Nullable Expression<StackFrame, JsonNode> extractExpr, Expression<StackFrame, JsonNode> iterExpr, Set<Integer> matcherSlots) {
+	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression<StackFrame, JsonNode> initExpr, Expression<StackFrame, JsonNode> updateExpr, @Nullable Expression<StackFrame, JsonNode> extractExpr, Expression<StackFrame, JsonNode> iterExpr, Set<Integer> matcherSlots, int initOutputIndex, int updateOutputIndex, int iterOutputIndex) {
 		this.matcher = matcher;
+		this.initOutputIndex = initOutputIndex;
+		this.updateOutputIndex = updateOutputIndex;
+		this.iterOutputIndex = iterOutputIndex;
 		this.initExpr = initExpr;
 		this.updateExpr = updateExpr;
 		this.extractExpr = extractExpr;
@@ -78,7 +86,9 @@ public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonN
 
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+		Memory memory = frame.getEnclosingMemory();
 		initExpr.apply(frame, in, ipath, (accumulator, accumulatorPath) -> {
+			memory.countOutput(initOutputIndex);
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
 			JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
@@ -89,6 +99,7 @@ public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonN
 			// updateExpr can simply read them.
 			PatternMatcher.OnMatch onMatch = () -> {
 				updateExpr.apply(frame, accumulators[0], extractExpr != null ? UntrackedPath.getInstance() : accumulatorPaths[0], (newaccumulator, newaccumulatorPath) -> {
+					memory.countOutput(updateOutputIndex);
 					if (extractExpr != null) {
 						extractExpr.apply(frame, newaccumulator, !(ipath instanceof UntrackedPath) && newaccumulatorPath instanceof UntrackedPath ? UnrepresentablePath.getInstance() : newaccumulatorPath, output);
 					} else {
@@ -100,7 +111,10 @@ public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonN
 							: newaccumulatorPath;
 				});
 			};
-			iterExpr.apply(frame, in, ipath, (item, itemPath) -> matcher.matchWithPath(frame, item, itemPath, onMatch));
+			iterExpr.apply(frame, in, ipath, (item, itemPath) -> {
+				memory.countOutput(iterOutputIndex);
+				matcher.matchWithPath(frame, item, itemPath, onMatch);
+			});
 		});
 	}
 }

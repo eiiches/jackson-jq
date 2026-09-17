@@ -5,8 +5,8 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 
 public class CompareLessEqualTest<JsonNode> extends AbstractComparisonExpression<JsonNode> {
-	public CompareLessEqualTest(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs) {
-		super(jsonProvider, lhs, rhs);
+	public CompareLessEqualTest(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, int lhsOutputIndex, int rhsOutputIndex) {
+		super(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 	}
 
 	@Override

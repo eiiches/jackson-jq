@@ -207,7 +207,7 @@ public class Compiler {
 	}
 
 	public static <JsonNode> Expression<StackFrame, JsonNode> compile(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, AstNode ast) throws JsonQueryException {
-		return compileRoot(env, options, scope, ast, false);
+		return compileRoot(env, options, scope, ast, /* exportTopLevelFunctions */ false, /* meterRuntimeBudgets */ true);
 	}
 
 	/**
@@ -219,10 +219,10 @@ public class Compiler {
 	 * Ordinary query compilation must never do this -- use {@link #compile(Environment, CompileOptions, ModuleScope, AstNode)}.
 	 */
 	public static <JsonNode> Expression<StackFrame, JsonNode> compileModule(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, AstNode ast) throws JsonQueryException {
-		return compileRoot(env, options, scope, ast, true);
+		return compileRoot(env, options, scope, ast, /* exportTopLevelFunctions */ true, /* meterRuntimeBudgets */ false);
 	}
 
-	private static <JsonNode> Expression<StackFrame, JsonNode> compileRoot(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, AstNode ast, boolean exportTopLevelFunctions) throws JsonQueryException {
+	private static <JsonNode> Expression<StackFrame, JsonNode> compileRoot(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, AstNode ast, boolean exportTopLevelFunctions, boolean meterRuntimeBudgets) throws JsonQueryException {
 		// Only whole queries and module sources are diagnosed. Function bodies that jq libraries
 		// bring along are compiled through the inner compile() below, never through here, so a
 		// caller never sees warnings about jq's own builtins.
@@ -230,7 +230,7 @@ public class Compiler {
 		if (diagnosticListener != null)
 			PipeParenthesesCheck.run(ast, diagnosticListener);
 
-		CompileContext context = new CompileContext(exportTopLevelFunctions);
+		CompileContext context = new CompileContext(exportTopLevelFunctions, meterRuntimeBudgets);
 		Expression<StackFrame, JsonNode> compiled = compile(env, context, scope, ast);
 		if (compiled == null)
 			throw new JsonQueryException("Cannot resolve null expression");
@@ -239,7 +239,9 @@ public class Compiler {
 		definedVariables.addAll(context.importedVariableDefaults().keySet());
 		Set<FunctionSignature> definedFunctions = new HashSet<>(env.getFunctions().keySet());
 		definedFunctions.addAll(env.getJqFunctions().keySet());
-		return new RootExpression<>(context.getSlotCount(), context.getGlobalCount(), compiled,
+		// Allocated before getOutputCounterCount() is read, so the root's own counter is included in the total.
+		int innerOutputIndex = context.outputCounterOf(compiled);
+		return new RootExpression<>(context.getSlotCount(), context.getGlobalCount(), context.getOutputCounterCount(), innerOutputIndex, compiled,
 				definedVariables, definedFunctions,
 				context.globalVariableIndices(), context.globalFunctionIndices(),
 				env.getDeclaredVariables(), env.getDeclaredFunctions(), context.rootFunctionSlots());
@@ -253,6 +255,29 @@ public class Compiler {
 		if (ast == null)
 			return null;
 		return new CompilationVisitor<>(env, context, scope).compileExpression(ast);
+	}
+
+	/**
+	 * Gives each argument its own output counter, so that everything it emits is charged against
+	 * {@code RuntimeOptions.Builder#setMaxOutputsPerExpression(long)}.
+	 * <p>
+	 * Every other expression is counted by whatever consumes it, in a sink the consumer already builds. An
+	 * argument is the exception: what drains it is a Java builtin, a third-party {@code Function}, or a
+	 * jq-library body reaching it through a parameter access -- none of which the engine can instrument, and
+	 * the last two not even in principle. Wrapping the producer covers all three at once.
+	 * <p>
+	 * Unlike the consumer-side counters this wraps regardless of cardinality, because an argument that emits
+	 * a single value per call is exactly the runaway shape here: {@code until(false; .)} loops forever on one
+	 * value per iteration. It also runs <em>after</em> {@code precomputeConstantArguments}, so that folding
+	 * {@code until(false; 1)}'s arguments into constants cannot take their counters with them.
+	 */
+	private static <N> List<Expression<StackFrame, N>> meterArguments(CompileContext context, List<Expression<StackFrame, N>> args) {
+		if (!context.metersRuntimeBudgets() || args.isEmpty())
+			return args;
+		List<Expression<StackFrame, N>> metered = new ArrayList<>(args.size());
+		for (Expression<StackFrame, N> arg : args)
+			metered.add(arg == null ? arg : MeteredOutputExpression.of(arg, context.allocateOutputCounter()));
+		return metered;
 	}
 
 	private static final class CompiledMatcher<N> {
@@ -330,7 +355,7 @@ public class Compiler {
 			} finally {
 				context.setInputFixed(inputFixed);
 			}
-			compiledArgs = Collections.unmodifiableList(precomputeConstantArguments(env, context, compiledArgs));
+			compiledArgs = Collections.unmodifiableList(meterArguments(context, precomputeConstantArguments(env, context, compiledArgs)));
 
 			if (call.moduleName() != null) {
 				@Var JavaModule mod = context.getImportedModule(call.moduleName());
@@ -398,7 +423,7 @@ public class Compiler {
 			} finally {
 				context.setInputFixed(savedInputFixed);
 			}
-			return new PipedQuery<>(compiledLeft, right);
+			return new PipedQuery<>(compiledLeft, right, context.outputCounterOf(compiledLeft));
 		}
 
 		private Expression<StackFrame, N> compileAsBinding(AsBindingAstNode binding, AstNode bodyAst) throws JsonQueryException {
@@ -421,7 +446,7 @@ public class Compiler {
 				context.popScope();
 			}
 			PatternMatcher<N> compiledMatcher = matcherResult.matcher.resolveSlots(new SlotResolver(slots));
-			return new VariableBinding<>(value, compiledMatcher, new HashSet<>(slots.values()), body);
+			return new VariableBinding<>(value, compiledMatcher, new HashSet<>(slots.values()), body, context.outputCounterOf(value));
 		}
 
 		private Expression<StackFrame, N> compileLabel(LabelAstNode label, AstNode bodyAst) throws JsonQueryException {
@@ -446,7 +471,7 @@ public class Compiler {
 			for (AstNode q : semi.expressions()) {
 				newExpressions.add(compileNonNull(env, context, q));
 			}
-			return new SemicolonOperator<>(newExpressions);
+			return new SemicolonOperator<>(newExpressions, context.outputCountersOf(newExpressions.subList(0, Math.max(0, newExpressions.size() - 1))));
 		}
 
 		@Override
@@ -461,33 +486,34 @@ public class Compiler {
 		@Override
 		public FieldConstruction<N> visit(ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst field) throws JsonQueryException {
 			Expression<StackFrame, N> value = compile(env, context, field.value);
-			return new IdentifierKeyFieldConstruction<>(env.getJsonProvider(), field.key, value, env.getJqVersion());
+			return new IdentifierKeyFieldConstruction<>(env.getJsonProvider(), field.key, value, env.getJqVersion(), context.outputCounterOf(value));
 		}
 
 		@Override
 		public FieldConstruction<N> visit(ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst field) throws JsonQueryException {
 			Expression<StackFrame, N> key = compileNonNull(env, context, field.key());
 			Expression<StackFrame, N> value = compileNonNull(env, context, field.value());
-			return new JsonQueryKeyFieldConstruction<>(env.getJsonProvider(), key, value, env.getJqVersion());
+			return new JsonQueryKeyFieldConstruction<>(env.getJsonProvider(), key, value, env.getJqVersion(), context.outputCounterOf(key), context.outputCounterOf(value));
 		}
 
 		@Override
 		public FieldConstruction<N> visit(ObjectConstructionAstNode.StringKeyFieldConstructionAst field) throws JsonQueryException {
 			Expression<StackFrame, N> key = compileNonNull(env, context, field.key);
 			Expression<StackFrame, N> value = compile(env, context, field.value);
-			return new StringKeyFieldConstruction<>(env.getJsonProvider(), key, value, env.getJqVersion());
+			return new StringKeyFieldConstruction<>(env.getJsonProvider(), key, value, env.getJqVersion(), context.outputCounterOf(key), context.outputCounterOf(value));
 		}
 
 		@Override
 		public FieldConstruction<N> visit(ObjectConstructionAstNode.VariableKeyFieldConstruction field) throws JsonQueryException {
 			// Desugar `{ $x }` into the same shape as `{ x: $x }` -- no dedicated resolved class needed.
 			Expression<StackFrame, N> value = compileVariableRef(env, context, null, field.name());
-			return new IdentifierKeyFieldConstruction<>(env.getJsonProvider(), field.name(), value, env.getJqVersion());
+			return new IdentifierKeyFieldConstruction<>(env.getJsonProvider(), field.name(), value, env.getJqVersion(), context.outputCounterOf(value));
 		}
 
 		@Override
 		public Expression<StackFrame, N> visit(ArrayConstructionAstNode arr) throws JsonQueryException {
-			return new ArrayConstruction<>(env.getJsonProvider(), compile(env, context, arr.q));
+			Expression<StackFrame, N> compiledArrayItems = compile(env, context, arr.q);
+			return new ArrayConstruction<>(env.getJsonProvider(), compiledArrayItems, context.outputCounterOf(compiledArrayItems));
 		}
 
 		@Override
@@ -512,12 +538,13 @@ public class Compiler {
 			} finally {
 				context.setInputFixed(savedInputFixed);
 			}
-			return compileBinaryOperator(bin.operator, lhs, rhs, env.getJqVersion(), env.getJsonProvider(), savedInputFixed);
+			return compileBinaryOperator(bin.operator, lhs, rhs, context.outputCounterOf(lhs), context.outputCounterOf(rhs), env.getJqVersion(), env.getJsonProvider(), savedInputFixed);
 		}
 
 		@Override
 		public Expression<StackFrame, N> visit(NegativeExpressionAstNode neg) throws JsonQueryException {
-			return new NegativeExpression<>(env.getJsonProvider(), compileNonNull(env, context, neg.value()), env.getJqVersion());
+			Expression<StackFrame, N> compiledNegated = compileNonNull(env, context, neg.value());
+			return new NegativeExpression<>(env.getJsonProvider(), compiledNegated, env.getJqVersion(), context.outputCounterOf(compiledNegated));
 		}
 
 		@Override
@@ -529,7 +556,10 @@ public class Compiler {
 				newSwitches.add(Pair.of(newIf, newThen));
 			}
 			Expression<StackFrame, N> newElse = compileNonNull(env, context, cond.otherwise());
-			return new Conditional<>(env.getJsonProvider(), newSwitches, newElse);
+			int[] conditionOutputIndices = new int[newSwitches.size()];
+			for (int i = 0; i < conditionOutputIndices.length; ++i)
+				conditionOutputIndices[i] = context.outputCounterOf(newSwitches.get(i)._1);
+			return new Conditional<>(env.getJsonProvider(), newSwitches, newElse, conditionOutputIndices);
 		}
 
 		@Override
@@ -605,7 +635,7 @@ public class Compiler {
 				} finally {
 					context.setInputFixed(savedInputFixed);
 				}
-				return new ReduceExpression<>(env.getJsonProvider(), compiledMatcher, compiledInit, compiledReduce, compiledIter, new HashSet<>(slots.values()));
+				return new ReduceExpression<>(env.getJsonProvider(), compiledMatcher, compiledInit, compiledReduce, compiledIter, new HashSet<>(slots.values()), context.outputCounterOf(compiledInit), context.outputCounterOf(compiledReduce), context.outputCounterOf(compiledIter));
 			} finally {
 				context.popScope();
 			}
@@ -646,7 +676,7 @@ public class Compiler {
 						context.setInputFixed(savedInputFixed);
 					}
 				}
-				return new ForeachExpression<>(compiledMatcher, compiledInit, compiledUpdate, compiledExtract, compiledIter, new HashSet<>(slots.values()));
+				return new ForeachExpression<>(compiledMatcher, compiledInit, compiledUpdate, compiledExtract, compiledIter, new HashSet<>(slots.values()), context.outputCounterOf(compiledInit), context.outputCounterOf(compiledUpdate), context.outputCounterOf(compiledIter));
 			} finally {
 				context.popScope();
 			}
@@ -676,7 +706,10 @@ public class Compiler {
 			} finally {
 				context.setInputFixed(savedInputFixed);
 			}
-			return new StringInterpolation<>(env.getJsonProvider(), si.template(), compiledInterpolations, compiledFormatter, env.getJqVersion());
+			int[] interpolationOutputIndices = new int[compiledInterpolations.size()];
+			for (int i = 0; i < interpolationOutputIndices.length; ++i)
+				interpolationOutputIndices[i] = context.outputCounterOf(compiledInterpolations.get(i)._2);
+			return new StringInterpolation<>(env.getJsonProvider(), si.template(), compiledInterpolations, compiledFormatter, env.getJqVersion(), interpolationOutputIndices, context.outputCounterOf(compiledFormatter));
 		}
 
 		@Override
@@ -689,29 +722,29 @@ public class Compiler {
 			if (end == null)
 				end = new ValueLiteral<>(env.getJsonProvider().createNull());
 			if (bfa.isRange()) {
-				return new BracketFieldAccess<>(env.getJsonProvider(), target, start, end, bfa.permissive(), env.getJqVersion());
+				return new BracketFieldAccess<>(env.getJsonProvider(), target, start, end, bfa.permissive(), env.getJqVersion(), context.outputCounterOf(target), context.outputCounterOf(start), context.outputCounterOf(end));
 			} else {
-				return new BracketFieldAccess<>(env.getJsonProvider(), target, start, bfa.permissive(), env.getJqVersion());
+				return new BracketFieldAccess<>(env.getJsonProvider(), target, start, bfa.permissive(), env.getJqVersion(), context.outputCounterOf(target), context.outputCounterOf(start));
 			}
 		}
 
 		@Override
 		public Expression<StackFrame, N> visit(IdentifierFieldAccessAstNode ifa) throws JsonQueryException {
 			Expression<StackFrame, N> target = compileNonNull(env, context, ifa.target());
-			return new IdentifierFieldAccess<>(env.getJsonProvider(), target, ifa.field(), ifa.permissive(), env.getJqVersion());
+			return new IdentifierFieldAccess<>(env.getJsonProvider(), target, ifa.field(), ifa.permissive(), env.getJqVersion(), context.outputCounterOf(target));
 		}
 
 		@Override
 		public Expression<StackFrame, N> visit(StringFieldAccessAstNode sfa) throws JsonQueryException {
 			Expression<StackFrame, N> target = compileNonNull(env, context, sfa.target());
 			Expression<StackFrame, N> key = compileNonNull(env, context, sfa.key());
-			return new StringFieldAccess<>(env.getJsonProvider(), target, key, sfa.permissive(), env.getJqVersion());
+			return new StringFieldAccess<>(env.getJsonProvider(), target, key, sfa.permissive(), env.getJqVersion(), context.outputCounterOf(target), context.outputCounterOf(key));
 		}
 
 		@Override
 		public Expression<StackFrame, N> visit(BracketExtractFieldAccessAstNode befa) throws JsonQueryException {
 			Expression<StackFrame, N> target = compileNonNull(env, context, befa.target());
-			return new BracketExtractFieldAccess<>(env.getJsonProvider(), target, befa.permissive(), env.getJqVersion());
+			return new BracketExtractFieldAccess<>(env.getJsonProvider(), target, befa.permissive(), env.getJqVersion(), context.outputCounterOf(target));
 		}
 
 		@Override
@@ -786,7 +819,7 @@ public class Compiler {
 			if (context.exportsTopLevelFunctions() && isTopLevelDefinition) {
 				context.recordRootFunctionSlot(signature, slot);
 			}
-			ResolvedFunctionDefinition<N> resolvedDef = new ResolvedFunctionDefinition<>(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody, ownClosureSlot, definerClosureSlot);
+			ResolvedFunctionDefinition<N> resolvedDef = new ResolvedFunctionDefinition<>(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody, ownClosureSlot, definerClosureSlot, context.metersRuntimeBudgets());
 			// freeLocalSlots always come from resolvedDef's own closureSpec, which is already precise for
 			// calls to *this* def -- including through nested defs in its body: resolving a deeper def's
 			// own capture threads an entry through every intermediate function-boundary scope's
@@ -850,7 +883,7 @@ public class Compiler {
 			Set<String> variableNames = subResult != null ? new HashSet<>(subResult.variableNames) : new HashSet<>();
 			if (field.dollar())
 				variableNames.add(field.name());
-			ObjectMatcher.FieldMatcher<N> compiled = new ObjectMatcher.FieldMatcher<>(field.dollar(), field.dollar() ? field.name() : null, name, subResult != null ? subResult.matcher : null);
+			ObjectMatcher.FieldMatcher<N> compiled = new ObjectMatcher.FieldMatcher<>(field.dollar(), field.dollar() ? field.name() : null, name, subResult != null ? subResult.matcher : null, context.outputCounterOf(name));
 			return new CompiledFieldMatcher<>(compiled, variableNames);
 		}
 
@@ -858,7 +891,7 @@ public class Compiler {
 		public CompiledFieldMatcher<N> visit(ObjectMatcherAstNode.ExpressionKeyFieldMatcher field) throws JsonQueryException {
 			Expression<StackFrame, N> name = compileNonNull(env, context, field.name());
 			CompiledMatcher<N> matcherResult = compileMatcher(field.matcher());
-			ObjectMatcher.FieldMatcher<N> compiled = new ObjectMatcher.FieldMatcher<>(false, null, name, matcherResult.matcher);
+			ObjectMatcher.FieldMatcher<N> compiled = new ObjectMatcher.FieldMatcher<>(false, null, name, matcherResult.matcher, context.outputCounterOf(name));
 			return new CompiledFieldMatcher<>(compiled, matcherResult.variableNames);
 		}
 	}
@@ -1147,54 +1180,56 @@ public class Compiler {
 			BinaryOperator operator,
 			Expression<StackFrame, JsonNode> lhs,
 			Expression<StackFrame, JsonNode> rhs,
+			int lhsOutputIndex,
+			int rhsOutputIndex,
 			Version version,
 			JsonProvider<JsonNode> jsonProvider,
 			boolean inputFixed) {
 		switch (operator) {
 			case ASSIGN:
-				return new Assignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+				return new Assignment<>(jsonProvider, lhs, rhs, version, inputFixed, lhsOutputIndex, rhsOutputIndex);
 			case UPDATE:
-				return new UpdateAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+				return new UpdateAssignment<>(jsonProvider, lhs, rhs, version, inputFixed, lhsOutputIndex, rhsOutputIndex);
 			case DEFAULT_EQUAL:
-				return new ComplexAlternativeAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+				return new ComplexAlternativeAssignment<>(jsonProvider, lhs, rhs, version, inputFixed, lhsOutputIndex, rhsOutputIndex);
 			case PLUS_EQUAL:
-				return new ComplexPlusAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+				return new ComplexPlusAssignment<>(jsonProvider, lhs, rhs, version, inputFixed, lhsOutputIndex, rhsOutputIndex);
 			case MINUS_EQUAL:
-				return new ComplexMinusAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+				return new ComplexMinusAssignment<>(jsonProvider, lhs, rhs, version, inputFixed, lhsOutputIndex, rhsOutputIndex);
 			case TIMES_EQUAL:
-				return new ComplexMultiplyAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+				return new ComplexMultiplyAssignment<>(jsonProvider, lhs, rhs, version, inputFixed, lhsOutputIndex, rhsOutputIndex);
 			case DIVIDE_EQUAL:
-				return new ComplexDivideAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+				return new ComplexDivideAssignment<>(jsonProvider, lhs, rhs, version, inputFixed, lhsOutputIndex, rhsOutputIndex);
 			case MODULO_EQUAL:
-				return new ComplexModuloAssignment<>(jsonProvider, lhs, rhs, version, inputFixed);
+				return new ComplexModuloAssignment<>(jsonProvider, lhs, rhs, version, inputFixed, lhsOutputIndex, rhsOutputIndex);
 			case DEFAULT:
-				return new AlternativeOperatorExpression<>(jsonProvider, lhs, rhs);
+				return new AlternativeOperatorExpression<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 			case OR:
-				return new BooleanOrExpression<>(jsonProvider, lhs, rhs);
+				return new BooleanOrExpression<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 			case AND:
-				return new BooleanAndExpression<>(jsonProvider, lhs, rhs);
+				return new BooleanAndExpression<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 			case LESS_EQUAL:
-				return new CompareLessEqualTest<>(jsonProvider, lhs, rhs);
+				return new CompareLessEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 			case LESS:
-				return new CompareLessTest<>(jsonProvider, lhs, rhs);
+				return new CompareLessTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 			case GREATER_EQUAL:
-				return new CompareGreaterEqualTest<>(jsonProvider, lhs, rhs);
+				return new CompareGreaterEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 			case GREATER:
-				return new CompareGreaterTest<>(jsonProvider, lhs, rhs);
+				return new CompareGreaterTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 			case EQUAL:
-				return new CompareEqualTest<>(jsonProvider, lhs, rhs);
+				return new CompareEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 			case NOT_EQUAL:
-				return new CompareNotEqualTest<>(jsonProvider, lhs, rhs);
+				return new CompareNotEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 			case PLUS:
-				return new PlusExpression<>(jsonProvider, lhs, rhs, version);
+				return new PlusExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
 			case MINUS:
-				return new MinusExpression<>(jsonProvider, lhs, rhs, version);
+				return new MinusExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
 			case MODULO:
-				return new ModuloExpression<>(jsonProvider, lhs, rhs, version);
+				return new ModuloExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
 			case DIVIDE:
-				return new DivideExpression<>(jsonProvider, lhs, rhs, version);
+				return new DivideExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
 			case TIMES:
-				return new MultiplyExpression<>(jsonProvider, lhs, rhs, version);
+				return new MultiplyExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
 			default:
 				throw new IllegalArgumentException("Unknown operator: " + operator);
 		}

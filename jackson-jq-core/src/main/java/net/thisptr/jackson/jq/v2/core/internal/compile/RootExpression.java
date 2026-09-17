@@ -14,12 +14,12 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.RuntimeBindings;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -47,6 +47,13 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 	// Size of the StackMemory global-slots array this compiled query needs -- one slot per referenced
 	// declareVariable/declareFunction name/signature (see CompileContext#getGlobalCount).
 	private final int globalCount;
+	// Size of the Memory#outputCounts array this compiled query needs -- one counter per metered
+	// expression (see CompileContext#allocateOutputCounter). Zero unless this is a query the caller wrote:
+	// a module source compiles unmetered, so applyForModuleExports below never needs any.
+	private final int outputCounterCount;
+	// Counter for the query's own final output. Nothing downstream of the query exists to charge it, so the
+	// top-level sink does, which is what stops a bare `range(0; infinite)` from streaming forever.
+	private final int innerOutputIndex;
 	private final Expression<StackFrame, JsonNode> inner;
 	// Names/signatures with a fixed, compile-time-baked value
 	// (defineVariable/defineConstant/defineFunction/defineJqFunction)
@@ -68,10 +75,10 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 	private final Map<FunctionSignature, Integer> rootFunctionSlots;
 
 	public RootExpression(int frameSize, Expression<StackFrame, JsonNode> inner) {
-		this(frameSize, 0, inner, Collections.emptySet(), Collections.emptySet(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
+		this(frameSize, 0, 0, Memory.NO_OUTPUT_COUNTER, inner, Collections.emptySet(), Collections.emptySet(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
 	}
 
-	public RootExpression(int frameSize, int globalCount, Expression<StackFrame, JsonNode> inner,
+	public RootExpression(int frameSize, int globalCount, int outputCounterCount, int innerOutputIndex, Expression<StackFrame, JsonNode> inner,
 						  Set<String> definedVariables,
 						  Set<FunctionSignature> definedFunctions,
 						  Map<String, Integer> globalVariableIndices,
@@ -81,6 +88,8 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 						  Map<FunctionSignature, Integer> rootFunctionSlots) {
 		this.frameSize = frameSize;
 		this.globalCount = globalCount;
+		this.outputCounterCount = outputCounterCount;
+		this.innerOutputIndex = innerOutputIndex;
 		this.inner = inner;
 		this.definedVariables = Collections.unmodifiableSet(new HashSet<>(definedVariables));
 		this.definedFunctions = Collections.unmodifiableSet(new HashSet<>(definedFunctions));
@@ -110,8 +119,12 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 	 * {@link net.thisptr.jackson.jq.v2.core.JsonQuery#withRuntimeBindings} does so once, when the query carrying
 	 * them is built.
 	 */
-	public void apply(JsonNode in, RuntimeLimits runtimeLimits, Object[] globals, Consumer<? super JsonNode> output) throws JsonQueryException {
-		apply(new Memory(globals, runtimeLimits), in, UntrackedPath.getInstance(), (v, p) -> output.accept(v));
+	public void apply(JsonNode in, RuntimeLimitsImpl runtimeLimits, Object[] globals, Consumer<? super JsonNode> output) throws JsonQueryException {
+		Memory memory = new Memory(globals, runtimeLimits, outputCounterCount);
+		apply(memory, in, UntrackedPath.getInstance(), (v, p) -> {
+			memory.countOutput(innerOutputIndex);
+			output.accept(v);
+		});
 	}
 
 	private void apply(Memory memory, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {

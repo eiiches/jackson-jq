@@ -5,6 +5,7 @@ Additional functions that are not part of jq are available through separate exte
 | Maven artifact | jq module | Functions |
 | --- | --- | --- |
 | `jackson-jq-ext-module-uuid` | `jackson-jq/uuid` | `uuid3/1`, `uuid4/0`, `uuid5/1` |
+| `jackson-jq-ext-module-re2` | `jackson-jq/re2` | `test/{1,2}`, `match/{1,2}`, `capture/{1,2}`, `scan/{1,2}`, `splits/{1,2}`, `split/2`, `sub/{2,3}`, `gsub/{2,3}` |
 | `jackson-jq-ext-module-time` | `jackson-jq/time` | `timestamp/0`, `strptime/{1,2}`, `strftime/{1,2}` |
 | `jackson-jq-ext-module-uri` | `jackson-jq/uri` | `uriparse/0`, `uridecode/0` |
 | `jackson-jq-ext-module-random` | `jackson-jq/random` | `random/0` |
@@ -28,6 +29,20 @@ uuid::uuid4
 ```
 
 Extension functions are available only through their imported module namespace.
+
+## `jackson-jq-ext-module-re2`
+
+jq module: `jackson-jq/re2`
+
+This module provides jq's regular-expression functions using [RE2/J](https://github.com/google/re2j), which guarantees linear-time matching but does not support backreferences or look-around assertions. Add the artifact and import it explicitly:
+
+```jq
+import "jackson-jq/re2" as re;
+
+"abc" | re::test("^a")
+```
+
+The functions have the same signatures and result shapes as the standard jq regex functions. Patterns use RE2 syntax. Mode flags `g`, `i`, `m`, `p`, `s`, and `l` are supported; `n`, `x`, and unknown flags are rejected. As in jq, `m` lets `.` match newlines, `s` keeps anchors at string boundaries, `p` combines `m` and `s`, and `l` selects the longest match. Inline flags inside a pattern use RE2's flag meanings.
 
 ## `jackson-jq-ext-module-uuid`
 

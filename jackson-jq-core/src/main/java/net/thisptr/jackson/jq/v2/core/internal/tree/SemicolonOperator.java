@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -24,8 +25,11 @@ public class SemicolonOperator<JsonNode> implements Expression<StackFrame, JsonN
 	private final boolean dependsOnExternalState;
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
+	// One counter per discarded operand. The last one needs none: it emits this expression's own values.
+	private final int[] discardedOutputIndices;
 
-	public SemicolonOperator(List<Expression<StackFrame, JsonNode>> qs) {
+	public SemicolonOperator(List<Expression<StackFrame, JsonNode>> qs, int[] discardedOutputIndices) {
+		this.discardedOutputIndices = discardedOutputIndices;
 		this.qs = qs;
 		this.dependsOnInput = qs.stream().anyMatch(Expression::dependsOnInput);
 		this.dependsOnExternalState = qs.stream().anyMatch(Expression::dependsOnExternalState);
@@ -57,9 +61,11 @@ public class SemicolonOperator<JsonNode> implements Expression<StackFrame, JsonN
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		if (qs.isEmpty())
 			return;
-		for (Expression<StackFrame, JsonNode> q : qs.subList(0, qs.size() - 1))
-			q.apply(frame, in, UntrackedPath.getInstance(), (out, opath) -> {
-			});
+		Memory memory = frame.getEnclosingMemory();
+		for (int i = 0; i < qs.size() - 1; ++i) {
+			int discardedOutputIndex = discardedOutputIndices[i];
+			qs.get(i).apply(frame, in, UntrackedPath.getInstance(), (out, opath) -> memory.countOutput(discardedOutputIndex));
+		}
 		qs.get(qs.size() - 1).apply(frame, in, path, output);
 	}
 }

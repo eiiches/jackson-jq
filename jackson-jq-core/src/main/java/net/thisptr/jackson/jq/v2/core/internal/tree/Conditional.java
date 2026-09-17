@@ -10,6 +10,7 @@ import com.google.errorprone.annotations.Var;
 import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -27,6 +28,9 @@ public class Conditional<JsonNode> implements Expression<StackFrame, JsonNode>, 
 	private final boolean dependsOnExternalState;
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
+	// One counter per condition. The branches need none: whichever one runs emits this expression's own
+	// values straight to `output`, so they are charged wherever this conditional's own values are.
+	private final int[] conditionOutputIndices;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -46,7 +50,8 @@ public class Conditional<JsonNode> implements Expression<StackFrame, JsonNode>, 
 		return expected;
 	}
 
-	public Conditional(JsonProvider<JsonNode> jsonProvider, List<Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>>> switches, Expression<StackFrame, JsonNode> otherwise) {
+	public Conditional(JsonProvider<JsonNode> jsonProvider, List<Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>>> switches, Expression<StackFrame, JsonNode> otherwise, int[] conditionOutputIndices) {
+		this.conditionOutputIndices = conditionOutputIndices;
 		this.jsonProvider = jsonProvider;
 		this.switches = switches;
 		this.otherwise = otherwise;
@@ -101,7 +106,11 @@ public class Conditional<JsonNode> implements Expression<StackFrame, JsonNode>, 
 		}
 		Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>> sw = switches.get(switchIndex);
 		List<JsonNode> condValues = new ArrayList<>();
-		sw._1.apply(frame, in, UntrackedPath.getInstance(), (r, opath) -> condValues.add(r));
+		Memory memory = frame.getEnclosingMemory();
+		sw._1.apply(frame, in, UntrackedPath.getInstance(), (r, opath) -> {
+			memory.countOutput(conditionOutputIndices[switchIndex]);
+			condValues.add(r);
+		});
 		for (JsonNode r : condValues) {
 			if (JsonNodeUtils.asBoolean(jsonProvider, r)) {
 				sw._2.apply(frame, in, path, output);

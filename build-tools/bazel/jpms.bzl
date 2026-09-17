@@ -1,6 +1,6 @@
 """Small JPMS helpers for jackson-jq's modular and multi-release jars."""
 
-load("@rules_java//java:defs.bzl", "JavaInfo")
+load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 
 def _java_compile_jars_impl(ctx):
     java_info = ctx.attr.library[JavaInfo]
@@ -15,6 +15,31 @@ def _java_compile_jars_impl(ctx):
 
 java_compile_jars = rule(
     implementation = _java_compile_jars_impl,
+    attrs = {
+        "library": attr.label(mandatory = True, providers = [JavaInfo]),
+    },
+)
+
+def _java_class_jars_impl(ctx):
+    java_info = ctx.attr.library[JavaInfo]
+    class_jars = []
+    full_jar_infos = []
+    for output in java_info.java_outputs:
+        class_jar = output.class_jar
+        class_jars.append(class_jar)
+        full_jar_infos.append(JavaInfo(
+            output_jar = class_jar,
+            compile_jar = class_jar,
+            deps = [java_info],
+            runtime_deps = [java_info],
+        ))
+    return [
+        DefaultInfo(files = depset(class_jars)),
+        java_common.merge(full_jar_infos),
+    ]
+
+java_class_jars = rule(
+    implementation = _java_class_jars_impl,
     attrs = {
         "library": attr.label(mandatory = True, providers = [JavaInfo]),
     },

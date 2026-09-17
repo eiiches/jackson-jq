@@ -12,6 +12,7 @@
     "com.google.errorprone:error_prone_annotations": 911823543,
     "com.google.guava:guava": -1316430090,
     "com.google.j2objc:j2objc-annotations": 2003271689,
+    "com.google.re2j:re2j": 1525409503,
     "com.puppycrawl.tools:checkstyle": 811293525,
     "com.uber.nullaway:nullaway": 133041687,
     "commons-cli:commons-cli": -743428100,
@@ -65,6 +66,8 @@
     "com.google.guava:listenablefuture": 1079558157,
     "com.google.j2objc:j2objc-annotations": -404209759,
     "com.google.j2objc:j2objc-annotations:jar:sources": 1852793670,
+    "com.google.re2j:re2j": -1688126233,
+    "com.google.re2j:re2j:jar:sources": 485338798,
     "com.puppycrawl.tools:checkstyle": 77744576,
     "com.puppycrawl.tools:checkstyle:jar:sources": -1571207737,
     "com.uber.nullaway:nullaway": -1722966679,
@@ -268,6 +271,13 @@
         "sources": "bd60019a0423c3a025ef6ab24fe0761f5f45ffb48a8cca74a01b678de1105d38"
       },
       "version": "3.0.0"
+    },
+    "com.google.re2j:re2j": {
+      "shasums": {
+        "jar": "7b52c72156dd7f98b3237a5b35c1d34fba381b21048c89208913ad80a45dfbd7",
+        "sources": "4378db846db2d91c8028fe32efcb183a1f1b4157339d0a3b4c46b2c6b0655d7c"
+      },
+      "version": "1.8"
     },
     "com.puppycrawl.tools:checkstyle": {
       "shasums": {
@@ -1040,6 +1050,9 @@
     "com.google.j2objc:j2objc-annotations": [
       "com.google.j2objc.annotations"
     ],
+    "com.google.re2j:re2j": [
+      "com.google.re2j"
+    ],
     "com.puppycrawl.tools:checkstyle": [
       "com.puppycrawl.tools.checkstyle",
       "com.puppycrawl.tools.checkstyle.ant",
@@ -1755,6 +1768,8 @@
       "com.google.guava:listenablefuture",
       "com.google.j2objc:j2objc-annotations",
       "com.google.j2objc:j2objc-annotations:jar:sources",
+      "com.google.re2j:re2j",
+      "com.google.re2j:re2j:jar:sources",
       "com.puppycrawl.tools:checkstyle",
       "com.puppycrawl.tools:checkstyle:jar:sources",
       "com.uber.nullaway:nullaway",

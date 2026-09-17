@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -21,6 +22,9 @@ public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNo
 	private final Expression<StackFrame, JsonNode> reduceExpr;
 	private final Expression<StackFrame, JsonNode> initExpr;
 	private final PatternMatcher<JsonNode> matcher;
+	private final int initOutputIndex;
+	private final int reduceOutputIndex;
+	private final int iterOutputIndex;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -32,9 +36,12 @@ public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNo
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public ReduceExpression(JsonProvider<JsonNode> jsonProvider, PatternMatcher<JsonNode> matcher, Expression<StackFrame, JsonNode> initExpr, Expression<StackFrame, JsonNode> reduceExpr, Expression<StackFrame, JsonNode> iterExpr, Set<Integer> matcherSlots) {
+	public ReduceExpression(JsonProvider<JsonNode> jsonProvider, PatternMatcher<JsonNode> matcher, Expression<StackFrame, JsonNode> initExpr, Expression<StackFrame, JsonNode> reduceExpr, Expression<StackFrame, JsonNode> iterExpr, Set<Integer> matcherSlots, int initOutputIndex, int reduceOutputIndex, int iterOutputIndex) {
 		this.jsonProvider = jsonProvider;
 		this.matcher = matcher;
+		this.initOutputIndex = initOutputIndex;
+		this.reduceOutputIndex = reduceOutputIndex;
+		this.iterOutputIndex = iterOutputIndex;
 		this.initExpr = initExpr;
 		this.reduceExpr = reduceExpr;
 		this.iterExpr = iterExpr;
@@ -73,7 +80,9 @@ public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNo
 
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
+		Memory memory = frame.getEnclosingMemory();
 		initExpr.apply(frame, in, UntrackedPath.getInstance(), (accumulator, opath) -> {
+			memory.countOutput(initOutputIndex);
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
 			JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
@@ -82,10 +91,16 @@ public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNo
 			PatternMatcher.OnMatch onMatch = () -> {
 				// We only use the last value from reduce expression.
 				List<JsonNode> reduceResult = new ArrayList<>();
-				reduceExpr.apply(frame, accumulators[0], UntrackedPath.getInstance(), (v, opath3) -> reduceResult.add(v));
+				reduceExpr.apply(frame, accumulators[0], UntrackedPath.getInstance(), (v, opath3) -> {
+					memory.countOutput(reduceOutputIndex);
+					reduceResult.add(v);
+				});
 				accumulators[0] = reduceResult.isEmpty() ? jsonProvider.createNull() : reduceResult.get(reduceResult.size() - 1);
 			};
-			iterExpr.apply(frame, in, UntrackedPath.getInstance(), (item, opath2) -> matcher.match(frame, item, onMatch));
+			iterExpr.apply(frame, in, UntrackedPath.getInstance(), (item, opath2) -> {
+				memory.countOutput(iterOutputIndex);
+				matcher.match(frame, item, onMatch);
+			});
 			output.emit(accumulators[0], UntrackedPath.getInstance());
 		});
 	}

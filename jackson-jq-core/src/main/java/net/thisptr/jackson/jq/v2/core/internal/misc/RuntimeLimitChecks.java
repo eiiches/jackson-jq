@@ -10,6 +10,11 @@ import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
  * <p>
  * Callers must check <em>before</em> allocating, not after filling: for
  * {@code setpath([100000000]; 1)} the preallocation alone is what exhausts the heap.
+ * <p>
+ * The user-defined function call and per-expression output budgets are the odd ones out -- they count
+ * rather than size, so they need per-invocation state and are tallied by
+ * {@code Memory#countUserDefinedFunctionCall} and {@code Memory#countOutput}. Only their messages live
+ * here, so that every limit still words its failure the same way.
  */
 public final class RuntimeLimitChecks {
 
@@ -56,5 +61,31 @@ public final class RuntimeLimitChecks {
 		int max = limits.getMaxStringLength();
 		if (length > max)
 			throw new RuntimeLimitExceededException("String of " + length + " characters exceeds the maximum string length of " + max);
+	}
+
+	/**
+	 * Builds the failure for a breached user-defined function call budget.
+	 * <p>
+	 * Returns the exception instead of throwing it so the counting itself stays on {@code Memory}, where the
+	 * per-invocation tally lives, and the caller's {@code throw} keeps the breach visibly terminal.
+	 *
+	 * @param max the budget that was exceeded
+	 * @return the exception to throw
+	 */
+	public static RuntimeLimitExceededException userDefinedFunctionCallsExceeded(long max) {
+		return new RuntimeLimitExceededException("Query exceeds the maximum of " + max + " user-defined function calls");
+	}
+
+	/**
+	 * Builds the failure for a breached per-expression output budget.
+	 * <p>
+	 * Returns the exception instead of throwing it for the same reason as
+	 * {@link #userDefinedFunctionCallsExceeded(long)}.
+	 *
+	 * @param max the budget that was exceeded
+	 * @return the exception to throw
+	 */
+	public static RuntimeLimitExceededException outputsPerExpressionExceeded(long max) {
+		return new RuntimeLimitExceededException("Query exceeds the maximum of " + max + " outputs per expression");
 	}
 }

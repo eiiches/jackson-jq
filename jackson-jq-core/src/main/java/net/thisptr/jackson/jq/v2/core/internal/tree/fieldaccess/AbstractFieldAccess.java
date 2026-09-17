@@ -24,8 +24,10 @@ public abstract class AbstractFieldAccess<JsonNode> implements Expression<StackF
 	protected final Expression<StackFrame, JsonNode> target;
 	protected final boolean permissive;
 	protected final Version version;
+	protected final int targetOutputIndex;
 
-	public AbstractFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> target, boolean permissive, Version version) {
+	public AbstractFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> target, boolean permissive, Version version, int targetOutputIndex) {
+		this.targetOutputIndex = targetOutputIndex;
 		this.jsonProvider = jsonProvider;
 		this.target = target;
 		this.permissive = permissive;

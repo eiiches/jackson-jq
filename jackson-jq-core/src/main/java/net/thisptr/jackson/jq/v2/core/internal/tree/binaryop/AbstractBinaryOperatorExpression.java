@@ -9,6 +9,11 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
 public abstract class AbstractBinaryOperatorExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	protected final Expression<StackFrame, JsonNode> lhs;
 	protected final Expression<StackFrame, JsonNode> rhs;
+	// Counters for the two operand streams. Every operator here evaluates both operands through sinks of
+	// its own -- to form the cross product, to test truthiness, to collect paths -- so both are charged
+	// here rather than by whatever consumes the operator's own result.
+	protected final int lhsOutputIndex;
+	protected final int rhsOutputIndex;
 	// Default `lhs || rhs` formulas shared by every non-assignment operator (arithmetic, comparison,
 	// and/or, //). The assignment family (whose dependsOnInput additionally depends on whether `.`
 	// itself is known fixed -- see Assignment/AbstractComplexAssignment/UpdateAssignment) combines this with
@@ -18,9 +23,11 @@ public abstract class AbstractBinaryOperatorExpression<JsonNode> implements Expr
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public AbstractBinaryOperatorExpression(Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs) {
+	public AbstractBinaryOperatorExpression(Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, int lhsOutputIndex, int rhsOutputIndex) {
 		this.lhs = lhs;
 		this.rhs = rhs;
+		this.lhsOutputIndex = lhsOutputIndex;
+		this.rhsOutputIndex = rhsOutputIndex;
 		this.dependsOnInput = lhs.dependsOnInput() || rhs.dependsOnInput();
 		this.dependsOnExternalState = lhs.dependsOnExternalState() || rhs.dependsOnExternalState();
 		this.freeLocalSlots = FreeVariables.union(lhs, rhs);

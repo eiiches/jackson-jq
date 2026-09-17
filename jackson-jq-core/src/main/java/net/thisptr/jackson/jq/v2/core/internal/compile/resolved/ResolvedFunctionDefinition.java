@@ -10,6 +10,7 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.ClosureSpec;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Closure;
+import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -35,10 +36,14 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<StackFra
 	private final Expression<StackFrame, JsonNode> resolvedBody;
 	private final int ownClosureSlot;
 	private final int definerClosureSlot;
+	// Whether each execution of this body draws on RuntimeOptions#setMaxUserDefinedFunctionCalls. Set by the
+	// compiler (CompileContext#metersRuntimeBudgets): true for a `def` the caller wrote, false for
+	// one the engine brought along inside a module or a jq-library body, which compile to this same node.
+	private final boolean metered;
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public ResolvedFunctionDefinition(int slot, ClosureSpec closureSpec, int fnSize, List<String> paramNames, List<Integer> paramSlots, Expression<StackFrame, JsonNode> resolvedBody, int ownClosureSlot, int definerClosureSlot) {
+	public ResolvedFunctionDefinition(int slot, ClosureSpec closureSpec, int fnSize, List<String> paramNames, List<Integer> paramSlots, Expression<StackFrame, JsonNode> resolvedBody, int ownClosureSlot, int definerClosureSlot, boolean metered) {
 		this.slot = slot;
 		this.closureSpec = closureSpec;
 		this.fnSize = fnSize;
@@ -47,6 +52,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<StackFra
 		this.resolvedBody = resolvedBody;
 		this.ownClosureSlot = ownClosureSlot;
 		this.definerClosureSlot = definerClosureSlot;
+		this.metered = metered;
 		// Capturing a variable directly off the enclosing frame (isLocalInParent) is a plain local-slot
 		// read from this node's own perspective -- subtractable by an enclosing `as $x | ...`, just like
 		// ResolvedLocalVariableAccess. Reaching one further via the enclosing frame's own closure is a
@@ -133,14 +139,19 @@ public class ResolvedFunctionDefinition<JsonNode> implements Expression<StackFra
 				return (callerFrame, input, path, out) -> {
 					StackFrame effectiveCallerFrame = (StackFrame) callerFrame;
 					Closure effectiveClosure = closureHolder[0];
-					StackFrame fnFrame = effectiveCallerFrame.getEnclosingMemory().pushFrame(fnSize);
+					Memory memory = effectiveCallerFrame.getEnclosingMemory();
+					StackFrame fnFrame = memory.pushFrame(fnSize);
 					fnFrame.set(ownClosureSlot, effectiveClosure);
 					try {
+						// Charged per body execution, not per call site: a $-parameter binds each value its argument
+						// produces in turn, so f(1, 2) runs the body -- and so costs -- twice.
 						Compiler.bindAndApply(effectiveCallerFrame, fnFrame, paramNames, paramSlots, effectiveFnArgs, input, path, out, (execFrame) -> {
+							if (metered)
+								memory.countUserDefinedFunctionCall();
 							effectiveBody.apply(execFrame, input, path, out);
 						});
 					} finally {
-						fnFrame.getEnclosingMemory().popFrame();
+						memory.popFrame();
 					}
 				};
 			}
