@@ -10,21 +10,24 @@ public final class RuntimeLimitsImpl implements RuntimeLimits {
 	/**
 	 * Bounds nothing -- the behaviour of every release before limits existed.
 	 */
-	public static final RuntimeLimitsImpl UNLIMITED = new RuntimeLimitsImpl(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE);
+	public static final RuntimeLimitsImpl UNLIMITED = new RuntimeLimitsImpl(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE);
 
 	private final int maxArrayLength;
 	private final int maxObjectMemberCount;
 	private final int maxStringLength;
+	private final int maxBinaryLength;
 	private final long maxUserDefinedFunctionCalls;
 	private final long maxOutputsPerExpression;
 
-	public RuntimeLimitsImpl(int maxArrayLength, int maxObjectMemberCount, int maxStringLength, long maxUserDefinedFunctionCalls, long maxOutputsPerExpression) {
+	public RuntimeLimitsImpl(int maxArrayLength, int maxObjectMemberCount, int maxStringLength, int maxBinaryLength, long maxUserDefinedFunctionCalls, long maxOutputsPerExpression) {
 		if (maxArrayLength < 0)
 			throw new IllegalArgumentException("maxArrayLength must not be negative");
 		if (maxObjectMemberCount < 0)
 			throw new IllegalArgumentException("maxObjectMemberCount must not be negative");
 		if (maxStringLength < 0)
 			throw new IllegalArgumentException("maxStringLength must not be negative");
+		if (maxBinaryLength < 0)
+			throw new IllegalArgumentException("maxBinaryLength must not be negative");
 		if (maxUserDefinedFunctionCalls < 0)
 			throw new IllegalArgumentException("maxUserDefinedFunctionCalls must not be negative");
 		if (maxOutputsPerExpression < 0)
@@ -32,6 +35,7 @@ public final class RuntimeLimitsImpl implements RuntimeLimits {
 		this.maxArrayLength = maxArrayLength;
 		this.maxObjectMemberCount = maxObjectMemberCount;
 		this.maxStringLength = maxStringLength;
+		this.maxBinaryLength = maxBinaryLength;
 		this.maxUserDefinedFunctionCalls = maxUserDefinedFunctionCalls;
 		this.maxOutputsPerExpression = maxOutputsPerExpression;
 	}
@@ -49,6 +53,11 @@ public final class RuntimeLimitsImpl implements RuntimeLimits {
 	@Override
 	public int getMaxStringLength() {
 		return maxStringLength;
+	}
+
+	@Override
+	public int getMaxBinaryLength() {
+		return maxBinaryLength;
 	}
 
 	/**
@@ -82,6 +91,6 @@ public final class RuntimeLimitsImpl implements RuntimeLimits {
 
 	@Override
 	public String toString() {
-		return "RuntimeLimits(maxArrayLength=" + maxArrayLength + ", maxObjectMemberCount=" + maxObjectMemberCount + ", maxStringLength=" + maxStringLength + ", maxUserDefinedFunctionCalls=" + maxUserDefinedFunctionCalls + ", maxOutputsPerExpression=" + maxOutputsPerExpression + ")";
+		return "RuntimeLimits(maxArrayLength=" + maxArrayLength + ", maxObjectMemberCount=" + maxObjectMemberCount + ", maxStringLength=" + maxStringLength + ", maxBinaryLength=" + maxBinaryLength + ", maxUserDefinedFunctionCalls=" + maxUserDefinedFunctionCalls + ", maxOutputsPerExpression=" + maxOutputsPerExpression + ")";
 	}
 }

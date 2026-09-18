@@ -5,8 +5,11 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
@@ -14,6 +17,7 @@ import com.alibaba.fastjson2.JSONException;
 import com.alibaba.fastjson2.JSONFactory;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.JSONReader;
+import com.alibaba.fastjson2.JSONWriter;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
@@ -32,6 +36,14 @@ import net.thisptr.jackson.jq.v2.json.NumberType;
  * not an absence signal.
  */
 public class Fastjson2JsonProvider implements JsonProvider<Object> {
+	private static final Set<JsonNodeType> SUPPORTED_NODE_TYPES = Collections.unmodifiableSet(EnumSet.allOf(JsonNodeType.class));
+	private static final Set<NumberType> SUPPORTED_NUMBER_TYPES = Collections.unmodifiableSet(EnumSet.of(
+			NumberType.INT,
+			NumberType.LONG,
+			NumberType.BIG_INTEGER,
+			NumberType.BIG_DECIMAL,
+			NumberType.FLOAT,
+			NumberType.DOUBLE));
 	private static final Fastjson2JsonProvider DEFAULT_INSTANCE = new Fastjson2JsonProvider();
 
 	/**
@@ -106,7 +118,17 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 
 	@Override
 	public Object createBinary(byte[] bytes) {
-		throw new UnsupportedOperationException("Fastjson2 has no binary node type");
+		return bytes;
+	}
+
+	@Override
+	public Set<JsonNodeType> getSupportedNodeTypes() {
+		return SUPPORTED_NODE_TYPES;
+	}
+
+	@Override
+	public Set<NumberType> getSupportedNumberTypes() {
+		return SUPPORTED_NUMBER_TYPES;
 	}
 
 	@Override
@@ -123,6 +145,8 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 			return JsonNodeType.NUMBER;
 		if (node instanceof Boolean)
 			return JsonNodeType.BOOLEAN;
+		if (node instanceof byte[])
+			return JsonNodeType.BINARY;
 		throw new IllegalStateException("Unknown Fastjson2 node type: " + node.getClass());
 	}
 
@@ -158,7 +182,7 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 
 	@Override
 	public boolean isBinary(Object node) {
-		return false;
+		return node instanceof byte[];
 	}
 
 	@Override
@@ -304,7 +328,9 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 
 	@Override
 	public byte[] getBinaryAsByteArray(Object node) {
-		throw new IllegalArgumentException("Cannot get the binary value of " + getNodeType(node));
+		if (!(node instanceof byte[]))
+			throw new IllegalArgumentException("Cannot get the binary value of " + getNodeType(node));
+		return (byte[]) node;
 	}
 
 	@Override
@@ -378,6 +404,8 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 				result.add(deepCopy(value));
 			return result;
 		}
+		if (node instanceof byte[])
+			return ((byte[]) node).clone();
 		return node;
 	}
 
@@ -395,6 +423,8 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 			return node.toString();
 		if (node instanceof String)
 			return JSON.toJSONString(node);
+		if (node instanceof byte[])
+			return JSON.toJSONString(node, JSONWriter.Feature.WriteByteArrayAsBase64);
 		if (node instanceof JSONArray) {
 			StringBuilder result = new StringBuilder("[");
 			@Var boolean first = true;

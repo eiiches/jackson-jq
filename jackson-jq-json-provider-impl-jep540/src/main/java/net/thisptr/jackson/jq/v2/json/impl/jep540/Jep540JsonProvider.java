@@ -9,10 +9,13 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.errorprone.annotations.Var;
 import jdk.incubator.json.Json;
@@ -38,6 +41,17 @@ import net.thisptr.jackson.jq.v2.json.NumberType;
  * A jackson-jq JSON provider backed by JEP 540's {@code jdk.incubator.json} API.
  */
 public final class Jep540JsonProvider implements JsonProvider<JsonValue> {
+	private static final Set<JsonNodeType> SUPPORTED_NODE_TYPES = Collections.unmodifiableSet(EnumSet.of(
+			JsonNodeType.OBJECT, JsonNodeType.ARRAY, JsonNodeType.STRING, JsonNodeType.NUMBER,
+			JsonNodeType.BOOLEAN, JsonNodeType.NULL));
+	private static final Set<NumberType> SUPPORTED_NUMBER_TYPES = Collections.unmodifiableSet(EnumSet.of(
+			NumberType.INT,
+			NumberType.LONG,
+			NumberType.BIG_INTEGER,
+			NumberType.BIG_DECIMAL,
+			NumberType.FLOAT,
+			NumberType.DOUBLE));
+
 	private Jep540JsonProvider() {
 	}
 
@@ -111,6 +125,16 @@ public final class Jep540JsonProvider implements JsonProvider<JsonValue> {
 	@Override
 	public JsonValue createBinary(byte[] bytes) {
 		throw new UnsupportedOperationException("JEP 540 has no binary node type");
+	}
+
+	@Override
+	public Set<JsonNodeType> getSupportedNodeTypes() {
+		return SUPPORTED_NODE_TYPES;
+	}
+
+	@Override
+	public Set<NumberType> getSupportedNumberTypes() {
+		return SUPPORTED_NUMBER_TYPES;
 	}
 
 	@Override

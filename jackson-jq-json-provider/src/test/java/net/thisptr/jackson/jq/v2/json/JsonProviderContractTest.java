@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -359,10 +360,12 @@ public interface JsonProviderContractTest<T> {
 		try {
 			node = getProvider().createBinary(bytes);
 		} catch (UnsupportedOperationException e) {
+			assertThat(getProvider().getSupportedNodeTypes()).doesNotContain(JsonNodeType.BINARY);
 			// Documented for a provider whose library has no binary node type. Every node it can
 			// create is then non-binary, which testGetBinaryAsByteArrayRejectsNonBinary covers.
 			return;
 		}
+		assertThat(getProvider().getSupportedNodeTypes()).contains(JsonNodeType.BINARY);
 		assertTypePredicates(node, JsonNodeType.BINARY);
 		assertThat(getProvider().getBinaryAsByteArray(node)).isEqualTo(bytes);
 	}
@@ -446,6 +449,87 @@ public interface JsonProviderContractTest<T> {
 	// ====================
 	// Type Predicate Tests
 	// ====================
+
+	@Test
+	default void testGetSupportedNodeTypes() {
+		Set<JsonNodeType> supportedNodeTypes = getProvider().getSupportedNodeTypes();
+		assertThat(supportedNodeTypes).contains(
+				JsonNodeType.OBJECT,
+				JsonNodeType.ARRAY,
+				JsonNodeType.STRING,
+				JsonNodeType.NUMBER,
+				JsonNodeType.BOOLEAN,
+				JsonNodeType.NULL);
+		assertThat(getProvider().getSupportedNodeTypes()).isSameAs(supportedNodeTypes);
+		assertThatThrownBy(() -> supportedNodeTypes.remove(JsonNodeType.NULL))
+				.isInstanceOf(UnsupportedOperationException.class);
+	}
+
+	/**
+	 * Every type {@link JsonProvider#getSupportedNumberTypes()} declares must round-trip intact, so each
+	 * declared type is checked against the extremes of its range. Only declared types are exercised: a
+	 * provider is free to leave one out, and the set must then still be internally consistent -- a type
+	 * whose values are a subset of a declared one's is declared too.
+	 */
+	@Test
+	default void testGetSupportedNumberTypes() {
+		Set<NumberType> supportedNumberTypes = getProvider().getSupportedNumberTypes();
+		assertThat(supportedNumberTypes).doesNotContain(NumberType.UNKNOWN);
+		assertThat(getProvider().getSupportedNumberTypes()).isSameAs(supportedNumberTypes);
+		assertThatThrownBy(() -> supportedNumberTypes.remove(NumberType.INT))
+				.isInstanceOf(UnsupportedOperationException.class);
+
+		// Closed under narrowing: declaring a type entails declaring every type whose values it covers.
+		if (supportedNumberTypes.contains(NumberType.DOUBLE))
+			assertThat(supportedNumberTypes).contains(NumberType.FLOAT);
+		if (supportedNumberTypes.contains(NumberType.BIG_DECIMAL))
+			assertThat(supportedNumberTypes).contains(NumberType.BIG_INTEGER);
+		if (supportedNumberTypes.contains(NumberType.BIG_INTEGER))
+			assertThat(supportedNumberTypes).contains(NumberType.LONG);
+		if (supportedNumberTypes.contains(NumberType.LONG))
+			assertThat(supportedNumberTypes).contains(NumberType.INT);
+
+		if (supportedNumberTypes.contains(NumberType.INT)) {
+			for (int value : new int[] { Integer.MIN_VALUE, -1, 0, Integer.MAX_VALUE })
+				assertThat(getProvider().getNumberAsIntExact(getProvider().createNumber(value))).isEqualTo(value);
+		}
+
+		if (supportedNumberTypes.contains(NumberType.LONG)) {
+			for (long value : new long[] { Long.MIN_VALUE, -1L, 0L, Long.MAX_VALUE })
+				assertThat(getProvider().getNumberAsLongExact(getProvider().createNumber(value))).isEqualTo(value);
+		}
+
+		if (supportedNumberTypes.contains(NumberType.BIG_INTEGER)) {
+			BigInteger huge = BigInteger.valueOf(Long.MAX_VALUE).pow(3);
+			for (BigInteger value : Arrays.asList(huge, huge.negate()))
+				assertThat(getProvider().getNumberAsBigIntegerExact(getProvider().createNumber(value))).isEqualTo(value);
+		}
+
+		if (supportedNumberTypes.contains(NumberType.BIG_DECIMAL)) {
+			// Scale is not part of the promise, so compare by value rather than with isEqualTo.
+			List<BigDecimal> values = Arrays.asList(
+					new BigDecimal("3.14159265358979323846264338327950288419716939937510"),
+					new BigDecimal("-1E-1000"),
+					new BigDecimal("1E+1000"));
+			for (BigDecimal value : values)
+				assertThat(getProvider().getNumberAsBigDecimalExact(getProvider().createNumber(value))).isEqualByComparingTo(value);
+		}
+
+		if (supportedNumberTypes.contains(NumberType.DOUBLE)) {
+			double[] values = { Double.MIN_VALUE, -Double.MAX_VALUE, Double.MAX_VALUE, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY };
+			for (double value : values)
+				assertThat(getProvider().getNumberAsDoubleRounded(getProvider().createNumber(value))).isEqualTo(value);
+			assertThat(Double.isNaN(getProvider().getNumberAsDoubleRounded(getProvider().createNumber(Double.NaN)))).isTrue();
+		}
+
+		if (supportedNumberTypes.contains(NumberType.FLOAT)) {
+			float[] values = { Float.MIN_VALUE, -Float.MAX_VALUE, Float.MAX_VALUE, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY };
+			// Every float is exactly a double, so narrowing the rounded double back recovers the value.
+			for (float value : values)
+				assertThat((float) getProvider().getNumberAsDoubleRounded(getProvider().createNumber(value))).isEqualTo(value);
+			assertThat(Double.isNaN(getProvider().getNumberAsDoubleRounded(getProvider().createNumber(Float.NaN)))).isTrue();
+		}
+	}
 
 	default void assertTypePredicates(T node, JsonNodeType expected) {
 		assertThat(getProvider().getNodeType(node)).as("getNodeType(%s)", getProvider().format(node)).isEqualTo(expected);

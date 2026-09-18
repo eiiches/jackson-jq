@@ -9,9 +9,12 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import com.google.errorprone.annotations.Var;
 import jakarta.json.JsonArray;
@@ -32,6 +35,17 @@ import net.thisptr.jackson.jq.v2.json.NumberType;
  * A jackson-jq JSON provider backed by the Jakarta JSON Processing tree model.
  */
 public class JakartaJsonProvider implements JsonProvider<JsonValue> {
+	private static final Set<JsonNodeType> SUPPORTED_NODE_TYPES = Collections.unmodifiableSet(EnumSet.of(
+			JsonNodeType.OBJECT, JsonNodeType.ARRAY, JsonNodeType.STRING, JsonNodeType.NUMBER,
+			JsonNodeType.BOOLEAN, JsonNodeType.NULL));
+	private static final Set<NumberType> SUPPORTED_NUMBER_TYPES = Collections.unmodifiableSet(EnumSet.of(
+			NumberType.INT,
+			NumberType.LONG,
+			NumberType.BIG_INTEGER,
+			NumberType.BIG_DECIMAL,
+			NumberType.FLOAT,
+			NumberType.DOUBLE));
+
 	private final jakarta.json.spi.JsonProvider delegate;
 
 	/**
@@ -116,6 +130,16 @@ public class JakartaJsonProvider implements JsonProvider<JsonValue> {
 	@Override
 	public JsonValue createBinary(byte[] bytes) {
 		throw new UnsupportedOperationException("JSON-P has no binary value type");
+	}
+
+	@Override
+	public Set<JsonNodeType> getSupportedNodeTypes() {
+		return SUPPORTED_NODE_TYPES;
+	}
+
+	@Override
+	public Set<NumberType> getSupportedNumberTypes() {
+		return SUPPORTED_NUMBER_TYPES;
 	}
 
 	@Override

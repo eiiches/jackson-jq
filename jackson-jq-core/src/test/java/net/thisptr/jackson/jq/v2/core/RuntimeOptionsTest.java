@@ -87,6 +87,7 @@ public class RuntimeOptionsTest {
 		assertThat(defaults.getMaxArrayLength()).isEqualTo(Integer.MAX_VALUE);
 		assertThat(defaults.getMaxObjectMemberCount()).isEqualTo(Integer.MAX_VALUE);
 		assertThat(defaults.getMaxStringLength()).isEqualTo(Integer.MAX_VALUE);
+		assertThat(defaults.getMaxBinaryLength()).isEqualTo(Integer.MAX_VALUE);
 		assertThat(defaults.getMaxUserDefinedFunctionCalls()).isEqualTo(Long.MAX_VALUE);
 		assertThat(defaults.getMaxOutputsPerExpression()).isEqualTo(Long.MAX_VALUE);
 
@@ -99,12 +100,20 @@ public class RuntimeOptionsTest {
 
 	@Test
 	public void eachSetterLeavesTheOtherLimitsAlone() {
-		RuntimeOptions options = RuntimeOptions.newBuilder().setMaxObjectMemberCount(7).setMaxStringLength(5).setMaxArrayLength(3).setMaxUserDefinedFunctionCalls(9).setMaxOutputsPerExpression(11).build();
+		RuntimeOptions options = RuntimeOptions.newBuilder().setMaxObjectMemberCount(7).setMaxStringLength(5).setMaxBinaryLength(4).setMaxArrayLength(3).setMaxUserDefinedFunctionCalls(9).setMaxOutputsPerExpression(11).build();
 		assertThat(options.getMaxArrayLength()).isEqualTo(3);
 		assertThat(options.getMaxObjectMemberCount()).isEqualTo(7);
 		assertThat(options.getMaxStringLength()).isEqualTo(5);
+		assertThat(options.getMaxBinaryLength()).isEqualTo(4);
 		assertThat(options.getMaxUserDefinedFunctionCalls()).isEqualTo(9);
 		assertThat(options.getMaxOutputsPerExpression()).isEqualTo(11);
+	}
+
+	@Test
+	public void rejectsNegativeBinaryLength() {
+		assertThatThrownBy(() -> RuntimeOptions.newBuilder().setMaxBinaryLength(-1))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("maxBinaryLength must not be negative");
 	}
 
 	// --- maxArrayLength -----------------------------------------------------------------------

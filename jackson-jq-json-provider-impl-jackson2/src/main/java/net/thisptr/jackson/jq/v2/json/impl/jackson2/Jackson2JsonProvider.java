@@ -5,8 +5,11 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,6 +37,14 @@ import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.NumberType;
 
 public class Jackson2JsonProvider implements JsonProvider<JsonNode> {
+	private static final Set<JsonNodeType> SUPPORTED_NODE_TYPES = Collections.unmodifiableSet(EnumSet.allOf(JsonNodeType.class));
+	private static final Set<NumberType> SUPPORTED_NUMBER_TYPES = Collections.unmodifiableSet(EnumSet.of(
+			NumberType.INT,
+			NumberType.LONG,
+			NumberType.BIG_INTEGER,
+			NumberType.BIG_DECIMAL,
+			NumberType.FLOAT,
+			NumberType.DOUBLE));
 	private static final Jackson2JsonProvider DEFAULT_INSTANCE = new Jackson2JsonProvider(new ObjectMapper().registerModule(JsonQueryJacksonModule.getInstance()));
 
 	private final ObjectMapper mapper;
@@ -115,6 +126,16 @@ public class Jackson2JsonProvider implements JsonProvider<JsonNode> {
 	@Override
 	public JsonNode createBinary(byte[] bytes) {
 		return BinaryNode.valueOf(bytes);
+	}
+
+	@Override
+	public Set<JsonNodeType> getSupportedNodeTypes() {
+		return SUPPORTED_NODE_TYPES;
+	}
+
+	@Override
+	public Set<NumberType> getSupportedNumberTypes() {
+		return SUPPORTED_NUMBER_TYPES;
 	}
 
 	@Override

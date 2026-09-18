@@ -28,3 +28,5 @@ test --test_output=errors
 test --test_verbose_timeout_warnings
 
 try-import %workspace%/.bazelrc.user
+
+run --run_in_cwd
