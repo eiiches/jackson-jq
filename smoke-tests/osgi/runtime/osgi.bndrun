@@ -4,6 +4,7 @@
 -runstartlevel: order=leastdependenciesfirst,begin=1,step=1
 -runrequires: \
 	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.smoketests.osgi.application)',\
+	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.jackson-jq-ext-module-binary)',\
 	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.jackson-jq-ext-module-fs)',\
 	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.jackson-jq-ext-module-gzip)',\
 	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.jackson-jq-ext-module-http)',\

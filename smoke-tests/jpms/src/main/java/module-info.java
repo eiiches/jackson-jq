@@ -3,6 +3,7 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 module net.thisptr.jackson.jq.v2.smoketests.jpms {
 	requires net.thisptr.jackson.jq.v2.core;
+	requires net.thisptr.jackson.jq.v2.ext.module.binary;
 	requires net.thisptr.jackson.jq.v2.ext.module.debug;
 	requires net.thisptr.jackson.jq.v2.ext.module.fs;
 	requires net.thisptr.jackson.jq.v2.ext.module.gzip;

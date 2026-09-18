@@ -28,6 +28,7 @@ public final class Java8SmokeTest {
 
 		assertQuery(jsonProvider, env, "length", "[1,2]", 2);
 		assertQuery(jsonProvider, env, "test(\"a.c\")", "\"abc\"", true);
+		assertQuery(jsonProvider, env, "import \"jackson-jq/binary\" as binary; \"hello\" | binary::encode_text | binary::decode_text", "null", "hello");
 		assertQuery(jsonProvider, env, "import \"jackson-jq/fs\" as fs; true", "null", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/gzip\" as gzip; gzip::decompress_text", "\"H4sIAAAAAAAAA8tIzcnJBwCGphA2BQAAAA==\"", "hello");
 		assertQuery(jsonProvider, env, "import \"jackson-jq/http\" as http; true", "null", true);

@@ -15,6 +15,7 @@ publish_all(
     publishers = [
         "//jackson-jq-cli:jackson-jq-cli.publish",
         "//jackson-jq-core:jackson-jq-core.publish",
+        "//jackson-jq-ext-module-binary:jackson-jq-ext-module-binary.publish",
         "//jackson-jq-ext-module-debug:jackson-jq-ext-module-debug.publish",
         "//jackson-jq-ext-module-fs:jackson-jq-ext-module-fs.publish",
         "//jackson-jq-ext-module-gzip:jackson-jq-ext-module-gzip.publish",

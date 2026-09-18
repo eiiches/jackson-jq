@@ -25,6 +25,12 @@
 		</dependency>
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-binary</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
 			<artifactId>jackson-jq-ext-module-fs</artifactId>
 			<version>${jackson-jq.version}</version>
 		</dependency>
