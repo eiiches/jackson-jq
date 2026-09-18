@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.compile;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -103,19 +104,20 @@ public final class ModuleResolver<JsonNode> {
 	}
 
 	/**
-	 * Makes a module usable: a {@link JavaModule} already is, a {@link JqModule} is compiled.
+	 * Makes a module usable: a {@link JavaModule} already is, a {@link JqModule} is compiled, and a
+	 * module implementing both has its Java and jq functions combined.
 	 * <p>
-	 * Public because an {@code Environment} may be handed either kind through
+	 * Public because an {@code Environment} may be handed either kind, or a hybrid of both, through
 	 * {@code addImportedModule}, and which one it got only matters here.
 	 */
 	public JavaModule materialize(Module module) throws JsonQueryException {
-		if (module instanceof JavaModule)
-			return (JavaModule) module;
 		if (module instanceof JqModule) {
 			@SuppressWarnings("unchecked") // A loader of ours produced it, so its node type is ours.
 			JqModule<JsonNode> jqModule = (JqModule<JsonNode>) module;
 			return compile(jqModule);
 		}
+		if (module instanceof JavaModule)
+			return (JavaModule) module;
 		throw new JsonQueryException(String.format("module %s is neither a JqModule nor a JavaModule", module.getClass().getName()));
 	}
 
@@ -159,10 +161,13 @@ public final class ModuleResolver<JsonNode> {
 			throw new JsonQueryException(String.format("module %s is imported recursively", module));
 
 		try {
+			Map<FunctionSignature, Function> javaFunctions = module instanceof JavaModule
+					? ((JavaModule) module).getFunctions()
+					: Collections.emptyMap();
 			// A module off a search path is somebody else's library, so it is compiled with default
 			// options -- the caller asked for diagnostics about their own query, not about the jq
 			// files it happens to import.
-			JavaModule result = compileSource(moduleEnvironment(), CompileOptions.newBuilder().build(), new ModuleScope<>(this, module), module.getSourceCode());
+			JavaModule result = compileSource(moduleEnvironment(javaFunctions), CompileOptions.newBuilder().build(), new ModuleScope<>(this, module), module, javaFunctions);
 			compiled.put(module, result);
 			return result;
 		} finally {
@@ -174,17 +179,21 @@ public final class ModuleResolver<JsonNode> {
 	 * Compiles jq source into a module: runs it once so every exported {@code def} lands in its slot
 	 * with its closures bound, then reads those out.
 	 */
-	private static <JsonNode> JavaModule compileSource(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, String source) throws JsonQueryException {
-		AstNode ast = AstParser.parse(source + " null", env.getJqVersion());
+	private static <JsonNode> JavaModule compileSource(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, JqModule<JsonNode> sourceModule, Map<FunctionSignature, Function> javaFunctions) throws JsonQueryException {
+		AstNode ast = AstParser.parse(sourceModule.getSourceCode() + " null", env.getJqVersion());
 		Expression<StackFrame, JsonNode> compiled = Compiler.compileModule(env, options, scope, ast);
 		if (!(compiled instanceof RootExpression))
 			throw new IllegalStateException("Compiler did not produce a root expression");
 
 		SimpleModule module = new SimpleModule();
+		module.addAllFunctions(javaFunctions);
 		Map<FunctionSignature, Function> exportedFunctions = ((RootExpression<JsonNode>) compiled).applyForModuleExports(env.getJsonProvider().createNull());
 		exportedFunctions.forEach((key, factory) -> {
-			if (key.arity() != null)
+			if (key.arity() != null) {
+				if (javaFunctions.containsKey(key))
+					throw new JsonQueryException(String.format("module %s defines function %s in both Java and jq source", sourceModule, key));
 				module.addFunction(key, factory);
+			}
 		});
 		module.setModuleMeta(SimpleModuleMeta.fromAst(ast));
 		return module;
@@ -197,17 +206,27 @@ public final class ModuleResolver<JsonNode> {
 	 * it imports. It needs no module loaders: this resolver, not that environment, resolves the
 	 * module's imports.
 	 */
-	private Environment<JsonNode> moduleEnvironment() {
+	private Environment<JsonNode> moduleEnvironment(Map<FunctionSignature, Function> moduleFunctions) {
+		if (!moduleFunctions.isEmpty()) {
+			EnvironmentBuilder<JsonNode> builder = newModuleEnvironmentBuilder();
+			moduleFunctions.forEach(builder::defineFunction);
+			return builder.build();
+		}
+
 		@Var
 		Environment<JsonNode> cached = moduleEnv;
 		if (cached == null) {
-			EnvironmentBuilder<JsonNode> builder = EnvironmentBuilder.withDefaultLoaders(env.getJsonProvider(), env.getJqVersion())
-					.clearModuleLoaders()
-					.clearFunctionLoaders();
-			env.getFunctionLoaders().forEach(builder::addFunctionLoader);
-			cached = builder.build();
+			cached = newModuleEnvironmentBuilder().build();
 			moduleEnv = cached;
 		}
 		return cached;
+	}
+
+	private EnvironmentBuilder<JsonNode> newModuleEnvironmentBuilder() {
+		EnvironmentBuilder<JsonNode> builder = EnvironmentBuilder.withDefaultLoaders(env.getJsonProvider(), env.getJqVersion())
+				.clearModuleLoaders()
+				.clearFunctionLoaders();
+		env.getFunctionLoaders().forEach(builder::addFunctionLoader);
+		return builder;
 	}
 }

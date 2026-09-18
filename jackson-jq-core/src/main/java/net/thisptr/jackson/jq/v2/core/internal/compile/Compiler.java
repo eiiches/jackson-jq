@@ -317,8 +317,8 @@ public class Compiler {
 			if (call.moduleName() != null) {
 				@Var JavaModule mod = context.getImportedModule(call.moduleName());
 				if (mod == null) {
-					// An environment may have been handed either kind of module; jq source is
-					// compiled here, the first time a query actually calls into it.
+					// An environment may have been handed either kind of module or a hybrid;
+					// jq source is compiled here, the first time a query actually calls into it.
 					Module imported = env.getImportedModules().get(call.moduleName());
 					mod = imported != null ? scope.materialize(imported) : null;
 				}
