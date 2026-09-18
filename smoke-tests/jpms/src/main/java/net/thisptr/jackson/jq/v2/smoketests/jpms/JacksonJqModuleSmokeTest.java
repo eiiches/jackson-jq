@@ -30,6 +30,7 @@ public final class JacksonJqModuleSmokeTest {
 
 		assertQuery(jsonProvider, env, "length", "[1,2]", 2);
 		assertQuery(jsonProvider, env, "test(\"a.c\")", "\"abc\"", true);
+		assertQuery(jsonProvider, env, "import \"jackson-jq/fs\" as fs; true", "null", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/gzip\" as gzip; gzip::decompress_text", "\"H4sIAAAAAAAAA8tIzcnJBwCGphA2BQAAAA==\"", "hello");
 		assertQuery(jsonProvider, env, "import \"jackson-jq/http\" as http; true", "null", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/debug\" as debug; debug::dump_expr(1 + .) | .fields.lhs.class | endswith(\".ValueLiteral\")", "null", true);
