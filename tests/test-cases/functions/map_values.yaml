@@ -1,0 +1,41 @@
+- q: 'map_values(select(.))'
+  in: {"key1": true, "key2": false}
+  out:
+  - null
+  v: '[1.5, 1.6)'
+
+- q: 'map_values(select(.))'
+  in: {"key1": true, "key2": false}
+  out:
+  - {"key1": true}
+  v: '[1.6, )'
+
+- q: 'map_values(if . == 2 then empty else . end)'
+  in: [1, 2, 3]
+  out:
+  - [null, null, null]
+  v: '[1.5, 1.6)'
+
+- q: 'map_values(if . == 2 then empty else . end)'
+  in: [1, 2, 3]
+  out:
+  - [1, 3, null]
+  v: '[1.6, 1.7)'
+
+- q: 'map_values(if . == 2 then empty else . end)'
+  in: [1, 2, 3]
+  out:
+  - [1, 3]
+  v: '[1.7, )'
+
+- q: 'map_values((., . + 10))'
+  in: {"a": 1, "b": 2}
+  out:
+  - {"a": 11, "b": 12}
+  v: '[1.5, 1.6)'
+
+- q: 'map_values((., . + 10))'
+  in: {"a": 1, "b": 2}
+  out:
+  - {"a": 1, "b": 2}
+  v: '[1.6, )'

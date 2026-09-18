@@ -95,17 +95,16 @@ public class CoreJqLibrary implements JqLibrary {
 			JqFunction.of("while", args("cond", "update"), "def _while: if cond then ., (update | _while) else empty end; _while"),
 			JqFunction.of("leaf_paths", args(), "paths(scalars)"),
 			// jq 1.7 redefined walk/1 in terms of map_values, so a generator f keeps its first output per
-			// object member instead of its last. The [1.7, ) definition spells map_values(w) out as
-			// _modify(.[]; w), which is what .[] |= w desugars to, because jackson-jq rejects `|= empty`
-			// by design (see docs/compatibility.md) and f is allowed to produce no output here.
+			// object member instead of its last.
 			JqFunction.of("walk", args("f"), ". as $in | if type == \"object\" then reduce keys_unsorted[] as $key ( {}; . + { ($key):  ($in[$key] | walk(f)) } ) | f elif type == \"array\" then map( walk(f) ) | f else f end", VersionRange.valueOf("[1.6, 1.7)")),
-			JqFunction.of("walk", args("f"), "def w: if type == \"object\" then _modify(.[]; w) elif type == \"array\" then map(w) else . end | f; w", VersionRange.valueOf("[1.7, )")),
+			JqFunction.of("walk", args("f"), "def w: if type == \"object\" then map_values(w) elif type == \"array\" then map(w) else . end | f; w", VersionRange.valueOf("[1.7, )")),
 			JqFunction.of("in", args("xs"), ". as $x | xs | has($x)"),
 			JqFunction.of("inside", args("xs"), ". as $x | xs | contains($x)"),
 			JqFunction.of("combinations", args(), "if length == 0 then [] else .[0][] as $x | (.[1:] | combinations) as $y | [$x] + $y end"),
 			JqFunction.of("combinations", args("n"), ". as $dot | [range(n) | $dot] | combinations"),
-			JqFunction.of("map_values", args("f"), ".[] |= f"),
-			JqFunction.of("_modify", args("paths", "update"), "reduce path(paths) as $p (.; label $out | (setpath($p; getpath($p) | update) | ., break $out), delpaths([$p]))", VersionRange.valueOf("[1.6, )")),
+			JqFunction.of("map_values", args("f"), "_modify(.[]; f)"),
+			JqFunction.of("_modify", args("paths", "update"), "reduce path(paths) as $p ([., []]; . as $dot | null | label $out | ($dot[0] | getpath($p)) as $value | (($value | update | (., break $out) as $updated | $dot | setpath([0] + $p; $updated)), ($dot | setpath([1, (.[1] | length)]; $p)))) | . as $dot | $dot[0] | delpaths($dot[1])", VersionRange.valueOf("[1.7, )")),
+			JqFunction.of("_modify", args("paths", "update"), "reduce path(paths) as $p (.; label $out | (setpath($p; getpath($p) | update) | ., break $out), delpaths([$p]))", VersionRange.valueOf("[1.6, 1.7)")),
 			JqFunction.of("_modify", args("paths", "update"), "reduce path(paths) as $p (.; setpath($p; getpath($p) | update))", VersionRange.valueOf("[, 1.6)")),
 			JqFunction.of("pick", args("pathexps"), ". as $in | reduce path(pathexps) as $a (null; setpath($a; $in|getpath($a)) )", VersionRange.valueOf("[1.7, )")),
 			JqFunction.of("ltrimstr", args("$left"), "if startswith($left) then .[$left | length:] else . end", VersionRange.valueOf("[1.8.0, )")),
