@@ -306,8 +306,8 @@ public class RuntimeOptionsTest {
 
 	@Test
 	public void runawayRecursionIsBoundedInsteadOfOverflowingTheStack() {
-		// Without a budget this exhausts the Java stack. The limit is well under the depth that takes,
-		// so the caller gets a limit failure rather than a stack overflow.
+		// `def f: f` is a tail call, so without a budget it loops at constant stack depth and never stops --
+		// as jq's own does. This budget, not the Java stack, is what bounds a runaway query-text recursion.
 		assertThatThrownBy(() -> run("def f: f; f", maxUserDefinedFunctionCalls(100)))
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum of 100 user-defined function calls");
@@ -431,8 +431,8 @@ public class RuntimeOptionsTest {
 	public void aLoopThatEmitsNothingIsStillBounded() throws Exception {
 		// `until` emits only its final value, so no amount of output metering downstream can see it looping.
 		// What is visible is that it re-evaluates the caller's own `cond` and `update` once per iteration.
-		// Without that these run until the Java stack gives out, which is a stack overflow rather than a
-		// limit -- and would not even be self-limiting were `until` implemented as a Java loop.
+		// This is the only thing that bounds it: `until`'s recursion is a tail call, so it runs as a loop at
+		// constant stack depth and runs forever without a budget -- as jq's own does. See runtime-limits.md.
 		assertThatThrownBy(() -> run("until(false; .)", maxOutputsPerExpression(10)))
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum of 10 outputs per expression");

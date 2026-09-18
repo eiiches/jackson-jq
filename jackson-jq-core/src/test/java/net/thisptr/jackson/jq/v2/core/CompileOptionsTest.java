@@ -32,6 +32,24 @@ class CompileOptionsTest {
 	}
 
 	@Test
+	void tailCallOptimizationIsOnByDefaultAndCanBeTurnedOff() throws JsonQueryException {
+		assertThat(CompileOptions.newBuilder().build().getTailCallOptions().isEnabled()).isTrue();
+
+		CompileOptions off = CompileOptions.newBuilder()
+				.setTailCallOptions(TailCallOptions.newBuilder().setEnabled(false).build())
+				.build();
+		assertThat(off.getTailCallOptions().isEnabled()).isFalse();
+
+		// Both compile the same query to the same values; what differs is only what it costs the Java stack,
+		// which TailCallTest covers.
+		List<JsonNode> withTailCalls = new ArrayList<>();
+		environment().compile("0 | def f: if . < 8 then . + 1 | f else . end; [f]").apply(JSON_PROVIDER.createNull(), withTailCalls::add);
+		List<JsonNode> withoutTailCalls = new ArrayList<>();
+		environment().compile("0 | def f: if . < 8 then . + 1 | f else . end; [f]", off).apply(JSON_PROVIDER.createNull(), withoutTailCalls::add);
+		assertThat(withTailCalls).isEqualTo(withoutTailCalls);
+	}
+
+	@Test
 	void warnsAboutACommaWrittenAsAnOperandOfAPipe() throws JsonQueryException {
 		environment().compile("1, 2 | .", options);
 

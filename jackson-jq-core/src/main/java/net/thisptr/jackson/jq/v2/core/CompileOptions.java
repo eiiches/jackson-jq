@@ -14,14 +14,16 @@ import net.thisptr.jackson.jq.v2.core.diagnostic.DiagnosticListener;
  * ones. Build one with {@link #newBuilder()}.
  */
 public final class CompileOptions {
-	private static final CompileOptions DEFAULT = new CompileOptions(null, ConstantFoldingOptions.getDefaultInstance());
+	private static final CompileOptions DEFAULT = new CompileOptions(null, ConstantFoldingOptions.getDefaultInstance(), TailCallOptions.getDefaultInstance());
 
 	private final @Nullable DiagnosticListener diagnosticListener;
 	private final ConstantFoldingOptions constantFoldingOptions;
+	private final TailCallOptions tailCallOptions;
 
-	private CompileOptions(@Nullable DiagnosticListener diagnosticListener, ConstantFoldingOptions constantFoldingOptions) {
+	private CompileOptions(@Nullable DiagnosticListener diagnosticListener, ConstantFoldingOptions constantFoldingOptions, TailCallOptions tailCallOptions) {
 		this.diagnosticListener = diagnosticListener;
 		this.constantFoldingOptions = constantFoldingOptions;
+		this.tailCallOptions = tailCallOptions;
 	}
 
 	// Package-private: Environment's no-options overload needs an instance to pass to compile(), but
@@ -32,7 +34,7 @@ public final class CompileOptions {
 
 	/**
 	 * Creates a builder with every setting at its default. No diagnostics are produced until a
-	 * listener is set, and constant folding is on.
+	 * listener is set, and constant folding and tail-call optimization are on.
 	 *
 	 * @return a new builder
 	 */
@@ -59,11 +61,21 @@ public final class CompileOptions {
 	}
 
 	/**
+	 * Returns whether a call in tail position is compiled as a loop.
+	 *
+	 * @return the tail-call settings, never {@code null}
+	 */
+	public TailCallOptions getTailCallOptions() {
+		return tailCallOptions;
+	}
+
+	/**
 	 * Builds a {@link CompileOptions}.
 	 */
 	public static final class Builder {
 		private @Nullable DiagnosticListener diagnosticListener;
 		private ConstantFoldingOptions constantFoldingOptions = ConstantFoldingOptions.getDefaultInstance();
+		private TailCallOptions tailCallOptions = TailCallOptions.getDefaultInstance();
 
 		private Builder() {
 		}
@@ -98,14 +110,31 @@ public final class CompileOptions {
 		}
 
 		/**
+		 * Sets whether a call in tail position is compiled as a loop.
+		 * <p>
+		 * By default it is, which is what lets a recursive {@code def} -- and the jq-defined {@code until},
+		 * {@code while} and {@code recurse} -- iterate as far as jq's own do instead of exhausting the Java
+		 * stack after a few hundred iterations. See {@link TailCallOptions} for exactly when it applies and
+		 * what turning it off brings back.
+		 *
+		 * @param tailCallOptions the tail-call settings
+		 * @return this, for chaining
+		 * @throws NullPointerException if {@code tailCallOptions} is {@code null}
+		 */
+		public Builder setTailCallOptions(TailCallOptions tailCallOptions) {
+			this.tailCallOptions = Objects.requireNonNull(tailCallOptions, "tailCallOptions");
+			return this;
+		}
+
+		/**
 		 * Builds the options.
 		 *
 		 * @return the options, never {@code null}
 		 */
 		public CompileOptions build() {
-			if (diagnosticListener == null && constantFoldingOptions == ConstantFoldingOptions.getDefaultInstance())
+			if (diagnosticListener == null && constantFoldingOptions == ConstantFoldingOptions.getDefaultInstance() && tailCallOptions == TailCallOptions.getDefaultInstance())
 				return DEFAULT;
-			return new CompileOptions(diagnosticListener, constantFoldingOptions);
+			return new CompileOptions(diagnosticListener, constantFoldingOptions, tailCallOptions);
 		}
 	}
 }

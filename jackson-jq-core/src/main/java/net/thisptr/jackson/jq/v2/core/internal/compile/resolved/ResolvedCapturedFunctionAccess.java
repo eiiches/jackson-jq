@@ -54,6 +54,10 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements RewritableExpre
 		return closureSlot;
 	}
 
+	public int frameClosureSlot() {
+		return frameClosureSlot;
+	}
+
 	public List<Expression<StackFrame, JsonNode>> args() {
 		return args;
 	}

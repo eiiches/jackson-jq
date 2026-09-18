@@ -72,6 +72,8 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedLocalFun
 import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedLocalFunctionBoundArgumentAccess;
 import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedLocalVariableAccess;
 import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedLocalVariableBoundArgumentAccess;
+import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedTailCall;
+import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.TailCallArgument;
 import net.thisptr.jackson.jq.v2.core.internal.diagnostics.PipeParenthesesCheck;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
@@ -135,11 +137,11 @@ import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
-import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
@@ -182,7 +184,7 @@ public class Compiler {
 		if (diagnosticListener != null)
 			PipeParenthesesCheck.run(ast, diagnosticListener);
 
-		CompileContext context = new CompileContext(exportTopLevelFunctions, meterRuntimeBudgets, options.getConstantFoldingOptions());
+		CompileContext context = new CompileContext(exportTopLevelFunctions, meterRuntimeBudgets, options.getConstantFoldingOptions(), options.getTailCallOptions());
 		FoldPlanner foldPlanner = context.foldPlanner();
 		boolean planFolds = meterRuntimeBudgets && foldPlanner.isEnabled();
 		if (planFolds)
@@ -247,6 +249,11 @@ public class Compiler {
 		private final CompileContext context;
 		private final ModuleScope<N> scope;
 
+		// Whether the node this visitor lowers stands in tail position of the def body it belongs to. Read off
+		// the context on the way in and cleared there, so a child this visitor does not deliberately re-arm is
+		// lowered as not in tail position -- the right default for every node kind but the handful below.
+		private boolean inTailPosition;
+
 		CompilationVisitor(Environment<N> env, CompileContext context, ModuleScope<N> scope) {
 			this.env = env;
 			this.context = context;
@@ -259,6 +266,7 @@ public class Compiler {
 		 * speculative evaluation starts only after the complete region has been lowered.
 		 */
 		private Expression<StackFrame, N> compileExpression(AstNode ast) throws JsonQueryException {
+			inTailPosition = context.setTailPosition(false);
 			FoldPlanner planner = context.foldPlanner();
 			if (!context.metersRuntimeBudgets() || !planner.isPlanning())
 				return accept(ast, Expression.class);
@@ -293,6 +301,7 @@ public class Compiler {
 
 		@Override
 		public Expression<StackFrame, N> visit(ParenAstNode paren) throws JsonQueryException {
+			context.setTailPosition(inTailPosition);
 			return compileNonNull(env, context, scope, paren.value());
 		}
 
@@ -318,7 +327,82 @@ public class Compiler {
 				return bindFunctionCall(bindContextOf(env), factory, meteredArgs);
 			}
 
-			return compileFunctionCall(env, context, call.signature(), meteredArgs);
+			SymbolLocation location = context.getFunctionLocation(call.signature());
+			Expression<StackFrame, N> compiled = compileFunctionCall(env, context, call.signature(), location, meteredArgs);
+			if (inTailPosition && context.tailCallsEnabled() && context.isInsideDefinitionBody())
+				return asTailCall(call.signature(), location, compiled, compiledArgs, meteredArgs);
+			return compiled;
+		}
+
+		/**
+		 * Turns a call standing in tail position into a {@link ResolvedTailCall}, or leaves it alone.
+		 * <p>
+		 * Two things have to hold beyond the position itself. The callee must be a {@code def} -- a
+		 * {@code ResolvedFunctionDefinition} installs the {@code TailCallTarget} the loop needs, and a builtin,
+		 * a declared global or a filter parameter has nothing of the kind. And every argument must survive the
+		 * caller's frame being popped, which {@link #tailCallArgument} decides one at a time.
+		 */
+		private Expression<StackFrame, N> asTailCall(FunctionSignature signature, @Nullable SymbolLocation location, Expression<StackFrame, N> compiled, List<Expression<StackFrame, N>> compiledArgs, List<Expression<StackFrame, N>> meteredArgs) {
+			int frameClosureSlot;
+			int slot;
+			if (compiled instanceof ResolvedLocalFunctionAccess) {
+				frameClosureSlot = ResolvedTailCall.LOCAL;
+				slot = ((ResolvedLocalFunctionAccess<N>) compiled).slot();
+			} else if (compiled instanceof ResolvedCapturedFunctionAccess) {
+				// The usual case for recursion: a def referring to itself has crossed its own function
+				// boundary, so it reads itself out of its own closure rather than out of a frame slot.
+				frameClosureSlot = ((ResolvedCapturedFunctionAccess<N>) compiled).frameClosureSlot();
+				slot = ((ResolvedCapturedFunctionAccess<N>) compiled).closureSlot();
+			} else {
+				return compiled;
+			}
+			List<String> parameterNames = location != null ? location.parameterNames : null;
+			if (parameterNames == null || parameterNames.size() != meteredArgs.size())
+				return compiled;
+			List<TailCallArgument<N>> arguments = new ArrayList<>(parameterNames.size());
+			for (int i = 0; i < parameterNames.size(); i++) {
+				TailCallArgument<N> argument = tailCallArgument(parameterNames.get(i), compiledArgs.get(i), meteredArgs.get(i));
+				if (argument == null)
+					return compiled;
+				arguments.add(argument);
+			}
+			// A call back into the def this body belongs to needs no new frame -- it writes its arguments into
+			// the parameter slots that frame already has. Matching signatures is necessary but not sufficient,
+			// so the node checks the callee's identity at run time and takes the general path if it differs.
+			int[] selfParameterSlots = signature.equals(context.enclosingDefinitionSignature())
+					? toIntArray(context.enclosingDefinitionParameterSlots())
+					: null;
+			return new ResolvedTailCall<>(compiled, context.getOrAssignTailCallSlot(), frameClosureSlot, slot, arguments, selfParameterSlots);
+		}
+
+		private static int @Nullable [] toIntArray(@Nullable List<Integer> slots) {
+			if (slots == null)
+				return null;
+			int[] array = new int[slots.size()];
+			for (int i = 0; i < array.length; i++)
+				array[i] = slots.get(i);
+			return array;
+		}
+
+		/**
+		 * Reduces one argument to something the callee's frame can hold once the caller's is gone, or returns
+		 * {@code null} when it cannot be reduced and the call stays an ordinary one.
+		 */
+		private @Nullable TailCallArgument<N> tailCallArgument(String parameterName, @Nullable Expression<StackFrame, N> argument, @Nullable Expression<StackFrame, N> meteredArgument) {
+			if (argument == null || meteredArgument == null)
+				return null;
+			if (parameterName.startsWith("$")) {
+				// An argument emitting several values would need the body run once per value, and that is a
+				// loop of its own, not a jump.
+				return meteredArgument.getCardinality() == Cardinality.ONE ? new TailCallArgument.Value<>(meteredArgument) : null;
+			}
+			// A filter argument is otherwise a closure over the caller's frame, which the loop pops. A bare
+			// reference to a function already sitting in a slot is the one shape that outlives it.
+			if (argument instanceof ResolvedLocalFunctionAccess && ((ResolvedLocalFunctionAccess<N>) argument).args().isEmpty())
+				return new TailCallArgument.Filter<>(ResolvedTailCall.LOCAL, ((ResolvedLocalFunctionAccess<N>) argument).slot());
+			if (argument instanceof ResolvedCapturedFunctionAccess && ((ResolvedCapturedFunctionAccess<N>) argument).args().isEmpty())
+				return new TailCallArgument.Filter<>(((ResolvedCapturedFunctionAccess<N>) argument).frameClosureSlot(), ((ResolvedCapturedFunctionAccess<N>) argument).closureSlot());
+			return null;
 		}
 
 		/**
@@ -386,6 +470,7 @@ public class Compiler {
 					}
 				}
 			}
+			context.setTailPosition(inTailPosition);
 			Expression<StackFrame, N> compiledInner = compileNonNull(env, context, scope, top.expr());
 			return new TopLevelExpression<>(compiledInner);
 		}
@@ -405,6 +490,10 @@ public class Compiler {
 				return compileLabel((LabelAstNode) left, piped.rhs);
 
 			Expression<StackFrame, N> compiledLeft = compileNonNull(env, context, scope, left);
+			// The pipe's own values are the right side's, so the right side inherits tail position -- but only
+			// once the left side is known to emit at most one value. Otherwise the left side is still iterating
+			// while the right side runs, and unwinding out of it to a tail-call loop would drop what it has left.
+			context.setTailPosition(inTailPosition && compiledLeft.getCardinality() != Cardinality.UNKNOWN);
 			Expression<StackFrame, N> right = compileNonNull(env, context, scope, piped.rhs);
 			return new PipedQuery<>(compiledLeft, right, context.outputCounterOf(compiledLeft));
 		}
@@ -449,7 +538,12 @@ public class Compiler {
 		public Expression<StackFrame, N> visit(SemicolonOperatorAstNode semi) throws JsonQueryException {
 			List<Expression<StackFrame, N>> newExpressions = new ArrayList<>();
 			Set<Integer> definedFunctionSlots = new HashSet<>();
-			for (AstNode q : semi.expressions()) {
+			List<AstNode> expressions = semi.expressions();
+			for (int i = 0; i < expressions.size(); i++) {
+				AstNode q = expressions.get(i);
+				// Everything but the last is evaluated for its effect and discarded -- a `def` statement, most
+				// of the time -- so only the last carries this expression's own values, and tail position.
+				context.setTailPosition(inTailPosition && i == expressions.size() - 1);
 				Expression<StackFrame, N> expression = compileNonNull(env, context, q);
 				newExpressions.add(expression);
 				if (expression instanceof ResolvedFunctionDefinition<?>)
@@ -523,11 +617,18 @@ public class Compiler {
 		@Override
 		public Expression<StackFrame, N> visit(ConditionalAstNode cond) throws JsonQueryException {
 			List<Pair<Expression<StackFrame, N>, Expression<StackFrame, N>>> newSwitches = new ArrayList<>();
+			// A branch runs inside the loop over its own condition's values, and inside the loops over every
+			// earlier condition's; so it only inherits tail position once all of those are known to emit at
+			// most one value. A condition itself never does -- the branch still has to run after it.
+			@Var boolean conditionsEmitAtMostOne = true;
 			for (Pair<AstNode, AstNode> sw : cond.switches()) {
 				Expression<StackFrame, N> newIf = compileNonNull(env, context, sw._1);
+				conditionsEmitAtMostOne = conditionsEmitAtMostOne && newIf.getCardinality() != Cardinality.UNKNOWN;
+				context.setTailPosition(inTailPosition && conditionsEmitAtMostOne);
 				Expression<StackFrame, N> newThen = compileNonNull(env, context, sw._2);
 				newSwitches.add(Pair.of(newIf, newThen));
 			}
+			context.setTailPosition(inTailPosition && conditionsEmitAtMostOne);
 			Expression<StackFrame, N> newElse = compileNonNull(env, context, cond.otherwise());
 			int[] conditionOutputIndices = new int[newSwitches.size()];
 			for (int i = 0; i < conditionOutputIndices.length; ++i)
@@ -584,6 +685,11 @@ public class Compiler {
 					pending.push(((ParenAstNode) operand).value());
 					continue;
 				}
+				// Only the last operand inherits tail position: an earlier one is followed by operands the
+				// enclosing Comma still has to run, so unwinding past them would lose their values. Earlier
+				// operands have already emitted and finished by then, which is why they place no condition
+				// on the last one.
+				context.setTailPosition(inTailPosition && pending.isEmpty());
 				operands.add(compileNonNull(env, context, operand));
 			}
 		}
@@ -727,10 +833,14 @@ public class Compiler {
 			boolean isTopLevelDefinition = context.isRootScope();
 			FunctionSignature signature = fd.signature();
 			context.addLocalFunction(signature);
+			// Before the body compiles, so a recursive call inside it can still tell which of this def's
+			// parameters take a value and which take a filter -- which a tail call has to resolve itself.
+			context.recordFunctionParameterNames(signature, fd.args());
 
 			List<Integer> paramSlots = new ArrayList<>();
 			int fnSize;
 			int ownClosureSlot;
+			int tailCallSlot;
 			Expression<StackFrame, N> compiledBody;
 			ClosureSpec closureSpec;
 			context.pushFunctionScope();
@@ -745,10 +855,17 @@ public class Compiler {
 						paramSlots.add(context.getFunctionSlot(parameterSignature));
 					}
 				}
+				// After the parameter slots are assigned, so a tail call back into this def knows where to
+				// write its new arguments -- which, besides jumping, is all such a call does.
+				context.markDefinitionScope(signature, paramSlots);
 				ownClosureSlot = context.reserveClosureSlot();
+				// A def body is the one place tail position starts: what the body emits is what the call emits,
+				// and the call's frame is gone by the time anything downstream sees a value.
+				context.setTailPosition(true);
 				compiledBody = compileNonNull(env, context, fd.body());
 				fnSize = context.getSlotCount();
 				closureSpec = context.getClosureSpec();
+				tailCallSlot = context.currentScopeTailCallSlot();
 			} finally {
 				context.popScope();
 			}
@@ -760,7 +877,7 @@ public class Compiler {
 				context.recordRootFunctionSlot(signature, slot);
 			}
 			context.markFoldBarrier();
-			ResolvedFunctionDefinition<N> resolvedDef = new ResolvedFunctionDefinition<>(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody, ownClosureSlot, definerClosureSlot, context.metersRuntimeBudgets());
+			ResolvedFunctionDefinition<N> resolvedDef = new ResolvedFunctionDefinition<>(slot, closureSpec, fnSize, fd.args(), paramSlots, compiledBody, ownClosureSlot, definerClosureSlot, context.metersRuntimeBudgets(), tailCallSlot);
 			// freeLocalSlots always come from resolvedDef's own closureSpec, which is already precise for
 			// calls to *this* def -- including through nested defs in its body: resolving a deeper def's
 			// own capture threads an entry through every intermediate function-boundary scope's
@@ -877,9 +994,20 @@ public class Compiler {
 	 * variadic function beats a later loader's exact one.
 	 */
 	private static <N> Expression<StackFrame, N> compileFunctionCall(Environment<N> env, CompileContext context, FunctionSignature signature, List<Expression<StackFrame, N>> compiledArgs) throws JsonQueryException {
+		return compileFunctionCall(env, context, signature, context.getFunctionLocation(signature), compiledArgs);
+	}
+
+	/**
+	 * As above, for the one caller that needs the resolved {@link SymbolLocation} for itself as well.
+	 * <p>
+	 * It has to be passed in rather than resolved again here, because resolving it twice does not give the
+	 * same answer: the first walk threads a capture chain through every intervening closure, and a second
+	 * finds that chain already in place and answers from it -- same slot, but without the definition's
+	 * dependency facts or its parameter names.
+	 */
+	private static <N> Expression<StackFrame, N> compileFunctionCall(Environment<N> env, CompileContext context, FunctionSignature signature, @Nullable SymbolLocation loc, List<Expression<StackFrame, N>> compiledArgs) throws JsonQueryException {
 		String fullName = signature.name();
 		BindContext<N> bindContext = bindContextOf(env);
-		SymbolLocation loc = context.getFunctionLocation(signature);
 		if (loc != null) {
 			int slot = loc.slot;
 			FunctionDependsOnInfo info = loc.dependsOnInfo;
@@ -1050,41 +1178,66 @@ public class Compiler {
 		throw new JsonQueryException(String.format("Variable $%s is not defined", varName));
 	}
 
-	public static <N> void bindAndApply(StackFrame callerFrame, StackFrame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<StackFrame, N>> fnArgs, N in, Path<N> path, Output<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
-		for (int i = 0; i < paramNames.size(); i++) {
-			String pName = paramNames.get(i);
-			int slot = paramSlots.get(i);
-			Expression<StackFrame, N> pExpr = fnArgs.get(i);
-			if (!pName.startsWith("$")) {
-				currentFrame.set(slot, new Function() {
-					@Override
-					@SuppressWarnings("unchecked")
-					public <Context extends RuntimeContext, N1> Expression<Context, N1> bind(BindContext<N1> bindCtx, List<Expression<Context, N1>> emptyArgs) {
-						Expression<StackFrame, N1> effectiveExpr = (Expression<StackFrame, N1>) (Expression<?, ?>) pExpr;
-						return (sFrame, inVal, pVal, outVal) -> effectiveExpr.apply(callerFrame, inVal, pVal, outVal);
-					}
-				});
-			}
-		}
-		bindValueParams(callerFrame, currentFrame, paramNames, paramSlots, fnArgs, 0, in, path, output, bodyTask);
-	}
+	private static final Object[] NO_ARGUMENTS = new Object[0];
 
-	private static <N> void bindValueParams(StackFrame callerFrame, StackFrame currentFrame, List<String> paramNames, List<Integer> paramSlots, List<Expression<StackFrame, N>> fnArgs, int index, N in, Path<N> path, Output<N> output, Consumer<StackFrame> bodyTask) throws JsonQueryException {
-		if (index >= paramNames.size()) {
-			bodyTask.accept(currentFrame);
+	/**
+	 * Works out what goes in each of a callee's parameter slots, and hands it over once per combination of
+	 * values its {@code $} parameters' arguments produce.
+	 * <p>
+	 * Nothing here touches a frame. A filter parameter becomes a {@link Function} closing over the argument
+	 * expression and the <em>caller's</em> frame -- jq's call-by-name -- and a {@code $} parameter becomes a
+	 * value the argument emitted, evaluated against that same caller frame. Neither needs the callee's frame
+	 * to exist yet, which is what lets the callee decide when to push one, reuse one, or replace one. See
+	 * {@code ResolvedFunctionDefinition}'s loop.
+	 * <p>
+	 * The array is reused between combinations: {@code bodyTask} installs the entries into a frame before
+	 * running anything, so the next combination is free to overwrite it.
+	 *
+	 * @param callerFrame the frame the arguments are evaluated against
+	 * @param paramNames the callee's declared parameter names, {@code $}-prefixed for a value parameter
+	 * @param fnArgs the call site's argument expressions, one per parameter
+	 * @param in the caller's input
+	 * @param path the caller's input path
+	 * @param bodyTask receives one parameter array per combination
+	 * @throws JsonQueryException if evaluating an argument does
+	 */
+	public static <N> void bindParameters(StackFrame callerFrame, List<String> paramNames, List<Expression<StackFrame, N>> fnArgs, N in, Path<N> path, Consumer<Object[]> bodyTask) throws JsonQueryException {
+		if (paramNames.isEmpty()) {
+			bodyTask.accept(NO_ARGUMENTS);
 			return;
 		}
-		String argName = paramNames.get(index);
-		Expression<StackFrame, N> argExpr = fnArgs.get(index);
-		int slot = paramSlots.get(index);
-		if (argName.startsWith("$")) {
-			argExpr.apply(callerFrame, in, path, (val, p) -> {
-				currentFrame.set(slot, StackFrameValues.toSlot(val));
-				bindValueParams(callerFrame, currentFrame, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
-			});
-		} else {
-			bindValueParams(callerFrame, currentFrame, paramNames, paramSlots, fnArgs, index + 1, in, path, output, bodyTask);
+		Object[] arguments = new Object[paramNames.size()];
+		for (int i = 0; i < paramNames.size(); i++) {
+			if (!paramNames.get(i).startsWith("$"))
+				arguments[i] = boundFilter(callerFrame, fnArgs.get(i));
 		}
+		bindValueParameters(callerFrame, paramNames, fnArgs, 0, in, path, arguments, bodyTask);
+	}
+
+	private static <N> void bindValueParameters(StackFrame callerFrame, List<String> paramNames, List<Expression<StackFrame, N>> fnArgs, int index, N in, Path<N> path, Object[] arguments, Consumer<Object[]> bodyTask) throws JsonQueryException {
+		if (index >= paramNames.size()) {
+			bodyTask.accept(arguments);
+			return;
+		}
+		if (!paramNames.get(index).startsWith("$")) {
+			bindValueParameters(callerFrame, paramNames, fnArgs, index + 1, in, path, arguments, bodyTask);
+			return;
+		}
+		fnArgs.get(index).apply(callerFrame, in, path, (value, valuePath) -> {
+			arguments[index] = StackFrameValues.toSlot(value);
+			bindValueParameters(callerFrame, paramNames, fnArgs, index + 1, in, path, arguments, bodyTask);
+		});
+	}
+
+	private static <N> Function boundFilter(StackFrame callerFrame, Expression<StackFrame, N> argument) {
+		return new Function() {
+			@Override
+			@SuppressWarnings("unchecked")
+			public <Context extends RuntimeContext, N1> Expression<Context, N1> bind(BindContext<N1> bindCtx, List<Expression<Context, N1>> emptyArgs) {
+				Expression<StackFrame, N1> effectiveArgument = (Expression<StackFrame, N1>) (Expression<?, ?>) argument;
+				return (sFrame, inVal, pVal, outVal) -> effectiveArgument.apply(callerFrame, inVal, pVal, outVal);
+			}
+		};
 	}
 
 	public static <JsonNode> Expression<StackFrame, JsonNode> compileNonNull(Environment<JsonNode> env, CompileContext context, AstNode ast) throws JsonQueryException {

@@ -29,6 +29,7 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
+import net.thisptr.jackson.jq.v2.core.TailCallOptions;
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
@@ -98,6 +99,10 @@ public class Main {
 			.longOpt("no-warnings")
 			.desc("suppress compile warnings")
 			.get();
+	private static final Option OPT_DISABLE_TCO = Option.builder()
+			.longOpt("disable-tco")
+			.desc("disable tail-call optimization")
+			.get();
 	private static final Option OPT_MAX_STRING_LENGTH = Option.builder()
 			.longOpt("max-string-length")
 			.desc("maximum length of strings produced during evaluation (default: unlimited)")
@@ -139,6 +144,7 @@ public class Main {
 		options.addOption(OPT_VERSION);
 		options.addOption(OPT_JSON_PROVIDER);
 		options.addOption(OPT_NO_WARNINGS);
+		options.addOption(OPT_DISABLE_TCO);
 		options.addOption(OPT_MAX_STRING_LENGTH);
 		options.addOption(OPT_MAX_ARRAY_LENGTH);
 		options.addOption(OPT_MAX_OBJECT_MEMBER_COUNT);
@@ -339,6 +345,8 @@ public class Main {
 					System.err.println(excerpt);
 			});
 		}
+		if (command.hasOption(OPT_DISABLE_TCO.getLongOpt()))
+			compileOptionsBuilder.setTailCallOptions(TailCallOptions.newBuilder().setEnabled(false).build());
 		CompileOptions compileOptions = compileOptionsBuilder.build();
 		JsonQuery<N> jq = compileOrExit(env, query, compileOptions).withRuntimeOptions(runtimeOptions);
 		boolean compact = command.hasOption(OPT_COMPACT.getOpt());

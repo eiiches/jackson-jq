@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.ClosureSpec;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
@@ -42,10 +43,14 @@ public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpressio
 	// compiler (CompileContext#metersRuntimeBudgets): true for a `def` the caller wrote, false for
 	// one the engine brought along inside a module or a jq-library body, which compile to this same node.
 	private final boolean metered;
+	// The frame slot a tail call in this body leaves its TailCallJump in, or NO_TAIL_CALL when the body holds
+	// none. Only a body that holds one is run inside the loop that drains them, so a def without one keeps
+	// exactly the shape it had before tail calls existed.
+	private final int tailCallSlot;
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public ResolvedFunctionDefinition(int slot, ClosureSpec closureSpec, int fnSize, List<String> paramNames, List<Integer> paramSlots, Expression<StackFrame, JsonNode> resolvedBody, int ownClosureSlot, int definerClosureSlot, boolean metered) {
+	public ResolvedFunctionDefinition(int slot, ClosureSpec closureSpec, int fnSize, List<String> paramNames, List<Integer> paramSlots, Expression<StackFrame, JsonNode> resolvedBody, int ownClosureSlot, int definerClosureSlot, boolean metered, int tailCallSlot) {
 		this.slot = slot;
 		this.closureSpec = closureSpec;
 		this.fnSize = fnSize;
@@ -55,6 +60,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpressio
 		this.ownClosureSlot = ownClosureSlot;
 		this.definerClosureSlot = definerClosureSlot;
 		this.metered = metered;
+		this.tailCallSlot = tailCallSlot;
 		// Capturing a variable directly off the enclosing frame (isLocalInParent) is a plain local-slot
 		// read from this node's own perspective -- subtractable by an enclosing `as $x | ...`, just like
 		// ResolvedLocalVariableAccess. Reaching one further via the enclosing frame's own closure is a
@@ -134,39 +140,137 @@ public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpressio
 		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(resolvedBody);
 		return rewritten == resolvedBody
 				? this
-				: new ResolvedFunctionDefinition<>(slot, closureSpec, fnSize, paramNames, paramSlots, rewritten, ownClosureSlot, definerClosureSlot, metered);
+				: new ResolvedFunctionDefinition<>(slot, closureSpec, fnSize, paramNames, paramSlots, rewritten, ownClosureSlot, definerClosureSlot, metered, tailCallSlot);
 	}
 
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		Closure[] closureHolder = new Closure[1];
-		Function factory = new Function() {
-			@Override
-			@SuppressWarnings("unchecked")
-			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> fnArgs) {
-				Expression<StackFrame, N> effectiveBody = (Expression<StackFrame, N>) (Expression<?, ?>) resolvedBody;
-				List<Expression<StackFrame, N>> effectiveFnArgs = (List<Expression<StackFrame, N>>) (List<?>) fnArgs;
-				return (callerFrame, input, path, out) -> {
-					StackFrame effectiveCallerFrame = (StackFrame) callerFrame;
-					Closure effectiveClosure = closureHolder[0];
-					Memory memory = effectiveCallerFrame.getEnclosingMemory();
-					StackFrame fnFrame = memory.pushFrame(fnSize);
-					fnFrame.set(ownClosureSlot, effectiveClosure);
-					try {
-						// Charged per body execution, not per call site: a $-parameter binds each value its argument
-						// produces in turn, so f(1, 2) runs the body -- and so costs -- twice.
-						Compiler.bindAndApply(effectiveCallerFrame, fnFrame, paramNames, paramSlots, effectiveFnArgs, input, path, out, (execFrame) -> {
-							if (metered)
-								memory.countUserDefinedFunctionCall();
-							effectiveBody.apply(execFrame, input, path, out);
-						});
-					} finally {
-						memory.popFrame();
-					}
-				};
-			}
-		};
+		Function factory = new Instance(closureHolder);
 		frame.set(slot, factory);
 		closureHolder[0] = closureSpec.buildClosure(frame, definerClosureSlot);
+	}
+
+	/**
+	 * One reach of this {@code def}: the {@link Function} installed in the definer's slot, closed over the
+	 * {@link Closure} snapshotted at that moment.
+	 * <p>
+	 * It is also the {@link TailCallTarget} a tail call to this definition names, which is what lets
+	 * {@link #activate} start another body without going back through {@link #bind}.
+	 */
+	private final class Instance implements Function, TailCallTarget {
+		// A one-element holder rather than the Closure itself: apply() must install this Function in the
+		// definer's slot *before* building the closure, so that a def can capture itself, and the closure is
+		// filled in synchronously right after -- before anything could invoke the function.
+		private final Closure[] closureHolder;
+
+		Instance(Closure[] closureHolder) {
+			this.closureHolder = closureHolder;
+		}
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> fnArgs) {
+			List<Expression<StackFrame, N>> effectiveFnArgs = (List<Expression<StackFrame, N>>) (List<?>) fnArgs;
+			return (callerFrame, input, path, out) -> {
+				StackFrame effectiveCallerFrame = (StackFrame) callerFrame;
+				Memory memory = effectiveCallerFrame.getEnclosingMemory();
+				// One body execution per combination of values the $-parameters' arguments produce, each
+				// getting a frame of its own -- which is why one combination can never see another's slots.
+				Compiler.bindParameters(effectiveCallerFrame, paramNames, effectiveFnArgs, input, path,
+						(arguments) -> activate(memory, this, arguments, input, path, out));
+			};
+		}
+
+		@Override
+		public int frameSize() {
+			return fnSize;
+		}
+
+		@Override
+		public int tailCallSlot() {
+			return tailCallSlot;
+		}
+
+		@Override
+		public void install(StackFrame frame, Object[] arguments) {
+			frame.set(ownClosureSlot, closureHolder[0]);
+			for (int i = 0; i < arguments.length; i++)
+				frame.set(paramSlots.get(i), arguments[i]);
+		}
+
+		// The body is compiled for this node's JsonNode, and every caller reaches it with values of that same
+		// type; only the Object-typed tail-call plumbing, which is deliberately not generic, loses track of
+		// that.
+		//
+		// NullAway: `in` is a JsonNode, and a provider that spells JSON null as Java null hands one in
+		// legitimately -- the same laundering StackFrameValues#jsonNull does. Expression#apply has always
+		// accepted it; only this method's Object-typed signature makes the nullness visible to the checker.
+		@Override
+		@SuppressWarnings({ "unchecked", "NullAway" })
+		public void runBody(StackFrame frame, @Nullable Object in, Object ipath, Object output) throws JsonQueryException {
+			// Charged per body execution, so a tail-recursive loop spends the budget once per iteration and
+			// RuntimeOptions#setMaxUserDefinedFunctionCalls still bounds a runaway recursion.
+			if (metered)
+				frame.getEnclosingMemory().countUserDefinedFunctionCall();
+			Expression<StackFrame, Object> body = (Expression<StackFrame, Object>) (Expression<?, ?>) resolvedBody;
+			body.apply(frame, in, (Path<Object>) ipath, (Output<Object>) output);
+		}
+	}
+
+	/**
+	 * Runs one body execution, and then whatever tail calls it leaves behind, until one leaves none.
+	 * <p>
+	 * Exactly one frame is live throughout and every body after the first runs in this same Java frame, which
+	 * is the point: the chain of frames an ordinary call leaves behind is what runs the stack out after a few
+	 * hundred iterations. A tail call to the body already running needs no new frame at all -- the call site
+	 * has written the new arguments into the parameter slots it already has -- so a self-recursive loop
+	 * allocates nothing per iteration. A tail call to a different {@code def} needs a different frame shape,
+	 * so it replaces the frame rather than stacking one on top.
+	 * <p>
+	 * There is one loop for the whole chain, never one per body: that is what keeps a mutual {@code a -> b ->
+	 * a} recursion flat instead of growing a Java frame per hop.
+	 * <p>
+	 * A call in tail position only becomes a tail call when everything still in progress to its left emits at
+	 * most one value (see {@code Compiler}'s tail-position rules), so by the time a jump arrives here there is
+	 * provably nothing left for the unwound Java frames to have done.
+	 */
+	private static void activate(Memory memory, TailCallTarget initial, Object[] arguments, @Nullable Object in, Object ipath, Object output) throws JsonQueryException {
+		@Var TailCallTarget target = initial;
+		@Var StackFrame frame = memory.pushFrame(target.frameSize());
+		try {
+			target.install(frame, arguments);
+			if (target.tailCallSlot() == TailCallTarget.NO_TAIL_CALL) {
+				target.runBody(frame, in, ipath, output);
+				return;
+			}
+			TailCallJump jump = new TailCallJump();
+			frame.set(target.tailCallSlot(), jump);
+			@Var Object nextIn = in;
+			@Var Object nextPath = ipath;
+			@Var Object nextOutput = output;
+			while (true) {
+				jump.arm(target);
+				target.runBody(frame, nextIn, nextPath, nextOutput);
+				if (!jump.isPending())
+					return;
+				TailCallTarget next = jump.target();
+				Object[] nextArguments = jump.arguments();
+				nextIn = jump.input();
+				nextPath = jump.ipath();
+				nextOutput = jump.output();
+				jump.clear();
+				if (next != target) {
+					target = next;
+					memory.popFrame();
+					frame = memory.pushFrame(target.frameSize());
+					target.install(frame, nextArguments);
+					if (target.tailCallSlot() != TailCallTarget.NO_TAIL_CALL)
+						frame.set(target.tailCallSlot(), jump);
+				}
+			}
+		} finally {
+			memory.popFrame();
+		}
 	}
 }

@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.compile;
 
+import java.util.List;
+
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -22,34 +24,56 @@ public class SymbolLocation {
 	public final @Nullable FunctionDependsOnInfo dependsOnInfo;
 	public final @Nullable BoundArgumentInfo boundArgumentInfo;
 
-	private SymbolLocation(boolean isLocal, int slot, @Nullable FunctionDependsOnInfo dependsOnInfo, @Nullable BoundArgumentInfo boundArgumentInfo) {
+	/**
+	 * The declared parameter names of the {@code def} this location resolves to, {@code $}-prefixed for a
+	 * value parameter -- {@code null} for a variable location, and for a function reached by a route that does
+	 * not identify the definition (a re-capture of something captured further out). A tail call needs them to
+	 * tell which parameters take a value and which take a filter; nothing else reads them.
+	 */
+	public final @Nullable List<String> parameterNames;
+
+	private SymbolLocation(boolean isLocal, int slot, @Nullable FunctionDependsOnInfo dependsOnInfo, @Nullable BoundArgumentInfo boundArgumentInfo, @Nullable List<String> parameterNames) {
 		this.isLocal = isLocal;
 		this.slot = slot;
 		this.dependsOnInfo = dependsOnInfo;
 		this.boundArgumentInfo = boundArgumentInfo;
+		this.parameterNames = parameterNames;
+	}
+
+	/**
+	 * Returns {@code location} with the resolved definition's parameter names attached.
+	 *
+	 * @param location the location to copy
+	 * @param parameterNames the declared parameter names, or {@code null} if unknown
+	 * @return {@code location} itself when there is nothing to attach, otherwise a copy carrying them
+	 */
+	public static SymbolLocation withParameterNames(SymbolLocation location, @Nullable List<String> parameterNames) {
+		if (parameterNames == null)
+			return location;
+		return new SymbolLocation(location.isLocal, location.slot, location.dependsOnInfo, location.boundArgumentInfo, parameterNames);
 	}
 
 	public static SymbolLocation local(int slot) {
-		return new SymbolLocation(true, slot, null, null);
+		return new SymbolLocation(true, slot, null, null, null);
 	}
 
 	public static SymbolLocation local(int slot, @Nullable FunctionDependsOnInfo dependsOnInfo) {
-		return new SymbolLocation(true, slot, dependsOnInfo, null);
+		return new SymbolLocation(true, slot, dependsOnInfo, null, null);
 	}
 
 	public static SymbolLocation localBoundArgument(int slot, BoundArgumentInfo boundArgumentInfo) {
-		return new SymbolLocation(true, slot, null, boundArgumentInfo);
+		return new SymbolLocation(true, slot, null, boundArgumentInfo, null);
 	}
 
 	public static SymbolLocation captured(int closureSlot) {
-		return new SymbolLocation(false, closureSlot, null, null);
+		return new SymbolLocation(false, closureSlot, null, null, null);
 	}
 
 	public static SymbolLocation captured(int closureSlot, @Nullable FunctionDependsOnInfo dependsOnInfo) {
-		return new SymbolLocation(false, closureSlot, dependsOnInfo, null);
+		return new SymbolLocation(false, closureSlot, dependsOnInfo, null, null);
 	}
 
 	public static SymbolLocation capturedBoundArgument(int closureSlot, BoundArgumentInfo boundArgumentInfo) {
-		return new SymbolLocation(false, closureSlot, null, boundArgumentInfo);
+		return new SymbolLocation(false, closureSlot, null, boundArgumentInfo, null);
 	}
 }
