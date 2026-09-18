@@ -19,6 +19,11 @@ public class MinusExpression<JsonNode> extends AbstractSimpleBinaryOperatorExpre
 	}
 
 	@Override
+	protected Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenLhs, Expression<StackFrame, JsonNode> rewrittenRhs) {
+		return new MinusExpression<>(jsonProvider, rewrittenLhs, rewrittenRhs, version, lhsOutputIndex, rhsOutputIndex);
+	}
+
+	@Override
 	protected JsonNode doEval(RuntimeLimits limits, JsonNode lhs, JsonNode rhs) throws JsonQueryException {
 		return BinaryOperations.minus(jsonProvider, lhs, rhs, version);
 	}

@@ -1,6 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.matcher;
 
+import java.util.function.UnaryOperator;
+
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -40,4 +43,11 @@ public interface PatternMatcher<JsonNode> {
 	 * that {@code resolver} sees duplicate variables in the order the runtime would write them.
 	 */
 	PatternMatcher<JsonNode> resolveSlots(SlotResolver resolver);
+
+	/**
+	 * Rewrites expressions embedded in this matcher, returning this matcher when none changed.
+	 */
+	default PatternMatcher<JsonNode> rewriteExpressions(UnaryOperator<Expression<StackFrame, JsonNode>> rewriter) {
+		return this;
+	}
 }

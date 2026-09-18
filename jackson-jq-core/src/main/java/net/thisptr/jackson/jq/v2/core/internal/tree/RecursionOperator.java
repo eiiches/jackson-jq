@@ -15,18 +15,16 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class RecursionOperator<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
-	private final boolean dependsOnInput;
 	private final boolean visitsNullValues;
 
-	public RecursionOperator(JsonProvider<JsonNode> jsonProvider, boolean dependsOnInput, boolean visitsNullValues) {
+	public RecursionOperator(JsonProvider<JsonNode> jsonProvider, boolean visitsNullValues) {
 		this.jsonProvider = jsonProvider;
-		this.dependsOnInput = dependsOnInput;
 		this.visitsNullValues = visitsNullValues;
 	}
 
 	@Override
 	public boolean dependsOnInput() {
-		return dependsOnInput;
+		return true;
 	}
 
 	@Override

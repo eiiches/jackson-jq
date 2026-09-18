@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core;
 
+import java.util.Objects;
+
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
@@ -12,12 +14,14 @@ import net.thisptr.jackson.jq.v2.core.diagnostic.DiagnosticListener;
  * ones. Build one with {@link #newBuilder()}.
  */
 public final class CompileOptions {
-	private static final CompileOptions DEFAULT = new CompileOptions(null);
+	private static final CompileOptions DEFAULT = new CompileOptions(null, OptimizationOptions.getDefaultInstance());
 
 	private final @Nullable DiagnosticListener diagnosticListener;
+	private final OptimizationOptions optimizationOptions;
 
-	private CompileOptions(@Nullable DiagnosticListener diagnosticListener) {
+	private CompileOptions(@Nullable DiagnosticListener diagnosticListener, OptimizationOptions optimizationOptions) {
 		this.diagnosticListener = diagnosticListener;
+		this.optimizationOptions = optimizationOptions;
 	}
 
 	// Package-private: Environment's no-options overload needs an instance to pass to compile(), but
@@ -28,7 +32,7 @@ public final class CompileOptions {
 
 	/**
 	 * Creates a builder with every setting at its default. No diagnostics are produced until a
-	 * listener is set.
+	 * listener is set, and every optimization is on.
 	 *
 	 * @return a new builder
 	 */
@@ -46,10 +50,20 @@ public final class CompileOptions {
 	}
 
 	/**
+	 * Returns the compile-time optimization settings.
+	 *
+	 * @return the optimization settings, never {@code null}
+	 */
+	public OptimizationOptions getOptimizationOptions() {
+		return optimizationOptions;
+	}
+
+	/**
 	 * Builds a {@link CompileOptions}.
 	 */
 	public static final class Builder {
 		private @Nullable DiagnosticListener diagnosticListener;
+		private OptimizationOptions optimizationOptions = OptimizationOptions.getDefaultInstance();
 
 		private Builder() {
 		}
@@ -68,14 +82,26 @@ public final class CompileOptions {
 		}
 
 		/**
+		 * Sets the compile-time optimization settings.
+		 *
+		 * @param optimizationOptions the optimization settings
+		 * @return this, for chaining
+		 * @throws NullPointerException if {@code optimizationOptions} is {@code null}
+		 */
+		public Builder setOptimizationOptions(OptimizationOptions optimizationOptions) {
+			this.optimizationOptions = Objects.requireNonNull(optimizationOptions, "optimizationOptions");
+			return this;
+		}
+
+		/**
 		 * Builds the options.
 		 *
 		 * @return the options, never {@code null}
 		 */
 		public CompileOptions build() {
-			if (diagnosticListener == null)
+			if (diagnosticListener == null && optimizationOptions == OptimizationOptions.getDefaultInstance())
 				return DEFAULT;
-			return new CompileOptions(diagnosticListener);
+			return new CompileOptions(diagnosticListener, optimizationOptions);
 		}
 	}
 }

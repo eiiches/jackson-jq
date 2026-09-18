@@ -7,6 +7,8 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.BoundArgumentInfo;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Closure;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
+import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -23,7 +25,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
  * {@code FunctionDependsOnInfo} never applies once it's constant-inlined, so unlike the base class this
  * one has no use for it.
  */
-public class ResolvedCapturedFunctionBoundArgumentAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class ResolvedCapturedFunctionBoundArgumentAccess<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final BindContext<JsonNode> bindContext;
 	private final String name;
 	private final int closureSlot;
@@ -34,7 +36,7 @@ public class ResolvedCapturedFunctionBoundArgumentAccess<JsonNode> implements Ex
 	private final Set<Integer> freeLocalSlots;
 	private final BoundArgumentInfo boundArgumentInfo;
 
-	public ResolvedCapturedFunctionBoundArgumentAccess(BindContext<JsonNode> bindContext, String name, int closureSlot, int frameClosureSlot, List<Expression<StackFrame, JsonNode>> args, BoundArgumentInfo boundArgumentInfo, boolean inputFixed) {
+	public ResolvedCapturedFunctionBoundArgumentAccess(BindContext<JsonNode> bindContext, String name, int closureSlot, int frameClosureSlot, List<Expression<StackFrame, JsonNode>> args, BoundArgumentInfo boundArgumentInfo) {
 		this.bindContext = bindContext;
 		this.name = name;
 		this.closureSlot = closureSlot;
@@ -43,7 +45,7 @@ public class ResolvedCapturedFunctionBoundArgumentAccess<JsonNode> implements Ex
 		this.boundArgumentInfo = boundArgumentInfo;
 		boolean ownInput = boundArgumentInfo.dependsOnInput();
 		boolean ownExternal = boundArgumentInfo.dependsOnExternalState();
-		this.dependsOnInput = (ownInput && !inputFixed) || args.stream().anyMatch(Expression::dependsOnInput);
+		this.dependsOnInput = ownInput || args.stream().anyMatch(Expression::dependsOnInput);
 		this.dependsOnExternalState = ownExternal || args.stream().anyMatch(Expression::dependsOnExternalState);
 		// Finding the callee itself already crosses a closure hop -- stay unconditionally opaque for the
 		// "own" contribution (matching ResolvedCapturedVariableAccess's "defs stay conservative"
@@ -86,6 +88,12 @@ public class ResolvedCapturedFunctionBoundArgumentAccess<JsonNode> implements Ex
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return boundArgumentInfo.dependsOnVariables() || FreeVariables.anyOpaqueIn(args);
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		List<Expression<StackFrame, JsonNode>> rewritten = ExpressionRewriter.rewriteAll(args, rewriter);
+		return rewritten == args ? this : new ResolvedCapturedFunctionBoundArgumentAccess<>(bindContext, name, closureSlot, frameClosureSlot, rewritten, boundArgumentInfo);
 	}
 
 	@Override

@@ -14,7 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
-public class VariableBinding<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class VariableBinding<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final Expression<StackFrame, JsonNode> value;
 	private final PatternMatcher<JsonNode> matcher;
 	private final Expression<StackFrame, JsonNode> body;
@@ -22,11 +22,13 @@ public class VariableBinding<JsonNode> implements Expression<StackFrame, JsonNod
 	private final boolean dependsOnExternalState;
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
+	private final Set<Integer> boundSlots;
 	// Counter for the bound expression. `body` needs none: it emits this binding's own values.
 	private final int valueOutputIndex;
 
 	public VariableBinding(Expression<StackFrame, JsonNode> value, PatternMatcher<JsonNode> matcher, Set<Integer> boundSlots, Expression<StackFrame, JsonNode> body, int valueOutputIndex) {
 		this.valueOutputIndex = valueOutputIndex;
+		this.boundSlots = boundSlots;
 		this.value = value;
 		this.matcher = matcher;
 		this.body = body;
@@ -59,6 +61,16 @@ public class VariableBinding<JsonNode> implements Expression<StackFrame, JsonNod
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		Expression<StackFrame, JsonNode> rewrittenValue = rewriter.rewrite(value);
+		PatternMatcher<JsonNode> rewrittenMatcher = matcher.rewriteExpressions(rewriter::rewrite);
+		Expression<StackFrame, JsonNode> rewrittenBody = rewriter.rewrite(body);
+		return rewrittenValue == value && rewrittenMatcher == matcher && rewrittenBody == body
+				? this
+				: new VariableBinding<>(rewrittenValue, rewrittenMatcher, boundSlots, rewrittenBody, valueOutputIndex);
 	}
 
 	@Override

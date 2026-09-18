@@ -12,6 +12,7 @@ import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathOperations;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathUtils;
+import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -19,7 +20,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-public abstract class AbstractFieldAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public abstract class AbstractFieldAccess<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	protected final JsonProvider<JsonNode> jsonProvider;
 	protected final Expression<StackFrame, JsonNode> target;
 	protected final boolean permissive;

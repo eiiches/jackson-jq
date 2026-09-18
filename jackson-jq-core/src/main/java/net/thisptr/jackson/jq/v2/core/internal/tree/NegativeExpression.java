@@ -17,7 +17,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-public class NegativeExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class NegativeExpression<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final Expression<StackFrame, JsonNode> value;
 	private final Version version;
@@ -53,6 +53,12 @@ public class NegativeExpression<JsonNode> implements Expression<StackFrame, Json
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return FreeVariables.anyOpaque(value);
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(value);
+		return rewritten == value ? this : new NegativeExpression<>(jsonProvider, rewritten, version, valueOutputIndex);
 	}
 
 	@Override

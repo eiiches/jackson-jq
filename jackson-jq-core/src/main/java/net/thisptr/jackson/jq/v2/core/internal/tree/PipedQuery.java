@@ -14,7 +14,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
-public class PipedQuery<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class PipedQuery<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final Expression<StackFrame, JsonNode> left;
 	private final Expression<StackFrame, JsonNode> right;
 	// Counter for everything `left` emits. `right` needs none: its values are piped straight out as this
@@ -29,7 +29,9 @@ public class PipedQuery<JsonNode> implements Expression<StackFrame, JsonNode>, F
 		this.left = left;
 		this.right = right;
 		this.leftOutputIndex = leftOutputIndex;
-		this.dependsOnInput = left.dependsOnInput() || right.dependsOnInput();
+		// Not an OR: the right side's `.` is whatever the left side emitted, so a pipe needs its caller's
+		// input exactly when its left side does. `1 | . + 1` therefore depends on no input at all.
+		this.dependsOnInput = left.dependsOnInput();
 		this.dependsOnExternalState = left.dependsOnExternalState() || right.dependsOnExternalState();
 		this.freeLocalSlots = FreeVariables.union(left, right);
 		this.hasOpaqueVariableReference = FreeVariables.anyOpaque(left, right);
@@ -58,6 +60,13 @@ public class PipedQuery<JsonNode> implements Expression<StackFrame, JsonNode>, F
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		Expression<StackFrame, JsonNode> newLeft = rewriter.rewrite(left);
+		Expression<StackFrame, JsonNode> newRight = rewriter.rewrite(right);
+		return newLeft == left && newRight == right ? this : new PipedQuery<>(newLeft, newRight, leftOutputIndex);
 	}
 
 	@Override

@@ -4,9 +4,11 @@ import java.util.Set;
 
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
+import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 
-public abstract class AbstractBinaryOperatorExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public abstract class AbstractBinaryOperatorExpression<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	protected final Expression<StackFrame, JsonNode> lhs;
 	protected final Expression<StackFrame, JsonNode> rhs;
 	// Counters for the two operand streams. Every operator here evaluates both operands through sinks of
@@ -32,6 +34,15 @@ public abstract class AbstractBinaryOperatorExpression<JsonNode> implements Expr
 		this.dependsOnExternalState = lhs.dependsOnExternalState() || rhs.dependsOnExternalState();
 		this.freeLocalSlots = FreeVariables.union(lhs, rhs);
 		this.hasOpaqueVariableReference = FreeVariables.anyOpaque(lhs, rhs);
+	}
+
+	protected abstract Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenLhs, Expression<StackFrame, JsonNode> rewrittenRhs);
+
+	@Override
+	public final Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		Expression<StackFrame, JsonNode> rewrittenLhs = rewriter.rewrite(lhs);
+		Expression<StackFrame, JsonNode> rewrittenRhs = rewriter.rewrite(rhs);
+		return rewrittenLhs == lhs && rewrittenRhs == rhs ? this : recreate(rewrittenLhs, rewrittenRhs);
 	}
 
 	@Override

@@ -252,10 +252,8 @@ public class DumpExprFunction implements Function {
 		}
 
 		private static final Set<String> TRANSPARENT_WRAPPERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-				"net.thisptr.jackson.jq.v2.core.internal.compile.MeteredOutputExpression",
-				"net.thisptr.jackson.jq.v2.core.internal.compile.MeteredConstantOutputExpression",
-				"net.thisptr.jackson.jq.v2.core.internal.compile.opt.MeteredOutputExpression",
-				"net.thisptr.jackson.jq.v2.core.internal.compile.opt.MeteredConstantOutputExpression")));
+				"net.thisptr.jackson.jq.v2.core.internal.tree.MeteredOutputExpression",
+				"net.thisptr.jackson.jq.v2.core.internal.tree.MeteredConstantOutputExpression")));
 
 		private static boolean isStructural(Class<?> type) {
 			String name = type.getName();

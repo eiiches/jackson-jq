@@ -12,11 +12,6 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class ThisObject<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
-	private final boolean dependsOnInput;
-
-	public ThisObject(boolean dependsOnInput) {
-		this.dependsOnInput = dependsOnInput;
-	}
 
 	@Override
 	public Cardinality getCardinality() {
@@ -25,7 +20,7 @@ public class ThisObject<JsonNode> implements Expression<StackFrame, JsonNode>, F
 
 	@Override
 	public boolean dependsOnInput() {
-		return dependsOnInput;
+		return true;
 	}
 
 	@Override

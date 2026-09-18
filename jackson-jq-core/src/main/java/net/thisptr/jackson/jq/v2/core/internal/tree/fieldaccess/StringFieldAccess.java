@@ -6,6 +6,7 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
+import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -16,7 +17,7 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class StringFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> {
-	private Expression<StackFrame, JsonNode> field;
+	private final Expression<StackFrame, JsonNode> field;
 	private final int fieldOutputIndex;
 
 	@Override
@@ -30,6 +31,15 @@ public class StringFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> {
 		super(jsonProvider, obj, permissive, version, targetOutputIndex);
 		this.fieldOutputIndex = fieldOutputIndex;
 		this.field = field;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		Expression<StackFrame, JsonNode> rewrittenTarget = rewriter.rewrite(target);
+		Expression<StackFrame, JsonNode> rewrittenField = rewriter.rewrite(field);
+		return rewrittenTarget == target && rewrittenField == field
+				? this
+				: new StringFieldAccess<>(jsonProvider, rewrittenTarget, rewrittenField, permissive, version, targetOutputIndex, fieldOutputIndex);
 	}
 
 	@Override

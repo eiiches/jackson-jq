@@ -1,0 +1,150 @@
+# A call in tail position runs as a loop rather than as a Java call (see docs/optimizations.md). Every case
+# here is depth that would exhaust the Java stack without that, or a shape where the optimization must not
+# apply and the answer has to come out the same anyway.
+
+# --- depth that the Java stack alone could not reach ---
+
+- q: '1 | until(. > 20000; . + 1)'
+  in: null
+  out:
+  - 20001
+  v: '[1.5, )'
+
+- q: 'last(while(. < 20000; . + 1))'
+  in: 1
+  out:
+  - 19999
+  v: '[1.5, )'
+
+- q: 'def f: if . < 20000 then . + 1 | f else . end; f'
+  in: 0
+  out:
+  - 20000
+  v: '[1.5, )'
+
+# A $-parameter's argument emits one value, so it is bound at the call site and the call is still a jump.
+- q: 'def f($n): if $n == 0 then . else . + 1 | f($n - 1) end; f(20000)'
+  in: 0
+  out:
+  - 20000
+  v: '[1.5, )'
+
+# A filter parameter passed straight on: the Function in the caller's slot outlives the frame it sat in.
+# Note the recursion is driven by `. + 1`, not by `f`: what a filter parameter emits is never known, so
+# putting `f` to the left of the call would be enough on its own to leave the call alone.
+- q: 'def w(f): if . < 20000 then . + 1 | w(f) else f end; w(. * 2)'
+  in: 0
+  out:
+  - 40000
+  v: '[1.5, )'
+
+# Mutual tail recursion, which jq can only express by nesting, since a def sees only what precedes it.
+- q: 'def outer: def inner: if . > 0 then . - 1 | outer else "inner" end; if . > 0 then . - 1 | inner else "outer" end; outer'
+  in: 20000
+  out:
+  - "outer"
+  v: '[1.5, )'
+
+- q: 'def outer: def inner: if . > 0 then . - 1 | outer else "inner" end; if . > 0 then . - 1 | inner else "outer" end; outer'
+  in: 19999
+  out:
+  - "inner"
+  v: '[1.5, )'
+
+# --- shapes the optimization must not take, which must still give jq's answer and jq's order ---
+
+# The pipe's left side emits two values, so the recursive call is not the last thing left to do.
+- q: 'def f: if . > 0 then (. - 1, . - 1) | f else "x" end; [f]'
+  in: 2
+  out:
+  - ["x", "x", "x", "x"]
+  v: '[1.5, )'
+
+- q: 'def f: if . > 0 then (. - 1, . - 2) | f else . end; [f]'
+  in: 2
+  out:
+  - [0, -1, 0]
+  v: '[1.5, )'
+
+# Not the last operand of the comma: what follows it still has to run, and in order.
+- q: 'def f: if . > 0 then ((. - 1 | f), "after-\(.)") else "base" end; [f]'
+  in: 2
+  out:
+  - ["base", "after-1", "after-2"]
+  v: '[1.5, )'
+
+# A generator condition runs the branch once per value it emits.
+- q: 'def f: if (. > 0, . > 0) then (. - 1 | f) else "x" end; [f]'
+  in: 1
+  out:
+  - ["x", "x", "x", "x"]
+  v: '[1.5, )'
+
+# A $-argument emitting two values binds the body twice, which is a loop of its own, not a jump.
+- q: 'def f($n): if $n == 0 then . else . + 1 | f($n - 1) end; [f(1, 2)]'
+  in: 0
+  out:
+  - [1, 2]
+  v: '[1.5, )'
+
+# A filter argument that closes over the caller's frame cannot outlive it.
+- q: 'def g(h): if . < 3 then . + 1 | g(h) else h end; [g(. * 10)]'
+  in: 0
+  out:
+  - [30]
+  v: '[1.5, )'
+
+# --- the constructs a tail call must not jump out of ---
+
+# try has to still be in scope when the error is raised.
+- q: 'def f: if . < 2000 then . + 1 | f else error("boom") end; [try f catch .]'
+  in: 0
+  out:
+  - ["boom"]
+  v: '[1.5, )'
+
+# break unwinds to its own label, which a tail call must not have left.
+- q: 'def f: if . < 2000 then . + 1 | f else "end" end; [label $out | (f, break $out)]'
+  in: 0
+  out:
+  - ["end"]
+  v: '[1.5, )'
+
+- q: 'first(recurse(. + 1))'
+  in: 5
+  out:
+  - 5
+  v: '[1.5, )'
+
+- q: '[limit(3; while(true; . + 1))]'
+  in: 1
+  out:
+  - [1, 2, 3]
+  v: '[1.5, )'
+
+# reduce and foreach consume what their update emits and keep going.
+- q: 'def f: if . < 3 then . + 1 | f else . end; reduce range(0; 3) as $i (0; f)'
+  in: null
+  out:
+  - 3
+  v: '[1.5, )'
+
+- q: 'def f: if . < 3 then . + 1 | f else . end; [foreach range(0; 3) as $i (0; f; .)]'
+  in: null
+  out:
+  - [3, 3, 3]
+  v: '[1.5, )'
+
+# --- paths still track through a deep recursion ---
+
+- q: 'def f: if type == "object" then .[] | f else . end; [path(f)]'
+  in: {"a": {"b": {"c": 1}}}
+  out:
+  - [["a", "b", "c"]]
+  v: '[1.5, )'
+
+- q: 'def descend: if type == "array" then .[0] | descend else . end; [path(descend)]'
+  in: [[[[1]]]]
+  out:
+  - [[0, 0, 0, 0]]
+  v: '[1.5, )'

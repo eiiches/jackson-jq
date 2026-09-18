@@ -276,6 +276,19 @@ class MainTest {
 	}
 
 	@Test
+	void optimizesTailCallsUnlessAskedNotTo() throws Exception {
+		// 5000 iterations is far past what one Java call per iteration allows, so getting an answer at all is
+		// the optimization working. The other half -- that --disable-tco really does bring the stack cost
+		// back -- is asserted in the core's TailCallTest instead: how deep a recursion gets before the stack
+		// runs out depends on the JVM's stack size, which is no more predictable here than anywhere else.
+		String query = "0 | def f: if . < 5000 then . + 1 | f else . end; f";
+
+		assertThat(run("null", "--compact", query)).isEqualTo("5000\n");
+		assertThat(runStderr("null", "--compact", "--disable-tco", "0 | def f: if . < 8 then . + 1 | f else . end; f")).isEmpty();
+		assertThat(run("null", "--compact", "--disable-tco", "0 | def f: if . < 8 then . + 1 | f else . end; f")).isEqualTo("8\n");
+	}
+
+	@Test
 	void configuresRuntimeLimits() throws Exception {
 		RuntimeOptions options = Main.createRuntimeOptions(parseLimits(
 				"--max-string-length", "11",

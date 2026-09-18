@@ -11,6 +11,8 @@ import java.util.Set;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.OptimizationOptions;
+import net.thisptr.jackson.jq.v2.core.internal.compile.opt.FoldPlanner;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -40,6 +42,24 @@ public class CompileContext {
 		// signature that's registered (addLocalFunction) but not yet fully compiled -- self-recursive,
 		// forward, or mutually-recursive references, which correctly fall back to a conservative default.
 		final Map<FunctionSignature, FunctionDependsOnInfo> functionDependsOnInfo = new HashMap<>();
+		// The declared parameter names of each local function, recorded by addLocalFunction's caller before
+		// the def's body compiles -- so a call inside that body, recursive or not, can still see them. A tail
+		// call needs them because a `$name` parameter takes a value and a filter parameter takes a Function,
+		// and it has to produce the right one without the callee's bindAndApply to sort it out.
+		final Map<FunctionSignature, List<String>> functionParameterNames = new HashMap<>();
+		// True only for a scope Compiler pushed for a `def` in the source it is lowering. The implicit root
+		// scope and a jq-library body are function boundaries too, but neither becomes a
+		// ResolvedFunctionDefinition, so neither gets the loop that runs tail calls -- and a call must not be
+		// compiled as a tail call with nothing to run it.
+		boolean isDefinitionBody;
+		// The signature and parameter slots of the `def` this scope is the body of, recorded before the body
+		// compiles. A tail call to the def it is already in writes its new arguments straight into those
+		// slots, which is the whole of what such a call does besides jumping.
+		@Nullable FunctionSignature definitionSignature;
+		@Nullable List<Integer> definitionParameterSlots;
+		// The slot this body's tail calls leave their jump in, assigned on the first one compiled. -1 while
+		// the body holds none, which is also what tells ResolvedFunctionDefinition it needs no loop.
+		int tailCallSlot = -1;
 		int nextSlot;
 
 		// Reserved slot (within this function's own frame) that will hold this function's own Closure at
@@ -103,41 +123,45 @@ public class CompileContext {
 	// spends the caller's budget, and neither does anything it emits along the way.
 	private final boolean meterRuntimeBudgets;
 
+	// Whether CompileOptions asked for tail calls at all. Threaded into the jq-library child contexts too,
+	// since the recursion in until/while/recurse lives in a nested def inside those bodies.
+	private final boolean tailCallsEnabled;
+
+	// Whether the node being lowered right now stands in tail position of the def body it belongs to. Unlike
+	// everything else here this is a top-down fact, so Compiler saves and restores it around each child it
+	// lowers rather than deriving it afterwards.
+	private boolean tailPosition;
+
 	// Next free index into Memory#outputCounts, handed out one per metered expression by
 	// allocateOutputCounter(). Only a metered context ever allocates, so the numbering covers exactly one
 	// top-level compile's query-text expressions and the array Memory sizes from it is never indexed by a
 	// node compiled anywhere else.
 	private int nextOutputCounter;
+
+	// What the compilation has folded so far, and the budget it is folding within. Per compilation rather
+	// than per node, because Compiler builds a fresh CompilationVisitor for every node it lowers while this
+	// one object is threaded through all of them -- including the child contexts the
+	// create*JqFunctionContext factories fork, which share it so the tally covers the whole compilation.
+	private final FoldPlanner foldPlanner;
+
 	private final Map<FunctionSignature, Integer> rootFunctionSlots;
 	private final Map<String, JavaModule> importedModules;
 	private final Map<String, Object> importedVariableDefaults;
-
-	// Whether the `.` currently being compiled against is known, at compile time, to always be the
-	// same fixed value -- e.g. the output of an earlier, already-constant pipe stage. Saved/restored
-	// (like a scope push/pop) around the handful of constructs that rebind what `.` means for a child
-	// expression (pipe stage transitions, try/catch's catch, string-interpolation's formatter,
-	// reduce/foreach's update expression, |='s rhs). Read by Compiler when constructing the few node
-	// types that read `.` themselves or fall back to the raw input (see Expression#dependsOnInput).
-	private boolean inputFixed = false;
-
-	public boolean isInputFixed() {
-		return inputFixed;
-	}
-
-	public void setInputFixed(boolean inputFixed) {
-		this.inputFixed = inputFixed;
-	}
 
 	public CompileContext() {
 		this(false, false);
 	}
 
 	public CompileContext(boolean exportTopLevelFunctions, boolean meterRuntimeBudgets) {
-		this(exportTopLevelFunctions, meterRuntimeBudgets, new JqFunctionCompiler.State(), Collections.emptySet(), Collections.emptySet(), new GlobalState());
+		this(exportTopLevelFunctions, meterRuntimeBudgets, OptimizationOptions.newBuilder().build());
 	}
 
-	private CompileContext(boolean exportTopLevelFunctions, boolean meterRuntimeBudgets, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState) {
-		this(newRootScopes(), exportTopLevelFunctions, meterRuntimeBudgets, jqFunctionState, activeJqFunctions, genericJqFunctions, globalState);
+	public CompileContext(boolean exportTopLevelFunctions, boolean meterRuntimeBudgets, OptimizationOptions optimizationOptions) {
+		this(exportTopLevelFunctions, meterRuntimeBudgets, optimizationOptions.getTailCallOptimization(), new JqFunctionCompiler.State(), Collections.emptySet(), Collections.emptySet(), new GlobalState(), new FoldPlanner(optimizationOptions.getConstantFoldingOptions()));
+	}
+
+	private CompileContext(boolean exportTopLevelFunctions, boolean meterRuntimeBudgets, boolean tailCallsEnabled, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState, FoldPlanner foldPlanner) {
+		this(newRootScopes(), exportTopLevelFunctions, meterRuntimeBudgets, tailCallsEnabled, jqFunctionState, activeJqFunctions, genericJqFunctions, globalState, foldPlanner);
 	}
 
 	// Shares `scopes` with the caller rather than starting a fresh list -- used only to build an inlined
@@ -145,8 +169,10 @@ public class CompileContext {
 	// separate CompileContext object (its own activeJqFunctions/genericJqFunctions fork), but needs to
 	// keep allocating slots in whatever frame is already live on the caller's own scope stack rather than
 	// starting a brand-new one.
-	private CompileContext(List<ScopeFrame> scopes, boolean exportTopLevelFunctions, boolean meterRuntimeBudgets, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState) {
+	private CompileContext(List<ScopeFrame> scopes, boolean exportTopLevelFunctions, boolean meterRuntimeBudgets, boolean tailCallsEnabled, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState, FoldPlanner foldPlanner) {
 		this.scopes = scopes;
+		this.tailCallsEnabled = tailCallsEnabled;
+		this.foldPlanner = foldPlanner;
 		this.jqFunctionState = jqFunctionState;
 		this.activeJqFunctions = activeJqFunctions;
 		this.genericJqFunctions = genericJqFunctions;
@@ -179,7 +205,7 @@ public class CompileContext {
 	CompileContext createJqFunctionContext(JqFunctionCompiler.DefinitionKey key, boolean shareGlobalState) {
 		Set<JqFunctionCompiler.DefinitionKey> nestedActiveJqFunctions = new HashSet<>(activeJqFunctions);
 		nestedActiveJqFunctions.add(key);
-		return new CompileContext(false, false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState());
+		return new CompileContext(false, false, tailCallsEnabled, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState(), foldPlanner);
 	}
 
 	// Like createJqFunctionContext, but shares this context's own `scopes` list instead of starting a
@@ -189,7 +215,7 @@ public class CompileContext {
 	CompileContext createInlinedJqFunctionContext(JqFunctionCompiler.DefinitionKey key, boolean shareGlobalState) {
 		Set<JqFunctionCompiler.DefinitionKey> nestedActiveJqFunctions = new HashSet<>(activeJqFunctions);
 		nestedActiveJqFunctions.add(key);
-		return new CompileContext(scopes, false, false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState());
+		return new CompileContext(scopes, false, false, tailCallsEnabled, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState(), foldPlanner);
 	}
 
 	CompileContext createGenericJqFunctionContext(JqFunctionCompiler.DefinitionKey key, boolean shareGlobalState) {
@@ -197,7 +223,7 @@ public class CompileContext {
 		nestedActiveJqFunctions.add(key);
 		Set<JqFunctionCompiler.DefinitionKey> nestedGenericJqFunctions = new HashSet<>(genericJqFunctions);
 		nestedGenericJqFunctions.add(key);
-		return new CompileContext(false, false, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), Collections.unmodifiableSet(nestedGenericJqFunctions), shareGlobalState ? globalState : new GlobalState());
+		return new CompileContext(false, false, tailCallsEnabled, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), Collections.unmodifiableSet(nestedGenericJqFunctions), shareGlobalState ? globalState : new GlobalState(), foldPlanner);
 	}
 
 	public void addImportedModule(String alias, JavaModule module) {
@@ -241,6 +267,139 @@ public class CompileContext {
 	 */
 	public boolean metersRuntimeBudgets() {
 		return meterRuntimeBudgets;
+	}
+
+	/**
+	 * Whether a call in tail position may be compiled as a tail call.
+	 *
+	 * @return {@code true} unless {@code CompileOptions} turned the optimization off
+	 */
+	public boolean tailCallsEnabled() {
+		return tailCallsEnabled;
+	}
+
+	/**
+	 * Whether the node being lowered stands in tail position -- nothing its enclosing {@code def} body still
+	 * has in progress will emit anything once it returns.
+	 *
+	 * @return {@code true} in tail position
+	 */
+	public boolean isTailPosition() {
+		return tailPosition;
+	}
+
+	/**
+	 * Sets whether the node about to be lowered stands in tail position, returning what it was so the caller
+	 * can put it back. Every lowering step either passes it on to the one child that inherits it, or clears
+	 * it; see {@code Compiler}.
+	 *
+	 * @param tailPosition the new value
+	 * @return the previous value, to restore
+	 */
+	public boolean setTailPosition(boolean tailPosition) {
+		boolean previous = this.tailPosition;
+		this.tailPosition = tailPosition;
+		return previous;
+	}
+
+	/**
+	 * Marks the scope just pushed as a {@code def} body being lowered -- one that will get a loop to run
+	 * whatever tail calls it turns out to contain -- and records what a tail call back into it needs: which
+	 * signature identifies it, and which slots its parameters live in.
+	 *
+	 * @param signature the {@code def}'s signature
+	 * @param parameterSlots its parameters' frame slots, in declaration order
+	 */
+	public void markDefinitionScope(FunctionSignature signature, List<Integer> parameterSlots) {
+		ScopeFrame top = scopes.get(scopes.size() - 1);
+		top.isDefinitionBody = true;
+		top.definitionSignature = signature;
+		top.definitionParameterSlots = parameterSlots;
+	}
+
+	/**
+	 * The signature of the {@code def} whose body is being lowered, or {@code null} outside one. A call whose
+	 * own signature differs cannot be a call back into it.
+	 *
+	 * @return the signature, or {@code null}
+	 */
+	public @Nullable FunctionSignature enclosingDefinitionSignature() {
+		ScopeFrame enclosing = enclosingFunctionScope();
+		return enclosing != null ? enclosing.definitionSignature : null;
+	}
+
+	/**
+	 * The parameter slots of the {@code def} whose body is being lowered, for a tail call back into it to
+	 * write into.
+	 *
+	 * @return the slots in declaration order, or {@code null} outside a {@code def} body
+	 */
+	public @Nullable List<Integer> enclosingDefinitionParameterSlots() {
+		ScopeFrame enclosing = enclosingFunctionScope();
+		return enclosing != null ? enclosing.definitionParameterSlots : null;
+	}
+
+	/**
+	 * Whether the innermost enclosing function scope is a {@code def} body (see {@link #markDefinitionScope(FunctionSignature, List)})
+	 * -- and therefore whether there will be anything to run a tail call taken here.
+	 *
+	 * @return {@code true} if a tail call taken now would have a loop to run it
+	 */
+	public boolean isInsideDefinitionBody() {
+		ScopeFrame enclosing = enclosingFunctionScope();
+		return enclosing != null && enclosing.isDefinitionBody;
+	}
+
+	/**
+	 * The frame slot this {@code def} body's tail calls leave their jump in, claiming one on the first call
+	 * that asks.
+	 * <p>
+	 * Claimed lazily, unlike {@link #reserveClosureSlot()}, because nothing outside this body ever needs the
+	 * number: the call sites that read it are compiled within the body, and {@link #getSlotCount()} is read
+	 * after the body finishes, so a slot claimed part-way through is still counted. Claimed from the
+	 * enclosing function scope, which is also the scope on top -- no construct that pushes a local scope
+	 * ({@code as}, {@code reduce}, {@code foreach}) passes tail position into it.
+	 *
+	 * @return the slot
+	 */
+	public int getOrAssignTailCallSlot() {
+		ScopeFrame enclosing = enclosingFunctionScope();
+		if (enclosing == null)
+			throw new IllegalStateException("a tail call outside any function scope");
+		if (enclosing.tailCallSlot < 0)
+			enclosing.tailCallSlot = enclosing.nextSlot++;
+		return enclosing.tailCallSlot;
+	}
+
+	/**
+	 * The tail-call slot of the scope on top -- the {@code def} body that just finished compiling -- or
+	 * {@code -1} if no tail call was compiled in it.
+	 *
+	 * @return the slot, or {@code -1}
+	 */
+	public int currentScopeTailCallSlot() {
+		return scopes.get(scopes.size() - 1).tailCallSlot;
+	}
+
+	private @Nullable ScopeFrame enclosingFunctionScope() {
+		for (int i = scopes.size() - 1; i >= 0; i--) {
+			ScopeFrame frame = scopes.get(i);
+			if (frame.isFunctionBoundary)
+				return frame;
+		}
+		return null;
+	}
+
+	/**
+	 * Records the declared parameter names of a local function, for a call site that needs to know which
+	 * parameters take a value and which take a filter. Called right after {@link #addLocalFunction}, before
+	 * the body compiles, so a recursive call inside that body sees them.
+	 *
+	 * @param signature the function just declared in the current scope
+	 * @param parameterNames its declared parameter names, {@code $}-prefixed for value parameters
+	 */
+	public void recordFunctionParameterNames(FunctionSignature signature, List<String> parameterNames) {
+		scopes.get(scopes.size() - 1).functionParameterNames.put(signature, parameterNames);
 	}
 
 	/**
@@ -289,6 +448,36 @@ public class CompileContext {
 		for (int i = 0; i < indices.length; ++i)
 			indices[i] = outputCounterOf(children.get(i));
 		return indices;
+	}
+
+	/**
+	 * Records a node whose presence makes every subtree containing it unfoldable.
+	 * <p>
+	 * A barrier is a node that is not a function of its own subtree, so evaluating that subtree ahead of time
+	 * does not reproduce what it does. There are two:
+	 * <ul>
+	 * <li>a {@code def} -- it registers its name in the <em>enclosing</em> lexical scope and writes its
+	 * {@code Function} into the enclosing frame, so an expression compiled <em>after</em> the subtree can call
+	 * it ({@code def f: 1; f}, and {@code def f: 1; . as $x | f} where the call is the {@code as} body).
+	 * Folding would evaluate the install and discard it, leaving the later call an empty slot;</li>
+	 * <li>a {@code try} or {@code ?} before jq 1.7 -- in that mode it catches errors raised
+	 * <em>downstream</em> of it as well as inside it ({@code TryCatch.applyLegacy}), so what it does depends
+	 * on who consumes its values. A fold consumes them with the compiler's own collector, which is not that
+	 * consumer.</li>
+	 * </ul>
+	 */
+	public void markFoldBarrier() {
+		if (meterRuntimeBudgets)
+			foldPlanner.markBarrier();
+	}
+
+	/**
+	 * The compilation-wide constant-folding pass.
+	 *
+	 * @return this compilation's planner, never {@code null}
+	 */
+	public FoldPlanner foldPlanner() {
+		return foldPlanner;
 	}
 
 	/**
@@ -610,9 +799,10 @@ public class CompileContext {
 			Integer slot = current.functionSlots.get(currentKey);
 			if (slot != null) {
 				BoundArgumentInfo boundArgumentInfo = current.functionBoundArguments.get(currentKey);
+				List<String> parameterNames = current.functionParameterNames.get(currentKey);
 				if (boundArgumentInfo != null)
-					return SymbolLocation.localBoundArgument(slot, boundArgumentInfo);
-				return SymbolLocation.local(slot, current.functionDependsOnInfo.get(currentKey));
+					return SymbolLocation.withParameterNames(SymbolLocation.localBoundArgument(slot, boundArgumentInfo), parameterNames);
+				return SymbolLocation.withParameterNames(SymbolLocation.local(slot, current.functionDependsOnInfo.get(currentKey)), parameterNames);
 			}
 		}
 
@@ -633,10 +823,11 @@ public class CompileContext {
 				Integer localSlot = outer.functionSlots.get(outerKey);
 				if (localSlot != null) {
 					BoundArgumentInfo boundArgumentInfo = outer.functionBoundArguments.get(outerKey);
+					List<String> parameterNames = outer.functionParameterNames.get(outerKey);
 					if (!crossedFunctionBoundary) {
 						if (boundArgumentInfo != null)
-							return SymbolLocation.localBoundArgument(localSlot, boundArgumentInfo);
-						return SymbolLocation.local(localSlot, outer.functionDependsOnInfo.get(outerKey));
+							return SymbolLocation.withParameterNames(SymbolLocation.localBoundArgument(localSlot, boundArgumentInfo), parameterNames);
+						return SymbolLocation.withParameterNames(SymbolLocation.local(localSlot, outer.functionDependsOnInfo.get(outerKey)), parameterNames);
 					}
 					@Var int targetSlot = localSlot;
 					@Var boolean isLocalInParent = true;
@@ -655,9 +846,9 @@ public class CompileContext {
 						targetSlot = closureSlot;
 						isLocalInParent = false;
 					}
-					return boundArgumentInfo != null
+					return SymbolLocation.withParameterNames(boundArgumentInfo != null
 							? SymbolLocation.capturedBoundArgument(targetSlot, boundArgumentInfo)
-							: SymbolLocation.captured(targetSlot, outer.functionDependsOnInfo.get(outerKey));
+							: SymbolLocation.captured(targetSlot, outer.functionDependsOnInfo.get(outerKey)), parameterNames);
 				}
 			}
 			FunctionSignature existingKey = outer.capturedFnSlots.containsKey(key) ? key : key.asVariadic();

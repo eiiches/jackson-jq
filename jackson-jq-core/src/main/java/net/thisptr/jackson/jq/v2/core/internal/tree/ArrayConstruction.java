@@ -19,7 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
-public class ArrayConstruction<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class ArrayConstruction<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
 	public final @Nullable Expression<StackFrame, JsonNode> q;
 	private final int qOutputIndex;
@@ -65,6 +65,14 @@ public class ArrayConstruction<JsonNode> implements Expression<StackFrame, JsonN
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		if (q == null)
+			return this;
+		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(q);
+		return rewritten == q ? this : new ArrayConstruction<>(jsonProvider, rewritten, qOutputIndex);
 	}
 
 	@Override

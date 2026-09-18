@@ -1,11 +1,7 @@
-package net.thisptr.jackson.jq.v2.core.internal.compile;
+package net.thisptr.jackson.jq.v2.core.internal.tree;
 
-import java.util.Set;
-
-import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -21,22 +17,16 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
  * or a third-party {@code Function} produces is charged to the query-text expression that called it, and
  * a node reached through a jq-library body or an imported module is never wrapped and so never charged.
  * <p>
- * Only an expression that can emit more than one value per input is wrapped (see
- * {@link Compiler#compile(net.thisptr.jackson.jq.v2.core.Environment, CompileContext, ModuleScope, net.thisptr.jackson.jq.v2.core.internal.ast.AstNode)}),
- * and the wrapper allocates its counting sink only for an invocation that actually has a budget: with none,
- * all this costs is the delegated call.
+ * Function arguments are the only position wrapped this way (see {@code Compiler}'s
+ * {@code meterArguments}), and the wrapper allocates its counting sink only for an invocation that
+ * actually has a budget: with none, all this costs is the delegated call.
  * <p>
- * Every question the compiler asks of an expression has to reach the node underneath, or wrapping would
- * change how the query compiles. {@link FreeVariables} matters most: {@code FreeVariables#dependsOnVariables}
- * reads an expression that does not implement it as depending on variables, which would silently disable
- * constant folding. The same goes for {@link ConstantExpression}, which a {@code Function} is invited to
- * specialize on at bind time -- joni precompiles a constant regex that way -- so {@link #of} keeps a wrapped
- * constant recognisable as one.
+ * Every question the compiler asks of an expression has to reach the node underneath, which is why this
+ * extends {@link AbstractDelegatingExpression} -- see that class for what breaks otherwise.
  *
  * @param <JsonNode> the JSON node type
  */
-class MeteredOutputExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
-	protected final Expression<StackFrame, JsonNode> inner;
+public class MeteredOutputExpression<JsonNode> extends AbstractDelegatingExpression<JsonNode> {
 	private final int index;
 
 	/**
@@ -49,38 +39,18 @@ class MeteredOutputExpression<JsonNode> implements Expression<StackFrame, JsonNo
 	 * @param <JsonNode> the JSON node type
 	 * @return the metered expression
 	 */
-	static <JsonNode> Expression<StackFrame, JsonNode> of(Expression<StackFrame, JsonNode> inner, int index) {
+	public static <JsonNode> Expression<StackFrame, JsonNode> of(Expression<StackFrame, JsonNode> inner, int index) {
 		return inner instanceof ConstantExpression ? new MeteredConstantOutputExpression<>(inner, index) : new MeteredOutputExpression<>(inner, index);
 	}
 
 	MeteredOutputExpression(Expression<StackFrame, JsonNode> inner, int index) {
-		this.inner = inner;
+		super(inner);
 		this.index = index;
 	}
 
 	@Override
-	public Cardinality getCardinality() {
-		return inner.getCardinality();
-	}
-
-	@Override
-	public boolean dependsOnInput() {
-		return inner.dependsOnInput();
-	}
-
-	@Override
-	public boolean dependsOnExternalState() {
-		return inner.dependsOnExternalState();
-	}
-
-	@Override
-	public Set<Integer> freeLocalSlots() {
-		return FreeVariables.slotsOf(inner);
-	}
-
-	@Override
-	public boolean hasOpaqueVariableReference() {
-		return FreeVariables.opaqueIn(inner);
+	protected Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenInner) {
+		return of(rewrittenInner, index);
 	}
 
 	@Override

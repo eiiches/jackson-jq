@@ -2,7 +2,9 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
+import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
@@ -22,7 +24,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
-	private List<FieldMatcher<JsonNode>> matchers;
+	private final List<FieldMatcher<JsonNode>> matchers;
 	private final Version version;
 
 	public ObjectMatcher(JsonProvider<JsonNode> jsonProvider, List<FieldMatcher<JsonNode>> matchers, Version version) {
@@ -78,6 +80,14 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			// recursive() writes them in.
 			int resolvedSlot = resolveWriteSlot(resolver);
 			return new FieldMatcher<>(dollar, variableName, name, matcher != null ? matcher.resolveSlots(resolver) : null, resolvedSlot, nameOutputIndex);
+		}
+
+		private FieldMatcher<JsonNode> rewriteExpressions(UnaryOperator<Expression<StackFrame, JsonNode>> rewriter) {
+			Expression<StackFrame, JsonNode> rewrittenName = rewriter.apply(name);
+			PatternMatcher<JsonNode> rewrittenMatcher = matcher != null ? matcher.rewriteExpressions(rewriter) : null;
+			return rewrittenName == name && rewrittenMatcher == matcher
+					? this
+					: new FieldMatcher<>(dollar, variableName, rewrittenName, rewrittenMatcher, writeSlot, nameOutputIndex);
 		}
 
 		private int resolveWriteSlot(SlotResolver resolver) {
@@ -178,5 +188,19 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		for (FieldMatcher<JsonNode> matcher : matchers)
 			resolved.add(matcher.resolveSlots(resolver));
 		return new ObjectMatcher<>(jsonProvider, resolved, version);
+	}
+
+	@Override
+	public PatternMatcher<JsonNode> rewriteExpressions(UnaryOperator<Expression<StackFrame, JsonNode>> rewriter) {
+		@Var List<FieldMatcher<JsonNode>> rewritten = null;
+		for (int i = 0; i < matchers.size(); i++) {
+			FieldMatcher<JsonNode> matcher = matchers.get(i);
+			FieldMatcher<JsonNode> replacement = matcher.rewriteExpressions(rewriter);
+			if (rewritten == null && replacement != matcher)
+				rewritten = new ArrayList<>(matchers);
+			if (rewritten != null)
+				rewritten.set(i, replacement);
+		}
+		return rewritten == null ? this : new ObjectMatcher<>(jsonProvider, rewritten, version);
 	}
 }

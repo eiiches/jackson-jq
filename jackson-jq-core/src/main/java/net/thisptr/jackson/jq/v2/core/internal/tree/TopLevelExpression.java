@@ -10,7 +10,7 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class TopLevelExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class TopLevelExpression<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final Expression<StackFrame, JsonNode> expr;
 
 	@Override
@@ -40,6 +40,12 @@ public class TopLevelExpression<JsonNode> implements Expression<StackFrame, Json
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return FreeVariables.anyOpaque(expr);
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(expr);
+		return rewritten == expr ? this : new TopLevelExpression<>(rewritten);
 	}
 
 	@Override

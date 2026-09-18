@@ -16,7 +16,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
-public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class ReduceExpression<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final Expression<StackFrame, JsonNode> iterExpr;
 	private final Expression<StackFrame, JsonNode> reduceExpr;
@@ -25,6 +25,7 @@ public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNo
 	private final int initOutputIndex;
 	private final int reduceOutputIndex;
 	private final int iterOutputIndex;
+	private final Set<Integer> matcherSlots;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -42,14 +43,16 @@ public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNo
 		this.initOutputIndex = initOutputIndex;
 		this.reduceOutputIndex = reduceOutputIndex;
 		this.iterOutputIndex = iterOutputIndex;
+		this.matcherSlots = matcherSlots;
 		this.initExpr = initExpr;
 		this.reduceExpr = reduceExpr;
 		this.iterExpr = iterExpr;
-		// reduceExpr is already compiled under the correct shielded context (see Compiler's
-		// ReduceExpressionAstNode handling), so dependsOnInput/dependsOnExternalState are a flat OR,
-		// same as everywhere else. The matcher's bound slot(s) are only "closed" for reduceExpr --
-		// they're not yet bound while initExpr/iterExpr run.
-		this.dependsOnInput = initExpr.dependsOnInput() || iterExpr.dependsOnInput() || reduceExpr.dependsOnInput();
+		// reduceExpr sees the accumulator rather than `.`, and the accumulator is determined entirely by
+		// initExpr and iterExpr, so its own input dependency is discharged by theirs.
+		// dependsOnExternalState stays a flat OR: rebinding `.` cannot make a clock or a file read
+		// deterministic. The matcher's bound slot(s) are only "closed" for reduceExpr -- they're not yet
+		// bound while initExpr/iterExpr run.
+		this.dependsOnInput = initExpr.dependsOnInput() || iterExpr.dependsOnInput();
 		this.dependsOnExternalState = initExpr.dependsOnExternalState() || iterExpr.dependsOnExternalState() || reduceExpr.dependsOnExternalState();
 		this.hasOpaqueVariableReference = FreeVariables.anyOpaque(initExpr, iterExpr, reduceExpr);
 		this.freeLocalSlots = FreeVariables.minus(
@@ -76,6 +79,17 @@ public class ReduceExpression<JsonNode> implements Expression<StackFrame, JsonNo
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		Expression<StackFrame, JsonNode> rewrittenIter = rewriter.rewrite(iterExpr);
+		Expression<StackFrame, JsonNode> rewrittenInit = rewriter.rewrite(initExpr);
+		PatternMatcher<JsonNode> rewrittenMatcher = matcher.rewriteExpressions(rewriter::rewrite);
+		Expression<StackFrame, JsonNode> rewrittenReduce = rewriter.rewrite(reduceExpr);
+		return rewrittenIter == iterExpr && rewrittenInit == initExpr && rewrittenMatcher == matcher && rewrittenReduce == reduceExpr
+				? this
+				: new ReduceExpression<>(jsonProvider, rewrittenMatcher, rewrittenInit, rewrittenReduce, rewrittenIter, matcherSlots, initOutputIndex, reduceOutputIndex, iterOutputIndex);
 	}
 
 	@Override

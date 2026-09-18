@@ -5,6 +5,28 @@ package net.thisptr.jackson.jq.v2.core;
  * <p>
  * Instances are immutable, so one can be reused for any number of queries and invocations, including
  * concurrent ones. Build one with {@link #newBuilder()}.
+ *
+ * <h2>What these budgets meter</h2>
+ * <p>
+ * Evaluation -- the work a query does when it is applied to an input. That is not quite all the work a
+ * query does: an expression that depends on neither the input, nor external state, nor a variable has the
+ * same result every time, so the compiler evaluates it once while compiling and keeps the values. Such an
+ * expression is never evaluated again, and so never draws on the budgets set here. {@code [range(0; 101)]}
+ * builds its array at compile time and {@link Builder#setMaxArrayLength(int)} does not see it, while
+ * {@code [range(0; .)]} on input {@code 101} is bounded normally.
+ * <p>
+ * Options attach to an already-compiled query, which is strictly after that has happened, so these numbers
+ * cannot cover it by themselves. What bounds compile-time evaluation is {@link ConstantFoldingOptions},
+ * set through {@link OptimizationOptions}: bounded by default and deliberately small, since an expression
+ * that would exceed it is not folded at all, which puts it back on the evaluation path where these limits
+ * apply to it in full. So the work a constant expression can do unmetered is bounded, just not by this
+ * class, and it is done once per {@code compile()} rather than once per input.
+ * <p>
+ * Two ways to bring it under a caller's control. Passing the same {@code RuntimeOptions} to
+ * {@link ConstantFoldingOptions.Builder#setRuntimeOptions(RuntimeOptions)} and to
+ * {@link JsonQuery#withRuntimeOptions(RuntimeOptions)} folds under exactly the limits the query will run
+ * under; {@link ConstantFoldingOptions.Builder#setEnabled(boolean) setEnabled(false)} folds nothing, so
+ * every expression is evaluated and everything here meters it.
  */
 public final class RuntimeOptions {
 	private static final RuntimeOptions DEFAULT = new RuntimeOptions(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE);

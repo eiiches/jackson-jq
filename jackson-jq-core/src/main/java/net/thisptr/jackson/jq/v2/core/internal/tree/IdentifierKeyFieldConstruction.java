@@ -57,6 +57,14 @@ public class IdentifierKeyFieldConstruction<JsonNode> implements FieldConstructi
 	}
 
 	@Override
+	public FieldConstruction<JsonNode> rewriteExpressions(ExpressionRewriter<JsonNode> rewriter) {
+		if (value == null)
+			return this;
+		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(value);
+		return rewritten == value ? this : new IdentifierKeyFieldConstruction<>(jsonProvider, key, rewritten, version, valueOutputIndex);
+	}
+
+	@Override
 	public void evaluate(StackFrame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException {
 		if (value == null) {
 			PathOperations.resolveObjectField(jsonProvider, in, UntrackedPath.getInstance(), (v, path) -> consumer.accept(key, v), key, false, version);

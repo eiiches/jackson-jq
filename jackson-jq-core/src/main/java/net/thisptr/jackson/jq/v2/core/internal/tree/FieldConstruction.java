@@ -36,5 +36,9 @@ public interface FieldConstruction<JsonNode> extends FreeVariables {
 		return true;
 	}
 
+	default FieldConstruction<JsonNode> rewriteExpressions(ExpressionRewriter<JsonNode> rewriter) {
+		return this;
+	}
+
 	void evaluate(StackFrame frame, JsonNode in, FieldConsumer<JsonNode> consumer) throws JsonQueryException;
 }

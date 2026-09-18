@@ -26,28 +26,31 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 public class Assignment<JsonNode> extends AbstractBinaryOperatorExpression<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final Version version;
-	private final boolean inputFixed;
 
 	@Override
 	public Cardinality getCardinality() {
 		return rhs.getCardinality();
 	}
 
-	public Assignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, boolean inputFixed, int lhsOutputIndex, int rhsOutputIndex) {
+	public Assignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, int lhsOutputIndex, int rhsOutputIndex) {
 		super(lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 		this.jsonProvider = jsonProvider;
 		this.version = version;
-		this.inputFixed = inputFixed;
 	}
 
-	// Falls back to the raw, unmodified `in` when lhs matches no paths, so the result always
-	// incorporates the base `.` being mutated -- unlike super's plain `lhs || rhs`, this also
-	// requires `.` itself to be known input-independent. External-state and free-variable dependencies
-	// need no override: they are fully covered by super's `lhs || rhs`, since the surrounding pipe (if any)
-	// already accounts for whatever the base `.` might carry.
+	@Override
+	protected Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenLhs, Expression<StackFrame, JsonNode> rewrittenRhs) {
+		return new Assignment<>(jsonProvider, rewrittenLhs, rewrittenRhs, version, lhsOutputIndex, rhsOutputIndex);
+	}
+
+	// Always: an assignment applies its lhs path to the base `.` and falls back to the raw, unmodified
+	// input when the lhs matches no paths, so it reads `.` even when neither child does. An enclosing
+	// construct that rebinds `.` to a fixed value discharges this the same way it discharges any other
+	// input dependency. External-state and free-variable dependencies need no override: they are fully
+	// covered by super's `lhs || rhs`.
 	@Override
 	public boolean dependsOnInput() {
-		return !inputFixed || super.dependsOnInput();
+		return true;
 	}
 
 	@Override

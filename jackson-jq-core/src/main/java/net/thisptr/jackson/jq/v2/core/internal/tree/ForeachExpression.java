@@ -18,7 +18,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
-public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class ForeachExpression<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final Expression<StackFrame, JsonNode> iterExpr;
 	private final Expression<StackFrame, JsonNode> updateExpr;
 	private final Expression<StackFrame, JsonNode> initExpr;
@@ -28,6 +28,7 @@ public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonN
 	private final int initOutputIndex;
 	private final int updateOutputIndex;
 	private final int iterOutputIndex;
+	private final Set<Integer> matcherSlots;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -46,16 +47,17 @@ public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonN
 		this.initOutputIndex = initOutputIndex;
 		this.updateOutputIndex = updateOutputIndex;
 		this.iterOutputIndex = iterOutputIndex;
+		this.matcherSlots = matcherSlots;
 		this.initExpr = initExpr;
 		this.updateExpr = updateExpr;
 		this.extractExpr = extractExpr;
 		this.iterExpr = iterExpr;
-		// updateExpr/extractExpr are already compiled under the correct shielded context (see
-		// Compiler's ForeachExpressionAstNode handling), so dependsOnInput/dependsOnExternalState are
-		// a flat OR, same as everywhere else. The matcher's bound slot(s) are only "closed" for
+		// updateExpr sees the accumulator rather than `.`, and extractExpr sees updateExpr's own output, so
+		// both have their input dependency discharged by initExpr and iterExpr -- which between them
+		// determine the accumulator. dependsOnExternalState stays a flat OR: rebinding `.` cannot make a
+		// clock or a file read deterministic. The matcher's bound slot(s) are only "closed" for
 		// updateExpr/extractExpr -- they're not yet bound while initExpr/iterExpr run.
-		this.dependsOnInput = initExpr.dependsOnInput() || iterExpr.dependsOnInput() || updateExpr.dependsOnInput()
-				|| (extractExpr != null && extractExpr.dependsOnInput());
+		this.dependsOnInput = initExpr.dependsOnInput() || iterExpr.dependsOnInput();
 		this.dependsOnExternalState = initExpr.dependsOnExternalState() || iterExpr.dependsOnExternalState() || updateExpr.dependsOnExternalState()
 				|| (extractExpr != null && extractExpr.dependsOnExternalState());
 		this.hasOpaqueVariableReference = FreeVariables.anyOpaque(initExpr, iterExpr, updateExpr, extractExpr);
@@ -82,6 +84,19 @@ public class ForeachExpression<JsonNode> implements Expression<StackFrame, JsonN
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		Expression<StackFrame, JsonNode> rewrittenIter = rewriter.rewrite(iterExpr);
+		Expression<StackFrame, JsonNode> rewrittenInit = rewriter.rewrite(initExpr);
+		PatternMatcher<JsonNode> rewrittenMatcher = matcher.rewriteExpressions(rewriter::rewrite);
+		Expression<StackFrame, JsonNode> rewrittenUpdate = rewriter.rewrite(updateExpr);
+		Expression<StackFrame, JsonNode> rewrittenExtract = extractExpr != null ? rewriter.rewrite(extractExpr) : null;
+		return rewrittenIter == iterExpr && rewrittenInit == initExpr && rewrittenMatcher == matcher
+				&& rewrittenUpdate == updateExpr && rewrittenExtract == extractExpr
+				? this
+				: new ForeachExpression<>(rewrittenMatcher, rewrittenInit, rewrittenUpdate, rewrittenExtract, rewrittenIter, matcherSlots, initOutputIndex, updateOutputIndex, iterOutputIndex);
 	}
 
 	@Override

@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.errorprone.annotations.Var;
+
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
@@ -19,37 +21,30 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
-public class ObjectConstruction<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class ObjectConstruction<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
-	public final List<FieldConstruction<JsonNode>> fields = new ArrayList<>();
+	private final List<FieldConstruction<JsonNode>> fields;
 
 	@Override
 	public Cardinality getCardinality() {
 		return CardinalityUtils.multiply(fields, FieldConstruction::getCardinality);
 	}
 
-	// Fields are appended one at a time via add() after construction (see Compiler's
-	// ObjectConstructionAstNode handling), so unlike every other node these can't be computed once
-	// in the constructor -- they're folded in incrementally as each field arrives instead.
-	private boolean dependsOnInput = false;
-	private boolean dependsOnExternalState = false;
-	private Set<Integer> freeLocalSlots = Collections.emptySet();
-	private boolean hasOpaqueVariableReference = false;
+	private final boolean dependsOnInput;
+	private final boolean dependsOnExternalState;
+	private final Set<Integer> freeLocalSlots;
+	private final boolean hasOpaqueVariableReference;
 
-	public ObjectConstruction(JsonProvider<JsonNode> jsonProvider) {
+	public ObjectConstruction(JsonProvider<JsonNode> jsonProvider, List<FieldConstruction<JsonNode>> fields) {
 		this.jsonProvider = jsonProvider;
-	}
-
-	public void add(FieldConstruction<JsonNode> field) {
-		fields.add(field);
-		dependsOnInput = dependsOnInput || field.dependsOnInput();
-		dependsOnExternalState = dependsOnExternalState || field.dependsOnExternalState();
-		if (!field.freeLocalSlots().isEmpty()) {
-			Set<Integer> merged = new HashSet<>(freeLocalSlots);
-			merged.addAll(field.freeLocalSlots());
-			freeLocalSlots = merged;
-		}
-		hasOpaqueVariableReference = hasOpaqueVariableReference || field.hasOpaqueVariableReference();
+		this.fields = Collections.unmodifiableList(new ArrayList<>(fields));
+		this.dependsOnInput = fields.stream().anyMatch(FieldConstruction::dependsOnInput);
+		this.dependsOnExternalState = fields.stream().anyMatch(FieldConstruction::dependsOnExternalState);
+		Set<Integer> slots = new HashSet<>();
+		for (FieldConstruction<JsonNode> field : fields)
+			slots.addAll(field.freeLocalSlots());
+		this.freeLocalSlots = Collections.unmodifiableSet(slots);
+		this.hasOpaqueVariableReference = fields.stream().anyMatch(FieldConstruction::hasOpaqueVariableReference);
 	}
 
 	@Override
@@ -70,6 +65,20 @@ public class ObjectConstruction<JsonNode> implements Expression<StackFrame, Json
 	@Override
 	public boolean hasOpaqueVariableReference() {
 		return hasOpaqueVariableReference;
+	}
+
+	@Override
+	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		@Var List<FieldConstruction<JsonNode>> rewritten = null;
+		for (int i = 0; i < fields.size(); i++) {
+			FieldConstruction<JsonNode> field = fields.get(i);
+			FieldConstruction<JsonNode> replacement = field.rewriteExpressions(rewriter);
+			if (rewritten == null && replacement != field)
+				rewritten = new ArrayList<>(fields);
+			if (rewritten != null)
+				rewritten.set(i, replacement);
+		}
+		return rewritten == null ? this : new ObjectConstruction<>(jsonProvider, rewritten);
 	}
 
 	@Override
