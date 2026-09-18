@@ -5,6 +5,7 @@
 -runrequires: \
 	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.smoketests.osgi.application)',\
 	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.jackson-jq-ext-module-gzip)',\
+	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.jackson-jq-ext-module-http)',\
 	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.jackson-jq-ext-module-random)',\
 	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.jackson-jq-ext-module-re2)',\
 	osgi.identity;filter:='(osgi.identity=net.thisptr.jackson.jq.v2.jackson-jq-ext-module-time)',\

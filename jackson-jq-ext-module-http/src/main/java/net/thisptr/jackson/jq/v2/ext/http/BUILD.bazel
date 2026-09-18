@@ -1,0 +1,12 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "http",
+    srcs = ["ModuleImpl.java"],
+    release = 8,
+    visibility = ["//jackson-jq-ext-module-http:__subpackages__"],
+    deps = [
+        "//jackson-jq-ext-module-http/src/main/java/net/thisptr/jackson/jq/v2/ext/http/functions",
+        "//jackson-jq-spi",
+    ],
+)

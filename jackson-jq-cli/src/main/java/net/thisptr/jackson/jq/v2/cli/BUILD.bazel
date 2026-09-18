@@ -16,6 +16,7 @@ jjq_java_library(
         "//jackson-jq-core",
         "//jackson-jq-ext-module-debug",
         "//jackson-jq-ext-module-gzip",
+        "//jackson-jq-ext-module-http",
         "//jackson-jq-ext-module-random",
         "//jackson-jq-ext-module-re2",
         "//jackson-jq-ext-module-time",

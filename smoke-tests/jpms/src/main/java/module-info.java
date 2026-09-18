@@ -5,6 +5,7 @@ module net.thisptr.jackson.jq.v2.smoketests.jpms {
 	requires net.thisptr.jackson.jq.v2.core;
 	requires net.thisptr.jackson.jq.v2.ext.module.debug;
 	requires net.thisptr.jackson.jq.v2.ext.module.gzip;
+	requires net.thisptr.jackson.jq.v2.ext.module.http;
 	requires net.thisptr.jackson.jq.v2.ext.module.random;
 	requires net.thisptr.jackson.jq.v2.ext.module.re2;
 	requires net.thisptr.jackson.jq.v2.ext.module.time;

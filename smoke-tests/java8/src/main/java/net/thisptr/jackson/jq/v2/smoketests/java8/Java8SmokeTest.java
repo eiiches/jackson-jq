@@ -29,6 +29,7 @@ public final class Java8SmokeTest {
 		assertQuery(jsonProvider, env, "length", "[1,2]", 2);
 		assertQuery(jsonProvider, env, "test(\"a.c\")", "\"abc\"", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/gzip\" as gzip; gzip::decompress_text", "\"H4sIAAAAAAAAA8tIzcnJBwCGphA2BQAAAA==\"", "hello");
+		assertQuery(jsonProvider, env, "import \"jackson-jq/http\" as http; true", "null", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/random\" as random; random::random | . >= 0 and . < 1", "null", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/re2\" as re; re::test(\"a.c\")", "\"abc\"", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/time\" as time; 1477162342372 | time::strftime(\"yyyy-MM-dd HH:mm:ss.SSSXXX\"; \"UTC\")", "null", "2016-10-22 18:52:22.372Z");
