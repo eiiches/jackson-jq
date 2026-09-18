@@ -28,8 +28,8 @@ import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.OptimizationOptions;
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
-import net.thisptr.jackson.jq.v2.core.TailCallOptions;
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
@@ -346,7 +346,7 @@ public class Main {
 			});
 		}
 		if (command.hasOption(OPT_DISABLE_TCO.getLongOpt()))
-			compileOptionsBuilder.setTailCallOptions(TailCallOptions.newBuilder().setEnabled(false).build());
+			compileOptionsBuilder.setOptimizationOptions(OptimizationOptions.newBuilder().setTailCallOptimization(false).build());
 		CompileOptions compileOptions = compileOptionsBuilder.build();
 		JsonQuery<N> jq = compileOrExit(env, query, compileOptions).withRuntimeOptions(runtimeOptions);
 		boolean compact = command.hasOption(OPT_COMPACT.getOpt());

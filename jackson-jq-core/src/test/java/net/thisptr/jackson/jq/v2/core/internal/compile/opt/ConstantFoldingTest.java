@@ -19,6 +19,7 @@ import net.thisptr.jackson.jq.v2.core.ConstantFoldingOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.OptimizationOptions;
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
@@ -173,7 +174,9 @@ public class ConstantFoldingTest {
 	}
 
 	private static CompileOptions folding(ConstantFoldingOptions constantFoldingOptions) {
-		return CompileOptions.newBuilder().setConstantFoldingOptions(constantFoldingOptions).build();
+		return CompileOptions.newBuilder()
+				.setOptimizationOptions(OptimizationOptions.newBuilder().setConstantFoldingOptions(constantFoldingOptions).build())
+				.build();
 	}
 
 	private static List<JsonNode> apply(JsonQuery<JsonNode> query, String input) throws JsonQueryException {

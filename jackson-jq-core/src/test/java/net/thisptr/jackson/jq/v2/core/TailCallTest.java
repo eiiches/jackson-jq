@@ -35,7 +35,7 @@ class TailCallTest {
 	private static final int DEEP = 100_000;
 
 	private static final CompileOptions WITHOUT_TAIL_CALLS = CompileOptions.newBuilder()
-			.setTailCallOptions(TailCallOptions.newBuilder().setEnabled(false).build())
+			.setOptimizationOptions(OptimizationOptions.newBuilder().setTailCallOptimization(false).build())
 			.build();
 
 	private static List<JsonNode> run(String q) throws JsonQueryException {

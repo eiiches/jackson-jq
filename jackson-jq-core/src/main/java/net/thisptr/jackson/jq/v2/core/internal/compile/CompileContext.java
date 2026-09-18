@@ -11,8 +11,7 @@ import java.util.Set;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.core.ConstantFoldingOptions;
-import net.thisptr.jackson.jq.v2.core.TailCallOptions;
+import net.thisptr.jackson.jq.v2.core.OptimizationOptions;
 import net.thisptr.jackson.jq.v2.core.internal.compile.opt.FoldPlanner;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -154,11 +153,11 @@ public class CompileContext {
 	}
 
 	public CompileContext(boolean exportTopLevelFunctions, boolean meterRuntimeBudgets) {
-		this(exportTopLevelFunctions, meterRuntimeBudgets, ConstantFoldingOptions.newBuilder().build(), TailCallOptions.newBuilder().build());
+		this(exportTopLevelFunctions, meterRuntimeBudgets, OptimizationOptions.newBuilder().build());
 	}
 
-	public CompileContext(boolean exportTopLevelFunctions, boolean meterRuntimeBudgets, ConstantFoldingOptions constantFoldingOptions, TailCallOptions tailCallOptions) {
-		this(exportTopLevelFunctions, meterRuntimeBudgets, tailCallOptions.isEnabled(), new JqFunctionCompiler.State(), Collections.emptySet(), Collections.emptySet(), new GlobalState(), new FoldPlanner(constantFoldingOptions));
+	public CompileContext(boolean exportTopLevelFunctions, boolean meterRuntimeBudgets, OptimizationOptions optimizationOptions) {
+		this(exportTopLevelFunctions, meterRuntimeBudgets, optimizationOptions.getTailCallOptimization(), new JqFunctionCompiler.State(), Collections.emptySet(), Collections.emptySet(), new GlobalState(), new FoldPlanner(optimizationOptions.getConstantFoldingOptions()));
 	}
 
 	private CompileContext(boolean exportTopLevelFunctions, boolean meterRuntimeBudgets, boolean tailCallsEnabled, JqFunctionCompiler.State jqFunctionState, Set<JqFunctionCompiler.DefinitionKey> activeJqFunctions, Set<JqFunctionCompiler.DefinitionKey> genericJqFunctions, GlobalState globalState, FoldPlanner foldPlanner) {

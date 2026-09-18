@@ -33,12 +33,12 @@ class CompileOptionsTest {
 
 	@Test
 	void tailCallOptimizationIsOnByDefaultAndCanBeTurnedOff() throws JsonQueryException {
-		assertThat(CompileOptions.newBuilder().build().getTailCallOptions().isEnabled()).isTrue();
+		assertThat(CompileOptions.newBuilder().build().getOptimizationOptions().getTailCallOptimization()).isTrue();
 
 		CompileOptions off = CompileOptions.newBuilder()
-				.setTailCallOptions(TailCallOptions.newBuilder().setEnabled(false).build())
+				.setOptimizationOptions(OptimizationOptions.newBuilder().setTailCallOptimization(false).build())
 				.build();
-		assertThat(off.getTailCallOptions().isEnabled()).isFalse();
+		assertThat(off.getOptimizationOptions().getTailCallOptimization()).isFalse();
 
 		// Both compile the same query to the same values; what differs is only what it costs the Java stack,
 		// which TailCallTest covers.
@@ -198,7 +198,7 @@ class CompileOptionsTest {
 
 	@Test
 	void constantFoldingIsOnByDefaultAndBoundedByDefault() {
-		ConstantFoldingOptions folding = CompileOptions.newBuilder().build().getConstantFoldingOptions();
+		ConstantFoldingOptions folding = CompileOptions.newBuilder().build().getOptimizationOptions().getConstantFoldingOptions();
 
 		assertThat(folding.isEnabled()).isTrue();
 		assertThat(folding.getMaxResults()).isEqualTo(256);
@@ -217,33 +217,40 @@ class CompileOptionsTest {
 	@Test
 	void optionsLeftAtTheirDefaultsShareOneInstance() {
 		assertThat(CompileOptions.newBuilder().build()).isSameAs(CompileOptions.newBuilder().build());
+		assertThat(OptimizationOptions.newBuilder().build()).isSameAs(OptimizationOptions.newBuilder().build());
 		assertThat(ConstantFoldingOptions.newBuilder().build()).isSameAs(ConstantFoldingOptions.newBuilder().build());
 
 		// Setting a folding option to its default value still yields the shared default.
 		assertThat(CompileOptions.newBuilder()
-				.setConstantFoldingOptions(ConstantFoldingOptions.newBuilder().build())
+				.setOptimizationOptions(OptimizationOptions.newBuilder()
+						.setConstantFoldingOptions(ConstantFoldingOptions.newBuilder().build())
+						.build())
 				.build()).isSameAs(CompileOptions.newBuilder().build());
 
 		assertThat(CompileOptions.newBuilder()
-				.setConstantFoldingOptions(ConstantFoldingOptions.newBuilder().setMaxResults(8).build())
+				.setOptimizationOptions(OptimizationOptions.newBuilder()
+						.setConstantFoldingOptions(ConstantFoldingOptions.newBuilder().setMaxResults(8).build())
+						.build())
 				.build()).isNotSameAs(CompileOptions.newBuilder().build());
 	}
 
 	@Test
 	void oneConstantFoldingOptionsCompilesAnyNumberOfQueries() throws JsonQueryException {
 		CompileOptions options = CompileOptions.newBuilder()
-				.setConstantFoldingOptions(ConstantFoldingOptions.newBuilder().setEnabled(false).build())
+				.setOptimizationOptions(OptimizationOptions.newBuilder()
+						.setConstantFoldingOptions(ConstantFoldingOptions.newBuilder().setEnabled(false).build())
+						.build())
 				.build();
 		Environment<JsonNode> env = environment();
 
 		assertThat(env.compile("1 + 1", options)).isNotNull();
 		assertThat(env.compile("2 + 2", options)).isNotNull();
-		assertThat(options.getConstantFoldingOptions().isEnabled()).isFalse();
+		assertThat(options.getOptimizationOptions().getConstantFoldingOptions().isEnabled()).isFalse();
 	}
 
 	@Test
 	void aNegativeMaxResultsIsRejected() {
-		// The null guards on setRuntimeOptions/setConstantFoldingOptions are not asserted here: NullAway
+		// The null guards on setRuntimeOptions/setOptimizationOptions/setConstantFoldingOptions are not asserted here: NullAway
 		// rejects the call at compile time, so only a caller outside its reach can reach them.
 		assertThatThrownBy(() -> ConstantFoldingOptions.newBuilder().setMaxResults(-1))
 				.isInstanceOf(IllegalArgumentException.class)

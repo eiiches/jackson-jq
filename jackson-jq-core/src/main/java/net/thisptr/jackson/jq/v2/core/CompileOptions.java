@@ -14,16 +14,14 @@ import net.thisptr.jackson.jq.v2.core.diagnostic.DiagnosticListener;
  * ones. Build one with {@link #newBuilder()}.
  */
 public final class CompileOptions {
-	private static final CompileOptions DEFAULT = new CompileOptions(null, ConstantFoldingOptions.getDefaultInstance(), TailCallOptions.getDefaultInstance());
+	private static final CompileOptions DEFAULT = new CompileOptions(null, OptimizationOptions.getDefaultInstance());
 
 	private final @Nullable DiagnosticListener diagnosticListener;
-	private final ConstantFoldingOptions constantFoldingOptions;
-	private final TailCallOptions tailCallOptions;
+	private final OptimizationOptions optimizationOptions;
 
-	private CompileOptions(@Nullable DiagnosticListener diagnosticListener, ConstantFoldingOptions constantFoldingOptions, TailCallOptions tailCallOptions) {
+	private CompileOptions(@Nullable DiagnosticListener diagnosticListener, OptimizationOptions optimizationOptions) {
 		this.diagnosticListener = diagnosticListener;
-		this.constantFoldingOptions = constantFoldingOptions;
-		this.tailCallOptions = tailCallOptions;
+		this.optimizationOptions = optimizationOptions;
 	}
 
 	// Package-private: Environment's no-options overload needs an instance to pass to compile(), but
@@ -34,7 +32,7 @@ public final class CompileOptions {
 
 	/**
 	 * Creates a builder with every setting at its default. No diagnostics are produced until a
-	 * listener is set, and constant folding and tail-call optimization are on.
+	 * listener is set, and every optimization is on.
 	 *
 	 * @return a new builder
 	 */
@@ -52,21 +50,12 @@ public final class CompileOptions {
 	}
 
 	/**
-	 * Returns how much the compiler may evaluate while compiling.
+	 * Returns the compile-time optimization settings.
 	 *
-	 * @return the constant-folding settings, never {@code null}
+	 * @return the optimization settings, never {@code null}
 	 */
-	public ConstantFoldingOptions getConstantFoldingOptions() {
-		return constantFoldingOptions;
-	}
-
-	/**
-	 * Returns whether a call in tail position is compiled as a loop.
-	 *
-	 * @return the tail-call settings, never {@code null}
-	 */
-	public TailCallOptions getTailCallOptions() {
-		return tailCallOptions;
+	public OptimizationOptions getOptimizationOptions() {
+		return optimizationOptions;
 	}
 
 	/**
@@ -74,8 +63,7 @@ public final class CompileOptions {
 	 */
 	public static final class Builder {
 		private @Nullable DiagnosticListener diagnosticListener;
-		private ConstantFoldingOptions constantFoldingOptions = ConstantFoldingOptions.getDefaultInstance();
-		private TailCallOptions tailCallOptions = TailCallOptions.getDefaultInstance();
+		private OptimizationOptions optimizationOptions = OptimizationOptions.getDefaultInstance();
 
 		private Builder() {
 		}
@@ -94,35 +82,14 @@ public final class CompileOptions {
 		}
 
 		/**
-		 * Sets how much the compiler may evaluate while compiling.
-		 * <p>
-		 * By default a constant expression is evaluated once, here, and the compiled query emits the values
-		 * it found rather than running the expression again. See {@link ConstantFoldingOptions} for what
-		 * that costs and for why turning it off changes which budgets bound a constant expression.
+		 * Sets the compile-time optimization settings.
 		 *
-		 * @param constantFoldingOptions the constant-folding settings
+		 * @param optimizationOptions the optimization settings
 		 * @return this, for chaining
-		 * @throws NullPointerException if {@code constantFoldingOptions} is {@code null}
+		 * @throws NullPointerException if {@code optimizationOptions} is {@code null}
 		 */
-		public Builder setConstantFoldingOptions(ConstantFoldingOptions constantFoldingOptions) {
-			this.constantFoldingOptions = Objects.requireNonNull(constantFoldingOptions, "constantFoldingOptions");
-			return this;
-		}
-
-		/**
-		 * Sets whether a call in tail position is compiled as a loop.
-		 * <p>
-		 * By default it is, which is what lets a recursive {@code def} -- and the jq-defined {@code until},
-		 * {@code while} and {@code recurse} -- iterate as far as jq's own do instead of exhausting the Java
-		 * stack after a few hundred iterations. See {@link TailCallOptions} for exactly when it applies and
-		 * what turning it off brings back.
-		 *
-		 * @param tailCallOptions the tail-call settings
-		 * @return this, for chaining
-		 * @throws NullPointerException if {@code tailCallOptions} is {@code null}
-		 */
-		public Builder setTailCallOptions(TailCallOptions tailCallOptions) {
-			this.tailCallOptions = Objects.requireNonNull(tailCallOptions, "tailCallOptions");
+		public Builder setOptimizationOptions(OptimizationOptions optimizationOptions) {
+			this.optimizationOptions = Objects.requireNonNull(optimizationOptions, "optimizationOptions");
 			return this;
 		}
 
@@ -132,9 +99,9 @@ public final class CompileOptions {
 		 * @return the options, never {@code null}
 		 */
 		public CompileOptions build() {
-			if (diagnosticListener == null && constantFoldingOptions == ConstantFoldingOptions.getDefaultInstance() && tailCallOptions == TailCallOptions.getDefaultInstance())
+			if (diagnosticListener == null && optimizationOptions == OptimizationOptions.getDefaultInstance())
 				return DEFAULT;
-			return new CompileOptions(diagnosticListener, constantFoldingOptions, tailCallOptions);
+			return new CompileOptions(diagnosticListener, optimizationOptions);
 		}
 	}
 }

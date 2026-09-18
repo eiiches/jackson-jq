@@ -4,7 +4,7 @@ import java.util.Objects;
 
 /**
  * How much the compiler may evaluate while compiling, applied with
- * {@link CompileOptions.Builder#setConstantFoldingOptions(ConstantFoldingOptions)}.
+ * {@link OptimizationOptions.Builder#setConstantFoldingOptions(ConstantFoldingOptions)}.
  * <p>
  * An expression that depends on neither the input, nor external state, nor a variable has the same result
  * every time, so the compiler evaluates it once, while compiling, and the compiled query emits the values it
@@ -25,7 +25,7 @@ import java.util.Objects;
  * expression back under the caller's own limits. {@link Builder#setEnabled(boolean) setEnabled(false)} puts
  * every expression back there.
  *
- * @see CompileOptions
+ * @see OptimizationOptions
  * @see RuntimeOptions
  */
 public final class ConstantFoldingOptions {

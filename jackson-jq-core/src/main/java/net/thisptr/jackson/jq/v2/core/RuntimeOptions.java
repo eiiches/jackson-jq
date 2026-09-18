@@ -17,10 +17,10 @@ package net.thisptr.jackson.jq.v2.core;
  * <p>
  * Options attach to an already-compiled query, which is strictly after that has happened, so these numbers
  * cannot cover it by themselves. What bounds compile-time evaluation is {@link ConstantFoldingOptions},
- * set on {@link CompileOptions}: bounded by default and deliberately small, since an expression that would
- * exceed it is not folded at all, which puts it back on the evaluation path where these limits apply to it
- * in full. So the work a constant expression can do unmetered is bounded, just not by this class, and it is
- * done once per {@code compile()} rather than once per input.
+ * set through {@link OptimizationOptions}: bounded by default and deliberately small, since an expression
+ * that would exceed it is not folded at all, which puts it back on the evaluation path where these limits
+ * apply to it in full. So the work a constant expression can do unmetered is bounded, just not by this
+ * class, and it is done once per {@code compile()} rather than once per input.
  * <p>
  * Two ways to bring it under a caller's control. Passing the same {@code RuntimeOptions} to
  * {@link ConstantFoldingOptions.Builder#setRuntimeOptions(RuntimeOptions)} and to

@@ -18,6 +18,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.OptimizationOptions;
 import net.thisptr.jackson.jq.v2.core.diagnostic.DiagnosticListener;
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
@@ -184,7 +185,8 @@ public class Compiler {
 		if (diagnosticListener != null)
 			PipeParenthesesCheck.run(ast, diagnosticListener);
 
-		CompileContext context = new CompileContext(exportTopLevelFunctions, meterRuntimeBudgets, options.getConstantFoldingOptions(), options.getTailCallOptions());
+		OptimizationOptions optimizationOptions = options.getOptimizationOptions();
+		CompileContext context = new CompileContext(exportTopLevelFunctions, meterRuntimeBudgets, optimizationOptions);
 		FoldPlanner foldPlanner = context.foldPlanner();
 		boolean planFolds = meterRuntimeBudgets && foldPlanner.isEnabled();
 		if (planFolds)
