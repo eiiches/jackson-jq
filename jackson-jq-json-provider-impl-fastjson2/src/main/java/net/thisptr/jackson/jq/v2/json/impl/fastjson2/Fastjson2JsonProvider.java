@@ -14,6 +14,7 @@ import com.alibaba.fastjson2.JSONException;
 import com.alibaba.fastjson2.JSONFactory;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.JSONReader;
+import com.alibaba.fastjson2.JSONWriter;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
@@ -106,7 +107,7 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 
 	@Override
 	public Object createBinary(byte[] bytes) {
-		throw new UnsupportedOperationException("Fastjson2 has no binary node type");
+		return bytes;
 	}
 
 	@Override
@@ -123,6 +124,8 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 			return JsonNodeType.NUMBER;
 		if (node instanceof Boolean)
 			return JsonNodeType.BOOLEAN;
+		if (node instanceof byte[])
+			return JsonNodeType.BINARY;
 		throw new IllegalStateException("Unknown Fastjson2 node type: " + node.getClass());
 	}
 
@@ -158,7 +161,7 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 
 	@Override
 	public boolean isBinary(Object node) {
-		return false;
+		return node instanceof byte[];
 	}
 
 	@Override
@@ -304,7 +307,9 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 
 	@Override
 	public byte[] getBinaryAsByteArray(Object node) {
-		throw new IllegalArgumentException("Cannot get the binary value of " + getNodeType(node));
+		if (!(node instanceof byte[]))
+			throw new IllegalArgumentException("Cannot get the binary value of " + getNodeType(node));
+		return (byte[]) node;
 	}
 
 	@Override
@@ -378,6 +383,8 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 				result.add(deepCopy(value));
 			return result;
 		}
+		if (node instanceof byte[])
+			return ((byte[]) node).clone();
 		return node;
 	}
 
@@ -395,6 +402,8 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 			return node.toString();
 		if (node instanceof String)
 			return JSON.toJSONString(node);
+		if (node instanceof byte[])
+			return JSON.toJSONString(node, JSONWriter.Feature.WriteByteArrayAsBase64);
 		if (node instanceof JSONArray) {
 			StringBuilder result = new StringBuilder("[");
 			@Var boolean first = true;
