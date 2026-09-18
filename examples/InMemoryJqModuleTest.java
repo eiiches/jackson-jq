@@ -64,7 +64,7 @@ public class InMemoryJqModuleTest {
 		}
 
 		@Override
-		public String getSource() {
+		public String getSourceCode() {
 			return source;
 		}
 

@@ -348,7 +348,7 @@ public class RuntimeOptionsTest {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
 				.addImportedModule("math", new JqModule<JsonNode>() {
 					@Override
-					public String getSource() {
+					public String getSourceCode() {
 						return "def square($x): $x * $x;";
 					}
 
@@ -459,7 +459,7 @@ public class RuntimeOptionsTest {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
 				.addImportedModule("gen", new JqModule<JsonNode>() {
 					@Override
-					public String getSource() {
+					public String getSourceCode() {
 						return "def nums: 1, 2, 3, 4, 5;\ndef total: reduce nums as $x (0; . + $x);";
 					}
 

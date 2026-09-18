@@ -162,7 +162,7 @@ public final class ModuleResolver<JsonNode> {
 			// A module off a search path is somebody else's library, so it is compiled with default
 			// options -- the caller asked for diagnostics about their own query, not about the jq
 			// files it happens to import.
-			JavaModule result = compileSource(moduleEnvironment(), CompileOptions.newBuilder().build(), new ModuleScope<>(this, module), module.getSource());
+			JavaModule result = compileSource(moduleEnvironment(), CompileOptions.newBuilder().build(), new ModuleScope<>(this, module), module.getSourceCode());
 			compiled.put(module, result);
 			return result;
 		} finally {

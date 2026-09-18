@@ -99,7 +99,7 @@ public class ModuleResolverTest {
 		}
 
 		@Override
-		public String getSource() {
+		public String getSourceCode() {
 			return source;
 		}
 

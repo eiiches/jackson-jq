@@ -30,7 +30,7 @@ public non-sealed interface JqModule<JsonNode> extends Module {
 	 *
 	 * @return the source text
 	 */
-	String getSource();
+	String getSourceCode();
 
 	/**
 	 * Resolves an import written inside this module against this module's own location -- what

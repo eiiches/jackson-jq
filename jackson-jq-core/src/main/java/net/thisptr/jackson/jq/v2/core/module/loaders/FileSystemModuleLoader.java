@@ -73,7 +73,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		}
 
 		@Override
-		public String getSource() {
+		public String getSourceCode() {
 			return source;
 		}
 
