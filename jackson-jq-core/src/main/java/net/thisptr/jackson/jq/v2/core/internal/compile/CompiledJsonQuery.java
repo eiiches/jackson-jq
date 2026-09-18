@@ -39,7 +39,7 @@ final class CompiledJsonQuery<JsonNode> implements JsonQuery<JsonNode> {
 	@Override
 	public JsonQuery<JsonNode> withRuntimeOptions(RuntimeOptions options) {
 		Objects.requireNonNull(options, "options");
-		RuntimeLimitsImpl limits = new RuntimeLimitsImpl(options.getMaxArrayLength(), options.getMaxObjectMemberCount(), options.getMaxStringLength(), options.getMaxUserDefinedFunctionCalls(), options.getMaxOutputsPerExpression());
+		RuntimeLimitsImpl limits = new RuntimeLimitsImpl(options.getMaxArrayLength(), options.getMaxObjectMemberCount(), options.getMaxStringLength(), options.getMaxBinaryLength(), options.getMaxUserDefinedFunctionCalls(), options.getMaxOutputsPerExpression());
 		return new CompiledJsonQuery<>(rootExpr, limits, globals);
 	}
 

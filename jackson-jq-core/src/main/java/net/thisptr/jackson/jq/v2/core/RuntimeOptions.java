@@ -29,18 +29,20 @@ package net.thisptr.jackson.jq.v2.core;
  * every expression is evaluated and everything here meters it.
  */
 public final class RuntimeOptions {
-	private static final RuntimeOptions DEFAULT = new RuntimeOptions(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE);
+	private static final RuntimeOptions DEFAULT = new RuntimeOptions(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE);
 
 	private final int maxArrayLength;
 	private final int maxObjectMemberCount;
 	private final int maxStringLength;
+	private final int maxBinaryLength;
 	private final long maxUserDefinedFunctionCalls;
 	private final long maxOutputsPerExpression;
 
-	private RuntimeOptions(int maxArrayLength, int maxObjectMemberCount, int maxStringLength, long maxUserDefinedFunctionCalls, long maxOutputsPerExpression) {
+	private RuntimeOptions(int maxArrayLength, int maxObjectMemberCount, int maxStringLength, int maxBinaryLength, long maxUserDefinedFunctionCalls, long maxOutputsPerExpression) {
 		this.maxArrayLength = maxArrayLength;
 		this.maxObjectMemberCount = maxObjectMemberCount;
 		this.maxStringLength = maxStringLength;
+		this.maxBinaryLength = maxBinaryLength;
 		this.maxUserDefinedFunctionCalls = maxUserDefinedFunctionCalls;
 		this.maxOutputsPerExpression = maxOutputsPerExpression;
 	}
@@ -84,6 +86,15 @@ public final class RuntimeOptions {
 	 */
 	public int getMaxStringLength() {
 		return maxStringLength;
+	}
+
+	/**
+	 * Returns the largest number of bytes a binary value produced during evaluation may have.
+	 *
+	 * @return the maximum binary value length, or {@link Integer#MAX_VALUE} for no limit
+	 */
+	public int getMaxBinaryLength() {
+		return maxBinaryLength;
 	}
 
 	/**
@@ -135,6 +146,7 @@ public final class RuntimeOptions {
 		private int maxArrayLength = Integer.MAX_VALUE;
 		private int maxObjectMemberCount = Integer.MAX_VALUE;
 		private int maxStringLength = Integer.MAX_VALUE;
+		private int maxBinaryLength = Integer.MAX_VALUE;
 		private long maxUserDefinedFunctionCalls = Long.MAX_VALUE;
 		private long maxOutputsPerExpression = Long.MAX_VALUE;
 
@@ -194,6 +206,23 @@ public final class RuntimeOptions {
 		}
 
 		/**
+		 * Sets the largest number of bytes a binary value produced during evaluation may have.
+		 * <p>
+		 * By default binary values are unbounded. This limit applies to binary values produced by an
+		 * operation, not binary input values supplied by the caller.
+		 *
+		 * @param maxBinaryLength the maximum binary value length; {@link Integer#MAX_VALUE} for no limit
+		 * @return this, for chaining
+		 * @throws IllegalArgumentException if {@code maxBinaryLength} is negative
+		 */
+		public Builder setMaxBinaryLength(int maxBinaryLength) {
+			if (maxBinaryLength < 0)
+				throw new IllegalArgumentException("maxBinaryLength must not be negative");
+			this.maxBinaryLength = maxBinaryLength;
+			return this;
+		}
+
+		/**
 		 * Sets the largest number of user-defined function calls one evaluation may make.
 		 * <p>
 		 * By default nothing is bounded, so a runaway query such as {@code def f: f; f} runs until it
@@ -238,9 +267,9 @@ public final class RuntimeOptions {
 		 * @return the options, never {@code null}
 		 */
 		public RuntimeOptions build() {
-			if (maxArrayLength == Integer.MAX_VALUE && maxObjectMemberCount == Integer.MAX_VALUE && maxStringLength == Integer.MAX_VALUE && maxUserDefinedFunctionCalls == Long.MAX_VALUE && maxOutputsPerExpression == Long.MAX_VALUE)
+			if (maxArrayLength == Integer.MAX_VALUE && maxObjectMemberCount == Integer.MAX_VALUE && maxStringLength == Integer.MAX_VALUE && maxBinaryLength == Integer.MAX_VALUE && maxUserDefinedFunctionCalls == Long.MAX_VALUE && maxOutputsPerExpression == Long.MAX_VALUE)
 				return DEFAULT;
-			return new RuntimeOptions(maxArrayLength, maxObjectMemberCount, maxStringLength, maxUserDefinedFunctionCalls, maxOutputsPerExpression);
+			return new RuntimeOptions(maxArrayLength, maxObjectMemberCount, maxStringLength, maxBinaryLength, maxUserDefinedFunctionCalls, maxOutputsPerExpression);
 		}
 	}
 }

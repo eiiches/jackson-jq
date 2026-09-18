@@ -107,7 +107,7 @@ final class ConstantFolder {
 		// silently dominates the number the caller set.
 		this.maxTotalResults = 256L * options.getMaxResults();
 		this.limits = new RuntimeLimitsImpl(runtimeOptions.getMaxArrayLength(), runtimeOptions.getMaxObjectMemberCount(),
-				runtimeOptions.getMaxStringLength(), runtimeOptions.getMaxUserDefinedFunctionCalls(), runtimeOptions.getMaxOutputsPerExpression());
+				runtimeOptions.getMaxStringLength(), runtimeOptions.getMaxBinaryLength(), runtimeOptions.getMaxUserDefinedFunctionCalls(), runtimeOptions.getMaxOutputsPerExpression());
 	}
 
 	/**

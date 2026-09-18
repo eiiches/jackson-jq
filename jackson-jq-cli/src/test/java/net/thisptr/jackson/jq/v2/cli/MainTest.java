@@ -292,16 +292,18 @@ class MainTest {
 	void configuresRuntimeLimits() throws Exception {
 		RuntimeOptions options = Main.createRuntimeOptions(parseLimits(
 				"--max-string-length", "11",
-				"--max-array-length", "12",
-				"--max-object-member-count", "13",
-				"--max-user-defined-function-calls", "14",
-				"--max-outputs-per-expression", "15"));
+				"--max-binary-length", "12",
+				"--max-array-length", "13",
+				"--max-object-member-count", "14",
+				"--max-user-defined-function-calls", "15",
+				"--max-outputs-per-expression", "16"));
 
 		assertThat(options.getMaxStringLength()).isEqualTo(11);
-		assertThat(options.getMaxArrayLength()).isEqualTo(12);
-		assertThat(options.getMaxObjectMemberCount()).isEqualTo(13);
-		assertThat(options.getMaxUserDefinedFunctionCalls()).isEqualTo(14);
-		assertThat(options.getMaxOutputsPerExpression()).isEqualTo(15);
+		assertThat(options.getMaxBinaryLength()).isEqualTo(12);
+		assertThat(options.getMaxArrayLength()).isEqualTo(13);
+		assertThat(options.getMaxObjectMemberCount()).isEqualTo(14);
+		assertThat(options.getMaxUserDefinedFunctionCalls()).isEqualTo(15);
+		assertThat(options.getMaxOutputsPerExpression()).isEqualTo(16);
 	}
 
 	@Test
@@ -309,6 +311,7 @@ class MainTest {
 		RuntimeOptions options = Main.createRuntimeOptions(parseLimits());
 
 		assertThat(options.getMaxStringLength()).isEqualTo(Integer.MAX_VALUE);
+		assertThat(options.getMaxBinaryLength()).isEqualTo(Integer.MAX_VALUE);
 		assertThat(options.getMaxArrayLength()).isEqualTo(Integer.MAX_VALUE);
 		assertThat(options.getMaxObjectMemberCount()).isEqualTo(Integer.MAX_VALUE);
 		assertThat(options.getMaxUserDefinedFunctionCalls()).isEqualTo(Long.MAX_VALUE);
@@ -316,7 +319,7 @@ class MainTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "--max-string-length", "--max-array-length", "--max-object-member-count", "--max-user-defined-function-calls", "--max-outputs-per-expression" })
+	@ValueSource(strings = { "--max-string-length", "--max-binary-length", "--max-array-length", "--max-object-member-count", "--max-user-defined-function-calls", "--max-outputs-per-expression" })
 	void rejectsInvalidRuntimeLimits(String option) throws Exception {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> Main.createRuntimeOptions(parseLimits(option, "-1")))
@@ -347,6 +350,7 @@ class MainTest {
 	private static CommandLine parseLimits(String... args) throws Exception {
 		Options options = new Options();
 		options.addOption(Option.builder().longOpt("max-string-length").numberOfArgs(1).get());
+		options.addOption(Option.builder().longOpt("max-binary-length").numberOfArgs(1).get());
 		options.addOption(Option.builder().longOpt("max-array-length").numberOfArgs(1).get());
 		options.addOption(Option.builder().longOpt("max-object-member-count").numberOfArgs(1).get());
 		options.addOption(Option.builder().longOpt("max-user-defined-function-calls").numberOfArgs(1).get());

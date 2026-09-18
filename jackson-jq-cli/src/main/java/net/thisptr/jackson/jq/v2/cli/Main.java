@@ -108,6 +108,11 @@ public class Main {
 			.desc("maximum length of strings produced during evaluation (default: unlimited)")
 			.numberOfArgs(1)
 			.get();
+	private static final Option OPT_MAX_BINARY_LENGTH = Option.builder()
+			.longOpt("max-binary-length")
+			.desc("maximum number of bytes in binary values produced during evaluation (default: unlimited)")
+			.numberOfArgs(1)
+			.get();
 	private static final Option OPT_MAX_ARRAY_LENGTH = Option.builder()
 			.longOpt("max-array-length")
 			.desc("maximum number of elements in arrays produced during evaluation (default: unlimited)")
@@ -146,6 +151,7 @@ public class Main {
 		options.addOption(OPT_NO_WARNINGS);
 		options.addOption(OPT_DISABLE_TCO);
 		options.addOption(OPT_MAX_STRING_LENGTH);
+		options.addOption(OPT_MAX_BINARY_LENGTH);
 		options.addOption(OPT_MAX_ARRAY_LENGTH);
 		options.addOption(OPT_MAX_OBJECT_MEMBER_COUNT);
 		options.addOption(OPT_MAX_USER_DEFINED_FUNCTION_CALLS);
@@ -217,6 +223,7 @@ public class Main {
 	static RuntimeOptions createRuntimeOptions(CommandLine command) {
 		return RuntimeOptions.newBuilder()
 				.setMaxStringLength(parseLimit(command, OPT_MAX_STRING_LENGTH))
+				.setMaxBinaryLength(parseLimit(command, OPT_MAX_BINARY_LENGTH))
 				.setMaxArrayLength(parseLimit(command, OPT_MAX_ARRAY_LENGTH))
 				.setMaxObjectMemberCount(parseLimit(command, OPT_MAX_OBJECT_MEMBER_COUNT))
 				.setMaxUserDefinedFunctionCalls(parseLongLimit(command, OPT_MAX_USER_DEFINED_FUNCTION_CALLS))
