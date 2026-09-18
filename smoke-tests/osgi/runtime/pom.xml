@@ -25,6 +25,12 @@
 		</dependency>
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-gzip</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
 			<artifactId>jackson-jq-ext-module-random</artifactId>
 			<version>${jackson-jq.version}</version>
 			<scope>runtime</scope>
@@ -62,6 +68,12 @@
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
 			<artifactId>jackson-jq-ext-module-uuid</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-zstd</artifactId>
 			<version>${jackson-jq.version}</version>
 			<scope>runtime</scope>
 		</dependency>

@@ -15,11 +15,13 @@ jjq_java_library(
     deps = [
         "//jackson-jq-core",
         "//jackson-jq-ext-module-debug",
+        "//jackson-jq-ext-module-gzip",
         "//jackson-jq-ext-module-random",
         "//jackson-jq-ext-module-re2",
         "//jackson-jq-ext-module-time",
         "//jackson-jq-ext-module-uri",
         "//jackson-jq-ext-module-uuid",
+        "//jackson-jq-ext-module-zstd",
         "//jackson-jq-json-provider",
         "//jackson-jq-json-provider-impl-fastjson2",
         "//jackson-jq-json-provider-impl-gson",

@@ -7,6 +7,7 @@
     "com.fasterxml.jackson.core:jackson-core": -2136216747,
     "com.fasterxml.jackson.core:jackson-databind": -647579619,
     "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml": 1804531274,
+    "com.github.luben:zstd-jni": 558948238,
     "com.google.code.findbugs:jsr305": 495355163,
     "com.google.code.gson:gson": -1136023703,
     "com.google.errorprone:error_prone_annotations": 911823543,
@@ -53,6 +54,8 @@
     "com.fasterxml.jackson.core:jackson-databind:jar:sources": 779577142,
     "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml": 1998256097,
     "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:sources": 597390101,
+    "com.github.luben:zstd-jni": -1044447834,
+    "com.github.luben:zstd-jni:jar:sources": 912833358,
     "com.google.code.findbugs:jsr305": 870839855,
     "com.google.code.findbugs:jsr305:jar:sources": -935881202,
     "com.google.code.gson:gson": 232429063,
@@ -223,6 +226,13 @@
         "sources": "09425e7d5a89546558263f18fd97492a6d045df1dd2a6ff575d0ed85b6d7b81e"
       },
       "version": "2.22.1"
+    },
+    "com.github.luben:zstd-jni": {
+      "shasums": {
+        "jar": "33661c9439a0898c4cc844d675bef56f6ea72e11079173c3cfc8f352c6e73f0c",
+        "sources": "3cbb19809552b151146935ff6dc71e877ed4f02f0b994952dd935fa7fa542bd4"
+      },
+      "version": "1.5.7-12"
     },
     "com.google.code.findbugs:jsr305": {
       "shasums": {
@@ -1004,6 +1014,10 @@
       "com.fasterxml.jackson.dataformat.yaml.snakeyaml.error",
       "com.fasterxml.jackson.dataformat.yaml.util"
     ],
+    "com.github.luben:zstd-jni": [
+      "com.github.luben.zstd",
+      "com.github.luben.zstd.util"
+    ],
     "com.google.code.findbugs:jsr305": [
       "javax.annotation",
       "javax.annotation.concurrent",
@@ -1755,6 +1769,8 @@
       "com.fasterxml.jackson.core:jackson-databind:jar:sources",
       "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml",
       "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:sources",
+      "com.github.luben:zstd-jni",
+      "com.github.luben:zstd-jni:jar:sources",
       "com.google.code.findbugs:jsr305",
       "com.google.code.findbugs:jsr305:jar:sources",
       "com.google.code.gson:gson",

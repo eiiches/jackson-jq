@@ -1,0 +1,18 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
+
+jjq_java_test_suite(
+    srcs = ["ZstdModuleTest.java"],
+    release = 8,
+    visibility = ["//jackson-jq-ext-module-zstd:__subpackages__"],
+    deps = [
+        "//jackson-jq-core",
+        "//jackson-jq-ext-module-zstd",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-gson",
+        "//jackson-jq-json-provider-impl-jackson2",
+        "//jackson-jq-spi",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+        "@maven//:com_github_luben_zstd_jni",
+        "@maven//:com_google_code_gson_gson",
+    ],
+)

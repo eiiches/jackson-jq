@@ -64,6 +64,11 @@
 		</dependency>
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-gzip</artifactId>
+			<version>${jackson-jq.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
 			<artifactId>jackson-jq-ext-module-random</artifactId>
 			<version>${jackson-jq.version}</version>
 		</dependency>
@@ -90,6 +95,11 @@
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
 			<artifactId>jackson-jq-ext-module-uuid</artifactId>
+			<version>${jackson-jq.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-zstd</artifactId>
 			<version>${jackson-jq.version}</version>
 		</dependency>
 	</dependencies>
@@ -129,6 +139,7 @@
 						<configuration>
 							<executable>${java.home}/bin/java</executable>
 							<arguments>
+								<argument>--enable-native-access=com.github.luben.zstd_jni</argument>
 								<argument>--module-path=${project.build.outputDirectory}:${project.build.directory}/module-path</argument>
 								<argument>--module</argument>
 								<argument>net.thisptr.jackson.jq.v2.smoketests.jpms/net.thisptr.jackson.jq.v2.smoketests.jpms.JacksonJqModuleSmokeTest</argument>

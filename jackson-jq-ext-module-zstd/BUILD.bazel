@@ -1,0 +1,18 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_mrjar", "jjq_maven_artifact")
+
+package(default_visibility = ["//visibility:public"])
+
+jjq_java_mrjar(
+    name = "jackson-jq-ext-module-zstd-mrjar",
+    osgi = True,
+    packages = [
+        "//jackson-jq-ext-module-zstd/src/main/java/net/thisptr/jackson/jq/v2/ext/zstd",
+    ],
+    release_overlays = {9: ["//jackson-jq-ext-module-zstd/src/main/java9:module-info"]},
+    resources = ["src/main/resources/META-INF/native-image/net.thisptr.jackson.jq.v2/jackson-jq-ext-module-zstd/native-image.properties"],
+)
+
+jjq_maven_artifact(
+    name = "jackson-jq-ext-module-zstd",
+    artifact = ":jackson-jq-ext-module-zstd-mrjar",
+)
