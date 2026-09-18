@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -359,10 +360,12 @@ public interface JsonProviderContractTest<T> {
 		try {
 			node = getProvider().createBinary(bytes);
 		} catch (UnsupportedOperationException e) {
+			assertThat(getProvider().getSupportedNodeTypes()).doesNotContain(JsonNodeType.BINARY);
 			// Documented for a provider whose library has no binary node type. Every node it can
 			// create is then non-binary, which testGetBinaryAsByteArrayRejectsNonBinary covers.
 			return;
 		}
+		assertThat(getProvider().getSupportedNodeTypes()).contains(JsonNodeType.BINARY);
 		assertTypePredicates(node, JsonNodeType.BINARY);
 		assertThat(getProvider().getBinaryAsByteArray(node)).isEqualTo(bytes);
 	}
@@ -446,6 +449,21 @@ public interface JsonProviderContractTest<T> {
 	// ====================
 	// Type Predicate Tests
 	// ====================
+
+	@Test
+	default void testGetSupportedNodeTypes() {
+		Set<JsonNodeType> supportedNodeTypes = getProvider().getSupportedNodeTypes();
+		assertThat(supportedNodeTypes).contains(
+				JsonNodeType.OBJECT,
+				JsonNodeType.ARRAY,
+				JsonNodeType.STRING,
+				JsonNodeType.NUMBER,
+				JsonNodeType.BOOLEAN,
+				JsonNodeType.NULL);
+		assertThat(getProvider().getSupportedNodeTypes()).isSameAs(supportedNodeTypes);
+		assertThatThrownBy(() -> supportedNodeTypes.remove(JsonNodeType.NULL))
+				.isInstanceOf(UnsupportedOperationException.class);
+	}
 
 	default void assertTypePredicates(T node, JsonNodeType expected) {
 		assertThat(getProvider().getNodeType(node)).as("getNodeType(%s)", getProvider().format(node)).isEqualTo(expected);

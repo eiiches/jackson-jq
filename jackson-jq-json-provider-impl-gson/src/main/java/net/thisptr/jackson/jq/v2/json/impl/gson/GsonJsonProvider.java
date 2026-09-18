@@ -9,8 +9,11 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.errorprone.annotations.Var;
 import com.google.gson.Gson;
@@ -32,6 +35,9 @@ import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.NumberType;
 
 public class GsonJsonProvider implements JsonProvider<JsonElement> {
+	private static final Set<JsonNodeType> SUPPORTED_NODE_TYPES = Collections.unmodifiableSet(EnumSet.of(
+			JsonNodeType.OBJECT, JsonNodeType.ARRAY, JsonNodeType.STRING, JsonNodeType.NUMBER,
+			JsonNodeType.BOOLEAN, JsonNodeType.NULL));
 	private static final GsonJsonProvider DEFAULT_INSTANCE = new GsonJsonProvider(GsonUtils.createJqCompatibleGson());
 
 	private final Gson gson;
@@ -113,6 +119,11 @@ public class GsonJsonProvider implements JsonProvider<JsonElement> {
 	@Override
 	public JsonElement createBinary(byte[] bytes) {
 		throw new UnsupportedOperationException("Gson has no binary node type");
+	}
+
+	@Override
+	public Set<JsonNodeType> getSupportedNodeTypes() {
+		return SUPPORTED_NODE_TYPES;
 	}
 
 	@Override

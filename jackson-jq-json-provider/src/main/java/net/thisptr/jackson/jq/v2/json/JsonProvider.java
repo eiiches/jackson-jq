@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
@@ -128,6 +129,15 @@ public interface JsonProvider<JsonNode> {
 	 * @throws UnsupportedOperationException if the provider has no binary node type
 	 */
 	JsonNode createBinary(byte[] bytes);
+
+	/**
+	 * Returns the node types this provider supports.
+	 * <p>
+	 * The returned set is immutable and shared across calls.
+	 *
+	 * @return the supported node types
+	 */
+	Set<JsonNodeType> getSupportedNodeTypes();
 
 	/**
 	 * Classifies the given node into one of {@link JsonNodeType}'s categories.

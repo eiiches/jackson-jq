@@ -4,8 +4,11 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import tools.jackson.core.JacksonException;
@@ -34,6 +37,7 @@ import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.NumberType;
 
 public class Jackson3JsonProvider implements JsonProvider<JsonNode> {
+	private static final Set<JsonNodeType> SUPPORTED_NODE_TYPES = Collections.unmodifiableSet(EnumSet.allOf(JsonNodeType.class));
 	private static final Jackson3JsonProvider DEFAULT_INSTANCE = new Jackson3JsonProvider(JsonMapper.builder().addModule(JsonQueryJacksonModule.getInstance()).build());
 
 	private final ObjectMapper mapper;
@@ -115,6 +119,11 @@ public class Jackson3JsonProvider implements JsonProvider<JsonNode> {
 	@Override
 	public JsonNode createBinary(byte[] bytes) {
 		return BinaryNode.valueOf(bytes);
+	}
+
+	@Override
+	public Set<JsonNodeType> getSupportedNodeTypes() {
+		return SUPPORTED_NODE_TYPES;
 	}
 
 	@Override

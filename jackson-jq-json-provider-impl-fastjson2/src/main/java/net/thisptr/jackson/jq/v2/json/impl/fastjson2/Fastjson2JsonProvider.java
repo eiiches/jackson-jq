@@ -5,8 +5,11 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
@@ -33,6 +36,7 @@ import net.thisptr.jackson.jq.v2.json.NumberType;
  * not an absence signal.
  */
 public class Fastjson2JsonProvider implements JsonProvider<Object> {
+	private static final Set<JsonNodeType> SUPPORTED_NODE_TYPES = Collections.unmodifiableSet(EnumSet.allOf(JsonNodeType.class));
 	private static final Fastjson2JsonProvider DEFAULT_INSTANCE = new Fastjson2JsonProvider();
 
 	/**
@@ -108,6 +112,11 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 	@Override
 	public Object createBinary(byte[] bytes) {
 		return bytes;
+	}
+
+	@Override
+	public Set<JsonNodeType> getSupportedNodeTypes() {
+		return SUPPORTED_NODE_TYPES;
 	}
 
 	@Override
