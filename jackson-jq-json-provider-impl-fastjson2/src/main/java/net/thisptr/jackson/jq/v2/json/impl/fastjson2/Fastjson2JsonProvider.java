@@ -37,6 +37,13 @@ import net.thisptr.jackson.jq.v2.json.NumberType;
  */
 public class Fastjson2JsonProvider implements JsonProvider<Object> {
 	private static final Set<JsonNodeType> SUPPORTED_NODE_TYPES = Collections.unmodifiableSet(EnumSet.allOf(JsonNodeType.class));
+	private static final Set<NumberType> SUPPORTED_NUMBER_TYPES = Collections.unmodifiableSet(EnumSet.of(
+			NumberType.INT,
+			NumberType.LONG,
+			NumberType.BIG_INTEGER,
+			NumberType.BIG_DECIMAL,
+			NumberType.FLOAT,
+			NumberType.DOUBLE));
 	private static final Fastjson2JsonProvider DEFAULT_INSTANCE = new Fastjson2JsonProvider();
 
 	/**
@@ -117,6 +124,11 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 	@Override
 	public Set<JsonNodeType> getSupportedNodeTypes() {
 		return SUPPORTED_NODE_TYPES;
+	}
+
+	@Override
+	public Set<NumberType> getSupportedNumberTypes() {
+		return SUPPORTED_NUMBER_TYPES;
 	}
 
 	@Override

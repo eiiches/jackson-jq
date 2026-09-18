@@ -140,6 +140,37 @@ public interface JsonProvider<JsonNode> {
 	Set<JsonNodeType> getSupportedNodeTypes();
 
 	/**
+	 * Returns the number types this provider can represent losslessly.
+	 * <p>
+	 * A type is a member when every value of that type survives a round trip: its whole range and
+	 * full precision, and for {@link NumberType#FLOAT} and {@link NumberType#DOUBLE} the non-finite
+	 * values -- {@code NaN} and the infinities -- as well.
+	 * <p>
+	 * Absence is not a promise that such values are rejected. A provider that does not hold
+	 * {@link NumberType#BIG_INTEGER} may still represent a small one exactly, as an {@code int} or a
+	 * {@code long}.
+	 * <p>
+	 * The set is closed under narrowing: where one type's values are a subset of another's, declaring
+	 * the wider type entails the narrower one. {@link NumberType#DOUBLE} entails
+	 * {@link NumberType#FLOAT}, because every {@code float} -- subnormals, signed zeros, {@code NaN}
+	 * and the infinities included -- is exactly a {@code double}; and {@link NumberType#BIG_DECIMAL}
+	 * entails {@link NumberType#BIG_INTEGER}, which entails {@link NumberType#LONG}, which entails
+	 * {@link NumberType#INT}. {@link NumberType#BIG_DECIMAL} entails neither floating-point type:
+	 * {@link BigDecimal} has no {@code NaN} and no infinities.
+	 * <p>
+	 * This describes the value domain, not the answer {@link #getNumberType(Object)} gives for any
+	 * particular node. A provider may widen on construction, or not track a node's representation at
+	 * all and report {@link NumberType#UNKNOWN}, while still representing every value of a declared
+	 * type exactly. {@link NumberType#UNKNOWN} is therefore never a member: it has no range or
+	 * precision to promise.
+	 * <p>
+	 * The returned set is immutable and shared across calls.
+	 *
+	 * @return the number types this provider can represent losslessly
+	 */
+	Set<NumberType> getSupportedNumberTypes();
+
+	/**
 	 * Classifies the given node into one of {@link JsonNodeType}'s categories.
 	 *
 	 * @param node the JSON node

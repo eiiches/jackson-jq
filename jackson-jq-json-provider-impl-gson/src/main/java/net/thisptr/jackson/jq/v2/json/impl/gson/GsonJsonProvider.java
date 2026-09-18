@@ -38,6 +38,13 @@ public class GsonJsonProvider implements JsonProvider<JsonElement> {
 	private static final Set<JsonNodeType> SUPPORTED_NODE_TYPES = Collections.unmodifiableSet(EnumSet.of(
 			JsonNodeType.OBJECT, JsonNodeType.ARRAY, JsonNodeType.STRING, JsonNodeType.NUMBER,
 			JsonNodeType.BOOLEAN, JsonNodeType.NULL));
+	private static final Set<NumberType> SUPPORTED_NUMBER_TYPES = Collections.unmodifiableSet(EnumSet.of(
+			NumberType.INT,
+			NumberType.LONG,
+			NumberType.BIG_INTEGER,
+			NumberType.BIG_DECIMAL,
+			NumberType.FLOAT,
+			NumberType.DOUBLE));
 	private static final GsonJsonProvider DEFAULT_INSTANCE = new GsonJsonProvider(GsonUtils.createJqCompatibleGson());
 
 	private final Gson gson;
@@ -124,6 +131,11 @@ public class GsonJsonProvider implements JsonProvider<JsonElement> {
 	@Override
 	public Set<JsonNodeType> getSupportedNodeTypes() {
 		return SUPPORTED_NODE_TYPES;
+	}
+
+	@Override
+	public Set<NumberType> getSupportedNumberTypes() {
+		return SUPPORTED_NUMBER_TYPES;
 	}
 
 	@Override

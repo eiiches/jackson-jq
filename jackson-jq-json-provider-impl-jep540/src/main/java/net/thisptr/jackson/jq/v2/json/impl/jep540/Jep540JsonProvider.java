@@ -44,6 +44,13 @@ public final class Jep540JsonProvider implements JsonProvider<JsonValue> {
 	private static final Set<JsonNodeType> SUPPORTED_NODE_TYPES = Collections.unmodifiableSet(EnumSet.of(
 			JsonNodeType.OBJECT, JsonNodeType.ARRAY, JsonNodeType.STRING, JsonNodeType.NUMBER,
 			JsonNodeType.BOOLEAN, JsonNodeType.NULL));
+	private static final Set<NumberType> SUPPORTED_NUMBER_TYPES = Collections.unmodifiableSet(EnumSet.of(
+			NumberType.INT,
+			NumberType.LONG,
+			NumberType.BIG_INTEGER,
+			NumberType.BIG_DECIMAL,
+			NumberType.FLOAT,
+			NumberType.DOUBLE));
 
 	private Jep540JsonProvider() {
 	}
@@ -123,6 +130,11 @@ public final class Jep540JsonProvider implements JsonProvider<JsonValue> {
 	@Override
 	public Set<JsonNodeType> getSupportedNodeTypes() {
 		return SUPPORTED_NODE_TYPES;
+	}
+
+	@Override
+	public Set<NumberType> getSupportedNumberTypes() {
+		return SUPPORTED_NUMBER_TYPES;
 	}
 
 	@Override
