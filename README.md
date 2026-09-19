@@ -107,7 +107,7 @@ Documentation
 
 * [Compatibility with jq](docs/compatibility.md)
 * [Regex](docs/regex.md)
-* [Extension modules](docs/extension-modules.md)
+* [Extension modules](docs/modules/README.md)
 * [Git branching and versioning](docs/development.md)
 
 Contributing
