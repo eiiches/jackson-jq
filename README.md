@@ -102,6 +102,35 @@ $ java -jar jackson-jq-cli-2.0.0-alpha2.jar --jq 1.6 'join("-")' # jq-1.6 can jo
 "1-2"
 ```
 
+### Interactive mode
+
+Pass `-i` / `--interactive` to open an interactive playground instead of evaluating the query once.
+The query is re-evaluated as you type, so you can build up a filter while watching the output.
+
+```sh
+$ cat maven_install.json | java -jar jackson-jq-cli-2.0.0-alpha2.jar -i
+
+$ curl -s https://api.github.com/repos/eiiches/jackson-jq | java -jar jackson-jq-cli-2.0.0-alpha2.jar -i '.name'
+```
+
+The query and any input files are optional; the query defaults to `.`, and `-n` starts the playground with `null` as the input.
+
+![interactive playground](docs/interactive-tui.png)
+
+The screen is split into a query editor, a diagnostics pane, and input and output previews. `Tab` (`Shift+Tab` for the reverse direction) moves the focus between them.
+
+| Key | Action |
+| --- | ------ |
+| `Ctrl+R` | evaluate the query now |
+| `Ctrl+P` | pause or resume automatic evaluation |
+| `Ctrl+O` | open the options dialog |
+| `Esc` | print the current output to stdout and quit |
+| `Ctrl+C` | quit without output; the equivalent non-interactive command line is printed to stderr |
+
+In the input and output previews, `↑`/`↓` (or `j`/`k`) move the cursor, `Ctrl+U`/`Ctrl+D` scroll by a page, `←`/`→` (or `h`/`l`) and `Space` collapse and expand nodes, `t` switches between the tree and text views, and `/` starts an incremental search (`n` and `N` jump between matches).
+
+The options dialog changes `-R`, `-s`, `-c` and `-r`, the jq version, the JSON provider, and the runtime limits without leaving the playground. Changes apply immediately and are reflected in the command line printed on exit.
+
 Documentation
 -------------
 
