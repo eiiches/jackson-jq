@@ -156,6 +156,12 @@ public class Main {
 			.desc("print this message")
 			.get();
 
+	static CommandLineParser createCommandLineParser() {
+		return DefaultParser.builder()
+				.setAllowPartialMatching(false)
+				.get();
+	}
+
 	public static void main(String[] args) throws Exception {
 		Options options = new Options();
 		options.addOption(OPT_COMPACT);
@@ -179,7 +185,7 @@ public class Main {
 		CommandLine command;
 		List<String> rest;
 		try {
-			CommandLineParser parser = new DefaultParser();
+			CommandLineParser parser = createCommandLineParser();
 			command = parser.parse(options, args);
 			rest = command.getArgList();
 		} catch (ParseException e) {
@@ -421,8 +427,8 @@ public class Main {
 		List<InputStream> streams = new ArrayList<>();
 		@Var boolean failed = false;
 		/*
-		 * jq still reads the input files with --null-input, so that input/inputs can consume them,
-		 * but jackson-jq has no such builtin and the files are simply left unread.
+		 * jq still reads input files with --null-input so that input/inputs can consume them, but
+		 * jackson-jq has no such builtin. Neither stdin nor input files are opened or read here.
 		 */
 		if (!nullInput) {
 			if (inputFiles.isEmpty()) {

@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.List;
 
 import dev.tamboui.backend.jline3.JLineBackend;
 import dev.tamboui.tui.TuiConfig;
@@ -16,9 +17,11 @@ import dev.tamboui.tui.TuiRunner;
 import dev.tamboui.tui.event.KeyCode;
 import dev.tamboui.tui.event.KeyEvent;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.UnrecognizedOptionException;
 import org.jline.terminal.Size;
 import org.jline.terminal.impl.LineDisciplineTerminal;
 import org.junit.jupiter.api.Test;
@@ -32,6 +35,7 @@ import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MainTest {
 	@ParameterizedTest
@@ -388,6 +392,34 @@ class MainTest {
 	}
 
 	@Test
+	void parsesInteractiveNullInputAsClusteredShortOptions() throws Exception {
+		Options options = interactiveNullInputOptions();
+
+		CommandLine clustered = Main.createCommandLineParser().parse(options, new String[] { "-in" });
+		CommandLine separate = Main.createCommandLineParser().parse(options, new String[] { "-i", "-n" });
+		CommandLine longOptions = Main.createCommandLineParser().parse(options, new String[] { "--interactive", "--null-input" });
+
+		for (CommandLine command : new CommandLine[] { clustered, separate, longOptions }) {
+			assertThat(command.hasOption("interactive")).isTrue();
+			assertThat(command.hasOption("null-input")).isTrue();
+			assertThat(command.getArgList()).isEmpty();
+		}
+	}
+
+	@Test
+	void rejectsPartialLongOptionNames() {
+		assertThatThrownBy(() -> Main.createCommandLineParser()
+				.parse(interactiveNullInputOptions(), new String[] { "--inter" }))
+				.isInstanceOf(UnrecognizedOptionException.class);
+	}
+
+	@Test
+	void interactiveNullInputDoesNotReadImplicitOrExplicitStdin() throws Exception {
+		assertInteractiveNullInputDoesNotReadStdin(Collections.emptyList());
+		assertInteractiveNullInputDoesNotReadStdin(Collections.singletonList("-"));
+	}
+
+	@Test
 	void testCreateDefaultRunnerWhenDevTtyAvailable() throws Exception {
 		if (new File("/dev/tty").exists()) {
 			try (TuiRunner runner = Main.createDefaultRunner()) {
@@ -409,6 +441,50 @@ class MainTest {
 				.hideCursor(false)
 				.backend(new JLineBackend(terminal))
 				.build());
+	}
+
+	private static Options interactiveNullInputOptions() {
+		Options options = new Options();
+		options.addOption(Option.builder("i").longOpt("interactive").get());
+		options.addOption(Option.builder("n").longOpt("null-input").get());
+		return options;
+	}
+
+	private static void assertInteractiveNullInputDoesNotReadStdin(List<String> inputFiles) throws Exception {
+		CommandLineParser parser = Main.createCommandLineParser();
+		CommandLine command = parser.parse(interactiveNullInputOptions(), new String[] { "-in" });
+		TuiRunner runner = createTestRunner("", new ByteArrayOutputStream());
+		runner.dispatch(KeyEvent.ofKey(KeyCode.ESCAPE));
+		runner.dispatch(KeyEvent.ofChar('y'));
+
+		InputStream originalIn = System.in;
+		PrintStream originalOut = System.out;
+		PrintStream originalErr = System.err;
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		ByteArrayOutputStream err = new ByteArrayOutputStream();
+		try {
+			System.setIn(new InputStream() {
+				@Override
+				public int read() {
+					throw new AssertionError("stdin must not be read with --null-input");
+				}
+			});
+			System.setOut(new PrintStream(out));
+			System.setErr(new PrintStream(err));
+			Main.run(command, ".", inputFiles, Versions.JQ_1_6,
+					Jackson3JsonProvider.getInstance(),
+					RuntimeOptions.newBuilder().build(), runner);
+		} finally {
+			System.setIn(originalIn);
+			System.setOut(originalOut);
+			System.setErr(originalErr);
+		}
+
+		assertThat(new String(out.toByteArray(), StandardCharsets.UTF_8)).isEqualTo("null\n");
+		String expectedCommand = inputFiles.isEmpty()
+				? "jackson-jq -n -- '.'\n"
+				: "jackson-jq -n -- '.' '-'\n";
+		assertThat(new String(err.toByteArray(), StandardCharsets.UTF_8)).isEqualTo(expectedCommand);
 	}
 
 	private static Path write(Path dir, String name, String content) throws Exception {
