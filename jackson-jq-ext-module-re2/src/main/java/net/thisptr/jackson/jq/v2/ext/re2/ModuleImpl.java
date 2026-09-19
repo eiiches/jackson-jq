@@ -52,7 +52,7 @@ public final class ModuleImpl implements JqModule<Object> {
 					+ "def gsub($re; s): re2_impl::_sub_impl($re; s; \"g\");\n";
 
 	@Override
-	public String getSource() {
+	public String getSourceCode() {
 		return SOURCE;
 	}
 

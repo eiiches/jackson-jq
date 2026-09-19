@@ -7,6 +7,7 @@
     "com.fasterxml.jackson.core:jackson-core": -2136216747,
     "com.fasterxml.jackson.core:jackson-databind": -647579619,
     "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml": 1804531274,
+    "com.github.luben:zstd-jni": 558948238,
     "com.google.code.findbugs:jsr305": 495355163,
     "com.google.code.gson:gson": -1136023703,
     "com.google.errorprone:error_prone_annotations": 911823543,
@@ -16,12 +17,17 @@
     "com.puppycrawl.tools:checkstyle": 811293525,
     "com.uber.nullaway:nullaway": 133041687,
     "commons-cli:commons-cli": -743428100,
+    "dev.tamboui:tamboui-core": -1343716431,
+    "dev.tamboui:tamboui-jline3-backend": 179797934,
+    "dev.tamboui:tamboui-tui": 79730124,
+    "dev.tamboui:tamboui-widgets": 2008560371,
     "jakarta.json:jakarta.json-api": 43477229,
     "net.java.dev.javacc:javacc": 520686333,
     "org.assertj:assertj-core": 1651685074,
     "org.checkerframework:checker-qual": 1912379972,
     "org.checkerframework:dataflow-nullaway": 900747383,
     "org.eclipse.parsson:parsson": 918376062,
+    "org.jline:jline": -486296989,
     "org.jruby.jcodings:jcodings": 107929672,
     "org.jruby.joni:joni": 1500006994,
     "org.jspecify:jspecify": -382205121,
@@ -53,6 +59,8 @@
     "com.fasterxml.jackson.core:jackson-databind:jar:sources": 779577142,
     "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml": 1998256097,
     "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:sources": 597390101,
+    "com.github.luben:zstd-jni": -1044447834,
+    "com.github.luben:zstd-jni:jar:sources": 912833358,
     "com.google.code.findbugs:jsr305": 870839855,
     "com.google.code.findbugs:jsr305:jar:sources": -935881202,
     "com.google.code.gson:gson": 232429063,
@@ -80,6 +88,16 @@
     "commons-collections:commons-collections:jar:sources": -1549695345,
     "commons-logging:commons-logging": 1248790901,
     "commons-logging:commons-logging:jar:sources": -740996845,
+    "dev.tamboui:tamboui-annotations": 2089126044,
+    "dev.tamboui:tamboui-annotations:jar:sources": 562146856,
+    "dev.tamboui:tamboui-core": 1520183467,
+    "dev.tamboui:tamboui-core:jar:sources": -1998915304,
+    "dev.tamboui:tamboui-jline3-backend": 517268273,
+    "dev.tamboui:tamboui-jline3-backend:jar:sources": -859412884,
+    "dev.tamboui:tamboui-tui": 310531352,
+    "dev.tamboui:tamboui-tui:jar:sources": -2140844838,
+    "dev.tamboui:tamboui-widgets": 1245171048,
+    "dev.tamboui:tamboui-widgets:jar:sources": -1612078529,
     "info.picocli:picocli": 1880843226,
     "info.picocli:picocli:jar:sources": 1918503702,
     "jakarta.json:jakarta.json-api": -1054410882,
@@ -110,6 +128,8 @@
     "org.eclipse.parsson:parsson:jar:sources": -1179844851,
     "org.javassist:javassist": -1946021694,
     "org.javassist:javassist:jar:sources": -429291628,
+    "org.jline:jline": -2100138504,
+    "org.jline:jline:jar:sources": 524948119,
     "org.jruby.jcodings:jcodings": 520864930,
     "org.jruby.jcodings:jcodings:jar:sources": 1979106442,
     "org.jruby.joni:joni": 1536996070,
@@ -224,6 +244,13 @@
       },
       "version": "2.22.1"
     },
+    "com.github.luben:zstd-jni": {
+      "shasums": {
+        "jar": "33661c9439a0898c4cc844d675bef56f6ea72e11079173c3cfc8f352c6e73f0c",
+        "sources": "3cbb19809552b151146935ff6dc71e877ed4f02f0b994952dd935fa7fa542bd4"
+      },
+      "version": "1.5.7-12"
+    },
     "com.google.code.findbugs:jsr305": {
       "shasums": {
         "jar": "766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7",
@@ -320,6 +347,41 @@
         "sources": "44347acfe5860461728e9cb33251e97345be36f8a0dfd5c5130c172559455f41"
       },
       "version": "1.2"
+    },
+    "dev.tamboui:tamboui-annotations": {
+      "shasums": {
+        "jar": "45709ed106deef6aee7e30de8a1b5d7a0ffce222310feda5a4a4e2deed22ce9e",
+        "sources": "882a2150b8ffe7c4b732aeda65f2c0018860434a98a657a04d77c08423a3d3be"
+      },
+      "version": "0.4.0"
+    },
+    "dev.tamboui:tamboui-core": {
+      "shasums": {
+        "jar": "ecb7b050886d15848eda051ded81c37c537df2803049dda806ad4e19461b4e5c",
+        "sources": "81183fda7254c920f05dd41e5d34b9ceb3b1211f7f6cc2f07cc676604b3613d5"
+      },
+      "version": "0.4.0"
+    },
+    "dev.tamboui:tamboui-jline3-backend": {
+      "shasums": {
+        "jar": "a4fbc8b70b4fcc522ecca6d3126be998c329af560b5e37abe0783d830cbcc9f0",
+        "sources": "52b66a456ac52aebb9d30ba4724fb4e1ac5bff68347c361efb4008cb96306d16"
+      },
+      "version": "0.4.0"
+    },
+    "dev.tamboui:tamboui-tui": {
+      "shasums": {
+        "jar": "b807883cb2a13fd9750bd705dc858c6920e4e5e5f0d20a7e97df30511c4751cd",
+        "sources": "f0a7bacd4a4ea2077e3cd33eda22a85c1756d38f803eb4a207cb89663433e0a1"
+      },
+      "version": "0.4.0"
+    },
+    "dev.tamboui:tamboui-widgets": {
+      "shasums": {
+        "jar": "d2c82c277c2db1b8b11250a3fdd91706c0463bafbcfb66526cd2c0ea48120b27",
+        "sources": "b50e81cc5a0e88a1d38f5d31f63e6316c5eeef5614f0c0f2c128a73a3d6c4d3c"
+      },
+      "version": "0.4.0"
     },
     "info.picocli:picocli": {
       "shasums": {
@@ -425,6 +487,13 @@
         "sources": "0b6cf0d138dc208263a2a0a39b1daae217707d58d79d7a4973a68ce62f8c2d1f"
       },
       "version": "3.28.0-GA"
+    },
+    "org.jline:jline": {
+      "shasums": {
+        "jar": "421efcde9db04c34b9c03cd66e0460e75e5cdd4a3cafde54ef370049ac092e7c",
+        "sources": "fc452b72d16b34773168a8e5e6aa9d5a54e4bd85fc099e397fe34e4133ab5efd"
+      },
+      "version": "3.25.1"
     },
     "org.jruby.jcodings:jcodings": {
       "shasums": {
@@ -686,6 +755,18 @@
     "commons-beanutils:commons-beanutils": [
       "commons-collections:commons-collections",
       "commons-logging:commons-logging"
+    ],
+    "dev.tamboui:tamboui-jline3-backend": [
+      "dev.tamboui:tamboui-core",
+      "org.jline:jline"
+    ],
+    "dev.tamboui:tamboui-tui": [
+      "dev.tamboui:tamboui-annotations",
+      "dev.tamboui:tamboui-core",
+      "dev.tamboui:tamboui-widgets"
+    ],
+    "dev.tamboui:tamboui-widgets": [
+      "dev.tamboui:tamboui-core"
     ],
     "net.java.dev.javacc:javacc": [
       "junit:junit"
@@ -1004,6 +1085,10 @@
       "com.fasterxml.jackson.dataformat.yaml.snakeyaml.error",
       "com.fasterxml.jackson.dataformat.yaml.util"
     ],
+    "com.github.luben:zstd-jni": [
+      "com.github.luben.zstd",
+      "com.github.luben.zstd.util"
+    ],
     "com.google.code.findbugs:jsr305": [
       "javax.annotation",
       "javax.annotation.concurrent",
@@ -1130,6 +1215,74 @@
     "commons-logging:commons-logging": [
       "org.apache.commons.logging",
       "org.apache.commons.logging.impl"
+    ],
+    "dev.tamboui:tamboui-annotations": [
+      "dev.tamboui.annotations.bindings"
+    ],
+    "dev.tamboui:tamboui-core": [
+      "dev.tamboui",
+      "dev.tamboui.buffer",
+      "dev.tamboui.capability",
+      "dev.tamboui.capability.core",
+      "dev.tamboui.error",
+      "dev.tamboui.export",
+      "dev.tamboui.export.html",
+      "dev.tamboui.export.svg",
+      "dev.tamboui.export.text",
+      "dev.tamboui.inline",
+      "dev.tamboui.internal.record",
+      "dev.tamboui.jfr",
+      "dev.tamboui.layout",
+      "dev.tamboui.layout.cassowary",
+      "dev.tamboui.layout.columns",
+      "dev.tamboui.layout.dock",
+      "dev.tamboui.layout.flow",
+      "dev.tamboui.layout.grid",
+      "dev.tamboui.layout.stack",
+      "dev.tamboui.style",
+      "dev.tamboui.symbols.merge",
+      "dev.tamboui.terminal",
+      "dev.tamboui.text",
+      "dev.tamboui.util",
+      "dev.tamboui.widget"
+    ],
+    "dev.tamboui:tamboui-jline3-backend": [
+      "dev.tamboui.backend.jline3"
+    ],
+    "dev.tamboui:tamboui-tui": [
+      "dev.tamboui.tui",
+      "dev.tamboui.tui.bindings",
+      "dev.tamboui.tui.error",
+      "dev.tamboui.tui.event",
+      "dev.tamboui.tui.overlay"
+    ],
+    "dev.tamboui:tamboui-widgets": [
+      "dev.tamboui.widgets",
+      "dev.tamboui.widgets.barchart",
+      "dev.tamboui.widgets.block",
+      "dev.tamboui.widgets.braille",
+      "dev.tamboui.widgets.calendar",
+      "dev.tamboui.widgets.canvas",
+      "dev.tamboui.widgets.canvas.shapes",
+      "dev.tamboui.widgets.chart",
+      "dev.tamboui.widgets.checkbox",
+      "dev.tamboui.widgets.common",
+      "dev.tamboui.widgets.error",
+      "dev.tamboui.widgets.form",
+      "dev.tamboui.widgets.gauge",
+      "dev.tamboui.widgets.input",
+      "dev.tamboui.widgets.list",
+      "dev.tamboui.widgets.logo",
+      "dev.tamboui.widgets.paragraph",
+      "dev.tamboui.widgets.scrollbar",
+      "dev.tamboui.widgets.select",
+      "dev.tamboui.widgets.sparkline",
+      "dev.tamboui.widgets.spinner",
+      "dev.tamboui.widgets.table",
+      "dev.tamboui.widgets.tabs",
+      "dev.tamboui.widgets.toggle",
+      "dev.tamboui.widgets.tree",
+      "dev.tamboui.widgets.wavetext"
     ],
     "info.picocli:picocli": [
       "picocli"
@@ -1481,6 +1634,47 @@
       "javassist.util",
       "javassist.util.proxy"
     ],
+    "org.jline:jline": [
+      "org.jline.builtins",
+      "org.jline.builtins.ssh",
+      "org.jline.builtins.telnet",
+      "org.jline.console",
+      "org.jline.console.impl",
+      "org.jline.jansi",
+      "org.jline.jansi.io",
+      "org.jline.keymap",
+      "org.jline.nativ",
+      "org.jline.reader",
+      "org.jline.reader.impl",
+      "org.jline.reader.impl.completer",
+      "org.jline.reader.impl.history",
+      "org.jline.style",
+      "org.jline.terminal",
+      "org.jline.terminal.impl",
+      "org.jline.terminal.impl.exec",
+      "org.jline.terminal.impl.ffm",
+      "org.jline.terminal.impl.jansi",
+      "org.jline.terminal.impl.jansi.freebsd",
+      "org.jline.terminal.impl.jansi.linux",
+      "org.jline.terminal.impl.jansi.osx",
+      "org.jline.terminal.impl.jansi.solaris",
+      "org.jline.terminal.impl.jansi.win",
+      "org.jline.terminal.impl.jna",
+      "org.jline.terminal.impl.jna.freebsd",
+      "org.jline.terminal.impl.jna.linux",
+      "org.jline.terminal.impl.jna.osx",
+      "org.jline.terminal.impl.jna.solaris",
+      "org.jline.terminal.impl.jna.win",
+      "org.jline.terminal.impl.jni",
+      "org.jline.terminal.impl.jni.freebsd",
+      "org.jline.terminal.impl.jni.linux",
+      "org.jline.terminal.impl.jni.osx",
+      "org.jline.terminal.impl.jni.solaris",
+      "org.jline.terminal.impl.jni.win",
+      "org.jline.terminal.spi",
+      "org.jline.utils",
+      "org.jline.widget"
+    ],
     "org.jruby.jcodings:jcodings": [
       "org.jcodings",
       "org.jcodings.ascii",
@@ -1755,6 +1949,8 @@
       "com.fasterxml.jackson.core:jackson-databind:jar:sources",
       "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml",
       "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:sources",
+      "com.github.luben:zstd-jni",
+      "com.github.luben:zstd-jni:jar:sources",
       "com.google.code.findbugs:jsr305",
       "com.google.code.findbugs:jsr305:jar:sources",
       "com.google.code.gson:gson",
@@ -1782,6 +1978,16 @@
       "commons-collections:commons-collections:jar:sources",
       "commons-logging:commons-logging",
       "commons-logging:commons-logging:jar:sources",
+      "dev.tamboui:tamboui-annotations",
+      "dev.tamboui:tamboui-annotations:jar:sources",
+      "dev.tamboui:tamboui-core",
+      "dev.tamboui:tamboui-core:jar:sources",
+      "dev.tamboui:tamboui-jline3-backend",
+      "dev.tamboui:tamboui-jline3-backend:jar:sources",
+      "dev.tamboui:tamboui-tui",
+      "dev.tamboui:tamboui-tui:jar:sources",
+      "dev.tamboui:tamboui-widgets",
+      "dev.tamboui:tamboui-widgets:jar:sources",
       "info.picocli:picocli",
       "info.picocli:picocli:jar:sources",
       "jakarta.json:jakarta.json-api",
@@ -1812,6 +2018,8 @@
       "org.eclipse.parsson:parsson:jar:sources",
       "org.javassist:javassist",
       "org.javassist:javassist:jar:sources",
+      "org.jline:jline",
+      "org.jline:jline:jar:sources",
       "org.jruby.jcodings:jcodings",
       "org.jruby.jcodings:jcodings:jar:sources",
       "org.jruby.joni:joni",
@@ -1917,6 +2125,26 @@
         "com.uber.nullaway.RequireExplicitNullMarking"
       ]
     },
+    "dev.tamboui:tamboui-core": {
+      "dev.tamboui.capability.CapabilityProvider": [
+        "dev.tamboui.capability.core.CoreCapabilityProvider"
+      ]
+    },
+    "dev.tamboui:tamboui-core:jar:sources": {
+      "dev.tamboui.capability.CapabilityProvider": [
+        "dev.tamboui.capability.core.CoreCapabilityProvider"
+      ]
+    },
+    "dev.tamboui:tamboui-jline3-backend": {
+      "dev.tamboui.terminal.BackendProvider": [
+        "dev.tamboui.backend.jline3.JLineBackendProvider"
+      ]
+    },
+    "dev.tamboui:tamboui-jline3-backend:jar:sources": {
+      "dev.tamboui.terminal.BackendProvider": [
+        "dev.tamboui.backend.jline3.JLineBackendProvider"
+      ]
+    },
     "net.sf.saxon:Saxon-HE": {
       "javax.xml.transform.TransformerFactory": [
         "net.sf.saxon.TransformerFactoryImpl"
@@ -1930,6 +2158,48 @@
     "org.eclipse.parsson:parsson:jar:sources": {
       "jakarta.json.spi.JsonProvider": [
         "org.eclipse.parsson.JsonProviderImpl"
+      ]
+    },
+    "org.jline:jline": {
+      "org/": [],
+      "org/jline/": [],
+      "org/jline/terminal/": [],
+      "org/jline/terminal/provider/": [],
+      "org/jline/terminal/provider/exec": [
+        "class=org.jline.terminal.impl.exec.ExecTerminalProvider"
+      ],
+      "org/jline/terminal/provider/ffm": [
+        "class=org.jline.terminal.impl.ffm.FfmTerminalProvider"
+      ],
+      "org/jline/terminal/provider/jansi": [
+        "class=org.jline.terminal.impl.jansi.JansiTerminalProvider"
+      ],
+      "org/jline/terminal/provider/jna": [
+        "class=org.jline.terminal.impl.jna.JnaTerminalProvider"
+      ],
+      "org/jline/terminal/provider/jni": [
+        "class=org.jline.terminal.impl.jni.JniTerminalProvider"
+      ]
+    },
+    "org.jline:jline:jar:sources": {
+      "org/": [],
+      "org/jline/": [],
+      "org/jline/terminal/": [],
+      "org/jline/terminal/provider/": [],
+      "org/jline/terminal/provider/exec": [
+        "class=org.jline.terminal.impl.exec.ExecTerminalProvider"
+      ],
+      "org/jline/terminal/provider/ffm": [
+        "class=org.jline.terminal.impl.ffm.FfmTerminalProvider"
+      ],
+      "org/jline/terminal/provider/jansi": [
+        "class=org.jline.terminal.impl.jansi.JansiTerminalProvider"
+      ],
+      "org/jline/terminal/provider/jna": [
+        "class=org.jline.terminal.impl.jna.JnaTerminalProvider"
+      ],
+      "org/jline/terminal/provider/jni": [
+        "class=org.jline.terminal.impl.jni.JniTerminalProvider"
       ]
     },
     "org.jruby.jcodings:jcodings": {

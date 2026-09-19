@@ -12,6 +12,9 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
  * {@code @ModuleRegistration}, and register it for {@link java.util.ServiceLoader} discovery as a
  * {@link Module} service. It is also what the compiler produces from a {@link JqModule} once that
  * module's source has been compiled.
+ * <p>
+ * An implementation may also implement {@link JqModule}. Such a hybrid makes these Java functions
+ * available to its jq source and exports them alongside the compiled jq functions.
  */
 public non-sealed interface JavaModule extends Module {
 

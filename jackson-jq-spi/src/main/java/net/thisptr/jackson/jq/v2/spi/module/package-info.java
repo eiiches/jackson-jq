@@ -1,5 +1,5 @@
 /**
- * SPI types for implementing jq modules ({@code Module} and its two kinds,
+ * SPI types for implementing jq modules ({@code Module} and its two facets,
  * {@code JavaModule} and {@code JqModule}, plus {@code ModuleMeta}).
  */
 @NullMarked

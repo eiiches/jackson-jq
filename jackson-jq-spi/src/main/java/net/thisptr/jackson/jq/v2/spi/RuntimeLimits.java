@@ -47,13 +47,8 @@ public interface RuntimeLimits {
 
 	/**
 	 * Returns the largest number of bytes a binary value produced during evaluation may have.
-	 * <p>
-	 * The default keeps implementations compiled against older SPI versions compatible and preserves
-	 * the historically unbounded behavior.
 	 *
 	 * @return the maximum binary value length, or {@link Integer#MAX_VALUE} for no limit
 	 */
-	default int getMaxBinaryLength() {
-		return Integer.MAX_VALUE;
-	}
+	int getMaxBinaryLength();
 }

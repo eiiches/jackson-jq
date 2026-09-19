@@ -15,12 +15,17 @@ publish_all(
     publishers = [
         "//jackson-jq-cli:jackson-jq-cli.publish",
         "//jackson-jq-core:jackson-jq-core.publish",
+        "//jackson-jq-ext-module-binary:jackson-jq-ext-module-binary.publish",
         "//jackson-jq-ext-module-debug:jackson-jq-ext-module-debug.publish",
+        "//jackson-jq-ext-module-fs:jackson-jq-ext-module-fs.publish",
+        "//jackson-jq-ext-module-gzip:jackson-jq-ext-module-gzip.publish",
+        "//jackson-jq-ext-module-http:jackson-jq-ext-module-http.publish",
         "//jackson-jq-ext-module-random:jackson-jq-ext-module-random.publish",
         "//jackson-jq-ext-module-re2:jackson-jq-ext-module-re2.publish",
         "//jackson-jq-ext-module-time:jackson-jq-ext-module-time.publish",
         "//jackson-jq-ext-module-uri:jackson-jq-ext-module-uri.publish",
         "//jackson-jq-ext-module-uuid:jackson-jq-ext-module-uuid.publish",
+        "//jackson-jq-ext-module-zstd:jackson-jq-ext-module-zstd.publish",
         "//jackson-jq-json-provider:jackson-jq-json-provider.publish",
         # Experimental: retained to exercise provider compatibility with JSON models that use
         # Java null, but excluded from releases until demand warrants long-term support.

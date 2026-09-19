@@ -7,6 +7,9 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
  * path resolves to something it can read but not run; the compiler parses it, resolves its own
  * imports, compiles it, and turns it into a {@link JavaModule}.
  * <p>
+ * An implementation may also implement {@link JavaModule}. The compiler makes a hybrid's Java
+ * functions available to this source and exports both sets after compilation.
+ * <p>
  * Loaders implement this themselves -- there is no shared implementation to extend -- because only
  * the loader knows where the module came from, which is what the two {@code relative*} methods and
  * {@link #equals} answer.
@@ -30,7 +33,7 @@ public non-sealed interface JqModule<JsonNode> extends Module {
 	 *
 	 * @return the source text
 	 */
-	String getSource();
+	String getSourceCode();
 
 	/**
 	 * Resolves an import written inside this module against this module's own location -- what

@@ -1,0 +1,13 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "zstd",
+    srcs = glob(["*.java"]),
+    release = 8,
+    visibility = ["//jackson-jq-ext-module-zstd:__subpackages__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi",
+        "@maven//:com_github_luben_zstd_jni",
+    ],
+)

@@ -69,7 +69,7 @@ public class EnvironmentAddImportedModuleTest {
 		}
 
 		@Override
-		public String getSource() {
+		public String getSourceCode() {
 			return source;
 		}
 

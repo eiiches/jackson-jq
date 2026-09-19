@@ -224,9 +224,9 @@ public final class EnvironmentBuilder<JsonNode> {
 
 	/**
 	 * Makes {@code module}'s functions callable as {@code name::func(...)} without the query having
-	 * to {@code import} it. Either kind will do: a {@link JavaModule} is used as it stands, and a
+	 * to {@code import} it. A {@link JavaModule} is used as it stands, a
 	 * {@link net.thisptr.jackson.jq.v2.spi.module.JqModule} is compiled the first time a query
-	 * actually calls into it.
+	 * actually calls into it, and a module implementing both contributes both sets of functions.
 	 */
 	public EnvironmentBuilder<JsonNode> addImportedModule(String name, Module module) {
 		importedModules.put(name, module);

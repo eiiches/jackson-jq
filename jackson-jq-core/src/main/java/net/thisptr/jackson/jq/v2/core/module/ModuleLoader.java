@@ -13,7 +13,8 @@ import net.thisptr.jackson.jq.v2.spi.module.Module;
  * a name and its source -- is the whole job for a module written in jq: the compiler parses it,
  * resolves that module's own imports through the environment's loaders, compiles it, and remembers
  * the result for the rest of the compilation. A loader that serves modules already implemented in
- * Java hands back a {@link JavaModule} instead, which the compiler uses as it is.
+ * Java hands back a {@link JavaModule}, which the compiler uses as it is. A module may implement
+ * both: the compiler makes its Java functions available to its jq source and exports both sets.
  * <p>
  * A loader that cannot resolve a path throws {@link ModuleNotFoundException}; a loader that
  * resolved it but then failed to read what it found throws some other {@link JsonQueryException}.

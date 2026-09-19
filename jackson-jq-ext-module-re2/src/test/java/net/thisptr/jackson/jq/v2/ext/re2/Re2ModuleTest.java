@@ -43,6 +43,12 @@ public class Re2ModuleTest {
 	}
 
 	@Test
+	public void includeExposesRegexFunctionsWithoutAQualifier() throws Exception {
+		assertThat(runQuery("include \"jackson-jq/re2\"; \"abc\" | test(\"^a\")", RuntimeOptions.newBuilder().build()))
+				.containsExactly(JSON_PROVIDER.createBoolean(true));
+	}
+
+	@Test
 	public void usesRe2SyntaxAndFlagSemantics() throws Exception {
 		assertThat(run("\"a\\nb\" | re::test(\"a.b\"; \"m\")")).containsExactly(JSON_PROVIDER.createBoolean(true));
 		assertThat(run("\"aa\" | re::match(\"a|aa\"; \"l\") | .string")).extracting(JSON_PROVIDER::getString).containsExactly("aa");
@@ -78,8 +84,12 @@ public class Re2ModuleTest {
 	}
 
 	private static List<JsonNode> run(String expression, RuntimeOptions options) throws JsonQueryException {
+		return runQuery(IMPORT + expression, options);
+	}
+
+	private static List<JsonNode> runQuery(String expression, RuntimeOptions options) throws JsonQueryException {
 		Environment<JsonNode> environment = environment();
-		JsonQuery<JsonNode> query = environment.compile(IMPORT + expression).withRuntimeOptions(options);
+		JsonQuery<JsonNode> query = environment.compile(expression).withRuntimeOptions(options);
 		List<JsonNode> results = new ArrayList<>();
 		query.apply(JSON_PROVIDER.createNull(), results::add);
 		return results;

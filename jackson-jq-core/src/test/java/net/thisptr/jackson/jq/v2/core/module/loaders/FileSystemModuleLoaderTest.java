@@ -177,7 +177,7 @@ public class FileSystemModuleLoaderTest {
 	 */
 	private static final class OtherLoaderJqModule implements JqModule<JsonNode> {
 		@Override
-		public String getSource() {
+		public String getSourceCode() {
 			return "def two: 2;";
 		}
 

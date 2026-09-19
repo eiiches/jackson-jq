@@ -4,6 +4,7 @@ jjq_java_test_suite(
     srcs = [
         "JqPrettyPrinterTest.java",
         "MainTest.java",
+        "PlaygroundTest.java",
     ],
     release = 8,
     visibility = ["//jackson-jq-cli:__subpackages__"],
@@ -11,7 +12,14 @@ jjq_java_test_suite(
         "//jackson-jq-cli/src/main/java/net/thisptr/jackson/jq/v2/cli",
         "//jackson-jq-core",
         "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-jackson3",
         "//jackson-jq-spi",
         "@maven//:commons_cli_commons_cli",
+        "@maven//:dev_tamboui_tamboui_core",
+        "@maven//:dev_tamboui_tamboui_jline3_backend",
+        "@maven//:dev_tamboui_tamboui_tui",
+        "@maven//:dev_tamboui_tamboui_widgets",
+        "@maven//:org_jline_jline",
+        "@maven//:tools_jackson_core_jackson_databind",
     ],
 )

@@ -317,8 +317,8 @@ public class Compiler {
 			if (call.moduleName() != null) {
 				@Var JavaModule mod = context.getImportedModule(call.moduleName());
 				if (mod == null) {
-					// An environment may have been handed either kind of module; jq source is
-					// compiled here, the first time a query actually calls into it.
+					// An environment may have been handed either kind of module or a hybrid;
+					// jq source is compiled here, the first time a query actually calls into it.
 					Module imported = env.getImportedModules().get(call.moduleName());
 					mod = imported != null ? scope.materialize(imported) : null;
 				}
@@ -469,6 +469,8 @@ public class Compiler {
 					JavaModule mod = scope.resolveModule(imp.path, metadata);
 					if (imp.name != null) {
 						context.addImportedModule(imp.name, mod);
+					} else {
+						context.addIncludedModule(mod);
 					}
 				}
 			}
@@ -1026,6 +1028,10 @@ public class Compiler {
 					? new ResolvedLocalFunctionBoundArgumentAccess<>(bindContext, fullName, slot, compiledArgs, boundArgumentInfo)
 					: new ResolvedLocalFunctionAccess<>(bindContext, fullName, slot, compiledArgs, info);
 		}
+
+		Function included = context.getIncludedFunction(signature);
+		if (included != null)
+			return bindFunctionCall(bindContext, included, compiledArgs);
 
 		FunctionSignature declaredKey = resolveDeclaredFunctionKey(env, signature);
 		if (declaredKey != null) {

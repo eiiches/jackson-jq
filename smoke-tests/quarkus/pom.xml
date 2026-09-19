@@ -80,6 +80,26 @@
 		</dependency>
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-binary</artifactId>
+			<version>${jackson-jq.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-fs</artifactId>
+			<version>${jackson-jq.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-gzip</artifactId>
+			<version>${jackson-jq.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-http</artifactId>
+			<version>${jackson-jq.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
 			<artifactId>jackson-jq-ext-module-random</artifactId>
 			<version>${jackson-jq.version}</version>
 		</dependency>
@@ -101,6 +121,11 @@
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
 			<artifactId>jackson-jq-ext-module-uuid</artifactId>
+			<version>${jackson-jq.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-zstd</artifactId>
 			<version>${jackson-jq.version}</version>
 		</dependency>
 		<dependency>
@@ -157,10 +182,42 @@
 				<skipITs>false</skipITs>
 				<quarkus.native.enabled>true</quarkus.native.enabled>
 				<!-- Quick build mode: these are smoke tests, so build time matters far more than peak runtime performance. -->
-				<quarkus.native.additional-build-args>-Ob</quarkus.native.additional-build-args>
+				<!--
+					Quarkus does not consume the GraalVM reachability metadata repository (quarkusio/quarkus#28994), so the
+					zstd-jni metadata it publishes is unpacked below and handed to native-image explicitly. The directory is
+					named after the metadata version, which is not the zstd-jni version: look it up in the repository's
+					com.github.luben/zstd-jni/index.json when upgrading zstd-jni.
+				-->
+				<zstd-jni.metadata.version>1.5.7-2</zstd-jni.metadata.version>
+				<quarkus.native.additional-build-args>-Ob,-H:ConfigurationFileDirectories=${project.build.directory}/graalvm-reachability-metadata/com.github.luben/zstd-jni/${zstd-jni.metadata.version}</quarkus.native.additional-build-args>
 			</properties>
 			<build>
 				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-dependency-plugin</artifactId>
+						<version>3.8.1</version>
+						<executions>
+							<execution>
+								<id>unpack-reachability-metadata</id>
+								<phase>generate-resources</phase>
+								<goals><goal>unpack</goal></goals>
+								<configuration>
+									<artifactItems>
+										<artifactItem>
+											<groupId>org.graalvm.buildtools</groupId>
+											<artifactId>graalvm-reachability-metadata</artifactId>
+											<version>1.1.12</version>
+											<classifier>repository</classifier>
+											<type>zip</type>
+											<includes>com.github.luben/zstd-jni/**</includes>
+											<outputDirectory>${project.build.directory}/graalvm-reachability-metadata</outputDirectory>
+										</artifactItem>
+									</artifactItems>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-failsafe-plugin</artifactId>

@@ -538,7 +538,7 @@ public class EnvironmentFunctionLoaderTest {
 		}
 
 		@Override
-		public String getSource() {
+		public String getSourceCode() {
 			return source;
 		}
 

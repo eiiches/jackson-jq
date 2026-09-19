@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.compile;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,9 +22,16 @@ import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.BindContext;
+import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
+import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -99,7 +107,7 @@ public class ModuleResolverTest {
 		}
 
 		@Override
-		public String getSource() {
+		public String getSourceCode() {
 			return source;
 		}
 
@@ -133,6 +141,59 @@ public class ModuleResolverTest {
 		@Override
 		public String toString() {
 			return name;
+		}
+	}
+
+	private static final class HybridModule implements JavaModule, JqModule<JsonNode> {
+		private final String source;
+		private final Map<FunctionSignature, Function> functions;
+
+		HybridModule(String source, Map<FunctionSignature, Function> functions) {
+			this.source = source;
+			this.functions = functions;
+		}
+
+		@Override
+		public String getSourceCode() {
+			return source;
+		}
+
+		@Override
+		public Map<FunctionSignature, Function> getFunctions() {
+			return functions;
+		}
+
+		@Override
+		public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
+			throw new ModuleNotFoundException(importPath);
+		}
+
+		@Override
+		public JsonNode relativeData(String importPath, String searchPath) {
+			throw new ModuleNotFoundException(importPath);
+		}
+
+		@Override
+		public String toString() {
+			return "hybrid";
+		}
+	}
+
+	private static final class SingleModuleLoader implements ModuleLoader<JsonNode> {
+		private final Module module;
+
+		SingleModuleLoader(Module module) {
+			this.module = module;
+		}
+
+		@Override
+		public Module loadModule(String path, Maybe<JsonNode> metadata) {
+			return module;
+		}
+
+		@Override
+		public JsonNode loadData(String path, Maybe<JsonNode> metadata) {
+			throw new ModuleNotFoundException(path);
 		}
 	}
 
@@ -183,6 +244,15 @@ public class ModuleResolverTest {
 		List<String> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), value -> actual.add(value.toString()));
 		return actual;
+	}
+
+	private static Function constantFunction(int value) {
+		return new Function() {
+			@Override
+			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> args) {
+				return (context, in, path, output) -> output.emit(bindCtx.getJsonProvider().createNumber(value), UntrackedPath.getInstance());
+			}
+		};
 	}
 
 	@Test
@@ -291,6 +361,94 @@ public class ModuleResolverTest {
 		assertThat(run(env, "m::three")).containsExactly("3");
 		// Nothing referenced it, so nothing compiled it.
 		assertThat(run(env, "1 + 1")).containsExactly("2");
+	}
+
+	@Test
+	public void testHybridModuleCombinesJavaAndJqFunctions() throws Exception {
+		FunctionSignature javaHelper = FunctionSignature.of("java_helper", 0);
+		HybridModule module = new HybridModule(
+				"module {\"kind\": \"hybrid\"}; def from_jq: java_helper;",
+				Collections.singletonMap(javaHelper, constantFunction(7)));
+		Environment<JsonNode> loaderEnvironment = builder()
+				.addModuleLoader(new SingleModuleLoader(module))
+				.build();
+		Environment<JsonNode> importedEnvironment = builder()
+				.addImportedModule("hybrid", module)
+				.build();
+
+		assertThat(run(loaderEnvironment, "import \"hybrid\" as hybrid; [hybrid::java_helper, hybrid::from_jq]")).containsExactly("[7,7]");
+		assertThat(run(importedEnvironment, "[hybrid::java_helper, hybrid::from_jq]")).containsExactly("[7,7]");
+
+		JavaModule materialized = new ModuleResolver<>(loaderEnvironment).materialize(module);
+		assertThat(materialized.getModuleMeta().getMetadata(Jackson2JsonProvider.getInstance()))
+				.containsEntry("kind", Jackson2JsonProvider.getInstance().createString("hybrid"));
+	}
+
+	@Test
+	public void testHybridModuleRejectsDuplicateFunctionSignature() {
+		FunctionSignature duplicate = FunctionSignature.of("duplicate", 0);
+		HybridModule module = new HybridModule(
+				"def duplicate: 1;",
+				Collections.singletonMap(duplicate, constantFunction(2)));
+
+		assertThatThrownBy(() -> new ModuleResolver<>(builder().build()).materialize(module))
+				.isInstanceOf(JsonQueryException.class)
+				.hasMessage("module hybrid defines function duplicate/0 in both Java and jq source");
+	}
+
+	@Test
+	public void testHybridModuleAllowsExactAndVariadicSignaturesToCoexist() throws Exception {
+		HybridModule module = new HybridModule(
+				"def shared: 1;",
+				Collections.singletonMap(FunctionSignature.ofVariadic("shared"), constantFunction(2)));
+		Environment<JsonNode> env = builder()
+				.addImportedModule("hybrid", module)
+				.build();
+
+		assertThat(run(env, "[hybrid::shared, hybrid::shared(0)]")).containsExactly("[1,2]");
+	}
+
+	@Test
+	public void testIncludeExposesJavaModuleFunctionsWithoutAQualifier() throws Exception {
+		Map<FunctionSignature, Function> functions = new HashMap<>();
+		functions.put(FunctionSignature.of("selected", 0), constantFunction(1));
+		functions.put(FunctionSignature.ofVariadic("selected"), constantFunction(2));
+		JavaModule module = () -> Collections.unmodifiableMap(functions);
+		Environment<JsonNode> env = builder()
+				.addModuleLoader(new SingleModuleLoader(module))
+				.build();
+
+		assertThat(run(env, "include \"helpers\"; [selected, selected(0)]")).containsExactly("[1,2]");
+	}
+
+	@Test
+	public void testLaterIncludeShadowsEarlierInclude() throws Exception {
+		Environment<JsonNode> env = builder()
+				.addModuleLoader(new SourceLoader("/first")
+						.put("one", "def selected: 1;")
+						.put("two", "def selected: 2;"))
+				.build();
+
+		assertThat(run(env, "include \"one\"; include \"two\"; selected")).containsExactly("2");
+	}
+
+	@Test
+	public void testLocalDefinitionShadowsIncludeWhichShadowsEnvironment() throws Exception {
+		FunctionSignature declared = FunctionSignature.of("declared", 0);
+		FunctionSignature defined = FunctionSignature.of("defined", 0);
+		Map<FunctionSignature, Function> functions = new HashMap<>();
+		functions.put(declared, constantFunction(2));
+		functions.put(defined, constantFunction(4));
+		functions.put(FunctionSignature.of("length", 0), constantFunction(6));
+		JavaModule module = () -> Collections.unmodifiableMap(functions);
+		Environment<JsonNode> env = builder()
+				.declareFunction(declared)
+				.defineFunction(defined, constantFunction(3))
+				.addModuleLoader(new SingleModuleLoader(module))
+				.build();
+
+		assertThat(run(env, "include \"helpers\"; [declared, defined, length]")).containsExactly("[2,4,6]");
+		assertThat(run(env, "include \"helpers\"; def defined: 5; defined")).containsExactly("5");
 	}
 
 	@Test
