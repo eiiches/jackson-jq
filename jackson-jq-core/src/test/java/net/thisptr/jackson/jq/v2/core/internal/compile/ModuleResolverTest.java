@@ -409,6 +409,49 @@ public class ModuleResolverTest {
 	}
 
 	@Test
+	public void testIncludeExposesJavaModuleFunctionsWithoutAQualifier() throws Exception {
+		Map<FunctionSignature, Function> functions = new HashMap<>();
+		functions.put(FunctionSignature.of("selected", 0), constantFunction(1));
+		functions.put(FunctionSignature.ofVariadic("selected"), constantFunction(2));
+		JavaModule module = () -> Collections.unmodifiableMap(functions);
+		Environment<JsonNode> env = builder()
+				.addModuleLoader(new SingleModuleLoader(module))
+				.build();
+
+		assertThat(run(env, "include \"helpers\"; [selected, selected(0)]")).containsExactly("[1,2]");
+	}
+
+	@Test
+	public void testLaterIncludeShadowsEarlierInclude() throws Exception {
+		Environment<JsonNode> env = builder()
+				.addModuleLoader(new SourceLoader("/first")
+						.put("one", "def selected: 1;")
+						.put("two", "def selected: 2;"))
+				.build();
+
+		assertThat(run(env, "include \"one\"; include \"two\"; selected")).containsExactly("2");
+	}
+
+	@Test
+	public void testLocalDefinitionShadowsIncludeWhichShadowsEnvironment() throws Exception {
+		FunctionSignature declared = FunctionSignature.of("declared", 0);
+		FunctionSignature defined = FunctionSignature.of("defined", 0);
+		Map<FunctionSignature, Function> functions = new HashMap<>();
+		functions.put(declared, constantFunction(2));
+		functions.put(defined, constantFunction(4));
+		functions.put(FunctionSignature.of("length", 0), constantFunction(6));
+		JavaModule module = () -> Collections.unmodifiableMap(functions);
+		Environment<JsonNode> env = builder()
+				.declareFunction(declared)
+				.defineFunction(defined, constantFunction(3))
+				.addModuleLoader(new SingleModuleLoader(module))
+				.build();
+
+		assertThat(run(env, "include \"helpers\"; [declared, defined, length]")).containsExactly("[2,4,6]");
+		assertThat(run(env, "include \"helpers\"; def defined: 5; defined")).containsExactly("5");
+	}
+
+	@Test
 	public void testRelativeImportFromTopLevelIsRejected() throws Exception {
 		Environment<JsonNode> env = builder()
 				.addModuleLoader(new SourceLoader("/first").put("b", "def two: 2;"))

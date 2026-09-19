@@ -16,6 +16,7 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.opt.FoldPlanner;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 
@@ -146,6 +147,7 @@ public class CompileContext {
 
 	private final Map<FunctionSignature, Integer> rootFunctionSlots;
 	private final Map<String, JavaModule> importedModules;
+	private final Map<FunctionSignature, Function> includedFunctions;
 	private final Map<String, Object> importedVariableDefaults;
 
 	public CompileContext() {
@@ -181,6 +183,7 @@ public class CompileContext {
 		this.meterRuntimeBudgets = meterRuntimeBudgets;
 		this.rootFunctionSlots = new HashMap<>();
 		this.importedModules = new HashMap<>();
+		this.includedFunctions = new HashMap<>();
 		this.importedVariableDefaults = new HashMap<>();
 	}
 
@@ -232,6 +235,15 @@ public class CompileContext {
 
 	public @Nullable JavaModule getImportedModule(String alias) {
 		return importedModules.get(alias);
+	}
+
+	public void addIncludedModule(JavaModule module) {
+		includedFunctions.putAll(module.getFunctions());
+	}
+
+	public @Nullable Function getIncludedFunction(FunctionSignature signature) {
+		Function function = includedFunctions.get(signature);
+		return function != null ? function : includedFunctions.get(signature.asVariadic());
 	}
 
 	/**

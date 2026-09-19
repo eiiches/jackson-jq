@@ -1900,7 +1900,6 @@
   out:
   - [0, "acmehbah"]
   v: '[1.5, )'
-  failing: true
   modules:
     a.jq: |
       module {version:1.7};

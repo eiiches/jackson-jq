@@ -20,4 +20,19 @@ import "jackson-jq/uuid" as uuid;
 uuid::uuid4
 ```
 
-Extension functions are available only through their imported module namespace.
+Prefer `import` for extension modules: its namespace prevents collisions with functions from other
+includes, environment registrations, or builtins.
+
+An extension can instead be included when its functions should intentionally be available without
+a namespace:
+
+```jq
+include "jackson-jq/uuid";
+
+uuid4
+```
+
+An explicit `import` keeps extension functions under its module namespace, while `include` adds
+them to that compilation's unqualified function namespace. Conflicting includes are allowed; a
+later include replaces an earlier function with the same signature, and a local `def` takes
+precedence over both.
