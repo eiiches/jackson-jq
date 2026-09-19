@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.cli;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -10,11 +12,17 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.google.errorprone.annotations.Var;
+import dev.tamboui.backend.jline3.JLineBackend;
+import dev.tamboui.tui.TuiConfig;
+import dev.tamboui.tui.TuiRunner;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -22,6 +30,12 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.help.HelpFormatter;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.impl.PosixSysTerminal;
+import org.jline.terminal.impl.exec.ExecPty;
+import org.jline.terminal.impl.exec.ExecTerminalProvider;
+import org.jline.terminal.spi.TerminalProvider;
+import org.jline.utils.OSUtils;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.CompileOptions;
@@ -133,6 +147,10 @@ public class Main {
 			.desc("maximum number of values a single expression in the query may produce during evaluation (default: unlimited)")
 			.numberOfArgs(1)
 			.get();
+	private static final Option OPT_INTERACTIVE = Option.builder("i")
+			.longOpt("interactive")
+			.desc("interactive playground TUI")
+			.get();
 	private static final Option OPT_HELP = Option.builder("h")
 			.longOpt("help")
 			.desc("print this message")
@@ -156,6 +174,7 @@ public class Main {
 		options.addOption(OPT_MAX_OBJECT_MEMBER_COUNT);
 		options.addOption(OPT_MAX_USER_DEFINED_FUNCTION_CALLS);
 		options.addOption(OPT_MAX_OUTPUTS_PER_EXPRESSION);
+		options.addOption(OPT_INTERACTIVE);
 		options.addOption(OPT_HELP);
 		CommandLine command;
 		List<String> rest;
@@ -176,8 +195,9 @@ public class Main {
 				System.exit(1);
 			}
 		}
+		boolean interactive = command.hasOption(OPT_INTERACTIVE.getLongOpt());
 		String queryFile = command.getOptionValue(OPT_FROM_FILE.getOpt());
-		if ((queryFile == null && rest.isEmpty()) || command.hasOption(OPT_HELP.getOpt())) {
+		if ((queryFile == null && rest.isEmpty() && !interactive) || command.hasOption(OPT_HELP.getOpt())) {
 			HelpFormatter help = HelpFormatter.builder().get();
 			help.printHelp("jackson-jq [OPTIONS...] QUERY [FILE...]", null, options, null, false);
 			System.exit(0);
@@ -194,6 +214,14 @@ public class Main {
 				throw e;
 			}
 			inputFiles = rest;
+		} else if (interactive) {
+			if (!rest.isEmpty()) {
+				query = rest.get(0);
+				inputFiles = rest.subList(1, rest.size());
+			} else {
+				query = ".";
+				inputFiles = rest;
+			}
 		} else {
 			query = rest.get(0);
 			inputFiles = rest.subList(1, rest.size());
@@ -259,6 +287,29 @@ public class Main {
 		}
 	}
 
+	static final List<String> PROVIDERS = Collections.unmodifiableList(
+			Arrays.asList("jackson3", "jackson2", "fastjson2", "gson", "jakarta")
+	);
+
+	static String resolveProviderName(JsonProvider<?> jsonProvider) {
+		if (jsonProvider instanceof Jackson3JsonProvider) {
+			return "jackson3";
+		}
+		if (jsonProvider instanceof Jackson2JsonProvider) {
+			return "jackson2";
+		}
+		if (jsonProvider instanceof Fastjson2JsonProvider) {
+			return "fastjson2";
+		}
+		if (jsonProvider instanceof GsonJsonProvider) {
+			return "gson";
+		}
+		if (jsonProvider instanceof JakartaJsonProvider) {
+			return "jakarta";
+		}
+		return "jackson3";
+	}
+
 	static JsonProvider<?> resolveProvider(String name) {
 		switch (name) {
 			case "jackson2":
@@ -300,9 +351,8 @@ public class Main {
 		}
 	}
 
-	private static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider,
-								RuntimeOptions runtimeOptions) throws Exception {
-		Environment<N> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
+	static <N> Environment<N> createEnvironment(JsonProvider<N> jsonProvider, Version version) {
+		return EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
 				.defineFunction(FunctionSignature.of("env", 0), new Function() {
 					@Override
 					public <Context extends RuntimeContext, N2> Expression<Context, N2> bind(BindContext<N2> bindCtx, List<Expression<Context, N2>> fnArgs) {
@@ -336,12 +386,22 @@ public class Main {
 				})
 				.addModuleLoader(new FileSystemModuleLoader<>(jsonProvider, FileSystems.getDefault().getPath("").toAbsolutePath()))
 				.build();
+	}
+
+	private static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider,
+								RuntimeOptions runtimeOptions) throws Exception {
+		run(command, query, inputFiles, version, jsonProvider, runtimeOptions, null);
+	}
+
+	static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider,
+						RuntimeOptions runtimeOptions, @Nullable TuiRunner customRunner) throws Exception {
+		Environment<N> env = createEnvironment(jsonProvider, version);
 		/*
 		 * jq itself emits no warnings at all, so this is purely additive: it goes to stderr, leaving
 		 * stdout and the exit code byte-for-byte what jq would produce.
 		 */
 		CompileOptions.Builder compileOptionsBuilder = CompileOptions.newBuilder();
-		if (!command.hasOption(OPT_NO_WARNINGS.getLongOpt())) {
+		if (!command.hasOption(OPT_NO_WARNINGS.getLongOpt()) && !command.hasOption(OPT_INTERACTIVE.getLongOpt())) {
 			compileOptionsBuilder.setDiagnosticListener(diagnostic -> {
 				SourceLocation location = diagnostic.location();
 				String excerpt = location != null ? location.excerpt(query) : null;
@@ -355,7 +415,6 @@ public class Main {
 		if (command.hasOption(OPT_DISABLE_TCO.getLongOpt()))
 			compileOptionsBuilder.setOptimizationOptions(OptimizationOptions.newBuilder().setTailCallOptimization(false).build());
 		CompileOptions compileOptions = compileOptionsBuilder.build();
-		JsonQuery<N> jq = compileOrExit(env, query, compileOptions).withRuntimeOptions(runtimeOptions);
 		boolean compact = command.hasOption(OPT_COMPACT.getOpt());
 		boolean rawOutput = command.hasOption(OPT_RAW_OUTPUT.getOpt());
 		boolean nullInput = command.hasOption(OPT_NULL_INPUT.getOpt());
@@ -380,9 +439,61 @@ public class Main {
 				}
 			}
 		}
+		if (command.hasOption(OPT_INTERACTIVE.getLongOpt())) {
+			if (failed)
+				System.exit(1);
+			@Var byte @Nullable [] rawInputBytes = null;
+			if (!nullInput) {
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				byte[] buf = new byte[8192];
+				for (InputStream s : streams) {
+					try {
+						@Var int n;
+						while ((n = s.read(buf)) != -1) {
+							baos.write(buf, 0, n);
+						}
+					} catch (IOException e) {
+						System.err.println("jq: error: Could not read input: " + reason(e));
+						System.exit(1);
+					}
+				}
+				rawInputBytes = baos.toByteArray();
+			}
+			TuiRunner runner;
+			if (customRunner != null) {
+				runner = customRunner;
+			} else {
+				try {
+					runner = createDefaultRunner();
+				} catch (Exception e) {
+					System.err.println("jackson-jq: error: --interactive requires an interactive terminal: " + e.getMessage());
+					System.exit(1);
+					throw e;
+				}
+			}
+			boolean rawInput = command.hasOption(OPT_RAW_INPUT.getOpt());
+			boolean slurp = command.hasOption(OPT_SLURP.getOpt());
+			boolean warningsEnabled = !command.hasOption(OPT_NO_WARNINGS.getLongOpt());
+			String providerName = resolveProviderName(jsonProvider);
+			ExecutorService evalExecutor = Executors.newSingleThreadExecutor(r -> {
+				Thread t = new Thread(r, "jq-playground-eval");
+				t.setDaemon(true);
+				return t;
+			});
+			Playground<N> pg = new Playground<>(env, version, providerName, rawInputBytes, nullInput, rawInput, slurp,
+					query, jsonProvider, runtimeOptions, compileOptions, compact, rawOutput, warningsEnabled, inputFiles, System.out, System.err);
+			pg.setEvaluationExecutor(evalExecutor);
+			try {
+				pg.run(runner);
+			} finally {
+				evalExecutor.shutdownNow();
+			}
+			return;
+		}
 		InputSource<N> input = InputSources.create(jsonProvider, streams, nullInput,
 				command.hasOption(OPT_RAW_INPUT.getOpt()),
 				command.hasOption(OPT_SLURP.getOpt()));
+		JsonQuery<N> jq = compileOrExit(env, query, compileOptions).withRuntimeOptions(runtimeOptions);
 		input.readAll(tree -> {
 			try {
 				jq.apply(tree, out -> {
@@ -401,6 +512,37 @@ public class Main {
 		});
 		if (failed)
 			System.exit(1);
+	}
+
+	static TuiRunner createDefaultRunner() throws Exception {
+		if (System.console() != null) {
+			try {
+				return TuiRunner.create();
+			} catch (Exception ignored) {
+				// Fall through to /dev/tty fallback
+			}
+		}
+		if (!OSUtils.IS_WINDOWS) {
+			File devTty = new File("/dev/tty");
+			if (devTty.exists()) {
+				ExecTerminalProvider provider = new ExecTerminalProvider();
+				DevTtyPty pty = new DevTtyPty(provider);
+				String termEnv = System.getenv("TERM");
+				String termType = (termEnv != null && !termEnv.isEmpty()) ? termEnv : "xterm-256color";
+				Terminal terminal = new PosixSysTerminal(
+						"jackson-jq", termType, pty, StandardCharsets.UTF_8, false, Terminal.SignalHandler.SIG_DFL);
+				JLineBackend backend = new JLineBackend(terminal);
+				TuiConfig config = TuiConfig.builder().backend(backend).build();
+				return TuiRunner.create(config);
+			}
+		}
+		return TuiRunner.create();
+	}
+
+	private static final class DevTtyPty extends ExecPty {
+		private DevTtyPty(TerminalProvider provider) throws IOException {
+			super(provider, null, "/dev/tty");
+		}
 	}
 
 	private static InputStream openInput(String inputFile) throws IOException {

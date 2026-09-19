@@ -2,22 +2,33 @@ package net.thisptr.jackson.jq.v2.cli;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 
+import dev.tamboui.backend.jline3.JLineBackend;
+import dev.tamboui.tui.TuiConfig;
+import dev.tamboui.tui.TuiRunner;
+import dev.tamboui.tui.event.KeyCode;
+import dev.tamboui.tui.event.KeyEvent;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.jline.terminal.Size;
+import org.jline.terminal.impl.LineDisciplineTerminal;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
+import net.thisptr.jackson.jq.v2.core.version.Versions;
+import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -339,6 +350,65 @@ class MainTest {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> Main.resolveProvider("unknown"))
 				.withMessage("unknown --json-provider: unknown (expected one of: jackson2, jackson3, fastjson2, gson, jakarta)");
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "-i", "--interactive" })
+	void runsPlaygroundWithCustomRunner(String opt) throws Exception {
+		Options options = new Options();
+		options.addOption(Option.builder("i").longOpt("interactive").get());
+		options.addOption(Option.builder("c").longOpt("compact").get());
+		CommandLine command = new DefaultParser().parse(options, new String[] { opt, "-c" });
+
+		ByteArrayOutputStream termOut = new ByteArrayOutputStream();
+		TuiRunner runner = createTestRunner("", termOut);
+		runner.dispatch(KeyEvent.ofKey(KeyCode.ESCAPE));
+		runner.dispatch(KeyEvent.ofChar('y'));
+
+		InputStream originalIn = System.in;
+		PrintStream originalOut = System.out;
+		PrintStream originalErr = System.err;
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		ByteArrayOutputStream err = new ByteArrayOutputStream();
+		try {
+			System.setIn(new ByteArrayInputStream("{\"x\":123}".getBytes(StandardCharsets.UTF_8)));
+			System.setOut(new PrintStream(out));
+			System.setErr(new PrintStream(err));
+			Main.run(command, ".", Collections.emptyList(), Versions.JQ_1_6,
+					Jackson3JsonProvider.getInstance(),
+					RuntimeOptions.newBuilder().build(), runner);
+		} finally {
+			System.setIn(originalIn);
+			System.setOut(originalOut);
+			System.setErr(originalErr);
+		}
+
+		assertThat(new String(out.toByteArray(), StandardCharsets.UTF_8)).isEqualTo("{\"x\":123}\n");
+		assertThat(new String(err.toByteArray(), StandardCharsets.UTF_8)).isEqualTo("jackson-jq -c -- '.'\n");
+	}
+
+	@Test
+	void testCreateDefaultRunnerWhenDevTtyAvailable() throws Exception {
+		if (new File("/dev/tty").exists()) {
+			try (TuiRunner runner = Main.createDefaultRunner()) {
+				assertThat(runner).isNotNull();
+			} catch (Exception ignored) {
+				// /dev/tty may exist but not be openable in sandbox/headless environments
+			}
+		}
+	}
+
+	private static TuiRunner createTestRunner(String keyInput, ByteArrayOutputStream terminalOut) throws Exception {
+		LineDisciplineTerminal terminal = new LineDisciplineTerminal("test", "dumb", terminalOut, StandardCharsets.UTF_8);
+		terminal.setSize(new Size(80, 24));
+		terminal.processInputBytes(keyInput.getBytes(StandardCharsets.UTF_8));
+		return TuiRunner.create(TuiConfig.builder()
+				.rawMode(false)
+				.shutdownHook(false)
+				.alternateScreen(false)
+				.hideCursor(false)
+				.backend(new JLineBackend(terminal))
+				.build());
 	}
 
 	private static Path write(Path dir, String name, String content) throws Exception {

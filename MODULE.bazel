@@ -131,6 +131,31 @@ maven.artifact(
     group = "com.google.guava",
     version = "33.4.8-jre",
 )
+maven.artifact(
+    artifact = "tamboui-core",
+    group = "dev.tamboui",
+    version = "0.4.0",
+)
+maven.artifact(
+    artifact = "tamboui-tui",
+    group = "dev.tamboui",
+    version = "0.4.0",
+)
+maven.artifact(
+    artifact = "tamboui-widgets",
+    group = "dev.tamboui",
+    version = "0.4.0",
+)
+maven.artifact(
+    artifact = "tamboui-jline3-backend",
+    group = "dev.tamboui",
+    version = "0.4.0",
+)
+maven.artifact(
+    artifact = "jline",
+    group = "org.jline",
+    version = "3.25.1",
+)
 
 # -- annotations --------------------------------------------------------------
 maven.artifact(
