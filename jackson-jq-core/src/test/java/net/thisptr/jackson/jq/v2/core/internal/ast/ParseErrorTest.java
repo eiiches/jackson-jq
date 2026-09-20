@@ -30,7 +30,11 @@ class ParseErrorTest {
 
 	@Test
 	void theCaretFindsTheRightLineOfAMultiLineQuery() {
-		assertThatThrownBy(() -> parse(".foo\n| .bar\n| ["))
+		assertThatThrownBy(() -> parse("""
+				.foo
+				| .bar
+				| [\
+				"""))
 				.isInstanceOf(JsonQueryException.class)
 				.hasMessageContaining(" at line 3, column 3:\n")
 				.hasMessageEndingWith("    | [\n      ^");

@@ -33,23 +33,24 @@ import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 
 @ModuleRegistration(path = "jackson-jq/re2")
 public final class ModuleImpl implements JqModule<Object> {
-	private static final String SOURCE =
-			"import \"jackson-jq/re2/_impl\" as re2_impl;\n"
-					+ "def match(re; mode): re2_impl::_match_impl(re; mode; false) | .[];\n"
-					+ "def match($val): ($val|type) as $vt | if $vt == \"string\" then match($val; null) elif $vt == \"array\" and ($val | length) > 1 then match($val[0]; $val[1]) elif $vt == \"array\" and ($val | length) > 0 then match($val[0]; null) else error($vt + \" not a string or array\") end;\n"
-					+ "def test(re; mode): re2_impl::_match_impl(re; mode; true);\n"
-					+ "def test($val): ($val|type) as $vt | if $vt == \"string\" then test($val; null) elif $vt == \"array\" and ($val | length) > 1 then test($val[0]; $val[1]) elif $vt == \"array\" and ($val | length) > 0 then test($val[0]; null) else error($vt + \" not a string or array\") end;\n"
-					+ "def capture(re; mods): match(re; mods) | reduce (.captures | .[] | select(.name != null) | {(.name): .string}) as $pair ({}; . + $pair);\n"
-					+ "def capture($val): ($val|type) as $vt | if $vt == \"string\" then capture($val; null) elif $vt == \"array\" and ($val | length) > 1 then capture($val[0]; $val[1]) elif $vt == \"array\" and ($val | length) > 0 then capture($val[0]; null) else error($vt + \" not a string or array\") end;\n"
-					+ "def scan(re; flags): match(re; flags + \"g\") | if (.captures|length > 0) then [.captures | .[] | .string] else .string end;\n"
-					+ "def scan(re): scan(re; \"\");\n"
-					+ "def splits($re; flags): def _nwise(a; $n): if a|length <= $n then a else a[0:$n], _nwise(a[$n:]; $n) end; def _nwise($n): _nwise(.; $n); . as $s | [match($re; \"g\" + flags) | (.offset, .offset + .length)] | [0] + . + [$s|length] | _nwise(2) | $s[.[0]:.[1]];\n"
-					+ "def splits($re): splits($re; null);\n"
-					+ "def split($re; flags): [splits($re; flags)];\n"
-					+ "def sub($re; s): re2_impl::_sub_impl($re; s; \"\");\n"
-					+ "def sub($re; s; flags): re2_impl::_sub_impl($re; s; flags);\n"
-					+ "def gsub($re; s; flags): re2_impl::_sub_impl($re; s; flags + \"g\");\n"
-					+ "def gsub($re; s): re2_impl::_sub_impl($re; s; \"g\");\n";
+	private static final String SOURCE = """
+			import "jackson-jq/re2/_impl" as re2_impl;
+			def match(re; mode): re2_impl::_match_impl(re; mode; false) | .[];
+			def match($val): ($val|type) as $vt | if $vt == "string" then match($val; null) elif $vt == "array" and ($val | length) > 1 then match($val[0]; $val[1]) elif $vt == "array" and ($val | length) > 0 then match($val[0]; null) else error($vt + " not a string or array") end;
+			def test(re; mode): re2_impl::_match_impl(re; mode; true);
+			def test($val): ($val|type) as $vt | if $vt == "string" then test($val; null) elif $vt == "array" and ($val | length) > 1 then test($val[0]; $val[1]) elif $vt == "array" and ($val | length) > 0 then test($val[0]; null) else error($vt + " not a string or array") end;
+			def capture(re; mods): match(re; mods) | reduce (.captures | .[] | select(.name != null) | {(.name): .string}) as $pair ({}; . + $pair);
+			def capture($val): ($val|type) as $vt | if $vt == "string" then capture($val; null) elif $vt == "array" and ($val | length) > 1 then capture($val[0]; $val[1]) elif $vt == "array" and ($val | length) > 0 then capture($val[0]; null) else error($vt + " not a string or array") end;
+			def scan(re; flags): match(re; flags + "g") | if (.captures|length > 0) then [.captures | .[] | .string] else .string end;
+			def scan(re): scan(re; "");
+			def splits($re; flags): def _nwise(a; $n): if a|length <= $n then a else a[0:$n], _nwise(a[$n:]; $n) end; def _nwise($n): _nwise(.; $n); . as $s | [match($re; "g" + flags) | (.offset, .offset + .length)] | [0] + . + [$s|length] | _nwise(2) | $s[.[0]:.[1]];
+			def splits($re): splits($re; null);
+			def split($re; flags): [splits($re; flags)];
+			def sub($re; s): re2_impl::_sub_impl($re; s; "");
+			def sub($re; s; flags): re2_impl::_sub_impl($re; s; flags);
+			def gsub($re; s; flags): re2_impl::_sub_impl($re; s; flags + "g");
+			def gsub($re; s): re2_impl::_sub_impl($re; s; "g");
+			""";
 
 	@Override
 	public String getSourceCode() {

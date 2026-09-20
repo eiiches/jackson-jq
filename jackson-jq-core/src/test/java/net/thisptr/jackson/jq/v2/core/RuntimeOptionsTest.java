@@ -460,7 +460,10 @@ public class RuntimeOptionsTest {
 				.addImportedModule("gen", new JqModule<JsonNode>() {
 					@Override
 					public String getSourceCode() {
-						return "def nums: 1, 2, 3, 4, 5;\ndef total: reduce nums as $x (0; . + $x);";
+						return """
+								def nums: 1, 2, 3, 4, 5;
+								def total: reduce nums as $x (0; . + $x);\
+								""";
 					}
 
 					@Override

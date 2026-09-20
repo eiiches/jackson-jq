@@ -66,7 +66,11 @@ class MainTest {
 	@ParameterizedTest
 	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void readsMultipleInputDocumentsWithSelectedJsonProvider(String provider) throws Exception {
-		assertThat(run("1 2\n{\"a\":3}\n[4,5] \"six\" null true", "--json-provider", provider, "--compact", "."))
+		assertThat(run("""
+				1 2
+				{"a":3}
+				[4,5] "six" null true\
+				""", "--json-provider", provider, "--compact", "."))
 				.isEqualTo("1\n2\n{\"a\":3}\n[4,5]\n\"six\"\nnull\ntrue\n");
 	}
 
@@ -114,7 +118,12 @@ class MainTest {
 
 	@Test
 	void readsMultiLineQueryWithCommentsFromFile(@TempDir Path dir) throws Exception {
-		Path query = write(dir, "query.jq", "#!/usr/bin/env jq -f\n# doubles .foo\n.foo\n\t| . * 2\n");
+		Path query = write(dir, "query.jq", """
+				#!/usr/bin/env jq -f
+				# doubles .foo
+				.foo
+				\t| . * 2
+				""");
 		assertThat(run("{\"foo\":21}", "--compact", "-f", query.toString()))
 				.isEqualTo("42\n");
 	}

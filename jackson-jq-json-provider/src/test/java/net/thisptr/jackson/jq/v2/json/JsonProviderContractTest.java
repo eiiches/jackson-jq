@@ -1016,7 +1016,10 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testCreateParserReadsValuesSeparatedByNewlines() {
-		assertThat(parseStream("{\"a\":1}\n{\"b\":2}\n")).containsExactly("{\"a\":1}", "{\"b\":2}");
+		assertThat(parseStream("""
+				{"a":1}
+				{"b":2}
+				""")).containsExactly("{\"a\":1}", "{\"b\":2}");
 	}
 
 	@Test

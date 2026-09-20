@@ -91,7 +91,10 @@ class PlaygroundTest {
 				true,
 				true,
 				true,
-				".[\"it's\"]\n| .",
+				"""
+						.["it's"]
+						| .\
+						""",
 				JSON,
 				runtimeOptions,
 				compileOptions,
@@ -398,7 +401,10 @@ class PlaygroundTest {
 		ByteArrayOutputStream err = new ByteArrayOutputStream();
 
 		// Start with query ".", type "val", Enter (newline), type "+ 1", then Escape + 'y'
-		List<Event> events = new ArrayList<>(textToKeys("val\n+ 1"));
+		List<Event> events = new ArrayList<>(textToKeys("""
+				val
+				+ 1\
+				"""));
 		events.add(KeyEvent.ofKey(KeyCode.ESCAPE));
 		events.add(KeyEvent.ofChar('y'));
 
@@ -1167,7 +1173,10 @@ class PlaygroundTest {
 
 		Playground<JsonNode> pg = new Playground<>(
 				env,
-				"{\"a\": 1}\n{\"a\": 2}\n".getBytes(StandardCharsets.UTF_8),
+				"""
+						{"a": 1}
+						{"a": 2}
+						""".getBytes(StandardCharsets.UTF_8),
 				false,
 				false,
 				false,

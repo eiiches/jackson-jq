@@ -22,7 +22,10 @@ class JakartaJsonProviderTest {
 
 	@Test
 	void readsMultipleTopLevelValues() {
-		List<JsonValue> values = provider.parseAll("1\n{\"value\": [true, \"}\"]}[2] \"text\"");
+		List<JsonValue> values = provider.parseAll("""
+				1
+				{"value": [true, "}"]}[2] "text"\
+				""");
 
 		assertThat(values).hasSize(4);
 		assertThat(provider.getNumberAsIntExact(values.get(0))).isEqualTo(1);

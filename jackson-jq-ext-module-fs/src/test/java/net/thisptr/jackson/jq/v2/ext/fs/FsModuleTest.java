@@ -371,7 +371,10 @@ public class FsModuleTest {
 	@Test
 	public void readsJsonStream() throws IOException {
 		Path streamFile = directory.resolve("stream.jsonl");
-		Files.write(streamFile, "{\"id\": 1, \"name\": \"a\"}\n{\"id\": 2, \"name\": \"b\"}\n".getBytes(StandardCharsets.UTF_8));
+		Files.write(streamFile, """
+				{"id": 1, "name": "a"}
+				{"id": 2, "name": "b"}
+				""".getBytes(StandardCharsets.UTF_8));
 
 		List<JsonNode> results = run("fs::read_json_stream(" + quote(streamFile) + ")", unlimited());
 		assertThat(results).hasSize(2);
