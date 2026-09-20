@@ -659,35 +659,10 @@ final class JsonTreePane {
 				? textMatches.get(textMatchIndex)
 				: -1;
 
-		String lowerQuery = searchQuery.toLowerCase(Locale.ROOT);
 		for (int lineIdx = 0; lineIdx < textLines.size(); lineIdx++) {
 			String lineText = textLines.get(lineIdx);
 			boolean isLineActiveMatch = (lineIdx == activeMatchLine);
-
-			if (!searchQuery.isEmpty() && lineText.toLowerCase(Locale.ROOT).contains(lowerQuery)) {
-				List<Span> spans = new ArrayList<>();
-				String lowerLine = lineText.toLowerCase(Locale.ROOT);
-				@Var int start = 0;
-				Style matchStyle = isLineActiveMatch
-						? Style.EMPTY.bold().bg(Color.MAGENTA).fg(Color.WHITE)
-						: Style.EMPTY.bold().bg(Color.YELLOW).fg(Color.BLACK);
-
-				while (start < lineText.length()) {
-					int matchPos = lowerLine.indexOf(lowerQuery, start);
-					if (matchPos < 0) {
-						spans.add(Span.raw(lineText.substring(start)));
-						break;
-					}
-					if (matchPos > start) {
-						spans.add(Span.raw(lineText.substring(start, matchPos)));
-					}
-					spans.add(Span.styled(lineText.substring(matchPos, matchPos + lowerQuery.length()), matchStyle));
-					start = matchPos + lowerQuery.length();
-				}
-				linesToRender.add(Line.from(spans));
-			} else {
-				linesToRender.add(Line.from(lineText));
-			}
+			linesToRender.add(JsonTextHighlighter.highlightLine(lineText, searchQuery, isLineActiveMatch));
 		}
 
 		Paragraph p = Paragraph.builder()

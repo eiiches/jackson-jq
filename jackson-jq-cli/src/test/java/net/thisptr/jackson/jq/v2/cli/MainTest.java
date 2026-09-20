@@ -356,6 +356,48 @@ class MainTest {
 				.withMessage("unknown --json-provider: unknown (expected one of: jackson2, jackson3, fastjson2, gson, jakarta)");
 	}
 
+	@Test
+	void colorizesOutputWithShortOption() throws Exception {
+		assertThat(run("{\"a\":1}", "-C", "."))
+				.isEqualTo("\033[1;39m{\033[0m\n  \033[1;34m\"a\"\033[0m\033[1;39m:\033[0m \033[0;39m1\033[0m\n\033[1;39m}\033[0m\n");
+	}
+
+	@Test
+	void colorizesOutputWithLongOption() throws Exception {
+		assertThat(run("{\"a\":1}", "--color-output", "."))
+				.isEqualTo("\033[1;39m{\033[0m\n  \033[1;34m\"a\"\033[0m\033[1;39m:\033[0m \033[0;39m1\033[0m\n\033[1;39m}\033[0m\n");
+	}
+
+	@Test
+	void disablesColorWithMonochromeOption() throws Exception {
+		assertThat(run("{\"a\":1}", "-M", "."))
+				.isEqualTo("{\n  \"a\": 1\n}\n");
+		assertThat(run("{\"a\":1}", "--monochrome-output", "."))
+				.isEqualTo("{\n  \"a\": 1\n}\n");
+	}
+
+	@Test
+	void monochromeWinsWhenBothColorAndMonochromeSpecified() throws Exception {
+		assertThat(run("{\"a\":1}", "-C", "-M", "."))
+				.isEqualTo("{\n  \"a\": 1\n}\n");
+		assertThat(run("{\"a\":1}", "-M", "-C", "."))
+				.isEqualTo("{\n  \"a\": 1\n}\n");
+	}
+
+	@Test
+	void colorizesCompactOutput() throws Exception {
+		assertThat(run("{\"a\":1}", "-c", "-C", "."))
+				.isEqualTo("\033[1;39m{\033[0m\033[1;34m\"a\"\033[0m\033[1;39m:\033[0m\033[0;39m1\033[0m\033[1;39m}\033[0m\n");
+		assertThat(run("{\"a\":1}", "-cC", "."))
+				.isEqualTo("\033[1;39m{\033[0m\033[1;34m\"a\"\033[0m\033[1;39m:\033[0m\033[0;39m1\033[0m\033[1;39m}\033[0m\n");
+	}
+
+	@Test
+	void handlesRawOutputWithColor() throws Exception {
+		assertThat(run("[\"hello\", 123]", "-r", "-C", ".[]"))
+				.isEqualTo("hello\n\033[0;39m123\033[0m\n");
+	}
+
 	@ParameterizedTest
 	@ValueSource(strings = { "-i", "--interactive" })
 	void runsPlaygroundWithCustomRunner(String opt) throws Exception {

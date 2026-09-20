@@ -78,6 +78,14 @@ public class Main {
 			.longOpt("compact")
 			.desc("compact instead of pretty-printed output")
 			.get();
+	private static final Option OPT_COLOR_OUTPUT = Option.builder("C")
+			.longOpt("color-output")
+			.desc("colorize JSON output")
+			.get();
+	private static final Option OPT_MONOCHROME_OUTPUT = Option.builder("M")
+			.longOpt("monochrome-output")
+			.desc("disable colored output")
+			.get();
 	private static final Option OPT_RAW_OUTPUT = Option.builder("r")
 			.longOpt("raw-output")
 			.desc("output raw strings, not JSON texts")
@@ -165,6 +173,8 @@ public class Main {
 	public static void main(String[] args) throws Exception {
 		Options options = new Options();
 		options.addOption(OPT_COMPACT);
+		options.addOption(OPT_COLOR_OUTPUT);
+		options.addOption(OPT_MONOCHROME_OUTPUT);
 		options.addOption(OPT_RAW_OUTPUT);
 		options.addOption(OPT_NULL_INPUT);
 		options.addOption(OPT_RAW_INPUT);
@@ -424,6 +434,20 @@ public class Main {
 		boolean compact = command.hasOption(OPT_COMPACT.getOpt());
 		boolean rawOutput = command.hasOption(OPT_RAW_OUTPUT.getOpt());
 		boolean nullInput = command.hasOption(OPT_NULL_INPUT.getOpt());
+		boolean forceColor = command.hasOption(OPT_COLOR_OUTPUT.getOpt());
+		boolean forceMonochrome = command.hasOption(OPT_MONOCHROME_OUTPUT.getOpt());
+		boolean color;
+		if (forceMonochrome) {
+			color = false;
+		} else if (forceColor) {
+			color = true;
+		} else {
+			String noColor = System.getenv("NO_COLOR");
+			boolean noColorSet = noColor != null && !noColor.isEmpty();
+			boolean isTty = System.console() != null;
+			color = isTty && !noColorSet;
+		}
+		@Nullable JqColors colors = color ? JqColors.fromEnvironment(version, System.getenv(), System.err) : null;
 		List<InputStream> streams = new ArrayList<>();
 		@Var boolean failed = false;
 		/*
@@ -506,9 +530,9 @@ public class Main {
 					if (jsonProvider.isString(out) && rawOutput) {
 						System.out.println(jsonProvider.getString(out));
 					} else if (compact) {
-						System.out.println(jsonProvider.format(out));
+						System.out.println(JqPrinter.print(jsonProvider, out, null, colors));
 					} else {
-						System.out.println(JqPrettyPrinter.print(jsonProvider, out, PRETTY_INDENT));
+						System.out.println(JqPrinter.print(jsonProvider, out, PRETTY_INDENT, colors));
 					}
 				});
 			} catch (JsonQueryException e) {
