@@ -547,21 +547,14 @@ class MainTest {
 	}
 
 	private static String run(String input, String... args) throws Exception {
-		return capture(input, args).out;
+		return capture(input, args).out();
 	}
 
 	private static String runStderr(String input, String... args) throws Exception {
-		return capture(input, args).err;
+		return capture(input, args).err();
 	}
 
-	private static final class Captured {
-		final String out;
-		final String err;
-
-		Captured(String out, String err) {
-			this.out = out;
-			this.err = err;
-		}
+	private record Captured(String out, String err) {
 	}
 
 	private static synchronized Captured capture(String input, String... args) throws Exception {

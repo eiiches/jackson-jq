@@ -168,7 +168,7 @@ public class HttpGetFunction implements Function {
 		HttpURLConnection connection = open(request);
 		try {
 			int status = connection.getResponseCode();
-			checkExpectedStatus(request.expectedStatuses, status);
+			checkExpectedStatus(request.expectedStatuses(), status);
 			List<JsonNode> headers = createHeaders(jsonProvider, limits, connection.getHeaderFields());
 			byte[] rawBody = readBody(connection, limits, binarySupported);
 			JsonNode body = createBody(jsonProvider, limits, rawBody, connection.getContentType());
@@ -181,7 +181,7 @@ public class HttpGetFunction implements Function {
 			response.put("raw_body", rawBodyNode);
 			return jsonProvider.createObject(response);
 		} catch (IOException e) {
-			throw new JsonQueryException("http::get failed for " + request.url + ": " + e.getMessage(), e);
+			throw new JsonQueryException("http::get failed for " + request.url() + ": " + e.getMessage(), e);
 		} finally {
 			connection.disconnect();
 		}
@@ -197,7 +197,7 @@ public class HttpGetFunction implements Function {
 
 	private static HttpURLConnection open(Request request) {
 		try {
-			URL url = new URL(request.url);
+			URL url = new URL(request.url());
 			String protocol = url.getProtocol();
 			if (!protocol.equalsIgnoreCase("http") && !protocol.equalsIgnoreCase("https"))
 				throw new JsonQueryException("http::get only supports http and https URLs");
@@ -205,13 +205,13 @@ public class HttpGetFunction implements Function {
 			if (!(rawConnection instanceof HttpURLConnection connection))
 				throw new JsonQueryException("http::get only supports HTTP connections");
 			connection.setRequestMethod("GET");
-			connection.setConnectTimeout(request.timeoutMillis);
-			connection.setReadTimeout(request.timeoutMillis);
+			connection.setConnectTimeout(request.timeoutMillis());
+			connection.setReadTimeout(request.timeoutMillis());
 			connection.setInstanceFollowRedirects(true);
 			connection.setRequestProperty("Accept-Encoding", "gzip, deflate");
 			return connection;
 		} catch (IOException | IllegalArgumentException | SecurityException e) {
-			throw new JsonQueryException("http::get failed to open " + request.url + ": " + e.getMessage(), e);
+			throw new JsonQueryException("http::get failed to open " + request.url() + ": " + e.getMessage(), e);
 		}
 	}
 
@@ -281,13 +281,13 @@ public class HttpGetFunction implements Function {
 
 	private static <JsonNode> JsonNode createBody(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, byte[] bytes, @Nullable String contentType) {
 		MediaType mediaType = MediaType.parse(contentType);
-		if (bytes.length == 0 && mediaType.json)
+		if (bytes.length == 0 && mediaType.json())
 			return jsonProvider.createNull();
-		if (!mediaType.json && !mediaType.text)
+		if (!mediaType.json() && !mediaType.text())
 			return jsonProvider.createNull();
 
-		String text = new String(bytes, mediaType.charset);
-		if (mediaType.text) {
+		String text = new String(bytes, mediaType.charset());
+		if (mediaType.text()) {
 			checkStringLength(limits, text);
 			return jsonProvider.createString(text);
 		}
@@ -365,29 +365,10 @@ public class HttpGetFunction implements Function {
 		return maximumStringLength == Integer.MAX_VALUE ? Integer.MAX_VALUE : (maximumStringLength / 4) * 3;
 	}
 
-	private static final class Request {
-		private final List<Integer> expectedStatuses;
-		private final int timeoutMillis;
-		private final String url;
-
-		private Request(String url, int timeoutMillis, List<Integer> expectedStatuses) {
-			this.url = url;
-			this.timeoutMillis = timeoutMillis;
-			this.expectedStatuses = expectedStatuses;
-		}
+	private record Request(String url, int timeoutMillis, List<Integer> expectedStatuses) {
 	}
 
-	private static final class MediaType {
-		private final Charset charset;
-		private final boolean json;
-		private final boolean text;
-
-		private MediaType(boolean json, boolean text, Charset charset) {
-			this.json = json;
-			this.text = text;
-			this.charset = charset;
-		}
-
+	private record MediaType(boolean json, boolean text, Charset charset) {
 		private static MediaType parse(@Nullable String contentType) {
 			if (contentType == null)
 				return new MediaType(false, false, StandardCharsets.UTF_8);

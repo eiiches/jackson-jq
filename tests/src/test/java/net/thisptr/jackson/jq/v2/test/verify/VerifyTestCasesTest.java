@@ -42,15 +42,15 @@ public class VerifyTestCasesTest {
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
 	private void verify(TestCase tc, JqExecutables.JqExecutable e, @Nullable Path moduleSearchPath) throws Throwable {
-		String command = String.format("%s '%s' <<< '%s'", e.executable, tc.q, tc.in);
+		String command = String.format("%s '%s' <<< '%s'", e.executable(), tc.q, tc.in);
 
-		Evaluator.Result result = new JqRunner(e.executable, moduleSearchPath).evaluate(tc.q, tc.in, Duration.ofSeconds(2));
-		assertThat(result.error).as("%s", command).isNull();
+		Evaluator.Result result = new JqRunner(e.executable(), moduleSearchPath).evaluate(tc.q, tc.in, Duration.ofSeconds(2));
+		assertThat(result.error()).as("%s", command).isNull();
 
 		Comparator<JsonNode> comparator = new TestJsonNodeComparator<>(Jackson2JsonProvider.getInstance(), true, tc.numericalErrors);
 		assertThat(tc.out).as("%s", command)
 				.usingElementComparator(comparator)
-				.isEqualTo(result.values);
+				.isEqualTo(result.values());
 	}
 
 	public void test(String tcText) throws Throwable {
@@ -59,7 +59,7 @@ public class VerifyTestCasesTest {
 		try {
 			List<Executable> testExecutables = new ArrayList<>();
 			for (JqExecutables.JqExecutable e : JqExecutables.ALL) {
-				if (tc.version == null || tc.version.contains(e.jqVersion)) {
+				if (tc.version == null || tc.version.contains(e.jqVersion())) {
 					if (!tc.shouldCompile || tc.ignoreTrueJqBehavior) {
 						testExecutables.add(() -> {
 							assertThat(catchThrowable(() -> verify(tc, e, moduleSearchPath)))
@@ -72,7 +72,7 @@ public class VerifyTestCasesTest {
 				} else {
 					testExecutables.add(() -> {
 						assertThat(catchThrowable(() -> verify(tc, e, moduleSearchPath)))
-								.describedAs("The version range excludes %s, but the test case succeeds anyway: %s", e.jqVersion, tcText)
+								.describedAs("The version range excludes %s, but the test case succeeds anyway: %s", e.jqVersion(), tcText)
 								.isInstanceOf(Throwable.class);
 					});
 				}

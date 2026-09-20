@@ -23,28 +23,7 @@ final class JsonTextHighlighter {
 	private JsonTextHighlighter() {
 	}
 
-	static final class Token {
-		final int start;
-		final int end;
-		final Style style;
-
-		Token(int start, int end, Style style) {
-			this.start = start;
-			this.end = end;
-			this.style = style;
-		}
-
-		int start() {
-			return start;
-		}
-
-		int end() {
-			return end;
-		}
-
-		Style style() {
-			return style;
-		}
+	record Token(int start, int end, Style style) {
 	}
 
 	static List<Token> tokenize(String line) {
@@ -148,8 +127,8 @@ final class JsonTextHighlighter {
 		if (searchQuery == null || searchQuery.isEmpty()) {
 			List<Span> spans = new ArrayList<>();
 			for (Token token : tokens) {
-				String text = lineText.substring(token.start, token.end);
-				spans.add(Span.styled(text, token.style));
+				String text = lineText.substring(token.start(), token.end());
+				spans.add(Span.styled(text, token.style()));
 			}
 			return Line.from(spans);
 		}
@@ -159,8 +138,8 @@ final class JsonTextHighlighter {
 		if (!lowerLine.contains(lowerQuery)) {
 			List<Span> spans = new ArrayList<>();
 			for (Token token : tokens) {
-				String text = lineText.substring(token.start, token.end);
-				spans.add(Span.styled(text, token.style));
+				String text = lineText.substring(token.start(), token.end());
+				spans.add(Span.styled(text, token.style()));
 			}
 			return Line.from(spans);
 		}
@@ -182,8 +161,8 @@ final class JsonTextHighlighter {
 
 		List<Span> spans = new ArrayList<>();
 		for (Token token : tokens) {
-			@Var int current = token.start;
-			while (current < token.end) {
+			@Var int current = token.start();
+			while (current < token.end()) {
 				@Var int[] containing = null;
 				@Var int[] nextMatch = null;
 				for (int[] m : matchIntervals) {
@@ -199,16 +178,16 @@ final class JsonTextHighlighter {
 				}
 
 				if (containing != null) {
-					int segEnd = Math.min(token.end, containing[1]);
+					int segEnd = Math.min(token.end(), containing[1]);
 					spans.add(Span.styled(lineText.substring(current, segEnd), matchStyle));
 					current = segEnd;
-				} else if (nextMatch != null && nextMatch[0] < token.end) {
+				} else if (nextMatch != null && nextMatch[0] < token.end()) {
 					int segEnd = nextMatch[0];
-					spans.add(Span.styled(lineText.substring(current, segEnd), token.style));
+					spans.add(Span.styled(lineText.substring(current, segEnd), token.style()));
 					current = segEnd;
 				} else {
-					spans.add(Span.styled(lineText.substring(current, token.end), token.style));
-					current = token.end;
+					spans.add(Span.styled(lineText.substring(current, token.end()), token.style()));
+					current = token.end();
 				}
 			}
 		}

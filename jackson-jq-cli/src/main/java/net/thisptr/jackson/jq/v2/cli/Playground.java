@@ -1107,25 +1107,12 @@ final class Playground<N> {
 		updateEvaluationGeneric(jsonProvider, env, inputs, true);
 	}
 
-	private static final class EvaluationResult {
-		final @Nullable List<String> previewLines;
-		final @Nullable List<?> outputItems;
-		final int itemCount;
-		final @Nullable String errorMessage;
-		final List<Diagnostic> warnings;
-
-		EvaluationResult(
-				@Nullable List<String> previewLines,
-				@Nullable List<?> outputItems,
-				int itemCount,
-				@Nullable String errorMessage,
-				List<Diagnostic> warnings) {
-			this.previewLines = previewLines;
-			this.outputItems = outputItems;
-			this.itemCount = itemCount;
-			this.errorMessage = errorMessage;
-			this.warnings = warnings;
-		}
+	private record EvaluationResult(
+			@Nullable List<String> previewLines,
+			@Nullable List<?> outputItems,
+			int itemCount,
+			@Nullable String errorMessage,
+			List<Diagnostic> warnings) {
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1183,27 +1170,27 @@ final class Playground<N> {
 	}
 
 	private void applyEvaluationResult(EvaluationResult result) {
-		this.warnings = result.warnings;
-		if (result.errorMessage != null) {
-			this.errorMessage = result.errorMessage;
+		this.warnings = result.warnings();
+		if (result.errorMessage() != null) {
+			this.errorMessage = result.errorMessage();
 			this.outputStale = true;
 			this.evaluationStatus = EvaluationStatus.FAILURE;
-		} else if (result.previewLines == null) {
+		} else if (result.previewLines() == null) {
 			this.errorMessage = null;
 			this.outputStale = true;
 			this.evaluationStatus = EvaluationStatus.STALE;
 		} else {
-			this.previewLines = result.previewLines;
-			this.itemCount = result.itemCount;
+			this.previewLines = result.previewLines();
+			this.itemCount = result.itemCount();
 			this.errorMessage = null;
 			this.outputStale = false;
 			this.evaluationStatus = EvaluationStatus.UP_TO_DATE;
 			this.outputScrollOffset = 0;
-			int maxOutputScroll = Math.max(0, result.previewLines.size() - outputViewportHeight);
+			int maxOutputScroll = Math.max(0, result.previewLines().size() - outputViewportHeight);
 			if (outputScrollOffset > maxOutputScroll) {
 				outputScrollOffset = maxOutputScroll;
 			}
-			this.outputTreePane.setNodes(result.outputItems != null ? result.outputItems : Collections.emptyList(), this.previewLines, jsonProvider);
+			this.outputTreePane.setNodes(result.outputItems() != null ? result.outputItems() : Collections.emptyList(), this.previewLines, jsonProvider);
 		}
 		updateDiagnosticLines();
 	}

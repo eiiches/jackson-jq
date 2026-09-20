@@ -85,7 +85,7 @@ public final class FileWriteFunction implements Function {
 						}
 						optionsExpression.apply(context, input, inputPath, (optionsNode, optionsPath) -> {
 							BinaryOptions options = parseBinaryOptions(jsonProvider, optionsNode, function);
-							FileFunctionSupport.write(file, bytes, options.append, options.createParents, function);
+							FileFunctionSupport.write(file, bytes, options.append(), options.createParents(), function);
 							output.emit(jsonProvider.createNull(), UntrackedPath.getInstance());
 						});
 					});
@@ -102,8 +102,8 @@ public final class FileWriteFunction implements Function {
 					}
 					optionsExpression.apply(context, input, inputPath, (optionsNode, optionsPath) -> {
 						TextOptions options = parseTextOptions(jsonProvider, optionsNode, function);
-						byte[] bytes = encode(text, options.charset, function);
-						FileFunctionSupport.write(file, bytes, options.append, options.createParents, function);
+						byte[] bytes = encode(text, options.charset(), function);
+						FileFunctionSupport.write(file, bytes, options.append(), options.createParents(), function);
 						output.emit(jsonProvider.createNull(), UntrackedPath.getInstance());
 					});
 				});
@@ -160,25 +160,9 @@ public final class FileWriteFunction implements Function {
 		}
 	}
 
-	private static final class TextOptions {
-		private final Charset charset;
-		private final boolean append;
-		private final boolean createParents;
-
-		private TextOptions(Charset charset, boolean append, boolean createParents) {
-			this.charset = charset;
-			this.append = append;
-			this.createParents = createParents;
-		}
+	private record TextOptions(Charset charset, boolean append, boolean createParents) {
 	}
 
-	private static final class BinaryOptions {
-		private final boolean append;
-		private final boolean createParents;
-
-		private BinaryOptions(boolean append, boolean createParents) {
-			this.append = append;
-			this.createParents = createParents;
-		}
+	private record BinaryOptions(boolean append, boolean createParents) {
 	}
 }

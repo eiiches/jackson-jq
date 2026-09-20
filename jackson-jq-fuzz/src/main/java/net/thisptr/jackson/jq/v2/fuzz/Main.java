@@ -426,13 +426,13 @@ public class Main {
 		if (result == null)
 			return null;
 		EvaluationSummary s = new EvaluationSummary();
-		s.values = result.values != null ? result.values : Collections.emptyList();
-		if (result.error != null) {
-			s.error = result.error.getMessage();
-			s.errorType = result.error.getClass().getName();
-			if (!(result.error instanceof JsonQueryException)) {
+		s.values = result.values() != null ? result.values() : Collections.emptyList();
+		if (result.error() != null) {
+			s.error = result.error().getMessage();
+			s.errorType = result.error().getClass().getName();
+			if (!(result.error() instanceof JsonQueryException)) {
 				List<String> trace = new ArrayList<>();
-				for (StackTraceElement elem : result.error.getStackTrace()) {
+				for (StackTraceElement elem : result.error().getStackTrace()) {
 					trace.add(elem.toString());
 					if (trace.size() >= 15)
 						break;
@@ -631,30 +631,30 @@ public class Main {
 			@Var Category category = null;
 			@Var String message = "";
 
-			if (actual.error != null && !(actual.error instanceof JsonQueryException)) {
-				if (actual.error instanceof TimeoutException) {
+			if (actual.error() != null && !(actual.error() instanceof JsonQueryException)) {
+				if (actual.error() instanceof TimeoutException) {
 					category = Category.TIMEOUT;
 					message = "jackson-jq evaluation timed out";
 				} else {
 					category = Category.UNEXPECTED_EXCEPTION;
-					message = "jackson-jq threw " + actual.error.getClass().getName() + ": " + actual.error.getMessage();
+					message = "jackson-jq threw " + actual.error().getClass().getName() + ": " + actual.error().getMessage();
 				}
-			} else if ((expected.error != null) != (actual.error != null)) {
+			} else if ((expected.error() != null) != (actual.error() != null)) {
 				category = Category.STATUS_MISMATCH;
-				if (expected.error != null) {
-					message = "jq failed with error [" + expected.error.getMessage() + "] but jackson-jq succeeded producing " + actual.values.size() + " value(s)";
+				if (expected.error() != null) {
+					message = "jq failed with error [" + expected.error().getMessage() + "] but jackson-jq succeeded producing " + actual.values().size() + " value(s)";
 				} else {
-					message = "jq succeeded with " + expected.values.size() + " value(s) but jackson-jq failed with error [" + actual.error.getMessage() + "]";
+					message = "jq succeeded with " + expected.values().size() + " value(s) but jackson-jq failed with error [" + actual.error().getMessage() + "]";
 				}
-			} else if (expected.error == null && actual.error == null) {
-				if (expected.values.size() != actual.values.size()) {
+			} else if (expected.error() == null && actual.error() == null) {
+				if (expected.values().size() != actual.values().size()) {
 					category = Category.COUNT_MISMATCH;
-					message = "Output count mismatch: expected " + expected.values.size() + " value(s), actual " + actual.values.size() + " value(s)";
+					message = "Output count mismatch: expected " + expected.values().size() + " value(s), actual " + actual.values().size() + " value(s)";
 				} else {
-					for (int t = 0; t < expected.values.size(); ++t) {
-						if (nodeComparator.compare(expected.values.get(t), actual.values.get(t)) != 0) {
+					for (int t = 0; t < expected.values().size(); ++t) {
+						if (nodeComparator.compare(expected.values().get(t), actual.values().get(t)) != 0) {
 							category = Category.VALUE_MISMATCH;
-							message = "Output mismatch at index " + t + ": expected=" + expected.values.get(t) + ", actual=" + actual.values.get(t);
+							message = "Output mismatch at index " + t + ": expected=" + expected.values().get(t) + ", actual=" + actual.values().get(t);
 							break;
 						}
 					}
@@ -665,13 +665,13 @@ public class Main {
 				TestCase testCase = new TestCase();
 				testCase.in = in;
 				testCase.version = VersionRange.of(version, true, null, false);
-				if (expected.error != null) {
+				if (expected.error() != null) {
 					testCase.expression = new TryCatchAstNode(SYNTHETIC, expr, new StringLiteralAstNode(SYNTHETIC, "__ERROR__"));
-					testCase.out = new ArrayList<>(expected.values);
+					testCase.out = new ArrayList<>(expected.values());
 					testCase.out.add(TextNode.valueOf("__ERROR__"));
 				} else {
 					testCase.expression = expr;
-					testCase.out = expected.values;
+					testCase.out = expected.values();
 				}
 
 				DiagnosticRecord record = new DiagnosticRecord();
@@ -690,8 +690,8 @@ public class Main {
 				diagnostics.add(record);
 			} else {
 				passedCount++;
-				if (expected.error == null && !expected.values.isEmpty()) {
-					actual.values.forEach(v -> {
+				if (expected.error() == null && !expected.values().isEmpty()) {
+					actual.values().forEach(v -> {
 						if (uniqueValues.add(v)) {
 							values.add(v);
 							expressions.add(toAstNode(v));

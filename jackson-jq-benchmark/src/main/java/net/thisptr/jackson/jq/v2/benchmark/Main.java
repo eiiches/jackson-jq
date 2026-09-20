@@ -32,10 +32,10 @@ public class Main {
 		Configuration configuration;
 		try {
 			configuration = parseArguments(args);
-			if (!configuration.help) {
+			if (!configuration.help()) {
 				// Validate these in the launcher as well as in forked benchmark workers.
-				resolveProvider(configuration.jsonProviderName);
-				resolveVersion(configuration.jqVersion);
+				resolveProvider(configuration.jsonProviderName());
+				resolveVersion(configuration.jqVersion());
 			}
 		} catch (IllegalArgumentException e) {
 			System.err.println(e.getMessage());
@@ -43,24 +43,24 @@ public class Main {
 			System.exit(1);
 			return;
 		}
-		if (configuration.help) {
+		if (configuration.help()) {
 			printUsage();
 			return;
 		}
 
-		String previousQuery = System.setProperty(QUERY_PROPERTY, configuration.jqExpression);
-		String previousInput = System.setProperty(INPUT_PROPERTY, configuration.jsonInput);
+		String previousQuery = System.setProperty(QUERY_PROPERTY, configuration.jqExpression());
+		String previousInput = System.setProperty(INPUT_PROPERTY, configuration.jsonInput());
 		try {
-			Options jmhCommandLine = new CommandLineOptions(configuration.jmhArguments);
+			Options jmhCommandLine = new CommandLineOptions(configuration.jmhArguments());
 			List<String> jvmArgsAppend = new ArrayList<>(jmhCommandLine.getJvmArgsAppend().orElse(List.of()));
-			jvmArgsAppend.add(systemPropertyArgument(QUERY_PROPERTY, configuration.jqExpression));
-			jvmArgsAppend.add(systemPropertyArgument(INPUT_PROPERTY, configuration.jsonInput));
+			jvmArgsAppend.add(systemPropertyArgument(QUERY_PROPERTY, configuration.jqExpression()));
+			jvmArgsAppend.add(systemPropertyArgument(INPUT_PROPERTY, configuration.jsonInput()));
 			Options options = new OptionsBuilder()
 					.parent(jmhCommandLine)
 					.include("^" + Pattern.quote(JacksonJqBenchmark.class.getName()) + "\\.")
-					.param("benchmarkId", configuration.benchmarkId)
-					.param("jsonProviderName", configuration.jsonProviderName)
-					.param("jqVersion", configuration.jqVersion)
+					.param("benchmarkId", configuration.benchmarkId())
+					.param("jsonProviderName", configuration.jsonProviderName())
+					.param("jqVersion", configuration.jqVersion())
 					.jvmArgsAppend(jvmArgsAppend.toArray(String[]::new))
 					.shouldFailOnError(true)
 					.build();
@@ -90,7 +90,7 @@ public class Main {
 		while (index < args.length) {
 			String argument = args[index];
 			if ("--help".equals(argument))
-				return Configuration.help();
+				return Configuration.forHelp();
 			if ("--".equals(argument)) {
 				index++;
 				break;
@@ -198,26 +198,15 @@ public class Main {
 		System.err.println("Arguments after JSON are passed to JMH; use -h there for JMH help.");
 	}
 
-	private static class Configuration {
-		private final String benchmarkId;
-		private final String jsonProviderName;
-		private final String jqVersion;
-		private final String jqExpression;
-		private final String jsonInput;
-		private final String[] jmhArguments;
-		private final boolean help;
-
-		private Configuration(String benchmarkId, String jsonProviderName, String jqVersion, String jqExpression, String jsonInput, String[] jmhArguments, boolean help) {
-			this.benchmarkId = benchmarkId;
-			this.jsonProviderName = jsonProviderName;
-			this.jqVersion = jqVersion;
-			this.jqExpression = jqExpression;
-			this.jsonInput = jsonInput;
-			this.jmhArguments = jmhArguments;
-			this.help = help;
-		}
-
-		private static Configuration help() {
+	private record Configuration(
+			String benchmarkId,
+			String jsonProviderName,
+			String jqVersion,
+			String jqExpression,
+			String jsonInput,
+			String[] jmhArguments,
+			boolean help) {
+		private static Configuration forHelp() {
 			return new Configuration("", "", "", "", "", new String[0], true);
 		}
 	}

@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 import com.google.errorprone.annotations.Var;
@@ -36,33 +35,10 @@ final class JqFunctionCompiler {
 		LOADER
 	}
 
-	static final class DefinitionKey {
-		private final Version version;
-		private final FunctionSignature signature;
-		private final List<FunctionParameter> parameters;
-		private final String body;
-		private final Origin origin;
-
+	record DefinitionKey(Version version, FunctionSignature signature, List<FunctionParameter> parameters, String body,
+						 Origin origin) {
 		DefinitionKey(Version version, FunctionSignature signature, JqFunction definition, Origin origin) {
-			this.version = version;
-			this.signature = signature;
-			this.parameters = definition.parameters();
-			this.body = definition.body();
-			this.origin = origin;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (!(obj instanceof DefinitionKey other))
-				return false;
-			return version.equals(other.version) && signature.equals(other.signature) && parameters.equals(other.parameters) && body.equals(other.body) && origin == other.origin;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(version, signature, parameters, body, origin);
+			this(version, signature, definition.parameters(), definition.body(), origin);
 		}
 	}
 

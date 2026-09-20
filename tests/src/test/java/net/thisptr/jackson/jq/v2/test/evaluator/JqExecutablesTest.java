@@ -25,6 +25,6 @@ public class JqExecutablesTest {
 	@ParameterizedTest
 	@MethodSource("executables")
 	void verifyExecutableExists(JqExecutables.JqExecutable ev) throws IOException, InterruptedException {
-		assertThat(JqRunner.hasJq(ev.executable)).withFailMessage("failed to run `%s --version`", ev.executable).isTrue();
+		assertThat(JqRunner.hasJq(ev.executable())).withFailMessage("failed to run `%s --version`", ev.executable()).isTrue();
 	}
 }

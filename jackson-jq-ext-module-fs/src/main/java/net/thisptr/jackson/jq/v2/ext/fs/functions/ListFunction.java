@@ -106,10 +106,10 @@ public final class ListFunction implements Function {
 			if (!Files.isDirectory(requestedDirectory))
 				throw new JsonQueryException("fs::list path is not a directory: " + requestedDirectory);
 			java.nio.file.Path directory = Files.isSymbolicLink(requestedDirectory) ? requestedDirectory.toRealPath() : requestedDirectory;
-			List<Entry> entries = options.recursive
-					? listRecursively(directory, options.followSymlinks, limits)
+			List<Entry> entries = options.recursive()
+					? listRecursively(directory, options.followSymlinks(), limits)
 					: listDirectly(directory, limits);
-			Collections.sort(entries, Comparator.comparing(entry -> entry.path));
+			Collections.sort(entries, Comparator.comparing(Entry::path));
 			List<JsonNode> result = new ArrayList<>(entries.size());
 			for (Entry entry : entries)
 				result.add(createEntry(jsonProvider, limits, entry));
@@ -174,31 +174,17 @@ public final class ListFunction implements Function {
 
 	private static <JsonNode> JsonNode createEntry(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, Entry entry) {
 		RuntimeLimitChecks.checkObjectLength(limits, 2);
-		RuntimeLimitChecks.checkStringLength(limits, entry.path.length());
-		RuntimeLimitChecks.checkStringLength(limits, entry.type.length());
+		RuntimeLimitChecks.checkStringLength(limits, entry.path().length());
+		RuntimeLimitChecks.checkStringLength(limits, entry.type().length());
 		Map<String, JsonNode> value = new LinkedHashMap<>();
-		value.put("path", jsonProvider.createString(entry.path));
-		value.put("type", jsonProvider.createString(entry.type));
+		value.put("path", jsonProvider.createString(entry.path()));
+		value.put("type", jsonProvider.createString(entry.type()));
 		return jsonProvider.createObject(value);
 	}
 
-	private static final class Options {
-		private final boolean followSymlinks;
-		private final boolean recursive;
-
-		private Options(boolean recursive, boolean followSymlinks) {
-			this.recursive = recursive;
-			this.followSymlinks = followSymlinks;
-		}
+	private record Options(boolean recursive, boolean followSymlinks) {
 	}
 
-	private static final class Entry {
-		private final String path;
-		private final String type;
-
-		private Entry(String path, String type) {
-			this.path = path;
-			this.type = type;
-		}
+	private record Entry(String path, String type) {
 	}
 }

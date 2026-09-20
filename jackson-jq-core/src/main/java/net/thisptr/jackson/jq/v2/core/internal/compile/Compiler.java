@@ -226,24 +226,10 @@ public class Compiler {
 		return new CompilationVisitor<>(env, context, scope).compileExpression(ast);
 	}
 
-	private static final class CompiledMatcher<N> {
-		final PatternMatcher<N> matcher;
-		final Set<String> variableNames;
-
-		CompiledMatcher(PatternMatcher<N> matcher, Set<String> variableNames) {
-			this.matcher = matcher;
-			this.variableNames = variableNames;
-		}
+	private record CompiledMatcher<N>(PatternMatcher<N> matcher, Set<String> variableNames) {
 	}
 
-	private static final class CompiledFieldMatcher<N> {
-		final ObjectMatcher.FieldMatcher<N> matcher;
-		final Set<String> variableNames;
-
-		CompiledFieldMatcher(ObjectMatcher.FieldMatcher<N> matcher, Set<String> variableNames) {
-			this.matcher = matcher;
-			this.variableNames = variableNames;
-		}
+	private record CompiledFieldMatcher<N>(ObjectMatcher.FieldMatcher<N> matcher, Set<String> variableNames) {
 	}
 
 	private static final class CompilationVisitor<N> implements AstVisitor<Object> {
@@ -510,7 +496,7 @@ public class Compiler {
 			Map<String, Integer> slots = new HashMap<>();
 			Expression<StackFrame, N> body;
 			try {
-				for (String varName : matcherResult.variableNames) {
+				for (String varName : matcherResult.variableNames()) {
 					context.addLocalVariable(varName);
 					slots.put(varName, context.getVariableSlot(varName));
 				}
@@ -518,7 +504,7 @@ public class Compiler {
 			} finally {
 				context.popScope();
 			}
-			PatternMatcher<N> compiledMatcher = matcherResult.matcher.resolveSlots(new SlotResolver(slots));
+			PatternMatcher<N> compiledMatcher = matcherResult.matcher().resolveSlots(new SlotResolver(slots));
 			return new VariableBinding<>(value, compiledMatcher, new HashSet<>(slots.values()), body, context.outputCounterOf(value));
 		}
 
@@ -703,9 +689,9 @@ public class Compiler {
 			Expression<StackFrame, N> compiledIter = compileNonNull(env, context, red.iterExpr());
 			Expression<StackFrame, N> compiledInit = compileNonNull(env, context, red.initExpr());
 			CompiledMatcher<N> matcherResult = compileMatcher(red.matcher());
-			@Var PatternMatcher<N> compiledMatcher = matcherResult.matcher;
+			@Var PatternMatcher<N> compiledMatcher = matcherResult.matcher();
 
-			Set<String> varNames = matcherResult.variableNames;
+			Set<String> varNames = matcherResult.variableNames();
 			Map<String, Integer> slots = new HashMap<>();
 			context.pushLocalScope();
 			try {
@@ -726,9 +712,9 @@ public class Compiler {
 			Expression<StackFrame, N> compiledIter = compileNonNull(env, context, fe.iterExpr());
 			Expression<StackFrame, N> compiledInit = compileNonNull(env, context, fe.initExpr());
 			CompiledMatcher<N> matcherResult = compileMatcher(fe.matcher());
-			@Var PatternMatcher<N> compiledMatcher = matcherResult.matcher;
+			@Var PatternMatcher<N> compiledMatcher = matcherResult.matcher();
 
-			Set<String> varNames = matcherResult.variableNames;
+			Set<String> varNames = matcherResult.variableNames();
 			Map<String, Integer> slots = new HashMap<>();
 			context.pushLocalScope();
 			try {
@@ -919,8 +905,8 @@ public class Compiler {
 			Set<String> variableNames = new HashSet<>();
 			for (PatternMatcherAstNode element : matcher.matchers()) {
 				CompiledMatcher<N> elementResult = compileMatcher(element);
-				compiled.add(elementResult.matcher);
-				variableNames.addAll(elementResult.variableNames);
+				compiled.add(elementResult.matcher());
+				variableNames.addAll(elementResult.variableNames());
 			}
 			return new CompiledMatcher<>(new ArrayMatcher<>(env.getJsonProvider(), compiled, env.getJqVersion()), variableNames);
 		}
@@ -931,8 +917,8 @@ public class Compiler {
 			Set<String> variableNames = new HashSet<>();
 			for (ObjectMatcherAstNode.FieldMatcher field : matcher.matchers()) {
 				CompiledFieldMatcher<N> fieldResult = compileFieldMatcher(field);
-				compiled.add(fieldResult.matcher);
-				variableNames.addAll(fieldResult.variableNames);
+				compiled.add(fieldResult.matcher());
+				variableNames.addAll(fieldResult.variableNames());
 			}
 			return new CompiledMatcher<>(new ObjectMatcher<>(env.getJsonProvider(), compiled, env.getJqVersion()), variableNames);
 		}
@@ -942,10 +928,10 @@ public class Compiler {
 			Expression<StackFrame, N> name = new ValueLiteral<>(env.getJsonProvider().createString(field.name()));
 			PatternMatcherAstNode sub = field.matcher();
 			CompiledMatcher<N> subResult = sub != null ? compileMatcher(sub) : null;
-			Set<String> variableNames = subResult != null ? new HashSet<>(subResult.variableNames) : new HashSet<>();
+			Set<String> variableNames = subResult != null ? new HashSet<>(subResult.variableNames()) : new HashSet<>();
 			if (field.dollar())
 				variableNames.add(field.name());
-			ObjectMatcher.FieldMatcher<N> compiled = new ObjectMatcher.FieldMatcher<>(field.dollar(), field.dollar() ? field.name() : null, name, subResult != null ? subResult.matcher : null, context.outputCounterOf(name));
+			ObjectMatcher.FieldMatcher<N> compiled = new ObjectMatcher.FieldMatcher<>(field.dollar(), field.dollar() ? field.name() : null, name, subResult != null ? subResult.matcher() : null, context.outputCounterOf(name));
 			return new CompiledFieldMatcher<>(compiled, variableNames);
 		}
 
@@ -953,8 +939,8 @@ public class Compiler {
 		public CompiledFieldMatcher<N> visit(ObjectMatcherAstNode.ExpressionKeyFieldMatcher field) throws JsonQueryException {
 			Expression<StackFrame, N> name = compileNonNull(env, context, field.name());
 			CompiledMatcher<N> matcherResult = compileMatcher(field.matcher());
-			ObjectMatcher.FieldMatcher<N> compiled = new ObjectMatcher.FieldMatcher<>(false, null, name, matcherResult.matcher, context.outputCounterOf(name));
-			return new CompiledFieldMatcher<>(compiled, matcherResult.variableNames);
+			ObjectMatcher.FieldMatcher<N> compiled = new ObjectMatcher.FieldMatcher<>(false, null, name, matcherResult.matcher(), context.outputCounterOf(name));
+			return new CompiledFieldMatcher<>(compiled, matcherResult.variableNames());
 		}
 	}
 

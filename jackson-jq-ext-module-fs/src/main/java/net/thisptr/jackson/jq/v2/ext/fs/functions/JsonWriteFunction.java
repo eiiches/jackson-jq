@@ -68,7 +68,7 @@ public final class JsonWriteFunction implements Function {
 					optionsExpression.apply(context, input, inputPath, (optionsNode, optionsPath) -> {
 						Options options = parseOptions(jsonProvider, optionsNode);
 						byte[] bytes = formatAndEncode(jsonProvider, input, options);
-						FileFunctionSupport.write(file, bytes, options.append, options.createParents, "fs::write_json");
+						FileFunctionSupport.write(file, bytes, options.append(), options.createParents(), "fs::write_json");
 						output.emit(jsonProvider.createNull(), UntrackedPath.getInstance());
 					});
 				});
@@ -87,9 +87,9 @@ public final class JsonWriteFunction implements Function {
 	}
 
 	private static <JsonNode> byte[] formatAndEncode(JsonProvider<JsonNode> jsonProvider, JsonNode input, Options options) {
-		String formatted = JsonPrettyPrinter.print(jsonProvider, input, options.indent);
-		String text = options.newline ? formatted + "\n" : formatted;
-		return encode(text, options.encoding);
+		String formatted = JsonPrettyPrinter.print(jsonProvider, input, options.indent());
+		String text = options.newline() ? formatted + "\n" : formatted;
+		return encode(text, options.encoding());
 	}
 
 	private static byte[] encode(String text, Charset charset) {
@@ -106,19 +106,7 @@ public final class JsonWriteFunction implements Function {
 		}
 	}
 
-	private static final class Options {
-		private final @Nullable String indent;
-		private final Charset encoding;
-		private final boolean append;
-		private final boolean newline;
-		private final boolean createParents;
-
-		private Options(@Nullable String indent, Charset encoding, boolean append, boolean newline, boolean createParents) {
-			this.indent = indent;
-			this.encoding = encoding;
-			this.append = append;
-			this.newline = newline;
-			this.createParents = createParents;
-		}
+	private record Options(@Nullable String indent, Charset encoding, boolean append, boolean newline,
+						   boolean createParents) {
 	}
 }
