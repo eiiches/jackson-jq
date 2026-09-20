@@ -7,7 +7,9 @@ jjq_java_library(
     srcs = [
         "InputSource.java",
         "InputSources.java",
+        "JqColors.java",
         "JqPrettyPrinter.java",
+        "JqPrinter.java",
         "JsonTreeNode.java",
         "JsonTreePane.java",
         "Main.java",
