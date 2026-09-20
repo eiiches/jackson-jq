@@ -40,6 +40,7 @@
     "org.openjdk.jmh:jmh-generator-annprocess": -833845560,
     "org.slf4j:slf4j-api": -2005163028,
     "org.slf4j:slf4j-simple": -1958526793,
+    "org.springframework.boot:spring-boot-loader": 1893862725,
     "repositories": -1949687017,
     "tools.jackson.core:jackson-core": 968794478,
     "tools.jackson.core:jackson-databind": 1559024550
@@ -184,6 +185,8 @@
     "org.slf4j:slf4j-api:jar:sources": 1751644771,
     "org.slf4j:slf4j-simple": -1055624668,
     "org.slf4j:slf4j-simple:jar:sources": 751828941,
+    "org.springframework.boot:spring-boot-loader": 1048716432,
+    "org.springframework.boot:spring-boot-loader:jar:sources": -583045180,
     "org.yaml:snakeyaml": 1308413731,
     "org.yaml:snakeyaml:jar:sources": -140059451,
     "tools.jackson.core:jackson-core": 1798856334,
@@ -683,6 +686,13 @@
         "sources": "977f636bc90dc879c56cd6b6158abf0ee77a6f4619ab23342781a273b743786b"
       },
       "version": "2.0.18"
+    },
+    "org.springframework.boot:spring-boot-loader": {
+      "shasums": {
+        "jar": "44b15032ec77953fe1eaa7a895f2a7e0309ebe6556ea62abd289018a57031724",
+        "sources": "eac78f0e7af5c69bb43b048d08dda0b4b6404cfe51650a7e0cf281d0e7247f4f"
+      },
+      "version": "4.1.1"
     },
     "org.yaml:snakeyaml": {
       "shasums": {
@@ -1854,6 +1864,19 @@
     "org.slf4j:slf4j-simple": [
       "org.slf4j.simple"
     ],
+    "org.springframework.boot:spring-boot-loader": [
+      "org.springframework.boot.loader.jar",
+      "org.springframework.boot.loader.jarmode",
+      "org.springframework.boot.loader.launch",
+      "org.springframework.boot.loader.log",
+      "org.springframework.boot.loader.net.protocol",
+      "org.springframework.boot.loader.net.protocol.jar",
+      "org.springframework.boot.loader.net.protocol.nested",
+      "org.springframework.boot.loader.net.util",
+      "org.springframework.boot.loader.nio.file",
+      "org.springframework.boot.loader.ref",
+      "org.springframework.boot.loader.zip"
+    ],
     "org.yaml:snakeyaml": [
       "org.yaml.snakeyaml",
       "org.yaml.snakeyaml.comments",
@@ -2074,6 +2097,8 @@
       "org.slf4j:slf4j-api:jar:sources",
       "org.slf4j:slf4j-simple",
       "org.slf4j:slf4j-simple:jar:sources",
+      "org.springframework.boot:spring-boot-loader",
+      "org.springframework.boot:spring-boot-loader:jar:sources",
       "org.yaml:snakeyaml",
       "org.yaml:snakeyaml:jar:sources",
       "tools.jackson.core:jackson-core",
@@ -2300,6 +2325,16 @@
     "org.slf4j:slf4j-simple:jar:sources": {
       "org.slf4j.spi.SLF4JServiceProvider": [
         "org.slf4j.simple.SimpleServiceProvider"
+      ]
+    },
+    "org.springframework.boot:spring-boot-loader": {
+      "java.nio.file.spi.FileSystemProvider": [
+        "org.springframework.boot.loader.nio.file.NestedFileSystemProvider"
+      ]
+    },
+    "org.springframework.boot:spring-boot-loader:jar:sources": {
+      "java.nio.file.spi.FileSystemProvider": [
+        "org.springframework.boot.loader.nio.file.NestedFileSystemProvider"
       ]
     },
     "tools.jackson.core:jackson-core": {
