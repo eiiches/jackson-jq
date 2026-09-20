@@ -148,7 +148,7 @@ public class Jackson3JsonProvider implements JsonProvider<JsonNode> {
 			case NUMBER -> JsonNodeType.NUMBER;
 			case OBJECT -> JsonNodeType.OBJECT;
 			case STRING -> JsonNodeType.STRING;
-			default -> throw new IllegalStateException("Unknown JsonNodeType: " + node.getNodeType());
+			case MISSING, POJO -> throw new IllegalStateException("Unknown JsonNodeType: " + node.getNodeType());
 		};
 	}
 
@@ -203,7 +203,6 @@ public class Jackson3JsonProvider implements JsonProvider<JsonNode> {
 			case BIG_DECIMAL -> NumberType.BIG_DECIMAL;
 			case DOUBLE -> NumberType.DOUBLE;
 			case FLOAT -> NumberType.FLOAT;
-			default -> NumberType.UNKNOWN;
 		};
 	}
 

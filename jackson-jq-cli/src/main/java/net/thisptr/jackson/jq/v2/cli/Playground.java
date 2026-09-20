@@ -332,22 +332,15 @@ final class Playground<N> {
 	}
 
 	private long getRuntimeLimit(int index) {
-		switch (index) {
-			case MAX_STRING_LENGTH_OPTION:
-				return runtimeOptions.getMaxStringLength();
-			case MAX_BINARY_LENGTH_OPTION:
-				return runtimeOptions.getMaxBinaryLength();
-			case MAX_ARRAY_LENGTH_OPTION:
-				return runtimeOptions.getMaxArrayLength();
-			case MAX_OBJECT_MEMBER_COUNT_OPTION:
-				return runtimeOptions.getMaxObjectMemberCount();
-			case MAX_USER_DEFINED_FUNCTION_CALLS_OPTION:
-				return runtimeOptions.getMaxUserDefinedFunctionCalls();
-			case MAX_OUTPUTS_PER_EXPRESSION_OPTION:
-				return runtimeOptions.getMaxOutputsPerExpression();
-			default:
-				throw new IllegalArgumentException("not a runtime limit option: " + index);
-		}
+		return switch (index) {
+			case MAX_STRING_LENGTH_OPTION -> runtimeOptions.getMaxStringLength();
+			case MAX_BINARY_LENGTH_OPTION -> runtimeOptions.getMaxBinaryLength();
+			case MAX_ARRAY_LENGTH_OPTION -> runtimeOptions.getMaxArrayLength();
+			case MAX_OBJECT_MEMBER_COUNT_OPTION -> runtimeOptions.getMaxObjectMemberCount();
+			case MAX_USER_DEFINED_FUNCTION_CALLS_OPTION -> runtimeOptions.getMaxUserDefinedFunctionCalls();
+			case MAX_OUTPUTS_PER_EXPRESSION_OPTION -> runtimeOptions.getMaxOutputsPerExpression();
+			default -> throw new IllegalArgumentException("not a runtime limit option: " + index);
+		};
 	}
 
 	private void setRuntimeLimit(int index, long value) {

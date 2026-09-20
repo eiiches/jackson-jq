@@ -39,15 +39,9 @@ final class JqPrinter {
 								   @Nullable String indent, @Nullable JqColors colors, int depth) {
 		JsonNodeType type = provider.getNodeType(node);
 		switch (type) {
-			case ARRAY:
-				appendArray(provider, out, node, indent, colors, depth);
-				break;
-			case OBJECT:
-				appendObject(provider, out, node, indent, colors, depth);
-				break;
-			default:
-				appendScalar(provider, out, node, colors);
-				break;
+			case ARRAY -> appendArray(provider, out, node, indent, colors, depth);
+			case OBJECT -> appendObject(provider, out, node, indent, colors, depth);
+			case NULL, BOOLEAN, NUMBER, STRING, BINARY -> appendScalar(provider, out, node, colors);
 		}
 	}
 
@@ -160,27 +154,21 @@ final class JqPrinter {
 			return;
 		}
 
-		switch (provider.getNodeType(node)) {
-			case NULL:
-				out.append(colors.colorize(colors.nullColor(), "null"));
-				break;
-			case BOOLEAN:
+		String formatted = switch (provider.getNodeType(node)) {
+			case NULL -> colors.colorize(colors.nullColor(), "null");
+			case BOOLEAN -> {
 				boolean b = provider.getBoolean(node);
-				out.append(colors.colorize(b ? colors.trueColor() : colors.falseColor(), b ? "true" : "false"));
-				break;
-			case NUMBER:
+				yield colors.colorize(b ? colors.trueColor() : colors.falseColor(), b ? "true" : "false");
+			}
+			case NUMBER -> {
 				String num = provider.format(node);
 				String color = "null".equals(num) ? colors.nullColor() : colors.numberColor();
-				out.append(colors.colorize(color, num));
-				break;
-			case STRING:
-			case BINARY:
-				out.append(colors.colorize(colors.stringColor(), provider.format(node)));
-				break;
-			default:
-				out.append(provider.format(node));
-				break;
-		}
+				yield colors.colorize(color, num);
+			}
+			case STRING, BINARY -> colors.colorize(colors.stringColor(), provider.format(node));
+			case OBJECT, ARRAY -> provider.format(node);
+		};
+		out.append(formatted);
 	}
 
 	private static void appendNewLine(StringBuilder out, String indent, int depth) {

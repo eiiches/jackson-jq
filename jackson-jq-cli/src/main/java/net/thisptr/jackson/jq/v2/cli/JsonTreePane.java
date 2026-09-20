@@ -769,21 +769,12 @@ final class JsonTreePane {
 	}
 
 	private Style defaultNodeStyle(JsonTreeNode node) {
-		switch (node.type()) {
-			case STRING:
-				return Style.EMPTY.green();
-			case NUMBER:
-				return Style.EMPTY.yellow();
-			case BOOLEAN:
-				return Style.EMPTY.magenta();
-			case NULL:
-				return Style.EMPTY.dim();
-			case OBJECT:
-			case ARRAY:
-				return Style.EMPTY.white();
-			case BINARY:
-			default:
-				return Style.EMPTY.dim();
-		}
+		return switch (node.type()) {
+			case STRING -> Style.EMPTY.green();
+			case NUMBER -> Style.EMPTY.yellow();
+			case BOOLEAN -> Style.EMPTY.magenta();
+			case NULL, BINARY -> Style.EMPTY.dim();
+			case OBJECT, ARRAY -> Style.EMPTY.white();
+		};
 	}
 }

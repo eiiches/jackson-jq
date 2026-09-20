@@ -144,23 +144,14 @@ public class JakartaJsonProvider implements JsonProvider<JsonValue> {
 
 	@Override
 	public JsonNodeType getNodeType(JsonValue node) {
-		switch (node.getValueType()) {
-			case ARRAY:
-				return JsonNodeType.ARRAY;
-			case OBJECT:
-				return JsonNodeType.OBJECT;
-			case STRING:
-				return JsonNodeType.STRING;
-			case NUMBER:
-				return JsonNodeType.NUMBER;
-			case TRUE:
-			case FALSE:
-				return JsonNodeType.BOOLEAN;
-			case NULL:
-				return JsonNodeType.NULL;
-			default:
-				throw new IllegalStateException("Unknown JSON-P value type: " + node.getValueType());
-		}
+		return switch (node.getValueType()) {
+			case ARRAY -> JsonNodeType.ARRAY;
+			case OBJECT -> JsonNodeType.OBJECT;
+			case STRING -> JsonNodeType.STRING;
+			case NUMBER -> JsonNodeType.NUMBER;
+			case TRUE, FALSE -> JsonNodeType.BOOLEAN;
+			case NULL -> JsonNodeType.NULL;
+		};
 	}
 
 	// Reading getValueType() directly is cheaper than getNodeType(), which switches over it.
@@ -603,29 +594,13 @@ public class JakartaJsonProvider implements JsonProvider<JsonValue> {
 
 	private void appendJson(StringBuilder result, JsonValue node) {
 		switch (node.getValueType()) {
-			case NULL:
-				result.append("null");
-				return;
-			case TRUE:
-				result.append("true");
-				return;
-			case FALSE:
-				result.append("false");
-				return;
-			case STRING:
-				result.append(delegate.createValue(((JsonString) node).getString()));
-				return;
-			case NUMBER:
-				result.append(formatNumber((JsonNumber) node));
-				return;
-			case ARRAY:
-				appendArray(result, (JsonArray) node);
-				return;
-			case OBJECT:
-				appendObject(result, (JsonObject) node);
-				return;
-			default:
-				throw new IllegalStateException("Unknown JSON-P value type: " + node.getValueType());
+			case NULL -> result.append("null");
+			case TRUE -> result.append("true");
+			case FALSE -> result.append("false");
+			case STRING -> result.append(delegate.createValue(((JsonString) node).getString()));
+			case NUMBER -> result.append(formatNumber((JsonNumber) node));
+			case ARRAY -> appendArray(result, (JsonArray) node);
+			case OBJECT -> appendObject(result, (JsonObject) node);
 		}
 	}
 

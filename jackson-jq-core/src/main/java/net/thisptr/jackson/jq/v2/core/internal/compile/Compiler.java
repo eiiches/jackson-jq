@@ -1286,53 +1286,36 @@ public class Compiler {
 			int rhsOutputIndex,
 			Version version,
 			JsonProvider<JsonNode> jsonProvider) {
-		switch (operator) {
-			case ASSIGN:
-				return new Assignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case UPDATE:
-				return new UpdateAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case DEFAULT_EQUAL:
-				return new ComplexAlternativeAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case PLUS_EQUAL:
-				return new ComplexPlusAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case MINUS_EQUAL:
-				return new ComplexMinusAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case TIMES_EQUAL:
-				return new ComplexMultiplyAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case DIVIDE_EQUAL:
-				return new ComplexDivideAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case MODULO_EQUAL:
-				return new ComplexModuloAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case DEFAULT:
-				return new AlternativeOperatorExpression<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case OR:
-				return new BooleanOrExpression<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case AND:
-				return new BooleanAndExpression<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case LESS_EQUAL:
-				return new CompareLessEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case LESS:
-				return new CompareLessTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case GREATER_EQUAL:
-				return new CompareGreaterEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case GREATER:
-				return new CompareGreaterTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case EQUAL:
-				return new CompareEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case NOT_EQUAL:
-				return new CompareNotEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case PLUS:
-				return new PlusExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case MINUS:
-				return new MinusExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case MODULO:
-				return new ModuloExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case DIVIDE:
-				return new DivideExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case TIMES:
-				return new MultiplyExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			default:
-				throw new IllegalArgumentException("Unknown operator: " + operator);
-		}
+		return switch (operator) {
+			case ASSIGN -> new Assignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case UPDATE -> new UpdateAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case DEFAULT_EQUAL ->
+					new ComplexAlternativeAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case PLUS_EQUAL ->
+					new ComplexPlusAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case MINUS_EQUAL ->
+					new ComplexMinusAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case TIMES_EQUAL ->
+					new ComplexMultiplyAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case DIVIDE_EQUAL ->
+					new ComplexDivideAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case MODULO_EQUAL ->
+					new ComplexModuloAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case DEFAULT -> new AlternativeOperatorExpression<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case OR -> new BooleanOrExpression<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case AND -> new BooleanAndExpression<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case LESS_EQUAL -> new CompareLessEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case LESS -> new CompareLessTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case GREATER_EQUAL -> new CompareGreaterEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case GREATER -> new CompareGreaterTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case EQUAL -> new CompareEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case NOT_EQUAL -> new CompareNotEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case PLUS -> new PlusExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case MINUS -> new MinusExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case MODULO -> new ModuloExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case DIVIDE -> new DivideExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case TIMES -> new MultiplyExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case PIPE, BINDING_PIPE, COMMA -> throw new IllegalArgumentException("Unknown operator: " + operator);
+		};
 	}
 }

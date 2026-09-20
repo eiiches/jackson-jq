@@ -39,20 +39,12 @@ public class Preconditions {
 			if (t == type)
 				return;
 
-		String indexText;
-		switch (aindex) {
-			case 1:
-				indexText = "1st";
-				break;
-			case 2:
-				indexText = "2nd";
-				break;
-			case 3:
-				indexText = "3rd";
-				break;
-			default:
-				indexText = aindex + "th";
-		}
+		String indexText = switch (aindex) {
+			case 1 -> "1st";
+			case 2 -> "2nd";
+			case 3 -> "3rd";
+			default -> aindex + "th";
+		};
 		throw new IllegalJsonArgumentException(String.format("cannot accept %s as %s argument of %s; expected one of %s", jsonProvider.getNodeType(value), indexText, fname, Arrays.toString(types)));
 	}
 }

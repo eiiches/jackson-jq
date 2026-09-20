@@ -140,24 +140,16 @@ public class Jackson2JsonProvider implements JsonProvider<JsonNode> {
 
 	@Override
 	public JsonNodeType getNodeType(JsonNode node) {
-		switch (node.getNodeType()) {
-			case ARRAY:
-				return JsonNodeType.ARRAY;
-			case BINARY:
-				return JsonNodeType.BINARY;
-			case BOOLEAN:
-				return JsonNodeType.BOOLEAN;
-			case NULL:
-				return JsonNodeType.NULL;
-			case NUMBER:
-				return JsonNodeType.NUMBER;
-			case OBJECT:
-				return JsonNodeType.OBJECT;
-			case STRING:
-				return JsonNodeType.STRING;
-			default:
-				throw new IllegalStateException("Unknown JsonNodeType: " + node.getNodeType());
-		}
+		return switch (node.getNodeType()) {
+			case ARRAY -> JsonNodeType.ARRAY;
+			case BINARY -> JsonNodeType.BINARY;
+			case BOOLEAN -> JsonNodeType.BOOLEAN;
+			case NULL -> JsonNodeType.NULL;
+			case NUMBER -> JsonNodeType.NUMBER;
+			case OBJECT -> JsonNodeType.OBJECT;
+			case STRING -> JsonNodeType.STRING;
+			case MISSING, POJO -> throw new IllegalStateException("Unknown JsonNodeType: " + node.getNodeType());
+		};
 	}
 
 	// JsonNode's own predicates are cheaper than getNodeType(), which re-maps Jackson's enum.
@@ -204,23 +196,15 @@ public class Jackson2JsonProvider implements JsonProvider<JsonNode> {
 		// NumericNode is exactly what JsonNode.isNumber() covers.
 		if (!(node instanceof NumericNode))
 			throw new IllegalArgumentException("Cannot get the number type of " + getNodeType(node));
-		switch (((NumericNode) node).numberType()) {
-			case INT:
-				// Jackson maps ShortNode here too.
-				return NumberType.INT;
-			case LONG:
-				return NumberType.LONG;
-			case BIG_INTEGER:
-				return NumberType.BIG_INTEGER;
-			case BIG_DECIMAL:
-				return NumberType.BIG_DECIMAL;
-			case DOUBLE:
-				return NumberType.DOUBLE;
-			case FLOAT:
-				return NumberType.FLOAT;
-			default:
-				return NumberType.UNKNOWN;
-		}
+		return switch (((NumericNode) node).numberType()) {
+			// Jackson maps ShortNode here too.
+			case INT -> NumberType.INT;
+			case LONG -> NumberType.LONG;
+			case BIG_INTEGER -> NumberType.BIG_INTEGER;
+			case BIG_DECIMAL -> NumberType.BIG_DECIMAL;
+			case DOUBLE -> NumberType.DOUBLE;
+			case FLOAT -> NumberType.FLOAT;
+		};
 	}
 
 	@Override
