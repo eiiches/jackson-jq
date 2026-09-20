@@ -22,7 +22,7 @@ public class DebugExprFunction implements Function {
 		Expression<Context, JsonNode> filter = args.get(0);
 		boolean dependsOnInput = filter.dependsOnInput();
 		boolean dependsOnExternalState = filter.dependsOnExternalState();
-		return new Expression<Context, JsonNode>() {
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				return Cardinality.ONE;

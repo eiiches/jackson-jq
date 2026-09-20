@@ -129,12 +129,7 @@ public class EnvironmentAddImportedModuleTest {
 				return (frame, in, path, output) -> output.emit(fprovider.createNumber(fargs.size()), UntrackedPath.getInstance());
 			}
 		};
-		JavaModule variadicModule = new JavaModule() {
-			@Override
-			public Map<FunctionSignature, Function> getFunctions() {
-				return Collections.singletonMap(FunctionSignature.ofVariadic("greet"), countArgs);
-			}
-		};
+		JavaModule variadicModule = () -> Collections.singletonMap(FunctionSignature.ofVariadic("greet"), countArgs);
 
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.addImportedModule("m", variadicModule)

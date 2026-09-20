@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class RegexFunctionContractTest {
 	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProvider.getInstance();
-	private static final BindContext<JsonNode> BIND_CONTEXT = new BindContext<JsonNode>() {
+	private static final BindContext<JsonNode> BIND_CONTEXT = new BindContext<>() {
 		@Override
 		public JsonProvider<JsonNode> getJsonProvider() {
 			return JSON_PROVIDER;
@@ -37,7 +37,7 @@ public class RegexFunctionContractTest {
 	};
 
 	private static <T, Context extends RuntimeContext> Expression<Context, T> pureExpression() {
-		return new Expression<Context, T>() {
+		return new Expression<>() {
 			@Override
 			public boolean dependsOnInput() {
 				return false;

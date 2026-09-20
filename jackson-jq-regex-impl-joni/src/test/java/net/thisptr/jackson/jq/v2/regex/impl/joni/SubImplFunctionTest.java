@@ -103,10 +103,6 @@ public class SubImplFunctionTest {
 	}
 
 	private static String repeat(String text, int count) {
-		StringBuilder result = new StringBuilder(text.length() * count);
-		for (int i = 0; i < count; ++i) {
-			result.append(text);
-		}
-		return result.toString();
+		return text.repeat(Math.max(0, count));
 	}
 }

@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import java.io.Serial;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -25,6 +26,7 @@ public class TryCatch<JsonNode> implements RewritableExpression<JsonNode>, FreeV
 	public static final Version DOWNSTREAM_ERRORS_ESCAPE_SINCE = Version.of(1, 7);
 
 	private static final class DownstreamException extends JsonQueryException {
+		@Serial
 		private static final long serialVersionUID = 1L;
 
 		private final transient Object boundary;

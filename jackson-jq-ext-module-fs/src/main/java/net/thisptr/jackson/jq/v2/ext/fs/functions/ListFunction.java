@@ -9,15 +9,12 @@ import java.nio.file.LinkOption;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -37,8 +34,8 @@ public final class ListFunction implements Function {
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindContext, List<Expression<Context, JsonNode>> arguments) {
 		JsonProvider<JsonNode> jsonProvider = bindContext.getJsonProvider();
 		Expression<Context, JsonNode> pathExpression = arguments.get(0);
-		@Nullable Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
-		return new Expression<Context, JsonNode>() {
+		Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				Cardinality pathCardinality = pathExpression.getCardinality();
@@ -109,7 +106,7 @@ public final class ListFunction implements Function {
 			List<Entry> entries = options.recursive()
 					? listRecursively(directory, options.followSymlinks(), limits)
 					: listDirectly(directory, limits);
-			Collections.sort(entries, Comparator.comparing(Entry::path));
+			entries.sort(Comparator.comparing(Entry::path));
 			List<JsonNode> result = new ArrayList<>(entries.size());
 			for (Entry entry : entries)
 				result.add(createEntry(jsonProvider, limits, entry));
@@ -131,7 +128,7 @@ public final class ListFunction implements Function {
 	private static List<Entry> listRecursively(java.nio.file.Path directory, boolean followSymlinks, RuntimeLimits limits) throws IOException {
 		List<Entry> result = new ArrayList<>();
 		EnumSet<FileVisitOption> options = followSymlinks ? EnumSet.of(FileVisitOption.FOLLOW_LINKS) : EnumSet.noneOf(FileVisitOption.class);
-		Files.walkFileTree(directory, options, Integer.MAX_VALUE, new SimpleFileVisitor<java.nio.file.Path>() {
+		Files.walkFileTree(directory, options, Integer.MAX_VALUE, new SimpleFileVisitor<>() {
 			@Override
 			public FileVisitResult preVisitDirectory(java.nio.file.Path dir, BasicFileAttributes attrs) {
 				if (!dir.equals(directory))

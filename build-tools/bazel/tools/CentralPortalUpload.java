@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serial;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -107,6 +108,7 @@ public final class CentralPortalUpload {
 	 * {@code SystemExit}.
 	 */
 	static final class Failure extends RuntimeException {
+		@Serial
 		private static final long serialVersionUID = 1L;
 
 		Failure(String message) {

@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.test.comparator;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.Iterator;
 import java.util.Map;
@@ -21,6 +22,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
  * @param <T> the native JSON node type of {@code jsonProvider}
  */
 public class TestJsonNodeComparator<T> extends JsonNodeComparator<T> {
+	@Serial
 	private static final long serialVersionUID = 1L;
 
 	private final boolean strictFieldOrder;

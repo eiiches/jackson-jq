@@ -240,8 +240,8 @@ public class EnvironmentPocTest {
 		// Top-level `.` is not fixed, so this only resolves as constant if error(null)'s
 		// dependsOnInput() correctly reflects that its literal argument doesn't depend on input.
 		env.compile("probe(error(null))");
-		assertTrue(isConstantExpression(captured.get(captured.size() - 1)));
-		assertTrue(captured.get(captured.size() - 1) instanceof ConstantExpression<?, ?>);
+		assertThat(isConstantExpression(captured.get(captured.size() - 1))).isTrue();
+		assertThat(captured.get(captured.size() - 1)).isInstanceOf(ConstantExpression.class);
 	}
 
 	@Test
@@ -262,7 +262,7 @@ public class EnvironmentPocTest {
 
 		env.compile("probe((1, 2))");
 
-		assertTrue(captured.get(0) instanceof ConstantExpression<?, ?>);
+		assertThat(captured.get(0)).isInstanceOf(ConstantExpression.class);
 		ConstantExpression<?, JsonNode> constant = (ConstantExpression<?, JsonNode>) captured.get(0);
 		assertThat(constant.getConstantResults()).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("1"), MAPPER.readTree("2")));
 	}
@@ -286,8 +286,8 @@ public class EnvironmentPocTest {
 		env.compile("1 | probe(\"literal\" | .)");
 		env.compile("1 | probe(.)");
 
-		assertTrue(captured.get(0) instanceof ConstantExpression<?, ?>);
-		assertFalse(captured.get(1) instanceof ConstantExpression<?, ?>);
+		assertThat(captured.get(0)).isInstanceOf(ConstantExpression.class);
+		assertThat(captured.get(1)).isNotInstanceOf(ConstantExpression.class);
 		assertTrue(captured.get(1).dependsOnInput());
 	}
 
@@ -430,7 +430,7 @@ public class EnvironmentPocTest {
 	}
 
 	@Test
-	public void testLocalDefWithCaptureDoesNotLeakEitherAndFailsCleanlyAfterwards() throws Exception {
+	public void testLocalDefWithCaptureDoesNotLeakEitherAndFailsCleanlyAfterwards() {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7).build();
 
 		env.compile("1 as $x | def bar: $x; bar");

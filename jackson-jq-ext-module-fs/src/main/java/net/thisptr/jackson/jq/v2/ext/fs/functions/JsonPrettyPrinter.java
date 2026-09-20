@@ -65,7 +65,6 @@ final class JsonPrettyPrinter {
 
 	private static void appendNewLine(StringBuilder out, String indent, int depth) {
 		out.append('\n');
-		for (int i = 0; i < depth; ++i)
-			out.append(indent);
+		out.append(String.valueOf(indent).repeat(Math.max(0, depth)));
 	}
 }

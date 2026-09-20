@@ -32,19 +32,17 @@ public class InMemoryJqModuleTest {
 
 		@Override
 		public Module loadModule(String path, Maybe<JsonNode> metadata) {
-			switch (path) {
-				case "math":
-					return new InMemoryJqModule(path, "def double: . * 2;");
-				case "greeting":
+			// "I don't have it", which lets the environment's next loader try. Any other
+			// exception would mean "I have it and it is broken", and would stop the search.
+			return switch (path) {
+				case "math" -> new InMemoryJqModule(path, "def double: . * 2;");
+				case "greeting" ->
 					// A module may import another. The engine resolves that import through this
 					// same environment's loaders and compiles "math" first -- nothing here has to.
-					return new InMemoryJqModule(path, "import \"math\" as math;"
-							+ " def shout($n): \"n=\" + ($n | math::double | tostring) + \"!\";");
-				default:
-					// "I don't have it", which lets the environment's next loader try. Any other
-					// exception would mean "I have it and it is broken", and would stop the search.
-					throw new ModuleNotFoundException(path);
-			}
+						new InMemoryJqModule(path, "import \"math\" as math;"
+								+ " def shout($n): \"n=\" + ($n | math::double | tostring) + \"!\";");
+				default -> throw new ModuleNotFoundException(path);
+			};
 		}
 
 		@Override

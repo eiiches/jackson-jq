@@ -19,10 +19,10 @@ public class AtUriFunction extends AbstractAtFormattingFunction {
 	public String convert(String text) throws JsonQueryException {
 		return URLEncoder.encode(text, StandardCharsets.UTF_8)
 				.replaceAll("\\+", "%20")
-				.replaceAll("%21", "!")
-				.replaceAll("%27", "'")
-				.replaceAll("%28", "(")
-				.replaceAll("%29", ")")
-				.replaceAll("%7E", "~");
+				.replace("%21", "!")
+				.replace("%27", "'")
+				.replace("%28", "(")
+				.replace("%29", ")")
+				.replace("%7E", "~");
 	}
 }

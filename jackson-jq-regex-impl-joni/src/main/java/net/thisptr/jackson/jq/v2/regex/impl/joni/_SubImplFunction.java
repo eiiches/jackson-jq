@@ -92,7 +92,7 @@ public class _SubImplFunction implements Function {
 			}
 
 			List<String> replacements = new ArrayList<>();
-			@Var @Nullable JsonQueryException pendingException = null;
+			@Var JsonQueryException pendingException = null;
 			try {
 				replaceExpr.apply(context, segment, UntrackedPath.getInstance(), (replacement, opath) -> {
 					// jq concatenates the replacement onto the text preceding the match, so a null
@@ -123,37 +123,21 @@ public class _SubImplFunction implements Function {
 		// The replacement can be arbitrarily longer than what it replaces -- gsub(""; $big) is the
 		// extreme case -- so measure the chain before allocating a buffer for it.
 		@Var long length = 0;
-		for (@Nullable Part part = parts; part != null; part = part.next)
+		for (Part part = parts; part != null; part = part.next)
 			length += part.value.length();
 		RuntimeLimitChecks.checkStringLength(limits, length);
 
 		StringBuilder result = new StringBuilder((int) length);
-		for (@Nullable Part part = parts; part != null; part = part.next) {
+		for (Part part = parts; part != null; part = part.next) {
 			result.append(part.value);
 		}
 		return result.toString();
 	}
 
-	private static class Frame {
-		private final int index;
-		private final @Nullable Part parts;
-		private final @Nullable JsonQueryException pendingException;
-
-		private Frame(int index, @Nullable Part parts, @Nullable JsonQueryException pendingException) {
-			this.index = index;
-			this.parts = parts;
-			this.pendingException = pendingException;
-		}
+	private record Frame(int index, @Nullable Part parts, @Nullable JsonQueryException pendingException) {
 	}
 
-	private static class Part {
-		private final String value;
-		private final @Nullable Part next;
-
-		private Part(String value, @Nullable Part next) {
-			this.value = value;
-			this.next = next;
-		}
+	private record Part(String value, @Nullable Part next) {
 	}
 
 	private static <JsonNode> List<JsonNode> match(JsonProvider<JsonNode> jsonProvider, OnigUtils.Pattern pattern, String inputText) {

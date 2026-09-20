@@ -444,18 +444,14 @@ public class Main {
 	}
 
 	private static JsonProvider<?> resolveProvider(String name) {
-		switch (name) {
-			case "jackson2":
-				return Jackson2JsonProvider.getInstance();
-			case "jackson3":
-				return Jackson3JsonProvider.getInstance();
-			case "fastjson2":
-				return Fastjson2JsonProvider.getInstance();
-			case "gson":
-				return GsonJsonProvider.getInstance();
-			default:
-				throw new IllegalArgumentException("unknown --provider: " + name + " (expected one of: jackson2, jackson3, fastjson2, gson)");
-		}
+		return switch (name) {
+			case "jackson2" -> Jackson2JsonProvider.getInstance();
+			case "jackson3" -> Jackson3JsonProvider.getInstance();
+			case "fastjson2" -> Fastjson2JsonProvider.getInstance();
+			case "gson" -> GsonJsonProvider.getInstance();
+			default ->
+					throw new IllegalArgumentException("unknown --provider: " + name + " (expected one of: jackson2, jackson3, fastjson2, gson)");
+		};
 	}
 
 	private static <N> Evaluator createJacksonJqRunner(JsonProvider<N> jsonProvider, Version jqVersion) {
@@ -639,14 +635,14 @@ public class Main {
 					category = Category.UNEXPECTED_EXCEPTION;
 					message = "jackson-jq threw " + actual.error().getClass().getName() + ": " + actual.error().getMessage();
 				}
-			} else if ((expected.error() != null) != (actual.error() != null)) {
+			} else if ((expected.error() == null) == (actual.error() != null)) {
 				category = Category.STATUS_MISMATCH;
 				if (expected.error() != null) {
 					message = "jq failed with error [" + expected.error().getMessage() + "] but jackson-jq succeeded producing " + actual.values().size() + " value(s)";
 				} else {
 					message = "jq succeeded with " + expected.values().size() + " value(s) but jackson-jq failed with error [" + actual.error().getMessage() + "]";
 				}
-			} else if (expected.error() == null && actual.error() == null) {
+			} else if (expected.error() == null) {
 				if (expected.values().size() != actual.values().size()) {
 					category = Category.COUNT_MISMATCH;
 					message = "Output count mismatch: expected " + expected.values().size() + " value(s), actual " + actual.values().size() + " value(s)";
@@ -716,7 +712,7 @@ public class Main {
 		System.err.println(MAPPER.writeValueAsString(summary));
 
 		if (failOnError && !diagnostics.isEmpty()) {
-			System.err.println(String.format("jackson-jq-fuzz found %d error(s) across %d iterations.", diagnostics.size(), iterations));
+			System.err.printf("jackson-jq-fuzz found %d error(s) across %d iterations.%n", diagnostics.size(), iterations);
 			System.exit(1);
 		}
 	}

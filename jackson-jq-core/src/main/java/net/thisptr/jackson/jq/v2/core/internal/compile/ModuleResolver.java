@@ -128,7 +128,7 @@ public final class ModuleResolver<JsonNode> {
 	 */
 	private Maybe<JsonNode> searchOverride(@Nullable JqModule<JsonNode> origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = env.getJsonProvider();
-		Maybe<JsonNode> search = metadata.isPresent() ? jsonProvider.getObjectMember(metadata.get(), "search") : Maybe.<JsonNode>absent();
+		Maybe<JsonNode> search = metadata.isPresent() ? jsonProvider.getObjectMember(metadata.get(), "search") : Maybe.absent();
 		if (!search.isPresent()) {
 			// A leading "./" in an import path is inert in jq -- only a search override is relative
 			// -- and an absolute one is refused outright. See docs/jq-module-observations.md.

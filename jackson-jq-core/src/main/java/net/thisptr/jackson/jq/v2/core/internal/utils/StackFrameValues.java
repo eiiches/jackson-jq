@@ -63,7 +63,7 @@ public final class StackFrameValues {
 		if (raw instanceof PathAndValue<?> pv) {
 			return (PathAndValue<JsonNode>) pv;
 		} else if (raw == JSON_NULL) {
-			return new PathAndValue<>(UntrackedPath.getInstance(), StackFrameValues.<JsonNode>jsonNull());
+			return new PathAndValue<>(UntrackedPath.getInstance(), StackFrameValues.jsonNull());
 		} else if (raw != null && !(raw instanceof Function) && !(raw instanceof Expression)) {
 			return new PathAndValue<>(UntrackedPath.getInstance(), (JsonNode) raw);
 		}

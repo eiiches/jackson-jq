@@ -1,11 +1,14 @@
 package net.thisptr.jackson.jq.v2.core.internal.exception;
 
+import java.io.Serial;
+
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class JsonQueryTypeException extends JsonQueryException {
+	@Serial
 	private static final long serialVersionUID = -2719442463094461632L;
 
 	public JsonQueryTypeException(String msg) {

@@ -25,7 +25,6 @@ final class MeteredConstantOutputExpression<JsonNode> extends MeteredOutputExpre
 
 	@Override
 	public List<JsonNode> getConstantResults() {
-		@SuppressWarnings("unchecked")
 		ConstantExpression<StackFrame, JsonNode> constant = (ConstantExpression<StackFrame, JsonNode>) inner;
 		return constant.getConstantResults();
 	}

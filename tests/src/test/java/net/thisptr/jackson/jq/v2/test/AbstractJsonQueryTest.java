@@ -58,7 +58,7 @@ public abstract class AbstractJsonQueryTest<T> {
 	 */
 	protected abstract T parseTestNode(JsonNode node);
 
-	private void test(TestCase tc, Version version, @Nullable Path moduleSearchPath) throws Throwable {
+	private void test(TestCase tc, Version version, @Nullable Path moduleSearchPath) {
 		EnvironmentBuilder<T> envBuilder = EnvironmentBuilder.withDefaultLoaders(getJsonProvider(), version);
 		if (moduleSearchPath != null) {
 			envBuilder.clearModuleLoaders()

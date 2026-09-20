@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class TimeModuleTest {
-	private static final BindContext<JsonNode> BIND_CONTEXT = new BindContext<JsonNode>() {
+	private static final BindContext<JsonNode> BIND_CONTEXT = new BindContext<>() {
 		@Override
 		public JsonProvider<JsonNode> getJsonProvider() {
 			return Jackson2JsonProvider.getInstance();
@@ -41,7 +41,7 @@ public class TimeModuleTest {
 	};
 
 	private static <T, Context extends RuntimeContext> Expression<Context, T> pureExpression() {
-		return new Expression<Context, T>() {
+		return new Expression<>() {
 			@Override
 			public boolean dependsOnInput() {
 				return false;

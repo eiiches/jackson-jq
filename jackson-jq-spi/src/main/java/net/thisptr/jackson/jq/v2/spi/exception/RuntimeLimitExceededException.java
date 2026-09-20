@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.spi.exception;
 
+import java.io.Serial;
+
 /**
  * Reports that evaluation was stopped because it would have exceeded one of the budgets set by
  * {@code RuntimeOptions.Builder}.
@@ -8,6 +10,7 @@ package net.thisptr.jackson.jq.v2.spi.exception;
  * into this would have either succeeded or exhausted memory under jq itself.
  */
 public class RuntimeLimitExceededException extends JsonQueryException {
+	@Serial
 	private static final long serialVersionUID = 6602284283096281130L;
 
 	/**

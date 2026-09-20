@@ -136,8 +136,8 @@ public class ExpressionCardinalityTest {
 	@Test
 	public void testSemicolonOperator() {
 		assertThat(new SemicolonOperator<JsonNode>(Collections.emptyList(), new int[0]).getCardinality()).isEqualTo(Cardinality.ZERO);
-		assertThat(new SemicolonOperator<JsonNode>(Collections.singletonList(new ValueLiteral<>(Jackson2JsonProvider.getInstance().createNumber(1))), new int[0]).getCardinality()).isEqualTo(Cardinality.ONE);
-		assertThat(new SemicolonOperator<JsonNode>(List.of(new ValueLiteral<>(Jackson2JsonProvider.getInstance().createNumber(1)), new BreakExpression<JsonNode>("out")), new int[] { Memory.NO_OUTPUT_COUNTER }).getCardinality()).isEqualTo(Cardinality.ZERO);
+		assertThat(new SemicolonOperator<>(Collections.singletonList(new ValueLiteral<>(Jackson2JsonProvider.getInstance().createNumber(1))), new int[0]).getCardinality()).isEqualTo(Cardinality.ONE);
+		assertThat(new SemicolonOperator<>(List.of(new ValueLiteral<>(Jackson2JsonProvider.getInstance().createNumber(1)), new BreakExpression<>("out")), new int[] { Memory.NO_OUTPUT_COUNTER }).getCardinality()).isEqualTo(Cardinality.ZERO);
 		assertThat(cardinalityOf("def f: 1; f")).isEqualTo(Cardinality.UNKNOWN);
 	}
 

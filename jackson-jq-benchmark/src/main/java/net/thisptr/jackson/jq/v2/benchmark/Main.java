@@ -163,21 +163,15 @@ public class Main {
 	// Every returned provider is used only with JSON nodes created by that same provider.
 	@SuppressWarnings("unchecked")
 	static JsonProvider<Object> resolveProvider(String name) {
-		switch (name) {
-			case "jackson2":
-				return (JsonProvider<Object>) (JsonProvider<?>) Jackson2JsonProvider.getInstance();
-			case "jackson3":
-				return (JsonProvider<Object>) (JsonProvider<?>) Jackson3JsonProvider.getInstance();
-			case "fastjson2":
-				return (JsonProvider<Object>) (JsonProvider<?>) Fastjson2JsonProvider.getInstance();
-			case "gson":
-				return (JsonProvider<Object>) (JsonProvider<?>) GsonJsonProvider.getInstance();
-			case "jakarta":
-				return (JsonProvider<Object>) (JsonProvider<?>) JakartaJsonProvider.getInstance();
-			default:
-				throw new IllegalArgumentException("unknown --json-provider: " + name
-						+ " (expected one of: jackson2, jackson3, fastjson2, gson, jakarta)");
-		}
+		return switch (name) {
+			case "jackson2" -> (JsonProvider<Object>) (JsonProvider<?>) Jackson2JsonProvider.getInstance();
+			case "jackson3" -> (JsonProvider<Object>) (JsonProvider<?>) Jackson3JsonProvider.getInstance();
+			case "fastjson2" -> (JsonProvider<Object>) Fastjson2JsonProvider.getInstance();
+			case "gson" -> (JsonProvider<Object>) (JsonProvider<?>) GsonJsonProvider.getInstance();
+			case "jakarta" -> (JsonProvider<Object>) (JsonProvider<?>) JakartaJsonProvider.getInstance();
+			default -> throw new IllegalArgumentException("unknown --json-provider: " + name
+					+ " (expected one of: jackson2, jackson3, fastjson2, gson, jakarta)");
+		};
 	}
 
 	static Version resolveVersion(String value) {

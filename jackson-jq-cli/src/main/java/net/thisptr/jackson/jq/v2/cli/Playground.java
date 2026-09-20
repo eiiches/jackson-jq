@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -246,9 +247,7 @@ final class Playground<N> {
 		} else {
 			for (Object in : inList) {
 				String formatted = JqPrettyPrinter.print(provider, (T) in, PRETTY_INDENT);
-				for (String line : formatted.split("\r?\n", -1)) {
-					inLines.add(line);
-				}
+				inLines.addAll(Arrays.asList(formatted.split("\r?\n", -1)));
 			}
 		}
 		this.inputLines = List.copyOf(inLines);
@@ -666,10 +665,7 @@ final class Playground<N> {
 						: inputTreePane.textScrollOffset();
 				return true;
 			}
-			if (key.isConfirm() || key.code() == KeyCode.ENTER) {
-				return true;
-			}
-			return false;
+			return key.isConfirm() || key.code() == KeyCode.ENTER;
 		}
 
 		// Output focus navigation
@@ -680,10 +676,7 @@ final class Playground<N> {
 						: outputTreePane.textScrollOffset();
 				return true;
 			}
-			if (key.isConfirm() || key.code() == KeyCode.ENTER) {
-				return true;
-			}
-			return false;
+			return key.isConfirm() || key.code() == KeyCode.ENTER;
 		}
 
 		// Query focus navigation & editing
@@ -1157,9 +1150,7 @@ final class Playground<N> {
 					} else {
 						formatted = JqPrettyPrinter.print(provider, output, PRETTY_INDENT);
 					}
-					for (String line : formatted.split("\r?\n", -1)) {
-						lines.add(line);
-					}
+					lines.addAll(Arrays.asList(formatted.split("\r?\n", -1)));
 				});
 			}
 			return new EvaluationResult(lines, items, count[0], null, currentWarnings);
@@ -1195,8 +1186,6 @@ final class Playground<N> {
 		updateDiagnosticLines();
 	}
 
-	// Safe unchecked cast: environment and inputs are always created with the matching jsonProvider.
-	@SuppressWarnings("unchecked")
 	private <T> void updateEvaluationGeneric(
 			JsonProvider<T> provider, Environment<?> environment, List<?> inList, boolean applyWhilePaused) {
 		if (inputErrorMessage != null) {
@@ -1299,7 +1288,7 @@ final class Playground<N> {
 		this.diagnosticsScrollOffset = 0;
 	}
 
-	private void emitResults() throws Exception {
+	private void emitResults() {
 		emitResultsGeneric(jsonProvider, env, inputs);
 	}
 
@@ -1357,7 +1346,7 @@ final class Playground<N> {
 
 	// Safe unchecked cast: environment and inputs are always created with the matching jsonProvider.
 	@SuppressWarnings("unchecked")
-	private <T> void emitResultsGeneric(JsonProvider<T> provider, Environment<?> environment, List<?> inList) throws Exception {
+	private <T> void emitResultsGeneric(JsonProvider<T> provider, Environment<?> environment, List<?> inList) {
 		try {
 			JsonQuery<T> jq = ((Environment<T>) environment).compile(queryState.text(), compileOptions).withRuntimeOptions(runtimeOptions);
 			for (Object tree : inList) {

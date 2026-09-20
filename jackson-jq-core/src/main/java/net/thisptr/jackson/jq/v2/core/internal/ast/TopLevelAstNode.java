@@ -104,10 +104,7 @@ public class TopLevelAstNode extends AbstractAstNode {
 
 		@Override
 		public String toString() {
-			StringBuilder s = new StringBuilder();
-			s.append("module ");
-			s.append(metadataExpr);
-			return s.toString();
+			return "module " + metadataExpr;
 		}
 	}
 }

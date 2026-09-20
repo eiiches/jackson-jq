@@ -79,7 +79,7 @@ final class SubImplFunction implements Function {
 			}
 
 			List<String> replacements = new ArrayList<>();
-			@Var @Nullable JsonQueryException pendingException = null;
+			@Var JsonQueryException pendingException = null;
 			try {
 				replaceExpression.apply(context, segment, UntrackedPath.getInstance(), (replacement, outputPath) -> {
 					JsonNodeType replacementType = jsonProvider.getNodeType(replacement);
@@ -99,12 +99,12 @@ final class SubImplFunction implements Function {
 
 	private static String concat(RuntimeLimits limits, @Nullable Part parts) {
 		@Var long length = 0;
-		for (@Nullable Part part = parts; part != null; part = part.next())
+		for (Part part = parts; part != null; part = part.next())
 			length += part.value().length();
 		RuntimeLimitChecks.checkStringLength(limits, length);
 
 		StringBuilder result = new StringBuilder((int) length);
-		for (@Nullable Part part = parts; part != null; part = part.next())
+		for (Part part = parts; part != null; part = part.next())
 			result.append(part.value());
 		return result.toString();
 	}

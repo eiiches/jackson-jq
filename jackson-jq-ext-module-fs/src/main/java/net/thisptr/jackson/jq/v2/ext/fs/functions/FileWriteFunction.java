@@ -11,8 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
@@ -47,9 +45,9 @@ public final class FileWriteFunction implements Function {
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindContext, List<Expression<Context, JsonNode>> arguments) {
 		JsonProvider<JsonNode> jsonProvider = bindContext.getJsonProvider();
 		Expression<Context, JsonNode> pathExpression = arguments.get(0);
-		@Nullable Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
+		Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
 		String function = binary ? "fs::write_binary" : "fs::write_text";
-		return new Expression<Context, JsonNode>() {
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				Cardinality pathCardinality = pathExpression.getCardinality();

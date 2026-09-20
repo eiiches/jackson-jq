@@ -53,13 +53,7 @@ public class BinaryModuleTest {
 				.isEqualTo(supplementary);
 
 		// Test surrogate pair crossing the 8192-character buffer boundary in decodeText
-		StringBuilder longText = new StringBuilder();
-		for (int i = 0; i < 8191; i++)
-			longText.append('a');
-		longText.append(supplementary);
-		for (int i = 0; i < 100; i++)
-			longText.append('b');
-		String str = longText.toString();
+		String str = "a".repeat(8191) + supplementary + "b".repeat(100);
 		assertThat(text(BINARY_PROVIDER, "binary::encode_text | binary::decode_text", BINARY_PROVIDER.createString(str))).isEqualTo(str);
 	}
 

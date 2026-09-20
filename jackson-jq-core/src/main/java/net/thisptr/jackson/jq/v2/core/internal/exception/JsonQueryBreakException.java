@@ -1,11 +1,13 @@
 package net.thisptr.jackson.jq.v2.core.internal.exception;
 
+import java.io.Serial;
 import java.util.Collections;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class JsonQueryBreakException extends JsonQueryException {
+	@Serial
 	private static final long serialVersionUID = -6066878919494380889L;
 
 	private final String name;

@@ -93,7 +93,7 @@ final class InputSources {
 				throw new UncheckedIOException(e);
 			}
 		}
-		if (line.length() > 0)
+		if (!line.isEmpty())
 			consumer.accept(line.toString());
 	}
 

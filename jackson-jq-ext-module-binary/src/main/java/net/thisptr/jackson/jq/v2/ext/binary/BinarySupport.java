@@ -110,9 +110,7 @@ final class BinarySupport {
 			return jsonProvider.createBinary(bytes);
 		}
 		long encodedLength = bytes.length == 0 ? 0 : 4L * ((bytes.length + 2) / 3);
-		int maximum = limits.getMaxStringLength();
-		if (encodedLength > maximum)
-			throw new RuntimeLimitExceededException("String of " + encodedLength + " characters exceeds the maximum string length of " + maximum);
+		checkStringLength(limits, encodedLength);
 		return jsonProvider.createString(Base64.getEncoder().encodeToString(bytes));
 	}
 

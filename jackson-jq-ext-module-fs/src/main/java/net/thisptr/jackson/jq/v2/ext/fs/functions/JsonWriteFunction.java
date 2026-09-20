@@ -31,8 +31,8 @@ public final class JsonWriteFunction implements Function {
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindContext, List<Expression<Context, JsonNode>> arguments) {
 		JsonProvider<JsonNode> jsonProvider = bindContext.getJsonProvider();
 		Expression<Context, JsonNode> pathExpression = arguments.get(0);
-		@Nullable Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
-		return new Expression<Context, JsonNode>() {
+		Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				Cardinality pathCardinality = pathExpression.getCardinality();

@@ -4,8 +4,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -23,8 +21,8 @@ final class DecodeTextFunction implements Function {
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindContext, List<Expression<Context, JsonNode>> arguments) {
 		JsonProvider<JsonNode> jsonProvider = bindContext.getJsonProvider();
-		@Nullable Expression<Context, JsonNode> optionsExpression = arguments.isEmpty() ? null : arguments.get(0);
-		return new Expression<Context, JsonNode>() {
+		Expression<Context, JsonNode> optionsExpression = arguments.isEmpty() ? null : arguments.get(0);
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				return optionsExpression == null ? Cardinality.ONE : optionsExpression.getCardinality();

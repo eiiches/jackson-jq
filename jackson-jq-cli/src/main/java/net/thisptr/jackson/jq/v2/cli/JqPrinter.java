@@ -158,7 +158,7 @@ final class JqPrinter {
 			case NULL -> colors.colorize(colors.nullColor(), "null");
 			case BOOLEAN -> {
 				boolean b = provider.getBoolean(node);
-				yield colors.colorize(b ? colors.trueColor() : colors.falseColor(), b ? "true" : "false");
+				yield colors.colorize(b ? colors.trueColor() : colors.falseColor(), Boolean.toString(b));
 			}
 			case NUMBER -> {
 				String num = provider.format(node);
@@ -173,8 +173,6 @@ final class JqPrinter {
 
 	private static void appendNewLine(StringBuilder out, String indent, int depth) {
 		out.append('\n');
-		for (@Var int i = 0; i < depth; ++i) {
-			out.append(indent);
-		}
+		out.append(String.valueOf(indent).repeat(Math.max(0, depth)));
 	}
 }

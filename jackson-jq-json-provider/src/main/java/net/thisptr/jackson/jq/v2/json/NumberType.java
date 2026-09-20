@@ -42,5 +42,5 @@ public enum NumberType {
 	 * Gson reports this for numbers coming out of its parser, which are held as a
 	 * {@code LazilyParsedNumber} until something asks for a specific type.
 	 */
-	UNKNOWN;
+	UNKNOWN,
 }

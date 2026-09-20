@@ -83,10 +83,7 @@ final class FileFunctionSupport {
 			Integer exact = jsonProvider.getNumberAsIntExact(value);
 			if (exact == null || exact < 0)
 				throw new JsonQueryException(function + " indent must be a non-negative integer, boolean, or string");
-			StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < exact; i++)
-				sb.append(' ');
-			return sb.toString();
+			return " ".repeat(exact);
 		}
 		if (type == JsonNodeType.BOOLEAN) {
 			return jsonProvider.getBoolean(value) ? "  " : null;

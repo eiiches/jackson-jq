@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.v2.test.evaluator;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.junit.jupiter.api.Order;
@@ -24,7 +23,7 @@ public class JqExecutablesTest {
 
 	@ParameterizedTest
 	@MethodSource("executables")
-	void verifyExecutableExists(JqExecutables.JqExecutable ev) throws IOException, InterruptedException {
+	void verifyExecutableExists(JqExecutables.JqExecutable ev) {
 		assertThat(JqRunner.hasJq(ev.executable())).withFailMessage("failed to run `%s --version`", ev.executable()).isTrue();
 	}
 }

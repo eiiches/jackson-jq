@@ -134,7 +134,7 @@ public class ConstantFoldingTest {
 		@Override
 		public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> ctx, List<Expression<Context, N>> args) {
 			JsonProvider<N> provider = ctx.getJsonProvider();
-			return FunctionBody.<Context, N>builder(args).usesInput(usesInput).build((frame, in, path, output) -> {
+			return FunctionBody.builder(args).usesInput(usesInput).build((frame, in, path, output) -> {
 				evaluations.incrementAndGet();
 				output.emit(usesInput ? in : provider.createNumber(1), UntrackedPath.getInstance());
 			});
@@ -670,8 +670,7 @@ public class ConstantFoldingTest {
 		for (int i = 0; i < 200; i++)
 			query.append(i == 0 ? "" : ", ").append("reduce range(0; 300) as $x (0; .)");
 		query.append("]");
-		for (int i = 0; i < 200; i++)
-			query.append(" | .");
+		query.append(" | .".repeat(200));
 
 		long started = System.nanoTime();
 		assertThatCode(() -> env.compile(query.toString())).doesNotThrowAnyException();

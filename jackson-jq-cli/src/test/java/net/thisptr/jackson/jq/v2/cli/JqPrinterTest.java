@@ -30,19 +30,20 @@ class JqPrinterTest {
 		JsonProvider<?> provider = Main.resolveProvider(providerName);
 		JqColors colors = JqColors.defaultFor(Versions.JQ_1_7);
 
-		String expected = ""
-				+ "\033[1;39m{\033[0m\n"
-				+ "  \033[1;34m\"a\"\033[0m\033[1;39m:\033[0m \033[1;39m[\033[0m\n"
-				+ "    \033[0;39m1\033[0m\033[1;39m,\033[0m\n"
-				+ "    \033[0;39m2\033[0m\033[1;39m,\033[0m\n"
-				+ "    \033[1;39m{\033[0m\n"
-				+ "      \033[1;34m\"b\"\033[0m\033[1;39m:\033[0m \033[0;90mnull\033[0m\n"
-				+ "    \033[1;39m}\033[0m\n"
-				+ "  \033[1;39m]\033[0m\033[1;39m,\033[0m\n"
-				+ "  \033[1;34m\"c\"\033[0m\033[1;39m:\033[0m \033[1;39m{}\033[0m\033[1;39m,\033[0m\n"
-				+ "  \033[1;34m\"d\"\033[0m\033[1;39m:\033[0m \033[1;39m[]\033[0m\033[1;39m,\033[0m\n"
-				+ "  \033[1;34m\"e\"\033[0m\033[1;39m:\033[0m \033[0;32m\"<&>\"\033[0m\n"
-				+ "\033[1;39m}\033[0m";
+		String expected = """
+				\
+				\033[1;39m{\033[0m
+				  \033[1;34m"a"\033[0m\033[1;39m:\033[0m \033[1;39m[\033[0m
+				    \033[0;39m1\033[0m\033[1;39m,\033[0m
+				    \033[0;39m2\033[0m\033[1;39m,\033[0m
+				    \033[1;39m{\033[0m
+				      \033[1;34m"b"\033[0m\033[1;39m:\033[0m \033[0;90mnull\033[0m
+				    \033[1;39m}\033[0m
+				  \033[1;39m]\033[0m\033[1;39m,\033[0m
+				  \033[1;34m"c"\033[0m\033[1;39m:\033[0m \033[1;39m{}\033[0m\033[1;39m,\033[0m
+				  \033[1;34m"d"\033[0m\033[1;39m:\033[0m \033[1;39m[]\033[0m\033[1;39m,\033[0m
+				  \033[1;34m"e"\033[0m\033[1;39m:\033[0m \033[0;32m"<&>"\033[0m
+				\033[1;39m}\033[0m""";
 
 		assertThat(printPretty(provider, FIXTURE, colors)).isEqualTo(expected);
 	}
@@ -139,20 +140,21 @@ class JqPrinterTest {
 		ByteArrayOutputStream err = new ByteArrayOutputStream();
 		JqColors colors = JqColors.fromEnvironment(Versions.JQ_1_7, env, new PrintStream(err));
 
-		assertThat(new String(err.toByteArray(), StandardCharsets.UTF_8)).isEqualTo("Failed to set $JQ_COLORS\n");
+		assertThat(err.toString(StandardCharsets.UTF_8)).isEqualTo("Failed to set $JQ_COLORS\n");
 		assertThat(printCompact(provider, "null", colors)).isEqualTo("\033[0;90mnull\033[0m");
 	}
 
 	@Test
 	void printsMonochromeWhenColorsIsNull() {
 		Jackson3JsonProvider provider = Jackson3JsonProvider.getInstance();
-		assertThat(printPretty(provider, "{\"a\":[1,null]}", null)).isEqualTo(""
-				+ "{\n"
-				+ "  \"a\": [\n"
-				+ "    1,\n"
-				+ "    null\n"
-				+ "  ]\n"
-				+ "}");
+		assertThat(printPretty(provider, "{\"a\":[1,null]}", null)).isEqualTo("""
+				\
+				{
+				  "a": [
+				    1,
+				    null
+				  ]
+				}""");
 		assertThat(printCompact(provider, "{\"a\":[1,null]}", null)).isEqualTo("{\"a\":[1,null]}");
 	}
 

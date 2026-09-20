@@ -139,7 +139,7 @@ final class JqFunctionCompiler {
 		private <N> Environment<N> resolveEnvironment(Environment<N> callingEnvironment) {
 			if (origin == Origin.ENVIRONMENT)
 				return callingEnvironment;
-			EnvironmentBuilder<N> builder = EnvironmentBuilder.<N>withDefaultLoaders(callingEnvironment.getJsonProvider(), version)
+			EnvironmentBuilder<N> builder = EnvironmentBuilder.withDefaultLoaders(callingEnvironment.getJsonProvider(), version)
 					.clearFunctionLoaders();
 			callingEnvironment.getFunctionLoaders().forEach(builder::addFunctionLoader);
 			return builder.build();
@@ -209,7 +209,7 @@ final class JqFunctionCompiler {
 	}
 
 	private static <N> Expression<StackFrame, N> bindResolved(List<FunctionParameter> paramNames, List<Expression<StackFrame, N>> args, ResolvedFunction<N> resolved) {
-		return new Expression<StackFrame, N>() {
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				return resolved.body.getCardinality();
@@ -245,7 +245,7 @@ final class JqFunctionCompiler {
 	 * {@code callerFrame} instead of pushing a dedicated one.
 	 */
 	private static <N> Expression<StackFrame, N> bindResolvedInline(List<FunctionParameter> paramNames, List<Expression<StackFrame, N>> args, ResolvedFunction<N> resolved) {
-		return new Expression<StackFrame, N>() {
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				return resolved.body.getCardinality();
@@ -299,7 +299,7 @@ final class JqFunctionCompiler {
 			@Override
 			@SuppressWarnings("unchecked")
 			public <Context extends RuntimeContext, N1> Expression<Context, N1> bind(BindContext<N1> bindCtx, List<Expression<Context, N1>> args) {
-				Expression<StackFrame, N1> effectiveExpression = (Expression<StackFrame, N1>) (Expression<?, ?>) expression;
+				Expression<StackFrame, N1> effectiveExpression = (Expression<StackFrame, N1>) expression;
 				return (frame, in, path, output) -> effectiveExpression.apply(callerFrame, in, path, output);
 			}
 		};

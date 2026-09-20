@@ -34,6 +34,6 @@ public final class SlotResolver {
 			throw new IllegalStateException("No slot allocated for pattern variable $" + name);
 		if (!claimed.add(name))
 			return -1;
-		return slot.intValue();
+		return slot;
 	}
 }

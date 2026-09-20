@@ -21,7 +21,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ModuleDiscoveryTest {
-	private static final BindContext<JsonNode> BIND_CONTEXT = new BindContext<JsonNode>() {
+	private static final BindContext<JsonNode> BIND_CONTEXT = new BindContext<>() {
 		@Override
 		public JsonProvider<JsonNode> getJsonProvider() {
 			return Jackson2JsonProvider.getInstance();
@@ -34,7 +34,7 @@ public class ModuleDiscoveryTest {
 	};
 
 	private static <T, Context extends RuntimeContext> Expression<Context, T> pureExpression() {
-		return new Expression<Context, T>() {
+		return new Expression<>() {
 			@Override
 			public boolean dependsOnInput() {
 				return false;

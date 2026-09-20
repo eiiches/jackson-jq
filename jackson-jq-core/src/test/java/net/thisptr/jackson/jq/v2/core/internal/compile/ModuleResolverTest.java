@@ -232,7 +232,7 @@ public class ModuleResolverTest {
 	}
 
 	private static EnvironmentBuilder<JsonNode> builder() {
-		return EnvironmentBuilder.<JsonNode>withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		return EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.clearModuleLoaders();
 	}
 

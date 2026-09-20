@@ -64,8 +64,7 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 	@Override
 	public Object createObject(Map<String, ?> values) {
 		JSONObject result = new JSONObject();
-		for (Map.Entry<String, ?> entry : values.entrySet())
-			result.put(entry.getKey(), entry.getValue());
+		result.putAll(values);
 		return result;
 	}
 

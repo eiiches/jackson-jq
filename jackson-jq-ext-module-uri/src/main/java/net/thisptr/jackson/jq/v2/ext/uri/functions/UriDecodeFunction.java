@@ -21,7 +21,7 @@ public class UriDecodeFunction implements Function {
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
-		return new Expression<Context, JsonNode>() {
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				return Cardinality.ONE;

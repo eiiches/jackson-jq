@@ -138,7 +138,7 @@ class PlaygroundTest {
 		assertThat(String.join("\n", pg.getPreviewLines())).contains("\"name\": \"Alice\"");
 		assertThat(lineToPlainText(pg.buildAutoRunStatusLine()))
 				.isEqualTo(" Auto-run: Paused (Ctrl+P to toggle) ");
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("Auto-run: On", "Auto-run: Paused", "(Ctrl+P to toggle)", "(Stal");
 	}
 
@@ -196,7 +196,7 @@ class PlaygroundTest {
 		assertThat(pg.getPreviewLines()).containsExactly("\"Alice\"");
 		assertThat(lineToPlainText(pg.buildAutoRunStatusLine()))
 				.isEqualTo(" Auto-run: On (Ctrl+P to toggle) ");
-		assertThat(new String(terminalOut.toByteArray(), StandardCharsets.UTF_8))
+		assertThat(terminalOut.toString(StandardCharsets.UTF_8))
 				.contains("Auto-run: On", "(Ctrl+P to toggle)");
 	}
 
@@ -280,8 +280,8 @@ class PlaygroundTest {
 		pg.run(runner);
 
 		assertThat(pg.isAccepted()).isTrue();
-		assertThat(new String(out.toByteArray(), StandardCharsets.UTF_8)).isEqualTo("10\n");
-		assertThat(new String(err.toByteArray(), StandardCharsets.UTF_8)).isEqualTo("jackson-jq -c -- '.a'\n");
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("10\n");
+		assertThat(err.toString(StandardCharsets.UTF_8)).isEqualTo("jackson-jq -c -- '.a'\n");
 	}
 
 	@Test
@@ -313,8 +313,8 @@ class PlaygroundTest {
 		pg.run(runner);
 
 		assertThat(pg.isAccepted()).isFalse();
-		assertThat(new String(out.toByteArray(), StandardCharsets.UTF_8)).isEmpty();
-		assertThat(new String(err.toByteArray(), StandardCharsets.UTF_8)).isEqualTo("jackson-jq -c -- '.a'\n");
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEmpty();
+		assertThat(err.toString(StandardCharsets.UTF_8)).isEqualTo("jackson-jq -c -- '.a'\n");
 	}
 
 	@Test
@@ -351,7 +351,7 @@ class PlaygroundTest {
 		pg.run(runner);
 
 		assertThat(pg.isAccepted()).isTrue();
-		assertThat(new String(out.toByteArray(), StandardCharsets.UTF_8)).isEqualTo("10\n");
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("10\n");
 	}
 
 	@Test
@@ -388,7 +388,7 @@ class PlaygroundTest {
 
 		assertThat(pg.isAccepted()).isFalse();
 		assertThat(out.toByteArray()).isEmpty();
-		assertThat(new String(terminalOut.toByteArray(), StandardCharsets.UTF_8)).contains("Quit Playground");
+		assertThat(terminalOut.toString(StandardCharsets.UTF_8)).contains("Quit Playground");
 	}
 
 	@Test
@@ -426,8 +426,8 @@ class PlaygroundTest {
 
 		assertThat(pg.isAccepted()).isTrue();
 		assertThat(pg.getQuery()).isEqualTo(".val\n+ 1");
-		assertThat(new String(out.toByteArray(), StandardCharsets.UTF_8)).isEqualTo("100\n");
-		assertThat(new String(err.toByteArray(), StandardCharsets.UTF_8))
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("100\n");
+		assertThat(err.toString(StandardCharsets.UTF_8))
 				.isEqualTo("jackson-jq -c -- '.val\n+ 1'\n");
 	}
 
@@ -464,7 +464,7 @@ class PlaygroundTest {
 		pg.run(runner);
 
 		assertThat(pg.isAccepted()).isTrue();
-		assertThat(new String(out.toByteArray(), StandardCharsets.UTF_8)).isEqualTo("1\n");
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("1\n");
 	}
 
 	@Test
@@ -502,7 +502,7 @@ class PlaygroundTest {
 		pg.run(runner);
 
 		assertThat(pg.isAccepted()).isTrue();
-		assertThat(new String(out.toByteArray(), StandardCharsets.UTF_8)).isEqualTo("1\n");
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("1\n");
 	}
 
 	@Test
@@ -840,7 +840,7 @@ class PlaygroundTest {
 		pg.run(runner);
 
 		assertThat(pg.isAccepted()).isTrue();
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("╭");
 		assertThat(rendered).contains("╰");
 	}
@@ -878,13 +878,13 @@ class PlaygroundTest {
 		assertThat(pg.getWarnings()).isNotEmpty();
 		assertThat(pg.getWarnings().get(0).message()).contains("binds tighter than");
 
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("[Warning]");
 		assertThat(rendered).contains("Output Preview [Text]: 2 items");
 		assertThat(rendered).contains("Diagnostics");
 
 		// Warnings should NOT be printed to stderr upon acceptance
-		String stderrText = new String(err.toByteArray(), StandardCharsets.UTF_8);
+		String stderrText = err.toString(StandardCharsets.UTF_8);
 		assertThat(stderrText).doesNotContain("jq: warning:");
 		assertThat(stderrText).isEqualTo("jackson-jq -c -- '1, 2 | .'\n");
 	}
@@ -921,7 +921,7 @@ class PlaygroundTest {
 		assertThat(pg.isAccepted()).isTrue();
 		assertThat(pg.getWarnings()).isEmpty();
 
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).doesNotContain("[Warning]");
 		assertThat(rendered).contains("Output Preview [Text]: 2 items");
 		assertThat(rendered).contains("(no diagnostics)");
@@ -959,7 +959,7 @@ class PlaygroundTest {
 		assertThat(pg.isAccepted()).isTrue();
 		assertThat(pg.getWarnings().size()).isGreaterThanOrEqualTo(2);
 
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("[Warning]");
 	}
 
@@ -998,7 +998,7 @@ class PlaygroundTest {
 		pg.run(runner);
 
 		assertThat(pg.isAccepted()).isTrue();
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("Input [Tree]: 1 item (3 lines)");
 		assertThat(rendered).contains("Output Preview [Text]: 1 item (3 lines)");
 	}
@@ -1038,7 +1038,7 @@ class PlaygroundTest {
 		assertThat(pg.isAccepted()).isTrue();
 		assertThat(pg.getOutputTreePane().roots()).isNotEmpty();
 		assertThat(pg.getOutputTreePane().textLines()).isNotEmpty();
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("[Error]");
 		assertThat(rendered).contains("Output Preview [Text]: 1 item (3 lines)");
 		assertThat(rendered).contains("\"a\":");
@@ -1468,7 +1468,7 @@ class PlaygroundTest {
 		pg.run(createTestRunner(new ByteArrayOutputStream(), events));
 
 		assertThat(pg.getErrorMessage()).contains("maximum string length of 3");
-		assertThat(new String(err.toByteArray(), StandardCharsets.UTF_8))
+		assertThat(err.toString(StandardCharsets.UTF_8))
 				.contains("maximum string length of 3");
 	}
 
@@ -1508,7 +1508,7 @@ class PlaygroundTest {
 
 		pg.run(runner);
 
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("Options");
 		assertThat(rendered).contains("Input:");
 		assertThat(rendered).contains("-R, --raw-input");
@@ -1562,7 +1562,7 @@ class PlaygroundTest {
 
 		assertThat(pg.getDiagnosticPlainLines()).containsExactly("(no diagnostics)");
 		assertThat(pg.getDiagnosticsViewportHeight()).isEqualTo(1);
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("Diagnostics");
 		assertThat(rendered).contains("(no diagnostics)");
 	}
@@ -1598,7 +1598,7 @@ class PlaygroundTest {
 		assertThat(diagLines.get(2)).isEqualTo("    ^");
 		assertThat(pg.getDiagnosticsViewportHeight()).isEqualTo(3);
 
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("[Error]");
 		assertThat(rendered).contains("Diagnostics");
 	}
@@ -1634,7 +1634,7 @@ class PlaygroundTest {
 		}
 		assertThat(pg.getDiagnosticsViewportHeight()).isEqualTo(diagLines.size());
 
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("[Warning]");
 		assertThat(rendered).contains("Diagnostics");
 	}
@@ -1678,7 +1678,7 @@ class PlaygroundTest {
 		assertThat(pg.getDiagnosticsViewportHeight()).isEqualTo(5);
 		assertThat(pg.getDiagnosticsScrollOffset()).isEqualTo(1);
 
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("Diagnostics");
 	}
 
@@ -1748,7 +1748,7 @@ class PlaygroundTest {
 		pg.run(runner);
 
 		assertThat(pg.getFocus()).isEqualTo(Playground.Focus.DIAGNOSTICS);
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("Scroll");
 		assertThat(rendered).contains("Focus Next");
 		assertThat(rendered).contains("Emit & Quit");
@@ -1817,7 +1817,7 @@ class PlaygroundTest {
 
 		pg10.run(runner10);
 
-		String rendered10 = new String(out10.toByteArray(), StandardCharsets.UTF_8);
+		String rendered10 = out10.toString(StandardCharsets.UTF_8);
 		assertThat(rendered10).contains("Query");
 		assertThat(rendered10).contains("Diagnostics");
 		assertThat(rendered10).contains("Input");
@@ -1846,7 +1846,7 @@ class PlaygroundTest {
 
 		pg9.run(runner9);
 
-		String rendered9 = new String(out9.toByteArray(), StandardCharsets.UTF_8);
+		String rendered9 = out9.toString(StandardCharsets.UTF_8);
 		assertThat(rendered9).contains("Screen", "small", "playground");
 	}
 
@@ -1870,7 +1870,7 @@ class PlaygroundTest {
 		assertThat(pg.getEvaluationStatus()).isEqualTo(Playground.EvaluationStatus.UP_TO_DATE);
 		assertThat(lineToPlainText(pg.buildAutoRunStatusLine()))
 				.isEqualTo(" Auto-run: On (Ctrl+P to toggle) ");
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("✓ Up to date");
 		assertThat(rendered).contains("Auto-run: On", "(Ctrl+P to toggle)");
 	}
@@ -1897,7 +1897,7 @@ class PlaygroundTest {
 		assertThat(pg.getEvaluationStatus()).isEqualTo(Playground.EvaluationStatus.STALE);
 		assertThat(lineToPlainText(pg.buildAutoRunStatusLine()))
 				.isEqualTo(" Auto-run: Paused (Ctrl+P to toggle) ");
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("○ Pending Run");
 		assertThat(rendered).doesNotContain("⚠ Stale");
 		assertThat(rendered).contains("Auto-run: Paused", "(Ctrl+P to toggle)");
@@ -1921,7 +1921,7 @@ class PlaygroundTest {
 		pg.run(runner);
 
 		assertThat(pg.getEvaluationStatus()).isEqualTo(Playground.EvaluationStatus.FAILURE);
-		String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("✗ Error");
 	}
 
@@ -1985,7 +1985,7 @@ class PlaygroundTest {
 			runThread.join(5000);
 
 			assertThat(pg.getEvaluationStatus()).isEqualTo(Playground.EvaluationStatus.UP_TO_DATE);
-			String rendered = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+			String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 			assertThat(rendered).contains("Evaluating...");
 			assertThat(rendered).contains("✓ Up to date");
 		} finally {
@@ -2114,7 +2114,7 @@ class PlaygroundTest {
 			// Allow render thread to process UiRunnable and perform redraw
 			Thread.sleep(150);
 
-			String outputBeforeExit = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+			String outputBeforeExit = terminalOut.toString(StandardCharsets.UTF_8);
 			assertThat(outputBeforeExit).contains("✓ Up to date");
 			assertThat(outputBeforeExit).doesNotContain("Output Preview (Stale)");
 
@@ -2737,7 +2737,7 @@ class PlaygroundTest {
 		assertThat(pg.isAccepted()).isTrue();
 		assertThat(pg.getInputTreePane().searchQuery()).isEmpty();
 		assertThat(pg.getInputTreePane().matches()).isEmpty();
-		String outputText = new String(terminalOut.toByteArray(), StandardCharsets.UTF_8);
+		String outputText = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(outputText).contains("(n/p/Esc)");
 		assertThat(outputText).doesNotContain("(n/p/t/Esc)");
 	}

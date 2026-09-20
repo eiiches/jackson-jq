@@ -49,9 +49,9 @@ public class HttpGetFunction implements Function {
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindContext, List<Expression<Context, JsonNode>> arguments) {
 		JsonProvider<JsonNode> jsonProvider = bindContext.getJsonProvider();
 		Expression<Context, JsonNode> urlExpression = arguments.get(0);
-		@Nullable Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
+		Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
 		boolean binarySupported = supportsBinary(jsonProvider);
-		return new Expression<Context, JsonNode>() {
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				Cardinality urlCardinality = urlExpression.getCardinality();
@@ -145,7 +145,7 @@ public class HttpGetFunction implements Function {
 	private static <JsonNode> int parseExpectedStatus(JsonProvider<JsonNode> jsonProvider, JsonNode node) {
 		if (!jsonProvider.isNumber(node))
 			throw new JsonQueryException("http::get expected_status values must be exact integers from 100 through 599");
-		@Nullable Integer status = jsonProvider.getNumberAsIntExact(node);
+		Integer status = jsonProvider.getNumberAsIntExact(node);
 		if (status == null || status < 100 || status > 599)
 			throw new JsonQueryException("http::get expected_status values must be exact integers from 100 through 599");
 		return status;
@@ -154,7 +154,7 @@ public class HttpGetFunction implements Function {
 	private static <JsonNode> int parseTimeout(JsonProvider<JsonNode> jsonProvider, JsonNode node) {
 		if (!jsonProvider.isNumber(node))
 			throw new JsonQueryException("http::get timeout must be a positive finite number of seconds");
-		@Nullable BigDecimal seconds = jsonProvider.getNumberAsBigDecimalExact(node);
+		BigDecimal seconds = jsonProvider.getNumberAsBigDecimalExact(node);
 		if (seconds == null || seconds.signum() <= 0)
 			throw new JsonQueryException("http::get timeout must be a positive finite number of seconds");
 		BigDecimal millis = seconds.movePointRight(3).setScale(0, RoundingMode.CEILING);
@@ -238,7 +238,7 @@ public class HttpGetFunction implements Function {
 	private static byte[] readBody(HttpURLConnection connection, RuntimeLimits limits, boolean binarySupported) throws IOException {
 		int maximumBytes = binarySupported ? limits.getMaxBinaryLength() : maximumBytesForBase64(limits.getMaxStringLength());
 		LimitedByteArrayOutputStream result = new LimitedByteArrayOutputStream(maximumBytes, binarySupported, limits.getMaxStringLength());
-		@Var @Nullable InputStream responseStream;
+		@Var InputStream responseStream;
 		try {
 			responseStream = connection.getInputStream();
 		} catch (IOException e) {
@@ -261,19 +261,19 @@ public class HttpGetFunction implements Function {
 		@Var InputStream result = input;
 		for (int i = encodings.length - 1; i >= 0; --i) {
 			String encoding = encodings[i].trim().toLowerCase(Locale.ROOT);
-			if (encoding.equals("identity") || encoding.isEmpty())
-				continue;
-			if (encoding.equals("gzip")) {
-				result = new GZIPInputStream(result);
-			} else if (encoding.equals("deflate")) {
-				result = new InflaterInputStream(result);
-			} else {
-				try {
-					result.close();
-				} catch (IOException closeFailure) {
-					// Preserve the actionable unsupported-encoding error.
+			switch (encoding) {
+				case "identity", "" -> {
 				}
-				throw new JsonQueryException("http::get does not support Content-Encoding: " + encoding);
+				case "gzip" -> result = new GZIPInputStream(result);
+				case "deflate" -> result = new InflaterInputStream(result);
+				default -> {
+					try {
+						result.close();
+					} catch (IOException closeFailure) {
+						// Preserve the actionable unsupported-encoding error.
+					}
+					throw new JsonQueryException("http::get does not support Content-Encoding: " + encoding);
+				}
 			}
 		}
 		return result;

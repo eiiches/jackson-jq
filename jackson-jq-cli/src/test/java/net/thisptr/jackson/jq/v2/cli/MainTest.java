@@ -21,6 +21,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.UnrecognizedOptionException;
 import org.jline.terminal.Size;
 import org.jline.terminal.impl.LineDisciplineTerminal;
@@ -85,19 +86,21 @@ class MainTest {
 	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void prettyPrintsLikeJqByDefault(String provider) throws Exception {
 		assertThat(run("{\"a\":[1,2,{\"b\":null}],\"c\":{},\"d\":[],\"e\":\"<&>\"}", "--json-provider", provider, "."))
-				.isEqualTo(""
-						+ "{\n"
-						+ "  \"a\": [\n"
-						+ "    1,\n"
-						+ "    2,\n"
-						+ "    {\n"
-						+ "      \"b\": null\n"
-						+ "    }\n"
-						+ "  ],\n"
-						+ "  \"c\": {},\n"
-						+ "  \"d\": [],\n"
-						+ "  \"e\": \"<&>\"\n"
-						+ "}\n");
+				.isEqualTo("""
+						\
+						{
+						  "a": [
+						    1,
+						    2,
+						    {
+						      "b": null
+						    }
+						  ],
+						  "c": {},
+						  "d": [],
+						  "e": "<&>"
+						}
+						""");
 	}
 
 	@ParameterizedTest
@@ -278,20 +281,24 @@ class MainTest {
 	void warnsOnStderrAboutACommaOperandOfAPipe() throws Exception {
 		assertThat(run("{\"a\":1,\"b\":2}", "--compact", ".a, .b | .")).isEqualTo("1\n2\n");
 		assertThat(runStderr("{\"a\":1,\"b\":2}", "--compact", ".a, .b | ."))
-				.isEqualTo("jq: warning: `,` binds tighter than `|`: write `(.a, .b)` to make the grouping explicit"
-						+ " at line 1, column 1:\n"
-						+ "    .a, .b | .\n"
-						+ "    ^\n");
+				.isEqualTo("""
+						jq: warning: `,` binds tighter than `|`: write `(.a, .b)` to make the grouping explicit\
+						 at line 1, column 1:
+						    .a, .b | .
+						    ^
+						""");
 	}
 
 	@Test
 	void warnsOnStderrAboutABindingPipeAfterAComma() throws Exception {
 		assertThat(run("null", "--compact", "1 + 1, 2 as $a | $a + 1")).isEqualTo("2\n3\n");
 		assertThat(runStderr("null", "--compact", "1 + 1, 2 as $a | $a + 1"))
-				.isEqualTo("jq: warning: `as` binds only `2`: write `(2 as $a | $a + 1)` to make the grouping explicit"
-						+ " at line 1, column 8:\n"
-						+ "    1 + 1, 2 as $a | $a + 1\n"
-						+ "           ^\n");
+				.isEqualTo("""
+						jq: warning: `as` binds only `2`: write `(2 as $a | $a + 1)` to make the grouping explicit\
+						 at line 1, column 8:
+						    1 + 1, 2 as $a | $a + 1
+						           ^
+						""");
 	}
 
 	@Test
@@ -344,7 +351,7 @@ class MainTest {
 
 	@ParameterizedTest
 	@ValueSource(strings = { "--max-string-length", "--max-binary-length", "--max-array-length", "--max-object-member-count", "--max-user-defined-function-calls", "--max-outputs-per-expression" })
-	void rejectsInvalidRuntimeLimits(String option) throws Exception {
+	void rejectsInvalidRuntimeLimits(String option) {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> Main.createRuntimeOptions(parseLimits(option, "-1")))
 				.withMessage("invalid " + option + ": -1 (expected a non-negative integer)");
@@ -438,12 +445,12 @@ class MainTest {
 			System.setErr(originalErr);
 		}
 
-		assertThat(new String(out.toByteArray(), StandardCharsets.UTF_8)).isEqualTo("{\"x\":123}\n");
-		assertThat(new String(err.toByteArray(), StandardCharsets.UTF_8)).isEqualTo("jackson-jq -c -- '.'\n");
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("{\"x\":123}\n");
+		assertThat(err.toString(StandardCharsets.UTF_8)).isEqualTo("jackson-jq -c -- '.'\n");
 	}
 
 	@Test
-	void parsesInteractiveNullInputAsClusteredShortOptions() throws Exception {
+	void parsesInteractiveNullInputAsClusteredShortOptions() throws ParseException {
 		Options options = interactiveNullInputOptions();
 
 		CommandLine clustered = Main.createCommandLineParser().parse(options, new String[] { "-in" });
@@ -471,7 +478,7 @@ class MainTest {
 	}
 
 	@Test
-	void testCreateDefaultRunnerWhenDevTtyAvailable() throws Exception {
+	void testCreateDefaultRunnerWhenDevTtyAvailable() {
 		if (new File("/dev/tty").exists()) {
 			try (TuiRunner runner = Main.createDefaultRunner()) {
 				assertThat(runner).isNotNull();
@@ -531,11 +538,11 @@ class MainTest {
 			System.setErr(originalErr);
 		}
 
-		assertThat(new String(out.toByteArray(), StandardCharsets.UTF_8)).isEqualTo("null\n");
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("null\n");
 		String expectedCommand = inputFiles.isEmpty()
 				? "jackson-jq -n -- '.'\n"
 				: "jackson-jq -n -- '.' '-'\n";
-		assertThat(new String(err.toByteArray(), StandardCharsets.UTF_8)).isEqualTo(expectedCommand);
+		assertThat(err.toString(StandardCharsets.UTF_8)).isEqualTo(expectedCommand);
 	}
 
 	private static Path write(Path dir, String name, String content) throws Exception {
@@ -577,8 +584,8 @@ class MainTest {
 			System.setOut(new PrintStream(output));
 			System.setErr(new PrintStream(errors));
 			Main.main(args);
-			return new Captured(new String(output.toByteArray(), StandardCharsets.UTF_8),
-					new String(errors.toByteArray(), StandardCharsets.UTF_8));
+			return new Captured(output.toString(StandardCharsets.UTF_8),
+					errors.toString(StandardCharsets.UTF_8));
 		} finally {
 			System.setIn(originalIn);
 			System.setOut(originalOut);

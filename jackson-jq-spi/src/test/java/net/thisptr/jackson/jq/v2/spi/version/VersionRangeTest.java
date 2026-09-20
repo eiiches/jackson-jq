@@ -6,6 +6,7 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -123,10 +124,10 @@ public class VersionRangeTest {
 		assertFalse(range.maxInclusive());
 
 		VersionRange unbounded = VersionRange.of(null, true, null, true);
-		assertEquals(null, unbounded.minVersion());
-		assertFalse(unbounded.minInclusive());
-		assertEquals(null, unbounded.maxVersion());
-		assertFalse(unbounded.maxInclusive());
+		assertThat(unbounded.minVersion()).isNull();
+		assertThat(unbounded.minInclusive()).isFalse();
+		assertThat(unbounded.maxVersion()).isNull();
+		assertThat(unbounded.maxInclusive()).isFalse();
 	}
 
 	@Test

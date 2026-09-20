@@ -51,7 +51,7 @@ public class FileSystemModuleLoaderTest {
 	public void beforeEach() throws IOException {
 		ModuleLoader<JsonNode> moduleLoader = setupModuleLoader(Objects.requireNonNull(tempDir));
 
-		env = EnvironmentBuilder.<JsonNode>withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.clearModuleLoaders()
 				.addModuleLoader(moduleLoader)
 				.build();
@@ -70,7 +70,7 @@ public class FileSystemModuleLoaderTest {
 	}
 
 	@Test
-	public void testSimple() throws Exception {
+	public void testSimple() {
 		JsonQuery<JsonNode> expr = env.compile("import \"simple\" as simple; simple::one");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
@@ -78,7 +78,7 @@ public class FileSystemModuleLoaderTest {
 	}
 
 	@Test
-	public void testSiblingDefCallWithinModule() throws Exception {
+	public void testSiblingDefCallWithinModule() {
 		JsonQuery<JsonNode> expr = env.compile("import \"sibling_defs\" as m; m::exported_foo");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
@@ -86,7 +86,7 @@ public class FileSystemModuleLoaderTest {
 	}
 
 	@Test
-	public void testRecursiveImports() throws Exception {
+	public void testRecursiveImports() {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"recursive_imports/a\" as a; a::one");
 			expr.apply(NullNode.getInstance(), value -> {
@@ -95,7 +95,7 @@ public class FileSystemModuleLoaderTest {
 	}
 
 	@Test
-	public void testSearchPathOverrides() throws Exception {
+	public void testSearchPathOverrides() {
 		JsonQuery<JsonNode> expr = env.compile("import \"search_path_overrides/a\" as a; a::two");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
@@ -103,7 +103,7 @@ public class FileSystemModuleLoaderTest {
 	}
 
 	@Test
-	public void testRepeatedPathComponents() throws Exception {
+	public void testRepeatedPathComponents() {
 		JsonQuery<JsonNode> expr = env.compile("import \"repeated_path_components\" as a; a::one");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
@@ -117,7 +117,7 @@ public class FileSystemModuleLoaderTest {
 	}
 
 	@Test
-	public void testDataImports() throws Exception {
+	public void testDataImports() {
 		JsonQuery<JsonNode> expr = env.compile("import \"data_imports/a\" as $a; $a::a[]");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
@@ -125,7 +125,7 @@ public class FileSystemModuleLoaderTest {
 	}
 
 	@Test
-	public void testBrokenDataImports() throws Exception {
+	public void testBrokenDataImports() {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"broken_data_imports/a\" as $a; $a::a");
 			expr.apply(NullNode.getInstance(), value -> {
@@ -134,7 +134,7 @@ public class FileSystemModuleLoaderTest {
 	}
 
 	@Test
-	public void testModuleNotFound() throws Exception {
+	public void testModuleNotFound() {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"module_not_exist\" as a; a::one");
 			expr.apply(NullNode.getInstance(), value -> {
@@ -153,7 +153,7 @@ public class FileSystemModuleLoaderTest {
 	}
 
 	@Test
-	public void testIllegalSearchPathOverrides() throws Exception {
+	public void testIllegalSearchPathOverrides() {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"illegal_search_path_overrides\" as a; a::one");
 			expr.apply(NullNode.getInstance(), value -> {
@@ -162,7 +162,7 @@ public class FileSystemModuleLoaderTest {
 	}
 
 	@Test
-	public void testImportWithAbsolutePath() throws Exception {
+	public void testImportWithAbsolutePath() {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"/foo\" as foo; foo::foo");
 			expr.apply(NullNode.getInstance(), value -> {
@@ -210,10 +210,10 @@ public class FileSystemModuleLoaderTest {
 		Path dir = Objects.requireNonNull(tempDir);
 		Files.writeString(dir.resolve("uses_other.jq"), "import \"other\" as other; def one: other::two - 1;");
 
-		Environment<JsonNode> mixedEnv = EnvironmentBuilder.<JsonNode>withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> mixedEnv = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.clearModuleLoaders()
 				.addModuleLoader(new FileSystemModuleLoader<>(Jackson2JsonProvider.getInstance(), dir))
-				.addModuleLoader(new ModuleLoader<JsonNode>() {
+				.addModuleLoader(new ModuleLoader<>() {
 					@Override
 					public Module loadModule(String path, Maybe<JsonNode> metadata) {
 						if (!"other".equals(path))
@@ -249,7 +249,7 @@ public class FileSystemModuleLoaderTest {
 		// The sibling of the search path: reachable only by escaping it.
 		Files.writeString(outside.resolve("root.jq"), "def secret: \"leaked\";");
 
-		Environment<JsonNode> rootEnv = EnvironmentBuilder.<JsonNode>withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> rootEnv = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.clearModuleLoaders()
 				.addModuleLoader(new FileSystemModuleLoader<>(Jackson2JsonProvider.getInstance(), searchPath))
 				.build();
@@ -280,7 +280,7 @@ public class FileSystemModuleLoaderTest {
 		Files.writeString(searchPath.resolve("a.jq"), "import \".\" as m {search: \"./\"}; def one: m::secret;");
 		Files.writeString(outside.resolve("root2.jq"), "def secret: \"leaked\";");
 
-		Environment<JsonNode> rootEnv = EnvironmentBuilder.<JsonNode>withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> rootEnv = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.clearModuleLoaders()
 				.addModuleLoader(new FileSystemModuleLoader<>(Jackson2JsonProvider.getInstance(), searchPath))
 				.build();
@@ -309,7 +309,7 @@ public class FileSystemModuleLoaderTest {
 			Assumptions.abort("this filesystem does not support symlinks: " + e.getMessage());
 		}
 
-		Environment<JsonNode> linkedEnv = EnvironmentBuilder.<JsonNode>withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> linkedEnv = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.clearModuleLoaders()
 				.addModuleLoader(new FileSystemModuleLoader<>(Jackson2JsonProvider.getInstance(), searchPath))
 				.build();
@@ -321,7 +321,7 @@ public class FileSystemModuleLoaderTest {
 	}
 
 	@Test
-	public void testDirectoryTraversal() throws Exception {
+	public void testDirectoryTraversal() {
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr = env.compile("import \"../foo\" as foo; foo::foo");
 			expr.apply(NullNode.getInstance(), value -> {

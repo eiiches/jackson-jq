@@ -1,12 +1,15 @@
 package net.thisptr.jackson.jq.v2.core.internal.exception;
 
+import java.io.Serial;
+
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class JsonQueryUserException extends JsonQueryException {
+	@Serial
 	private static final long serialVersionUID = -2719442463094461632L;
 
-	private Object value;
+	private final Object value;
 
 	public <JsonNode> JsonQueryUserException(JsonProvider<JsonNode> jsonProvider, JsonNode value) {
 		super(jsonProvider.isString(value)

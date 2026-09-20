@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.builtins;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -30,6 +31,7 @@ public class IsEmptyFunction implements Function {
 	 * intercept each other's break. The identity token makes each invocation catch only its own.
 	 */
 	private static final class ShortCircuit extends JsonQueryException {
+		@Serial
 		private static final long serialVersionUID = 1L;
 
 		private final transient Object token;

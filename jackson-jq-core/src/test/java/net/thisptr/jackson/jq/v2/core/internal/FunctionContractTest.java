@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class FunctionContractTest {
 	private static BindContext<JsonNode> bindContext(JsonProvider<JsonNode> jsonProvider, Version version) {
-		return new BindContext<JsonNode>() {
+		return new BindContext<>() {
 			@Override
 			public JsonProvider<JsonNode> getJsonProvider() {
 				return jsonProvider;
@@ -47,7 +47,7 @@ public class FunctionContractTest {
 	}
 
 	private static <Context extends RuntimeContext> Expression<Context, JsonNode> pureExpression() {
-		return new Expression<Context, JsonNode>() {
+		return new Expression<>() {
 			@Override
 			public boolean dependsOnInput() {
 				return false;
@@ -120,7 +120,7 @@ public class FunctionContractTest {
 					// Test arg with dependsOnInput=true
 					List<Expression<RuntimeContext, JsonNode>> inputArgs = new ArrayList<>();
 					for (int i = 0; i < arity; i++) {
-						inputArgs.add(new Expression<RuntimeContext, JsonNode>() {
+						inputArgs.add(new Expression<>() {
 							@Override
 							public boolean dependsOnInput() {
 								return true;
@@ -143,7 +143,7 @@ public class FunctionContractTest {
 					// Test arg with dependsOnExternalState=true
 					List<Expression<RuntimeContext, JsonNode>> externalStateArgs = new ArrayList<>();
 					for (int i = 0; i < arity; i++) {
-						externalStateArgs.add(new Expression<RuntimeContext, JsonNode>() {
+						externalStateArgs.add(new Expression<>() {
 							@Override
 							public boolean dependsOnInput() {
 								return false;

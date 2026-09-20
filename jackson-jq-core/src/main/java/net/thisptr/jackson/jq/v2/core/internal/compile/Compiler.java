@@ -1062,7 +1062,7 @@ public class Compiler {
 	private static <N> BindContext<N> bindContextOf(Environment<N> env) {
 		JsonProvider<N> jsonProvider = env.getJsonProvider();
 		Version jqVersion = env.getJqVersion();
-		return new BindContext<N>() {
+		return new BindContext<>() {
 			@Override
 			public JsonProvider<N> getJsonProvider() {
 				return jsonProvider;
@@ -1228,7 +1228,7 @@ public class Compiler {
 			@Override
 			@SuppressWarnings("unchecked")
 			public <Context extends RuntimeContext, N1> Expression<Context, N1> bind(BindContext<N1> bindCtx, List<Expression<Context, N1>> emptyArgs) {
-				Expression<StackFrame, N1> effectiveArgument = (Expression<StackFrame, N1>) (Expression<?, ?>) argument;
+				Expression<StackFrame, N1> effectiveArgument = (Expression<StackFrame, N1>) argument;
 				return (sFrame, inVal, pVal, outVal) -> effectiveArgument.apply(callerFrame, inVal, pVal, outVal);
 			}
 		};

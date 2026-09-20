@@ -119,8 +119,7 @@ public final class VersionRange {
 		}
 		if (maxVersion != null) {
 			int r = maxVersion.compareTo(version);
-			if (r < 0 || (!maxInclusive && r == 0))
-				return false;
+			return r >= 0 && (maxInclusive || r != 0);
 		}
 		return true;
 	}

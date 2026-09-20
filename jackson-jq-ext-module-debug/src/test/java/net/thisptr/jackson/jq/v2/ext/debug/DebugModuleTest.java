@@ -31,7 +31,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DebugModuleTest {
-	private static final BindContext<JsonNode> BIND_CONTEXT = new BindContext<JsonNode>() {
+	private static final BindContext<JsonNode> BIND_CONTEXT = new BindContext<>() {
 		@Override
 		public JsonProvider<JsonNode> getJsonProvider() {
 			return Jackson2JsonProvider.getInstance();
@@ -267,11 +267,8 @@ public class DebugModuleTest {
 		int n = arity == null ? 0 : arity;
 		List<Expression<Context, JsonNode>> args = new ArrayList<>();
 		for (int i = 0; i < n; ++i) {
-			args.add(new Expression<Context, JsonNode>() {
-				@Override
-				public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) {
-					throw new UnsupportedOperationException();
-				}
+			args.add((context, in, ipath, output) -> {
+				throw new UnsupportedOperationException();
 			});
 		}
 		return args;

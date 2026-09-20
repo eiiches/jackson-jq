@@ -60,7 +60,7 @@ public class FsModuleTest {
 		assertThat(run("fs::read_text(" + quote(utf8) + ")", unlimited()).get(0).textValue()).isEqualTo("こんにちは");
 
 		Path latin1 = directory.resolve("latin1.txt");
-		Files.write(latin1, "café".getBytes(StandardCharsets.ISO_8859_1));
+		Files.writeString(latin1, "café", StandardCharsets.ISO_8859_1);
 		assertThat(run("fs::read_text(" + quote(latin1) + "; {encoding: \"ISO-8859-1\"})", unlimited()).get(0).textValue()).isEqualTo("café");
 		assertThat(run("fs::read_text(" + quote(utf8) + "; {})", unlimited()).get(0).textValue()).isEqualTo("こんにちは");
 
@@ -455,7 +455,7 @@ public class FsModuleTest {
 
 		Path encodedFile = directory.resolve("encoded.json");
 		run("fs::write_json(" + quote(encodedFile) + "; {encoding: \"ISO-8859-1\"})", run("{\"msg\": \"café\"}", unlimited()).get(0), unlimited());
-		assertThat(new String(Files.readAllBytes(encodedFile), StandardCharsets.ISO_8859_1)).isEqualTo("{\"msg\":\"café\"}\n");
+		assertThat(Files.readString(encodedFile, StandardCharsets.ISO_8859_1)).isEqualTo("{\"msg\":\"café\"}\n");
 
 		JsonProvider<JsonElement> provider = GsonJsonProvider.getInstance();
 		JsonElement gsonInput = run(provider, "{\"x\": 1}", unlimited()).get(0);

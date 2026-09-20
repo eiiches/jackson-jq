@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import com.google.errorprone.annotations.Var;
-
 import net.thisptr.jackson.jq.v2.ext.uri.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -33,7 +31,7 @@ public class UriParseFunction implements Function {
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
-		return new Expression<Context, JsonNode>() {
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				return Cardinality.ONE;
@@ -71,12 +69,7 @@ public class UriParseFunction implements Function {
 			try {
 				String key = URLDecoder.decode(keyEncoded, StandardCharsets.UTF_8);
 				String value = URLDecoder.decode(valueEncoded, StandardCharsets.UTF_8);
-				@Var List<String> arr = result.get(key);
-				if (arr == null) {
-					arr = new ArrayList<>(1);
-					result.put(key, arr);
-				}
-				arr.add(value);
+				result.computeIfAbsent(key, k -> new ArrayList<>(1)).add(value);
 			} catch (Exception e) {
 				// ignore malformed query parameters
 			}

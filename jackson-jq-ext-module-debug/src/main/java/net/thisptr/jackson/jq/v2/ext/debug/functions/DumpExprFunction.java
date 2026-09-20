@@ -34,7 +34,7 @@ public class DumpExprFunction implements Function {
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
 		JsonNode dump = new Dumper<>(jsonProvider).dump(args.get(0));
-		return new Expression<Context, JsonNode>() {
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				return Cardinality.ONE;
@@ -114,11 +114,11 @@ public class DumpExprFunction implements Function {
 			if (value instanceof Byte || value instanceof Short || value instanceof Integer)
 				return jsonProvider.createNumber(((Number) value).intValue());
 			if (value instanceof Long)
-				return jsonProvider.createNumber(((Long) value).longValue());
+				return jsonProvider.createNumber((Long) value);
 			if (value instanceof Float)
-				return jsonProvider.createNumber(((Float) value).floatValue());
+				return jsonProvider.createNumber((Float) value);
 			if (value instanceof Double)
-				return jsonProvider.createNumber(((Double) value).doubleValue());
+				return jsonProvider.createNumber((Double) value);
 			if (value instanceof BigInteger)
 				return jsonProvider.createNumber((BigInteger) value);
 			if (value instanceof BigDecimal)
