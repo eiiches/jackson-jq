@@ -1,4 +1,6 @@
-load("@rules_java//java:defs.bzl", "java_binary", "java_import")
+load("@rules_graalvm//graalvm:defs.bzl", "native_image")
+load("@rules_java//java:defs.bzl", "java_binary", "java_import", "java_library")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//build-tools/bazel:defs.bzl", "jjq_maven_artifact")
 
 package(default_visibility = ["//visibility:public"])
@@ -15,6 +17,57 @@ java_binary(
     name = "jackson-jq-cli-bin",
     main_class = "net.thisptr.jackson.jq.v2.cli.Main",
     runtime_deps = ["//jackson-jq-cli/src/main/java/net/thisptr/jackson/jq/v2/cli"],
+)
+
+# Keep Native Image configuration out of the published CLI jar. The native target consumes
+# this resource-only library alongside the CLI's normal transitive runtime jars.
+genrule(
+    name = "zstd-jni-reachability-metadata",
+    srcs = ["@zstd_jni_reachability_metadata//file"],
+    outs = ["src/native/resources/META-INF/native-image/com.github.luben/zstd-jni/reachability-metadata.json"],
+    cmd = "cp $(location @zstd_jni_reachability_metadata//file) $@",
+)
+
+java_library(
+    name = "native-config",
+    resource_strip_prefix = "jackson-jq-cli/src/native/resources",
+    resources = glob(["src/native/resources/**"]) + [":zstd-jni-reachability-metadata"],
+)
+
+native_image(
+    name = "native",
+    executable_name = "jackson-jq-cli-native",
+    extra_args = [
+        # The rules_graalvm fastbuild default is -Ob, which prioritizes image build speed.
+        # Native executables are release artifacts, so optimize their runtime performance.
+        "-O3",
+        # Debug options:
+        # "-H:+PreserveFramePointer",
+        # "-H:+SourceLevelDebug",
+        # "-H:-DeleteLocalSymbols",
+        # "-g",
+        # Fastjson2's configuration initializes broad packages at image build time and is
+        # incompatible with GraalVM 25. Runtime initialization preserves provider support.
+        "--exclude-config",
+        ".*fastjson2-[^/]+[.]jar",
+        "META-INF/native-image/com[.]alibaba[.]fastjson2/fastjson2/native-image[.]properties",
+        "--enable-native-access=ALL-UNNAMED",
+    ],
+    main_class = "net.thisptr.jackson.jq.v2.cli.Main",
+    tags = ["manual"],
+    deps = [
+        ":native-config",
+        "//jackson-jq-cli/src/main/java/net/thisptr/jackson/jq/v2/cli",
+    ],
+)
+
+sh_test(
+    name = "jackson-jq-cli-native-smoke-test",
+    size = "small",
+    srcs = ["src/test/shell/native_smoke_test.sh"],
+    args = ["$(location :jackson-jq-cli-native)"],
+    data = [":jackson-jq-cli-native"],
+    tags = ["manual"],
 )
 
 # The uber jar as a Maven artifact: the deploy jar plus the CLI's own sources, and no deps at

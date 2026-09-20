@@ -16,7 +16,15 @@ bazel_dep(name = "rules_jvm_external", version = "7.1")
 bazel_dep(name = "contrib_rules_jvm", version = "0.34.0")
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.4")
 bazel_dep(name = "rules_shell", version = "0.8.0")
+bazel_dep(name = "rules_graalvm", version = "0.12.0")
 bazel_dep(name = "rules_jq", version = "0.0.0")
+
+git_override(
+    module_name = "rules_graalvm",
+    commit = "40bbecd298c2357d3796eff2988793deffd2a782",
+    remote = "https://github.com/sgammon/rules_graalvm.git",
+)
+
 local_path_override(
     module_name = "rules_jq",
     path = "build-tools/rules_jq",
@@ -274,6 +282,19 @@ maven.artifact(
 )
 use_repo(maven, "maven")
 
+# GraalVM is a native-image toolchain only. Java sources continue to compile with the JDK 26
+# toolchain below; the CLI itself targets Java 17 bytecode.
+graalvm = use_extension("@rules_graalvm//:extensions.bzl", "graalvm")
+graalvm.graalvm(
+    name = "graalvm",
+    distribution = "community",
+    java_version = "25",
+    version = "25.2.4",
+)
+use_repo(graalvm, "graalvm")
+
+register_toolchains("@graalvm//:sdk")
+
 # -- JDK 26 toolchains --------------------------------------------------------
 # rules_java 9.9.0 predates JDK 26 toolchain declarations. Register the current
 # Temurin JDK explicitly so the JEP 540 prototype can be compiled without using
@@ -418,6 +439,13 @@ jq = use_extension("@rules_jq//:extensions.bzl", "jq", dev_dependency = True)
 use_repo(jq, "jq_binaries")
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+http_file(
+    name = "zstd_jni_reachability_metadata",
+    downloaded_file_path = "reachability-metadata.json",
+    sha256 = "5fb5f36e86adf90e9e7dff43e76ef9769ef1567b099651513b068aa2d18bd122",
+    urls = ["https://raw.githubusercontent.com/oracle/graalvm-reachability-metadata/75a6adb5a12320d56df1e0c470dda8638a5b29ec/metadata/com.github.luben/zstd-jni/1.5.7-2/reachability-metadata.json"],
+)
 
 http_file(
     name = "intellij_code_formatter",
