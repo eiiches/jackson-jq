@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -16,6 +15,8 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+
+import net.thisptr.jackson.jq.v2.json.internal.collections.JsonList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -193,7 +194,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testIntegralAccessorsThrowOnNonNumber() {
-		List<T> nonNumbers = Arrays.asList(
+		List<T> nonNumbers = JsonList.of(
 				getProvider().createString("42"),
 				getProvider().createBoolean(true),
 				getProvider().createNull(),
@@ -329,7 +330,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testGetStringRejectsNonStrings() {
-		List<T> nonStrings = Arrays.asList(
+		List<T> nonStrings = JsonList.of(
 				getProvider().createArray(Collections.emptyList()),
 				getProvider().createObject(Collections.emptyMap()),
 				getProvider().createNumber(1),
@@ -342,7 +343,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testGetBooleanRejectsNonBooleans() {
-		List<T> nonBooleans = Arrays.asList(
+		List<T> nonBooleans = JsonList.of(
 				getProvider().createArray(Collections.emptyList()),
 				getProvider().createObject(Collections.emptyMap()),
 				getProvider().createNumber(0),
@@ -373,7 +374,7 @@ public interface JsonProviderContractTest<T> {
 	@Test
 	default void testGetBinaryAsByteArrayRejectsNonBinary() {
 		// A provider with no binary node type rejects these the same way: none of them is binary.
-		List<T> nonBinary = Arrays.asList(
+		List<T> nonBinary = JsonList.of(
 				getProvider().createArray(Collections.emptyList()),
 				getProvider().createObject(Collections.emptyMap()),
 				getProvider().createNumber(1),
@@ -401,7 +402,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testCreateArrayFromValues() {
-		T node = getProvider().createArray(Arrays.asList(getProvider().createNumber(1), getProvider().createString("two")));
+		T node = getProvider().createArray(JsonList.of(getProvider().createNumber(1), getProvider().createString("two")));
 
 		assertThat(getProvider().getArrayLength(node)).isEqualTo(2);
 		assertThat(getProvider().getNumberAsIntExact(getProvider().getArrayElement(node, 0))).isEqualTo(1);
@@ -422,7 +423,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testGetArrayLengthRejectsNonArrays() {
-		List<T> nonArrays = Arrays.asList(
+		List<T> nonArrays = JsonList.of(
 				getProvider().createObject(Collections.emptyMap()),
 				getProvider().createString("value"),
 				getProvider().createNumber(1),
@@ -435,7 +436,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testGetObjectMemberCountRejectsNonObjects() {
-		List<T> nonObjects = Arrays.asList(
+		List<T> nonObjects = JsonList.of(
 				getProvider().createArray(Collections.emptyList()),
 				getProvider().createString("value"),
 				getProvider().createNumber(1),
@@ -501,13 +502,13 @@ public interface JsonProviderContractTest<T> {
 
 		if (supportedNumberTypes.contains(NumberType.BIG_INTEGER)) {
 			BigInteger huge = BigInteger.valueOf(Long.MAX_VALUE).pow(3);
-			for (BigInteger value : Arrays.asList(huge, huge.negate()))
+			for (BigInteger value : List.of(huge, huge.negate()))
 				assertThat(getProvider().getNumberAsBigIntegerExact(getProvider().createNumber(value))).isEqualTo(value);
 		}
 
 		if (supportedNumberTypes.contains(NumberType.BIG_DECIMAL)) {
 			// Scale is not part of the promise, so compare by value rather than with isEqualTo.
-			List<BigDecimal> values = Arrays.asList(
+			List<BigDecimal> values = List.of(
 					new BigDecimal("3.14159265358979323846264338327950288419716939937510"),
 					new BigDecimal("-1E-1000"),
 					new BigDecimal("1E+1000"));
@@ -550,26 +551,26 @@ public interface JsonProviderContractTest<T> {
 	@Test
 	default void testTypePredicates() {
 		Map<JsonNodeType, List<T>> samples = new LinkedHashMap<>();
-		samples.put(JsonNodeType.NULL, Arrays.asList(
+		samples.put(JsonNodeType.NULL, JsonList.of(
 				getProvider().createNull(),
 				getProvider().parse("null")));
-		samples.put(JsonNodeType.BOOLEAN, Arrays.asList(
+		samples.put(JsonNodeType.BOOLEAN, JsonList.of(
 				getProvider().createBoolean(true),
 				getProvider().createBoolean(false)));
-		samples.put(JsonNodeType.NUMBER, Arrays.asList(
+		samples.put(JsonNodeType.NUMBER, JsonList.of(
 				getProvider().createNumber(42),
 				getProvider().createNumber(9999999999L),
 				getProvider().createNumber(3.14f),
 				getProvider().createNumber(3.14159),
 				getProvider().createNumber(BigInteger.ONE),
 				getProvider().createNumber(BigDecimal.ONE)));
-		samples.put(JsonNodeType.STRING, Arrays.asList(
+		samples.put(JsonNodeType.STRING, JsonList.of(
 				getProvider().createString(""),
 				getProvider().createString("hello")));
-		samples.put(JsonNodeType.ARRAY, Arrays.asList(
+		samples.put(JsonNodeType.ARRAY, JsonList.of(
 				getProvider().createArray(Collections.emptyList()),
-				getProvider().createArray(Collections.singletonList(getProvider().createNumber(1)))));
-		samples.put(JsonNodeType.OBJECT, Arrays.asList(
+				getProvider().createArray(JsonList.of(getProvider().createNumber(1)))));
+		samples.put(JsonNodeType.OBJECT, JsonList.of(
 				getProvider().createObject(Collections.emptyMap()),
 				getProvider().createObject(mapOf("a", getProvider().createNumber(1), "b", getProvider().createNull()))));
 
@@ -601,7 +602,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testGetObjectMembersRejectsNonObjects() {
-		List<T> nonObjects = Arrays.asList(
+		List<T> nonObjects = JsonList.of(
 				getProvider().createArray(Collections.emptyList()),
 				getProvider().createString("value"),
 				getProvider().createNumber(1),
@@ -627,7 +628,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testGetObjectMemberNamesRejectsNonObjects() {
-		List<T> nonObjects = Arrays.asList(
+		List<T> nonObjects = JsonList.of(
 				getProvider().createArray(Collections.emptyList()),
 				getProvider().createString("value"),
 				getProvider().createNumber(1),
@@ -653,7 +654,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testGetObjectMemberValuesRejectsNonObjects() {
-		List<T> nonObjects = Arrays.asList(
+		List<T> nonObjects = JsonList.of(
 				getProvider().createArray(Collections.emptyList()),
 				getProvider().createString("value"),
 				getProvider().createNumber(1),
@@ -699,7 +700,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testGetObjectMemberRejectsNonObjects() {
-		List<T> nonObjects = Arrays.asList(
+		List<T> nonObjects = JsonList.of(
 				getProvider().createArray(Collections.emptyList()),
 				getProvider().createString("value"),
 				getProvider().createNumber(1),
@@ -712,7 +713,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testHasObjectMemberRejectsNonObjects() {
-		List<T> nonObjects = Arrays.asList(
+		List<T> nonObjects = JsonList.of(
 				getProvider().createArray(Collections.emptyList()),
 				getProvider().createString("value"),
 				getProvider().createNumber(1),
@@ -725,7 +726,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testGetObjectMemberOrDefaultRejectsNonObjects() {
-		List<T> nonObjects = Arrays.asList(
+		List<T> nonObjects = JsonList.of(
 				getProvider().createArray(Collections.emptyList()),
 				getProvider().createString("value"),
 				getProvider().createNumber(1),
@@ -739,7 +740,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testGetObjectMemberOrThrowRejectsNonObjects() {
-		List<T> nonObjects = Arrays.asList(
+		List<T> nonObjects = JsonList.of(
 				getProvider().createArray(Collections.emptyList()),
 				getProvider().createString("value"),
 				getProvider().createNumber(1),
@@ -756,7 +757,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testGetArrayElements() {
-		T arr = getProvider().createArray(Arrays.asList(getProvider().createString("a"), getProvider().createString("b"), getProvider().createString("c")));
+		T arr = getProvider().createArray(JsonList.of(getProvider().createString("a"), getProvider().createString("b"), getProvider().createString("c")));
 
 		List<String> elements = new ArrayList<>();
 		Iterator<T> it = getProvider().getArrayElements(arr);
@@ -769,7 +770,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testGetArrayElement() {
-		T arr = getProvider().createArray(Arrays.asList(getProvider().createString("a"), getProvider().createString("b")));
+		T arr = getProvider().createArray(JsonList.of(getProvider().createString("a"), getProvider().createString("b")));
 
 		assertThat(getProvider().getString(getProvider().getArrayElement(arr, 0))).isEqualTo("a");
 		assertThat(getProvider().getString(getProvider().getArrayElement(arr, 1))).isEqualTo("b");
@@ -779,7 +780,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testGetArrayElementRejectsNonArrays() {
-		List<T> nonArrays = Arrays.asList(
+		List<T> nonArrays = JsonList.of(
 				getProvider().createObject(Collections.emptyMap()),
 				getProvider().createString("value"),
 				getProvider().createNumber(1),
@@ -886,7 +887,7 @@ public interface JsonProviderContractTest<T> {
 	@Test
 	default void testNestedStructures() {
 		// Create nested object: {"outer": {"inner": [1, 2, 3]}}
-		T inner = getProvider().createArray(Arrays.asList(getProvider().createNumber(1), getProvider().createNumber(2), getProvider().createNumber(3)));
+		T inner = getProvider().createArray(JsonList.of(getProvider().createNumber(1), getProvider().createNumber(2), getProvider().createNumber(3)));
 		T nested = getProvider().createObject(Collections.singletonMap("inner", inner));
 		T outer = getProvider().createObject(Collections.singletonMap("outer", nested));
 
@@ -1122,7 +1123,7 @@ public interface JsonProviderContractTest<T> {
 	@Test
 	default void testGetNumberTypeIsConsistentWithTheAccessors() {
 		// Whatever a provider reports, the matching accessor has to work on that node.
-		List<T> numbers = Arrays.asList(
+		List<T> numbers = JsonList.of(
 				getProvider().createNumber(42),
 				getProvider().createNumber(9999999999L),
 				getProvider().createNumber(3.14f),

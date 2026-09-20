@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.v2.test.testcase;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -25,7 +24,7 @@ public class TestCaseLoader {
 		for (TestCase tc : result) {
 			tc.file = resourceName;
 		}
-		return Arrays.asList(result);
+		return List.of(result);
 	}
 
 	public static Stream<String> loadTestCasesAsJsonStrings(String resourceName) throws IOException {

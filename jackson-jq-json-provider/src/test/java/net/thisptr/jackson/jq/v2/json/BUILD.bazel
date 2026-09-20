@@ -10,6 +10,7 @@ java_library(
     visibility = ["//jackson-jq-json-provider:__subpackages__"],
     deps = [
         "//jackson-jq-json-provider/src/main/java/net/thisptr/jackson/jq/v2/json",
+        "//jackson-jq-json-provider/src/test/java/net/thisptr/jackson/jq/v2/json/internal/collections",
         "@maven//:org_assertj_assertj_core",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
     ],
@@ -23,5 +24,8 @@ jjq_java_test_suite(
     release = 17,
     test_suffixes_excludes = ["JsonProviderContractTest.java"],
     visibility = ["//jackson-jq-json-provider:__subpackages__"],
-    deps = ["//jackson-jq-json-provider/src/main/java/net/thisptr/jackson/jq/v2/json"],
+    deps = [
+        "//jackson-jq-json-provider/src/main/java/net/thisptr/jackson/jq/v2/json",
+        "//jackson-jq-json-provider/src/test/java/net/thisptr/jackson/jq/v2/json/internal/collections",
+    ],
 )

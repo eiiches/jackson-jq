@@ -1,7 +1,7 @@
 package net.thisptr.jackson.jq.v2.spi;
 
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -19,11 +19,11 @@ public class JqFunctionTest {
 	@Test
 	void testAccessors() {
 		VersionRange version = VersionRange.valueOf("[1.6, )");
-		JqFunction fn = JqFunction.of("f", Arrays.asList(FunctionParameter.ofFilter("f"), FunctionParameter.ofValue("n")), "f + $n", version);
+		JqFunction fn = JqFunction.of("f", List.of(FunctionParameter.ofFilter("f"), FunctionParameter.ofValue("n")), "f + $n", version);
 
 		assertEquals("f", fn.name());
 		assertEquals(FunctionSignature.of("f", 2), fn.signature());
-		assertEquals(Arrays.asList(FunctionParameter.ofFilter("f"), FunctionParameter.ofValue("n")), fn.parameters());
+		assertEquals(List.of(FunctionParameter.ofFilter("f"), FunctionParameter.ofValue("n")), fn.parameters());
 		assertEquals("f + $n", fn.body());
 		assertEquals(version, fn.version());
 	}
@@ -31,7 +31,7 @@ public class JqFunctionTest {
 	@Test
 	void testSignatureArityMatchesArgCount() {
 		assertEquals(FunctionSignature.of("f", 0), JqFunction.of("f", Collections.emptyList(), ".").signature());
-		assertEquals(FunctionSignature.of("f", 3), JqFunction.of("f", Arrays.asList(FunctionParameter.valueOf("a"), FunctionParameter.valueOf("$b"), FunctionParameter.valueOf("c")), ".").signature());
+		assertEquals(FunctionSignature.of("f", 3), JqFunction.of("f", List.of(FunctionParameter.valueOf("a"), FunctionParameter.valueOf("$b"), FunctionParameter.valueOf("c")), ".").signature());
 	}
 
 	@Test
@@ -61,7 +61,7 @@ public class JqFunctionTest {
 
 	@Test
 	void testFilterAndValueArgsAreAccepted() {
-		JqFunction fn = JqFunction.of("f", Arrays.asList(FunctionParameter.ofFilter("filterArg"), FunctionParameter.ofValue("valueArg")), ".");
+		JqFunction fn = JqFunction.of("f", List.of(FunctionParameter.ofFilter("filterArg"), FunctionParameter.ofValue("valueArg")), ".");
 		assertEquals(FunctionParameter.Kind.FILTER, fn.parameters().get(0).kind());
 		assertEquals(FunctionParameter.Kind.VALUE, fn.parameters().get(1).kind());
 	}
@@ -70,12 +70,12 @@ public class JqFunctionTest {
 	void testEqualsAndHashCode() {
 		VersionRange v1 = VersionRange.valueOf("[1.6, )");
 		VersionRange v2 = VersionRange.valueOf("[1.7, )");
-		JqFunction fn1 = JqFunction.of("f", Arrays.asList(FunctionParameter.ofFilter("a"), FunctionParameter.ofValue("b")), "a + $b", v1);
-		JqFunction fn2 = JqFunction.of("f", Arrays.asList(FunctionParameter.ofFilter("a"), FunctionParameter.ofValue("b")), "a + $b", v1);
-		JqFunction fnDiffVersion = JqFunction.of("f", Arrays.asList(FunctionParameter.ofFilter("a"), FunctionParameter.ofValue("b")), "a + $b", v2);
-		JqFunction fnDiffBody = JqFunction.of("f", Arrays.asList(FunctionParameter.ofFilter("a"), FunctionParameter.ofValue("b")), "a * $b", v1);
-		JqFunction fnDiffParams = JqFunction.of("f", Arrays.asList(FunctionParameter.ofFilter("a"), FunctionParameter.ofFilter("b")), "a + $b", v1);
-		JqFunction fnDiffName = JqFunction.of("g", Arrays.asList(FunctionParameter.ofFilter("a"), FunctionParameter.ofValue("b")), "a + $b", v1);
+		JqFunction fn1 = JqFunction.of("f", List.of(FunctionParameter.ofFilter("a"), FunctionParameter.ofValue("b")), "a + $b", v1);
+		JqFunction fn2 = JqFunction.of("f", List.of(FunctionParameter.ofFilter("a"), FunctionParameter.ofValue("b")), "a + $b", v1);
+		JqFunction fnDiffVersion = JqFunction.of("f", List.of(FunctionParameter.ofFilter("a"), FunctionParameter.ofValue("b")), "a + $b", v2);
+		JqFunction fnDiffBody = JqFunction.of("f", List.of(FunctionParameter.ofFilter("a"), FunctionParameter.ofValue("b")), "a * $b", v1);
+		JqFunction fnDiffParams = JqFunction.of("f", List.of(FunctionParameter.ofFilter("a"), FunctionParameter.ofFilter("b")), "a + $b", v1);
+		JqFunction fnDiffName = JqFunction.of("g", List.of(FunctionParameter.ofFilter("a"), FunctionParameter.ofValue("b")), "a + $b", v1);
 
 		assertEquals(fn1, fn2);
 		assertEquals(fn1.hashCode(), fn2.hashCode());
@@ -92,6 +92,6 @@ public class JqFunctionTest {
 		assertEquals("def length: _length;", JqFunction.of("length", Collections.emptyList(), "_length").toString());
 		assertEquals("def map(f): [.[] | f];", JqFunction.of("map", Collections.singletonList(FunctionParameter.ofFilter("f")), "[.[] | f]").toString());
 		assertEquals("def limit($n; exp): ...; # [1.6.0, )",
-				JqFunction.of("limit", Arrays.asList(FunctionParameter.ofValue("n"), FunctionParameter.ofFilter("exp")), "...", VersionRange.valueOf("[1.6, )")).toString());
+				JqFunction.of("limit", List.of(FunctionParameter.ofValue("n"), FunctionParameter.ofFilter("exp")), "...", VersionRange.valueOf("[1.6, )")).toString());
 	}
 }

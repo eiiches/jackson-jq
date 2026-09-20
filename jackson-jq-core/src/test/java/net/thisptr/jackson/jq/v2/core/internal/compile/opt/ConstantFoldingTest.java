@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.compile.opt;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -684,7 +683,7 @@ public class ConstantFoldingTest {
 	@Test
 	public void foldingPreservesValuesAndOrder() throws Exception {
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.emptyMap());
-		for (String[] pair : Arrays.asList(
+		for (String[] pair : List.of(
 				new String[] { "[limit(2; 1, 2, 3)]", "[1,2]" },
 				new String[] { "[range(0; 3)]", "[0,1,2]" },
 				new String[] { "\"\\(1 + 1)\"", "\"2\"" },

@@ -5,7 +5,6 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -101,7 +100,7 @@ class PlaygroundTest {
 				true,
 				true,
 				false,
-				Arrays.asList("input data.json", "odd'name.json"),
+				List.of("input data.json", "odd'name.json"),
 				System.out,
 				System.err);
 
@@ -2217,7 +2216,7 @@ class PlaygroundTest {
 		Map<String, JsonNode> user3 = new LinkedHashMap<>();
 		user3.put("name", JSON.createString("Alice"));
 		Map<String, JsonNode> root = new LinkedHashMap<>();
-		root.put("users", JSON.createArray(Arrays.asList(JSON.createObject(user1), JSON.createObject(user2), JSON.createObject(user3))));
+		root.put("users", JSON.createArray(List.of(JSON.createObject(user1), JSON.createObject(user2), JSON.createObject(user3))));
 		JsonNode input = JSON.createObject(root);
 
 		// Focus INPUT, search for 'Alice', navigate matches, then quit without clearing search state

@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.v2.core.internal.json.comparator;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,9 +31,9 @@ public class JsonNodeComparatorTest {
 		assertTrue(sut.compare(j3, jhoge) < 0);
 		assertTrue(sut.compare(j10, jhoge) < 0);
 
-		List<JsonNode> nodes = new ArrayList<>(Arrays.asList(j3, jhoge, j10));
+		List<JsonNode> nodes = new ArrayList<>(List.of(j3, jhoge, j10));
 		nodes.sort(sut);
-		assertEquals(Arrays.asList(j3, j10, jhoge), nodes);
+		assertEquals(List.of(j3, j10, jhoge), nodes);
 	}
 
 	/**
@@ -58,8 +57,8 @@ public class JsonNodeComparatorTest {
 		assertTrue(sut.compare(jhoge, binary) < 0);
 		assertTrue(sut.compare(binary, jhoge) > 0);
 
-		List<JsonNode> nodes = new ArrayList<>(Arrays.asList(binaryHigh, jhoge, binary, j3));
+		List<JsonNode> nodes = new ArrayList<>(List.of(binaryHigh, jhoge, binary, j3));
 		nodes.sort(sut);
-		assertEquals(Arrays.asList(j3, jhoge, binary, binaryHigh), nodes);
+		assertEquals(List.of(j3, jhoge, binary, binaryHigh), nodes);
 	}
 }

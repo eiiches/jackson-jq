@@ -6,7 +6,6 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
@@ -27,8 +26,8 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public final class FileWriteFunction implements Function {
-	private static final Set<String> TEXT_ALLOWED_OPTIONS = new HashSet<>(Arrays.asList("encoding", "append", "create_parents", "mkdirs"));
-	private static final Set<String> BINARY_ALLOWED_OPTIONS = new HashSet<>(Arrays.asList("append", "create_parents", "mkdirs"));
+	private static final Set<String> TEXT_ALLOWED_OPTIONS = new HashSet<>(List.of("encoding", "append", "create_parents", "mkdirs"));
+	private static final Set<String> BINARY_ALLOWED_OPTIONS = new HashSet<>(List.of("append", "create_parents", "mkdirs"));
 
 	private final boolean binary;
 

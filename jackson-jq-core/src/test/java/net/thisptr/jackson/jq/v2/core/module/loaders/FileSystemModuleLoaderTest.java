@@ -6,7 +6,6 @@ import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -76,7 +75,7 @@ public class FileSystemModuleLoaderTest {
 		JsonQuery<JsonNode> expr = env.compile("import \"simple\" as simple; simple::one");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
-		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(IntNode.valueOf(1)));
+		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(IntNode.valueOf(1)));
 	}
 
 	@Test
@@ -84,7 +83,7 @@ public class FileSystemModuleLoaderTest {
 		JsonQuery<JsonNode> expr = env.compile("import \"sibling_defs\" as m; m::exported_foo");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
-		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(IntNode.valueOf(11)));
+		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(IntNode.valueOf(11)));
 	}
 
 	@Test
@@ -101,7 +100,7 @@ public class FileSystemModuleLoaderTest {
 		JsonQuery<JsonNode> expr = env.compile("import \"search_path_overrides/a\" as a; a::two");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
-		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(IntNode.valueOf(2)));
+		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(IntNode.valueOf(2)));
 	}
 
 	@Test
@@ -109,7 +108,7 @@ public class FileSystemModuleLoaderTest {
 		JsonQuery<JsonNode> expr = env.compile("import \"repeated_path_components\" as a; a::one");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
-		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(IntNode.valueOf(1)));
+		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(IntNode.valueOf(1)));
 
 		assertThatThrownBy(() -> {
 			JsonQuery<JsonNode> expr2 = env.compile("import \"repeated_path_components/repeated_path_components\" as a; a::one");
@@ -123,7 +122,7 @@ public class FileSystemModuleLoaderTest {
 		JsonQuery<JsonNode> expr = env.compile("import \"data_imports/a\" as $a; $a::a[]");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
-		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(IntNode.valueOf(1), IntNode.valueOf(2)));
+		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(IntNode.valueOf(1), IntNode.valueOf(2)));
 	}
 
 	@Test
@@ -233,7 +232,7 @@ public class FileSystemModuleLoaderTest {
 		JsonQuery<JsonNode> expr = mixedEnv.compile("import \"uses_other\" as a; a::one");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
-		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(IntNode.valueOf(1)));
+		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(IntNode.valueOf(1)));
 	}
 
 	/**
@@ -256,7 +255,7 @@ public class FileSystemModuleLoaderTest {
 				.addModuleLoader(new FileSystemModuleLoader<>(Jackson2JsonProvider.getInstance(), searchPath))
 				.build();
 
-		for (String path : Arrays.asList(".", "", "inside/..", "../root")) {
+		for (String path : List.of(".", "", "inside/..", "../root")) {
 			assertThatThrownBy(() -> rootEnv.compile("import \"" + path + "\" as m; m::secret"))
 					.describedAs("import \"%s\"", path)
 					.isInstanceOf(JsonQueryException.class)
@@ -267,7 +266,7 @@ public class FileSystemModuleLoaderTest {
 		JsonQuery<JsonNode> expr = rootEnv.compile("import \"inside\" as m; m::inside");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
-		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(IntNode.valueOf(1)));
+		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(IntNode.valueOf(1)));
 	}
 
 	/**
@@ -319,7 +318,7 @@ public class FileSystemModuleLoaderTest {
 		JsonQuery<JsonNode> expr = linkedEnv.compile("import \"shared\" as m; m::shared");
 		List<JsonNode> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), actual::add);
-		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(IntNode.valueOf(42)));
+		assertThat(actual).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(IntNode.valueOf(42)));
 	}
 
 	@Test

@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.core;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -46,9 +45,9 @@ public class RuntimeBindingsTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$value");
 
-		assertThat(run(query, bindingsWithVariable("value", 1))).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("1")));
-		assertThat(run(query, bindingsWithVariable("value", 2))).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("2")));
-		assertThat(run(query, bindingsWithVariable("value", 3))).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("3")));
+		assertThat(run(query, bindingsWithVariable("value", 1))).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("1")));
+		assertThat(run(query, bindingsWithVariable("value", 2))).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("2")));
+		assertThat(run(query, bindingsWithVariable("value", 3))).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("3")));
 	}
 
 	@Test
@@ -58,7 +57,7 @@ public class RuntimeBindingsTest {
 				.defineVariable("value", () -> JSON_PROVIDER.createNumber(counter.incrementAndGet()))
 				.build();
 
-		assertThat(run(env.compile("[$value, $value]"))).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[1,2]")));
+		assertThat(run(env.compile("[$value, $value]"))).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("[1,2]")));
 	}
 
 	@Test
@@ -73,12 +72,12 @@ public class RuntimeBindingsTest {
 				.build();
 
 		assertEquals(0, overrideCounter.get());
-		assertThat(run(query, bindings)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[1,2]")));
+		assertThat(run(query, bindings)).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("[1,2]")));
 		assertEquals(2, overrideCounter.get());
 	}
 
 	@Test
-	public void doesNotEvaluateUnusedOverrideSupplier() throws Exception {
+	public void doesNotEvaluateUnusedOverrideSupplier() {
 		AtomicInteger counter = new AtomicInteger();
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
@@ -92,7 +91,7 @@ public class RuntimeBindingsTest {
 	}
 
 	@Test
-	public void reportsNullValueFromOverrideSupplier() throws Exception {
+	public void reportsNullValueFromOverrideSupplier() {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
@@ -122,12 +121,12 @@ public class RuntimeBindingsTest {
 				.setFunction(key, constantFunction("override-function"))
 				.build();
 
-		assertThat(run(query, firstCall)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[\"default-variable\",\"default-function\"]")));
-		assertThat(run(query, secondCall)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[\"override-variable\",\"override-function\"]")));
+		assertThat(run(query, firstCall)).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("[\"default-variable\",\"default-function\"]")));
+		assertThat(run(query, secondCall)).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("[\"override-variable\",\"override-function\"]")));
 	}
 
 	@Test
-	public void rejectsUnknownOverrides() throws Exception {
+	public void rejectsUnknownOverrides() {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.defineConstant("known", JSON_PROVIDER.createNull())
 				.build();
@@ -145,7 +144,7 @@ public class RuntimeBindingsTest {
 	}
 
 	@Test
-	public void rejectsOverrideOfFixedValue() throws Exception {
+	public void rejectsOverrideOfFixedValue() {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.defineConstant("known", JSON_PROVIDER.createNumber(1))
 				.build();
@@ -157,7 +156,7 @@ public class RuntimeBindingsTest {
 	}
 
 	@Test
-	public void rejectsMissingDeclaredVariable() throws Exception {
+	public void rejectsMissingDeclaredVariable() {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7)
 				.declareVariable("value")
 				.build();
@@ -181,7 +180,7 @@ public class RuntimeBindingsTest {
 		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setFunction(builtinCollision, constantFunction("overridden"))
 				.build();
-		assertThat(run(query, bindings)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("\"overridden\"")));
+		assertThat(run(query, bindings)).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("\"overridden\"")));
 	}
 
 	@Test
@@ -194,8 +193,8 @@ public class RuntimeBindingsTest {
 		JsonQuery<JsonNode> bound = query.withRuntimeBindings(bindingsWithVariable("value", 1));
 		JsonQuery<JsonNode> reboundFromTheSameBase = query.withRuntimeBindings(bindingsWithVariable("value", 2));
 
-		assertThat(run(bound)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("1")));
-		assertThat(run(reboundFromTheSameBase)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("2")));
+		assertThat(run(bound)).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("1")));
+		assertThat(run(reboundFromTheSameBase)).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("2")));
 		// The base query never acquired bindings of its own, so it still demands them.
 		assertThat(assertThrows(JsonQueryException.class, () -> run(query))).hasMessageContaining("must be supplied");
 	}
@@ -207,7 +206,7 @@ public class RuntimeBindingsTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("10 as $value | $value");
 
-		assertThat(run(query, bindingsWithVariable("value", 20))).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("10")));
+		assertThat(run(query, bindingsWithVariable("value", 20))).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("10")));
 	}
 
 	@Test
@@ -223,7 +222,7 @@ public class RuntimeBindingsTest {
 				.setFunction(zeroArg, constantFunction("override"))
 				.build();
 
-		assertThat(run(query, bindings)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[\"override\",\"one\"]")));
+		assertThat(run(query, bindings)).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("[\"override\",\"one\"]")));
 	}
 
 	@Test
@@ -237,7 +236,7 @@ public class RuntimeBindingsTest {
 				.setFunction(variadic, constantFunction("override"))
 				.build();
 
-		assertThat(run(query, bindings)).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("[\"override\",\"override\"]")));
+		assertThat(run(query, bindings)).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("[\"override\",\"override\"]")));
 	}
 
 	@Test
@@ -254,9 +253,9 @@ public class RuntimeBindingsTest {
 				futures.add(executor.submit(() -> run(query, bindingsWithVariable("value", value))));
 			}
 			for (int i = 0; i < futures.size(); i++)
-				assertThat(futures.get(i).get()).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(JSON_PROVIDER.createNumber(i)));
+				assertThat(futures.get(i).get()).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(JSON_PROVIDER.createNumber(i)));
 		} finally {
-			executor.shutdownNow();
+			executor.shutdown();
 		}
 	}
 

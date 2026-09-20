@@ -89,7 +89,7 @@ public class JsonQueryConcurrentReuseTest {
 							mismatches.size(), TOTAL_INVOCATIONS)
 					.isEmpty();
 		} finally {
-			executor.shutdownNow();
+			executor.shutdown();
 		}
 	}
 

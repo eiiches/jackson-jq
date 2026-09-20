@@ -529,10 +529,9 @@ public class RuntimeOptionsTest {
 			for (int i = 0; i < 64; ++i) {
 				boolean tight = i % 2 == 0;
 				Callable<Boolean> task = () -> {
-					List<JsonNode> out = new ArrayList<>();
 					try {
 						query.withRuntimeOptions(tight ? maxUserDefinedFunctionCalls(2) : RuntimeOptions.newBuilder().build())
-								.apply(Jackson2JsonProvider.getInstance().createNull(), out::add);
+								.apply(Jackson2JsonProvider.getInstance().createNull());
 						return false;
 					} catch (RuntimeLimitExceededException e) {
 						return true;
@@ -543,7 +542,7 @@ public class RuntimeOptionsTest {
 			for (int i = 0; i < futures.size(); ++i)
 				assertThat(futures.get(i).get()).isEqualTo(i % 2 == 0);
 		} finally {
-			executor.shutdownNow();
+			executor.shutdown();
 		}
 	}
 
@@ -556,10 +555,9 @@ public class RuntimeOptionsTest {
 			for (int i = 0; i < 64; ++i) {
 				boolean tight = i % 2 == 0;
 				Callable<Boolean> task = () -> {
-					List<JsonNode> out = new ArrayList<>();
 					try {
 						query.withRuntimeOptions(tight ? maxArrayLength(10) : RuntimeOptions.newBuilder().build())
-								.apply(in("50"), out::add);
+								.apply(in("50"));
 						return false;
 					} catch (RuntimeLimitExceededException e) {
 						return true;
@@ -570,7 +568,7 @@ public class RuntimeOptionsTest {
 			for (int i = 0; i < futures.size(); ++i)
 				assertThat(futures.get(i).get()).isEqualTo(i % 2 == 0);
 		} finally {
-			executor.shutdownNow();
+			executor.shutdown();
 		}
 	}
 
@@ -585,10 +583,9 @@ public class RuntimeOptionsTest {
 			for (int i = 0; i < 64; ++i) {
 				boolean tight = i % 2 == 0;
 				Callable<Boolean> task = () -> {
-					List<JsonNode> out = new ArrayList<>();
 					try {
 						query.withRuntimeOptions(tight ? maxOutputsPerExpression(10) : RuntimeOptions.newBuilder().build())
-								.apply(Jackson2JsonProvider.getInstance().createNull(), out::add);
+								.apply(Jackson2JsonProvider.getInstance().createNull());
 						return false;
 					} catch (RuntimeLimitExceededException e) {
 						return true;
@@ -599,7 +596,7 @@ public class RuntimeOptionsTest {
 			for (int i = 0; i < futures.size(); ++i)
 				assertThat(futures.get(i).get()).isEqualTo(i % 2 == 0);
 		} finally {
-			executor.shutdownNow();
+			executor.shutdown();
 		}
 	}
 }

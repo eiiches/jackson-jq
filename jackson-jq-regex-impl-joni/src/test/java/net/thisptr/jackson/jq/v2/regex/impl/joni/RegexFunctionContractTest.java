@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.regex.impl.joni;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -58,7 +57,7 @@ public class RegexFunctionContractTest {
 	@Test
 	public void testMatchImplFunctionContract() {
 		_MatchImplFunction fn = new _MatchImplFunction();
-		Expression<RuntimeContext, JsonNode> expr = fn.bind(BIND_CONTEXT, Arrays.asList(pureExpression(), pureExpression(), pureExpression()));
+		Expression<RuntimeContext, JsonNode> expr = fn.bind(BIND_CONTEXT, List.of(pureExpression(), pureExpression(), pureExpression()));
 		assertThat(expr.dependsOnInput()).isTrue();
 		assertThat(expr.dependsOnExternalState()).isFalse();
 	}
@@ -66,7 +65,7 @@ public class RegexFunctionContractTest {
 	@Test
 	public void testSubImplFunctionContract() {
 		_SubImplFunction fn = new _SubImplFunction();
-		Expression<RuntimeContext, JsonNode> expr = fn.bind(BIND_CONTEXT, Arrays.asList(pureExpression(), pureExpression(), pureExpression()));
+		Expression<RuntimeContext, JsonNode> expr = fn.bind(BIND_CONTEXT, List.of(pureExpression(), pureExpression(), pureExpression()));
 		assertThat(expr.dependsOnInput()).isTrue();
 		assertThat(expr.dependsOnExternalState()).isFalse();
 	}

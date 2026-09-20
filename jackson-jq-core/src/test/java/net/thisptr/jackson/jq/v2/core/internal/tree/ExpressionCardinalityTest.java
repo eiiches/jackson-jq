@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -59,12 +58,12 @@ public class ExpressionCardinalityTest {
 		assertThat(CardinalityUtils.sum(Collections.singletonList(Cardinality.ONE), (Cardinality c) -> c)).isEqualTo(Cardinality.ONE);
 		assertThat(CardinalityUtils.sum(Collections.singletonList(Cardinality.ZERO), (Cardinality c) -> c)).isEqualTo(Cardinality.ZERO);
 		assertThat(CardinalityUtils.sum(Collections.singletonList(Cardinality.UNKNOWN), (Cardinality c) -> c)).isEqualTo(Cardinality.UNKNOWN);
-		assertThat(CardinalityUtils.sum(Arrays.asList(Cardinality.ZERO, Cardinality.ZERO), (Cardinality c) -> c)).isEqualTo(Cardinality.ZERO);
-		assertThat(CardinalityUtils.sum(Arrays.asList(Cardinality.ZERO, Cardinality.ONE), (Cardinality c) -> c)).isEqualTo(Cardinality.ONE);
-		assertThat(CardinalityUtils.sum(Arrays.asList(Cardinality.ONE, Cardinality.ZERO), (Cardinality c) -> c)).isEqualTo(Cardinality.ONE);
-		assertThat(CardinalityUtils.sum(Arrays.asList(Cardinality.ONE, Cardinality.ONE), (Cardinality c) -> c)).isEqualTo(Cardinality.UNKNOWN);
-		assertThat(CardinalityUtils.sum(Arrays.asList(Cardinality.ZERO, Cardinality.UNKNOWN), (Cardinality c) -> c)).isEqualTo(Cardinality.UNKNOWN);
-		assertThat(CardinalityUtils.sum(Arrays.asList(Cardinality.ONE, Cardinality.UNKNOWN), (Cardinality c) -> c)).isEqualTo(Cardinality.UNKNOWN);
+		assertThat(CardinalityUtils.sum(List.of(Cardinality.ZERO, Cardinality.ZERO), (Cardinality c) -> c)).isEqualTo(Cardinality.ZERO);
+		assertThat(CardinalityUtils.sum(List.of(Cardinality.ZERO, Cardinality.ONE), (Cardinality c) -> c)).isEqualTo(Cardinality.ONE);
+		assertThat(CardinalityUtils.sum(List.of(Cardinality.ONE, Cardinality.ZERO), (Cardinality c) -> c)).isEqualTo(Cardinality.ONE);
+		assertThat(CardinalityUtils.sum(List.of(Cardinality.ONE, Cardinality.ONE), (Cardinality c) -> c)).isEqualTo(Cardinality.UNKNOWN);
+		assertThat(CardinalityUtils.sum(List.of(Cardinality.ZERO, Cardinality.UNKNOWN), (Cardinality c) -> c)).isEqualTo(Cardinality.UNKNOWN);
+		assertThat(CardinalityUtils.sum(List.of(Cardinality.ONE, Cardinality.UNKNOWN), (Cardinality c) -> c)).isEqualTo(Cardinality.UNKNOWN);
 	}
 
 	@Test
@@ -138,7 +137,7 @@ public class ExpressionCardinalityTest {
 	public void testSemicolonOperator() {
 		assertThat(new SemicolonOperator<JsonNode>(Collections.emptyList(), new int[0]).getCardinality()).isEqualTo(Cardinality.ZERO);
 		assertThat(new SemicolonOperator<JsonNode>(Collections.singletonList(new ValueLiteral<>(Jackson2JsonProvider.getInstance().createNumber(1))), new int[0]).getCardinality()).isEqualTo(Cardinality.ONE);
-		assertThat(new SemicolonOperator<JsonNode>(Arrays.asList(new ValueLiteral<>(Jackson2JsonProvider.getInstance().createNumber(1)), new BreakExpression<JsonNode>("out")), new int[] { Memory.NO_OUTPUT_COUNTER }).getCardinality()).isEqualTo(Cardinality.ZERO);
+		assertThat(new SemicolonOperator<JsonNode>(List.of(new ValueLiteral<>(Jackson2JsonProvider.getInstance().createNumber(1)), new BreakExpression<JsonNode>("out")), new int[] { Memory.NO_OUTPUT_COUNTER }).getCardinality()).isEqualTo(Cardinality.ZERO);
 		assertThat(cardinalityOf("def f: 1; f")).isEqualTo(Cardinality.UNKNOWN);
 	}
 

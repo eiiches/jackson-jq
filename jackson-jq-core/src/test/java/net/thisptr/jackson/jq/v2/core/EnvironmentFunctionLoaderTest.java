@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.core;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -476,7 +475,7 @@ public class EnvironmentFunctionLoaderTest {
 				.addFunctionLoader(constantLoader(FunctionSignature.of("farewell", 0), "bye"))
 				.build();
 
-		assertThat(execute(env, "[greet, farewell]")).flatExtracting(node -> Arrays.asList(node.get(0).asText(), node.get(1).asText()))
+		assertThat(execute(env, "[greet, farewell]")).flatExtracting(node -> List.of(node.get(0).asText(), node.get(1).asText()))
 				.containsExactly("hello", "bye");
 	}
 

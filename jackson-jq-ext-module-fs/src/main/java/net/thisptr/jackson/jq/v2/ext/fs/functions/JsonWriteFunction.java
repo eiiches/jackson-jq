@@ -6,7 +6,6 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,7 +24,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public final class JsonWriteFunction implements Function {
-	private static final Set<String> ALLOWED_OPTIONS = new HashSet<>(Arrays.asList("indent", "encoding", "append", "newline", "create_parents", "mkdirs"));
+	private static final Set<String> ALLOWED_OPTIONS = new HashSet<>(List.of("indent", "encoding", "append", "newline", "create_parents", "mkdirs"));
 	private static final Options DEFAULT_OPTIONS = new Options(null, StandardCharsets.UTF_8, false, true, false);
 
 	@Override

@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.ext.debug;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -257,7 +256,7 @@ public class DebugModuleTest {
 		Function fn = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("dump_expr", 1)));
 		@SuppressWarnings("unchecked")
 		Expression<RuntimeContext, JsonNode> castArg = (Expression<RuntimeContext, JsonNode>) argument;
-		Expression<RuntimeContext, JsonNode> expression = fn.bind(BIND_CONTEXT, Arrays.asList(castArg));
+		Expression<RuntimeContext, JsonNode> expression = fn.bind(BIND_CONTEXT, List.of(castArg));
 		List<JsonNode> results = new ArrayList<>();
 		expression.apply(() -> RuntimeLimitsImpl.UNLIMITED, Jackson2JsonProvider.getInstance().createNull(), UntrackedPath.getInstance(), (val, path) -> results.add(val));
 		assertThat(results).hasSize(1);
@@ -292,7 +291,7 @@ public class DebugModuleTest {
 			}
 		};
 		private final Expression<RuntimeContext, JsonNode> self = this;
-		private final List<Object> values = Arrays.asList(this, "scalar-value");
+		private final List<Object> values = List.of(this, "scalar-value");
 
 		@Override
 		public boolean dependsOnInput() {

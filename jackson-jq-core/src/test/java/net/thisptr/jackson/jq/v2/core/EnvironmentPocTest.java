@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.core;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -142,7 +141,7 @@ public class EnvironmentPocTest {
 		env.compile("probe(. + 1)");
 		env.compile("probe(1 | . + 1)");
 
-		assertEquals(Arrays.asList(true, false, false, false, true), captured);
+		assertEquals(List.of(true, false, false, false, true), captured);
 	}
 
 	@Test
@@ -265,7 +264,7 @@ public class EnvironmentPocTest {
 
 		assertTrue(captured.get(0) instanceof ConstantExpression<?, ?>);
 		ConstantExpression<?, JsonNode> constant = (ConstantExpression<?, JsonNode>) captured.get(0);
-		assertThat(constant.getConstantResults()).usingElementComparator(BY_JQ_VALUE).isEqualTo(Arrays.asList(MAPPER.readTree("1"), MAPPER.readTree("2")));
+		assertThat(constant.getConstantResults()).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("1"), MAPPER.readTree("2")));
 	}
 
 	@Test

@@ -3,7 +3,6 @@ package net.thisptr.jackson.jq.v2.test.evaluator;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -28,7 +27,7 @@ public final class JqExecutables {
 	}
 
 	private static List<JqExecutable> configuredExecutables() {
-		List<JqExecutable> all = Arrays.asList(
+		List<JqExecutable> all = List.of(
 				new JqExecutable(bin("jq-1.5"), Version.of(1, 5, 0)),
 				new JqExecutable(bin("jq-1.6"), Version.of(1, 6, 0)),
 				new JqExecutable(bin("jq-1.7"), Version.of(1, 7, 0)),

@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.v2.core.internal;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,6 +24,6 @@ public class NullLHSFunctionTest {
 		ObjectNode input = mapper.createObjectNode().set("input", mapper.createArrayNode().add(1));
 		List<JsonNode> output = new ArrayList<>();
 		env.compile(".output+=[.input[0]+1]").apply(input, output::add);
-		assertEquals(Arrays.asList(input.deepCopy().set("output", mapper.createArrayNode().add(2))), output);
+		assertEquals(List.of(input.deepCopy().set("output", mapper.createArrayNode().add(2))), output);
 	}
 }

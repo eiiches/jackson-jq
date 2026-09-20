@@ -32,29 +32,29 @@ public class ObjectMatcherTest {
 	@Test
 	void test1() throws Exception {
 		JsonNode in = new ObjectMapper().readTree("{\"outer\":{\"a\": 1, \"b\": 2}, \"c\": 3}");
-		PatternMatcher<JsonNode> matcher = new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
-				new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("outer")), new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
-						new ObjectMatcher.FieldMatcher<>(false, null, new Comma<>(Arrays.<Expression<StackFrame, JsonNode>>asList(new ValueLiteral<>(JSON_PROVIDER.createString("a")), new ValueLiteral<>(JSON_PROVIDER.createString("b")))), new ValueMatcher<>("x"), Memory.NO_OUTPUT_COUNTER)), Versions.JQ_1_8_2), Memory.NO_OUTPUT_COUNTER),
+		PatternMatcher<JsonNode> matcher = new ObjectMatcher<>(JSON_PROVIDER, List.of(
+				new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("outer")), new ObjectMatcher<>(JSON_PROVIDER, List.of(
+						new ObjectMatcher.FieldMatcher<>(false, null, new Comma<>(List.<Expression<StackFrame, JsonNode>>of(new ValueLiteral<>(JSON_PROVIDER.createString("a")), new ValueLiteral<>(JSON_PROVIDER.createString("b")))), new ValueMatcher<>("x"), Memory.NO_OUTPUT_COUNTER)), Versions.JQ_1_8_2), Memory.NO_OUTPUT_COUNTER),
 				new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("c")), new ValueMatcher<>("y"), Memory.NO_OUTPUT_COUNTER)), Versions.JQ_1_8_2)
 				.resolveSlots(new SlotResolver(slots("x", 3, "y", 5)));
 
-		assertEquals(Arrays.asList(
-				Arrays.<Pair<Integer, Object>>asList(Pair.of(3, IntNode.valueOf(1)), Pair.of(5, IntNode.valueOf(3))),
-				Arrays.<Pair<Integer, Object>>asList(Pair.of(3, IntNode.valueOf(2)), Pair.of(5, IntNode.valueOf(3)))), bindingsPerMatch(matcher, in, 3, 5));
+		assertEquals(List.of(
+				List.<Pair<Integer, Object>>of(Pair.of(3, IntNode.valueOf(1)), Pair.of(5, IntNode.valueOf(3))),
+				List.<Pair<Integer, Object>>of(Pair.of(3, IntNode.valueOf(2)), Pair.of(5, IntNode.valueOf(3)))), bindingsPerMatch(matcher, in, 3, 5));
 	}
 
 	@Test
 	void test2() throws Exception {
 		JsonNode in = new ObjectMapper().readTree("{\"outer\":{\"a\": 1}, \"b\": 2, \"c\": 3}");
-		PatternMatcher<JsonNode> matcher = new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
-				new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("outer")), new ObjectMatcher<>(JSON_PROVIDER, Arrays.asList(
+		PatternMatcher<JsonNode> matcher = new ObjectMatcher<>(JSON_PROVIDER, List.of(
+				new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("outer")), new ObjectMatcher<>(JSON_PROVIDER, List.of(
 						new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("a")), new ValueMatcher<>("x"), Memory.NO_OUTPUT_COUNTER)), Versions.JQ_1_8_2), Memory.NO_OUTPUT_COUNTER),
-				new ObjectMatcher.FieldMatcher<>(false, null, new Comma<>(Arrays.<Expression<StackFrame, JsonNode>>asList(new ValueLiteral<>(JSON_PROVIDER.createString("b")), new ValueLiteral<>(JSON_PROVIDER.createString("c")))), new ValueMatcher<>("y"), Memory.NO_OUTPUT_COUNTER)), Versions.JQ_1_8_2)
+						new ObjectMatcher.FieldMatcher<>(false, null, new Comma<>(List.<Expression<StackFrame, JsonNode>>of(new ValueLiteral<>(JSON_PROVIDER.createString("b")), new ValueLiteral<>(JSON_PROVIDER.createString("c")))), new ValueMatcher<>("y"), Memory.NO_OUTPUT_COUNTER)), Versions.JQ_1_8_2)
 				.resolveSlots(new SlotResolver(slots("x", 7, "y", 11)));
 
-		assertEquals(Arrays.asList(
-				Arrays.<Pair<Integer, Object>>asList(Pair.of(7, IntNode.valueOf(1)), Pair.of(11, IntNode.valueOf(2))),
-				Arrays.<Pair<Integer, Object>>asList(Pair.of(7, IntNode.valueOf(1)), Pair.of(11, IntNode.valueOf(3)))), bindingsPerMatch(matcher, in, 7, 11));
+		assertEquals(List.of(
+				List.<Pair<Integer, Object>>of(Pair.of(7, IntNode.valueOf(1)), Pair.of(11, IntNode.valueOf(2))),
+				List.<Pair<Integer, Object>>of(Pair.of(7, IntNode.valueOf(1)), Pair.of(11, IntNode.valueOf(3)))), bindingsPerMatch(matcher, in, 7, 11));
 	}
 
 	/**
