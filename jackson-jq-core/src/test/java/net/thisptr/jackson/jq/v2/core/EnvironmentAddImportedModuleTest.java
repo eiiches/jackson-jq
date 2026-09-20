@@ -85,7 +85,7 @@ public class EnvironmentAddImportedModuleTest {
 	}
 
 	@Test
-	public void testImportedModuleUsableWithoutImportStatement() throws Exception {
+	public void testImportedModuleUsableWithoutImportStatement() {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.addImportedModule("math", new SourceModule("def square($x): $x * $x;"))
 				.build();
@@ -99,7 +99,7 @@ public class EnvironmentAddImportedModuleTest {
 	}
 
 	@Test
-	public void testExplicitImportShadowsBuilderRegisteredModule() throws Exception {
+	public void testExplicitImportShadowsBuilderRegisteredModule() {
 		SourceModule builderModule = new SourceModule("def bar: 1;");
 		SourceModule loaderModule = new SourceModule("def bar: 2;");
 
@@ -121,7 +121,7 @@ public class EnvironmentAddImportedModuleTest {
 	}
 
 	@Test
-	public void testModuleQualifiedCallFallsBackToVariadicFunction() throws Exception {
+	public void testModuleQualifiedCallFallsBackToVariadicFunction() {
 		Function countArgs = new Function() {
 			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> fargs) {

@@ -23,7 +23,7 @@ public class Re2ModuleTest {
 	private static final String IMPORT = "import \"jackson-jq/re2\" as re; ";
 
 	@Test
-	public void exposesThePublicRegexFunctions() throws Exception {
+	public void exposesThePublicRegexFunctions() {
 		assertThat(run("\"abc\" | re::test(\"^a\")")).containsExactly(JSON_PROVIDER.createBoolean(true));
 		assertThat(run("\"abc\" | re::test([\"^a\", \"\"])")).containsExactly(JSON_PROVIDER.createBoolean(true));
 		assertThat(run("\"abc\" | re::match(\"b\"; \"\") | [.offset, .length, .string]")).singleElement().satisfies(result ->
@@ -43,13 +43,13 @@ public class Re2ModuleTest {
 	}
 
 	@Test
-	public void includeExposesRegexFunctionsWithoutAQualifier() throws Exception {
+	public void includeExposesRegexFunctionsWithoutAQualifier() {
 		assertThat(runQuery("include \"jackson-jq/re2\"; \"abc\" | test(\"^a\")", RuntimeOptions.newBuilder().build()))
 				.containsExactly(JSON_PROVIDER.createBoolean(true));
 	}
 
 	@Test
-	public void usesRe2SyntaxAndFlagSemantics() throws Exception {
+	public void usesRe2SyntaxAndFlagSemantics() {
 		assertThat(run("\"a\\nb\" | re::test(\"a.b\"; \"m\")")).containsExactly(JSON_PROVIDER.createBoolean(true));
 		assertThat(run("\"aa\" | re::match(\"a|aa\"; \"l\") | .string")).extracting(JSON_PROVIDER::getString).containsExactly("aa");
 		assertThat(run("\"١\" | re::test(\"\\\\d\")")).containsExactly(JSON_PROVIDER.createBoolean(false));
@@ -59,14 +59,14 @@ public class Re2ModuleTest {
 	}
 
 	@Test
-	public void reportsCodePointOffsetsAndAdvancesZeroWidthMatchesByCodePoint() throws Exception {
+	public void reportsCodePointOffsetsAndAdvancesZeroWidthMatchesByCodePoint() {
 		assertThat(run("\"a😀b\" | re::match(\"😀\"; \"\") | [.offset, .length]")).singleElement().satisfies(result ->
 				assertThat(JSON_PROVIDER.format(result)).isEqualTo("[1,1]"));
 		assertThat(run("\"a😀b\" | re::gsub(\"\"; \"X\")")).extracting(JSON_PROVIDER::getString).containsExactly("XaX😀XbX");
 	}
 
 	@Test
-	public void preservesReplacementBranchesAndRuntimeLimits() throws Exception {
+	public void preservesReplacementBranchesAndRuntimeLimits() {
 		assertThat(run("\"aa\" | re::gsub(\"a\"; \"x\", \"y\")")).extracting(JSON_PROVIDER::getString).containsExactly("xx", "yx", "xy", "yy");
 		assertThatThrownBy(() -> run("\"aaaa\" | re::gsub(\"a\"; \"xxxxxxxxxx\")", RuntimeOptions.newBuilder().setMaxStringLength(39).build()))
 				.isInstanceOf(JsonQueryException.class)

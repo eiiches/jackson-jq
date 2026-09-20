@@ -24,7 +24,7 @@ public class PathOperationsTest {
 	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProvider.getInstance();
 
 	@Test
-	void resolvesIntIndexPathWithoutChangingItsRepresentation() throws Exception {
+	void resolvesIntIndexPathWithoutChangingItsRepresentation() {
 		Path<JsonNode> path = RootPath.<JsonNode>getInstance().appendIndex(-1);
 		List<JsonNode> values = new ArrayList<>();
 		List<Path<JsonNode>> paths = new ArrayList<>();
@@ -40,7 +40,7 @@ public class PathOperationsTest {
 	}
 
 	@Test
-	void resolvesOutOfRangeIntIndexPathToNull() throws Exception {
+	void resolvesOutOfRangeIntIndexPathToNull() {
 		Path<JsonNode> path = RootPath.<JsonNode>getInstance().appendIndex(3);
 		List<JsonNode> values = new ArrayList<>();
 		List<Path<JsonNode>> paths = new ArrayList<>();
@@ -55,7 +55,7 @@ public class PathOperationsTest {
 	}
 
 	@Test
-	void mutatesAndExtendsArraysThroughIntIndexPath() throws Exception {
+	void mutatesAndExtendsArraysThroughIntIndexPath() {
 		JsonNode replaced = PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendIndex(-1),
 				JSON_PROVIDER.parse("[1,2]"),
@@ -72,7 +72,7 @@ public class PathOperationsTest {
 	}
 
 	@Test
-	void rejectsInvalidIntIndexPathMutations() throws Exception {
+	void rejectsInvalidIntIndexPathMutations() {
 		assertThatThrownBy(() -> PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendIndex(-3),
 				JSON_PROVIDER.parse("[1,2]"),
@@ -89,7 +89,7 @@ public class PathOperationsTest {
 	}
 
 	@Test
-	void mutatesAndExtendsArraysThroughNumberIndexPath() throws Exception {
+	void mutatesAndExtendsArraysThroughNumberIndexPath() {
 		JsonNode replaced = PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendIndex(JSON_PROVIDER, JSON_PROVIDER.createNumber(-1)),
 				JSON_PROVIDER.parse("[1,2]"),
@@ -106,7 +106,7 @@ public class PathOperationsTest {
 	}
 
 	@Test
-	void rejectsInvalidNumberIndexPathMutations() throws Exception {
+	void rejectsInvalidNumberIndexPathMutations() {
 		assertThatThrownBy(() -> PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendIndex(JSON_PROVIDER, JSON_PROVIDER.createNumber(-3)),
 				JSON_PROVIDER.parse("[1,2]"),
@@ -130,7 +130,7 @@ public class PathOperationsTest {
 	}
 
 	@Test
-	void mutatesObjectFieldsPreservingFieldOrder() throws Exception {
+	void mutatesObjectFieldsPreservingFieldOrder() {
 		JsonNode updated = PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendKey("b"),
 				JSON_PROVIDER.parse("{\"a\":1,\"b\":2,\"c\":3}"),
@@ -141,7 +141,7 @@ public class PathOperationsTest {
 	}
 
 	@Test
-	void mutatesObjectFieldsAppendingNewKeys() throws Exception {
+	void mutatesObjectFieldsAppendingNewKeys() {
 		JsonNode extended = PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendKey("d"),
 				JSON_PROVIDER.parse("{\"a\":1,\"b\":2}"),
@@ -156,7 +156,7 @@ public class PathOperationsTest {
 	}
 
 	@Test
-	void mutatesArraySliceWithShorterReplacement() throws Exception {
+	void mutatesArraySliceWithShorterReplacement() {
 		List<JsonNode> capturedOldSlice = new ArrayList<>();
 		JsonNode replacement = JSON_PROVIDER.parse("[9]");
 
@@ -174,7 +174,7 @@ public class PathOperationsTest {
 	}
 
 	@Test
-	void mutatesArraySliceWithLongerReplacement() throws Exception {
+	void mutatesArraySliceWithLongerReplacement() {
 		JsonNode replacement = JSON_PROVIDER.parse("[8,9,10]");
 
 		JsonNode result = PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
@@ -187,7 +187,7 @@ public class PathOperationsTest {
 	}
 
 	@Test
-	void resolvesArrayRangeIndexClampingOutOfBounds() throws Exception {
+	void resolvesArrayRangeIndexClampingOutOfBounds() {
 		List<JsonNode> values = new ArrayList<>();
 		Path<JsonNode> path = RootPath.<JsonNode>getInstance().appendIndexRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(1), JSON_PROVIDER.createNumber(10));
 
@@ -199,7 +199,7 @@ public class PathOperationsTest {
 	}
 
 	@Test
-	void resolvesEmptyArrayRangeIndex() throws Exception {
+	void resolvesEmptyArrayRangeIndex() {
 		List<JsonNode> values = new ArrayList<>();
 		Path<JsonNode> path = RootPath.<JsonNode>getInstance().appendIndexRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(5), JSON_PROVIDER.createNumber(10));
 
@@ -211,7 +211,7 @@ public class PathOperationsTest {
 	}
 
 	@Test
-	void resolvesArrayIndexOfAllMatches() throws Exception {
+	void resolvesArrayIndexOfAllMatches() {
 		List<JsonNode> values = new ArrayList<>();
 		Path<JsonNode> path = RootPath.<JsonNode>getInstance().appendIndexOf(JSON_PROVIDER, JSON_PROVIDER.parse("[1,2]"));
 
@@ -223,7 +223,7 @@ public class PathOperationsTest {
 	}
 
 	@Test
-	void resolvesArrayIndexOfNoMatches() throws Exception {
+	void resolvesArrayIndexOfNoMatches() {
 		List<JsonNode> values = new ArrayList<>();
 		Path<JsonNode> path = RootPath.<JsonNode>getInstance().appendIndexOf(JSON_PROVIDER, JSON_PROVIDER.parse("[9,9]"));
 
@@ -235,7 +235,7 @@ public class PathOperationsTest {
 	}
 
 	@Test
-	void resolvesArrayIndexOfEmptySubsequenceToEmptyResult() throws Exception {
+	void resolvesArrayIndexOfEmptySubsequenceToEmptyResult() {
 		List<JsonNode> values = new ArrayList<>();
 		Path<JsonNode> path = RootPath.<JsonNode>getInstance().appendIndexOf(JSON_PROVIDER, JSON_PROVIDER.parse("[]"));
 

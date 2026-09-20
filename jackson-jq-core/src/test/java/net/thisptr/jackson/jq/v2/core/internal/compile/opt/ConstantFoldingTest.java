@@ -217,7 +217,7 @@ public class ConstantFoldingTest {
 	// --- folding replaces evaluation ------------------------------------------------------------
 
 	@Test
-	public void aConstantExpressionIsEvaluatedOnceAtCompileTimeAndNeverAgain() throws Exception {
+	public void aConstantExpressionIsEvaluatedOnceAtCompileTimeAndNeverAgain() {
 		Tick tick = new Tick();
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("tick", 0), tick));
 
@@ -230,7 +230,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void anInputDependentExpressionIsEvaluatedEveryTime() throws Exception {
+	public void anInputDependentExpressionIsEvaluatedEveryTime() {
 		Tick echo = new Tick(/* usesInput */ true);
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("echo", 0), echo));
 
@@ -278,7 +278,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void foldingIsNotLimitedToFunctionArguments() throws Exception {
+	public void foldingIsNotLimitedToFunctionArguments() {
 		Tick tick = new Tick();
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("tick", 0), tick));
 
@@ -295,7 +295,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void aConstantChildIsRewrittenInsideAnInputDependentParent() throws Exception {
+	public void aConstantChildIsRewrittenInsideAnInputDependentParent() {
 		Tick tick = new Tick();
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("tick", 0), tick));
 
@@ -308,7 +308,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void aFoldedArgumentStillReachesBindAsAConstantExpression() throws Exception {
+	public void aFoldedArgumentStillReachesBindAsAConstantExpression() {
 		Probe probe = new Probe();
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), probe));
 
@@ -333,7 +333,7 @@ public class ConstantFoldingTest {
 	 * past them.
 	 */
 	@Test
-	public void aConstructThatRebindsItsChildInputIsFoldedWhenWhatItRebindsFromIs() throws Exception {
+	public void aConstructThatRebindsItsChildInputIsFoldedWhenWhatItRebindsFromIs() {
 		Probe probe = new Probe();
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), probe));
 
@@ -346,7 +346,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void aConstructThatRebindsItsChildInputStillDependsOnWhatItRebindsFrom() throws Exception {
+	public void aConstructThatRebindsItsChildInputStillDependsOnWhatItRebindsFrom() {
 		Probe probe = new Probe();
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), probe));
 
@@ -361,7 +361,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void aConstantChildOfAnInputDependentPipeStillFolds() throws Exception {
+	public void aConstantChildOfAnInputDependentPipeStillFolds() {
 		Tick tick = new Tick();
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("tick", 0), tick));
 
@@ -376,7 +376,7 @@ public class ConstantFoldingTest {
 	// --- the budget ------------------------------------------------------------------------------
 
 	@Test
-	public void aFoldIsAbandonedPastTheValueBudget() throws Exception {
+	public void aFoldIsAbandonedPastTheValueBudget() {
 		Probe probe = new Probe();
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), probe));
 
@@ -391,7 +391,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void aNonTerminatingConstantExpressionDoesNotHangCompilation() throws Exception {
+	public void aNonTerminatingConstantExpressionDoesNotHangCompilation() {
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.emptyMap());
 		long started = System.nanoTime();
 		assertThatCode(() -> env.compile("[last(range(0; 1e9)), until(false; 1)]")).doesNotThrowAnyException();
@@ -401,7 +401,7 @@ public class ConstantFoldingTest {
 	// --- error timing ----------------------------------------------------------------------------
 
 	@Test
-	public void aConstantJqErrorIsFoldedAndReplayedAtEvaluationTime() throws Exception {
+	public void aConstantJqErrorIsFoldedAndReplayedAtEvaluationTime() {
 		AtomicInteger evaluations = new AtomicInteger();
 		Function fail = new Function() {
 			@Override
@@ -423,7 +423,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void valuesBeforeAConstantErrorAreFoldedAndReplayedInOrder() throws Exception {
+	public void valuesBeforeAConstantErrorAreFoldedAndReplayedInOrder() {
 		AtomicInteger evaluations = new AtomicInteger();
 		Function fail = new Function() {
 			@Override
@@ -447,7 +447,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void aDownstreamErrorStopsReplayBeforeTheStoredError() throws Exception {
+	public void aDownstreamErrorStopsReplayBeforeTheStoredError() {
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.emptyMap());
 		JsonQuery<JsonNode> query = env.compile("1, error(\"stored\")");
 
@@ -457,7 +457,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void anErrorEndingArgumentIsNotExposedAsAConstantExpression() throws Exception {
+	public void anErrorEndingArgumentIsNotExposedAsAConstantExpression() {
 		Probe probe = new Probe();
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), probe));
 
@@ -471,7 +471,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void runtimeLimitErrorsAreNotFolded() throws Exception {
+	public void runtimeLimitErrorsAreNotFolded() {
 		AtomicInteger evaluations = new AtomicInteger();
 		Function limit = new Function() {
 			@Override
@@ -491,7 +491,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void foldedBreakRetainsItsControlFlowSubtype() throws Exception {
+	public void foldedBreakRetainsItsControlFlowSubtype() {
 		Probe probe = new Probe();
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), probe));
 
@@ -502,7 +502,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void aFunctionThatThrowsSomethingOtherThanJsonQueryExceptionDoesNotBreakCompilation() throws Exception {
+	public void aFunctionThatThrowsSomethingOtherThanJsonQueryExceptionDoesNotBreakCompilation() {
 		Function explode = new Function() {
 			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> ctx, List<Expression<Context, N>> args) {
@@ -520,7 +520,7 @@ public class ConstantFoldingTest {
 	// --- barriers ---------------------------------------------------------------------------------
 
 	@Test
-	public void aSubtreeThatInstallsADefIsNotFolded() throws Exception {
+	public void aSubtreeThatInstallsADefIsNotFolded() {
 		Probe probe = new Probe();
 		Map<FunctionSignature, Function> functions = Collections.singletonMap(FunctionSignature.of("probe", 1), probe);
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, functions);
@@ -540,7 +540,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void aTryIsNotFoldedBeforeJq17BecauseItCatchesWhatItsConsumerThrows() throws Exception {
+	public void aTryIsNotFoldedBeforeJq17BecauseItCatchesWhatItsConsumerThrows() {
 		Probe legacy = new Probe();
 		env(Versions.JQ_1_6, Collections.singletonMap(FunctionSignature.of("probe", 1), legacy)).compile("probe(try 1 catch .)");
 		assertThat(foldedValues(legacy.arguments.get(0)))
@@ -558,7 +558,7 @@ public class ConstantFoldingTest {
 	// --- path mode --------------------------------------------------------------------------------
 
 	@Test
-	public void aFoldedExpressionStepsAsideWhenAPathIsBeingTracked() throws Exception {
+	public void aFoldedExpressionStepsAsideWhenAPathIsBeingTracked() {
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.emptyMap());
 
 		// Evaluated for its value `[] | .c?` yields nothing, which is what the folder collects. Asked for a
@@ -577,7 +577,7 @@ public class ConstantFoldingTest {
 	// --- the budget is the caller's ---------------------------------------------------------------
 
 	@Test
-	public void raisingMaxResultsFoldsWhatTheDefaultRefuses() throws Exception {
+	public void raisingMaxResultsFoldsWhatTheDefaultRefuses() {
 		Probe probe = new Probe();
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), probe));
 
@@ -592,7 +592,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void loweringMaxResultsRefusesWhatTheDefaultFolds() throws Exception {
+	public void loweringMaxResultsRefusesWhatTheDefaultFolds() {
 		Probe probe = new Probe();
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), probe));
 
@@ -604,7 +604,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void theEmbeddedRuntimeOptionsBoundWhatAFoldMayBuild() throws Exception {
+	public void theEmbeddedRuntimeOptionsBoundWhatAFoldMayBuild() {
 		Probe probe = new Probe();
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), probe));
 
@@ -627,7 +627,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void foldingCanBeTurnedOff() throws Exception {
+	public void foldingCanBeTurnedOff() {
 		Tick tick = new Tick();
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("tick", 0), tick));
 
@@ -643,7 +643,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void turningFoldingOffPutsConstantWorkBackUnderTheCallersRuntimeOptions() throws Exception {
+	public void turningFoldingOffPutsConstantWorkBackUnderTheCallersRuntimeOptions() {
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.emptyMap());
 		RuntimeOptions maxArrayLength100 = RuntimeOptions.newBuilder().setMaxArrayLength(100).build();
 
@@ -661,7 +661,7 @@ public class ConstantFoldingTest {
 	}
 
 	@Test
-	public void theDerivedTotalStillBoundsOneCompilation() throws Exception {
+	public void theDerivedTotalStillBoundsOneCompilation() {
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.emptyMap());
 
 		// A constant term the folder refuses on size, so every enclosing fold attempt re-runs it from
@@ -681,7 +681,7 @@ public class ConstantFoldingTest {
 	// --- folding is not visible in results --------------------------------------------------------
 
 	@Test
-	public void foldingPreservesValuesAndOrder() throws Exception {
+	public void foldingPreservesValuesAndOrder() {
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.emptyMap());
 		for (String[] pair : List.of(
 				new String[] { "[limit(2; 1, 2, 3)]", "[1,2]" },

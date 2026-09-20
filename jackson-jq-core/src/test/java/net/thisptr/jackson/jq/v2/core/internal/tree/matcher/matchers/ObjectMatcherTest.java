@@ -49,7 +49,7 @@ public class ObjectMatcherTest {
 		PatternMatcher<JsonNode> matcher = new ObjectMatcher<>(JSON_PROVIDER, List.of(
 				new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("outer")), new ObjectMatcher<>(JSON_PROVIDER, List.of(
 						new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("a")), new ValueMatcher<>("x"), Memory.NO_OUTPUT_COUNTER)), Versions.JQ_1_8_2), Memory.NO_OUTPUT_COUNTER),
-						new ObjectMatcher.FieldMatcher<>(false, null, new Comma<>(List.<Expression<StackFrame, JsonNode>>of(new ValueLiteral<>(JSON_PROVIDER.createString("b")), new ValueLiteral<>(JSON_PROVIDER.createString("c")))), new ValueMatcher<>("y"), Memory.NO_OUTPUT_COUNTER)), Versions.JQ_1_8_2)
+				new ObjectMatcher.FieldMatcher<>(false, null, new Comma<>(List.<Expression<StackFrame, JsonNode>>of(new ValueLiteral<>(JSON_PROVIDER.createString("b")), new ValueLiteral<>(JSON_PROVIDER.createString("c")))), new ValueMatcher<>("y"), Memory.NO_OUTPUT_COUNTER)), Versions.JQ_1_8_2)
 				.resolveSlots(new SlotResolver(slots("x", 7, "y", 11)));
 
 		assertEquals(List.of(
@@ -61,7 +61,7 @@ public class ObjectMatcherTest {
 	 * Runs {@code matcher} and, for each complete match, snapshots what it wrote into the frame at
 	 * {@code slots}.
 	 */
-	private static List<List<Pair<Integer, Object>>> bindingsPerMatch(PatternMatcher<JsonNode> matcher, JsonNode in, int... slots) throws Exception {
+	private static List<List<Pair<Integer, Object>>> bindingsPerMatch(PatternMatcher<JsonNode> matcher, JsonNode in, int... slots) {
 		StackFrame frame = new Memory().pushFrame(Arrays.stream(slots).max().getAsInt() + 1);
 		List<List<Pair<Integer, Object>>> matches = new ArrayList<>();
 		matcher.match(frame, in, () -> {
