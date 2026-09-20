@@ -1,22 +1,21 @@
 load("@rules_graalvm//graalvm:defs.bzl", "native_image")
-load("@rules_java//java:defs.bzl", "java_binary", "java_import", "java_library")
+load("@rules_java//java:defs.bzl", "java_import", "java_library")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("@rules_spring//springboot:springboot.bzl", "springboot")
 load("//build-tools/bazel:defs.bzl", "jjq_maven_artifact")
 
 package(default_visibility = ["//visibility:public"])
 
-# The deploy jar is the counterpart of maven-shade-plugin: singlejar merges META-INF/services
-# the way shade's ServicesResourceTransformer did, and writes the jar deflated with normalized
-# timestamps, so nothing needs repacking afterwards.
-#
-# Note it intentionally does NOT carry META-INF/versions/9/module-info.class. Maven's shaded
-# jar does -- shade copies one arbitrary dependency's module descriptor (jackson-jq-core's)
-# into the uber jar, which would make the whole shaded artifact masquerade as that single
-# module on the module path. singlejar leaves it out on purpose.
-java_binary(
+# Packages the CLI as an executable JAR using Spring Boot's nested JAR format:
+# application classes in BOOT-INF/classes/, dependencies as uncompressed JARs in BOOT-INF/lib/,
+# and Spring Boot's launcher at the root.
+springboot(
     name = "jackson-jq-cli-bin",
-    main_class = "net.thisptr.jackson.jq.v2.cli.Main",
-    runtime_deps = ["//jackson-jq-cli/src/main/java/net/thisptr/jackson/jq/v2/cli"],
+    boot_app_class = "net.thisptr.jackson.jq.v2.cli.Main",
+    boot_launcher_class = "org.springframework.boot.loader.launch.JarLauncher",
+    include_git_properties_file = False,
+    java_library = "//jackson-jq-cli/src/main/java/net/thisptr/jackson/jq/v2/cli",
+    deps = ["@maven//:org_springframework_boot_spring_boot_loader"],
 )
 
 # Keep Native Image configuration out of the published CLI jar. The native target consumes
@@ -70,18 +69,30 @@ sh_test(
     tags = ["manual"],
 )
 
-# The uber jar as a Maven artifact: the deploy jar plus the CLI's own sources, and no deps at
+sh_test(
+    name = "jackson-jq-cli-nested-jar-test",
+    size = "small",
+    srcs = ["src/test/shell/nested_jar_test.sh"],
+    args = ["$(location :jackson-jq-cli-bin.jar)"],
+    data = [
+        ":jackson-jq-cli-bin.jar",
+        "@bazel_tools//tools/jdk:current_java_runtime",
+    ],
+)
+
+# The executable jar as a Maven artifact: the nested jar plus the CLI's own sources, and no deps at
 # all -- everything it would depend on is inside it, so the published pom lists nothing.
 java_import(
-    name = "jackson-jq-cli-uber-jar",
-    jars = [":jackson-jq-cli-bin_deploy.jar"],
+    name = "jackson-jq-cli-nested-jar",
+    jars = [":jackson-jq-cli-bin.jar"],
     srcjar = "//jackson-jq-cli/src/main/java/net/thisptr/jackson/jq/v2/cli:libcli-src.jar",
 )
 
 # `bazel run //jackson-jq-cli` runs the published jar; the same target carries the coordinates.
 jjq_maven_artifact(
     name = "jackson-jq-cli",
-    artifact = ":jackson-jq-cli-uber-jar",
+    artifact = ":jackson-jq-cli-nested-jar",
     executable = True,
+    javadoc_library = "//jackson-jq-cli/src/main/java/net/thisptr/jackson/jq/v2/cli",
     publish_prebuilt = True,
 )

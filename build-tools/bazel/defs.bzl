@@ -186,6 +186,7 @@ def jjq_maven_artifact(
         artifact,
         artifact_id = None,
         doc_excluded_packages = [],
+        javadoc_library = None,
         pom_template = "//build-tools/bazel:pom.tpl",
         publish_prebuilt = False,
         executable = False):
@@ -197,6 +198,8 @@ def jjq_maven_artifact(
         the dependency edges the pom is derived from.
       artifact_id: Maven artifactId when it differs from `name`.
       doc_excluded_packages: packages to exclude from generated javadocs.
+      javadoc_library: target whose sources and dependencies are used to generate javadocs.
+        Defaults to `artifact`.
       pom_template: template for pom.xml.
       publish_prebuilt: whether to publish the artifact's jar as built, without running
         maven_export's repacking.
@@ -236,7 +239,7 @@ def jjq_maven_artifact(
             artifact = artifact,
             coordinates = module_coordinates,
             excluded_packages = doc_excluded_packages,
-            javadoc_library = artifact,
+            javadoc_library = javadoc_library or artifact,
             pom_library = ":" + name,
             sources = ":" + name + "-sources",
         )
