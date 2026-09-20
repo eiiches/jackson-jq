@@ -208,7 +208,7 @@ public class CompileContext {
 	CompileContext createJqFunctionContext(JqFunctionCompiler.DefinitionKey key, boolean shareGlobalState) {
 		Set<JqFunctionCompiler.DefinitionKey> nestedActiveJqFunctions = new HashSet<>(activeJqFunctions);
 		nestedActiveJqFunctions.add(key);
-		return new CompileContext(false, false, tailCallsEnabled, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState(), foldPlanner);
+		return new CompileContext(false, false, tailCallsEnabled, jqFunctionState, Set.copyOf(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState(), foldPlanner);
 	}
 
 	// Like createJqFunctionContext, but shares this context's own `scopes` list instead of starting a
@@ -218,7 +218,7 @@ public class CompileContext {
 	CompileContext createInlinedJqFunctionContext(JqFunctionCompiler.DefinitionKey key, boolean shareGlobalState) {
 		Set<JqFunctionCompiler.DefinitionKey> nestedActiveJqFunctions = new HashSet<>(activeJqFunctions);
 		nestedActiveJqFunctions.add(key);
-		return new CompileContext(scopes, false, false, tailCallsEnabled, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState(), foldPlanner);
+		return new CompileContext(scopes, false, false, tailCallsEnabled, jqFunctionState, Set.copyOf(nestedActiveJqFunctions), genericJqFunctions, shareGlobalState ? globalState : new GlobalState(), foldPlanner);
 	}
 
 	CompileContext createGenericJqFunctionContext(JqFunctionCompiler.DefinitionKey key, boolean shareGlobalState) {
@@ -226,7 +226,7 @@ public class CompileContext {
 		nestedActiveJqFunctions.add(key);
 		Set<JqFunctionCompiler.DefinitionKey> nestedGenericJqFunctions = new HashSet<>(genericJqFunctions);
 		nestedGenericJqFunctions.add(key);
-		return new CompileContext(false, false, tailCallsEnabled, jqFunctionState, Collections.unmodifiableSet(nestedActiveJqFunctions), Collections.unmodifiableSet(nestedGenericJqFunctions), shareGlobalState ? globalState : new GlobalState(), foldPlanner);
+		return new CompileContext(false, false, tailCallsEnabled, jqFunctionState, Set.copyOf(nestedActiveJqFunctions), Set.copyOf(nestedGenericJqFunctions), shareGlobalState ? globalState : new GlobalState(), foldPlanner);
 	}
 
 	public void addImportedModule(String alias, JavaModule module) {

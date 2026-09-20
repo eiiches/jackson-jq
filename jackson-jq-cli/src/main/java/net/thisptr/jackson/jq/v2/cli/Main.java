@@ -12,7 +12,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -303,9 +302,7 @@ public class Main {
 		}
 	}
 
-	static final List<String> PROVIDERS = Collections.unmodifiableList(
-			Arrays.asList("jackson3", "jackson2", "fastjson2", "gson", "jakarta")
-	);
+	static final List<String> PROVIDERS = List.of("jackson3", "jackson2", "fastjson2", "gson", "jakarta");
 
 	static String resolveProviderName(JsonProvider<?> jsonProvider) {
 		if (jsonProvider instanceof Jackson3JsonProvider) {

@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,13 +36,13 @@ public class ObjectConstruction<JsonNode> implements RewritableExpression<JsonNo
 
 	public ObjectConstruction(JsonProvider<JsonNode> jsonProvider, List<FieldConstruction<JsonNode>> fields) {
 		this.jsonProvider = jsonProvider;
-		this.fields = Collections.unmodifiableList(new ArrayList<>(fields));
+		this.fields = List.copyOf(fields);
 		this.dependsOnInput = fields.stream().anyMatch(FieldConstruction::dependsOnInput);
 		this.dependsOnExternalState = fields.stream().anyMatch(FieldConstruction::dependsOnExternalState);
 		Set<Integer> slots = new HashSet<>();
 		for (FieldConstruction<JsonNode> field : fields)
 			slots.addAll(field.freeLocalSlots());
-		this.freeLocalSlots = Collections.unmodifiableSet(slots);
+		this.freeLocalSlots = Set.copyOf(slots);
 		this.hasOpaqueVariableReference = fields.stream().anyMatch(FieldConstruction::hasOpaqueVariableReference);
 	}
 

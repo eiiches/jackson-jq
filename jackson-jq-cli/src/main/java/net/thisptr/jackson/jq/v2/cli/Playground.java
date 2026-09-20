@@ -161,7 +161,7 @@ final class Playground<N> {
 		this.compact = compact;
 		this.rawOutput = rawOutput;
 		this.warningsEnabled = warningsEnabled;
-		this.inputFiles = Collections.unmodifiableList(new ArrayList<>(inputFiles));
+		this.inputFiles = List.copyOf(inputFiles);
 		this.out = out;
 		this.err = err;
 		this.queryState = new TextAreaState(initialQuery);
@@ -251,7 +251,7 @@ final class Playground<N> {
 				}
 			}
 		}
-		this.inputLines = Collections.unmodifiableList(inLines);
+		this.inputLines = List.copyOf(inLines);
 		this.inputScrollOffset = 0;
 		this.inputTreePane.setNodes(inList, this.inputLines, provider);
 	}
@@ -1294,8 +1294,8 @@ final class Playground<N> {
 				}
 			}
 		}
-		this.diagnosticLines = Collections.unmodifiableList(dLines);
-		this.diagnosticPlainLines = Collections.unmodifiableList(plain);
+		this.diagnosticLines = List.copyOf(dLines);
+		this.diagnosticPlainLines = List.copyOf(plain);
 		this.diagnosticsScrollOffset = 0;
 	}
 

@@ -28,7 +28,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.builtins.library;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,7 +37,7 @@ import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
 
 public class CoreJqLibrary implements JqLibrary {
-	private static final List<JqFunction> FUNCTIONS = Collections.unmodifiableList(Arrays.asList(
+	private static final List<JqFunction> FUNCTIONS = List.of(
 			JqFunction.of("@text", args(), "tostring"),
 			JqFunction.of("@json", args(), "tojson"),
 			// jq 1.5's `..` skips null-valued members, so their paths are not yielded; from 1.6 on it visits them.
@@ -110,7 +109,7 @@ public class CoreJqLibrary implements JqLibrary {
 			JqFunction.of("ltrimstr", args("$left"), "if startswith($left) then .[$left | length:] else . end", VersionRange.valueOf("[1.8.0, )")),
 			JqFunction.of("rtrimstr", args("$right"), "if endswith($right) then .[:$right | -length] else . end", VersionRange.valueOf("[1.8.0, 1.8.2)")),
 			JqFunction.of("rtrimstr", args("$right"), "if endswith($right) then .[:length - ($right | length)] else . end", VersionRange.valueOf("[1.8.2, )")),
-			JqFunction.of("trimstr", args("$val"), "ltrimstr($val) | rtrimstr($val)", VersionRange.valueOf("[1.8.0, )"))));
+			JqFunction.of("trimstr", args("$val"), "ltrimstr($val) | rtrimstr($val)", VersionRange.valueOf("[1.8.0, )")));
 
 	private static List<FunctionParameter> args(String... args) {
 		return Arrays.stream(args).map(FunctionParameter::valueOf).collect(Collectors.toList());

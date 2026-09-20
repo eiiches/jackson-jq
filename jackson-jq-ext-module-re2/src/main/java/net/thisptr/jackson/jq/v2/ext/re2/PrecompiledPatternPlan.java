@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.ext.re2;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
@@ -56,7 +55,7 @@ final class PrecompiledPatternPlan {
 				for (JsonNode flags : flagsValues)
 					patterns.add(compile(jsonProvider, regex, flags, nullableFlags));
 		}
-		return new PrecompiledPatternPlan(Collections.unmodifiableList(patterns), flagsValues.size());
+		return new PrecompiledPatternPlan(List.copyOf(patterns), flagsValues.size());
 	}
 
 	private static <Context extends RuntimeContext, JsonNode> @Nullable List<JsonNode> constantResults(Expression<Context, JsonNode> expression) {

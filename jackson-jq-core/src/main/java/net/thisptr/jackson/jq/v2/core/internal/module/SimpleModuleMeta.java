@@ -23,12 +23,12 @@ public class SimpleModuleMeta implements ModuleMeta {
 	private final List<Dependency> dependencies;
 
 	public SimpleModuleMeta() {
-		this(null, Collections.emptyList());
+		this(null, List.of());
 	}
 
 	public SimpleModuleMeta(@Nullable AstNode metadataExpr, List<Dependency> dependencies) {
 		this.metadataExpr = metadataExpr;
-		this.dependencies = Collections.unmodifiableList(new ArrayList<>(dependencies));
+		this.dependencies = List.copyOf(dependencies);
 	}
 
 	public static SimpleModuleMeta fromAst(@Nullable AstNode ast) {
@@ -55,7 +55,7 @@ public class SimpleModuleMeta implements ModuleMeta {
 
 	static <JsonNode> Map<String, JsonNode> evaluateMetadata(JsonProvider<JsonNode> jsonProvider, @Nullable AstNode expr) {
 		if (expr == null)
-			return Collections.emptyMap();
+			return Map.of();
 		Maybe<JsonNode> node = ExpressionUtils.evaluateLiteralExpression(jsonProvider, expr);
 		if (node.isAbsent())
 			throw new IllegalArgumentException("Module metadata must be constant");

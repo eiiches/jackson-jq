@@ -1,7 +1,5 @@
 package net.thisptr.jackson.jq.v2.ext.random;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import net.thisptr.jackson.jq.v2.ext.random.functions.RandomFunction;
@@ -11,15 +9,12 @@ import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 
 @ModuleRegistration(path = "jackson-jq/random")
-public class ModuleImpl implements JavaModule {
-	private final Map<FunctionSignature, Function> functions = new HashMap<>();
-
-	public ModuleImpl() {
-		functions.put(FunctionSignature.of("random", 0), new RandomFunction());
-	}
+public final class ModuleImpl implements JavaModule {
+	private static final Map<FunctionSignature, Function> FUNCTIONS = Map.of(
+			FunctionSignature.of("random", 0), new RandomFunction());
 
 	@Override
 	public Map<FunctionSignature, Function> getFunctions() {
-		return Collections.unmodifiableMap(functions);
+		return FUNCTIONS;
 	}
 }

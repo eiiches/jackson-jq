@@ -4,7 +4,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -48,7 +47,7 @@ public final class JqExecutables {
 		return selected;
 	}
 
-	public static final List<JqExecutable> ALL = Collections.unmodifiableList(configuredExecutables());
+	public static final List<JqExecutable> ALL = List.copyOf(configuredExecutables());
 
 	public static String executableFor(Version version) {
 		return ALL.stream()

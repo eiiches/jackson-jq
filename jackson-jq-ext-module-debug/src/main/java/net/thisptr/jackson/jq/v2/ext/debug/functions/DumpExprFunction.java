@@ -6,10 +6,8 @@ import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -251,9 +249,9 @@ public class DumpExprFunction implements Function {
 			return fields;
 		}
 
-		private static final Set<String> TRANSPARENT_WRAPPERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+		private static final Set<String> TRANSPARENT_WRAPPERS = Set.of(
 				"net.thisptr.jackson.jq.v2.core.internal.tree.MeteredOutputExpression",
-				"net.thisptr.jackson.jq.v2.core.internal.tree.MeteredConstantOutputExpression")));
+				"net.thisptr.jackson.jq.v2.core.internal.tree.MeteredConstantOutputExpression");
 
 		private static boolean isStructural(Class<?> type) {
 			String name = type.getName();

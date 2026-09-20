@@ -28,7 +28,6 @@
 package net.thisptr.jackson.jq.v2.regex.impl.joni;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,7 +36,7 @@ import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 
 public class RegexJqLibrary implements JqLibrary {
-	private static final List<JqFunction> FUNCTIONS = Collections.unmodifiableList(Arrays.asList(
+	private static final List<JqFunction> FUNCTIONS = List.of(
 			JqFunction.of("match", args("re", "mode"), "_match_impl(re; mode; false)|.[]"),
 			JqFunction.of("match", args("$val"), "($val|type) as $vt | if $vt == \"string\" then match($val; null) elif $vt == \"array\" and ($val | length) > 1 then match($val[0]; $val[1]) elif $vt == \"array\" and ($val | length) > 0 then match($val[0]; null) else error( $vt + \" not a string or array\") end"),
 			JqFunction.of("test", args("re", "mode"), "_match_impl(re; mode; true)"),
@@ -54,7 +53,7 @@ public class RegexJqLibrary implements JqLibrary {
 			JqFunction.of("sub", args("$re", "s"), "_sub_impl($re; s; \"\")"),
 			JqFunction.of("sub", args("$re", "s", "flags"), "_sub_impl($re; s; flags)"),
 			JqFunction.of("gsub", args("$re", "s", "flags"), "_sub_impl($re; s; flags + \"g\")"),
-			JqFunction.of("gsub", args("$re", "s"), "_sub_impl($re; s; \"g\")")));
+			JqFunction.of("gsub", args("$re", "s"), "_sub_impl($re; s; \"g\")"));
 
 	private static List<FunctionParameter> args(String... args) {
 		return Arrays.stream(args).map(FunctionParameter::valueOf).collect(Collectors.toList());

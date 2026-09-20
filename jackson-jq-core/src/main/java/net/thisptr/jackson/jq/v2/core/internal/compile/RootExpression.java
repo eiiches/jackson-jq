@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.v2.core.internal.compile;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -91,13 +90,13 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 		this.outputCounterCount = outputCounterCount;
 		this.innerOutputIndex = innerOutputIndex;
 		this.inner = inner;
-		this.definedVariables = Collections.unmodifiableSet(new HashSet<>(definedVariables));
-		this.definedFunctions = Collections.unmodifiableSet(new HashSet<>(definedFunctions));
-		this.globalVariableIndices = Collections.unmodifiableMap(new HashMap<>(globalVariableIndices));
-		this.globalFunctionIndices = Collections.unmodifiableMap(new HashMap<>(globalFunctionIndices));
-		this.declaredVariables = Collections.unmodifiableSet(new HashSet<>(declaredVariables));
-		this.declaredFunctions = Collections.unmodifiableSet(new HashSet<>(declaredFunctions));
-		this.rootFunctionSlots = Collections.unmodifiableMap(new HashMap<>(rootFunctionSlots));
+		this.definedVariables = Set.copyOf(definedVariables);
+		this.definedFunctions = Set.copyOf(definedFunctions);
+		this.globalVariableIndices = Map.copyOf(globalVariableIndices);
+		this.globalFunctionIndices = Map.copyOf(globalFunctionIndices);
+		this.declaredVariables = Set.copyOf(declaredVariables);
+		this.declaredFunctions = Set.copyOf(declaredFunctions);
+		this.rootFunctionSlots = Map.copyOf(rootFunctionSlots);
 	}
 
 	public int frameSize() {

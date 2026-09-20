@@ -410,10 +410,9 @@ public class ModuleResolverTest {
 
 	@Test
 	public void testIncludeExposesJavaModuleFunctionsWithoutAQualifier() throws Exception {
-		Map<FunctionSignature, Function> functions = new HashMap<>();
-		functions.put(FunctionSignature.of("selected", 0), constantFunction(1));
-		functions.put(FunctionSignature.ofVariadic("selected"), constantFunction(2));
-		JavaModule module = () -> Collections.unmodifiableMap(functions);
+		JavaModule module = () -> Map.of(
+				FunctionSignature.of("selected", 0), constantFunction(1),
+				FunctionSignature.ofVariadic("selected"), constantFunction(2));
 		Environment<JsonNode> env = builder()
 				.addModuleLoader(new SingleModuleLoader(module))
 				.build();
@@ -436,11 +435,10 @@ public class ModuleResolverTest {
 	public void testLocalDefinitionShadowsIncludeWhichShadowsEnvironment() throws Exception {
 		FunctionSignature declared = FunctionSignature.of("declared", 0);
 		FunctionSignature defined = FunctionSignature.of("defined", 0);
-		Map<FunctionSignature, Function> functions = new HashMap<>();
-		functions.put(declared, constantFunction(2));
-		functions.put(defined, constantFunction(4));
-		functions.put(FunctionSignature.of("length", 0), constantFunction(6));
-		JavaModule module = () -> Collections.unmodifiableMap(functions);
+		JavaModule module = () -> Map.of(
+				declared, constantFunction(2),
+				defined, constantFunction(4),
+				FunctionSignature.of("length", 0), constantFunction(6));
 		Environment<JsonNode> env = builder()
 				.declareFunction(declared)
 				.defineFunction(defined, constantFunction(3))

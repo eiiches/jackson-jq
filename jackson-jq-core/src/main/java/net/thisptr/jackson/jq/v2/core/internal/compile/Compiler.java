@@ -298,7 +298,7 @@ public class Compiler {
 			List<Expression<StackFrame, N>> compiledArgs = new ArrayList<>();
 			for (AstNode arg : call.args())
 				compiledArgs.add(compileArgument(arg));
-			List<Expression<StackFrame, N>> meteredArgs = Collections.unmodifiableList(meterArguments(compiledArgs));
+			List<Expression<StackFrame, N>> meteredArgs = List.copyOf(meterArguments(compiledArgs));
 
 			if (call.moduleName() != null) {
 				@Var JavaModule mod = context.getImportedModule(call.moduleName());

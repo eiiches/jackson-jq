@@ -1,7 +1,5 @@
 package net.thisptr.jackson.jq.v2.core.internal.ast;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import com.google.errorprone.annotations.Var;
@@ -15,7 +13,7 @@ public class ObjectConstructionAstNode extends AbstractAstNode {
 
 	public ObjectConstructionAstNode(SourceLocation location, List<FieldConstructionAst> fields) {
 		super(location);
-		this.fields = Collections.unmodifiableList(new ArrayList<>(fields));
+		this.fields = List.copyOf(fields);
 	}
 
 	@Override
