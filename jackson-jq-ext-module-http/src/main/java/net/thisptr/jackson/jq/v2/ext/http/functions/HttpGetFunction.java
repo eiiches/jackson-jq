@@ -202,9 +202,8 @@ public class HttpGetFunction implements Function {
 			if (!protocol.equalsIgnoreCase("http") && !protocol.equalsIgnoreCase("https"))
 				throw new JsonQueryException("http::get only supports http and https URLs");
 			URLConnection rawConnection = url.openConnection();
-			if (!(rawConnection instanceof HttpURLConnection))
+			if (!(rawConnection instanceof HttpURLConnection connection))
 				throw new JsonQueryException("http::get only supports HTTP connections");
-			HttpURLConnection connection = (HttpURLConnection) rawConnection;
 			connection.setRequestMethod("GET");
 			connection.setConnectTimeout(request.timeoutMillis);
 			connection.setReadTimeout(request.timeoutMillis);

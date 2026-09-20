@@ -60,9 +60,11 @@ final class PrecompiledPatternPlan {
 	}
 
 	private static <Context extends RuntimeContext, JsonNode> @Nullable List<JsonNode> constantResults(Expression<Context, JsonNode> expression) {
-		if (!(expression instanceof ConstantExpression<?, ?>))
+		if (!(expression instanceof ConstantExpression<?, ?> constExpr))
 			return null;
-		return ((ConstantExpression<Context, JsonNode>) expression).getConstantResults();
+		@SuppressWarnings("unchecked")
+		ConstantExpression<Context, JsonNode> typed = (ConstantExpression<Context, JsonNode>) constExpr;
+		return typed.getConstantResults();
 	}
 
 	private static boolean exceedsProductLimit(int left, int right) {

@@ -208,10 +208,10 @@ public class ConstantFoldingTest {
 	}
 
 	private static @Nullable List<JsonNode> foldedValues(Expression<?, ?> expression) {
-		if (!(expression instanceof ConstantExpression<?, ?>))
+		if (!(expression instanceof ConstantExpression<?, ?> constExpr))
 			return null;
 		@SuppressWarnings("unchecked")
-		ConstantExpression<?, JsonNode> constant = (ConstantExpression<?, JsonNode>) expression;
+		ConstantExpression<?, JsonNode> constant = (ConstantExpression<?, JsonNode>) constExpr;
 		return constant.getConstantResults();
 	}
 

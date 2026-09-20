@@ -153,11 +153,11 @@ public final class FoldPlanner {
 	}
 
 	private <N> Expression<StackFrame, N> rewriteChildren(Environment<N> env, Expression<StackFrame, N> expression) {
-		if (!(expression instanceof RewritableExpression<?>))
+		if (!(expression instanceof RewritableExpression<?> rewritableExpr))
 			return expression;
 		// The instanceof check guarantees that this expression's JSON node type matches the current tree.
 		@SuppressWarnings("unchecked")
-		RewritableExpression<N> rewritable = (RewritableExpression<N>) expression;
+		RewritableExpression<N> rewritable = (RewritableExpression<N>) rewritableExpr;
 		return rewritable.rewriteChildren(child -> optimize(env, child));
 	}
 }

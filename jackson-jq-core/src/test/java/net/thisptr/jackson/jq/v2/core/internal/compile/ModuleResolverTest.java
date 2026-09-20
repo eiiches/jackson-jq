@@ -130,7 +130,7 @@ public class ModuleResolverTest {
 
 		@Override
 		public boolean equals(@Nullable Object o) {
-			return o instanceof SourceModule && name.equals(((SourceModule) o).name);
+			return o instanceof SourceModule other && name.equals(other.name);
 		}
 
 		@Override

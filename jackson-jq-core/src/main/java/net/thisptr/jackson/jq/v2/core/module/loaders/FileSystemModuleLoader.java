@@ -119,9 +119,9 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		 */
 		@Override
 		public boolean equals(@Nullable Object o) {
-			if (!(o instanceof FileSystemJqModule))
+			if (!(o instanceof FileSystemJqModule<?> that))
 				return false;
-			return modulePath.equals(((FileSystemJqModule<?>) o).modulePath);
+			return modulePath.equals(that.modulePath);
 		}
 
 		@Override

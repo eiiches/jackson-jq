@@ -117,9 +117,8 @@ public final class Maybe<T extends @Nullable Object> {
 	public boolean equals(@Nullable Object o) {
 		if (this == o)
 			return true;
-		if (!(o instanceof Maybe))
+		if (!(o instanceof Maybe<?> other))
 			return false;
-		Maybe<?> other = (Maybe<?>) o;
 		return present == other.present && Objects.equals(value, other.value);
 	}
 

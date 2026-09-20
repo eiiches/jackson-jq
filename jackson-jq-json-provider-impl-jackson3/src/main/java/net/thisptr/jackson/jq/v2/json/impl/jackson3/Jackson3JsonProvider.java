@@ -193,9 +193,9 @@ public class Jackson3JsonProvider implements JsonProvider<JsonNode> {
 	@Override
 	public NumberType getNumberType(JsonNode node) {
 		// NumericNode is exactly what JsonNode.isNumber() covers.
-		if (!(node instanceof NumericNode))
+		if (!(node instanceof NumericNode numeric))
 			throw new IllegalArgumentException("Cannot get the number type of " + getNodeType(node));
-		return switch (((NumericNode) node).numberType()) {
+		return switch (numeric.numberType()) {
 			// Jackson maps ShortNode to INT too.
 			case INT -> NumberType.INT;
 			case LONG -> NumberType.LONG;

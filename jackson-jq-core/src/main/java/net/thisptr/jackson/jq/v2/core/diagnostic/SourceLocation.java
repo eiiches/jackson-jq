@@ -134,9 +134,8 @@ public final class SourceLocation {
 
 	@Override
 	public boolean equals(@Nullable Object o) {
-		if (!(o instanceof SourceLocation))
+		if (!(o instanceof SourceLocation that))
 			return false;
-		SourceLocation that = (SourceLocation) o;
 		return beginLine == that.beginLine && beginColumn == that.beginColumn
 				&& endLine == that.endLine && endColumn == that.endColumn;
 	}

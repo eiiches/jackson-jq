@@ -127,9 +127,8 @@ public final class VersionRange {
 
 	@Override
 	public boolean equals(@Nullable Object o) {
-		if (!(o instanceof VersionRange))
+		if (!(o instanceof VersionRange that))
 			return false;
-		VersionRange that = (VersionRange) o;
 		return minInclusive == that.minInclusive && maxInclusive == that.maxInclusive && Objects.equals(minVersion, that.minVersion) && Objects.equals(maxVersion, that.maxVersion);
 	}
 

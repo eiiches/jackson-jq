@@ -90,6 +90,6 @@ public final class PipeParenthesesCheck extends AbstractAstWalker {
 	}
 
 	private static boolean isOperator(AstNode operand, BinaryOperator operator) {
-		return operand instanceof BinaryOpAstNode && ((BinaryOpAstNode) operand).operator == operator;
+		return operand instanceof BinaryOpAstNode bin && bin.operator == operator;
 	}
 }

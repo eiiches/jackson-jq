@@ -243,12 +243,12 @@ public class JakartaJsonProvider implements JsonProvider<JsonValue> {
 
 	@Override
 	public @Nullable BigDecimal getNumberAsBigDecimalExact(JsonValue node) {
-		if (!(node instanceof JsonNumber))
+		if (!(node instanceof JsonNumber jsonNumber))
 			throw new IllegalArgumentException("Cannot convert non-number to BigDecimal");
 		// JSON-P itself cannot represent non-finite values; only our own wrapper can hold them.
-		if (node instanceof FloatingPointJsonNumber && !Double.isFinite(((FloatingPointJsonNumber) node).doubleValue()))
+		if (jsonNumber instanceof FloatingPointJsonNumber fp && !Double.isFinite(fp.doubleValue()))
 			return null;
-		return ((JsonNumber) node).bigDecimalValue();
+		return jsonNumber.bigDecimalValue();
 	}
 
 	@Override
@@ -271,9 +271,9 @@ public class JakartaJsonProvider implements JsonProvider<JsonValue> {
 
 	@Override
 	public String getString(JsonValue node) {
-		if (!(node instanceof JsonString))
+		if (!(node instanceof JsonString js))
 			throw new IllegalArgumentException("Cannot get the string value of " + getNodeType(node));
-		return ((JsonString) node).getString();
+		return js.getString();
 	}
 
 	@Override
@@ -336,9 +336,9 @@ public class JakartaJsonProvider implements JsonProvider<JsonValue> {
 	}
 
 	private static JsonNumber requireNumber(JsonValue node, String targetType) {
-		if (!(node instanceof JsonNumber))
+		if (!(node instanceof JsonNumber jn))
 			throw new IllegalArgumentException("Cannot convert non-number to " + targetType);
-		return (JsonNumber) node;
+		return jn;
 	}
 
 	/**
@@ -346,7 +346,7 @@ public class JakartaJsonProvider implements JsonProvider<JsonValue> {
 	 * those; only our own wrapper can hold them.
 	 */
 	private static @Nullable BigDecimal finiteDecimal(JsonNumber number) {
-		if (number instanceof FloatingPointJsonNumber && !Double.isFinite(number.doubleValue()))
+		if (number instanceof FloatingPointJsonNumber fp && !Double.isFinite(fp.doubleValue()))
 			return null;
 		return number.bigDecimalValue();
 	}
@@ -357,39 +357,41 @@ public class JakartaJsonProvider implements JsonProvider<JsonValue> {
 		throw new IllegalArgumentException("Cannot get the binary value of " + getNodeType(node));
 	}
 
+	private static JsonObject requireObject(JsonValue node) {
+		if (!(node instanceof JsonObject obj))
+			throw new IllegalArgumentException("Expected an object node");
+		return obj;
+	}
+
+	private static JsonArray requireArray(JsonValue node) {
+		if (!(node instanceof JsonArray arr))
+			throw new IllegalArgumentException("Expected an array node");
+		return arr;
+	}
+
 	@Override
 	public Iterator<Map.Entry<String, JsonValue>> getObjectMembers(JsonValue node) {
-		if (!(node instanceof JsonObject))
-			throw new IllegalArgumentException("Expected an object node");
-		return ((JsonObject) node).entrySet().iterator();
+		return requireObject(node).entrySet().iterator();
 	}
 
 	@Override
 	public Iterator<JsonValue> getArrayElements(JsonValue node) {
-		if (!(node instanceof JsonArray))
-			throw new IllegalArgumentException("Expected an array node");
-		return ((JsonArray) node).iterator();
+		return requireArray(node).iterator();
 	}
 
 	@Override
 	public Iterator<JsonValue> getObjectMemberValues(JsonValue node) {
-		if (!(node instanceof JsonObject))
-			throw new IllegalArgumentException("Expected an object node");
-		return ((JsonObject) node).values().iterator();
+		return requireObject(node).values().iterator();
 	}
 
 	@Override
 	public Iterator<String> getObjectMemberNames(JsonValue node) {
-		if (!(node instanceof JsonObject))
-			throw new IllegalArgumentException("Expected an object node");
-		return ((JsonObject) node).keySet().iterator();
+		return requireObject(node).keySet().iterator();
 	}
 
 	@Override
 	public Maybe<JsonValue> getObjectMember(JsonValue node, String name) {
-		if (!(node instanceof JsonObject))
-			throw new IllegalArgumentException("Expected an object node");
-		JsonValue value = ((JsonObject) node).get(name);
+		JsonValue value = requireObject(node).get(name);
 		if (value == null)
 			return Maybe.absent();
 		return Maybe.of(value);
@@ -397,17 +399,13 @@ public class JakartaJsonProvider implements JsonProvider<JsonValue> {
 
 	@Override
 	public JsonValue getObjectMemberOrDefault(JsonValue node, String name, JsonValue defaultValue) {
-		if (!(node instanceof JsonObject))
-			throw new IllegalArgumentException("Expected an object node");
-		JsonValue value = ((JsonObject) node).get(name);
+		JsonValue value = requireObject(node).get(name);
 		return value != null ? value : defaultValue;
 	}
 
 	@Override
 	public JsonValue getArrayElement(JsonValue node, int index) {
-		if (!(node instanceof JsonArray))
-			throw new IllegalArgumentException("Expected an array node");
-		JsonArray array = (JsonArray) node;
+		JsonArray array = requireArray(node);
 		if (index < 0 || index >= array.size())
 			throw new IndexOutOfBoundsException("Index " + index + " out of bounds for array length " + array.size());
 		return array.get(index);
@@ -415,23 +413,17 @@ public class JakartaJsonProvider implements JsonProvider<JsonValue> {
 
 	@Override
 	public int getArrayLength(JsonValue node) {
-		if (!(node instanceof JsonArray))
-			throw new IllegalArgumentException("Expected an array node");
-		return ((JsonArray) node).size();
+		return requireArray(node).size();
 	}
 
 	@Override
 	public int getObjectMemberCount(JsonValue node) {
-		if (!(node instanceof JsonObject))
-			throw new IllegalArgumentException("Expected an object node");
-		return ((JsonObject) node).size();
+		return requireObject(node).size();
 	}
 
 	@Override
 	public boolean hasObjectMember(JsonValue node, String name) {
-		if (!(node instanceof JsonObject))
-			throw new IllegalArgumentException("Expected an object node");
-		return ((JsonObject) node).containsKey(name);
+		return requireObject(node).containsKey(name);
 	}
 
 	@Override
@@ -724,8 +716,8 @@ public class JakartaJsonProvider implements JsonProvider<JsonValue> {
 
 		@Override
 		public boolean equals(@Nullable Object other) {
-			return this == other || (other instanceof FloatingPointJsonNumber
-					&& Double.doubleToLongBits(value) == Double.doubleToLongBits(((FloatingPointJsonNumber) other).value));
+			return this == other || (other instanceof FloatingPointJsonNumber fp
+					&& Double.doubleToLongBits(value) == Double.doubleToLongBits(fp.value));
 		}
 
 		@Override

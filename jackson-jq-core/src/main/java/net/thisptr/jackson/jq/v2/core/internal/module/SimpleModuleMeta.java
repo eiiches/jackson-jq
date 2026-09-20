@@ -34,8 +34,7 @@ public class SimpleModuleMeta implements ModuleMeta {
 	public static SimpleModuleMeta fromAst(@Nullable AstNode ast) {
 		@Var AstNode metadataExpr = null;
 		List<Dependency> dependencies = new ArrayList<>();
-		if (ast instanceof TopLevelAstNode) {
-			TopLevelAstNode top = (TopLevelAstNode) ast;
+		if (ast instanceof TopLevelAstNode top) {
 			if (top.moduleDirective() != null)
 				metadataExpr = top.moduleDirective().metadataExpr();
 			for (TopLevelAstNode.ImportStatement imp : top.imports())

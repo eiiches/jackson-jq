@@ -54,12 +54,12 @@ public final class Java17SmokeTest {
 	}
 
 	private static <JsonNode> JsonNode toJsonNode(JsonProvider<JsonNode> jsonProvider, Object value) {
-		if (value instanceof Integer)
-			return jsonProvider.createNumber((Integer) value);
-		if (value instanceof Boolean)
-			return jsonProvider.createBoolean((Boolean) value);
-		if (value instanceof String)
-			return jsonProvider.createString((String) value);
+		if (value instanceof Integer i)
+			return jsonProvider.createNumber(i);
+		if (value instanceof Boolean b)
+			return jsonProvider.createBoolean(b);
+		if (value instanceof String s)
+			return jsonProvider.createString(s);
 		throw new IllegalArgumentException("Unsupported type: " + value.getClass());
 	}
 }

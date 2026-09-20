@@ -205,9 +205,9 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 
 	@Override
 	public boolean getBoolean(Object node) {
-		if (!(node instanceof Boolean))
+		if (!(node instanceof Boolean b))
 			throw new IllegalArgumentException("Cannot get the boolean value of " + getNodeType(node));
-		return (Boolean) node;
+		return b;
 	}
 
 	@Override
@@ -240,9 +240,9 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 
 	@Override
 	public String getString(Object node) {
-		if (!(node instanceof String))
+		if (!(node instanceof String s))
 			throw new IllegalArgumentException("Cannot get the string value of " + getNodeType(node));
-		return (String) node;
+		return s;
 	}
 
 	@Override
@@ -311,26 +311,26 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 	}
 
 	private static Number requireNumber(Object node, String targetType) {
-		if (!(node instanceof Number))
+		if (!(node instanceof Number number))
 			throw new IllegalArgumentException("Cannot convert non-number to " + targetType);
-		return (Number) node;
+		return number;
 	}
 
 	private static @Nullable BigDecimal finiteDecimal(Number number) {
 		if ((number instanceof Double || number instanceof Float) && !Double.isFinite(number.doubleValue()))
 			return null;
-		if (number instanceof BigDecimal)
-			return (BigDecimal) number;
-		if (number instanceof BigInteger)
-			return new BigDecimal((BigInteger) number);
+		if (number instanceof BigDecimal bd)
+			return bd;
+		if (number instanceof BigInteger bi)
+			return new BigDecimal(bi);
 		return new BigDecimal(number.toString());
 	}
 
 	@Override
 	public byte[] getBinaryAsByteArray(Object node) {
-		if (!(node instanceof byte[]))
+		if (!(node instanceof byte[] bytes))
 			throw new IllegalArgumentException("Cannot get the binary value of " + getNodeType(node));
-		return (byte[]) node;
+		return bytes;
 	}
 
 	@Override
@@ -392,20 +392,20 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 
 	@Override
 	public Object deepCopy(Object node) {
-		if (node instanceof JSONObject) {
+		if (node instanceof JSONObject obj) {
 			JSONObject result = new JSONObject();
-			for (Map.Entry<String, Object> entry : ((JSONObject) node).entrySet())
+			for (Map.Entry<String, Object> entry : obj.entrySet())
 				result.put(entry.getKey(), deepCopy(entry.getValue()));
 			return result;
 		}
-		if (node instanceof JSONArray) {
+		if (node instanceof JSONArray arr) {
 			JSONArray result = new JSONArray();
-			for (Object value : (JSONArray) node)
+			for (Object value : arr)
 				result.add(deepCopy(value));
 			return result;
 		}
-		if (node instanceof byte[])
-			return ((byte[]) node).clone();
+		if (node instanceof byte[] bytes)
+			return bytes.clone();
 		return node;
 	}
 
@@ -413,8 +413,7 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 	public String format(Object node) {
 		if (node == null)
 			return "null";
-		if (node instanceof Number) {
-			Number number = (Number) node;
+		if (node instanceof Number number) {
 			if (number instanceof Double || number instanceof Float)
 				return formatDouble(number.doubleValue());
 			return number.toString();
@@ -425,10 +424,10 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 			return JSON.toJSONString(node);
 		if (node instanceof byte[])
 			return JSON.toJSONString(node, JSONWriter.Feature.WriteByteArrayAsBase64);
-		if (node instanceof JSONArray) {
+		if (node instanceof JSONArray arr) {
 			StringBuilder result = new StringBuilder("[");
 			@Var boolean first = true;
-			for (Object value : (JSONArray) node) {
+			for (Object value : arr) {
 				if (!first)
 					result.append(',');
 				first = false;
@@ -436,10 +435,10 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 			}
 			return result.append(']').toString();
 		}
-		if (node instanceof JSONObject) {
+		if (node instanceof JSONObject obj) {
 			StringBuilder result = new StringBuilder("{");
 			@Var boolean first = true;
-			for (Map.Entry<String, Object> entry : ((JSONObject) node).entrySet()) {
+			for (Map.Entry<String, Object> entry : obj.entrySet()) {
 				if (!first)
 					result.append(',');
 				first = false;
@@ -479,15 +478,15 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 	}
 
 	private static JSONObject requireObject(Object node) {
-		if (!(node instanceof JSONObject))
+		if (!(node instanceof JSONObject obj))
 			throw new IllegalArgumentException("Expected an object node");
-		return (JSONObject) node;
+		return obj;
 	}
 
 	private static JSONArray requireArray(Object node) {
-		if (!(node instanceof JSONArray))
+		if (!(node instanceof JSONArray arr))
 			throw new IllegalArgumentException("Expected an array node");
-		return (JSONArray) node;
+		return arr;
 	}
 
 	private static class Fastjson2Parser implements JsonParser<Object> {

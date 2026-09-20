@@ -118,9 +118,8 @@ public final class JqFunction {
 
 	@Override
 	public boolean equals(@Nullable Object o) {
-		if (!(o instanceof JqFunction))
+		if (!(o instanceof JqFunction that))
 			return false;
-		JqFunction that = (JqFunction) o;
 		return signature.equals(that.signature)
 				&& parameters.equals(that.parameters)
 				&& body.equals(that.body)

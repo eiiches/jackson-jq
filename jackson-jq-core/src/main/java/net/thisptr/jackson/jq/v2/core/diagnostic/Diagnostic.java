@@ -90,9 +90,8 @@ public final class Diagnostic {
 
 	@Override
 	public boolean equals(@Nullable Object o) {
-		if (!(o instanceof Diagnostic))
+		if (!(o instanceof Diagnostic that))
 			return false;
-		Diagnostic that = (Diagnostic) o;
 		return severity == that.severity && message.equals(that.message) && Objects.equals(location, that.location);
 	}
 

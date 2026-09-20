@@ -347,14 +347,14 @@ public class Compiler {
 		private Expression<StackFrame, N> asTailCall(FunctionSignature signature, @Nullable SymbolLocation location, Expression<StackFrame, N> compiled, List<Expression<StackFrame, N>> compiledArgs, List<Expression<StackFrame, N>> meteredArgs) {
 			int frameClosureSlot;
 			int slot;
-			if (compiled instanceof ResolvedLocalFunctionAccess) {
+			if (compiled instanceof ResolvedLocalFunctionAccess<N> local) {
 				frameClosureSlot = ResolvedTailCall.LOCAL;
-				slot = ((ResolvedLocalFunctionAccess<N>) compiled).slot();
-			} else if (compiled instanceof ResolvedCapturedFunctionAccess) {
+				slot = local.slot();
+			} else if (compiled instanceof ResolvedCapturedFunctionAccess<N> captured) {
 				// The usual case for recursion: a def referring to itself has crossed its own function
 				// boundary, so it reads itself out of its own closure rather than out of a frame slot.
-				frameClosureSlot = ((ResolvedCapturedFunctionAccess<N>) compiled).frameClosureSlot();
-				slot = ((ResolvedCapturedFunctionAccess<N>) compiled).closureSlot();
+				frameClosureSlot = captured.frameClosureSlot();
+				slot = captured.closureSlot();
 			} else {
 				return compiled;
 			}
@@ -400,10 +400,10 @@ public class Compiler {
 			}
 			// A filter argument is otherwise a closure over the caller's frame, which the loop pops. A bare
 			// reference to a function already sitting in a slot is the one shape that outlives it.
-			if (argument instanceof ResolvedLocalFunctionAccess && ((ResolvedLocalFunctionAccess<N>) argument).args().isEmpty())
-				return new TailCallArgument.Filter<>(ResolvedTailCall.LOCAL, ((ResolvedLocalFunctionAccess<N>) argument).slot());
-			if (argument instanceof ResolvedCapturedFunctionAccess && ((ResolvedCapturedFunctionAccess<N>) argument).args().isEmpty())
-				return new TailCallArgument.Filter<>(((ResolvedCapturedFunctionAccess<N>) argument).frameClosureSlot(), ((ResolvedCapturedFunctionAccess<N>) argument).closureSlot());
+			if (argument instanceof ResolvedLocalFunctionAccess<N> local && local.args().isEmpty())
+				return new TailCallArgument.Filter<>(ResolvedTailCall.LOCAL, local.slot());
+			if (argument instanceof ResolvedCapturedFunctionAccess<N> captured && captured.args().isEmpty())
+				return new TailCallArgument.Filter<>(captured.frameClosureSlot(), captured.closureSlot());
 			return null;
 		}
 
@@ -488,10 +488,10 @@ public class Compiler {
 		 */
 		private Expression<StackFrame, N> compilePipe(BinaryOpAstNode piped) throws JsonQueryException {
 			AstNode left = piped.lhs;
-			if (left instanceof AsBindingAstNode)
-				return compileAsBinding((AsBindingAstNode) left, piped.rhs);
-			if (left instanceof LabelAstNode)
-				return compileLabel((LabelAstNode) left, piped.rhs);
+			if (left instanceof AsBindingAstNode asBinding)
+				return compileAsBinding(asBinding, piped.rhs);
+			if (left instanceof LabelAstNode label)
+				return compileLabel(label, piped.rhs);
 
 			Expression<StackFrame, N> compiledLeft = compileNonNull(env, context, scope, left);
 			// The pipe's own values are the right side's, so the right side inherits tail position -- but only
@@ -550,8 +550,8 @@ public class Compiler {
 				context.setTailPosition(inTailPosition && i == expressions.size() - 1);
 				Expression<StackFrame, N> expression = compileNonNull(env, context, q);
 				newExpressions.add(expression);
-				if (expression instanceof ResolvedFunctionDefinition<?>)
-					definedFunctionSlots.add(((ResolvedFunctionDefinition<?>) expression).slot());
+				if (expression instanceof ResolvedFunctionDefinition<?> def)
+					definedFunctionSlots.add(def.slot());
 			}
 			return new SemicolonOperator<>(newExpressions, definedFunctionSlots, context.outputCountersOf(newExpressions.subList(0, Math.max(0, newExpressions.size() - 1))));
 		}
@@ -680,13 +680,13 @@ public class Compiler {
 			pending.push(comma);
 			while (!pending.isEmpty()) {
 				AstNode operand = pending.pop();
-				if (operand instanceof BinaryOpAstNode && ((BinaryOpAstNode) operand).operator == BinaryOperator.COMMA) {
-					pending.push(((BinaryOpAstNode) operand).rhs);
-					pending.push(((BinaryOpAstNode) operand).lhs);
+				if (operand instanceof BinaryOpAstNode bin && bin.operator == BinaryOperator.COMMA) {
+					pending.push(bin.rhs);
+					pending.push(bin.lhs);
 					continue;
 				}
-				if (operand instanceof ParenAstNode) {
-					pending.push(((ParenAstNode) operand).value());
+				if (operand instanceof ParenAstNode paren) {
+					pending.push(paren.value());
 					continue;
 				}
 				// Only the last operand inherits tail position: an earlier one is followed by operands the

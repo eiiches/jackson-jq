@@ -119,9 +119,8 @@ public final class FunctionSignature {
 
 	@Override
 	public boolean equals(@Nullable Object o) {
-		if (!(o instanceof FunctionSignature))
+		if (!(o instanceof FunctionSignature that))
 			return false;
-		FunctionSignature that = (FunctionSignature) o;
 		return Objects.equals(name, that.name) && Objects.equals(arity, that.arity);
 	}
 

@@ -194,9 +194,9 @@ public class Jackson2JsonProvider implements JsonProvider<JsonNode> {
 	@Override
 	public NumberType getNumberType(JsonNode node) {
 		// NumericNode is exactly what JsonNode.isNumber() covers.
-		if (!(node instanceof NumericNode))
+		if (!(node instanceof NumericNode numeric))
 			throw new IllegalArgumentException("Cannot get the number type of " + getNodeType(node));
-		return switch (((NumericNode) node).numberType()) {
+		return switch (numeric.numberType()) {
 			// Jackson maps ShortNode here too.
 			case INT -> NumberType.INT;
 			case LONG -> NumberType.LONG;
@@ -363,10 +363,10 @@ public class Jackson2JsonProvider implements JsonProvider<JsonNode> {
 
 	@Override
 	public byte[] getBinaryAsByteArray(JsonNode node) {
-		if (!(node instanceof BinaryNode))
+		if (!(node instanceof BinaryNode binary))
 			throw new IllegalArgumentException("Cannot get the binary value of " + getNodeType(node));
 		// BinaryNode.binaryValue() does not declare the IOException that JsonNode.binaryValue() does.
-		return ((BinaryNode) node).binaryValue();
+		return binary.binaryValue();
 	}
 
 	@Override

@@ -103,9 +103,8 @@ public final class FunctionParameter {
 
 	@Override
 	public boolean equals(@Nullable Object o) {
-		if (!(o instanceof FunctionParameter))
+		if (!(o instanceof FunctionParameter that))
 			return false;
-		FunctionParameter that = (FunctionParameter) o;
 		return kind == that.kind && name.equals(that.name);
 	}
 

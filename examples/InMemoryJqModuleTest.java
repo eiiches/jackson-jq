@@ -87,7 +87,7 @@ public class InMemoryJqModuleTest {
 		 */
 		@Override
 		public boolean equals(Object o) {
-			return o instanceof InMemoryJqModule && name.equals(((InMemoryJqModule) o).name);
+			return o instanceof InMemoryJqModule other && name.equals(other.name);
 		}
 
 		@Override

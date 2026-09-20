@@ -154,8 +154,8 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 			Map<FunctionSignature, Function> result = new HashMap<>();
 			for (Map.Entry<FunctionSignature, Integer> entry : rootFunctionSlots.entrySet()) {
 				Object raw = rootFrame.get(entry.getValue());
-				if (raw instanceof Function) {
-					result.put(entry.getKey(), (Function) raw);
+				if (raw instanceof Function fn) {
+					result.put(entry.getKey(), fn);
 				}
 			}
 			return result;

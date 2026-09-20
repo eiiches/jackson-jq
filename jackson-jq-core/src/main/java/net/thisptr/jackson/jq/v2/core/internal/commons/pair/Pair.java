@@ -40,9 +40,8 @@ public class Pair<T, U> {
 
 	@Override
 	public boolean equals(@Nullable Object o) {
-		if (!(o instanceof Pair))
+		if (!(o instanceof Pair<?, ?> pair))
 			return false;
-		Pair<?, ?> pair = (Pair<?, ?>) o;
 		return Objects.equals(_1, pair._1) && Objects.equals(_2, pair._2);
 	}
 

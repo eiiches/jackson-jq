@@ -132,14 +132,14 @@ public class DumpExprFunction implements Function {
 				return reference(previousIdentity);
 			String identity = identity(value);
 			identities.put(value, identity);
-			if (value instanceof Expression)
-				return serializeExpression((Expression<?, ?>) value, identity);
+			if (value instanceof Expression<?, ?> expr)
+				return serializeExpression(expr, identity);
 			if (value.getClass().isArray())
 				return serializeArray(value, identity);
-			if (value instanceof Iterable)
-				return serializeIterable((Iterable<?>) value, identity);
-			if (value instanceof Map)
-				return serializeMap((Map<?, ?>) value, identity);
+			if (value instanceof Iterable<?> iterable)
+				return serializeIterable(iterable, identity);
+			if (value instanceof Map<?, ?> map)
+				return serializeMap(map, identity);
 			if (isStructural(value.getClass()))
 				return serializeObject(value, identity);
 			return serializeOpaque(value, identity);

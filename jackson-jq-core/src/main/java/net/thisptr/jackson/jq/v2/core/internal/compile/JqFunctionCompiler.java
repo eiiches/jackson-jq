@@ -55,9 +55,8 @@ final class JqFunctionCompiler {
 		public boolean equals(Object obj) {
 			if (this == obj)
 				return true;
-			if (!(obj instanceof DefinitionKey))
+			if (!(obj instanceof DefinitionKey other))
 				return false;
-			DefinitionKey other = (DefinitionKey) obj;
 			return version.equals(other.version) && signature.equals(other.signature) && parameters.equals(other.parameters) && body.equals(other.body) && origin == other.origin;
 		}
 

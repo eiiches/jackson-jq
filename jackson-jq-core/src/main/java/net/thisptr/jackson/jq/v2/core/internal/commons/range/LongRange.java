@@ -33,9 +33,8 @@ public class LongRange {
 
 	@Override
 	public boolean equals(@Nullable Object o) {
-		if (!(o instanceof LongRange))
+		if (!(o instanceof LongRange other))
 			return false;
-		LongRange other = (LongRange) o;
 		return startInclusive == other.startInclusive && endExclusive == other.endExclusive;
 	}
 

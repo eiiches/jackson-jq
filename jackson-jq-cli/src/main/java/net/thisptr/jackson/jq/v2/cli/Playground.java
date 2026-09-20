@@ -405,10 +405,9 @@ final class Playground<N> {
 			}
 			return false;
 		}
-		if (!(event instanceof KeyEvent)) {
+		if (!(event instanceof KeyEvent key)) {
 			return false;
 		}
-		KeyEvent key = (KeyEvent) event;
 		if (modal != Modal.NONE && key.hasCtrl() && (key.isChar('p') || key.isChar('r'))) {
 			return true;
 		}
