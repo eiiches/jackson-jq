@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.test.testcase;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -19,7 +18,7 @@ public final class ModuleFixtures {
 		for (Map.Entry<String, String> entry : modules.entrySet()) {
 			Path file = dir.resolve(entry.getKey());
 			Files.createDirectories(file.getParent());
-			Files.write(file, entry.getValue().getBytes(StandardCharsets.UTF_8));
+			Files.writeString(file, entry.getValue());
 		}
 		return dir;
 	}

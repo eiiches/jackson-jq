@@ -222,7 +222,7 @@ public class Main {
 		if (queryFile != null) {
 			// jq reads the query from the file, so that every positional argument is an input file.
 			try {
-				query = new String(Files.readAllBytes(Paths.get(queryFile)), StandardCharsets.UTF_8);
+				query = Files.readString(Paths.get(queryFile));
 			} catch (IOException e) {
 				System.err.println("jq: error: Could not open " + queryFile + ": " + reason(e));
 				System.exit(1);

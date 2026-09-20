@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.module.loaders;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -209,7 +208,7 @@ public class FileSystemModuleLoaderTest {
 	@Test
 	public void testModuleCanImportFromAnotherLoader() throws Exception {
 		Path dir = Objects.requireNonNull(tempDir);
-		Files.write(dir.resolve("uses_other.jq"), "import \"other\" as other; def one: other::two - 1;".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(dir.resolve("uses_other.jq"), "import \"other\" as other; def one: other::two - 1;");
 
 		Environment<JsonNode> mixedEnv = EnvironmentBuilder.<JsonNode>withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.clearModuleLoaders()
@@ -246,9 +245,9 @@ public class FileSystemModuleLoaderTest {
 		Path outside = Objects.requireNonNull(tempDir);
 		Path searchPath = outside.resolve("root");
 		Files.createDirectories(searchPath);
-		Files.write(searchPath.resolve("inside.jq"), "def inside: 1;".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(searchPath.resolve("inside.jq"), "def inside: 1;");
 		// The sibling of the search path: reachable only by escaping it.
-		Files.write(outside.resolve("root.jq"), "def secret: \"leaked\";".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(outside.resolve("root.jq"), "def secret: \"leaked\";");
 
 		Environment<JsonNode> rootEnv = EnvironmentBuilder.<JsonNode>withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.clearModuleLoaders()
@@ -278,8 +277,8 @@ public class FileSystemModuleLoaderTest {
 		Path outside = Objects.requireNonNull(tempDir);
 		Path searchPath = outside.resolve("root2");
 		Files.createDirectories(searchPath);
-		Files.write(searchPath.resolve("a.jq"), "import \".\" as m {search: \"./\"}; def one: m::secret;".getBytes(StandardCharsets.UTF_8));
-		Files.write(outside.resolve("root2.jq"), "def secret: \"leaked\";".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(searchPath.resolve("a.jq"), "import \".\" as m {search: \"./\"}; def one: m::secret;");
+		Files.writeString(outside.resolve("root2.jq"), "def secret: \"leaked\";");
 
 		Environment<JsonNode> rootEnv = EnvironmentBuilder.<JsonNode>withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.clearModuleLoaders()
@@ -303,7 +302,7 @@ public class FileSystemModuleLoaderTest {
 		Path outside = Objects.requireNonNull(tempDir);
 		Path searchPath = outside.resolve("root3");
 		Files.createDirectories(searchPath);
-		Files.write(outside.resolve("shared.jq"), "def shared: 42;".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(outside.resolve("shared.jq"), "def shared: 42;");
 		try {
 			Files.createSymbolicLink(searchPath.resolve("shared.jq"), outside.resolve("shared.jq"));
 		} catch (UnsupportedOperationException | FileSystemException e) {

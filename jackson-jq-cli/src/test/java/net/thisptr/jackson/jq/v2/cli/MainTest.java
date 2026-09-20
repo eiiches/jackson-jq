@@ -540,7 +540,7 @@ class MainTest {
 
 	private static Path write(Path dir, String name, String content) throws Exception {
 		Path file = dir.resolve(name);
-		Files.write(file, content.getBytes(StandardCharsets.UTF_8));
+		Files.writeString(file, content);
 		return file;
 	}
 
