@@ -2,63 +2,63 @@ package net.thisptr.jackson.jq.v2.spi.version;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class VersionTest {
 
 	@Test
 	void testValidVersions() {
 		Version v1 = Version.valueOf("1.0");
-		assertEquals(1, v1.major());
-		assertEquals(0, v1.minor());
-		assertEquals(0, v1.patch());
+		assertThat(v1.major()).isEqualTo(1);
+		assertThat(v1.minor()).isEqualTo(0);
+		assertThat(v1.patch()).isEqualTo(0);
 
 		Version v2 = Version.valueOf("1.2.3");
-		assertEquals(1, v2.major());
-		assertEquals(2, v2.minor());
-		assertEquals(3, v2.patch());
+		assertThat(v2.major()).isEqualTo(1);
+		assertThat(v2.minor()).isEqualTo(2);
+		assertThat(v2.patch()).isEqualTo(3);
 
 		Version v3 = Version.valueOf("0.1.0");
-		assertEquals(0, v3.major());
-		assertEquals(1, v3.minor());
-		assertEquals(0, v3.patch());
+		assertThat(v3.major()).isEqualTo(0);
+		assertThat(v3.minor()).isEqualTo(1);
+		assertThat(v3.patch()).isEqualTo(0);
 
 		Version v4 = Version.valueOf("10.20.30");
-		assertEquals(10, v4.major());
-		assertEquals(20, v4.minor());
-		assertEquals(30, v4.patch());
+		assertThat(v4.major()).isEqualTo(10);
+		assertThat(v4.minor()).isEqualTo(20);
+		assertThat(v4.patch()).isEqualTo(30);
 	}
 
 	@Test
 	void testOfComponents() {
 		Version v1 = Version.of(1, 2, 3);
-		assertEquals(1, v1.major());
-		assertEquals(2, v1.minor());
-		assertEquals(3, v1.patch());
+		assertThat(v1.major()).isEqualTo(1);
+		assertThat(v1.minor()).isEqualTo(2);
+		assertThat(v1.patch()).isEqualTo(3);
 
 		Version v2 = Version.of(1, 2);
-		assertEquals(1, v2.major());
-		assertEquals(2, v2.minor());
-		assertEquals(0, v2.patch());
+		assertThat(v2.major()).isEqualTo(1);
+		assertThat(v2.minor()).isEqualTo(2);
+		assertThat(v2.patch()).isEqualTo(0);
 	}
 
 	@Test
 	void testInvalidVersions() {
-		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("1"));
-		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("1.0.0.0"));
-		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("01.0.0"));
-		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("1.0.0-SNAPSHOT"));
-		assertThrows(IllegalArgumentException.class, () -> Version.valueOf(""));
-		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("abc"));
-		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("-1.0"));
-		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("1.-1.0"));
-		assertThrows(IllegalArgumentException.class, () -> Version.valueOf("1.0.-1"));
-		assertThrows(IllegalArgumentException.class, () -> Version.of(-1, 0, 0));
-		assertThrows(IllegalArgumentException.class, () -> Version.of(0, -1, 0));
-		assertThrows(IllegalArgumentException.class, () -> Version.of(0, 0, -1));
-		assertThrows(IllegalArgumentException.class, () -> Version.of(-1, -1, -1));
-		assertThrows(IllegalArgumentException.class, () -> Version.of(-1, 0));
-		assertThrows(IllegalArgumentException.class, () -> Version.of(0, -1));
+		assertThatThrownBy(() -> Version.valueOf("1")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> Version.valueOf("1.0.0.0")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> Version.valueOf("01.0.0")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> Version.valueOf("1.0.0-SNAPSHOT")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> Version.valueOf("")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> Version.valueOf("abc")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> Version.valueOf("-1.0")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> Version.valueOf("1.-1.0")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> Version.valueOf("1.0.-1")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> Version.of(-1, 0, 0)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> Version.of(0, -1, 0)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> Version.of(0, 0, -1)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> Version.of(-1, -1, -1)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> Version.of(-1, 0)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> Version.of(0, -1)).isInstanceOf(IllegalArgumentException.class);
 	}
 }

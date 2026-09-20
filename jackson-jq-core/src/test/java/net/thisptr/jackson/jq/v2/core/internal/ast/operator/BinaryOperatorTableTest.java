@@ -2,23 +2,22 @@ package net.thisptr.jackson.jq.v2.core.internal.ast.operator;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class BinaryOperatorTableTest {
 	@Test
 	void everySupportedVersionDefinesEveryOperator() {
 		for (BinaryOperatorTable table : new BinaryOperatorTable[] { Jq15BinaryOperatorTable.INSTANCE, Jq18BinaryOperatorTable.INSTANCE }) {
 			for (BinaryOperator operator : BinaryOperator.values())
-				assertNotNull(table.getOperatorInfo(operator), operator.toString());
+				assertThat(table.getOperatorInfo(operator)).as(operator.toString()).isNotNull();
 		}
 	}
 
 	@Test
 	void bindingPipePrecedenceChangesAtJq18() {
-		assertEquals(0, Jq15BinaryOperatorTable.INSTANCE.getOperatorInfo(BinaryOperator.BINDING_PIPE).getPrecedence());
+		assertThat(Jq15BinaryOperatorTable.INSTANCE.getOperatorInfo(BinaryOperator.BINDING_PIPE).getPrecedence()).isEqualTo(0);
 		BinaryOperatorInfo jq18BindingPipe = Jq18BinaryOperatorTable.INSTANCE.getOperatorInfo(BinaryOperator.BINDING_PIPE);
-		assertEquals(7, jq18BindingPipe.getPrecedence());
-		assertEquals(BinaryOperatorInfo.Associativity.RIGHT, jq18BindingPipe.getAssociativity());
+		assertThat(jq18BindingPipe.getPrecedence()).isEqualTo(7);
+		assertThat(jq18BindingPipe.getAssociativity()).isEqualTo(BinaryOperatorInfo.Associativity.RIGHT);
 	}
 }

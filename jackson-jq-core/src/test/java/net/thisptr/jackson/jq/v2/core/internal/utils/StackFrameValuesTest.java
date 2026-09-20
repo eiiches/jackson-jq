@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.utils;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 
@@ -11,9 +12,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class StackFrameValuesTest {
 
@@ -21,30 +20,30 @@ public class StackFrameValuesTest {
 	void passesThroughAnExistingPathAndValue() {
 		PathAndValue<String> pv = new PathAndValue<>(UntrackedPath.getInstance(), "value");
 
-		assertSame(pv, StackFrameValues.<String>asPathAndValue(pv));
+		assertThat(StackFrameValues.<String>asPathAndValue(pv)).isSameAs(pv);
 	}
 
 	@Test
 	void wrapsAPlainValueWithoutAPath() {
 		PathAndValue<String> result = StackFrameValues.asPathAndValue("value");
 
-		assertNotNull(result);
-		assertSame(UntrackedPath.getInstance(), result.getPath());
-		assertSame("value", result.getValue());
+		assertThat(result).isNotNull();
+		assertThat(Objects.requireNonNull(result).getPath()).isSameAs(UntrackedPath.getInstance());
+		assertThat(result.getValue()).isSameAs("value");
 	}
 
 	@Test
 	void returnsNullForNullRawValue() {
-		assertNull(StackFrameValues.asPathAndValue(null));
+		assertThat(StackFrameValues.asPathAndValue(null)).isNull();
 	}
 
 	@Test
 	void roundTripsAPlainValueThroughASlot() {
 		PathAndValue<String> result = StackFrameValues.asPathAndValue(StackFrameValues.toSlot("value"));
 
-		assertNotNull(result);
-		assertSame(UntrackedPath.getInstance(), result.getPath());
-		assertSame("value", result.getValue());
+		assertThat(result).isNotNull();
+		assertThat(Objects.requireNonNull(result).getPath()).isSameAs(UntrackedPath.getInstance());
+		assertThat(result.getValue()).isSameAs("value");
 	}
 
 	// A provider representing JSON null as Java null binds exactly this. It must not be stored as a
@@ -54,13 +53,13 @@ public class StackFrameValuesTest {
 	@Test
 	void roundTripsAJavaNullValueThroughASlotAsAValue() {
 		Object slot = StackFrameValues.toSlot((String) null);
-		assertNotNull(slot);
+		assertThat(slot).isNotNull();
 
 		PathAndValue<String> result = StackFrameValues.asPathAndValue(slot);
 
-		assertNotNull(result);
-		assertSame(UntrackedPath.getInstance(), result.getPath());
-		assertNull(result.getValue());
+		assertThat(result).isNotNull();
+		assertThat(result.getPath()).isSameAs(UntrackedPath.getInstance());
+		assertThat(result.getValue()).isNull();
 	}
 
 	@Test
@@ -72,7 +71,7 @@ public class StackFrameValuesTest {
 			}
 		};
 
-		assertNull(StackFrameValues.asPathAndValue(factory));
+		assertThat(StackFrameValues.asPathAndValue(factory)).isNull();
 	}
 
 	@Test
@@ -81,6 +80,6 @@ public class StackFrameValuesTest {
 			throw new UnsupportedOperationException();
 		};
 
-		assertNull(StackFrameValues.asPathAndValue(expression));
+		assertThat(StackFrameValues.asPathAndValue(expression)).isNull();
 	}
 }

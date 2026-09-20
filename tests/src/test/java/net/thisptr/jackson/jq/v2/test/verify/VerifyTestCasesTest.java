@@ -10,7 +10,6 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jspecify.annotations.Nullable;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.function.Executable;
 
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
@@ -24,6 +23,7 @@ import net.thisptr.jackson.jq.v2.test.testcase.TestCaseLoader;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 /**
  * Verifies that the {@code out} expectations in the golden test data under
@@ -77,7 +77,7 @@ public class VerifyTestCasesTest {
 					});
 				}
 			}
-			Assertions.assertAll(testExecutables);
+			assertAll(testExecutables);
 		} finally {
 			if (moduleSearchPath != null)
 				ModuleFixtures.cleanup(moduleSearchPath);
@@ -89,7 +89,7 @@ public class VerifyTestCasesTest {
 			throw new IllegalArgumentException("Usage: VerifyTestCasesTest <test-case-resource>");
 
 		VerifyTestCasesTest verifier = new VerifyTestCasesTest();
-		Assertions.assertAll(
+		assertAll(
 				args[0],
 				TestCaseLoader.loadTestCasesAsJsonStrings(args[0]).parallel()
 						.map(tcText -> (Executable) () -> verifier.test(tcText)));

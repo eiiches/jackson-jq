@@ -23,7 +23,7 @@ import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ObjectMatcherTest {
 	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProvider.getInstance();
@@ -37,9 +37,9 @@ public class ObjectMatcherTest {
 				new ObjectMatcher.FieldMatcher<>(false, null, new ValueLiteral<>(JSON_PROVIDER.createString("c")), new ValueMatcher<>("y"), Memory.NO_OUTPUT_COUNTER)), Versions.JQ_1_8_2)
 				.resolveSlots(new SlotResolver(slots("x", 3, "y", 5)));
 
-		assertEquals(List.of(
+		assertThat(bindingsPerMatch(matcher, in, 3, 5)).isEqualTo(List.of(
 				List.<Pair<Integer, Object>>of(Pair.of(3, IntNode.valueOf(1)), Pair.of(5, IntNode.valueOf(3))),
-				List.<Pair<Integer, Object>>of(Pair.of(3, IntNode.valueOf(2)), Pair.of(5, IntNode.valueOf(3)))), bindingsPerMatch(matcher, in, 3, 5));
+				List.<Pair<Integer, Object>>of(Pair.of(3, IntNode.valueOf(2)), Pair.of(5, IntNode.valueOf(3)))));
 	}
 
 	@Test
@@ -51,9 +51,9 @@ public class ObjectMatcherTest {
 				new ObjectMatcher.FieldMatcher<>(false, null, new Comma<>(List.of(new ValueLiteral<>(JSON_PROVIDER.createString("b")), new ValueLiteral<>(JSON_PROVIDER.createString("c")))), new ValueMatcher<>("y"), Memory.NO_OUTPUT_COUNTER)), Versions.JQ_1_8_2)
 				.resolveSlots(new SlotResolver(slots("x", 7, "y", 11)));
 
-		assertEquals(List.of(
+		assertThat(bindingsPerMatch(matcher, in, 7, 11)).isEqualTo(List.of(
 				List.<Pair<Integer, Object>>of(Pair.of(7, IntNode.valueOf(1)), Pair.of(11, IntNode.valueOf(2))),
-				List.<Pair<Integer, Object>>of(Pair.of(7, IntNode.valueOf(1)), Pair.of(11, IntNode.valueOf(3)))), bindingsPerMatch(matcher, in, 7, 11));
+				List.<Pair<Integer, Object>>of(Pair.of(7, IntNode.valueOf(1)), Pair.of(11, IntNode.valueOf(3)))));
 	}
 
 	/**

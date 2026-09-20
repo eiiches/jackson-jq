@@ -9,7 +9,6 @@ import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 class SourceLocationTest {
 	@Test
@@ -92,7 +91,8 @@ class SourceLocationTest {
 	}
 
 	private static BinaryOpAstNode assertOperator(BinaryOperator operator, AstNode node) {
-		BinaryOpAstNode binary = assertInstanceOf(BinaryOpAstNode.class, node);
+		assertThat(node).isInstanceOf(BinaryOpAstNode.class);
+		BinaryOpAstNode binary = (BinaryOpAstNode) node;
 		assertThat(binary.operator).isEqualTo(operator);
 		return binary;
 	}

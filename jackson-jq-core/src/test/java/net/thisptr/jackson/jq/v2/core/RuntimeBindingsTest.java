@@ -25,8 +25,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class RuntimeBindingsTest {
 	/**
@@ -71,9 +70,9 @@ public class RuntimeBindingsTest {
 				.setVariable("value", () -> JSON_PROVIDER.createNumber(overrideCounter.incrementAndGet()))
 				.build();
 
-		assertEquals(0, overrideCounter.get());
+		assertThat(overrideCounter.get()).isEqualTo(0);
 		assertThat(run(query, bindings)).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("[1,2]")));
-		assertEquals(2, overrideCounter.get());
+		assertThat(overrideCounter.get()).isEqualTo(2);
 	}
 
 	@Test
@@ -87,7 +86,7 @@ public class RuntimeBindingsTest {
 				.build();
 
 		run(env.compile("."), bindings);
-		assertEquals(0, counter.get());
+		assertThat(counter.get()).isEqualTo(0);
 	}
 
 	@Test
@@ -99,8 +98,9 @@ public class RuntimeBindingsTest {
 				.setVariable("value", () -> null)
 				.build();
 
-		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(env.compile("$value"), bindings));
-		assertThat(error).hasMessageContaining("evaluated to null");
+		assertThatThrownBy(() -> run(env.compile("$value"), bindings))
+				.isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("evaluated to null");
 	}
 
 	@Test
@@ -131,16 +131,16 @@ public class RuntimeBindingsTest {
 				.defineConstant("known", JSON_PROVIDER.createNull())
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$known");
-
-		JsonQueryException variableError = assertThrows(JsonQueryException.class,
-				() -> query.withRuntimeBindings(bindingsWithVariable("unknown", 1)));
-		assertThat(variableError).hasMessageContaining("$unknown");
+		assertThatThrownBy(() -> query.withRuntimeBindings(bindingsWithVariable("unknown", 1)))
+				.isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("$unknown");
 
 		RuntimeBindings<JsonNode> functionBindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setFunction(FunctionSignature.of("unknown", 0), constantFunction("unused"))
 				.build();
-		JsonQueryException functionError = assertThrows(JsonQueryException.class, () -> query.withRuntimeBindings(functionBindings));
-		assertThat(functionError).hasMessageContaining("unknown/0");
+		assertThatThrownBy(() -> query.withRuntimeBindings(functionBindings))
+				.isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("unknown/0");
 	}
 
 	@Test
@@ -150,9 +150,10 @@ public class RuntimeBindingsTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$known");
 
-		JsonQueryException error = assertThrows(JsonQueryException.class,
-				() -> query.withRuntimeBindings(bindingsWithVariable("known", 2)));
-		assertThat(error).hasMessageContaining("$known").hasMessageContaining("fixed value");
+		assertThatThrownBy(() -> query.withRuntimeBindings(bindingsWithVariable("known", 2)))
+				.isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("$known")
+				.hasMessageContaining("fixed value");
 	}
 
 	@Test
@@ -162,8 +163,10 @@ public class RuntimeBindingsTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("$value");
 
-		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(query));
-		assertThat(error).hasMessageContaining("$value").hasMessageContaining("must be supplied");
+		assertThatThrownBy(() -> run(query))
+				.isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("$value")
+				.hasMessageContaining("must be supplied");
 	}
 
 	@Test
@@ -174,8 +177,10 @@ public class RuntimeBindingsTest {
 				.build();
 		JsonQuery<JsonNode> query = env.compile("length");
 
-		JsonQueryException error = assertThrows(JsonQueryException.class, () -> run(query));
-		assertThat(error).hasMessageContaining("length").hasMessageContaining("must be supplied");
+		assertThatThrownBy(() -> run(query))
+				.isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("length")
+				.hasMessageContaining("must be supplied");
 
 		RuntimeBindings<JsonNode> bindings = RuntimeBindings.<JsonNode>newBuilder()
 				.setFunction(builtinCollision, constantFunction("overridden"))
@@ -196,7 +201,9 @@ public class RuntimeBindingsTest {
 		assertThat(run(bound)).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("1")));
 		assertThat(run(reboundFromTheSameBase)).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("2")));
 		// The base query never acquired bindings of its own, so it still demands them.
-		assertThat(assertThrows(JsonQueryException.class, () -> run(query))).hasMessageContaining("must be supplied");
+		assertThatThrownBy(() -> run(query))
+				.isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("must be supplied");
 	}
 
 	@Test

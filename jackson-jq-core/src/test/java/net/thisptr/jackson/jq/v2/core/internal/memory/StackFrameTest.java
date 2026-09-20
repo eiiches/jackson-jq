@@ -4,10 +4,8 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class StackFrameTest {
 
@@ -17,7 +15,7 @@ public class StackFrameTest {
 
 		StackFrame frame = stack.pushFrame(1);
 
-		assertSame(stack, frame.getEnclosingMemory());
+		assertThat(frame.getEnclosingMemory()).isSameAs(stack);
 	}
 
 	@Test
@@ -29,9 +27,9 @@ public class StackFrameTest {
 		frame.set(0, "value");
 		frame.set(2, supplier);
 
-		assertEquals("value", frame.get(0));
-		assertNull(frame.get(1));
-		assertSame(supplier, frame.get(2));
+		assertThat(frame.get(0)).isEqualTo("value");
+		assertThat(frame.get(1)).isNull();
+		assertThat(frame.get(2)).isSameAs(supplier);
 	}
 
 	@Test
@@ -39,7 +37,7 @@ public class StackFrameTest {
 		Memory stack = new Memory();
 		StackFrame frame = stack.pushFrame(1);
 
-		assertThrows(IndexOutOfBoundsException.class, () -> frame.set(1, "value"));
+		assertThatThrownBy(() -> frame.set(1, "value")).isInstanceOf(IndexOutOfBoundsException.class);
 	}
 
 	@Test
@@ -47,7 +45,7 @@ public class StackFrameTest {
 		Memory stack = new Memory();
 		StackFrame frame = stack.pushFrame(1);
 
-		assertThrows(IndexOutOfBoundsException.class, () -> frame.get(1));
+		assertThatThrownBy(() -> frame.get(1)).isInstanceOf(IndexOutOfBoundsException.class);
 	}
 
 	@Test
@@ -55,8 +53,8 @@ public class StackFrameTest {
 		Memory stack = new Memory();
 		StackFrame frame = stack.pushFrame(1);
 
-		assertThrows(IndexOutOfBoundsException.class, () -> frame.get(-1));
-		assertThrows(IndexOutOfBoundsException.class, () -> frame.set(-1, "value"));
+		assertThatThrownBy(() -> frame.get(-1)).isInstanceOf(IndexOutOfBoundsException.class);
+		assertThatThrownBy(() -> frame.set(-1, "value")).isInstanceOf(IndexOutOfBoundsException.class);
 	}
 
 	@Test
@@ -67,7 +65,7 @@ public class StackFrameTest {
 
 		StackFrame child = stack.pushFrame(1);
 
-		assertNull(child.get(0));
+		assertThat(child.get(0)).isNull();
 	}
 
 	@Test
@@ -80,7 +78,7 @@ public class StackFrameTest {
 
 		stack.popFrame();
 
-		assertEquals("parent", parent.get(0));
+		assertThat(parent.get(0)).isEqualTo("parent");
 	}
 
 	@Test
@@ -92,7 +90,7 @@ public class StackFrameTest {
 		stack.popFrame();
 		StackFrame second = stack.pushFrame(1);
 
-		assertNull(second.get(0));
+		assertThat(second.get(0)).isNull();
 	}
 
 	@Test
@@ -104,44 +102,44 @@ public class StackFrameTest {
 		stack.popFrame();
 		stack.popFrame();
 
-		assertThrows(IllegalStateException.class, stack::popFrame);
+		assertThatThrownBy(stack::popFrame).isInstanceOf(IllegalStateException.class);
 	}
 
 	@Test
 	void rejectsNegativeFrameSizes() {
 		Memory stack = new Memory();
 
-		assertThrows(IllegalArgumentException.class, () -> stack.pushFrame(-1));
+		assertThatThrownBy(() -> stack.pushFrame(-1)).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
 	void throwsWhenPoppingAnEmptyStack() {
 		Memory stack = new Memory();
 
-		assertThrows(IllegalStateException.class, stack::popFrame);
+		assertThatThrownBy(stack::popFrame).isInstanceOf(IllegalStateException.class);
 	}
 
 	@Test
 	void readsPreparedGlobalSlots() {
 		Memory stack = new Memory(new Object[] { "first", "second" });
 
-		assertEquals("first", stack.getGlobal(0));
-		assertEquals("second", stack.getGlobal(1));
+		assertThat(stack.getGlobal(0)).isEqualTo("first");
+		assertThat(stack.getGlobal(1)).isEqualTo("second");
 	}
 
 	@Test
 	void defaultsToZeroGlobalSlots() {
 		Memory stack = new Memory();
 
-		assertThrows(IndexOutOfBoundsException.class, () -> stack.getGlobal(0));
+		assertThatThrownBy(() -> stack.getGlobal(0)).isInstanceOf(IndexOutOfBoundsException.class);
 	}
 
 	@Test
 	void throwsForOutOfBoundsOrNegativeGlobalIndices() {
 		Memory stack = new Memory(1);
 
-		assertThrows(IndexOutOfBoundsException.class, () -> stack.getGlobal(1));
-		assertThrows(IndexOutOfBoundsException.class, () -> stack.getGlobal(-1));
+		assertThatThrownBy(() -> stack.getGlobal(1)).isInstanceOf(IndexOutOfBoundsException.class);
+		assertThatThrownBy(() -> stack.getGlobal(-1)).isInstanceOf(IndexOutOfBoundsException.class);
 	}
 
 	@Test
@@ -152,6 +150,6 @@ public class StackFrameTest {
 		frame.set(0, "frame-value");
 		stack.popFrame();
 
-		assertEquals("global-value", stack.getGlobal(0));
+		assertThat(stack.getGlobal(0)).isEqualTo("global-value");
 	}
 }

@@ -13,7 +13,7 @@ import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class NullLHSFunctionTest {
 	@Test
@@ -23,6 +23,6 @@ public class NullLHSFunctionTest {
 		ObjectNode input = mapper.createObjectNode().set("input", mapper.createArrayNode().add(1));
 		List<JsonNode> output = new ArrayList<>();
 		env.compile(".output+=[.input[0]+1]").apply(input, output::add);
-		assertEquals(List.of(input.deepCopy().set("output", mapper.createArrayNode().add(2))), output);
+		assertThat(output).isEqualTo(List.of(input.deepCopy().set("output", mapper.createArrayNode().add(2))));
 	}
 }

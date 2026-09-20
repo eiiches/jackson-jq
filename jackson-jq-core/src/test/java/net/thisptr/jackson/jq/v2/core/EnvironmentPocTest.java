@@ -30,11 +30,7 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class EnvironmentPocTest {
 	private static boolean isConstantExpression(Expression<?, ?> expr) {
@@ -84,8 +80,8 @@ public class EnvironmentPocTest {
 		List<JsonNode> out = new ArrayList<>();
 		q.apply(MAPPER.readTree("\"world\""), out::add);
 
-		assertEquals(1, out.size());
-		assertEquals("hello:world", out.get(0).asText());
+		assertThat(out).hasSize(1);
+		assertThat(out.get(0).asText()).isEqualTo("hello:world");
 	}
 
 	@Test
@@ -99,8 +95,8 @@ public class EnvironmentPocTest {
 		List<JsonNode> out = new ArrayList<>();
 		q.apply(MAPPER.readTree("{}"), out::add);
 
-		assertEquals(1, out.size());
-		assertEquals(42, out.get(0).asInt());
+		assertThat(out).hasSize(1);
+		assertThat(out.get(0).asInt()).isEqualTo(42);
 	}
 
 
@@ -141,7 +137,7 @@ public class EnvironmentPocTest {
 		env.compile("probe(. + 1)");
 		env.compile("probe(1 | . + 1)");
 
-		assertEquals(List.of(true, false, false, false, true), captured);
+		assertThat(captured).isEqualTo(List.of(true, false, false, false, true));
 	}
 
 	@Test
@@ -175,16 +171,16 @@ public class EnvironmentPocTest {
 
 		env.compile("probe(1 | random)");
 		Expression<?, JsonNode> onePipeRandom = captured.get(captured.size() - 1);
-		assertFalse(onePipeRandom.dependsOnInput());
-		assertTrue(onePipeRandom.dependsOnExternalState());
-		assertFalse(isConstantExpression(onePipeRandom));
+		assertThat(onePipeRandom.dependsOnInput()).isFalse();
+		assertThat(onePipeRandom.dependsOnExternalState()).isTrue();
+		assertThat(isConstantExpression(onePipeRandom)).isFalse();
 
 		// Deliberately NOT shielded (see plan): random's result is discarded, but the pipe as a
 		// whole still conservatively reports dependsOnExternalState()==true.
 		env.compile("probe(random | 1)");
 		Expression<?, JsonNode> randomPipeOne = captured.get(captured.size() - 1);
-		assertFalse(randomPipeOne.dependsOnInput());
-		assertTrue(randomPipeOne.dependsOnExternalState());
+		assertThat(randomPipeOne.dependsOnInput()).isFalse();
+		assertThat(randomPipeOne.dependsOnExternalState()).isTrue();
 	}
 
 	@Test
@@ -206,16 +202,16 @@ public class EnvironmentPocTest {
 
 		// $b (a global variable) is always free -- non-const regardless of what it happens to hold.
 		withProbe.compile("probe($b)");
-		assertTrue(FreeVariables.dependsOnVariables(captured.get(captured.size() - 1)));
-		assertFalse(isConstantExpression(captured.get(captured.size() - 1)));
+		assertThat(FreeVariables.dependsOnVariables(captured.get(captured.size() - 1))).isTrue();
+		assertThat(isConstantExpression(captured.get(captured.size() - 1))).isFalse();
 
 		// The binding is *inside* the expression -- $b is not free here, so the whole thing is const.
 		withProbe.compile("probe(1 as $b | $b)");
-		assertTrue(isConstantExpression(captured.get(captured.size() - 1)));
+		assertThat(isConstantExpression(captured.get(captured.size() - 1))).isTrue();
 
 		// `.` is still free even though the local $b binding is closed.
 		withProbe.compile("probe(. as $b | $b)");
-		assertFalse(isConstantExpression(captured.get(captured.size() - 1)));
+		assertThat(isConstantExpression(captured.get(captured.size() - 1))).isFalse();
 	}
 
 	@Test
@@ -288,7 +284,7 @@ public class EnvironmentPocTest {
 
 		assertThat(captured.get(0)).isInstanceOf(ConstantExpression.class);
 		assertThat(captured.get(1)).isNotInstanceOf(ConstantExpression.class);
-		assertTrue(captured.get(1).dependsOnInput());
+		assertThat(captured.get(1).dependsOnInput()).isTrue();
 	}
 
 	@Test
@@ -309,23 +305,23 @@ public class EnvironmentPocTest {
 
 		// A local def whose body is a literal, called with no arguments, is fully constant.
 		env.compile("probe(def f: 1; f)");
-		assertTrue(isConstantExpression(captured.get(captured.size() - 1)));
+		assertThat(isConstantExpression(captured.get(captured.size() - 1))).isTrue();
 
 		// A local def whose body reads `.` propagates dependsOnInput to its call sites.
 		env.compile("probe(def f: .; f)");
-		assertTrue(captured.get(captured.size() - 1).dependsOnInput());
+		assertThat(captured.get(captured.size() - 1).dependsOnInput()).isTrue();
 
 		// A one-hop capture ($x lives directly in the enclosing frame) is precisely subtracted by the
 		// outer `as` binding, same as a plain variable read -- the whole thing folds to constant.
 		env.compile("probe(1 as $x | def f: $x; f)");
-		assertTrue(isConstantExpression(captured.get(captured.size() - 1)));
+		assertThat(isConstantExpression(captured.get(captured.size() - 1))).isTrue();
 
 		// A def that never references its own filter-typed parameter is still conservatively marked as
 		// depending on input once called, because the argument expression is composed in regardless of
 		// whether the body actually invokes it (mirrors testDependsOnExternalStateIsNotShielded's
 		// "deliberately not shielded" precedent for builtin calls).
 		env.compile("probe(def f(g): 1; f(. + 1))");
-		assertTrue(captured.get(captured.size() - 1).dependsOnInput());
+		assertThat(captured.get(captured.size() - 1).dependsOnInput()).isTrue();
 
 		// A def whose body reads a *declared/global* variable stays conservative too -- that dependency
 		// never touches CompileContext's closureSpec machinery at all (globals bypass the local/captured
@@ -336,7 +332,7 @@ public class EnvironmentPocTest {
 				.defineFunction(FunctionSignature.of("probe", 1), probe)
 				.build();
 		withGlobal.compile("probe(def f: $g; f)");
-		assertTrue(FreeVariables.dependsOnVariables(captured.get(captured.size() - 1)));
+		assertThat(FreeVariables.dependsOnVariables(captured.get(captured.size() - 1))).isTrue();
 	}
 
 	@Test
@@ -361,13 +357,13 @@ public class EnvironmentPocTest {
 		// `outer` is still precisely known to depend on exactly $x's root-frame slot, and the enclosing
 		// `as` binding correctly closes over it -- constant, even through the nested def.
 		env.compile("probe(1 as $x | def outer: def inner: $x; inner; outer)");
-		assertTrue(isConstantExpression(captured.get(captured.size() - 1)));
+		assertThat(isConstantExpression(captured.get(captured.size() - 1))).isTrue();
 
 		// A *captured* call (reaching `outer` itself through a closure hop, from inside another def) does
 		// stay conservatively opaque, though -- matching ResolvedCapturedVariableAccess's "defs stay
 		// conservative" precedent for the call node itself, even though the callee's own info is precise.
 		env.compile("probe(1 as $x | def outer: def inner: $x; inner; def middle: outer; middle)");
-		assertTrue(FreeVariables.dependsOnVariables(captured.get(captured.size() - 1)));
+		assertThat(FreeVariables.dependsOnVariables(captured.get(captured.size() - 1))).isTrue();
 	}
 
 	@Test
@@ -381,32 +377,28 @@ public class EnvironmentPocTest {
 
 		List<JsonNode> out = new ArrayList<>();
 		q.apply(MAPPER.readTree("3"), out::add);
-		assertEquals(1, out.size());
-		assertEquals(0, out.get(0).asInt());
+		assertThat(out).hasSize(1);
+		assertThat(out.get(0).asInt()).isEqualTo(0);
 	}
 
 	@Test
 	public void testUndefinedFunctionThrowsAtCompileTime() {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7).build();
 
-		JsonQueryException ex = assertThrows(JsonQueryException.class, () -> {
+		assertThatThrownBy(() -> {
 			env.compile("nonExistentFunc(.)");
-		});
-
-		assertNotNull(ex.getMessage());
-		assertTrue(ex.getMessage().contains("nonExistentFunc/1 does not exist"));
+		}).isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("nonExistentFunc/1 does not exist");
 	}
 
 	@Test
 	public void testUndefinedVariableThrowsAtCompileTime() {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_7).build();
 
-		JsonQueryException ex = assertThrows(JsonQueryException.class, () -> {
+		assertThatThrownBy(() -> {
 			env.compile("$undefinedVar");
-		});
-
-		assertNotNull(ex.getMessage());
-		assertTrue(ex.getMessage().contains("Variable $undefinedVar is not defined"));
+		}).isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("Variable $undefinedVar is not defined");
 	}
 
 	@Test
@@ -417,16 +409,15 @@ public class EnvironmentPocTest {
 		JsonQuery<JsonNode> q1 = env.compile("def foo: 1; foo");
 		List<JsonNode> out = new ArrayList<>();
 		q1.apply(MAPPER.readTree("null"), out::add);
-		assertEquals(1, out.size());
-		assertEquals(1, out.get(0).asInt());
+		assertThat(out).hasSize(1);
+		assertThat(out.get(0).asInt()).isEqualTo(1);
 
 		// Second, independent compile on the SAME Environment: `foo` was never re-defined here, and must
 		// not have been globally registered as a side effect of the first compile.
-		JsonQueryException ex = assertThrows(JsonQueryException.class, () -> {
+		assertThatThrownBy(() -> {
 			env.compile("foo");
-		});
-		assertNotNull(ex.getMessage());
-		assertTrue(ex.getMessage().contains("foo/0 does not exist"));
+		}).isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("foo/0 does not exist");
 	}
 
 	@Test
@@ -435,11 +426,10 @@ public class EnvironmentPocTest {
 
 		env.compile("1 as $x | def bar: $x; bar");
 
-		JsonQueryException ex = assertThrows(JsonQueryException.class, () -> {
+		assertThatThrownBy(() -> {
 			env.compile("bar");
-		});
-		assertNotNull(ex.getMessage());
-		assertTrue(ex.getMessage().contains("bar/0 does not exist"));
+		}).isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("bar/0 does not exist");
 	}
 
 	@Test
@@ -451,7 +441,7 @@ public class EnvironmentPocTest {
 		List<JsonNode> out = new ArrayList<>();
 		q.apply(MAPPER.readTree("123"), out::add);
 
-		assertEquals(1, out.size());
-		assertEquals(123, out.get(0).asInt());
+		assertThat(out).hasSize(1);
+		assertThat(out.get(0).asInt()).isEqualTo(123);
 	}
 }

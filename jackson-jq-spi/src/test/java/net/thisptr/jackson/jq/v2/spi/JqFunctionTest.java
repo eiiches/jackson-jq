@@ -9,10 +9,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class JqFunctionTest {
 
@@ -21,49 +19,49 @@ public class JqFunctionTest {
 		VersionRange version = VersionRange.valueOf("[1.6, )");
 		JqFunction fn = JqFunction.of("f", List.of(FunctionParameter.ofFilter("f"), FunctionParameter.ofValue("n")), "f + $n", version);
 
-		assertEquals("f", fn.name());
-		assertEquals(FunctionSignature.of("f", 2), fn.signature());
-		assertEquals(List.of(FunctionParameter.ofFilter("f"), FunctionParameter.ofValue("n")), fn.parameters());
-		assertEquals("f + $n", fn.body());
-		assertEquals(version, fn.version());
+		assertThat(fn.name()).isEqualTo("f");
+		assertThat(fn.signature()).isEqualTo(FunctionSignature.of("f", 2));
+		assertThat(fn.parameters()).isEqualTo(List.of(FunctionParameter.ofFilter("f"), FunctionParameter.ofValue("n")));
+		assertThat(fn.body()).isEqualTo("f + $n");
+		assertThat(fn.version()).isEqualTo(version);
 	}
 
 	@Test
 	void testSignatureArityMatchesArgCount() {
-		assertEquals(FunctionSignature.of("f", 0), JqFunction.of("f", Collections.emptyList(), ".").signature());
-		assertEquals(FunctionSignature.of("f", 3), JqFunction.of("f", List.of(FunctionParameter.valueOf("a"), FunctionParameter.valueOf("$b"), FunctionParameter.valueOf("c")), ".").signature());
+		assertThat(JqFunction.of("f", Collections.emptyList(), ".").signature()).isEqualTo(FunctionSignature.of("f", 0));
+		assertThat(JqFunction.of("f", List.of(FunctionParameter.valueOf("a"), FunctionParameter.valueOf("$b"), FunctionParameter.valueOf("c")), ".").signature()).isEqualTo(FunctionSignature.of("f", 3));
 	}
 
 	@Test
 	void testNullVersionMeansAllVersions() {
 		JqFunction fn = JqFunction.of("f", Collections.emptyList(), ".");
-		assertNull(fn.version());
+		assertThat(fn.version()).isNull();
 	}
 
 	@Test
 	void testParametersIsUnmodifiable() {
 		JqFunction fn = JqFunction.of("f", Collections.singletonList(FunctionParameter.ofFilter("x")), ".");
-		assertThrows(UnsupportedOperationException.class, () -> fn.parameters().add(FunctionParameter.ofFilter("y")));
+		assertThatThrownBy(() -> fn.parameters().add(FunctionParameter.ofFilter("y"))).isInstanceOf(UnsupportedOperationException.class);
 	}
 
 	@ParameterizedTest
 	@ValueSource(strings = { "", "  ", "\t", "123foo", "foo-bar", "foo bar", "$foo" })
 	void testInvalidNameThrows(String name) {
-		assertThrows(IllegalArgumentException.class, () -> JqFunction.of(name, Collections.emptyList(), "."));
+		assertThatThrownBy(() -> JqFunction.of(name, Collections.emptyList(), ".")).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	// NullAway checks for null arguments; this test verifies runtime null rejection.
 	@Test
 	@SuppressWarnings("NullAway")
 	void testNullNameThrows() {
-		assertThrows(NullPointerException.class, () -> JqFunction.of(null, Collections.emptyList(), "."));
+		assertThatThrownBy(() -> JqFunction.of(null, Collections.emptyList(), ".")).isInstanceOf(NullPointerException.class);
 	}
 
 	@Test
 	void testFilterAndValueArgsAreAccepted() {
 		JqFunction fn = JqFunction.of("f", List.of(FunctionParameter.ofFilter("filterArg"), FunctionParameter.ofValue("valueArg")), ".");
-		assertEquals(FunctionParameter.Kind.FILTER, fn.parameters().get(0).kind());
-		assertEquals(FunctionParameter.Kind.VALUE, fn.parameters().get(1).kind());
+		assertThat(fn.parameters().get(0).kind()).isEqualTo(FunctionParameter.Kind.FILTER);
+		assertThat(fn.parameters().get(1).kind()).isEqualTo(FunctionParameter.Kind.VALUE);
 	}
 
 	@Test
@@ -77,21 +75,22 @@ public class JqFunctionTest {
 		JqFunction fnDiffParams = JqFunction.of("f", List.of(FunctionParameter.ofFilter("a"), FunctionParameter.ofFilter("b")), "a + $b", v1);
 		JqFunction fnDiffName = JqFunction.of("g", List.of(FunctionParameter.ofFilter("a"), FunctionParameter.ofValue("b")), "a + $b", v1);
 
-		assertEquals(fn1, fn2);
-		assertEquals(fn1.hashCode(), fn2.hashCode());
-		assertNotEquals(fn1, fnDiffVersion);
-		assertNotEquals(fn1, fnDiffBody);
-		assertNotEquals(fn1, fnDiffParams);
-		assertNotEquals(fn1, fnDiffName);
-		assertNotEquals(fn1, null);
-		assertNotEquals(fn1, "f");
+		assertThat(fn1)
+				.isEqualTo(fn2)
+				.hasSameHashCodeAs(fn2)
+				.isNotEqualTo(fnDiffVersion)
+				.isNotEqualTo(fnDiffBody)
+				.isNotEqualTo(fnDiffParams)
+				.isNotEqualTo(fnDiffName)
+				.isNotNull()
+				.isNotEqualTo("f");
 	}
 
 	@Test
 	void testToString() {
-		assertEquals("def length: _length;", JqFunction.of("length", Collections.emptyList(), "_length").toString());
-		assertEquals("def map(f): [.[] | f];", JqFunction.of("map", Collections.singletonList(FunctionParameter.ofFilter("f")), "[.[] | f]").toString());
-		assertEquals("def limit($n; exp): ...; # [1.6.0, )",
-				JqFunction.of("limit", List.of(FunctionParameter.ofValue("n"), FunctionParameter.ofFilter("exp")), "...", VersionRange.valueOf("[1.6, )")).toString());
+		assertThat(JqFunction.of("length", Collections.emptyList(), "_length")).hasToString("def length: _length;");
+		assertThat(JqFunction.of("map", Collections.singletonList(FunctionParameter.ofFilter("f")), "[.[] | f]")).hasToString("def map(f): [.[] | f];");
+		assertThat(JqFunction.of("limit", List.of(FunctionParameter.ofValue("n"), FunctionParameter.ofFilter("exp")), "...", VersionRange.valueOf("[1.6, )")))
+				.hasToString("def limit($n; exp): ...; # [1.6.0, )");
 	}
 }
