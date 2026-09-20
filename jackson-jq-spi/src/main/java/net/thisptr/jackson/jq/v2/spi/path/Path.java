@@ -19,7 +19,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
  *
  * @param <JsonNode> the JSON node type
  */
-public abstract class Path<JsonNode> {
+public abstract sealed class Path<JsonNode> permits IndexOfPath, IndexRangePath, IntIndexPath, InvalidPath, NumberIndexPath, RootPath, StringKeyPath, UnrepresentablePath, UntrackedPath {
 	Path() {
 	}
 

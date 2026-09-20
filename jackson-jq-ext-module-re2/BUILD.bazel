@@ -6,9 +6,9 @@ jjq_java_mrjar(
     name = "jackson-jq-ext-module-re2-mrjar",
     osgi = True,
     packages = [
+        "//jackson-jq-ext-module-re2/src/main/java:module-info",
         "//jackson-jq-ext-module-re2/src/main/java/net/thisptr/jackson/jq/v2/ext/re2",
     ],
-    release_overlays = {9: ["//jackson-jq-ext-module-re2/src/main/java9:module-info"]},
 )
 
 jjq_maven_artifact(

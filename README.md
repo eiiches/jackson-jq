@@ -12,7 +12,7 @@ A pure-Java, embeddable [jq](http://stedolan.github.io/jq/) implementation with 
 Getting started
 ---------------
 
-Java 8 or later is required.
+Java 17 or later is required.
 If you use Maven, add `jackson-jq-core` and the appropriate JSON provider to the `<dependencies>` section of your POM. Add the regex implementation only if your application uses regex functions.
 
 ```xml

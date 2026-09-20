@@ -9,7 +9,7 @@ jjq_java_library(
         "IdentifierFieldAccess.java",
         "StringFieldAccess.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/compile/freevars",

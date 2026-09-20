@@ -10,7 +10,7 @@ jjq_java_library(
         "RandomGenerator.java",
         "ToleranceJsonNodeComparator.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-fuzz:__subpackages__"],
     deps = [
         "//jackson-jq-core",

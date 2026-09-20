@@ -2,7 +2,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
 
 jjq_java_test_suite(
     srcs = ["SimpleModuleMetaTest.java"],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
         "//jackson-jq-core",

@@ -3,7 +3,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "loaders",
     srcs = ["ClassPathFunctionLoader.java"],
-    release = 8,
+    release = 17,
     visibility = [
         "//jackson-jq-cli:__subpackages__",
         "//jackson-jq-core:__subpackages__",

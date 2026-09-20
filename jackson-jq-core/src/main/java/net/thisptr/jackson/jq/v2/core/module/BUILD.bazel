@@ -6,7 +6,7 @@ jjq_java_library(
         "ModuleLoader.java",
         "ModuleNotFoundException.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
         "//jackson-jq-spi",

@@ -5,7 +5,7 @@ jjq_java_test_suite(
         "VersionRangeTest.java",
         "VersionTest.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-spi:__subpackages__"],
     deps = [
         "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/annotations",

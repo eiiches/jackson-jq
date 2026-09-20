@@ -7,7 +7,7 @@ jjq_java_library(
         "RuntimeLimitChecks.java",
         "RuntimeLimitsImpl.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
         "//jackson-jq-spi",

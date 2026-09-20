@@ -3,7 +3,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "re2",
     srcs = glob(["*.java"]),
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-ext-module-re2:__subpackages__"],
     deps = [
         "//jackson-jq-json-provider",

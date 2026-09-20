@@ -11,7 +11,7 @@ jjq_java_test_suite(
         "PipeOperatorAstTest.java",
         "SourceLocationTest.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
         "//jackson-jq-core",

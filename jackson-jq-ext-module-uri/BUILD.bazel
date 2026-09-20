@@ -6,11 +6,11 @@ jjq_java_mrjar(
     name = "jackson-jq-ext-module-uri-mrjar",
     osgi = True,
     packages = [
+        "//jackson-jq-ext-module-uri/src/main/java:module-info",
         "//jackson-jq-ext-module-uri/src/main/java/net/thisptr/jackson/jq/v2/ext/uri",
         "//jackson-jq-ext-module-uri/src/main/java/net/thisptr/jackson/jq/v2/ext/uri/functions",
         "//jackson-jq-ext-module-uri/src/main/java/net/thisptr/jackson/jq/v2/ext/uri/internal/misc",
     ],
-    release_overlays = {9: ["//jackson-jq-ext-module-uri/src/main/java9:module-info"]},
 )
 
 jjq_maven_artifact(

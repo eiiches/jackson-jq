@@ -6,7 +6,7 @@ jjq_java_library(
         "UriDecodeFunction.java",
         "UriParseFunction.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-ext-module-uri:__subpackages__"],
     deps = [
         "//jackson-jq-ext-module-uri/src/main/java/net/thisptr/jackson/jq/v2/ext/uri/internal/misc",

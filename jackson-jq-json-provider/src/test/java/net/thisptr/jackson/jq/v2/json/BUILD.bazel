@@ -20,7 +20,7 @@ jjq_java_test_suite(
         "JsonProviderContractTest.java",
         "MaybeTest.java",
     ],
-    release = 8,
+    release = 17,
     test_suffixes_excludes = ["JsonProviderContractTest.java"],
     visibility = ["//jackson-jq-json-provider:__subpackages__"],
     deps = ["//jackson-jq-json-provider/src/main/java/net/thisptr/jackson/jq/v2/json"],

@@ -7,6 +7,6 @@ jjq_java_library(
         "DiagnosticListener.java",
         "SourceLocation.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-core:__subpackages__"],
 )

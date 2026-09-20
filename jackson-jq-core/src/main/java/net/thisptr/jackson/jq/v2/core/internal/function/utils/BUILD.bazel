@@ -6,7 +6,7 @@ jjq_java_library(
         "FunctionBody.java",
         "Preconditions.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/exception",

@@ -26,7 +26,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
  *
  * @param <JsonNode> the JSON node type
  */
-public interface JqModule<JsonNode> extends Module {
+public non-sealed interface JqModule<JsonNode> extends Module {
 
 	/**
 	 * Returns this module's jq source.

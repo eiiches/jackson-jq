@@ -58,8 +58,6 @@ public class UriParseFunction implements Function {
 		};
 	}
 
-	// Suppress JdkObsolete because URLDecoder.decode(String, Charset) is not available in Java 8 target.
-	@SuppressWarnings("JdkObsolete")
 	private <JsonNode> Map<String, JsonNode> parseQueryObj(JsonProvider<JsonNode> jsonProvider, String rawQuery) {
 		if (rawQuery == null)
 			return new HashMap<>();
@@ -71,8 +69,8 @@ public class UriParseFunction implements Function {
 			String keyEncoded = tuple[0];
 			String valueEncoded = tuple[1];
 			try {
-				String key = URLDecoder.decode(keyEncoded, StandardCharsets.UTF_8.name());
-				String value = URLDecoder.decode(valueEncoded, StandardCharsets.UTF_8.name());
+				String key = URLDecoder.decode(keyEncoded, StandardCharsets.UTF_8);
+				String value = URLDecoder.decode(valueEncoded, StandardCharsets.UTF_8);
 				@Var List<String> arr = result.get(key);
 				if (arr == null) {
 					arr = new ArrayList<>(1);
