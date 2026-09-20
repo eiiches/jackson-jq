@@ -29,7 +29,6 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins.library;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import net.thisptr.jackson.jq.v2.spi.FunctionParameter;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
@@ -112,7 +111,7 @@ public class CoreJqLibrary implements JqLibrary {
 			JqFunction.of("trimstr", args("$val"), "ltrimstr($val) | rtrimstr($val)", VersionRange.valueOf("[1.8.0, )")));
 
 	private static List<FunctionParameter> args(String... args) {
-		return Arrays.stream(args).map(FunctionParameter::valueOf).collect(Collectors.toList());
+		return Arrays.stream(args).map(FunctionParameter::valueOf).toList();
 	}
 
 	@Override

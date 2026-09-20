@@ -16,7 +16,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class ClassLoaderUtils {
@@ -69,7 +68,7 @@ public final class ClassLoaderUtils {
 			return paths.filter(Files::isRegularFile)
 					.map(root::relativize)
 					.map(path -> basePath + "/" + path.toString().replace('\\', '/'))
-					.collect(Collectors.toList());
+					.toList();
 		}
 	}
 }

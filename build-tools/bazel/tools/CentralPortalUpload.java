@@ -15,7 +15,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -200,7 +199,7 @@ public final class CentralPortalUpload {
 			return tree.filter(Files::isRegularFile)
 					.filter(artifact -> !artifact.getFileName().toString().startsWith("maven-metadata"))
 					.sorted()
-					.collect(Collectors.toList());
+					.toList();
 		}
 	}
 
@@ -357,7 +356,7 @@ public final class CentralPortalUpload {
 
 	private static void deleteRecursively(Path directory) throws IOException {
 		try (Stream<Path> tree = Files.walk(directory)) {
-			for (Path path : tree.sorted(Comparator.reverseOrder()).collect(Collectors.toList()))
+			for (Path path : tree.sorted(Comparator.reverseOrder()).toList())
 				Files.deleteIfExists(path);
 		}
 	}

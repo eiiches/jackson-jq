@@ -29,7 +29,6 @@ package net.thisptr.jackson.jq.v2.regex.impl.joni;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import net.thisptr.jackson.jq.v2.spi.FunctionParameter;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
@@ -56,7 +55,7 @@ public class RegexJqLibrary implements JqLibrary {
 			JqFunction.of("gsub", args("$re", "s"), "_sub_impl($re; s; \"g\")"));
 
 	private static List<FunctionParameter> args(String... args) {
-		return Arrays.stream(args).map(FunctionParameter::valueOf).collect(Collectors.toList());
+		return Arrays.stream(args).map(FunctionParameter::valueOf).toList();
 	}
 
 	@Override
