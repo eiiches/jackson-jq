@@ -3,7 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.compile;
 import java.util.List;
 
 import com.google.errorprone.annotations.Var;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.memory.Closure;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
@@ -57,7 +56,7 @@ public class ClosureSpec {
 	 */
 	public Closure buildClosure(StackFrame currentFrame, int definerClosureSlot) {
 		Closure closure = new Closure(capturedVariables.size() + capturedFunctions.size());
-		@Var @Nullable Closure parentClosure = null;
+		@Var Closure parentClosure = null;
 		@Var boolean parentClosureFetched = false;
 		for (CapturedVariableRef ref : capturedVariables) {
 			Object value;

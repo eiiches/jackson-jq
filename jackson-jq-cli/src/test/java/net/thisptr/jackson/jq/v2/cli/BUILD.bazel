@@ -8,7 +8,7 @@ jjq_java_test_suite(
         "MainTest.java",
         "PlaygroundTest.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-cli:__subpackages__"],
     deps = [
         "//jackson-jq-cli/src/main/java/net/thisptr/jackson/jq/v2/cli",

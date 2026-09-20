@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.json.impl.jackson2;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.databind.node.FloatNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class JsonQueryJacksonModule extends SimpleModule {
+	@Serial
 	private static final long serialVersionUID = 1137650244815104623L;
 
 	private static final JsonQueryJacksonModule INSTANCE = new JsonQueryJacksonModule();

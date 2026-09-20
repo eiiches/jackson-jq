@@ -51,20 +51,14 @@ jobs:
     - name: Install artifacts for Maven consumers
       run: bazel run //:maven_install
 
-    - name: Set up JDK 8
-      uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
-      with:
-        java-version: '8'
-        distribution: 'temurin'
-
-    - name: Test Java 8 compatibility
-      run: mvn -f smoke-tests/java8/pom.xml clean verify
-
     - name: Set up JDK 17
       uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
       with:
         java-version: '17'
         distribution: 'temurin'
+
+    - name: Test Java 17 compatibility
+      run: mvn -f smoke-tests/java17/pom.xml clean verify
 
     - name: Test OSGi compatibility
       run: mvn -f smoke-tests/osgi/pom.xml clean verify

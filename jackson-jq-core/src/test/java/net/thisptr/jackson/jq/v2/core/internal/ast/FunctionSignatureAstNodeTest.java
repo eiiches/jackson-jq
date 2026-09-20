@@ -8,36 +8,44 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 class FunctionSignatureAstNodeTest {
 	@Test
 	void parserStoresDefinitionSignature() throws JsonQueryException {
-		SemicolonOperatorAstNode sequence = assertInstanceOf(SemicolonOperatorAstNode.class, parse("def f(a; $b): .; ."));
-		FunctionDefinitionAstNode definition = assertInstanceOf(FunctionDefinitionAstNode.class, sequence.expressions().get(0));
+		AstNode parsed = parse("def f(a; $b): .; .");
+		assertThat(parsed).isInstanceOf(SemicolonOperatorAstNode.class);
+		SemicolonOperatorAstNode sequence = (SemicolonOperatorAstNode) parsed;
+		assertThat(sequence.expressions().get(0)).isInstanceOf(FunctionDefinitionAstNode.class);
+		FunctionDefinitionAstNode definition = (FunctionDefinitionAstNode) sequence.expressions().get(0);
 
 		assertThat(definition.signature()).isEqualTo(FunctionSignature.of("f", 2));
-		assertThat(definition.toString()).isEqualTo("def f(a; $b): .");
+		assertThat(definition).hasToString("def f(a; $b): .");
 	}
 
 	@Test
 	void parserStoresCallSignatures() throws JsonQueryException {
-		FunctionCallAstNode call = assertInstanceOf(FunctionCallAstNode.class, parse("f(.; .)"));
+		AstNode parsed = parse("f(.; .)");
+		assertThat(parsed).isInstanceOf(FunctionCallAstNode.class);
+		FunctionCallAstNode call = (FunctionCallAstNode) parsed;
 		assertThat(call.signature()).isEqualTo(FunctionSignature.of("f", 2));
 		assertThat(call.moduleName()).isNull();
 
-		FunctionCallAstNode qualifiedCall = assertInstanceOf(FunctionCallAstNode.class, parse("m::f(.)"));
+		AstNode parsedQualified = parse("m::f(.)");
+		assertThat(parsedQualified).isInstanceOf(FunctionCallAstNode.class);
+		FunctionCallAstNode qualifiedCall = (FunctionCallAstNode) parsedQualified;
 		assertThat(qualifiedCall.signature()).isEqualTo(FunctionSignature.of("f", 1));
 		assertThat(qualifiedCall.moduleName()).isEqualTo("m");
-		assertThat(qualifiedCall.toString()).isEqualTo("m::f(.)");
+		assertThat(qualifiedCall).hasToString("m::f(.)");
 	}
 
 	@Test
 	void parserStoresFormattingFilterSignature() throws JsonQueryException {
-		FormattingFilterAstNode formatter = assertInstanceOf(FormattingFilterAstNode.class, parse("@csv"));
+		AstNode parsed = parse("@csv");
+		assertThat(parsed).isInstanceOf(FormattingFilterAstNode.class);
+		FormattingFilterAstNode formatter = (FormattingFilterAstNode) parsed;
 
 		assertThat(formatter.signature()).isEqualTo(FunctionSignature.of("@csv", 0));
-		assertThat(formatter.toString()).isEqualTo("@csv");
+		assertThat(formatter).hasToString("@csv");
 	}
 
 	private static AstNode parse(String query) throws JsonQueryException {

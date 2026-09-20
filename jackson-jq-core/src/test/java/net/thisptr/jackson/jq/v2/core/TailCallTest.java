@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.core;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -152,7 +151,7 @@ class TailCallTest {
 	void turningTheOptimizationOffChangesNothingElse() throws JsonQueryException {
 		// Both settings have to agree on every shape, whether or not the optimization applies to it: the
 		// switch exists to isolate the optimization, not to choose between behaviours.
-		List<String> queries = Arrays.asList(
+		List<String> queries = List.of(
 				"0 | def f: if . < 8 then . + 1 | f else . end; [f]",
 				"2 | def f: if . > 0 then (. - 1, . - 1) | f else . end; [f]",
 				"2 | def f: if . > 0 then ((. - 1 | f), \"after\") else \"base\" end; [f]",

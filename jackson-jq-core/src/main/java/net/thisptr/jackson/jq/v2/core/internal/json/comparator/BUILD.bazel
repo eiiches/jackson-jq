@@ -3,7 +3,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "comparator",
     srcs = ["JsonNodeComparator.java"],
-    release = 8,
+    release = 17,
     visibility = [
         "//jackson-jq-core:__subpackages__",
         "//jackson-jq-fuzz:__subpackages__",

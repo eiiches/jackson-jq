@@ -17,18 +17,14 @@ public class UuidUtils {
 
 	public static UUID uuid3or5(UUID namespace, byte[] name, int version) {
 		// https://datatracker.ietf.org/doc/html/rfc4122#section-4.3
+		String algorithm = switch (version) {
+			case 3 -> "MD5";
+			case 5 -> "SHA-1";
+			default -> throw new IllegalArgumentException("invalid version");
+		};
 		MessageDigest md;
 		try {
-			switch (version) {
-				case 3:
-					md = MessageDigest.getInstance("MD5");
-					break;
-				case 5:
-					md = MessageDigest.getInstance("SHA-1");
-					break;
-				default:
-					throw new IllegalArgumentException("invalid version");
-			}
+			md = MessageDigest.getInstance(algorithm);
 		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
 		}

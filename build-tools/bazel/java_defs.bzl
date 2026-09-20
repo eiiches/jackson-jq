@@ -88,7 +88,7 @@ JQ_PLUGINS = [
     "//build-tools/bazel:nullaway",
 ]
 
-def javacopts(release = 8, extra = []):
+def javacopts(release = 17, extra = []):
     """javacopts for a jackson-jq target.
 
     `--release` is passed explicitly, exactly as <release> in the poms, and is

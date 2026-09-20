@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.compile.opt;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,6 +57,7 @@ final class ConstantFolder {
 	 * swallow it -- a {@code Function} catching {@code Throwable}.
 	 */
 	private static final class FoldAbandonedException extends RuntimeException {
+		@Serial
 		private static final long serialVersionUID = 1L;
 
 		FoldAbandonedException() {
@@ -146,9 +148,7 @@ final class ConstantFolder {
 		@Var boolean abandoned = false;
 		try {
 			compiled.apply(frame, jsonProvider.createNull(), UntrackedPath.getInstance(), collector);
-		} catch (FoldAbandonedException e) {
-			abandoned = true;
-		} catch (RuntimeLimitExceededException e) {
+		} catch (FoldAbandonedException | RuntimeLimitExceededException e) {
 			abandoned = true;
 		} catch (JsonQueryException e) {
 			terminalError = e;

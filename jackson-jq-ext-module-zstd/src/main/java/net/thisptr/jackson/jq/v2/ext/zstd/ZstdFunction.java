@@ -10,7 +10,6 @@ import java.util.List;
 
 import com.github.luben.zstd.ZstdInputStream;
 import com.github.luben.zstd.ZstdOutputStream;
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
@@ -40,8 +39,8 @@ final class ZstdFunction implements Function {
 		JsonProvider<JsonNode> jsonProvider = bindContext.getJsonProvider();
 		String function = "zstd::" + name;
 		boolean binarySupported = CompressionSupport.supportsBinary(jsonProvider);
-		@Nullable Expression<Context, JsonNode> optionsExpression = arguments.isEmpty() ? null : arguments.get(0);
-		return new Expression<Context, JsonNode>() {
+		Expression<Context, JsonNode> optionsExpression = arguments.isEmpty() ? null : arguments.get(0);
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				return optionsExpression == null ? Cardinality.ONE : optionsExpression.getCardinality();

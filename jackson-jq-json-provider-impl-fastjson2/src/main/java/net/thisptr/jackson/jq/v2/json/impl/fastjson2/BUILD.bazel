@@ -3,7 +3,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "fastjson2",
     srcs = ["Fastjson2JsonProvider.java"],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-json-provider-impl-fastjson2:__subpackages__"],
     deps = [
         "//jackson-jq-json-provider",

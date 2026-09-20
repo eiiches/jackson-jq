@@ -21,7 +21,7 @@ package net.thisptr.jackson.jq.v2.spi.module;
  * Nothing implements this interface directly: Java 17 and later seal it to the two sub-interfaces
  * via {@code permits}.
  */
-public interface Module {
+public sealed interface Module permits JavaModule, JqModule {
 
 	/**
 	 * Returns the metadata associated with this module, such as its {@code module {...};} directive

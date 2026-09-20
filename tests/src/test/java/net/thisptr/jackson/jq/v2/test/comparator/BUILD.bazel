@@ -4,7 +4,7 @@ jjq_java_library(
     name = "comparator",
     testonly = True,
     srcs = ["TestJsonNodeComparator.java"],
-    release = 8,
+    release = 17,
     visibility = ["//tests:__subpackages__"],
     deps = [
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/json/comparator",

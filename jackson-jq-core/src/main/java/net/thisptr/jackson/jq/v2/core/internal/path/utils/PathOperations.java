@@ -217,12 +217,12 @@ public final class PathOperations {
 		if (parentType == JsonNodeType.ARRAY) {
 			LongRange range = resolveRange(jsonProvider, start, end, jsonProvider.getArrayLength(parent));
 			List<JsonNode> subarray = new ArrayList<>((int) range.length());
-			for (long index = range.startInclusive; index < range.endExclusive; ++index)
+			for (long index = range.startInclusive(); index < range.endExclusive(); ++index)
 				subarray.add(jsonProvider.getArrayElement(parent, (int) index));
 			output.emit(jsonProvider.createArray(subarray), parentPath.appendIndexRange(jsonProvider, start, end));
 		} else if (parentType == JsonNodeType.STRING) {
 			LongRange range = resolveRange(jsonProvider, start, end, UnicodeUtils.lengthUtf32(jsonProvider.getString(parent)));
-			JsonNode substring = jsonProvider.createString(UnicodeUtils.substringUtf32(jsonProvider.getString(parent), (int) range.startInclusive, (int) range.endExclusive));
+			JsonNode substring = jsonProvider.createString(UnicodeUtils.substringUtf32(jsonProvider.getString(parent), (int) range.startInclusive(), (int) range.endExclusive()));
 			output.emit(substring, parentPath.appendIndexRange(jsonProvider, start, end));
 		} else if (parentType == JsonNodeType.NULL) {
 			output.emit(jsonProvider.createNull(), parentPath.appendIndexRange(jsonProvider, start, end));
@@ -376,21 +376,21 @@ public final class PathOperations {
 			LongRange range = resolveRange(jsonProvider, start, end, jsonProvider.getArrayLength(in));
 
 			List<JsonNode> oldSlice = new ArrayList<>((int) range.length());
-			for (long index = range.startInclusive; index < range.endExclusive; ++index)
+			for (long index = range.startInclusive(); index < range.endExclusive(); ++index)
 				oldSlice.add(jsonProvider.getArrayElement(in, (int) index));
 			JsonNode newValue = mutation.apply(jsonProvider.createArray(oldSlice));
 			if (!jsonProvider.isArray(newValue))
 				throw new JsonQueryTypeException("A slice of an array can only be assigned another array");
 
-			RuntimeLimitChecks.checkArraySize(limits, range.startInclusive + jsonProvider.getArrayLength(newValue) + (jsonProvider.getArrayLength(in) - range.endExclusive));
+			RuntimeLimitChecks.checkArraySize(limits, range.startInclusive() + jsonProvider.getArrayLength(newValue) + (jsonProvider.getArrayLength(in) - range.endExclusive()));
 
-			List<JsonNode> out = new ArrayList<>((int) range.startInclusive + jsonProvider.getArrayLength(newValue) + (jsonProvider.getArrayLength(in) - (int) range.endExclusive));
-			for (int index = 0; index < range.startInclusive; ++index)
+			List<JsonNode> out = new ArrayList<>((int) range.startInclusive() + jsonProvider.getArrayLength(newValue) + (jsonProvider.getArrayLength(in) - (int) range.endExclusive()));
+			for (int index = 0; index < range.startInclusive(); ++index)
 				out.add(jsonProvider.getArrayElement(in, index));
 			Iterator<JsonNode> iterator = jsonProvider.getArrayElements(newValue);
 			while (iterator.hasNext())
 				out.add(iterator.next());
-			for (long index = range.endExclusive; index < jsonProvider.getArrayLength(in); ++index)
+			for (long index = range.endExclusive(); index < jsonProvider.getArrayLength(in); ++index)
 				out.add(jsonProvider.getArrayElement(in, (int) index));
 			return jsonProvider.createArray(out);
 		}

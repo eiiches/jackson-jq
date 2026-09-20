@@ -6,6 +6,6 @@ jjq_java_library(
         "Strings.java",
         "UnicodeUtils.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-core:__subpackages__"],
 )

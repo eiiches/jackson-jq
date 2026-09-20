@@ -1,6 +1,6 @@
 package net.thisptr.jackson.jq.v2.json.impl.jackson3;
 
-import java.util.Iterator;
+import java.io.Serial;
 import java.util.Map;
 
 import tools.jackson.core.JacksonException;
@@ -16,6 +16,7 @@ import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.databind.ser.std.StdSerializer;
 
 public class JsonQueryJacksonModule extends SimpleModule {
+	@Serial
 	private static final long serialVersionUID = 1137650244815104623L;
 
 	private static final JsonQueryJacksonModule INSTANCE = new JsonQueryJacksonModule();
@@ -48,8 +49,6 @@ public class JsonQueryJacksonModule extends SimpleModule {
 	}
 
 	private static class ArrayNodeSerializer extends StdSerializer<ArrayNode> {
-		private static long serialVersionUID = 1L;
-
 		ArrayNodeSerializer() {
 			super(ArrayNode.class);
 		}
@@ -64,8 +63,6 @@ public class JsonQueryJacksonModule extends SimpleModule {
 	}
 
 	private static class ObjectNodeSerializer extends StdSerializer<ObjectNode> {
-		private static long serialVersionUID = 1L;
-
 		ObjectNodeSerializer() {
 			super(ObjectNode.class);
 		}
@@ -73,9 +70,7 @@ public class JsonQueryJacksonModule extends SimpleModule {
 		@Override
 		public void serialize(ObjectNode value, JsonGenerator gen, SerializationContext serializers) throws JacksonException {
 			gen.writeStartObject();
-			Iterator<Map.Entry<String, JsonNode>> iter = value.properties().iterator();
-			while (iter.hasNext()) {
-				Map.Entry<String, JsonNode> entry = iter.next();
+			for (Map.Entry<String, JsonNode> entry : value.properties()) {
 				gen.writeName(entry.getKey());
 				gen.writePOJO(entry.getValue());
 			}
@@ -84,8 +79,6 @@ public class JsonQueryJacksonModule extends SimpleModule {
 	}
 
 	private static class DoubleNodeSerializer extends StdSerializer<DoubleNode> {
-		private static long serialVersionUID = 1L;
-
 		DoubleNodeSerializer() {
 			super(DoubleNode.class);
 		}
@@ -97,8 +90,6 @@ public class JsonQueryJacksonModule extends SimpleModule {
 	}
 
 	private static class FloatNodeSerializer extends StdSerializer<FloatNode> {
-		private static long serialVersionUID = 1L;
-
 		FloatNodeSerializer() {
 			super(FloatNode.class);
 		}

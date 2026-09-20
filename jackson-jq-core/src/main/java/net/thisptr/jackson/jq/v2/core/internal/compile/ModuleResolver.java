@@ -111,13 +111,13 @@ public final class ModuleResolver<JsonNode> {
 	 * {@code addImportedModule}, and which one it got only matters here.
 	 */
 	public JavaModule materialize(Module module) throws JsonQueryException {
-		if (module instanceof JqModule) {
+		if (module instanceof JqModule<?> jqModule) {
 			@SuppressWarnings("unchecked") // A loader of ours produced it, so its node type is ours.
-			JqModule<JsonNode> jqModule = (JqModule<JsonNode>) module;
-			return compile(jqModule);
+			JqModule<JsonNode> typed = (JqModule<JsonNode>) jqModule;
+			return compile(typed);
 		}
-		if (module instanceof JavaModule)
-			return (JavaModule) module;
+		if (module instanceof JavaModule javaModule)
+			return javaModule;
 		throw new JsonQueryException(String.format("module %s is neither a JqModule nor a JavaModule", module.getClass().getName()));
 	}
 
@@ -128,7 +128,7 @@ public final class ModuleResolver<JsonNode> {
 	 */
 	private Maybe<JsonNode> searchOverride(@Nullable JqModule<JsonNode> origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = env.getJsonProvider();
-		Maybe<JsonNode> search = metadata.isPresent() ? jsonProvider.getObjectMember(metadata.get(), "search") : Maybe.<JsonNode>absent();
+		Maybe<JsonNode> search = metadata.isPresent() ? jsonProvider.getObjectMember(metadata.get(), "search") : Maybe.absent();
 		if (!search.isPresent()) {
 			// A leading "./" in an import path is inert in jq -- only a search override is relative
 			// -- and an absolute one is refused outright. See docs/jq-module-observations.md.
@@ -161,8 +161,8 @@ public final class ModuleResolver<JsonNode> {
 			throw new JsonQueryException(String.format("module %s is imported recursively", module));
 
 		try {
-			Map<FunctionSignature, Function> javaFunctions = module instanceof JavaModule
-					? ((JavaModule) module).getFunctions()
+			Map<FunctionSignature, Function> javaFunctions = module instanceof JavaModule javaModule
+					? javaModule.getFunctions()
 					: Collections.emptyMap();
 			// A module off a search path is somebody else's library, so it is compiled with default
 			// options -- the caller asked for diagnostics about their own query, not about the jq
@@ -182,12 +182,12 @@ public final class ModuleResolver<JsonNode> {
 	private static <JsonNode> JavaModule compileSource(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, JqModule<JsonNode> sourceModule, Map<FunctionSignature, Function> javaFunctions) throws JsonQueryException {
 		AstNode ast = AstParser.parse(sourceModule.getSourceCode() + " null", env.getJqVersion());
 		Expression<StackFrame, JsonNode> compiled = Compiler.compileModule(env, options, scope, ast);
-		if (!(compiled instanceof RootExpression))
+		if (!(compiled instanceof RootExpression<JsonNode> rootExpr))
 			throw new IllegalStateException("Compiler did not produce a root expression");
 
 		SimpleModule module = new SimpleModule();
 		module.addAllFunctions(javaFunctions);
-		Map<FunctionSignature, Function> exportedFunctions = ((RootExpression<JsonNode>) compiled).applyForModuleExports(env.getJsonProvider().createNull());
+		Map<FunctionSignature, Function> exportedFunctions = rootExpr.applyForModuleExports(env.getJsonProvider().createNull());
 		exportedFunctions.forEach((key, factory) -> {
 			if (key.arity() != null) {
 				if (javaFunctions.containsKey(key))

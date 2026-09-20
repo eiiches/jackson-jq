@@ -130,7 +130,7 @@ public class ModuleResolverTest {
 
 		@Override
 		public boolean equals(@Nullable Object o) {
-			return o instanceof SourceModule && name.equals(((SourceModule) o).name);
+			return o instanceof SourceModule other && name.equals(other.name);
 		}
 
 		@Override
@@ -232,14 +232,14 @@ public class ModuleResolverTest {
 	}
 
 	private static EnvironmentBuilder<JsonNode> builder() {
-		return EnvironmentBuilder.<JsonNode>withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		return EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.clearModuleLoaders();
 	}
 
 	/**
 	 * Compared as text: which node class the compiler produced is not what these tests are about.
 	 */
-	private static List<String> run(Environment<JsonNode> env, String query) throws Exception {
+	private static List<String> run(Environment<JsonNode> env, String query) {
 		JsonQuery<JsonNode> expr = env.compile(query);
 		List<String> actual = new ArrayList<>();
 		expr.apply(NullNode.getInstance(), value -> actual.add(value.toString()));
@@ -256,7 +256,7 @@ public class ModuleResolverTest {
 	}
 
 	@Test
-	public void testMissedLoaderFallsThroughToNextLoader() throws Exception {
+	public void testMissedLoaderFallsThroughToNextLoader() {
 		Environment<JsonNode> env = builder()
 				.addModuleLoader(new MissingModuleLoader())
 				.addModuleLoader(new SourceLoader("/second").put("foo", "def one: 1;"))
@@ -266,7 +266,7 @@ public class ModuleResolverTest {
 	}
 
 	@Test
-	public void testFailingLoaderAbortsTheSearch() throws Exception {
+	public void testFailingLoaderAbortsTheSearch() {
 		Environment<JsonNode> env = builder()
 				.addModuleLoader(new FailingModuleLoader())
 				.addModuleLoader(new SourceLoader("/second").put("foo", "def one: 1;"))
@@ -279,7 +279,7 @@ public class ModuleResolverTest {
 	}
 
 	@Test
-	public void testAllLoadersMissing() throws Exception {
+	public void testAllLoadersMissing() {
 		Environment<JsonNode> env = builder()
 				.addModuleLoader(new MissingModuleLoader())
 				.addModuleLoader(new MissingModuleLoader())
@@ -298,7 +298,7 @@ public class ModuleResolverTest {
 	 * -- reaching a loader other than the one the importing module came from.
 	 */
 	@Test
-	public void testNonRelativeImportInsideModuleWalksEveryLoader() throws Exception {
+	public void testNonRelativeImportInsideModuleWalksEveryLoader() {
 		Environment<JsonNode> env = builder()
 				.addModuleLoader(new SourceLoader("/first").put("a", "import \"b\" as b; def one: b::two - 1;"))
 				.addModuleLoader(new SourceLoader("/second").put("b", "def two: 2;"))
@@ -312,7 +312,7 @@ public class ModuleResolverTest {
 	 * answers, and no loader is consulted for it at all.
 	 */
 	@Test
-	public void testRelativeImportIsResolvedByTheModuleItself() throws Exception {
+	public void testRelativeImportIsResolvedByTheModuleItself() {
 		MissingModuleLoader other = new MissingModuleLoader();
 		SourceLoader producer = new SourceLoader("/first")
 				.put("lib/a", "import \"b\" as b {search: \"./\"}; def one: b::two - 1;")
@@ -332,7 +332,7 @@ public class ModuleResolverTest {
 	 * {@code import "x" as $d {search: "./"}} -- the data counterpart, resolved by the module too.
 	 */
 	@Test
-	public void testRelativeDataImportIsResolvedByTheModuleItself() throws Exception {
+	public void testRelativeDataImportIsResolvedByTheModuleItself() {
 		MissingModuleLoader other = new MissingModuleLoader();
 		Environment<JsonNode> env = builder()
 				.addModuleLoader(other)
@@ -350,7 +350,7 @@ public class ModuleResolverTest {
 	 * query calls into it, and not at all if no query does.
 	 */
 	@Test
-	public void testImportedJqModuleFromEnvironmentIsCompiledOnUse() throws Exception {
+	public void testImportedJqModuleFromEnvironmentIsCompiledOnUse() {
 		SourceLoader loader = new SourceLoader("/first").put("helper", "def three: 3;");
 		SourceModule module = loader.moduleAt("/first/helper", "helper");
 
@@ -364,7 +364,7 @@ public class ModuleResolverTest {
 	}
 
 	@Test
-	public void testHybridModuleCombinesJavaAndJqFunctions() throws Exception {
+	public void testHybridModuleCombinesJavaAndJqFunctions() {
 		FunctionSignature javaHelper = FunctionSignature.of("java_helper", 0);
 		HybridModule module = new HybridModule(
 				"module {\"kind\": \"hybrid\"}; def from_jq: java_helper;",
@@ -397,7 +397,7 @@ public class ModuleResolverTest {
 	}
 
 	@Test
-	public void testHybridModuleAllowsExactAndVariadicSignaturesToCoexist() throws Exception {
+	public void testHybridModuleAllowsExactAndVariadicSignaturesToCoexist() {
 		HybridModule module = new HybridModule(
 				"def shared: 1;",
 				Collections.singletonMap(FunctionSignature.ofVariadic("shared"), constantFunction(2)));
@@ -409,11 +409,10 @@ public class ModuleResolverTest {
 	}
 
 	@Test
-	public void testIncludeExposesJavaModuleFunctionsWithoutAQualifier() throws Exception {
-		Map<FunctionSignature, Function> functions = new HashMap<>();
-		functions.put(FunctionSignature.of("selected", 0), constantFunction(1));
-		functions.put(FunctionSignature.ofVariadic("selected"), constantFunction(2));
-		JavaModule module = () -> Collections.unmodifiableMap(functions);
+	public void testIncludeExposesJavaModuleFunctionsWithoutAQualifier() {
+		JavaModule module = () -> Map.of(
+				FunctionSignature.of("selected", 0), constantFunction(1),
+				FunctionSignature.ofVariadic("selected"), constantFunction(2));
 		Environment<JsonNode> env = builder()
 				.addModuleLoader(new SingleModuleLoader(module))
 				.build();
@@ -422,7 +421,7 @@ public class ModuleResolverTest {
 	}
 
 	@Test
-	public void testLaterIncludeShadowsEarlierInclude() throws Exception {
+	public void testLaterIncludeShadowsEarlierInclude() {
 		Environment<JsonNode> env = builder()
 				.addModuleLoader(new SourceLoader("/first")
 						.put("one", "def selected: 1;")
@@ -433,14 +432,13 @@ public class ModuleResolverTest {
 	}
 
 	@Test
-	public void testLocalDefinitionShadowsIncludeWhichShadowsEnvironment() throws Exception {
+	public void testLocalDefinitionShadowsIncludeWhichShadowsEnvironment() {
 		FunctionSignature declared = FunctionSignature.of("declared", 0);
 		FunctionSignature defined = FunctionSignature.of("defined", 0);
-		Map<FunctionSignature, Function> functions = new HashMap<>();
-		functions.put(declared, constantFunction(2));
-		functions.put(defined, constantFunction(4));
-		functions.put(FunctionSignature.of("length", 0), constantFunction(6));
-		JavaModule module = () -> Collections.unmodifiableMap(functions);
+		JavaModule module = () -> Map.of(
+				declared, constantFunction(2),
+				defined, constantFunction(4),
+				FunctionSignature.of("length", 0), constantFunction(6));
 		Environment<JsonNode> env = builder()
 				.declareFunction(declared)
 				.defineFunction(defined, constantFunction(3))
@@ -452,7 +450,7 @@ public class ModuleResolverTest {
 	}
 
 	@Test
-	public void testRelativeImportFromTopLevelIsRejected() throws Exception {
+	public void testRelativeImportFromTopLevelIsRejected() {
 		Environment<JsonNode> env = builder()
 				.addModuleLoader(new SourceLoader("/first").put("b", "def two: 2;"))
 				.build();
@@ -463,7 +461,7 @@ public class ModuleResolverTest {
 	}
 
 	@Test
-	public void testAbsoluteImportPathIsRejected() throws Exception {
+	public void testAbsoluteImportPathIsRejected() {
 		Environment<JsonNode> env = builder()
 				.addModuleLoader(new SourceLoader("/first").put("b", "def two: 2;"))
 				.build();
@@ -477,7 +475,7 @@ public class ModuleResolverTest {
 	 * A cycle that no single loader could see: a is served by one loader, b by another.
 	 */
 	@Test
-	public void testCycleAcrossTwoLoadersIsReported() throws Exception {
+	public void testCycleAcrossTwoLoadersIsReported() {
 		Environment<JsonNode> env = builder()
 				.addModuleLoader(new SourceLoader("/first").put("a", "import \"b\" as b; def one: b::two;"))
 				.addModuleLoader(new SourceLoader("/second").put("b", "import \"a\" as a; def two: a::one;"))
@@ -493,7 +491,7 @@ public class ModuleResolverTest {
 	 * see the same compiled module.
 	 */
 	@Test
-	public void testSameModuleImportedTwiceIsCompiledOnce() throws Exception {
+	public void testSameModuleImportedTwiceIsCompiledOnce() {
 		SourceLoader loader = new SourceLoader("/first")
 				.put("a", "import \"c\" as c; def one: c::three;")
 				.put("b", "import \"c\" as c; def two: c::three;")

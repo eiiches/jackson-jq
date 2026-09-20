@@ -36,8 +36,8 @@ public class ResolvedLocalFunctionAccess<JsonNode> implements RewritableExpressi
 		this.slot = slot;
 		this.args = args;
 		this.info = info;
-		boolean ownInput = info != null ? info.dependsOnInput() : true;
-		boolean ownExternal = info != null ? info.dependsOnExternalState() : true;
+		boolean ownInput = info == null || info.dependsOnInput();
+		boolean ownExternal = info == null || info.dependsOnExternalState();
 		this.dependsOnInput = ownInput || args.stream().anyMatch(Expression::dependsOnInput);
 		this.dependsOnExternalState = ownExternal || args.stream().anyMatch(Expression::dependsOnExternalState);
 		// The callee lives in the same frame this call runs in. Its own slot is a dependency too: evaluating

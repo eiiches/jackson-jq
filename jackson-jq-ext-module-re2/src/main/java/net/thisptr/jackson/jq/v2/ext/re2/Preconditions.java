@@ -28,20 +28,12 @@ final class Preconditions {
 			if (actual == type)
 				return;
 
-		String indexText;
-		switch (argumentIndex) {
-			case 1:
-				indexText = "1st";
-				break;
-			case 2:
-				indexText = "2nd";
-				break;
-			case 3:
-				indexText = "3rd";
-				break;
-			default:
-				indexText = argumentIndex + "th";
-		}
+		String indexText = switch (argumentIndex) {
+			case 1 -> "1st";
+			case 2 -> "2nd";
+			case 3 -> "3rd";
+			default -> argumentIndex + "th";
+		};
 		throw new JsonQueryException(String.format("cannot accept %s as %s argument of %s; expected one of %s", actual, indexText, functionName, Arrays.toString(types)));
 	}
 

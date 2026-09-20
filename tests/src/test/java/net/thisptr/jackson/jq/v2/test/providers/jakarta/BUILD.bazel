@@ -6,7 +6,7 @@ jjq_java_library(
     srcs = [
         "JakartaJsonQueryTest.java",
     ],
-    release = 11,
+    release = 17,
     visibility = ["//tests:__pkg__"],
     deps = [
         "//jackson-jq-json-provider",

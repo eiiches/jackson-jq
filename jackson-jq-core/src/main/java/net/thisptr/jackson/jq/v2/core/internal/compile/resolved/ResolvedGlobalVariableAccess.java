@@ -62,9 +62,9 @@ public class ResolvedGlobalVariableAccess<JsonNode> implements Expression<StackF
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		@Var Supplier<JsonNode> valueSupplier = null;
 		Object raw = frame.getEnclosingMemory().getGlobal(globalIndex);
-		if (raw instanceof Supplier) {
+		if (raw instanceof Supplier<?> supplier) {
 			@SuppressWarnings("unchecked")
-			Supplier<JsonNode> effectiveSupplier = (Supplier<JsonNode>) raw;
+			Supplier<JsonNode> effectiveSupplier = (Supplier<JsonNode>) supplier;
 			valueSupplier = effectiveSupplier;
 		}
 		if (valueSupplier == null)

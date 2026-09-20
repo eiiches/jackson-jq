@@ -3,8 +3,6 @@ package net.thisptr.jackson.jq.v2.test.evaluator;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -21,15 +19,7 @@ public final class JqExecutables {
 		return binDir == null ? executable : Paths.get(binDir, executable).toString();
 	}
 
-	public static class JqExecutable {
-		public final String executable;
-		public final Version jqVersion;
-
-		public JqExecutable(String executable, Version jqVersion) {
-			this.executable = executable;
-			this.jqVersion = jqVersion;
-		}
-
+	public record JqExecutable(String executable, Version jqVersion) {
 		@Override
 		public String toString() {
 			return executable + " (jq " + jqVersion + ")";
@@ -37,7 +27,7 @@ public final class JqExecutables {
 	}
 
 	private static List<JqExecutable> configuredExecutables() {
-		List<JqExecutable> all = Arrays.asList(
+		List<JqExecutable> all = List.of(
 				new JqExecutable(bin("jq-1.5"), Version.of(1, 5, 0)),
 				new JqExecutable(bin("jq-1.6"), Version.of(1, 6, 0)),
 				new JqExecutable(bin("jq-1.7"), Version.of(1, 7, 0)),
@@ -50,19 +40,19 @@ public final class JqExecutables {
 
 		List<JqExecutable> selected = new ArrayList<>();
 		for (JqExecutable executable : all) {
-			if (Files.isRegularFile(Paths.get(executable.executable)))
+			if (Files.isRegularFile(Paths.get(executable.executable())))
 				selected.add(executable);
 		}
 		return selected;
 	}
 
-	public static final List<JqExecutable> ALL = Collections.unmodifiableList(configuredExecutables());
+	public static final List<JqExecutable> ALL = List.copyOf(configuredExecutables());
 
 	public static String executableFor(Version version) {
 		return ALL.stream()
-				.filter(e -> e.jqVersion.equals(version))
+				.filter(e -> e.jqVersion().equals(version))
 				.findFirst()
-				.map(e -> e.executable)
+				.map(JqExecutable::executable)
 				.orElseThrow(() -> new IllegalArgumentException("No known jq executable for version " + version));
 	}
 

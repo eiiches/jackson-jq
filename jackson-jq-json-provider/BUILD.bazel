@@ -5,8 +5,10 @@ package(default_visibility = ["//visibility:public"])
 jjq_java_mrjar(
     name = "jackson-jq-json-provider-mrjar",
     osgi = True,
-    packages = ["//jackson-jq-json-provider/src/main/java/net/thisptr/jackson/jq/v2/json"],
-    release_overlays = {9: ["//jackson-jq-json-provider/src/main/java9:module-info"]},
+    packages = [
+        "//jackson-jq-json-provider/src/main/java:module-info",
+        "//jackson-jq-json-provider/src/main/java/net/thisptr/jackson/jq/v2/json",
+    ],
 )
 
 jjq_maven_artifact(

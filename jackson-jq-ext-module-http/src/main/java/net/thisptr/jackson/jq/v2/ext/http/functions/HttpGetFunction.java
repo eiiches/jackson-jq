@@ -49,9 +49,9 @@ public class HttpGetFunction implements Function {
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindContext, List<Expression<Context, JsonNode>> arguments) {
 		JsonProvider<JsonNode> jsonProvider = bindContext.getJsonProvider();
 		Expression<Context, JsonNode> urlExpression = arguments.get(0);
-		@Nullable Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
+		Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
 		boolean binarySupported = supportsBinary(jsonProvider);
-		return new Expression<Context, JsonNode>() {
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				Cardinality urlCardinality = urlExpression.getCardinality();
@@ -145,7 +145,7 @@ public class HttpGetFunction implements Function {
 	private static <JsonNode> int parseExpectedStatus(JsonProvider<JsonNode> jsonProvider, JsonNode node) {
 		if (!jsonProvider.isNumber(node))
 			throw new JsonQueryException("http::get expected_status values must be exact integers from 100 through 599");
-		@Nullable Integer status = jsonProvider.getNumberAsIntExact(node);
+		Integer status = jsonProvider.getNumberAsIntExact(node);
 		if (status == null || status < 100 || status > 599)
 			throw new JsonQueryException("http::get expected_status values must be exact integers from 100 through 599");
 		return status;
@@ -154,7 +154,7 @@ public class HttpGetFunction implements Function {
 	private static <JsonNode> int parseTimeout(JsonProvider<JsonNode> jsonProvider, JsonNode node) {
 		if (!jsonProvider.isNumber(node))
 			throw new JsonQueryException("http::get timeout must be a positive finite number of seconds");
-		@Nullable BigDecimal seconds = jsonProvider.getNumberAsBigDecimalExact(node);
+		BigDecimal seconds = jsonProvider.getNumberAsBigDecimalExact(node);
 		if (seconds == null || seconds.signum() <= 0)
 			throw new JsonQueryException("http::get timeout must be a positive finite number of seconds");
 		BigDecimal millis = seconds.movePointRight(3).setScale(0, RoundingMode.CEILING);
@@ -168,7 +168,7 @@ public class HttpGetFunction implements Function {
 		HttpURLConnection connection = open(request);
 		try {
 			int status = connection.getResponseCode();
-			checkExpectedStatus(request.expectedStatuses, status);
+			checkExpectedStatus(request.expectedStatuses(), status);
 			List<JsonNode> headers = createHeaders(jsonProvider, limits, connection.getHeaderFields());
 			byte[] rawBody = readBody(connection, limits, binarySupported);
 			JsonNode body = createBody(jsonProvider, limits, rawBody, connection.getContentType());
@@ -181,7 +181,7 @@ public class HttpGetFunction implements Function {
 			response.put("raw_body", rawBodyNode);
 			return jsonProvider.createObject(response);
 		} catch (IOException e) {
-			throw new JsonQueryException("http::get failed for " + request.url + ": " + e.getMessage(), e);
+			throw new JsonQueryException("http::get failed for " + request.url() + ": " + e.getMessage(), e);
 		} finally {
 			connection.disconnect();
 		}
@@ -197,22 +197,21 @@ public class HttpGetFunction implements Function {
 
 	private static HttpURLConnection open(Request request) {
 		try {
-			URL url = new URL(request.url);
+			URL url = new URL(request.url());
 			String protocol = url.getProtocol();
 			if (!protocol.equalsIgnoreCase("http") && !protocol.equalsIgnoreCase("https"))
 				throw new JsonQueryException("http::get only supports http and https URLs");
 			URLConnection rawConnection = url.openConnection();
-			if (!(rawConnection instanceof HttpURLConnection))
+			if (!(rawConnection instanceof HttpURLConnection connection))
 				throw new JsonQueryException("http::get only supports HTTP connections");
-			HttpURLConnection connection = (HttpURLConnection) rawConnection;
 			connection.setRequestMethod("GET");
-			connection.setConnectTimeout(request.timeoutMillis);
-			connection.setReadTimeout(request.timeoutMillis);
+			connection.setConnectTimeout(request.timeoutMillis());
+			connection.setReadTimeout(request.timeoutMillis());
 			connection.setInstanceFollowRedirects(true);
 			connection.setRequestProperty("Accept-Encoding", "gzip, deflate");
 			return connection;
 		} catch (IOException | IllegalArgumentException | SecurityException e) {
-			throw new JsonQueryException("http::get failed to open " + request.url + ": " + e.getMessage(), e);
+			throw new JsonQueryException("http::get failed to open " + request.url() + ": " + e.getMessage(), e);
 		}
 	}
 
@@ -239,7 +238,7 @@ public class HttpGetFunction implements Function {
 	private static byte[] readBody(HttpURLConnection connection, RuntimeLimits limits, boolean binarySupported) throws IOException {
 		int maximumBytes = binarySupported ? limits.getMaxBinaryLength() : maximumBytesForBase64(limits.getMaxStringLength());
 		LimitedByteArrayOutputStream result = new LimitedByteArrayOutputStream(maximumBytes, binarySupported, limits.getMaxStringLength());
-		@Var @Nullable InputStream responseStream;
+		@Var InputStream responseStream;
 		try {
 			responseStream = connection.getInputStream();
 		} catch (IOException e) {
@@ -262,19 +261,19 @@ public class HttpGetFunction implements Function {
 		@Var InputStream result = input;
 		for (int i = encodings.length - 1; i >= 0; --i) {
 			String encoding = encodings[i].trim().toLowerCase(Locale.ROOT);
-			if (encoding.equals("identity") || encoding.isEmpty())
-				continue;
-			if (encoding.equals("gzip")) {
-				result = new GZIPInputStream(result);
-			} else if (encoding.equals("deflate")) {
-				result = new InflaterInputStream(result);
-			} else {
-				try {
-					result.close();
-				} catch (IOException closeFailure) {
-					// Preserve the actionable unsupported-encoding error.
+			switch (encoding) {
+				case "identity", "" -> {
 				}
-				throw new JsonQueryException("http::get does not support Content-Encoding: " + encoding);
+				case "gzip" -> result = new GZIPInputStream(result);
+				case "deflate" -> result = new InflaterInputStream(result);
+				default -> {
+					try {
+						result.close();
+					} catch (IOException closeFailure) {
+						// Preserve the actionable unsupported-encoding error.
+					}
+					throw new JsonQueryException("http::get does not support Content-Encoding: " + encoding);
+				}
 			}
 		}
 		return result;
@@ -282,13 +281,13 @@ public class HttpGetFunction implements Function {
 
 	private static <JsonNode> JsonNode createBody(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, byte[] bytes, @Nullable String contentType) {
 		MediaType mediaType = MediaType.parse(contentType);
-		if (bytes.length == 0 && mediaType.json)
+		if (bytes.length == 0 && mediaType.json())
 			return jsonProvider.createNull();
-		if (!mediaType.json && !mediaType.text)
+		if (!mediaType.json() && !mediaType.text())
 			return jsonProvider.createNull();
 
-		String text = new String(bytes, mediaType.charset);
-		if (mediaType.text) {
+		String text = new String(bytes, mediaType.charset());
+		if (mediaType.text()) {
 			checkStringLength(limits, text);
 			return jsonProvider.createString(text);
 		}
@@ -366,29 +365,10 @@ public class HttpGetFunction implements Function {
 		return maximumStringLength == Integer.MAX_VALUE ? Integer.MAX_VALUE : (maximumStringLength / 4) * 3;
 	}
 
-	private static final class Request {
-		private final List<Integer> expectedStatuses;
-		private final int timeoutMillis;
-		private final String url;
-
-		private Request(String url, int timeoutMillis, List<Integer> expectedStatuses) {
-			this.url = url;
-			this.timeoutMillis = timeoutMillis;
-			this.expectedStatuses = expectedStatuses;
-		}
+	private record Request(String url, int timeoutMillis, List<Integer> expectedStatuses) {
 	}
 
-	private static final class MediaType {
-		private final Charset charset;
-		private final boolean json;
-		private final boolean text;
-
-		private MediaType(boolean json, boolean text, Charset charset) {
-			this.json = json;
-			this.text = text;
-			this.charset = charset;
-		}
-
+	private record MediaType(boolean json, boolean text, Charset charset) {
 		private static MediaType parse(@Nullable String contentType) {
 			if (contentType == null)
 				return new MediaType(false, false, StandardCharsets.UTF_8);

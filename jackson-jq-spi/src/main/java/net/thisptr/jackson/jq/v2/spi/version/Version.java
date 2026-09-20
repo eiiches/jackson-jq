@@ -41,9 +41,8 @@ public final class Version implements Comparable<Version> {
 
 	@Override
 	public boolean equals(@Nullable Object o) {
-		if (!(o instanceof Version))
+		if (!(o instanceof Version version))
 			return false;
-		Version version = (Version) o;
 		return major == version.major && minor == version.minor && patch == version.patch;
 	}
 

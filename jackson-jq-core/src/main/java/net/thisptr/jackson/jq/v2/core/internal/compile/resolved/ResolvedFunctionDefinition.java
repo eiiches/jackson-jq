@@ -213,7 +213,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpressio
 			// RuntimeOptions#setMaxUserDefinedFunctionCalls still bounds a runaway recursion.
 			if (metered)
 				frame.getEnclosingMemory().countUserDefinedFunctionCall();
-			Expression<StackFrame, Object> body = (Expression<StackFrame, Object>) (Expression<?, ?>) resolvedBody;
+			Expression<StackFrame, Object> body = (Expression<StackFrame, Object>) resolvedBody;
 			body.apply(frame, in, (Path<Object>) ipath, (Output<Object>) output);
 		}
 	}

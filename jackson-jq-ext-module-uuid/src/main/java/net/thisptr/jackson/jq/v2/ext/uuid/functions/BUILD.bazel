@@ -6,7 +6,7 @@ jjq_java_library(
         "Uuid35Function.java",
         "Uuid4Function.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-ext-module-uuid:__subpackages__"],
     deps = [
         "//jackson-jq-ext-module-uuid/src/main/java/net/thisptr/jackson/jq/v2/ext/uuid/internal/misc",

@@ -21,9 +21,8 @@ public final class QueryCompiler {
 		try {
 			AstNode parsedAst = AstParser.parse(expression, env.getJqVersion());
 			Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(env, options, ModuleScope.root(env), parsedAst);
-			if (!(compiledExpr instanceof RootExpression))
+			if (!(compiledExpr instanceof RootExpression<JsonNode> rootExpr))
 				throw new IllegalStateException("Compiler did not produce a root expression");
-			RootExpression<JsonNode> rootExpr = (RootExpression<JsonNode>) compiledExpr;
 			return new CompiledJsonQuery<>(rootExpr, RuntimeLimitsImpl.UNLIMITED);
 		} catch (JsonQueryException e) {
 			throw e;

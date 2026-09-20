@@ -6,13 +6,10 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -27,8 +24,8 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public final class FileWriteFunction implements Function {
-	private static final Set<String> TEXT_ALLOWED_OPTIONS = new HashSet<>(Arrays.asList("encoding", "append", "create_parents", "mkdirs"));
-	private static final Set<String> BINARY_ALLOWED_OPTIONS = new HashSet<>(Arrays.asList("append", "create_parents", "mkdirs"));
+	private static final Set<String> TEXT_ALLOWED_OPTIONS = new HashSet<>(List.of("encoding", "append", "create_parents", "mkdirs"));
+	private static final Set<String> BINARY_ALLOWED_OPTIONS = new HashSet<>(List.of("append", "create_parents", "mkdirs"));
 
 	private final boolean binary;
 
@@ -48,9 +45,9 @@ public final class FileWriteFunction implements Function {
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindContext, List<Expression<Context, JsonNode>> arguments) {
 		JsonProvider<JsonNode> jsonProvider = bindContext.getJsonProvider();
 		Expression<Context, JsonNode> pathExpression = arguments.get(0);
-		@Nullable Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
+		Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
 		String function = binary ? "fs::write_binary" : "fs::write_text";
-		return new Expression<Context, JsonNode>() {
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				Cardinality pathCardinality = pathExpression.getCardinality();
@@ -85,7 +82,7 @@ public final class FileWriteFunction implements Function {
 						}
 						optionsExpression.apply(context, input, inputPath, (optionsNode, optionsPath) -> {
 							BinaryOptions options = parseBinaryOptions(jsonProvider, optionsNode, function);
-							FileFunctionSupport.write(file, bytes, options.append, options.createParents, function);
+							FileFunctionSupport.write(file, bytes, options.append(), options.createParents(), function);
 							output.emit(jsonProvider.createNull(), UntrackedPath.getInstance());
 						});
 					});
@@ -102,8 +99,8 @@ public final class FileWriteFunction implements Function {
 					}
 					optionsExpression.apply(context, input, inputPath, (optionsNode, optionsPath) -> {
 						TextOptions options = parseTextOptions(jsonProvider, optionsNode, function);
-						byte[] bytes = encode(text, options.charset, function);
-						FileFunctionSupport.write(file, bytes, options.append, options.createParents, function);
+						byte[] bytes = encode(text, options.charset(), function);
+						FileFunctionSupport.write(file, bytes, options.append(), options.createParents(), function);
 						output.emit(jsonProvider.createNull(), UntrackedPath.getInstance());
 					});
 				});
@@ -160,25 +157,9 @@ public final class FileWriteFunction implements Function {
 		}
 	}
 
-	private static final class TextOptions {
-		private final Charset charset;
-		private final boolean append;
-		private final boolean createParents;
-
-		private TextOptions(Charset charset, boolean append, boolean createParents) {
-			this.charset = charset;
-			this.append = append;
-			this.createParents = createParents;
-		}
+	private record TextOptions(Charset charset, boolean append, boolean createParents) {
 	}
 
-	private static final class BinaryOptions {
-		private final boolean append;
-		private final boolean createParents;
-
-		private BinaryOptions(boolean append, boolean createParents) {
-			this.append = append;
-			this.createParents = createParents;
-		}
+	private record BinaryOptions(boolean append, boolean createParents) {
 	}
 }

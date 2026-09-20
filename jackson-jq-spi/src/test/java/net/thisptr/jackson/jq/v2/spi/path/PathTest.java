@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class PathTest {
 	@Test
-	void serializesEveryRepresentablePathType() throws Exception {
+	void serializesEveryRepresentablePathType() {
 		Jackson2JsonProvider jsonProvider = new Jackson2JsonProvider(new ObjectMapper());
 		@Var Path<JsonNode> path = RootPath.getInstance();
 		path = StringKeyPath.of(path, "a");

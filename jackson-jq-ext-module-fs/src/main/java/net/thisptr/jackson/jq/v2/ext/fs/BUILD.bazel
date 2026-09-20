@@ -3,7 +3,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "fs",
     srcs = ["ModuleImpl.java"],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-ext-module-fs:__subpackages__"],
     deps = [
         "//jackson-jq-ext-module-fs/src/main/java/net/thisptr/jackson/jq/v2/ext/fs/functions",

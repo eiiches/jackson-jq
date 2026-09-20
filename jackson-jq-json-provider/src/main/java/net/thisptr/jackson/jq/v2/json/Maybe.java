@@ -23,7 +23,7 @@ import org.jspecify.annotations.Nullable;
  * @param <T> the type of the held value
  */
 public final class Maybe<T extends @Nullable Object> {
-	private static final Maybe<?> ABSENT = new Maybe<Object>(false, null);
+	private static final Maybe<?> ABSENT = new Maybe<>(false, null);
 
 	private final boolean present;
 
@@ -117,9 +117,8 @@ public final class Maybe<T extends @Nullable Object> {
 	public boolean equals(@Nullable Object o) {
 		if (this == o)
 			return true;
-		if (!(o instanceof Maybe))
+		if (!(o instanceof Maybe<?> other))
 			return false;
-		Maybe<?> other = (Maybe<?>) o;
 		return present == other.present && Objects.equals(value, other.value);
 	}
 

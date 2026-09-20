@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.v2.ext.uri.functions;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -20,11 +19,9 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class UriDecodeFunction implements Function {
 	@Override
-	// Suppress JdkObsolete because URLDecoder.decode(String, Charset) is not available in Java 8 target.
-	@SuppressWarnings("JdkObsolete")
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
-		return new Expression<Context, JsonNode>() {
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				return Cardinality.ONE;
@@ -38,11 +35,7 @@ public class UriDecodeFunction implements Function {
 			@Override
 			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 				Preconditions.checkInputType(jsonProvider, "urldecode", in, JsonNodeType.STRING);
-				try {
-					output.emit(jsonProvider.createString(URLDecoder.decode(jsonProvider.getString(in), StandardCharsets.UTF_8.name())), UntrackedPath.getInstance());
-				} catch (UnsupportedEncodingException e) {
-					throw new JsonQueryException(e);
-				}
+				output.emit(jsonProvider.createString(URLDecoder.decode(jsonProvider.getString(in), StandardCharsets.UTF_8)), UntrackedPath.getInstance());
 			}
 		};
 	}

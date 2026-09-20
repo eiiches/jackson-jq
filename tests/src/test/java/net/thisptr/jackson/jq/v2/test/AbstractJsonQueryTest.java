@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.function.Executable;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
@@ -29,7 +28,8 @@ import net.thisptr.jackson.jq.v2.test.testcase.TestCase;
 import net.thisptr.jackson.jq.v2.test.testcase.TestCaseLoader;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 /**
  * Abstract base class for JsonQuery tests. Subclasses must implement methods to provide
@@ -58,7 +58,7 @@ public abstract class AbstractJsonQueryTest<T> {
 	 */
 	protected abstract T parseTestNode(JsonNode node);
 
-	private void test(TestCase tc, Version version, @Nullable Path moduleSearchPath) throws Throwable {
+	private void test(TestCase tc, Version version, @Nullable Path moduleSearchPath) {
 		EnvironmentBuilder<T> envBuilder = EnvironmentBuilder.withDefaultLoaders(getJsonProvider(), version);
 		if (moduleSearchPath != null) {
 			envBuilder.clearModuleLoaders()
@@ -72,7 +72,7 @@ public abstract class AbstractJsonQueryTest<T> {
 		String command = String.format("jq (v%s) '%s' <<< '%s'", version, tc.q, tc.in);
 
 		if (!tc.shouldCompile) {
-			assertThrows(JsonQueryException.class, () -> env.compile(tc.q));
+			assertThatThrownBy(() -> env.compile(tc.q)).isInstanceOf(JsonQueryException.class);
 			return;
 		}
 
@@ -111,7 +111,7 @@ public abstract class AbstractJsonQueryTest<T> {
 		if (args.length != 1)
 			throw new IllegalArgumentException(String.format("Usage: %s <test-case-resource>", getClass().getSimpleName()));
 
-		Assertions.assertAll(
+		assertAll(
 				args[0],
 				TestCaseLoader.loadTestCasesAsJsonStrings(args[0]).parallel()
 						.flatMap(tcText -> Versions.versions().stream()

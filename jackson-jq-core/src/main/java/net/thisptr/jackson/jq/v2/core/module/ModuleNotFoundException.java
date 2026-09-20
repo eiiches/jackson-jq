@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.module;
 
+import java.io.Serial;
+
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 /**
@@ -11,6 +13,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
  * distinction to decide whether to try the next loader or to give up.
  */
 public class ModuleNotFoundException extends JsonQueryException {
+	@Serial
 	private static final long serialVersionUID = 1L;
 
 	private final String path;

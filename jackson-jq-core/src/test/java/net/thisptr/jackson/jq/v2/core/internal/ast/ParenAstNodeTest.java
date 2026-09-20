@@ -17,9 +17,7 @@ import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ParenAstNodeTest {
 	@Test
@@ -42,7 +40,7 @@ class ParenAstNodeTest {
 		assertPrintedAs("(.foo).bar?", "(.foo).bar?");
 		assertPrintedAs("{value: (1, 2)}", "{value: (1, 2)}");
 
-		assertInstanceOf(ParenAstNode.class, AstParser.parse("(1)", Versions.JQ_1_6));
+		assertThat(AstParser.parse("(1)", Versions.JQ_1_6)).isInstanceOf(ParenAstNode.class);
 	}
 
 	@Test
@@ -57,7 +55,7 @@ class ParenAstNodeTest {
 	void printedGroupingCanBeParsedAgain() throws JsonQueryException {
 		AstNode parsed = AstParser.parse("((1 + 2) * 3) | (. - (4 - 5))", Versions.JQ_1_6);
 		String printed = parsed.toString();
-		assertEquals(printed, AstParser.parse(printed, Versions.JQ_1_6).toString());
+		assertThat(AstParser.parse(printed, Versions.JQ_1_6).toString()).isEqualTo(printed);
 	}
 
 	@Test
@@ -66,18 +64,18 @@ class ParenAstNodeTest {
 		JsonQuery<JsonNode> query = environment.compile("((1 + 2))");
 		List<JsonNode> output = new ArrayList<>();
 		query.apply(NullNode.getInstance(), output::add);
-		assertEquals(3, output.get(0).intValue());
+		assertThat(output.get(0).intValue()).isEqualTo(3);
 	}
 
 	@Test
 	void parenthesizedModuleMetadataRemainsConstant() throws JsonQueryException {
 		TopLevelAstNode topLevel = (TopLevelAstNode) AstParser.parse("module ({name: \"test\"}); .", Versions.JQ_1_6);
-		assertNotNull(topLevel.moduleDirective());
+		assertThat(topLevel.moduleDirective()).isNotNull();
 		JsonNode metadata = Compiler.evaluateMetadata(Jackson2JsonProvider.getInstance(), Objects.requireNonNull(topLevel.moduleDirective()));
-		assertEquals("test", metadata.get("name").textValue());
+		assertThat(metadata.get("name").textValue()).isEqualTo("test");
 	}
 
 	private static void assertPrintedAs(String query, String expected) throws JsonQueryException {
-		assertEquals(expected, AstParser.parse(query, Versions.JQ_1_6).toString());
+		assertThat(AstParser.parse(query, Versions.JQ_1_6).toString()).isEqualTo(expected);
 	}
 }

@@ -42,7 +42,7 @@ def jjq_java_mrjar(
         base = None,
         base_name = None,
         release_overlays = {},
-        multi_release = True,
+        multi_release = None,
         osgi = False,
         osgi_exports = None,
         osgi_provide = None,
@@ -61,7 +61,7 @@ def jjq_java_mrjar(
       base: optional explicit base jar target. If not provided, compiled from `packages`.
       base_name: name of the merged base jar target (defaults to `<name>-merged`).
       release_overlays: mapping of Java releases to lists of overlay jars.
-      multi_release: whether this is a multi-release jar (default True).
+      multi_release: whether this is a multi-release jar (defaults to bool(release_overlays)).
       osgi: whether to generate an OSGi bundle manifest.
       osgi_exports: OSGi Export-Package instruction.
       osgi_provide: OSGi Provide-Capability instruction.
@@ -70,6 +70,9 @@ def jjq_java_mrjar(
       testonly: whether this target is testonly.
       **kwargs: passed through to the base java_library.
     """
+    if multi_release == None:
+        multi_release = bool(release_overlays)
+
     if resource_strip_prefix == None and resources:
         resource_strip_prefix = native.package_name() + "/src/main/resources"
 

@@ -2,7 +2,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
 
 jjq_java_test_suite(
     srcs = ["Re2ModuleTest.java"],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-ext-module-re2:__subpackages__"],
     deps = [
         "//jackson-jq-core",

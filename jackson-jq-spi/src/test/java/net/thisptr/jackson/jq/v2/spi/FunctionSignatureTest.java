@@ -4,13 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class FunctionSignatureTest {
 
@@ -38,9 +33,9 @@ public class FunctionSignatureTest {
 	})
 	void testValidFunctionNames(String name) {
 		FunctionSignature sig = FunctionSignature.of(name, 0);
-		assertEquals(name, sig.name());
-		assertEquals(0, sig.arity());
-		assertFalse(sig.isVariadic());
+		assertThat(sig.name()).isEqualTo(name);
+		assertThat(sig.arity()).isEqualTo(0);
+		assertThat(sig.isVariadic()).isFalse();
 	}
 
 	@ParameterizedTest
@@ -60,62 +55,62 @@ public class FunctionSignatureTest {
 			"@foo-bar"
 	})
 	void testInvalidFunctionNames(String name) {
-		assertThrows(IllegalArgumentException.class, () -> FunctionSignature.of(name, 0));
+		assertThatThrownBy(() -> FunctionSignature.of(name, 0)).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
 	@SuppressWarnings("NullAway")
 	void testNullFunctionName() {
-		assertThrows(NullPointerException.class, () -> FunctionSignature.of(null, 0));
+		assertThatThrownBy(() -> FunctionSignature.of(null, 0)).isInstanceOf(NullPointerException.class);
 	}
 
 	@Test
 	void testValidArity() {
 		FunctionSignature sig0 = FunctionSignature.of("foo", 0);
-		assertEquals(0, sig0.arity());
-		assertFalse(sig0.isVariadic());
+		assertThat(sig0.arity()).isEqualTo(0);
+		assertThat(sig0.isVariadic()).isFalse();
 
 		FunctionSignature sig5 = FunctionSignature.of("foo", 5);
-		assertEquals(5, sig5.arity());
-		assertFalse(sig5.isVariadic());
+		assertThat(sig5.arity()).isEqualTo(5);
+		assertThat(sig5.isVariadic()).isFalse();
 	}
 
 	@Test
 	void testNegativeArityThrows() {
-		assertThrows(IllegalArgumentException.class, () -> FunctionSignature.of("foo", -1));
-		assertThrows(IllegalArgumentException.class, () -> FunctionSignature.of("foo", -10));
+		assertThatThrownBy(() -> FunctionSignature.of("foo", -1)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> FunctionSignature.of("foo", -10)).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
 	void testWithArity() {
 		FunctionSignature sig = FunctionSignature.of("foo", 2);
-		assertEquals(2, sig.arity());
-		assertFalse(sig.isVariadic());
+		assertThat(sig.arity()).isEqualTo(2);
+		assertThat(sig.isVariadic()).isFalse();
 
 		FunctionSignature sig3 = sig.withArity(3);
-		assertEquals(3, sig3.arity());
-		assertFalse(sig3.isVariadic());
+		assertThat(sig3.arity()).isEqualTo(3);
+		assertThat(sig3.isVariadic()).isFalse();
 
-		assertThrows(IllegalArgumentException.class, () -> sig.withArity(-1));
+		assertThatThrownBy(() -> sig.withArity(-1)).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
 	void testAsVariadic() {
 		FunctionSignature sig = FunctionSignature.of("foo", 2);
 		FunctionSignature variadic = sig.asVariadic();
-		assertEquals("foo", variadic.name());
-		assertNull(variadic.arity());
-		assertTrue(variadic.isVariadic());
-		assertSame(variadic, variadic.asVariadic());
+		assertThat(variadic.name()).isEqualTo("foo");
+		assertThat(variadic.arity()).isNull();
+		assertThat(variadic.isVariadic()).isTrue();
+		assertThat(variadic.asVariadic()).isSameAs(variadic);
 	}
 
 	@Test
 	void testToString() {
-		assertEquals("length/0", FunctionSignature.of("length", 0).toString());
-		assertEquals("map/1", FunctionSignature.of("map", 1).toString());
-		assertEquals("@csv/0", FunctionSignature.of("@csv", 0).toString());
-		assertEquals("custom/*", FunctionSignature.of("custom", 0).asVariadic().toString());
-		assertEquals("custom/*", FunctionSignature.ofVariadic("custom").toString());
+		assertThat(FunctionSignature.of("length", 0)).hasToString("length/0");
+		assertThat(FunctionSignature.of("map", 1)).hasToString("map/1");
+		assertThat(FunctionSignature.of("@csv", 0)).hasToString("@csv/0");
+		assertThat(FunctionSignature.of("custom", 0).asVariadic()).hasToString("custom/*");
+		assertThat(FunctionSignature.ofVariadic("custom")).hasToString("custom/*");
 	}
 
 	@Test
@@ -127,48 +122,49 @@ public class FunctionSignatureTest {
 		FunctionSignature variadic1 = FunctionSignature.ofVariadic("foo");
 		FunctionSignature variadic2 = FunctionSignature.of("foo", 1).asVariadic();
 
-		assertEquals(sig1, sig2);
-		assertEquals(sig1.hashCode(), sig2.hashCode());
-		assertEquals(variadic1, variadic2);
-		assertEquals(variadic1.hashCode(), variadic2.hashCode());
-
-		assertNotEquals(sig1, sig3);
-		assertNotEquals(sig1, sig4);
-		assertNotEquals(sig1, variadic1);
-		assertNotEquals(sig1, null);
-		assertNotEquals(sig1, "foo/1");
+		assertThat(sig1)
+				.isEqualTo(sig2)
+				.hasSameHashCodeAs(sig2)
+				.isNotEqualTo(sig3)
+				.isNotEqualTo(sig4)
+				.isNotEqualTo(variadic1)
+				.isNotNull()
+				.isNotEqualTo("foo/1");
+		assertThat(variadic1)
+				.isEqualTo(variadic2)
+				.hasSameHashCodeAs(variadic2);
 	}
 
 	@Test
 	void testOfVariadic() {
 		FunctionSignature sig = FunctionSignature.ofVariadic("custom");
-		assertEquals("custom", sig.name());
-		assertNull(sig.arity());
-		assertTrue(sig.isVariadic());
+		assertThat(sig.name()).isEqualTo("custom");
+		assertThat(sig.arity()).isNull();
+		assertThat(sig.isVariadic()).isTrue();
 	}
 
 	// NullAway checks for null arguments; this test verifies runtime null rejection.
 	@Test
 	@SuppressWarnings("NullAway")
 	void testNullValueOf() {
-		assertThrows(NullPointerException.class, () -> FunctionSignature.valueOf(null));
+		assertThatThrownBy(() -> FunctionSignature.valueOf(null)).isInstanceOf(NullPointerException.class);
 	}
 
 	@Test
 	void testValueOf() {
-		assertEquals(FunctionSignature.of("length", 0), FunctionSignature.valueOf("length/0"));
-		assertEquals(FunctionSignature.of("map", 1), FunctionSignature.valueOf("map/1"));
-		assertEquals(FunctionSignature.of("@csv", 0), FunctionSignature.valueOf("@csv/0"));
-		assertEquals(FunctionSignature.ofVariadic("custom"), FunctionSignature.valueOf("custom/*"));
+		assertThat(FunctionSignature.valueOf("length/0")).isEqualTo(FunctionSignature.of("length", 0));
+		assertThat(FunctionSignature.valueOf("map/1")).isEqualTo(FunctionSignature.of("map", 1));
+		assertThat(FunctionSignature.valueOf("@csv/0")).isEqualTo(FunctionSignature.of("@csv", 0));
+		assertThat(FunctionSignature.valueOf("custom/*")).isEqualTo(FunctionSignature.ofVariadic("custom"));
 
-		assertThrows(IllegalArgumentException.class, () -> FunctionSignature.valueOf(""));
-		assertThrows(IllegalArgumentException.class, () -> FunctionSignature.valueOf("custom"));
-		assertThrows(IllegalArgumentException.class, () -> FunctionSignature.valueOf("foo/"));
-		assertThrows(IllegalArgumentException.class, () -> FunctionSignature.valueOf("foo/bar"));
-		assertThrows(IllegalArgumentException.class, () -> FunctionSignature.valueOf("foo/-1"));
-		assertThrows(IllegalArgumentException.class, () -> FunctionSignature.valueOf("foo/+1"));
-		assertThrows(IllegalArgumentException.class, () -> FunctionSignature.valueOf("foo/01"));
-		assertThrows(IllegalArgumentException.class, () -> FunctionSignature.valueOf("foo/00"));
-		assertThrows(IllegalArgumentException.class, () -> FunctionSignature.valueOf("123foo/0"));
+		assertThatThrownBy(() -> FunctionSignature.valueOf("")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> FunctionSignature.valueOf("custom")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> FunctionSignature.valueOf("foo/")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> FunctionSignature.valueOf("foo/bar")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> FunctionSignature.valueOf("foo/-1")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> FunctionSignature.valueOf("foo/+1")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> FunctionSignature.valueOf("foo/01")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> FunctionSignature.valueOf("foo/00")).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> FunctionSignature.valueOf("123foo/0")).isInstanceOf(IllegalArgumentException.class);
 	}
 }

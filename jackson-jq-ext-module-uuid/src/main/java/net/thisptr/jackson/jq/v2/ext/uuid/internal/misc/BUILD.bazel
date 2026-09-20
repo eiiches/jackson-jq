@@ -6,7 +6,7 @@ jjq_java_library(
         "Preconditions.java",
         "UuidUtils.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-ext-module-uuid:__subpackages__"],
     deps = [
         "//jackson-jq-json-provider",

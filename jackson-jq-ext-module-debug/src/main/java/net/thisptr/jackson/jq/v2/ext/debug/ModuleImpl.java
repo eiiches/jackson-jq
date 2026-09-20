@@ -1,7 +1,5 @@
 package net.thisptr.jackson.jq.v2.ext.debug;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import net.thisptr.jackson.jq.v2.ext.debug.functions.DebugExprFunction;
@@ -13,17 +11,14 @@ import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 
 @ModuleRegistration(path = "jackson-jq/debug")
-public class ModuleImpl implements JavaModule {
-	private final Map<FunctionSignature, Function> functions = new HashMap<>();
-
-	public ModuleImpl() {
-		functions.put(FunctionSignature.of("debug_scope", 0), new DebugScopeFunction());
-		functions.put(FunctionSignature.of("debug_expr", 1), new DebugExprFunction());
-		functions.put(FunctionSignature.of("dump_expr", 1), new DumpExprFunction());
-	}
+public final class ModuleImpl implements JavaModule {
+	private static final Map<FunctionSignature, Function> FUNCTIONS = Map.of(
+			FunctionSignature.of("debug_scope", 0), new DebugScopeFunction(),
+			FunctionSignature.of("debug_expr", 1), new DebugExprFunction(),
+			FunctionSignature.of("dump_expr", 1), new DumpExprFunction());
 
 	@Override
 	public Map<FunctionSignature, Function> getFunctions() {
-		return Collections.unmodifiableMap(functions);
+		return FUNCTIONS;
 	}
 }

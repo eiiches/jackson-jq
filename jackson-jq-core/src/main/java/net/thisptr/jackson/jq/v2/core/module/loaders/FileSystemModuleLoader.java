@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.v2.core.module.loaders;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -119,9 +118,9 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		 */
 		@Override
 		public boolean equals(@Nullable Object o) {
-			if (!(o instanceof FileSystemJqModule))
+			if (!(o instanceof FileSystemJqModule<?> that))
 				return false;
-			return modulePath.equals(((FileSystemJqModule<?>) o).modulePath);
+			return modulePath.equals(that.modulePath);
 		}
 
 		@Override
@@ -194,7 +193,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 
 	private static String read(Path filePath, String what, String path) throws JsonQueryException {
 		try {
-			return new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
+			return Files.readString(filePath);
 		} catch (FileNotFoundException | NoSuchFileException e) {
 			// Readable a moment ago, gone now: report it as missing rather than as a read failure.
 			throw new ModuleNotFoundException(path, e);

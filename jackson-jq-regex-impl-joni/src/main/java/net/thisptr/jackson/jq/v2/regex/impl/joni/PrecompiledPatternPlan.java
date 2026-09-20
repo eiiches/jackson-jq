@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.regex.impl.joni;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
@@ -56,13 +55,15 @@ final class PrecompiledPatternPlan {
 				for (JsonNode flags : flagsValues)
 					patterns.add(compile(jsonProvider, regex, flags, nullableFlags));
 		}
-		return new PrecompiledPatternPlan(Collections.unmodifiableList(patterns), flagsValues.size());
+		return new PrecompiledPatternPlan(List.copyOf(patterns), flagsValues.size());
 	}
 
 	private static <JsonNode> @Nullable List<JsonNode> constantResults(Expression<?, JsonNode> expression) {
-		if (!(expression instanceof ConstantExpression<?, ?>))
+		if (!(expression instanceof ConstantExpression<?, ?> constExpr))
 			return null;
-		return ((ConstantExpression<?, JsonNode>) expression).getConstantResults();
+		@SuppressWarnings("unchecked")
+		ConstantExpression<?, JsonNode> typed = (ConstantExpression<?, JsonNode>) constExpr;
+		return typed.getConstantResults();
 	}
 
 	private static boolean exceedsProductLimit(int left, int right) {

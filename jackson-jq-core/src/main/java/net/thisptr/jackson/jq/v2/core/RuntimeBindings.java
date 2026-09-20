@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.v2.core;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -16,14 +15,14 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
  * Instances are immutable. Build one with {@link #newBuilder()}.
  */
 public final class RuntimeBindings<JsonNode> {
-	private static final RuntimeBindings<?> EMPTY = new RuntimeBindings<>(Collections.emptyMap(), Collections.emptyMap());
+	private static final RuntimeBindings<?> EMPTY = new RuntimeBindings<>(Map.of(), Map.of());
 
 	private final Map<String, Supplier<JsonNode>> variables;
 	private final Map<FunctionSignature, Function> functions;
 
 	private RuntimeBindings(Map<String, Supplier<JsonNode>> variables, Map<FunctionSignature, Function> functions) {
-		this.variables = Collections.unmodifiableMap(new HashMap<>(variables));
-		this.functions = Collections.unmodifiableMap(new HashMap<>(functions));
+		this.variables = Map.copyOf(variables);
+		this.functions = Map.copyOf(functions);
 	}
 
 	public static <JsonNode> Builder<JsonNode> newBuilder() {

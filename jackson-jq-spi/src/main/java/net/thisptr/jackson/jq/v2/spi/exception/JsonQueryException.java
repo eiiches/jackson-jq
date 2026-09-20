@@ -1,11 +1,14 @@
 package net.thisptr.jackson.jq.v2.spi.exception;
 
+import java.io.Serial;
+
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
 /**
  * Reports an error that occurred while compiling or evaluating a jq expression.
  */
 public class JsonQueryException extends RuntimeException {
+	@Serial
 	private static final long serialVersionUID = -7241258446595502920L;
 
 	/**

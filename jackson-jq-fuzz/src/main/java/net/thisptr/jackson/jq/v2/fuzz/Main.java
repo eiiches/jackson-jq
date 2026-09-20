@@ -92,7 +92,7 @@ import net.thisptr.jackson.jq.v2.test.evaluator.JqRunner;
 public class Main {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
-	private static final Set<String> ALWAYS_EXCLUDED_FUNCTIONS = new HashSet<>(Arrays.asList(
+	private static final Set<String> ALWAYS_EXCLUDED_FUNCTIONS = new HashSet<>(List.of(
 			"now/0", // wall-clock time; always differs between the two evaluations, not a real mismatch
 			"builtins/0", // the set of built-in functions inherently differs between jq and jackson-jq
 			"_match_impl/3", // internal regex implementation function
@@ -107,12 +107,12 @@ public class Main {
 
 	static {
 		EXCLUDED_FUNCTIONS.computeIfAbsent(Versions.JQ_1_5, k -> {
-			return new HashSet<>(Arrays.asList(
+			return new HashSet<>(List.of(
 					"log2/0" // log2 has slightly different precisions
 			));
 		});
 		EXCLUDED_FUNCTIONS.computeIfAbsent(Versions.JQ_1_6, k -> {
-			return new HashSet<>(Arrays.asList(
+			return new HashSet<>(List.of(
 					"log2/0" // log2 has slightly different precisions
 			));
 		});
@@ -126,7 +126,7 @@ public class Main {
 
 			// Conditionals (if-then-else, if-then-elif-then-else)
 			generators.add(new RandomGenerator(3, (exprs) -> new ConditionalAstNode(SYNTHETIC, Collections.singletonList(Pair.of(exprs.get(0), exprs.get(1))), exprs.get(2))));
-			generators.add(new RandomGenerator(5, (exprs) -> new ConditionalAstNode(SYNTHETIC, Arrays.asList(Pair.of(exprs.get(0), exprs.get(1)), Pair.of(exprs.get(2), exprs.get(3))), exprs.get(4))));
+			generators.add(new RandomGenerator(5, (exprs) -> new ConditionalAstNode(SYNTHETIC, List.of(Pair.of(exprs.get(0), exprs.get(1)), Pair.of(exprs.get(2), exprs.get(3))), exprs.get(4))));
 
 			// Try-Catch & Question Operator
 			generators.add(new RandomGenerator(2, (exprs) -> new TryCatchAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ParenAstNode(SYNTHETIC, exprs.get(1)))));
@@ -183,16 +183,16 @@ public class Main {
 			generators.add(new RandomGenerator(2, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ValueMatcherAstNode(SYNTHETIC, "x")), new BinaryOpAstNode(SYNTHETIC, BinaryOperator.PLUS, new VariableAccessAstNode(SYNTHETIC, "x"), exprs.get(1)))));
 			generators.add(new RandomGenerator(2, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ValueMatcherAstNode(SYNTHETIC, "x")), new ArrayConstructionAstNode(SYNTHETIC, binary(BinaryOperator.COMMA, new VariableAccessAstNode(SYNTHETIC, "x"), exprs.get(1))))));
 			generators.add(new RandomGenerator(3, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ValueMatcherAstNode(SYNTHETIC, "x")), new ConditionalAstNode(SYNTHETIC, Collections.singletonList(Pair.of(new VariableAccessAstNode(SYNTHETIC, "x"), exprs.get(1))), exprs.get(2)))));
-			generators.add(new RandomGenerator(1, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ArrayMatcherAstNode(SYNTHETIC, Arrays.asList(new ValueMatcherAstNode(SYNTHETIC, "a"), new ValueMatcherAstNode(SYNTHETIC, "b")))), new ArrayConstructionAstNode(SYNTHETIC, binary(BinaryOperator.COMMA, new VariableAccessAstNode(SYNTHETIC, "b"), new VariableAccessAstNode(SYNTHETIC, "a"))))));
-			generators.add(new RandomGenerator(1, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ObjectMatcherAstNode(SYNTHETIC, Arrays.asList(new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, true, "a", null), new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, true, "b", null)))), new ArrayConstructionAstNode(SYNTHETIC, binary(BinaryOperator.COMMA, new VariableAccessAstNode(SYNTHETIC, "a"), new VariableAccessAstNode(SYNTHETIC, "b"))))));
-			generators.add(new RandomGenerator(1, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ObjectMatcherAstNode(SYNTHETIC, Arrays.asList(new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, false, "foo", new ValueMatcherAstNode(SYNTHETIC, "a")), new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, false, "bar", new ValueMatcherAstNode(SYNTHETIC, "b"))))), new ArrayConstructionAstNode(SYNTHETIC, binary(BinaryOperator.COMMA, new VariableAccessAstNode(SYNTHETIC, "a"), new VariableAccessAstNode(SYNTHETIC, "b"))))));
+			generators.add(new RandomGenerator(1, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ArrayMatcherAstNode(SYNTHETIC, List.of(new ValueMatcherAstNode(SYNTHETIC, "a"), new ValueMatcherAstNode(SYNTHETIC, "b")))), new ArrayConstructionAstNode(SYNTHETIC, binary(BinaryOperator.COMMA, new VariableAccessAstNode(SYNTHETIC, "b"), new VariableAccessAstNode(SYNTHETIC, "a"))))));
+			generators.add(new RandomGenerator(1, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ObjectMatcherAstNode(SYNTHETIC, List.of(new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, true, "a", null), new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, true, "b", null)))), new ArrayConstructionAstNode(SYNTHETIC, binary(BinaryOperator.COMMA, new VariableAccessAstNode(SYNTHETIC, "a"), new VariableAccessAstNode(SYNTHETIC, "b"))))));
+			generators.add(new RandomGenerator(1, (exprs) -> binary(BinaryOperator.BINDING_PIPE, new AsBindingAstNode(SYNTHETIC, new ParenAstNode(SYNTHETIC, exprs.get(0)), new ObjectMatcherAstNode(SYNTHETIC, List.of(new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, false, "foo", new ValueMatcherAstNode(SYNTHETIC, "a")), new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, false, "bar", new ValueMatcherAstNode(SYNTHETIC, "b"))))), new ArrayConstructionAstNode(SYNTHETIC, binary(BinaryOperator.COMMA, new VariableAccessAstNode(SYNTHETIC, "a"), new VariableAccessAstNode(SYNTHETIC, "b"))))));
 			generators.add(new RandomGenerator(3, (exprs) -> binary(BinaryOperator.PIPE, new LabelAstNode(SYNTHETIC, "out"), binary(BinaryOperator.COMMA, exprs.get(0), new ConditionalAstNode(SYNTHETIC, Collections.singletonList(Pair.of(exprs.get(1), new BreakExpressionAstNode(SYNTHETIC, "out"))), exprs.get(2))))));
 
 			// Reduce & Foreach
 			generators.add(new RandomGenerator(3, (exprs) -> new ReduceExpressionAstNode(SYNTHETIC, new ValueMatcherAstNode(SYNTHETIC, "x"), exprs.get(1), exprs.get(2), new ParenAstNode(SYNTHETIC, exprs.get(0)))));
 			generators.add(new RandomGenerator(2, (exprs) -> new ReduceExpressionAstNode(SYNTHETIC, new ValueMatcherAstNode(SYNTHETIC, "x"), exprs.get(1), new BinaryOpAstNode(SYNTHETIC, BinaryOperator.PLUS, new ThisObjectAstNode(SYNTHETIC), new VariableAccessAstNode(SYNTHETIC, "x")), new ParenAstNode(SYNTHETIC, exprs.get(0)))));
-			generators.add(new RandomGenerator(2, (exprs) -> new ReduceExpressionAstNode(SYNTHETIC, new ArrayMatcherAstNode(SYNTHETIC, Arrays.asList(new ValueMatcherAstNode(SYNTHETIC, "a"), new ValueMatcherAstNode(SYNTHETIC, "b"))), exprs.get(1), new BinaryOpAstNode(SYNTHETIC, BinaryOperator.PLUS, new BinaryOpAstNode(SYNTHETIC, BinaryOperator.PLUS, new ThisObjectAstNode(SYNTHETIC), new VariableAccessAstNode(SYNTHETIC, "a")), new VariableAccessAstNode(SYNTHETIC, "b")), new ParenAstNode(SYNTHETIC, exprs.get(0)))));
-			generators.add(new RandomGenerator(2, (exprs) -> new ReduceExpressionAstNode(SYNTHETIC, new ObjectMatcherAstNode(SYNTHETIC, Arrays.asList(new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, true, "a", null), new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, true, "b", null))), exprs.get(1), new BinaryOpAstNode(SYNTHETIC, BinaryOperator.PLUS, new BinaryOpAstNode(SYNTHETIC, BinaryOperator.PLUS, new ThisObjectAstNode(SYNTHETIC), new VariableAccessAstNode(SYNTHETIC, "a")), new VariableAccessAstNode(SYNTHETIC, "b")), new ParenAstNode(SYNTHETIC, exprs.get(0)))));
+			generators.add(new RandomGenerator(2, (exprs) -> new ReduceExpressionAstNode(SYNTHETIC, new ArrayMatcherAstNode(SYNTHETIC, List.of(new ValueMatcherAstNode(SYNTHETIC, "a"), new ValueMatcherAstNode(SYNTHETIC, "b"))), exprs.get(1), new BinaryOpAstNode(SYNTHETIC, BinaryOperator.PLUS, new BinaryOpAstNode(SYNTHETIC, BinaryOperator.PLUS, new ThisObjectAstNode(SYNTHETIC), new VariableAccessAstNode(SYNTHETIC, "a")), new VariableAccessAstNode(SYNTHETIC, "b")), new ParenAstNode(SYNTHETIC, exprs.get(0)))));
+			generators.add(new RandomGenerator(2, (exprs) -> new ReduceExpressionAstNode(SYNTHETIC, new ObjectMatcherAstNode(SYNTHETIC, List.of(new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, true, "a", null), new ObjectMatcherAstNode.ConstantKeyFieldMatcher(SYNTHETIC, true, "b", null))), exprs.get(1), new BinaryOpAstNode(SYNTHETIC, BinaryOperator.PLUS, new BinaryOpAstNode(SYNTHETIC, BinaryOperator.PLUS, new ThisObjectAstNode(SYNTHETIC), new VariableAccessAstNode(SYNTHETIC, "a")), new VariableAccessAstNode(SYNTHETIC, "b")), new ParenAstNode(SYNTHETIC, exprs.get(0)))));
 			generators.add(new RandomGenerator(3, (exprs) -> new ForeachExpressionAstNode(SYNTHETIC, new ValueMatcherAstNode(SYNTHETIC, "x"), exprs.get(1), exprs.get(2), null, new ParenAstNode(SYNTHETIC, exprs.get(0)))));
 			generators.add(new RandomGenerator(2, (exprs) -> new ForeachExpressionAstNode(SYNTHETIC, new ValueMatcherAstNode(SYNTHETIC, "x"), exprs.get(1), new BinaryOpAstNode(SYNTHETIC, BinaryOperator.PLUS, new ThisObjectAstNode(SYNTHETIC), new VariableAccessAstNode(SYNTHETIC, "x")), null, new ParenAstNode(SYNTHETIC, exprs.get(0)))));
 			generators.add(new RandomGenerator(4, (exprs) -> new ForeachExpressionAstNode(SYNTHETIC, new ValueMatcherAstNode(SYNTHETIC, "x"), exprs.get(1), exprs.get(2), exprs.get(3), new ParenAstNode(SYNTHETIC, exprs.get(0)))));
@@ -200,15 +200,15 @@ public class Main {
 
 			// Object Construction
 			generators.add(new RandomGenerator(0, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, Collections.emptyList())));
-			generators.add(new RandomGenerator(1, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, Arrays.asList(new ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst(SYNTHETIC, "foo", new ParenAstNode(SYNTHETIC, exprs.get(0)))))));
-			generators.add(new RandomGenerator(0, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, Arrays.asList(new ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst(SYNTHETIC, "foo")))));
-			generators.add(new RandomGenerator(1, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, Arrays.asList(new ObjectConstructionAstNode.StringKeyFieldConstructionAst(SYNTHETIC, new StringLiteralAstNode(SYNTHETIC, "foo"), new ParenAstNode(SYNTHETIC, exprs.get(0)))))));
-			generators.add(new RandomGenerator(0, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, Arrays.asList(new ObjectConstructionAstNode.StringKeyFieldConstructionAst(SYNTHETIC, new StringLiteralAstNode(SYNTHETIC, "foo"))))));
-			generators.add(new RandomGenerator(2, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, Arrays.asList(new ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst(SYNTHETIC, exprs.get(0), new ParenAstNode(SYNTHETIC, exprs.get(1)))))));
-			generators.add(new RandomGenerator(2, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, Arrays.asList(new ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst(SYNTHETIC, "foo", new ParenAstNode(SYNTHETIC, exprs.get(0))), new ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst(SYNTHETIC, "bar", new ParenAstNode(SYNTHETIC, exprs.get(1)))))));
-			generators.add(new RandomGenerator(2, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, Arrays.asList(new ObjectConstructionAstNode.StringKeyFieldConstructionAst(SYNTHETIC, new StringLiteralAstNode(SYNTHETIC, "foo"), new ParenAstNode(SYNTHETIC, exprs.get(0))), new ObjectConstructionAstNode.StringKeyFieldConstructionAst(SYNTHETIC, new StringLiteralAstNode(SYNTHETIC, "bar"), new ParenAstNode(SYNTHETIC, exprs.get(1)))))));
-			generators.add(new RandomGenerator(4, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, Arrays.asList(new ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst(SYNTHETIC, exprs.get(0), new ParenAstNode(SYNTHETIC, exprs.get(1))), new ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst(SYNTHETIC, exprs.get(2), new ParenAstNode(SYNTHETIC, exprs.get(3)))))));
-			generators.add(new RandomGenerator(3, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, Arrays.asList(new ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst(SYNTHETIC, "foo", new ParenAstNode(SYNTHETIC, exprs.get(0))), new ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst(SYNTHETIC, exprs.get(1), new ParenAstNode(SYNTHETIC, exprs.get(2)))))));
+			generators.add(new RandomGenerator(1, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, List.of(new ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst(SYNTHETIC, "foo", new ParenAstNode(SYNTHETIC, exprs.get(0)))))));
+			generators.add(new RandomGenerator(0, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, List.of(new ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst(SYNTHETIC, "foo")))));
+			generators.add(new RandomGenerator(1, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, List.of(new ObjectConstructionAstNode.StringKeyFieldConstructionAst(SYNTHETIC, new StringLiteralAstNode(SYNTHETIC, "foo"), new ParenAstNode(SYNTHETIC, exprs.get(0)))))));
+			generators.add(new RandomGenerator(0, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, List.of(new ObjectConstructionAstNode.StringKeyFieldConstructionAst(SYNTHETIC, new StringLiteralAstNode(SYNTHETIC, "foo"))))));
+			generators.add(new RandomGenerator(2, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, List.of(new ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst(SYNTHETIC, exprs.get(0), new ParenAstNode(SYNTHETIC, exprs.get(1)))))));
+			generators.add(new RandomGenerator(2, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, List.of(new ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst(SYNTHETIC, "foo", new ParenAstNode(SYNTHETIC, exprs.get(0))), new ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst(SYNTHETIC, "bar", new ParenAstNode(SYNTHETIC, exprs.get(1)))))));
+			generators.add(new RandomGenerator(2, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, List.of(new ObjectConstructionAstNode.StringKeyFieldConstructionAst(SYNTHETIC, new StringLiteralAstNode(SYNTHETIC, "foo"), new ParenAstNode(SYNTHETIC, exprs.get(0))), new ObjectConstructionAstNode.StringKeyFieldConstructionAst(SYNTHETIC, new StringLiteralAstNode(SYNTHETIC, "bar"), new ParenAstNode(SYNTHETIC, exprs.get(1)))))));
+			generators.add(new RandomGenerator(4, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, List.of(new ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst(SYNTHETIC, exprs.get(0), new ParenAstNode(SYNTHETIC, exprs.get(1))), new ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst(SYNTHETIC, exprs.get(2), new ParenAstNode(SYNTHETIC, exprs.get(3)))))));
+			generators.add(new RandomGenerator(3, (exprs) -> new ObjectConstructionAstNode(SYNTHETIC, List.of(new ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst(SYNTHETIC, "foo", new ParenAstNode(SYNTHETIC, exprs.get(0))), new ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst(SYNTHETIC, exprs.get(1), new ParenAstNode(SYNTHETIC, exprs.get(2)))))));
 
 			// Array Construction & Commas
 			generators.add(new RandomGenerator(0, (exprs) -> new ArrayConstructionAstNode(SYNTHETIC)));
@@ -254,11 +254,11 @@ public class Main {
 			// String Interpolation & Formatting Filters
 			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode(SYNTHETIC, "foo  bar", Collections.singletonList(Pair.of(4, exprs.get(0))), null)));
 			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode(SYNTHETIC, "", Collections.singletonList(Pair.of(0, exprs.get(0))), null)));
-			generators.add(new RandomGenerator(2, (exprs) -> new StringInterpolationAstNode(SYNTHETIC, " - ", Arrays.asList(Pair.of(0, exprs.get(0)), Pair.of(3, exprs.get(1))), null)));
+			generators.add(new RandomGenerator(2, (exprs) -> new StringInterpolationAstNode(SYNTHETIC, " - ", List.of(Pair.of(0, exprs.get(0)), Pair.of(3, exprs.get(1))), null)));
 			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode(SYNTHETIC, "foo ", Collections.singletonList(Pair.of(4, exprs.get(0))), formattingFilter("uri"))));
 			generators.add(new RandomGenerator(1, (exprs) -> new StringInterpolationAstNode(SYNTHETIC, "foo ", Collections.singletonList(Pair.of(4, exprs.get(0))), formattingFilter("json"))));
 
-			for (String fmt : Arrays.asList("base64", "json", "uri", "csv", "tsv", "sh", "html", "text")) {
+			for (String fmt : List.of("base64", "json", "uri", "csv", "tsv", "sh", "html", "text")) {
 				generators.add(new RandomGenerator(0, (exprs) -> formattingFilter(fmt)));
 			}
 			if (version.compareTo(Versions.JQ_1_6) >= 0) {
@@ -266,21 +266,21 @@ public class Main {
 			}
 
 			// User-Defined Functions
-			generators.add(new RandomGenerator(1, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, Arrays.asList(
+			generators.add(new RandomGenerator(1, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, List.of(
 					functionDefinition("f", Collections.emptyList(), exprs.get(0)),
 					functionCall("f", Collections.emptyList())))));
-			generators.add(new RandomGenerator(2, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, Arrays.asList(
+			generators.add(new RandomGenerator(2, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, List.of(
 					functionDefinition("f", Collections.emptyList(), exprs.get(0)),
 					binary(BinaryOperator.PIPE, exprs.get(1), functionCall("f", Collections.emptyList()))))));
-			generators.add(new RandomGenerator(2, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, Arrays.asList(
+			generators.add(new RandomGenerator(2, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, List.of(
 					functionDefinition("f", Collections.singletonList("a"), exprs.get(0)),
 					functionCall("f", Collections.singletonList(exprs.get(1)))))));
-			generators.add(new RandomGenerator(3, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, Arrays.asList(
+			generators.add(new RandomGenerator(3, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, List.of(
 					functionDefinition("f", Collections.singletonList("a"), exprs.get(0)),
 					binary(BinaryOperator.PIPE, exprs.get(1), functionCall("f", Collections.singletonList(exprs.get(2))))))));
-			generators.add(new RandomGenerator(3, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, Arrays.asList(
-					functionDefinition("f", Arrays.asList("a", "b"), exprs.get(0)),
-					functionCall("f", Arrays.asList(exprs.get(1), exprs.get(2)))))));
+			generators.add(new RandomGenerator(3, (exprs) -> new SemicolonOperatorAstNode(SYNTHETIC, List.of(
+					functionDefinition("f", List.of("a", "b"), exprs.get(0)),
+					functionCall("f", List.of(exprs.get(1), exprs.get(2)))))));
 
 			Set<String> exclusions = new HashSet<>(ALWAYS_EXCLUDED_FUNCTIONS);
 			exclusions.addAll(EXCLUDED_FUNCTIONS.getOrDefault(v, Collections.emptySet()));
@@ -426,13 +426,13 @@ public class Main {
 		if (result == null)
 			return null;
 		EvaluationSummary s = new EvaluationSummary();
-		s.values = result.values != null ? result.values : Collections.emptyList();
-		if (result.error != null) {
-			s.error = result.error.getMessage();
-			s.errorType = result.error.getClass().getName();
-			if (!(result.error instanceof JsonQueryException)) {
+		s.values = result.values() != null ? result.values() : Collections.emptyList();
+		if (result.error() != null) {
+			s.error = result.error().getMessage();
+			s.errorType = result.error().getClass().getName();
+			if (!(result.error() instanceof JsonQueryException)) {
 				List<String> trace = new ArrayList<>();
-				for (StackTraceElement elem : result.error.getStackTrace()) {
+				for (StackTraceElement elem : result.error().getStackTrace()) {
 					trace.add(elem.toString());
 					if (trace.size() >= 15)
 						break;
@@ -444,18 +444,14 @@ public class Main {
 	}
 
 	private static JsonProvider<?> resolveProvider(String name) {
-		switch (name) {
-			case "jackson2":
-				return Jackson2JsonProvider.getInstance();
-			case "jackson3":
-				return Jackson3JsonProvider.getInstance();
-			case "fastjson2":
-				return Fastjson2JsonProvider.getInstance();
-			case "gson":
-				return GsonJsonProvider.getInstance();
-			default:
-				throw new IllegalArgumentException("unknown --provider: " + name + " (expected one of: jackson2, jackson3, fastjson2, gson)");
-		}
+		return switch (name) {
+			case "jackson2" -> Jackson2JsonProvider.getInstance();
+			case "jackson3" -> Jackson3JsonProvider.getInstance();
+			case "fastjson2" -> Fastjson2JsonProvider.getInstance();
+			case "gson" -> GsonJsonProvider.getInstance();
+			default ->
+					throw new IllegalArgumentException("unknown --provider: " + name + " (expected one of: jackson2, jackson3, fastjson2, gson)");
+		};
 	}
 
 	private static <N> Evaluator createJacksonJqRunner(JsonProvider<N> jsonProvider, Version jqVersion) {
@@ -576,7 +572,7 @@ public class Main {
 
 		List<JsonNode> values = new ArrayList<>();
 		Set<JsonNode> uniqueValues = new TreeSet<>(new JsonNodeComparator<>(Jackson2JsonProvider.getInstance()));
-		for (JsonNode initialVal : Arrays.asList(
+		for (JsonNode initialVal : List.of(
 				NullNode.getInstance(),
 				BooleanNode.TRUE,
 				BooleanNode.FALSE,
@@ -631,30 +627,30 @@ public class Main {
 			@Var Category category = null;
 			@Var String message = "";
 
-			if (actual.error != null && !(actual.error instanceof JsonQueryException)) {
-				if (actual.error instanceof TimeoutException) {
+			if (actual.error() != null && !(actual.error() instanceof JsonQueryException)) {
+				if (actual.error() instanceof TimeoutException) {
 					category = Category.TIMEOUT;
 					message = "jackson-jq evaluation timed out";
 				} else {
 					category = Category.UNEXPECTED_EXCEPTION;
-					message = "jackson-jq threw " + actual.error.getClass().getName() + ": " + actual.error.getMessage();
+					message = "jackson-jq threw " + actual.error().getClass().getName() + ": " + actual.error().getMessage();
 				}
-			} else if ((expected.error != null) != (actual.error != null)) {
+			} else if ((expected.error() == null) == (actual.error() != null)) {
 				category = Category.STATUS_MISMATCH;
-				if (expected.error != null) {
-					message = "jq failed with error [" + expected.error.getMessage() + "] but jackson-jq succeeded producing " + actual.values.size() + " value(s)";
+				if (expected.error() != null) {
+					message = "jq failed with error [" + expected.error().getMessage() + "] but jackson-jq succeeded producing " + actual.values().size() + " value(s)";
 				} else {
-					message = "jq succeeded with " + expected.values.size() + " value(s) but jackson-jq failed with error [" + actual.error.getMessage() + "]";
+					message = "jq succeeded with " + expected.values().size() + " value(s) but jackson-jq failed with error [" + actual.error().getMessage() + "]";
 				}
-			} else if (expected.error == null && actual.error == null) {
-				if (expected.values.size() != actual.values.size()) {
+			} else if (expected.error() == null) {
+				if (expected.values().size() != actual.values().size()) {
 					category = Category.COUNT_MISMATCH;
-					message = "Output count mismatch: expected " + expected.values.size() + " value(s), actual " + actual.values.size() + " value(s)";
+					message = "Output count mismatch: expected " + expected.values().size() + " value(s), actual " + actual.values().size() + " value(s)";
 				} else {
-					for (int t = 0; t < expected.values.size(); ++t) {
-						if (nodeComparator.compare(expected.values.get(t), actual.values.get(t)) != 0) {
+					for (int t = 0; t < expected.values().size(); ++t) {
+						if (nodeComparator.compare(expected.values().get(t), actual.values().get(t)) != 0) {
 							category = Category.VALUE_MISMATCH;
-							message = "Output mismatch at index " + t + ": expected=" + expected.values.get(t) + ", actual=" + actual.values.get(t);
+							message = "Output mismatch at index " + t + ": expected=" + expected.values().get(t) + ", actual=" + actual.values().get(t);
 							break;
 						}
 					}
@@ -665,13 +661,13 @@ public class Main {
 				TestCase testCase = new TestCase();
 				testCase.in = in;
 				testCase.version = VersionRange.of(version, true, null, false);
-				if (expected.error != null) {
+				if (expected.error() != null) {
 					testCase.expression = new TryCatchAstNode(SYNTHETIC, expr, new StringLiteralAstNode(SYNTHETIC, "__ERROR__"));
-					testCase.out = new ArrayList<>(expected.values);
+					testCase.out = new ArrayList<>(expected.values());
 					testCase.out.add(TextNode.valueOf("__ERROR__"));
 				} else {
 					testCase.expression = expr;
-					testCase.out = expected.values;
+					testCase.out = expected.values();
 				}
 
 				DiagnosticRecord record = new DiagnosticRecord();
@@ -690,8 +686,8 @@ public class Main {
 				diagnostics.add(record);
 			} else {
 				passedCount++;
-				if (expected.error == null && !expected.values.isEmpty()) {
-					actual.values.forEach(v -> {
+				if (expected.error() == null && !expected.values().isEmpty()) {
+					actual.values().forEach(v -> {
 						if (uniqueValues.add(v)) {
 							values.add(v);
 							expressions.add(toAstNode(v));
@@ -716,7 +712,7 @@ public class Main {
 		System.err.println(MAPPER.writeValueAsString(summary));
 
 		if (failOnError && !diagnostics.isEmpty()) {
-			System.err.println(String.format("jackson-jq-fuzz found %d error(s) across %d iterations.", diagnostics.size(), iterations));
+			System.err.printf("jackson-jq-fuzz found %d error(s) across %d iterations.%n", diagnostics.size(), iterations);
 			System.exit(1);
 		}
 	}

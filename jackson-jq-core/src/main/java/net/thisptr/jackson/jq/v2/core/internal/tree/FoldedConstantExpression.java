@@ -71,7 +71,7 @@ public final class FoldedConstantExpression<JsonNode> implements ConstantExpress
 			delegate.apply(frame, in, ipath, output);
 			return;
 		}
-		for (int i = 0; i < values.size(); i++)
-			output.emit(values.get(i), UntrackedPath.getInstance());
+		for (JsonNode value : values)
+			output.emit(value, UntrackedPath.getInstance());
 	}
 }

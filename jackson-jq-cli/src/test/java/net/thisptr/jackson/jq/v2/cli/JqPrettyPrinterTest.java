@@ -24,19 +24,20 @@ class JqPrettyPrinterTest {
 	@ParameterizedTest
 	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void printsNestedValuesLikeJq(String provider) {
-		assertThat(print(provider, FIXTURE)).isEqualTo(""
-				+ "{\n"
-				+ "  \"a\": [\n"
-				+ "    1,\n"
-				+ "    2,\n"
-				+ "    {\n"
-				+ "      \"b\": null\n"
-				+ "    }\n"
-				+ "  ],\n"
-				+ "  \"c\": {},\n"
-				+ "  \"d\": [],\n"
-				+ "  \"e\": \"<&>\"\n"
-				+ "}");
+		assertThat(print(provider, FIXTURE)).isEqualTo("""
+				\
+				{
+				  "a": [
+				    1,
+				    2,
+				    {
+				      "b": null
+				    }
+				  ],
+				  "c": {},
+				  "d": [],
+				  "e": "<&>"
+				}""");
 	}
 
 	@ParameterizedTest
@@ -44,12 +45,13 @@ class JqPrettyPrinterTest {
 	void keepsEmptyContainersOnOneLine(String provider) {
 		assertThat(print(provider, "{}")).isEqualTo("{}");
 		assertThat(print(provider, "[]")).isEqualTo("[]");
-		assertThat(print(provider, "[[],{},1]")).isEqualTo(""
-				+ "[\n"
-				+ "  [],\n"
-				+ "  {},\n"
-				+ "  1\n"
-				+ "]");
+		assertThat(print(provider, "[[],{},1]")).isEqualTo("""
+				\
+				[
+				  [],
+				  {},
+				  1
+				]""");
 	}
 
 	@ParameterizedTest
@@ -63,32 +65,35 @@ class JqPrettyPrinterTest {
 	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void keepsJqNumberFormattingOfParsedNumbers(String provider) {
 		// Scalars go through the provider's own format(), so indenting cannot change a number.
-		assertThat(print(provider, "{\"exp\":1e10,\"whole\":1.0}")).isEqualTo(""
-				+ "{\n"
-				+ "  \"exp\": 10000000000,\n"
-				+ "  \"whole\": 1\n"
-				+ "}");
+		assertThat(print(provider, "{\"exp\":1e10,\"whole\":1.0}")).isEqualTo("""
+				\
+				{
+				  "exp": 10000000000,
+				  "whole": 1
+				}""");
 	}
 
 	@ParameterizedTest
 	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void keepsJqNumberFormattingOfNonFiniteDoubles(String provider) {
-		assertThat(printNonFinite(Main.resolveProvider(provider))).isEqualTo(""
-				+ "{\n"
-				+ "  \"nan\": null,\n"
-				+ "  \"inf\": 1.7976931348623157e+308\n"
-				+ "}");
+		assertThat(printNonFinite(Main.resolveProvider(provider))).isEqualTo("""
+				\
+				{
+				  "nan": null,
+				  "inf": 1.7976931348623157e+308
+				}""");
 	}
 
 	@ParameterizedTest
 	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void honoursTheGivenIndent(String provider) {
-		assertThat(printWith(Main.resolveProvider(provider), "{\"a\":[1]}", "\t")).isEqualTo(""
-				+ "{\n"
-				+ "\t\"a\": [\n"
-				+ "\t\t1\n"
-				+ "\t]\n"
-				+ "}");
+		assertThat(printWith(Main.resolveProvider(provider), "{\"a\":[1]}", "\t")).isEqualTo("""
+				\
+				{
+				\t"a": [
+				\t\t1
+				\t]
+				}""");
 	}
 
 	@Test

@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 import com.google.errorprone.annotations.Var;
@@ -36,34 +35,10 @@ final class JqFunctionCompiler {
 		LOADER
 	}
 
-	static final class DefinitionKey {
-		private final Version version;
-		private final FunctionSignature signature;
-		private final List<FunctionParameter> parameters;
-		private final String body;
-		private final Origin origin;
-
+	record DefinitionKey(Version version, FunctionSignature signature, List<FunctionParameter> parameters, String body,
+						 Origin origin) {
 		DefinitionKey(Version version, FunctionSignature signature, JqFunction definition, Origin origin) {
-			this.version = version;
-			this.signature = signature;
-			this.parameters = definition.parameters();
-			this.body = definition.body();
-			this.origin = origin;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (!(obj instanceof DefinitionKey))
-				return false;
-			DefinitionKey other = (DefinitionKey) obj;
-			return version.equals(other.version) && signature.equals(other.signature) && parameters.equals(other.parameters) && body.equals(other.body) && origin == other.origin;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(version, signature, parameters, body, origin);
+			this(version, signature, definition.parameters(), definition.body(), origin);
 		}
 	}
 
@@ -164,7 +139,7 @@ final class JqFunctionCompiler {
 		private <N> Environment<N> resolveEnvironment(Environment<N> callingEnvironment) {
 			if (origin == Origin.ENVIRONMENT)
 				return callingEnvironment;
-			EnvironmentBuilder<N> builder = EnvironmentBuilder.<N>withDefaultLoaders(callingEnvironment.getJsonProvider(), version)
+			EnvironmentBuilder<N> builder = EnvironmentBuilder.withDefaultLoaders(callingEnvironment.getJsonProvider(), version)
 					.clearFunctionLoaders();
 			callingEnvironment.getFunctionLoaders().forEach(builder::addFunctionLoader);
 			return builder.build();
@@ -234,7 +209,7 @@ final class JqFunctionCompiler {
 	}
 
 	private static <N> Expression<StackFrame, N> bindResolved(List<FunctionParameter> paramNames, List<Expression<StackFrame, N>> args, ResolvedFunction<N> resolved) {
-		return new Expression<StackFrame, N>() {
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				return resolved.body.getCardinality();
@@ -270,7 +245,7 @@ final class JqFunctionCompiler {
 	 * {@code callerFrame} instead of pushing a dedicated one.
 	 */
 	private static <N> Expression<StackFrame, N> bindResolvedInline(List<FunctionParameter> paramNames, List<Expression<StackFrame, N>> args, ResolvedFunction<N> resolved) {
-		return new Expression<StackFrame, N>() {
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				return resolved.body.getCardinality();
@@ -324,7 +299,7 @@ final class JqFunctionCompiler {
 			@Override
 			@SuppressWarnings("unchecked")
 			public <Context extends RuntimeContext, N1> Expression<Context, N1> bind(BindContext<N1> bindCtx, List<Expression<Context, N1>> args) {
-				Expression<StackFrame, N1> effectiveExpression = (Expression<StackFrame, N1>) (Expression<?, ?>) expression;
+				Expression<StackFrame, N1> effectiveExpression = (Expression<StackFrame, N1>) expression;
 				return (frame, in, path, output) -> effectiveExpression.apply(callerFrame, in, path, output);
 			}
 		};

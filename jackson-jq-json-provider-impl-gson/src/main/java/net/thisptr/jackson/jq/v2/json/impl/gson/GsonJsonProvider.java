@@ -179,17 +179,17 @@ public class GsonJsonProvider implements JsonProvider<JsonElement> {
 
 	@Override
 	public boolean isString(JsonElement node) {
-		return node instanceof JsonPrimitive && ((JsonPrimitive) node).isString();
+		return node instanceof JsonPrimitive primitive && primitive.isString();
 	}
 
 	@Override
 	public boolean isNumber(JsonElement node) {
-		return node instanceof JsonPrimitive && ((JsonPrimitive) node).isNumber();
+		return node instanceof JsonPrimitive primitive && primitive.isNumber();
 	}
 
 	@Override
 	public boolean isBoolean(JsonElement node) {
-		return node instanceof JsonPrimitive && ((JsonPrimitive) node).isBoolean();
+		return node instanceof JsonPrimitive primitive && primitive.isBoolean();
 	}
 
 	@Override

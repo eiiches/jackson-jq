@@ -9,7 +9,7 @@ jjq_java_library(
         "JqExecutables.java",
         "JqRunner.java",
     ],
-    release = 8,
+    release = 17,
     visibility = [
         "//jackson-jq-fuzz/src/main/java/net/thisptr/jackson/jq/v2/fuzz:__pkg__",
         "//tests:__subpackages__",
@@ -30,7 +30,7 @@ jjq_java_test_suite(
     ],
     data = ["@jq_binaries//:all"],
     env = {"JQ_BIN_DIR": jq_binaries_rootpath()},
-    release = 8,
+    release = 17,
     visibility = ["//tests:__subpackages__"],
     deps = [
         ":evaluator",

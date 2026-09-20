@@ -12,7 +12,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -223,7 +222,7 @@ public class Main {
 		if (queryFile != null) {
 			// jq reads the query from the file, so that every positional argument is an input file.
 			try {
-				query = new String(Files.readAllBytes(Paths.get(queryFile)), StandardCharsets.UTF_8);
+				query = Files.readString(Paths.get(queryFile));
 			} catch (IOException e) {
 				System.err.println("jq: error: Could not open " + queryFile + ": " + reason(e));
 				System.exit(1);
@@ -303,9 +302,7 @@ public class Main {
 		}
 	}
 
-	static final List<String> PROVIDERS = Collections.unmodifiableList(
-			Arrays.asList("jackson3", "jackson2", "fastjson2", "gson", "jakarta")
-	);
+	static final List<String> PROVIDERS = List.of("jackson3", "jackson2", "fastjson2", "gson", "jakarta");
 
 	static String resolveProviderName(JsonProvider<?> jsonProvider) {
 		if (jsonProvider instanceof Jackson3JsonProvider) {
@@ -327,20 +324,15 @@ public class Main {
 	}
 
 	static JsonProvider<?> resolveProvider(String name) {
-		switch (name) {
-			case "jackson2":
-				return Jackson2JsonProvider.getInstance();
-			case "jackson3":
-				return Jackson3JsonProvider.getInstance();
-			case "fastjson2":
-				return Fastjson2JsonProvider.getInstance();
-			case "gson":
-				return GsonJsonProvider.getInstance();
-			case "jakarta":
-				return JakartaJsonProvider.getInstance();
-			default:
-				throw new IllegalArgumentException("unknown --json-provider: " + name + " (expected one of: jackson2, jackson3, fastjson2, gson, jakarta)");
-		}
+		return switch (name) {
+			case "jackson2" -> Jackson2JsonProvider.getInstance();
+			case "jackson3" -> Jackson3JsonProvider.getInstance();
+			case "fastjson2" -> Fastjson2JsonProvider.getInstance();
+			case "gson" -> GsonJsonProvider.getInstance();
+			case "jakarta" -> JakartaJsonProvider.getInstance();
+			default ->
+					throw new IllegalArgumentException("unknown --json-provider: " + name + " (expected one of: jackson2, jackson3, fastjson2, gson, jakarta)");
+		};
 	}
 
 	/**
@@ -373,7 +365,7 @@ public class Main {
 					@Override
 					public <Context extends RuntimeContext, N2> Expression<Context, N2> bind(BindContext<N2> bindCtx, List<Expression<Context, N2>> fnArgs) {
 						JsonProvider<N2> jsonProv = bindCtx.getJsonProvider();
-						return new Expression<Context, N2>() {
+						return new Expression<>() {
 							@Override
 							public Cardinality getCardinality() {
 								return Cardinality.ONE;
@@ -447,7 +439,7 @@ public class Main {
 			boolean isTty = System.console() != null;
 			color = isTty && !noColorSet;
 		}
-		@Nullable JqColors colors = color ? JqColors.fromEnvironment(version, System.getenv(), System.err) : null;
+		JqColors colors = color ? JqColors.fromEnvironment(version, System.getenv(), System.err) : null;
 		List<InputStream> streams = new ArrayList<>();
 		@Var boolean failed = false;
 		/*
@@ -472,7 +464,7 @@ public class Main {
 		if (command.hasOption(OPT_INTERACTIVE.getLongOpt())) {
 			if (failed)
 				System.exit(1);
-			@Var byte @Nullable [] rawInputBytes = null;
+			@Var byte[] rawInputBytes = null;
 			if (!nullInput) {
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 				byte[] buf = new byte[8192];
@@ -570,7 +562,7 @@ public class Main {
 	}
 
 	private static final class DevTtyPty extends ExecPty {
-		private DevTtyPty(TerminalProvider provider) throws IOException {
+		private DevTtyPty(TerminalProvider provider) {
 			super(provider, null, "/dev/tty");
 		}
 	}

@@ -148,7 +148,7 @@ final class JsonTreeNode {
 			JsonTreeNode root = buildNode(provider, item, null, rootIndex, null, 0);
 			roots.add(root);
 		}
-		return Collections.unmodifiableList(roots);
+		return List.copyOf(roots);
 	}
 
 	private static <T> JsonTreeNode buildNode(

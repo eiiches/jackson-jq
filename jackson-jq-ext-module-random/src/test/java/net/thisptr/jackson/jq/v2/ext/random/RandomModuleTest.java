@@ -23,7 +23,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RandomModuleTest {
-	private static final BindContext<JsonNode> BIND_CONTEXT = new BindContext<JsonNode>() {
+	private static final BindContext<JsonNode> BIND_CONTEXT = new BindContext<>() {
 		@Override
 		public JsonProvider<JsonNode> getJsonProvider() {
 			return Jackson2JsonProvider.getInstance();

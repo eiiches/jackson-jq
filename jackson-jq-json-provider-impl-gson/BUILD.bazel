@@ -5,8 +5,10 @@ package(default_visibility = ["//visibility:public"])
 jjq_java_mrjar(
     name = "jackson-jq-json-provider-impl-gson-mrjar",
     osgi = True,
-    packages = ["//jackson-jq-json-provider-impl-gson/src/main/java/net/thisptr/jackson/jq/v2/json/impl/gson"],
-    release_overlays = {9: ["//jackson-jq-json-provider-impl-gson/src/main/java9:module-info"]},
+    packages = [
+        "//jackson-jq-json-provider-impl-gson/src/main/java:module-info",
+        "//jackson-jq-json-provider-impl-gson/src/main/java/net/thisptr/jackson/jq/v2/json/impl/gson",
+    ],
 )
 
 jjq_maven_artifact(

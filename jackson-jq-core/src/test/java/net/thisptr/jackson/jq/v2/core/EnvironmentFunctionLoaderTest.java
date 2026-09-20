@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.core;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -77,7 +76,7 @@ public class EnvironmentFunctionLoaderTest {
 		};
 	}
 
-	private static List<JsonNode> execute(Environment<JsonNode> env, String source) throws Exception {
+	private static List<JsonNode> execute(Environment<JsonNode> env, String source) {
 		JsonQuery<JsonNode> query = env.compile(source);
 		List<JsonNode> out = new ArrayList<>();
 		query.apply(env.getJsonProvider().createNull(), out::add);
@@ -85,7 +84,7 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void addFunctionLoaderAfterConstructionTakesEffect() throws Exception {
+	public void addFunctionLoaderAfterConstructionTakesEffect() {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.addFunctionLoader(constantLoader(FunctionSignature.of("greet", 0), "hello"))
 				.build();
@@ -103,7 +102,7 @@ public class EnvironmentFunctionLoaderTest {
 	 * supply a name answers -- so an added loader extends the builtins, it does not shadow them.
 	 */
 	@Test
-	public void addedFunctionLoaderDoesNotShadowABuiltin() throws Exception {
+	public void addedFunctionLoaderDoesNotShadowABuiltin() {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.addFunctionLoader(constantLoader(FunctionSignature.of("not", 0), "overridden"))
 				.build();
@@ -112,7 +111,7 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void clearFunctionLoadersLetsALoaderSupplyABuiltinName() throws Exception {
+	public void clearFunctionLoadersLetsALoaderSupplyABuiltinName() {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.clearFunctionLoaders()
 				.addFunctionLoader(constantLoader(FunctionSignature.of("not", 0), "overridden"))
@@ -122,7 +121,7 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void explicitDefineFunctionWinsOverFunctionLoader() throws Exception {
+	public void explicitDefineFunctionWinsOverFunctionLoader() {
 		FunctionSignature key = FunctionSignature.of("greet", 0);
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.addFunctionLoader(constantLoader(key, "from-loader"))
@@ -138,7 +137,7 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void jqFunctionIsResolvedFromSeparateLoaderRegistry() throws Exception {
+	public void jqFunctionIsResolvedFromSeparateLoaderRegistry() {
 		FunctionSignature key = FunctionSignature.of("greet", 0);
 		JqFunction jqFunction = JqFunction.of("greet", Collections.emptyList(), "\"from-jq\"");
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
@@ -154,7 +153,7 @@ public class EnvironmentFunctionLoaderTest {
 	 * how it was supplied, so it must not decide the winner differently in one tier than in the other.
 	 */
 	@Test
-	public void loadedJavaFunctionWinsOverLoaderJqFunctionWithSameExactSignature() throws Exception {
+	public void loadedJavaFunctionWinsOverLoaderJqFunctionWithSameExactSignature() {
 		FunctionSignature key = FunctionSignature.of("greet", 0);
 		JqFunction jqFunction = JqFunction.of("greet", Collections.emptyList(), "\"from-jq\"");
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
@@ -169,7 +168,7 @@ public class EnvironmentFunctionLoaderTest {
 	 * beats variadic, so a loader jq definition wins over a variadic loader Java function.
 	 */
 	@Test
-	public void exactLoaderJqFunctionWinsOverLoaderJavaVariadicFunction() throws Exception {
+	public void exactLoaderJqFunctionWinsOverLoaderJavaVariadicFunction() {
 		JqFunction jqFunction = JqFunction.of("greet", Collections.emptyList(), "\"exact-jq\"");
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.addFunctionLoader(functionLoader(
@@ -181,7 +180,7 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void explicitFunctionWinsOverLoadedJqFunction() throws Exception {
+	public void explicitFunctionWinsOverLoadedJqFunction() {
 		FunctionSignature key = FunctionSignature.of("greet", 0);
 		JqFunction jqFunction = JqFunction.of("greet", Collections.emptyList(), "\"from-jq\"");
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
@@ -193,7 +192,7 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void recursiveJqFunctionUsesGenericBodyAsRecursionGuard() throws Exception {
+	public void recursiveJqFunctionUsesGenericBodyAsRecursionGuard() {
 		FunctionSignature key = FunctionSignature.of("countdown", 1);
 		JqFunction jqFunction = JqFunction.of("countdown", Collections.singletonList(FunctionParameter.ofValue("n")),
 				"if $n <= 0 then 0 else countdown($n - 1) end");
@@ -205,7 +204,7 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void environmentJqFunctionUsesFullEnvironment() throws Exception {
+	public void environmentJqFunctionUsesFullEnvironment() {
 		JqFunction helper = JqFunction.of("jq_helper", Collections.emptyList(), "\"-jq\"");
 		JqFunction greet = JqFunction.of("greet", Collections.emptyList(), "java_helper + jq_helper + $suffix");
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
@@ -219,7 +218,7 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void environmentJqFunctionIsRecursive() throws Exception {
+	public void environmentJqFunctionIsRecursive() {
 		JqFunction countdown = JqFunction.of("countdown", Collections.singletonList(FunctionParameter.ofValue("n")),
 				"if $n <= 0 then 0 else countdown($n - 1) end");
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
@@ -230,7 +229,7 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void recursiveEnvironmentJqFunctionCanUseDeclaredGlobals() throws Exception {
+	public void recursiveEnvironmentJqFunctionCanUseDeclaredGlobals() {
 		FunctionSignature helperSignature = FunctionSignature.of("declared_helper", 0);
 		JqFunction countdown = JqFunction.of("countdown", Collections.singletonList(FunctionParameter.ofValue("n")),
 				"if $n <= 0 then declared_helper + $suffix else countdown($n - 1) end");
@@ -251,7 +250,7 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void environmentJqFunctionWinsOverLoaderDefinition() throws Exception {
+	public void environmentJqFunctionWinsOverLoaderDefinition() {
 		FunctionSignature key = FunctionSignature.of("greet", 0);
 		JqFunction loaded = JqFunction.of("greet", Collections.emptyList(), "\"from-loader\"");
 		JqFunction defined = JqFunction.of("greet", Collections.emptyList(), "\"from-environment\"");
@@ -311,7 +310,7 @@ public class EnvironmentFunctionLoaderTest {
 	// slot reused across each `.[]` iteration) must not leak a previous iteration's bound argument into
 	// the next one's.
 	@Test
-	public void repeatedInlinedCallsAtTheSameCallSiteDoNotAliasAcrossIterations() throws Exception {
+	public void repeatedInlinedCallsAtTheSameCallSiteDoNotAliasAcrossIterations() {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).build();
 
 		assertThat(execute(env, "[1,2,3,4] | map(select(. % 2 == 0)) | add"))
@@ -322,7 +321,7 @@ public class EnvironmentFunctionLoaderTest {
 	// deliberately excluded from the inlined fast path (see CompiledDefinition#eligibleForInlining) and
 	// must keep working exactly as before through the unmodified compileResolvedFunction/bindResolved path.
 	@Test
-	public void jqFunctionWithAnInternalDefStillWorksThroughTheUnmodifiedPath() throws Exception {
+	public void jqFunctionWithAnInternalDefStillWorksThroughTheUnmodifiedPath() {
 		JqFunction countUp = JqFunction.of("count_up", Collections.singletonList(FunctionParameter.ofValue("limit")),
 				"def _step: if . >= $limit then . else (. + 1 | _step) end; _step");
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
@@ -336,7 +335,7 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void exactEnvironmentJqFunctionWinsOverEnvironmentJavaVariadicFunction() throws Exception {
+	public void exactEnvironmentJqFunctionWinsOverEnvironmentJavaVariadicFunction() {
 		JqFunction defined = JqFunction.of("greet", Collections.emptyList(), "\"exact-jq\"");
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.defineFunction(FunctionSignature.ofVariadic("greet"), constantFunction("variadic-java"))
@@ -360,7 +359,7 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void environmentJqFunctionCannotBeOverriddenByBindings() throws Exception {
+	public void environmentJqFunctionCannotBeOverriddenByBindings() {
 		FunctionSignature signature = FunctionSignature.of("greet", 0);
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.defineJqFunction(JqFunction.of("greet", Collections.emptyList(), "\"fixed\""))
@@ -459,7 +458,7 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void earlierFunctionLoaderWinsOverALaterOneWithTheSameSignature() throws Exception {
+	public void earlierFunctionLoaderWinsOverALaterOneWithTheSameSignature() {
 		FunctionSignature key = FunctionSignature.of("greet", 0);
 		Environment<JsonNode> env = builder()
 				.addFunctionLoader(constantLoader(key, "from-first"))
@@ -470,13 +469,13 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void aLaterFunctionLoaderIsConsultedForASignatureTheEarlierOneLacks() throws Exception {
+	public void aLaterFunctionLoaderIsConsultedForASignatureTheEarlierOneLacks() {
 		Environment<JsonNode> env = builder()
 				.addFunctionLoader(constantLoader(FunctionSignature.of("greet", 0), "hello"))
 				.addFunctionLoader(constantLoader(FunctionSignature.of("farewell", 0), "bye"))
 				.build();
 
-		assertThat(execute(env, "[greet, farewell]")).flatExtracting(node -> Arrays.asList(node.get(0).asText(), node.get(1).asText()))
+		assertThat(execute(env, "[greet, farewell]")).flatExtracting(node -> List.of(node.get(0).asText(), node.get(1).asText()))
 				.containsExactly("hello", "bye");
 	}
 
@@ -487,7 +486,7 @@ public class EnvironmentFunctionLoaderTest {
 	 * follow, deliberately preferred over letting exactness cross a loader boundary.
 	 */
 	@Test
-	public void anEarlierLoadersVariadicFunctionWinsOverALaterLoadersExactFunction() throws Exception {
+	public void anEarlierLoadersVariadicFunctionWinsOverALaterLoadersExactFunction() {
 		Environment<JsonNode> env = builder()
 				.addFunctionLoader(constantLoader(FunctionSignature.ofVariadic("greet"), "variadic-first"))
 				.addFunctionLoader(constantLoader(FunctionSignature.of("greet", 0), "exact-second"))
@@ -502,7 +501,7 @@ public class EnvironmentFunctionLoaderTest {
 	 * loader supplies -- not just the one it came from.
 	 */
 	@Test
-	public void aLoaderJqFunctionBodyResolvesAgainstEveryFunctionLoader() throws Exception {
+	public void aLoaderJqFunctionBodyResolvesAgainstEveryFunctionLoader() {
 		JqFunction greet = JqFunction.of("greet", Collections.emptyList(), "helper");
 		Environment<JsonNode> env = builder()
 				.addFunctionLoader(functionLoader(Collections.emptyMap(), Collections.singletonMap(FunctionSignature.of("greet", 0), greet)))
@@ -517,7 +516,7 @@ public class EnvironmentFunctionLoaderTest {
 	 * ModuleResolver#moduleEnvironment, which must carry the whole list too.
 	 */
 	@Test
-	public void aModuleBodyResolvesAgainstEveryFunctionLoader() throws Exception {
+	public void aModuleBodyResolvesAgainstEveryFunctionLoader() {
 		Environment<JsonNode> env = builder()
 				.addFunctionLoader(constantLoader(FunctionSignature.of("helper", 0), "from-loader"))
 				.addImportedModule("lib", new SourceModule("def greet: helper;"))

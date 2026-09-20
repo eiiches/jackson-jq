@@ -6,10 +6,10 @@ jjq_java_mrjar(
     name = "jackson-jq-ext-module-random-mrjar",
     osgi = True,
     packages = [
+        "//jackson-jq-ext-module-random/src/main/java:module-info",
         "//jackson-jq-ext-module-random/src/main/java/net/thisptr/jackson/jq/v2/ext/random",
         "//jackson-jq-ext-module-random/src/main/java/net/thisptr/jackson/jq/v2/ext/random/functions",
     ],
-    release_overlays = {9: ["//jackson-jq-ext-module-random/src/main/java9:module-info"]},
 )
 
 jjq_maven_artifact(

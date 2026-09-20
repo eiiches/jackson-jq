@@ -65,26 +65,26 @@ final class SubImplFunction implements Function {
 
 		while (!frames.isEmpty()) {
 			Frame frame = frames.pop();
-			if (frame.pendingException != null)
-				throw frame.pendingException;
-			if (frame.index < 0) {
-				output.emit(jsonProvider.createString(concat(context.getRuntimeLimits(), frame.parts)), UntrackedPath.getInstance());
+			if (frame.pendingException() != null)
+				throw frame.pendingException();
+			if (frame.index() < 0) {
+				output.emit(jsonProvider.createString(concat(context.getRuntimeLimits(), frame.parts())), UntrackedPath.getInstance());
 				continue;
 			}
 
-			JsonNode segment = match.get(frame.index);
+			JsonNode segment = match.get(frame.index());
 			if (jsonProvider.isString(segment)) {
-				frames.push(new Frame(frame.index - 1, new Part(jsonProvider.getString(segment), frame.parts), null));
+				frames.push(new Frame(frame.index() - 1, new Part(jsonProvider.getString(segment), frame.parts()), null));
 				continue;
 			}
 
 			List<String> replacements = new ArrayList<>();
-			@Var @Nullable JsonQueryException pendingException = null;
+			@Var JsonQueryException pendingException = null;
 			try {
 				replaceExpression.apply(context, segment, UntrackedPath.getInstance(), (replacement, outputPath) -> {
 					JsonNodeType replacementType = jsonProvider.getNodeType(replacement);
 					if (replacementType != JsonNodeType.STRING && replacementType != JsonNodeType.NULL)
-						throw Preconditions.cannotBeAdded(jsonProvider, version, match.get(frame.index - 1), replacement);
+						throw Preconditions.cannotBeAdded(jsonProvider, version, match.get(frame.index() - 1), replacement);
 					replacements.add(replacementType == JsonNodeType.STRING ? jsonProvider.getString(replacement) : "");
 				});
 			} catch (JsonQueryException e) {
@@ -93,42 +93,26 @@ final class SubImplFunction implements Function {
 			if (pendingException != null)
 				frames.push(new Frame(-1, null, pendingException));
 			for (int i = replacements.size() - 1; i >= 0; i--)
-				frames.push(new Frame(frame.index - 1, new Part(replacements.get(i), frame.parts), null));
+				frames.push(new Frame(frame.index() - 1, new Part(replacements.get(i), frame.parts()), null));
 		}
 	}
 
 	private static String concat(RuntimeLimits limits, @Nullable Part parts) {
 		@Var long length = 0;
-		for (@Nullable Part part = parts; part != null; part = part.next)
-			length += part.value.length();
+		for (Part part = parts; part != null; part = part.next())
+			length += part.value().length();
 		RuntimeLimitChecks.checkStringLength(limits, length);
 
 		StringBuilder result = new StringBuilder((int) length);
-		for (@Nullable Part part = parts; part != null; part = part.next)
-			result.append(part.value);
+		for (Part part = parts; part != null; part = part.next())
+			result.append(part.value());
 		return result.toString();
 	}
 
-	private static final class Frame {
-		private final int index;
-		private final @Nullable Part parts;
-		private final @Nullable JsonQueryException pendingException;
-
-		private Frame(int index, @Nullable Part parts, @Nullable JsonQueryException pendingException) {
-			this.index = index;
-			this.parts = parts;
-			this.pendingException = pendingException;
-		}
+	private record Frame(int index, @Nullable Part parts, @Nullable JsonQueryException pendingException) {
 	}
 
-	private static final class Part {
-		private final String value;
-		private final @Nullable Part next;
-
-		private Part(String value, @Nullable Part next) {
-			this.value = value;
-			this.next = next;
-		}
+	private record Part(String value, @Nullable Part next) {
 	}
 
 	private static <JsonNode> List<JsonNode> match(JsonProvider<JsonNode> jsonProvider, Re2Pattern pattern, String input) {

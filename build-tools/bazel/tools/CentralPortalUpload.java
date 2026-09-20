@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serial;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -15,7 +16,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -108,6 +108,7 @@ public final class CentralPortalUpload {
 	 * {@code SystemExit}.
 	 */
 	static final class Failure extends RuntimeException {
+		@Serial
 		private static final long serialVersionUID = 1L;
 
 		Failure(String message) {
@@ -200,7 +201,7 @@ public final class CentralPortalUpload {
 			return tree.filter(Files::isRegularFile)
 					.filter(artifact -> !artifact.getFileName().toString().startsWith("maven-metadata"))
 					.sorted()
-					.collect(Collectors.toList());
+					.toList();
 		}
 	}
 
@@ -357,7 +358,7 @@ public final class CentralPortalUpload {
 
 	private static void deleteRecursively(Path directory) throws IOException {
 		try (Stream<Path> tree = Files.walk(directory)) {
-			for (Path path : tree.sorted(Comparator.reverseOrder()).collect(Collectors.toList()))
+			for (Path path : tree.sorted(Comparator.reverseOrder()).toList())
 				Files.deleteIfExists(path);
 		}
 	}

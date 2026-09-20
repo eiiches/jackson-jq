@@ -35,7 +35,7 @@ public class SimpleModuleMetaTest {
 	}
 
 	@Test
-	public void testExposesMetadata() throws Exception {
+	public void testExposesMetadata() {
 		Map<String, JsonNode> metadata = metadataOf("module { \"author\": \"Alice\", \"version\": 1 }; def one: 1;");
 
 		assertThat(metadata).containsKey("author");
@@ -47,7 +47,7 @@ public class SimpleModuleMetaTest {
 	// Metadata is folded by ExpressionUtils.evaluateLiteralExpression, which has to walk a `,` as a
 	// left-nested binary node to read an array literal's elements in order.
 	@Test
-	public void testFoldsArrayMetadata() throws Exception {
+	public void testFoldsArrayMetadata() {
 		Map<String, JsonNode> metadata = metadataOf("module { \"tags\": [\"a\", (\"b\", \"c\")], \"nested\": [1, [2, 3], 4], \"solo\": [\"only\"], \"none\": [] }; def one: 1;");
 
 		assertThat(Objects.requireNonNull(metadata.get("tags")).toString()).isEqualTo("[\"a\",\"b\",\"c\"]");
@@ -57,7 +57,7 @@ public class SimpleModuleMetaTest {
 	}
 
 	@Test
-	public void testFoldsLongArrayMetadataWithoutOverflowingTheStack() throws Exception {
+	public void testFoldsLongArrayMetadataWithoutOverflowingTheStack() {
 		StringBuilder source = new StringBuilder("module { \"values\": [");
 		for (int i = 0; i < 10_000; i++) {
 			if (i != 0)
@@ -74,7 +74,7 @@ public class SimpleModuleMetaTest {
 	}
 
 	@Test
-	public void testExposesDependencies() throws Exception {
+	public void testExposesDependencies() {
 		List<ModuleMeta.Dependency> deps = metaOf("import \"foo/bar\" as bar; import \"data/nums\" as $nums { \"tag\": \"nums\" }; include \"helpers\"; def test: 1;")
 				.getDependencies();
 

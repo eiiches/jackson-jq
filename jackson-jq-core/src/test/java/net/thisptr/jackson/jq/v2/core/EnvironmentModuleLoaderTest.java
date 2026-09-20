@@ -45,12 +45,12 @@ public class EnvironmentModuleLoaderTest {
 	}
 
 	@Test
-	public void testDefaultEnvironmentHasTheClassPathLoader() throws Exception {
+	public void testDefaultEnvironmentHasTheClassPathLoader() {
 		assertThat(builder().build().getModuleLoaders()).hasSize(1);
 	}
 
 	@Test
-	public void testAddedLoadersFollowTheDefaultInOrder() throws Exception {
+	public void testAddedLoadersFollowTheDefaultInOrder() {
 		ModuleLoader<JsonNode> first = new StubModuleLoader();
 		ModuleLoader<JsonNode> second = new StubModuleLoader();
 
@@ -60,7 +60,7 @@ public class EnvironmentModuleLoaderTest {
 	}
 
 	@Test
-	public void testClearModuleLoadersTakesOverTheOrder() throws Exception {
+	public void testClearModuleLoadersTakesOverTheOrder() {
 		ModuleLoader<JsonNode> first = new StubModuleLoader();
 		ModuleLoader<JsonNode> second = new StubModuleLoader();
 
@@ -69,7 +69,7 @@ public class EnvironmentModuleLoaderTest {
 	}
 
 	@Test
-	public void testEnvironmentWithNoModuleLoadersCannotImport() throws Exception {
+	public void testEnvironmentWithNoModuleLoadersCannotImport() {
 		Environment<JsonNode> env = builder().clearModuleLoaders().build();
 
 		assertThat(env.getModuleLoaders()).isEmpty();
@@ -97,7 +97,7 @@ public class EnvironmentModuleLoaderTest {
 	}
 
 	@Test
-	public void testModuleLoadersAreNotModifiableThroughTheEnvironment() throws Exception {
+	public void testModuleLoadersAreNotModifiableThroughTheEnvironment() {
 		assertThatThrownBy(() -> builder().build().getModuleLoaders().add(new StubModuleLoader()))
 				.isInstanceOf(UnsupportedOperationException.class);
 	}

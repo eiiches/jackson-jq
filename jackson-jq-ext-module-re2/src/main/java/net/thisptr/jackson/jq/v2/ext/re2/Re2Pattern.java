@@ -39,10 +39,7 @@ final class Re2Pattern {
 				case 'i':
 					result |= Pattern.CASE_INSENSITIVE;
 					break;
-				case 'm':
-					result |= Pattern.DOTALL;
-					break;
-				case 'p':
+				case 'm', 'p':
 					result |= Pattern.DOTALL;
 					break;
 				case 'l':

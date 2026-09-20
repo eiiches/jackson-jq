@@ -20,7 +20,7 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public abstract class AbstractMaxByFunction implements Function {
 
-	private String fname;
+	private final String fname;
 
 	public AbstractMaxByFunction(String fname) {
 		this.fname = fname;

@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.fuzz;
 
+import java.io.Serial;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
@@ -12,6 +14,7 @@ import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
  * without masking genuinely different values.
  */
 public class ToleranceJsonNodeComparator extends JsonNodeComparator<JsonNode> {
+	@Serial
 	private static final long serialVersionUID = 1L;
 
 	private static final double ABSOLUTE_EPSILON = 1e-9;

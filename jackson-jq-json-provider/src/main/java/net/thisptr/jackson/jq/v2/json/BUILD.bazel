@@ -11,7 +11,7 @@ jjq_java_library(
         "Maybe.java",
         "NumberType.java",
     ],
-    release = 8,
+    release = 17,
     visibility = [
         "//jackson-jq-json-provider:__subpackages__",
     ],

@@ -1,9 +1,12 @@
 package net.thisptr.jackson.jq.v2.json;
 
+import java.io.Serial;
+
 /**
  * Reports a failure to parse or otherwise interpret raw JSON text via a {@link JsonProvider}.
  */
 public class JsonException extends RuntimeException {
+	@Serial
 	private static final long serialVersionUID = 5533862584931897206L;
 
 	/**

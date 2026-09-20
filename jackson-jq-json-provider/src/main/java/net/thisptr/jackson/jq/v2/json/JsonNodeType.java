@@ -47,5 +47,5 @@ public enum JsonNodeType {
 	 * it; the rest never produce this constant, and their {@link JsonProvider#createBinary} throws
 	 * {@link UnsupportedOperationException}.
 	 */
-	BINARY;
+	BINARY,
 }

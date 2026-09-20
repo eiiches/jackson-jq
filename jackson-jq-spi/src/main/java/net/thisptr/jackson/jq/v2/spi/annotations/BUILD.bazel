@@ -13,6 +13,6 @@ jjq_java_library(
         "VersionSpec.java",
         "package-info.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-spi:__subpackages__"],
 )

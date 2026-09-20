@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.v2.core.internal.json.comparator;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -14,8 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class JsonNodeComparatorTest {
 
@@ -28,13 +26,13 @@ public class JsonNodeComparatorTest {
 		JsonNode jhoge = mapper.readTree("\"hoge\"");
 
 		JsonNodeComparator<JsonNode> sut = new JsonNodeComparator<>(Jackson2JsonProvider.getInstance());
-		assertTrue(sut.compare(j3, j10) < 0);
-		assertTrue(sut.compare(j3, jhoge) < 0);
-		assertTrue(sut.compare(j10, jhoge) < 0);
+		assertThat(sut.compare(j3, j10)).isLessThan(0);
+		assertThat(sut.compare(j3, jhoge)).isLessThan(0);
+		assertThat(sut.compare(j10, jhoge)).isLessThan(0);
 
-		List<JsonNode> nodes = new ArrayList<>(Arrays.asList(j3, jhoge, j10));
+		List<JsonNode> nodes = new ArrayList<>(List.of(j3, jhoge, j10));
 		nodes.sort(sut);
-		assertEquals(Arrays.asList(j3, j10, jhoge), nodes);
+		assertThat(nodes).isEqualTo(List.of(j3, j10, jhoge));
 	}
 
 	/**
@@ -50,16 +48,16 @@ public class JsonNodeComparatorTest {
 		JsonNode jhoge = TextNode.valueOf("hoge");
 
 		JsonNodeComparator<JsonNode> sut = new JsonNodeComparator<>(Jackson2JsonProvider.getInstance());
-		assertEquals(0, sut.compare(binary, BinaryNode.valueOf(new byte[] { 1, 2 })));
-		assertTrue(sut.compare(binary, binaryLonger) < 0);
+		assertThat(sut.compare(binary, BinaryNode.valueOf(new byte[] { 1, 2 }))).isZero();
+		assertThat(sut.compare(binary, binaryLonger)).isLessThan(0);
 		// 0xff sorts after 0x01, i.e. the bytes are compared unsigned.
-		assertTrue(sut.compare(binary, binaryHigh) < 0);
-		assertTrue(sut.compare(j3, binary) < 0);
-		assertTrue(sut.compare(jhoge, binary) < 0);
-		assertTrue(sut.compare(binary, jhoge) > 0);
+		assertThat(sut.compare(binary, binaryHigh)).isLessThan(0);
+		assertThat(sut.compare(j3, binary)).isLessThan(0);
+		assertThat(sut.compare(jhoge, binary)).isLessThan(0);
+		assertThat(sut.compare(binary, jhoge)).isGreaterThan(0);
 
-		List<JsonNode> nodes = new ArrayList<>(Arrays.asList(binaryHigh, jhoge, binary, j3));
+		List<JsonNode> nodes = new ArrayList<>(List.of(binaryHigh, jhoge, binary, j3));
 		nodes.sort(sut);
-		assertEquals(Arrays.asList(j3, jhoge, binary, binaryHigh), nodes);
+		assertThat(nodes).isEqualTo(List.of(j3, jhoge, binary, binaryHigh));
 	}
 }

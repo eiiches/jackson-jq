@@ -5,7 +5,7 @@ jjq_java_library(
     srcs = [
         "FunctionBody.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-regex-impl-joni:__subpackages__"],
     deps = [
         "//jackson-jq-spi",

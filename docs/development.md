@@ -69,7 +69,7 @@ To exercise the Maven consumer projects, publish the Bazel-built artifacts local
 
 ```sh
 bazel run //:maven_install
-for project in java8 jpms osgi quarkus graalvm; do
+for project in java17 jpms osgi quarkus graalvm; do
 	mvn -f "smoke-tests/$project/pom.xml" clean verify
 done
 ```

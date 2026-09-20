@@ -7,7 +7,7 @@ jjq_java_library(
     srcs = [
         "AbstractJsonQueryTest.java",
     ],
-    release = 8,
+    release = 17,
     visibility = [
         "//tests:__subpackages__",
     ],

@@ -119,17 +119,15 @@ public final class VersionRange {
 		}
 		if (maxVersion != null) {
 			int r = maxVersion.compareTo(version);
-			if (r < 0 || (!maxInclusive && r == 0))
-				return false;
+			return r >= 0 && (maxInclusive || r != 0);
 		}
 		return true;
 	}
 
 	@Override
 	public boolean equals(@Nullable Object o) {
-		if (!(o instanceof VersionRange))
+		if (!(o instanceof VersionRange that))
 			return false;
-		VersionRange that = (VersionRange) o;
 		return minInclusive == that.minInclusive && maxInclusive == that.maxInclusive && Objects.equals(minVersion, that.minVersion) && Objects.equals(maxVersion, that.maxVersion);
 	}
 

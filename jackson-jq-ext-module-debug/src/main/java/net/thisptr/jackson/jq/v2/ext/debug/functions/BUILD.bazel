@@ -7,7 +7,7 @@ jjq_java_library(
         "DebugScopeFunction.java",
         "DumpExprFunction.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-ext-module-debug:__subpackages__"],
     deps = [
         "//jackson-jq-json-provider",

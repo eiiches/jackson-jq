@@ -20,21 +20,10 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
  * {@code Function.bind} can specialize from {@link ConstantExpression}.</p>
  */
 public final class FoldPlanner {
-	private static final class Metadata {
-		final boolean foldable;
-		final int frameSize;
-		final int globalCount;
-		final int outputCounterCount;
-
-		Metadata(boolean foldable, int frameSize, int globalCount, int outputCounterCount) {
-			this.foldable = foldable;
-			this.frameSize = frameSize;
-			this.globalCount = globalCount;
-			this.outputCounterCount = outputCounterCount;
-		}
-
+	private record Metadata(boolean foldable, int frameSize, int globalCount, int outputCounterCount) {
 		Metadata merge(Metadata other) {
-			return new Metadata(foldable && other.foldable,
+			return new Metadata(
+					foldable && other.foldable,
 					Math.max(frameSize, other.frameSize),
 					Math.max(globalCount, other.globalCount),
 					Math.max(outputCounterCount, other.outputCounterCount));
@@ -139,8 +128,8 @@ public final class FoldPlanner {
 		}
 
 		Metadata metadata = metadataByExpression.get(expression);
-		if (metadata != null && metadata.foldable) {
-			Expression<StackFrame, N> folded = folder.fold(env, expression, metadata.frameSize, metadata.globalCount, metadata.outputCounterCount);
+		if (metadata != null && metadata.foldable()) {
+			Expression<StackFrame, N> folded = folder.fold(env, expression, metadata.frameSize(), metadata.globalCount(), metadata.outputCounterCount());
 			if (folded != expression) {
 				optimizedByExpression.put(expression, folded);
 				return folded;
@@ -153,11 +142,11 @@ public final class FoldPlanner {
 	}
 
 	private <N> Expression<StackFrame, N> rewriteChildren(Environment<N> env, Expression<StackFrame, N> expression) {
-		if (!(expression instanceof RewritableExpression<?>))
+		if (!(expression instanceof RewritableExpression<?> rewritableExpr))
 			return expression;
 		// The instanceof check guarantees that this expression's JSON node type matches the current tree.
 		@SuppressWarnings("unchecked")
-		RewritableExpression<N> rewritable = (RewritableExpression<N>) expression;
+		RewritableExpression<N> rewritable = (RewritableExpression<N>) rewritableExpr;
 		return rewritable.rewriteChildren(child -> optimize(env, child));
 	}
 }

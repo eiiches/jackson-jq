@@ -9,48 +9,51 @@ import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ObjectMatcherAstNodeTest {
 	@Test
 	void constantKeysKeepTheirSourceForm() throws JsonQueryException {
 		List<ObjectMatcherAstNode.FieldMatcher> matchers = parseObjectMatcher(". as {$x, $y: [$a], foo: $b, if: $c} | .");
 
-		ObjectMatcherAstNode.ConstantKeyFieldMatcher shorthand = assertInstanceOf(ObjectMatcherAstNode.ConstantKeyFieldMatcher.class, matchers.get(0));
-		assertTrue(shorthand.dollar());
-		assertEquals("x", shorthand.name());
-		assertNull(shorthand.matcher());
+		assertThat(matchers.get(0)).isInstanceOf(ObjectMatcherAstNode.ConstantKeyFieldMatcher.class);
+		ObjectMatcherAstNode.ConstantKeyFieldMatcher shorthand = (ObjectMatcherAstNode.ConstantKeyFieldMatcher) matchers.get(0);
+		assertThat(shorthand.dollar()).isTrue();
+		assertThat(shorthand.name()).isEqualTo("x");
+		assertThat(shorthand.matcher()).isNull();
 
-		ObjectMatcherAstNode.ConstantKeyFieldMatcher variable = assertInstanceOf(ObjectMatcherAstNode.ConstantKeyFieldMatcher.class, matchers.get(1));
-		assertTrue(variable.dollar());
-		assertEquals("y", variable.name());
-		assertInstanceOf(ArrayMatcherAstNode.class, variable.matcher());
+		assertThat(matchers.get(1)).isInstanceOf(ObjectMatcherAstNode.ConstantKeyFieldMatcher.class);
+		ObjectMatcherAstNode.ConstantKeyFieldMatcher variable = (ObjectMatcherAstNode.ConstantKeyFieldMatcher) matchers.get(1);
+		assertThat(variable.dollar()).isTrue();
+		assertThat(variable.name()).isEqualTo("y");
+		assertThat(variable.matcher()).isInstanceOf(ArrayMatcherAstNode.class);
 
-		ObjectMatcherAstNode.ConstantKeyFieldMatcher identifier = assertInstanceOf(ObjectMatcherAstNode.ConstantKeyFieldMatcher.class, matchers.get(2));
-		assertFalse(identifier.dollar());
-		assertEquals("foo", identifier.name());
+		assertThat(matchers.get(2)).isInstanceOf(ObjectMatcherAstNode.ConstantKeyFieldMatcher.class);
+		ObjectMatcherAstNode.ConstantKeyFieldMatcher identifier = (ObjectMatcherAstNode.ConstantKeyFieldMatcher) matchers.get(2);
+		assertThat(identifier.dollar()).isFalse();
+		assertThat(identifier.name()).isEqualTo("foo");
 
-		ObjectMatcherAstNode.ConstantKeyFieldMatcher keyword = assertInstanceOf(ObjectMatcherAstNode.ConstantKeyFieldMatcher.class, matchers.get(3));
-		assertFalse(keyword.dollar());
-		assertEquals("if", keyword.name());
+		assertThat(matchers.get(3)).isInstanceOf(ObjectMatcherAstNode.ConstantKeyFieldMatcher.class);
+		ObjectMatcherAstNode.ConstantKeyFieldMatcher keyword = (ObjectMatcherAstNode.ConstantKeyFieldMatcher) matchers.get(3);
+		assertThat(keyword.dollar()).isFalse();
+		assertThat(keyword.name()).isEqualTo("if");
 	}
 
 	@Test
 	void expressionKeysKeepTheirNameExpression() throws JsonQueryException {
 		List<ObjectMatcherAstNode.FieldMatcher> matchers = parseObjectMatcher(". as {\"foo\": $a, \"\\(.key)\": $b, (.expr): $c} | .");
 
-		ObjectMatcherAstNode.ExpressionKeyFieldMatcher string = assertInstanceOf(ObjectMatcherAstNode.ExpressionKeyFieldMatcher.class, matchers.get(0));
-		assertInstanceOf(StringLiteralAstNode.class, string.name());
+		assertThat(matchers.get(0)).isInstanceOf(ObjectMatcherAstNode.ExpressionKeyFieldMatcher.class);
+		ObjectMatcherAstNode.ExpressionKeyFieldMatcher string = (ObjectMatcherAstNode.ExpressionKeyFieldMatcher) matchers.get(0);
+		assertThat(string.name()).isInstanceOf(StringLiteralAstNode.class);
 
-		ObjectMatcherAstNode.ExpressionKeyFieldMatcher interpolation = assertInstanceOf(ObjectMatcherAstNode.ExpressionKeyFieldMatcher.class, matchers.get(1));
-		assertInstanceOf(StringInterpolationAstNode.class, interpolation.name());
+		assertThat(matchers.get(1)).isInstanceOf(ObjectMatcherAstNode.ExpressionKeyFieldMatcher.class);
+		ObjectMatcherAstNode.ExpressionKeyFieldMatcher interpolation = (ObjectMatcherAstNode.ExpressionKeyFieldMatcher) matchers.get(1);
+		assertThat(interpolation.name()).isInstanceOf(StringInterpolationAstNode.class);
 
-		ObjectMatcherAstNode.ExpressionKeyFieldMatcher parenthesized = assertInstanceOf(ObjectMatcherAstNode.ExpressionKeyFieldMatcher.class, matchers.get(2));
-		assertInstanceOf(ParenAstNode.class, parenthesized.name());
+		assertThat(matchers.get(2)).isInstanceOf(ObjectMatcherAstNode.ExpressionKeyFieldMatcher.class);
+		ObjectMatcherAstNode.ExpressionKeyFieldMatcher parenthesized = (ObjectMatcherAstNode.ExpressionKeyFieldMatcher) matchers.get(2);
+		assertThat(parenthesized.name()).isInstanceOf(ParenAstNode.class);
 	}
 
 	@Test
@@ -66,15 +69,19 @@ class ObjectMatcherAstNodeTest {
 	}
 
 	private static List<ObjectMatcherAstNode.FieldMatcher> parseObjectMatcher(String query) throws JsonQueryException {
-		BinaryOpAstNode pipe = assertInstanceOf(BinaryOpAstNode.class, AstParser.parse(query, Versions.JQ_1_6));
-		assertEquals(BinaryOperator.BINDING_PIPE, pipe.operator);
-		AsBindingAstNode binding = assertInstanceOf(AsBindingAstNode.class, pipe.lhs);
-		return assertInstanceOf(ObjectMatcherAstNode.class, binding.matcher()).matchers();
+		AstNode parsed = AstParser.parse(query, Versions.JQ_1_6);
+		assertThat(parsed).isInstanceOf(BinaryOpAstNode.class);
+		BinaryOpAstNode pipe = (BinaryOpAstNode) parsed;
+		assertThat(pipe.operator).isEqualTo(BinaryOperator.BINDING_PIPE);
+		assertThat(pipe.lhs).isInstanceOf(AsBindingAstNode.class);
+		AsBindingAstNode binding = (AsBindingAstNode) pipe.lhs;
+		assertThat(binding.matcher()).isInstanceOf(ObjectMatcherAstNode.class);
+		return ((ObjectMatcherAstNode) binding.matcher()).matchers();
 	}
 
 	private static void assertPrintedAs(String query) throws JsonQueryException {
 		AstNode parsed = AstParser.parse(query, Versions.JQ_1_6);
-		assertEquals(query, parsed.toString());
-		assertEquals(query, AstParser.parse(parsed.toString(), Versions.JQ_1_6).toString());
+		assertThat(parsed.toString()).isEqualTo(query);
+		assertThat(AstParser.parse(parsed.toString(), Versions.JQ_1_6).toString()).isEqualTo(query);
 	}
 }

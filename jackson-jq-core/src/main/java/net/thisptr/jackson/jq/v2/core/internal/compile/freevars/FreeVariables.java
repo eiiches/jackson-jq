@@ -43,7 +43,7 @@ public interface FreeVariables {
 	 * if {@code null} or untracked.
 	 */
 	static Set<Integer> slotsOf(@Nullable Expression<?, ?> expr) {
-		return expr instanceof FreeVariables ? ((FreeVariables) expr).freeLocalSlots() : Collections.emptySet();
+		return expr instanceof FreeVariables fv ? fv.freeLocalSlots() : Collections.emptySet();
 	}
 
 	/**
@@ -52,7 +52,7 @@ public interface FreeVariables {
 	 * untracked.
 	 */
 	static boolean opaqueIn(@Nullable Expression<?, ?> expr) {
-		return expr != null && (!(expr instanceof FreeVariables) || ((FreeVariables) expr).hasOpaqueVariableReference());
+		return expr != null && (!(expr instanceof FreeVariables fv) || fv.hasOpaqueVariableReference());
 	}
 
 	static Set<Integer> union(@Nullable Expression<?, ?>... exprs) {

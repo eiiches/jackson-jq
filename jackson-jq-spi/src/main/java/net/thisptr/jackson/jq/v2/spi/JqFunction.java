@@ -1,7 +1,5 @@
 package net.thisptr.jackson.jq.v2.spi;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,7 +34,7 @@ public final class JqFunction {
 		for (FunctionParameter parameter : parameters)
 			Objects.requireNonNull(parameter, "parameters must not contain null elements");
 		this.signature = FunctionSignature.of(name, parameters.size());
-		this.parameters = Collections.unmodifiableList(new ArrayList<>(parameters));
+		this.parameters = List.copyOf(parameters);
 		this.body = Objects.requireNonNull(body, "body");
 		this.version = version;
 	}
@@ -118,9 +116,8 @@ public final class JqFunction {
 
 	@Override
 	public boolean equals(@Nullable Object o) {
-		if (!(o instanceof JqFunction))
+		if (!(o instanceof JqFunction that))
 			return false;
-		JqFunction that = (JqFunction) o;
 		return signature.equals(that.signature)
 				&& parameters.equals(that.parameters)
 				&& body.equals(that.body)

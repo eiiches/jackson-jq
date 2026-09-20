@@ -226,24 +226,10 @@ public class Compiler {
 		return new CompilationVisitor<>(env, context, scope).compileExpression(ast);
 	}
 
-	private static final class CompiledMatcher<N> {
-		final PatternMatcher<N> matcher;
-		final Set<String> variableNames;
-
-		CompiledMatcher(PatternMatcher<N> matcher, Set<String> variableNames) {
-			this.matcher = matcher;
-			this.variableNames = variableNames;
-		}
+	private record CompiledMatcher<N>(PatternMatcher<N> matcher, Set<String> variableNames) {
 	}
 
-	private static final class CompiledFieldMatcher<N> {
-		final ObjectMatcher.FieldMatcher<N> matcher;
-		final Set<String> variableNames;
-
-		CompiledFieldMatcher(ObjectMatcher.FieldMatcher<N> matcher, Set<String> variableNames) {
-			this.matcher = matcher;
-			this.variableNames = variableNames;
-		}
+	private record CompiledFieldMatcher<N>(ObjectMatcher.FieldMatcher<N> matcher, Set<String> variableNames) {
 	}
 
 	private static final class CompilationVisitor<N> implements AstVisitor<Object> {
@@ -312,7 +298,7 @@ public class Compiler {
 			List<Expression<StackFrame, N>> compiledArgs = new ArrayList<>();
 			for (AstNode arg : call.args())
 				compiledArgs.add(compileArgument(arg));
-			List<Expression<StackFrame, N>> meteredArgs = Collections.unmodifiableList(meterArguments(compiledArgs));
+			List<Expression<StackFrame, N>> meteredArgs = List.copyOf(meterArguments(compiledArgs));
 
 			if (call.moduleName() != null) {
 				@Var JavaModule mod = context.getImportedModule(call.moduleName());
@@ -347,14 +333,14 @@ public class Compiler {
 		private Expression<StackFrame, N> asTailCall(FunctionSignature signature, @Nullable SymbolLocation location, Expression<StackFrame, N> compiled, List<Expression<StackFrame, N>> compiledArgs, List<Expression<StackFrame, N>> meteredArgs) {
 			int frameClosureSlot;
 			int slot;
-			if (compiled instanceof ResolvedLocalFunctionAccess) {
+			if (compiled instanceof ResolvedLocalFunctionAccess<N> local) {
 				frameClosureSlot = ResolvedTailCall.LOCAL;
-				slot = ((ResolvedLocalFunctionAccess<N>) compiled).slot();
-			} else if (compiled instanceof ResolvedCapturedFunctionAccess) {
+				slot = local.slot();
+			} else if (compiled instanceof ResolvedCapturedFunctionAccess<N> captured) {
 				// The usual case for recursion: a def referring to itself has crossed its own function
 				// boundary, so it reads itself out of its own closure rather than out of a frame slot.
-				frameClosureSlot = ((ResolvedCapturedFunctionAccess<N>) compiled).frameClosureSlot();
-				slot = ((ResolvedCapturedFunctionAccess<N>) compiled).closureSlot();
+				frameClosureSlot = captured.frameClosureSlot();
+				slot = captured.closureSlot();
 			} else {
 				return compiled;
 			}
@@ -400,10 +386,10 @@ public class Compiler {
 			}
 			// A filter argument is otherwise a closure over the caller's frame, which the loop pops. A bare
 			// reference to a function already sitting in a slot is the one shape that outlives it.
-			if (argument instanceof ResolvedLocalFunctionAccess && ((ResolvedLocalFunctionAccess<N>) argument).args().isEmpty())
-				return new TailCallArgument.Filter<>(ResolvedTailCall.LOCAL, ((ResolvedLocalFunctionAccess<N>) argument).slot());
-			if (argument instanceof ResolvedCapturedFunctionAccess && ((ResolvedCapturedFunctionAccess<N>) argument).args().isEmpty())
-				return new TailCallArgument.Filter<>(((ResolvedCapturedFunctionAccess<N>) argument).frameClosureSlot(), ((ResolvedCapturedFunctionAccess<N>) argument).closureSlot());
+			if (argument instanceof ResolvedLocalFunctionAccess<N> local && local.args().isEmpty())
+				return new TailCallArgument.Filter<>(ResolvedTailCall.LOCAL, local.slot());
+			if (argument instanceof ResolvedCapturedFunctionAccess<N> captured && captured.args().isEmpty())
+				return new TailCallArgument.Filter<>(captured.frameClosureSlot(), captured.closureSlot());
 			return null;
 		}
 
@@ -488,10 +474,10 @@ public class Compiler {
 		 */
 		private Expression<StackFrame, N> compilePipe(BinaryOpAstNode piped) throws JsonQueryException {
 			AstNode left = piped.lhs;
-			if (left instanceof AsBindingAstNode)
-				return compileAsBinding((AsBindingAstNode) left, piped.rhs);
-			if (left instanceof LabelAstNode)
-				return compileLabel((LabelAstNode) left, piped.rhs);
+			if (left instanceof AsBindingAstNode asBinding)
+				return compileAsBinding(asBinding, piped.rhs);
+			if (left instanceof LabelAstNode label)
+				return compileLabel(label, piped.rhs);
 
 			Expression<StackFrame, N> compiledLeft = compileNonNull(env, context, scope, left);
 			// The pipe's own values are the right side's, so the right side inherits tail position -- but only
@@ -510,7 +496,7 @@ public class Compiler {
 			Map<String, Integer> slots = new HashMap<>();
 			Expression<StackFrame, N> body;
 			try {
-				for (String varName : matcherResult.variableNames) {
+				for (String varName : matcherResult.variableNames()) {
 					context.addLocalVariable(varName);
 					slots.put(varName, context.getVariableSlot(varName));
 				}
@@ -518,7 +504,7 @@ public class Compiler {
 			} finally {
 				context.popScope();
 			}
-			PatternMatcher<N> compiledMatcher = matcherResult.matcher.resolveSlots(new SlotResolver(slots));
+			PatternMatcher<N> compiledMatcher = matcherResult.matcher().resolveSlots(new SlotResolver(slots));
 			return new VariableBinding<>(value, compiledMatcher, new HashSet<>(slots.values()), body, context.outputCounterOf(value));
 		}
 
@@ -550,8 +536,8 @@ public class Compiler {
 				context.setTailPosition(inTailPosition && i == expressions.size() - 1);
 				Expression<StackFrame, N> expression = compileNonNull(env, context, q);
 				newExpressions.add(expression);
-				if (expression instanceof ResolvedFunctionDefinition<?>)
-					definedFunctionSlots.add(((ResolvedFunctionDefinition<?>) expression).slot());
+				if (expression instanceof ResolvedFunctionDefinition<?> def)
+					definedFunctionSlots.add(def.slot());
 			}
 			return new SemicolonOperator<>(newExpressions, definedFunctionSlots, context.outputCountersOf(newExpressions.subList(0, Math.max(0, newExpressions.size() - 1))));
 		}
@@ -680,13 +666,13 @@ public class Compiler {
 			pending.push(comma);
 			while (!pending.isEmpty()) {
 				AstNode operand = pending.pop();
-				if (operand instanceof BinaryOpAstNode && ((BinaryOpAstNode) operand).operator == BinaryOperator.COMMA) {
-					pending.push(((BinaryOpAstNode) operand).rhs);
-					pending.push(((BinaryOpAstNode) operand).lhs);
+				if (operand instanceof BinaryOpAstNode bin && bin.operator == BinaryOperator.COMMA) {
+					pending.push(bin.rhs);
+					pending.push(bin.lhs);
 					continue;
 				}
-				if (operand instanceof ParenAstNode) {
-					pending.push(((ParenAstNode) operand).value());
+				if (operand instanceof ParenAstNode paren) {
+					pending.push(paren.value());
 					continue;
 				}
 				// Only the last operand inherits tail position: an earlier one is followed by operands the
@@ -703,9 +689,9 @@ public class Compiler {
 			Expression<StackFrame, N> compiledIter = compileNonNull(env, context, red.iterExpr());
 			Expression<StackFrame, N> compiledInit = compileNonNull(env, context, red.initExpr());
 			CompiledMatcher<N> matcherResult = compileMatcher(red.matcher());
-			@Var PatternMatcher<N> compiledMatcher = matcherResult.matcher;
+			@Var PatternMatcher<N> compiledMatcher = matcherResult.matcher();
 
-			Set<String> varNames = matcherResult.variableNames;
+			Set<String> varNames = matcherResult.variableNames();
 			Map<String, Integer> slots = new HashMap<>();
 			context.pushLocalScope();
 			try {
@@ -726,9 +712,9 @@ public class Compiler {
 			Expression<StackFrame, N> compiledIter = compileNonNull(env, context, fe.iterExpr());
 			Expression<StackFrame, N> compiledInit = compileNonNull(env, context, fe.initExpr());
 			CompiledMatcher<N> matcherResult = compileMatcher(fe.matcher());
-			@Var PatternMatcher<N> compiledMatcher = matcherResult.matcher;
+			@Var PatternMatcher<N> compiledMatcher = matcherResult.matcher();
 
-			Set<String> varNames = matcherResult.variableNames;
+			Set<String> varNames = matcherResult.variableNames();
 			Map<String, Integer> slots = new HashMap<>();
 			context.pushLocalScope();
 			try {
@@ -919,8 +905,8 @@ public class Compiler {
 			Set<String> variableNames = new HashSet<>();
 			for (PatternMatcherAstNode element : matcher.matchers()) {
 				CompiledMatcher<N> elementResult = compileMatcher(element);
-				compiled.add(elementResult.matcher);
-				variableNames.addAll(elementResult.variableNames);
+				compiled.add(elementResult.matcher());
+				variableNames.addAll(elementResult.variableNames());
 			}
 			return new CompiledMatcher<>(new ArrayMatcher<>(env.getJsonProvider(), compiled, env.getJqVersion()), variableNames);
 		}
@@ -931,8 +917,8 @@ public class Compiler {
 			Set<String> variableNames = new HashSet<>();
 			for (ObjectMatcherAstNode.FieldMatcher field : matcher.matchers()) {
 				CompiledFieldMatcher<N> fieldResult = compileFieldMatcher(field);
-				compiled.add(fieldResult.matcher);
-				variableNames.addAll(fieldResult.variableNames);
+				compiled.add(fieldResult.matcher());
+				variableNames.addAll(fieldResult.variableNames());
 			}
 			return new CompiledMatcher<>(new ObjectMatcher<>(env.getJsonProvider(), compiled, env.getJqVersion()), variableNames);
 		}
@@ -942,10 +928,10 @@ public class Compiler {
 			Expression<StackFrame, N> name = new ValueLiteral<>(env.getJsonProvider().createString(field.name()));
 			PatternMatcherAstNode sub = field.matcher();
 			CompiledMatcher<N> subResult = sub != null ? compileMatcher(sub) : null;
-			Set<String> variableNames = subResult != null ? new HashSet<>(subResult.variableNames) : new HashSet<>();
+			Set<String> variableNames = subResult != null ? new HashSet<>(subResult.variableNames()) : new HashSet<>();
 			if (field.dollar())
 				variableNames.add(field.name());
-			ObjectMatcher.FieldMatcher<N> compiled = new ObjectMatcher.FieldMatcher<>(field.dollar(), field.dollar() ? field.name() : null, name, subResult != null ? subResult.matcher : null, context.outputCounterOf(name));
+			ObjectMatcher.FieldMatcher<N> compiled = new ObjectMatcher.FieldMatcher<>(field.dollar(), field.dollar() ? field.name() : null, name, subResult != null ? subResult.matcher() : null, context.outputCounterOf(name));
 			return new CompiledFieldMatcher<>(compiled, variableNames);
 		}
 
@@ -953,8 +939,8 @@ public class Compiler {
 		public CompiledFieldMatcher<N> visit(ObjectMatcherAstNode.ExpressionKeyFieldMatcher field) throws JsonQueryException {
 			Expression<StackFrame, N> name = compileNonNull(env, context, field.name());
 			CompiledMatcher<N> matcherResult = compileMatcher(field.matcher());
-			ObjectMatcher.FieldMatcher<N> compiled = new ObjectMatcher.FieldMatcher<>(false, null, name, matcherResult.matcher, context.outputCounterOf(name));
-			return new CompiledFieldMatcher<>(compiled, matcherResult.variableNames);
+			ObjectMatcher.FieldMatcher<N> compiled = new ObjectMatcher.FieldMatcher<>(false, null, name, matcherResult.matcher(), context.outputCounterOf(name));
+			return new CompiledFieldMatcher<>(compiled, matcherResult.variableNames());
 		}
 	}
 
@@ -1076,7 +1062,7 @@ public class Compiler {
 	private static <N> BindContext<N> bindContextOf(Environment<N> env) {
 		JsonProvider<N> jsonProvider = env.getJsonProvider();
 		Version jqVersion = env.getJqVersion();
-		return new BindContext<N>() {
+		return new BindContext<>() {
 			@Override
 			public JsonProvider<N> getJsonProvider() {
 				return jsonProvider;
@@ -1242,7 +1228,7 @@ public class Compiler {
 			@Override
 			@SuppressWarnings("unchecked")
 			public <Context extends RuntimeContext, N1> Expression<Context, N1> bind(BindContext<N1> bindCtx, List<Expression<Context, N1>> emptyArgs) {
-				Expression<StackFrame, N1> effectiveArgument = (Expression<StackFrame, N1>) (Expression<?, ?>) argument;
+				Expression<StackFrame, N1> effectiveArgument = (Expression<StackFrame, N1>) argument;
 				return (sFrame, inVal, pVal, outVal) -> effectiveArgument.apply(callerFrame, inVal, pVal, outVal);
 			}
 		};
@@ -1286,53 +1272,36 @@ public class Compiler {
 			int rhsOutputIndex,
 			Version version,
 			JsonProvider<JsonNode> jsonProvider) {
-		switch (operator) {
-			case ASSIGN:
-				return new Assignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case UPDATE:
-				return new UpdateAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case DEFAULT_EQUAL:
-				return new ComplexAlternativeAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case PLUS_EQUAL:
-				return new ComplexPlusAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case MINUS_EQUAL:
-				return new ComplexMinusAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case TIMES_EQUAL:
-				return new ComplexMultiplyAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case DIVIDE_EQUAL:
-				return new ComplexDivideAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case MODULO_EQUAL:
-				return new ComplexModuloAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case DEFAULT:
-				return new AlternativeOperatorExpression<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case OR:
-				return new BooleanOrExpression<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case AND:
-				return new BooleanAndExpression<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case LESS_EQUAL:
-				return new CompareLessEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case LESS:
-				return new CompareLessTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case GREATER_EQUAL:
-				return new CompareGreaterEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case GREATER:
-				return new CompareGreaterTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case EQUAL:
-				return new CompareEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case NOT_EQUAL:
-				return new CompareNotEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
-			case PLUS:
-				return new PlusExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case MINUS:
-				return new MinusExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case MODULO:
-				return new ModuloExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case DIVIDE:
-				return new DivideExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			case TIMES:
-				return new MultiplyExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
-			default:
-				throw new IllegalArgumentException("Unknown operator: " + operator);
-		}
+		return switch (operator) {
+			case ASSIGN -> new Assignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case UPDATE -> new UpdateAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case DEFAULT_EQUAL ->
+					new ComplexAlternativeAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case PLUS_EQUAL ->
+					new ComplexPlusAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case MINUS_EQUAL ->
+					new ComplexMinusAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case TIMES_EQUAL ->
+					new ComplexMultiplyAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case DIVIDE_EQUAL ->
+					new ComplexDivideAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case MODULO_EQUAL ->
+					new ComplexModuloAssignment<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case DEFAULT -> new AlternativeOperatorExpression<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case OR -> new BooleanOrExpression<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case AND -> new BooleanAndExpression<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case LESS_EQUAL -> new CompareLessEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case LESS -> new CompareLessTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case GREATER_EQUAL -> new CompareGreaterEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case GREATER -> new CompareGreaterTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case EQUAL -> new CompareEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case NOT_EQUAL -> new CompareNotEqualTest<>(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
+			case PLUS -> new PlusExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case MINUS -> new MinusExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case MODULO -> new ModuloExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case DIVIDE -> new DivideExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case TIMES -> new MultiplyExpression<>(jsonProvider, lhs, rhs, version, lhsOutputIndex, rhsOutputIndex);
+			case PIPE, BINDING_PIPE, COMMA -> throw new IllegalArgumentException("Unknown operator: " + operator);
+		};
 	}
 }

@@ -22,10 +22,7 @@ public class Strings {
 	public static String repeat(String pat, int n) {
 		if (pat.isEmpty())
 			return "";
-		StringBuilder builder = new StringBuilder(pat.length() * n);
-		for (int i = 0; i < n; ++i)
-			builder.append(pat);
-		return builder.toString();
+		return pat.repeat(Math.max(0, n));
 	}
 
 	private static final String[] EMPTY_STRING_ARRAY = new String[0];

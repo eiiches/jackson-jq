@@ -143,23 +143,14 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 		if (type1 != type2)
 			return Integer.compare(orderValue(type1), orderValue(type2));
 
-		switch (type1) {
-			case NULL:
-				return 0;
-			case BOOLEAN:
-				return Boolean.compare(jsonProvider.getBoolean(o1), jsonProvider.getBoolean(o2));
-			case NUMBER:
-				return compareNumberNode(o1, o2);
-			case STRING:
-				return jsonProvider.getString(o1).compareTo(jsonProvider.getString(o2));
-			case BINARY:
-				return compareBinaryNode(o1, o2);
-			case ARRAY:
-				return compareArrayNode(o1, o2);
-			case OBJECT:
-				return compareObjectNode(o1, o2);
-			default:
-				throw new IllegalArgumentException("Unknown JsonNodeType: " + type1);
-		}
+		return switch (type1) {
+			case NULL -> 0;
+			case BOOLEAN -> Boolean.compare(jsonProvider.getBoolean(o1), jsonProvider.getBoolean(o2));
+			case NUMBER -> compareNumberNode(o1, o2);
+			case STRING -> jsonProvider.getString(o1).compareTo(jsonProvider.getString(o2));
+			case BINARY -> compareBinaryNode(o1, o2);
+			case ARRAY -> compareArrayNode(o1, o2);
+			case OBJECT -> compareObjectNode(o1, o2);
+		};
 	}
 }

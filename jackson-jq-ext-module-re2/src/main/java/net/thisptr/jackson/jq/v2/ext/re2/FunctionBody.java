@@ -11,7 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 final class FunctionBody {
 	static final class Builder<Context extends RuntimeContext, JsonNode> {
-		private boolean dependsOnExternalState;
+		private final boolean dependsOnExternalState;
 		private boolean dependsOnInput;
 		private Cardinality cardinality = Cardinality.UNKNOWN;
 
@@ -31,7 +31,7 @@ final class FunctionBody {
 		}
 
 		Expression<Context, JsonNode> build(Expression<Context, JsonNode> expression) {
-			return new Expression<Context, JsonNode>() {
+			return new Expression<>() {
 				@Override
 				public Cardinality getCardinality() {
 					return cardinality;

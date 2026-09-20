@@ -6,10 +6,8 @@ import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,7 +34,7 @@ public class DumpExprFunction implements Function {
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
 		JsonNode dump = new Dumper<>(jsonProvider).dump(args.get(0));
-		return new Expression<Context, JsonNode>() {
+		return new Expression<>() {
 			@Override
 			public Cardinality getCardinality() {
 				return Cardinality.ONE;
@@ -116,11 +114,11 @@ public class DumpExprFunction implements Function {
 			if (value instanceof Byte || value instanceof Short || value instanceof Integer)
 				return jsonProvider.createNumber(((Number) value).intValue());
 			if (value instanceof Long)
-				return jsonProvider.createNumber(((Long) value).longValue());
+				return jsonProvider.createNumber((Long) value);
 			if (value instanceof Float)
-				return jsonProvider.createNumber(((Float) value).floatValue());
+				return jsonProvider.createNumber((Float) value);
 			if (value instanceof Double)
-				return jsonProvider.createNumber(((Double) value).doubleValue());
+				return jsonProvider.createNumber((Double) value);
 			if (value instanceof BigInteger)
 				return jsonProvider.createNumber((BigInteger) value);
 			if (value instanceof BigDecimal)
@@ -132,14 +130,14 @@ public class DumpExprFunction implements Function {
 				return reference(previousIdentity);
 			String identity = identity(value);
 			identities.put(value, identity);
-			if (value instanceof Expression)
-				return serializeExpression((Expression<?, ?>) value, identity);
+			if (value instanceof Expression<?, ?> expr)
+				return serializeExpression(expr, identity);
 			if (value.getClass().isArray())
 				return serializeArray(value, identity);
-			if (value instanceof Iterable)
-				return serializeIterable((Iterable<?>) value, identity);
-			if (value instanceof Map)
-				return serializeMap((Map<?, ?>) value, identity);
+			if (value instanceof Iterable<?> iterable)
+				return serializeIterable(iterable, identity);
+			if (value instanceof Map<?, ?> map)
+				return serializeMap(map, identity);
 			if (isStructural(value.getClass()))
 				return serializeObject(value, identity);
 			return serializeOpaque(value, identity);
@@ -251,9 +249,9 @@ public class DumpExprFunction implements Function {
 			return fields;
 		}
 
-		private static final Set<String> TRANSPARENT_WRAPPERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+		private static final Set<String> TRANSPARENT_WRAPPERS = Set.of(
 				"net.thisptr.jackson.jq.v2.core.internal.tree.MeteredOutputExpression",
-				"net.thisptr.jackson.jq.v2.core.internal.tree.MeteredConstantOutputExpression")));
+				"net.thisptr.jackson.jq.v2.core.internal.tree.MeteredConstantOutputExpression");
 
 		private static boolean isStructural(Class<?> type) {
 			String name = type.getName();

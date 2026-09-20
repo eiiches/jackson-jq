@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -161,7 +162,7 @@ final class Playground<N> {
 		this.compact = compact;
 		this.rawOutput = rawOutput;
 		this.warningsEnabled = warningsEnabled;
-		this.inputFiles = Collections.unmodifiableList(new ArrayList<>(inputFiles));
+		this.inputFiles = List.copyOf(inputFiles);
 		this.out = out;
 		this.err = err;
 		this.queryState = new TextAreaState(initialQuery);
@@ -246,12 +247,10 @@ final class Playground<N> {
 		} else {
 			for (Object in : inList) {
 				String formatted = JqPrettyPrinter.print(provider, (T) in, PRETTY_INDENT);
-				for (String line : formatted.split("\r?\n", -1)) {
-					inLines.add(line);
-				}
+				inLines.addAll(Arrays.asList(formatted.split("\r?\n", -1)));
 			}
 		}
-		this.inputLines = Collections.unmodifiableList(inLines);
+		this.inputLines = List.copyOf(inLines);
 		this.inputScrollOffset = 0;
 		this.inputTreePane.setNodes(inList, this.inputLines, provider);
 	}
@@ -332,22 +331,15 @@ final class Playground<N> {
 	}
 
 	private long getRuntimeLimit(int index) {
-		switch (index) {
-			case MAX_STRING_LENGTH_OPTION:
-				return runtimeOptions.getMaxStringLength();
-			case MAX_BINARY_LENGTH_OPTION:
-				return runtimeOptions.getMaxBinaryLength();
-			case MAX_ARRAY_LENGTH_OPTION:
-				return runtimeOptions.getMaxArrayLength();
-			case MAX_OBJECT_MEMBER_COUNT_OPTION:
-				return runtimeOptions.getMaxObjectMemberCount();
-			case MAX_USER_DEFINED_FUNCTION_CALLS_OPTION:
-				return runtimeOptions.getMaxUserDefinedFunctionCalls();
-			case MAX_OUTPUTS_PER_EXPRESSION_OPTION:
-				return runtimeOptions.getMaxOutputsPerExpression();
-			default:
-				throw new IllegalArgumentException("not a runtime limit option: " + index);
-		}
+		return switch (index) {
+			case MAX_STRING_LENGTH_OPTION -> runtimeOptions.getMaxStringLength();
+			case MAX_BINARY_LENGTH_OPTION -> runtimeOptions.getMaxBinaryLength();
+			case MAX_ARRAY_LENGTH_OPTION -> runtimeOptions.getMaxArrayLength();
+			case MAX_OBJECT_MEMBER_COUNT_OPTION -> runtimeOptions.getMaxObjectMemberCount();
+			case MAX_USER_DEFINED_FUNCTION_CALLS_OPTION -> runtimeOptions.getMaxUserDefinedFunctionCalls();
+			case MAX_OUTPUTS_PER_EXPRESSION_OPTION -> runtimeOptions.getMaxOutputsPerExpression();
+			default -> throw new IllegalArgumentException("not a runtime limit option: " + index);
+		};
 	}
 
 	private void setRuntimeLimit(int index, long value) {
@@ -412,10 +404,9 @@ final class Playground<N> {
 			}
 			return false;
 		}
-		if (!(event instanceof KeyEvent)) {
+		if (!(event instanceof KeyEvent key)) {
 			return false;
 		}
-		KeyEvent key = (KeyEvent) event;
 		if (modal != Modal.NONE && key.hasCtrl() && (key.isChar('p') || key.isChar('r'))) {
 			return true;
 		}
@@ -674,10 +665,7 @@ final class Playground<N> {
 						: inputTreePane.textScrollOffset();
 				return true;
 			}
-			if (key.isConfirm() || key.code() == KeyCode.ENTER) {
-				return true;
-			}
-			return false;
+			return key.isConfirm() || key.code() == KeyCode.ENTER;
 		}
 
 		// Output focus navigation
@@ -688,10 +676,7 @@ final class Playground<N> {
 						: outputTreePane.textScrollOffset();
 				return true;
 			}
-			if (key.isConfirm() || key.code() == KeyCode.ENTER) {
-				return true;
-			}
-			return false;
+			return key.isConfirm() || key.code() == KeyCode.ENTER;
 		}
 
 		// Query focus navigation & editing
@@ -1115,25 +1100,12 @@ final class Playground<N> {
 		updateEvaluationGeneric(jsonProvider, env, inputs, true);
 	}
 
-	private static final class EvaluationResult {
-		final @Nullable List<String> previewLines;
-		final @Nullable List<?> outputItems;
-		final int itemCount;
-		final @Nullable String errorMessage;
-		final List<Diagnostic> warnings;
-
-		EvaluationResult(
-				@Nullable List<String> previewLines,
-				@Nullable List<?> outputItems,
-				int itemCount,
-				@Nullable String errorMessage,
-				List<Diagnostic> warnings) {
-			this.previewLines = previewLines;
-			this.outputItems = outputItems;
-			this.itemCount = itemCount;
-			this.errorMessage = errorMessage;
-			this.warnings = warnings;
-		}
+	private record EvaluationResult(
+			@Nullable List<String> previewLines,
+			@Nullable List<?> outputItems,
+			int itemCount,
+			@Nullable String errorMessage,
+			List<Diagnostic> warnings) {
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1178,9 +1150,7 @@ final class Playground<N> {
 					} else {
 						formatted = JqPrettyPrinter.print(provider, output, PRETTY_INDENT);
 					}
-					for (String line : formatted.split("\r?\n", -1)) {
-						lines.add(line);
-					}
+					lines.addAll(Arrays.asList(formatted.split("\r?\n", -1)));
 				});
 			}
 			return new EvaluationResult(lines, items, count[0], null, currentWarnings);
@@ -1191,33 +1161,31 @@ final class Playground<N> {
 	}
 
 	private void applyEvaluationResult(EvaluationResult result) {
-		this.warnings = result.warnings;
-		if (result.errorMessage != null) {
-			this.errorMessage = result.errorMessage;
+		this.warnings = result.warnings();
+		if (result.errorMessage() != null) {
+			this.errorMessage = result.errorMessage();
 			this.outputStale = true;
 			this.evaluationStatus = EvaluationStatus.FAILURE;
-		} else if (result.previewLines == null) {
+		} else if (result.previewLines() == null) {
 			this.errorMessage = null;
 			this.outputStale = true;
 			this.evaluationStatus = EvaluationStatus.STALE;
 		} else {
-			this.previewLines = result.previewLines;
-			this.itemCount = result.itemCount;
+			this.previewLines = result.previewLines();
+			this.itemCount = result.itemCount();
 			this.errorMessage = null;
 			this.outputStale = false;
 			this.evaluationStatus = EvaluationStatus.UP_TO_DATE;
 			this.outputScrollOffset = 0;
-			int maxOutputScroll = Math.max(0, result.previewLines.size() - outputViewportHeight);
+			int maxOutputScroll = Math.max(0, result.previewLines().size() - outputViewportHeight);
 			if (outputScrollOffset > maxOutputScroll) {
 				outputScrollOffset = maxOutputScroll;
 			}
-			this.outputTreePane.setNodes(result.outputItems != null ? result.outputItems : Collections.emptyList(), this.previewLines, jsonProvider);
+			this.outputTreePane.setNodes(result.outputItems() != null ? result.outputItems() : Collections.emptyList(), this.previewLines, jsonProvider);
 		}
 		updateDiagnosticLines();
 	}
 
-	// Safe unchecked cast: environment and inputs are always created with the matching jsonProvider.
-	@SuppressWarnings("unchecked")
 	private <T> void updateEvaluationGeneric(
 			JsonProvider<T> provider, Environment<?> environment, List<?> inList, boolean applyWhilePaused) {
 		if (inputErrorMessage != null) {
@@ -1315,12 +1283,12 @@ final class Playground<N> {
 				}
 			}
 		}
-		this.diagnosticLines = Collections.unmodifiableList(dLines);
-		this.diagnosticPlainLines = Collections.unmodifiableList(plain);
+		this.diagnosticLines = List.copyOf(dLines);
+		this.diagnosticPlainLines = List.copyOf(plain);
 		this.diagnosticsScrollOffset = 0;
 	}
 
-	private void emitResults() throws Exception {
+	private void emitResults() {
 		emitResultsGeneric(jsonProvider, env, inputs);
 	}
 
@@ -1378,7 +1346,7 @@ final class Playground<N> {
 
 	// Safe unchecked cast: environment and inputs are always created with the matching jsonProvider.
 	@SuppressWarnings("unchecked")
-	private <T> void emitResultsGeneric(JsonProvider<T> provider, Environment<?> environment, List<?> inList) throws Exception {
+	private <T> void emitResultsGeneric(JsonProvider<T> provider, Environment<?> environment, List<?> inList) {
 		try {
 			JsonQuery<T> jq = ((Environment<T>) environment).compile(queryState.text(), compileOptions).withRuntimeOptions(runtimeOptions);
 			for (Object tree : inList) {

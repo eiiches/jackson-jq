@@ -1,8 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,16 +13,16 @@ import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class NullLHSFunctionTest {
 	@Test
-	public void test() throws IOException {
+	public void test() {
 		ObjectMapper mapper = new ObjectMapper();
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_5).build();
 		ObjectNode input = mapper.createObjectNode().set("input", mapper.createArrayNode().add(1));
 		List<JsonNode> output = new ArrayList<>();
 		env.compile(".output+=[.input[0]+1]").apply(input, output::add);
-		assertEquals(Arrays.asList(input.deepCopy().set("output", mapper.createArrayNode().add(2))), output);
+		assertThat(output).isEqualTo(List.of(input.deepCopy().set("output", mapper.createArrayNode().add(2))));
 	}
 }

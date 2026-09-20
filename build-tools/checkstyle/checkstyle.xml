@@ -15,15 +15,24 @@
 		</module>
 		<module name="AvoidStaticImport">
 			<property name="excludes"
-				value="org.junit.jupiter.api.Assertions.*, org.assertj.core.api.Assertions.*"/>
+				value="org.junit.jupiter.api.Assertions.assertAll, org.assertj.core.api.Assertions.*"/>
 		</module>
 		<module name="IllegalImport">
+			<property name="id" value="IllegalImportNested"/>
 			<property name="regexp" value="true"/>
 			<property name="illegalPkgs" value="sun"/>
 			<property name="illegalClasses"
 				value=".*\.[A-Z][A-Za-z0-9_$]*\.[A-Z][A-Za-z0-9_$]*"/>
 			<message key="import.illegal"
 				value="Nested types must be referenced through their enclosing type instead of imported: {0}"/>
+		</module>
+		<module name="IllegalImport">
+			<property name="id" value="IllegalImportJUnitAssertions"/>
+			<property name="illegalClasses"
+				value="^org\.junit\.jupiter\.api\.Assertions$"/>
+			<property name="regexp" value="true"/>
+			<message key="import.illegal"
+				value="Non-static import of JUnit 5 Assertions is banned. Use AssertJ assertions, or static import assertAll() if needed: {0}"/>
 		</module>
 		<module name="RedundantImport"/>
 		<module name="UnusedImports"/>

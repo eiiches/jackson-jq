@@ -7,35 +7,34 @@ import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class CommaOperatorAstTest {
 	@Test
 	void commaIsLeftAssociated() throws JsonQueryException {
 		String query = ".foo, .bar, .baz";
 		BinaryOpAstNode outer = assertOperator(BinaryOperator.COMMA, AstParser.parse(query, Versions.JQ_1_6));
-		assertEquals(".baz", outer.rhs.toString());
+		assertThat(outer.rhs.toString()).isEqualTo(".baz");
 
 		BinaryOpAstNode inner = assertOperator(BinaryOperator.COMMA, outer.lhs);
-		assertEquals(".foo", inner.lhs.toString());
-		assertEquals(".bar", inner.rhs.toString());
+		assertThat(inner.lhs.toString()).isEqualTo(".foo");
+		assertThat(inner.rhs.toString()).isEqualTo(".bar");
 
-		assertEquals(query, outer.toString());
+		assertThat(outer.toString()).isEqualTo(query);
 	}
 
 	@Test
 	void aSingleOperandIsNotWrappedInAComma() throws JsonQueryException {
-		assertInstanceOf(IdentifierFieldAccessAstNode.class, AstParser.parse(".foo", Versions.JQ_1_6));
+		assertThat(AstParser.parse(".foo", Versions.JQ_1_6)).isInstanceOf(IdentifierFieldAccessAstNode.class);
 	}
 
 	@Test
 	void explicitParenthesesRemainAstBoundaries() throws JsonQueryException {
 		BinaryOpAstNode rightGrouped = assertOperator(BinaryOperator.COMMA, AstParser.parse(".foo, (.bar, .baz)", Versions.JQ_1_6));
-		assertInstanceOf(ParenAstNode.class, rightGrouped.rhs);
+		assertThat(rightGrouped.rhs).isInstanceOf(ParenAstNode.class);
 
 		BinaryOpAstNode leftGrouped = assertOperator(BinaryOperator.COMMA, AstParser.parse("(.foo, .bar), .baz", Versions.JQ_1_6));
-		assertInstanceOf(ParenAstNode.class, leftGrouped.lhs);
+		assertThat(leftGrouped.lhs).isInstanceOf(ParenAstNode.class);
 	}
 
 	// `,` binds tighter than `|` and looser than every binary operator, so it owns neither side here.
@@ -49,8 +48,9 @@ class CommaOperatorAstTest {
 	}
 
 	private static BinaryOpAstNode assertOperator(BinaryOperator operator, AstNode node) {
-		BinaryOpAstNode binary = assertInstanceOf(BinaryOpAstNode.class, node);
-		assertEquals(operator, binary.operator);
+		assertThat(node).isInstanceOf(BinaryOpAstNode.class);
+		BinaryOpAstNode binary = (BinaryOpAstNode) node;
+		assertThat(binary.operator).isEqualTo(operator);
 		return binary;
 	}
 }

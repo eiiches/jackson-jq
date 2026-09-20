@@ -6,7 +6,7 @@ jjq_java_library(
         "Jackson2JsonProvider.java",
         "JsonQueryJacksonModule.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-json-provider-impl-jackson2:__subpackages__"],
     deps = [
         "//jackson-jq-json-provider",

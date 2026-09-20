@@ -56,11 +56,11 @@ public class FsModuleTest {
 	@Test
 	public void readsTextWithDefaultAndSelectedEncoding() throws IOException {
 		Path utf8 = directory.resolve("utf8.txt");
-		Files.write(utf8, "こんにちは".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(utf8, "こんにちは");
 		assertThat(run("fs::read_text(" + quote(utf8) + ")", unlimited()).get(0).textValue()).isEqualTo("こんにちは");
 
 		Path latin1 = directory.resolve("latin1.txt");
-		Files.write(latin1, "café".getBytes(StandardCharsets.ISO_8859_1));
+		Files.writeString(latin1, "café", StandardCharsets.ISO_8859_1);
 		assertThat(run("fs::read_text(" + quote(latin1) + "; {encoding: \"ISO-8859-1\"})", unlimited()).get(0).textValue()).isEqualTo("café");
 		assertThat(run("fs::read_text(" + quote(utf8) + "; {})", unlimited()).get(0).textValue()).isEqualTo("こんにちは");
 
@@ -113,7 +113,7 @@ public class FsModuleTest {
 		assertThat(result.isNull()).isTrue();
 		assertThat(Files.readAllBytes(file)).isEqualTo("こんにちは".getBytes(StandardCharsets.UTF_8));
 
-		Files.write(file, "a longer previous value".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(file, "a longer previous value");
 		run("fs::write_text(" + quote(file) + "; {encoding: \"ISO-8859-1\"})", JSON_PROVIDER.createString("café"), unlimited());
 		assertThat(Files.readAllBytes(file)).isEqualTo("café".getBytes(StandardCharsets.ISO_8859_1));
 
@@ -123,9 +123,9 @@ public class FsModuleTest {
 		Path appendTextFile = directory.resolve("append_text.txt");
 		run("fs::write_text(" + quote(appendTextFile) + "; {append: true})", JSON_PROVIDER.createString("hello "), unlimited());
 		run("fs::write_text(" + quote(appendTextFile) + "; {append: true})", JSON_PROVIDER.createString("world"), unlimited());
-		assertThat(new String(Files.readAllBytes(appendTextFile), StandardCharsets.UTF_8)).isEqualTo("hello world");
+		assertThat(Files.readString(appendTextFile)).isEqualTo("hello world");
 		run("fs::write_text(" + quote(appendTextFile) + "; {append: false})", JSON_PROVIDER.createString("replaced"), unlimited());
-		assertThat(new String(Files.readAllBytes(appendTextFile), StandardCharsets.UTF_8)).isEqualTo("replaced");
+		assertThat(Files.readString(appendTextFile)).isEqualTo("replaced");
 	}
 
 	@Test
@@ -295,7 +295,7 @@ public class FsModuleTest {
 	@Test
 	public void enforcesRuntimeLimits() throws IOException {
 		Path file = directory.resolve("value.txt");
-		Files.write(file, "hello".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(file, "hello");
 		RuntimeOptions shortString = RuntimeOptions.newBuilder().setMaxStringLength(4).build();
 		assertThatThrownBy(() -> run("fs::read_text(" + quote(file) + ")", shortString))
 				.isInstanceOf(JsonQueryException.class)
@@ -321,7 +321,7 @@ public class FsModuleTest {
 	@Test
 	public void readsJsonValue() throws IOException {
 		Path file = directory.resolve("data.json");
-		Files.write(file, "{\"name\": \"alice\", \"age\": 30, \"active\": true, \"tags\": [1, null]}".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(file, "{\"name\": \"alice\", \"age\": 30, \"active\": true, \"tags\": [1, null]}");
 		JsonNode result = run("fs::read_json(" + quote(file) + ")", unlimited()).get(0);
 		assertThat(result.get("name").textValue()).isEqualTo("alice");
 		assertThat(result.get("age").intValue()).isEqualTo(30);
@@ -333,7 +333,7 @@ public class FsModuleTest {
 		assertThat(withEmptyOptions.get("name").textValue()).isEqualTo("alice");
 
 		Path primitive = directory.resolve("num.json");
-		Files.write(primitive, "123".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(primitive, "123");
 		assertThat(run("fs::read_json(" + quote(primitive) + ")", unlimited()).get(0).intValue()).isEqualTo(123);
 	}
 
@@ -346,13 +346,13 @@ public class FsModuleTest {
 				.hasMessageContaining("empty input");
 
 		Path trailing = directory.resolve("trailing.json");
-		Files.write(trailing, "{\"a\": 1} {\"b\": 2}".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(trailing, "{\"a\": 1} {\"b\": 2}");
 		assertThatThrownBy(() -> run("fs::read_json(" + quote(trailing) + ")", unlimited()))
 				.isInstanceOf(JsonQueryException.class)
 				.hasMessageContaining("trailing content");
 
 		Path malformed = directory.resolve("malformed.json");
-		Files.write(malformed, "{\"a\":".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(malformed, "{\"a\":");
 		assertThatThrownBy(() -> run("fs::read_json(" + quote(malformed) + ")", unlimited()))
 				.isInstanceOf(JsonQueryException.class)
 				.hasMessageContaining("failed for");
@@ -371,7 +371,10 @@ public class FsModuleTest {
 	@Test
 	public void readsJsonStream() throws IOException {
 		Path streamFile = directory.resolve("stream.jsonl");
-		Files.write(streamFile, "{\"id\": 1, \"name\": \"a\"}\n{\"id\": 2, \"name\": \"b\"}\n".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(streamFile, """
+				{"id": 1, "name": "a"}
+				{"id": 2, "name": "b"}
+				""");
 
 		List<JsonNode> results = run("fs::read_json_stream(" + quote(streamFile) + ")", unlimited());
 		assertThat(results).hasSize(2);
@@ -389,11 +392,11 @@ public class FsModuleTest {
 		assertThat(run("fs::read_json_stream(" + quote(empty) + ")", unlimited())).isEmpty();
 
 		Path whitespaceOnly = directory.resolve("whitespace.json");
-		Files.write(whitespaceOnly, "   \n\t  ".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(whitespaceOnly, "   \n\t  ");
 		assertThat(run("fs::read_json_stream(" + quote(whitespaceOnly) + ")", unlimited())).isEmpty();
 
 		Path spaceSeparated = directory.resolve("values.json");
-		Files.write(spaceSeparated, "1 \"two\" true [3] {\"k\": 4}".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(spaceSeparated, "1 \"two\" true [3] {\"k\": 4}");
 		List<JsonNode> values = run("fs::read_json_stream(" + quote(spaceSeparated) + ")", unlimited());
 		assertThat(values).hasSize(5);
 		assertThat(values.get(0).intValue()).isEqualTo(1);
@@ -403,7 +406,7 @@ public class FsModuleTest {
 		assertThat(values.get(4).get("k").intValue()).isEqualTo(4);
 
 		Path malformedStream = directory.resolve("bad_stream.json");
-		Files.write(malformedStream, "{\"id\": 1} invalid".getBytes(StandardCharsets.UTF_8));
+		Files.writeString(malformedStream, "{\"id\": 1} invalid");
 		assertThatThrownBy(() -> run("fs::read_json_stream(" + quote(malformedStream) + ")", unlimited()))
 				.isInstanceOf(JsonQueryException.class)
 				.hasMessageContaining("failed for");
@@ -426,40 +429,40 @@ public class FsModuleTest {
 
 		JsonNode result = run("fs::write_json(" + quote(file) + ")", input, unlimited()).get(0);
 		assertThat(result.isNull()).isTrue();
-		assertThat(new String(Files.readAllBytes(file), StandardCharsets.UTF_8)).isEqualTo("{\"b\":2,\"a\":[1,2]}\n");
+		assertThat(Files.readString(file)).isEqualTo("{\"b\":2,\"a\":[1,2]}\n");
 
 		run("fs::write_json(" + quote(file) + "; {newline: false})", input, unlimited());
-		assertThat(new String(Files.readAllBytes(file), StandardCharsets.UTF_8)).isEqualTo("{\"b\":2,\"a\":[1,2]}");
+		assertThat(Files.readString(file)).isEqualTo("{\"b\":2,\"a\":[1,2]}");
 
 		run("fs::write_json(" + quote(file) + "; {indent: 2})", input, unlimited());
-		String indented = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+		String indented = Files.readString(file);
 		assertThat(indented).isEqualTo("{\n  \"b\": 2,\n  \"a\": [\n    1,\n    2\n  ]\n}\n");
 
 		run("fs::write_json(" + quote(file) + "; {indent: \"\\t\"})", input, unlimited());
-		String tabIndented = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+		String tabIndented = Files.readString(file);
 		assertThat(tabIndented).isEqualTo("{\n\t\"b\": 2,\n\t\"a\": [\n\t\t1,\n\t\t2\n\t]\n}\n");
 
 		run("fs::write_json(" + quote(file) + "; {indent: true})", input, unlimited());
-		assertThat(new String(Files.readAllBytes(file), StandardCharsets.UTF_8)).isEqualTo(indented);
+		assertThat(Files.readString(file)).isEqualTo(indented);
 
 		run("fs::write_json(" + quote(file) + "; {indent: false})", input, unlimited());
-		assertThat(new String(Files.readAllBytes(file), StandardCharsets.UTF_8)).isEqualTo("{\"b\":2,\"a\":[1,2]}\n");
+		assertThat(Files.readString(file)).isEqualTo("{\"b\":2,\"a\":[1,2]}\n");
 
 		Path appendFile = directory.resolve("append.jsonl");
 		run("fs::write_json(" + quote(appendFile) + "; {append: true})", run("{\"line\": 1}", unlimited()).get(0), unlimited());
 		run("fs::write_json(" + quote(appendFile) + "; {append: true})", run("{\"line\": 2}", unlimited()).get(0), unlimited());
-		assertThat(new String(Files.readAllBytes(appendFile), StandardCharsets.UTF_8)).isEqualTo("{\"line\":1}\n{\"line\":2}\n");
+		assertThat(Files.readString(appendFile)).isEqualTo("{\"line\":1}\n{\"line\":2}\n");
 
 		Path encodedFile = directory.resolve("encoded.json");
 		run("fs::write_json(" + quote(encodedFile) + "; {encoding: \"ISO-8859-1\"})", run("{\"msg\": \"café\"}", unlimited()).get(0), unlimited());
-		assertThat(new String(Files.readAllBytes(encodedFile), StandardCharsets.ISO_8859_1)).isEqualTo("{\"msg\":\"café\"}\n");
+		assertThat(Files.readString(encodedFile, StandardCharsets.ISO_8859_1)).isEqualTo("{\"msg\":\"café\"}\n");
 
 		JsonProvider<JsonElement> provider = GsonJsonProvider.getInstance();
 		JsonElement gsonInput = run(provider, "{\"x\": 1}", unlimited()).get(0);
 		Path gsonFile = directory.resolve("gson.json");
 		JsonElement gsonResult = run(provider, "fs::write_json(" + quote(provider, gsonFile) + ")", gsonInput, unlimited()).get(0);
 		assertThat(provider.isNull(gsonResult)).isTrue();
-		assertThat(new String(Files.readAllBytes(gsonFile), StandardCharsets.UTF_8)).isEqualTo("{\"x\":1}\n");
+		assertThat(Files.readString(gsonFile)).isEqualTo("{\"x\":1}\n");
 	}
 
 	@Test
@@ -543,16 +546,16 @@ public class FsModuleTest {
 
 		Path jsonFile1 = directory.resolve("nested5").resolve("sub5").resolve("data.json");
 		run("fs::write_json(" + quote(jsonFile1) + "; {create_parents: true})", run("{\"a\": 1}", unlimited()).get(0), unlimited());
-		assertThat(new String(Files.readAllBytes(jsonFile1), StandardCharsets.UTF_8)).isEqualTo("{\"a\":1}\n");
+		assertThat(Files.readString(jsonFile1)).isEqualTo("{\"a\":1}\n");
 
 		Path jsonFile2 = directory.resolve("nested6").resolve("sub6").resolve("data.json");
 		run("fs::write_json(" + quote(jsonFile2) + "; {mkdirs: true})", run("{\"b\": 2}", unlimited()).get(0), unlimited());
-		assertThat(new String(Files.readAllBytes(jsonFile2), StandardCharsets.UTF_8)).isEqualTo("{\"b\":2}\n");
+		assertThat(Files.readString(jsonFile2)).isEqualTo("{\"b\":2}\n");
 
 		Path combinedFile = directory.resolve("nested7").resolve("sub7").resolve("stream.jsonl");
 		run("fs::write_json(" + quote(combinedFile) + "; {create_parents: true, append: true})", run("{\"line\": 1}", unlimited()).get(0), unlimited());
 		run("fs::write_json(" + quote(combinedFile) + "; {create_parents: true, append: true})", run("{\"line\": 2}", unlimited()).get(0), unlimited());
-		assertThat(new String(Files.readAllBytes(combinedFile), StandardCharsets.UTF_8)).isEqualTo("{\"line\":1}\n{\"line\":2}\n");
+		assertThat(Files.readString(combinedFile)).isEqualTo("{\"line\":1}\n{\"line\":2}\n");
 	}
 
 	private static void assertEntry(JsonNode node, String path, String type) {

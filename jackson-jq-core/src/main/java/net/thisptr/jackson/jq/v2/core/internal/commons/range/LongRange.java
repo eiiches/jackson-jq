@@ -1,18 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.commons.range;
 
-import java.util.Objects;
-
-import org.jspecify.annotations.Nullable;
-
-public class LongRange {
-	public final long startInclusive;
-	public final long endExclusive;
-
-	public LongRange(long startInclusive, long endExclusive) {
+public record LongRange(long startInclusive, long endExclusive) {
+	public LongRange {
 		if (startInclusive > endExclusive)
 			throw new IllegalArgumentException(String.format("startInclusive (%d) must not be greater than endExclusive (%d)", startInclusive, endExclusive));
-		this.startInclusive = startInclusive;
-		this.endExclusive = endExclusive;
 	}
 
 	public static LongRange of(long startInclusive, long endExclusive) {
@@ -29,19 +20,6 @@ public class LongRange {
 
 	public boolean contains(long value) {
 		return value >= startInclusive && value < endExclusive;
-	}
-
-	@Override
-	public boolean equals(@Nullable Object o) {
-		if (!(o instanceof LongRange))
-			return false;
-		LongRange other = (LongRange) o;
-		return startInclusive == other.startInclusive && endExclusive == other.endExclusive;
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(startInclusive, endExclusive);
 	}
 
 	@Override

@@ -12,7 +12,7 @@ jjq_java_library(
         "_MatchImplFunction.java",
         "_SubImplFunction.java",
     ],
-    release = 8,
+    release = 17,
     visibility = ["//jackson-jq-regex-impl-joni:__subpackages__"],
     deps = [
         "//jackson-jq-json-provider",

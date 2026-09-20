@@ -10,8 +10,8 @@ public class LongRangeTest {
 	@Test
 	void testValidRange() {
 		LongRange range = new LongRange(1, 5);
-		assertThat(range.startInclusive).isEqualTo(1);
-		assertThat(range.endExclusive).isEqualTo(5);
+		assertThat(range.startInclusive()).isEqualTo(1);
+		assertThat(range.endExclusive()).isEqualTo(5);
 		assertThat(range.length()).isEqualTo(4);
 		assertThat(range.isEmpty()).isFalse();
 	}
@@ -19,8 +19,8 @@ public class LongRangeTest {
 	@Test
 	void testEmptyRange() {
 		LongRange range = LongRange.of(3, 3);
-		assertThat(range.startInclusive).isEqualTo(3);
-		assertThat(range.endExclusive).isEqualTo(3);
+		assertThat(range.startInclusive()).isEqualTo(3);
+		assertThat(range.endExclusive()).isEqualTo(3);
 		assertThat(range.length()).isEqualTo(0);
 		assertThat(range.isEmpty()).isTrue();
 	}

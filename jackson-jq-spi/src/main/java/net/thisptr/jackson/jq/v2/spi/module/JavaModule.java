@@ -16,7 +16,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
  * An implementation may also implement {@link JqModule}. Such a hybrid makes these Java functions
  * available to its jq source and exports them alongside the compiled jq functions.
  */
-public interface JavaModule extends Module {
+public non-sealed interface JavaModule extends Module {
 
 	/**
 	 * Returns all functions exported by this module, keyed by name and arity.

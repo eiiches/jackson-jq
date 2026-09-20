@@ -10,7 +10,6 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jspecify.annotations.Nullable;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.function.Executable;
 
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
@@ -24,6 +23,7 @@ import net.thisptr.jackson.jq.v2.test.testcase.TestCaseLoader;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 /**
  * Verifies that the {@code out} expectations in the golden test data under
@@ -42,15 +42,15 @@ public class VerifyTestCasesTest {
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
 	private void verify(TestCase tc, JqExecutables.JqExecutable e, @Nullable Path moduleSearchPath) throws Throwable {
-		String command = String.format("%s '%s' <<< '%s'", e.executable, tc.q, tc.in);
+		String command = String.format("%s '%s' <<< '%s'", e.executable(), tc.q, tc.in);
 
-		Evaluator.Result result = new JqRunner(e.executable, moduleSearchPath).evaluate(tc.q, tc.in, Duration.ofSeconds(2));
-		assertThat(result.error).as("%s", command).isNull();
+		Evaluator.Result result = new JqRunner(e.executable(), moduleSearchPath).evaluate(tc.q, tc.in, Duration.ofSeconds(2));
+		assertThat(result.error()).as("%s", command).isNull();
 
 		Comparator<JsonNode> comparator = new TestJsonNodeComparator<>(Jackson2JsonProvider.getInstance(), true, tc.numericalErrors);
 		assertThat(tc.out).as("%s", command)
 				.usingElementComparator(comparator)
-				.isEqualTo(result.values);
+				.isEqualTo(result.values());
 	}
 
 	public void test(String tcText) throws Throwable {
@@ -59,7 +59,7 @@ public class VerifyTestCasesTest {
 		try {
 			List<Executable> testExecutables = new ArrayList<>();
 			for (JqExecutables.JqExecutable e : JqExecutables.ALL) {
-				if (tc.version == null || tc.version.contains(e.jqVersion)) {
+				if (tc.version == null || tc.version.contains(e.jqVersion())) {
 					if (!tc.shouldCompile || tc.ignoreTrueJqBehavior) {
 						testExecutables.add(() -> {
 							assertThat(catchThrowable(() -> verify(tc, e, moduleSearchPath)))
@@ -72,12 +72,12 @@ public class VerifyTestCasesTest {
 				} else {
 					testExecutables.add(() -> {
 						assertThat(catchThrowable(() -> verify(tc, e, moduleSearchPath)))
-								.describedAs("The version range excludes %s, but the test case succeeds anyway: %s", e.jqVersion, tcText)
+								.describedAs("The version range excludes %s, but the test case succeeds anyway: %s", e.jqVersion(), tcText)
 								.isInstanceOf(Throwable.class);
 					});
 				}
 			}
-			Assertions.assertAll(testExecutables);
+			assertAll(testExecutables);
 		} finally {
 			if (moduleSearchPath != null)
 				ModuleFixtures.cleanup(moduleSearchPath);
@@ -89,7 +89,7 @@ public class VerifyTestCasesTest {
 			throw new IllegalArgumentException("Usage: VerifyTestCasesTest <test-case-resource>");
 
 		VerifyTestCasesTest verifier = new VerifyTestCasesTest();
-		Assertions.assertAll(
+		assertAll(
 				args[0],
 				TestCaseLoader.loadTestCasesAsJsonStrings(args[0]).parallel()
 						.map(tcText -> (Executable) () -> verifier.test(tcText)));

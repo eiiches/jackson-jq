@@ -22,7 +22,7 @@ update_project_version_refs() {
 	fi
 	sed -i -E "s/^VERSION = \"[^\"]+\"$/VERSION = \"$target_version\"/" version.bzl
 
-	for pom in smoke-tests/{java8,jpms,graalvm,osgi,quarkus}/pom.xml; do
+	for pom in smoke-tests/{java17,jpms,graalvm,osgi,quarkus}/pom.xml; do
 		mvn -f "$pom" "${versions_maven_plugin}:set-property" -Dproperty=jackson-jq.version -DnewVersion="$target_version" -DautoLinkItems=false -DgenerateBackupPoms=false
 	done
 }

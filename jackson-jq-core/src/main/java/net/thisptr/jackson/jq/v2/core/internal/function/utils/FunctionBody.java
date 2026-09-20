@@ -36,7 +36,7 @@ public class FunctionBody {
 		}
 
 		public Expression<Context, JsonNode> build(Expression<Context, JsonNode> expr) {
-			return new Expression<Context, JsonNode>() {
+			return new Expression<>() {
 				@Override
 				public Cardinality getCardinality() {
 					return cardinality;

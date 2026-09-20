@@ -1,7 +1,5 @@
 package net.thisptr.jackson.jq.v2.ext.binary;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -10,21 +8,17 @@ import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 
 @ModuleRegistration(path = "jackson-jq/binary")
-public class ModuleImpl implements JavaModule {
-	private final Map<FunctionSignature, Function> functions = new HashMap<>();
-
-	public ModuleImpl() {
-		DecodeTextFunction decodeText = new DecodeTextFunction();
-		functions.put(FunctionSignature.of("decode_text", 0), decodeText);
-		functions.put(FunctionSignature.of("decode_text", 1), decodeText);
-
-		EncodeTextFunction encodeText = new EncodeTextFunction();
-		functions.put(FunctionSignature.of("encode_text", 0), encodeText);
-		functions.put(FunctionSignature.of("encode_text", 1), encodeText);
-	}
+public final class ModuleImpl implements JavaModule {
+	private static final DecodeTextFunction DECODE_TEXT = new DecodeTextFunction();
+	private static final EncodeTextFunction ENCODE_TEXT = new EncodeTextFunction();
+	private static final Map<FunctionSignature, Function> FUNCTIONS = Map.of(
+			FunctionSignature.of("decode_text", 0), DECODE_TEXT,
+			FunctionSignature.of("decode_text", 1), DECODE_TEXT,
+			FunctionSignature.of("encode_text", 0), ENCODE_TEXT,
+			FunctionSignature.of("encode_text", 1), ENCODE_TEXT);
 
 	@Override
 	public Map<FunctionSignature, Function> getFunctions() {
-		return Collections.unmodifiableMap(functions);
+		return FUNCTIONS;
 	}
 }

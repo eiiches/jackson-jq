@@ -110,7 +110,7 @@ class CentralPortalUploadTest {
 		Path artifact = repository.resolve(path);
 		Files.createDirectories(artifact.getParent());
 		// Content unique per path, so the bundle can be checked entry by entry.
-		Files.write(artifact, path.getBytes(StandardCharsets.UTF_8));
+		Files.writeString(artifact, path);
 	}
 
 	private List<String> relative(List<Path> artifacts) {

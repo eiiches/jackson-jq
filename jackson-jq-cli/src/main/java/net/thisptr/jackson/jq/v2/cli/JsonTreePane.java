@@ -59,13 +59,13 @@ final class JsonTreePane {
 	private List<String> textLines = Collections.emptyList();
 	private int textScrollOffset;
 	private int textViewportHeight = 1;
-	private List<Integer> textMatches = new ArrayList<>();
+	private final List<Integer> textMatches = new ArrayList<>();
 	private int textMatchIndex = -1;
 
 	private boolean searchActive;
 	private final TextInputState searchInputState = new TextInputState();
 	private String searchQuery = "";
-	private List<JsonTreeNode> matches = new ArrayList<>();
+	private final List<JsonTreeNode> matches = new ArrayList<>();
 	private int matchIndex = -1;
 
 	<T> void setNodes(List<?> items, List<String> lines, JsonProvider<T> provider) {
@@ -437,7 +437,7 @@ final class JsonTreePane {
 			}
 			if (!key.hasCtrl() && !key.hasAlt()) {
 				String str = key.string();
-				if (str != null && !str.isEmpty() && (key.code() == KeyCode.CHAR || str.charAt(0) >= 32)) {
+				if (!str.isEmpty() && (key.code() == KeyCode.CHAR || str.charAt(0) >= 32)) {
 					searchInputState.insert(str);
 					onSearchQueryChanged();
 					return true;
@@ -593,7 +593,7 @@ final class JsonTreePane {
 		}
 
 		Rect contentArea;
-		@Var @Nullable Rect searchArea = null;
+		@Var Rect searchArea = null;
 		if (searchActive || !searchQuery.isEmpty()) {
 			if (inner.height() > 1) {
 				List<Rect> parts = Layout.vertical()
@@ -769,21 +769,12 @@ final class JsonTreePane {
 	}
 
 	private Style defaultNodeStyle(JsonTreeNode node) {
-		switch (node.type()) {
-			case STRING:
-				return Style.EMPTY.green();
-			case NUMBER:
-				return Style.EMPTY.yellow();
-			case BOOLEAN:
-				return Style.EMPTY.magenta();
-			case NULL:
-				return Style.EMPTY.dim();
-			case OBJECT:
-			case ARRAY:
-				return Style.EMPTY.white();
-			case BINARY:
-			default:
-				return Style.EMPTY.dim();
-		}
+		return switch (node.type()) {
+			case STRING -> Style.EMPTY.green();
+			case NUMBER -> Style.EMPTY.yellow();
+			case BOOLEAN -> Style.EMPTY.magenta();
+			case NULL, BINARY -> Style.EMPTY.dim();
+			case OBJECT, ARRAY -> Style.EMPTY.white();
+		};
 	}
 }
