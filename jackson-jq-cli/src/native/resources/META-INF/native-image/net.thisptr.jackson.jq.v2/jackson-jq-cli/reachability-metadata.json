@@ -1,0 +1,7 @@
+{
+  "resources": [
+    {
+      "glob": "dev/tamboui/tui/bindings/*.properties"
+    }
+  ]
+}
