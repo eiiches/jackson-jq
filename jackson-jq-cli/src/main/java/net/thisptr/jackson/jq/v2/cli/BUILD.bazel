@@ -10,6 +10,7 @@ jjq_java_library(
         "JqColors.java",
         "JqPrettyPrinter.java",
         "JqPrinter.java",
+        "JsonTextHighlighter.java",
         "JsonTreeNode.java",
         "JsonTreePane.java",
         "Main.java",
