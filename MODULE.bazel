@@ -471,3 +471,12 @@ http_file(
     sha256 = "32eebd2924499f4956648ff457e7033321f583ff541ad075328c9a2c1df6e0ef",
     urls = ["https://github.com/ICIJ/intellij-code-formatter/releases/download/0.0.3/intellij-code-formatter-0.0.3.jar"],
 )
+
+# ImportHelper, the Optimize Imports engine inside intellij-code-formatter, calls into StreamEx,
+# which the shaded jar does not bundle.
+http_file(
+    name = "streamex",
+    downloaded_file_path = "streamex.jar",
+    sha256 = "029117d46bcb8b850ad36cff3540c1844e25b4d5352aadd982e8cd80ffb8677c",
+    urls = ["https://repo1.maven.org/maven2/one/util/streamex/0.8.3/streamex-0.8.3.jar"],
+)
