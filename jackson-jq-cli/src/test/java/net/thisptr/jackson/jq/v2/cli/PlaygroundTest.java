@@ -910,6 +910,7 @@ class PlaygroundTest {
 		assertThat(rendered).contains("╰");
 	}
 
+
 	@Test
 	void collectsAndDisplaysWarningsForAmbiguousQuery() throws Exception {
 		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
@@ -944,7 +945,7 @@ class PlaygroundTest {
 		assertThat(pg.getWarnings().get(0).message()).contains("binds tighter than");
 
 		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
-		assertThat(rendered).contains("[Warning]");
+		assertThat(rendered).contains("[Compile][Warning]");
 		assertThat(rendered).contains("Output Preview [Text]: 2 items");
 		assertThat(rendered).contains("Diagnostics");
 
@@ -987,7 +988,7 @@ class PlaygroundTest {
 		assertThat(pg.getWarnings()).isEmpty();
 
 		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
-		assertThat(rendered).doesNotContain("[Warning]");
+		assertThat(rendered).doesNotContain("[Compile][Warning]");
 		assertThat(rendered).contains("Output Preview [Text]: 2 items");
 		assertThat(rendered).contains("(no diagnostics)");
 	}
@@ -1025,7 +1026,7 @@ class PlaygroundTest {
 		assertThat(pg.getWarnings().size()).isGreaterThanOrEqualTo(2);
 
 		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
-		assertThat(rendered).contains("[Warning]");
+		assertThat(rendered).contains("[Compile][Warning]");
 	}
 
 	@Test
@@ -1104,7 +1105,7 @@ class PlaygroundTest {
 		assertThat(pg.getOutputTreePane().roots()).isNotEmpty();
 		assertThat(pg.getOutputTreePane().textLines()).isNotEmpty();
 		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
-		assertThat(rendered).contains("[Error]");
+		assertThat(rendered).contains("[Compile][Error]");
 		assertThat(rendered).contains("Output Preview [Text]: 1 item (3 lines)");
 		assertThat(rendered).contains("\"a\":");
 	}
@@ -1658,13 +1659,13 @@ class PlaygroundTest {
 
 		List<String> diagLines = pg.getDiagnosticPlainLines();
 		assertThat(diagLines.size()).isGreaterThanOrEqualTo(3);
-		assertThat(diagLines.get(0)).startsWith("[Error] syntax error");
+		assertThat(diagLines.get(0)).startsWith("[Compile][Error] syntax error");
 		assertThat(diagLines.get(1)).isEqualTo("    [");
 		assertThat(diagLines.get(2)).isEqualTo("    ^");
 		assertThat(pg.getDiagnosticsViewportHeight()).isEqualTo(3);
 
 		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
-		assertThat(rendered).contains("[Error]");
+		assertThat(rendered).contains("[Compile][Error]");
 		assertThat(rendered).contains("Diagnostics");
 	}
 
@@ -1695,13 +1696,40 @@ class PlaygroundTest {
 		List<String> diagLines = pg.getDiagnosticPlainLines();
 		assertThat(diagLines.size()).isGreaterThanOrEqualTo(2);
 		for (String line : diagLines) {
-			assertThat(line).startsWith("[Warning]");
+			assertThat(line).startsWith("[Compile][Warning]");
 		}
 		assertThat(pg.getDiagnosticsViewportHeight()).isEqualTo(diagLines.size());
 
 		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
-		assertThat(rendered).contains("[Warning]");
+		assertThat(rendered).contains("[Compile][Warning]");
 		assertThat(rendered).contains("Diagnostics");
+	}
+
+	@Test
+	void rendersCompileWarningsBeforeRuntimeErrors() {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				Collections.singletonList(JSON.createNull()),
+				"""
+						import "jackson-jq/fs" as fs;
+						1, 2 | fs::read_text("maven_install.json"; {misspelled: (now | tostring)})
+						""",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		assertThat(pg.getDiagnosticPlainLines()).satisfiesExactly(
+				line -> assertThat(line)
+						.startsWith("[Compile][Warning] `,` binds tighter than `|`")
+						.contains("at line 2, column 1"),
+				line -> assertThat(line)
+						.isEqualTo("[Runtime][Error] fs::read_text options contains unknown member: misspelled"));
 	}
 
 	@Test

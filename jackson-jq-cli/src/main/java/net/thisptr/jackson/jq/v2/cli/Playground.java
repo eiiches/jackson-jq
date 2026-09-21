@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 
 import com.google.errorprone.annotations.Var;
@@ -122,6 +123,7 @@ final class Playground<N> {
 	private int diagnosticsScrollOffset;
 	private volatile List<String> previewLines = new ArrayList<>();
 	private volatile @Nullable String errorMessage;
+	private volatile @Nullable DiagnosticPhase errorPhase;
 	private List<Diagnostic> warnings = new ArrayList<>();
 	private List<Line> diagnosticLines = Collections.emptyList();
 	private List<String> diagnosticPlainLines = Collections.emptyList();
@@ -1108,7 +1110,20 @@ final class Playground<N> {
 			@Nullable List<?> outputItems,
 			int itemCount,
 			@Nullable String errorMessage,
+			@Nullable DiagnosticPhase errorPhase,
 			List<Diagnostic> warnings) {
+	}
+
+	private enum DiagnosticPhase {
+		COMPILE("Compile"),
+		RUNTIME("Runtime"),
+		INPUT("Input");
+
+		private final String label;
+
+		DiagnosticPhase(String label) {
+			this.label = label;
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1124,20 +1139,26 @@ final class Playground<N> {
 			boolean compact,
 			boolean execute) {
 		List<Diagnostic> currentWarnings = new ArrayList<>();
+		CompileOptions.Builder optsBuilder = CompileOptions.newBuilder()
+				.setOptimizationOptions(compileOptions.getOptimizationOptions());
+		if (warningsEnabled) {
+			optsBuilder.setDiagnosticListener(diag -> {
+				if (diag.severity() == Diagnostic.Severity.WARNING) {
+					currentWarnings.add(diag);
+				}
+			});
+		}
+		JsonQuery<T> jq;
 		try {
-			CompileOptions.Builder optsBuilder = CompileOptions.newBuilder()
-					.setOptimizationOptions(compileOptions.getOptimizationOptions());
-			if (warningsEnabled) {
-				optsBuilder.setDiagnosticListener(diag -> {
-					if (diag.severity() == Diagnostic.Severity.WARNING) {
-						currentWarnings.add(diag);
-					}
-				});
-			}
-			JsonQuery<T> jq = ((Environment<T>) environment).compile(queryText, optsBuilder.build()).withRuntimeOptions(runtimeOptions);
-			if (!execute) {
-				return new EvaluationResult(null, null, 0, null, currentWarnings);
-			}
+			jq = ((Environment<T>) environment).compile(queryText, optsBuilder.build()).withRuntimeOptions(runtimeOptions);
+		} catch (Throwable t) {
+			String err = t.getMessage() != null ? t.getMessage() : t.toString();
+			return new EvaluationResult(null, null, 0, err, DiagnosticPhase.COMPILE, currentWarnings);
+		}
+		if (!execute) {
+			return new EvaluationResult(null, null, 0, null, null, currentWarnings);
+		}
+		try {
 			List<String> lines = new ArrayList<>();
 			List<Object> items = new ArrayList<>();
 			int[] count = new int[1];
@@ -1156,27 +1177,30 @@ final class Playground<N> {
 					lines.addAll(Arrays.asList(formatted.split("\r?\n", -1)));
 				});
 			}
-			return new EvaluationResult(lines, items, count[0], null, currentWarnings);
+			return new EvaluationResult(lines, items, count[0], null, null, currentWarnings);
 		} catch (Throwable t) {
 			String err = t.getMessage() != null ? t.getMessage() : t.toString();
-			return new EvaluationResult(null, null, 0, err, currentWarnings);
+			return new EvaluationResult(null, null, 0, err, DiagnosticPhase.RUNTIME, currentWarnings);
 		}
 	}
 
 	private void applyEvaluationResult(EvaluationResult result) {
 		this.warnings = result.warnings();
 		if (result.errorMessage() != null) {
+			this.errorPhase = result.errorPhase();
 			this.errorMessage = result.errorMessage();
 			this.outputStale = true;
 			this.evaluationStatus = EvaluationStatus.FAILURE;
 		} else if (result.previewLines() == null) {
 			this.errorMessage = null;
+			this.errorPhase = null;
 			this.outputStale = true;
 			this.evaluationStatus = EvaluationStatus.STALE;
 		} else {
 			this.previewLines = result.previewLines();
 			this.itemCount = result.itemCount();
 			this.errorMessage = null;
+			this.errorPhase = null;
 			this.outputStale = false;
 			this.evaluationStatus = EvaluationStatus.UP_TO_DATE;
 			this.outputScrollOffset = 0;
@@ -1192,6 +1216,7 @@ final class Playground<N> {
 	private <T> void updateEvaluationGeneric(
 			JsonProvider<T> provider, Environment<?> environment, List<?> inList, boolean applyWhilePaused) {
 		if (inputErrorMessage != null) {
+			this.errorPhase = DiagnosticPhase.INPUT;
 			this.errorMessage = "Input error: " + inputErrorMessage;
 			this.outputStale = true;
 			this.evaluationStatus = EvaluationStatus.FAILURE;
@@ -1251,24 +1276,10 @@ final class Playground<N> {
 			dLines.add(Line.from(Span.styled("(no diagnostics)", Style.EMPTY.dim())));
 			plain.add("(no diagnostics)");
 		} else {
-			if (errorMessage != null) {
-				@Var String err = errorMessage;
-				while (err.endsWith("\n") || err.endsWith("\r")) {
-					err = err.substring(0, err.length() - 1);
-				}
-				String[] split = err.split("\r?\n", -1);
-				for (int i = 0; i < split.length; i++) {
-					String line = split[i];
-					if (i == 0) {
-						dLines.add(Line.from(Span.styled("[Error] " + line, Style.EMPTY.bold().red())));
-						plain.add("[Error] " + line);
-					} else {
-						dLines.add(Line.from(Span.styled(line, Style.EMPTY.bold().red())));
-						plain.add(line);
-					}
-				}
-			}
 			for (Diagnostic w : warnings) {
+				boolean isError = w.severity() == Diagnostic.Severity.ERROR;
+				String label = isError ? "[Compile][Error] " : "[Compile][Warning] ";
+				Style style = isError ? Style.EMPTY.bold().red() : Style.EMPTY.bold().yellow();
 				@Var String msg = w.message() + (w.location() != null ? " at " + w.location() : "");
 				while (msg.endsWith("\n") || msg.endsWith("\r")) {
 					msg = msg.substring(0, msg.length() - 1);
@@ -1277,10 +1288,28 @@ final class Playground<N> {
 				for (int i = 0; i < split.length; i++) {
 					String line = split[i];
 					if (i == 0) {
-						dLines.add(Line.from(Span.styled("[Warning] " + line, Style.EMPTY.bold().yellow())));
-						plain.add("[Warning] " + line);
+						dLines.add(Line.from(Span.styled(label + line, style)));
+						plain.add(label + line);
 					} else {
-						dLines.add(Line.from(Span.styled(line, Style.EMPTY.bold().yellow())));
+						dLines.add(Line.from(Span.styled(line, style)));
+						plain.add(line);
+					}
+				}
+			}
+			if (errorMessage != null) {
+				@Var String err = errorMessage;
+				while (err.endsWith("\n") || err.endsWith("\r")) {
+					err = err.substring(0, err.length() - 1);
+				}
+				String[] split = err.split("\r?\n", -1);
+				String label = "[" + Objects.requireNonNull(errorPhase).label + "][Error] ";
+				for (int i = 0; i < split.length; i++) {
+					String line = split[i];
+					if (i == 0) {
+						dLines.add(Line.from(Span.styled(label + line, Style.EMPTY.bold().red())));
+						plain.add(label + line);
+					} else {
+						dLines.add(Line.from(Span.styled(line, Style.EMPTY.bold().red())));
 						plain.add(line);
 					}
 				}
