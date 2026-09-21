@@ -13,8 +13,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import dev.tamboui.backend.jline3.JLineBackend;
+import dev.tamboui.style.Color;
 import dev.tamboui.style.Style;
 import dev.tamboui.text.Line;
 import dev.tamboui.text.Span;
@@ -140,6 +143,68 @@ class PlaygroundTest {
 				.isEqualTo(" Auto-run: Paused (Ctrl+P to toggle) ");
 		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
 		assertThat(rendered).contains("Auto-run: On", "Auto-run: Paused", "(Ctrl+P to toggle)", "(Stal");
+	}
+
+	@Test
+	void outputTitleEmphasizesStaleMarker() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		JsonNode input = JSON.createObject(Collections.singletonMap("name", JSON.createString("Alice")));
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		List<Event> events = new ArrayList<>();
+		events.add(KeyEvent.ofChar('p', KeyModifiers.CTRL));
+		events.add(KeyEvent.ofChar('u', KeyModifiers.CTRL));
+		events.addAll(textToKeys(".name"));
+		events.add(KeyEvent.ofChar('c', KeyModifiers.CTRL));
+		events.add(KeyEvent.ofChar('y'));
+
+		Playground<JsonNode> pg = new Playground<>(
+				env, Collections.singletonList(input), ".", JSON,
+				RuntimeOptions.newBuilder().build(), CompileOptions.newBuilder().build(),
+				false, false, System.out, System.err);
+
+		pg.run(createTestRunner(terminalOut, events));
+
+		assertThat(pg.isOutputStale()).isTrue();
+		Line title = pg.buildOutputTitleLine("Tree", "1 item (3 lines)", Color.DARK_GRAY);
+		assertThat(lineToPlainText(title)).isEqualTo(" Output Preview [Tree] (Stale): 1 item (3 lines) ");
+		Style plain = Style.EMPTY.fg(Color.DARK_GRAY);
+		assertThat(title.spans()).containsExactly(
+				Span.styled(" Output Preview [Tree]", plain),
+				Span.styled(" ", plain),
+				Span.styled("(Stale)", Style.EMPTY.bold().yellow()),
+				Span.styled(": 1 item (3 lines) ", plain));
+
+		// Block.renderTitle() would repaint the marker in the border color, so assert the emphasis
+		// survives all the way to the terminal rather than only in the Line we build.
+		Matcher marker = Pattern.compile("\u001b\\[([0-9;]+)m\\(Stale\\)")
+				.matcher(terminalOut.toString(StandardCharsets.UTF_8));
+		assertThat(marker.find()).isTrue();
+		assertThat(marker.group(1).split(";")).contains("33", "1");
+	}
+
+	@Test
+	void outputTitleOmitsStaleMarkerWhenUpToDate() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		JsonNode input = JSON.createObject(Collections.singletonMap("name", JSON.createString("Alice")));
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		List<Event> events = new ArrayList<>();
+		events.add(KeyEvent.ofChar('c', KeyModifiers.CTRL));
+		events.add(KeyEvent.ofChar('y'));
+
+		Playground<JsonNode> pg = new Playground<>(
+				env, Collections.singletonList(input), ".", JSON,
+				RuntimeOptions.newBuilder().build(), CompileOptions.newBuilder().build(),
+				false, false, System.out, System.err);
+
+		pg.run(createTestRunner(terminalOut, events));
+
+		assertThat(pg.isOutputStale()).isFalse();
+		Line title = pg.buildOutputTitleLine("Text", "1 item (3 lines)", Color.CYAN);
+		assertThat(lineToPlainText(title)).isEqualTo(" Output Preview [Text]: 1 item (3 lines) ");
+		Style plain = Style.EMPTY.fg(Color.CYAN);
+		assertThat(title.spans()).containsExactly(
+				Span.styled(" Output Preview [Text]", plain),
+				Span.styled(": 1 item (3 lines) ", plain));
 	}
 
 	@Test

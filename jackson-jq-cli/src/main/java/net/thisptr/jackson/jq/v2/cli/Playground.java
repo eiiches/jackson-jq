@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 
 import com.google.errorprone.annotations.Var;
+import dev.tamboui.buffer.Buffer;
 import dev.tamboui.layout.Alignment;
 import dev.tamboui.layout.Constraint;
 import dev.tamboui.layout.Layout;
@@ -916,16 +917,18 @@ final class Playground<N> {
 		String outStats = String.format("%d %s (%d %s)",
 				itemCount, itemCount == 1 ? "item" : "items",
 				previewLines.size(), previewLines.size() == 1 ? "line" : "lines");
-		String outputTitle = String.format(" Output Preview [%s]%s: %s ", outMode, outputStale ? " (Stale)" : "", outStats);
+		Color outputBorderColor = focus == Focus.OUTPUT && modal == Modal.NONE ? Color.CYAN : Color.DARK_GRAY;
 		Block previewBlock = Block.builder()
-				.title(outputTitle)
 				.borders(Borders.ALL)
-				.borderColor(focus == Focus.OUTPUT && modal == Modal.NONE ? Color.CYAN : Color.DARK_GRAY)
+				.borderColor(outputBorderColor)
 				.build();
 		String outputEmptyMessage = errorMessage != null
 				? errorMessage
 				: (itemCount == 0 ? "(no output)" : null);
 		outputTreePane.render(outputRect, frame.buffer(), frame, focus == Focus.OUTPUT && modal == Modal.NONE, previewBlock, outputEmptyMessage);
+		// Block.renderTitle() repaints the whole title in the border color, which would wash out the
+		// emphasized (Stale) marker, so the title is drawn over the rendered top border instead.
+		renderBlockTitle(frame.buffer(), outputRect, buildOutputTitleLine(outMode, outStats, outputBorderColor));
 		this.outputViewportHeight = Math.max(1, previewBlock.inner(outputRect).height());
 		this.outputScrollOffset = outputTreePane.viewMode() == JsonTreePane.ViewMode.TREE
 				? outputTreePane.treeState().offset()
@@ -1505,6 +1508,29 @@ final class Playground<N> {
 		return Line.from(
 				Span.styled(status, statusStyle),
 				Span.styled(" (Ctrl+P to toggle) ", Style.EMPTY.dim()));
+	}
+
+	Line buildOutputTitleLine(String outMode, String outStats, Color titleColor) {
+		Style titleStyle = Style.EMPTY.fg(titleColor);
+		List<Span> spans = new ArrayList<>();
+		spans.add(Span.styled(String.format(" Output Preview [%s]", outMode), titleStyle));
+		if (outputStale) {
+			spans.add(Span.styled(" ", titleStyle));
+			spans.add(Span.styled("(Stale)", Style.EMPTY.bold().yellow()));
+		}
+		spans.add(Span.styled(String.format(": %s ", outStats), titleStyle));
+		return Line.from(spans);
+	}
+
+	/**
+	 * Draws a left-aligned title onto the top border of an already-rendered bordered block, keeping
+	 * each span's own style instead of inheriting the border color the way {@link Block} does.
+	 */
+	private static void renderBlockTitle(Buffer buffer, Rect area, Line title) {
+		if (area.width() <= 2) {
+			return;
+		}
+		buffer.setLine(area.left() + 1, area.top(), title);
 	}
 
 	Line buildGuideLine(Focus focus) {
