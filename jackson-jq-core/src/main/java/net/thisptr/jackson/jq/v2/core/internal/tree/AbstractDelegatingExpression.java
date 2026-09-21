@@ -2,10 +2,10 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.Set;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -28,9 +28,9 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
  * @param <JsonNode> the JSON node type
  */
 public abstract class AbstractDelegatingExpression<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
-	protected final Expression<StackFrame, JsonNode> inner;
+	protected final AnalyzedExpression<JsonNode> inner;
 
-	protected AbstractDelegatingExpression(Expression<StackFrame, JsonNode> inner) {
+	protected AbstractDelegatingExpression(AnalyzedExpression<JsonNode> inner) {
 		this.inner = inner;
 	}
 
@@ -39,15 +39,15 @@ public abstract class AbstractDelegatingExpression<JsonNode> implements Rewritab
 	 *
 	 * @return the wrapped expression, never {@code null}
 	 */
-	public final Expression<StackFrame, JsonNode> inner() {
+	public final AnalyzedExpression<JsonNode> inner() {
 		return inner;
 	}
 
-	protected abstract Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenInner);
+	protected abstract AnalyzedExpression<JsonNode> recreate(AnalyzedExpression<JsonNode> rewrittenInner);
 
 	@Override
-	public final Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(inner);
+	public final AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		AnalyzedExpression<JsonNode> rewritten = rewriter.rewrite(inner);
 		return rewritten == inner ? this : recreate(rewritten);
 	}
 

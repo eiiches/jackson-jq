@@ -1,8 +1,6 @@
-package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
+package net.thisptr.jackson.jq.v2.core.internal.tree.matcher;
 
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
-import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.SlotResolver;
 import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -22,6 +20,15 @@ public class ValueMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	ValueMatcher(String name, int slot) {
 		this.name = name;
 		this.slot = slot;
+	}
+
+	public int slot() {
+		return slot;
+	}
+
+	@Override
+	public <R> R accept(Visitor<JsonNode, R> visitor) {
+		return visitor.visit(this);
 	}
 
 	@Override

@@ -2,9 +2,9 @@ package net.thisptr.jackson.jq.v2.core.internal.compile.resolved;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -51,9 +51,9 @@ public interface TailCallArgument<JsonNode> {
 	 * cardinality is a promise a third-party {@code Function} can break.
 	 */
 	final class Value<JsonNode> implements TailCallArgument<JsonNode> {
-		private final Expression<StackFrame, JsonNode> expression;
+		private final AnalyzedExpression<JsonNode> expression;
 
-		public Value(Expression<StackFrame, JsonNode> expression) {
+		public Value(AnalyzedExpression<JsonNode> expression) {
 			this.expression = expression;
 		}
 

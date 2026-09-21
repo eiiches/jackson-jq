@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
+package net.thisptr.jackson.jq.v2.core.internal.tree.matcher;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,16 +7,14 @@ import java.util.function.UnaryOperator;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
-import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.SlotResolver;
 import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -33,6 +31,10 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		this.version = version;
 	}
 
+	public List<FieldMatcher<JsonNode>> matchers() {
+		return matchers;
+	}
+
 	public static class FieldMatcher<JsonNode> {
 		// e.g.
 		// {$x} : dollar = true, name = "x", matcher = null
@@ -41,7 +43,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 
 		private final boolean dollar;
 		private final @Nullable String variableName;
-		private final Expression<StackFrame, JsonNode> name;
+		private final AnalyzedExpression<JsonNode> name;
 		private final @Nullable PatternMatcher<JsonNode> matcher;
 
 		/**
@@ -58,11 +60,11 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		 */
 		private final int nameOutputIndex;
 
-		public FieldMatcher(boolean dollar, @Nullable String variableName, Expression<StackFrame, JsonNode> name, @Nullable PatternMatcher<JsonNode> matcher, int nameOutputIndex) {
+		public FieldMatcher(boolean dollar, @Nullable String variableName, AnalyzedExpression<JsonNode> name, @Nullable PatternMatcher<JsonNode> matcher, int nameOutputIndex) {
 			this(dollar, variableName, name, matcher, -1, nameOutputIndex);
 		}
 
-		private FieldMatcher(boolean dollar, @Nullable String variableName, Expression<StackFrame, JsonNode> name, @Nullable PatternMatcher<JsonNode> matcher, int writeSlot, int nameOutputIndex) {
+		private FieldMatcher(boolean dollar, @Nullable String variableName, AnalyzedExpression<JsonNode> name, @Nullable PatternMatcher<JsonNode> matcher, int writeSlot, int nameOutputIndex) {
 			if (dollar && variableName == null)
 				throw new IllegalArgumentException("BUG: variableName must not be null when dollar = true");
 			if (!dollar && matcher == null)
@@ -82,8 +84,24 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 			return new FieldMatcher<>(dollar, variableName, name, matcher != null ? matcher.resolveSlots(resolver) : null, resolvedSlot, nameOutputIndex);
 		}
 
-		private FieldMatcher<JsonNode> rewriteExpressions(UnaryOperator<Expression<StackFrame, JsonNode>> rewriter) {
-			Expression<StackFrame, JsonNode> rewrittenName = rewriter.apply(name);
+		public boolean dollar() {
+			return dollar;
+		}
+
+		public AnalyzedExpression<JsonNode> name() {
+			return name;
+		}
+
+		public @Nullable PatternMatcher<JsonNode> matcher() {
+			return matcher;
+		}
+
+		public int writeSlot() {
+			return writeSlot;
+		}
+
+		private FieldMatcher<JsonNode> rewriteExpressions(UnaryOperator<AnalyzedExpression<JsonNode>> rewriter) {
+			AnalyzedExpression<JsonNode> rewrittenName = rewriter.apply(name);
 			PatternMatcher<JsonNode> rewrittenMatcher = matcher != null ? matcher.rewriteExpressions(rewriter) : null;
 			return rewrittenName == name && rewrittenMatcher == matcher
 					? this
@@ -161,6 +179,11 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
+	public <R> R accept(Visitor<JsonNode, R> visitor) {
+		return visitor.visit(this);
+	}
+
+	@Override
 	public void match(StackFrame frame, JsonNode in, OnMatch onMatch) throws JsonQueryException {
 		JsonNodeType type = jsonProvider.getNodeType(in);
 		if (type != JsonNodeType.OBJECT && type != JsonNodeType.NULL) {
@@ -191,7 +214,7 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public PatternMatcher<JsonNode> rewriteExpressions(UnaryOperator<Expression<StackFrame, JsonNode>> rewriter) {
+	public PatternMatcher<JsonNode> rewriteExpressions(UnaryOperator<AnalyzedExpression<JsonNode>> rewriter) {
 		@Var List<FieldMatcher<JsonNode>> rewritten = null;
 		for (int i = 0; i < matchers.size(); i++) {
 			FieldMatcher<JsonNode> matcher = matchers.get(i);

@@ -1,55 +1,20 @@
 package net.thisptr.jackson.jq.v2.ext.uuid;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.version.Versions;
-import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.BindContext;
-import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
-import net.thisptr.jackson.jq.v2.spi.Output;
-import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
-import net.thisptr.jackson.jq.v2.spi.path.Path;
-import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ModuleDiscoveryTest {
-	private static final BindContext<JsonNode> BIND_CONTEXT = new BindContext<>() {
-		@Override
-		public JsonProvider<JsonNode> getJsonProvider() {
-			return Jackson2JsonProvider.getInstance();
-		}
-
-		@Override
-		public Version getJqVersion() {
-			return Versions.JQ_1_6;
-		}
-	};
-
-	private static <T, Context extends RuntimeContext> Expression<Context, T> pureExpression() {
-		return new Expression<>() {
-			@Override
-			public boolean dependsOnInput() {
-				return false;
-			}
-
-			@Override
-			public boolean dependsOnExternalState() {
-				return false;
-			}
-
-			@Override
-			public void apply(Context context, T in, Path<T> ipath, Output<T> output) {
-			}
-		};
-	}
+	private static final ExpressionProperties PURE_ARGUMENT = new ExpressionProperties(Cardinality.ONE, false, false);
 
 	@Test
 	public void exposesFunctions() {
@@ -64,16 +29,16 @@ public class ModuleDiscoveryTest {
 	public void functionContract() {
 		ModuleImpl module = new ModuleImpl();
 		Function uuid3 = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("uuid3", 1)));
-		Expression<RuntimeContext, JsonNode> uuid3Expr = uuid3.bind(BIND_CONTEXT, Collections.singletonList(pureExpression()));
-		assertThat(uuid3Expr.dependsOnInput()).isTrue();
-		assertThat(uuid3Expr.dependsOnExternalState()).isFalse();
+		ExpressionProperties uuid3Properties = uuid3.analyze(Versions.JQ_1_6, List.of(PURE_ARGUMENT));
+		assertThat(uuid3Properties.dependsOnInput()).isTrue();
+		assertThat(uuid3Properties.dependsOnExternalState()).isFalse();
 		Function uuid5 = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("uuid5", 1)));
-		Expression<RuntimeContext, JsonNode> uuid5Expr = uuid5.bind(BIND_CONTEXT, Collections.singletonList(pureExpression()));
-		assertThat(uuid5Expr.dependsOnInput()).isTrue();
-		assertThat(uuid5Expr.dependsOnExternalState()).isFalse();
+		ExpressionProperties uuid5Properties = uuid5.analyze(Versions.JQ_1_6, List.of(PURE_ARGUMENT));
+		assertThat(uuid5Properties.dependsOnInput()).isTrue();
+		assertThat(uuid5Properties.dependsOnExternalState()).isFalse();
 		Function uuid4 = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("uuid4", 0)));
-		Expression<RuntimeContext, JsonNode> uuid4Expr = uuid4.bind(BIND_CONTEXT, Collections.emptyList());
-		assertThat(uuid4Expr.dependsOnInput()).isFalse();
-		assertThat(uuid4Expr.dependsOnExternalState()).isTrue();
+		ExpressionProperties uuid4Properties = uuid4.analyze(Versions.JQ_1_6, List.of());
+		assertThat(uuid4Properties.dependsOnInput()).isFalse();
+		assertThat(uuid4Properties.dependsOnExternalState()).isTrue();
 	}
 }

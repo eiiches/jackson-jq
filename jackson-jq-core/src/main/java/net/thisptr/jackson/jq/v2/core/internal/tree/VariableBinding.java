@@ -2,22 +2,22 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.Set;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class VariableBinding<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
-	private final Expression<StackFrame, JsonNode> value;
+	private final AnalyzedExpression<JsonNode> value;
 	private final PatternMatcher<JsonNode> matcher;
-	private final Expression<StackFrame, JsonNode> body;
+	private final AnalyzedExpression<JsonNode> body;
 	private final boolean dependsOnInput;
 	private final boolean dependsOnExternalState;
 	private final Set<Integer> freeLocalSlots;
@@ -26,7 +26,7 @@ public class VariableBinding<JsonNode> implements RewritableExpression<JsonNode>
 	// Counter for the bound expression. `body` needs none: it emits this binding's own values.
 	private final int valueOutputIndex;
 
-	public VariableBinding(Expression<StackFrame, JsonNode> value, PatternMatcher<JsonNode> matcher, Set<Integer> boundSlots, Expression<StackFrame, JsonNode> body, int valueOutputIndex) {
+	public VariableBinding(AnalyzedExpression<JsonNode> value, PatternMatcher<JsonNode> matcher, Set<Integer> boundSlots, AnalyzedExpression<JsonNode> body, int valueOutputIndex) {
 		this.valueOutputIndex = valueOutputIndex;
 		this.boundSlots = boundSlots;
 		this.value = value;
@@ -36,6 +36,22 @@ public class VariableBinding<JsonNode> implements RewritableExpression<JsonNode>
 		this.dependsOnExternalState = value.dependsOnExternalState() || body.dependsOnExternalState();
 		this.freeLocalSlots = FreeVariables.unionSets(FreeVariables.slotsOf(value), FreeVariables.minus(FreeVariables.slotsOf(body), boundSlots));
 		this.hasOpaqueVariableReference = FreeVariables.anyOpaque(value, body);
+	}
+
+	public AnalyzedExpression<JsonNode> value() {
+		return value;
+	}
+
+	public AnalyzedExpression<JsonNode> body() {
+		return body;
+	}
+
+	public PatternMatcher<JsonNode> matcher() {
+		return matcher;
+	}
+
+	public Set<Integer> boundSlots() {
+		return boundSlots;
 	}
 
 	@Override
@@ -64,10 +80,10 @@ public class VariableBinding<JsonNode> implements RewritableExpression<JsonNode>
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		Expression<StackFrame, JsonNode> rewrittenValue = rewriter.rewrite(value);
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		AnalyzedExpression<JsonNode> rewrittenValue = rewriter.rewrite(value);
 		PatternMatcher<JsonNode> rewrittenMatcher = matcher.rewriteExpressions(rewriter::rewrite);
-		Expression<StackFrame, JsonNode> rewrittenBody = rewriter.rewrite(body);
+		AnalyzedExpression<JsonNode> rewrittenBody = rewriter.rewrite(body);
 		return rewrittenValue == value && rewrittenMatcher == matcher && rewrittenBody == body
 				? this
 				: new VariableBinding<>(rewrittenValue, rewrittenMatcher, boundSlots, rewrittenBody, valueOutputIndex);

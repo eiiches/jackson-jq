@@ -1,11 +1,11 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -24,14 +24,18 @@ public class IdentifierFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNod
 		return Cardinality.UNKNOWN;
 	}
 
-	public IdentifierFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> obj, String field, boolean permissive, Version version, int targetOutputIndex) {
+	public IdentifierFieldAccess(JsonProvider<JsonNode> jsonProvider, AnalyzedExpression<JsonNode> obj, String field, boolean permissive, Version version, int targetOutputIndex) {
 		super(jsonProvider, obj, permissive, version, targetOutputIndex);
 		this.field = field;
 	}
 
+	public String field() {
+		return field;
+	}
+
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(target);
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		AnalyzedExpression<JsonNode> rewritten = rewriter.rewrite(target);
 		return rewritten == target ? this : new IdentifierFieldAccess<>(jsonProvider, rewritten, field, permissive, version, targetOutputIndex);
 	}
 

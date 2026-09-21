@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
+package net.thisptr.jackson.jq.v2.core.internal.tree.matcher;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,8 +17,6 @@ import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.Comma;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.ValueLiteral;
-import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
-import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.SlotResolver;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;

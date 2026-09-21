@@ -17,30 +17,75 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.NullType;
+import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
+import net.thisptr.jackson.jq.v2.spi.type.NumericType;
+import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.UnionType;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class UriParseFunction implements Function {
 	private static final Pattern AMPERSAND = Pattern.compile(Pattern.quote("&"));
 	private static final Pattern EQUAL = Pattern.compile(Pattern.quote("="));
 
+	/**
+	 * A component that is absent from the URI is reported as null rather than omitted.
+	 */
+	private static final Type COMPONENT;
+	/**
+	 * A query parameter repeated in the URI is collected into an array.
+	 */
+	private static final Type QUERY_OBJECT;
+
+	static {
+		COMPONENT = UnionType.of(StringType.getInstance(), NullType.getInstance());
+		QUERY_OBJECT = ObjectType.of(Map.of(), UnionType.of(StringType.getInstance(), ArrayType.of(StringType.getInstance())));
+	}
+
+	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
+			TypeScheme.of(FunctionType.of(StringType.getInstance(), ObjectType.of(Map.ofEntries(
+					Map.entry("scheme", COMPONENT),
+					Map.entry("user_info", COMPONENT),
+					Map.entry("raw_user_info", COMPONENT),
+					Map.entry("host", COMPONENT),
+					Map.entry("port", NumericType.of(NumberKind.INT)),
+					Map.entry("authority", COMPONENT),
+					Map.entry("raw_authority", COMPONENT),
+					Map.entry("path", COMPONENT),
+					Map.entry("raw_path", COMPONENT),
+					Map.entry("query", COMPONENT),
+					Map.entry("raw_query", COMPONENT),
+					Map.entry("query_obj", QUERY_OBJECT),
+					Map.entry("fragment", COMPONENT),
+					Map.entry("raw_fragment", COMPONENT))))));
+
+	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		return TYPE_SCHEMES;
+	}
+
+	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		return new ExpressionProperties(Cardinality.ONE, true, false);
+	}
+
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
 		return new Expression<>() {
-			@Override
-			public Cardinality getCardinality() {
-				return Cardinality.ONE;
-			}
 
-			@Override
-			public boolean dependsOnExternalState() {
-				return false;
-			}
 
 			@Override
 			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {

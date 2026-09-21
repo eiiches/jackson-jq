@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -18,9 +18,9 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class ReduceExpression<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
-	private final Expression<StackFrame, JsonNode> iterExpr;
-	private final Expression<StackFrame, JsonNode> reduceExpr;
-	private final Expression<StackFrame, JsonNode> initExpr;
+	private final AnalyzedExpression<JsonNode> iterExpr;
+	private final AnalyzedExpression<JsonNode> reduceExpr;
+	private final AnalyzedExpression<JsonNode> initExpr;
 	private final PatternMatcher<JsonNode> matcher;
 	private final int initOutputIndex;
 	private final int reduceOutputIndex;
@@ -37,7 +37,7 @@ public class ReduceExpression<JsonNode> implements RewritableExpression<JsonNode
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public ReduceExpression(JsonProvider<JsonNode> jsonProvider, PatternMatcher<JsonNode> matcher, Expression<StackFrame, JsonNode> initExpr, Expression<StackFrame, JsonNode> reduceExpr, Expression<StackFrame, JsonNode> iterExpr, Set<Integer> matcherSlots, int initOutputIndex, int reduceOutputIndex, int iterOutputIndex) {
+	public ReduceExpression(JsonProvider<JsonNode> jsonProvider, PatternMatcher<JsonNode> matcher, AnalyzedExpression<JsonNode> initExpr, AnalyzedExpression<JsonNode> reduceExpr, AnalyzedExpression<JsonNode> iterExpr, Set<Integer> matcherSlots, int initOutputIndex, int reduceOutputIndex, int iterOutputIndex) {
 		this.jsonProvider = jsonProvider;
 		this.matcher = matcher;
 		this.initOutputIndex = initOutputIndex;
@@ -58,6 +58,22 @@ public class ReduceExpression<JsonNode> implements RewritableExpression<JsonNode
 		this.freeLocalSlots = FreeVariables.minus(
 				FreeVariables.union(initExpr, iterExpr, reduceExpr),
 				new ArrayList<>(matcherSlots));
+	}
+
+	public AnalyzedExpression<JsonNode> iterExpr() {
+		return iterExpr;
+	}
+
+	public AnalyzedExpression<JsonNode> initExpr() {
+		return initExpr;
+	}
+
+	public AnalyzedExpression<JsonNode> reduceExpr() {
+		return reduceExpr;
+	}
+
+	public PatternMatcher<JsonNode> matcher() {
+		return matcher;
 	}
 
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
@@ -82,11 +98,11 @@ public class ReduceExpression<JsonNode> implements RewritableExpression<JsonNode
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		Expression<StackFrame, JsonNode> rewrittenIter = rewriter.rewrite(iterExpr);
-		Expression<StackFrame, JsonNode> rewrittenInit = rewriter.rewrite(initExpr);
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		AnalyzedExpression<JsonNode> rewrittenIter = rewriter.rewrite(iterExpr);
+		AnalyzedExpression<JsonNode> rewrittenInit = rewriter.rewrite(initExpr);
 		PatternMatcher<JsonNode> rewrittenMatcher = matcher.rewriteExpressions(rewriter::rewrite);
-		Expression<StackFrame, JsonNode> rewrittenReduce = rewriter.rewrite(reduceExpr);
+		AnalyzedExpression<JsonNode> rewrittenReduce = rewriter.rewrite(reduceExpr);
 		return rewrittenIter == iterExpr && rewrittenInit == initExpr && rewrittenMatcher == matcher && rewrittenReduce == reduceExpr
 				? this
 				: new ReduceExpression<>(jsonProvider, rewrittenMatcher, rewrittenInit, rewrittenReduce, rewrittenIter, matcherSlots, initOutputIndex, reduceOutputIndex, iterOutputIndex);

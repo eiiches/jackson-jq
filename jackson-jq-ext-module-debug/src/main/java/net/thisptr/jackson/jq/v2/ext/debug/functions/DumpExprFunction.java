@@ -22,33 +22,46 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.TypeVariable;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class DumpExprFunction implements Function {
+	private static final TypeVariable INPUT = TypeVariable.of("Input");
+	/**
+	 * The argument is serialized at bind time and never evaluated. The dump mirrors the shape of the
+	 * compiled expression tree, which is not worth spelling out as a type.
+	 */
+	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
+			TypeScheme.of(Map.of(INPUT, AnyType.getInstance()), FunctionType.of(INPUT, ObjectType.of(AnyType.getInstance()), FilterType.of(INPUT, AnyType.getInstance()))));
+
+	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		return TYPE_SCHEMES;
+	}
+
+	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		return new ExpressionProperties(Cardinality.ONE, false, false);
+	}
+
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
 		JsonNode dump = new Dumper<>(jsonProvider).dump(args.get(0));
 		return new Expression<>() {
-			@Override
-			public Cardinality getCardinality() {
-				return Cardinality.ONE;
-			}
 
-			@Override
-			public boolean dependsOnInput() {
-				return false;
-			}
-
-			@Override
-			public boolean dependsOnExternalState() {
-				return false;
-			}
 
 			@Override
 			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
@@ -145,11 +158,23 @@ public class DumpExprFunction implements Function {
 
 		private JsonNode serializeExpression(Expression<?, ?> expression, String identity) {
 			Map<String, JsonNode> node = objectEnvelope(expression, identity);
-			node.put("cardinality", jsonProvider.createString(expression.getCardinality().name().toLowerCase(Locale.ROOT)));
-			node.put("depends_on_input", jsonProvider.createBoolean(expression.dependsOnInput()));
-			node.put("depends_on_external_state", jsonProvider.createBoolean(expression.dependsOnExternalState()));
+			ExpressionProperties properties = compilerProperties(expression);
+			node.put("cardinality", jsonProvider.createString(properties.cardinality().name().toLowerCase(Locale.ROOT)));
+			node.put("depends_on_input", jsonProvider.createBoolean(properties.dependsOnInput()));
+			node.put("depends_on_external_state", jsonProvider.createBoolean(properties.dependsOnExternalState()));
 			putFields(expression, node);
 			return jsonProvider.createObject(node);
+		}
+
+		private static ExpressionProperties compilerProperties(Expression<?, ?> expression) {
+			try {
+				Cardinality cardinality = (Cardinality) expression.getClass().getMethod("getCardinality").invoke(expression);
+				boolean dependsOnInput = (Boolean) expression.getClass().getMethod("dependsOnInput").invoke(expression);
+				boolean dependsOnExternalState = (Boolean) expression.getClass().getMethod("dependsOnExternalState").invoke(expression);
+				return new ExpressionProperties(cardinality, dependsOnInput, dependsOnExternalState);
+			} catch (ReflectiveOperationException | RuntimeException e) {
+				return ExpressionProperties.UNKNOWN;
+			}
 		}
 
 		private JsonNode serializeObject(Object value, String identity) {

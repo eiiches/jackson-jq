@@ -3,6 +3,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
 jjq_java_test_suite(
     srcs = [
         "RandomModuleTest.java",
+        "RandomTypeSchemeTest.java",
     ],
     release = 17,
     visibility = ["//jackson-jq-ext-module-random:__subpackages__"],

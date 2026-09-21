@@ -5,11 +5,11 @@ import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -40,8 +40,8 @@ public class TryCatch<JsonNode> implements RewritableExpression<JsonNode>, FreeV
 	}
 
 	private final JsonProvider<JsonNode> jsonProvider;
-	private final Expression<StackFrame, JsonNode> tryExpr;
-	private final @Nullable Expression<StackFrame, JsonNode> catchExpr;
+	private final AnalyzedExpression<JsonNode> tryExpr;
+	private final @Nullable AnalyzedExpression<JsonNode> catchExpr;
 	private final Version version;
 
 	@Override
@@ -51,14 +51,14 @@ public class TryCatch<JsonNode> implements RewritableExpression<JsonNode>, FreeV
 		return Cardinality.UNKNOWN;
 	}
 
-	public TryCatch(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> tryExpr, @Nullable Expression<StackFrame, JsonNode> catchExpr, Version version) {
+	public TryCatch(JsonProvider<JsonNode> jsonProvider, AnalyzedExpression<JsonNode> tryExpr, @Nullable AnalyzedExpression<JsonNode> catchExpr, Version version) {
 		this.jsonProvider = jsonProvider;
 		this.tryExpr = tryExpr;
 		this.catchExpr = catchExpr;
 		this.version = version;
 	}
 
-	public TryCatch(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> tryExpr, Version version) {
+	public TryCatch(JsonProvider<JsonNode> jsonProvider, AnalyzedExpression<JsonNode> tryExpr, Version version) {
 		this(jsonProvider, tryExpr, null, version);
 	}
 
@@ -87,9 +87,9 @@ public class TryCatch<JsonNode> implements RewritableExpression<JsonNode>, FreeV
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		Expression<StackFrame, JsonNode> rewrittenTry = rewriter.rewrite(tryExpr);
-		Expression<StackFrame, JsonNode> rewrittenCatch = catchExpr != null ? rewriter.rewrite(catchExpr) : null;
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		AnalyzedExpression<JsonNode> rewrittenTry = rewriter.rewrite(tryExpr);
+		AnalyzedExpression<JsonNode> rewrittenCatch = catchExpr != null ? rewriter.rewrite(catchExpr) : null;
 		return rewrittenTry == tryExpr && rewrittenCatch == catchExpr ? this : new TryCatch<>(jsonProvider, rewrittenTry, rewrittenCatch, version);
 	}
 

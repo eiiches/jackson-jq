@@ -1,14 +1,14 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryBreakException;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class BreakExpression<JsonNode> implements Expression<StackFrame, JsonNode> {
+public class BreakExpression<JsonNode> implements AnalyzedExpression<JsonNode> {
 	private final String name;
 
 	@Override
@@ -18,6 +18,13 @@ public class BreakExpression<JsonNode> implements Expression<StackFrame, JsonNod
 
 	public BreakExpression(String name) {
 		this.name = name;
+	}
+
+	/**
+	 * The label this unwinds to.
+	 */
+	public String name() {
+		return name;
 	}
 
 	@Override

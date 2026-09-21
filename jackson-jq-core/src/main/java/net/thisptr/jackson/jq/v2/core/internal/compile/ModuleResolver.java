@@ -12,8 +12,8 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModuleMeta;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
@@ -21,7 +21,6 @@ import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -181,7 +180,7 @@ public final class ModuleResolver<JsonNode> {
 	 */
 	private static <JsonNode> JavaModule compileSource(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, JqModule<JsonNode> sourceModule, Map<FunctionSignature, Function> javaFunctions) throws JsonQueryException {
 		AstNode ast = AstParser.parse(sourceModule.getSourceCode() + " null", env.getJqVersion());
-		Expression<StackFrame, JsonNode> compiled = Compiler.compileModule(env, options, scope, ast);
+		AnalyzedExpression<JsonNode> compiled = Compiler.compileModule(env, options, scope, ast);
 		if (!(compiled instanceof RootExpression<JsonNode> rootExpr))
 			throw new IllegalStateException("Compiler did not produce a root expression");
 

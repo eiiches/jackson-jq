@@ -11,11 +11,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
@@ -24,12 +26,43 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.BinaryType;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.TypeVariable;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public final class FileReadFunction implements Function {
+	private static final TypeVariable INPUT = TypeVariable.of("Input");
+	private static final Type OPTIONS = ObjectType.of("encoding", FileFunctionSupport.OPTIONAL_STRING);
+
+	/**
+	 * Indexed by argument count; index 0 is unused because the path is required. Reading bytes takes no
+	 * charset, so {@code read_binary} is registered at arity 1 alone. The input is only passed on to the
+	 * arguments, so its type flows through untouched.
+	 */
+	private final List<List<TypeScheme<FunctionType>>> typeSchemes;
 	private final boolean binary;
 
 	private FileReadFunction(boolean binary) {
 		this.binary = binary;
+		Type outputType = binary ? BinaryType.getInstance() : StringType.getInstance();
+		List<TypeScheme<FunctionType>> withPathOnly = List.of(TypeScheme.of(Map.of(INPUT, AnyType.getInstance()),
+				FunctionType.of(INPUT, outputType, FilterType.of(INPUT, StringType.getInstance()))));
+		this.typeSchemes = binary ? List.of(List.of(), withPathOnly) : List.of(List.of(), withPathOnly,
+				List.of(TypeScheme.of(Map.of(INPUT, AnyType.getInstance()), FunctionType.of(INPUT, outputType, FilterType.of(INPUT, StringType.getInstance()), FilterType.of(INPUT, OPTIONS)))));
+	}
+
+	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		if (totalArguments < 1 || totalArguments >= typeSchemes.size())
+			return List.of();
+		return typeSchemes.get(totalArguments);
 	}
 
 	public static FileReadFunction text() {
@@ -41,32 +74,25 @@ public final class FileReadFunction implements Function {
 	}
 
 	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		boolean input = arguments.stream().anyMatch(ExpressionProperties::dependsOnInput);
+		Cardinality first = arguments.get(0).cardinality();
+		if (arguments.size() == 1 || first == Cardinality.ZERO)
+			return new ExpressionProperties(first, input, true);
+		Cardinality second = arguments.get(1).cardinality();
+		Cardinality cardinality = second == Cardinality.ZERO ? Cardinality.ZERO
+				: first == Cardinality.ONE && second == Cardinality.ONE ? Cardinality.ONE : Cardinality.UNKNOWN;
+		return new ExpressionProperties(cardinality, input, true);
+	}
+
+	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindContext, List<Expression<Context, JsonNode>> arguments) {
 		JsonProvider<JsonNode> jsonProvider = bindContext.getJsonProvider();
 		Expression<Context, JsonNode> pathExpression = arguments.get(0);
 		Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
 		boolean binarySupported = binary && supportsBinary(jsonProvider);
 		return new Expression<>() {
-			@Override
-			public Cardinality getCardinality() {
-				Cardinality pathCardinality = pathExpression.getCardinality();
-				if (optionsExpression == null || pathCardinality == Cardinality.ZERO)
-					return pathCardinality;
-				Cardinality optionsCardinality = optionsExpression.getCardinality();
-				if (optionsCardinality == Cardinality.ZERO)
-					return Cardinality.ZERO;
-				return pathCardinality == Cardinality.ONE && optionsCardinality == Cardinality.ONE ? Cardinality.ONE : Cardinality.UNKNOWN;
-			}
 
-			@Override
-			public boolean dependsOnInput() {
-				return pathExpression.dependsOnInput() || (optionsExpression != null && optionsExpression.dependsOnInput());
-			}
-
-			@Override
-			public boolean dependsOnExternalState() {
-				return true;
-			}
 
 			@Override
 			public void apply(Context context, JsonNode input, Path<JsonNode> inputPath, Output<JsonNode> output) throws JsonQueryException {

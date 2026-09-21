@@ -4,13 +4,13 @@ import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathOperations;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -18,7 +18,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 public class IdentifierKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
 	public final String key;
-	public final @Nullable Expression<StackFrame, JsonNode> value;
+	public final @Nullable AnalyzedExpression<JsonNode> value;
 	private final Version version;
 	private final int valueOutputIndex;
 
@@ -27,7 +27,7 @@ public class IdentifierKeyFieldConstruction<JsonNode> implements FieldConstructi
 		return value == null ? Cardinality.ONE : value.getCardinality();
 	}
 
-	public IdentifierKeyFieldConstruction(JsonProvider<JsonNode> jsonProvider, String key, @Nullable Expression<StackFrame, JsonNode> value, Version version, int valueOutputIndex) {
+	public IdentifierKeyFieldConstruction(JsonProvider<JsonNode> jsonProvider, String key, @Nullable AnalyzedExpression<JsonNode> value, Version version, int valueOutputIndex) {
 		this.jsonProvider = jsonProvider;
 		this.key = key;
 		this.value = value;
@@ -60,7 +60,7 @@ public class IdentifierKeyFieldConstruction<JsonNode> implements FieldConstructi
 	public FieldConstruction<JsonNode> rewriteExpressions(ExpressionRewriter<JsonNode> rewriter) {
 		if (value == null)
 			return this;
-		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(value);
+		AnalyzedExpression<JsonNode> rewritten = rewriter.rewrite(value);
 		return rewritten == value ? this : new IdentifierKeyFieldConstruction<>(jsonProvider, key, rewritten, version, valueOutputIndex);
 	}
 

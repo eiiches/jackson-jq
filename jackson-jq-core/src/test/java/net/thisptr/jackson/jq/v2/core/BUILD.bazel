@@ -2,6 +2,8 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
 
 jjq_java_test_suite(
     srcs = [
+        "BuiltinTypeSchemeCoverageTest.java",
+        "BuiltinTypeSchemeTest.java",
         "ClassLoaderUtils.java",
         "CompileOptionsTest.java",
         "CustomFunctionTest.java",
@@ -9,12 +11,16 @@ jjq_java_test_suite(
         "EnvironmentFunctionLoaderTest.java",
         "EnvironmentModuleLoaderTest.java",
         "EnvironmentPocTest.java",
+        "EnvironmentVariableTypeTest.java",
         "JsonQueryConcurrentReuseTest.java",
         "JsonQueryTest.java",
         "OutputBudgetCoverageTest.java",
         "RuntimeBindingsTest.java",
         "RuntimeOptionsTest.java",
         "TailCallTest.java",
+        "TypeCheckConstructCoverageTest.java",
+        "TypeCheckFoldingTest.java",
+        "TypeCheckTest.java",
     ],
     release = 17,
     visibility = ["//jackson-jq-core:__subpackages__"],

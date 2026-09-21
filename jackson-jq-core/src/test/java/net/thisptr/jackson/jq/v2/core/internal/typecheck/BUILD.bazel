@@ -1,0 +1,17 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
+
+jjq_java_test_suite(
+    srcs = [
+        "StructuralWideningTest.java",
+        "TypeEquivalenceTest.java",
+        "TypeMatcherTest.java",
+        "TypeRelationsTest.java",
+        "TypeSubstitutionTest.java",
+    ],
+    release = 17,
+    visibility = ["//jackson-jq-core:__subpackages__"],
+    deps = [
+        "//jackson-jq-core",
+        "//jackson-jq-spi",
+    ],
+)

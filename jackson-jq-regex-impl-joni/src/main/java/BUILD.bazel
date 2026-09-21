@@ -4,7 +4,6 @@ jjq_java_module_info(
     module_name = "net.thisptr.jackson.jq.v2.regex.impl.joni",
     module_packages = [
         "//jackson-jq-regex-impl-joni/src/main/java/net/thisptr/jackson/jq/v2/regex/impl/joni",
-        "//jackson-jq-regex-impl-joni/src/main/java/net/thisptr/jackson/jq/v2/regex/impl/joni/internal",
     ],
     release = 17,
     visibility = ["//jackson-jq-regex-impl-joni:__pkg__"],

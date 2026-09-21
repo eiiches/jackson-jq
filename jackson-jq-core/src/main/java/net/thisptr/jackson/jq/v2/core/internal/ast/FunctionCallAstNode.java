@@ -8,7 +8,6 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 
-
 public class FunctionCallAstNode extends AbstractAstNode {
 	private final FunctionSignature signature;
 	private final List<AstNode> args;

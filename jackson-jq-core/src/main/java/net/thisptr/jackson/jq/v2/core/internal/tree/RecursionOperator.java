@@ -5,21 +5,25 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
-public class RecursionOperator<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class RecursionOperator<JsonNode> implements AnalyzedExpression<JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final boolean visitsNullValues;
 
 	public RecursionOperator(JsonProvider<JsonNode> jsonProvider, boolean visitsNullValues) {
 		this.jsonProvider = jsonProvider;
 		this.visitsNullValues = visitsNullValues;
+	}
+
+	public boolean visitsNullValues() {
+		return visitsNullValues;
 	}
 
 	@Override

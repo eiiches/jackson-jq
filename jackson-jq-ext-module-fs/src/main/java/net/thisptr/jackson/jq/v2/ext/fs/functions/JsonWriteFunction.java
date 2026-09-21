@@ -6,8 +6,9 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -16,16 +17,70 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.NullType;
+import net.thisptr.jackson.jq.v2.spi.type.NumericType;
+import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.TypeVariable;
+import net.thisptr.jackson.jq.v2.spi.type.UndefinedType;
+import net.thisptr.jackson.jq.v2.spi.type.UnionType;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public final class JsonWriteFunction implements Function {
-	private static final Set<String> ALLOWED_OPTIONS = new HashSet<>(List.of("indent", "encoding", "append", "newline", "create_parents", "mkdirs"));
+	private static final TypeVariable INPUT = TypeVariable.of("Input");
+	/**
+	 * {@code indent} is the one option that also accepts null, meaning no indentation.
+	 */
+	private static final Map<String, Type> OPTION_TYPES = optionTypes();
+	private static final Set<String> ALLOWED_OPTIONS = OPTION_TYPES.keySet();
+	/**
+	 * Indexed by argument count; index 0 is unused because the path is required.
+	 */
+	private static final List<List<TypeScheme<FunctionType>>> TYPE_SCHEMES = List.of(
+			List.of(),
+			List.of(TypeScheme.of(Map.of(INPUT, AnyType.getInstance()), FunctionType.of(INPUT, NullType.getInstance(), FilterType.of(INPUT, StringType.getInstance())))),
+			List.of(TypeScheme.of(Map.of(INPUT, AnyType.getInstance()), FunctionType.of(INPUT, NullType.getInstance(), FilterType.of(INPUT, StringType.getInstance()),
+					FilterType.of(INPUT, ObjectType.of(OPTION_TYPES))))));
 	private static final Options DEFAULT_OPTIONS = new Options(null, StandardCharsets.UTF_8, false, true, false);
+
+	private static Map<String, Type> optionTypes() {
+		Map<String, Type> types = new HashMap<>(FileFunctionSupport.COMMON_WRITE_OPTIONS);
+		types.put("encoding", FileFunctionSupport.OPTIONAL_STRING);
+		types.put("newline", FileFunctionSupport.OPTIONAL_BOOLEAN);
+		types.put("indent", UnionType.of(NumericType.getInstance(), BooleanType.getInstance(), StringType.getInstance(), NullType.getInstance(), UndefinedType.getInstance()));
+		return Map.copyOf(types);
+	}
+
+	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		if (totalArguments < 1 || totalArguments > 2)
+			return List.of();
+		return TYPE_SCHEMES.get(totalArguments);
+	}
+
+	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		Cardinality first = arguments.get(0).cardinality();
+		if (arguments.size() == 1 || first == Cardinality.ZERO)
+			return new ExpressionProperties(first, true, true);
+		Cardinality second = arguments.get(1).cardinality();
+		Cardinality cardinality = second == Cardinality.ZERO ? Cardinality.ZERO
+				: first == Cardinality.ONE && second == Cardinality.ONE ? Cardinality.ONE : Cardinality.UNKNOWN;
+		return new ExpressionProperties(cardinality, true, true);
+	}
 
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindContext, List<Expression<Context, JsonNode>> arguments) {
@@ -33,26 +88,7 @@ public final class JsonWriteFunction implements Function {
 		Expression<Context, JsonNode> pathExpression = arguments.get(0);
 		Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
 		return new Expression<>() {
-			@Override
-			public Cardinality getCardinality() {
-				Cardinality pathCardinality = pathExpression.getCardinality();
-				if (optionsExpression == null || pathCardinality == Cardinality.ZERO)
-					return pathCardinality;
-				Cardinality optionsCardinality = optionsExpression.getCardinality();
-				if (optionsCardinality == Cardinality.ZERO)
-					return Cardinality.ZERO;
-				return pathCardinality == Cardinality.ONE && optionsCardinality == Cardinality.ONE ? Cardinality.ONE : Cardinality.UNKNOWN;
-			}
 
-			@Override
-			public boolean dependsOnInput() {
-				return true;
-			}
-
-			@Override
-			public boolean dependsOnExternalState() {
-				return true;
-			}
 
 			@Override
 			public void apply(Context context, JsonNode input, Path<JsonNode> inputPath, Output<JsonNode> output) throws JsonQueryException {

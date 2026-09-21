@@ -20,8 +20,18 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
+import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.UndefinedType;
+import net.thisptr.jackson.jq.v2.spi.type.UnionType;
 
 final class CompressionSupport {
+	/**
+	 * The charset option the text conversions accept.
+	 */
+	static final Type OPTIONS = ObjectType.of("encoding", UnionType.of(StringType.getInstance(), UndefinedType.getInstance()));
+
 	private CompressionSupport() {
 	}
 

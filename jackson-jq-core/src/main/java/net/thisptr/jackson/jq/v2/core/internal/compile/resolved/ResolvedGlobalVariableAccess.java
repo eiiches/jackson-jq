@@ -6,14 +6,15 @@ import java.util.function.Supplier;
 
 import com.google.errorprone.annotations.Var;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
 
 /**
  * Reference to an {@code EnvironmentBuilder.declareVariable}-registered variable -- no compile-time value,
@@ -22,13 +23,23 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
  * valid from any {@code def}-nesting depth, since one {@code StackMemory} backs exactly one top-level
  * {@code apply()} call -- no closure capture needed.
  */
-public class ResolvedGlobalVariableAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class ResolvedGlobalVariableAccess<JsonNode> implements AnalyzedExpression<JsonNode>, FreeVariables {
 	private final String name;
 	private final int globalIndex;
+	private final Type type;
 
-	public ResolvedGlobalVariableAccess(String name, int globalIndex) {
+	public ResolvedGlobalVariableAccess(String name, int globalIndex, Type type) {
 		this.name = name;
 		this.globalIndex = globalIndex;
+		this.type = type;
+	}
+
+	/**
+	 * The type the {@code Environment} declared for this variable, or {@link Type#ANY} when it declared none.
+	 * Nothing checks a runtime binding against it -- it is what type checking is told, not a constraint.
+	 */
+	public Type type() {
+		return type;
 	}
 
 	@Override

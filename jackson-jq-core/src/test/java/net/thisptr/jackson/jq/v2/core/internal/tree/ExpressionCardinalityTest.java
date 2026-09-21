@@ -9,18 +9,17 @@ import org.junit.jupiter.api.Test;
 import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.internal.compile.ModuleScope;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
-import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.ValueLiteral;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,7 +86,7 @@ public class ExpressionCardinalityTest {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), jqVersion)
 				.build();
 		AstNode parsedAst = AstParser.parse(expression, env.getJqVersion());
-		Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(env, CompileOptions.newBuilder().build(), ModuleScope.root(env), parsedAst);
+		AnalyzedExpression<JsonNode> compiledExpr = Compiler.compile(env, CompileOptions.newBuilder().build(), ModuleScope.root(env), parsedAst);
 		return compiledExpr.getCardinality();
 	}
 

@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
@@ -18,7 +17,9 @@ import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -68,8 +69,10 @@ public class DebugModuleTest {
 	public void functionContract() {
 		ModuleImpl module = new ModuleImpl();
 		module.getFunctions().forEach((signature, fn) -> {
-			Expression<RuntimeContext, JsonNode> expr = fn.bind(BIND_CONTEXT, dummyArgs(signature.arity()));
-			assertThat(expr.dependsOnExternalState()).isFalse();
+			int arity = signature.arity() == null ? 0 : signature.arity();
+			ExpressionProperties properties = fn.analyze(Versions.JQ_1_6,
+					Collections.nCopies(arity, new ExpressionProperties(Cardinality.ONE, false, false)));
+			assertThat(properties.dependsOnExternalState()).isFalse();
 		});
 	}
 
@@ -77,17 +80,17 @@ public class DebugModuleTest {
 	public void debugScopeDependsOnFlags() {
 		ModuleImpl module = new ModuleImpl();
 		Function fn = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("debug_scope", 0)));
-		Expression<RuntimeContext, JsonNode> expr = fn.bind(BIND_CONTEXT, dummyArgs(0));
-		assertThat(expr.dependsOnInput()).isTrue();
+		assertThat(fn.analyze(Versions.JQ_1_6, List.of()).dependsOnInput()).isTrue();
 	}
 
 	@Test
 	public void debugExprIsItselfConstant() {
 		ModuleImpl module = new ModuleImpl();
 		Function fn = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("debug_expr", 1)));
-		Expression<RuntimeContext, JsonNode> expr = fn.bind(BIND_CONTEXT, dummyArgs(1));
-		assertThat(expr.dependsOnInput()).isFalse();
-		assertThat(expr.dependsOnExternalState()).isFalse();
+		ExpressionProperties properties = fn.analyze(Versions.JQ_1_6,
+				List.of(new ExpressionProperties(Cardinality.ONE, true, true)));
+		assertThat(properties.dependsOnInput()).isFalse();
+		assertThat(properties.dependsOnExternalState()).isFalse();
 	}
 
 	@Test
@@ -263,17 +266,6 @@ public class DebugModuleTest {
 		return results.get(0);
 	}
 
-	private static <Context extends RuntimeContext> List<Expression<Context, JsonNode>> dummyArgs(@Nullable Integer arity) {
-		int n = arity == null ? 0 : arity;
-		List<Expression<Context, JsonNode>> args = new ArrayList<>();
-		for (int i = 0; i < n; ++i) {
-			args.add((context, in, ipath, output) -> {
-				throw new UnsupportedOperationException();
-			});
-		}
-		return args;
-	}
-
 	private static final class CyclicExpression implements Expression<RuntimeContext, JsonNode> {
 		private final Map<Object, Object> mapping = Collections.singletonMap(new Object() {
 			@Override
@@ -289,16 +281,6 @@ public class DebugModuleTest {
 		};
 		private final Expression<RuntimeContext, JsonNode> self = this;
 		private final List<Object> values = List.of(this, "scalar-value");
-
-		@Override
-		public boolean dependsOnInput() {
-			return false;
-		}
-
-		@Override
-		public boolean dependsOnExternalState() {
-			return false;
-		}
 
 		@Override
 		public void apply(RuntimeContext frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) {

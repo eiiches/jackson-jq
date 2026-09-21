@@ -26,7 +26,6 @@ module net.thisptr.jackson.jq.v2.core {
 	opens net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess to net.thisptr.jackson.jq.v2.ext.module.debug;
 	opens net.thisptr.jackson.jq.v2.core.internal.tree.literal to net.thisptr.jackson.jq.v2.ext.module.debug;
 	opens net.thisptr.jackson.jq.v2.core.internal.tree.matcher to net.thisptr.jackson.jq.v2.ext.module.debug;
-	opens net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers to net.thisptr.jackson.jq.v2.ext.module.debug;
 
 	uses net.thisptr.jackson.jq.v2.spi.Function;
 	uses net.thisptr.jackson.jq.v2.spi.JqLibrary;

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 
@@ -38,6 +39,8 @@ import dev.tamboui.widgets.block.BorderType;
 import dev.tamboui.widgets.block.Borders;
 import dev.tamboui.widgets.input.TextArea;
 import dev.tamboui.widgets.input.TextAreaState;
+import dev.tamboui.widgets.input.TextInput;
+import dev.tamboui.widgets.input.TextInputState;
 import dev.tamboui.widgets.paragraph.Paragraph;
 import dev.tamboui.widgets.scrollbar.Scrollbar;
 import dev.tamboui.widgets.scrollbar.ScrollbarOrientation;
@@ -51,9 +54,16 @@ import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
+import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
 import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
+import net.thisptr.jackson.jq.v2.core.internal.typecheck.ConstantTypes;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
+import net.thisptr.jackson.jq.v2.spi.type.NullType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.UnionType;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 final class Playground<N> {
@@ -66,7 +76,10 @@ final class Playground<N> {
 	private static final int MAX_USER_DEFINED_FUNCTION_CALLS_OPTION = 10;
 	private static final int MAX_OUTPUTS_PER_EXPRESSION_OPTION = 11;
 	private static final int FIRST_RUNTIME_LIMIT_OPTION = MAX_STRING_LENGTH_OPTION;
-	private static final int OPTION_COUNT = MAX_OUTPUTS_PER_EXPRESSION_OPTION + 1;
+	private static final int TYPE_CHECK_OPTION = 12;
+	private static final int INPUT_TYPE_OPTION = 13;
+	private static final int OUTPUT_TYPE_OPTION = 14;
+	private static final int OPTION_COUNT = OUTPUT_TYPE_OPTION + 1;
 	private static final int LIMIT_FLAG_WIDTH = 35;
 	private static final int LIMIT_VALUE_WIDTH = 20;
 
@@ -81,7 +94,13 @@ final class Playground<N> {
 		NONE,
 		CONFIRM_QUIT,
 		CONFIRM_SUBMIT,
-		OPTIONS
+		OPTIONS,
+		EDIT_TYPE
+	}
+
+	enum TypeTarget {
+		INPUT,
+		OUTPUT
 	}
 
 	enum EvaluationStatus {
@@ -100,7 +119,12 @@ final class Playground<N> {
 	private boolean rawInput;
 	private boolean slurp;
 	private RuntimeOptions runtimeOptions;
-	private final CompileOptions compileOptions;
+	private CompileOptions compileOptions;
+	private @Nullable FilterType inferredFilterType;
+	private TypeTarget editingTypeTarget = TypeTarget.INPUT;
+	private final TextInputState typeInputState = new TextInputState();
+	private @Nullable String typeValidationError = null;
+	private @Nullable Type targetTypeResult = null;
 	private boolean compact;
 	private boolean rawOutput;
 	private final boolean warningsEnabled;
@@ -290,6 +314,66 @@ final class Playground<N> {
 		updateInputs();
 	}
 
+	private void cycleTypeCheckMode(int direction) {
+		TypeCheckMode current = compileOptions.getTypeCheckMode();
+		TypeCheckMode[] modes = TypeCheckMode.values();
+		int next = (current.ordinal() + direction + modes.length) % modes.length;
+		this.compileOptions = compileOptions.toBuilder().setTypeCheckMode(modes[next]).build();
+		updateEvaluation();
+	}
+
+	private void startEditingType(TypeTarget target) {
+		this.editingTypeTarget = target;
+		Type current = target == TypeTarget.INPUT ? compileOptions.getInputType() : compileOptions.getOutputType();
+		this.typeInputState.setText(current == AnyType.getInstance() ? "" : current.toString());
+		this.typeInputState.moveCursorToEnd();
+		validateTypeInput();
+		this.modal = Modal.EDIT_TYPE;
+	}
+
+	private void validateTypeInput() {
+		String text = typeInputState.text().trim();
+		if (text.isEmpty() || "ANY".equalsIgnoreCase(text)) {
+			targetTypeResult = AnyType.getInstance();
+			typeValidationError = null;
+			return;
+		}
+		try {
+			targetTypeResult = Type.valueOf(text);
+			typeValidationError = null;
+		} catch (IllegalArgumentException e) {
+			typeValidationError = e.getMessage() != null ? e.getMessage() : "Invalid type syntax";
+			targetTypeResult = null;
+		}
+	}
+
+	Type inferInputType() {
+		return inferInputTypeGeneric(jsonProvider, inputs, nullInput, inputErrorMessage);
+	}
+
+	// Cast is safe because all elements in inputs were created with the given JsonProvider
+	@SuppressWarnings("unchecked")
+	private static <T> Type inferInputTypeGeneric(
+			JsonProvider<T> provider,
+			List<?> inputList,
+			boolean isNullInput,
+			@Nullable String inputErrorMessage) {
+		if (isNullInput) {
+			return NullType.getInstance();
+		}
+		if (inputErrorMessage != null || inputList == null || inputList.isEmpty()) {
+			return AnyType.getInstance();
+		}
+		if (inputList.size() == 1) {
+			return ConstantTypes.of(provider, (T) inputList.get(0));
+		}
+		List<Type> types = new ArrayList<>(inputList.size());
+		for (Object item : inputList) {
+			types.add(ConstantTypes.of(provider, (T) item));
+		}
+		return UnionType.of(types);
+	}
+
 	private void toggleOption(int index) {
 		switch (index) {
 			case 0:
@@ -314,11 +398,20 @@ final class Playground<N> {
 			case 5:
 				cycleProvider(1);
 				break;
+			case TYPE_CHECK_OPTION:
+				cycleTypeCheckMode(1);
+				break;
+			case INPUT_TYPE_OPTION:
+				startEditingType(TypeTarget.INPUT);
+				break;
+			case OUTPUT_TYPE_OPTION:
+				startEditingType(TypeTarget.OUTPUT);
+				break;
 		}
 	}
 
 	private static boolean isRuntimeLimitOption(int index) {
-		return index >= FIRST_RUNTIME_LIMIT_OPTION && index < OPTION_COUNT;
+		return index >= FIRST_RUNTIME_LIMIT_OPTION && index <= MAX_OUTPUTS_PER_EXPRESSION_OPTION;
 	}
 
 	private void appendRuntimeLimitDigit(int index, int digit) {
@@ -450,6 +543,10 @@ final class Playground<N> {
 					cycleProvider(-1);
 					return true;
 				}
+				if (selectedOptionIndex == TYPE_CHECK_OPTION) {
+					cycleTypeCheckMode(-1);
+					return true;
+				}
 			}
 			if (key.isRight() || key.isChar('l')) {
 				if (selectedOptionIndex == 4) {
@@ -458,6 +555,10 @@ final class Playground<N> {
 				}
 				if (selectedOptionIndex == 5) {
 					cycleProvider(1);
+					return true;
+				}
+				if (selectedOptionIndex == TYPE_CHECK_OPTION) {
+					cycleTypeCheckMode(1);
 					return true;
 				}
 			}
@@ -510,10 +611,122 @@ final class Playground<N> {
 					}
 				}
 			}
+			if (selectedOptionIndex == INPUT_TYPE_OPTION && key.hasCtrl() && (key.isChar('i') || key.isChar('I'))) {
+				compileOptions = compileOptions.toBuilder().setInputType(inferInputType()).build();
+				updateEvaluation();
+				return true;
+			}
+			if (key.code() == KeyCode.ENTER || key.isConfirm()) {
+				if (selectedOptionIndex == INPUT_TYPE_OPTION) {
+					startEditingType(TypeTarget.INPUT);
+					return true;
+				}
+				if (selectedOptionIndex == OUTPUT_TYPE_OPTION) {
+					startEditingType(TypeTarget.OUTPUT);
+					return true;
+				}
+				return true;
+			}
 			if (key.code() == KeyCode.ESCAPE || key.isCancel()
 					|| (key.hasCtrl() && key.isChar('o'))) {
 				modal = Modal.NONE;
 				return true;
+			}
+			return true;
+		}
+
+		if (modal == Modal.EDIT_TYPE) {
+			if (key.isCtrlC()) {
+				modal = Modal.CONFIRM_QUIT;
+				return true;
+			}
+			if (key.code() == KeyCode.ESCAPE || key.isCancel()) {
+				modal = Modal.OPTIONS;
+				return true;
+			}
+			if (key.code() == KeyCode.ENTER || key.isConfirm()) {
+				if (typeValidationError == null && targetTypeResult != null) {
+					if (editingTypeTarget == TypeTarget.INPUT) {
+						compileOptions = compileOptions.toBuilder().setInputType(targetTypeResult).build();
+					} else {
+						compileOptions = compileOptions.toBuilder().setOutputType(targetTypeResult).build();
+					}
+					modal = Modal.OPTIONS;
+					updateEvaluation();
+				}
+				return true;
+			}
+			if (editingTypeTarget == TypeTarget.INPUT && key.hasCtrl() && (key.isChar('i') || key.isChar('I'))) {
+				Type inferred = inferInputType();
+				typeInputState.setText(inferred == AnyType.getInstance() ? "" : inferred.toString());
+				typeInputState.moveCursorToEnd();
+				validateTypeInput();
+				return true;
+			}
+			if (key.hasCtrl() && key.isChar('u')) {
+				while (typeInputState.cursorPosition() > 0) {
+					typeInputState.deleteBackward();
+				}
+				validateTypeInput();
+				return true;
+			}
+			if (key.hasCtrl() && key.isChar('k')) {
+				while (typeInputState.cursorPosition() < typeInputState.length()) {
+					typeInputState.deleteForward();
+				}
+				validateTypeInput();
+				return true;
+			}
+			if (key.hasCtrl() && key.isChar('w')) {
+				String cur = typeInputState.text();
+				int col = typeInputState.cursorPosition();
+				if (col > 0) {
+					@Var int i = col - 1;
+					while (i > 0 && Character.isWhitespace(cur.charAt(i))) {
+						typeInputState.deleteBackward();
+						i--;
+					}
+					while (i >= 0 && !Character.isWhitespace(cur.charAt(i))) {
+						typeInputState.deleteBackward();
+						i--;
+					}
+					validateTypeInput();
+				}
+				return true;
+			}
+			if (key.isDeleteBackward() || key.code() == KeyCode.BACKSPACE) {
+				typeInputState.deleteBackward();
+				validateTypeInput();
+				return true;
+			}
+			if (key.isDeleteForward() || key.code() == KeyCode.DELETE || (key.hasCtrl() && key.isChar('d'))) {
+				typeInputState.deleteForward();
+				validateTypeInput();
+				return true;
+			}
+			if (key.isLeft()) {
+				typeInputState.moveCursorLeft();
+				return true;
+			}
+			if (key.isRight()) {
+				typeInputState.moveCursorRight();
+				return true;
+			}
+			if (key.isHome() || (key.hasCtrl() && key.isChar('a'))) {
+				typeInputState.moveCursorToStart();
+				return true;
+			}
+			if (key.isEnd() || (key.hasCtrl() && key.isChar('e'))) {
+				typeInputState.moveCursorToEnd();
+				return true;
+			}
+			if (!key.hasCtrl() && !key.hasAlt()) {
+				String str = key.string();
+				if (str != null && !str.isEmpty() && (key.code() == KeyCode.CHAR || str.charAt(0) >= 32)) {
+					typeInputState.insert(str);
+					validateTypeInput();
+					return true;
+				}
 			}
 			return true;
 		}
@@ -960,8 +1173,9 @@ final class Playground<N> {
 		String inputEmptyMessage = inputErrorMessage != null
 				? "(error parsing input: " + inputErrorMessage + ")"
 				: (inputs.isEmpty() ? "(no input)" : null);
+		inputTreePane.setBannerLines(buildInputTypeBanner(Math.max(1, inputBlock.inner(inputRect).width())));
 		inputTreePane.render(inputRect, frame.buffer(), frame, focus == Focus.INPUT && modal == Modal.NONE, inputBlock, inputEmptyMessage);
-		this.inputViewportHeight = Math.max(1, inputBlock.inner(inputRect).height());
+		this.inputViewportHeight = Math.max(1, inputBlock.inner(inputRect).height() - inputTreePane.bannerLines().size());
 		this.inputScrollOffset = inputTreePane.viewMode() == JsonTreePane.ViewMode.TREE
 				? inputTreePane.treeState().offset()
 				: inputTreePane.textScrollOffset();
@@ -979,11 +1193,12 @@ final class Playground<N> {
 		String outputEmptyMessage = errorMessage != null
 				? errorMessage
 				: (itemCount == 0 ? "(no output)" : null);
+		outputTreePane.setBannerLines(buildOutputTypeBanner(Math.max(1, previewBlock.inner(outputRect).width())));
 		outputTreePane.render(outputRect, frame.buffer(), frame, focus == Focus.OUTPUT && modal == Modal.NONE, previewBlock, outputEmptyMessage);
 		// Block.renderTitle() repaints the whole title in the border color, which would wash out the
 		// emphasized (Stale) marker, so the title is drawn over the rendered top border instead.
 		renderBlockTitle(frame.buffer(), outputRect, buildOutputTitleLine(outMode, outStats, outputBorderColor));
-		this.outputViewportHeight = Math.max(1, previewBlock.inner(outputRect).height());
+		this.outputViewportHeight = Math.max(1, previewBlock.inner(outputRect).height() - outputTreePane.bannerLines().size());
 		this.outputScrollOffset = outputTreePane.viewMode() == JsonTreePane.ViewMode.TREE
 				? outputTreePane.treeState().offset()
 				: outputTreePane.textScrollOffset();
@@ -1007,9 +1222,9 @@ final class Playground<N> {
 		// Modal confirmation dialog overlay
 		if (modal == Modal.OPTIONS) {
 			int dialogWidth = Math.min(78, Math.max(50, area.width() - 4));
-			int dialogHeight = 20;
+			int dialogHeight = Math.min(24, area.height());
 			int dialogX = area.left() + (area.width() - dialogWidth) / 2;
-			int dialogY = area.top() + (area.height() - dialogHeight) / 2;
+			int dialogY = area.top() + Math.max(0, (area.height() - dialogHeight) / 2);
 			Rect dialogArea = new Rect(dialogX, dialogY, dialogWidth, dialogHeight);
 
 			frame.renderWidget(Clear.INSTANCE, dialogArea);
@@ -1037,23 +1252,86 @@ final class Playground<N> {
 			optionLines.add(buildRuntimeLimitLine(MAX_OBJECT_MEMBER_COUNT_OPTION, "--max-object-member-count", "object members"));
 			optionLines.add(buildRuntimeLimitLine(MAX_USER_DEFINED_FUNCTION_CALLS_OPTION, "--max-user-defined-function-calls", "query calls"));
 			optionLines.add(buildRuntimeLimitLine(MAX_OUTPUTS_PER_EXPRESSION_OPTION, "--max-outputs-per-expression", "expression outputs"));
+			optionLines.add(Line.styled(" Compiler:", Style.EMPTY.bold()));
+			optionLines.add(buildSelectorLine(TYPE_CHECK_OPTION, "--type-check:", "< " + compileOptions.getTypeCheckMode().name().toLowerCase(Locale.ROOT) + " >"));
+			optionLines.add(buildTypeOptionLine(INPUT_TYPE_OPTION, "--input-type:", compileOptions.getInputType()));
+			optionLines.add(buildTypeOptionLine(OUTPUT_TYPE_OPTION, "--output-type:", compileOptions.getOutputType()));
 			optionLines.add(Line.from(Span.raw("")));
 			optionLines.add(Line.from(
 					Span.styled("  [↑↓] Select  [0-9/⌫] Edit  [Space/←→] Change  [Esc] Close", Style.EMPTY.dim().yellow())
 			));
 
+			int innerHeight = Math.max(1, dialogHeight - 2);
+			int selectedLine = getOptionLineIndex(selectedOptionIndex);
+			int maxScroll = Math.max(0, optionLines.size() - innerHeight);
+			int scrollOffset = Math.max(0, Math.min(maxScroll, selectedLine - innerHeight / 2));
+
 			Paragraph dialogContent = Paragraph.builder()
 					.block(dialogBlock)
 					.text(Text.from(optionLines))
+					.scroll(scrollOffset)
 					.build();
 			frame.renderWidget(dialogContent, dialogArea);
 			if (isRuntimeLimitOption(selectedOptionIndex)) {
 				String value = formatRuntimeLimit(selectedOptionIndex);
-				int row = 10 + selectedOptionIndex - FIRST_RUNTIME_LIMIT_OPTION;
-				int cursorX = dialogArea.left() + 1 + 4 + LIMIT_FLAG_WIDTH + value.length();
-				int cursorY = dialogArea.top() + 1 + row;
-				frame.setCursorPosition(new Position(cursorX, cursorY));
+				int row = getOptionLineIndex(selectedOptionIndex) - scrollOffset;
+				if (row >= 0 && row < innerHeight) {
+					int cursorX = dialogArea.left() + 1 + 4 + LIMIT_FLAG_WIDTH + value.length();
+					int cursorY = dialogArea.top() + 1 + row;
+					frame.setCursorPosition(new Position(cursorX, cursorY));
+				}
 			}
+		} else if (modal == Modal.EDIT_TYPE) {
+			int dialogWidth = Math.min(76, Math.max(60, area.width() - 4));
+			int dialogHeight = 9;
+			int dialogX = area.left() + (area.width() - dialogWidth) / 2;
+			int dialogY = area.top() + (area.height() - dialogHeight) / 2;
+			Rect dialogArea = new Rect(dialogX, dialogY, dialogWidth, dialogHeight);
+
+			frame.renderWidget(Clear.INSTANCE, dialogArea);
+
+			String title = editingTypeTarget == TypeTarget.INPUT ? " Edit Input Type " : " Edit Expected Output Type ";
+			Block dialogBlock = Block.builder()
+					.title(title)
+					.borders(Borders.ALL)
+					.borderColor(Color.CYAN)
+					.build();
+
+			List<Line> editLines = new ArrayList<>();
+			editLines.add(Line.styled(
+					editingTypeTarget == TypeTarget.INPUT
+							? "Type expression for input '.' (default: any):"
+							: "Expected type expression for query results (default: any):",
+					Style.EMPTY.dim()
+			));
+			editLines.add(Line.from(Span.raw("")));
+			editLines.add(Line.from(Span.raw("")));
+			editLines.add(Line.from(Span.raw("")));
+			if (typeValidationError == null) {
+				editLines.add(Line.styled("✓ Valid type syntax", Style.EMPTY.green()));
+			} else {
+				editLines.add(Line.styled("✗ " + typeValidationError, Style.EMPTY.red()));
+			}
+			editLines.add(Line.from(Span.raw("")));
+			String footer = editingTypeTarget == TypeTarget.INPUT
+					? "  [Enter] Apply  [Ctrl+I] Infer  [Ctrl+U] Clear  [Esc] Cancel"
+					: "  [Enter] Apply  [Ctrl+U] Clear  [Esc] Cancel";
+			editLines.add(Line.from(
+					Span.styled(footer, Style.EMPTY.dim().yellow())
+			));
+
+			Paragraph dialogContent = Paragraph.builder()
+					.block(dialogBlock)
+					.text(Text.from(editLines))
+					.build();
+			frame.renderWidget(dialogContent, dialogArea);
+
+			Rect typeInputRect = new Rect(dialogArea.left() + 2, dialogArea.top() + 3, dialogWidth - 4, 1);
+			TextInput inputWidget = TextInput.builder()
+					.style(Style.EMPTY.bold().white())
+					.cursorStyle(Style.EMPTY.reversed())
+					.build();
+			inputWidget.renderWithCursor(typeInputRect, frame.buffer(), typeInputState, frame);
 		} else if (modal != Modal.NONE) {
 			int dialogWidth = Math.min(64, Math.max(36, area.width() - 4));
 			int dialogHeight = 7;
@@ -1149,6 +1427,191 @@ final class Playground<N> {
 		return value == getRuntimeLimitMaximum(index) ? "unlimited" : Long.toString(value);
 	}
 
+	private static int getOptionLineIndex(int index) {
+		return switch (index) {
+			case 0 -> 1;
+			case 1 -> 2;
+			case 2 -> 4;
+			case 3 -> 5;
+			case 4 -> 7;
+			case 5 -> 8;
+			case 6, 7, 8, 9, 10, 11 -> 10 + (index - FIRST_RUNTIME_LIMIT_OPTION);
+			case TYPE_CHECK_OPTION -> 17;
+			case INPUT_TYPE_OPTION -> 18;
+			case OUTPUT_TYPE_OPTION -> 19;
+			default -> 0;
+		};
+	}
+
+	private Line buildTypeOptionLine(int index, String label, Type type) {
+		boolean isSelected = (selectedOptionIndex == index);
+		String pointer = isSelected ? "> " : "  ";
+
+		Style prefixStyle = isSelected ? Style.EMPTY.bold().cyan() : Style.EMPTY;
+		Style labelStyle = isSelected ? Style.EMPTY.bold().white() : Style.EMPTY.bold();
+		Style valueStyle = isSelected ? Style.EMPTY.bold().cyan() : Style.EMPTY.green();
+
+		@Var String typeStr = type.toString();
+		if (typeStr.length() > 30) {
+			typeStr = typeStr.substring(0, 27) + "...";
+		}
+
+		String hint = isSelected
+				? (index == INPUT_TYPE_OPTION ? " [Enter: Edit] [Ctrl+I: Infer]" : " [Enter: Edit]")
+				: "";
+
+		return Line.from(
+				Span.styled("  " + pointer, prefixStyle),
+				Span.styled(String.format("  %-20s", label), labelStyle),
+				Span.styled(typeStr, valueStyle),
+				Span.styled(hint, Style.EMPTY.dim().yellow())
+		);
+	}
+
+	private boolean hasTypeCheckMismatch() {
+		for (Diagnostic d : warnings) {
+			if (d.message().contains("is not assignable to the declared output type")) {
+				return true;
+			}
+		}
+		if (errorMessage != null && errorMessage.contains("is not assignable to the declared output type")) {
+			return true;
+		}
+		return false;
+	}
+
+	List<Line> buildInputTypeBanner(int width) {
+		Type inputType = compileOptions.getInputType();
+		String prefix = "Type: ";
+		String typeStr = inputType.toString();
+		boolean isDefault = inputType == AnyType.getInstance();
+		List<String> wrapped = wrapType(prefix, typeStr, width, 3);
+		List<Line> lines = new ArrayList<>();
+		for (int i = 0; i < wrapped.size(); i++) {
+			String lineStr = wrapped.get(i);
+			if (i == 0) {
+				String afterPrefix = lineStr.substring(prefix.length());
+				lines.add(Line.from(
+						Span.styled(prefix, Style.EMPTY.bold().white()),
+						Span.styled(afterPrefix, isDefault ? Style.EMPTY.dim() : Style.EMPTY.cyan())
+				));
+			} else {
+				lines.add(Line.from(
+						Span.styled(lineStr, isDefault ? Style.EMPTY.dim() : Style.EMPTY.cyan())
+				));
+			}
+		}
+		lines.add(Line.from(Span.styled("─".repeat(Math.max(1, width)), Style.EMPTY.dim())));
+		return lines;
+	}
+
+	List<Line> buildOutputTypeBanner(int width) {
+		Type expectedType = compileOptions.getOutputType();
+		boolean hasExpected = expectedType != AnyType.getInstance();
+		Type inferredType = inferredFilterType != null ? inferredFilterType.outputType() : null;
+		boolean hasMismatch = hasExpected && hasTypeCheckMismatch();
+
+		List<Line> lines = new ArrayList<>();
+		if (hasExpected) {
+			List<String> expWrapped = wrapType("Expected: ", expectedType.toString(), width, 2);
+			for (int i = 0; i < expWrapped.size(); i++) {
+				String lineStr = expWrapped.get(i);
+				if (i == 0) {
+					lines.add(Line.from(
+							Span.styled("Expected: ", Style.EMPTY.bold().white()),
+							Span.styled(lineStr.substring("Expected: ".length()), Style.EMPTY.cyan())
+					));
+				} else {
+					lines.add(Line.from(Span.styled(lineStr, Style.EMPTY.cyan())));
+				}
+			}
+		}
+
+		String infPrefix = "Inferred: ";
+		String infStr = inferredType != null ? inferredType.toString() : "any";
+		List<String> infWrapped = wrapType(infPrefix, infStr, width, 2);
+		for (int i = 0; i < infWrapped.size(); i++) {
+			String lineStr = infWrapped.get(i);
+			if (i == 0) {
+				List<Span> spans = new ArrayList<>();
+				spans.add(Span.styled(infPrefix, Style.EMPTY.bold().white()));
+				spans.add(Span.styled(lineStr.substring(infPrefix.length()), hasMismatch ? Style.EMPTY.yellow() : Style.EMPTY.green()));
+				if (hasMismatch && infWrapped.size() == 1) {
+					spans.add(Span.styled(" ⚠ Mismatch", Style.EMPTY.bold().red()));
+				}
+				lines.add(Line.from(spans));
+			} else {
+				List<Span> spans = new ArrayList<>();
+				spans.add(Span.styled(lineStr, hasMismatch ? Style.EMPTY.yellow() : Style.EMPTY.green()));
+				if (hasMismatch && i == infWrapped.size() - 1) {
+					spans.add(Span.styled(" ⚠ Mismatch", Style.EMPTY.bold().red()));
+				}
+				lines.add(Line.from(spans));
+			}
+		}
+
+		lines.add(Line.from(Span.styled("─".repeat(Math.max(1, width)), Style.EMPTY.dim())));
+		return lines;
+	}
+
+	static List<String> wrapType(String prefix, String text, int maxWidth, int maxHeight) {
+		if (maxWidth <= 0) {
+			return Collections.singletonList(prefix + text);
+		}
+		List<String> result = new ArrayList<>();
+		String indent = "  ";
+		@Var int firstAvailable = maxWidth - prefix.length();
+		if (firstAvailable <= 0) {
+			firstAvailable = maxWidth;
+		}
+
+		@Var String remaining = text;
+		@Var boolean isFirst = true;
+
+		while (!remaining.isEmpty()) {
+			if (result.size() >= maxHeight) {
+				int lastIdx = result.size() - 1;
+				@Var String last = result.get(lastIdx);
+				if (last.length() > maxWidth - 3) {
+					last = last.substring(0, Math.max(0, maxWidth - 3));
+				}
+				result.set(lastIdx, last + "...");
+				break;
+			}
+
+			@Var int currentAvail = isFirst ? firstAvailable : (maxWidth - indent.length());
+			if (currentAvail <= 0) {
+				currentAvail = 1;
+			}
+
+			if (remaining.length() <= currentAvail) {
+				result.add(isFirst ? (prefix + remaining) : (indent + remaining));
+				break;
+			}
+
+			int split = findBreakPoint(remaining, currentAvail);
+			String chunk = remaining.substring(0, split).trim();
+			result.add(isFirst ? (prefix + chunk) : (indent + chunk));
+			remaining = remaining.substring(split).trim();
+			isFirst = false;
+		}
+
+		return result;
+	}
+
+	private static int findBreakPoint(String text, int max) {
+		if (max >= text.length()) {
+			return text.length();
+		}
+		for (int i = max; i >= 1; i--) {
+			char c = text.charAt(i - 1);
+			if (c == ' ' || c == ',' || c == '|' || c == '{' || c == '[' || c == '}') {
+				return i;
+			}
+		}
+		return max;
+	}
+
 	private void updateEvaluation() {
 		updateEvaluationGeneric(jsonProvider, env, inputs, false);
 	}
@@ -1163,7 +1626,8 @@ final class Playground<N> {
 			int itemCount,
 			@Nullable String errorMessage,
 			@Nullable DiagnosticPhase errorPhase,
-			List<Diagnostic> warnings) {
+			List<Diagnostic> warnings,
+			@Nullable FilterType filterType) {
 	}
 
 	private enum DiagnosticPhase {
@@ -1191,24 +1655,24 @@ final class Playground<N> {
 			boolean compact,
 			boolean execute) {
 		List<Diagnostic> currentWarnings = new ArrayList<>();
-		CompileOptions.Builder optsBuilder = CompileOptions.newBuilder()
-				.setOptimizationOptions(compileOptions.getOptimizationOptions());
-		if (warningsEnabled) {
-			optsBuilder.setDiagnosticListener(diag -> {
-				if (diag.severity() == Diagnostic.Severity.WARNING) {
-					currentWarnings.add(diag);
-				}
-			});
-		}
+		CompileOptions.Builder optsBuilder = compileOptions.toBuilder();
+		// Errors are collected regardless: under `--type-check strict` compilation fails, and the
+		// pane would otherwise show only how many errors there were, never where they are.
+		optsBuilder.setDiagnosticListener(diag -> {
+			if (warningsEnabled || diag.severity() == Diagnostic.Severity.ERROR) {
+				currentWarnings.add(diag);
+			}
+		});
 		JsonQuery<T> jq;
 		try {
 			jq = ((Environment<T>) environment).compile(queryText, optsBuilder.build()).withRuntimeOptions(runtimeOptions);
 		} catch (Throwable t) {
 			String err = t.getMessage() != null ? t.getMessage() : t.toString();
-			return new EvaluationResult(null, null, 0, err, DiagnosticPhase.COMPILE, currentWarnings);
+			return new EvaluationResult(null, null, 0, err, DiagnosticPhase.COMPILE, currentWarnings, null);
 		}
+		FilterType filterType = jq.getType();
 		if (!execute) {
-			return new EvaluationResult(null, null, 0, null, null, currentWarnings);
+			return new EvaluationResult(null, null, 0, null, null, currentWarnings, filterType);
 		}
 		try {
 			List<String> lines = new ArrayList<>();
@@ -1229,15 +1693,18 @@ final class Playground<N> {
 					lines.addAll(Arrays.asList(formatted.split("\r?\n", -1)));
 				});
 			}
-			return new EvaluationResult(lines, items, count[0], null, null, currentWarnings);
+			return new EvaluationResult(lines, items, count[0], null, null, currentWarnings, filterType);
 		} catch (Throwable t) {
 			String err = t.getMessage() != null ? t.getMessage() : t.toString();
-			return new EvaluationResult(null, null, 0, err, DiagnosticPhase.RUNTIME, currentWarnings);
+			return new EvaluationResult(null, null, 0, err, DiagnosticPhase.RUNTIME, currentWarnings, filterType);
 		}
 	}
 
 	private void applyEvaluationResult(EvaluationResult result) {
 		this.warnings = result.warnings();
+		if (result.filterType() != null) {
+			this.inferredFilterType = result.filterType();
+		}
 		if (result.errorMessage() != null) {
 			this.errorPhase = result.errorPhase();
 			this.errorMessage = result.errorMessage();
@@ -1332,13 +1799,13 @@ final class Playground<N> {
 				boolean isError = w.severity() == Diagnostic.Severity.ERROR;
 				String label = isError ? "[Compile][Error] " : "[Compile][Warning] ";
 				Style style = isError ? Style.EMPTY.bold().red() : Style.EMPTY.bold().yellow();
-				@Var String msg = w.message() + (w.location() != null ? " at " + w.location() : "");
+				@Var String msg = w.message();
 				while (msg.endsWith("\n") || msg.endsWith("\r")) {
 					msg = msg.substring(0, msg.length() - 1);
 				}
 				String[] split = msg.split("\r?\n", -1);
 				for (int i = 0; i < split.length; i++) {
-					String line = split[i];
+					String line = split[i] + (i == 0 && w.location() != null ? " at " + w.location() : "");
 					if (i == 0) {
 						dLines.add(Line.from(Span.styled(label + line, style)));
 						plain.add(label + line);
@@ -1404,6 +1871,16 @@ final class Playground<N> {
 		}
 		if (!compileOptions.getOptimizationOptions().getTailCallOptimization()) {
 			command.append(" --disable-tco");
+		}
+		// The CLI's own default, which is not the library's.
+		if (compileOptions.getTypeCheckMode() != TypeCheckMode.WARN) {
+			command.append(" --type-check ").append(compileOptions.getTypeCheckMode().name().toLowerCase(Locale.ROOT));
+		}
+		if (!compileOptions.getInputType().equals(AnyType.getInstance())) {
+			command.append(" --input-type ").append(shellQuote(compileOptions.getInputType().toString()));
+		}
+		if (!compileOptions.getOutputType().equals(AnyType.getInstance())) {
+			command.append(" --output-type ").append(shellQuote(compileOptions.getOutputType().toString()));
 		}
 		appendRuntimeLimit(command, "--max-string-length", runtimeOptions.getMaxStringLength(), Integer.MAX_VALUE);
 		appendRuntimeLimit(command, "--max-binary-length", runtimeOptions.getMaxBinaryLength(), Integer.MAX_VALUE);
@@ -1557,6 +2034,15 @@ final class Playground<N> {
 
 	RuntimeOptions getRuntimeOptions() {
 		return runtimeOptions;
+	}
+
+	CompileOptions getCompileOptions() {
+		return compileOptions;
+	}
+
+	@Nullable
+	FilterType getInferredFilterType() {
+		return inferredFilterType;
 	}
 
 	int getSelectedOptionIndex() {

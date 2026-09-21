@@ -5,32 +5,51 @@ import java.util.List;
 import net.thisptr.jackson.jq.v2.core.internal.commons.strings.UnicodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
-import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
+import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
+import net.thisptr.jackson.jq.v2.spi.type.NumericType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @FunctionRegistration(name = "utf8bytelength", nargs = 0, version = @VersionRangeSpec(
 		min = @VersionSpec(major = 1, minor = 6, patch = 0)
 ))
 public class Utf8ByteLengthFunction implements Function {
+	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
+			TypeScheme.of(FunctionType.of(StringType.getInstance(), NumericType.of(NumberKind.INT))));
+
+	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		return TYPE_SCHEMES;
+	}
+
+	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		return ExpressionPropertiesUtils.forwardAll(Cardinality.ONE, true, false, arguments);
+	}
+
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
 		Version version = bindCtx.getJqVersion();
-		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
+		return (scope, in, ipath, output) -> {
 
 			if (!jsonProvider.isString(in))
 				throw new JsonQueryTypeException("%s only strings have UTF-8 byte length", ExceptionMessages.describe(jsonProvider, version, in));
 			output.emit(jsonProvider.createNumber(UnicodeUtils.lengthUtf8(jsonProvider.getString(in))), UntrackedPath.getInstance());
-		});
+		};
 	}
 }

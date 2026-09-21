@@ -7,6 +7,7 @@ import java.util.Set;
 
 import com.google.errorprone.annotations.Var;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
@@ -14,7 +15,6 @@ import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -22,8 +22,8 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class Conditional<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
-	private final Expression<StackFrame, JsonNode> otherwise;
-	private final List<Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>>> switches;
+	private final AnalyzedExpression<JsonNode> otherwise;
+	private final List<Pair<AnalyzedExpression<JsonNode>, AnalyzedExpression<JsonNode>>> switches;
 	private final boolean dependsOnInput;
 	private final boolean dependsOnExternalState;
 	private final Set<Integer> freeLocalSlots;
@@ -36,21 +36,21 @@ public class Conditional<JsonNode> implements RewritableExpression<JsonNode>, Fr
 	public Cardinality getCardinality() {
 		if (!switches.isEmpty() && switches.get(0)._1.getCardinality() == Cardinality.ZERO)
 			return Cardinality.ZERO;
-		for (Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>> sw : switches) {
+		for (Pair<AnalyzedExpression<JsonNode>, AnalyzedExpression<JsonNode>> sw : switches) {
 			if (sw._1.getCardinality() != Cardinality.ONE)
 				return Cardinality.UNKNOWN;
 		}
 		Cardinality expected = otherwise != null ? otherwise.getCardinality() : Cardinality.ZERO;
 		if (expected == Cardinality.UNKNOWN)
 			return Cardinality.UNKNOWN;
-		for (Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>> sw : switches) {
+		for (Pair<AnalyzedExpression<JsonNode>, AnalyzedExpression<JsonNode>> sw : switches) {
 			if (sw._2.getCardinality() != expected)
 				return Cardinality.UNKNOWN;
 		}
 		return expected;
 	}
 
-	public Conditional(JsonProvider<JsonNode> jsonProvider, List<Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>>> switches, Expression<StackFrame, JsonNode> otherwise, int[] conditionOutputIndices) {
+	public Conditional(JsonProvider<JsonNode> jsonProvider, List<Pair<AnalyzedExpression<JsonNode>, AnalyzedExpression<JsonNode>>> switches, AnalyzedExpression<JsonNode> otherwise, int[] conditionOutputIndices) {
 		this.conditionOutputIndices = conditionOutputIndices;
 		this.jsonProvider = jsonProvider;
 		this.switches = switches;
@@ -59,7 +59,7 @@ public class Conditional<JsonNode> implements RewritableExpression<JsonNode>, Fr
 		@Var boolean anyDependsOnExternalState = otherwise.dependsOnExternalState();
 		@Var boolean anyOpaque = FreeVariables.anyOpaque(otherwise);
 		Set<Integer> slots = new HashSet<>(FreeVariables.slotsOf(otherwise));
-		for (Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>> sw : switches) {
+		for (Pair<AnalyzedExpression<JsonNode>, AnalyzedExpression<JsonNode>> sw : switches) {
 			anyDependsOnInput = anyDependsOnInput || sw._1.dependsOnInput() || sw._2.dependsOnInput();
 			anyDependsOnExternalState = anyDependsOnExternalState || sw._1.dependsOnExternalState() || sw._2.dependsOnExternalState();
 			anyOpaque = anyOpaque || FreeVariables.anyOpaque(sw._1, sw._2);
@@ -93,18 +93,18 @@ public class Conditional<JsonNode> implements RewritableExpression<JsonNode>, Fr
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		@Var List<Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>>> rewrittenSwitches = null;
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		@Var List<Pair<AnalyzedExpression<JsonNode>, AnalyzedExpression<JsonNode>>> rewrittenSwitches = null;
 		for (int i = 0; i < switches.size(); i++) {
-			Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>> sw = switches.get(i);
-			Expression<StackFrame, JsonNode> condition = rewriter.rewrite(sw._1);
-			Expression<StackFrame, JsonNode> branch = rewriter.rewrite(sw._2);
+			Pair<AnalyzedExpression<JsonNode>, AnalyzedExpression<JsonNode>> sw = switches.get(i);
+			AnalyzedExpression<JsonNode> condition = rewriter.rewrite(sw._1);
+			AnalyzedExpression<JsonNode> branch = rewriter.rewrite(sw._2);
 			if (rewrittenSwitches == null && (condition != sw._1 || branch != sw._2))
 				rewrittenSwitches = new ArrayList<>(switches);
 			if (rewrittenSwitches != null)
 				rewrittenSwitches.set(i, Pair.of(condition, branch));
 		}
-		Expression<StackFrame, JsonNode> rewrittenOtherwise = rewriter.rewrite(otherwise);
+		AnalyzedExpression<JsonNode> rewrittenOtherwise = rewriter.rewrite(otherwise);
 		return rewrittenSwitches == null && rewrittenOtherwise == otherwise
 				? this
 				: new Conditional<>(jsonProvider, rewrittenSwitches != null ? rewrittenSwitches : switches, rewrittenOtherwise, conditionOutputIndices);
@@ -122,7 +122,7 @@ public class Conditional<JsonNode> implements RewritableExpression<JsonNode>, Fr
 			}
 			return;
 		}
-		Pair<Expression<StackFrame, JsonNode>, Expression<StackFrame, JsonNode>> sw = switches.get(switchIndex);
+		Pair<AnalyzedExpression<JsonNode>, AnalyzedExpression<JsonNode>> sw = switches.get(switchIndex);
 		List<JsonNode> condValues = new ArrayList<>();
 		Memory memory = frame.getEnclosingMemory();
 		sw._1.apply(frame, in, UntrackedPath.getInstance(), (r, opath) -> {

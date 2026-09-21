@@ -20,6 +20,7 @@ import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -27,6 +28,7 @@ import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,23 +41,15 @@ public class CustomFunctionTest {
 		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2)
 				.defineFunction(FunctionSignature.of("double", 0), new Function() {
 					@Override
+					public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+						return new ExpressionProperties(Cardinality.ONE, true, false);
+					}
+
+					@Override
 					public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> arguments) {
 						JsonProvider<JsonNode> provider = bindCtx.getJsonProvider();
 						return new Expression<>() {
-							@Override
-							public Cardinality getCardinality() {
-								return Cardinality.ONE; // Exactly one doubled value is emitted for each input.
-							}
 
-							@Override
-							public boolean dependsOnInput() {
-								return true; // The calculation reads the current input value.
-							}
-
-							@Override
-							public boolean dependsOnExternalState() {
-								return false; // The calculation is deterministic and does not consult outside state.
-							}
 
 							@Override
 							public void apply(Context context, JsonNode input, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
@@ -76,24 +70,17 @@ public class CustomFunctionTest {
 		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2)
 				.defineFunction(FunctionSignature.of("assert", 1), new Function() {
 					@Override
+					public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+						ExpressionProperties condition = arguments.get(0);
+						return new ExpressionProperties(condition.cardinality(), true, condition.dependsOnExternalState());
+					}
+
+					@Override
 					public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> arguments) {
 						JsonProvider<JsonNode> provider = bindCtx.getJsonProvider();
 						Expression<Context, JsonNode> condition = arguments.get(0);
 						return new Expression<>() {
-							@Override
-							public Cardinality getCardinality() {
-								return condition.getCardinality(); // One input value is emitted for each condition result on normal completion.
-							}
 
-							@Override
-							public boolean dependsOnInput() {
-								return true; // A successful assertion returns the current input value.
-							}
-
-							@Override
-							public boolean dependsOnExternalState() {
-								return condition.dependsOnExternalState(); // The condition can introduce an external-state dependency.
-							}
 
 							@Override
 							public void apply(Context context, JsonNode input, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
@@ -123,23 +110,15 @@ public class CustomFunctionTest {
 		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2)
 				.defineFunction(FunctionSignature.of("heap_usage", 0), new Function() {
 					@Override
+					public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+						return new ExpressionProperties(Cardinality.ONE, false, true);
+					}
+
+					@Override
 					public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> arguments) {
 						JsonProvider<JsonNode> provider = bindCtx.getJsonProvider();
 						return new Expression<>() {
-							@Override
-							public Cardinality getCardinality() {
-								return Cardinality.ONE; // Each evaluation emits one object containing the current heap metrics.
-							}
 
-							@Override
-							public boolean dependsOnInput() {
-								return false; // Heap metrics do not depend on the jq input value.
-							}
-
-							@Override
-							public boolean dependsOnExternalState() {
-								return true; // JVM heap metrics can change between evaluations.
-							}
 
 							@Override
 							public void apply(Context context, JsonNode input, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {

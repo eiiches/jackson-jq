@@ -8,6 +8,7 @@ jjq_java_module_info(
         "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/exception",
         "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/module",
         "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/path",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/type",
         "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/version",
     ],
     release = 17,

@@ -12,12 +12,62 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
+import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.NullType;
+import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
+import net.thisptr.jackson.jq.v2.spi.type.NumericType;
+import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.UnionType;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 final class MatchImplFunction implements Function {
+	private static final Type CAPTURE;
+	private static final Type MATCH;
+	/**
+	 * The same signature the joni engine publishes; one jq-level surface is built on both.
+	 */
+	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES;
+
+	static {
+		CAPTURE = ObjectType.of(
+				"offset", NumericType.of(NumberKind.INT),
+				"length", NumericType.of(NumberKind.INT),
+				"string", UnionType.of(StringType.getInstance(), NullType.getInstance()),
+				"name", UnionType.of(StringType.getInstance(), NullType.getInstance()));
+		MATCH = ObjectType.of(
+				"offset", NumericType.of(NumberKind.INT),
+				"length", NumericType.of(NumberKind.INT),
+				"string", UnionType.of(StringType.getInstance(), NullType.getInstance()),
+				"captures", ArrayType.of(CAPTURE));
+		TYPE_SCHEMES = List.of(
+				TypeScheme.of(FunctionType.of(StringType.getInstance(), UnionType.of(BooleanType.getInstance(), ArrayType.of(MATCH)), FilterType.of(StringType.getInstance(), StringType.getInstance()),
+						FilterType.of(StringType.getInstance(), UnionType.of(StringType.getInstance(), NullType.getInstance())),
+						FilterType.of(StringType.getInstance(), BooleanType.getInstance()))));
+	}
+
+	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		return TYPE_SCHEMES;
+	}
+
+	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		boolean external = arguments.stream().anyMatch(ExpressionProperties::dependsOnExternalState);
+		return new ExpressionProperties(Cardinality.UNKNOWN, true, external);
+	}
+
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindContext, List<Expression<Context, JsonNode>> arguments) {
 		JsonProvider<JsonNode> jsonProvider = bindContext.getJsonProvider();
@@ -27,7 +77,7 @@ final class MatchImplFunction implements Function {
 		PrecompiledPatternPlan precompiled = PrecompiledPatternPlan.flagsThenRegex(jsonProvider, regexExpression, flagsExpression, true);
 
 		if (precompiled != null) {
-			return FunctionBody.builder(arguments).usesInput(true).build((context, input, inputPath, output) -> {
+			return (context, input, inputPath, output) -> {
 				Preconditions.checkInputType(jsonProvider, "_match_impl/3", input, JsonNodeType.STRING);
 				String inputText = jsonProvider.getString(input);
 				testExpression.apply(context, input, UntrackedPath.getInstance(), (test, outputPath) -> {
@@ -35,10 +85,10 @@ final class MatchImplFunction implements Function {
 					for (Re2Pattern pattern : precompiled.patterns())
 						output.emit(match(jsonProvider, pattern, inputText, jsonProvider.getBoolean(test)), UntrackedPath.getInstance());
 				});
-			});
+			};
 		}
 
-		return FunctionBody.builder(arguments).usesInput(true).build((context, input, inputPath, output) -> {
+		return (context, input, inputPath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "_match_impl/3", input, JsonNodeType.STRING);
 			String inputText = jsonProvider.getString(input);
 			testExpression.apply(context, input, UntrackedPath.getInstance(), (test, outputPath) -> {
@@ -53,7 +103,7 @@ final class MatchImplFunction implements Function {
 					});
 				});
 			});
-		});
+		};
 	}
 
 	private static final class CaptureObject {

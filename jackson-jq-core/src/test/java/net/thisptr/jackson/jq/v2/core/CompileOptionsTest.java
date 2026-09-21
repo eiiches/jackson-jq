@@ -7,11 +7,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
+import net.thisptr.jackson.jq.v2.core.diagnostic.DiagnosticListener;
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.NumericType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -217,6 +221,12 @@ class CompileOptionsTest {
 	@Test
 	void optionsLeftAtTheirDefaultsShareOneInstance() {
 		assertThat(CompileOptions.newBuilder().build()).isSameAs(CompileOptions.newBuilder().build());
+
+		// Setting a type to the type that is already the default still yields the shared default.
+		assertThat(CompileOptions.newBuilder()
+				.setInputType(AnyType.getInstance())
+				.setOutputType(AnyType.getInstance())
+				.build()).isSameAs(CompileOptions.newBuilder().build());
 		assertThat(OptimizationOptions.newBuilder().build()).isSameAs(OptimizationOptions.newBuilder().build());
 		assertThat(ConstantFoldingOptions.newBuilder().build()).isSameAs(ConstantFoldingOptions.newBuilder().build());
 
@@ -232,6 +242,33 @@ class CompileOptionsTest {
 						.setConstantFoldingOptions(ConstantFoldingOptions.newBuilder().setMaxResults(8).build())
 						.build())
 				.build()).isNotSameAs(CompileOptions.newBuilder().build());
+	}
+
+	@Test
+	void toBuilderCarriesEverySetting() {
+		DiagnosticListener listener = reported::add;
+		OptimizationOptions optimizations = OptimizationOptions.newBuilder().setTailCallOptimization(false).build();
+		CompileOptions original = CompileOptions.newBuilder()
+				.setDiagnosticListener(listener)
+				.setOptimizationOptions(optimizations)
+				.setTypeCheckMode(TypeCheckMode.STRICT)
+				.setInputType(StringType.getInstance())
+				.setOutputType(NumericType.getInstance())
+				.build();
+
+		CompileOptions copy = original.toBuilder().build();
+		assertThat(copy.getDiagnosticListener()).isSameAs(listener);
+		assertThat(copy.getOptimizationOptions()).isSameAs(optimizations);
+		assertThat(copy.getTypeCheckMode()).isEqualTo(TypeCheckMode.STRICT);
+		assertThat(copy.getInputType()).isSameAs(StringType.getInstance());
+		assertThat(copy.getOutputType()).isSameAs(NumericType.getInstance());
+
+		// Deriving is the point: one setting changes and the rest come along.
+		CompileOptions derived = original.toBuilder().setDiagnosticListener(null).build();
+		assertThat(derived.getDiagnosticListener()).isNull();
+		assertThat(derived.getInputType()).isSameAs(StringType.getInstance());
+
+		assertThat(CompileOptions.newBuilder().build().toBuilder().build()).isSameAs(CompileOptions.newBuilder().build());
 	}
 
 	@Test

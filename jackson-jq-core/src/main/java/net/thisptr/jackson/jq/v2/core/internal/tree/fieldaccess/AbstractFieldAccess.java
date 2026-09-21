@@ -5,16 +5,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
-import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathOperations;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -22,17 +21,25 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public abstract class AbstractFieldAccess<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	protected final JsonProvider<JsonNode> jsonProvider;
-	protected final Expression<StackFrame, JsonNode> target;
+	protected final AnalyzedExpression<JsonNode> target;
 	protected final boolean permissive;
 	protected final Version version;
 	protected final int targetOutputIndex;
 
-	public AbstractFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> target, boolean permissive, Version version, int targetOutputIndex) {
+	public AbstractFieldAccess(JsonProvider<JsonNode> jsonProvider, AnalyzedExpression<JsonNode> target, boolean permissive, Version version, int targetOutputIndex) {
 		this.targetOutputIndex = targetOutputIndex;
 		this.jsonProvider = jsonProvider;
 		this.target = target;
 		this.permissive = permissive;
 		this.version = version;
+	}
+
+	public AnalyzedExpression<JsonNode> target() {
+		return target;
+	}
+
+	public boolean permissive() {
+		return permissive;
 	}
 
 	@Override

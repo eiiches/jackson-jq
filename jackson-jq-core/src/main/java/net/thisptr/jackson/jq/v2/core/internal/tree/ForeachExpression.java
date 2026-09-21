@@ -5,13 +5,13 @@ import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -19,10 +19,10 @@ import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class ForeachExpression<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
-	private final Expression<StackFrame, JsonNode> iterExpr;
-	private final Expression<StackFrame, JsonNode> updateExpr;
-	private final Expression<StackFrame, JsonNode> initExpr;
-	private final @Nullable Expression<StackFrame, JsonNode> extractExpr;
+	private final AnalyzedExpression<JsonNode> iterExpr;
+	private final AnalyzedExpression<JsonNode> updateExpr;
+	private final AnalyzedExpression<JsonNode> initExpr;
+	private final @Nullable AnalyzedExpression<JsonNode> extractExpr;
 	private final PatternMatcher<JsonNode> matcher;
 	// `extractExpr` needs no counter: when present it emits this foreach's own values.
 	private final int initOutputIndex;
@@ -42,7 +42,7 @@ public class ForeachExpression<JsonNode> implements RewritableExpression<JsonNod
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public ForeachExpression(PatternMatcher<JsonNode> matcher, Expression<StackFrame, JsonNode> initExpr, Expression<StackFrame, JsonNode> updateExpr, @Nullable Expression<StackFrame, JsonNode> extractExpr, Expression<StackFrame, JsonNode> iterExpr, Set<Integer> matcherSlots, int initOutputIndex, int updateOutputIndex, int iterOutputIndex) {
+	public ForeachExpression(PatternMatcher<JsonNode> matcher, AnalyzedExpression<JsonNode> initExpr, AnalyzedExpression<JsonNode> updateExpr, @Nullable AnalyzedExpression<JsonNode> extractExpr, AnalyzedExpression<JsonNode> iterExpr, Set<Integer> matcherSlots, int initOutputIndex, int updateOutputIndex, int iterOutputIndex) {
 		this.matcher = matcher;
 		this.initOutputIndex = initOutputIndex;
 		this.updateOutputIndex = updateOutputIndex;
@@ -66,6 +66,26 @@ public class ForeachExpression<JsonNode> implements RewritableExpression<JsonNod
 				new ArrayList<>(matcherSlots));
 	}
 
+	public AnalyzedExpression<JsonNode> iterExpr() {
+		return iterExpr;
+	}
+
+	public AnalyzedExpression<JsonNode> initExpr() {
+		return initExpr;
+	}
+
+	public AnalyzedExpression<JsonNode> updateExpr() {
+		return updateExpr;
+	}
+
+	public @Nullable AnalyzedExpression<JsonNode> extractExpr() {
+		return extractExpr;
+	}
+
+	public PatternMatcher<JsonNode> matcher() {
+		return matcher;
+	}
+
 	@Override
 	public boolean dependsOnInput() {
 		return dependsOnInput;
@@ -87,12 +107,12 @@ public class ForeachExpression<JsonNode> implements RewritableExpression<JsonNod
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		Expression<StackFrame, JsonNode> rewrittenIter = rewriter.rewrite(iterExpr);
-		Expression<StackFrame, JsonNode> rewrittenInit = rewriter.rewrite(initExpr);
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		AnalyzedExpression<JsonNode> rewrittenIter = rewriter.rewrite(iterExpr);
+		AnalyzedExpression<JsonNode> rewrittenInit = rewriter.rewrite(initExpr);
 		PatternMatcher<JsonNode> rewrittenMatcher = matcher.rewriteExpressions(rewriter::rewrite);
-		Expression<StackFrame, JsonNode> rewrittenUpdate = rewriter.rewrite(updateExpr);
-		Expression<StackFrame, JsonNode> rewrittenExtract = extractExpr != null ? rewriter.rewrite(extractExpr) : null;
+		AnalyzedExpression<JsonNode> rewrittenUpdate = rewriter.rewrite(updateExpr);
+		AnalyzedExpression<JsonNode> rewrittenExtract = extractExpr != null ? rewriter.rewrite(extractExpr) : null;
 		return rewrittenIter == iterExpr && rewrittenInit == initExpr && rewrittenMatcher == matcher
 				&& rewrittenUpdate == updateExpr && rewrittenExtract == extractExpr
 				? this

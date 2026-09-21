@@ -2,30 +2,41 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.Set;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryBreakException;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class Label<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final String name;
-	private final Expression<StackFrame, JsonNode> body;
+	private final AnalyzedExpression<JsonNode> body;
 	private final boolean dependsOnInput;
 	private final boolean dependsOnExternalState;
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public Label(String name, Expression<StackFrame, JsonNode> body) {
+	public Label(String name, AnalyzedExpression<JsonNode> body) {
 		this.name = name;
 		this.body = body;
 		this.dependsOnInput = body.dependsOnInput();
 		this.dependsOnExternalState = body.dependsOnExternalState();
 		this.freeLocalSlots = FreeVariables.slotsOf(body);
 		this.hasOpaqueVariableReference = FreeVariables.opaqueIn(body);
+	}
+
+	public AnalyzedExpression<JsonNode> body() {
+		return body;
+	}
+
+	/**
+	 * The label a {@code break} in the body unwinds to.
+	 */
+	public String name() {
+		return name;
 	}
 
 	@Override
@@ -54,8 +65,8 @@ public class Label<JsonNode> implements RewritableExpression<JsonNode>, FreeVari
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(body);
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		AnalyzedExpression<JsonNode> rewritten = rewriter.rewrite(body);
 		return rewritten == body ? this : new Label<>(name, rewritten);
 	}
 

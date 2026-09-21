@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers;
+package net.thisptr.jackson.jq.v2.core.internal.tree.matcher;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,14 +7,12 @@ import java.util.function.UnaryOperator;
 
 import com.google.errorprone.annotations.Var;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
-import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.SlotResolver;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -28,6 +26,10 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		this.jsonProvider = jsonProvider;
 		this.matchers = matchers;
 		this.version = version;
+	}
+
+	public List<PatternMatcher<JsonNode>> matchers() {
+		return matchers;
 	}
 
 	private JsonNode getArrayElementOrNull(JsonNode node, int index) {
@@ -50,6 +52,11 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 		JsonNode value = getArrayElementOrNull(in, rindex);
 
 		matcher.match(frame, value, () -> recursive(frame, in, onMatch, index + 1));
+	}
+
+	@Override
+	public <R> R accept(Visitor<JsonNode, R> visitor) {
+		return visitor.visit(this);
 	}
 
 	@Override
@@ -101,7 +108,7 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 	}
 
 	@Override
-	public PatternMatcher<JsonNode> rewriteExpressions(UnaryOperator<Expression<StackFrame, JsonNode>> rewriter) {
+	public PatternMatcher<JsonNode> rewriteExpressions(UnaryOperator<AnalyzedExpression<JsonNode>> rewriter) {
 		@Var List<PatternMatcher<JsonNode>> rewritten = null;
 		for (int i = 0; i < matchers.size(); i++) {
 			PatternMatcher<JsonNode> matcher = matchers.get(i);

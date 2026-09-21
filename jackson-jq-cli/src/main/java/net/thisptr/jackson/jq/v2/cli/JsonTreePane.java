@@ -570,6 +570,16 @@ final class JsonTreePane {
 		return false;
 	}
 
+	private List<Line> bannerLines = Collections.emptyList();
+
+	void setBannerLines(List<Line> bannerLines) {
+		this.bannerLines = bannerLines != null ? bannerLines : Collections.emptyList();
+	}
+
+	List<Line> bannerLines() {
+		return bannerLines;
+	}
+
 	void render(
 			Rect area,
 			Buffer buffer,
@@ -583,11 +593,25 @@ final class JsonTreePane {
 			return;
 		}
 
+		@Var Rect workArea = inner;
+		if (!bannerLines.isEmpty() && inner.height() > 1) {
+			int bannerHeight = Math.min(bannerLines.size(), inner.height() - 1);
+			List<Rect> parts = Layout.vertical()
+					.constraints(Constraint.length(bannerHeight), Constraint.fill())
+					.split(inner);
+			Rect bannerArea = parts.get(0);
+			Paragraph bannerParagraph = Paragraph.builder()
+					.text(Text.from(bannerLines.subList(0, bannerHeight)))
+					.build();
+			bannerParagraph.render(bannerArea, buffer);
+			workArea = parts.get(1);
+		}
+
 		boolean isEmpty = (viewMode == ViewMode.TREE) ? roots.isEmpty() : textLines.isEmpty();
 		if (isEmpty) {
 			if (emptyMessage != null) {
 				Paragraph p = Paragraph.from(Line.from(Span.styled(emptyMessage, Style.EMPTY.dim())));
-				p.render(inner, buffer);
+				p.render(workArea, buffer);
 			}
 			return;
 		}
@@ -595,17 +619,17 @@ final class JsonTreePane {
 		Rect contentArea;
 		@Var Rect searchArea = null;
 		if (searchActive || !searchQuery.isEmpty()) {
-			if (inner.height() > 1) {
+			if (workArea.height() > 1) {
 				List<Rect> parts = Layout.vertical()
 						.constraints(Constraint.fill(), Constraint.length(1))
-						.split(inner);
+						.split(workArea);
 				contentArea = parts.get(0);
 				searchArea = parts.get(1);
 			} else {
-				contentArea = inner;
+				contentArea = workArea;
 			}
 		} else {
-			contentArea = inner;
+			contentArea = workArea;
 		}
 
 		if (viewMode == ViewMode.TREE) {

@@ -4,7 +4,6 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-
 public class VariableAccessAstNode extends AbstractAstNode {
 	private final String name;
 	private final @Nullable String moduleName;

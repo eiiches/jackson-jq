@@ -6,7 +6,6 @@ import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-
 public class SemicolonOperatorAstNode extends AbstractAstNode {
 	private final List<AstNode> qs;
 

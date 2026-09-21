@@ -3,7 +3,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "utils",
     srcs = [
-        "FunctionBody.java",
+        "ExpressionPropertiesUtils.java",
         "Preconditions.java",
     ],
     release = 17,

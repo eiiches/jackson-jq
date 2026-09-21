@@ -14,16 +14,62 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.regex.impl.joni.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
+import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.NullType;
+import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
+import net.thisptr.jackson.jq.v2.spi.type.NumericType;
+import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.UnionType;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @FunctionRegistration(name = "_match_impl", nargs = 3)
 public class _MatchImplFunction implements Function {
+	private static final Type CAPTURE_OBJECT_TYPE = ObjectType.of(
+			"offset", NumericType.of(NumberKind.INT),
+			"length", NumericType.of(NumberKind.INT),
+			"string", UnionType.of(StringType.getInstance(), NullType.getInstance()),
+			"name", UnionType.of(StringType.getInstance(), NullType.getInstance())
+	);
+
+	private static final Type MATCH_OBJECT_TYPE = ObjectType.of(
+			"offset", NumericType.of(NumberKind.INT),
+			"length", NumericType.of(NumberKind.INT),
+			"string", UnionType.of(StringType.getInstance(), NullType.getInstance()),
+			"captures", ArrayType.of(CAPTURE_OBJECT_TYPE)
+	);
+
+	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
+			TypeScheme.of(FunctionType.of(StringType.getInstance(), UnionType.of(BooleanType.getInstance(), ArrayType.of(MATCH_OBJECT_TYPE)),
+					FilterType.of(StringType.getInstance(), StringType.getInstance()),
+					FilterType.of(StringType.getInstance(), UnionType.of(StringType.getInstance(), NullType.getInstance())),
+					FilterType.of(StringType.getInstance(), BooleanType.getInstance())))
+	);
+
+	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		return TYPE_SCHEMES;
+	}
+
+	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		boolean external = arguments.stream().anyMatch(ExpressionProperties::dependsOnExternalState);
+		return new ExpressionProperties(Cardinality.UNKNOWN, true, external);
+	}
+
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
@@ -33,7 +79,7 @@ public class _MatchImplFunction implements Function {
 		PrecompiledPatternPlan precompiled = PrecompiledPatternPlan.flagsThenRegex(jsonProvider, regexExpr, flagsExpr, true);
 
 		if (precompiled != null) {
-			return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
+			return (frame, in, ipath, output) -> {
 				Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
 				byte[] ibytes = jsonProvider.getString(in).getBytes(StandardCharsets.UTF_8);
 				int[] cindex = UnicodeUtils.utf8CharIndex(ibytes);
@@ -43,10 +89,10 @@ public class _MatchImplFunction implements Function {
 					for (OnigUtils.Pattern pattern : precompiled.patterns())
 						output.emit(match(jsonProvider, pattern, ibytes, cindex, jsonProvider.getBoolean(test)), UntrackedPath.getInstance());
 				});
-			});
+			};
 		}
 
-		return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
+		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "_match_impl/3", in, JsonNodeType.STRING);
 			byte[] ibytes = jsonProvider.getString(in).getBytes(StandardCharsets.UTF_8);
 			int[] cindex = UnicodeUtils.utf8CharIndex(ibytes);
@@ -62,7 +108,7 @@ public class _MatchImplFunction implements Function {
 					});
 				});
 			});
-		});
+		};
 	}
 
 	static class CaptureObject {

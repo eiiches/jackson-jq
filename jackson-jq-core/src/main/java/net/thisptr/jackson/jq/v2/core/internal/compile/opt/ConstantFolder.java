@@ -9,13 +9,13 @@ import com.google.errorprone.annotations.Var;
 import net.thisptr.jackson.jq.v2.core.ConstantFoldingOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FoldedConstantExpression;
 import net.thisptr.jackson.jq.v2.core.internal.tree.FoldedErrorExpression;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
@@ -131,7 +131,7 @@ final class ConstantFolder {
 	 * @param <N> the JSON node type
 	 * @return an expression carrying the folded outcome, or {@code compiled} unchanged
 	 */
-	<N> Expression<StackFrame, N> fold(Environment<N> env, Expression<StackFrame, N> compiled, int frameSize, int globalCount, int outputCounterCount) {
+	<N> AnalyzedExpression<N> fold(Environment<N> env, AnalyzedExpression<N> compiled, int frameSize, int globalCount, int outputCounterCount) {
 		if (isExhausted())
 			return compiled;
 

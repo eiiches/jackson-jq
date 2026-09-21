@@ -1,0 +1,229 @@
+package net.thisptr.jackson.jq.v2.core.internal.typecheck;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
+
+import com.google.errorprone.annotations.Var;
+
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
+import net.thisptr.jackson.jq.v2.spi.type.NeverType;
+import net.thisptr.jackson.jq.v2.spi.type.NumericType;
+import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
+import net.thisptr.jackson.jq.v2.spi.type.RecursiveType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.TypeVariable;
+import net.thisptr.jackson.jq.v2.spi.type.UndefinedType;
+import net.thisptr.jackson.jq.v2.spi.type.UnionType;
+
+/**
+ * Matches actual types against scheme types and collects constraints for quantified variables.
+ */
+final class TypeMatcher {
+	private final Set<TypeVariable> quantified;
+	private final Map<TypeVariable, Type> upperBounds;
+	private final Map<TypeVariable, Type> substitutions = new HashMap<>();
+	private final Deque<TypeVariable> expectedRecursiveVariables = new ArrayDeque<>();
+	private final Deque<TypeVariable> actualRecursiveVariables = new ArrayDeque<>();
+
+	TypeMatcher(TypeScheme<?> scheme) {
+		this(scheme.typeVariables().keySet(), scheme.typeVariables());
+	}
+
+	TypeMatcher(Set<TypeVariable> quantified) {
+		this(quantified, Map.of());
+	}
+
+	TypeMatcher(Set<TypeVariable> quantified, Map<TypeVariable, Type> upperBounds) {
+		this.quantified = Set.copyOf(quantified);
+		this.upperBounds = Map.copyOf(upperBounds);
+	}
+
+	/**
+	 * Matches {@code actual} against {@code expected}, preserving prior constraints on failure.
+	 */
+	boolean match(Type expected, Type actual) {
+		Objects.requireNonNull(expected, "expected");
+		Objects.requireNonNull(actual, "actual");
+		Map<TypeVariable, Type> before = new HashMap<>(substitutions);
+		if (matchInternal(expected, actual))
+			return true;
+		restore(before);
+		return false;
+	}
+
+	/**
+	 * Returns whether all inferred types satisfy their fully substituted upper bounds.
+	 */
+	boolean validateBounds() {
+		for (Map.Entry<TypeVariable, Type> substitution : substitutions.entrySet()) {
+			Type bound = upperBounds.getOrDefault(substitution.getKey(), AnyType.getInstance());
+			Type upperBound = substitute(bound);
+			if (!accepts(upperBound, substitution.getValue()))
+				return false;
+		}
+		return true;
+	}
+
+	Type substitute(Type type) {
+		return TypeSubstitution.apply(type, quantified, substitutions, upperBounds);
+	}
+
+	static boolean accepts(Type expected, Type actual) {
+		TypeMatcher matcher = new TypeMatcher(Set.of());
+		return matcher.match(expected, actual);
+	}
+
+	private boolean matchInternal(Type expected, Type actual) {
+		if (actual == NeverType.getInstance())
+			return true;
+
+		if (actual instanceof UnionType union) {
+			for (Type alternative : union.alternatives()) {
+				if (!matchInternal(expected, alternative))
+					return false;
+			}
+			return true;
+		}
+
+		if (expected instanceof UnionType union)
+			return matchExpectedUnion(union, actual);
+
+		if (expected instanceof TypeVariable || actual instanceof TypeVariable) {
+			int expectedBinder = binderIndex(expectedRecursiveVariables, expected);
+			int actualBinder = binderIndex(actualRecursiveVariables, actual);
+			if (expectedBinder >= 0 || actualBinder >= 0)
+				return expectedBinder >= 0 && expectedBinder == actualBinder;
+			if (expected instanceof TypeVariable variable && quantified.contains(variable))
+				return constrain(variable, actual);
+		}
+
+		if (expected instanceof UndefinedType || actual instanceof UndefinedType)
+			return expected instanceof UndefinedType && actual instanceof UndefinedType;
+		if (expected instanceof AnyType || actual instanceof AnyType)
+			return true;
+
+		if (expected instanceof ArrayType || actual instanceof ArrayType) {
+			return expected instanceof ArrayType expectedArray && actual instanceof ArrayType actualArray
+					&& matchArrays(expectedArray, actualArray);
+		}
+
+		if (expected instanceof ObjectType || actual instanceof ObjectType) {
+			return expected instanceof ObjectType expectedObject && actual instanceof ObjectType actualObject
+					&& matchObjects(expectedObject, actualObject);
+		}
+
+		if (expected instanceof RecursiveType || actual instanceof RecursiveType) {
+			return expected instanceof RecursiveType expectedRecursive && actual instanceof RecursiveType actualRecursive
+					&& matchRecursive(expectedRecursive, actualRecursive);
+		}
+
+		if (expected instanceof NumericType && actual instanceof NumericType)
+			return true;
+		return TypeEquivalence.isEqualType(expected, actual);
+	}
+
+	private boolean matchExpectedUnion(UnionType expected, Type actual) {
+		Map<TypeVariable, Type> before = new HashMap<>(substitutions);
+		List<Map<TypeVariable, Type>> matches = new ArrayList<>();
+		for (Type alternative : expected.alternatives()) {
+			restore(before);
+			if (matchInternal(alternative, actual))
+				matches.add(new HashMap<>(substitutions));
+		}
+		restore(before);
+		if (matches.isEmpty())
+			return false;
+		for (Map<TypeVariable, Type> match : matches)
+			merge(match);
+		return true;
+	}
+
+	private boolean constrain(TypeVariable variable, Type actual) {
+		Map<TypeVariable, Type> before = new HashMap<>(substitutions);
+		Type bound = upperBounds.getOrDefault(variable, AnyType.getInstance());
+		if (!matchInternal(bound, actual)) {
+			restore(before);
+			return false;
+		}
+		addConstraint(variable, actual instanceof AnyType ? bound : actual);
+		return true;
+	}
+
+	private boolean matchObjects(ObjectType expected, ObjectType actual) {
+		Set<String> fieldNames = new TreeSet<>(expected.fields().keySet());
+		fieldNames.addAll(actual.fields().keySet());
+		for (String fieldName : fieldNames) {
+			if (!matchInternal(effectiveFieldType(expected, fieldName), effectiveFieldType(actual, fieldName)))
+				return false;
+		}
+		return matchInternal(expected.additionalFieldType(), actual.additionalFieldType());
+	}
+
+	/**
+	 * Matches position by position, as {@link #matchObjects} matches field by field. A position one side
+	 * knows and the other does not is compared against what that side says about the positions past its
+	 * known ones, which is what lets {@code [NUMBER,NUMBER]} meet a scheme asking for
+	 * {@code [*:NUMBER]} while an array of unknown length does not meet one asking for two numbers.
+	 */
+	private boolean matchArrays(ArrayType expected, ArrayType actual) {
+		int positions = Math.max(expected.knownElements().size(), actual.knownElements().size());
+		for (int i = 0; i < positions; i++) {
+			if (!matchInternal(TypeRelations.elementAt(expected, i), TypeRelations.elementAt(actual, i)))
+				return false;
+		}
+		return matchInternal(expected.additionalElementType(), actual.additionalElementType());
+	}
+
+	private static Type effectiveFieldType(ObjectType object, String fieldName) {
+		Type declared = object.fields().get(fieldName);
+		return declared != null ? declared : UnionType.of(object.additionalFieldType(), UndefinedType.getInstance());
+	}
+
+	private boolean matchRecursive(RecursiveType expected, RecursiveType actual) {
+		expectedRecursiveVariables.push(expected.variable());
+		actualRecursiveVariables.push(actual.variable());
+		try {
+			return matchInternal(expected.body(), actual.body());
+		} finally {
+			expectedRecursiveVariables.pop();
+			actualRecursiveVariables.pop();
+		}
+	}
+
+	private void addConstraint(TypeVariable variable, Type candidate) {
+		Type previous = substitutions.get(variable);
+		substitutions.put(variable, previous == null ? candidate : UnionType.of(previous, candidate));
+	}
+
+	private void merge(Map<TypeVariable, Type> match) {
+		for (Map.Entry<TypeVariable, Type> substitution : match.entrySet())
+			addConstraint(substitution.getKey(), substitution.getValue());
+	}
+
+	private void restore(Map<TypeVariable, Type> snapshot) {
+		substitutions.clear();
+		substitutions.putAll(snapshot);
+	}
+
+	private static int binderIndex(Deque<TypeVariable> binders, Type type) {
+		if (!(type instanceof TypeVariable variable))
+			return -1;
+		@Var
+		int index = 0;
+		for (TypeVariable binder : binders) {
+			if (binder.equals(variable))
+				return index;
+			index++;
+		}
+		return -1;
+	}
+}

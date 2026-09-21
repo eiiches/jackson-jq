@@ -30,10 +30,21 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import tools.jackson.databind.JsonNode;
 
+import net.thisptr.jackson.jq.v2.core.CompileOptions;
+import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
+import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
+import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
+import net.thisptr.jackson.jq.v2.spi.type.NumericType;
+import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -282,7 +293,7 @@ class MainTest {
 	void warnsOnStderrAboutACommaOperandOfAPipe() throws Exception {
 		assertThat(run("{\"a\":1,\"b\":2}", "--compact", ".a, .b | .")).isEqualTo("1\n2\n");
 		assertThat(runStderr("{\"a\":1,\"b\":2}", "--compact", ".a, .b | ."))
-				.isEqualTo("""
+				.contains("""
 						jq: warning: `,` binds tighter than `|`: write `(.a, .b)` to make the grouping explicit\
 						 at line 1, column 1:
 						    .a, .b | .
@@ -294,7 +305,7 @@ class MainTest {
 	void warnsOnStderrAboutABindingPipeAfterAComma() throws Exception {
 		assertThat(run("null", "--compact", "1 + 1, 2 as $a | $a + 1")).isEqualTo("2\n3\n");
 		assertThat(runStderr("null", "--compact", "1 + 1, 2 as $a | $a + 1"))
-				.isEqualTo("""
+				.contains("""
 						jq: warning: `as` binds only `2`: write `(2 as $a | $a + 1)` to make the grouping explicit\
 						 at line 1, column 8:
 						    1 + 1, 2 as $a | $a + 1
@@ -316,7 +327,7 @@ class MainTest {
 		String query = "0 | def f: if . < 5000 then . + 1 | f else . end; f";
 
 		assertThat(run("null", "--compact", query)).isEqualTo("5000\n");
-		assertThat(runStderr("null", "--compact", "--disable-tco", "0 | def f: if . < 8 then . + 1 | f else . end; f")).isEmpty();
+		assertThat(runStderr("null", "--compact", "--no-warnings", "--disable-tco", "0 | def f: if . < 8 then . + 1 | f else . end; f")).isEmpty();
 		assertThat(run("null", "--compact", "--disable-tco", "0 | def f: if . < 8 then . + 1 | f else . end; f")).isEqualTo("8\n");
 	}
 
@@ -364,6 +375,140 @@ class MainTest {
 	@Test
 	void saysNothingWhenTheGroupingIsExplicit() throws Exception {
 		assertThat(runStderr("{\"a\":1,\"b\":2}", "--compact", "(.a, .b) | .")).isEmpty();
+	}
+
+	@Test
+	void checksTypesWithWarningsUnlessToldOtherwise() throws Exception {
+		assertThat(Main.createTypeCheckMode(parseLimits())).isEqualTo(TypeCheckMode.WARN);
+		assertThat(Main.createTypeCheckMode(parseLimits("--type-check", "off"))).isEqualTo(TypeCheckMode.OFF);
+		assertThat(Main.createTypeCheckMode(parseLimits("--type-check", "warn"))).isEqualTo(TypeCheckMode.WARN);
+		assertThat(Main.createTypeCheckMode(parseLimits("--type-check", "strict"))).isEqualTo(TypeCheckMode.STRICT);
+		assertThat(Main.createTypeCheckMode(parseLimits("--type-check", "STRICT"))).isEqualTo(TypeCheckMode.STRICT);
+	}
+
+	@Test
+	void readsTheInputTypeInTheNotationOfTheTypePackage() throws Exception {
+		assertThat(Main.createInputType(parseLimits())).isSameAs(AnyType.getInstance());
+		assertThat(Main.createInputType(parseLimits("--input-type", "STRING"))).isSameAs(StringType.getInstance());
+		assertThat(Main.createInputType(parseLimits("--input-type", "[*:{name:STRING}]")))
+				.isEqualTo(ArrayType.of(ObjectType.of("name", StringType.getInstance())));
+	}
+
+	@Test
+	void rejectsAnUnparseableInputType() throws Exception {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> Main.createInputType(parseLimits("--input-type", "[*:")))
+				.withMessageStartingWith("invalid --input-type: ")
+				.withMessageContaining("[*:");
+	}
+
+	@Test
+	void readsTheOutputTypeInTheNotationOfTheTypePackage() throws Exception {
+		assertThat(Main.createOutputType(parseLimits())).isSameAs(AnyType.getInstance());
+		assertThat(Main.createOutputType(parseLimits("--output-type", "STRING"))).isSameAs(StringType.getInstance());
+		assertThat(Main.createOutputType(parseLimits("--output-type", "[*:{name:STRING}]")))
+				.isEqualTo(ArrayType.of(ObjectType.of("name", StringType.getInstance())));
+	}
+
+	@Test
+	void rejectsAnUnparseableOutputType() throws Exception {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> Main.createOutputType(parseLimits("--output-type", "[*:")))
+				.withMessageStartingWith("invalid --output-type: ")
+				.withMessageContaining("[*:");
+	}
+
+	@Test
+	void collectsEveryCompileOptionTheCommandLineCarries() throws Exception {
+		CompileOptions options = Main.createCompileOptions(parseLimits(
+				"--type-check", "strict", "--input-type", "STRING", "--output-type", "INT", "--disable-tco"));
+
+		assertThat(options.getTypeCheckMode()).isEqualTo(TypeCheckMode.STRICT);
+		assertThat(options.getInputType()).isSameAs(StringType.getInstance());
+		assertThat(options.getOutputType()).isEqualTo(NumericType.of(NumberKind.INT));
+		assertThat(options.getOptimizationOptions().getTailCallOptimization()).isFalse();
+	}
+
+	// Declaring what the query must produce turns a query jq runs happily into a warning, without
+	// changing a byte of what it prints.
+	@Test
+	void statingTheOutputTypeFaultsAResultThatDoesNotFit() throws Exception {
+		assertThat(runStderr("null", "--compact", "1 + 1")).isEmpty();
+		assertThat(runStderr("null", "--compact", "--output-type", "STRING", "\"a\"")).isEmpty();
+		assertThat(runStderr("null", "--compact", "--output-type", "STRING", "1 + 1"))
+				.contains("jq: warning: Output type NUMBER is not assignable to the declared output type STRING");
+		assertThat(run("null", "--compact", "--output-type", "STRING", "1 + 1")).isEqualTo("2\n");
+	}
+
+	@Test
+	void saysNothingAboutTheOutputTypeWhenCheckingIsOff() throws Exception {
+		assertThat(runStderr("null", "--compact", "--type-check", "off", "--output-type", "STRING", "1 + 1")).isEmpty();
+	}
+
+	@Test
+	void rejectsUnknownTypeCheckMode() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> Main.resolveTypeCheckMode("unknown"))
+				.withMessage("unknown --type-check: unknown (expected one of: off, warn, strict)");
+	}
+
+	// A type warning never stops the query: it goes to stderr and stdout stays what jq would print.
+	// `?` makes the query one jq runs happily to no output, so what is asserted is the warning alone.
+	@Test
+	void warnsOnStderrAboutAnImpossibleIndex() throws Exception {
+		assertThat(run("null", "--compact", "1 | .a?")).isEmpty();
+		assertThat(runStderr("null", "--compact", "1 | .a?")).contains("jq: warning: Cannot index");
+	}
+
+	@Test
+	void placesOverloadLocationBeforeAcceptedTypes() throws Exception {
+		assertThat(runStderr("null", "--compact", "\"test\" | ltrimstr([1])"))
+				.contains("jq: warning: Argument 1 of ltrimstr/1 has type [INT]; expected STRING at line 1, column 19:")
+				.contains("\nAccepted types:\n  Input: STRING -> ltrimstr(STRING -> STRING) -> Output: STRING\n");
+	}
+
+	// `map` is written in jq, so what fails is a `.[]` inside its body. The caller is told which call of
+	// theirs led there instead of being shown an operation their query does not contain.
+	@Test
+	void tracesACallIntoTheBuiltinWhoseBodyFailed() throws Exception {
+		assertThat(runStderr("null", "--compact", "\"test\" | map(\"test\")?"))
+				.contains("jq: warning: Cannot iterate over STRING at line 1, column 10:\n  in map/1\n");
+	}
+
+	// Without --input-type nothing is known about the input, so the index cannot be faulted. Saying
+	// what the input is turns the same query into a warning, which is the point of the option.
+	@Test
+	void statingTheInputTypeLetsTheCheckerSeeMore() throws Exception {
+		assertThat(runStderr("[{\"name\":\"a\"}]", "--compact", ".[].name | .x?")).isEmpty();
+		assertThat(runStderr("[{\"name\":\"a\"}]", "--compact", "--input-type", "[*:{name:STRING}]",
+				".[].name | .x?")).contains("jq: warning: Cannot index STRING with a string");
+		assertThat(run("[{\"name\":\"a\"}]", "--compact", "--input-type", "[*:{name:STRING}]",
+				".[].name")).isEqualTo("\"a\"\n");
+	}
+
+	@Test
+	void saysNothingAboutTypesWhenCheckingIsOff() throws Exception {
+		assertThat(runStderr("null", "--compact", "--type-check", "off", "1 | .a?")).isEmpty();
+	}
+
+	@Test
+	void suppressesTypeWarningsOnRequest() throws Exception {
+		assertThat(runStderr("null", "--compact", "--no-warnings", "1 | .a?")).isEmpty();
+	}
+
+	// The CLI's own exit path calls System.exit, which would take the test JVM with it, so the half
+	// that is testable here is that `strict` really does turn a type problem into a failing compile.
+	@Test
+	void strictTypeCheckingRejectsTheQuery() throws Exception {
+		CompileOptions options = CompileOptions.newBuilder()
+				.setTypeCheckMode(Main.createTypeCheckMode(parseLimits("--type-check", "strict")))
+				.build();
+		Environment<JsonNode> env = Main.createEnvironment(Jackson3JsonProvider.getInstance(), Versions.JQ_1_6);
+
+		assertThatThrownBy(() -> env.compile("1 | .a", options))
+				.isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("Type checking failed");
+		assertThat(env.compile("1 | .a", CompileOptions.newBuilder().build())).isNotNull();
 	}
 
 	@Test
@@ -446,7 +591,7 @@ class MainTest {
 			System.setErr(new PrintStream(err));
 			Main.run(command, ".", Collections.emptyList(), Versions.JQ_1_6,
 					Jackson3JsonProvider.getInstance(),
-					RuntimeOptions.newBuilder().build(), runner, null);
+					RuntimeOptions.newBuilder().build(), warnTypeChecking(), runner, null);
 		} finally {
 			System.setIn(originalIn);
 			System.setOut(originalOut);
@@ -499,7 +644,7 @@ class MainTest {
 			System.setErr(new PrintStream(err));
 			Main.run(command, ".", Collections.emptyList(), Versions.JQ_1_6,
 					Jackson3JsonProvider.getInstance(),
-					RuntimeOptions.newBuilder().build(), runner, editor);
+					RuntimeOptions.newBuilder().build(), warnTypeChecking(), runner, editor);
 		} finally {
 			System.setIn(originalIn);
 			System.setOut(originalOut);
@@ -697,7 +842,7 @@ class MainTest {
 			System.setErr(new PrintStream(err));
 			Main.run(command, ".", inputFiles, Versions.JQ_1_6,
 					Jackson3JsonProvider.getInstance(),
-					RuntimeOptions.newBuilder().build(), runner, null);
+					RuntimeOptions.newBuilder().build(), warnTypeChecking(), runner, null);
 		} finally {
 			System.setIn(originalIn);
 			System.setOut(originalOut);
@@ -717,6 +862,11 @@ class MainTest {
 		return file;
 	}
 
+	// What the CLI compiles with by default: everything else left alone, type checking on and warning.
+	private static CompileOptions warnTypeChecking() {
+		return CompileOptions.newBuilder().setTypeCheckMode(TypeCheckMode.WARN).build();
+	}
+
 	private static CommandLine parseLimits(String... args) throws Exception {
 		Options options = new Options();
 		options.addOption(Option.builder().longOpt("max-string-length").numberOfArgs(1).get());
@@ -725,6 +875,10 @@ class MainTest {
 		options.addOption(Option.builder().longOpt("max-object-member-count").numberOfArgs(1).get());
 		options.addOption(Option.builder().longOpt("max-user-defined-function-calls").numberOfArgs(1).get());
 		options.addOption(Option.builder().longOpt("max-outputs-per-expression").numberOfArgs(1).get());
+		options.addOption(Option.builder().longOpt("type-check").numberOfArgs(1).get());
+		options.addOption(Option.builder().longOpt("input-type").numberOfArgs(1).get());
+		options.addOption(Option.builder().longOpt("output-type").numberOfArgs(1).get());
+		options.addOption(Option.builder().longOpt("disable-tco").get());
 		return new DefaultParser().parse(options, args);
 	}
 

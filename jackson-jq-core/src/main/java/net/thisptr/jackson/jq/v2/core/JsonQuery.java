@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
 
 /**
  * A compiled jq query, ready to be run against any number of inputs.
@@ -37,6 +38,10 @@ import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
  * @param <JsonNode> the JSON node type
  */
 public interface JsonQuery<JsonNode> {
+	/**
+	 * Returns the input/output type inferred when this query was compiled.
+	 */
+	FilterType getType();
 
 	/**
 	 * Returns a query that runs under {@code options}, replacing any previously set options.

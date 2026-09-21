@@ -4,6 +4,7 @@ import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
@@ -14,16 +15,18 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.literal.ValueLiteral;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.NullType;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class BracketFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> {
-	private final Expression<StackFrame, JsonNode> startExpr;
-	private final Expression<StackFrame, JsonNode> endExpr;
+	private final AnalyzedExpression<JsonNode> startExpr;
+	private final AnalyzedExpression<JsonNode> endExpr;
+	// An omitted bound is a literal null, and typed as one: `.[1:]` has no end, rather than an end nothing
+	// is known about.
 	private final boolean isRange;
 	private final int startOutputIndex;
 	private final int endOutputIndex;
@@ -41,29 +44,41 @@ public class BracketFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> 
 		}
 	}
 
-	public BracketFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> src, @Nullable Expression<StackFrame, JsonNode> atExpr, boolean permissive, Version version, int targetOutputIndex, int startOutputIndex) {
+	public BracketFieldAccess(JsonProvider<JsonNode> jsonProvider, AnalyzedExpression<JsonNode> src, @Nullable AnalyzedExpression<JsonNode> atExpr, boolean permissive, Version version, int targetOutputIndex, int startOutputIndex) {
 		super(jsonProvider, src, permissive, version, targetOutputIndex);
-		this.startExpr = atExpr != null ? atExpr : new ValueLiteral<>(jsonProvider.createNull());
-		this.endExpr = new ValueLiteral<>(jsonProvider.createNull());
+		this.startExpr = atExpr != null ? atExpr : new ValueLiteral<>(NullType.getInstance(), jsonProvider.createNull());
+		this.endExpr = new ValueLiteral<>(NullType.getInstance(), jsonProvider.createNull());
 		this.isRange = false;
 		this.startOutputIndex = startOutputIndex;
 		this.endOutputIndex = Memory.NO_OUTPUT_COUNTER;
 	}
 
-	public BracketFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> src, @Nullable Expression<StackFrame, JsonNode> startExpr, @Nullable Expression<StackFrame, JsonNode> endExpr, boolean permissive, Version version, int targetOutputIndex, int startOutputIndex, int endOutputIndex) {
+	public BracketFieldAccess(JsonProvider<JsonNode> jsonProvider, AnalyzedExpression<JsonNode> src, @Nullable AnalyzedExpression<JsonNode> startExpr, @Nullable AnalyzedExpression<JsonNode> endExpr, boolean permissive, Version version, int targetOutputIndex, int startOutputIndex, int endOutputIndex) {
 		super(jsonProvider, src, permissive, version, targetOutputIndex);
-		this.startExpr = startExpr != null ? startExpr : new ValueLiteral<>(jsonProvider.createNull());
-		this.endExpr = endExpr != null ? endExpr : new ValueLiteral<>(jsonProvider.createNull());
+		this.startExpr = startExpr != null ? startExpr : new ValueLiteral<>(NullType.getInstance(), jsonProvider.createNull());
+		this.endExpr = endExpr != null ? endExpr : new ValueLiteral<>(NullType.getInstance(), jsonProvider.createNull());
 		this.isRange = true;
 		this.startOutputIndex = startOutputIndex;
 		this.endOutputIndex = endOutputIndex;
 	}
 
+	public AnalyzedExpression<JsonNode> startExpr() {
+		return startExpr;
+	}
+
+	public AnalyzedExpression<JsonNode> endExpr() {
+		return endExpr;
+	}
+
+	public boolean isRange() {
+		return isRange;
+	}
+
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		Expression<StackFrame, JsonNode> rewrittenTarget = rewriter.rewrite(target);
-		Expression<StackFrame, JsonNode> rewrittenStart = rewriter.rewrite(startExpr);
-		Expression<StackFrame, JsonNode> rewrittenEnd = isRange ? rewriter.rewrite(endExpr) : endExpr;
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		AnalyzedExpression<JsonNode> rewrittenTarget = rewriter.rewrite(target);
+		AnalyzedExpression<JsonNode> rewrittenStart = rewriter.rewrite(startExpr);
+		AnalyzedExpression<JsonNode> rewrittenEnd = isRange ? rewriter.rewrite(endExpr) : endExpr;
 		if (rewrittenTarget == target && rewrittenStart == startExpr && rewrittenEnd == endExpr)
 			return this;
 		return isRange

@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.FunctionDependsOnInfo;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Closure;
@@ -12,7 +13,6 @@ import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -23,13 +23,13 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements RewritableExpre
 	private final String name;
 	private final int closureSlot;
 	private final int frameClosureSlot;
-	private final List<Expression<StackFrame, JsonNode>> args;
+	private final List<AnalyzedExpression<JsonNode>> args;
 	private final boolean dependsOnInput;
 	private final boolean dependsOnExternalState;
 	private final Set<Integer> freeLocalSlots;
 	private final @Nullable FunctionDependsOnInfo info;
 
-	public ResolvedCapturedFunctionAccess(BindContext<JsonNode> bindContext, String name, int closureSlot, int frameClosureSlot, List<Expression<StackFrame, JsonNode>> args, @Nullable FunctionDependsOnInfo info) {
+	public ResolvedCapturedFunctionAccess(BindContext<JsonNode> bindContext, String name, int closureSlot, int frameClosureSlot, List<AnalyzedExpression<JsonNode>> args, @Nullable FunctionDependsOnInfo info) {
 		this.bindContext = bindContext;
 		this.name = name;
 		this.closureSlot = closureSlot;
@@ -38,8 +38,8 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements RewritableExpre
 		this.info = info;
 		boolean ownInput = info == null || info.dependsOnInput();
 		boolean ownExternal = info == null || info.dependsOnExternalState();
-		this.dependsOnInput = ownInput || args.stream().anyMatch(Expression::dependsOnInput);
-		this.dependsOnExternalState = ownExternal || args.stream().anyMatch(Expression::dependsOnExternalState);
+		this.dependsOnInput = ownInput || args.stream().anyMatch(AnalyzedExpression::dependsOnInput);
+		this.dependsOnExternalState = ownExternal || args.stream().anyMatch(AnalyzedExpression::dependsOnExternalState);
 		// Finding the callee itself already crosses a closure hop -- stay unconditionally opaque for the
 		// "own" contribution (matching ResolvedCapturedVariableAccess's "defs stay conservative"
 		// precedent); only args, evaluated in the caller's own frame, are ever subtractable.
@@ -58,7 +58,7 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements RewritableExpre
 		return frameClosureSlot;
 	}
 
-	public List<Expression<StackFrame, JsonNode>> args() {
+	public List<AnalyzedExpression<JsonNode>> args() {
 		return args;
 	}
 
@@ -83,8 +83,8 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements RewritableExpre
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		List<Expression<StackFrame, JsonNode>> rewritten = ExpressionRewriter.rewriteAll(args, rewriter);
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		List<AnalyzedExpression<JsonNode>> rewritten = ExpressionRewriter.rewriteAll(args, rewriter);
 		return rewritten == args ? this : new ResolvedCapturedFunctionAccess<>(bindContext, name, closureSlot, frameClosureSlot, rewritten, info);
 	}
 
@@ -95,6 +95,6 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements RewritableExpre
 		if (factory == null) {
 			throw new JsonQueryException("Function " + name + " is not defined");
 		}
-		factory.bind(bindContext, args).apply(frame, in, path, output);
+		factory.<StackFrame, JsonNode>bind(bindContext, new java.util.ArrayList<>(args)).apply(frame, in, path, output);
 	}
 }

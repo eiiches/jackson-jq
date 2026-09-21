@@ -7,7 +7,6 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-
 public class ObjectMatcherAstNode extends AbstractAstNode implements PatternMatcherAstNode {
 	private final List<FieldMatcher> matchers;
 

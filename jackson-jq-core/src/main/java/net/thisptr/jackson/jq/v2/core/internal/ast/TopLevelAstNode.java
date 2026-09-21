@@ -6,7 +6,6 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-
 public class TopLevelAstNode extends AbstractAstNode {
 	private final List<ImportStatement> imports;
 	private final AstNode expr;

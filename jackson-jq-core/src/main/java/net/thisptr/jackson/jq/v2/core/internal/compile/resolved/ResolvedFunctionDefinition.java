@@ -7,6 +7,7 @@ import java.util.Set;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.ClosureSpec;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
@@ -36,7 +37,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpressio
 	private final int fnSize;
 	private final List<String> paramNames;
 	private final List<Integer> paramSlots;
-	private final Expression<StackFrame, JsonNode> resolvedBody;
+	private final AnalyzedExpression<JsonNode> resolvedBody;
 	private final int ownClosureSlot;
 	private final int definerClosureSlot;
 	// Whether each execution of this body draws on RuntimeOptions#setMaxUserDefinedFunctionCalls. Set by the
@@ -50,7 +51,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpressio
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public ResolvedFunctionDefinition(int slot, ClosureSpec closureSpec, int fnSize, List<String> paramNames, List<Integer> paramSlots, Expression<StackFrame, JsonNode> resolvedBody, int ownClosureSlot, int definerClosureSlot, boolean metered, int tailCallSlot) {
+	public ResolvedFunctionDefinition(int slot, ClosureSpec closureSpec, int fnSize, List<String> paramNames, List<Integer> paramSlots, AnalyzedExpression<JsonNode> resolvedBody, int ownClosureSlot, int definerClosureSlot, boolean metered, int tailCallSlot) {
 		this.slot = slot;
 		this.closureSpec = closureSpec;
 		this.fnSize = fnSize;
@@ -99,7 +100,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpressio
 		return paramSlots;
 	}
 
-	public Expression<StackFrame, JsonNode> resolvedBody() {
+	public AnalyzedExpression<JsonNode> resolvedBody() {
 		return resolvedBody;
 	}
 
@@ -136,8 +137,8 @@ public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpressio
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(resolvedBody);
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		AnalyzedExpression<JsonNode> rewritten = rewriter.rewrite(resolvedBody);
 		return rewritten == resolvedBody
 				? this
 				: new ResolvedFunctionDefinition<>(slot, closureSpec, fnSize, paramNames, paramSlots, rewritten, ownClosureSlot, definerClosureSlot, metered, tailCallSlot);
@@ -171,7 +172,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpressio
 		@Override
 		@SuppressWarnings("unchecked")
 		public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> fnArgs) {
-			List<Expression<StackFrame, N>> effectiveFnArgs = (List<Expression<StackFrame, N>>) (List<?>) fnArgs;
+			List<AnalyzedExpression<N>> effectiveFnArgs = (List<AnalyzedExpression<N>>) (List<?>) fnArgs;
 			return (callerFrame, input, path, out) -> {
 				StackFrame effectiveCallerFrame = (StackFrame) callerFrame;
 				Memory memory = effectiveCallerFrame.getEnclosingMemory();
@@ -213,7 +214,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpressio
 			// RuntimeOptions#setMaxUserDefinedFunctionCalls still bounds a runaway recursion.
 			if (metered)
 				frame.getEnclosingMemory().countUserDefinedFunctionCall();
-			Expression<StackFrame, Object> body = (Expression<StackFrame, Object>) resolvedBody;
+			AnalyzedExpression<Object> body = (AnalyzedExpression<Object>) resolvedBody;
 			body.apply(frame, in, (Path<Object>) ipath, (Output<Object>) output);
 		}
 	}

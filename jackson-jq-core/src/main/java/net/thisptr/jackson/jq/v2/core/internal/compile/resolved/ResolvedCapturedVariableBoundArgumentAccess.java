@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.compile.resolved;
 import java.util.Collections;
 import java.util.Set;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.BoundArgumentInfo;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Closure;
@@ -10,7 +11,6 @@ import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.path.PathAndValue;
 import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -22,7 +22,7 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
  * dependency facts. Kept as a separate class (rather than a nullable field on the base class) so the
  * common, unbound case stays exactly as small/inlinable as before.
  */
-public class ResolvedCapturedVariableBoundArgumentAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class ResolvedCapturedVariableBoundArgumentAccess<JsonNode> implements AnalyzedExpression<JsonNode>, FreeVariables {
 	private final String name;
 	private final int closureSlot;
 	private final int frameClosureSlot;

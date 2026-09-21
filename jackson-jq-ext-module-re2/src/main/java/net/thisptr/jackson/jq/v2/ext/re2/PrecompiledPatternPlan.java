@@ -45,17 +45,21 @@ final class PrecompiledPatternPlan {
 		if (regexValues == null || flagsValues == null || regexValues.size() > MAX_VALUES || flagsValues.size() > MAX_VALUES || exceedsProductLimit(regexValues.size(), flagsValues.size()))
 			return null;
 
-		List<Re2Pattern> patterns = new ArrayList<>(regexValues.size() * flagsValues.size());
-		if (flagsFirst) {
-			for (JsonNode flags : flagsValues)
-				for (JsonNode regex : regexValues)
-					patterns.add(compile(jsonProvider, regex, flags, nullableFlags));
-		} else {
-			for (JsonNode regex : regexValues)
+		try {
+			List<Re2Pattern> patterns = new ArrayList<>(regexValues.size() * flagsValues.size());
+			if (flagsFirst) {
 				for (JsonNode flags : flagsValues)
-					patterns.add(compile(jsonProvider, regex, flags, nullableFlags));
+					for (JsonNode regex : regexValues)
+						patterns.add(compile(jsonProvider, regex, flags, nullableFlags));
+			} else {
+				for (JsonNode regex : regexValues)
+					for (JsonNode flags : flagsValues)
+						patterns.add(compile(jsonProvider, regex, flags, nullableFlags));
+			}
+			return new PrecompiledPatternPlan(List.copyOf(patterns), flagsValues.size());
+		} catch (RuntimeException e) {
+			return null;
 		}
-		return new PrecompiledPatternPlan(List.copyOf(patterns), flagsValues.size());
 	}
 
 	private static <Context extends RuntimeContext, JsonNode> @Nullable List<JsonNode> constantResults(Expression<Context, JsonNode> expression) {

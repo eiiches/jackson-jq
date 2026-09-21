@@ -2,8 +2,8 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.matcher;
 
 import java.util.function.UnaryOperator;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -33,6 +33,29 @@ public interface PatternMatcher<JsonNode> {
 		void matched() throws JsonQueryException;
 	}
 
+	/**
+	 * A visitor over every pattern a jq destructuring can compile to.
+	 * <p>
+	 * The three implementations below are the whole language: a variable, an array pattern and an object
+	 * pattern. Analyses dispatch through this rather than on {@code instanceof} so that adding a fourth
+	 * matcher breaks every analysis at compile time instead of silently taking some default branch.
+	 *
+	 * @param <JsonNode> the JSON node type
+	 * @param <R> what the visit produces
+	 */
+	interface Visitor<JsonNode, R> {
+		R visit(ValueMatcher<JsonNode> matcher);
+
+		R visit(ArrayMatcher<JsonNode> matcher);
+
+		R visit(ObjectMatcher<JsonNode> matcher);
+	}
+
+	/**
+	 * Dispatches to the {@link Visitor} method for this matcher's kind.
+	 */
+	<R> R accept(Visitor<JsonNode, R> visitor);
+
 	void match(StackFrame frame, JsonNode in, OnMatch onMatch) throws JsonQueryException;
 
 	void matchWithPath(StackFrame frame, JsonNode in, Path<JsonNode> path, OnMatch onMatch) throws JsonQueryException;
@@ -47,7 +70,7 @@ public interface PatternMatcher<JsonNode> {
 	/**
 	 * Rewrites expressions embedded in this matcher, returning this matcher when none changed.
 	 */
-	default PatternMatcher<JsonNode> rewriteExpressions(UnaryOperator<Expression<StackFrame, JsonNode>> rewriter) {
+	default PatternMatcher<JsonNode> rewriteExpressions(UnaryOperator<AnalyzedExpression<JsonNode>> rewriter) {
 		return this;
 	}
 }
