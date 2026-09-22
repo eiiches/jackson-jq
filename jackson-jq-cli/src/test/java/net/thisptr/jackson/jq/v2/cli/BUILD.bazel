@@ -7,6 +7,7 @@ jjq_java_test_suite(
         "JsonTextHighlighterTest.java",
         "MainTest.java",
         "PlaygroundTest.java",
+        "VimQueryEditorTest.java",
     ],
     release = 17,
     visibility = ["//jackson-jq-cli:__subpackages__"],

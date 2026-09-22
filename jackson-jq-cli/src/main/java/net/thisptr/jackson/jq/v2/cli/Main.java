@@ -65,6 +65,12 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class Main {
+	private enum VimSetting {
+		AUTO,
+		ENABLED,
+		DISABLED
+	}
+
 	/**
 	 * jq indents with two spaces.
 	 */
@@ -158,15 +164,45 @@ public class Main {
 			.longOpt("interactive")
 			.desc("interactive playground TUI")
 			.get();
+	private static final Option OPT_VIM = Option.builder()
+			.longOpt("vim")
+			.hasArg()
+			.argName("auto|true|false")
+			.desc("Vim keybindings: auto, true, or false (bare --vim means true and implies --interactive)")
+			.get();
 	private static final Option OPT_HELP = Option.builder("h")
 			.longOpt("help")
 			.desc("print this message")
 			.get();
 
 	static CommandLineParser createCommandLineParser() {
-		return DefaultParser.builder()
+		CommandLineParser delegate = DefaultParser.builder()
 				.setAllowPartialMatching(false)
 				.get();
+		return new CommandLineParser() {
+			@Override
+			public CommandLine parse(Options options, String[] arguments) throws ParseException {
+				return delegate.parse(options, normalizeVimArguments(arguments));
+			}
+
+			@Override
+			public CommandLine parse(Options options, String[] arguments, boolean stopAtNonOption) throws ParseException {
+				return delegate.parse(options, normalizeVimArguments(arguments), stopAtNonOption);
+			}
+		};
+	}
+
+	private static String[] normalizeVimArguments(String[] arguments) {
+		String[] normalized = arguments.clone();
+		for (int i = 0; i < normalized.length; i++) {
+			if (normalized[i].equals("--")) {
+				break;
+			}
+			if (normalized[i].equals("--vim")) {
+				normalized[i] = "--vim=true";
+			}
+		}
+		return normalized;
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -190,6 +226,7 @@ public class Main {
 		options.addOption(OPT_MAX_USER_DEFINED_FUNCTION_CALLS);
 		options.addOption(OPT_MAX_OUTPUTS_PER_EXPRESSION);
 		options.addOption(OPT_INTERACTIVE);
+		options.addOption(OPT_VIM);
 		options.addOption(OPT_HELP);
 		CommandLine command;
 		List<String> rest;
@@ -210,7 +247,14 @@ public class Main {
 				System.exit(1);
 			}
 		}
-		boolean interactive = command.hasOption(OPT_INTERACTIVE.getLongOpt());
+		boolean interactive;
+		try {
+			interactive = isInteractive(command);
+		} catch (IllegalArgumentException e) {
+			System.err.println(e.getMessage());
+			System.exit(1);
+			throw e;
+		}
 		String queryFile = command.getOptionValue(OPT_FROM_FILE.getOpt());
 		if ((queryFile == null && rest.isEmpty() && !interactive) || command.hasOption(OPT_HELP.getOpt())) {
 			HelpFormatter help = HelpFormatter.builder().get();
@@ -403,13 +447,19 @@ public class Main {
 
 	static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider,
 						RuntimeOptions runtimeOptions, @Nullable TuiRunner customRunner) throws Exception {
+		run(command, query, inputFiles, version, jsonProvider, runtimeOptions, customRunner, System.getenv("EDITOR"));
+	}
+
+	static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider,
+						RuntimeOptions runtimeOptions, @Nullable TuiRunner customRunner,
+						@Nullable String editor) throws Exception {
 		Environment<N> env = createEnvironment(jsonProvider, version);
 		/*
 		 * jq itself emits no warnings at all, so this is purely additive: it goes to stderr, leaving
 		 * stdout and the exit code byte-for-byte what jq would produce.
 		 */
 		CompileOptions.Builder compileOptionsBuilder = CompileOptions.newBuilder();
-		if (!command.hasOption(OPT_NO_WARNINGS.getLongOpt()) && !command.hasOption(OPT_INTERACTIVE.getLongOpt())) {
+		if (!command.hasOption(OPT_NO_WARNINGS.getLongOpt()) && !isInteractive(command)) {
 			compileOptionsBuilder.setDiagnosticListener(diagnostic -> {
 				SourceLocation location = diagnostic.location();
 				String excerpt = location != null ? location.excerpt(query) : null;
@@ -461,7 +511,7 @@ public class Main {
 				}
 			}
 		}
-		if (command.hasOption(OPT_INTERACTIVE.getLongOpt())) {
+		if (isInteractive(command)) {
 			if (failed)
 				System.exit(1);
 			@Var byte[] rawInputBytes = null;
@@ -503,7 +553,8 @@ public class Main {
 				return t;
 			});
 			Playground<N> pg = new Playground<>(env, version, providerName, rawInputBytes, nullInput, rawInput, slurp,
-					query, jsonProvider, runtimeOptions, compileOptions, compact, rawOutput, warningsEnabled, inputFiles, System.out, System.err);
+					query, jsonProvider, runtimeOptions, compileOptions, compact, rawOutput, warningsEnabled, inputFiles,
+					isVimMode(command, editor), System.out, System.err);
 			pg.setEvaluationExecutor(evalExecutor);
 			try {
 				pg.run(runner);
@@ -559,6 +610,58 @@ public class Main {
 			}
 		}
 		return TuiRunner.create();
+	}
+
+	static boolean isInteractive(CommandLine command) {
+		VimSetting vimSetting = resolveVimSetting(command);
+		return command.hasOption(OPT_INTERACTIVE.getLongOpt()) || vimSetting == VimSetting.ENABLED;
+	}
+
+	static boolean isVimMode(CommandLine command, @Nullable String editor) {
+		return switch (resolveVimSetting(command)) {
+			case ENABLED -> true;
+			case DISABLED -> false;
+			case AUTO -> isVimEditor(editor);
+		};
+	}
+
+	private static VimSetting resolveVimSetting(CommandLine command) {
+		String value = command.getOptionValue(OPT_VIM.getLongOpt());
+		if (value == null) {
+			return VimSetting.AUTO;
+		}
+		return switch (value) {
+			case "auto" -> VimSetting.AUTO;
+			case "true" -> VimSetting.ENABLED;
+			case "false" -> VimSetting.DISABLED;
+			default -> throw new IllegalArgumentException(
+					"invalid --vim: " + value + " (expected one of: auto, true, false)");
+		};
+	}
+
+	static boolean isVimEditor(@Nullable String editor) {
+		if (editor == null) {
+			return false;
+		}
+		String command = editor.trim();
+		if (command.isEmpty()) {
+			return false;
+		}
+		String executable;
+		char first = command.charAt(0);
+		if (first == '\'' || first == '"') {
+			int closingQuote = command.indexOf(first, 1);
+			executable = closingQuote < 0 ? command.substring(1) : command.substring(1, closingQuote);
+		} else {
+			@Var int end = 0;
+			while (end < command.length() && !Character.isWhitespace(command.charAt(end))) {
+				end++;
+			}
+			executable = command.substring(0, end);
+		}
+		int slash = Math.max(executable.lastIndexOf('/'), executable.lastIndexOf('\\'));
+		String basename = executable.substring(slash + 1);
+		return basename.equals("vi") || basename.equals("vim");
 	}
 
 	private static final class DevTtyPty extends ExecPty {

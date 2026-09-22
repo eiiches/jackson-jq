@@ -47,6 +47,86 @@ class PlaygroundTest {
 	private static final Jackson3JsonProvider JSON = Jackson3JsonProvider.getInstance();
 
 	@Test
+	void vimModeEditsQueryAndSubmitsWithColonQ() throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6),
+				Versions.JQ_1_6,
+				"jackson3",
+				"{\"name\":\"Alice\"}".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				".",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				Collections.emptyList(),
+				true,
+				new PrintStream(out),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		assertThat(lineToPlainText(pg.buildGuideLine(Playground.Focus.QUERY)))
+				.contains("hjkl Navigate", ":q Apply & Exit")
+				.doesNotContain("Esc Emit & Quit");
+
+		TuiRunner runner = createTestRunner(
+				new ByteArrayOutputStream(),
+				KeyEvent.ofChar('A'),
+				KeyEvent.ofChar('n'),
+				KeyEvent.ofChar('a'),
+				KeyEvent.ofChar('m'),
+				KeyEvent.ofChar('e'),
+				KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofChar(':'),
+				KeyEvent.ofChar('q'),
+				KeyEvent.ofKey(KeyCode.ENTER),
+				KeyEvent.ofChar('y'));
+
+		pg.run(runner);
+
+		assertThat(pg.getQuery()).isEqualTo(".name");
+		assertThat(pg.isAccepted()).isTrue();
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("\"Alice\"\n");
+	}
+
+	@Test
+	void tabLeavesVimInsertModeAndMovesFocus() throws Exception {
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6),
+				Versions.JQ_1_6,
+				"jackson3",
+				null,
+				true,
+				false,
+				false,
+				".",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				Collections.emptyList(),
+				true,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(createTestRunner(
+				new ByteArrayOutputStream(),
+				KeyEvent.ofChar('i'),
+				KeyEvent.ofKey(KeyCode.TAB),
+				KeyEvent.ofChar('c', KeyModifiers.CTRL),
+				KeyEvent.ofChar('y')));
+
+		assertThat(pg.getFocus()).isEqualTo(Playground.Focus.DIAGNOSTICS);
+		assertThat(pg.isAccepted()).isFalse();
+	}
+
+	@Test
 	void initializesWithEvaluatedPreview() {
 		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
 		JsonNode input = JSON.createObject(Collections.singletonMap("name", JSON.createString("Alice")));
