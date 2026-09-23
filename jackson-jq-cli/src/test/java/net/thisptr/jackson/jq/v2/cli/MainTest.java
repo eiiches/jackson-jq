@@ -28,6 +28,7 @@ import org.jline.terminal.impl.LineDisciplineTerminal;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
@@ -415,16 +416,23 @@ class MainTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "-i", "--interactive" })
+	@ValueSource(strings = { "-i", "--interactive", "--vim", "--vim=true" })
 	void runsPlaygroundWithCustomRunner(String opt) throws Exception {
 		Options options = new Options();
 		options.addOption(Option.builder("i").longOpt("interactive").get());
+		options.addOption(Option.builder().longOpt("vim").hasArg().get());
 		options.addOption(Option.builder("c").longOpt("compact").get());
-		CommandLine command = new DefaultParser().parse(options, new String[] { opt, "-c" });
+		CommandLine command = Main.createCommandLineParser().parse(options, new String[] { opt, "-c" });
 
 		ByteArrayOutputStream termOut = new ByteArrayOutputStream();
 		TuiRunner runner = createTestRunner("", termOut);
-		runner.dispatch(KeyEvent.ofKey(KeyCode.ESCAPE));
+		if (opt.equals("--vim") || opt.equals("--vim=true")) {
+			runner.dispatch(KeyEvent.ofChar(':'));
+			runner.dispatch(KeyEvent.ofChar('q'));
+			runner.dispatch(KeyEvent.ofKey(KeyCode.ENTER));
+		} else {
+			runner.dispatch(KeyEvent.ofKey(KeyCode.ESCAPE));
+		}
 		runner.dispatch(KeyEvent.ofChar('y'));
 
 		InputStream originalIn = System.in;
@@ -438,7 +446,7 @@ class MainTest {
 			System.setErr(new PrintStream(err));
 			Main.run(command, ".", Collections.emptyList(), Versions.JQ_1_6,
 					Jackson3JsonProvider.getInstance(),
-					RuntimeOptions.newBuilder().build(), runner);
+					RuntimeOptions.newBuilder().build(), runner, null);
 		} finally {
 			System.setIn(originalIn);
 			System.setOut(originalOut);
@@ -447,6 +455,164 @@ class MainTest {
 
 		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("{\"x\":123}\n");
 		assertThat(err.toString(StandardCharsets.UTF_8)).isEqualTo("jackson-jq -c -- '.'\n");
+	}
+
+	@ParameterizedTest
+	@CsvSource({
+			"--interactive, vim, true",
+			"--interactive, vi, true",
+			"--interactive, /usr/bin/vim, true",
+			"--interactive, nano, false",
+			"--interactive, nvim, false",
+			"'--interactive --vim=auto', vi, true",
+			"'--interactive --vim=auto', nano, false",
+			"'--interactive --vim=false', vim, false",
+			"'--vim=true', nano, true"
+	})
+	void runsPlaygroundWithAutoVimAndOverrides(String cliArgs, String editor, boolean expectVim) throws Exception {
+		Options options = new Options();
+		options.addOption(Option.builder("i").longOpt("interactive").get());
+		options.addOption(Option.builder().longOpt("vim").hasArg().get());
+		options.addOption(Option.builder("c").longOpt("compact").get());
+		String[] args = (cliArgs + " -c").split(" ");
+		CommandLine command = Main.createCommandLineParser().parse(options, args);
+
+		ByteArrayOutputStream termOut = new ByteArrayOutputStream();
+		TuiRunner runner = createTestRunner("", termOut);
+		if (expectVim) {
+			runner.dispatch(KeyEvent.ofChar(':'));
+			runner.dispatch(KeyEvent.ofChar('q'));
+			runner.dispatch(KeyEvent.ofKey(KeyCode.ENTER));
+		} else {
+			runner.dispatch(KeyEvent.ofKey(KeyCode.ESCAPE));
+		}
+		runner.dispatch(KeyEvent.ofChar('y'));
+
+		InputStream originalIn = System.in;
+		PrintStream originalOut = System.out;
+		PrintStream originalErr = System.err;
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		ByteArrayOutputStream err = new ByteArrayOutputStream();
+		try {
+			System.setIn(new ByteArrayInputStream("{\"x\":123}".getBytes(StandardCharsets.UTF_8)));
+			System.setOut(new PrintStream(out));
+			System.setErr(new PrintStream(err));
+			Main.run(command, ".", Collections.emptyList(), Versions.JQ_1_6,
+					Jackson3JsonProvider.getInstance(),
+					RuntimeOptions.newBuilder().build(), runner, editor);
+		} finally {
+			System.setIn(originalIn);
+			System.setOut(originalOut);
+			System.setErr(originalErr);
+		}
+
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("{\"x\":123}\n");
+		assertThat(err.toString(StandardCharsets.UTF_8)).isEqualTo("jackson-jq -c -- '.'\n");
+	}
+
+	@Test
+	void parsesVimModesWithoutConsumingTheQuery() throws Exception {
+		Options options = new Options();
+		options.addOption(Option.builder("i").longOpt("interactive").get());
+		options.addOption(Option.builder().longOpt("vim").hasArg().get());
+
+		CommandLine omitted = Main.createCommandLineParser().parse(options, new String[] { ".name" });
+		assertThat(omitted.getOptionValue("vim")).isNull();
+		assertThat(omitted.getArgList()).containsExactly(".name");
+		assertThat(Main.isInteractive(omitted)).isFalse();
+
+		CommandLine bareVim = Main.createCommandLineParser().parse(options, new String[] { "--vim", ".name" });
+		assertThat(bareVim.getOptionValue("vim")).isEqualTo("true");
+		assertThat(bareVim.getArgList()).containsExactly(".name");
+		assertThat(Main.isInteractive(bareVim)).isTrue();
+
+		CommandLine explicitVim = Main.createCommandLineParser().parse(options, new String[] { "--vim=true", ".name" });
+		assertThat(explicitVim.getOptionValue("vim")).isEqualTo("true");
+		assertThat(explicitVim.getArgList()).containsExactly(".name");
+		assertThat(Main.isInteractive(explicitVim)).isTrue();
+
+		CommandLine autoVim = Main.createCommandLineParser().parse(options, new String[] { "--vim=auto", ".name" });
+		assertThat(autoVim.getOptionValue("vim")).isEqualTo("auto");
+		assertThat(autoVim.getArgList()).containsExactly(".name");
+		assertThat(Main.isInteractive(autoVim)).isFalse();
+
+		CommandLine disabledVim = Main.createCommandLineParser().parse(options, new String[] { "--vim=false", ".name" });
+		assertThat(disabledVim.getOptionValue("vim")).isEqualTo("false");
+		assertThat(disabledVim.getArgList()).containsExactly(".name");
+		assertThat(Main.isInteractive(disabledVim)).isFalse();
+
+		CommandLine interactiveAuto = Main.createCommandLineParser()
+				.parse(options, new String[] { "--interactive", "--vim=auto", ".name" });
+		assertThat(interactiveAuto.getOptionValue("vim")).isEqualTo("auto");
+		assertThat(interactiveAuto.getArgList()).containsExactly(".name");
+		assertThat(Main.isInteractive(interactiveAuto)).isTrue();
+
+		CommandLine escaped = Main.createCommandLineParser().parse(options, new String[] { "--", "--vim" });
+		assertThat(escaped.getOptionValue("vim")).isNull();
+		assertThat(escaped.getArgList()).containsExactly("--vim");
+		assertThat(Main.isInteractive(escaped)).isFalse();
+	}
+
+	@Test
+	void resolvesVimModeFromEditorAndExplicitOverrides() throws Exception {
+		Options options = new Options();
+		options.addOption(Option.builder("i").longOpt("interactive").get());
+		options.addOption(Option.builder().longOpt("vim").hasArg().get());
+
+		CommandLine automatic = Main.createCommandLineParser().parse(options, new String[] { "--interactive" });
+		assertThat(Main.isVimMode(automatic, "vi")).isTrue();
+		assertThat(Main.isVimMode(automatic, "vim")).isTrue();
+		assertThat(Main.isVimMode(automatic, "vim -f")).isTrue();
+		assertThat(Main.isVimMode(automatic, "/usr/bin/vim")).isTrue();
+		assertThat(Main.isVimMode(automatic, "/usr/bin/vi")).isTrue();
+		assertThat(Main.isVimMode(automatic, "'/path with spaces/vim' -f")).isTrue();
+		assertThat(Main.isVimMode(automatic, "\"/path with spaces/vi\" --clean")).isTrue();
+		assertThat(Main.isVimMode(automatic, null)).isFalse();
+		assertThat(Main.isVimMode(automatic, "")).isFalse();
+		assertThat(Main.isVimMode(automatic, "   ")).isFalse();
+		assertThat(Main.isVimMode(automatic, "nano")).isFalse();
+		assertThat(Main.isVimMode(automatic, "nvim")).isFalse();
+		assertThat(Main.isVimMode(automatic, "vim90")).isFalse();
+		assertThat(Main.isVimMode(automatic, "gvim")).isFalse();
+
+		CommandLine explicitAuto = Main.createCommandLineParser()
+				.parse(options, new String[] { "--interactive", "--vim=auto" });
+		assertThat(Main.isVimMode(explicitAuto, "vim")).isTrue();
+		assertThat(Main.isVimMode(explicitAuto, "nano")).isFalse();
+
+		CommandLine bare = Main.createCommandLineParser().parse(options, new String[] { "--vim" });
+		assertThat(Main.isVimMode(bare, "nano")).isTrue();
+		assertThat(Main.isVimMode(bare, null)).isTrue();
+
+		CommandLine enabled = Main.createCommandLineParser().parse(options, new String[] { "--vim=true" });
+		assertThat(Main.isVimMode(enabled, "nano")).isTrue();
+		assertThat(Main.isVimMode(enabled, null)).isTrue();
+
+		CommandLine disabled = Main.createCommandLineParser()
+				.parse(options, new String[] { "--interactive", "--vim=false" });
+		assertThat(Main.isVimMode(disabled, "vim")).isFalse();
+		assertThat(Main.isVimMode(disabled, "/usr/bin/vi")).isFalse();
+	}
+
+	@Test
+	void rejectsUnknownVimMode() throws Exception {
+		Options options = new Options();
+		options.addOption(Option.builder("i").longOpt("interactive").get());
+		options.addOption(Option.builder().longOpt("vim").hasArg().get());
+
+		CommandLine command = Main.createCommandLineParser().parse(options, new String[] { "--vim=maybe" });
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> Main.isInteractive(command))
+				.withMessage("invalid --vim: maybe (expected one of: auto, true, false)");
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> Main.isVimMode(command, "vim"))
+				.withMessage("invalid --vim: maybe (expected one of: auto, true, false)");
+
+		CommandLine interactiveCommand = Main.createCommandLineParser()
+				.parse(options, new String[] { "--interactive", "--vim=invalid" });
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> Main.isInteractive(interactiveCommand))
+				.withMessage("invalid --vim: invalid (expected one of: auto, true, false)");
 	}
 
 	@Test
@@ -531,7 +697,7 @@ class MainTest {
 			System.setErr(new PrintStream(err));
 			Main.run(command, ".", inputFiles, Versions.JQ_1_6,
 					Jackson3JsonProvider.getInstance(),
-					RuntimeOptions.newBuilder().build(), runner);
+					RuntimeOptions.newBuilder().build(), runner, null);
 		} finally {
 			System.setIn(originalIn);
 			System.setOut(originalOut);

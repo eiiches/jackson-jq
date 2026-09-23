@@ -15,6 +15,7 @@ jjq_java_library(
         "JsonTreePane.java",
         "Main.java",
         "Playground.java",
+        "VimQueryEditor.java",
     ],
     release = 17,
     visibility = ["//jackson-jq-cli:__subpackages__"],

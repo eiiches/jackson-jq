@@ -115,6 +115,8 @@ $ curl -s https://api.github.com/repos/eiiches/jackson-jq | java -jar jackson-jq
 
 The query and any input files are optional; the query defaults to `.`, and `-n` starts the playground with `null` as the input.
 
+Vim keybindings default to `--vim=auto`: interactive mode enables them when the executable named by `EDITOR` is `vi` or `vim`. Paths and editor arguments are accepted, such as `EDITOR=/usr/bin/vim` or `EDITOR="vim -f"`. Use `--vim` or `--vim=true` to force Vim keybindings and imply `--interactive`; use `--vim=false` to force standard editing. Press `Esc` to return to Normal mode and use `:q` to apply the query and exit.
+
 ![interactive playground](docs/interactive-tui.png)
 
 The screen is split into a query editor, a diagnostics pane, and input and output previews. `Tab` (`Shift+Tab` for the reverse direction) moves the focus between them.

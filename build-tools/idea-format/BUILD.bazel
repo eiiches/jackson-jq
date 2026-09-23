@@ -9,13 +9,19 @@ java_import(
     jars = ["@intellij_code_formatter//file:intellij-code-formatter.jar"],
 )
 
+java_import(
+    name = "streamex_jar",
+    jars = ["@streamex//file:streamex.jar"],
+)
+
 java_library(
     name = "idea_format_stubs",
-    srcs = ["idea-format-stubs/com/intellij/ide/todo/TodoConfiguration.java"],
+    srcs = glob(["idea-format-stubs/**/*.java"]),
     javacopts = [
         "--release",
         "21",
     ],
+    deps = [":intellij_code_formatter_jar"],
 )
 
 java_binary(
@@ -41,6 +47,7 @@ java_binary(
     deps = [
         ":idea_format_stubs",
         ":intellij_code_formatter_jar",
+        ":streamex_jar",
         "@maven//:commons_cli_commons_cli",
     ],
 )
