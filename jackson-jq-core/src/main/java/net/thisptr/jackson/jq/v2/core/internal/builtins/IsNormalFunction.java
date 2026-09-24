@@ -17,14 +17,17 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
 import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.NumericType;
 import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @FunctionRegistration(name = "isnormal", nargs = 0)
 public class IsNormalFunction implements Function {
-	// A non-number is not an error here; it simply answers false.
+	// A non-number is not an error here; it answers false, and saying so is what lets a type test written
+	// as this predicate rule the other kinds out of the branch it guards.
 	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
-			TypeScheme.of(FunctionType.of(AnyType.getInstance(), BooleanType.getInstance())));
+			TypeScheme.of(FunctionType.of(NumericType.getInstance(), BooleanType.getInstance())),
+			TypeScheme.of(FunctionType.of(AnyType.getInstance(), BooleanType.of(false))));
 
 	@Override
 	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {

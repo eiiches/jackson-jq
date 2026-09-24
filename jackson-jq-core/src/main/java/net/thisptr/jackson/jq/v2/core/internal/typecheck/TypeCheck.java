@@ -99,6 +99,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionParameter;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
+import net.thisptr.jackson.jq.v2.spi.type.BinaryType;
 import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
 import net.thisptr.jackson.jq.v2.spi.type.FilterType;
 import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
@@ -147,6 +148,27 @@ public final class TypeCheck {
 	private static final int MAX_CALL_DEPTH = 64;
 
 	/**
+	 * How many alternatives an input may have before a condition stops being run against each of them.
+	 * A discrimination anyone writes covers a handful of kinds; past this the answer is not worth the
+	 * passes it would take to work out.
+	 */
+	private static final int MAX_NARROWED_ALTERNATIVES = 16;
+
+	/**
+	 * The kinds of value {@link AnyType} admits, each described as widely as its kind allows. Together
+	 * they cover every value, which is what lets a condition answering for all of them be read as a test
+	 * of which kind the input is.
+	 */
+	private static final List<Type> VALUE_KINDS = List.of(
+			NullType.getInstance(),
+			BooleanType.getInstance(),
+			NumericType.getInstance(),
+			StringType.getInstance(),
+			BinaryType.getInstance(),
+			ArrayType.of(AnyType.getInstance()),
+			ObjectType.of(AnyType.getInstance()));
+
+	/**
 	 * How many calls a diagnostic's trace names before it stops listing them. A trace is there to say which
 	 * call the reader has to look at, and the calls nearest the failure are the ones that say it.
 	 */
@@ -191,6 +213,10 @@ public final class TypeCheck {
 	private final Map<AnalyzedExpression<?>, List<Frame>> argumentTraces = new IdentityHashMap<>();
 	private int errors;
 	private int freshVariables;
+	// How many nested condition trials are in progress. A trial runs an expression the query already had
+	// analysed, against one alternative of its input, purely to see what it answers; the diagnostics it
+	// raises were raised once already, by the pass over the whole input type.
+	private int speculative;
 	private boolean guarded;
 	private boolean inferenceContext;
 
@@ -297,11 +323,10 @@ public final class TypeCheck {
 			return updateAssignment(assignment, input);
 		if (expression instanceof AbstractComplexAssignment<?> assignment)
 			return complexAssignment(assignment, input);
-		if (expression instanceof AbstractComparisonExpression<?> || expression instanceof BooleanAndExpression<?>
-				|| expression instanceof BooleanOrExpression<?>) {
-			inferBinaryChildren(expression, input);
-			return BooleanType.getInstance();
-		}
+		if (expression instanceof AbstractComparisonExpression<?>)
+			return comparison(expression, input);
+		if (expression instanceof BooleanAndExpression<?> || expression instanceof BooleanOrExpression<?>)
+			return booleanOperator(expression, input);
 		if (expression instanceof AlternativeOperatorExpression<?>) {
 			List<Type> operands = inferBinaryChildren(expression, input);
 			Type left = TypeRelations.withoutNull(operands.get(0));
@@ -966,8 +991,7 @@ public final class TypeCheck {
 		@Var Type remaining = input;
 		for (int i = 0; i + 1 < children.size() - 1; i += 2) {
 			AnalyzedExpression<?> condition = children.get(i);
-			infer(condition, remaining);
-			Narrowing narrowing = narrowing(condition, remaining);
+			Narrowing narrowing = split(condition, remaining, infer(condition, remaining));
 			if (narrowing.whenTrue != NeverType.getInstance())
 				outputs.add(infer(children.get(i + 1), narrowing.whenTrue));
 			else
@@ -984,44 +1008,86 @@ public final class TypeCheck {
 		return UnionType.of(outputs);
 	}
 
-	private static Narrowing narrowing(AnalyzedExpression<?> condition, Type input) {
-		AnalyzedExpression<?> unwrapped = unwrap(condition);
-		if (!(unwrapped instanceof CompareEqualTest<?> || unwrapped instanceof CompareNotEqualTest<?>))
+	/**
+	 * How an input's alternatives divide between a condition's branches.
+	 * <p>
+	 * Each alternative is run through the condition on its own, so whatever test the condition performs
+	 * -- however it is written, and through however many calls -- routes that alternative to the branch
+	 * it selects. Nothing here looks at how the condition is spelled: {@code select(type == "number")}
+	 * narrows because asking what the parameter {@code pred} answers for one alternative is the whole of
+	 * the analysis, and the same goes for {@code type == "number" or type == "string"} and for a test a
+	 * user's own {@code def} performs.
+	 *
+	 * @param conditionType what the condition answers for {@code input} as a whole, already inferred
+	 */
+	private Narrowing split(AnalyzedExpression<?> condition, Type input, Type conditionType) {
+		List<Type> alternatives = TypeRelations.alternatives(input);
+		if (alternatives.size() > MAX_NARROWED_ALTERNATIVES)
 			return new Narrowing(input, input);
-		AbstractBinaryOperatorExpression<?> comparison = (AbstractBinaryOperatorExpression<?>) unwrapped;
-		@Var @Nullable Type selected = selectedType(comparison.lhs(), comparison.rhs());
-		if (selected == null)
-			selected = selectedType(comparison.rhs(), comparison.lhs());
-		if (selected == null)
-			return new Narrowing(input, input);
-		List<Type> yes = new ArrayList<>();
-		List<Type> no = new ArrayList<>();
-		for (Type alternative : TypeRelations.alternatives(input)) {
-			// A variable standing in for "whatever this definition is called with" is not a value type, so
-			// nothing can be ruled in or out by asking what type it is.
-			if (alternative instanceof TypeVariable)
-				return new Narrowing(input, input);
-			// ANY admits values of the tested type and values of every other, so it goes both ways -- and
-			// the branch that runs knows more about its input than ANY.
+		List<Type> whenTrue = new ArrayList<>();
+		List<Type> whenFalse = new ArrayList<>();
+		for (Type alternative : alternatives) {
 			if (alternative instanceof AnyType) {
-				yes.add(selected);
-				no.add(alternative);
+				@Nullable Type tested = testedKinds(condition);
+				whenTrue.add(tested != null ? tested : alternative);
+				whenFalse.add(alternative);
 				continue;
 			}
-			(alternative.getClass() == selected.getClass() ? yes : no).add(alternative);
+			// A variable stands in for whatever this definition is called with, so asking what a condition
+			// answers for it settles nothing and both branches keep it.
+			if (alternative instanceof TypeVariable) {
+				whenTrue.add(alternative);
+				whenFalse.add(alternative);
+				continue;
+			}
+			// With one alternative the condition has already been run against exactly that type.
+			Truthiness answer = alternatives.size() == 1
+					? TypeRelations.truthiness(conditionType)
+					: answer(condition, alternative);
+			if (answer != Truthiness.ALWAYS_FALSE)
+				whenTrue.add(alternative);
+			if (answer != Truthiness.ALWAYS_TRUE)
+				whenFalse.add(alternative);
 		}
-		Narrowing result = new Narrowing(UnionType.of(yes), UnionType.of(no));
-		return unwrapped instanceof CompareNotEqualTest<?>
-				? new Narrowing(result.whenFalse, result.whenTrue) : result;
+		return new Narrowing(UnionType.of(whenTrue), UnionType.of(whenFalse));
 	}
 
-	private static @Nullable Type selectedType(AnalyzedExpression<?> typeExpression,
-											   AnalyzedExpression<?> literalExpression) {
-		AnalyzedExpression<?> type = unwrap(typeExpression);
-		String literal = stringLiteral(literalExpression);
-		if (!(type instanceof UnboundFunctionCall<?> call) || literal == null)
-			return null;
-		return call.factory().getInputTypeRefinement(literal);
+	/**
+	 * What {@link AnyType} narrows to in the branch a condition selects, or null when the condition is
+	 * not a test of which kind of value the input is.
+	 * <p>
+	 * Every kind must answer outright for the test to count. A condition that merely fails to rule a
+	 * kind out has not asked about it: {@code if .a} rules out null and says nothing about a boolean, and
+	 * a branch handed "ANY except null" would be faulted for the boolean the query never meant it to
+	 * accept. The false branch keeps ANY regardless, since ANY admits values none of these kinds
+	 * describes exactly and the branch that runs knows more about its input than ANY does.
+	 */
+	private @Nullable Type testedKinds(AnalyzedExpression<?> condition) {
+		List<Type> selected = new ArrayList<>();
+		for (Type kind : VALUE_KINDS) {
+			Truthiness answer = answer(condition, kind);
+			if (answer == Truthiness.UNKNOWN)
+				return null;
+			if (answer == Truthiness.ALWAYS_TRUE)
+				selected.add(kind);
+		}
+		return selected.size() == VALUE_KINDS.size() ? AnyType.getInstance() : UnionType.of(selected);
+	}
+
+	/**
+	 * What a condition answers for one alternative of its input. The trial reports nothing: every
+	 * diagnostic it could raise was raised by the pass over the whole input type, and a condition that
+	 * cannot run for this alternative rules nothing out rather than faulting the query.
+	 */
+	private Truthiness answer(AnalyzedExpression<?> condition, Type input) {
+		++speculative;
+		try {
+			return TypeRelations.truthiness(infer(condition, input));
+		} catch (TypeRelations.Problem problem) {
+			return Truthiness.UNKNOWN;
+		} finally {
+			--speculative;
+		}
 	}
 
 	/**
@@ -1310,6 +1376,83 @@ public final class TypeCheck {
 		return assignments.apply(input, selector, replacement);
 	}
 
+	/**
+	 * A comparison answers a known boolean whenever its operands say enough to decide it: {@code ==} on
+	 * two types describing one value each is decided by comparing those values, and on two types sharing
+	 * no value at all it is false however they are written. That is what lets a type test be read off a
+	 * union one alternative at a time. The ordering comparisons are not decided here.
+	 */
+	private Type comparison(AnalyzedExpression<?> expression, Type input) {
+		List<Type> operands = inferBinaryChildren(expression, input);
+		Type left = operands.get(0);
+		Type right = operands.get(1);
+		// An operand that emits nothing never reaches the operator, as TypeRelations has it for the rest.
+		if (left == NeverType.getInstance() || right == NeverType.getInstance())
+			return NeverType.getInstance();
+		boolean equality = expression instanceof CompareEqualTest<?>;
+		if (!equality && !(expression instanceof CompareNotEqualTest<?>))
+			return BooleanType.getInstance();
+		@Nullable Boolean equal = knownEquality(left, right);
+		if (equal == null)
+			return BooleanType.getInstance();
+		return BooleanType.of(equal == equality);
+	}
+
+	/**
+	 * Whether two types are known to describe equal values, known to describe unequal ones, or neither.
+	 */
+	private static @Nullable Boolean knownEquality(Type left, Type right) {
+		if (TypeRelations.disjoint(left, right))
+			return false;
+		@Nullable Object leftValue = soleValue(left);
+		@Nullable Object rightValue = soleValue(right);
+		if (leftValue == null || rightValue == null)
+			return null;
+		return leftValue.equals(rightValue);
+	}
+
+	/**
+	 * The one value a type describes, or null when it describes more than one. Null is the only value of
+	 * its own type, and stands for itself here since there is no {@code Object} to return for it.
+	 */
+	private static @Nullable Object soleValue(Type type) {
+		if (type instanceof StringType string)
+			return string.value();
+		if (type instanceof BooleanType bool)
+			return bool.value();
+		return type instanceof NullType ? type : null;
+	}
+
+	/**
+	 * {@code and} and {@code or} answer a known boolean whenever an operand decides it, following jq's
+	 * rule that only {@code null} and {@code false} are falsy. Both operands are inferred either way:
+	 * the short circuit decides the answer, not whether the code the query wrote is checked. A left
+	 * operand that decides the answer settles it even when the right emits nothing -- jq answers
+	 * {@code false and empty} with {@code false} -- while otherwise an operand emitting nothing leaves
+	 * the operator with nothing to answer.
+	 */
+	private Type booleanOperator(AnalyzedExpression<?> expression, Type input) {
+		List<Type> operands = inferBinaryChildren(expression, input);
+		Type left = operands.get(0);
+		if (left == NeverType.getInstance())
+			return NeverType.getInstance();
+		boolean conjunction = expression instanceof BooleanAndExpression<?>;
+		Truthiness decisive = conjunction ? Truthiness.ALWAYS_FALSE : Truthiness.ALWAYS_TRUE;
+		Truthiness leftTruthiness = TypeRelations.truthiness(left);
+		if (leftTruthiness == decisive)
+			return BooleanType.of(!conjunction);
+		Type right = operands.get(1);
+		if (right == NeverType.getInstance())
+			return NeverType.getInstance();
+		Truthiness rightTruthiness = TypeRelations.truthiness(right);
+		if (rightTruthiness == decisive)
+			return BooleanType.of(!conjunction);
+		if (leftTruthiness == Truthiness.UNKNOWN || rightTruthiness == Truthiness.UNKNOWN)
+			return BooleanType.getInstance();
+		// Neither operand decides the answer the other way, so both settle on the operator's own value.
+		return BooleanType.of(conjunction);
+	}
+
 	private Type binary(AnalyzedExpression<?> expression, Type input, BinaryRule rule) {
 		List<Type> operands = inferBinaryChildren(expression, input);
 		return rule.apply(operands.get(0), operands.get(1));
@@ -1396,7 +1539,7 @@ public final class TypeCheck {
 	private void report(String message, @Nullable SourceLocation location, @Nullable String callee) {
 		Diagnostic.Severity severity = guarded || inferenceContext || mode == TypeCheckMode.WARN
 				? Diagnostic.Severity.WARNING : Diagnostic.Severity.ERROR;
-		if (severity == Diagnostic.Severity.ERROR)
+		if (severity == Diagnostic.Severity.ERROR && speculative == 0)
 			errors++;
 		emit(Diagnostic.of(severity, withCallTrace(message, callee), locate(location)));
 	}
@@ -1489,6 +1632,8 @@ public final class TypeCheck {
 	}
 
 	private void emit(Diagnostic diagnostic) {
+		if (speculative != 0)
+			return;
 		Integer definition = definitionsBeingInferred.peek();
 		if (definition != null) {
 			deferredDiagnostics.computeIfAbsent(definition, slot -> new ArrayList<>()).add(diagnostic);

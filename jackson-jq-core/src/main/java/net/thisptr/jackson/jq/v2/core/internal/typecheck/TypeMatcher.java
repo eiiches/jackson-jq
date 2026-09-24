@@ -11,14 +11,17 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
+import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
 import net.thisptr.jackson.jq.v2.spi.type.NeverType;
 import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
 import net.thisptr.jackson.jq.v2.spi.type.NumericType;
 import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
 import net.thisptr.jackson.jq.v2.spi.type.RecursiveType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
 import net.thisptr.jackson.jq.v2.spi.type.Type;
 import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
 import net.thisptr.jackson.jq.v2.spi.type.TypeVariable;
@@ -155,7 +158,28 @@ final class TypeMatcher {
 				return expectedNum.numberKind() == NumberKind.UNKNOWN || expectedNum.numberKind() == actualNum.numberKind();
 			return true;
 		}
+
+		if (expected instanceof StringType expectedString && actual instanceof StringType actualString)
+			return matchesValue(expectedString.value(), actualString.value());
+
+		if (expected instanceof BooleanType expectedBoolean && actual instanceof BooleanType actualBoolean)
+			return matchesValue(expectedBoolean.value(), actualBoolean.value());
+
 		return TypeEquivalence.isEqualType(expected, actual);
+	}
+
+	/**
+	 * Whether a type describing a known value meets one describing another. An expectation naming no
+	 * value is met by anything, and two named values must be the same one. An expectation that names a
+	 * value where the actual type does not is a maybe: assignability lets it through, since the value
+	 * may well be the one asked for, while subtyping does not, since it is not known to be.
+	 */
+	private boolean matchesValue(@Nullable Object expected, @Nullable Object actual) {
+		if (expected == null)
+			return true;
+		if (actual == null)
+			return !strictSubtyping;
+		return expected.equals(actual);
 	}
 
 	private boolean matchExpectedUnion(UnionType expected, Type actual) {

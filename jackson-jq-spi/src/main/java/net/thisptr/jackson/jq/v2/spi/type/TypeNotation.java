@@ -32,6 +32,7 @@ import com.google.errorprone.annotations.Var;
  * Type          ::= Alternative ("|" Alternative)*
  * Alternative   ::= "ANY" | "NEVER" | "UNDEFINED" | "NULL" | "BOOLEAN" | "STRING" | "BINARY"
  *                 | "NUMBER" | "INT" | "FLOAT"
+ *                 | "true" | "false" | STRING
  *                 | ArrayType | ObjectType | RecursiveType
  *                 | IDENT
  *
@@ -41,7 +42,9 @@ import com.google.errorprone.annotations.Var;
  * Rest          ::= "*" ":" Type
  * RecursiveType ::= "RECURSIVE" "&lt;" IDENT "=" Type "&gt;"
  * </pre>
- * {@code IDENT} is {@code [A-Za-z_][A-Za-z0-9_]*} and {@code STRING} is a JSON string literal.
+ * {@code IDENT} is {@code [A-Za-z_][A-Za-z0-9_]*} and {@code STRING} is a JSON string literal. A
+ * {@code STRING} in type position is the type of that one string, and {@code true} and {@code false}
+ * are the types of those booleans.
  * Whitespace between tokens is insignificant on input.
  * <p>
  * The grammar is LL(1). Every alternative is chosen by its first token, {@code |} is the only infix
@@ -56,7 +59,7 @@ final class TypeNotation {
 	 */
 	private static final Set<String> RESERVED_NAMES = Set.of(
 			"ANY", "NEVER", "UNDEFINED", "NULL", "BOOLEAN", "STRING", "BINARY",
-			"NUMBER", "INT", "FLOAT", "RECURSIVE");
+			"NUMBER", "INT", "FLOAT", "RECURSIVE", "true", "false");
 
 	private TypeNotation() {
 	}
@@ -134,10 +137,21 @@ final class TypeNotation {
 
 	private static void appendType(StringBuilder out, Type type) {
 		// The dataless types are their own spelling, so their toString is the whole definition.
-		if (type instanceof AnyType || type instanceof BinaryType || type instanceof BooleanType
-				|| type instanceof NeverType || type instanceof NullType || type instanceof StringType
-				|| type instanceof UndefinedType) {
+		if (type instanceof AnyType || type instanceof BinaryType || type instanceof NeverType
+				|| type instanceof NullType || type instanceof UndefinedType) {
 			out.append(type);
+		} else if (type instanceof StringType string) {
+			String value = string.value();
+			if (value == null)
+				out.append("STRING");
+			else
+				appendQuoted(out, value);
+		} else if (type instanceof BooleanType bool) {
+			Boolean value = bool.value();
+			if (value == null)
+				out.append("BOOLEAN");
+			else
+				out.append(value ? "true" : "false");
 		} else if (type instanceof NumericType numeric) {
 			out.append(switch (numeric.numberKind()) {
 				case UNKNOWN -> "NUMBER";
@@ -235,9 +249,17 @@ final class TypeNotation {
 			out.append(name);
 			return;
 		}
+		appendQuoted(out, name);
+	}
+
+	/**
+	 * Writes a JSON string literal, which is how both a field name that is not an identifier and the
+	 * type of a known string are spelled.
+	 */
+	private static void appendQuoted(StringBuilder out, String value) {
 		out.append('"');
-		for (int i = 0; i < name.length(); i++) {
-			char ch = name.charAt(i);
+		for (int i = 0; i < value.length(); i++) {
+			char ch = value.charAt(i);
 			switch (ch) {
 				case '"' -> out.append("\\\"");
 				case '\\' -> out.append("\\\\");
@@ -327,6 +349,8 @@ final class TypeNotation {
 				return parseArray();
 			if (peek('{'))
 				return parseObject();
+			if (peek('"'))
+				return StringType.of(readQuoted());
 			String word = readIdentifier("a type");
 			return switch (word) {
 				case "ANY" -> AnyType.getInstance();
@@ -340,6 +364,8 @@ final class TypeNotation {
 				case "INT" -> NumericType.of(NumberKind.INT);
 				case "FLOAT" -> NumericType.of(NumberKind.FLOAT);
 				case "RECURSIVE" -> parseRecursive();
+				case "true" -> BooleanType.of(true);
+				case "false" -> BooleanType.of(false);
 				default -> resolve(word);
 			};
 		}

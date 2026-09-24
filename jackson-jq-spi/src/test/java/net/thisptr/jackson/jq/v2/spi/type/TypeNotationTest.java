@@ -40,6 +40,11 @@ public class TypeNotationTest {
 				ObjectType.of(optionalFields),
 				ObjectType.of(ESCAPED_FIELD_NAME, StringType.getInstance()),
 				ObjectType.of("a-b", StringType.getInstance(), "", NullType.getInstance(), "*", BooleanType.getInstance()),
+				StringType.of("number"), StringType.of(""), StringType.of(ESCAPED_FIELD_NAME),
+				BooleanType.of(true), BooleanType.of(false),
+				UnionType.of(StringType.of("a"), StringType.of("b"), NullType.getInstance()),
+				ArrayType.of(StringType.of("a")),
+				ObjectType.of("kind", StringType.of("a"), "ok", BooleanType.of(true)),
 				UnionType.of(NullType.getInstance(), StringType.getInstance()),
 				UnionType.of(BooleanType.getInstance(), NullType.getInstance(), StringType.getInstance()),
 				UnionType.of(AnyType.getInstance(), UndefinedType.getInstance()),
@@ -71,6 +76,22 @@ public class TypeNotationTest {
 		assertThat(ObjectType.of("a-b", StringType.getInstance())).hasToString("{\"a-b\":STRING}");
 		assertThat(RecursiveType.of(T, ArrayType.of(T))).hasToString("RECURSIVE<T = [*:T]>");
 		assertThat(FilterType.of(AnyType.getInstance(), StringType.getInstance())).hasToString("ANY -> STRING");
+		assertThat(StringType.of("number")).hasToString("\"number\"");
+		assertThat(BooleanType.of(true)).hasToString("true");
+		assertThat(BooleanType.of(false)).hasToString("false");
+		assertThat(ObjectType.of("kind", StringType.of("a"))).hasToString("{kind:\"a\"}");
+	}
+
+	@Test
+	void parsesKnownStringsAndBooleans() {
+		assertThat(Type.valueOf("\"number\"")).isEqualTo(StringType.of("number"));
+		assertThat(Type.valueOf("\"\"")).isEqualTo(StringType.of(""));
+		assertThat(Type.valueOf("true")).isSameAs(BooleanType.of(true));
+		assertThat(Type.valueOf("false")).isSameAs(BooleanType.of(false));
+		assertThat(Type.valueOf("\"a\\u0001b\"")).isEqualTo(StringType.of("a\u0001b"));
+		// A quoted string in field position is still a field name, so the two uses do not collide.
+		assertThat(Type.valueOf("{\"a-b\":\"a\"}")).isEqualTo(ObjectType.of("a-b", StringType.of("a")));
+		assertThat(Type.valueOf("\"a\"|\"b\"")).isEqualTo(UnionType.of(StringType.of("a"), StringType.of("b")));
 	}
 
 	@Test
@@ -266,6 +287,10 @@ public class TypeNotationTest {
 				.hasMessageContaining("reserved type name: INT");
 		assertThatThrownBy(() -> TypeVariable.of("RECURSIVE")).isInstanceOf(IllegalArgumentException.class)
 				.hasMessageContaining("reserved type name: RECURSIVE");
+		assertThatThrownBy(() -> TypeVariable.of("true")).isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("reserved type name: true");
+		assertThatThrownBy(() -> TypeVariable.of("false")).isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("reserved type name: false");
 		// Matching is case-sensitive, so the conventional mixed-case names stay legal.
 		assertThat(TypeVariable.of("Int")).hasToString("Int");
 		assertThat(TypeVariable.of("Recursive")).hasToString("Recursive");

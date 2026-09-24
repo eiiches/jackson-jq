@@ -52,18 +52,40 @@ public final class ConstantTypes {
 
 	private int remainingNodes = MAX_NODES;
 
-	private ConstantTypes() {
+	/**
+	 * Whether a string or boolean is described by the value it holds, or only by being one.
+	 */
+	private final boolean knownValues;
+
+	private ConstantTypes(boolean knownValues) {
+		this.knownValues = knownValues;
 	}
 
 	/**
-	 * Returns the type of {@code value}.
+	 * Returns the type of {@code value}, describing the strings and booleans it holds by the very values
+	 * they are -- which is what a constant is.
 	 *
 	 * @param jsonProvider the provider that reads {@code value}
 	 * @param value the value to describe
 	 * @return the type of {@code value}, never {@code null}
 	 */
 	public static <JsonNode> Type of(JsonProvider<JsonNode> jsonProvider, JsonNode value) {
-		return new ConstantTypes().typeOf(jsonProvider, value, 0);
+		return new ConstantTypes(true).typeOf(jsonProvider, value, 0);
+	}
+
+	/**
+	 * Returns the shape of {@code value}, describing a string as a string and a boolean as a boolean.
+	 * <p>
+	 * This is for a value standing in for others of its shape -- a sample document a type is read off --
+	 * rather than for a constant. Pinning such a sample's strings would narrow a query against the one
+	 * document it happened to be shown, and turn away the rest.
+	 *
+	 * @param jsonProvider the provider that reads {@code value}
+	 * @param value the value whose shape to describe
+	 * @return the shape of {@code value}, never {@code null}
+	 */
+	public static <JsonNode> Type shapeOf(JsonProvider<JsonNode> jsonProvider, JsonNode value) {
+		return new ConstantTypes(false).typeOf(jsonProvider, value, 0);
 	}
 
 	private <JsonNode> Type typeOf(JsonProvider<JsonNode> jsonProvider, JsonNode value, int depth) {
@@ -72,8 +94,8 @@ public final class ConstantTypes {
 		--remainingNodes;
 		return switch (jsonProvider.getNodeType(value)) {
 			case NULL -> NullType.getInstance();
-			case BOOLEAN -> BooleanType.getInstance();
-			case STRING -> StringType.getInstance();
+			case BOOLEAN -> knownValues ? BooleanType.of(jsonProvider.getBoolean(value)) : BooleanType.getInstance();
+			case STRING -> knownValues ? StringType.of(jsonProvider.getString(value)) : StringType.getInstance();
 			case BINARY -> BinaryType.getInstance();
 			case NUMBER -> NumericType.of(numberKind(jsonProvider, value));
 			case ARRAY -> arrayType(jsonProvider, value, depth);

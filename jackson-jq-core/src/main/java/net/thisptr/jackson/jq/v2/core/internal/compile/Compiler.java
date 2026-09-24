@@ -810,7 +810,7 @@ public class Compiler {
 
 		@Override
 		public AnalyzedExpression<N> visit(BooleanLiteralAstNode ast) throws JsonQueryException {
-			return new ValueLiteral<>(BooleanType.getInstance(), env.getJsonProvider().createBoolean(ast.value()));
+			return new ValueLiteral<>(BooleanType.of(ast.value()), env.getJsonProvider().createBoolean(ast.value()));
 		}
 
 		@Override
@@ -827,7 +827,7 @@ public class Compiler {
 
 		@Override
 		public AnalyzedExpression<N> visit(StringLiteralAstNode ast) throws JsonQueryException {
-			return new ValueLiteral<>(StringType.getInstance(), env.getJsonProvider().createString(ast.value()), ast.value());
+			return new ValueLiteral<>(StringType.of(ast.value()), env.getJsonProvider().createString(ast.value()), ast.value());
 		}
 
 		@Override
@@ -952,7 +952,7 @@ public class Compiler {
 
 		@Override
 		public CompiledFieldMatcher<N> visit(ObjectMatcherAstNode.ConstantKeyFieldMatcher field) throws JsonQueryException {
-			AnalyzedExpression<N> name = new ValueLiteral<>(StringType.getInstance(),
+			AnalyzedExpression<N> name = new ValueLiteral<>(StringType.of(field.name()),
 					env.getJsonProvider().createString(field.name()), field.name());
 			PatternMatcherAstNode sub = field.matcher();
 			CompiledMatcher<N> subResult = sub != null ? compileMatcher(sub) : null;

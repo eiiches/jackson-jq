@@ -15,6 +15,13 @@ import org.jspecify.annotations.Nullable;
 public final class UnionType implements Type {
 	private static final Comparator<Type> CANONICAL_ORDER = Comparator.comparing(Type::toString);
 
+	/**
+	 * How many known strings a union names one by one. A discrimination anyone writes by hand sits far
+	 * inside this; past it the alternatives are only expensive to carry around, and the plain string
+	 * type says the one thing left worth saying.
+	 */
+	private static final int MAX_STRING_LITERALS = 16;
+
 	private final List<Type> alternatives;
 
 	public static Type of(Type... alternatives) {
@@ -55,7 +62,10 @@ public final class UnionType implements Type {
 			if (unique.isEmpty() || !unique.get(unique.size() - 1).equals(alternative))
 				unique.add(alternative);
 		}
-		if (collapseNumbers(unique))
+		@Var
+		boolean collapsed = collapseNumbers(unique);
+		collapsed |= collapseLiterals(unique);
+		if (collapsed)
 			unique.sort(CANONICAL_ORDER);
 		if (unique.size() == 1)
 			return unique.get(0);
@@ -79,6 +89,31 @@ public final class UnionType implements Type {
 		alternatives.removeIf(NumericType.class::isInstance);
 		alternatives.add(NumericType.getInstance());
 		return true;
+	}
+
+	/**
+	 * Replaces the known strings and booleans a union names with the type they are all instances of,
+	 * answering whether it did. A value is dropped once the type it is an instance of is there anyway,
+	 * {@code true | false} is no more than a boolean, and too many strings are no more than a string.
+	 */
+	private static boolean collapseLiterals(List<Type> alternatives) {
+		@Var
+		boolean collapsed = false;
+		if (alternatives.contains(StringType.getInstance()))
+			collapsed = alternatives.removeIf(alternative -> alternative instanceof StringType string && string.value() != null);
+		else if (alternatives.stream().filter(StringType.class::isInstance).count() > MAX_STRING_LITERALS) {
+			alternatives.removeIf(StringType.class::isInstance);
+			alternatives.add(StringType.getInstance());
+			collapsed = true;
+		}
+		if (alternatives.contains(BooleanType.getInstance()))
+			collapsed |= alternatives.removeIf(alternative -> alternative instanceof BooleanType bool && bool.value() != null);
+		else if (alternatives.contains(BooleanType.of(true)) && alternatives.contains(BooleanType.of(false))) {
+			alternatives.removeIf(BooleanType.class::isInstance);
+			alternatives.add(BooleanType.getInstance());
+			collapsed = true;
+		}
+		return collapsed;
 	}
 
 	private UnionType(List<Type> alternatives) {

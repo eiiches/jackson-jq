@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.spi.type;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,6 +40,56 @@ public class TypeTest {
 		assertThat(NumericType.of(NumberKind.INT)).isSameAs(NumericType.of(NumberKind.INT));
 		assertThat(NumericType.of(NumberKind.INT)).isNotEqualTo(NumericType.of(NumberKind.FLOAT));
 		assertThat(NumericType.of(NumberKind.INT)).isNotEqualTo(NumericType.getInstance());
+	}
+
+	@Test
+	void testKnownStringAndBooleanValues() {
+		assertThat(StringType.getInstance().value()).isNull();
+		assertThat(BooleanType.getInstance().value()).isNull();
+		assertThat(StringType.of("number").value()).isEqualTo("number");
+		assertThat(BooleanType.of(true).value()).isTrue();
+		assertThat(BooleanType.of(false).value()).isFalse();
+
+		assertThat(StringType.of("number")).hasToString("\"number\"");
+		assertThat(BooleanType.of(true)).hasToString("true");
+		assertThat(BooleanType.of(false)).hasToString("false");
+		// A value that is not an identifier is spelled the way a field name of the same shape is.
+		assertThat(StringType.of("a\"b\n")).hasToString("\"a\\\"b\\n\"");
+
+		assertThat(StringType.of("number")).isEqualTo(StringType.of("number"))
+				.hasSameHashCodeAs(StringType.of("number"));
+		assertThat(StringType.of("number")).isNotEqualTo(StringType.of("string"));
+		assertThat(StringType.of("number")).isNotEqualTo(StringType.getInstance());
+		// One instance per value, so equality is identity.
+		assertThat(BooleanType.of(true)).isSameAs(BooleanType.of(true)).isNotEqualTo(BooleanType.of(false));
+		assertThat(BooleanType.of(true)).isNotEqualTo(BooleanType.getInstance());
+	}
+
+	// NullAway checks null arguments; this assertion verifies runtime rejection.
+	@Test
+	@SuppressWarnings("NullAway")
+	void testNullStringValue() {
+		assertThatThrownBy(() -> StringType.of(null)).isInstanceOf(NullPointerException.class);
+	}
+
+	@Test
+	void testKnownValuesCollapseInAUnion() {
+		// A value is dropped once the type it is an instance of is an alternative anyway.
+		assertThat(UnionType.of(StringType.of("a"), StringType.getInstance())).isSameAs(StringType.getInstance());
+		assertThat(UnionType.of(BooleanType.of(true), BooleanType.getInstance())).isSameAs(BooleanType.getInstance());
+		// The two booleans together say no more than BOOLEAN does.
+		assertThat(UnionType.of(BooleanType.of(true), BooleanType.of(false))).isSameAs(BooleanType.getInstance());
+		// Distinct strings stay distinct, which is what a discrimination over them needs.
+		assertThat(UnionType.of(StringType.of("b"), StringType.of("a"))).hasToString("\"a\"|\"b\"");
+		assertThat(UnionType.of(StringType.of("a"), StringType.of("a"))).isEqualTo(StringType.of("a"));
+
+		List<Type> sixteen = new ArrayList<>();
+		for (int i = 0; i < 16; i++)
+			sixteen.add(StringType.of("s" + i));
+		assertThat(UnionType.of(sixteen)).isInstanceOf(UnionType.class);
+		List<Type> seventeen = new ArrayList<>(sixteen);
+		seventeen.add(StringType.of("s16"));
+		assertThat(UnionType.of(seventeen)).isSameAs(StringType.getInstance());
 	}
 
 	// NullAway checks null arguments; this assertion verifies runtime rejection.

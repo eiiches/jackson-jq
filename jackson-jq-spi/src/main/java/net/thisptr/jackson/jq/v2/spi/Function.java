@@ -3,8 +3,6 @@ package net.thisptr.jackson.jq.v2.spi;
 import java.util.Collections;
 import java.util.List;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.FilterType;
@@ -39,14 +37,6 @@ public interface Function {
 	 */
 	default ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
 		return ExpressionProperties.UNKNOWN;
-	}
-
-	/**
-	 * Returns the input type selected when this function's result equals {@code outputValue}, or
-	 * {@code null} when the function does not define a type refinement.
-	 */
-	default @Nullable Type getInputTypeRefinement(String outputValue) {
-		return null;
 	}
 
 	/**

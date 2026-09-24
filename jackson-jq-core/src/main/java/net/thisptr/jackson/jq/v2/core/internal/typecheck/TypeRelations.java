@@ -6,16 +6,21 @@ import java.util.Map;
 import java.util.OptionalInt;
 import java.util.TreeMap;
 
+import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
+import net.thisptr.jackson.jq.v2.spi.type.BinaryType;
+import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
 import net.thisptr.jackson.jq.v2.spi.type.NeverType;
 import net.thisptr.jackson.jq.v2.spi.type.NullType;
 import net.thisptr.jackson.jq.v2.spi.type.NumericType;
 import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
+import net.thisptr.jackson.jq.v2.spi.type.RecursiveType;
 import net.thisptr.jackson.jq.v2.spi.type.StringType;
 import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.TypeVariable;
 import net.thisptr.jackson.jq.v2.spi.type.UndefinedType;
 import net.thisptr.jackson.jq.v2.spi.type.UnionType;
 
@@ -296,6 +301,85 @@ final class TypeRelations {
 				alternatives.add(alternative);
 		}
 		return UnionType.of(alternatives);
+	}
+
+	/**
+	 * What a type says about the branch a condition of that type takes. jq counts only {@code null} and
+	 * {@code false} as falsy, so every other kind of value is truthy outright and a type admitting no
+	 * value of those two kinds decides the branch on its own.
+	 * <p>
+	 * A union decides only when every alternative decides the same way. A type that says nothing about
+	 * its values -- {@link AnyType}, a variable, a recursive shape -- decides nothing.
+	 */
+	static Truthiness truthiness(Type type) {
+		@Var
+		@Nullable Truthiness result = null;
+		for (Type alternative : alternatives(type)) {
+			Truthiness truthiness = alternativeTruthiness(alternative);
+			if (truthiness == Truthiness.UNKNOWN || (result != null && result != truthiness))
+				return Truthiness.UNKNOWN;
+			result = truthiness;
+		}
+		return result != null ? result : Truthiness.UNKNOWN;
+	}
+
+	private static Truthiness alternativeTruthiness(Type alternative) {
+		if (alternative instanceof NullType)
+			return Truthiness.ALWAYS_FALSE;
+		if (alternative instanceof BooleanType bool) {
+			@Nullable Boolean value = bool.value();
+			if (value == null)
+				return Truthiness.UNKNOWN;
+			return value ? Truthiness.ALWAYS_TRUE : Truthiness.ALWAYS_FALSE;
+		}
+		if (alternative instanceof StringType || alternative instanceof NumericType
+				|| alternative instanceof BinaryType || alternative instanceof ArrayType
+				|| alternative instanceof ObjectType)
+			return Truthiness.ALWAYS_TRUE;
+		return Truthiness.UNKNOWN;
+	}
+
+	/**
+	 * Whether no value inhabits both types, so that jq's {@code ==} can never call a value of one equal
+	 * to a value of the other.
+	 * <p>
+	 * This is answered from what the types say outright, so it is conservative in one direction only: a
+	 * type that says nothing about its values, and two types of the same kind that are not both known
+	 * values, are never called disjoint. Two containers are not compared element by element either --
+	 * proving {@code [INT]} and {@code [STRING]} disjoint is not worth a rule of its own here.
+	 */
+	static boolean disjoint(Type left, Type right) {
+		for (Type leftAlternative : alternatives(left)) {
+			for (Type rightAlternative : alternatives(right)) {
+				if (!disjointAlternatives(leftAlternative, rightAlternative))
+					return false;
+			}
+		}
+		return true;
+	}
+
+	private static boolean disjointAlternatives(Type left, Type right) {
+		// Nothing inhabits NEVER, so it shares no value with anything, itself included.
+		if (left == NeverType.getInstance() || right == NeverType.getInstance())
+			return true;
+		if (left instanceof AnyType || right instanceof AnyType
+				|| left instanceof TypeVariable || right instanceof TypeVariable
+				|| left instanceof RecursiveType || right instanceof RecursiveType)
+			return false;
+		// A binary node is a provider's own kind of value, and what it compares equal to is the
+		// provider's business rather than something worth ruling on here.
+		if (left instanceof BinaryType || right instanceof BinaryType)
+			return false;
+		if (left instanceof StringType leftString && right instanceof StringType rightString)
+			return differingValues(leftString.value(), rightString.value());
+		if (left instanceof BooleanType leftBoolean && right instanceof BooleanType rightBoolean)
+			return differingValues(leftBoolean.value(), rightBoolean.value());
+		// Two values of one kind may well be equal, and for a number the kind is only a hint anyway.
+		return left.getClass() != right.getClass();
+	}
+
+	private static boolean differingValues(@Nullable Object left, @Nullable Object right) {
+		return left != null && right != null && !left.equals(right);
 	}
 
 	private static Type pairs(Type left, Type right, PairRule rule) {

@@ -100,8 +100,8 @@ class EnvironmentVariableTypeTest {
 
 	@Test
 	void constantTakesTheTypeReadOffItsValue() throws JsonQueryException {
-		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.createString("a")))).isSameAs(StringType.getInstance());
-		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.createBoolean(true)))).isSameAs(BooleanType.getInstance());
+		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.createString("a")))).isEqualTo(StringType.of("a"));
+		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.createBoolean(true)))).isEqualTo(BooleanType.of(true));
 		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.createNull()))).isSameAs(NullType.getInstance());
 		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.createBinary(new byte[] { 1, 2 }))))
 				.isSameAs(BinaryType.getInstance());
@@ -119,11 +119,11 @@ class EnvironmentVariableTypeTest {
 	@Test
 	void constantContainerTypesDescribeTheirContents() throws JsonQueryException {
 		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.parse("[1, \"a\"]"))))
-				.isEqualTo(ArrayType.of(List.of(NumericType.of(NumberKind.INT), StringType.getInstance())));
+				.isEqualTo(ArrayType.of(List.of(NumericType.of(NumberKind.INT), StringType.of("a"))));
 		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.parse("{\"a\": 1, \"b\": {\"c\": \"s\"}}"))))
 				.isEqualTo(ObjectType.of(
 						"a", NumericType.of(NumberKind.INT),
-						"b", ObjectType.of("c", StringType.getInstance())));
+						"b", ObjectType.of("c", StringType.of("s"))));
 	}
 
 	@Test
@@ -190,7 +190,7 @@ class EnvironmentVariableTypeTest {
 		assertThat(environment.getVariables()).hasEntrySatisfying("defined",
 				variable -> assertThat(variable.getType()).isSameAs(StringType.getInstance()));
 		assertThat(environment.getConstants()).hasEntrySatisfying("constant",
-				constant -> assertThat(constant.getType()).isSameAs(StringType.getInstance()));
+				constant -> assertThat(constant.getType()).isEqualTo(StringType.of("a")));
 	}
 
 	@Test

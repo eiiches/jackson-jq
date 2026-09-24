@@ -1918,7 +1918,7 @@ class PlaygroundTest {
 				new PrintStream(new ByteArrayOutputStream()));
 
 		assertThat(pg.getDiagnosticPlainLines()).satisfiesExactly(
-				line -> assertThat(line).isEqualTo("[Compile][Warning] Cannot iterate over STRING at line 1, column 10"),
+				line -> assertThat(line).isEqualTo("[Compile][Warning] Cannot iterate over \"test\" at line 1, column 10"),
 				line -> assertThat(line).isEqualTo("  in map/1"),
 				line -> assertThat(line).isEqualTo("[Runtime][Error] Cannot iterate over string (\"test\")"));
 	}
@@ -3369,7 +3369,7 @@ class PlaygroundTest {
 		assertThat(banner).isNotEmpty();
 		String bannerText = banner.stream().map(PlaygroundTest::lineToPlainText).reduce("", (a, b) -> a + "\n" + b);
 		assertThat(bannerText).contains("Expected: BOOLEAN");
-		assertThat(bannerText).contains("Inferred: STRING");
+		assertThat(bannerText).contains("Inferred: \"hello\"");
 		assertThat(bannerText).contains("⚠ Mismatch");
 	}
 

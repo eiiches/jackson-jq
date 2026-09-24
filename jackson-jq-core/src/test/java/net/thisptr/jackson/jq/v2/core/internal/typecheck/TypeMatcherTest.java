@@ -192,6 +192,25 @@ class TypeMatcherTest {
 	}
 
 	@Test
+	void matchesKnownStringAndBooleanValues() {
+		// Assignability is "could be": a known value fits the type it is an instance of, and that type
+		// fits a known value because a string of unknown content may well be the one asked for.
+		assertThat(TypeMatcher.accepts(StringType.getInstance(), StringType.of("a"))).isTrue();
+		assertThat(TypeMatcher.accepts(StringType.of("a"), StringType.getInstance())).isTrue();
+		assertThat(TypeMatcher.accepts(StringType.of("a"), StringType.of("a"))).isTrue();
+		assertThat(TypeMatcher.accepts(StringType.of("a"), StringType.of("b"))).isFalse();
+		assertThat(TypeMatcher.accepts(BooleanType.of(true), BooleanType.of(false))).isFalse();
+		assertThat(TypeMatcher.accepts(StringType.of("a"), NumericType.getInstance())).isFalse();
+
+		// Subtyping is "is": only one of those directions is proven.
+		assertThat(TypeMatcher.isSubtype(StringType.of("a"), StringType.getInstance())).isTrue();
+		assertThat(TypeMatcher.isSubtype(StringType.getInstance(), StringType.of("a"))).isFalse();
+		assertThat(TypeMatcher.isSubtype(BooleanType.of(true), BooleanType.getInstance())).isTrue();
+		assertThat(TypeMatcher.isSubtype(BooleanType.getInstance(), BooleanType.of(true))).isFalse();
+		assertThat(TypeMatcher.isSubtype(StringType.of("a"), StringType.of("b"))).isFalse();
+	}
+
+	@Test
 	void aVariableUnderAnEmptyArrayBindsToNever() {
 		TypeVariable element = TypeVariable.of("T");
 		TypeMatcher matcher = new TypeMatcher(Set.of(element));

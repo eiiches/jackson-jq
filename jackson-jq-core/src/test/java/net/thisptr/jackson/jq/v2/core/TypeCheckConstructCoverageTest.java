@@ -47,24 +47,24 @@ class TypeCheckConstructCoverageTest {
 				// identity, literals and composition
 				Arguments.of(".", StringType.getInstance(), StringType.getInstance()),
 				Arguments.of("1", NullType.getInstance(), INT),
-				Arguments.of("\"x\"", NullType.getInstance(), StringType.getInstance()),
+				Arguments.of("\"x\"", NullType.getInstance(), StringType.of("x")),
 				Arguments.of("[1, 2]", NullType.getInstance(), ArrayType.of(List.of(INT, INT))),
 				// An array literal whose elements each emit one value knows what is at each position.
 				Arguments.of("[1, \"a\"] | .[0] - 1", NullType.getInstance(), NumericType.getInstance()),
-				Arguments.of("[1, \"a\"] | .[-1]", NullType.getInstance(), StringType.getInstance()),
+				Arguments.of("[1, \"a\"] | .[-1]", NullType.getInstance(), StringType.of("a")),
 				Arguments.of("[1, 2] | .[5]", NullType.getInstance(), NullType.getInstance()),
 				Arguments.of("[.[]] | .[0]", ArrayType.of(INT), UnionType.of(INT, NullType.getInstance())),
-				Arguments.of("[1] + [\"a\"] | .[1]", NullType.getInstance(), StringType.getInstance()),
+				Arguments.of("[1] + [\"a\"] | .[1]", NullType.getInstance(), StringType.of("a")),
 				Arguments.of("[[1, 2]][] as [$i, $j] | $i * $j", NullType.getInstance(), NumericType.getInstance()),
 				// Concatenating onto an array of unknown length says nothing about where anything landed.
-				Arguments.of("[.[]] + [\"a\"] | .[1]", ArrayType.of(INT), UnionType.of(INT, StringType.getInstance(), NullType.getInstance())),
+				Arguments.of("[.[]] + [\"a\"] | .[1]", ArrayType.of(INT), UnionType.of(INT, StringType.of("a"), NullType.getInstance())),
 				// A slice and a subtraction both move elements, so neither keeps a position.
-				Arguments.of("[1, \"a\"] | .[0:1] | .[0]", NullType.getInstance(), UnionType.of(INT, StringType.getInstance(), NullType.getInstance())),
-				Arguments.of("[1, \"a\"] - [1] | .[0]", NullType.getInstance(), UnionType.of(INT, StringType.getInstance(), NullType.getInstance())),
+				Arguments.of("[1, \"a\"] | .[0:1] | .[0]", NullType.getInstance(), UnionType.of(INT, StringType.of("a"), NullType.getInstance())),
+				Arguments.of("[1, \"a\"] - [1] | .[0]", NullType.getInstance(), UnionType.of(INT, StringType.of("a"), NullType.getInstance())),
 				Arguments.of("[]", NullType.getInstance(), ArrayType.of(NeverType.getInstance())),
 				Arguments.of("{a: 1}", NullType.getInstance(), ObjectType.of("a", INT)),
 				Arguments.of(". | length", StringType.getInstance(), NumericType.getInstance()),
-				Arguments.of("(1, \"x\")", NullType.getInstance(), UnionType.of(INT, StringType.getInstance())),
+				Arguments.of("(1, \"x\")", NullType.getInstance(), UnionType.of(INT, StringType.of("x"))),
 				Arguments.of("\"v=\\(1)\"", NullType.getInstance(), StringType.getInstance()),
 				// field and index access
 				Arguments.of(".a", OBJ, NumericType.getInstance()),
@@ -87,11 +87,11 @@ class TypeCheckConstructCoverageTest {
 				Arguments.of("5 % 2", NullType.getInstance(), NumericType.getInstance()),
 				Arguments.of("-.", NumericType.getInstance(), NumericType.getInstance()),
 				Arguments.of("1 < 2", NullType.getInstance(), BooleanType.getInstance()),
-				Arguments.of("true and false", NullType.getInstance(), BooleanType.getInstance()),
+				Arguments.of("true and false", NullType.getInstance(), BooleanType.of(false)),
 				Arguments.of(".a // \"fallback\"", ObjectType.of("a", UnionType.of(StringType.getInstance(), NullType.getInstance())), StringType.getInstance()),
 				// control flow
 				Arguments.of("if type == \"number\" then . - 1 else 0 end", UnionType.of(NumericType.getInstance(), StringType.getInstance()), NumericType.getInstance()),
-				Arguments.of("try .a catch \"e\"", OBJ, UnionType.of(NumericType.getInstance(), StringType.getInstance())),
+				Arguments.of("try .a catch \"e\"", OBJ, UnionType.of(NumericType.getInstance(), StringType.of("e"))),
 				Arguments.of("label $out | (1, break $out)", NullType.getInstance(), INT),
 				Arguments.of("..", ObjectType.of("a", NumericType.getInstance()),
 						UnionType.of(ObjectType.of("a", NumericType.getInstance()), NumericType.getInstance())),
@@ -110,11 +110,11 @@ class TypeCheckConstructCoverageTest {
 				Arguments.of("tostring", NumericType.getInstance(), StringType.getInstance()),
 				Arguments.of("map(tostring)", ArrayType.of(NumericType.getInstance()), ArrayType.of(StringType.getInstance())),
 				// assignment
-				Arguments.of(".a = \"x\"", OBJ, ObjectType.of("a", StringType.getInstance(), "b", StringType.getInstance())),
+				Arguments.of(".a = \"x\"", OBJ, ObjectType.of("a", StringType.of("x"), "b", StringType.getInstance())),
 				Arguments.of(".a |= tostring", OBJ, ObjectType.of("a", StringType.getInstance(), "b", StringType.getInstance())),
 				Arguments.of(".a += 1", OBJ, ObjectType.of("a", NumericType.getInstance(), "b", StringType.getInstance())),
 				Arguments.of(".[] |= tostring", ArrayType.of(NumericType.getInstance()), ArrayType.of(StringType.getInstance())),
-				Arguments.of(".[0:1] = [\"x\"]", ArrayType.of(NumericType.getInstance()), ArrayType.of(UnionType.of(NumericType.getInstance(), StringType.getInstance()))));
+				Arguments.of(".[0:1] = [\"x\"]", ArrayType.of(NumericType.getInstance()), ArrayType.of(UnionType.of(NumericType.getInstance(), StringType.of("x")))));
 	}
 
 	static Stream<Arguments> rejected() {

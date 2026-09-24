@@ -2,8 +2,6 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins;
 
 import java.util.List;
 
-import org.jspecify.annotations.Nullable;
-
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -17,32 +15,30 @@ import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
+import net.thisptr.jackson.jq.v2.spi.type.BinaryType;
 import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
 import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
 import net.thisptr.jackson.jq.v2.spi.type.NullType;
 import net.thisptr.jackson.jq.v2.spi.type.NumericType;
 import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
 import net.thisptr.jackson.jq.v2.spi.type.StringType;
-import net.thisptr.jackson.jq.v2.spi.type.Type;
 import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @FunctionRegistration(name = "type", nargs = 0)
 public class TypeFunction implements Function {
-	@Override
-	public @Nullable Type getInputTypeRefinement(String result) {
-		return switch (result) {
-			case "number" -> NumericType.getInstance();
-			case "string" -> StringType.getInstance();
-			case "boolean" -> BooleanType.getInstance();
-			case "null" -> NullType.getInstance();
-			case "array" -> ArrayType.of(AnyType.getInstance());
-			case "object" -> ObjectType.of(AnyType.getInstance());
-			default -> null;
-		};
-	}
-
+	// An overload per kind of value, naming the very string that kind answers. That is all the narrowing
+	// of a type test needs: `if type == "number"` compares two known strings once the input is one kind,
+	// and a kind whose comparison cannot come out true is left to the other branch.
 	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
+			TypeScheme.of(FunctionType.of(NullType.getInstance(), StringType.of("null"))),
+			TypeScheme.of(FunctionType.of(BooleanType.getInstance(), StringType.of("boolean"))),
+			TypeScheme.of(FunctionType.of(NumericType.getInstance(), StringType.of("number"))),
+			TypeScheme.of(FunctionType.of(StringType.getInstance(), StringType.of("string"))),
+			// JsonNodeUtils.typeOf lowercases the provider's node kind, so a binary node answers "binary".
+			TypeScheme.of(FunctionType.of(BinaryType.getInstance(), StringType.of("binary"))),
+			TypeScheme.of(FunctionType.of(ArrayType.of(AnyType.getInstance()), StringType.of("array"))),
+			TypeScheme.of(FunctionType.of(ObjectType.of(AnyType.getInstance()), StringType.of("object"))),
 			TypeScheme.of(FunctionType.of(AnyType.getInstance(), StringType.getInstance())));
 
 	@Override

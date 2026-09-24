@@ -472,7 +472,7 @@ class MainTest {
 	@Test
 	void tracesACallIntoTheBuiltinWhoseBodyFailed() throws Exception {
 		assertThat(runStderr("null", "--compact", "\"test\" | map(\"test\")?"))
-				.contains("jq: warning: Cannot iterate over STRING at line 1, column 10:\n  in map/1\n");
+				.contains("jq: warning: Cannot iterate over \"test\" at line 1, column 10:\n  in map/1\n");
 	}
 
 	// Without --input-type nothing is known about the input, so the index cannot be faulted. Saying

@@ -365,11 +365,11 @@ final class Playground<N> {
 			return AnyType.getInstance();
 		}
 		if (inputList.size() == 1) {
-			return ConstantTypes.of(provider, (T) inputList.get(0));
+			return ConstantTypes.shapeOf(provider, (T) inputList.get(0));
 		}
 		List<Type> types = new ArrayList<>(inputList.size());
 		for (Object item : inputList) {
-			types.add(ConstantTypes.of(provider, (T) item));
+			types.add(ConstantTypes.shapeOf(provider, (T) item));
 		}
 		return UnionType.of(types);
 	}
