@@ -285,7 +285,14 @@ public final class TypeCheck {
 			return applyFilterSchemes(expression, input);
 		if (expression instanceof PipedQuery<?>) {
 			List<AnalyzedExpression<?>> children = children(expression);
-			return infer(children.get(1), infer(children.get(0), input));
+			Type left = infer(children.get(0), input);
+			List<Type> alternatives = TypeRelations.alternatives(left);
+			if (alternatives.size() <= 1)
+				return infer(children.get(1), left);
+			List<Type> outputs = new ArrayList<>(alternatives.size());
+			for (Type alternative : alternatives)
+				outputs.add(infer(children.get(1), alternative));
+			return UnionType.of(outputs);
 		}
 		if (expression instanceof ArrayConstruction<?> array)
 			return arrayConstruction(array, input);

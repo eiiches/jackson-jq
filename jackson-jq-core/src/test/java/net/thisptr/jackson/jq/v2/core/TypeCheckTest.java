@@ -647,6 +647,22 @@ class TypeCheckTest {
 	}
 
 	@Test
+	void pipeDistributesOverUnionAlternatives() throws JsonQueryException {
+		assertThat(environment.compile("(1, \"a\") | type", strict(NullType.getInstance()))
+				.getType().outputType())
+				.isEqualTo(UnionType.of(StringType.of("number"), StringType.of("string")));
+	}
+
+	@Test
+	void compositePipeDistributesUnionAlternatives() throws JsonQueryException {
+		assertThat(environment.compile("(1, \"a\") | { t: type }", strict(NullType.getInstance()))
+				.getType().outputType())
+				.isEqualTo(UnionType.of(
+						ObjectType.of("t", StringType.of("number")),
+						ObjectType.of("t", StringType.of("string"))));
+	}
+
+	@Test
 	void infersAndInstantiatesPolymorphicDefinitions() throws JsonQueryException {
 		JsonQuery<JsonNode> query = environment.compile("def identity: .; (1 | identity), (\"x\" | identity)", strict(NullType.getInstance()));
 		assertThat(query.getType().outputType()).isEqualTo(UnionType.of(NumericType.of(NumberKind.INT), StringType.of("x")));
