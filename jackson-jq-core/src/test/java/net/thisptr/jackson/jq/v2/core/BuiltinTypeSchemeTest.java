@@ -127,6 +127,43 @@ class BuiltinTypeSchemeTest {
 	}
 
 	@Test
+	void addNarrowsOutputForNonEmptyArraysAndRejectsMixed() throws JsonQueryException {
+		Type ints = NumericType.of(NumberKind.INT);
+		Type strings = StringType.getInstance();
+		Type numbers = NumericType.getInstance();
+		Type objects = ObjectType.of(AnyType.getInstance());
+
+		// Non-empty numbers
+		assertThat(outputOf("add", ArrayType.of(List.of(ints, ints, ints)))).isEqualTo(ints);
+		assertThat(outputOf("add", ArrayType.of(List.of(numbers, ints)))).isEqualTo(numbers);
+
+		// Non-empty strings
+		assertThat(outputOf("add", ArrayType.of(List.of(strings, strings)))).isEqualTo(strings);
+
+		// Non-empty arrays (concatenation)
+		assertThat(outputOf("add", ArrayType.of(List.of(ArrayType.of(ints), ArrayType.of(ints)))))
+				.isEqualTo(ArrayType.of(ints));
+
+		// Non-empty objects (merging)
+		assertThat(outputOf("add", ArrayType.of(List.of(objects, objects)))).isEqualTo(objects);
+
+		// Empty array
+		assertThat(outputOf("add", ArrayType.of(List.of()))).isEqualTo(NullType.getInstance());
+
+		// Open arrays
+		assertThat(outputOf("add", ArrayType.of(numbers))).isEqualTo(UnionType.of(numbers, NullType.getInstance()));
+		assertThat(outputOf("add", ArrayType.of(strings))).isEqualTo(UnionType.of(strings, NullType.getInstance()));
+		assertThat(outputOf("add", ArrayType.of(ArrayType.of(ints))))
+				.isEqualTo(UnionType.of(ArrayType.of(ints), NullType.getInstance()));
+		assertThat(outputOf("add", ArrayType.of(objects))).isEqualTo(UnionType.of(objects, NullType.getInstance()));
+
+		// Mixed elements rejected
+		assertThatThrownBy(() -> outputOf("add", ArrayType.of(List.of(ints, strings))))
+				.isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("Type checking failed");
+	}
+
+	@Test
 	void theKeyFilterOfSortBySeesTheElementNotTheArray() {
 		// length accepts a string, so this is well typed only if the element type reaches the filter.
 		assertThatThrownBy(() -> outputOf("sort_by(explode)", ArrayType.of(NumericType.getInstance())))

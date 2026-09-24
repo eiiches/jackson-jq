@@ -157,6 +157,32 @@ public class CoreJqLibrary implements JqLibrary {
 				FunctionType.of(ArrayType.of(ArrayType.of(element)), ArrayType.of(element))));
 	}
 
+	private static List<TypeScheme<FunctionType>> addSchemes() {
+		Type empty = ArrayType.of(List.of());
+		TypeVariable number = TypeVariable.of("T");
+		TypeVariable element = TypeVariable.of("T");
+		Type arrayElement = ArrayType.of(element);
+		Type string = StringType.getInstance();
+		Type object = ObjectType.of(AnyType.getInstance());
+
+		return List.of(
+				TypeScheme.of(FunctionType.of(empty, NullType.getInstance())),
+				TypeScheme.of(Map.of(number, NumericType.getInstance()),
+						FunctionType.of(ArrayType.of(List.of(number), number), number)),
+				TypeScheme.of(Map.of(number, NumericType.getInstance()),
+						FunctionType.of(ArrayType.of(number), UnionType.of(number, NullType.getInstance()))),
+				TypeScheme.of(FunctionType.of(ArrayType.of(List.of(string), string), string)),
+				TypeScheme.of(FunctionType.of(ArrayType.of(string), UnionType.of(string, NullType.getInstance()))),
+				TypeScheme.of(Map.of(element, AnyType.getInstance()),
+						FunctionType.of(ArrayType.of(List.of(arrayElement), arrayElement), arrayElement)),
+				TypeScheme.of(Map.of(element, AnyType.getInstance()),
+						FunctionType.of(ArrayType.of(arrayElement), UnionType.of(arrayElement, NullType.getInstance()))),
+				TypeScheme.of(FunctionType.of(ArrayType.of(List.of(object), object), object)),
+				TypeScheme.of(FunctionType.of(ArrayType.of(object), UnionType.of(object, NullType.getInstance()))));
+	}
+
+	private static final List<TypeScheme<FunctionType>> ADD = addSchemes();
+
 	private static final List<JqFunction> FUNCTIONS = List.of(
 			JqFunction.of("@text", args(), "tostring"),
 			JqFunction.of("@json", args(), "tojson"),
@@ -176,7 +202,7 @@ public class CoreJqLibrary implements JqLibrary {
 			JqFunction.of("iterables", args(), "arrays, objects", ITERABLES),
 			JqFunction.of("scalars", args(), "nulls, booleans, numbers, strings", SCALARS),
 			JqFunction.of("isfinite", args(), "type == \"number\" and (isinfinite | not)"),
-			JqFunction.of("add", args(), "reduce .[] as $item (null; . + $item)"),
+			JqFunction.of("add", args(), "reduce .[] as $item (null; . + $item)", ADD),
 			JqFunction.of("min", args(), "min_by(.)"),
 			JqFunction.of("max", args(), "max_by(.)"),
 			JqFunction.of("sort", args(), "sort_by(.)"),

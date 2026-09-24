@@ -763,6 +763,21 @@ class TypeCheckTest {
 		assertThat(diagnostics).isEmpty();
 	}
 
+	@Test
+	void addInfersPreciseOutputForKnownArrayInputs() throws JsonQueryException {
+		CompileOptions options = strict(NullType.getInstance());
+		assertThat(environment.compile("[1, 2, 3] | add", options).getType().outputType())
+				.isEqualTo(NumericType.of(NumberKind.INT));
+		assertThat(environment.compile("[\"a\", \"b\"] | add", options).getType().outputType())
+				.isSameAs(StringType.getInstance());
+		assertThat(environment.compile("[[1], [2]] | add", options).getType().outputType())
+				.isEqualTo(ArrayType.of(NumericType.of(NumberKind.INT)));
+		assertThat(environment.compile("[{\"a\": 1}, {\"b\": 2}] | add", options).getType().outputType())
+				.isEqualTo(ObjectType.of(AnyType.getInstance()));
+		assertThat(environment.compile("[] | add", options).getType().outputType())
+				.isSameAs(NullType.getInstance());
+	}
+
 	private static CompileOptions strictOutput(Type outputType) {
 		return CompileOptions.newBuilder()
 				.setTypeCheckMode(TypeCheckMode.STRICT)

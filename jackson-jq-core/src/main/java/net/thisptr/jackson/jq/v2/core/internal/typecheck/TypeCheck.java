@@ -1119,7 +1119,7 @@ public final class TypeCheck {
 							  List<? extends AnalyzedExpression<?>> arguments,
 							  Type input, List<TypeScheme<FunctionType>> schemes) {
 		String function = name + "/" + callArity;
-		List<Type> outputs = new ArrayList<>();
+		List<MatchedOverload> matched = new ArrayList<>();
 		@Var boolean hasMatchingArity = false;
 		@Var boolean hasMatchingInput = false;
 		@Var boolean onlySameArgumentMismatch = true;
@@ -1148,12 +1148,21 @@ public final class TypeCheck {
 				else if (!commonMismatch.sameTypesAs(mismatch))
 					onlySameArgumentMismatch = false;
 			} else if (matcher.validateBounds()) {
-				outputs.add(matcher.substitute(type.returnType().outputType()));
+				List<FilterType> effectiveParameters = new ArrayList<>(type.parameterTypes().size());
+				for (FilterType parameter : type.parameterTypes()) {
+					effectiveParameters.add(FilterType.of(
+							matcher.substitute(parameter.inputType()),
+							matcher.substitute(parameter.outputType())));
+				}
+				matched.add(new MatchedOverload(
+						matcher.substitute(type.returnType().inputType()),
+						effectiveParameters,
+						matcher.substitute(type.returnType().outputType())));
 			} else {
 				onlySameArgumentMismatch = false;
 			}
 		}
-		if (outputs.isEmpty()) {
+		if (matched.isEmpty()) {
 			if (hasMatchingInput && onlySameArgumentMismatch && commonMismatch != null) {
 				String message = "Argument " + (commonMismatch.index() + 1) + " of " + function + " has type "
 						+ commonMismatch.actual() + "; expected " + commonMismatch.expected();
@@ -1166,7 +1175,46 @@ public final class TypeCheck {
 					: "No overload of " + function + " matches this call with input " + input;
 			throw new TypeRelations.Problem(withAcceptedTypes(message, name, schemes), function);
 		}
+		List<Type> outputs = new ArrayList<>(matched.size());
+		for (MatchedOverload candidate : matched) {
+			@Var boolean subsumed = false;
+			for (MatchedOverload other : matched) {
+				if (candidate != other && isStrictlyMoreSpecific(other, candidate)) {
+					subsumed = true;
+					break;
+				}
+			}
+			if (!subsumed)
+				outputs.add(candidate.output());
+		}
 		return UnionType.of(outputs);
+	}
+
+	private record MatchedOverload(Type effectiveInput, List<FilterType> effectiveParameters, Type output) {
+	}
+
+	private static boolean isStrictlyMoreSpecific(MatchedOverload narrower, MatchedOverload wider) {
+		if (!TypeMatcher.accepts(wider.effectiveInput(), narrower.effectiveInput()))
+			return false;
+		for (int i = 0; i < narrower.effectiveParameters().size(); i++) {
+			FilterType nParam = narrower.effectiveParameters().get(i);
+			FilterType wParam = wider.effectiveParameters().get(i);
+			if (!TypeMatcher.accepts(nParam.inputType(), wParam.inputType()))
+				return false;
+			if (!TypeMatcher.accepts(wParam.outputType(), nParam.outputType()))
+				return false;
+		}
+		if (!TypeMatcher.accepts(narrower.effectiveInput(), wider.effectiveInput()))
+			return true;
+		for (int i = 0; i < narrower.effectiveParameters().size(); i++) {
+			FilterType nParam = narrower.effectiveParameters().get(i);
+			FilterType wParam = wider.effectiveParameters().get(i);
+			if (!TypeMatcher.accepts(wParam.inputType(), nParam.inputType()))
+				return true;
+			if (!TypeMatcher.accepts(nParam.outputType(), wParam.outputType()))
+				return true;
+		}
+		return false;
 	}
 
 	private static String withAcceptedTypes(String message, String name, List<TypeScheme<FunctionType>> schemes) {
