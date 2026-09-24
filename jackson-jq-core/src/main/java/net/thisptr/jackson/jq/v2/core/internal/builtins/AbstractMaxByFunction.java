@@ -30,9 +30,12 @@ import net.thisptr.jackson.jq.v2.spi.type.UnionType;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public abstract class AbstractMaxByFunction implements Function {
-	private static final TypeVariable ELEMENT = TypeVariable.of("Element");
+	private static final TypeVariable T = TypeVariable.of("T");
 	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
-			TypeScheme.of(Map.of(ELEMENT, AnyType.getInstance()), FunctionType.of(ArrayType.of(ELEMENT), UnionType.of(ELEMENT, NullType.getInstance()), FilterType.of(ELEMENT, AnyType.getInstance())))
+			TypeScheme.of(Map.of(T, AnyType.getInstance()),
+					FunctionType.of(ArrayType.of(List.of(T), T), T, FilterType.of(T, AnyType.getInstance()))),
+			TypeScheme.of(Map.of(T, AnyType.getInstance()),
+					FunctionType.of(ArrayType.of(T), UnionType.of(T, NullType.getInstance()), FilterType.of(T, AnyType.getInstance())))
 	);
 
 	private final String fname;

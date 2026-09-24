@@ -15,6 +15,7 @@ import com.google.errorprone.annotations.Var;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
 import net.thisptr.jackson.jq.v2.spi.type.NeverType;
+import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
 import net.thisptr.jackson.jq.v2.spi.type.NumericType;
 import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
 import net.thisptr.jackson.jq.v2.spi.type.RecursiveType;
@@ -30,6 +31,7 @@ import net.thisptr.jackson.jq.v2.spi.type.UnionType;
 final class TypeMatcher {
 	private final Set<TypeVariable> quantified;
 	private final Map<TypeVariable, Type> upperBounds;
+	private final boolean strictSubtyping;
 	private final Map<TypeVariable, Type> substitutions = new HashMap<>();
 	private final Deque<TypeVariable> expectedRecursiveVariables = new ArrayDeque<>();
 	private final Deque<TypeVariable> actualRecursiveVariables = new ArrayDeque<>();
@@ -43,8 +45,13 @@ final class TypeMatcher {
 	}
 
 	TypeMatcher(Set<TypeVariable> quantified, Map<TypeVariable, Type> upperBounds) {
+		this(quantified, upperBounds, false);
+	}
+
+	TypeMatcher(Set<TypeVariable> quantified, Map<TypeVariable, Type> upperBounds, boolean strictSubtyping) {
 		this.quantified = Set.copyOf(quantified);
 		this.upperBounds = Map.copyOf(upperBounds);
+		this.strictSubtyping = strictSubtyping;
 	}
 
 	/**
@@ -82,9 +89,19 @@ final class TypeMatcher {
 		return matcher.match(expected, actual);
 	}
 
+	static boolean isSubtype(Type subtype, Type supertype) {
+		TypeMatcher matcher = new TypeMatcher(Set.of(), Map.of(), true);
+		return matcher.match(supertype, subtype);
+	}
+
 	private boolean matchInternal(Type expected, Type actual) {
-		if (actual == NeverType.getInstance())
+		if (actual == NeverType.getInstance()) {
+			if (expected instanceof TypeVariable variable && quantified.contains(variable))
+				return constrain(variable, actual);
 			return true;
+		}
+		if (expected == NeverType.getInstance())
+			return false;
 
 		if (actual instanceof UnionType union) {
 			for (Type alternative : union.alternatives()) {
@@ -108,8 +125,15 @@ final class TypeMatcher {
 
 		if (expected instanceof UndefinedType || actual instanceof UndefinedType)
 			return expected instanceof UndefinedType && actual instanceof UndefinedType;
-		if (expected instanceof AnyType || actual instanceof AnyType)
-			return true;
+		if (strictSubtyping) {
+			if (expected instanceof AnyType)
+				return true;
+			if (actual instanceof AnyType)
+				return false;
+		} else {
+			if (expected instanceof AnyType || actual instanceof AnyType)
+				return true;
+		}
 
 		if (expected instanceof ArrayType || actual instanceof ArrayType) {
 			return expected instanceof ArrayType expectedArray && actual instanceof ArrayType actualArray
@@ -126,8 +150,11 @@ final class TypeMatcher {
 					&& matchRecursive(expectedRecursive, actualRecursive);
 		}
 
-		if (expected instanceof NumericType && actual instanceof NumericType)
+		if (expected instanceof NumericType expectedNum && actual instanceof NumericType actualNum) {
+			if (strictSubtyping)
+				return expectedNum.numberKind() == NumberKind.UNKNOWN || expectedNum.numberKind() == actualNum.numberKind();
 			return true;
+		}
 		return TypeEquivalence.isEqualType(expected, actual);
 	}
 

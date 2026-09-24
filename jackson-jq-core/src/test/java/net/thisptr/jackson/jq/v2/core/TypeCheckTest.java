@@ -778,6 +778,33 @@ class TypeCheckTest {
 				.isSameAs(NullType.getInstance());
 	}
 
+	@Test
+	void minAndMaxInferPreciseOutputForKnownArrayInputs() throws JsonQueryException {
+		CompileOptions options = strict(NullType.getInstance());
+		assertThat(environment.compile("[1, 2, 3] | min", options).getType().outputType())
+				.isEqualTo(NumericType.of(NumberKind.INT));
+		assertThat(environment.compile("[1, 2, 3] | max", options).getType().outputType())
+				.isEqualTo(NumericType.of(NumberKind.INT));
+		assertThat(environment.compile("[\"b\", \"a\"] | min", options).getType().outputType())
+				.isSameAs(StringType.getInstance());
+		assertThat(environment.compile("[\"b\", \"a\"] | max", options).getType().outputType())
+				.isSameAs(StringType.getInstance());
+
+		assertThat(environment.compile("[1, 2, 3] | min_by(.)", options).getType().outputType())
+				.isEqualTo(NumericType.of(NumberKind.INT));
+		assertThat(environment.compile("[1, 2, 3] | max_by(.)", options).getType().outputType())
+				.isEqualTo(NumericType.of(NumberKind.INT));
+		assertThat(environment.compile("[\"b\", \"a\"] | min_by(.)", options).getType().outputType())
+				.isSameAs(StringType.getInstance());
+		assertThat(environment.compile("[\"b\", \"a\"] | max_by(.)", options).getType().outputType())
+				.isSameAs(StringType.getInstance());
+
+		assertThat(environment.compile("[] | min", options).getType().outputType())
+				.isSameAs(NullType.getInstance());
+		assertThat(environment.compile("[] | max", options).getType().outputType())
+				.isSameAs(NullType.getInstance());
+	}
+
 	private static CompileOptions strictOutput(Type outputType) {
 		return CompileOptions.newBuilder()
 				.setTypeCheckMode(TypeCheckMode.STRICT)

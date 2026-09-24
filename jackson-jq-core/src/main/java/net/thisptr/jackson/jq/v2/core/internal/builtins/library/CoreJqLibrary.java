@@ -183,6 +183,19 @@ public class CoreJqLibrary implements JqLibrary {
 
 	private static final List<TypeScheme<FunctionType>> ADD = addSchemes();
 
+	private static List<TypeScheme<FunctionType>> minMaxSchemes() {
+		Type empty = ArrayType.of(List.of());
+		TypeVariable element = TypeVariable.of("Element");
+		return List.of(
+				TypeScheme.of(FunctionType.of(empty, NullType.getInstance())),
+				TypeScheme.of(Map.of(element, AnyType.getInstance()),
+						FunctionType.of(ArrayType.of(List.of(element), element), element)),
+				TypeScheme.of(Map.of(element, AnyType.getInstance()),
+						FunctionType.of(ArrayType.of(element), UnionType.of(element, NullType.getInstance()))));
+	}
+
+	private static final List<TypeScheme<FunctionType>> MIN_MAX = minMaxSchemes();
+
 	private static final List<JqFunction> FUNCTIONS = List.of(
 			JqFunction.of("@text", args(), "tostring"),
 			JqFunction.of("@json", args(), "tojson"),
@@ -203,8 +216,8 @@ public class CoreJqLibrary implements JqLibrary {
 			JqFunction.of("scalars", args(), "nulls, booleans, numbers, strings", SCALARS),
 			JqFunction.of("isfinite", args(), "type == \"number\" and (isinfinite | not)"),
 			JqFunction.of("add", args(), "reduce .[] as $item (null; . + $item)", ADD),
-			JqFunction.of("min", args(), "min_by(.)"),
-			JqFunction.of("max", args(), "max_by(.)"),
+			JqFunction.of("min", args(), "min_by(.)", MIN_MAX),
+			JqFunction.of("max", args(), "max_by(.)", MIN_MAX),
 			JqFunction.of("sort", args(), "sort_by(.)"),
 			JqFunction.of("unique", args(), "group_by(.) | map(.[0])"),
 			JqFunction.of("unique_by", args("f"), "group_by(f) | map(.[0])"),

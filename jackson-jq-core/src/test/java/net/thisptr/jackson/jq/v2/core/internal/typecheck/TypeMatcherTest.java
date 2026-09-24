@@ -11,6 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
 import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
 import net.thisptr.jackson.jq.v2.spi.type.NeverType;
 import net.thisptr.jackson.jq.v2.spi.type.NullType;
+import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
 import net.thisptr.jackson.jq.v2.spi.type.NumericType;
 import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
 import net.thisptr.jackson.jq.v2.spi.type.RecursiveType;
@@ -142,6 +143,7 @@ class TypeMatcherTest {
 		assertThat(TypeMatcher.accepts(StringType.getInstance(), NeverType.getInstance())).isTrue();
 		assertThat(TypeMatcher.accepts(AnyType.getInstance(), UndefinedType.getInstance())).isFalse();
 		assertThat(TypeMatcher.accepts(UndefinedType.getInstance(), AnyType.getInstance())).isFalse();
+		assertThat(TypeMatcher.accepts(NeverType.getInstance(), AnyType.getInstance())).isFalse();
 		assertThat(TypeMatcher.accepts(UnionType.of(AnyType.getInstance(), UndefinedType.getInstance()), UndefinedType.getInstance())).isTrue();
 	}
 
@@ -175,5 +177,25 @@ class TypeMatcherTest {
 		assertThat(matcher.substitute(element)).isSameAs(NumericType.getInstance());
 		assertThat(TypeMatcher.accepts(ArrayType.of(ArrayType.of(AnyType.getInstance())),
 				ArrayType.of(List.of(NumericType.getInstance(), NumericType.getInstance())))).isFalse();
+	}
+
+	@Test
+	void subtypingIsDirectedOrder() {
+		assertThat(TypeMatcher.isSubtype(StringType.getInstance(), AnyType.getInstance())).isTrue();
+		assertThat(TypeMatcher.isSubtype(AnyType.getInstance(), StringType.getInstance())).isFalse();
+		assertThat(TypeMatcher.isSubtype(NeverType.getInstance(), StringType.getInstance())).isTrue();
+		assertThat(TypeMatcher.isSubtype(StringType.getInstance(), NeverType.getInstance())).isFalse();
+		assertThat(TypeMatcher.isSubtype(NumericType.of(NumberKind.INT), NumericType.getInstance())).isTrue();
+		assertThat(TypeMatcher.isSubtype(NumericType.getInstance(), NumericType.of(NumberKind.INT))).isFalse();
+		assertThat(TypeMatcher.isSubtype(ArrayType.of(List.of()), ArrayType.of(AnyType.getInstance()))).isTrue();
+		assertThat(TypeMatcher.isSubtype(ArrayType.of(AnyType.getInstance()), ArrayType.of(List.of()))).isFalse();
+	}
+
+	@Test
+	void aVariableUnderAnEmptyArrayBindsToNever() {
+		TypeVariable element = TypeVariable.of("T");
+		TypeMatcher matcher = new TypeMatcher(Set.of(element));
+		assertThat(matcher.match(ArrayType.of(element), ArrayType.of(List.of()))).isTrue();
+		assertThat(matcher.substitute(element)).isSameAs(NeverType.getInstance());
 	}
 }

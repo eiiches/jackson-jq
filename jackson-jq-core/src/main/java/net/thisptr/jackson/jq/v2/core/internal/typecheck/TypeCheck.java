@@ -1194,24 +1194,24 @@ public final class TypeCheck {
 	}
 
 	private static boolean isStrictlyMoreSpecific(MatchedOverload narrower, MatchedOverload wider) {
-		if (!TypeMatcher.accepts(wider.effectiveInput(), narrower.effectiveInput()))
+		if (!TypeMatcher.isSubtype(narrower.effectiveInput(), wider.effectiveInput()))
 			return false;
 		for (int i = 0; i < narrower.effectiveParameters().size(); i++) {
 			FilterType nParam = narrower.effectiveParameters().get(i);
 			FilterType wParam = wider.effectiveParameters().get(i);
-			if (!TypeMatcher.accepts(nParam.inputType(), wParam.inputType()))
+			if (!TypeMatcher.isSubtype(wParam.inputType(), nParam.inputType()))
 				return false;
-			if (!TypeMatcher.accepts(wParam.outputType(), nParam.outputType()))
+			if (!TypeMatcher.isSubtype(nParam.outputType(), wParam.outputType()))
 				return false;
 		}
-		if (!TypeMatcher.accepts(narrower.effectiveInput(), wider.effectiveInput()))
+		if (!TypeMatcher.isSubtype(wider.effectiveInput(), narrower.effectiveInput()))
 			return true;
 		for (int i = 0; i < narrower.effectiveParameters().size(); i++) {
 			FilterType nParam = narrower.effectiveParameters().get(i);
 			FilterType wParam = wider.effectiveParameters().get(i);
-			if (!TypeMatcher.accepts(wParam.inputType(), nParam.inputType()))
+			if (!TypeMatcher.isSubtype(nParam.inputType(), wParam.inputType()))
 				return true;
-			if (!TypeMatcher.accepts(nParam.outputType(), wParam.outputType()))
+			if (!TypeMatcher.isSubtype(wParam.outputType(), nParam.outputType()))
 				return true;
 		}
 		return false;

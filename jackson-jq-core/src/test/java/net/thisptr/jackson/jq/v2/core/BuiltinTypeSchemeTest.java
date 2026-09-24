@@ -164,6 +164,33 @@ class BuiltinTypeSchemeTest {
 	}
 
 	@Test
+	void minAndMaxNarrowOutputForNonEmptyArrays() throws JsonQueryException {
+		Type ints = NumericType.of(NumberKind.INT);
+		Type strings = StringType.getInstance();
+		Type numbers = NumericType.getInstance();
+
+		// Non-empty arrays for min/max
+		assertThat(outputOf("min", ArrayType.of(List.of(ints, ints)))).isEqualTo(ints);
+		assertThat(outputOf("max", ArrayType.of(List.of(ints, ints)))).isEqualTo(ints);
+		assertThat(outputOf("min", ArrayType.of(List.of(strings, strings)))).isEqualTo(strings);
+		assertThat(outputOf("max", ArrayType.of(List.of(strings, strings)))).isEqualTo(strings);
+
+		// Non-empty arrays for min_by/max_by
+		assertThat(outputOf("min_by(.)", ArrayType.of(List.of(ints, ints)))).isEqualTo(ints);
+		assertThat(outputOf("max_by(.)", ArrayType.of(List.of(ints, ints)))).isEqualTo(ints);
+		assertThat(outputOf("min_by(.)", ArrayType.of(List.of(strings, strings)))).isEqualTo(strings);
+		assertThat(outputOf("max_by(.)", ArrayType.of(List.of(strings, strings)))).isEqualTo(strings);
+
+		// Empty array
+		assertThat(outputOf("min", ArrayType.of(List.of()))).isEqualTo(NullType.getInstance());
+		assertThat(outputOf("max", ArrayType.of(List.of()))).isEqualTo(NullType.getInstance());
+
+		// Open arrays
+		assertThat(outputOf("min", ArrayType.of(numbers))).isEqualTo(UnionType.of(numbers, NullType.getInstance()));
+		assertThat(outputOf("max", ArrayType.of(numbers))).isEqualTo(UnionType.of(numbers, NullType.getInstance()));
+	}
+
+	@Test
 	void theKeyFilterOfSortBySeesTheElementNotTheArray() {
 		// length accepts a string, so this is well typed only if the element type reaches the filter.
 		assertThatThrownBy(() -> outputOf("sort_by(explode)", ArrayType.of(NumericType.getInstance())))
