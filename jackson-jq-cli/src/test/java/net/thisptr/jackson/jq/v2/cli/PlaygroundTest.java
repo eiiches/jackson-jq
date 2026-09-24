@@ -1239,8 +1239,6 @@ class PlaygroundTest {
 				KeyEvent.ofChar('o', KeyModifiers.CTRL),
 				KeyEvent.ofKey(KeyCode.ESCAPE),
 				KeyEvent.ofChar('o', KeyModifiers.CTRL),
-				KeyEvent.ofChar('q'),
-				KeyEvent.ofChar('o', KeyModifiers.CTRL),
 				KeyEvent.ofChar('o', KeyModifiers.CTRL),
 				KeyEvent.ofKey(KeyCode.ESCAPE),
 				KeyEvent.ofChar('y'));
@@ -1316,7 +1314,7 @@ class PlaygroundTest {
 				KeyEvent.ofChar('c'),
 				KeyEvent.ofChar('s'),
 				KeyEvent.ofChar('R'),
-				KeyEvent.ofKey(KeyCode.ENTER),
+				KeyEvent.ofKey(KeyCode.ESCAPE),
 				KeyEvent.ofKey(KeyCode.ESCAPE),
 				KeyEvent.ofChar('y'));
 
@@ -1718,7 +1716,7 @@ class PlaygroundTest {
 		assertThat(rendered).contains("unlimited");
 		assertThat(rendered).contains("[0-9/⌫] Edit");
 		assertThat(rendered).contains("[Space/←→] Change");
-		assertThat(rendered).contains("[Esc/Enter] Close");
+		assertThat(rendered).contains("[Esc] Close");
 		assertThat(rendered).contains("Ctrl+O");
 	}
 

@@ -510,8 +510,8 @@ final class Playground<N> {
 					}
 				}
 			}
-			if (key.code() == KeyCode.ESCAPE || key.code() == KeyCode.ENTER || key.isConfirm() || key.isCancel()
-					|| key.isCharIgnoreCase('q') || (key.hasCtrl() && key.isChar('o'))) {
+			if (key.code() == KeyCode.ESCAPE || key.isCancel()
+					|| (key.hasCtrl() && key.isChar('o'))) {
 				modal = Modal.NONE;
 				return true;
 			}
@@ -1039,7 +1039,7 @@ final class Playground<N> {
 			optionLines.add(buildRuntimeLimitLine(MAX_OUTPUTS_PER_EXPRESSION_OPTION, "--max-outputs-per-expression", "expression outputs"));
 			optionLines.add(Line.from(Span.raw("")));
 			optionLines.add(Line.from(
-					Span.styled("  [↑↓] Select  [0-9/⌫] Edit  [Space/←→] Change  [Esc/Enter] Close", Style.EMPTY.dim().yellow())
+					Span.styled("  [↑↓] Select  [0-9/⌫] Edit  [Space/←→] Change  [Esc] Close", Style.EMPTY.dim().yellow())
 			));
 
 			Paragraph dialogContent = Paragraph.builder()
