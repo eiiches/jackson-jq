@@ -626,6 +626,138 @@ class VimQueryEditorTest {
 		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.NORMAL);
 	}
 
+	@Test
+	void supportsControlUInCommandMode() {
+		VimQueryEditor editor = new VimQueryEditor(new TextAreaState("."));
+
+		text(editor, ":hello");
+		assertThat(editor.statusText()).isEqualTo(":hello");
+		assertThat(editor.commandCursor()).isEqualTo(5);
+
+		editor.handleKey(KeyEvent.ofChar('u', KeyModifiers.CTRL));
+		assertThat(editor.statusText()).isEqualTo(":");
+		assertThat(editor.commandCursor()).isZero();
+		assertThat(editor.commandText()).isEmpty();
+
+		text(editor, "foobar");
+		for (int i = 0; i < 3; i++) {
+			editor.handleKey(KeyEvent.ofKey(KeyCode.LEFT));
+		}
+		assertThat(editor.commandCursor()).isEqualTo(3);
+
+		editor.handleKey(KeyEvent.ofChar('u', KeyModifiers.CTRL));
+		assertThat(editor.commandText()).isEqualTo("bar");
+		assertThat(editor.statusText()).isEqualTo(":bar");
+		assertThat(editor.commandCursor()).isZero();
+	}
+
+	@Test
+	void supportsControlWInCommandMode() {
+		VimQueryEditor editor = new VimQueryEditor(new TextAreaState("."));
+
+		text(editor, ":hello world");
+		assertThat(editor.commandCursor()).isEqualTo(11);
+
+		editor.handleKey(KeyEvent.ofChar('w', KeyModifiers.CTRL));
+		assertThat(editor.commandText()).isEqualTo("hello ");
+		assertThat(editor.statusText()).isEqualTo(":hello ");
+		assertThat(editor.commandCursor()).isEqualTo(6);
+
+		text(editor, "world   ");
+		assertThat(editor.commandCursor()).isEqualTo(14);
+		editor.handleKey(KeyEvent.ofChar('w', KeyModifiers.CTRL));
+		assertThat(editor.commandText()).isEqualTo("hello ");
+		assertThat(editor.commandCursor()).isEqualTo(6);
+
+		editor.handleKey(KeyEvent.ofChar('w', KeyModifiers.CTRL));
+		assertThat(editor.commandText()).isEmpty();
+		assertThat(editor.commandCursor()).isZero();
+	}
+
+	@Test
+	void supportsControlKInCommandMode() {
+		VimQueryEditor editor = new VimQueryEditor(new TextAreaState("."));
+
+		text(editor, ":hello world");
+		for (int i = 0; i < 5; i++) {
+			editor.handleKey(KeyEvent.ofKey(KeyCode.LEFT));
+		}
+		assertThat(editor.commandCursor()).isEqualTo(6);
+
+		editor.handleKey(KeyEvent.ofChar('k', KeyModifiers.CTRL));
+		assertThat(editor.commandText()).isEqualTo("hello ");
+		assertThat(editor.statusText()).isEqualTo(":hello ");
+		assertThat(editor.commandCursor()).isEqualTo(6);
+	}
+
+	@Test
+	void supportsNavigationAndEditingInCommandMode() {
+		VimQueryEditor editor = new VimQueryEditor(new TextAreaState("."));
+
+		text(editor, ":foo");
+		editor.handleKey(KeyEvent.ofChar('a', KeyModifiers.CTRL));
+		assertThat(editor.commandCursor()).isZero();
+
+		text(editor, "bar");
+		assertThat(editor.commandText()).isEqualTo("barfoo");
+		assertThat(editor.commandCursor()).isEqualTo(3);
+
+		editor.handleKey(KeyEvent.ofKey(KeyCode.END));
+		assertThat(editor.commandCursor()).isEqualTo(6);
+
+		for (int i = 0; i < 3; i++) {
+			editor.handleKey(KeyEvent.ofKey(KeyCode.LEFT));
+		}
+		assertThat(editor.commandCursor()).isEqualTo(3);
+
+		editor.handleKey(KeyEvent.ofKey(KeyCode.DELETE));
+		assertThat(editor.commandText()).isEqualTo("baroo");
+		assertThat(editor.commandCursor()).isEqualTo(3);
+
+		editor.handleKey(KeyEvent.ofKey(KeyCode.BACKSPACE));
+		assertThat(editor.commandText()).isEqualTo("baoo");
+		assertThat(editor.commandCursor()).isEqualTo(2);
+
+		editor.handleKey(KeyEvent.ofChar('h', KeyModifiers.CTRL));
+		assertThat(editor.commandText()).isEqualTo("boo");
+		assertThat(editor.commandCursor()).isEqualTo(1);
+	}
+
+	@Test
+	void backspaceInCommandModeExitsWhenEmpty() {
+		VimQueryEditor editor = new VimQueryEditor(new TextAreaState("."));
+
+		key(editor, ':');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.COMMAND);
+
+		editor.handleKey(KeyEvent.ofKey(KeyCode.BACKSPACE));
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.NORMAL);
+
+		text(editor, ":foo");
+		editor.handleKey(KeyEvent.ofKey(KeyCode.HOME));
+		assertThat(editor.commandCursor()).isZero();
+
+		editor.handleKey(KeyEvent.ofKey(KeyCode.BACKSPACE));
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.COMMAND);
+		assertThat(editor.commandText()).isEqualTo("foo");
+		assertThat(editor.commandCursor()).isZero();
+	}
+
+	@Test
+	void supportsControlWAndControlKInSearchMode() {
+		TextAreaState state = new TextAreaState("foo bar");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "/hello world");
+		editor.handleKey(KeyEvent.ofChar('w', KeyModifiers.CTRL));
+		assertThat(editor.statusText()).startsWith("/hello ");
+
+		editor.handleKey(KeyEvent.ofKey(KeyCode.HOME));
+		editor.handleKey(KeyEvent.ofKey(KeyCode.RIGHT));
+		editor.handleKey(KeyEvent.ofChar('k', KeyModifiers.CTRL));
+		assertThat(editor.statusText()).startsWith("/h");
+	}
+
 	private static void text(VimQueryEditor editor, String text) {
 		for (int i = 0; i < text.length(); i++) {
 			key(editor, text.charAt(i));

@@ -854,7 +854,9 @@ final class Playground<N> {
 			renderQuerySearchHighlights(frame.buffer(), queryEditorRect);
 		}
 		if (focus == Focus.QUERY && modal == Modal.NONE) {
-			renderQueryCursor(frame.buffer(), queryEditorRect);
+			if (vimQueryEditor == null || vimQueryEditor.mode() != VimQueryEditor.Mode.COMMAND) {
+				renderQueryCursor(frame.buffer(), queryEditorRect);
+			}
 		}
 		Line autoRunStatusLine = buildAutoRunStatusLine();
 		int autoRunStatusWidth = autoRunStatusLine.width();
@@ -873,6 +875,13 @@ final class Playground<N> {
 			String vimStatus = vimQueryEditor == null ? null : vimQueryEditor.statusText();
 			if (vimStatus != null) {
 				frame.renderWidget(Paragraph.from(" " + vimStatus), leftStatusRect);
+				if (focus == Focus.QUERY && vimQueryEditor != null && vimQueryEditor.mode() == VimQueryEditor.Mode.COMMAND) {
+					int cursorX = leftStatusRect.x() + 1 + 1 + CharWidth.of(vimQueryEditor.commandText().substring(0, vimQueryEditor.commandCursor()));
+					if (cursorX < leftStatusRect.right()) {
+						Cell cell = frame.buffer().get(cursorX, leftStatusRect.y());
+						frame.buffer().set(cursorX, leftStatusRect.y(), cell.patchStyle(Style.EMPTY.reversed()));
+					}
+				}
 			} else if (evaluationStatus == EvaluationStatus.LOADING) {
 				frame.renderWidget(Paragraph.builder()
 						.text(Text.from(Line.styled("  Evaluating...", Style.EMPTY.cyan())))

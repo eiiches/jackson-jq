@@ -94,6 +94,46 @@ class PlaygroundTest {
 	}
 
 	@Test
+	void vimCommandModeSupportsControlUAndEditingShortcuts() throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6),
+				Versions.JQ_1_6,
+				"jackson3",
+				"{\"name\":\"Bob\"}".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				".",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				Collections.emptyList(),
+				true,
+				new PrintStream(out),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		TuiRunner runner = createTestRunner(
+				new ByteArrayOutputStream(),
+				KeyEvent.ofChar(':'),
+				KeyEvent.ofChar('n'),
+				KeyEvent.ofChar('o'),
+				KeyEvent.ofChar('h'),
+				KeyEvent.ofChar('u', KeyModifiers.CTRL),
+				KeyEvent.ofChar('q'),
+				KeyEvent.ofKey(KeyCode.ENTER),
+				KeyEvent.ofChar('y'));
+
+		pg.run(runner);
+
+		assertThat(pg.isAccepted()).isTrue();
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("{\n  \"name\": \"Bob\"\n}\n");
+	}
+
+	@Test
 	void tabLeavesVimInsertModeAndMovesFocus() throws Exception {
 		Playground<JsonNode> pg = new Playground<>(
 				Main.createEnvironment(JSON, Versions.JQ_1_6),

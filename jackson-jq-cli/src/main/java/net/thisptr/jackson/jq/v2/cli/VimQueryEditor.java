@@ -94,6 +94,7 @@ final class VimQueryEditor {
 	private Mode mode = Mode.NORMAL;
 	private Register register = Register.EMPTY;
 	private final StringBuilder command = new StringBuilder();
+	private int commandCursor;
 	private final StringBuilder searchInput = new StringBuilder();
 	private final StringBuilder count = new StringBuilder();
 	private @Nullable Operator pendingOperator;
@@ -129,6 +130,14 @@ final class VimQueryEditor {
 			case COMMAND -> "COMMAND";
 			case SEARCH -> "SEARCH";
 		};
+	}
+
+	int commandCursor() {
+		return commandCursor;
+	}
+
+	String commandText() {
+		return command.toString();
 	}
 
 	@Nullable
@@ -174,6 +183,7 @@ final class VimQueryEditor {
 			clearPending();
 		}
 		command.setLength(0);
+		commandCursor = 0;
 		message = null;
 	}
 
@@ -290,19 +300,63 @@ final class VimQueryEditor {
 		if (isEscape(key)) {
 			mode = Mode.NORMAL;
 			command.setLength(0);
+			commandCursor = 0;
 			return Result.HANDLED;
 		}
-		if (key.isDeleteBackward() || key.code() == KeyCode.BACKSPACE) {
+		if (key.isDeleteBackward() || key.code() == KeyCode.BACKSPACE || (key.hasCtrl() && key.isChar('h'))) {
 			if (command.length() == 0) {
 				mode = Mode.NORMAL;
-			} else {
-				command.setLength(command.length() - 1);
+			} else if (commandCursor > 0) {
+				int start = command.offsetByCodePoints(commandCursor, -1);
+				command.delete(start, commandCursor);
+				commandCursor = start;
 			}
+			return Result.HANDLED;
+		}
+		if (key.isDeleteForward() || key.code() == KeyCode.DELETE) {
+			if (commandCursor < command.length()) {
+				int end = command.offsetByCodePoints(commandCursor, 1);
+				command.delete(commandCursor, end);
+			}
+			return Result.HANDLED;
+		}
+		if (key.isLeft()) {
+			if (commandCursor > 0) {
+				commandCursor = command.offsetByCodePoints(commandCursor, -1);
+			}
+			return Result.HANDLED;
+		}
+		if (key.isRight()) {
+			if (commandCursor < command.length()) {
+				commandCursor = command.offsetByCodePoints(commandCursor, 1);
+			}
+			return Result.HANDLED;
+		}
+		if (key.isHome() || (key.hasCtrl() && key.isChar('a'))) {
+			commandCursor = 0;
+			return Result.HANDLED;
+		}
+		if (key.isEnd() || (key.hasCtrl() && key.isChar('e'))) {
+			commandCursor = command.length();
+			return Result.HANDLED;
+		}
+		if (key.hasCtrl() && key.isChar('u')) {
+			command.delete(0, commandCursor);
+			commandCursor = 0;
+			return Result.HANDLED;
+		}
+		if (key.hasCtrl() && key.isChar('k')) {
+			command.delete(commandCursor, command.length());
+			return Result.HANDLED;
+		}
+		if (key.hasCtrl() && key.isChar('w')) {
+			deletePreviousWordInCommand();
 			return Result.HANDLED;
 		}
 		if (key.isConfirm() || key.code() == KeyCode.ENTER) {
 			String entered = command.toString();
 			command.setLength(0);
+			commandCursor = 0;
 			mode = Mode.NORMAL;
 			if (entered.equals("q")) {
 				return Result.SUBMIT;
@@ -317,7 +371,8 @@ final class VimQueryEditor {
 		if (!key.hasCtrl() && !key.hasAlt()) {
 			String str = key.string();
 			if (str != null && !str.isEmpty() && (key.code() == KeyCode.CHAR || str.charAt(0) >= 32)) {
-				command.append(str);
+				command.insert(commandCursor, str);
+				commandCursor += str.length();
 				return Result.HANDLED;
 			}
 		}
@@ -348,7 +403,7 @@ final class VimQueryEditor {
 			finishSearchInput();
 			return Result.HANDLED;
 		}
-		if (key.isDeleteBackward() || key.code() == KeyCode.BACKSPACE) {
+		if (key.isDeleteBackward() || key.code() == KeyCode.BACKSPACE || (key.hasCtrl() && key.isChar('h'))) {
 			if (searchInputCursor > 0) {
 				int start = searchInput.offsetByCodePoints(searchInputCursor, -1);
 				searchInput.delete(start, searchInputCursor);
@@ -388,6 +443,16 @@ final class VimQueryEditor {
 		if (key.hasCtrl() && key.isChar('u')) {
 			searchInput.delete(0, searchInputCursor);
 			searchInputCursor = 0;
+			updateSearchPreview();
+			return Result.HANDLED;
+		}
+		if (key.hasCtrl() && key.isChar('k')) {
+			searchInput.delete(searchInputCursor, searchInput.length());
+			updateSearchPreview();
+			return Result.HANDLED;
+		}
+		if (key.hasCtrl() && key.isChar('w')) {
+			deletePreviousWordInSearch();
 			updateSearchPreview();
 			return Result.HANDLED;
 		}
@@ -1247,6 +1312,7 @@ final class VimQueryEditor {
 		clearPending();
 		mode = Mode.COMMAND;
 		command.setLength(0);
+		commandCursor = 0;
 		return Result.HANDLED;
 	}
 
@@ -1600,6 +1666,36 @@ final class VimQueryEditor {
 			state.deleteBackward();
 			col--;
 		}
+	}
+
+	private void deletePreviousWordInCommand() {
+		if (commandCursor == 0) {
+			return;
+		}
+		@Var int start = commandCursor;
+		while (start > 0 && Character.isWhitespace(command.charAt(start - 1))) {
+			start--;
+		}
+		while (start > 0 && !Character.isWhitespace(command.charAt(start - 1))) {
+			start--;
+		}
+		command.delete(start, commandCursor);
+		commandCursor = start;
+	}
+
+	private void deletePreviousWordInSearch() {
+		if (searchInputCursor == 0) {
+			return;
+		}
+		@Var int start = searchInputCursor;
+		while (start > 0 && Character.isWhitespace(searchInput.charAt(start - 1))) {
+			start--;
+		}
+		while (start > 0 && !Character.isWhitespace(searchInput.charAt(start - 1))) {
+			start--;
+		}
+		searchInput.delete(start, searchInputCursor);
+		searchInputCursor = start;
 	}
 
 	private void normalizeNormalCursor() {
