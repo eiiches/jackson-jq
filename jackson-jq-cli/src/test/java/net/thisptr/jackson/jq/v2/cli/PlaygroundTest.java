@@ -3368,8 +3368,8 @@ class PlaygroundTest {
 		List<Line> banner = pg.buildOutputTypeBanner(80);
 		assertThat(banner).isNotEmpty();
 		String bannerText = banner.stream().map(PlaygroundTest::lineToPlainText).reduce("", (a, b) -> a + "\n" + b);
-		assertThat(bannerText).contains("Expected: BOOLEAN");
-		assertThat(bannerText).contains("Inferred: \"hello\"");
+		assertThat(bannerText).contains("Type (Expected): BOOLEAN");
+		assertThat(bannerText).contains("Type (Inferred): \"hello\"");
 		assertThat(bannerText).contains("⚠ Mismatch");
 	}
 

@@ -1513,13 +1513,14 @@ final class Playground<N> {
 
 		List<Line> lines = new ArrayList<>();
 		if (hasExpected) {
-			List<String> expWrapped = wrapType("Expected: ", expectedType.toString(), width, 2);
+			String expPrefix = "Type (Expected): ";
+			List<String> expWrapped = wrapType(expPrefix, expectedType.toString(), width, 2);
 			for (int i = 0; i < expWrapped.size(); i++) {
 				String lineStr = expWrapped.get(i);
 				if (i == 0) {
 					lines.add(Line.from(
-							Span.styled("Expected: ", Style.EMPTY.bold().white()),
-							Span.styled(lineStr.substring("Expected: ".length()), Style.EMPTY.cyan())
+							Span.styled(expPrefix, Style.EMPTY.bold().white()),
+							Span.styled(lineStr.substring(expPrefix.length()), Style.EMPTY.cyan())
 					));
 				} else {
 					lines.add(Line.from(Span.styled(lineStr, Style.EMPTY.cyan())));
@@ -1527,7 +1528,7 @@ final class Playground<N> {
 			}
 		}
 
-		String infPrefix = "Inferred: ";
+		String infPrefix = "Type (Inferred): ";
 		String infStr = inferredType != null ? inferredType.toString() : "any";
 		List<String> infWrapped = wrapType(infPrefix, infStr, width, 2);
 		for (int i = 0; i < infWrapped.size(); i++) {
