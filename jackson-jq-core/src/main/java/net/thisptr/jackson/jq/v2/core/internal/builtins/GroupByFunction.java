@@ -41,7 +41,7 @@ public class GroupByFunction implements Function {
 
 	@Override
 	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
-		return ExpressionPropertiesUtils.forwardAll(Cardinality.ONE, true, false, arguments);
+		return ExpressionPropertiesUtils.forwardDependencies(Cardinality.ONE, true, false, arguments);
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -61,8 +62,53 @@ public class FunctionContractTest {
 					assertThat(function.analyze(version, externalArguments).dependsOnExternalState())
 							.as("%s/%d propagates evaluated external-state arguments in %s", signature.name(), arity, version)
 							.isTrue();
+
+					List<ExpressionProperties> zeroArguments = java.util.Collections.nCopies(arity,
+							new ExpressionProperties(Cardinality.ZERO, false, false));
+					Set<String> aggregationFunctions = Set.of("sort_by", "group_by", "max_by", "min_by", "isempty");
+					if (aggregationFunctions.contains(signature.name())) {
+						assertThat(function.analyze(version, zeroArguments).cardinality())
+								.as("%s/%d retains cardinality for aggregation in %s", signature.name(), arity, version)
+								.isNotEqualTo(Cardinality.ZERO);
+					} else {
+						assertThat(function.analyze(version, zeroArguments).cardinality())
+								.as("%s/%d propagates ZERO cardinality in %s", signature.name(), arity, version)
+								.isEqualTo(Cardinality.ZERO);
+					}
+				}
+			}
+		}
+	}
+
+	@Test
+	public void functionCardinalityContracts() {
+		for (Version version : Versions.versions()) {
+			Map<FunctionSignature, Function> functions = ClassPathFunctionLoader.getInstance().getFunctions(version);
+			for (String name : List.of("tonumber", "has", "index", "rindex", "indices")) {
+				for (Map.Entry<FunctionSignature, Function> entry : functions.entrySet()) {
+					if (entry.getKey().name().equals(name)) {
+						int arity = entry.getKey().arity() != null ? entry.getKey().arity() : 0;
+						List<ExpressionProperties> pureArgs = java.util.Collections.nCopies(arity,
+								new ExpressionProperties(Cardinality.ONE, false, false));
+						assertThat(entry.getValue().analyze(version, pureArgs).cardinality())
+								.as("%s/%d in %s", name, arity, version)
+								.isEqualTo(Cardinality.ONE);
+					}
+				}
+			}
+			for (String name : List.of("range", "paths")) {
+				for (Map.Entry<FunctionSignature, Function> entry : functions.entrySet()) {
+					if (entry.getKey().name().equals(name)) {
+						int arity = entry.getKey().arity() != null ? entry.getKey().arity() : 0;
+						List<ExpressionProperties> pureArgs = java.util.Collections.nCopies(arity,
+								new ExpressionProperties(Cardinality.ONE, false, false));
+						assertThat(entry.getValue().analyze(version, pureArgs).cardinality())
+								.as("%s/%d in %s", name, arity, version)
+								.isEqualTo(Cardinality.UNKNOWN);
+					}
 				}
 			}
 		}
 	}
 }
+

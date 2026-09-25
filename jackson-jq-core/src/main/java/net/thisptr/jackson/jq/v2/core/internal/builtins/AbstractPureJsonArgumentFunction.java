@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
-import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -34,7 +34,7 @@ public abstract class AbstractPureJsonArgumentFunction implements Function {
 
 	@Override
 	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
-		return ExpressionPropertiesUtils.forwardAll(CardinalityUtils.multiply(arguments, ExpressionProperties::cardinality), false, false, arguments);
+		return ExpressionPropertiesUtils.forwardAll(Cardinality.ONE, false, false, arguments);
 	}
 
 	@Override

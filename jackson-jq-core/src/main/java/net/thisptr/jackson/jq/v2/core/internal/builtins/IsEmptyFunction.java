@@ -69,7 +69,7 @@ public class IsEmptyFunction implements Function {
 	@Override
 	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
 		Cardinality cardinality = jqVersion.compareTo(Versions.JQ_1_7) >= 0 ? Cardinality.ONE : Cardinality.UNKNOWN;
-		return ExpressionPropertiesUtils.forwardAll(cardinality, false, false, arguments);
+		return ExpressionPropertiesUtils.forwardDependencies(cardinality, false, false, arguments);
 	}
 
 	@Override

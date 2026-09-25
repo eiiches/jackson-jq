@@ -38,7 +38,7 @@ public class RIndexFunction implements Function {
 
 	@Override
 	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
-		return ExpressionPropertiesUtils.forwardAll(Cardinality.UNKNOWN, true, false, arguments);
+		return ExpressionPropertiesUtils.forwardAll(Cardinality.ONE, true, false, arguments);
 	}
 
 	@Override

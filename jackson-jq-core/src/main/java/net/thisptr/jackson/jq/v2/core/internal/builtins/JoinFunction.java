@@ -14,6 +14,7 @@ import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
@@ -62,7 +63,7 @@ public class JoinFunction implements Function {
 
 	@Override
 	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
-		return ExpressionPropertiesUtils.forwardAll(arguments.get(0).cardinality(), true, false, arguments);
+		return ExpressionPropertiesUtils.forwardAll(Cardinality.ONE, true, false, arguments);
 	}
 
 	@Override
