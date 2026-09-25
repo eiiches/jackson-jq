@@ -2,9 +2,25 @@
 import glob
 import json
 import os
+import re
 import sys
 import yaml
 import yaml.nodes
+
+
+yaml.SafeLoader.add_implicit_resolver(
+    "tag:yaml.org,2002:float",
+    re.compile(
+        r"""^(?:[-+]?(?:[0-9][0-9_]*)\.[0-9_]*(?:[eE][-+]?[0-9]+)?
+|[-+]?(?:[0-9][0-9_]*)(?:[eE][-+]?[0-9]+)
+|\.[0-9_]+(?:[eE][-+]?[0-9]+)?
+|[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\.[0-9_]*
+|[-+]?\.(?:inf|Inf|INF)
+|\.(?:nan|NaN|NAN))$""",
+        re.VERBOSE,
+    ),
+    list("-+0123456789."),
+)
 
 
 def represent_json(dumper, value):
@@ -92,55 +108,88 @@ class FormattedTestCase:
 yaml.add_representer(FormattedTestCase, lambda dumper, data: data.__yaml__(dumper))
 
 
-def extract_header_comment(filepath):
-    with open(filepath, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-    header = []
-    for line in lines:
-        if line.strip().startswith("#") or (not line.strip() and header):
-            header.append(line)
-        elif not line.strip():
-            continue
+def extract_comments_and_data(content):
+    lines = content.splitlines(keepends=True)
+    tokens = [t for t in yaml.scan(content) if isinstance(t, yaml.BlockEntryToken) and t.start_mark.column == 0]
+    data = yaml.load(content, Loader=yaml.SafeLoader)
+    if not isinstance(data, list):
+        return None, None, None
+
+    if not tokens:
+        all_comments = "".join(lines).strip()
+        trailing_comment = (all_comments + "\n") if all_comments else ""
+        return data, [], trailing_comment
+
+    comments = []
+    for i, t in enumerate(tokens):
+        if i == 0:
+            raw_comment_lines = lines[:t.start_mark.line]
         else:
-            break
-    header_text = "".join(header)
-    # Only retain header if it is a license block
-    if "Permission is hereby granted" in header_text or "Creative Commons" in header_text:
-        return header_text
-    return ""
+            prev_start = tokens[i - 1].start_mark.line
+            curr_start = t.start_mark.line
+            raw_comment_lines = lines[prev_start:curr_start]
+            last_item_line = -1
+            for idx, l in enumerate(raw_comment_lines):
+                if l.strip() and not l.startswith("#"):
+                    last_item_line = idx
+            raw_comment_lines = raw_comment_lines[last_item_line + 1:]
+
+        while raw_comment_lines and not raw_comment_lines[0].strip():
+            raw_comment_lines.pop(0)
+        comments.append("".join(raw_comment_lines))
+
+    last_start = tokens[-1].start_mark.line
+    raw_trailing = lines[last_start:]
+    last_item_line = -1
+    for idx, l in enumerate(raw_trailing):
+        if l.strip() and not l.startswith("#"):
+            last_item_line = idx
+    raw_trailing = raw_trailing[last_item_line + 1:]
+    while raw_trailing and not raw_trailing[0].strip():
+        raw_trailing.pop(0)
+    trailing_comment = "".join(raw_trailing)
+
+    return data, comments, trailing_comment
 
 
 def format_file(filepath):
-    header = ""
     if filepath.endswith(".yaml") or filepath.endswith(".yml"):
-        header = extract_header_comment(filepath)
         with open(filepath, "r", encoding="utf-8") as fp:
-            data = yaml.safe_load(fp)
+            content = fp.read()
+        data, comments, trailing_comment = extract_comments_and_data(content)
+        if data is None or not isinstance(data, list):
+            print(f"Skipping {filepath}: top-level element is not a list")
+            return
     elif filepath.endswith(".json"):
         with open(filepath, "r", encoding="utf-8") as fp:
             data = json.load(fp)
+        if not isinstance(data, list):
+            print(f"Skipping {filepath}: top-level element is not a list")
+            return
+        comments = [""] * len(data)
+        trailing_comment = ""
     else:
         return
 
-    if not isinstance(data, list):
-        print(f"Skipping {filepath}: top-level element is not a list")
-        return
+    parts = []
+    for c, comment in zip(data, comments):
+        dumped = yaml.dump([FormattedTestCase(c)], width=2**32, allow_unicode=False).strip()
+        if comment:
+            parts.append(comment + dumped)
+        else:
+            parts.append(dumped)
 
-    parts = [
-        yaml.dump([FormattedTestCase(c)], width=2**32, allow_unicode=False).strip()
-        for c in data
-    ]
     yaml_text = "\n\n".join(parts) + "\n" if parts else "[]\n"
+    if trailing_comment:
+        if not trailing_comment.endswith("\n"):
+            trailing_comment += "\n"
+        yaml_text += "\n" + trailing_comment
 
     target_path = filepath
     if filepath.endswith(".json"):
         target_path = filepath[:-5] + ".yaml"
 
     with open(target_path, "w", encoding="utf-8") as fp:
-        if header:
-            fp.write(header)
-            if not header.endswith("\n"):
-                fp.write("\n")
         fp.write(yaml_text)
 
     if filepath.endswith(".json") and target_path != filepath:

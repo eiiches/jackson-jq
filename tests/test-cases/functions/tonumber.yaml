@@ -52,7 +52,7 @@
 - q: 'tonumber'
   in: "1.50"
   out:
-  - 1.50
+  - 1.5
 
 # Number comparison is scale-insensitive (1.50 == 1.5, in real jq too), so the case above cannot
 # see the preserved scale; tostring can. Real jq only kept the extra precision from 1.7 on

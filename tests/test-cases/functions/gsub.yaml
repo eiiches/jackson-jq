@@ -9,7 +9,7 @@
 - q: 'try ("abc" | gsub("b"; 1)) catch .'
   in: null
   out:
-  - 'string ("a") and number (1) cannot be added'
+  - "string (\"a\") and number (1) cannot be added"
   v: '[1.5, )'
 
 - q: '[("abc" | gsub(""; "X")), ("" | gsub(""; "X")), ("abc" | gsub("(?=b)"; "X")), ("aaa" | gsub("a*"; "X"))]'

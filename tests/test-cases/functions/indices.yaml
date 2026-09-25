@@ -23,9 +23,7 @@
   v: '[1.5, )'
 
 - q: 'indices(("name") + ("Zm9v"))'
-  in:
-    foo: "foo -0.5 bar"
-    nameZm9v: "[]"
+  in: {"foo": "foo -0.5 bar", "nameZm9v": "[]"}
   out:
   - "[]"
   v: '[1.5, )'

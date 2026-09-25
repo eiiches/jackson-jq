@@ -28,7 +28,7 @@
 - q: 'try [paths(endswith("foo"))] catch .'
   in: 0.5
   out:
-  - 'endswith() requires string inputs'
+  - "endswith() requires string inputs"
   v: '[1.7.1, )'
 
 - q: '[paths(endswith("foo"))]'
@@ -41,7 +41,7 @@
 - q: 'try [paths(endswith("foo"))] catch .'
   in: {"a": "xfoo"}
   out:
-  - 'endswith() requires string inputs'
+  - "endswith() requires string inputs"
   v: '[1.7.1, )'
 
 # The root matches, but its (empty) path is still not emitted.
