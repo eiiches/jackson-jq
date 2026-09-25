@@ -154,6 +154,8 @@ final class TypeMatcher {
 		}
 
 		if (expected instanceof NumericType expectedNum && actual instanceof NumericType actualNum) {
+			if (!matchesValue(expectedNum.value(), actualNum.value()))
+				return false;
 			if (strictSubtyping)
 				return expectedNum.numberKind() == NumberKind.UNKNOWN || expectedNum.numberKind() == actualNum.numberKind();
 			return true;

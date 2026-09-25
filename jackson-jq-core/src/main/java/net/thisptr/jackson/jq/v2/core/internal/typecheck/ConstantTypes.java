@@ -97,7 +97,7 @@ public final class ConstantTypes {
 			case BOOLEAN -> knownValues ? BooleanType.of(jsonProvider.getBoolean(value)) : BooleanType.getInstance();
 			case STRING -> knownValues ? StringType.of(jsonProvider.getString(value)) : StringType.getInstance();
 			case BINARY -> BinaryType.getInstance();
-			case NUMBER -> NumericType.of(numberKind(jsonProvider, value));
+			case NUMBER -> numberType(jsonProvider, value);
 			case ARRAY -> arrayType(jsonProvider, value, depth);
 			case OBJECT -> objectType(jsonProvider, value, depth);
 		};
@@ -108,11 +108,14 @@ public final class ConstantTypes {
 	 * test the compiler applies to a numeric literal. A value with no exact decimal form is a NaN or an
 	 * infinity, which {@link NumberKind} counts as {@link NumberKind#FLOAT}.
 	 */
-	private static <JsonNode> NumberKind numberKind(JsonProvider<JsonNode> jsonProvider, JsonNode value) {
+	private <JsonNode> Type numberType(JsonProvider<JsonNode> jsonProvider, JsonNode value) {
 		BigDecimal decimal = jsonProvider.getNumberAsBigDecimalExact(value);
 		if (decimal == null)
-			return NumberKind.FLOAT;
-		return decimal.stripTrailingZeros().scale() <= 0 ? NumberKind.INT : NumberKind.FLOAT;
+			return NumericType.of(NumberKind.FLOAT);
+		boolean isInt = decimal.stripTrailingZeros().scale() <= 0;
+		if (!isInt)
+			return NumericType.of(NumberKind.FLOAT);
+		return knownValues ? NumericType.of(decimal.toBigIntegerExact()) : NumericType.of(NumberKind.INT);
 	}
 
 	private <JsonNode> Type arrayType(JsonProvider<JsonNode> jsonProvider, JsonNode value, int depth) {

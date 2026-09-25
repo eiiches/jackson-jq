@@ -89,7 +89,7 @@ class TypeCheckTest {
 				.build();
 		environment.compile("[1,2,3] | ltrimstr(\"1\")", options);
 		assertThat(diagnostics).singleElement().satisfies(diagnostic ->
-				assertThat(diagnostic.message()).isEqualTo("No overload of ltrimstr/1 accepts input [INT,INT,INT]"
+				assertThat(diagnostic.message()).isEqualTo("No overload of ltrimstr/1 accepts input [1,2,3]"
 						+ "\nAccepted types:\n  Input: STRING -> ltrimstr(STRING -> STRING) -> Output: STRING"));
 	}
 
@@ -102,7 +102,7 @@ class TypeCheckTest {
 				.build();
 		environment.compile("\"test\" | ltrimstr([1])", options);
 		assertThat(diagnostics).singleElement().satisfies(diagnostic -> {
-			assertThat(diagnostic.message()).isEqualTo("Argument 1 of ltrimstr/1 has type [INT]; expected STRING"
+			assertThat(diagnostic.message()).isEqualTo("Argument 1 of ltrimstr/1 has type [1]; expected STRING"
 					+ "\nAccepted types:\n  Input: STRING -> ltrimstr(STRING -> STRING) -> Output: STRING");
 			assertThat(diagnostic.location()).isNotNull();
 			assertThat(Objects.requireNonNull(diagnostic.location()).beginColumn()).isEqualTo(19);
@@ -161,7 +161,7 @@ class TypeCheckTest {
 				.build();
 		customEnvironment.compile("1 | string_only", options);
 		assertThat(diagnostics).singleElement().satisfies(diagnostic ->
-				assertThat(diagnostic.message()).isEqualTo("No overload of string_only/0 accepts input INT"
+				assertThat(diagnostic.message()).isEqualTo("No overload of string_only/0 accepts input 1"
 						+ "\nAccepted types:\n  Input: STRING -> string_only() -> Output: STRING"));
 	}
 
@@ -204,7 +204,7 @@ class TypeCheckTest {
 	@Test
 	void constantQuotedObjectKeysAreDeclaredFields() throws JsonQueryException {
 		Type expected = ObjectType.of(
-				"a", NumericType.of(NumberKind.INT),
+				"a", NumericType.of(1),
 				"b", StringType.of("x"));
 		assertThat(environment.compile("{a: 1, b: \"x\"}", strict(NullType.getInstance())).getType().outputType())
 				.isEqualTo(expected);
@@ -235,17 +235,17 @@ class TypeCheckTest {
 	@Test
 	void constantExpressionObjectKeysBecomeDeclaredFields() throws JsonQueryException {
 		Type input = ObjectType.of("key", StringType.getInstance());
-		Type expected = ObjectType.of(Map.of("a", NumericType.of(NumberKind.INT)), StringType.of("x"));
+		Type expected = ObjectType.of(Map.of("a", NumericType.of(1)), StringType.of("x"));
 		assertThat(environment.compile("{\"a\": 1, \"\\(.key)\": \"x\"}", strict(input)).getType().outputType())
 				.isEqualTo(expected);
 		assertThat(environment.compile("{(\"a\"): 1}", strict(NullType.getInstance())).getType().outputType())
-				.isEqualTo(ObjectType.of("a", NumericType.of(NumberKind.INT)));
+				.isEqualTo(ObjectType.of("a", NumericType.of(1)));
 	}
 
 	@Test
 	void handlesEveryBinaryOperatorOverload() throws JsonQueryException {
 		assertThat(environment.compile("[1, 2] - [2]", strict(NullType.getInstance())).getType().outputType())
-				.isEqualTo(ArrayType.of(NumericType.of(NumberKind.INT)));
+				.isEqualTo(ArrayType.of(UnionType.of(NumericType.of(1), NumericType.of(2))));
 		assertThat(environment.compile("\"x\" * 2", strict(NullType.getInstance())).getType().outputType())
 				.isEqualTo(UnionType.of(StringType.getInstance(), NullType.getInstance()));
 		assertThat(environment.compile("\"a,b\" / \",\"", strict(NullType.getInstance())).getType().outputType())
@@ -263,7 +263,7 @@ class TypeCheckTest {
 	@Test
 	void destructuringBindsExtractedTypes() throws JsonQueryException {
 		assertThat(environment.compile("{a: 1} as {a: $x} | $x", strict(NullType.getInstance())).getType().outputType())
-				.isEqualTo(NumericType.of(NumberKind.INT));
+				.isEqualTo(NumericType.of(1));
 		assertThat(environment.compile("{a: 1} as {a: $x} | $x | floor", strict(NullType.getInstance())).getType().outputType())
 				.isSameAs(NumericType.getInstance());
 		assertThatThrownBy(() -> environment.compile("1 as [$x] | 0", strict(NullType.getInstance())))
@@ -291,7 +291,7 @@ class TypeCheckTest {
 		assertThat(environment.compile("..", strict(ObjectType.of("a", NumericType.getInstance())))
 				.getType().outputType()).isEqualTo(UnionType.of(ObjectType.of("a", NumericType.getInstance()), NumericType.getInstance()));
 		assertThat(environment.compile("label $done | (1, break $done)", strict(NullType.getInstance()))
-				.getType().outputType()).isEqualTo(NumericType.of(NumberKind.INT));
+				.getType().outputType()).isEqualTo(NumericType.of(1));
 		assertThat(environment.compile(".a = empty", strict(ObjectType.of(AnyType.getInstance()))).getType().outputType())
 				.isSameAs(NeverType.getInstance());
 		assertThatThrownBy(() -> environment.compile(".a |= empty", strict(ObjectType.of(AnyType.getInstance()))))
@@ -301,7 +301,7 @@ class TypeCheckTest {
 	@Test
 	void preservesDynamicObjectValueAndKnownBracketTypes() throws JsonQueryException {
 		assertThat(environment.compile("{(.): 1}", strict(StringType.getInstance())).getType().outputType())
-				.isEqualTo(ObjectType.of(Map.of(), NumericType.of(NumberKind.INT)));
+				.isEqualTo(ObjectType.of(Map.of(), NumericType.of(1)));
 		assertThat(environment.compile(".[(\"a\")]", strict(ObjectType.of("a", StringType.getInstance())))
 				.getType().outputType()).isSameAs(StringType.getInstance());
 	}
@@ -347,7 +347,7 @@ class TypeCheckTest {
 		// `limit` starts its accumulator at `[$n, null]`, which the model spells as an array that knows what
 		// is at each position, so the `.[0] - 1` that follows subtracts from the count it really is.
 		assertThat(environment.compile("[limit(3; 1, 2, 3)]", strict(NullType.getInstance())).getType().outputType())
-				.isEqualTo(ArrayType.of(NumericType.of(NumberKind.INT)));
+				.isEqualTo(ArrayType.of(UnionType.of(NumericType.of(1), NumericType.of(2), NumericType.of(3))));
 		assertThat(environment.compile("flatten", strict(ArrayType.of(AnyType.getInstance()))).getType().outputType())
 				.isNotNull();
 		// `map` on a number fails at run time, and the analysis saying so is the same one that no longer
@@ -431,10 +431,12 @@ class TypeCheckTest {
 		// trace says nothing: naming map/1 would send them to look at a body that is doing what it should.
 		ArrayList<Diagnostic> diagnostics = new ArrayList<>();
 		environment.compile("[1, 2] | map(.a)", warn(diagnostics));
-		assertThat(diagnostics).singleElement().satisfies(diagnostic -> {
-			assertThat(diagnostic.message()).isEqualTo("Cannot index INT with a string");
+		assertThat(diagnostics).hasSize(2).allSatisfy(diagnostic -> {
 			assertThat(diagnostic.location()).isEqualTo(SourceLocation.of(1, 14, 1, 15));
 		});
+		assertThat(diagnostics).extracting(Diagnostic::message).containsExactly(
+				"Cannot index 1 with a string",
+				"Cannot index 2 with a string");
 	}
 
 	@Test
@@ -541,10 +543,10 @@ class TypeCheckTest {
 		assertThat(diagnostics).isEmpty();
 		// A type-changing accumulator settles into the union of what it can hold.
 		assertThat(environment.compile("reduce .[] as $x (0; tostring)", strict(ArrayType.of(NumericType.getInstance())))
-				.getType().outputType()).isEqualTo(UnionType.of(NumericType.of(NumberKind.INT), StringType.getInstance()));
+				.getType().outputType()).isEqualTo(UnionType.of(NumericType.of(0), StringType.getInstance()));
 		// An update that can emit nothing leaves the accumulator null.
 		assertThat(environment.compile("reduce .[] as $x (0; empty)", strict(ArrayType.of(NumericType.getInstance())))
-				.getType().outputType()).isEqualTo(UnionType.of(NumericType.of(NumberKind.INT), NullType.getInstance()));
+				.getType().outputType()).isEqualTo(UnionType.of(NumericType.of(0), NullType.getInstance()));
 	}
 
 	@Test
@@ -665,7 +667,7 @@ class TypeCheckTest {
 	@Test
 	void infersAndInstantiatesPolymorphicDefinitions() throws JsonQueryException {
 		JsonQuery<JsonNode> query = environment.compile("def identity: .; (1 | identity), (\"x\" | identity)", strict(NullType.getInstance()));
-		assertThat(query.getType().outputType()).isEqualTo(UnionType.of(NumericType.of(NumberKind.INT), StringType.of("x")));
+		assertThat(query.getType().outputType()).isEqualTo(UnionType.of(NumericType.of(1), StringType.of("x")));
 	}
 
 	@Test
@@ -686,7 +688,7 @@ class TypeCheckTest {
 		assertThat(mismatch.getType().outputType()).isEqualTo(ArrayType.of(NumericType.getInstance()));
 		assertThat(diagnostics).singleElement().satisfies(diagnostic -> {
 			assertThat(diagnostic.severity()).isEqualTo(Diagnostic.Severity.WARNING);
-			assertThat(diagnostic.message()).contains("INT").contains("\"a\"|\"b\"");
+			assertThat(diagnostic.message()).contains("1").contains("\"a\"|\"b\"");
 		});
 		assertThatThrownBy(() -> environment.compile("\"x\" | .[[1]]", strict(NullType.getInstance())))
 				.isInstanceOf(JsonQueryException.class)
@@ -817,7 +819,7 @@ class TypeCheckTest {
 				.setOutputType(UnionType.of(StringType.getInstance(), NumericType.of(NumberKind.INT)))
 				.build();
 
-		assertThat(environment.compile("1", options).getType().outputType()).isEqualTo(NumericType.of(NumberKind.INT));
+		assertThat(environment.compile("1", options).getType().outputType()).isEqualTo(NumericType.of(1));
 	}
 
 	@Test
@@ -838,12 +840,13 @@ class TypeCheckTest {
 	@Test
 	void addInfersPreciseOutputForKnownArrayInputs() throws JsonQueryException {
 		CompileOptions options = strict(NullType.getInstance());
+		Type intUnion = UnionType.of(NumericType.of(1), NumericType.of(2), NumericType.of(3));
 		assertThat(environment.compile("[1, 2, 3] | add", options).getType().outputType())
-				.isEqualTo(NumericType.of(NumberKind.INT));
+				.isEqualTo(intUnion);
 		assertThat(environment.compile("[\"a\", \"b\"] | add", options).getType().outputType())
 				.isSameAs(StringType.getInstance());
 		assertThat(environment.compile("[[1], [2]] | add", options).getType().outputType())
-				.isEqualTo(ArrayType.of(NumericType.of(NumberKind.INT)));
+				.isEqualTo(ArrayType.of(UnionType.of(NumericType.of(1), NumericType.of(2))));
 		assertThat(environment.compile("[{\"a\": 1}, {\"b\": 2}] | add", options).getType().outputType())
 				.isEqualTo(ObjectType.of(AnyType.getInstance()));
 		assertThat(environment.compile("[] | add", options).getType().outputType())
@@ -853,19 +856,20 @@ class TypeCheckTest {
 	@Test
 	void minAndMaxInferPreciseOutputForKnownArrayInputs() throws JsonQueryException {
 		CompileOptions options = strict(NullType.getInstance());
+		Type intUnion = UnionType.of(NumericType.of(1), NumericType.of(2), NumericType.of(3));
 		assertThat(environment.compile("[1, 2, 3] | min", options).getType().outputType())
-				.isEqualTo(NumericType.of(NumberKind.INT));
+				.isEqualTo(intUnion);
 		assertThat(environment.compile("[1, 2, 3] | max", options).getType().outputType())
-				.isEqualTo(NumericType.of(NumberKind.INT));
+				.isEqualTo(intUnion);
 		assertThat(environment.compile("[\"b\", \"a\"] | min", options).getType().outputType())
 				.isEqualTo(UnionType.of(StringType.of("a"), StringType.of("b")));
 		assertThat(environment.compile("[\"b\", \"a\"] | max", options).getType().outputType())
 				.isEqualTo(UnionType.of(StringType.of("a"), StringType.of("b")));
 
 		assertThat(environment.compile("[1, 2, 3] | min_by(.)", options).getType().outputType())
-				.isEqualTo(NumericType.of(NumberKind.INT));
+				.isEqualTo(intUnion);
 		assertThat(environment.compile("[1, 2, 3] | max_by(.)", options).getType().outputType())
-				.isEqualTo(NumericType.of(NumberKind.INT));
+				.isEqualTo(intUnion);
 		assertThat(environment.compile("[\"b\", \"a\"] | min_by(.)", options).getType().outputType())
 				.isEqualTo(UnionType.of(StringType.of("a"), StringType.of("b")));
 		assertThat(environment.compile("[\"b\", \"a\"] | max_by(.)", options).getType().outputType())
@@ -875,6 +879,22 @@ class TypeCheckTest {
 				.isSameAs(NullType.getInstance());
 		assertThat(environment.compile("[] | max", options).getType().outputType())
 				.isSameAs(NullType.getInstance());
+	}
+
+	@Test
+	void branchNarrowingOnIntegerLiteralCondition() throws JsonQueryException {
+		CompileOptions options = strict(UnionType.of(NumericType.of(1), NumericType.of(2)));
+		assertThat(environment.compile("if . == 1 then \"one\" else \"other\" end", options).getType().outputType())
+				.isEqualTo(UnionType.of(StringType.of("one"), StringType.of("other")));
+	}
+
+	@Test
+	void arrayIndexWithIntegerLiteralVariable() throws JsonQueryException {
+		CompileOptions options = strict(NullType.getInstance());
+		assertThat(environment.compile("[10, 20] as $arr | 0 as $i | $arr[$i]", options).getType().outputType())
+				.isEqualTo(NumericType.of(10));
+		assertThat(environment.compile("[10, 20] as $arr | 1 as $i | $arr[$i]", options).getType().outputType())
+				.isEqualTo(NumericType.of(20));
 	}
 
 	private static CompileOptions strictOutput(Type outputType) {

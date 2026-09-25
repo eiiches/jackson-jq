@@ -1,7 +1,6 @@
 package net.thisptr.jackson.jq.v2.core;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,10 +105,10 @@ class EnvironmentVariableTypeTest {
 		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.createBinary(new byte[] { 1, 2 }))))
 				.isSameAs(BinaryType.getInstance());
 		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.createNumber(1))))
-				.isEqualTo(NumericType.of(NumberKind.INT));
+				.isEqualTo(NumericType.of(1));
 		// The kind describes the value, not how the provider stores it: 1.0 is integral.
 		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.createNumber(1.0))))
-				.isEqualTo(NumericType.of(NumberKind.INT));
+				.isEqualTo(NumericType.of(1));
 		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.createNumber(1.5))))
 				.isEqualTo(NumericType.of(NumberKind.FLOAT));
 		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.createNumber(Double.NaN))))
@@ -119,10 +118,10 @@ class EnvironmentVariableTypeTest {
 	@Test
 	void constantContainerTypesDescribeTheirContents() throws JsonQueryException {
 		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.parse("[1, \"a\"]"))))
-				.isEqualTo(ArrayType.of(List.of(NumericType.of(NumberKind.INT), StringType.of("a"))));
+				.isEqualTo(ArrayType.of(List.of(NumericType.of(1), StringType.of("a"))));
 		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.parse("{\"a\": 1, \"b\": {\"c\": \"s\"}}"))))
 				.isEqualTo(ObjectType.of(
-						"a", NumericType.of(NumberKind.INT),
+						"a", NumericType.of(1),
 						"b", ObjectType.of("c", StringType.of("s"))));
 	}
 
@@ -132,8 +131,11 @@ class EnvironmentVariableTypeTest {
 		// open and every position has the same type.
 		JsonNode thirtyTwo = PROVIDER.createArray(numbers(32));
 		JsonNode thirtyThree = PROVIDER.createArray(numbers(33));
+		List<Type> thirtyTwoTypes = new ArrayList<>();
+		for (int i = 0; i < 32; i++)
+			thirtyTwoTypes.add(NumericType.of(i));
 		assertThat(typeOfVariable(b -> b.defineConstant("x", thirtyTwo)))
-				.isEqualTo(ArrayType.of(Collections.nCopies(32, NumericType.of(NumberKind.INT))));
+				.isEqualTo(ArrayType.of(thirtyTwoTypes));
 		assertThat(typeOfVariable(b -> b.defineConstant("x", thirtyThree)))
 				.isEqualTo(ArrayType.of(NumericType.of(NumberKind.INT)));
 	}

@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.spi.type;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -65,6 +66,33 @@ public class TypeTest {
 		assertThat(BooleanType.of(true)).isNotEqualTo(BooleanType.getInstance());
 	}
 
+	@Test
+	void testKnownNumericValues() {
+		assertThat(NumericType.getInstance().value()).isNull();
+		assertThat(NumericType.of(NumberKind.INT).value()).isNull();
+		assertThat(NumericType.of(NumberKind.FLOAT).value()).isNull();
+		assertThat(NumericType.of(0).value()).isEqualTo(BigInteger.ZERO);
+		assertThat(NumericType.of(1).value()).isEqualTo(BigInteger.ONE);
+		assertThat(NumericType.of(-42).value()).isEqualTo(BigInteger.valueOf(-42));
+		assertThat(NumericType.of(BigInteger.valueOf(100)).value()).isEqualTo(BigInteger.valueOf(100));
+
+		assertThat(NumericType.of(0)).hasToString("0");
+		assertThat(NumericType.of(1)).hasToString("1");
+		assertThat(NumericType.of(-42)).hasToString("-42");
+
+		// Cached range identity.
+		assertThat(NumericType.of(0)).isSameAs(NumericType.of(0));
+		assertThat(NumericType.of(1)).isSameAs(NumericType.of(BigInteger.ONE));
+		assertThat(NumericType.of(-1)).isSameAs(NumericType.of(-1));
+
+		assertThat(NumericType.of(100)).isEqualTo(NumericType.of(100))
+				.hasSameHashCodeAs(NumericType.of(100));
+		assertThat(NumericType.of(100)).isNotEqualTo(NumericType.of(101));
+		assertThat(NumericType.of(0)).isNotEqualTo(NumericType.of(NumberKind.INT));
+		assertThat(NumericType.of(0)).isNotEqualTo(NumericType.getInstance());
+		assertThat(NumericType.of(0)).isNotEqualTo(NumericType.of(NumberKind.FLOAT));
+	}
+
 	// NullAway checks null arguments; this assertion verifies runtime rejection.
 	@Test
 	@SuppressWarnings("NullAway")
@@ -72,16 +100,30 @@ public class TypeTest {
 		assertThatThrownBy(() -> StringType.of(null)).isInstanceOf(NullPointerException.class);
 	}
 
+	// NullAway checks null arguments; this assertion verifies runtime rejection.
+	@Test
+	@SuppressWarnings("NullAway")
+	void testNullNumericValue() {
+		assertThatThrownBy(() -> NumericType.of((BigInteger) null)).isInstanceOf(NullPointerException.class);
+	}
+
 	@Test
 	void testKnownValuesCollapseInAUnion() {
 		// A value is dropped once the type it is an instance of is an alternative anyway.
 		assertThat(UnionType.of(StringType.of("a"), StringType.getInstance())).isSameAs(StringType.getInstance());
 		assertThat(UnionType.of(BooleanType.of(true), BooleanType.getInstance())).isSameAs(BooleanType.getInstance());
+		assertThat(UnionType.of(NumericType.of(0), NumericType.getInstance())).isSameAs(NumericType.getInstance());
+		assertThat(UnionType.of(NumericType.of(0), NumericType.of(NumberKind.INT))).isSameAs(NumericType.of(NumberKind.INT));
+		// An int literal and FLOAT collapse to NUMBER.
+		assertThat(UnionType.of(NumericType.of(0), NumericType.of(NumberKind.FLOAT))).isSameAs(NumericType.getInstance());
 		// The two booleans together say no more than BOOLEAN does.
 		assertThat(UnionType.of(BooleanType.of(true), BooleanType.of(false))).isSameAs(BooleanType.getInstance());
 		// Distinct strings stay distinct, which is what a discrimination over them needs.
 		assertThat(UnionType.of(StringType.of("b"), StringType.of("a"))).hasToString("\"a\"|\"b\"");
 		assertThat(UnionType.of(StringType.of("a"), StringType.of("a"))).isEqualTo(StringType.of("a"));
+		// Distinct integers stay distinct.
+		assertThat(UnionType.of(NumericType.of(1), NumericType.of(0))).hasToString("0|1");
+		assertThat(UnionType.of(NumericType.of(0), NumericType.of(0))).isEqualTo(NumericType.of(0));
 
 		List<Type> sixteen = new ArrayList<>();
 		for (int i = 0; i < 16; i++)
@@ -90,13 +132,21 @@ public class TypeTest {
 		List<Type> seventeen = new ArrayList<>(sixteen);
 		seventeen.add(StringType.of("s16"));
 		assertThat(UnionType.of(seventeen)).isSameAs(StringType.getInstance());
+
+		List<Type> sixteenInts = new ArrayList<>();
+		for (int i = 0; i < 16; i++)
+			sixteenInts.add(NumericType.of(i));
+		assertThat(UnionType.of(sixteenInts)).isInstanceOf(UnionType.class);
+		List<Type> seventeenInts = new ArrayList<>(sixteenInts);
+		seventeenInts.add(NumericType.of(16));
+		assertThat(UnionType.of(seventeenInts)).isSameAs(NumericType.of(NumberKind.INT));
 	}
 
 	// NullAway checks null arguments; this assertion verifies runtime rejection.
 	@Test
 	@SuppressWarnings("NullAway")
 	void testNullNumericType() {
-		assertThatThrownBy(() -> NumericType.of(null)).isInstanceOf(NullPointerException.class);
+		assertThatThrownBy(() -> NumericType.of((NumberKind) null)).isInstanceOf(NullPointerException.class);
 	}
 
 	@Test

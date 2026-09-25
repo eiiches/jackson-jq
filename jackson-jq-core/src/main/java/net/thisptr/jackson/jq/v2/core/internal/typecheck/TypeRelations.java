@@ -244,11 +244,22 @@ final class TypeRelations {
 	}
 
 	static Type negate(Type input) {
+		if (input instanceof AnyType)
+			return AnyType.getInstance();
+		List<Type> outputs = new ArrayList<>();
 		for (Type alternative : alternatives(input)) {
-			if (!(alternative instanceof AnyType || alternative instanceof NumericType))
+			if (alternative instanceof AnyType) {
+				outputs.add(AnyType.getInstance());
+			} else if (alternative instanceof NumericType numeric) {
+				if (numeric.value() != null)
+					outputs.add(NumericType.of(numeric.value().negate()));
+				else
+					outputs.add(numeric);
+			} else {
 				throw new Problem(alternative + " cannot be negated");
+			}
 		}
-		return input instanceof AnyType ? AnyType.getInstance() : NumericType.getInstance();
+		return UnionType.of(outputs);
 	}
 
 	/**
@@ -374,6 +385,8 @@ final class TypeRelations {
 			return differingValues(leftString.value(), rightString.value());
 		if (left instanceof BooleanType leftBoolean && right instanceof BooleanType rightBoolean)
 			return differingValues(leftBoolean.value(), rightBoolean.value());
+		if (left instanceof NumericType leftNumeric && right instanceof NumericType rightNumeric)
+			return differingValues(leftNumeric.value(), rightNumeric.value());
 		// Two values of one kind may well be equal, and for a number the kind is only a hint anyway.
 		return left.getClass() != right.getClass();
 	}

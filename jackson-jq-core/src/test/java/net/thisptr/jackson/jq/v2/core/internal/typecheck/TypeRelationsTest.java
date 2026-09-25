@@ -8,6 +8,7 @@ import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
 import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
 import net.thisptr.jackson.jq.v2.spi.type.NeverType;
 import net.thisptr.jackson.jq.v2.spi.type.NullType;
+import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
 import net.thisptr.jackson.jq.v2.spi.type.NumericType;
 import net.thisptr.jackson.jq.v2.spi.type.StringType;
 import net.thisptr.jackson.jq.v2.spi.type.Type;
@@ -77,5 +78,20 @@ class TypeRelationsTest {
 		assertThat(TypeRelations.exactLength(ArrayType.of(NumericType.getInstance()))).isEmpty();
 		assertThat(TypeRelations.exactLength(ArrayType.of(List.of(NumericType.getInstance()), StringType.getInstance()))).isEmpty();
 		assertThat(TypeRelations.exactLength(ArrayType.of(List.of(UnionType.of(NumericType.getInstance(), UndefinedType.getInstance()))))).isEmpty();
+	}
+
+	@Test
+	void negatingNumericLiteralFlipsSign() {
+		assertThat(TypeRelations.negate(NumericType.of(1))).isEqualTo(NumericType.of(-1));
+		assertThat(TypeRelations.negate(NumericType.of(-5))).isEqualTo(NumericType.of(5));
+		assertThat(TypeRelations.negate(NumericType.of(NumberKind.INT))).isEqualTo(NumericType.of(NumberKind.INT));
+	}
+
+	@Test
+	void differingNumericLiteralsAreDisjoint() {
+		assertThat(TypeRelations.disjoint(NumericType.of(0), NumericType.of(1))).isTrue();
+		assertThat(TypeRelations.disjoint(NumericType.of(0), NumericType.of(0))).isFalse();
+		assertThat(TypeRelations.disjoint(NumericType.of(0), NumericType.of(NumberKind.INT))).isFalse();
+		assertThat(TypeRelations.disjoint(NumericType.of(0), StringType.of("0"))).isTrue();
 	}
 }

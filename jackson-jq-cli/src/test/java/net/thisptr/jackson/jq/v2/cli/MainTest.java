@@ -463,7 +463,7 @@ class MainTest {
 	@Test
 	void placesOverloadLocationBeforeAcceptedTypes() throws Exception {
 		assertThat(runStderr("null", "--compact", "\"test\" | ltrimstr([1])"))
-				.contains("jq: warning: Argument 1 of ltrimstr/1 has type [INT]; expected STRING at line 1, column 19:")
+				.contains("jq: warning: Argument 1 of ltrimstr/1 has type [1]; expected STRING at line 1, column 19:")
 				.contains("\nAccepted types:\n  Input: STRING -> ltrimstr(STRING -> STRING) -> Output: STRING\n");
 	}
 

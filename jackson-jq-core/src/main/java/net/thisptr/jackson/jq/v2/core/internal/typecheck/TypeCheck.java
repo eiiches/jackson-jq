@@ -541,8 +541,10 @@ public final class TypeCheck {
 			return AnyType.getInstance();
 		if (target instanceof NullType)
 			return NullType.getInstance();
-		if (target instanceof ArrayType array && index instanceof NumericType)
-			return element(array, integerLiteral(bracket.startExpr()));
+		if (target instanceof ArrayType array && index instanceof NumericType numeric) {
+			@Nullable Integer position = numericPosition(numeric, bracket.startExpr());
+			return element(array, position);
+		}
 		// `.[[x]]` answers the positions at which the subsequence occurs, so its result is index numbers.
 		if (target instanceof ArrayType array && index instanceof ArrayType subsequence) {
 			if (!TypeMatcher.accepts(array.elementType(), subsequence.elementType()))
@@ -1116,6 +1118,17 @@ public final class TypeCheck {
 		return TypeRelations.absentAsNull(TypeRelations.elementAt(array, index));
 	}
 
+	private static @Nullable Integer numericPosition(NumericType numeric, AnalyzedExpression<?> startExpr) {
+		if (numeric.value() != null) {
+			try {
+				return numeric.value().intValueExact();
+			} catch (ArithmeticException e) {
+				return null;
+			}
+		}
+		return integerLiteral(startExpr);
+	}
+
 	/**
 	 * The value of an integer literal, or null when the expression is not one. A fractional literal is not
 	 * one either: jq truncates it, and saying which position that lands on is not worth a second rule.
@@ -1427,6 +1440,8 @@ public final class TypeCheck {
 			return string.value();
 		if (type instanceof BooleanType bool)
 			return bool.value();
+		if (type instanceof NumericType numeric)
+			return numeric.value();
 		return type instanceof NullType ? type : null;
 	}
 

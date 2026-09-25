@@ -21,6 +21,7 @@ public final class UnionType implements Type {
 	 * type says the one thing left worth saying.
 	 */
 	private static final int MAX_STRING_LITERALS = 16;
+	private static final int MAX_INT_LITERALS = 16;
 
 	private final List<Type> alternatives;
 
@@ -65,8 +66,10 @@ public final class UnionType implements Type {
 		@Var
 		boolean collapsed = collapseNumbers(unique);
 		collapsed |= collapseLiterals(unique);
-		if (collapsed)
+		if (collapsed) {
+			collapseNumbers(unique);
 			unique.sort(CANONICAL_ORDER);
+		}
 		if (unique.size() == 1)
 			return unique.get(0);
 		return new UnionType(unique);
@@ -79,22 +82,28 @@ public final class UnionType implements Type {
 	 */
 	private static boolean collapseNumbers(List<Type> alternatives) {
 		@Var
-		int numbers = 0;
-		for (Type alternative : alternatives) {
-			if (alternative instanceof NumericType)
-				numbers++;
+		boolean collapsed = false;
+		if (alternatives.contains(NumericType.getInstance())) {
+			collapsed = alternatives.removeIf(alternative -> alternative instanceof NumericType && alternative != NumericType.getInstance());
+		} else {
+			boolean hasFloat = alternatives.contains(NumericType.of(NumberKind.FLOAT));
+			boolean hasInt = alternatives.contains(NumericType.of(NumberKind.INT));
+			boolean hasIntLiteral = alternatives.stream().anyMatch(alternative -> alternative instanceof NumericType num && num.value() != null);
+			if (hasFloat && (hasInt || hasIntLiteral)) {
+				alternatives.removeIf(NumericType.class::isInstance);
+				alternatives.add(NumericType.getInstance());
+				collapsed = true;
+			} else if (hasInt && hasIntLiteral) {
+				collapsed = alternatives.removeIf(alternative -> alternative instanceof NumericType num && num.value() != null);
+			}
 		}
-		if (numbers < 2)
-			return false;
-		alternatives.removeIf(NumericType.class::isInstance);
-		alternatives.add(NumericType.getInstance());
-		return true;
+		return collapsed;
 	}
 
 	/**
-	 * Replaces the known strings and booleans a union names with the type they are all instances of,
+	 * Replaces the known strings, booleans, and integers a union names with the type they are all instances of,
 	 * answering whether it did. A value is dropped once the type it is an instance of is there anyway,
-	 * {@code true | false} is no more than a boolean, and too many strings are no more than a string.
+	 * {@code true | false} is no more than a boolean, and too many literals are no more than their general type.
 	 */
 	private static boolean collapseLiterals(List<Type> alternatives) {
 		@Var
@@ -111,6 +120,11 @@ public final class UnionType implements Type {
 		else if (alternatives.contains(BooleanType.of(true)) && alternatives.contains(BooleanType.of(false))) {
 			alternatives.removeIf(BooleanType.class::isInstance);
 			alternatives.add(BooleanType.getInstance());
+			collapsed = true;
+		}
+		if (alternatives.stream().filter(alternative -> alternative instanceof NumericType num && num.value() != null).count() > MAX_INT_LITERALS) {
+			alternatives.removeIf(alternative -> alternative instanceof NumericType num && num.value() != null);
+			alternatives.add(NumericType.of(NumberKind.INT));
 			collapsed = true;
 		}
 		return collapsed;

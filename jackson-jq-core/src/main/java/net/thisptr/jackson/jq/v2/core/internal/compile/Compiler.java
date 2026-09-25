@@ -816,8 +816,10 @@ public class Compiler {
 		@Override
 		public AnalyzedExpression<N> visit(NumericLiteralAstNode ast) throws JsonQueryException {
 			BigDecimal value = new BigDecimal(ast.text());
-			return new ValueLiteral<>(NumericType.of(value.stripTrailingZeros().scale() <= 0 ? NumberKind.INT : NumberKind.FLOAT),
-					env.getJsonProvider().createNumber(value), value);
+			Type type = value.stripTrailingZeros().scale() <= 0
+					? NumericType.of(value.toBigIntegerExact())
+					: NumericType.of(NumberKind.FLOAT);
+			return new ValueLiteral<>(type, env.getJsonProvider().createNumber(value), value);
 		}
 
 		@Override

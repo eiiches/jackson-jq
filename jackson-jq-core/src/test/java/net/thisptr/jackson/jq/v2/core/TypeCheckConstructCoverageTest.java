@@ -46,9 +46,9 @@ class TypeCheckConstructCoverageTest {
 		return Stream.of(
 				// identity, literals and composition
 				Arguments.of(".", StringType.getInstance(), StringType.getInstance()),
-				Arguments.of("1", NullType.getInstance(), INT),
+				Arguments.of("1", NullType.getInstance(), NumericType.of(1)),
 				Arguments.of("\"x\"", NullType.getInstance(), StringType.of("x")),
-				Arguments.of("[1, 2]", NullType.getInstance(), ArrayType.of(List.of(INT, INT))),
+				Arguments.of("[1, 2]", NullType.getInstance(), ArrayType.of(List.of(NumericType.of(1), NumericType.of(2)))),
 				// An array literal whose elements each emit one value knows what is at each position.
 				Arguments.of("[1, \"a\"] | .[0] - 1", NullType.getInstance(), NumericType.getInstance()),
 				Arguments.of("[1, \"a\"] | .[-1]", NullType.getInstance(), StringType.of("a")),
@@ -59,12 +59,12 @@ class TypeCheckConstructCoverageTest {
 				// Concatenating onto an array of unknown length says nothing about where anything landed.
 				Arguments.of("[.[]] + [\"a\"] | .[1]", ArrayType.of(INT), UnionType.of(INT, StringType.of("a"), NullType.getInstance())),
 				// A slice and a subtraction both move elements, so neither keeps a position.
-				Arguments.of("[1, \"a\"] | .[0:1] | .[0]", NullType.getInstance(), UnionType.of(INT, StringType.of("a"), NullType.getInstance())),
-				Arguments.of("[1, \"a\"] - [1] | .[0]", NullType.getInstance(), UnionType.of(INT, StringType.of("a"), NullType.getInstance())),
+				Arguments.of("[1, \"a\"] | .[0:1] | .[0]", NullType.getInstance(), UnionType.of(NumericType.of(1), StringType.of("a"), NullType.getInstance())),
+				Arguments.of("[1, \"a\"] - [1] | .[0]", NullType.getInstance(), UnionType.of(NumericType.of(1), StringType.of("a"), NullType.getInstance())),
 				Arguments.of("[]", NullType.getInstance(), ArrayType.of(NeverType.getInstance())),
-				Arguments.of("{a: 1}", NullType.getInstance(), ObjectType.of("a", INT)),
+				Arguments.of("{a: 1}", NullType.getInstance(), ObjectType.of("a", NumericType.of(1))),
 				Arguments.of(". | length", StringType.getInstance(), NumericType.getInstance()),
-				Arguments.of("(1, \"x\")", NullType.getInstance(), UnionType.of(INT, StringType.of("x"))),
+				Arguments.of("(1, \"x\")", NullType.getInstance(), UnionType.of(NumericType.of(1), StringType.of("x"))),
 				Arguments.of("\"v=\\(1)\"", NullType.getInstance(), StringType.getInstance()),
 				// field and index access
 				Arguments.of(".a", OBJ, NumericType.getInstance()),
@@ -77,12 +77,12 @@ class TypeCheckConstructCoverageTest {
 				Arguments.of(".a?", OBJ, NumericType.getInstance()),
 				// operators
 				Arguments.of("1 + 2", NullType.getInstance(), NumericType.getInstance()),
-				Arguments.of("[1] + [2]", NullType.getInstance(), ArrayType.of(List.of(INT, INT))),
-				Arguments.of("{a: 1} + {b: 2}", NullType.getInstance(), ObjectType.of("a", INT, "b", INT)),
-				Arguments.of("[1, 2] - [2]", NullType.getInstance(), ArrayType.of(INT)),
+				Arguments.of("[1] + [2]", NullType.getInstance(), ArrayType.of(List.of(NumericType.of(1), NumericType.of(2)))),
+				Arguments.of("{a: 1} + {b: 2}", NullType.getInstance(), ObjectType.of("a", NumericType.of(1), "b", NumericType.of(2))),
+				Arguments.of("[1, 2] - [2]", NullType.getInstance(), ArrayType.of(UnionType.of(NumericType.of(1), NumericType.of(2)))),
 				Arguments.of("\"x\" * 2", NullType.getInstance(), UnionType.of(StringType.getInstance(), NullType.getInstance())),
 				Arguments.of("{a: {b: 1}} * {a: {c: 2}}", NullType.getInstance(),
-						ObjectType.of("a", ObjectType.of("b", INT, "c", INT))),
+						ObjectType.of("a", ObjectType.of("b", NumericType.of(1), "c", NumericType.of(2)))),
 				Arguments.of("\"a,b\" / \",\"", NullType.getInstance(), ArrayType.of(StringType.getInstance())),
 				Arguments.of("5 % 2", NullType.getInstance(), NumericType.getInstance()),
 				Arguments.of("-.", NumericType.getInstance(), NumericType.getInstance()),
@@ -92,7 +92,7 @@ class TypeCheckConstructCoverageTest {
 				// control flow
 				Arguments.of("if type == \"number\" then . - 1 else 0 end", UnionType.of(NumericType.getInstance(), StringType.getInstance()), NumericType.getInstance()),
 				Arguments.of("try .a catch \"e\"", OBJ, UnionType.of(NumericType.getInstance(), StringType.of("e"))),
-				Arguments.of("label $out | (1, break $out)", NullType.getInstance(), INT),
+				Arguments.of("label $out | (1, break $out)", NullType.getInstance(), NumericType.of(1)),
 				Arguments.of("..", ObjectType.of("a", NumericType.getInstance()),
 						UnionType.of(ObjectType.of("a", NumericType.getInstance()), NumericType.getInstance())),
 				// binding and destructuring

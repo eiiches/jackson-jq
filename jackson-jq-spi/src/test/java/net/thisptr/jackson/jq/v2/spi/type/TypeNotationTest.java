@@ -27,6 +27,7 @@ public class TypeNotationTest {
 		return List.of(
 				AnyType.getInstance(), NeverType.getInstance(), UndefinedType.getInstance(), NullType.getInstance(), BooleanType.getInstance(), StringType.getInstance(), BinaryType.getInstance(),
 				NumericType.getInstance(), NumericType.of(NumberKind.INT), NumericType.of(NumberKind.FLOAT),
+				NumericType.of(0), NumericType.of(1), NumericType.of(-42),
 				ArrayType.of(NeverType.getInstance()),
 				ArrayType.of(StringType.getInstance()),
 				ArrayType.of(ArrayType.of(StringType.getInstance())),
@@ -79,6 +80,9 @@ public class TypeNotationTest {
 		assertThat(StringType.of("number")).hasToString("\"number\"");
 		assertThat(BooleanType.of(true)).hasToString("true");
 		assertThat(BooleanType.of(false)).hasToString("false");
+		assertThat(NumericType.of(0)).hasToString("0");
+		assertThat(NumericType.of(1)).hasToString("1");
+		assertThat(NumericType.of(-42)).hasToString("-42");
 		assertThat(ObjectType.of("kind", StringType.of("a"))).hasToString("{kind:\"a\"}");
 	}
 
@@ -92,6 +96,16 @@ public class TypeNotationTest {
 		// A quoted string in field position is still a field name, so the two uses do not collide.
 		assertThat(Type.valueOf("{\"a-b\":\"a\"}")).isEqualTo(ObjectType.of("a-b", StringType.of("a")));
 		assertThat(Type.valueOf("\"a\"|\"b\"")).isEqualTo(UnionType.of(StringType.of("a"), StringType.of("b")));
+	}
+
+	@Test
+	void parsesKnownIntegers() {
+		assertThat(Type.valueOf("0")).isEqualTo(NumericType.of(0));
+		assertThat(Type.valueOf("1")).isEqualTo(NumericType.of(1));
+		assertThat(Type.valueOf("-42")).isEqualTo(NumericType.of(-42));
+		assertThat(Type.valueOf("0|1")).isEqualTo(UnionType.of(NumericType.of(0), NumericType.of(1)));
+		assertThat(Type.valueOf("[0, 1]")).isEqualTo(ArrayType.of(List.of(NumericType.of(0), NumericType.of(1))));
+		assertThat(Type.valueOf("{code: 200}")).isEqualTo(ObjectType.of("code", NumericType.of(200)));
 	}
 
 	@Test

@@ -201,6 +201,10 @@ class TypeMatcherTest {
 		assertThat(TypeMatcher.accepts(StringType.of("a"), StringType.of("b"))).isFalse();
 		assertThat(TypeMatcher.accepts(BooleanType.of(true), BooleanType.of(false))).isFalse();
 		assertThat(TypeMatcher.accepts(StringType.of("a"), NumericType.getInstance())).isFalse();
+		assertThat(TypeMatcher.accepts(NumericType.of(1), NumericType.of(1))).isTrue();
+		assertThat(TypeMatcher.accepts(NumericType.of(1), NumericType.of(2))).isFalse();
+		assertThat(TypeMatcher.accepts(NumericType.of(1), NumericType.of(NumberKind.INT))).isTrue();
+		assertThat(TypeMatcher.accepts(NumericType.of(NumberKind.INT), NumericType.of(1))).isTrue();
 
 		// Subtyping is "is": only one of those directions is proven.
 		assertThat(TypeMatcher.isSubtype(StringType.of("a"), StringType.getInstance())).isTrue();
@@ -208,6 +212,11 @@ class TypeMatcherTest {
 		assertThat(TypeMatcher.isSubtype(BooleanType.of(true), BooleanType.getInstance())).isTrue();
 		assertThat(TypeMatcher.isSubtype(BooleanType.getInstance(), BooleanType.of(true))).isFalse();
 		assertThat(TypeMatcher.isSubtype(StringType.of("a"), StringType.of("b"))).isFalse();
+		assertThat(TypeMatcher.isSubtype(NumericType.of(1), NumericType.of(NumberKind.INT))).isTrue();
+		assertThat(TypeMatcher.isSubtype(NumericType.of(1), NumericType.getInstance())).isTrue();
+		assertThat(TypeMatcher.isSubtype(NumericType.of(NumberKind.INT), NumericType.of(1))).isFalse();
+		assertThat(TypeMatcher.isSubtype(NumericType.of(1), NumericType.of(2))).isFalse();
+		assertThat(TypeMatcher.isSubtype(NumericType.of(1), NumericType.of(NumberKind.FLOAT))).isFalse();
 	}
 
 	@Test

@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.spi.type;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -153,11 +154,16 @@ final class TypeNotation {
 			else
 				out.append(value ? "true" : "false");
 		} else if (type instanceof NumericType numeric) {
-			out.append(switch (numeric.numberKind()) {
-				case UNKNOWN -> "NUMBER";
-				case INT -> "INT";
-				case FLOAT -> "FLOAT";
-			});
+			BigInteger value = numeric.value();
+			if (value != null) {
+				out.append(value);
+			} else {
+				out.append(switch (numeric.numberKind()) {
+					case UNKNOWN -> "NUMBER";
+					case INT -> "INT";
+					case FLOAT -> "FLOAT";
+				});
+			}
 		} else if (type instanceof TypeVariable variable) {
 			out.append(variable.name());
 		} else if (type instanceof UnionType union) {
@@ -351,6 +357,8 @@ final class TypeNotation {
 				return parseObject();
 			if (peek('"'))
 				return StringType.of(readQuoted());
+			if (peekInteger())
+				return NumericType.of(readInteger());
 			String word = readIdentifier("a type");
 			return switch (word) {
 				case "ANY" -> AnyType.getInstance();
@@ -597,6 +605,30 @@ final class TypeNotation {
 			}
 			pos += 4;
 			return (char) value;
+		}
+
+		private boolean peekInteger() {
+			skipWhitespace();
+			if (pos >= text.length())
+				return false;
+			char ch = text.charAt(pos);
+			if (ch >= '0' && ch <= '9')
+				return true;
+			if (ch == '-' && pos + 1 < text.length()) {
+				char next = text.charAt(pos + 1);
+				return next >= '0' && next <= '9';
+			}
+			return false;
+		}
+
+		private BigInteger readInteger() {
+			skipWhitespace();
+			int start = pos;
+			if (text.charAt(pos) == '-')
+				pos++;
+			while (pos < text.length() && text.charAt(pos) >= '0' && text.charAt(pos) <= '9')
+				pos++;
+			return new BigInteger(text.substring(start, pos));
 		}
 
 		void expectEnd() {
