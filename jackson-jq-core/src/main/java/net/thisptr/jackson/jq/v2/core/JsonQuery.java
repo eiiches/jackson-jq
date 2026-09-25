@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
 import net.thisptr.jackson.jq.v2.spi.type.FilterType;
@@ -42,6 +43,13 @@ public interface JsonQuery<JsonNode> {
 	 * Returns the input/output type inferred when this query was compiled.
 	 */
 	FilterType getType();
+
+	/**
+	 * Returns the cardinality inferred when this query was compiled.
+	 *
+	 * @return the cardinality of this query
+	 */
+	Cardinality getCardinality();
 
 	/**
 	 * Returns a query that runs under {@code options}, replacing any previously set options.

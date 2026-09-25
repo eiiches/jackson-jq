@@ -12,6 +12,7 @@ import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparato
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -82,5 +83,14 @@ public class JsonQueryTest {
 		assertThat(query.withRuntimeBindings(bindings).apply(JSON_PROVIDER.createNull()))
 				.usingElementComparator(BY_JQ_VALUE)
 				.containsExactly(IntNode.valueOf(42));
+	}
+
+	@Test
+	public void reportsInferredCardinality() {
+		assertThat(ENV.compile("1").getCardinality()).isEqualTo(Cardinality.ONE);
+		assertThat(ENV.compile("empty").getCardinality()).isEqualTo(Cardinality.ZERO);
+		assertThat(ENV.compile(".[]").getCardinality()).isEqualTo(Cardinality.UNKNOWN);
+		assertThat(ENV.compile("tonumber").getCardinality()).isEqualTo(Cardinality.ONE);
+		assertThat(ENV.compile("has(\"a\")").getCardinality()).isEqualTo(Cardinality.ONE);
 	}
 }

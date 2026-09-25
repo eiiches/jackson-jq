@@ -41,6 +41,7 @@ import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
 import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
 import net.thisptr.jackson.jq.v2.spi.type.NullType;
@@ -3371,6 +3372,8 @@ class PlaygroundTest {
 		assertThat(bannerText).contains("Type (Expected): BOOLEAN");
 		assertThat(bannerText).contains("Type (Inferred): \"hello\"");
 		assertThat(bannerText).contains("⚠ Mismatch");
+		assertThat(bannerText).contains("Cardinality: ONE");
+		assertThat(pg.getOutputCardinality()).isEqualTo(Cardinality.ONE);
 	}
 
 	@Test
@@ -3694,5 +3697,37 @@ class PlaygroundTest {
 
 	private static TuiRunner createTestRunner(ByteArrayOutputStream terminalOut, List<Event> events) throws Exception {
 		return createTestRunner(terminalOut, events.toArray(new Event[0]));
+	}
+
+	@Test
+	void outputCardinalityReflectsQueryInBanner() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		List<Event> events = new ArrayList<>();
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE));
+		events.add(KeyEvent.ofChar('y'));
+
+		TuiRunner runner = createTestRunner(terminalOut, events);
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				"1\n".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				"empty",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(runner);
+		assertThat(pg.getOutputCardinality()).isEqualTo(Cardinality.ZERO);
+		List<Line> banner = pg.buildOutputTypeBanner(80);
+		String bannerText = banner.stream().map(PlaygroundTest::lineToPlainText).reduce("", (a, b) -> a + "\n" + b);
+		assertThat(bannerText).contains("Cardinality: ZERO");
 	}
 }

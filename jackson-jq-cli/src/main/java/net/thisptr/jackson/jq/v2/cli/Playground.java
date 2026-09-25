@@ -59,6 +59,7 @@ import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
 import net.thisptr.jackson.jq.v2.core.internal.typecheck.ConstantTypes;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.FilterType;
 import net.thisptr.jackson.jq.v2.spi.type.NullType;
@@ -121,6 +122,7 @@ final class Playground<N> {
 	private RuntimeOptions runtimeOptions;
 	private CompileOptions compileOptions;
 	private @Nullable FilterType inferredFilterType;
+	private @Nullable Cardinality outputCardinality;
 	private TypeTarget editingTypeTarget = TypeTarget.INPUT;
 	private final TextInputState typeInputState = new TextInputState();
 	private @Nullable String typeValidationError = null;
@@ -1551,6 +1553,13 @@ final class Playground<N> {
 			}
 		}
 
+		String cardPrefix = "Cardinality: ";
+		String cardStr = outputCardinality != null ? outputCardinality.name() : "UNKNOWN";
+		lines.add(Line.from(
+				Span.styled(cardPrefix, Style.EMPTY.bold().white()),
+				Span.styled(cardStr, Style.EMPTY.cyan())
+		));
+
 		lines.add(Line.from(Span.styled("─".repeat(Math.max(1, width)), Style.EMPTY.dim())));
 		return lines;
 	}
@@ -1628,7 +1637,8 @@ final class Playground<N> {
 			@Nullable String errorMessage,
 			@Nullable DiagnosticPhase errorPhase,
 			List<Diagnostic> warnings,
-			@Nullable FilterType filterType) {
+			@Nullable FilterType filterType,
+			@Nullable Cardinality outputCardinality) {
 	}
 
 	private enum DiagnosticPhase {
@@ -1669,11 +1679,12 @@ final class Playground<N> {
 			jq = ((Environment<T>) environment).compile(queryText, optsBuilder.build()).withRuntimeOptions(runtimeOptions);
 		} catch (Throwable t) {
 			String err = t.getMessage() != null ? t.getMessage() : t.toString();
-			return new EvaluationResult(null, null, 0, err, DiagnosticPhase.COMPILE, currentWarnings, null);
+			return new EvaluationResult(null, null, 0, err, DiagnosticPhase.COMPILE, currentWarnings, null, null);
 		}
 		FilterType filterType = jq.getType();
+		Cardinality outputCardinality = jq.getCardinality();
 		if (!execute) {
-			return new EvaluationResult(null, null, 0, null, null, currentWarnings, filterType);
+			return new EvaluationResult(null, null, 0, null, null, currentWarnings, filterType, outputCardinality);
 		}
 		try {
 			List<String> lines = new ArrayList<>();
@@ -1694,10 +1705,10 @@ final class Playground<N> {
 					lines.addAll(Arrays.asList(formatted.split("\r?\n", -1)));
 				});
 			}
-			return new EvaluationResult(lines, items, count[0], null, null, currentWarnings, filterType);
+			return new EvaluationResult(lines, items, count[0], null, null, currentWarnings, filterType, outputCardinality);
 		} catch (Throwable t) {
 			String err = t.getMessage() != null ? t.getMessage() : t.toString();
-			return new EvaluationResult(null, null, 0, err, DiagnosticPhase.RUNTIME, currentWarnings, filterType);
+			return new EvaluationResult(null, null, 0, err, DiagnosticPhase.RUNTIME, currentWarnings, filterType, outputCardinality);
 		}
 	}
 
@@ -1705,6 +1716,9 @@ final class Playground<N> {
 		this.warnings = result.warnings();
 		if (result.filterType() != null) {
 			this.inferredFilterType = result.filterType();
+		}
+		if (result.outputCardinality() != null) {
+			this.outputCardinality = result.outputCardinality();
 		}
 		if (result.errorMessage() != null) {
 			this.errorPhase = result.errorPhase();
@@ -2044,6 +2058,11 @@ final class Playground<N> {
 	@Nullable
 	FilterType getInferredFilterType() {
 		return inferredFilterType;
+	}
+
+	@Nullable
+	Cardinality getOutputCardinality() {
+		return outputCardinality;
 	}
 
 	int getSelectedOptionIndex() {

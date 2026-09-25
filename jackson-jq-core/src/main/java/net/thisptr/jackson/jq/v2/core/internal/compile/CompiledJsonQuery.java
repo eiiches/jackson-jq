@@ -9,6 +9,7 @@ import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.RuntimeBindings;
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.type.FilterType;
 
@@ -42,6 +43,11 @@ final class CompiledJsonQuery<JsonNode> implements JsonQuery<JsonNode> {
 	@Override
 	public FilterType getType() {
 		return type;
+	}
+
+	@Override
+	public Cardinality getCardinality() {
+		return rootExpr.getCardinality();
 	}
 
 	@Override
