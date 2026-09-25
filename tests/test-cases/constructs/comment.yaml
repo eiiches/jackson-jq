@@ -1,3 +1,12 @@
 - q: '10 # comment'
   out:
   - 10
+  types:
+  - input: 'ANY'
+    output: '10'
+  - input: 'NULL'
+    output: '10'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false

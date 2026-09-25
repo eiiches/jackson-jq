@@ -1,19 +1,55 @@
 - q: 'if true then 1 else 2 end'
   out:
   - 1
+  types:
+  - input: 'ANY'
+    output: '1|2'
+  - input: 'NULL'
+    output: '1'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'if false then 1 end'
   in: 2
   out:
   - 2
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: 'if false then 1 elif false then 2 else 3 end'
   out:
   - 3
+  types:
+  - input: 'ANY'
+    output: '3'
+  - input: 'NULL'
+    output: '3'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'if false then 1 elif false then 2 end'
   in: 3
   out:
   - 3
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'

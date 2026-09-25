@@ -10,5 +10,6 @@ module net.thisptr.jackson.jq.v2.spi {
 	exports net.thisptr.jackson.jq.v2.spi.exception;
 	exports net.thisptr.jackson.jq.v2.spi.module;
 	exports net.thisptr.jackson.jq.v2.spi.path;
+	exports net.thisptr.jackson.jq.v2.spi.type;
 	exports net.thisptr.jackson.jq.v2.spi.version;
 }

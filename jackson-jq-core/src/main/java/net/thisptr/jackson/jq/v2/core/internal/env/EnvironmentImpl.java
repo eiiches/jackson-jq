@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
@@ -21,6 +20,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 /**
@@ -31,25 +31,25 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	private final Version jqVersion;
 	private final List<ModuleLoader<JsonNode>> moduleLoaders;
 	private final List<FunctionLoader> functionLoaders;
-	private final Set<String> declaredVariables;
+	private final Map<String, Type> declaredVariables;
 	private final Set<FunctionSignature> declaredFunctions;
-	private final Map<String, Supplier<JsonNode>> variables;
+	private final Map<String, Variable<JsonNode>> variables;
 	private final Map<FunctionSignature, Function> functions;
 	private final Map<FunctionSignature, JqFunction> jqFunctions;
-	private final Map<String, JsonNode> constants;
+	private final Map<String, Constant<JsonNode>> constants;
 	private final Map<String, Module> importedModules;
 
 	public EnvironmentImpl(JsonProvider<JsonNode> jsonProvider, Version jqVersion,
 						   List<ModuleLoader<JsonNode>> moduleLoaders, List<FunctionLoader> functionLoaders,
-						   Set<String> declaredVariables, Set<FunctionSignature> declaredFunctions,
-						   Map<String, Supplier<JsonNode>> variables, Map<FunctionSignature, Function> functions,
+						   Map<String, Type> declaredVariables, Set<FunctionSignature> declaredFunctions,
+						   Map<String, Variable<JsonNode>> variables, Map<FunctionSignature, Function> functions,
 						   Map<FunctionSignature, JqFunction> jqFunctions,
-						   Map<String, JsonNode> constants, Map<String, Module> importedModules) {
+						   Map<String, Constant<JsonNode>> constants, Map<String, Module> importedModules) {
 		this.jsonProvider = jsonProvider;
 		this.jqVersion = jqVersion;
 		this.moduleLoaders = new ArrayList<>(moduleLoaders);
 		this.functionLoaders = new ArrayList<>(functionLoaders);
-		this.declaredVariables = new HashSet<>(declaredVariables);
+		this.declaredVariables = new HashMap<>(declaredVariables);
 		this.declaredFunctions = new HashSet<>(declaredFunctions);
 		this.variables = new HashMap<>(variables);
 		this.functions = new HashMap<>(functions);
@@ -79,8 +79,8 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	}
 
 	@Override
-	public Set<String> getDeclaredVariables() {
-		return Collections.unmodifiableSet(declaredVariables);
+	public Map<String, Type> getDeclaredVariables() {
+		return Collections.unmodifiableMap(declaredVariables);
 	}
 
 	@Override
@@ -89,7 +89,7 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	}
 
 	@Override
-	public Map<String, Supplier<JsonNode>> getVariables() {
+	public Map<String, Variable<JsonNode>> getVariables() {
 		return Collections.unmodifiableMap(variables);
 	}
 
@@ -104,7 +104,7 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	}
 
 	@Override
-	public Map<String, JsonNode> getConstants() {
+	public Map<String, Constant<JsonNode>> getConstants() {
 		return Collections.unmodifiableMap(constants);
 	}
 

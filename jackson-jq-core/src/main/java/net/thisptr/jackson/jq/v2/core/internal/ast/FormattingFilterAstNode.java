@@ -3,7 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.ast;
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 
-
 public class FormattingFilterAstNode extends AbstractAstNode {
 	private final FunctionSignature signature;
 

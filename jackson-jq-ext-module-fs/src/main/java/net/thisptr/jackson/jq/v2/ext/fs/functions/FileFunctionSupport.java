@@ -9,14 +9,39 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.UndefinedType;
+import net.thisptr.jackson.jq.v2.spi.type.UnionType;
 
 final class FileFunctionSupport {
+	/**
+	 * Every option member is optional, so each declared type admits its absence.
+	 */
+	static final Type OPTIONAL_STRING;
+	static final Type OPTIONAL_BOOLEAN;
+
+	static {
+		OPTIONAL_STRING = UnionType.of(StringType.getInstance(), UndefinedType.getInstance());
+		OPTIONAL_BOOLEAN = UnionType.of(BooleanType.getInstance(), UndefinedType.getInstance());
+	}
+
+	/**
+	 * The members a write shares regardless of what it writes.
+	 */
+	static final Map<String, Type> COMMON_WRITE_OPTIONS = Map.of(
+			"append", OPTIONAL_BOOLEAN,
+			"create_parents", OPTIONAL_BOOLEAN,
+			"mkdirs", OPTIONAL_BOOLEAN);
+
 	private FileFunctionSupport() {
 	}
 

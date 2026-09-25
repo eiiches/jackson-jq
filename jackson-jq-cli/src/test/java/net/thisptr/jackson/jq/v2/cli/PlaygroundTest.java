@@ -37,8 +37,15 @@ import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.OptimizationOptions;
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
+import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
+import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
+import net.thisptr.jackson.jq.v2.spi.type.NullType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -91,6 +98,46 @@ class PlaygroundTest {
 		assertThat(pg.getQuery()).isEqualTo(".name");
 		assertThat(pg.isAccepted()).isTrue();
 		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("\"Alice\"\n");
+	}
+
+	@Test
+	void vimCommandModeSupportsControlUAndEditingShortcuts() throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6),
+				Versions.JQ_1_6,
+				"jackson3",
+				"{\"name\":\"Bob\"}".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				".",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				Collections.emptyList(),
+				true,
+				new PrintStream(out),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		TuiRunner runner = createTestRunner(
+				new ByteArrayOutputStream(),
+				KeyEvent.ofChar(':'),
+				KeyEvent.ofChar('n'),
+				KeyEvent.ofChar('o'),
+				KeyEvent.ofChar('h'),
+				KeyEvent.ofChar('u', KeyModifiers.CTRL),
+				KeyEvent.ofChar('q'),
+				KeyEvent.ofKey(KeyCode.ENTER),
+				KeyEvent.ofChar('y'));
+
+		pg.run(runner);
+
+		assertThat(pg.isAccepted()).isTrue();
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("{\n  \"name\": \"Bob\"\n}\n");
 	}
 
 	@Test
@@ -188,7 +235,7 @@ class PlaygroundTest {
 				System.err);
 
 		assertThat(pg.finalCommand()).isEqualTo(
-				"jackson-jq -c -r -n -R -s --jq 1.7.0 --json-provider gson --no-warnings --disable-tco"
+				"jackson-jq -c -r -n -R -s --jq 1.7.0 --json-provider gson --no-warnings --disable-tco --type-check off"
 						+ " --max-string-length 1 --max-binary-length 2 --max-array-length 3"
 						+ " --max-object-member-count 4 --max-user-defined-function-calls 5"
 						+ " --max-outputs-per-expression 6 -- '.[\"it'\"'\"'s\"]\n| .'"
@@ -426,7 +473,7 @@ class PlaygroundTest {
 
 		assertThat(pg.isAccepted()).isTrue();
 		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("10\n");
-		assertThat(err.toString(StandardCharsets.UTF_8)).isEqualTo("jackson-jq -c -- '.a'\n");
+		assertThat(err.toString(StandardCharsets.UTF_8)).isEqualTo("jackson-jq -c --type-check off -- '.a'\n");
 	}
 
 	@Test
@@ -459,7 +506,7 @@ class PlaygroundTest {
 
 		assertThat(pg.isAccepted()).isFalse();
 		assertThat(out.toString(StandardCharsets.UTF_8)).isEmpty();
-		assertThat(err.toString(StandardCharsets.UTF_8)).isEqualTo("jackson-jq -c -- '.a'\n");
+		assertThat(err.toString(StandardCharsets.UTF_8)).isEqualTo("jackson-jq -c --type-check off -- '.a'\n");
 	}
 
 	@Test
@@ -573,7 +620,7 @@ class PlaygroundTest {
 		assertThat(pg.getQuery()).isEqualTo(".val\n+ 1");
 		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("100\n");
 		assertThat(err.toString(StandardCharsets.UTF_8))
-				.isEqualTo("jackson-jq -c -- '.val\n+ 1'\n");
+				.isEqualTo("jackson-jq -c --type-check off -- '.val\n+ 1'\n");
 	}
 
 	@Test
@@ -990,6 +1037,47 @@ class PlaygroundTest {
 		assertThat(rendered).contains("╰");
 	}
 
+	// Strict checking is the one mode where compiling fails, so the pane has to say where the errors
+	// are: the exception itself carries only how many there were.
+	@Test
+	void displaysTypeErrorsFromStrictChecking() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		JsonNode input = JSON.createNull();
+
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		TuiRunner runner = createTestRunner(
+				terminalOut,
+				KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofChar('y'));
+
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				Collections.singletonList(input),
+				"1 | .a",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().setTypeCheckMode(TypeCheckMode.STRICT).build(),
+				true,
+				false,
+				true,
+				new PrintStream(out),
+				new PrintStream(err));
+
+		pg.run(runner);
+
+		assertThat(pg.getWarnings()).singleElement().satisfies(diagnostic -> {
+			assertThat(diagnostic.severity()).isEqualTo(Diagnostic.Severity.ERROR);
+			assertThat(diagnostic.message()).contains("Cannot index");
+		});
+		assertThat(pg.getErrorMessage()).contains("Type checking failed");
+
+		String rendered = terminalOut.toString(StandardCharsets.UTF_8);
+		assertThat(rendered).contains("[Compile][Error]");
+		assertThat(rendered).doesNotContain("[Compile][Warning]");
+	}
 
 	@Test
 	void collectsAndDisplaysWarningsForAmbiguousQuery() throws Exception {
@@ -1032,7 +1120,7 @@ class PlaygroundTest {
 		// Warnings should NOT be printed to stderr upon acceptance
 		String stderrText = err.toString(StandardCharsets.UTF_8);
 		assertThat(stderrText).doesNotContain("jq: warning:");
-		assertThat(stderrText).isEqualTo("jackson-jq -c -- '1, 2 | .'\n");
+		assertThat(stderrText).isEqualTo("jackson-jq -c --type-check off -- '1, 2 | .'\n");
 	}
 
 	@Test
@@ -1199,8 +1287,6 @@ class PlaygroundTest {
 				KeyEvent.ofChar('o', KeyModifiers.CTRL),
 				KeyEvent.ofKey(KeyCode.ESCAPE),
 				KeyEvent.ofChar('o', KeyModifiers.CTRL),
-				KeyEvent.ofChar('q'),
-				KeyEvent.ofChar('o', KeyModifiers.CTRL),
 				KeyEvent.ofChar('o', KeyModifiers.CTRL),
 				KeyEvent.ofKey(KeyCode.ESCAPE),
 				KeyEvent.ofChar('y'));
@@ -1276,7 +1362,7 @@ class PlaygroundTest {
 				KeyEvent.ofChar('c'),
 				KeyEvent.ofChar('s'),
 				KeyEvent.ofChar('R'),
-				KeyEvent.ofKey(KeyCode.ENTER),
+				KeyEvent.ofKey(KeyCode.ESCAPE),
 				KeyEvent.ofKey(KeyCode.ESCAPE),
 				KeyEvent.ofChar('y'));
 
@@ -1678,7 +1764,7 @@ class PlaygroundTest {
 		assertThat(rendered).contains("unlimited");
 		assertThat(rendered).contains("[0-9/⌫] Edit");
 		assertThat(rendered).contains("[Space/←→] Change");
-		assertThat(rendered).contains("[Esc/Enter] Close");
+		assertThat(rendered).contains("[Esc] Close");
 		assertThat(rendered).contains("Ctrl+O");
 	}
 
@@ -1793,11 +1879,11 @@ class PlaygroundTest {
 				Collections.singletonList(JSON.createNull()),
 				"""
 						import "jackson-jq/fs" as fs;
-						1, 2 | fs::read_text("maven_install.json"; {misspelled: (now | tostring)})
+						fs::read_text("maven_install.json"; {misspelled: (now | tostring)})
 						""",
 				JSON,
 				RuntimeOptions.newBuilder().build(),
-				CompileOptions.newBuilder().build(),
+				CompileOptions.newBuilder().setTypeCheckMode(TypeCheckMode.WARN).build(),
 				false,
 				false,
 				true,
@@ -1806,10 +1892,36 @@ class PlaygroundTest {
 
 		assertThat(pg.getDiagnosticPlainLines()).satisfiesExactly(
 				line -> assertThat(line)
-						.startsWith("[Compile][Warning] `,` binds tighter than `|`")
-						.contains("at line 2, column 1"),
+						.startsWith("[Compile][Warning] Argument 2 of fs::read_text/2 has type ")
+						.contains("; expected ")
+						.contains("at line 2, column "),
+				line -> assertThat(line).isEqualTo("Accepted types:"),
+				line -> assertThat(line).startsWith("  <Input> Input: Input -> fs::read_text(")
+						.contains(") -> Output: STRING").doesNotContain(" at line "),
 				line -> assertThat(line)
 						.isEqualTo("[Runtime][Error] fs::read_text options contains unknown member: misspelled"));
+	}
+
+	@Test
+	void rendersTheCallTraceUnderTheDiagnosticItBelongsTo() {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				Collections.singletonList(JSON.createNull()),
+				"\"test\" | map(\"test\")",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().setTypeCheckMode(TypeCheckMode.WARN).build(),
+				false,
+				false,
+				true,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		assertThat(pg.getDiagnosticPlainLines()).satisfiesExactly(
+				line -> assertThat(line).isEqualTo("[Compile][Warning] Cannot iterate over \"test\" at line 1, column 10"),
+				line -> assertThat(line).isEqualTo("  in map/1"),
+				line -> assertThat(line).isEqualTo("[Runtime][Error] Cannot iterate over string (\"test\")"));
 	}
 
 	@Test
@@ -3140,6 +3252,406 @@ class PlaygroundTest {
 		assertThat(pg.isAccepted()).isTrue();
 	}
 
+	@Test
+	void optionsDialogCyclesTypeCheckMode() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		List<Event> events = new ArrayList<>();
+		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
+		for (int i = 0; i < 12; i++) {
+			events.add(KeyEvent.ofKey(KeyCode.DOWN));
+		}
+		// Default is WARN. Cycle forward: WARN -> STRICT
+		events.add(KeyEvent.ofKey(KeyCode.RIGHT));
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE));
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE));
+		events.add(KeyEvent.ofChar('y'));
+
+		TuiRunner runner = createTestRunner(terminalOut, events);
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				"1\n".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				".",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().setTypeCheckMode(TypeCheckMode.WARN).build(),
+				false,
+				false,
+				true,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(runner);
+		assertThat(pg.getCompileOptions().getTypeCheckMode()).isEqualTo(TypeCheckMode.STRICT);
+		assertThat(pg.finalCommand()).contains("--type-check strict");
+	}
+
+	@Test
+	void optionsDialogEditsInputType() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		List<Event> events = new ArrayList<>();
+		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
+		for (int i = 0; i < 13; i++) {
+			events.add(KeyEvent.ofKey(KeyCode.DOWN));
+		}
+		events.add(KeyEvent.ofKey(KeyCode.ENTER)); // open EDIT_TYPE
+		events.addAll(textToKeys("STRING"));
+		events.add(KeyEvent.ofKey(KeyCode.ENTER)); // commit
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // close options
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // confirm quit
+		events.add(KeyEvent.ofChar('y'));
+
+		TuiRunner runner = createTestRunner(terminalOut, events);
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				"\"hello\"\n".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				".",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(runner);
+		assertThat(pg.getCompileOptions().getInputType()).isEqualTo(StringType.getInstance());
+		assertThat(pg.finalCommand()).contains("--input-type 'STRING'");
+		List<Line> banner = pg.buildInputTypeBanner(80);
+		assertThat(banner).isNotEmpty();
+		assertThat(lineToPlainText(banner.get(0))).contains("Type: STRING");
+	}
+
+	@Test
+	void optionsDialogEditsOutputTypeAndDetectsMismatch() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		List<Event> events = new ArrayList<>();
+		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
+		for (int i = 0; i < 14; i++) {
+			events.add(KeyEvent.ofKey(KeyCode.DOWN));
+		}
+		events.add(KeyEvent.ofKey(KeyCode.ENTER)); // open EDIT_TYPE
+		events.addAll(textToKeys("BOOLEAN"));
+		events.add(KeyEvent.ofKey(KeyCode.ENTER)); // commit
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // close options
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // confirm quit
+		events.add(KeyEvent.ofChar('y'));
+
+		TuiRunner runner = createTestRunner(terminalOut, events);
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				"\"hello\"\n".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				"\"hello\"",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().setTypeCheckMode(TypeCheckMode.WARN).build(),
+				false,
+				false,
+				true,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(runner);
+		assertThat(pg.getCompileOptions().getOutputType()).isEqualTo(BooleanType.getInstance());
+		assertThat(pg.finalCommand()).contains("--output-type 'BOOLEAN'");
+		List<Line> banner = pg.buildOutputTypeBanner(80);
+		assertThat(banner).isNotEmpty();
+		String bannerText = banner.stream().map(PlaygroundTest::lineToPlainText).reduce("", (a, b) -> a + "\n" + b);
+		assertThat(bannerText).contains("Type (Expected): BOOLEAN");
+		assertThat(bannerText).contains("Type (Inferred): \"hello\"");
+		assertThat(bannerText).contains("⚠ Mismatch");
+		assertThat(bannerText).contains("Cardinality: ONE");
+		assertThat(pg.getOutputCardinality()).isEqualTo(Cardinality.ONE);
+	}
+
+	@Test
+	void editTypeModalValidationAndCancel() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		List<Event> events = new ArrayList<>();
+		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
+		for (int i = 0; i < 13; i++) {
+			events.add(KeyEvent.ofKey(KeyCode.DOWN));
+		}
+		events.add(KeyEvent.ofKey(KeyCode.ENTER)); // open EDIT_TYPE
+		events.addAll(textToKeys("INVALID_TYPE_[*"));
+		events.add(KeyEvent.ofKey(KeyCode.ENTER)); // should fail validation, not commit
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // cancel back to OPTIONS
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // close options
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // confirm quit
+		events.add(KeyEvent.ofChar('y'));
+
+		TuiRunner runner = createTestRunner(terminalOut, events);
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				"1\n".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				".",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(runner);
+		// Remained AnyType because invalid was not committed
+		assertThat(pg.getCompileOptions().getInputType()).isEqualTo(AnyType.getInstance());
+	}
+
+	@Test
+	void editTypeModalClearsToAnyTypeWithCtrlU() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		List<Event> events = new ArrayList<>();
+		// First set to STRING
+		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
+		for (int i = 0; i < 13; i++) {
+			events.add(KeyEvent.ofKey(KeyCode.DOWN));
+		}
+		events.add(KeyEvent.ofKey(KeyCode.ENTER));
+		events.addAll(textToKeys("STRING"));
+		events.add(KeyEvent.ofKey(KeyCode.ENTER));
+		// Now edit again and clear with Ctrl+U
+		events.add(KeyEvent.ofKey(KeyCode.ENTER));
+		events.add(KeyEvent.ofChar('u', KeyModifiers.CTRL));
+		events.add(KeyEvent.ofKey(KeyCode.ENTER));
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE));
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE));
+		events.add(KeyEvent.ofChar('y'));
+
+		TuiRunner runner = createTestRunner(terminalOut, events);
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				"1\n".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				".",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(runner);
+		assertThat(pg.getCompileOptions().getInputType()).isEqualTo(AnyType.getInstance());
+	}
+
+	@Test
+	void optionsDialogPressingCtrlIInfersInputTypeFromSingleObject() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		List<Event> events = new ArrayList<>();
+		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
+		for (int i = 0; i < 13; i++) {
+			events.add(KeyEvent.ofKey(KeyCode.DOWN));
+		}
+		events.add(KeyEvent.ofChar('i', KeyModifiers.CTRL)); // infer type
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // close options
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // confirm quit
+		events.add(KeyEvent.ofChar('y'));
+
+		TuiRunner runner = createTestRunner(terminalOut, events);
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				"{\"id\": 1, \"name\": \"foo\"}\n".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				".",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(runner);
+		assertThat(pg.getCompileOptions().getInputType().toString()).isEqualTo("{id:INT,name:STRING}");
+		assertThat(pg.finalCommand()).contains("--input-type '{id:INT,name:STRING}'");
+	}
+
+	@Test
+	void optionsDialogPressingCtrlIInfersUnionForMultipleInputDocuments() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		List<Event> events = new ArrayList<>();
+		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
+		for (int i = 0; i < 13; i++) {
+			events.add(KeyEvent.ofKey(KeyCode.DOWN));
+		}
+		events.add(KeyEvent.ofChar('i', KeyModifiers.CTRL)); // infer type
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // close options
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // confirm quit
+		events.add(KeyEvent.ofChar('y'));
+
+		TuiRunner runner = createTestRunner(terminalOut, events);
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				"{\"a\": 1}\n{\"b\": \"hello\"}\n".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				".",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(runner);
+		assertThat(pg.getCompileOptions().getInputType().toString()).isEqualTo("{a:INT}|{b:STRING}");
+	}
+
+	@Test
+	void optionsDialogPressingCtrlIInfersNullTypeForNullInput() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		List<Event> events = new ArrayList<>();
+		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
+		for (int i = 0; i < 13; i++) {
+			events.add(KeyEvent.ofKey(KeyCode.DOWN));
+		}
+		events.add(KeyEvent.ofChar('i', KeyModifiers.CTRL)); // infer type
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // close options
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // confirm quit
+		events.add(KeyEvent.ofChar('y'));
+
+		TuiRunner runner = createTestRunner(terminalOut, events);
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				new byte[0],
+				true, // nullInput
+				false,
+				false,
+				".",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(runner);
+		assertThat(pg.getCompileOptions().getInputType()).isEqualTo(NullType.getInstance());
+	}
+
+	@Test
+	void optionsDialogPlainIDoesNotInferInputType() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		List<Event> events = new ArrayList<>();
+		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
+		for (int i = 0; i < 13; i++) {
+			events.add(KeyEvent.ofKey(KeyCode.DOWN));
+		}
+		events.add(KeyEvent.ofChar('i')); // plain 'i' should not infer
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // close options
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // confirm quit
+		events.add(KeyEvent.ofChar('y'));
+
+		TuiRunner runner = createTestRunner(terminalOut, events);
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				"{\"id\": 1}\n".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				".",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(runner);
+		assertThat(pg.getCompileOptions().getInputType()).isEqualTo(AnyType.getInstance());
+	}
+
+	@Test
+	void editTypeModalCtrlIPopulatesInferredType() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		List<Event> events = new ArrayList<>();
+		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
+		for (int i = 0; i < 13; i++) {
+			events.add(KeyEvent.ofKey(KeyCode.DOWN));
+		}
+		events.add(KeyEvent.ofKey(KeyCode.ENTER)); // open EDIT_TYPE
+		events.add(KeyEvent.ofChar('i', KeyModifiers.CTRL)); // trigger infer in modal
+		events.add(KeyEvent.ofKey(KeyCode.ENTER)); // apply
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // close options
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE)); // confirm quit
+		events.add(KeyEvent.ofChar('y'));
+
+		TuiRunner runner = createTestRunner(terminalOut, events);
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				"[1, 2, 3]\n".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				".",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(runner);
+		assertThat(pg.getCompileOptions().getInputType().toString()).isEqualTo("[INT,INT,INT]");
+	}
+
+	@Test
+	void wrapTypeWrapsAndTruncates() {
+		List<String> shortLines = Playground.wrapType("Type: ", "STRING", 40, 3);
+		assertThat(shortLines).containsExactly("Type: STRING");
+
+		List<String> wrappedLines = Playground.wrapType("Type: ", "{id: INT, name: STRING, active: BOOLEAN}", 20, 3);
+		assertThat(wrappedLines.size()).isGreaterThan(1);
+		assertThat(wrappedLines.get(0)).startsWith("Type: ");
+		for (int i = 1; i < wrappedLines.size(); i++) {
+			assertThat(wrappedLines.get(i)).startsWith("  ");
+		}
+
+		List<String> truncated = Playground.wrapType("Type: ", "A, B, C, D, E, F, G, H, I, J, K, L, M, N", 10, 2);
+		assertThat(truncated).hasSize(2);
+		assertThat(truncated.get(1)).endsWith("...");
+	}
+
 	private static String lineToPlainText(Line line) {
 		StringBuilder sb = new StringBuilder();
 		for (Span span : line.spans()) {
@@ -3185,5 +3697,37 @@ class PlaygroundTest {
 
 	private static TuiRunner createTestRunner(ByteArrayOutputStream terminalOut, List<Event> events) throws Exception {
 		return createTestRunner(terminalOut, events.toArray(new Event[0]));
+	}
+
+	@Test
+	void outputCardinalityReflectsQueryInBanner() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		List<Event> events = new ArrayList<>();
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE));
+		events.add(KeyEvent.ofChar('y'));
+
+		TuiRunner runner = createTestRunner(terminalOut, events);
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				"1\n".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				"empty",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(runner);
+		assertThat(pg.getOutputCardinality()).isEqualTo(Cardinality.ZERO);
+		List<Line> banner = pg.buildOutputTypeBanner(80);
+		String bannerText = banner.stream().map(PlaygroundTest::lineToPlainText).reduce("", (a, b) -> a + "\n" + b);
+		assertThat(bannerText).contains("Cardinality: ZERO");
 	}
 }

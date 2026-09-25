@@ -2,12 +2,12 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.Set;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -15,8 +15,8 @@ import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class PipedQuery<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
-	private final Expression<StackFrame, JsonNode> left;
-	private final Expression<StackFrame, JsonNode> right;
+	private final AnalyzedExpression<JsonNode> left;
+	private final AnalyzedExpression<JsonNode> right;
 	// Counter for everything `left` emits. `right` needs none: its values are piped straight out as this
 	// query's own, so whatever consumes this query charges them.
 	private final int leftOutputIndex;
@@ -25,7 +25,7 @@ public class PipedQuery<JsonNode> implements RewritableExpression<JsonNode>, Fre
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public PipedQuery(Expression<StackFrame, JsonNode> left, Expression<StackFrame, JsonNode> right, int leftOutputIndex) {
+	public PipedQuery(AnalyzedExpression<JsonNode> left, AnalyzedExpression<JsonNode> right, int leftOutputIndex) {
 		this.left = left;
 		this.right = right;
 		this.leftOutputIndex = leftOutputIndex;
@@ -63,9 +63,9 @@ public class PipedQuery<JsonNode> implements RewritableExpression<JsonNode>, Fre
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		Expression<StackFrame, JsonNode> newLeft = rewriter.rewrite(left);
-		Expression<StackFrame, JsonNode> newRight = rewriter.rewrite(right);
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		AnalyzedExpression<JsonNode> newLeft = rewriter.rewrite(left);
+		AnalyzedExpression<JsonNode> newRight = rewriter.rewrite(right);
 		return newLeft == left && newRight == right ? this : new PipedQuery<>(newLeft, newRight, leftOutputIndex);
 	}
 

@@ -1,3 +1,12 @@
 - q: '[path(.)]'
   out:
   - [[]]
+  types:
+  - input: 'ANY'
+    output: '[[*:NUMBER|STRING]]'
+  - input: 'NULL'
+    output: '[[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false

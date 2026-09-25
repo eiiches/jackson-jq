@@ -14,16 +14,49 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.NullType;
+import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.UnionType;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 final class SubImplFunction implements Function {
+	/**
+	 * The replacement filter is evaluated against an object of the named captures.
+	 */
+	private static final Type CAPTURES = ObjectType.of(Map.of(), UnionType.of(StringType.getInstance(), NullType.getInstance()));
+	/**
+	 * The same signature the joni engine publishes; one jq-level surface is built on both.
+	 */
+	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
+			TypeScheme.of(FunctionType.of(StringType.getInstance(), StringType.getInstance(), FilterType.of(StringType.getInstance(), StringType.getInstance()),
+					FilterType.of(CAPTURES, StringType.getInstance()),
+					FilterType.of(StringType.getInstance(), StringType.getInstance()))));
+
+	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		return TYPE_SCHEMES;
+	}
+
+	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		boolean external = arguments.stream().anyMatch(ExpressionProperties::dependsOnExternalState);
+		return new ExpressionProperties(Cardinality.UNKNOWN, true, external);
+	}
+
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindContext, List<Expression<Context, JsonNode>> arguments) {
 		JsonProvider<JsonNode> jsonProvider = bindContext.getJsonProvider();
@@ -34,17 +67,17 @@ final class SubImplFunction implements Function {
 		PrecompiledPatternPlan precompiled = PrecompiledPatternPlan.regexThenFlags(jsonProvider, regexExpression, flagsExpression, false);
 
 		if (precompiled != null) {
-			return FunctionBody.builder(arguments).usesInput(true).build((context, input, inputPath, output) -> {
+			return (context, input, inputPath, output) -> {
 				Preconditions.checkInputType(jsonProvider, "_sub_impl/3", input, JsonNodeType.STRING);
 				for (Re2Pattern pattern : precompiled.patterns()) {
 					List<JsonNode> match = match(jsonProvider, pattern, jsonProvider.getString(input));
 					for (int i = 0; i < precompiled.flagsMultiplicity(); i++)
 						replaceAndConcat(jsonProvider, context, output, match, replaceExpression, version);
 				}
-			});
+			};
 		}
 
-		return FunctionBody.builder(arguments).usesInput(true).build((context, input, inputPath, output) -> {
+		return (context, input, inputPath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "_sub_impl/3", input, JsonNodeType.STRING);
 			regexExpression.apply(context, input, UntrackedPath.getInstance(), (regex, regexPath) -> {
 				Preconditions.checkArgumentType(jsonProvider, "_sub_impl/3", 1, regex, JsonNodeType.STRING);
@@ -56,7 +89,7 @@ final class SubImplFunction implements Function {
 							replaceAndConcat(jsonProvider, context, output, match, replaceExpression, version));
 				});
 			});
-		});
+		};
 	}
 
 	private static <Context extends RuntimeContext, JsonNode> void replaceAndConcat(JsonProvider<JsonNode> jsonProvider, Context context, Output<JsonNode> output, List<JsonNode> match, Expression<Context, JsonNode> replaceExpression, Version version) throws JsonQueryException {

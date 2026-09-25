@@ -7,7 +7,6 @@ import com.google.errorprone.annotations.Var;
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 
-
 public class FunctionDefinitionAstNode extends AbstractAstNode {
 	private final AstNode body;
 	private final FunctionSignature signature;

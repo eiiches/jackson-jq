@@ -2,6 +2,15 @@
   in: {"b": 1, "a": 2}
   out:
   - {"b": 1, "a": 2}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT,b:INT}'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
   comment: 'jq rebuilds the object from keys_unsorted, so walk/1 keeps the input field order instead of sorting it.'
 
@@ -9,41 +18,104 @@
   in: {"b": {"y": 1, "x": 2}, "a": [{"n": 1, "m": 2}]}
   out:
   - {"b": {"y": 1, "x": 2}, "a": [{"n": 1, "m": 2}]}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:[{m:INT,n:INT}],b:{x:INT,y:INT}}'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'walk(if type == "object" then with_entries(.value += 1) else . end)'
   in: {"b": 1, "a": 2}
   out:
   - {"b": 2, "a": 3}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT,b:INT}'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '[walk(.) | keys_unsorted]'
   in: {"b": 1, "a": 2}
   out:
   - [["b", "a"]]
+  types:
+  - input: 'ANY'
+    output: '[*:[*:INT]|[*:STRING]]'
+  - input: '{a:INT,b:INT}'
+    output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'walk(if type == "array" then sort else . end)'
   in: [[4, 1, 7], [8, 5, 2], [3, 6, 9]]
   out:
   - [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[[INT,INT,INT],[INT,INT,INT],[INT,INT,INT]]'
+    output: '[*:ANY]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'walk(.)'
   in: [1, "a", null, true]
   out:
   - [1, "a", null, true]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,STRING,NULL,BOOLEAN]'
+    output: '[*:ANY]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'walk(empty)'
   in: {"b": 1}
   out: []
+  types:
+  - input: 'ANY'
+    output: 'NEVER'
+  - input: '{b:INT}'
+    output: 'NEVER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '[walk(if type == "number" then (., . + 10) else . end)]'
   in: {"b": 1}
   out:
   - [{"b": 11}]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: '{b:INT}'
+    output: '[*:NULL|{*:NULL|NUMBER}]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, 1.7)'
   comment: 'jq 1.6 rebuilds the object with reduce, whose update keeps the last output of a generator f.'
 
@@ -51,6 +123,15 @@
   in: {"b": 1}
   out:
   - [{"b": 1}]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: '{b:INT}'
+    output: '[*:NULL|[*:ANY]|{*:ANY}]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
   comment: 'jq 1.7 redefined walk/1 in terms of map_values, which keeps the first output of a generator f.'
 
@@ -58,6 +139,15 @@
   in: [1, 2]
   out:
   - [[1, 11, 2, 12]]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: '[INT,INT]'
+    output: '[*:[*:ANY]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
   comment: 'Not version-dependent: both definitions descend into arrays with map, which collects every output.'
 
@@ -65,6 +155,15 @@
   in: {"b": 1, "a": "x"}
   out:
   - {"a": "x"}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:STRING,b:INT}'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
   comment: 'f may produce no output for a member, in which case the member is dropped. The [1.7, ) definition uses _modify(.[]; w) rather than map_values(w) so this does not hit the `|= empty` error.'
 
@@ -72,4 +171,13 @@
   in: {"b": {"c": 1}}
   out:
   - [{"b": {"c": 1}}, {"b": {"c": 1}}]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: '{b:{c:INT}}'
+    output: '[*:NULL|[*:ANY]|{*:ANY}]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'

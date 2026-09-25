@@ -2,11 +2,11 @@ package net.thisptr.jackson.jq.v2.core.internal.compile.resolved;
 
 import java.util.List;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -22,9 +22,9 @@ public class ResolvedGlobalFunctionAccess<JsonNode> implements RewritableExpress
 	private final BindContext<JsonNode> bindContext;
 	private final String name;
 	private final int globalIndex;
-	private final List<Expression<StackFrame, JsonNode>> args;
+	private final List<AnalyzedExpression<JsonNode>> args;
 
-	public ResolvedGlobalFunctionAccess(BindContext<JsonNode> bindContext, String name, int globalIndex, List<Expression<StackFrame, JsonNode>> args) {
+	public ResolvedGlobalFunctionAccess(BindContext<JsonNode> bindContext, String name, int globalIndex, List<AnalyzedExpression<JsonNode>> args) {
 		this.bindContext = bindContext;
 		this.name = name;
 		this.globalIndex = globalIndex;
@@ -35,13 +35,13 @@ public class ResolvedGlobalFunctionAccess<JsonNode> implements RewritableExpress
 		return name;
 	}
 
-	public List<Expression<StackFrame, JsonNode>> args() {
+	public List<AnalyzedExpression<JsonNode>> args() {
 		return args;
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		List<Expression<StackFrame, JsonNode>> rewritten = ExpressionRewriter.rewriteAll(args, rewriter);
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		List<AnalyzedExpression<JsonNode>> rewritten = ExpressionRewriter.rewriteAll(args, rewriter);
 		return rewritten == args ? this : new ResolvedGlobalFunctionAccess<>(bindContext, name, globalIndex, rewritten);
 	}
 
@@ -50,6 +50,6 @@ public class ResolvedGlobalFunctionAccess<JsonNode> implements RewritableExpress
 		Function factory = (Function) frame.getEnclosingMemory().getGlobal(globalIndex);
 		if (factory == null)
 			throw new JsonQueryException("Function " + name + " is not defined");
-		factory.bind(bindContext, args).apply(frame, in, path, output);
+		factory.<StackFrame, JsonNode>bind(bindContext, new java.util.ArrayList<>(args)).apply(frame, in, path, output);
 	}
 }

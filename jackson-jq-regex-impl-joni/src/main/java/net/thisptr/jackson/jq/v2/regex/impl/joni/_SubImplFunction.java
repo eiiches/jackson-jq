@@ -16,9 +16,10 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.regex.impl.joni.internal.FunctionBody;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
@@ -26,10 +27,35 @@ import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.NullType;
+import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.UnionType;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @FunctionRegistration(name = "_sub_impl", nargs = 3)
 public class _SubImplFunction implements Function {
+	private static final Type CAPTURES = ObjectType.of(Map.of(), UnionType.of(StringType.getInstance(), NullType.getInstance()));
+	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
+			TypeScheme.of(FunctionType.of(StringType.getInstance(), StringType.getInstance(), FilterType.of(StringType.getInstance(), StringType.getInstance()),
+					FilterType.of(CAPTURES, StringType.getInstance()),
+					FilterType.of(StringType.getInstance(), StringType.getInstance()))));
+
+	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		return TYPE_SCHEMES;
+	}
+
+	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		boolean external = arguments.stream().anyMatch(ExpressionProperties::dependsOnExternalState);
+		return new ExpressionProperties(Cardinality.UNKNOWN, true, external);
+	}
+
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
@@ -40,17 +66,17 @@ public class _SubImplFunction implements Function {
 		PrecompiledPatternPlan precompiled = PrecompiledPatternPlan.regexThenFlags(jsonProvider, regexExpr, flagsExpr, false);
 
 		if (precompiled != null) {
-			return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
+			return (frame, in, ipath, output) -> {
 				Preconditions.checkInputType(jsonProvider, "_sub_impl/3", in, JsonNodeType.STRING);
 				for (OnigUtils.Pattern pattern : precompiled.patterns()) {
 					List<JsonNode> match = match(jsonProvider, pattern, jsonProvider.getString(in));
 					for (int i = 0; i < precompiled.flagsMultiplicity(); i++)
 						replaceAndConcat(jsonProvider, frame, output, match, replaceExpr, version);
 				}
-			});
+			};
 		}
 
-		return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
+		return (frame, in, ipath, output) -> {
 			Preconditions.checkInputType(jsonProvider, "_sub_impl/3", in, JsonNodeType.STRING);
 
 			regexExpr.apply(frame, in, UntrackedPath.getInstance(), (regexText, opath) -> {
@@ -68,7 +94,7 @@ public class _SubImplFunction implements Function {
 					});
 				});
 			});
-		});
+		};
 	}
 
 	private <Context extends RuntimeContext, JsonNode> void replaceAndConcat(JsonProvider<JsonNode> jsonProvider, Context context, Output<JsonNode> output, List<JsonNode> match, Expression<Context, JsonNode> replaceExpr, Version version) throws JsonQueryException {

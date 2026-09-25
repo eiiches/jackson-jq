@@ -2,15 +2,14 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.binaryop;
 
 import java.util.Set;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
-import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 
 public abstract class AbstractBinaryOperatorExpression<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
-	protected final Expression<StackFrame, JsonNode> lhs;
-	protected final Expression<StackFrame, JsonNode> rhs;
+	protected final AnalyzedExpression<JsonNode> lhs;
+	protected final AnalyzedExpression<JsonNode> rhs;
 	// Counters for the two operand streams. Every operator here evaluates both operands through sinks of
 	// its own -- to form the cross product, to test truthiness, to collect paths -- so both are charged
 	// here rather than by whatever consumes the operator's own result.
@@ -25,7 +24,7 @@ public abstract class AbstractBinaryOperatorExpression<JsonNode> implements Rewr
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public AbstractBinaryOperatorExpression(Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, int lhsOutputIndex, int rhsOutputIndex) {
+	public AbstractBinaryOperatorExpression(AnalyzedExpression<JsonNode> lhs, AnalyzedExpression<JsonNode> rhs, int lhsOutputIndex, int rhsOutputIndex) {
 		this.lhs = lhs;
 		this.rhs = rhs;
 		this.lhsOutputIndex = lhsOutputIndex;
@@ -36,12 +35,20 @@ public abstract class AbstractBinaryOperatorExpression<JsonNode> implements Rewr
 		this.hasOpaqueVariableReference = FreeVariables.anyOpaque(lhs, rhs);
 	}
 
-	protected abstract Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenLhs, Expression<StackFrame, JsonNode> rewrittenRhs);
+	public AnalyzedExpression<JsonNode> lhs() {
+		return lhs;
+	}
+
+	public AnalyzedExpression<JsonNode> rhs() {
+		return rhs;
+	}
+
+	protected abstract AnalyzedExpression<JsonNode> recreate(AnalyzedExpression<JsonNode> rewrittenLhs, AnalyzedExpression<JsonNode> rewrittenRhs);
 
 	@Override
-	public final Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		Expression<StackFrame, JsonNode> rewrittenLhs = rewriter.rewrite(lhs);
-		Expression<StackFrame, JsonNode> rewrittenRhs = rewriter.rewrite(rhs);
+	public final AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		AnalyzedExpression<JsonNode> rewrittenLhs = rewriter.rewrite(lhs);
+		AnalyzedExpression<JsonNode> rewrittenRhs = rewriter.rewrite(rhs);
 		return rewrittenLhs == lhs && rewrittenRhs == rhs ? this : recreate(rewrittenLhs, rewrittenRhs);
 	}
 

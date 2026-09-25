@@ -1,33 +1,105 @@
 - q: '"foo" / "o"'
   out:
   - ["f", "", ""]
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '(("foo" // 1) / "foo")'
   in: "foo"
   out:
   - ["", ""]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '"" / ""'
   out:
   - []
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '"foo" / ""'
   out:
   - ["f", "o", "o"]
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '"" / "foo"'
   out:
   - []
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'error("foo") / empty'
   out: []
+  types:
+  - input: 'ANY'
+    output: 'NEVER'
+  - input: 'NULL'
+    output: 'NEVER'
+  properties:
+    cardinality: ZERO
+    depends_on_input: false
+    depends_on_external_state: false
   comment: 'rhs is evaluated first'
 
 - q: 'try (empty / error("foo")) catch .'
   out:
   - "foo"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try (./nan) catch .'
   out:
   - "null (null) and number (null) cannot be divided"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false

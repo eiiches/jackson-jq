@@ -3,6 +3,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
 jjq_java_test_suite(
     srcs = [
         "RegexFunctionContractTest.java",
+        "RegexTypeSchemeTest.java",
         "SubImplFunctionTest.java",
     ],
     release = 17,

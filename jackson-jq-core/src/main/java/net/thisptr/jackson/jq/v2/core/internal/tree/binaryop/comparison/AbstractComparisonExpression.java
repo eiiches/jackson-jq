@@ -1,15 +1,14 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.comparison;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
-import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.AbstractSimpleBinaryOperatorExpression;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public abstract class AbstractComparisonExpression<JsonNode> extends AbstractSimpleBinaryOperatorExpression<JsonNode> {
-	public AbstractComparisonExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, int lhsOutputIndex, int rhsOutputIndex) {
+	public AbstractComparisonExpression(JsonProvider<JsonNode> jsonProvider, AnalyzedExpression<JsonNode> lhs, AnalyzedExpression<JsonNode> rhs, int lhsOutputIndex, int rhsOutputIndex) {
 		super(jsonProvider, lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 	}
 

@@ -4,27 +4,39 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
 
 /**
  * Reference to an {@code EnvironmentBuilder.defineVariable}/{@code defineConstant}-registered variable --
  * fixed at compile time, so the {@link Supplier} is bound directly into the tree with no {@code StackFrame}
  * slot and no closure capture at all.
  */
-public class ResolvedFixedVariableAccess<JsonNode> implements Expression<StackFrame, JsonNode>, FreeVariables {
+public class ResolvedFixedVariableAccess<JsonNode> implements AnalyzedExpression<JsonNode>, FreeVariables {
 	private final String name;
 	private final Supplier<JsonNode> supplier;
+	private final Type type;
 
-	public ResolvedFixedVariableAccess(String name, Supplier<JsonNode> supplier) {
+	public ResolvedFixedVariableAccess(String name, Supplier<JsonNode> supplier, Type type) {
 		this.name = name;
 		this.supplier = supplier;
+		this.type = type;
+	}
+
+	/**
+	 * The type the {@code Environment} declared for this variable, or {@link Type#ANY} when it declared none
+	 * -- which is also what a {@code $}-style data import, registered on the compilation rather than on the
+	 * {@code Environment}, contributes.
+	 */
+	public Type type() {
+		return type;
 	}
 
 	@Override

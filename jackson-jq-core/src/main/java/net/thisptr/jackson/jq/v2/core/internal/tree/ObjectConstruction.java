@@ -9,12 +9,12 @@ import java.util.Set;
 
 import com.google.errorprone.annotations.Var;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -46,6 +46,10 @@ public class ObjectConstruction<JsonNode> implements RewritableExpression<JsonNo
 		this.hasOpaqueVariableReference = fields.stream().anyMatch(FieldConstruction::hasOpaqueVariableReference);
 	}
 
+	public List<FieldConstruction<JsonNode>> fields() {
+		return fields;
+	}
+
 	@Override
 	public boolean dependsOnInput() {
 		return dependsOnInput;
@@ -67,7 +71,7 @@ public class ObjectConstruction<JsonNode> implements RewritableExpression<JsonNo
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
 		@Var List<FieldConstruction<JsonNode>> rewritten = null;
 		for (int i = 0; i < fields.size(); i++) {
 			FieldConstruction<JsonNode> field = fields.get(i);

@@ -11,19 +11,21 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.RuntimeBindings;
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
 
-public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode> {
+public class RootExpression<JsonNode> implements AnalyzedExpression<JsonNode> {
 	private static final Object[] EMPTY_GLOBALS = new Object[0];
 
 	private final int frameSize;
@@ -53,7 +55,7 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 	// Counter for the query's own final output. Nothing downstream of the query exists to charge it, so the
 	// top-level sink does, which is what stops a bare `range(0; infinite)` from streaming forever.
 	private final int innerOutputIndex;
-	private final Expression<StackFrame, JsonNode> inner;
+	private final AnalyzedExpression<JsonNode> inner;
 	// Names/signatures with a fixed, compile-time-baked value
 	// (defineVariable/defineConstant/defineFunction/defineJqFunction)
 	// -- used only to pick the right prepareBindings() error message; the actual values are already bound
@@ -72,19 +74,21 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 	private final Set<String> declaredVariables;
 	private final Set<FunctionSignature> declaredFunctions;
 	private final Map<FunctionSignature, Integer> rootFunctionSlots;
+	private final Type outputType;
 
-	public RootExpression(int frameSize, Expression<StackFrame, JsonNode> inner) {
-		this(frameSize, 0, 0, Memory.NO_OUTPUT_COUNTER, inner, Collections.emptySet(), Collections.emptySet(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
+	public RootExpression(int frameSize, AnalyzedExpression<JsonNode> inner) {
+		this(frameSize, 0, 0, Memory.NO_OUTPUT_COUNTER, inner, Collections.emptySet(), Collections.emptySet(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap(), AnyType.getInstance());
 	}
 
-	public RootExpression(int frameSize, int globalCount, int outputCounterCount, int innerOutputIndex, Expression<StackFrame, JsonNode> inner,
+	public RootExpression(int frameSize, int globalCount, int outputCounterCount, int innerOutputIndex, AnalyzedExpression<JsonNode> inner,
 						  Set<String> definedVariables,
 						  Set<FunctionSignature> definedFunctions,
 						  Map<String, Integer> globalVariableIndices,
 						  Map<FunctionSignature, Integer> globalFunctionIndices,
 						  Set<String> declaredVariables,
 						  Set<FunctionSignature> declaredFunctions,
-						  Map<FunctionSignature, Integer> rootFunctionSlots) {
+						  Map<FunctionSignature, Integer> rootFunctionSlots,
+						  Type outputType) {
 		this.frameSize = frameSize;
 		this.globalCount = globalCount;
 		this.outputCounterCount = outputCounterCount;
@@ -97,14 +101,19 @@ public class RootExpression<JsonNode> implements Expression<StackFrame, JsonNode
 		this.declaredVariables = Set.copyOf(declaredVariables);
 		this.declaredFunctions = Set.copyOf(declaredFunctions);
 		this.rootFunctionSlots = Map.copyOf(rootFunctionSlots);
+		this.outputType = outputType;
 	}
 
 	public int frameSize() {
 		return frameSize;
 	}
 
-	public Expression<StackFrame, JsonNode> inner() {
+	public AnalyzedExpression<JsonNode> inner() {
 		return inner;
+	}
+
+	public Type outputType() {
+		return outputType;
 	}
 
 	@Override

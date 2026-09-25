@@ -4,10 +4,10 @@ import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Closure;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.AbstractDelegatingExpression;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -49,7 +49,7 @@ public final class ResolvedTailCall<JsonNode> extends AbstractDelegatingExpressi
 	// -- the necessary condition for a call back into it. Null means the callee is certainly another def.
 	private final int @Nullable [] selfParameterSlots;
 
-	public ResolvedTailCall(Expression<StackFrame, JsonNode> ordinaryCall, int tailCallSlot, int frameClosureSlot, int slot, List<TailCallArgument<JsonNode>> arguments, int @Nullable [] selfParameterSlots) {
+	public ResolvedTailCall(AnalyzedExpression<JsonNode> ordinaryCall, int tailCallSlot, int frameClosureSlot, int slot, List<TailCallArgument<JsonNode>> arguments, int @Nullable [] selfParameterSlots) {
 		super(ordinaryCall);
 		this.tailCallSlot = tailCallSlot;
 		this.frameClosureSlot = frameClosureSlot;
@@ -59,7 +59,7 @@ public final class ResolvedTailCall<JsonNode> extends AbstractDelegatingExpressi
 	}
 
 	@Override
-	protected Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenInner) {
+	protected AnalyzedExpression<JsonNode> recreate(AnalyzedExpression<JsonNode> rewrittenInner) {
 		// A rewritten call site is a different call site, and the argument resolvers here were built from the
 		// old one. Give back the plain call: the only thing lost is the optimization, and a def body is a fold
 		// barrier (CompileContext#markFoldBarrier), so nothing rewrites one today.

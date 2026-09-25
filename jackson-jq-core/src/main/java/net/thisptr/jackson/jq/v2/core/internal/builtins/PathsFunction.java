@@ -5,23 +5,50 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
+import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.TypeVariable;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @FunctionRegistration(name = "paths", nargs = 1)
 public class PathsFunction implements Function {
+	private static final TypeVariable INPUT = TypeVariable.of("Input");
+	/**
+	 * Before jq 1.7.1 the filter only ever saw descendants, whose types are not known here; from
+	 * 1.7.1 on it also sees the root, so the input type is a real requirement on it.
+	 */
+	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES_DESCENDANTS_ONLY = List.of(
+			TypeScheme.of(Map.of(INPUT, AnyType.getInstance()), FunctionType.of(INPUT, BuiltinTypes.PATH, FilterType.of(AnyType.getInstance(), AnyType.getInstance()))));
+	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
+			TypeScheme.of(Map.of(INPUT, AnyType.getInstance()), FunctionType.of(INPUT, BuiltinTypes.PATH, FilterType.of(INPUT, AnyType.getInstance()))));
+
+	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		return jqVersion.compareTo(Versions.JQ_1_7_1) >= 0 ? TYPE_SCHEMES : TYPE_SCHEMES_DESCENDANTS_ONLY;
+	}
+
+	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		return ExpressionPropertiesUtils.forwardAll(Cardinality.UNKNOWN, true, false, arguments);
+	}
+
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
@@ -38,10 +65,10 @@ public class PathsFunction implements Function {
 		 * emitted.
 		 */
 		boolean appliesToRoot = version.compareTo(Versions.JQ_1_7_1) >= 0;
-		return FunctionBody.builder(args).usesInput(true).build((frame, in, ipath, output) -> {
+		return (frame, in, ipath, output) -> {
 			List<JsonNode> stack = new ArrayList<>();
 			applyRecursive(frame, jsonProvider, in, output, stack, args.get(0), appliesToRoot);
-		});
+		};
 	}
 
 	private static <Context extends RuntimeContext, JsonNode> void applyRecursive(Context context, JsonProvider<JsonNode> jsonProvider, JsonNode in, Output<JsonNode> output, List<JsonNode> stack, Expression<Context, JsonNode> predicate, boolean appliesToRoot) throws JsonQueryException {

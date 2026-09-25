@@ -2,24 +2,60 @@
   in: {"a": null, "b": [null, 1]}
   out:
   - [{"a": null, "b": [null, 1]}, [null, 1], 1]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: '{a:NULL,b:[NULL,INT]}'
+    output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
 
 - q: '[recurse]'
   in: {"a": null, "b": [null, 1]}
   out:
   - [{"a": null, "b": [null, 1]}, null, [null, 1], null, 1]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: '{a:NULL,b:[NULL,INT]}'
+    output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '[recurse(.[]?)]'
   in: [null]
   out:
   - [[null]]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: '[NULL]'
+    output: '[*:[NULL]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
 
 - q: '[recurse(.[]?)]'
   in: [null]
   out:
   - [[null], null]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: '[NULL]'
+    output: '[*:NULL|[NULL]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 # A null root is emitted in every supported jq version.
@@ -27,4 +63,13 @@
   in: null
   out:
   - [null]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: 'NULL'
+    output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'

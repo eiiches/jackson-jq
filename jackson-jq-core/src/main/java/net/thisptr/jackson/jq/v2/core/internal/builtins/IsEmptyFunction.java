@@ -3,14 +3,16 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins;
 import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
+import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
@@ -18,12 +20,27 @@ import net.thisptr.jackson.jq.v2.spi.annotations.VersionRangeSpec;
 import net.thisptr.jackson.jq.v2.spi.annotations.VersionSpec;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.TypeVariable;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @FunctionRegistration(name = "isempty", nargs = 1, version = @VersionRangeSpec(
 		min = @VersionSpec(major = 1, minor = 6, patch = 0)
 ))
 public class IsEmptyFunction implements Function {
+	private static final TypeVariable INPUT = TypeVariable.of("Input");
+	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
+			TypeScheme.of(Map.of(INPUT, AnyType.getInstance()), FunctionType.of(INPUT, BooleanType.getInstance(), FilterType.of(INPUT, AnyType.getInstance()))));
+
+	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		return TYPE_SCHEMES;
+	}
+
 
 	/**
 	 * Stops the generator once it has produced a value. jq expresses the same short-circuit with
@@ -50,6 +67,12 @@ public class IsEmptyFunction implements Function {
 	}
 
 	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		Cardinality cardinality = jqVersion.compareTo(Versions.JQ_1_7) >= 0 ? Cardinality.ONE : Cardinality.UNKNOWN;
+		return ExpressionPropertiesUtils.forwardDependencies(cardinality, false, false, arguments);
+	}
+
+	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
 		Version version = bindCtx.getJqVersion();
@@ -57,7 +80,7 @@ public class IsEmptyFunction implements Function {
 		// catch body, which emits a second value -- reproducing jq 1.6's `//`-based definition.
 		// From 1.7 on TryCatch tunnels downstream errors, so exactly one value is emitted.
 		Cardinality cardinality = version.compareTo(Versions.JQ_1_7) >= 0 ? Cardinality.ONE : Cardinality.UNKNOWN;
-		return FunctionBody.builder(args).cardinality(cardinality).build((frame, in, ipath, output) -> {
+		return (frame, in, ipath, output) -> {
 			Object token = new Object();
 			AtomicBoolean emitted = new AtomicBoolean();
 			try {
@@ -72,6 +95,6 @@ public class IsEmptyFunction implements Function {
 			}
 			if (!emitted.get())
 				output.emit(jsonProvider.createBoolean(true), UntrackedPath.getInstance());
-		});
+		};
 	}
 }

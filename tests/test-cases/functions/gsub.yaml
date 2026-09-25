@@ -4,16 +4,43 @@
   in: null
   out:
   - "acac"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try ("abc" | gsub("b"; 1)) catch .'
   in: null
   out:
-  - 'string ("a") and number (1) cannot be added'
+  - "string (\"a\") and number (1) cannot be added"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[("abc" | gsub(""; "X")), ("" | gsub(""; "X")), ("abc" | gsub("(?=b)"; "X")), ("aaa" | gsub("a*"; "X"))]'
   in: null
   out:
   - ["XaXbXcX", "X", "aXbc", "XX"]
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'

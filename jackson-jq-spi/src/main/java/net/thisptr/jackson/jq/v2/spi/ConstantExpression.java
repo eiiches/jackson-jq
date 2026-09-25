@@ -19,25 +19,4 @@ public interface ConstantExpression<Context extends RuntimeContext, JsonNode> ex
 	 * @return the emitted values, in emission order
 	 */
 	List<JsonNode> getConstantResults();
-
-	@Override
-	default Cardinality getCardinality() {
-		int size = getConstantResults().size();
-		if (size == 0)
-			return Cardinality.ZERO;
-		if (size == 1)
-			return Cardinality.ONE;
-		return Cardinality.UNKNOWN;
-	}
-
-	@Override
-	default boolean dependsOnInput() {
-		return false;
-	}
-
-	@Override
-	default boolean dependsOnExternalState() {
-		return false;
-	}
-
 }

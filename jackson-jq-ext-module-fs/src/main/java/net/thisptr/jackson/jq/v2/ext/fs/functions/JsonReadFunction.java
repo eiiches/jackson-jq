@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonParser;
@@ -13,14 +14,45 @@ import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.TypeVariable;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public final class JsonReadFunction implements Function {
+	private static final TypeVariable INPUT = TypeVariable.of("Input");
+	/**
+	 * Reading JSON takes no options, so the options object must be empty.
+	 */
+	private static final Type OPTIONS = ObjectType.of();
+	/**
+	 * Indexed by argument count; index 0 is unused because the path is required. What a file holds is
+	 * not known until it is read, so the output is unconstrained.
+	 */
+	private static final List<List<TypeScheme<FunctionType>>> TYPE_SCHEMES = List.of(
+			List.of(),
+			List.of(TypeScheme.of(Map.of(INPUT, AnyType.getInstance()), FunctionType.of(INPUT, AnyType.getInstance(), FilterType.of(INPUT, StringType.getInstance())))),
+			List.of(TypeScheme.of(Map.of(INPUT, AnyType.getInstance()), FunctionType.of(INPUT, AnyType.getInstance(), FilterType.of(INPUT, StringType.getInstance()), FilterType.of(INPUT, OPTIONS)))));
+
+	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		if (totalArguments < 1 || totalArguments > 2)
+			return List.of();
+		return TYPE_SCHEMES.get(totalArguments);
+	}
+
 	private final boolean stream;
 
 	private JsonReadFunction(boolean stream) {
@@ -36,32 +68,23 @@ public final class JsonReadFunction implements Function {
 	}
 
 	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		boolean input = arguments.stream().anyMatch(ExpressionProperties::dependsOnInput);
+		Cardinality path = arguments.get(0).cardinality();
+		if (path == Cardinality.ZERO || (arguments.size() == 2 && arguments.get(1).cardinality() == Cardinality.ZERO))
+			return new ExpressionProperties(Cardinality.ZERO, input, true);
+		if (!stream && path == Cardinality.ONE && (arguments.size() == 1 || arguments.get(1).cardinality() == Cardinality.ONE))
+			return new ExpressionProperties(Cardinality.ONE, input, true);
+		return new ExpressionProperties(Cardinality.UNKNOWN, input, true);
+	}
+
+	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindContext, List<Expression<Context, JsonNode>> arguments) {
 		JsonProvider<JsonNode> jsonProvider = bindContext.getJsonProvider();
 		Expression<Context, JsonNode> pathExpression = arguments.get(0);
 		Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
 		return new Expression<>() {
-			@Override
-			public Cardinality getCardinality() {
-				Cardinality pathCardinality = pathExpression.getCardinality();
-				if (pathCardinality == Cardinality.ZERO)
-					return Cardinality.ZERO;
-				if (optionsExpression != null && optionsExpression.getCardinality() == Cardinality.ZERO)
-					return Cardinality.ZERO;
-				if (!stream && (optionsExpression == null || optionsExpression.getCardinality() == Cardinality.ONE) && pathCardinality == Cardinality.ONE)
-					return Cardinality.ONE;
-				return Cardinality.UNKNOWN;
-			}
 
-			@Override
-			public boolean dependsOnInput() {
-				return pathExpression.dependsOnInput() || (optionsExpression != null && optionsExpression.dependsOnInput());
-			}
-
-			@Override
-			public boolean dependsOnExternalState() {
-				return true;
-			}
 
 			@Override
 			public void apply(Context context, JsonNode input, Path<JsonNode> inputPath, Output<JsonNode> output) throws JsonQueryException {

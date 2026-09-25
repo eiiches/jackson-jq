@@ -2,13 +2,13 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.binaryop;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -21,13 +21,13 @@ public class AlternativeOperatorExpression<JsonNode> extends AbstractBinaryOpera
 		return CardinalityUtils.alternative(lhs.getCardinality(), rhs.getCardinality());
 	}
 
-	public AlternativeOperatorExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> valueExpr, Expression<StackFrame, JsonNode> defaultExpr, int lhsOutputIndex, int rhsOutputIndex) {
+	public AlternativeOperatorExpression(JsonProvider<JsonNode> jsonProvider, AnalyzedExpression<JsonNode> valueExpr, AnalyzedExpression<JsonNode> defaultExpr, int lhsOutputIndex, int rhsOutputIndex) {
 		super(valueExpr, defaultExpr, lhsOutputIndex, rhsOutputIndex);
 		this.jsonProvider = jsonProvider;
 	}
 
 	@Override
-	protected Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenLhs, Expression<StackFrame, JsonNode> rewrittenRhs) {
+	protected AnalyzedExpression<JsonNode> recreate(AnalyzedExpression<JsonNode> rewrittenLhs, AnalyzedExpression<JsonNode> rewrittenRhs) {
 		return new AlternativeOperatorExpression<>(jsonProvider, rewrittenLhs, rewrittenRhs, lhsOutputIndex, rhsOutputIndex);
 	}
 

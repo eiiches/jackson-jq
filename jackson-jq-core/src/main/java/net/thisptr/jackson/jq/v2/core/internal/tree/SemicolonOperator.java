@@ -4,18 +4,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class SemicolonOperator<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
-	private final List<Expression<StackFrame, JsonNode>> qs;
+	private final List<AnalyzedExpression<JsonNode>> qs;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -30,16 +30,16 @@ public class SemicolonOperator<JsonNode> implements RewritableExpression<JsonNod
 	// One counter per discarded operand. The last one needs none: it emits this expression's own values.
 	private final int[] discardedOutputIndices;
 
-	public SemicolonOperator(List<Expression<StackFrame, JsonNode>> qs, int[] discardedOutputIndices) {
+	public SemicolonOperator(List<AnalyzedExpression<JsonNode>> qs, int[] discardedOutputIndices) {
 		this(qs, Collections.emptySet(), discardedOutputIndices);
 	}
 
-	public SemicolonOperator(List<Expression<StackFrame, JsonNode>> qs, Set<Integer> definedFunctionSlots, int[] discardedOutputIndices) {
+	public SemicolonOperator(List<AnalyzedExpression<JsonNode>> qs, Set<Integer> definedFunctionSlots, int[] discardedOutputIndices) {
 		this.discardedOutputIndices = discardedOutputIndices;
 		this.definedFunctionSlots = definedFunctionSlots;
 		this.qs = qs;
-		this.dependsOnInput = qs.stream().anyMatch(Expression::dependsOnInput);
-		this.dependsOnExternalState = qs.stream().anyMatch(Expression::dependsOnExternalState);
+		this.dependsOnInput = qs.stream().anyMatch(AnalyzedExpression::dependsOnInput);
+		this.dependsOnExternalState = qs.stream().anyMatch(AnalyzedExpression::dependsOnExternalState);
 		this.freeLocalSlots = FreeVariables.minus(FreeVariables.unionAll(qs), definedFunctionSlots);
 		this.hasOpaqueVariableReference = FreeVariables.anyOpaqueIn(qs);
 	}
@@ -65,8 +65,8 @@ public class SemicolonOperator<JsonNode> implements RewritableExpression<JsonNod
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		List<Expression<StackFrame, JsonNode>> rewritten = ExpressionRewriter.rewriteAll(qs, rewriter);
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		List<AnalyzedExpression<JsonNode>> rewritten = ExpressionRewriter.rewriteAll(qs, rewriter);
 		return rewritten == qs ? this : new SemicolonOperator<>(rewritten, definedFunctionSlots, discardedOutputIndices);
 	}
 

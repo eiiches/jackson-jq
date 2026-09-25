@@ -1,0 +1,29 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "type",
+    srcs = [
+        "AnyType.java",
+        "ArrayType.java",
+        "BinaryType.java",
+        "BooleanType.java",
+        "FilterType.java",
+        "FunctionType.java",
+        "NeverType.java",
+        "NullType.java",
+        "NumberKind.java",
+        "NumericType.java",
+        "ObjectType.java",
+        "RecursiveType.java",
+        "StringType.java",
+        "Type.java",
+        "TypeNotation.java",
+        "TypeScheme.java",
+        "TypeVariable.java",
+        "UndefinedType.java",
+        "UnionType.java",
+        "package-info.java",
+    ],
+    release = 17,
+    visibility = ["//jackson-jq-spi:__subpackages__"],
+)

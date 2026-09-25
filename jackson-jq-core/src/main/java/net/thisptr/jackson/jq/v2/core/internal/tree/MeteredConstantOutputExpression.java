@@ -2,9 +2,9 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.List;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 
 /**
  * A {@link MeteredOutputExpression} over an argument that constant-folded, still answering as the
@@ -19,7 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
  */
 final class MeteredConstantOutputExpression<JsonNode> extends MeteredOutputExpression<JsonNode> implements ConstantExpression<StackFrame, JsonNode> {
 
-	MeteredConstantOutputExpression(Expression<StackFrame, JsonNode> inner, int index) {
+	MeteredConstantOutputExpression(AnalyzedExpression<JsonNode> inner, int index) {
 		super(inner, index);
 	}
 

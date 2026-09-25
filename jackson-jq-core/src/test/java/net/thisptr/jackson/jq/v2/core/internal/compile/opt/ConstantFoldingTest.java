@@ -21,8 +21,8 @@ import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.OptimizationOptions;
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
-import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
@@ -30,9 +30,12 @@ import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionParameter;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.Output;
@@ -58,7 +61,7 @@ public class ConstantFoldingTest {
 	private static final JsonProvider<JsonNode> PROVIDER = Jackson2JsonProvider.getInstance();
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
-	private abstract static class AbstractPureExpression implements Expression<StackFrame, JsonNode>, FreeVariables {
+	private abstract static class AbstractPureExpression implements AnalyzedExpression<JsonNode>, FreeVariables {
 		@Override
 		public boolean dependsOnInput() {
 			return false;
@@ -83,25 +86,25 @@ public class ConstantFoldingTest {
 	private static final class PlannerExpression extends AbstractPureExpression implements RewritableExpression<JsonNode> {
 		private final String name;
 		private final List<String> evaluations;
-		private final @Nullable Expression<StackFrame, JsonNode> child;
+		private final @Nullable AnalyzedExpression<JsonNode> child;
 		private final boolean fail;
 
-		PlannerExpression(String name, List<String> evaluations, @Nullable Expression<StackFrame, JsonNode> child, boolean fail) {
+		PlannerExpression(String name, List<String> evaluations, @Nullable AnalyzedExpression<JsonNode> child, boolean fail) {
 			this.name = name;
 			this.evaluations = evaluations;
 			this.child = child;
 			this.fail = fail;
 		}
 
-		@Nullable Expression<StackFrame, JsonNode> child() {
+		@Nullable AnalyzedExpression<JsonNode> child() {
 			return child;
 		}
 
 		@Override
-		public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
 			if (child == null)
 				return this;
-			Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(child);
+			AnalyzedExpression<JsonNode> rewritten = rewriter.rewrite(child);
 			return rewritten == child ? this : new PlannerExpression(name, evaluations, rewritten, fail);
 		}
 
@@ -132,20 +135,32 @@ public class ConstantFoldingTest {
 		}
 
 		@Override
+		public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+			boolean external = arguments.stream().anyMatch(ExpressionProperties::dependsOnExternalState);
+			boolean input = usesInput || arguments.stream().anyMatch(ExpressionProperties::dependsOnInput);
+			return new ExpressionProperties(Cardinality.UNKNOWN, input, external);
+		}
+
+		@Override
 		public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> ctx, List<Expression<Context, N>> args) {
 			JsonProvider<N> provider = ctx.getJsonProvider();
-			return FunctionBody.builder(args).usesInput(usesInput).build((frame, in, path, output) -> {
+			return (frame, in, path, output) -> {
 				evaluations.incrementAndGet();
 				output.emit(usesInput ? in : provider.createNumber(1), UntrackedPath.getInstance());
-			});
+			};
 		}
 	}
 
 	/**
-	 * Captures the argument expression each call site hands it, at bind time.
+	 * Captures the finalized argument expression each call site hands it at bind time.
 	 */
 	private static final class Probe implements Function {
 		final List<Expression<?, ?>> arguments = new ArrayList<>();
+
+		@Override
+		public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+			return arguments.get(0);
+		}
 
 		@Override
 		public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> ctx, List<Expression<Context, N>> args) {
@@ -154,7 +169,18 @@ public class ConstantFoldingTest {
 		}
 	}
 
+	private abstract static class AbstractPureFunction implements Function {
+		@Override
+		public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+			return new ExpressionProperties(Cardinality.UNKNOWN, false, false);
+		}
+	}
+
 	private static FunctionLoader loader(Map<FunctionSignature, Function> functions) {
+		return loader(functions, Collections.emptyMap());
+	}
+
+	private static FunctionLoader loader(Map<FunctionSignature, Function> functions, Map<FunctionSignature, JqFunction> jqFunctions) {
 		return new FunctionLoader() {
 			@Override
 			public Map<FunctionSignature, Function> getFunctions(Version version) {
@@ -163,7 +189,7 @@ public class ConstantFoldingTest {
 
 			@Override
 			public Map<FunctionSignature, JqFunction> getJqFunctions(Version version) {
-				return Collections.emptyMap();
+				return jqFunctions;
 			}
 		};
 	}
@@ -197,13 +223,23 @@ public class ConstantFoldingTest {
 	 */
 	private static @Nullable List<String> foldedOf(Environment<JsonNode> env, Probe probe, String query) throws JsonQueryException {
 		env.compile("probe(" + query + ")");
-		List<JsonNode> folded = foldedValues(probe.arguments.get(probe.arguments.size() - 1));
+		List<JsonNode> folded = lastFoldedValues(probe);
 		if (folded == null)
 			return null;
 		List<String> rendered = new ArrayList<>(folded.size());
 		for (JsonNode value : folded)
 			rendered.add(value.toString());
 		return rendered;
+	}
+
+	/**
+	 * The argument the binding saw.
+	 * <p>
+	 * A call whose argument folds is bound once after the fold has run, so a {@code Function} specializing
+	 * on constants sees the finalized argument. Type checking still reads the tree the query was written as.
+	 */
+	private static @Nullable List<JsonNode> lastFoldedValues(Probe probe) {
+		return foldedValues(probe.arguments.get(probe.arguments.size() - 1));
 	}
 
 	private static @Nullable List<JsonNode> foldedValues(Expression<?, ?> expression) {
@@ -249,11 +285,11 @@ public class ConstantFoldingTest {
 		planner.beginRegion();
 		int parentMark = planner.beginNode();
 		int childMark = planner.beginNode();
-		Expression<StackFrame, JsonNode> child = planner.endNode(childMark, new PlannerExpression("child", evaluations, null, false), 0, 0, 0);
+		AnalyzedExpression<JsonNode> child = planner.endNode(childMark, new PlannerExpression("child", evaluations, null, false), 0, 0, 0);
 		PlannerExpression parent = new PlannerExpression("parent", evaluations, child, true);
 		planner.endNode(parentMark, parent, 0, 0, 0);
 
-		Expression<StackFrame, JsonNode> optimized = planner.finishRegion(env(Versions.JQ_1_8_2, Collections.emptyMap()), parent);
+		AnalyzedExpression<JsonNode> optimized = planner.finishRegion(env(Versions.JQ_1_8_2, Collections.emptyMap()), parent);
 
 		assertThat(evaluations).containsExactly("parent", "child");
 		assertThat(optimized).isNotSameAs(parent).isInstanceOf(PlannerExpression.class);
@@ -267,11 +303,11 @@ public class ConstantFoldingTest {
 		planner.beginRegion();
 		int parentMark = planner.beginNode();
 		int childMark = planner.beginNode();
-		Expression<StackFrame, JsonNode> child = planner.endNode(childMark, new PlannerExpression("child", evaluations, null, false), 0, 0, 0);
+		AnalyzedExpression<JsonNode> child = planner.endNode(childMark, new PlannerExpression("child", evaluations, null, false), 0, 0, 0);
 		PlannerExpression parent = new PlannerExpression("parent", evaluations, child, false);
 		planner.endNode(parentMark, parent, 0, 0, 0);
 
-		Expression<StackFrame, JsonNode> optimized = planner.finishRegion(env(Versions.JQ_1_8_2, Collections.emptyMap()), parent);
+		AnalyzedExpression<JsonNode> optimized = planner.finishRegion(env(Versions.JQ_1_8_2, Collections.emptyMap()), parent);
 
 		assertThat(evaluations).containsExactly("parent");
 		assertThat(optimized).isInstanceOf(ConstantExpression.class);
@@ -313,14 +349,45 @@ public class ConstantFoldingTest {
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), probe));
 
 		env.compile("probe(1, 2, 3)");
-		assertThat(foldedValues(probe.arguments.get(0))).extracting(Object::toString).containsExactly("1", "2", "3");
+		assertThat(probe.arguments).hasSize(1);
+		assertThat(lastFoldedValues(probe)).extracting(Object::toString).containsExactly("1", "2", "3");
 
 		// Order is the emission order, and metering the argument does not hide its constancy.
 		env.compile("probe(\"a\" + \"b\")");
-		assertThat(foldedValues(probe.arguments.get(1))).extracting(Object::toString).containsExactly("\"ab\"");
+		assertThat(probe.arguments).hasSize(2);
+		assertThat(lastFoldedValues(probe)).extracting(Object::toString).containsExactly("\"ab\"");
 
 		env.compile("probe(.)");
-		assertThat(foldedValues(probe.arguments.get(2))).isNull();
+		assertThat(probe.arguments).hasSize(3);
+		assertThat(lastFoldedValues(probe)).isNull();
+	}
+
+	@Test
+	public void aConstantArgumentReachesANativeFunctionThroughAJqWrapper() {
+		Probe probe = new Probe();
+		JqFunction wrapper = JqFunction.of("wrap", List.of(FunctionParameter.ofFilter("re")), "probe(re)");
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(PROVIDER, Versions.JQ_1_8_2)
+				.addFunctionLoader(loader(Collections.singletonMap(FunctionSignature.of("probe", 1), probe),
+						Collections.singletonMap(FunctionSignature.of("wrap", 1), wrapper)))
+				.build();
+
+		// The jq body is specialized per call site and its parameter compiles *as* the caller's argument, so
+		// finalization folds that argument before binding `probe`. This is what lets a constant reach a native
+		// function through a chain of jq wrappers -- capture -> match -> _match_impl.
+		env.compile("wrap(\"a\" + \"b\")");
+		assertThat(probe.arguments).hasSize(1);
+		assertThat(lastFoldedValues(probe)).extracting(Object::toString).containsExactly("\"ab\"");
+	}
+
+	@Test
+	public void aStaticCallIsBoundOnceWhenFoldingIsDisabled() {
+		Probe probe = new Probe();
+		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), probe));
+
+		env.compile("probe(1 + 1)", folding(ConstantFoldingOptions.newBuilder().setEnabled(false).build()));
+
+		assertThat(probe.arguments).hasSize(1);
+		assertThat(lastFoldedValues(probe)).isNull();
 	}
 
 	// --- constructs that rebind `.` ---------------------------------------------------------------
@@ -381,10 +448,10 @@ public class ConstantFoldingTest {
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), probe));
 
 		env.compile("probe([range(0; 256)] | .[])");
-		assertThat(foldedValues(probe.arguments.get(0))).as("256 values fit").hasSize(256);
+		assertThat(lastFoldedValues(probe)).as("256 values fit").hasSize(256);
 
 		env.compile("probe([range(0; 257)] | .[])");
-		assertThat(foldedValues(probe.arguments.get(1))).as("257 do not").isNull();
+		assertThat(lastFoldedValues(probe)).as("257 do not").isNull();
 
 		// Abandoning changes nothing but the compiled tree: the query still evaluates.
 		assertThat(apply(env.compile("[range(0; 257)] | length"), "null")).extracting(Object::toString).containsExactly("257");
@@ -403,13 +470,13 @@ public class ConstantFoldingTest {
 	@Test
 	public void aConstantJqErrorIsFoldedAndReplayedAtEvaluationTime() {
 		AtomicInteger evaluations = new AtomicInteger();
-		Function fail = new Function() {
+		Function fail = new AbstractPureFunction() {
 			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> ctx, List<Expression<Context, N>> args) {
-				return FunctionBody.<Context, N>builder(args).build((frame, in, path, output) -> {
+				return (frame, in, path, output) -> {
 					evaluations.incrementAndGet();
 					throw new JsonQueryException("boom");
-				});
+				};
 			}
 		};
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("fail", 0), fail));
@@ -425,13 +492,13 @@ public class ConstantFoldingTest {
 	@Test
 	public void valuesBeforeAConstantErrorAreFoldedAndReplayedInOrder() {
 		AtomicInteger evaluations = new AtomicInteger();
-		Function fail = new Function() {
+		Function fail = new AbstractPureFunction() {
 			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> ctx, List<Expression<Context, N>> args) {
-				return FunctionBody.<Context, N>builder(args).build((frame, in, path, output) -> {
+				return (frame, in, path, output) -> {
 					evaluations.incrementAndGet();
 					throw new JsonQueryException("boom");
-				});
+				};
 			}
 		};
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("fail", 0), fail));
@@ -462,24 +529,24 @@ public class ConstantFoldingTest {
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), probe));
 
 		JsonQuery<JsonNode> query = env.compile("probe(error(\"boom\"))");
-		assertThat(foldedValues(probe.arguments.get(0))).isNull();
+		assertThat(lastFoldedValues(probe)).isNull();
 		assertThatThrownBy(() -> apply(query, "null")).isInstanceOf(JsonQueryException.class).hasMessageContaining("boom");
 
 		// An error the expression itself catches is not a failure, so that folds.
 		env.compile("probe(try error(\"boom\") catch .)");
-		assertThat(foldedValues(probe.arguments.get(1))).extracting(Object::toString).containsExactly("\"boom\"");
+		assertThat(lastFoldedValues(probe)).extracting(Object::toString).containsExactly("\"boom\"");
 	}
 
 	@Test
 	public void runtimeLimitErrorsAreNotFolded() {
 		AtomicInteger evaluations = new AtomicInteger();
-		Function limit = new Function() {
+		Function limit = new AbstractPureFunction() {
 			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> ctx, List<Expression<Context, N>> args) {
-				return FunctionBody.<Context, N>builder(args).build((frame, in, path, output) -> {
+				return (frame, in, path, output) -> {
 					evaluations.incrementAndGet();
 					throw new RuntimeLimitExceededException("limit");
-				});
+				};
 			}
 		};
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("limit_now", 0), limit));
@@ -498,17 +565,17 @@ public class ConstantFoldingTest {
 		assertThat(apply(env.compile("label $out | probe(1, break $out, 2)"), "null"))
 				.extracting(Object::toString)
 				.containsExactly("1");
-		assertThat(foldedValues(probe.arguments.get(0))).isNull();
+		assertThat(lastFoldedValues(probe)).isNull();
 	}
 
 	@Test
 	public void aFunctionThatThrowsSomethingOtherThanJsonQueryExceptionDoesNotBreakCompilation() {
-		Function explode = new Function() {
+		Function explode = new AbstractPureFunction() {
 			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> ctx, List<Expression<Context, N>> args) {
-				return FunctionBody.<Context, N>builder(args).build((frame, in, path, output) -> {
+				return (frame, in, path, output) -> {
 					throw new IllegalStateException("not a JsonQueryException");
-				});
+				};
 			}
 		};
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("explode_now", 0), explode));
@@ -529,10 +596,10 @@ public class ConstantFoldingTest {
 		// expression that put it there -- folding would evaluate the install and discard it, leaving the call
 		// an empty slot. The def's own body still folds; it is the subtree around it that cannot.
 		env.compile("probe(def f: 1; f)");
-		assertThat(foldedValues(probe.arguments.get(0))).as("a def in the subtree blocks the fold").isNull();
+		assertThat(lastFoldedValues(probe)).as("a def in the subtree blocks the fold").isNull();
 
 		env.compile("probe(1)");
-		assertThat(foldedValues(probe.arguments.get(1))).as("control: the same shape without a def").isNotNull();
+		assertThat(lastFoldedValues(probe)).as("control: the same shape without a def").isNotNull();
 
 		// And the shapes that would break if the barrier were missing still evaluate correctly.
 		assertThat(apply(env.compile("def f: 1 + 1; 1 as $_ | f"), "null")).extracting(Object::toString).containsExactly("2");
@@ -543,13 +610,13 @@ public class ConstantFoldingTest {
 	public void aTryIsNotFoldedBeforeJq17BecauseItCatchesWhatItsConsumerThrows() {
 		Probe legacy = new Probe();
 		env(Versions.JQ_1_6, Collections.singletonMap(FunctionSignature.of("probe", 1), legacy)).compile("probe(try 1 catch .)");
-		assertThat(foldedValues(legacy.arguments.get(0)))
+		assertThat(lastFoldedValues(legacy))
 				.as("a 1.6 try also catches what its consumer throws, so it is not a function of its own subtree")
 				.isNull();
 
 		Probe modern = new Probe();
 		env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), modern)).compile("probe(try 1 catch .)");
-		assertThat(foldedValues(modern.arguments.get(0)))
+		assertThat(lastFoldedValues(modern))
 				.as("from 1.7 a downstream error escapes the try, so it folds like anything else")
 				.extracting(Object::toString)
 				.containsExactly("1");
@@ -584,11 +651,11 @@ public class ConstantFoldingTest {
 		// A bare generator, so maxResults is the only cap in play -- wrapping it in an array would hit
 		// maxArrayLength first, which is what theEmbeddedRuntimeOptionsBoundWhatAFoldMayBuild covers.
 		env.compile("probe(range(0; 257))");
-		assertThat(foldedValues(probe.arguments.get(0))).as("257 is past the default of 256").isNull();
+		assertThat(lastFoldedValues(probe)).as("257 is past the default of 256").isNull();
 
 		env.compile("probe(range(0; 257))",
 				folding(ConstantFoldingOptions.newBuilder().setMaxResults(300).build()));
-		assertThat(foldedValues(probe.arguments.get(1))).hasSize(257);
+		assertThat(lastFoldedValues(probe)).hasSize(257);
 	}
 
 	@Test
@@ -597,10 +664,10 @@ public class ConstantFoldingTest {
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), probe));
 
 		env.compile("probe(1, 2, 3)");
-		assertThat(foldedValues(probe.arguments.get(0))).hasSize(3);
+		assertThat(lastFoldedValues(probe)).hasSize(3);
 
 		env.compile("probe(1, 2, 3)", folding(ConstantFoldingOptions.newBuilder().setMaxResults(2).build()));
-		assertThat(foldedValues(probe.arguments.get(1))).isNull();
+		assertThat(lastFoldedValues(probe)).isNull();
 	}
 
 	@Test
@@ -609,7 +676,7 @@ public class ConstantFoldingTest {
 		Environment<JsonNode> env = env(Versions.JQ_1_8_2, Collections.singletonMap(FunctionSignature.of("probe", 1), probe));
 
 		env.compile("probe([range(0; 300)])");
-		assertThat(foldedValues(probe.arguments.get(0))).as("300 elements exceeds the default maxArrayLength").isNull();
+		assertThat(lastFoldedValues(probe)).as("300 elements exceeds the default maxArrayLength").isNull();
 
 		// Raising the array limit is not enough on its own: draining 300 values through the array
 		// construction's own counter also has to fit maxOutputsPerExpression.
@@ -623,7 +690,7 @@ public class ConstantFoldingTest {
 						.build())
 				.build();
 		env.compile("probe([range(0; 300)])", folding(roomier));
-		assertThat(foldedValues(probe.arguments.get(1))).hasSize(1);
+		assertThat(lastFoldedValues(probe)).hasSize(1);
 	}
 
 	@Test

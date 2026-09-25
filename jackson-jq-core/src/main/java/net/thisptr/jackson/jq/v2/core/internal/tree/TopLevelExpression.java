@@ -2,23 +2,23 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.Set;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
 public class TopLevelExpression<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
-	private final Expression<StackFrame, JsonNode> expr;
+	private final AnalyzedExpression<JsonNode> expr;
 
 	@Override
 	public Cardinality getCardinality() {
 		return expr.getCardinality();
 	}
 
-	public TopLevelExpression(Expression<StackFrame, JsonNode> expr) {
+	public TopLevelExpression(AnalyzedExpression<JsonNode> expr) {
 		this.expr = expr;
 	}
 
@@ -43,8 +43,8 @@ public class TopLevelExpression<JsonNode> implements RewritableExpression<JsonNo
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(expr);
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		AnalyzedExpression<JsonNode> rewritten = rewriter.rewrite(expr);
 		return rewritten == expr ? this : new TopLevelExpression<>(rewritten);
 	}
 

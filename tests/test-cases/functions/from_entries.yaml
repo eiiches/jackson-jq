@@ -2,30 +2,84 @@
   in: {}
   out:
   - {}
+  types:
+  - input: 'ANY'
+    output: '{*:ANY}'
+  - input: '{}'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try from_entries catch .'
   in: 1
   out:
   - "Cannot iterate over number (1)"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try from_entries catch .'
   in: [{"key": "a", "value": 1}, 1]
   out:
   - "Cannot index number with string \"key\""
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[{key:STRING,value:INT},INT]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try from_entries catch .'
   in: [{"key": "a", "value": 1}, 1]
   out:
   - "Cannot index number with string (\"key\")"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[{key:STRING,value:INT},INT]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: '{a: {key: "a", value: 1}} | from_entries'
   out:
   - {"a": 1}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try from_entries catch .'
   in: [{}]
   out:
   - "Cannot use null (null) as object key"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[{}]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false

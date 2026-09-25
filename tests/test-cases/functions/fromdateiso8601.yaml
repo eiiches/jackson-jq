@@ -2,8 +2,26 @@
   in: "2023-09-30T00:00:00Z"
   out:
   - 1696032000
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'STRING'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try fromdateiso8601 catch .'
   in: "2023-09-30T00:00:00.000Z"
   out:
   - "date \"2023-09-30T00:00:00.000Z\" does not match format \"%Y-%m-%dT%H:%M:%SZ\""
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false

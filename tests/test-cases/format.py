@@ -2,9 +2,25 @@
 import glob
 import json
 import os
+import re
 import sys
 import yaml
 import yaml.nodes
+
+
+yaml.SafeLoader.add_implicit_resolver(
+    "tag:yaml.org,2002:float",
+    re.compile(
+        r"""^(?:[-+]?(?:[0-9][0-9_]*)\.[0-9_]*(?:[eE][-+]?[0-9]+)?
+|[-+]?(?:[0-9][0-9_]*)(?:[eE][-+]?[0-9]+)
+|\.[0-9_]+(?:[eE][-+]?[0-9]+)?
+|[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\.[0-9_]*
+|[-+]?\.(?:inf|Inf|INF)
+|\.(?:nan|NaN|NAN))$""",
+        re.VERBOSE,
+    ),
+    list("-+0123456789."),
+)
 
 
 def represent_json(dumper, value):
@@ -36,7 +52,7 @@ class FormattedTestCase:
     def __yaml__(self, dumper):
         root_node = yaml.nodes.MappingNode("tag:yaml.org,2002:map", [], flow_style=False)
         known_order = [
-            "q", "in", "out", "v", "failing", "comment", "justification",
+            "q", "in", "out", "types", "properties", "v", "failing", "comment", "justification",
             "modules", "should_compile",
             "numerical_errors", "ignore_true_jq_behavior",
         ]
@@ -65,6 +81,30 @@ class FormattedTestCase:
                     for o in val:
                         out_node.value.append(represent_json(dumper, o))
                 root_node.value.append((dumper.represent_str("out"), out_node))
+            elif k == "types":
+                types_node = yaml.nodes.SequenceNode("tag:yaml.org,2002:seq", [], flow_style=False)
+                for t in val:
+                    item_node = yaml.nodes.MappingNode("tag:yaml.org,2002:map", [], flow_style=False)
+                    in_node = yaml.nodes.ScalarNode("tag:yaml.org,2002:str", str(t["input"]), style="'")
+                    out_node = yaml.nodes.ScalarNode("tag:yaml.org,2002:str", str(t["output"]), style="'")
+                    item_node.value.append((dumper.represent_str("input"), in_node))
+                    item_node.value.append((dumper.represent_str("output"), out_node))
+                    types_node.value.append(item_node)
+                root_node.value.append((dumper.represent_str("types"), types_node))
+            elif k == "properties":
+                props_node = yaml.nodes.MappingNode("tag:yaml.org,2002:map", [], flow_style=False)
+                for pk in ["cardinality", "depends_on_input", "depends_on_external_state"]:
+                    if pk in val:
+                        pv = val[pk]
+                        if pk == "cardinality":
+                            pv_node = yaml.nodes.ScalarNode("tag:yaml.org,2002:str", str(pv), style=None)
+                        elif isinstance(pv, bool):
+                            pv_node = dumper.represent_data(pv)
+                            pv_node.style = None
+                        else:
+                            pv_node = dumper.represent_data(pv)
+                        props_node.value.append((dumper.represent_str(pk), pv_node))
+                root_node.value.append((dumper.represent_str("properties"), props_node))
             elif k == "v":
                 v_node = dumper.represent_data(val)
                 v_node.style = "'"
@@ -92,55 +132,88 @@ class FormattedTestCase:
 yaml.add_representer(FormattedTestCase, lambda dumper, data: data.__yaml__(dumper))
 
 
-def extract_header_comment(filepath):
-    with open(filepath, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-    header = []
-    for line in lines:
-        if line.strip().startswith("#") or (not line.strip() and header):
-            header.append(line)
-        elif not line.strip():
-            continue
+def extract_comments_and_data(content):
+    lines = content.splitlines(keepends=True)
+    tokens = [t for t in yaml.scan(content) if isinstance(t, yaml.BlockEntryToken) and t.start_mark.column == 0]
+    data = yaml.load(content, Loader=yaml.SafeLoader)
+    if not isinstance(data, list):
+        return None, None, None
+
+    if not tokens:
+        all_comments = "".join(lines).strip()
+        trailing_comment = (all_comments + "\n") if all_comments else ""
+        return data, [], trailing_comment
+
+    comments = []
+    for i, t in enumerate(tokens):
+        if i == 0:
+            raw_comment_lines = lines[:t.start_mark.line]
         else:
-            break
-    header_text = "".join(header)
-    # Only retain header if it is a license block
-    if "Permission is hereby granted" in header_text or "Creative Commons" in header_text:
-        return header_text
-    return ""
+            prev_start = tokens[i - 1].start_mark.line
+            curr_start = t.start_mark.line
+            raw_comment_lines = lines[prev_start:curr_start]
+            last_item_line = -1
+            for idx, l in enumerate(raw_comment_lines):
+                if l.strip() and not l.startswith("#"):
+                    last_item_line = idx
+            raw_comment_lines = raw_comment_lines[last_item_line + 1:]
+
+        while raw_comment_lines and not raw_comment_lines[0].strip():
+            raw_comment_lines.pop(0)
+        comments.append("".join(raw_comment_lines))
+
+    last_start = tokens[-1].start_mark.line
+    raw_trailing = lines[last_start:]
+    last_item_line = -1
+    for idx, l in enumerate(raw_trailing):
+        if l.strip() and not l.startswith("#"):
+            last_item_line = idx
+    raw_trailing = raw_trailing[last_item_line + 1:]
+    while raw_trailing and not raw_trailing[0].strip():
+        raw_trailing.pop(0)
+    trailing_comment = "".join(raw_trailing)
+
+    return data, comments, trailing_comment
 
 
 def format_file(filepath):
-    header = ""
     if filepath.endswith(".yaml") or filepath.endswith(".yml"):
-        header = extract_header_comment(filepath)
         with open(filepath, "r", encoding="utf-8") as fp:
-            data = yaml.safe_load(fp)
+            content = fp.read()
+        data, comments, trailing_comment = extract_comments_and_data(content)
+        if data is None or not isinstance(data, list):
+            print(f"Skipping {filepath}: top-level element is not a list")
+            return
     elif filepath.endswith(".json"):
         with open(filepath, "r", encoding="utf-8") as fp:
             data = json.load(fp)
+        if not isinstance(data, list):
+            print(f"Skipping {filepath}: top-level element is not a list")
+            return
+        comments = [""] * len(data)
+        trailing_comment = ""
     else:
         return
 
-    if not isinstance(data, list):
-        print(f"Skipping {filepath}: top-level element is not a list")
-        return
+    parts = []
+    for c, comment in zip(data, comments):
+        dumped = yaml.dump([FormattedTestCase(c)], width=2**32, allow_unicode=False).strip()
+        if comment:
+            parts.append(comment + dumped)
+        else:
+            parts.append(dumped)
 
-    parts = [
-        yaml.dump([FormattedTestCase(c)], width=2**32, allow_unicode=False).strip()
-        for c in data
-    ]
     yaml_text = "\n\n".join(parts) + "\n" if parts else "[]\n"
+    if trailing_comment:
+        if not trailing_comment.endswith("\n"):
+            trailing_comment += "\n"
+        yaml_text += "\n" + trailing_comment
 
     target_path = filepath
     if filepath.endswith(".json"):
         target_path = filepath[:-5] + ".yaml"
 
     with open(target_path, "w", encoding="utf-8") as fp:
-        if header:
-            fp.write(header)
-            if not header.endswith("\n"):
-                fp.write("\n")
         fp.write(yaml_text)
 
     if filepath.endswith(".json") and target_path != filepath:

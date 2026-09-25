@@ -12,15 +12,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
-import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
@@ -34,7 +36,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class EnvironmentPocTest {
 	private static boolean isConstantExpression(Expression<?, ?> expr) {
-		return !expr.dependsOnInput() && !expr.dependsOnExternalState() && !FreeVariables.dependsOnVariables(expr);
+		ExpressionProperties properties = AnalyzedExpression.propertiesOf(expr);
+		return !properties.dependsOnInput() && !properties.dependsOnExternalState() && !FreeVariables.dependsOnVariables(expr);
+	}
+
+	private abstract static class AbstractForwardingFunction implements Function {
+		@Override
+		public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+			return arguments.get(0);
+		}
 	}
 
 	/**
@@ -106,19 +116,22 @@ public class EnvironmentPocTest {
 		// (dependsOnExternalState=false) -- registered through a FunctionLoader (like a real
 		// built-in) rather than EnvironmentBuilder.defineFunction(), since only that path is resolved
 		// via ResolvedFunctionCall.
-		// bind() uses FunctionBody, matching how every real Function now builds its bound
-		// Expression -- Compiler.java reads these flags off the bound Expression.
 		Function increment = new Function() {
+			@Override
+			public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+				return new ExpressionProperties(Cardinality.ONE, true, false);
+			}
+
 			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> args) {
 				JsonProvider<N> provider = bindCtx.getJsonProvider();
-				return FunctionBody.<Context, N>builder(args).usesInput(true).build((scope, in, path, output) -> output.emit(provider.createNumber(Objects.requireNonNull(provider.getNumberAsLongExact(in)) + 1), UntrackedPath.getInstance()));
+				return (scope, in, path, output) -> output.emit(provider.createNumber(Objects.requireNonNull(provider.getNumberAsLongExact(in)) + 1), UntrackedPath.getInstance());
 			}
 		};
 		FunctionLoader testLoader = javaFunctionLoader(FunctionSignature.of("increment", 0), increment);
 
 		List<Boolean> captured = new ArrayList<>();
-		Function probe = new Function() {
+		Function probe = new AbstractForwardingFunction() {
 			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> args) {
 				captured.add(isConstantExpression(args.get(0)));
@@ -131,13 +144,14 @@ public class EnvironmentPocTest {
 				.defineFunction(FunctionSignature.of("probe", 1), probe)
 				.build();
 
-		env.compile("probe(1 | increment)");
-		env.compile("probe(increment)");
-		env.compile("probe(. | increment)");
-		env.compile("probe(. + 1)");
-		env.compile("probe(1 | . + 1)");
+		// Each call is bound once, after its argument has been finalized and optionally folded.
+		List<Boolean> perCompilation = new ArrayList<>();
+		for (String query : List.of("probe(1 | increment)", "probe(increment)", "probe(. | increment)", "probe(. + 1)", "probe(1 | . + 1)")) {
+			env.compile(query);
+			perCompilation.add(captured.get(captured.size() - 1));
+		}
 
-		assertThat(captured).isEqualTo(List.of(true, false, false, false, true));
+		assertThat(perCompilation).isEqualTo(List.of(true, false, false, false, true));
 	}
 
 	@Test
@@ -146,15 +160,20 @@ public class EnvironmentPocTest {
 		// (dependsOnExternalState=true), like a real `random`/`now`.
 		Function random = new Function() {
 			@Override
+			public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+				return new ExpressionProperties(Cardinality.ONE, false, true);
+			}
+
+			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> args) {
 				JsonProvider<N> provider = bindCtx.getJsonProvider();
-				return FunctionBody.<Context, N>builder(args).usesExternalState(true).build((scope, in, path, output) -> output.emit(provider.createNumber(0), UntrackedPath.getInstance()));
+				return (scope, in, path, output) -> output.emit(provider.createNumber(0), UntrackedPath.getInstance());
 			}
 		};
 		FunctionLoader testLoader = javaFunctionLoader(FunctionSignature.of("random", 0), random);
 
 		List<Expression<?, JsonNode>> captured = new ArrayList<>();
-		Function probe = new Function() {
+		Function probe = new AbstractForwardingFunction() {
 			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> args) {
 				@SuppressWarnings("unchecked")
@@ -171,22 +190,22 @@ public class EnvironmentPocTest {
 
 		env.compile("probe(1 | random)");
 		Expression<?, JsonNode> onePipeRandom = captured.get(captured.size() - 1);
-		assertThat(onePipeRandom.dependsOnInput()).isFalse();
-		assertThat(onePipeRandom.dependsOnExternalState()).isTrue();
+		assertThat(AnalyzedExpression.propertiesOf(onePipeRandom).dependsOnInput()).isFalse();
+		assertThat(AnalyzedExpression.propertiesOf(onePipeRandom).dependsOnExternalState()).isTrue();
 		assertThat(isConstantExpression(onePipeRandom)).isFalse();
 
 		// Deliberately NOT shielded (see plan): random's result is discarded, but the pipe as a
 		// whole still conservatively reports dependsOnExternalState()==true.
 		env.compile("probe(random | 1)");
 		Expression<?, JsonNode> randomPipeOne = captured.get(captured.size() - 1);
-		assertThat(randomPipeOne.dependsOnInput()).isFalse();
-		assertThat(randomPipeOne.dependsOnExternalState()).isTrue();
+		assertThat(AnalyzedExpression.propertiesOf(randomPipeOne).dependsOnInput()).isFalse();
+		assertThat(AnalyzedExpression.propertiesOf(randomPipeOne).dependsOnExternalState()).isTrue();
 	}
 
 	@Test
 	public void testDependsOnVariablesClosesOverLocalBindings() throws Exception {
 		List<Expression<?, JsonNode>> captured = new ArrayList<>();
-		Function probe = new Function() {
+		Function probe = new AbstractForwardingFunction() {
 			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> args) {
 				@SuppressWarnings("unchecked")
@@ -216,11 +235,11 @@ public class EnvironmentPocTest {
 
 	@Test
 	public void testBuiltinFunctionCallDependsOnInputComposesFromBoundExpression() throws Exception {
-		// error/1 bind() correctly composes a precise bound Expression via FunctionBody
+		// error/1 analyze() correctly describes the complete call
 		// (own contribution only when called with zero args). With a literal message and a non-fixed
 		// `.`, reading the bound Expression's dependsOnInput() recognizes this as input-independent.
 		List<Expression<?, JsonNode>> captured = new ArrayList<>();
-		Function probe = new Function() {
+		Function probe = new AbstractForwardingFunction() {
 			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> args) {
 				@SuppressWarnings("unchecked")
@@ -243,7 +262,7 @@ public class EnvironmentPocTest {
 	@Test
 	public void compilerPrecomputesEveryResultOfConstantFunctionArguments() throws Exception {
 		List<Expression<?, JsonNode>> captured = new ArrayList<>();
-		Function probe = new Function() {
+		Function probe = new AbstractForwardingFunction() {
 			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> args) {
 				@SuppressWarnings("unchecked")
@@ -258,15 +277,16 @@ public class EnvironmentPocTest {
 
 		env.compile("probe((1, 2))");
 
-		assertThat(captured.get(0)).isInstanceOf(ConstantExpression.class);
-		ConstantExpression<?, JsonNode> constant = (ConstantExpression<?, JsonNode>) captured.get(0);
+		// The argument folds after type checking, so the binding that saw it folded is the last one.
+		assertThat(captured.get(captured.size() - 1)).isInstanceOf(ConstantExpression.class);
+		ConstantExpression<?, JsonNode> constant = (ConstantExpression<?, JsonNode>) captured.get(captured.size() - 1);
 		assertThat(constant.getConstantResults()).usingElementComparator(BY_JQ_VALUE).isEqualTo(List.of(MAPPER.readTree("1"), MAPPER.readTree("2")));
 	}
 
 	@Test
 	public void functionArgumentsUseTheirOwnInputDependencyScope() {
 		List<Expression<?, JsonNode>> captured = new ArrayList<>();
-		Function probe = new Function() {
+		Function probe = new AbstractForwardingFunction() {
 			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> args) {
 				@SuppressWarnings("unchecked")
@@ -279,18 +299,19 @@ public class EnvironmentPocTest {
 				.defineFunction(FunctionSignature.of("probe", 1), probe)
 				.build();
 
+		// Asserted per compilation, because a call whose argument folds is bound again afterwards.
 		env.compile("1 | probe(\"literal\" | .)");
-		env.compile("1 | probe(.)");
+		assertThat(captured.get(captured.size() - 1)).isInstanceOf(ConstantExpression.class);
 
-		assertThat(captured.get(0)).isInstanceOf(ConstantExpression.class);
-		assertThat(captured.get(1)).isNotInstanceOf(ConstantExpression.class);
-		assertThat(captured.get(1).dependsOnInput()).isTrue();
+		env.compile("1 | probe(.)");
+		assertThat(captured.get(captured.size() - 1)).isNotInstanceOf(ConstantExpression.class);
+		assertThat(AnalyzedExpression.propertiesOf(captured.get(captured.size() - 1)).dependsOnInput()).isTrue();
 	}
 
 	@Test
 	public void testLocalDefDependsOnFlagsComposeFromBody() throws Exception {
 		List<Expression<?, JsonNode>> captured = new ArrayList<>();
-		Function probe = new Function() {
+		Function probe = new AbstractForwardingFunction() {
 			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> args) {
 				@SuppressWarnings("unchecked")
@@ -309,7 +330,7 @@ public class EnvironmentPocTest {
 
 		// A local def whose body reads `.` propagates dependsOnInput to its call sites.
 		env.compile("probe(def f: .; f)");
-		assertThat(captured.get(captured.size() - 1).dependsOnInput()).isTrue();
+		assertThat(AnalyzedExpression.propertiesOf(captured.get(captured.size() - 1)).dependsOnInput()).isTrue();
 
 		// A one-hop capture ($x lives directly in the enclosing frame) is precisely subtracted by the
 		// outer `as` binding, same as a plain variable read -- the whole thing folds to constant.
@@ -321,7 +342,7 @@ public class EnvironmentPocTest {
 		// whether the body actually invokes it (mirrors testDependsOnExternalStateIsNotShielded's
 		// "deliberately not shielded" precedent for builtin calls).
 		env.compile("probe(def f(g): 1; f(. + 1))");
-		assertThat(captured.get(captured.size() - 1).dependsOnInput()).isTrue();
+		assertThat(AnalyzedExpression.propertiesOf(captured.get(captured.size() - 1)).dependsOnInput()).isTrue();
 
 		// A def whose body reads a *declared/global* variable stays conservative too -- that dependency
 		// never touches CompileContext's closureSpec machinery at all (globals bypass the local/captured
@@ -338,7 +359,7 @@ public class EnvironmentPocTest {
 	@Test
 	public void testLocalDefCapturePrecisionThreadsThroughNestedDefs() throws Exception {
 		List<Expression<?, JsonNode>> captured = new ArrayList<>();
-		Function probe = new Function() {
+		Function probe = new AbstractForwardingFunction() {
 			@Override
 			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> args) {
 				@SuppressWarnings("unchecked")

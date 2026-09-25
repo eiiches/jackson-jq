@@ -4,7 +4,6 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-
 public class BracketFieldAccessAstNode extends AbstractFieldAccessAstNode {
 	private final AstNode startExpr;
 	private final AstNode endExpr;

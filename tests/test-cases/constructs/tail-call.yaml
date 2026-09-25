@@ -8,18 +8,45 @@
   in: null
   out:
   - 20001
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'NULL'
+    output: 'NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'last(while(. < 20000; . + 1))'
   in: 1
   out:
   - 19999
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'NULL|NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def f: if . < 20000 then . + 1 | f else . end; f'
   in: 0
   out:
   - 20000
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # A $-parameter's argument emits one value, so it is bound at the call site and the call is still a jump.
@@ -27,6 +54,15 @@
   in: 0
   out:
   - 20000
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # A filter parameter passed straight on: the Function in the caller's slot outlives the frame it sat in.
@@ -36,6 +72,15 @@
   in: 0
   out:
   - 40000
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # Mutual tail recursion, which jq can only express by nesting, since a def sees only what precedes it.
@@ -43,12 +88,30 @@
   in: 20000
   out:
   - "outer"
+  types:
+  - input: 'ANY'
+    output: '"inner"|"outer"'
+  - input: 'INT'
+    output: '"inner"|"outer"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def outer: def inner: if . > 0 then . - 1 | outer else "inner" end; if . > 0 then . - 1 | inner else "outer" end; outer'
   in: 19999
   out:
   - "inner"
+  types:
+  - input: 'ANY'
+    output: '"inner"|"outer"'
+  - input: 'INT'
+    output: '"inner"|"outer"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # --- shapes the optimization must not take, which must still give jq's answer and jq's order ---
@@ -58,12 +121,30 @@
   in: 2
   out:
   - ["x", "x", "x", "x"]
+  types:
+  - input: 'ANY'
+    output: '[*:"x"]'
+  - input: 'INT'
+    output: '[*:"x"]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def f: if . > 0 then (. - 1, . - 2) | f else . end; [f]'
   in: 2
   out:
   - [0, -1, 0]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: 'INT'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # Not the last operand of the comma: what follows it still has to run, and in order.
@@ -71,6 +152,15 @@
   in: 2
   out:
   - ["base", "after-1", "after-2"]
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'INT'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # A generator condition runs the branch once per value it emits.
@@ -78,6 +168,15 @@
   in: 1
   out:
   - ["x", "x", "x", "x"]
+  types:
+  - input: 'ANY'
+    output: '[*:"x"]'
+  - input: 'INT'
+    output: '[*:"x"]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # A $-argument emitting two values binds the body twice, which is a loop of its own, not a jump.
@@ -85,6 +184,15 @@
   in: 0
   out:
   - [1, 2]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: 'INT'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # A filter argument that closes over the caller's frame cannot outlive it.
@@ -92,6 +200,15 @@
   in: 0
   out:
   - [30]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: 'INT'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # --- the constructs a tail call must not jump out of ---
@@ -101,6 +218,15 @@
   in: 0
   out:
   - ["boom"]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: 'INT'
+    output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # break unwinds to its own label, which a tail call must not have left.
@@ -108,18 +234,45 @@
   in: 0
   out:
   - ["end"]
+  types:
+  - input: 'ANY'
+    output: '[*:"end"]'
+  - input: 'INT'
+    output: '[*:"end"]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'first(recurse(. + 1))'
   in: 5
   out:
   - 5
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[limit(3; while(true; . + 1))]'
   in: 1
   out:
   - [1, 2, 3]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: 'INT'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # reduce and foreach consume what their update emits and keep going.
@@ -127,12 +280,30 @@
   in: null
   out:
   - 3
+  types:
+  - input: 'ANY'
+    output: 'NULL|NUMBER'
+  - input: 'NULL'
+    output: 'NULL|NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def f: if . < 3 then . + 1 | f else . end; [foreach range(0; 3) as $i (0; f; .)]'
   in: null
   out:
   - [3, 3, 3]
+  types:
+  - input: 'ANY'
+    output: '[*:NULL|NUMBER]'
+  - input: 'NULL'
+    output: '[*:NULL|NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # --- paths still track through a deep recursion ---
@@ -141,10 +312,28 @@
   in: {"a": {"b": {"c": 1}}}
   out:
   - [["a", "b", "c"]]
+  types:
+  - input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - input: '{a:{b:{c:INT}}}'
+    output: '[*:[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def descend: if type == "array" then .[0] | descend else . end; [path(descend)]'
   in: [[[[1]]]]
   out:
   - [[0, 0, 0, 0]]
+  types:
+  - input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - input: '[[[[INT]]]]'
+    output: '[*:[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'

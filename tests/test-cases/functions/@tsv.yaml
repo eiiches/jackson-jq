@@ -2,24 +2,69 @@
   in: [["[]"]]
   out:
   - "array ([\"[]\"]) is not valid in a csv row"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[[STRING]]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '@tsv'
   in: [0.0]
   out:
   - "0"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '@tsv'
   in: [0.0]
   out:
   - "0.0"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
 
 - q: '[0,null,nan,infinite] | @tsv'
   out:
   - "0\t\t\t1.7976931348623157e+308"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'NULL'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[[range(0; 128)] | implode] | @tsv'
   out:
   - "\\0\x01\x02\x03\x04\x05\x06\a\b\\t\\n\v\f\\r\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7F"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'NULL'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false

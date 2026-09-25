@@ -1,12 +1,30 @@
 - q: 'path(null)'
   out:
   - []
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: 'NULL'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'path(.["x":"y"])'
   in: null
   out:
   - [{"start": "x", "end": "y"}]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: 'NULL'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'path(.a.b[])'
@@ -14,138 +32,399 @@
   out:
   - ["a", "b", 0]
   - ["a", "b", 1]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:{b:[INT,INT]}}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '{} | try path(.[0]) catch .'
   out:
   - "Cannot index object with number"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: '{} | try path(.[0]) catch .'
   out:
   - "Cannot index object with number (0)"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: '[] | try path(.a) catch .'
   out:
   - "Cannot index array with string \"a\""
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: '[] | try path(.a) catch .'
   out:
   - "Cannot index array with string (\"a\")"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: '1 | try path(.[]) catch .'
   out:
   - "Cannot iterate over number (1)"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try path(.a | .c?) catch .'
   in: {"a": []}
   out: []
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:[]}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(.a | .c) catch .'
   in: {"a": []}
   out:
   - "Cannot index array with string \"c\""
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:[]}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try path(.a | .c) catch .'
   in: {"a": []}
   out:
   - "Cannot index array with string (\"c\")"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:[]}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try path([] | .c?) catch .'
   in: {"a": []}
   out:
   - "Invalid path expression near attempt to access element \"c\" of []"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:[]}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path([] | .c) catch .'
   in: {"a": []}
   out:
   - "Invalid path expression near attempt to access element \"c\" of []"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:[]}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(.a | .[0]) catch .'
   in: {"a": 1}
   out:
   - "Cannot index number with number"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try path(.a | .[0]) catch .'
   in: {"a": 1}
   out:
   - "Cannot index number with number (0)"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try path(.a | .[0]?) catch .'
   in: {"a": 1}
   out: []
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(1 | .[0]) catch .'
   out:
   - "Invalid path expression near attempt to access element 0 of 1"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(1 | .[0]?) catch .'
   out:
   - "Invalid path expression near attempt to access element 0 of 1"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(.a | .[0:1]) catch .'
   in: {"a": 1}
   out:
   - "Cannot index number with object"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try path(.a | .[0:1]) catch .'
   in: {"a": 1}
   out:
   - "Cannot index number with object ({\"start\":0,\"end\":1})"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try path(.a | .[0:1]?) catch .'
   in: {"a": 1}
   out: []
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(1 | .[0:1]) catch .'
   out:
   - "Invalid path expression near attempt to access element {\"start\":0,... of 1"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try path(1 | .[0:1]) catch .'
   out:
   - "Invalid path expression near attempt to access element {\"start\":0,\"end\":1} of 1"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try path(1 | .[0:1]?) catch .'
   out:
   - "Invalid path expression near attempt to access element {\"start\":0,... of 1"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try path(1 | .[0:1]?) catch .'
   out:
   - "Invalid path expression near attempt to access element {\"start\":0,\"end\":1} of 1"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try path(.a | .[]) catch .'
   in: {"a": 1}
   out:
   - "Cannot iterate over number (1)"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(.a | .[]?) catch .'
   in: {"a": 1}
   out: []
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(1 | .[]) catch .'
   out:
   - "Invalid path expression near attempt to iterate through 1"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(1 | .[]?) catch .'
   out:
   - "Invalid path expression near attempt to iterate through 1"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try (path([1,2,3,4,5,6,7,8,9][])) catch .'
   out:
   - "Invalid path expression near attempt to iterate through [1,2,3,4,5,6,7,8,9]"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try (path("longer string not truncated")) catch .'
   out:
   - "Invalid path expression with result \"longer string not truncated\""
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false

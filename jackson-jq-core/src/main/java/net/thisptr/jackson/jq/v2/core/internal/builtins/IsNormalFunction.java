@@ -4,22 +4,45 @@ import java.util.List;
 
 import com.google.errorprone.annotations.Var;
 
-import net.thisptr.jackson.jq.v2.core.internal.function.utils.FunctionBody;
+import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.NumericType;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @FunctionRegistration(name = "isnormal", nargs = 0)
 public class IsNormalFunction implements Function {
+	// A non-number is not an error here; it answers false, and saying so is what lets a type test written
+	// as this predicate rule the other kinds out of the branch it guards.
+	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
+			TypeScheme.of(FunctionType.of(NumericType.getInstance(), BooleanType.getInstance())),
+			TypeScheme.of(FunctionType.of(AnyType.getInstance(), BooleanType.of(false))));
+
+	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		return TYPE_SCHEMES;
+	}
+
+	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		return ExpressionPropertiesUtils.forwardAll(Cardinality.ONE, true, false, arguments);
+	}
+
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
-		return FunctionBody.builder(args).usesInput(true).cardinality(Cardinality.ONE).build((scope, in, ipath, output) -> {
+		return (scope, in, ipath, output) -> {
 
 			@Var boolean result = false;
 			if (jsonProvider.isNumber(in)) {
@@ -27,6 +50,6 @@ public class IsNormalFunction implements Function {
 				result = !Double.isInfinite(v) && (v <= -Double.MIN_NORMAL || Double.MIN_NORMAL <= v);
 			}
 			output.emit(jsonProvider.createBoolean(result), UntrackedPath.getInstance());
-		});
+		};
 	}
 }

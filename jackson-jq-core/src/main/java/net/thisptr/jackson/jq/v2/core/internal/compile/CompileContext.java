@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,6 +13,8 @@ import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.OptimizationOptions;
+import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.opt.FoldPlanner;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -98,7 +101,16 @@ public class CompileContext {
 	private static final class GlobalState {
 		final Map<String, Integer> variableIndices = new HashMap<>();
 		final Map<FunctionSignature, Integer> functionIndices = new HashMap<>();
+		final Map<AnalyzedExpression<?>, SourceLocation> sourceLocations = new IdentityHashMap<>();
 		int nextIndex;
+	}
+
+	void recordSourceLocation(AnalyzedExpression<?> expression, SourceLocation location) {
+		globalState.sourceLocations.put(expression, location);
+	}
+
+	Map<AnalyzedExpression<?>, SourceLocation> sourceLocations() {
+		return globalState.sourceLocations;
 	}
 
 	private final List<ScopeFrame> scopes;
@@ -443,7 +455,7 @@ public class CompileContext {
 	 * @param child the expression whose values the caller consumes, or {@code null}
 	 * @return the index to charge, or {@link Memory#NO_OUTPUT_COUNTER}
 	 */
-	public int outputCounterOf(@Nullable Expression<?, ?> child) {
+	public int outputCounterOf(@Nullable AnalyzedExpression<?> child) {
 		if (child == null || !meterRuntimeBudgets || child.getCardinality() != Cardinality.UNKNOWN)
 			return Memory.NO_OUTPUT_COUNTER;
 		return nextOutputCounter++;
@@ -455,7 +467,7 @@ public class CompileContext {
 	 * @param children the expressions whose values the caller consumes
 	 * @return one index per child
 	 */
-	public int[] outputCountersOf(List<? extends @Nullable Expression<?, ?>> children) {
+	public int[] outputCountersOf(List<? extends @Nullable AnalyzedExpression<?>> children) {
 		int[] indices = new int[children.size()];
 		for (int i = 0; i < indices.length; ++i)
 			indices[i] = outputCounterOf(children.get(i));

@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.google.errorprone.annotations.Var;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryUndefinedBehaviorException;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
@@ -16,7 +17,6 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.AbstractBinaryOpera
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -33,14 +33,14 @@ public class UpdateAssignment<JsonNode> extends AbstractBinaryOperatorExpression
 		return Cardinality.ONE;
 	}
 
-	public UpdateAssignment(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> lhs, Expression<StackFrame, JsonNode> rhs, Version version, int lhsOutputIndex, int rhsOutputIndex) {
+	public UpdateAssignment(JsonProvider<JsonNode> jsonProvider, AnalyzedExpression<JsonNode> lhs, AnalyzedExpression<JsonNode> rhs, Version version, int lhsOutputIndex, int rhsOutputIndex) {
 		super(lhs, rhs, lhsOutputIndex, rhsOutputIndex);
 		this.jsonProvider = jsonProvider;
 		this.version = version;
 	}
 
 	@Override
-	protected Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenLhs, Expression<StackFrame, JsonNode> rewrittenRhs) {
+	protected AnalyzedExpression<JsonNode> recreate(AnalyzedExpression<JsonNode> rewrittenLhs, AnalyzedExpression<JsonNode> rewrittenRhs) {
 		return new UpdateAssignment<>(jsonProvider, rewrittenLhs, rewrittenRhs, version, lhsOutputIndex, rhsOutputIndex);
 	}
 

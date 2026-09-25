@@ -9,16 +9,31 @@ import net.thisptr.jackson.jq.v2.ext.uuid.internal.misc.UuidUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
-import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.BinaryType;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.UnionType;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class Uuid35Function implements Function {
+	/**
+	 * The name being hashed is taken from the input, as text or as raw bytes.
+	 */
+	private static final Type NAME = UnionType.of(StringType.getInstance(), BinaryType.getInstance());
+	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
+			TypeScheme.of(FunctionType.of(NAME, StringType.getInstance(), FilterType.of(NAME, StringType.getInstance()))));
+
 	private final int uuidVersion;
 
 	public Uuid35Function(int uuidVersion) {
@@ -26,24 +41,22 @@ public class Uuid35Function implements Function {
 	}
 
 	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		return TYPE_SCHEMES;
+	}
+
+	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		ExpressionProperties namespace = arguments.get(0);
+		return new ExpressionProperties(namespace.cardinality(), true, namespace.dependsOnExternalState());
+	}
+
+	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
 		Expression<Context, JsonNode> namespaceExpr = args.get(0);
 		return new Expression<>() {
-			@Override
-			public Cardinality getCardinality() {
-				return namespaceExpr.getCardinality();
-			}
 
-			@Override
-			public boolean dependsOnExternalState() {
-				return namespaceExpr.dependsOnExternalState();
-			}
-
-			@Override
-			public boolean dependsOnInput() {
-				return true;
-			}
 
 			@Override
 			public void apply(Context context, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {

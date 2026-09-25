@@ -21,6 +21,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
@@ -28,34 +29,58 @@ import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.TypeVariable;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public final class ListFunction implements Function {
+	private static final TypeVariable INPUT = TypeVariable.of("Input");
+	private static final Type ENTRY = ObjectType.of("path", StringType.getInstance(), "type", StringType.getInstance());
+	private static final Type OPTIONS = ObjectType.of(
+			"recursive", FileFunctionSupport.OPTIONAL_BOOLEAN,
+			"follow_symlinks", FileFunctionSupport.OPTIONAL_BOOLEAN);
+	/**
+	 * Indexed by argument count; index 0 is unused because the directory is required. The input is only
+	 * passed on to the arguments, so its type flows through untouched.
+	 */
+	private static final List<List<TypeScheme<FunctionType>>> TYPE_SCHEMES = List.of(
+			List.of(),
+			List.of(TypeScheme.of(Map.of(INPUT, AnyType.getInstance()), FunctionType.of(INPUT, ArrayType.of(ENTRY), FilterType.of(INPUT, StringType.getInstance())))),
+			List.of(TypeScheme.of(Map.of(INPUT, AnyType.getInstance()), FunctionType.of(INPUT, ArrayType.of(ENTRY), FilterType.of(INPUT, StringType.getInstance()), FilterType.of(INPUT, OPTIONS)))));
+
+	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		if (totalArguments < 1 || totalArguments > 2)
+			return List.of();
+		return TYPE_SCHEMES.get(totalArguments);
+	}
+
+	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		boolean input = arguments.stream().anyMatch(ExpressionProperties::dependsOnInput);
+		Cardinality first = arguments.get(0).cardinality();
+		if (arguments.size() == 1 || first == Cardinality.ZERO)
+			return new ExpressionProperties(first, input, true);
+		Cardinality second = arguments.get(1).cardinality();
+		Cardinality cardinality = second == Cardinality.ZERO ? Cardinality.ZERO
+				: first == Cardinality.ONE && second == Cardinality.ONE ? Cardinality.ONE : Cardinality.UNKNOWN;
+		return new ExpressionProperties(cardinality, input, true);
+	}
+
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindContext, List<Expression<Context, JsonNode>> arguments) {
 		JsonProvider<JsonNode> jsonProvider = bindContext.getJsonProvider();
 		Expression<Context, JsonNode> pathExpression = arguments.get(0);
 		Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
 		return new Expression<>() {
-			@Override
-			public Cardinality getCardinality() {
-				Cardinality pathCardinality = pathExpression.getCardinality();
-				if (optionsExpression == null || pathCardinality == Cardinality.ZERO)
-					return pathCardinality;
-				Cardinality optionsCardinality = optionsExpression.getCardinality();
-				if (optionsCardinality == Cardinality.ZERO)
-					return Cardinality.ZERO;
-				return pathCardinality == Cardinality.ONE && optionsCardinality == Cardinality.ONE ? Cardinality.ONE : Cardinality.UNKNOWN;
-			}
 
-			@Override
-			public boolean dependsOnInput() {
-				return pathExpression.dependsOnInput() || (optionsExpression != null && optionsExpression.dependsOnInput());
-			}
-
-			@Override
-			public boolean dependsOnExternalState() {
-				return true;
-			}
 
 			@Override
 			public void apply(Context context, JsonNode input, Path<JsonNode> inputPath, Output<JsonNode> output) throws JsonQueryException {

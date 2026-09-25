@@ -1,30 +1,75 @@
 - q: 'delpaths(empty)'
   in: true
   out: []
+  types:
+  - input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - input: 'BOOLEAN'
+    output: 'ANY'
+  properties:
+    cardinality: ZERO
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'delpaths([[{"start": "x", "end": "y"}]])'
   in: null
   out:
   - null
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'delpaths([["a",{"start":0,"end":2}]])'
   in: {}
   out:
   - {}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{}'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'delpaths([["a",[true]]])'
   in: {}
   out:
   - {}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{}'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try delpaths([[true]]) catch .'
   in: {}
   out:
   - "Cannot delete boolean field of object"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
   failing: true
 
@@ -32,18 +77,45 @@
   in: [0, 1, 2]
   out:
   - [0, 2]
+  types:
+  - input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - input: '[INT,INT,INT]'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try (delpaths([[{}]])) catch .'
   in: [1, 2, 3]
   out:
   - "Start and end indices of an array slice must be numbers"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try (delpaths([[{}]])) catch .'
   in: [1, 2, 3]
   out:
   - "Array/string slice indices must be integers"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
 
@@ -51,4 +123,13 @@
   in: [1, 2, 3]
   out:
   - [1]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT]'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'

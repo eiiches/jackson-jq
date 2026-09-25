@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,6 +44,8 @@ import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.OptimizationOptions;
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
+import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
+import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
@@ -55,13 +58,14 @@ import net.thisptr.jackson.jq.v2.json.impl.jakarta.JakartaJsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
-import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class Main {
@@ -129,6 +133,21 @@ public class Main {
 	private static final Option OPT_DISABLE_TCO = Option.builder()
 			.longOpt("disable-tco")
 			.desc("disable tail-call optimization")
+			.get();
+	private static final Option OPT_TYPE_CHECK = Option.builder()
+			.longOpt("type-check")
+			.desc("compile-time type checking: off, warn, or strict (default: warn)")
+			.numberOfArgs(1)
+			.get();
+	private static final Option OPT_INPUT_TYPE = Option.builder()
+			.longOpt("input-type")
+			.desc("the type of the input values, for --type-check (default: ANY)")
+			.numberOfArgs(1)
+			.get();
+	private static final Option OPT_OUTPUT_TYPE = Option.builder()
+			.longOpt("output-type")
+			.desc("the type the results must be assignable to, for --type-check (default: ANY)")
+			.numberOfArgs(1)
 			.get();
 	private static final Option OPT_MAX_STRING_LENGTH = Option.builder()
 			.longOpt("max-string-length")
@@ -219,6 +238,9 @@ public class Main {
 		options.addOption(OPT_JSON_PROVIDER);
 		options.addOption(OPT_NO_WARNINGS);
 		options.addOption(OPT_DISABLE_TCO);
+		options.addOption(OPT_TYPE_CHECK);
+		options.addOption(OPT_INPUT_TYPE);
+		options.addOption(OPT_OUTPUT_TYPE);
 		options.addOption(OPT_MAX_STRING_LENGTH);
 		options.addOption(OPT_MAX_BINARY_LENGTH);
 		options.addOption(OPT_MAX_ARRAY_LENGTH);
@@ -304,7 +326,15 @@ public class Main {
 			System.exit(1);
 			throw e;
 		}
-		run(command, query, inputFiles, version, jsonProvider, runtimeOptions);
+		CompileOptions compileOptions;
+		try {
+			compileOptions = createCompileOptions(command);
+		} catch (IllegalArgumentException e) {
+			System.err.println(e.getMessage());
+			System.exit(1);
+			throw e;
+		}
+		run(command, query, inputFiles, version, jsonProvider, runtimeOptions, compileOptions);
 	}
 
 	static RuntimeOptions createRuntimeOptions(CommandLine command) {
@@ -316,6 +346,71 @@ public class Main {
 				.setMaxUserDefinedFunctionCalls(parseLongLimit(command, OPT_MAX_USER_DEFINED_FUNCTION_CALLS))
 				.setMaxOutputsPerExpression(parseLongLimit(command, OPT_MAX_OUTPUTS_PER_EXPRESSION))
 				.build();
+	}
+
+	/**
+	 * Reads {@code --type-check}, which selects how hard the compiler looks at the query's types.
+	 * Unlike jq, which has no such pass at all, the default reports what it finds and runs the query
+	 * anyway.
+	 */
+	static TypeCheckMode createTypeCheckMode(CommandLine command) {
+		String value = command.getOptionValue(OPT_TYPE_CHECK.getLongOpt());
+		return value == null ? TypeCheckMode.WARN : resolveTypeCheckMode(value);
+	}
+
+	/**
+	 * Reads {@code --input-type}, which says what the query's {@code .} input is, in the notation of
+	 * {@link Type}. Without it nothing is known about the input and every type checks.
+	 */
+	static Type createInputType(CommandLine command) {
+		String value = command.getOptionValue(OPT_INPUT_TYPE.getLongOpt());
+		if (value == null)
+			return AnyType.getInstance();
+		try {
+			return Type.valueOf(value);
+		} catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException("invalid --" + OPT_INPUT_TYPE.getLongOpt() + ": " + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Reads {@code --output-type}, which says what the query's results must be assignable to, in the
+	 * notation of {@link Type}. Without it any result is accepted.
+	 */
+	static Type createOutputType(CommandLine command) {
+		String value = command.getOptionValue(OPT_OUTPUT_TYPE.getLongOpt());
+		if (value == null)
+			return AnyType.getInstance();
+		try {
+			return Type.valueOf(value);
+		} catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException("invalid --" + OPT_OUTPUT_TYPE.getLongOpt() + ": " + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Everything the command line says about how to compile the query. The diagnostic listener is not
+	 * among it: what a diagnostic is printed to, and whether one is printed at all, is the business of
+	 * whichever of {@link #run}'s two modes ends up running.
+	 */
+	static CompileOptions createCompileOptions(CommandLine command) {
+		CompileOptions.Builder builder = CompileOptions.newBuilder()
+				.setTypeCheckMode(createTypeCheckMode(command))
+				.setInputType(createInputType(command))
+				.setOutputType(createOutputType(command));
+		if (command.hasOption(OPT_DISABLE_TCO.getLongOpt()))
+			builder.setOptimizationOptions(OptimizationOptions.newBuilder().setTailCallOptimization(false).build());
+		return builder.build();
+	}
+
+	static TypeCheckMode resolveTypeCheckMode(String name) {
+		return switch (name.toLowerCase(Locale.ROOT)) {
+			case "off" -> TypeCheckMode.OFF;
+			case "warn" -> TypeCheckMode.WARN;
+			case "strict" -> TypeCheckMode.STRICT;
+			default ->
+					throw new IllegalArgumentException("unknown --type-check: " + name + " (expected one of: off, warn, strict)");
+		};
 	}
 
 	private static int parseLimit(CommandLine command, Option option) {
@@ -407,32 +502,19 @@ public class Main {
 		return EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
 				.defineFunction(FunctionSignature.of("env", 0), new Function() {
 					@Override
+					public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+						return new ExpressionProperties(Cardinality.ONE, false, true);
+					}
+
+					@Override
 					public <Context extends RuntimeContext, N2> Expression<Context, N2> bind(BindContext<N2> bindCtx, List<Expression<Context, N2>> fnArgs) {
 						JsonProvider<N2> jsonProv = bindCtx.getJsonProvider();
-						return new Expression<>() {
-							@Override
-							public Cardinality getCardinality() {
-								return Cardinality.ONE;
+						return (context, in, ipath, output) -> {
+							Map<String, N2> envValues = new HashMap<>();
+							for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+								envValues.put(entry.getKey(), jsonProv.createString(entry.getValue()));
 							}
-
-							@Override
-							public boolean dependsOnInput() {
-								return false;
-							}
-
-							@Override
-							public boolean dependsOnExternalState() {
-								return true;
-							}
-
-							@Override
-							public void apply(Context context, N2 in, Path<N2> ipath, Output<N2> output) throws JsonQueryException {
-								Map<String, N2> envValues = new HashMap<>();
-								for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
-									envValues.put(entry.getKey(), jsonProv.createString(entry.getValue()));
-								}
-								output.emit(jsonProv.createObject(envValues), UntrackedPath.getInstance());
-							}
+							output.emit(jsonProv.createObject(envValues), UntrackedPath.getInstance());
 						};
 					}
 				})
@@ -441,38 +523,45 @@ public class Main {
 	}
 
 	private static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider,
-								RuntimeOptions runtimeOptions) throws Exception {
-		run(command, query, inputFiles, version, jsonProvider, runtimeOptions, null);
+								RuntimeOptions runtimeOptions, CompileOptions compileOptions) throws Exception {
+		run(command, query, inputFiles, version, jsonProvider, runtimeOptions, compileOptions, null);
 	}
 
 	static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider,
-						RuntimeOptions runtimeOptions, @Nullable TuiRunner customRunner) throws Exception {
-		run(command, query, inputFiles, version, jsonProvider, runtimeOptions, customRunner, System.getenv("EDITOR"));
+						RuntimeOptions runtimeOptions, CompileOptions compileOptions,
+						@Nullable TuiRunner customRunner) throws Exception {
+		run(command, query, inputFiles, version, jsonProvider, runtimeOptions, compileOptions, customRunner,
+				System.getenv("EDITOR"));
 	}
 
 	static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider,
-						RuntimeOptions runtimeOptions, @Nullable TuiRunner customRunner,
-						@Nullable String editor) throws Exception {
+						RuntimeOptions runtimeOptions, @Var CompileOptions compileOptions,
+						@Nullable TuiRunner customRunner, @Nullable String editor) throws Exception {
 		Environment<N> env = createEnvironment(jsonProvider, version);
+		boolean warningsEnabled = !command.hasOption(OPT_NO_WARNINGS.getLongOpt());
 		/*
-		 * jq itself emits no warnings at all, so this is purely additive: it goes to stderr, leaving
-		 * stdout and the exit code byte-for-byte what jq would produce.
+		 * jq itself emits no diagnostics at all, so this is purely additive: it goes to stderr, leaving
+		 * stdout and the exit code byte-for-byte what jq would produce -- except under
+		 * `--type-check strict`, where an error is the whole point and compilation fails.
+		 * --no-warnings silences the warnings, not the errors: the listener is what carries the place
+		 * each error is about, and without it strict mode could only report how many there were.
 		 */
-		CompileOptions.Builder compileOptionsBuilder = CompileOptions.newBuilder();
-		if (!command.hasOption(OPT_NO_WARNINGS.getLongOpt()) && !isInteractive(command)) {
-			compileOptionsBuilder.setDiagnosticListener(diagnostic -> {
+		if (!isInteractive(command)) {
+			compileOptions = compileOptions.toBuilder().setDiagnosticListener(diagnostic -> {
+				boolean isError = diagnostic.severity() == Diagnostic.Severity.ERROR;
+				if (!isError && !warningsEnabled)
+					return;
 				SourceLocation location = diagnostic.location();
 				String excerpt = location != null ? location.excerpt(query) : null;
-				System.err.println("jq: warning: " + diagnostic.message()
+				String[] messageLines = diagnostic.message().split("\\r?\\n", 2);
+				System.err.println((isError ? "jq: error: " : "jq: warning: ") + messageLines[0]
 						+ (location != null ? " at " + location : "")
-						+ (excerpt != null ? ":" : ""));
+						+ (excerpt != null ? ":" : "")
+						+ (messageLines.length > 1 ? "\n" + messageLines[1] : ""));
 				if (excerpt != null)
 					System.err.println(excerpt);
-			});
+			}).build();
 		}
-		if (command.hasOption(OPT_DISABLE_TCO.getLongOpt()))
-			compileOptionsBuilder.setOptimizationOptions(OptimizationOptions.newBuilder().setTailCallOptimization(false).build());
-		CompileOptions compileOptions = compileOptionsBuilder.build();
 		boolean compact = command.hasOption(OPT_COMPACT.getOpt());
 		boolean rawOutput = command.hasOption(OPT_RAW_OUTPUT.getOpt());
 		boolean nullInput = command.hasOption(OPT_NULL_INPUT.getOpt());
@@ -545,7 +634,6 @@ public class Main {
 			}
 			boolean rawInput = command.hasOption(OPT_RAW_INPUT.getOpt());
 			boolean slurp = command.hasOption(OPT_SLURP.getOpt());
-			boolean warningsEnabled = !command.hasOption(OPT_NO_WARNINGS.getLongOpt());
 			String providerName = resolveProviderName(jsonProvider);
 			ExecutorService evalExecutor = Executors.newSingleThreadExecutor(r -> {
 				Thread t = new Thread(r, "jq-playground-eval");

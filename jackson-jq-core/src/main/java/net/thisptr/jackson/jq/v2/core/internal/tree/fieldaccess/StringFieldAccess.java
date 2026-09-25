@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 
 import java.util.Set;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
@@ -9,7 +10,6 @@ import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -17,7 +17,7 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class StringFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> {
-	private final Expression<StackFrame, JsonNode> field;
+	private final AnalyzedExpression<JsonNode> field;
 	private final int fieldOutputIndex;
 
 	@Override
@@ -27,16 +27,20 @@ public class StringFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> {
 				: (target.getCardinality() == Cardinality.ZERO || field.getCardinality() == Cardinality.ZERO ? Cardinality.ZERO : Cardinality.UNKNOWN);
 	}
 
-	public StringFieldAccess(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> obj, Expression<StackFrame, JsonNode> field, boolean permissive, Version version, int targetOutputIndex, int fieldOutputIndex) {
+	public StringFieldAccess(JsonProvider<JsonNode> jsonProvider, AnalyzedExpression<JsonNode> obj, AnalyzedExpression<JsonNode> field, boolean permissive, Version version, int targetOutputIndex, int fieldOutputIndex) {
 		super(jsonProvider, obj, permissive, version, targetOutputIndex);
 		this.fieldOutputIndex = fieldOutputIndex;
 		this.field = field;
 	}
 
+	public AnalyzedExpression<JsonNode> key() {
+		return field;
+	}
+
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		Expression<StackFrame, JsonNode> rewrittenTarget = rewriter.rewrite(target);
-		Expression<StackFrame, JsonNode> rewrittenField = rewriter.rewrite(field);
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		AnalyzedExpression<JsonNode> rewrittenTarget = rewriter.rewrite(target);
+		AnalyzedExpression<JsonNode> rewrittenField = rewriter.rewrite(field);
 		return rewrittenTarget == target && rewrittenField == field
 				? this
 				: new StringFieldAccess<>(jsonProvider, rewrittenTarget, rewrittenField, permissive, version, targetOutputIndex, fieldOutputIndex);

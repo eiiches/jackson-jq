@@ -1,8 +1,27 @@
 - q: '{ a }'
-  in: { "a": 1 }
+  in: {"a": 1}
   out:
-  - { "a": 1 }
+  - {"a": 1}
+  types:
+  - input: 'ANY'
+    output: '{a:ANY}'
+  - input: '{a:INT}'
+    output: '{a:INT}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
 - q: '{ a, }'
-  in: { "a": 1 }
+  in: {"a": 1}
   out:
-  - { "a": 1 }
+  - {"a": 1}
+  types:
+  - input: 'ANY'
+    output: '{a:ANY}'
+  - input: '{a:INT}'
+    output: '{a:INT}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false

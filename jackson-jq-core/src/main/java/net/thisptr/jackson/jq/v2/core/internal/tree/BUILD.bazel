@@ -35,6 +35,7 @@ jjq_java_library(
     release = 17,
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/analysis",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/ast",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/commons/pair",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/compile/freevars",

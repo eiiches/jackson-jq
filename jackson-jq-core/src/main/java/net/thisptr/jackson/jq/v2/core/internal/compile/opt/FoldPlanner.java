@@ -7,23 +7,25 @@ import java.util.Map;
 
 import net.thisptr.jackson.jq.v2.core.ConstantFoldingOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
-import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 
 /**
  * Records fold metadata during lowering and immutably rewrites expressions from the top down afterwards.
  *
- * <p>Function arguments form their own regions because they must be finalized before
- * {@code Function.bind} can specialize from {@link ConstantExpression}.</p>
+ * <p>Nothing is folded while lowering. Type checking reads the tree the query was written as, so every
+ * fold happens in the single rewrite the root region runs once type checking is done. Function arguments
+ * still open a region of their own, but only for the barrier bookkeeping {@link #closeRegion} describes;
+ * the rewrite reaches them through their enclosing call, which rebinds itself so that a {@code Function}
+ * specializing on {@link ConstantExpression} still sees an argument that folded.</p>
  */
 public final class FoldPlanner {
-	private record Metadata(boolean foldable, int frameSize, int globalCount, int outputCounterCount) {
+	private record Metadata(boolean barrierFree, int frameSize, int globalCount, int outputCounterCount) {
 		Metadata merge(Metadata other) {
 			return new Metadata(
-					foldable && other.foldable,
+					barrierFree && other.barrierFree,
 					Math.max(frameSize, other.frameSize),
 					Math.max(globalCount, other.globalCount),
 					Math.max(outputCounterCount, other.outputCounterCount));
@@ -42,8 +44,8 @@ public final class FoldPlanner {
 	// propagation to enclosing nodes needs no per-node bookkeeping -- see beginNode/endNode.
 	private int barriers;
 
-	private final Map<Expression<StackFrame, ?>, Metadata> metadataByExpression = new IdentityHashMap<>();
-	private final Map<Expression<StackFrame, ?>, Expression<StackFrame, ?>> optimizedByExpression = new IdentityHashMap<>();
+	private final Map<AnalyzedExpression<?>, Metadata> metadataByExpression = new IdentityHashMap<>();
+	private final Map<AnalyzedExpression<?>, AnalyzedExpression<?>> optimizedByExpression = new IdentityHashMap<>();
 
 	public FoldPlanner(ConstantFoldingOptions options) {
 		this.folder = new ConstantFolder(options);
@@ -61,7 +63,15 @@ public final class FoldPlanner {
 		regionBarriers.push(barriers);
 	}
 
-	public void cancelRegion() {
+	/**
+	 * Closes the innermost region without rewriting it, undoing the barriers it installed.
+	 * <p>
+	 * A region's own barriers are undone so that one inside a function argument does not make the enclosing
+	 * call unfoldable: the argument is a complete expression, folding the call re-evaluates it in place, and
+	 * nothing outside it can observe what its barrier installed. This is also the unwinding path when
+	 * lowering a region throws.
+	 */
+	public void closeRegion() {
 		barriers = regionBarriers.pop();
 	}
 
@@ -94,59 +104,69 @@ public final class FoldPlanner {
 	 * @param <N> the JSON node type
 	 * @return {@code expression}, unchanged
 	 */
-	public <N> Expression<StackFrame, N> endNode(int mark, Expression<StackFrame, N> expression, int frameSize, int globalCount, int outputCounterCount) {
-		boolean foldable = mark == barriers
-				&& !(expression instanceof ConstantExpression<?, ?>)
-				&& !expression.dependsOnInput()
-				&& !expression.dependsOnExternalState()
-				&& !FreeVariables.dependsOnVariables(expression);
-		Metadata metadata = new Metadata(foldable, frameSize, globalCount, outputCounterCount);
+	public <N> AnalyzedExpression<N> endNode(int mark, AnalyzedExpression<N> expression, int frameSize, int globalCount, int outputCounterCount) {
+		Metadata metadata = new Metadata(mark == barriers, frameSize, globalCount, outputCounterCount);
 		metadataByExpression.merge(expression, metadata, Metadata::merge);
 		return expression;
 	}
 
 	/**
 	 * Closes the innermost region and rewrites it, folding maximal constant subtrees.
+	 * <p>
+	 * Only the root region is finished this way, and only once type checking has run, so no fold can change
+	 * a type the checker inferred or hide a diagnostic it would have reported.
 	 *
 	 * @param env the environment the query is compiling against
 	 * @param root the expression the region lowered to
 	 * @param <N> the JSON node type
 	 * @return the rewritten expression
 	 */
-	public <N> Expression<StackFrame, N> finishRegion(Environment<N> env, Expression<StackFrame, N> root) {
-		Expression<StackFrame, N> optimized = optimize(env, root);
-		barriers = regionBarriers.pop();
+	public <N> AnalyzedExpression<N> finishRegion(Environment<N> env, AnalyzedExpression<N> root) {
+		AnalyzedExpression<N> optimized = optimizeExpression(env, root);
+		closeRegion();
 		return optimized;
 	}
 
-	private <N> Expression<StackFrame, N> optimize(Environment<N> env, Expression<StackFrame, N> expression) {
-		Expression<StackFrame, ?> cached = optimizedByExpression.get(expression);
+	public <N> AnalyzedExpression<N> optimizeExpression(Environment<N> env, AnalyzedExpression<N> expression) {
+		AnalyzedExpression<?> cached = optimizedByExpression.get(expression);
 		if (cached != null) {
 			@SuppressWarnings("unchecked")
-			Expression<StackFrame, N> typed = (Expression<StackFrame, N>) cached;
+			AnalyzedExpression<N> typed = (AnalyzedExpression<N>) cached;
 			return typed;
 		}
 
 		Metadata metadata = metadataByExpression.get(expression);
-		if (metadata != null && metadata.foldable()) {
-			Expression<StackFrame, N> folded = folder.fold(env, expression, metadata.frameSize(), metadata.globalCount(), metadata.outputCounterCount());
+		if (metadata != null && metadata.barrierFree()
+				&& !(expression instanceof ConstantExpression<?, ?>)
+				&& !expression.dependsOnInput()
+				&& !expression.dependsOnExternalState()
+				&& !FreeVariables.dependsOnVariables(expression)) {
+			AnalyzedExpression<N> folded = folder.fold(env, expression, metadata.frameSize(), metadata.globalCount(), metadata.outputCounterCount());
 			if (folded != expression) {
 				optimizedByExpression.put(expression, folded);
 				return folded;
 			}
 		}
 
-		Expression<StackFrame, N> optimized = rewriteChildren(env, expression);
+		AnalyzedExpression<N> optimized = rewriteChildren(env, expression);
 		optimizedByExpression.put(expression, optimized);
 		return optimized;
 	}
 
-	private <N> Expression<StackFrame, N> rewriteChildren(Environment<N> env, Expression<StackFrame, N> expression) {
+	public void transferMetadata(AnalyzedExpression<?> source, AnalyzedExpression<?> replacement) {
+		if (source == replacement)
+			return;
+		Metadata metadata = metadataByExpression.get(source);
+		if (metadata != null)
+			metadataByExpression.merge(replacement, metadata, Metadata::merge);
+	}
+
+	private <N> AnalyzedExpression<N> rewriteChildren(Environment<N> env, AnalyzedExpression<N> expression) {
 		if (!(expression instanceof RewritableExpression<?> rewritableExpr))
 			return expression;
 		// The instanceof check guarantees that this expression's JSON node type matches the current tree.
 		@SuppressWarnings("unchecked")
 		RewritableExpression<N> rewritable = (RewritableExpression<N>) rewritableExpr;
-		return rewritable.rewriteChildren(child -> optimize(env, child));
+		return rewritable.rewriteChildren(child -> optimizeExpression(env, child));
 	}
 }

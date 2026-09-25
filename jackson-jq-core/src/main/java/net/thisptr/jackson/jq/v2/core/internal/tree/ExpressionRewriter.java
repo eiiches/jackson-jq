@@ -5,8 +5,7 @@ import java.util.List;
 
 import com.google.errorprone.annotations.Var;
 
-import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
-import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 
 /**
  * Rewrites one expression subtree.
@@ -15,13 +14,13 @@ import net.thisptr.jackson.jq.v2.spi.Expression;
  */
 @FunctionalInterface
 public interface ExpressionRewriter<JsonNode> {
-	Expression<StackFrame, JsonNode> rewrite(Expression<StackFrame, JsonNode> expression);
+	AnalyzedExpression<JsonNode> rewrite(AnalyzedExpression<JsonNode> expression);
 
-	static <N> List<Expression<StackFrame, N>> rewriteAll(List<Expression<StackFrame, N>> expressions, ExpressionRewriter<N> rewriter) {
-		@Var List<Expression<StackFrame, N>> rewritten = null;
+	static <N> List<AnalyzedExpression<N>> rewriteAll(List<AnalyzedExpression<N>> expressions, ExpressionRewriter<N> rewriter) {
+		@Var List<AnalyzedExpression<N>> rewritten = null;
 		for (int i = 0; i < expressions.size(); i++) {
-			Expression<StackFrame, N> expression = expressions.get(i);
-			Expression<StackFrame, N> replacement = rewriter.rewrite(expression);
+			AnalyzedExpression<N> expression = expressions.get(i);
+			AnalyzedExpression<N> replacement = rewriter.rewrite(expression);
 			if (rewritten == null && replacement != expression)
 				rewritten = new ArrayList<>(expressions);
 			if (rewritten != null)

@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 /**
@@ -37,17 +38,42 @@ public interface Environment<JsonNode> {
 	 */
 	List<FunctionLoader> getFunctionLoaders();
 
-	Set<String> getDeclaredVariables();
+	/**
+	 * The variables this environment declares without a value, each with the type it was declared at.
+	 */
+	Map<String, Type> getDeclaredVariables();
 
 	Set<FunctionSignature> getDeclaredFunctions();
 
-	Map<String, Supplier<JsonNode>> getVariables();
+	Map<String, Variable<JsonNode>> getVariables();
 
 	Map<FunctionSignature, Function> getFunctions();
 
 	Map<FunctionSignature, JqFunction> getJqFunctions();
 
-	Map<String, JsonNode> getConstants();
+	Map<String, Constant<JsonNode>> getConstants();
+
+	interface Constant<JsonNode> {
+		/**
+		 * The type this constant was registered at, which is read off {@link #getConstantValue} unless
+		 * the registration named one. It is what compile-time type checking is told; nothing validates
+		 * the value against it.
+		 */
+		Type getType();
+
+		JsonNode getConstantValue();
+	}
+
+	interface Variable<JsonNode> {
+		/**
+		 * The type this variable was registered at, {@link Type#ANY} unless the registration named one.
+		 * It is what compile-time type checking is told; nothing validates what the supplier returns
+		 * against it.
+		 */
+		Type getType();
+
+		Supplier<JsonNode> getValue();
+	}
 
 	Map<String, Module> getImportedModules();
 

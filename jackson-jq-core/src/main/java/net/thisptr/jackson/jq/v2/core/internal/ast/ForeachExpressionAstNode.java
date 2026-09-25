@@ -4,7 +4,6 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-
 public class ForeachExpressionAstNode extends AbstractAstNode {
 	private final AstNode iterExpr;
 	private final AstNode updateExpr;

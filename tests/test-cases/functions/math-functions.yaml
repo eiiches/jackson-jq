@@ -2,49 +2,130 @@
   in: [10, 100, 1000]
   out:
   - [1, 2, 3]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: '[INT,INT,INT]'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'map(log2)'
   in: [2, 4, 8]
   out:
   - [1, 2, 3]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: '[INT,INT,INT]'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'map(log / (2|log))'
   in: [2, 4, 8]
   out:
   - [1, 2, 3]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: '[INT,INT,INT]'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'def log1p_: 1 + . | log; map(log1p_ == log1p)'
   in: [4, 8, 16]
   out:
   - [true, true, true]
+  types:
+  - input: 'ANY'
+    output: '[*:BOOLEAN]'
+  - input: '[INT,INT,INT]'
+    output: '[*:BOOLEAN]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'log'
   in: 10
   out:
   - 2.302585092994046
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'INT'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'exp'
   in: 2
   out:
   - 7.38905609893065
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'INT'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'expm1'
   in: 2
   out:
   - 6.38905609893065
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'INT'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'map(round)'
   in: [2.49, 2.5, -2.49, -2.5]
   out:
   - [2, 3, -2, -3]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: '[FLOAT,FLOAT,FLOAT,FLOAT]'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'map(exp10)'
   in: [-2, 2, 5.5]
   out:
   - [0.01, 100, 316227.76601683797]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: '[INT,INT,FLOAT]'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
   numerical_errors: 1.0e-09
 
@@ -52,14 +133,41 @@
   in: [-2, 2, 2.1]
   out:
   - [0.25, 4, 4.2870938501451725]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: '[INT,INT,FLOAT]'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '[0, 1, nan, infinite | ., -. | normals]'
   out:
   - [1, -1]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[0, 2.2250738585072011e-308, 2.2250738585072014e-308, 1, nan, infinite | ., -. | normals]'
   out:
   - [1, -1]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, 1.7.1)'
   failing: true
 
@@ -67,9 +175,27 @@
   in: [2.1, 2.7, -2.1, -2.7, 0, 42]
   out:
   - [2, 2, -3, -3, 0, 42]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: '[FLOAT,FLOAT,FLOAT,FLOAT,INT,INT]'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'map(ceil)'
   in: [2.1, 2.7, -2.1, -2.7, 0, 42]
   out:
   - [3, 3, -2, -2, 0, 42]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: '[FLOAT,FLOAT,FLOAT,FLOAT,INT,INT]'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'

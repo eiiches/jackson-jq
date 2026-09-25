@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.v2.core.internal.builtins.filters;
 
-
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 
 @FunctionRegistration(name = "@tsv", nargs = 0)

@@ -4,10 +4,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -24,8 +24,24 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
  *
  * @param <JsonNode> the JSON node type
  */
-public final class FoldedConstantExpression<JsonNode> implements ConstantExpression<StackFrame, JsonNode>, FreeVariables {
-	private final Expression<StackFrame, JsonNode> delegate;
+public final class FoldedConstantExpression<JsonNode> implements ConstantExpression<StackFrame, JsonNode>, AnalyzedExpression<JsonNode>, FreeVariables {
+	@Override
+	public net.thisptr.jackson.jq.v2.spi.Cardinality getCardinality() {
+		return values.size() == 0 ? net.thisptr.jackson.jq.v2.spi.Cardinality.ZERO
+				: values.size() == 1 ? net.thisptr.jackson.jq.v2.spi.Cardinality.ONE : net.thisptr.jackson.jq.v2.spi.Cardinality.UNKNOWN;
+	}
+
+	@Override
+	public boolean dependsOnInput() {
+		return false;
+	}
+
+	@Override
+	public boolean dependsOnExternalState() {
+		return false;
+	}
+
+	private final AnalyzedExpression<JsonNode> delegate;
 	private final List<JsonNode> values;
 
 	/**
@@ -33,7 +49,7 @@ public final class FoldedConstantExpression<JsonNode> implements ConstantExpress
 	 * @param values the values {@code delegate} produced, in emission order; taken as-is, so the caller must
 	 * pass a list nothing else will mutate
 	 */
-	public FoldedConstantExpression(Expression<StackFrame, JsonNode> delegate, List<JsonNode> values) {
+	public FoldedConstantExpression(AnalyzedExpression<JsonNode> delegate, List<JsonNode> values) {
 		this.delegate = delegate;
 		this.values = Collections.unmodifiableList(values);
 	}

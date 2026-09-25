@@ -23,7 +23,7 @@ public final class SlotResolver {
 	 * The slot the occurrence of {@code name} at the current traversal position must write, or -1 if
 	 * an earlier position already binds it. jq keeps the first occurrence of a duplicated pattern
 	 * variable -- {@code . as [$x, $x] | $x} is the second array element because {@link
-	 * net.thisptr.jackson.jq.v2.core.internal.tree.matcher.matchers.ArrayMatcher} traverses back to
+	 * net.thisptr.jackson.jq.v2.core.internal.tree.matcher.ArrayMatcher} traverses back to
 	 * front -- so every later occurrence is a dead write and is suppressed here rather than at
 	 * runtime. Only the write is suppressed: the occurrence still traverses, and still branches if
 	 * its key expression produces several keys.

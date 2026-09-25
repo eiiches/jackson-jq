@@ -1,7 +1,10 @@
 load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
 
 jjq_java_test_suite(
-    srcs = ["GzipModuleTest.java"],
+    srcs = [
+        "GzipModuleTest.java",
+        "GzipTypeSchemeTest.java",
+    ],
     release = 17,
     visibility = ["//jackson-jq-ext-module-gzip:__subpackages__"],
     deps = [

@@ -2,7 +2,6 @@ package net.thisptr.jackson.jq.v2.core.internal.ast;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-
 public class BracketExtractFieldAccessAstNode extends AbstractFieldAccessAstNode {
 	public BracketExtractFieldAccessAstNode(SourceLocation location, AstNode src, boolean permissive) {
 		super(location, src, permissive);

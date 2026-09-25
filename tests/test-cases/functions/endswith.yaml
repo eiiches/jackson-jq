@@ -1,18 +1,54 @@
 - q: 'endswith(empty)'
   out: []
+  types:
+  - input: 'ANY'
+    output: 'BOOLEAN'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ZERO
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'endswith(.)'
   in: "foo"
   out:
   - true
+  types:
+  - input: 'ANY'
+    output: 'BOOLEAN'
+  - input: 'STRING'
+    output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try endswith("foo") catch .'
   out:
   - "endswith() requires string inputs"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try endswith(1) catch .'
   in: "foo"
   out:
   - "endswith() requires string inputs"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false

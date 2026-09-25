@@ -4,6 +4,7 @@ import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
@@ -11,15 +12,14 @@ import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathOperations;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
-	public final Expression<StackFrame, JsonNode> key;
-	public final @Nullable Expression<StackFrame, JsonNode> value;
+	public final AnalyzedExpression<JsonNode> key;
+	public final @Nullable AnalyzedExpression<JsonNode> value;
 	private final Version version;
 	private final int keyOutputIndex;
 	private final int valueOutputIndex;
@@ -29,7 +29,7 @@ public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<J
 		return value == null ? key.getCardinality() : CardinalityUtils.multiply(key.getCardinality(), value.getCardinality());
 	}
 
-	public StringKeyFieldConstruction(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> key, @Nullable Expression<StackFrame, JsonNode> value, Version version, int keyOutputIndex, int valueOutputIndex) {
+	public StringKeyFieldConstruction(JsonProvider<JsonNode> jsonProvider, AnalyzedExpression<JsonNode> key, @Nullable AnalyzedExpression<JsonNode> value, Version version, int keyOutputIndex, int valueOutputIndex) {
 		this.jsonProvider = jsonProvider;
 		this.key = key;
 		this.value = value;
@@ -61,8 +61,8 @@ public class StringKeyFieldConstruction<JsonNode> implements FieldConstruction<J
 
 	@Override
 	public FieldConstruction<JsonNode> rewriteExpressions(ExpressionRewriter<JsonNode> rewriter) {
-		Expression<StackFrame, JsonNode> rewrittenKey = rewriter.rewrite(key);
-		Expression<StackFrame, JsonNode> rewrittenValue = value != null ? rewriter.rewrite(value) : null;
+		AnalyzedExpression<JsonNode> rewrittenKey = rewriter.rewrite(key);
+		AnalyzedExpression<JsonNode> rewrittenValue = value != null ? rewriter.rewrite(value) : null;
 		return rewrittenKey == key && rewrittenValue == value
 				? this
 				: new StringKeyFieldConstruction<>(jsonProvider, rewrittenKey, rewrittenValue, version, keyOutputIndex, valueOutputIndex);

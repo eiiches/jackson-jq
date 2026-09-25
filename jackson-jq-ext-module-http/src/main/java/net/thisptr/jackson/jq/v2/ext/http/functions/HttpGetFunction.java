@@ -32,6 +32,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
@@ -40,10 +41,66 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
+import net.thisptr.jackson.jq.v2.spi.type.BinaryType;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
+import net.thisptr.jackson.jq.v2.spi.type.NumericType;
+import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.TypeVariable;
+import net.thisptr.jackson.jq.v2.spi.type.UndefinedType;
+import net.thisptr.jackson.jq.v2.spi.type.UnionType;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class HttpGetFunction implements Function {
 	private static final int DEFAULT_TIMEOUT_MILLIS = 30_000;
 	private static final Pattern CHARSET_PARAMETER = Pattern.compile("(?:^|;)\\s*charset\\s*=\\s*(?:\"([^\"]*)\"|([^;\\s]*))", Pattern.CASE_INSENSITIVE);
+
+	private static final TypeVariable INPUT = TypeVariable.of("Input");
+	private static final Type HEADER = ObjectType.of("name", StringType.getInstance(), "value", StringType.getInstance());
+	/**
+	 * {@code body} is the parsed JSON, the decoded text, or null, chosen by the response content type.
+	 */
+	private static final Type RESPONSE = ObjectType.of(
+			"status", NumericType.of(NumberKind.INT),
+			"headers", ArrayType.of(HEADER),
+			"body", AnyType.getInstance(),
+			"raw_body", BinaryType.getInstance());
+	private static final Type OPTIONS = ObjectType.of(
+			"timeout", UnionType.of(NumericType.getInstance(), UndefinedType.getInstance()),
+			"expected_status", UnionType.of(NumericType.getInstance(), ArrayType.of(NumericType.getInstance()), UndefinedType.getInstance()));
+	/**
+	 * Indexed by argument count; index 0 is unused because {@code get/0} does not exist. The input is
+	 * only ever passed on to the arguments, so its type flows through untouched.
+	 */
+	private static final List<List<TypeScheme<FunctionType>>> TYPE_SCHEMES = List.of(
+			List.of(),
+			List.of(TypeScheme.of(Map.of(INPUT, AnyType.getInstance()), FunctionType.of(INPUT, RESPONSE, FilterType.of(INPUT, StringType.getInstance())))),
+			List.of(TypeScheme.of(Map.of(INPUT, AnyType.getInstance()), FunctionType.of(INPUT, RESPONSE, FilterType.of(INPUT, StringType.getInstance()), FilterType.of(INPUT, OPTIONS)))));
+
+	@Override
+	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
+		if (totalArguments < 1 || totalArguments > 2)
+			return List.of();
+		return TYPE_SCHEMES.get(totalArguments);
+	}
+
+	@Override
+	public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+		boolean input = arguments.stream().anyMatch(ExpressionProperties::dependsOnInput);
+		Cardinality first = arguments.get(0).cardinality();
+		if (arguments.size() == 1 || first == Cardinality.ZERO)
+			return new ExpressionProperties(first, input, true);
+		Cardinality second = arguments.get(1).cardinality();
+		Cardinality cardinality = second == Cardinality.ZERO ? Cardinality.ZERO
+				: first == Cardinality.ONE && second == Cardinality.ONE ? Cardinality.ONE : Cardinality.UNKNOWN;
+		return new ExpressionProperties(cardinality, input, true);
+	}
 
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindContext, List<Expression<Context, JsonNode>> arguments) {
@@ -52,26 +109,7 @@ public class HttpGetFunction implements Function {
 		Expression<Context, JsonNode> optionsExpression = arguments.size() == 2 ? arguments.get(1) : null;
 		boolean binarySupported = supportsBinary(jsonProvider);
 		return new Expression<>() {
-			@Override
-			public Cardinality getCardinality() {
-				Cardinality urlCardinality = urlExpression.getCardinality();
-				if (optionsExpression == null || urlCardinality == Cardinality.ZERO)
-					return urlCardinality;
-				Cardinality optionsCardinality = optionsExpression.getCardinality();
-				if (optionsCardinality == Cardinality.ZERO)
-					return Cardinality.ZERO;
-				return urlCardinality == Cardinality.ONE && optionsCardinality == Cardinality.ONE ? Cardinality.ONE : Cardinality.UNKNOWN;
-			}
 
-			@Override
-			public boolean dependsOnInput() {
-				return urlExpression.dependsOnInput() || (optionsExpression != null && optionsExpression.dependsOnInput());
-			}
-
-			@Override
-			public boolean dependsOnExternalState() {
-				return true;
-			}
 
 			@Override
 			public void apply(Context context, JsonNode input, Path<JsonNode> inputPath, Output<JsonNode> output) throws JsonQueryException {

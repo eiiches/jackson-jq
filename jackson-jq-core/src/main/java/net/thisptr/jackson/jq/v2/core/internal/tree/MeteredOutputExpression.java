@@ -1,9 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.spi.ConstantExpression;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -39,17 +39,17 @@ public class MeteredOutputExpression<JsonNode> extends AbstractDelegatingExpress
 	 * @param <JsonNode> the JSON node type
 	 * @return the metered expression
 	 */
-	public static <JsonNode> Expression<StackFrame, JsonNode> of(Expression<StackFrame, JsonNode> inner, int index) {
+	public static <JsonNode> AnalyzedExpression<JsonNode> of(AnalyzedExpression<JsonNode> inner, int index) {
 		return inner instanceof ConstantExpression ? new MeteredConstantOutputExpression<>(inner, index) : new MeteredOutputExpression<>(inner, index);
 	}
 
-	MeteredOutputExpression(Expression<StackFrame, JsonNode> inner, int index) {
+	MeteredOutputExpression(AnalyzedExpression<JsonNode> inner, int index) {
 		super(inner);
 		this.index = index;
 	}
 
 	@Override
-	protected Expression<StackFrame, JsonNode> recreate(Expression<StackFrame, JsonNode> rewrittenInner) {
+	protected AnalyzedExpression<JsonNode> recreate(AnalyzedExpression<JsonNode> rewrittenInner) {
 		return of(rewrittenInner, index);
 	}
 

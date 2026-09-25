@@ -3,12 +3,12 @@ package net.thisptr.jackson.jq.v2.core.internal.compile;
 import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
-import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.type.FilterType;
 
 /**
  * Compiles user-facing jq queries and adapts the compiler's root expression to {@link JsonQuery}.
@@ -20,10 +20,10 @@ public final class QueryCompiler {
 	public static <JsonNode> JsonQuery<JsonNode> compile(Environment<JsonNode> env, String expression, CompileOptions options) throws JsonQueryException {
 		try {
 			AstNode parsedAst = AstParser.parse(expression, env.getJqVersion());
-			Expression<StackFrame, JsonNode> compiledExpr = Compiler.compile(env, options, ModuleScope.root(env), parsedAst);
+			AnalyzedExpression<JsonNode> compiledExpr = Compiler.compile(env, options, ModuleScope.root(env), parsedAst);
 			if (!(compiledExpr instanceof RootExpression<JsonNode> rootExpr))
 				throw new IllegalStateException("Compiler did not produce a root expression");
-			return new CompiledJsonQuery<>(rootExpr, RuntimeLimitsImpl.UNLIMITED);
+			return new CompiledJsonQuery<>(rootExpr, RuntimeLimitsImpl.UNLIMITED, FilterType.of(options.getInputType(), rootExpr.outputType()));
 		} catch (JsonQueryException e) {
 			throw e;
 		} catch (StackOverflowError e) {

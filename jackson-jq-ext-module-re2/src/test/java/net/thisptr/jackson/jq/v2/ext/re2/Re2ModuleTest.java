@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.v2.ext.re2;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -68,7 +67,7 @@ public class Re2ModuleTest {
 	@Test
 	public void preservesReplacementBranchesAndRuntimeLimits() {
 		assertThat(run("\"aa\" | re::gsub(\"a\"; \"x\", \"y\")")).extracting(JSON_PROVIDER::getString).containsExactly("xx", "yx", "xy", "yy");
-		assertThatThrownBy(() -> run("\"aaaa\" | re::gsub(\"a\"; \"xxxxxxxxxx\")", RuntimeOptions.newBuilder().setMaxStringLength(39).build()))
+		assertThatThrownBy(() -> run("re::gsub(\"a\"; \"xxxxxxxxxx\")", JSON_PROVIDER.createString("aaaa"), RuntimeOptions.newBuilder().setMaxStringLength(39).build()))
 				.isInstanceOf(JsonQueryException.class)
 				.hasMessageContaining("maximum string length of 39");
 	}
@@ -84,15 +83,21 @@ public class Re2ModuleTest {
 	}
 
 	private static List<JsonNode> run(String expression, RuntimeOptions options) throws JsonQueryException {
-		return runQuery(IMPORT + expression, options);
+		return run(expression, JSON_PROVIDER.createNull(), options);
+	}
+
+	private static List<JsonNode> run(String expression, JsonNode input, RuntimeOptions options) throws JsonQueryException {
+		return runQuery(IMPORT + expression, input, options);
 	}
 
 	private static List<JsonNode> runQuery(String expression, RuntimeOptions options) throws JsonQueryException {
+		return runQuery(expression, JSON_PROVIDER.createNull(), options);
+	}
+
+	private static List<JsonNode> runQuery(String expression, JsonNode input, RuntimeOptions options) throws JsonQueryException {
 		Environment<JsonNode> environment = environment();
 		JsonQuery<JsonNode> query = environment.compile(expression).withRuntimeOptions(options);
-		List<JsonNode> results = new ArrayList<>();
-		query.apply(JSON_PROVIDER.createNull(), results::add);
-		return results;
+		return query.apply(input);
 	}
 
 	private static Environment<JsonNode> environment() {

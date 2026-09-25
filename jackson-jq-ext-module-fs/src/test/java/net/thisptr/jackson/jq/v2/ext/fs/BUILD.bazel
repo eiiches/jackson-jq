@@ -1,7 +1,10 @@
 load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
 
 jjq_java_test_suite(
-    srcs = ["FsModuleTest.java"],
+    srcs = [
+        "FsModuleTest.java",
+        "FsTypeSchemeTest.java",
+    ],
     release = 17,
     visibility = ["//jackson-jq-ext-module-fs:__subpackages__"],
     deps = [

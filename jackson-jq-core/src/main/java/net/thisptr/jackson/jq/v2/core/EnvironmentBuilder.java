@@ -11,8 +11,11 @@ import java.util.function.Supplier;
 
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
 import net.thisptr.jackson.jq.v2.core.function.loaders.ClassPathFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.internal.env.ConstantImpl;
 import net.thisptr.jackson.jq.v2.core.internal.env.EnvironmentImpl;
+import net.thisptr.jackson.jq.v2.core.internal.env.VariableImpl;
 import net.thisptr.jackson.jq.v2.core.internal.function.loaders.CachedFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.internal.typecheck.ConstantTypes;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -20,6 +23,8 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
 
@@ -34,12 +39,12 @@ public final class EnvironmentBuilder<JsonNode> {
 	private final List<ModuleLoader<JsonNode>> moduleLoaders = new ArrayList<>();
 	private final List<FunctionLoader> functionLoaders = new ArrayList<>();
 
-	private final Set<String> declaredVariables = new HashSet<>();
+	private final Map<String, Type> declaredVariables = new HashMap<>();
 	private final Set<FunctionSignature> declaredFunctions = new HashSet<>();
-	private final Map<String, Supplier<JsonNode>> variables = new HashMap<>();
+	private final Map<String, Environment.Variable<JsonNode>> variables = new HashMap<>();
 	private final Map<FunctionSignature, Function> functions = new HashMap<>();
 	private final Map<FunctionSignature, JqFunction> jqFunctions = new HashMap<>();
-	private final Map<String, JsonNode> constants = new HashMap<>();
+	private final Map<String, Environment.Constant<JsonNode>> constants = new HashMap<>();
 	private final Map<String, Module> importedModules = new HashMap<>();
 
 	private EnvironmentBuilder(JsonProvider<JsonNode> jsonProvider, Version jqVersion) {
@@ -137,11 +142,25 @@ public final class EnvironmentBuilder<JsonNode> {
 	/**
 	 * Declares {@code name} as a valid global variable with no value -- every query that references it
 	 * must be supplied a value via {@link RuntimeBindings} on every {@code apply()} call, or that call
-	 * fails immediately.
+	 * fails immediately. Its type is {@link AnyType}; to publish a narrower one, use
+	 * {@link #declareVariable(String, Type)}.
 	 */
 	public EnvironmentBuilder<JsonNode> declareVariable(String name) {
+		return declareVariable(name, AnyType.getInstance());
+	}
+
+	/**
+	 * Declares {@code name} as a valid global variable of type {@code type} and with no value, as
+	 * {@link #declareVariable(String)} does.
+	 * <p>
+	 * {@code type} is what compile-time type checking is told this variable holds; see
+	 * {@link CompileOptions.Builder#setTypeCheckMode}. Nothing validates a {@link RuntimeBindings} value
+	 * against it, and nothing about evaluation depends on it -- a type narrower than the values actually
+	 * supplied costs diagnostics that do not hold, never wrong results.
+	 */
+	public EnvironmentBuilder<JsonNode> declareVariable(String name, Type type) {
 		requireUnusedVariableName(name);
-		declaredVariables.add(name);
+		declaredVariables.put(name, Objects.requireNonNull(type, "type"));
 		return this;
 	}
 
@@ -159,20 +178,53 @@ public final class EnvironmentBuilder<JsonNode> {
 	/**
 	 * Defines {@code name} with a fixed {@code supplier}, evaluated on every reference. This value is
 	 * baked into the compiled query and can never be overridden by {@link RuntimeBindings}.
+	 * <p>
+	 * A supplier is free to answer differently on every read, so nothing can be known about what it
+	 * returns and the variable's type is {@link AnyType}. To publish a narrower one, use
+	 * {@link #defineVariable(String, Type, Supplier)}.
 	 */
 	public EnvironmentBuilder<JsonNode> defineVariable(String name, Supplier<JsonNode> supplier) {
+		return defineVariable(name, AnyType.getInstance(), supplier);
+	}
+
+	/**
+	 * Defines {@code name} as {@link #defineVariable(String, Supplier)} does, with {@code type} as the
+	 * type compile-time type checking is told the supplier returns. As with
+	 * {@link #declareVariable(String, Type)}, nothing validates what the supplier actually returns
+	 * against it.
+	 */
+	public EnvironmentBuilder<JsonNode> defineVariable(String name, Type type, Supplier<JsonNode> supplier) {
 		requireUnusedVariableName(name);
-		variables.put(Objects.requireNonNull(name, "name"), Objects.requireNonNull(supplier, "supplier"));
+		Objects.requireNonNull(type, "type");
+		Objects.requireNonNull(supplier, "supplier");
+		variables.put(name, new VariableImpl<>(type, supplier));
 		return this;
 	}
 
 	/**
 	 * Defines {@code name} with a fixed {@code value}. Like {@link #defineVariable}, this can never be
 	 * overridden by {@link RuntimeBindings}.
+	 * <p>
+	 * The value is known, so its type is read off it: a constant object declares exactly the fields it
+	 * has, and a query reading one it does not have is told so. A value too large or too deeply nested to
+	 * describe contributes {@link AnyType} past that point. Pass a type explicitly with
+	 * {@link #defineConstant(String, Type, Object)} to say something else.
 	 */
 	public EnvironmentBuilder<JsonNode> defineConstant(String name, JsonNode value) {
+		Objects.requireNonNull(value, "value");
+		return defineConstant(name, ConstantTypes.of(jsonProvider, value), value);
+	}
+
+	/**
+	 * Defines {@code name} as {@link #defineConstant(String, Object)} does, with {@code type} in place of
+	 * the type that would be read off {@code value}. Nothing checks that {@code value} conforms to
+	 * {@code type}; the declaration is taken at its word, as with {@link #declareVariable(String, Type)}.
+	 */
+	public EnvironmentBuilder<JsonNode> defineConstant(String name, Type type, JsonNode value) {
 		requireUnusedVariableName(name);
-		constants.put(Objects.requireNonNull(name, "name"), Objects.requireNonNull(value, "value"));
+		Objects.requireNonNull(type, "type");
+		Objects.requireNonNull(value, "value");
+		constants.put(name, new ConstantImpl<>(type, value));
 		return this;
 	}
 
@@ -204,7 +256,7 @@ public final class EnvironmentBuilder<JsonNode> {
 
 	private void requireUnusedVariableName(String name) {
 		Objects.requireNonNull(name, "name");
-		if (declaredVariables.contains(name))
+		if (declaredVariables.containsKey(name))
 			throw new IllegalArgumentException("Variable $" + name + " was already declared via declareVariable()");
 		if (variables.containsKey(name))
 			throw new IllegalArgumentException("Variable $" + name + " was already defined via defineVariable()");

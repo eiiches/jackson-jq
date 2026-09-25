@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.Set;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
@@ -10,7 +11,6 @@ import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -19,7 +19,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class NegativeExpression<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
-	private final Expression<StackFrame, JsonNode> value;
+	private final AnalyzedExpression<JsonNode> value;
 	private final Version version;
 	private final int valueOutputIndex;
 
@@ -28,7 +28,7 @@ public class NegativeExpression<JsonNode> implements RewritableExpression<JsonNo
 		return value.getCardinality();
 	}
 
-	public NegativeExpression(JsonProvider<JsonNode> jsonProvider, Expression<StackFrame, JsonNode> value, Version version, int valueOutputIndex) {
+	public NegativeExpression(JsonProvider<JsonNode> jsonProvider, AnalyzedExpression<JsonNode> value, Version version, int valueOutputIndex) {
 		this.jsonProvider = jsonProvider;
 		this.value = value;
 		this.version = version;
@@ -56,8 +56,8 @@ public class NegativeExpression<JsonNode> implements RewritableExpression<JsonNo
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(value);
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		AnalyzedExpression<JsonNode> rewritten = rewriter.rewrite(value);
 		return rewritten == value ? this : new NegativeExpression<>(jsonProvider, rewritten, version, valueOutputIndex);
 	}
 

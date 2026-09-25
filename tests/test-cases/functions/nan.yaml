@@ -5,6 +5,15 @@
   - true
   - false
   - true
+  types:
+  - input: 'ANY'
+    output: 'BOOLEAN'
+  - input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '0 == nan, 0 > nan, 0 < nan, nan > 0, nan < 0'
   out:
@@ -13,6 +22,15 @@
   - false
   - false
   - true
+  types:
+  - input: 'ANY'
+    output: 'BOOLEAN'
+  - input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '0 == nan, 0 >= nan, 0 <= nan, nan >= 0, nan <= 0'
   out:
@@ -21,3 +39,12 @@
   - false
   - false
   - true
+  types:
+  - input: 'ANY'
+    output: 'BOOLEAN'
+  - input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false

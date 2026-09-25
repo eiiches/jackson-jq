@@ -4,7 +4,6 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
 
-
 public class ArrayConstructionAstNode extends AbstractAstNode {
 	public final @Nullable AstNode q;
 

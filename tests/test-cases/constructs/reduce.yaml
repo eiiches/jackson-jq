@@ -1,3 +1,12 @@
 - q: 'try (reduce error("foo") as $i (null; $i)) catch .'
   out:
   - "foo"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false

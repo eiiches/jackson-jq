@@ -6,13 +6,13 @@ import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -21,7 +21,7 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class ArrayConstruction<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final JsonProvider<JsonNode> jsonProvider;
-	public final @Nullable Expression<StackFrame, JsonNode> q;
+	public final @Nullable AnalyzedExpression<JsonNode> q;
 	private final int qOutputIndex;
 	private final boolean dependsOnInput;
 	private final boolean dependsOnExternalState;
@@ -32,7 +32,7 @@ public class ArrayConstruction<JsonNode> implements RewritableExpression<JsonNod
 		this(jsonProvider, null, Memory.NO_OUTPUT_COUNTER);
 	}
 
-	public ArrayConstruction(JsonProvider<JsonNode> jsonProvider, @Nullable Expression<StackFrame, JsonNode> q, int qOutputIndex) {
+	public ArrayConstruction(JsonProvider<JsonNode> jsonProvider, @Nullable AnalyzedExpression<JsonNode> q, int qOutputIndex) {
 		this.jsonProvider = jsonProvider;
 		this.q = q;
 		this.qOutputIndex = qOutputIndex;
@@ -68,10 +68,10 @@ public class ArrayConstruction<JsonNode> implements RewritableExpression<JsonNod
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
 		if (q == null)
 			return this;
-		Expression<StackFrame, JsonNode> rewritten = rewriter.rewrite(q);
+		AnalyzedExpression<JsonNode> rewritten = rewriter.rewrite(q);
 		return rewritten == q ? this : new ArrayConstruction<>(jsonProvider, rewritten, qOutputIndex);
 	}
 

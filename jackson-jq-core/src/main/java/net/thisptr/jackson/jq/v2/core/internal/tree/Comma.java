@@ -3,11 +3,11 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 import java.util.List;
 import java.util.Set;
 
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
-import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
@@ -21,23 +21,23 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
  * stack frame per comma.
  */
 public class Comma<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
-	private final List<Expression<StackFrame, JsonNode>> operands;
+	private final List<AnalyzedExpression<JsonNode>> operands;
 	private final boolean dependsOnInput;
 	private final boolean dependsOnExternalState;
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
 
-	public Comma(List<Expression<StackFrame, JsonNode>> operands) {
+	public Comma(List<AnalyzedExpression<JsonNode>> operands) {
 		this.operands = operands;
-		this.dependsOnInput = operands.stream().anyMatch(Expression::dependsOnInput);
-		this.dependsOnExternalState = operands.stream().anyMatch(Expression::dependsOnExternalState);
+		this.dependsOnInput = operands.stream().anyMatch(AnalyzedExpression::dependsOnInput);
+		this.dependsOnExternalState = operands.stream().anyMatch(AnalyzedExpression::dependsOnExternalState);
 		this.freeLocalSlots = FreeVariables.unionAll(operands);
 		this.hasOpaqueVariableReference = FreeVariables.anyOpaqueIn(operands);
 	}
 
 	@Override
 	public Cardinality getCardinality() {
-		return CardinalityUtils.sum(operands, Expression::getCardinality);
+		return CardinalityUtils.sum(operands, AnalyzedExpression::getCardinality);
 	}
 
 	@Override
@@ -61,8 +61,8 @@ public class Comma<JsonNode> implements RewritableExpression<JsonNode>, FreeVari
 	}
 
 	@Override
-	public Expression<StackFrame, JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
-		List<Expression<StackFrame, JsonNode>> rewritten = ExpressionRewriter.rewriteAll(operands, rewriter);
+	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
+		List<AnalyzedExpression<JsonNode>> rewritten = ExpressionRewriter.rewriteAll(operands, rewriter);
 		return rewritten == operands ? this : new Comma<>(rewritten);
 	}
 
@@ -70,7 +70,7 @@ public class Comma<JsonNode> implements RewritableExpression<JsonNode>, FreeVari
 	// does -- so there is none of PipedQuery's path shielding here.
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
-		for (Expression<StackFrame, JsonNode> operand : operands) {
+		for (AnalyzedExpression<JsonNode> operand : operands) {
 			operand.apply(frame, in, path, output);
 		}
 	}
