@@ -111,6 +111,8 @@ final class VimQueryEditor {
 	private int previewSearchMatch = -1;
 	private int searchInputCursor;
 	private @Nullable String searchError;
+	private boolean awaitingReplace;
+	private int replaceCount = 1;
 	private boolean insertUndoCaptured;
 	private @Nullable String message;
 
@@ -484,6 +486,29 @@ final class VimQueryEditor {
 			}
 			return completeCharacterMotion(target);
 		}
+		if (awaitingReplace) {
+			if (key.hasCtrl() || key.hasAlt()) {
+				clearPending();
+				return Result.HANDLED;
+			}
+			if (key.isConfirm() || key.code() == KeyCode.ENTER) {
+				return completeReplace("\n");
+			}
+			if (key.code() == KeyCode.TAB) {
+				return completeReplace("\t");
+			}
+			String target = key.string();
+			if (target != null && !target.isEmpty()) {
+				if ("\r".equals(target) || "\n".equals(target)) {
+					return completeReplace("\n");
+				}
+				if (key.code() == KeyCode.CHAR || target.charAt(0) >= 32) {
+					return completeReplace(target);
+				}
+			}
+			clearPending();
+			return Result.HANDLED;
+		}
 		if ((pendingOperator != null || pendingG) && key.code() != KeyCode.CHAR) {
 			clearPending();
 			return Result.HANDLED;
@@ -560,6 +585,7 @@ final class VimQueryEditor {
 			case 'O' -> openLine(false);
 			case 'x' -> deleteCharacters(false, consumeCount());
 			case 'X' -> deleteCharacters(true, consumeCount());
+			case 'r' -> startReplace();
 			case 'D' -> deleteToLineEnd(false);
 			case 'C' -> deleteToLineEnd(true);
 			case 'p' -> paste(true, consumeCount());
@@ -1564,6 +1590,60 @@ final class VimQueryEditor {
 		return Result.CHANGED;
 	}
 
+	private Result startReplace() {
+		replaceCount = consumeCount();
+		awaitingReplace = true;
+		return Result.HANDLED;
+	}
+
+	private Result completeReplace(String replacement) {
+		int repetitions = replaceCount;
+		clearPending();
+
+		String line = state.getLine(state.cursorRow());
+		if (line.isEmpty() || state.cursorCol() >= line.length()) {
+			return Result.HANDLED;
+		}
+
+		TextAreaState temp = new TextAreaState(line);
+		temp.moveCursorToStart();
+		while (temp.cursorCol() < state.cursorCol()) {
+			temp.moveCursorRight();
+		}
+
+		int initialLength = temp.getLine(0).length();
+		for (int i = 0; i < repetitions; i++) {
+			if (temp.cursorCol() >= temp.getLine(0).length()) {
+				return Result.HANDLED;
+			}
+			temp.deleteForward();
+		}
+		int charactersDeletedLength = initialLength - temp.getLine(0).length();
+
+		Snapshot before = snapshot();
+		int currentRow = state.cursorRow();
+		int currentCol = state.cursorCol();
+		List<String> lines = lines();
+
+		if (replacement.equals("\n")) {
+			String beforeBreak = line.substring(0, currentCol);
+			String afterBreak = line.substring(currentCol + charactersDeletedLength);
+			lines.set(currentRow, beforeBreak);
+			lines.add(currentRow + 1, afterBreak);
+			pushUndo(before);
+			setTextAndPosition(String.join("\n", lines), currentRow + 1, 0);
+		} else {
+			String inserted = replacement.repeat(repetitions);
+			String newLine = line.substring(0, currentCol) + inserted + line.substring(currentCol + charactersDeletedLength);
+			lines.set(currentRow, newLine);
+			pushUndo(before);
+			int targetCol = currentCol + (repetitions - 1) * replacement.length();
+			setTextAndPosition(String.join("\n", lines), currentRow, targetCol);
+		}
+		normalizeNormalCursor();
+		return Result.CHANGED;
+	}
+
 	private Result deleteToLineEnd(boolean enterInsert) {
 		Snapshot before = snapshot();
 		String line = state.getLine(state.cursorRow());
@@ -1828,6 +1908,8 @@ final class VimQueryEditor {
 		operatorCount = 1;
 		pendingG = false;
 		awaitingCharacterMotion = null;
+		awaitingReplace = false;
+		replaceCount = 1;
 	}
 
 	private static boolean isEscape(KeyEvent key) {

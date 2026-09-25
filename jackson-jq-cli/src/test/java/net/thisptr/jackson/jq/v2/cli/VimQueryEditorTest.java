@@ -758,6 +758,171 @@ class VimQueryEditorTest {
 		assertThat(editor.statusText()).startsWith("/h");
 	}
 
+	@Test
+	void supportsSingleCharacterReplace() {
+		TextAreaState state = new TextAreaState("hello");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0lrx");
+		assertThat(state.text()).isEqualTo("hxllo");
+		assertThat(state.cursorRow()).isZero();
+		assertThat(state.cursorCol()).isEqualTo(1);
+	}
+
+	@Test
+	void supportsCountedReplace() {
+		TextAreaState state = new TextAreaState("hello world");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0ll3rx");
+		assertThat(state.text()).isEqualTo("hexxx world");
+		assertThat(state.cursorRow()).isZero();
+		assertThat(state.cursorCol()).isEqualTo(4);
+	}
+
+	@Test
+	void replacesWithNewline() {
+		TextAreaState state = new TextAreaState("hello world");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0ll");
+		key(editor, 'r');
+		editor.handleKey(KeyEvent.ofKey(KeyCode.ENTER));
+		assertThat(state.text()).isEqualTo("he\nlo world");
+		assertThat(state.cursorRow()).isEqualTo(1);
+		assertThat(state.cursorCol()).isZero();
+	}
+
+	@Test
+	void replacesCountWithSingleNewline() {
+		TextAreaState state = new TextAreaState("hello world");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0ll3r");
+		editor.handleKey(KeyEvent.ofKey(KeyCode.ENTER));
+		assertThat(state.text()).isEqualTo("he\n world");
+		assertThat(state.cursorRow()).isEqualTo(1);
+		assertThat(state.cursorCol()).isZero();
+	}
+
+	@Test
+	void replaceLastCharacterWithNewline() {
+		TextAreaState state = new TextAreaState("abc");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "$r");
+		editor.handleKey(KeyEvent.ofKey(KeyCode.ENTER));
+		assertThat(state.text()).isEqualTo("ab\n");
+		assertThat(state.cursorRow()).isEqualTo(1);
+		assertThat(state.cursorCol()).isZero();
+	}
+
+	@Test
+	void countedReplaceFailsWhenExceedingLine() {
+		TextAreaState state = new TextAreaState("abc");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "04rx");
+		assertThat(state.text()).isEqualTo("abc");
+		assertThat(state.cursorCol()).isZero();
+
+		text(editor, "0l3rx");
+		assertThat(state.text()).isEqualTo("abc");
+		assertThat(state.cursorCol()).isEqualTo(1);
+	}
+
+	@Test
+	void replaceOnEmptyLineDoesNothing() {
+		TextAreaState state = new TextAreaState("");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "rx");
+		assertThat(state.text()).isEmpty();
+	}
+
+	@Test
+	void replaceCanBeCancelled() {
+		TextAreaState state = new TextAreaState("hello");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0lr");
+		escape(editor);
+		assertThat(state.text()).isEqualTo("hello");
+		assertThat(state.cursorCol()).isEqualTo(1);
+
+		key(editor, 'r');
+		editor.handleKey(KeyEvent.ofKey(KeyCode.BACKSPACE));
+		assertThat(state.text()).isEqualTo("hello");
+
+		key(editor, 'r');
+		editor.handleKey(KeyEvent.ofChar('c', KeyModifiers.CTRL));
+		assertThat(state.text()).isEqualTo("hello");
+	}
+
+	@Test
+	void replacesWithDigitsAndSymbols() {
+		TextAreaState state = new TextAreaState("hello world");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0lr5");
+		assertThat(state.text()).isEqualTo("h5llo world");
+		assertThat(state.cursorCol()).isEqualTo(1);
+
+		text(editor, "l2r9");
+		assertThat(state.text()).isEqualTo("h599o world");
+		assertThat(state.cursorCol()).isEqualTo(3);
+
+		text(editor, "lr ");
+		assertThat(state.text()).isEqualTo("h599  world");
+		assertThat(state.cursorCol()).isEqualTo(4);
+
+		text(editor, "lr");
+		editor.handleKey(KeyEvent.ofKey(KeyCode.TAB));
+		assertThat(state.text()).isEqualTo("h599 \tworld");
+		assertThat(state.cursorCol()).isEqualTo(5);
+	}
+
+	@Test
+	void replacesUnicodeGraphemes() {
+		TextAreaState state = new TextAreaState("a👨‍👩‍👧‍👦b");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0lrx");
+		assertThat(state.text()).isEqualTo("axb");
+		assertThat(state.cursorCol()).isEqualTo(1);
+
+		text(editor, "0r");
+		editor.handleKey(KeyEvent.ofChar(0x1F600));
+		assertThat(state.text()).isEqualTo("😀xb");
+		assertThat(state.cursorCol()).isZero();
+	}
+
+	@Test
+	void undoRestoresReplacedTextInSingleStep() {
+		TextAreaState state = new TextAreaState("hello world");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0ll3rx");
+		assertThat(state.text()).isEqualTo("hexxx world");
+
+		key(editor, 'u');
+		assertThat(state.text()).isEqualTo("hello world");
+		assertThat(state.cursorRow()).isZero();
+		assertThat(state.cursorCol()).isEqualTo(2);
+	}
+
+	@Test
+	void replaceDoesNotAffectRegisters() {
+		TextAreaState state = new TextAreaState("abc");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0yyrx");
+		assertThat(state.text()).isEqualTo("xbc");
+
+		key(editor, 'p');
+		assertThat(state.text()).isEqualTo("xbc\nabc");
+	}
+
 	private static void text(VimQueryEditor editor, String text) {
 		for (int i = 0; i < text.length(); i++) {
 			key(editor, text.charAt(i));
