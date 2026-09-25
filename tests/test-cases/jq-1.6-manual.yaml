@@ -771,7 +771,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'path(.a[0].b)'
@@ -1139,7 +1139,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'any'
@@ -1154,7 +1154,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'any'
@@ -1169,7 +1169,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'all'
@@ -1184,7 +1184,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'all'
@@ -1199,7 +1199,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'all'
@@ -1214,7 +1214,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'flatten'
@@ -1229,7 +1229,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'flatten(1)'
@@ -1244,7 +1244,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'flatten'
@@ -1259,7 +1259,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'flatten'
@@ -1274,7 +1274,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'range(2;4)'
@@ -1883,7 +1883,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'combinations(2)'
@@ -1901,7 +1901,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[.[]|ltrimstr("foo")]'
@@ -2021,7 +2021,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]'
@@ -2036,7 +2036,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'recurse(.foo[])'
@@ -2054,7 +2054,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'recurse'
@@ -2072,7 +2072,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'recurse(. * .; . < 20)'
@@ -2089,7 +2089,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'walk(if type == "array" then sort else . end)'
@@ -2104,7 +2104,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'walk( if type == "object" then with_entries( .key |= sub( "^_+"; "") ) else . end )'
@@ -2119,7 +2119,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '$ENV.PAGER'
@@ -2721,7 +2721,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def addvalue(f): f as $x | map(. + $x); addvalue(.[0])'
@@ -2736,7 +2736,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'reduce .[] as $item (0; . + $item)'
@@ -2781,7 +2781,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[first(range(.)), last(range(.)), nth(./2; range(.))]'
@@ -2796,7 +2796,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[range(.)]|[first, last, nth(5)]'
@@ -2844,7 +2844,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def while(cond; update): def _while: if cond then ., (update | _while) else empty end; _while; [while(.<100; .*2)]'
@@ -2859,7 +2859,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])]'

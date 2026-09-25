@@ -10,7 +10,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'
   comment: 'jq rebuilds the object from keys_unsorted, so walk/1 keeps the input field order instead of sorting it.'
 
@@ -26,7 +26,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'walk(if type == "object" then with_entries(.value += 1) else . end)'
@@ -41,7 +41,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '[walk(.) | keys_unsorted]'
@@ -56,7 +56,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'walk(if type == "array" then sort else . end)'
@@ -71,7 +71,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'walk(.)'
@@ -86,7 +86,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'walk(empty)'
@@ -100,7 +100,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '[walk(if type == "number" then (., . + 10) else . end)]'
@@ -115,7 +115,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, 1.7)'
   comment: 'jq 1.6 rebuilds the object with reduce, whose update keeps the last output of a generator f.'
 
@@ -131,7 +131,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.7, )'
   comment: 'jq 1.7 redefined walk/1 in terms of map_values, which keeps the first output of a generator f.'
 
@@ -147,7 +147,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'
   comment: 'Not version-dependent: both definitions descend into arrays with map, which collects every output.'
 
@@ -163,7 +163,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'
   comment: 'f may produce no output for a member, in which case the member is dropped. The [1.7, ) definition uses _modify(.[]; w) rather than map_values(w) so this does not hit the `|= empty` error.'
 
@@ -179,5 +179,5 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'

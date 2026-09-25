@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.test.properties;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -17,6 +18,7 @@ import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 import net.thisptr.jackson.jq.v2.test.testcase.ModuleFixtures;
@@ -33,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 public class PropertyCheckTestCasesTest {
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
-	private void testVersion(TestCase tc, Version version, @Nullable Path moduleSearchPath) {
+	private void testVersion(TestCase tc, Version version, @Nullable Path moduleSearchPath) throws Throwable {
 		EnvironmentBuilder<JsonNode> envBuilder = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), version);
 		if (moduleSearchPath != null) {
 			envBuilder.clearModuleLoaders()
@@ -62,6 +64,24 @@ public class PropertyCheckTestCasesTest {
 		assertThat(actual.dependsOnExternalState())
 				.as("depends_on_external_state of %s", desc)
 				.isEqualTo(expected.dependsOnExternalState);
+
+		if (!Boolean.TRUE.equals(tc.failing)) {
+			List<JsonNode> actualOutputs = new ArrayList<>();
+			query.apply(tc.in, actualOutputs::add);
+			if (actual.cardinality() == Cardinality.ZERO) {
+				assertThat(actualOutputs)
+						.as("cardinality of %s is ZERO, but actual output count is %d", desc, actualOutputs.size())
+						.isEmpty();
+			} else if (actual.cardinality() == Cardinality.ONE) {
+				assertThat(actualOutputs)
+						.as("cardinality of %s is ONE, but actual output count is %d", desc, actualOutputs.size())
+						.hasSize(1);
+			} else if (actualOutputs.size() > 1) {
+				assertThat(actual.cardinality())
+						.as("actual output count is %d (> 1), so cardinality of %s must be UNKNOWN", actualOutputs.size(), desc)
+						.isEqualTo(Cardinality.UNKNOWN);
+			}
+		}
 	}
 
 	private static Version selectVersion(TestCase tc) {

@@ -37,7 +37,7 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements RewritableExpre
 		this.args = args;
 		this.info = info;
 		boolean ownInput = info == null || info.dependsOnInput();
-		boolean ownExternal = info == null || info.dependsOnExternalState();
+		boolean ownExternal = info != null && info.dependsOnExternalState();
 		this.dependsOnInput = ownInput || args.stream().anyMatch(AnalyzedExpression::dependsOnInput);
 		this.dependsOnExternalState = ownExternal || args.stream().anyMatch(AnalyzedExpression::dependsOnExternalState);
 		// Finding the callee itself already crosses a closure hop -- stay unconditionally opaque for the

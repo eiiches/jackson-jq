@@ -195,8 +195,8 @@
     output: '1|2|3'
   properties:
     cardinality: UNKNOWN
-    depends_on_input: true
-    depends_on_external_state: true
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # Generator count and order survive folding.
@@ -227,7 +227,7 @@
   properties:
     cardinality: ONE
     depends_on_input: false
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[first(1, 2, 3)]'
@@ -242,7 +242,7 @@
   properties:
     cardinality: ONE
     depends_on_input: false
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '(1, 2) as $x | $x + 1'

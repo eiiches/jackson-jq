@@ -32,8 +32,8 @@ public class VariableBinding<JsonNode> implements RewritableExpression<JsonNode>
 		this.value = value;
 		this.matcher = matcher;
 		this.body = body;
-		this.dependsOnInput = value.dependsOnInput() || body.dependsOnInput();
-		this.dependsOnExternalState = value.dependsOnExternalState() || body.dependsOnExternalState();
+		this.dependsOnInput = value.dependsOnInput() || matcher.dependsOnInput() || body.dependsOnInput();
+		this.dependsOnExternalState = value.dependsOnExternalState() || matcher.dependsOnExternalState() || body.dependsOnExternalState();
 		this.freeLocalSlots = FreeVariables.unionSets(FreeVariables.slotsOf(value), FreeVariables.minus(FreeVariables.slotsOf(body), boundSlots));
 		this.hasOpaqueVariableReference = FreeVariables.anyOpaque(value, body);
 	}
@@ -56,7 +56,7 @@ public class VariableBinding<JsonNode> implements RewritableExpression<JsonNode>
 
 	@Override
 	public Cardinality getCardinality() {
-		return CardinalityUtils.multiply(value.getCardinality(), body.getCardinality());
+		return CardinalityUtils.multiply(value.getCardinality(), matcher.getCardinality(), body.getCardinality());
 	}
 
 	@Override

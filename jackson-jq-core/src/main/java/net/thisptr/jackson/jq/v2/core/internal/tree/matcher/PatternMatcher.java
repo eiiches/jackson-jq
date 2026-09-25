@@ -4,6 +4,7 @@ import java.util.function.UnaryOperator;
 
 import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 
@@ -25,6 +26,18 @@ import net.thisptr.jackson.jq.v2.spi.path.Path;
  * part-way through, the values it already wrote are unreachable -- the body never runs.
  */
 public interface PatternMatcher<JsonNode> {
+	default Cardinality getCardinality() {
+		return Cardinality.ONE;
+	}
+
+	default boolean dependsOnInput() {
+		return false;
+	}
+
+	default boolean dependsOnExternalState() {
+		return false;
+	}
+
 	/**
 	 * Invoked once per complete match, after every slot the pattern binds has been written into the
 	 * frame.

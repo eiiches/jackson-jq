@@ -117,7 +117,7 @@ public class ExpressionCardinalityTest {
 		assertThat(cardinalityOf("empty")).isEqualTo(Cardinality.ZERO);
 		assertThat(new BreakExpression<JsonNode>("out").getCardinality()).isEqualTo(Cardinality.ZERO);
 		assertThat(cardinalityOf("label $out | break $out")).isEqualTo(Cardinality.ZERO);
-		assertThat(cardinalityOf("label $out | (1, break $out)")).isEqualTo(Cardinality.UNKNOWN);
+		assertThat(cardinalityOf("label $out | (., break $out)")).isEqualTo(Cardinality.UNKNOWN);
 		assertThat(cardinalityOf("-1")).isEqualTo(Cardinality.ONE);
 		assertThat(cardinalityOf("-empty")).isEqualTo(Cardinality.ZERO);
 		assertThat(cardinalityOf("-(1, 2)")).isEqualTo(Cardinality.UNKNOWN);

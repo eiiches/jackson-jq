@@ -16,7 +16,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: false
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'last(while(. < 20000; . + 1))'
@@ -31,7 +31,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def f: if . < 20000 then . + 1 | f else . end; f'
@@ -46,7 +46,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # A $-parameter's argument emits one value, so it is bound at the call site and the call is still a jump.
@@ -62,7 +62,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # A filter parameter passed straight on: the Function in the caller's slot outlives the frame it sat in.
@@ -80,7 +80,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # Mutual tail recursion, which jq can only express by nesting, since a def sees only what precedes it.
@@ -96,7 +96,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def outer: def inner: if . > 0 then . - 1 | outer else "inner" end; if . > 0 then . - 1 | inner else "outer" end; outer'
@@ -111,7 +111,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # --- shapes the optimization must not take, which must still give jq's answer and jq's order ---
@@ -129,7 +129,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def f: if . > 0 then (. - 1, . - 2) | f else . end; [f]'
@@ -144,7 +144,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # Not the last operand of the comma: what follows it still has to run, and in order.
@@ -160,7 +160,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # A generator condition runs the branch once per value it emits.
@@ -176,7 +176,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # A $-argument emitting two values binds the body twice, which is a loop of its own, not a jump.
@@ -192,7 +192,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # A filter argument that closes over the caller's frame cannot outlive it.
@@ -208,7 +208,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # --- the constructs a tail call must not jump out of ---
@@ -226,7 +226,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # break unwinds to its own label, which a tail call must not have left.
@@ -242,7 +242,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'first(recurse(. + 1))'
@@ -257,7 +257,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[limit(3; while(true; . + 1))]'
@@ -272,7 +272,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # reduce and foreach consume what their update emits and keep going.
@@ -288,7 +288,7 @@
   properties:
     cardinality: ONE
     depends_on_input: false
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def f: if . < 3 then . + 1 | f else . end; [foreach range(0; 3) as $i (0; f; .)]'
@@ -303,7 +303,7 @@
   properties:
     cardinality: ONE
     depends_on_input: false
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # --- paths still track through a deep recursion ---
@@ -320,7 +320,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def descend: if type == "array" then .[0] | descend else . end; [path(descend)]'
@@ -335,5 +335,5 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'

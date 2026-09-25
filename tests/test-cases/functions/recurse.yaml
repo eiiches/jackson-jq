@@ -10,7 +10,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
 
 - q: '[recurse]'
@@ -25,7 +25,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '[recurse(.[]?)]'
@@ -40,7 +40,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
 
 - q: '[recurse(.[]?)]'
@@ -55,7 +55,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 # A null root is emitted in every supported jq version.
@@ -71,5 +71,5 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'

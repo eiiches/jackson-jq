@@ -848,7 +848,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[(label $here | .[] | if .>1 then break $here else . end), "hi!"]'
@@ -863,7 +863,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[(label $here | .[] | if .>1 then break $here else . end), "hi!"]'
@@ -878,7 +878,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[.[]|[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]]'
@@ -893,7 +893,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]'
@@ -908,7 +908,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[foreach range(5) as $item (0; $item)]'
@@ -968,7 +968,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[first(range(.)), last(range(.)), nth(0; range(.)), nth(5; range(.)), try nth(-1; range(.)) catch .]'
@@ -983,7 +983,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'first(1,error("foo"))'
@@ -998,7 +998,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: false
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '[limit(5,7; range(9))]'
@@ -1013,7 +1013,7 @@
   properties:
     cardinality: ONE
     depends_on_input: false
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[nth(5,7; range(9;0;-1))]'
@@ -1028,7 +1028,7 @@
   properties:
     cardinality: ONE
     depends_on_input: false
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[range(0,1,2;4,3,2;2,3)]'
@@ -1121,7 +1121,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[.[3:2], .[-5:4], .[:-2], .[-2:], .[3:3][1:], .[10:]]'
@@ -1781,7 +1781,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def f: . + 1; def g: def g: . + 100; f | g | f; (f | g), g'
@@ -1828,7 +1828,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def a: 0; . | a'
@@ -1858,7 +1858,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '([1,2] + [4,5])'
@@ -2028,7 +2028,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def f: .+1; def g: f; def f: .+100; def f(a):a+.+11; [(g|f(20)), f]'
@@ -2043,7 +2043,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def id(x):x; 2000 as $x | def f(x):1 as $x | id([$x, x, x]); def g(x): 100 as $x | f($x,$x+x); g($x)'
@@ -2058,7 +2058,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'def x(a;b): a as $a | b as $b | $a + $b; def y($a;$b): $a + $b; def check(a;b): [x(a;b)] == [y(a;b)]; check(.[];.[]*2)'
@@ -2073,7 +2073,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[[20,10][1,0] as $x | def f: (100,200) as $y | def g: [$x + $y, .]; . + $x | g; f[0] | [f][0][1] | f]'
@@ -2103,7 +2103,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'reduce .[] as $x (0; . + $x)'
@@ -2365,7 +2365,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '. as $dot|any($dot[];not)'
@@ -2380,7 +2380,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '. as $dot|all($dot[];.)'
@@ -2395,7 +2395,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '. as $dot|all($dot[];.)'
@@ -2410,7 +2410,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'path(.foo[0,1])'
@@ -2814,7 +2814,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '.[] | try (getpath(["a",0,"b"]) |= 5) catch .'
@@ -4057,7 +4057,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'flatten(0)'
@@ -4072,7 +4072,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'flatten(2)'
@@ -4087,7 +4087,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'flatten(2)'
@@ -4102,7 +4102,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try flatten(-1) catch .'
@@ -4117,7 +4117,7 @@
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'transpose'

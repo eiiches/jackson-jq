@@ -25,7 +25,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'map_values(if . == 2 then empty else . end)'
@@ -55,7 +55,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, 1.7)'
 
 - q: 'map_values(if . == 2 then empty else . end)'
@@ -70,7 +70,7 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: 'map_values((., . + 10))'
@@ -100,5 +100,5 @@
   properties:
     cardinality: ONE
     depends_on_input: true
-    depends_on_external_state: true
+    depends_on_external_state: false
   v: '[1.6, )'

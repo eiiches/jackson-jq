@@ -11,8 +11,10 @@ import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -30,6 +32,21 @@ public class ArrayMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 
 	public List<PatternMatcher<JsonNode>> matchers() {
 		return matchers;
+	}
+
+	@Override
+	public Cardinality getCardinality() {
+		return CardinalityUtils.multiply(matchers, PatternMatcher::getCardinality);
+	}
+
+	@Override
+	public boolean dependsOnInput() {
+		return matchers.stream().anyMatch(PatternMatcher::dependsOnInput);
+	}
+
+	@Override
+	public boolean dependsOnExternalState() {
+		return matchers.stream().anyMatch(PatternMatcher::dependsOnExternalState);
 	}
 
 	private JsonNode getArrayElementOrNull(JsonNode node, int index) {

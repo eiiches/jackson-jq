@@ -12,9 +12,11 @@ import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -33,6 +35,21 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 
 	public List<FieldMatcher<JsonNode>> matchers() {
 		return matchers;
+	}
+
+	@Override
+	public Cardinality getCardinality() {
+		return CardinalityUtils.multiply(matchers, FieldMatcher::getCardinality);
+	}
+
+	@Override
+	public boolean dependsOnInput() {
+		return matchers.stream().anyMatch(FieldMatcher::dependsOnInput);
+	}
+
+	@Override
+	public boolean dependsOnExternalState() {
+		return matchers.stream().anyMatch(FieldMatcher::dependsOnExternalState);
 	}
 
 	public static class FieldMatcher<JsonNode> {
@@ -98,6 +115,20 @@ public class ObjectMatcher<JsonNode> implements PatternMatcher<JsonNode> {
 
 		public int writeSlot() {
 			return writeSlot;
+		}
+
+		public Cardinality getCardinality() {
+			Cardinality nameCard = name.getCardinality();
+			Cardinality childCard = matcher != null ? matcher.getCardinality() : Cardinality.ONE;
+			return CardinalityUtils.multiply(nameCard, childCard);
+		}
+
+		public boolean dependsOnInput() {
+			return name.dependsOnInput() || (matcher != null && matcher.dependsOnInput());
+		}
+
+		public boolean dependsOnExternalState() {
+			return name.dependsOnExternalState() || (matcher != null && matcher.dependsOnExternalState());
 		}
 
 		private FieldMatcher<JsonNode> rewriteExpressions(UnaryOperator<AnalyzedExpression<JsonNode>> rewriter) {
