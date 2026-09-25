@@ -22,6 +22,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
+import net.thisptr.jackson.jq.v2.spi.type.BinaryType;
 import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
 import net.thisptr.jackson.jq.v2.spi.type.FilterType;
 import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
@@ -73,6 +74,16 @@ class BuiltinTypeSchemeTest {
 		assertThat(outputOf("@base64", NumericType.getInstance())).isSameAs(StringType.getInstance());
 		assertThat(outputOf("@csv", ArrayType.of(AnyType.getInstance()))).isSameAs(StringType.getInstance());
 		assertThat(outputOf("sqrt", NumericType.getInstance())).isSameAs(NumericType.getInstance());
+		assertThat(outputOf("type", AnyType.getInstance())).isEqualTo(UnionType.of(
+				StringType.of("null"),
+				StringType.of("boolean"),
+				StringType.of("number"),
+				StringType.of("string"),
+				StringType.of("binary"),
+				StringType.of("array"),
+				StringType.of("object")));
+		assertThat(outputOf("type", BinaryType.getInstance()))
+				.isEqualTo(UnionType.of(StringType.of("binary"), StringType.of("string")));
 	}
 
 	@Test

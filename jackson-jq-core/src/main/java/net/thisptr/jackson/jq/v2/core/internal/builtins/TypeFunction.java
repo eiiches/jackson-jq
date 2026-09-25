@@ -22,11 +22,22 @@ import net.thisptr.jackson.jq.v2.spi.type.NullType;
 import net.thisptr.jackson.jq.v2.spi.type.NumericType;
 import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
 import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
 import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.UnionType;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @FunctionRegistration(name = "type", nargs = 0)
 public class TypeFunction implements Function {
+	private static final Type ALL_TYPES = UnionType.of(
+			StringType.of("null"),
+			StringType.of("boolean"),
+			StringType.of("number"),
+			StringType.of("string"),
+			StringType.of("binary"),
+			StringType.of("array"),
+			StringType.of("object"));
+
 	// An overload per kind of value, naming the very string that kind answers. That is all the narrowing
 	// of a type test needs: `if type == "number"` compares two known strings once the input is one kind,
 	// and a kind whose comparison cannot come out true is left to the other branch.
@@ -35,11 +46,12 @@ public class TypeFunction implements Function {
 			TypeScheme.of(FunctionType.of(BooleanType.getInstance(), StringType.of("boolean"))),
 			TypeScheme.of(FunctionType.of(NumericType.getInstance(), StringType.of("number"))),
 			TypeScheme.of(FunctionType.of(StringType.getInstance(), StringType.of("string"))),
-			// JsonNodeUtils.typeOf lowercases the provider's node kind, so a binary node answers "binary".
-			TypeScheme.of(FunctionType.of(BinaryType.getInstance(), StringType.of("binary"))),
+			// A provider with binary nodes answers "binary"; one without represents binary data as a base64-encoded string.
+			TypeScheme.of(FunctionType.of(BinaryType.getInstance(), UnionType.of(StringType.of("binary"), StringType.of("string")))),
 			TypeScheme.of(FunctionType.of(ArrayType.of(AnyType.getInstance()), StringType.of("array"))),
 			TypeScheme.of(FunctionType.of(ObjectType.of(AnyType.getInstance()), StringType.of("object"))),
-			TypeScheme.of(FunctionType.of(AnyType.getInstance(), StringType.getInstance())));
+			TypeScheme.of(FunctionType.of(AnyType.getInstance(), ALL_TYPES))
+	);
 
 	@Override
 	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
