@@ -923,6 +923,145 @@ class VimQueryEditorTest {
 		assertThat(state.text()).isEqualTo("xbc\nabc");
 	}
 
+	@Test
+	void entersAndExitsReplaceMode() {
+		TextAreaState state = new TextAreaState("hello");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0l");
+		key(editor, 'R');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.REPLACE);
+		assertThat(editor.modeLabel()).isEqualTo("REPLACE");
+
+		escape(editor);
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.NORMAL);
+		assertThat(editor.modeLabel()).isEqualTo("NORMAL");
+		assertThat(state.cursorCol()).isZero();
+	}
+
+	@Test
+	void replacesCharactersSequentiallyInReplaceMode() {
+		TextAreaState state = new TextAreaState("hello world");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0lRxyz");
+		escape(editor);
+
+		assertThat(state.text()).isEqualTo("hxyzo world");
+		assertThat(state.cursorRow()).isZero();
+		assertThat(state.cursorCol()).isEqualTo(3);
+	}
+
+	@Test
+	void appendsCharactersPastEndOfLineInReplaceMode() {
+		TextAreaState state = new TextAreaState("hi");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0Rabcdef");
+		escape(editor);
+
+		assertThat(state.text()).isEqualTo("abcdef");
+		assertThat(state.cursorCol()).isEqualTo(5);
+	}
+
+	@Test
+	void backspaceRestoresOverwrittenCharactersInReplaceMode() {
+		TextAreaState state = new TextAreaState("hello world");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0lRxyz");
+		editor.handleKey(KeyEvent.ofKey(KeyCode.BACKSPACE));
+		editor.handleKey(KeyEvent.ofKey(KeyCode.BACKSPACE));
+		escape(editor);
+
+		assertThat(state.text()).isEqualTo("hxllo world");
+		assertThat(state.cursorCol()).isEqualTo(1);
+	}
+
+	@Test
+	void backspaceDeletesAppendedCharactersInReplaceMode() {
+		TextAreaState state = new TextAreaState("hi");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0Rabcdef");
+		editor.handleKey(KeyEvent.ofKey(KeyCode.BACKSPACE));
+		editor.handleKey(KeyEvent.ofKey(KeyCode.BACKSPACE));
+		escape(editor);
+
+		assertThat(state.text()).isEqualTo("abcd");
+		assertThat(state.cursorCol()).isEqualTo(3);
+	}
+
+	@Test
+	void backspacePastOriginalCursorMovesLeftInReplaceMode() {
+		TextAreaState state = new TextAreaState("hello");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0llR");
+		editor.handleKey(KeyEvent.ofKey(KeyCode.BACKSPACE));
+		assertThat(state.cursorCol()).isEqualTo(1);
+		assertThat(state.text()).isEqualTo("hello");
+	}
+
+	@Test
+	void replaceModeSplitsLineOnEnter() {
+		TextAreaState state = new TextAreaState("hello world");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0llRxy");
+		editor.handleKey(KeyEvent.ofKey(KeyCode.ENTER));
+		text(editor, "z");
+		escape(editor);
+
+		assertThat(state.text()).isEqualTo("hexy\nz world");
+		assertThat(state.cursorRow()).isEqualTo(1);
+		assertThat(state.cursorCol()).isZero();
+	}
+
+	@Test
+	void backspaceReversesEnterNewlineInReplaceMode() {
+		TextAreaState state = new TextAreaState("hello world");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0llRxy");
+		editor.handleKey(KeyEvent.ofKey(KeyCode.ENTER));
+		editor.handleKey(KeyEvent.ofKey(KeyCode.BACKSPACE));
+		escape(editor);
+
+		assertThat(state.text()).isEqualTo("hexyo world");
+		assertThat(state.cursorRow()).isZero();
+		assertThat(state.cursorCol()).isEqualTo(3);
+	}
+
+	@Test
+	void replacesExtendedGraphemesInReplaceMode() {
+		TextAreaState state = new TextAreaState("a👨‍👩‍👧‍👦b");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0lRX");
+		assertThat(state.text()).isEqualTo("aXb");
+		assertThat(state.cursorCol()).isEqualTo(2);
+
+		editor.handleKey(KeyEvent.ofKey(KeyCode.BACKSPACE));
+		assertThat(state.text()).isEqualTo("a👨‍👩‍👧‍👦b");
+		assertThat(state.cursorCol()).isEqualTo(1);
+	}
+
+	@Test
+	void undoRestoresEntireReplaceSession() {
+		TextAreaState state = new TextAreaState("hello world");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0lRxyz");
+		escape(editor);
+		assertThat(state.text()).isEqualTo("hxyzo world");
+
+		key(editor, 'u');
+		assertThat(state.text()).isEqualTo("hello world");
+		assertThat(state.cursorRow()).isZero();
+		assertThat(state.cursorCol()).isEqualTo(1);
+	}
+
 	private static void text(VimQueryEditor editor, String text) {
 		for (int i = 0; i < text.length(); i++) {
 			key(editor, text.charAt(i));

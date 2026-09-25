@@ -2202,7 +2202,8 @@ final class Playground<N> {
 		switch (focus) {
 			case QUERY:
 				if (vimQueryEditor != null) {
-					if (vimQueryEditor.mode() == VimQueryEditor.Mode.INSERT) {
+					if (vimQueryEditor.mode() == VimQueryEditor.Mode.INSERT
+							|| vimQueryEditor.mode() == VimQueryEditor.Mode.REPLACE) {
 						addGuideItem(spans, "Esc", "Normal Mode");
 						addGuideItem(spans, "Enter", "Newline");
 					} else if (vimQueryEditor.mode() == VimQueryEditor.Mode.SEARCH) {

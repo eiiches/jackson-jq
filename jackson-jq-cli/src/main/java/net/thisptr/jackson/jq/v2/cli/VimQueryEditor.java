@@ -20,6 +20,7 @@ final class VimQueryEditor {
 	enum Mode {
 		NORMAL,
 		INSERT,
+		REPLACE,
 		COMMAND,
 		SEARCH
 	}
@@ -114,6 +115,7 @@ final class VimQueryEditor {
 	private boolean awaitingReplace;
 	private int replaceCount = 1;
 	private boolean insertUndoCaptured;
+	private final Deque<Snapshot> replaceHistory = new ArrayDeque<>();
 	private @Nullable String message;
 
 	VimQueryEditor(TextAreaState state) {
@@ -129,6 +131,7 @@ final class VimQueryEditor {
 		return switch (mode) {
 			case NORMAL -> "NORMAL";
 			case INSERT -> "INSERT";
+			case REPLACE -> "REPLACE";
 			case COMMAND -> "COMMAND";
 			case SEARCH -> "SEARCH";
 		};
@@ -176,7 +179,7 @@ final class VimQueryEditor {
 	}
 
 	void leaveFocus() {
-		if (mode == Mode.INSERT) {
+		if (mode == Mode.INSERT || mode == Mode.REPLACE) {
 			leaveInsertMode();
 		} else if (mode == Mode.SEARCH) {
 			cancelSearchInput(true);
@@ -193,6 +196,7 @@ final class VimQueryEditor {
 		message = null;
 		Result result = switch (mode) {
 			case INSERT -> handleInsertKey(key);
+			case REPLACE -> handleReplaceKey(key);
 			case COMMAND -> handleCommandKey(key);
 			case SEARCH -> handleSearchKey(key);
 			case NORMAL -> handleNormalKey(key);
@@ -292,6 +296,107 @@ final class VimQueryEditor {
 			if (str != null && !str.isEmpty() && (key.code() == KeyCode.CHAR || str.charAt(0) >= 32)) {
 				captureInsertUndo();
 				state.insert(str);
+				return Result.CHANGED;
+			}
+		}
+		return Result.NOT_HANDLED;
+	}
+
+	private Result handleReplaceKey(KeyEvent key) {
+		if (isEscape(key)) {
+			leaveInsertMode();
+			return Result.HANDLED;
+		}
+		if (key.isConfirm() || key.code() == KeyCode.ENTER) {
+			captureInsertUndo();
+			replaceHistory.push(snapshot());
+			state.insert('\n');
+			return Result.CHANGED;
+		}
+		if (key.isUp()) {
+			state.moveCursorUp();
+			return Result.HANDLED;
+		}
+		if (key.isDown()) {
+			state.moveCursorDown();
+			return Result.HANDLED;
+		}
+		if (key.isLeft()) {
+			state.moveCursorLeft();
+			return Result.HANDLED;
+		}
+		if (key.isRight()) {
+			state.moveCursorRight();
+			return Result.HANDLED;
+		}
+		if (key.isHome() || (key.hasCtrl() && key.isChar('a'))) {
+			state.moveCursorToLineStart();
+			return Result.HANDLED;
+		}
+		if (key.isEnd() || (key.hasCtrl() && key.isChar('e'))) {
+			state.moveCursorToLineEnd();
+			return Result.HANDLED;
+		}
+		if (key.isDeleteBackward() || key.code() == KeyCode.BACKSPACE) {
+			if (!replaceHistory.isEmpty()) {
+				restore(replaceHistory.pop());
+				return Result.CHANGED;
+			}
+			if (state.cursorCol() > 0) {
+				state.moveCursorLeft();
+			}
+			return Result.HANDLED;
+		}
+		if (key.isDeleteForward() || key.code() == KeyCode.DELETE) {
+			if (state.cursorRow() == state.lineCount() - 1
+					&& state.cursorCol() == state.getLine(state.cursorRow()).length()) {
+				return Result.HANDLED;
+			}
+			captureInsertUndo();
+			String before = state.text();
+			state.deleteForward();
+			return changedSince(before);
+		}
+		if (key.hasCtrl() && key.isChar('u')) {
+			if (state.cursorCol() == 0) {
+				return Result.HANDLED;
+			}
+			captureInsertUndo();
+			replaceHistory.push(snapshot());
+			String before = state.text();
+			while (state.cursorCol() > 0) {
+				state.deleteBackward();
+			}
+			return changedSince(before);
+		}
+		if (key.hasCtrl() && key.isChar('k')) {
+			if (state.cursorCol() == state.getLine(state.cursorRow()).length()) {
+				return Result.HANDLED;
+			}
+			captureInsertUndo();
+			replaceHistory.push(snapshot());
+			String before = state.text();
+			while (state.cursorCol() < state.getLine(state.cursorRow()).length()) {
+				state.deleteForward();
+			}
+			return changedSince(before);
+		}
+		if (key.hasCtrl() && key.isChar('w')) {
+			if (state.cursorCol() == 0) {
+				return Result.HANDLED;
+			}
+			captureInsertUndo();
+			replaceHistory.push(snapshot());
+			String before = state.text();
+			deletePreviousWord();
+			return changedSince(before);
+		}
+		if (!key.hasCtrl() && !key.hasAlt()) {
+			String str = key.code() == KeyCode.TAB ? "\t" : key.string();
+			if (str != null && !str.isEmpty() && (key.code() == KeyCode.CHAR || key.code() == KeyCode.TAB || str.charAt(0) >= 32)) {
+				captureInsertUndo();
+				replaceHistory.push(snapshot());
+				replaceCharacterInMode(str);
 				return Result.CHANGED;
 			}
 		}
@@ -586,6 +691,7 @@ final class VimQueryEditor {
 			case 'x' -> deleteCharacters(false, consumeCount());
 			case 'X' -> deleteCharacters(true, consumeCount());
 			case 'r' -> startReplace();
+			case 'R' -> enterReplaceMode();
 			case 'D' -> deleteToLineEnd(false);
 			case 'C' -> deleteToLineEnd(true);
 			case 'p' -> paste(true, consumeCount());
@@ -1721,11 +1827,50 @@ final class VimQueryEditor {
 
 	private void leaveInsertMode() {
 		mode = Mode.NORMAL;
+		replaceHistory.clear();
 		if (state.cursorCol() > 0) {
 			state.moveCursorLeft();
 		}
 		normalizeNormalCursor();
 		clearPending();
+	}
+
+	private Result enterReplaceMode() {
+		consumeCount();
+		beginReplace();
+		return Result.HANDLED;
+	}
+
+	private void beginReplace() {
+		clearPending();
+		mode = Mode.REPLACE;
+		replaceHistory.clear();
+		insertUndoCaptured = false;
+	}
+
+	private void replaceCharacterInMode(String str) {
+		String line = state.getLine(state.cursorRow());
+		int row = state.cursorRow();
+		int col = state.cursorCol();
+
+		if (col >= line.length()) {
+			state.insert(str);
+			return;
+		}
+
+		TextAreaState temp = new TextAreaState(line);
+		temp.moveCursorToStart();
+		while (temp.cursorCol() < col) {
+			temp.moveCursorRight();
+		}
+		int oldLen = temp.getLine(0).length();
+		temp.deleteForward();
+		int charLen = oldLen - temp.getLine(0).length();
+
+		List<String> lines = lines();
+		String newLine = line.substring(0, col) + str + line.substring(col + charLen);
+		lines.set(row, newLine);
+		setTextAndPosition(String.join("\n", lines), row, col + str.length());
 	}
 
 	private void captureInsertUndo() {
@@ -1802,7 +1947,9 @@ final class VimQueryEditor {
 
 	private void restore(Snapshot snapshot) {
 		setTextAndPosition(snapshot.text(), snapshot.row(), snapshot.col());
-		normalizeNormalCursor();
+		if (mode == Mode.NORMAL) {
+			normalizeNormalCursor();
+		}
 	}
 
 	private List<String> lines() {
