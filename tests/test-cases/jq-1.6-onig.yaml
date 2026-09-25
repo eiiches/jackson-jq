@@ -36,6 +36,10 @@
     output: '[*:ANY]'
   - input: 'STRING'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '[match("( )*"; "gn")]'
@@ -47,6 +51,10 @@
     output: '[*:ANY]'
   - input: 'STRING'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[match("a"; "gi")]'
@@ -58,6 +66,10 @@
     output: '[*:ANY]'
   - input: 'STRING'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[match(["(bar)"])]'
@@ -69,6 +81,10 @@
     output: '[*:ANY]'
   - input: 'STRING'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[match("bar")]'
@@ -80,6 +96,10 @@
     output: '[*:ANY]'
   - input: 'STRING'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: "[match(\"ba\u0304r\")]"
@@ -91,6 +111,10 @@
     output: '[*:ANY]'
   - input: 'STRING'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[match(".+?\\b")]'
@@ -102,6 +126,10 @@
     output: '[*:ANY]'
   - input: 'STRING'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[match(["foo (?<bar123>bar)? foo", "ig"])]'
@@ -113,6 +141,10 @@
     output: '[*:ANY]'
   - input: 'STRING'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[test("( )*"; "gn")]'
@@ -124,6 +156,10 @@
     output: '[*:BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]]'
   - input: 'STRING'
     output: '[*:BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: "[test(\"\u0101\")]"
@@ -135,6 +171,10 @@
     output: '[*:BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]]'
   - input: 'STRING'
     output: '[*:BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'capture("(?<a>[a-z]+)-(?<n>[0-9]+)")'
@@ -146,6 +186,10 @@
     output: '{*:ANY}'
   - input: 'STRING'
     output: '{*:ANY}'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[.[] | sub(", "; ":")]'
@@ -157,6 +201,10 @@
     output: '[*:STRING]'
   - input: '[STRING,STRING]'
     output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'sub("^(?<head>.)"; "Head=\(.head) Tail=")'
@@ -168,6 +216,10 @@
     output: 'STRING'
   - input: 'STRING'
     output: 'STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[.[] | gsub(", "; ":")]'
@@ -179,6 +231,10 @@
     output: '[*:STRING]'
   - input: '[STRING,STRING]'
     output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'gsub("(?<d>\\d)"; ":\(.d);")'
@@ -190,6 +246,10 @@
     output: 'STRING'
   - input: 'STRING'
     output: 'STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'gsub("a";"b")'
@@ -201,6 +261,10 @@
     output: 'STRING'
   - input: 'STRING'
     output: 'STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'gsub( "(.*)"; "";  "x")'
@@ -212,6 +276,10 @@
     output: 'STRING'
   - input: 'STRING'
     output: 'STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '[.[] | scan(", ")]'
@@ -223,6 +291,10 @@
     output: '[*:ANY]'
   - input: '[STRING,STRING]'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[.[]|[[sub(", *";":")], [gsub(", *";":")], [scan(", *")]]]'
@@ -234,6 +306,10 @@
     output: '[*:[[*:STRING],[*:STRING],[*:ANY]]]'
   - input: '[STRING,STRING]'
     output: '[*:[[*:STRING],[*:STRING],[*:ANY]]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[.[]|[[sub(", +";":")], [gsub(", +";":")], [scan(", +")]]]'
@@ -245,6 +321,10 @@
     output: '[*:[[*:STRING],[*:STRING],[*:ANY]]]'
   - input: '[STRING,STRING]'
     output: '[*:[[*:STRING],[*:STRING],[*:ANY]]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'gsub("(?<x>.)[^a]*"; "+\(.x)-")'
@@ -256,6 +336,10 @@
     output: 'STRING'
   - input: 'STRING'
     output: 'STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'sub("(?<x>.)"; "\(.x)!")'
@@ -267,4 +351,8 @@
     output: 'STRING'
   - input: 'STRING'
     output: 'STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'

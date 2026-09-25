@@ -22,6 +22,14 @@ test_case_suite(
 )
 
 test_case_suite(
+    name = "property-tests",
+    test_cases = TEST_CASES,
+    test_class = "net.thisptr.jackson.jq.v2.test.properties.PropertyCheckTestCasesTest",
+    test_library = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/properties",
+    visibility = ["//visibility:private"],
+)
+
+test_case_suite(
     name = "jackson2-tests",
     test_cases = TEST_CASES,
     test_class = "net.thisptr.jackson.jq.v2.test.providers.jackson2.Jackson2JsonQueryTest",

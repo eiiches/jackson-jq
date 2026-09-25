@@ -5,6 +5,10 @@
     output: 'BOOLEAN'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ZERO
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'endswith(.)'
@@ -16,6 +20,10 @@
     output: 'BOOLEAN'
   - input: 'STRING'
     output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try endswith("foo") catch .'
@@ -26,6 +34,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try endswith(1) catch .'
   in: "foo"
@@ -36,3 +48,7 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false

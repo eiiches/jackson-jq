@@ -7,6 +7,10 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'todateiso8601'
   in: [2023, 8, 30, 0, 0, 0, 6, 272]
@@ -17,6 +21,10 @@
     output: 'STRING'
   - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5.0, )'
 
 - q: 'todateiso8601'
@@ -28,6 +36,10 @@
     output: 'STRING'
   - input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT]'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5.0, 1.8.0)'
 
 - q: 'todateiso8601'
@@ -39,6 +51,10 @@
     output: 'STRING'
   - input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT]'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.0, )'
 
 - q: 'try todateiso8601 catch .'
@@ -50,6 +66,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5.0, 1.8.0)'
 
 - q: 'todateiso8601'
@@ -61,6 +81,10 @@
     output: 'STRING'
   - input: '[INT,INT,INT]'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.0, )'
 
 - q: 'try todateiso8601 catch .'
@@ -72,6 +96,10 @@
     output: 'ANY'
   - input: '[INT,STRING,INT,INT,INT,INT,INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5.0, )'
 
 - q: 'try (nan | todateiso8601) catch .'
@@ -82,6 +110,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7.0, )'
   comment: 'jq 1.5/1.6 crash (native assertion failure) on this input rather than erroring cleanly, so this is verified against real jq for 1.7.0 and above only; jackson-jq raises the same error consistently on every supported version'
 
@@ -93,6 +125,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7.0, )'
   comment: 'jq 1.5/1.6 crash (native assertion failure) on this input rather than erroring cleanly, so this is verified against real jq for 1.7.0 and above only; jackson-jq raises the same error consistently on every supported version'
 
@@ -104,6 +140,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7.0, )'
   comment: 'jq 1.5/1.6 crash (native assertion failure) on this input rather than erroring cleanly, so this is verified against real jq for 1.7.0 and above only; jackson-jq raises the same error consistently on every supported version'
 
@@ -115,5 +155,9 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7.0, )'
   comment: 'jq 1.5/1.6 crash (native assertion failure) on this input rather than erroring cleanly, so this is verified against real jq for 1.7.0 and above only; jackson-jq raises the same error consistently on every supported version'

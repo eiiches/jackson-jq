@@ -8,6 +8,10 @@
     output: 'NUMBER'
   - input: 'INT'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'tonumber'
   in: 5.5
@@ -18,6 +22,10 @@
     output: 'NUMBER'
   - input: 'FLOAT'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 # basic string parsing
 - q: 'tonumber'
@@ -29,6 +37,10 @@
     output: 'NUMBER'
   - input: 'STRING'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'tonumber'
   in: "5.5"
@@ -39,6 +51,10 @@
     output: 'NUMBER'
   - input: 'STRING'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'tonumber'
   in: "-5"
@@ -49,6 +65,10 @@
     output: 'NUMBER'
   - input: 'STRING'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'tonumber'
   in: "+5"
@@ -59,6 +79,10 @@
     output: 'NUMBER'
   - input: 'STRING'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'tonumber'
   in: "01"
@@ -69,6 +93,10 @@
     output: 'NUMBER'
   - input: 'STRING'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'tonumber'
   in: "0001.5"
@@ -79,6 +107,10 @@
     output: 'NUMBER'
   - input: 'STRING'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 # jackson-jq parses strings via BigDecimal to preserve the exact literal value and scale, rather
 # than narrowing through double, on every version. Real jq only stopped narrowing in 1.7
@@ -92,6 +124,10 @@
     output: 'NUMBER'
   - input: 'STRING'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: 'tonumber'
@@ -103,6 +139,10 @@
     output: 'NUMBER'
   - input: 'STRING'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 # Number comparison is scale-insensitive (1.50 == 1.5, in real jq too), so the case above cannot
 # see the preserved scale; tostring can. Real jq only kept the extra precision from 1.7 on
@@ -116,6 +156,10 @@
     output: 'STRING'
   - input: 'STRING'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 # scientific notation
@@ -128,6 +172,10 @@
     output: 'NUMBER'
   - input: 'STRING'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'tonumber'
   in: "1e-2"
@@ -138,6 +186,10 @@
     output: 'NUMBER'
   - input: 'STRING'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 # special float literals (Infinity/NaN family, case-insensitive, optional leading sign) are
 # accepted on every supported version, unlike plain decimal numerals which go through BigDecimal
@@ -156,6 +208,10 @@
     output: 'BOOLEAN'
   - input: 'NULL'
     output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '("Infinity" | tonumber) | type'
   out:
@@ -165,6 +221,10 @@
     output: '"number"'
   - input: 'NULL'
     output: '"number"'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '("infinity" | tonumber) > 1e300'
   out:
@@ -174,6 +234,10 @@
     output: 'BOOLEAN'
   - input: 'NULL'
     output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '("+Infinity" | tonumber) > 1e300'
   out:
@@ -183,6 +247,10 @@
     output: 'BOOLEAN'
   - input: 'NULL'
     output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '("-Infinity" | tonumber) < -1e300'
   out:
@@ -192,6 +260,10 @@
     output: 'BOOLEAN'
   - input: 'NULL'
     output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '("NaN" | tonumber) | type'
   out:
@@ -201,6 +273,10 @@
     output: '"number"'
   - input: 'NULL'
     output: '"number"'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '("NaN" | tonumber) | isnan'
   out:
@@ -210,6 +286,10 @@
     output: 'BOOLEAN'
   - input: 'NULL'
     output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '("NAN" | tonumber) | isnan'
   out:
@@ -219,6 +299,10 @@
     output: 'BOOLEAN'
   - input: 'NULL'
     output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 # jq 1.7 made "NaN" case-insensitive (in addition to the exact "NaN"/"NAN" spellings already
 # accepted before that); lowercase "nan" errors pre-1.7 and succeeds from 1.7 on.
@@ -231,6 +315,10 @@
     output: '"__ERROR__"|NUMBER'
   - input: 'STRING'
     output: '"__ERROR__"|NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '("nan" | tonumber) | isnan'
@@ -241,6 +329,10 @@
     output: 'BOOLEAN'
   - input: 'NULL'
     output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
 
 # type errors
@@ -253,6 +345,10 @@
     output: '"__ERROR__"|NUMBER'
   - input: 'STRING'
     output: '"__ERROR__"|NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try tonumber catch ("__ERROR__")'
   in: null
@@ -263,6 +359,10 @@
     output: '"__ERROR__"|NUMBER'
   - input: 'NULL'
     output: '"__ERROR__"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try tonumber catch ("__ERROR__")'
   in: true
@@ -273,6 +373,10 @@
     output: '"__ERROR__"|NUMBER'
   - input: 'BOOLEAN'
     output: '"__ERROR__"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try tonumber catch ("__ERROR__")'
   in: []
@@ -283,6 +387,10 @@
     output: '"__ERROR__"|NUMBER'
   - input: '[]'
     output: '"__ERROR__"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try tonumber catch ("__ERROR__")'
   in: {}
@@ -293,6 +401,10 @@
     output: '"__ERROR__"|NUMBER'
   - input: '{}'
     output: '"__ERROR__"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 # empty / whitespace-only strings are always invalid
 - q: 'try tonumber catch ("__ERROR__")'
@@ -304,6 +416,10 @@
     output: '"__ERROR__"|NUMBER'
   - input: 'STRING'
     output: '"__ERROR__"|NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try tonumber catch ("__ERROR__")'
   in: "  "
@@ -314,6 +430,10 @@
     output: '"__ERROR__"|NUMBER'
   - input: 'STRING'
     output: '"__ERROR__"|NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 # jq 1.8 stopped accepting leading/trailing whitespace around an otherwise-valid numeral
 # (plain numerals and the Infinity/NaN family alike); earlier versions trim it.
@@ -326,6 +446,10 @@
     output: 'NUMBER'
   - input: 'STRING'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.0)'
 
 - q: 'try tonumber catch ("__ERROR__")'
@@ -337,6 +461,10 @@
     output: '"__ERROR__"|NUMBER'
   - input: 'STRING'
     output: '"__ERROR__"|NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.0, )'
 
 - q: '("  Infinity  " | tonumber) > 1e300'
@@ -347,6 +475,10 @@
     output: 'BOOLEAN'
   - input: 'NULL'
     output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.8.0)'
 
 - q: 'try tonumber catch ("__ERROR__")'
@@ -358,6 +490,10 @@
     output: '"__ERROR__"|NUMBER'
   - input: 'STRING'
     output: '"__ERROR__"|NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.0, )'
 
 # real jq rejects anything outside its numeric-literal grammar; "1d" (a Java float suffix, not
@@ -371,6 +507,10 @@
     output: '"__ERROR__"|NUMBER'
   - input: 'STRING'
     output: '"__ERROR__"|NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try tonumber catch ("__ERROR__")'
   in: "0x10"
@@ -381,6 +521,10 @@
     output: '"__ERROR__"|NUMBER'
   - input: 'STRING'
     output: '"__ERROR__"|NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try tonumber catch ("__ERROR__")'
   in: "1_000"
@@ -391,6 +535,10 @@
     output: '"__ERROR__"|NUMBER'
   - input: 'STRING'
     output: '"__ERROR__"|NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try tonumber catch ("__ERROR__")'
   in: ". "
@@ -401,3 +549,7 @@
     output: '"__ERROR__"|NUMBER'
   - input: 'STRING'
     output: '"__ERROR__"|NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false

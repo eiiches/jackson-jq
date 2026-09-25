@@ -5,6 +5,10 @@
     output: 'NEVER'
   - input: 'NULL'
     output: 'NEVER'
+  properties:
+    cardinality: ZERO
+    depends_on_input: false
+    depends_on_external_state: false
   comment: 'lhs is evaluated first'
 
 - q: 'try (error("foo") or empty) catch .'
@@ -15,3 +19,7 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false

@@ -7,6 +7,10 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'getpath([{"start": "x", "end": "y"}])'
   in: null
@@ -17,6 +21,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try (getpath([false, []])) catch .'
@@ -27,6 +35,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try (getpath([false, []])) catch .'
@@ -37,6 +49,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try (setpath([false, []]; null)) catch .'
@@ -47,6 +63,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try (setpath([false, []]; null)) catch .'
@@ -57,6 +77,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 # An array slice path segment must carry both "start" and "end". An explicit null means an open
@@ -70,6 +94,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try (getpath([{}])) catch .'
@@ -81,6 +109,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
 
@@ -93,6 +125,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try (getpath([{"start": 1}])) catch .'
@@ -104,6 +140,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
 
@@ -116,6 +156,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'getpath([{"start": 1, "end": null}])'
@@ -127,4 +171,8 @@
     output: 'ANY'
   - input: '[INT,INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'

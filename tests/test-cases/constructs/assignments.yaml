@@ -7,6 +7,10 @@
     output: 'ANY'
   - input: 'BOOLEAN'
     output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '1 += 1'
   in: 1
@@ -17,6 +21,10 @@
     output: 'ANY'
   - input: 'INT'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try (1 += 1) catch .'
@@ -28,6 +36,10 @@
     output: 'ANY'
   - input: 'INT'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
 
@@ -40,6 +52,10 @@
     output: 'ANY'
   - input: 'INT'
     output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try (1 = 3) catch .'
@@ -51,6 +67,10 @@
     output: 'ANY'
   - input: 'INT'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
 
@@ -62,6 +82,10 @@
     output: '[*:NUMBER]'
   - input: 'NULL'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
 
 - q: '[1,2,3] | (.[] | select(. > 1)) |= (. + 10, . + 20)'
@@ -72,6 +96,10 @@
     output: '[*:NUMBER]'
   - input: 'NULL'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '[1,2,3] | (.[], .[] | select(. > 1)) |= (. + 10, . + 40)'
@@ -82,6 +110,10 @@
     output: '[*:NUMBER]'
   - input: 'NULL'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
 
 - q: '[1,2,3] | (.[], .[] | select(. > 1)) |= (. + 10, . + 40)'
@@ -92,6 +124,10 @@
     output: '[*:NUMBER]'
   - input: 'NULL'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '[1,2,3] | (.[], .[] | select(. > 1)) |= (if . == 3 then empty else . + 1 end)'
@@ -102,6 +138,10 @@
     output: '[*:NUMBER]'
   - input: 'NULL'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.6, 1.7)'
   failing: true
   justification: This behavior is officially undefined. See https://github.com/stedolan/jq/issues/897.
@@ -114,6 +154,10 @@
     output: '[*:NUMBER]'
   - input: 'NULL'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
   justification: This behavior is officially undefined. See https://github.com/stedolan/jq/issues/897.
@@ -126,6 +170,10 @@
     output: '[*:NUMBER]'
   - input: 'NULL'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
   failing: true
   justification: This behavior is officially undefined. See https://github.com/stedolan/jq/issues/897.
@@ -138,6 +186,10 @@
     output: '[*:NUMBER]'
   - input: 'NULL'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.6, )'
   failing: true
   justification: This behavior is officially undefined. See https://github.com/stedolan/jq/issues/897.
@@ -150,6 +202,10 @@
     output: '[*:NUMBER]'
   - input: 'NULL'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
   failing: true
   justification: This behavior is officially undefined. See https://github.com/stedolan/jq/issues/897.
@@ -162,6 +218,10 @@
     output: '[*:1|2|3]'
   - input: 'NULL'
     output: '[*:1|2|3]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.6, 1.7)'
   failing: true
   justification: This behavior is officially undefined. See https://github.com/stedolan/jq/issues/897.
@@ -174,6 +234,10 @@
     output: '[*:1|2|3]'
   - input: 'NULL'
     output: '[*:1|2|3]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
   justification: This behavior is officially undefined. See https://github.com/stedolan/jq/issues/897.
@@ -186,6 +250,10 @@
     output: '[*:1|2|3]'
   - input: 'NULL'
     output: '[*:1|2|3]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
   failing: true
   justification: This behavior is officially undefined. See https://github.com/stedolan/jq/issues/897.
@@ -198,6 +266,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.6, )'
   failing: true
   justification: This behavior is officially undefined. See https://github.com/stedolan/jq/issues/897.
@@ -210,6 +282,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.6, 1.7)'
   failing: true
   justification: The result is not what everyone expects. Actually, this behavior is officially undefined. See https://github.com/stedolan/jq/issues/897.
@@ -222,6 +298,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
   justification: The result is not what everyone expects. Actually, this behavior is officially undefined. See https://github.com/stedolan/jq/issues/897.
@@ -234,6 +314,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
   failing: true
   justification: This behavior is officially undefined. See https://github.com/stedolan/jq/issues/897.
@@ -246,6 +330,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'try (def f($n): $n.a; [{a: 1}, {a: 2}] | path(f(.[2]))) catch .'
@@ -256,6 +344,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
   failing: true
   justification: The jq documentation explicitly states `$var.foo is not a valid or useful path expression in .`.
@@ -269,6 +361,10 @@
     output: 'ANY'
   - input: '{}'
     output: '{foo:NULL}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.foo += 1'
   in: {}
@@ -279,3 +375,7 @@
     output: 'ANY'
   - input: '{}'
     output: '{foo:1}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false

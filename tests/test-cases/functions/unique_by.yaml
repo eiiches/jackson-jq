@@ -7,3 +7,7 @@
     output: '[*:ANY]'
   - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
     output: '[*:INT|NULL]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false

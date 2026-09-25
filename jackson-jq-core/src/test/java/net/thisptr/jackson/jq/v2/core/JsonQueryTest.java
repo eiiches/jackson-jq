@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -86,11 +87,16 @@ public class JsonQueryTest {
 	}
 
 	@Test
-	public void reportsInferredCardinality() {
-		assertThat(ENV.compile("1").getCardinality()).isEqualTo(Cardinality.ONE);
-		assertThat(ENV.compile("empty").getCardinality()).isEqualTo(Cardinality.ZERO);
-		assertThat(ENV.compile(".[]").getCardinality()).isEqualTo(Cardinality.UNKNOWN);
-		assertThat(ENV.compile("tonumber").getCardinality()).isEqualTo(Cardinality.ONE);
-		assertThat(ENV.compile("has(\"a\")").getCardinality()).isEqualTo(Cardinality.ONE);
+	public void reportsInferredProperties() {
+		assertThat(ENV.compile("1").getProperties())
+				.isEqualTo(new ExpressionProperties(Cardinality.ONE, false, false));
+		assertThat(ENV.compile("empty").getProperties())
+				.isEqualTo(new ExpressionProperties(Cardinality.ZERO, false, false));
+		assertThat(ENV.compile(".[]").getProperties())
+				.isEqualTo(new ExpressionProperties(Cardinality.UNKNOWN, true, false));
+		assertThat(ENV.compile("tonumber").getProperties())
+				.isEqualTo(new ExpressionProperties(Cardinality.ONE, true, false));
+		assertThat(ENV.compile("has(\"a\")").getProperties())
+				.isEqualTo(new ExpressionProperties(Cardinality.ONE, true, false));
 	}
 }

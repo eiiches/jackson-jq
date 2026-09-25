@@ -9,6 +9,10 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.0)'
 
 - q: 'del(ltrimstr(isnan))'
@@ -20,6 +24,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT]'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.0)'
 
 - q: 'ltrimstr(0.0)'
@@ -31,6 +39,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.0)'
 
 - q: 'try ltrimstr("foo") catch .'
@@ -42,6 +54,10 @@
     output: 'ANY'
   - input: 'INT'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.0, )'
 
 - q: 'try ltrimstr(123) catch .'
@@ -53,6 +69,10 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.0, )'
 
 - q: 'ltrimstr("foo")'
@@ -64,6 +84,10 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'ltrimstr("bar")'
@@ -75,6 +99,10 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'ltrimstr("")'
@@ -86,4 +114,8 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'

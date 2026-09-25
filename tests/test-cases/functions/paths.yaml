@@ -7,6 +7,10 @@
     output: '[*:NUMBER|STRING]'
   - input: '[BOOLEAN]'
     output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'paths'
@@ -19,6 +23,10 @@
     output: '[*:NUMBER|STRING]'
   - input: '[[[NULL]]]'
     output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
 
 - q: 'paths'
@@ -29,6 +37,10 @@
     output: '[*:NUMBER|STRING]'
   - input: '[NULL]'
     output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
 
 # jq >= 1.7.1 defines paths(f) as `path(..|select(f))|select(length > 0)`, which evaluates f on
@@ -43,6 +55,10 @@
     output: '[*:[*:NUMBER|STRING]]'
   - input: 'FLOAT'
     output: '[*:[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7.1)'
 
 - q: 'try [paths(endswith("foo"))] catch .'
@@ -54,6 +70,10 @@
     output: 'ANY'
   - input: 'FLOAT'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7.1, )'
 
 - q: '[paths(endswith("foo"))]'
@@ -65,6 +85,10 @@
     output: '[*:[*:NUMBER|STRING]]'
   - input: '{a:STRING}'
     output: '[*:[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7.1)'
 
 # The root is evaluated before any child path is emitted.
@@ -77,6 +101,10 @@
     output: 'ANY'
   - input: '{a:STRING}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7.1, )'
 
 # The root matches, but its (empty) path is still not emitted.
@@ -89,6 +117,10 @@
     output: '[*:[*:NUMBER|STRING]]'
   - input: 'STRING'
     output: '[*:[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # jq 1.5's `..` skips null-valued members, so paths/0 does not yield their paths; from 1.6 on it
@@ -102,6 +134,10 @@
     output: '[*:[*:NUMBER|STRING]]'
   - input: '{a:NULL}'
     output: '[*:[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
 
 - q: '[paths]'
@@ -113,6 +149,10 @@
     output: '[*:[*:NUMBER|STRING]]'
   - input: '{a:NULL}'
     output: '[*:[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '[paths]'
@@ -124,4 +164,8 @@
     output: '[*:[*:NUMBER|STRING]]'
   - input: '[NULL]'
     output: '[*:[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'

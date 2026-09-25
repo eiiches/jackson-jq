@@ -7,6 +7,10 @@
     output: '[*:ANY]|[]'
   - input: '{}'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'reverse'
@@ -18,6 +22,10 @@
     output: '[*:ANY]|[]'
   - input: 'NULL'
     output: '[]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'reverse'
@@ -29,4 +37,8 @@
     output: '[*:ANY]|[]'
   - input: 'STRING'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'

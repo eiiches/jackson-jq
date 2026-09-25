@@ -6,6 +6,10 @@
     output: '[*:STRING]'
   - input: 'NULL'
     output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '(("foo" // 1) / "foo")'
   in: "foo"
@@ -16,6 +20,10 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '"" / ""'
@@ -26,6 +34,10 @@
     output: '[*:STRING]'
   - input: 'NULL'
     output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '"foo" / ""'
   out:
@@ -35,6 +47,10 @@
     output: '[*:STRING]'
   - input: 'NULL'
     output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '"" / "foo"'
   out:
@@ -44,6 +60,10 @@
     output: '[*:STRING]'
   - input: 'NULL'
     output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'error("foo") / empty'
   out: []
@@ -52,6 +72,10 @@
     output: 'NEVER'
   - input: 'NULL'
     output: 'NEVER'
+  properties:
+    cardinality: ZERO
+    depends_on_input: false
+    depends_on_external_state: false
   comment: 'rhs is evaluated first'
 
 - q: 'try (empty / error("foo")) catch .'
@@ -62,6 +86,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try (./nan) catch .'
   out:
@@ -71,3 +99,7 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false

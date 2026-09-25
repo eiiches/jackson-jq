@@ -7,6 +7,10 @@
     output: 'NUMBER'
   - input: 'STRING'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try fromdateiso8601 catch .'
   in: "2023-09-30T00:00:00.000Z"
@@ -17,3 +21,7 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false

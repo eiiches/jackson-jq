@@ -7,3 +7,7 @@
     output: 'STRING'
   - input: '[BOOLEAN,FLOAT,STRING]'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false

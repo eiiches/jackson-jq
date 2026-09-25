@@ -6,6 +6,10 @@
     output: '1|2'
   - input: 'NULL'
     output: '1'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'if false then 1 end'
   in: 2
@@ -16,6 +20,10 @@
     output: 'ANY'
   - input: 'INT'
     output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: 'if false then 1 elif false then 2 else 3 end'
@@ -26,6 +34,10 @@
     output: '3'
   - input: 'NULL'
     output: '3'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'if false then 1 elif false then 2 end'
   in: 3
@@ -36,4 +48,8 @@
     output: 'ANY'
   - input: 'INT'
     output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'

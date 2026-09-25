@@ -6,6 +6,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try ({"foo": [1,2,3,4,4,5,5,6]} | contains("foo")) catch .'
@@ -16,6 +20,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'contains("\u0000 jq ignores any string after \\0, but we do differently")'
@@ -27,6 +35,10 @@
     output: 'BOOLEAN'
   - input: 'STRING'
     output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
   failing: true
   justification: This is more safe.
@@ -40,4 +52,8 @@
     output: 'BOOLEAN'
   - input: 'STRING'
     output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'

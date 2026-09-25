@@ -7,6 +7,10 @@
     output: 'NULL|STRING'
   - input: '[[INT],BOOLEAN]'
     output: 'NULL|STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '(0 * ("baz" * 1.0))'
   in: 2
@@ -17,6 +21,10 @@
     output: 'ANY'
   - input: 'INT'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '(0 * ("baz" * 1.0))'
@@ -28,6 +36,10 @@
     output: 'ANY'
   - input: 'INT'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
 
@@ -40,6 +52,10 @@
     output: 'NULL|STRING'
   - input: 'STRING'
     output: 'NULL|STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '("baz" * 0.5)'
@@ -51,6 +67,10 @@
     output: 'NULL|STRING'
   - input: 'STRING'
     output: 'NULL|STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
 
@@ -62,6 +82,10 @@
     output: 'NULL|STRING'
   - input: 'NULL'
     output: 'NULL|STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '"foo" * -3'
   out:
@@ -71,6 +95,10 @@
     output: 'NULL|STRING'
   - input: 'NULL'
     output: 'NULL|STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'error("foo") * empty'
   out: []
@@ -79,6 +107,10 @@
     output: 'NEVER'
   - input: 'NULL'
     output: 'NEVER'
+  properties:
+    cardinality: ZERO
+    depends_on_input: false
+    depends_on_external_state: false
   comment: 'rhs is evaluated first'
 
 - q: 'try (empty * error("foo")) catch .'
@@ -89,6 +121,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '(try ((-1.5 * "baz")) catch ("__ERROR__"))'
   out:
@@ -98,6 +134,10 @@
     output: 'NULL|STRING'
   - input: 'NULL'
     output: 'NULL|STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.8.0)'
   failing: true
   justification: jq interprets this as -(1.5 * baz) while jackson-jq as (-1.5) * baz. Defer resolution to future versions.
@@ -110,4 +150,8 @@
     output: 'NULL|STRING'
   - input: 'NULL'
     output: 'NULL|STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.8.0, )'

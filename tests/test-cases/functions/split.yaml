@@ -7,6 +7,10 @@
     output: '[*:STRING]'
   - input: 'STRING'
     output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'split(empty)'
@@ -17,3 +21,7 @@
     output: '[*:STRING]'
   - input: '[]'
     output: 'ANY'
+  properties:
+    cardinality: ZERO
+    depends_on_input: true
+    depends_on_external_state: false

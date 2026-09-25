@@ -7,6 +7,10 @@
     output: 'BOOLEAN'
   - input: 'NULL'
     output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[has(1.9), has(-0.9)]'
@@ -18,6 +22,10 @@
     output: '[BOOLEAN,BOOLEAN]'
   - input: '[INT,INT,INT]'
     output: '[BOOLEAN,BOOLEAN]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[has(-1), has(0), has(2), has(3)]'
@@ -29,6 +37,10 @@
     output: '[BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN]'
   - input: '[INT,INT,INT]'
     output: '[BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[has(1e20), has(nan)]'
@@ -40,4 +52,8 @@
     output: '[BOOLEAN,BOOLEAN]'
   - input: '[INT,INT,INT]'
     output: '[BOOLEAN,BOOLEAN]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'

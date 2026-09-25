@@ -7,6 +7,10 @@
     output: 'ANY'
   - input: '{}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '@csv'
   in: [0.0]
@@ -17,6 +21,10 @@
     output: 'STRING'
   - input: '[INT]'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '@csv'
@@ -28,6 +36,10 @@
     output: 'STRING'
   - input: '[INT]'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
 
@@ -39,6 +51,10 @@
     output: 'STRING'
   - input: 'NULL'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[[range(0; 128)] | implode] | @csv'
   out:
@@ -48,3 +64,7 @@
     output: 'STRING'
   - input: 'NULL'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false

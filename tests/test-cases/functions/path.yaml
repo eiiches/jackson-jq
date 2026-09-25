@@ -6,6 +6,10 @@
     output: '[*:NUMBER|STRING]'
   - input: 'NULL'
     output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'path(.["x":"y"])'
@@ -17,6 +21,10 @@
     output: '[*:NUMBER|STRING]'
   - input: 'NULL'
     output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'path(.a.b[])'
@@ -29,6 +37,10 @@
     output: '[*:NUMBER|STRING]'
   - input: '{a:{b:[INT,INT]}}'
     output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '{} | try path(.[0]) catch .'
   out:
@@ -38,6 +50,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: '{} | try path(.[0]) catch .'
@@ -48,6 +64,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: '[] | try path(.a) catch .'
@@ -58,6 +78,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: '[] | try path(.a) catch .'
@@ -68,6 +92,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: '1 | try path(.[]) catch .'
@@ -78,6 +106,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try path(.a | .c?) catch .'
   in: {"a": []}
@@ -87,6 +119,10 @@
     output: 'ANY'
   - input: '{a:[]}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(.a | .c) catch .'
   in: {"a": []}
@@ -97,6 +133,10 @@
     output: 'ANY'
   - input: '{a:[]}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try path(.a | .c) catch .'
@@ -108,6 +148,10 @@
     output: 'ANY'
   - input: '{a:[]}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try path([] | .c?) catch .'
@@ -119,6 +163,10 @@
     output: 'ANY'
   - input: '{a:[]}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path([] | .c) catch .'
   in: {"a": []}
@@ -129,6 +177,10 @@
     output: 'ANY'
   - input: '{a:[]}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(.a | .[0]) catch .'
   in: {"a": 1}
@@ -139,6 +191,10 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try path(.a | .[0]) catch .'
@@ -150,6 +206,10 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try path(.a | .[0]?) catch .'
@@ -160,6 +220,10 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(1 | .[0]) catch .'
   out:
@@ -169,6 +233,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(1 | .[0]?) catch .'
   out:
@@ -178,6 +246,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(.a | .[0:1]) catch .'
   in: {"a": 1}
@@ -188,6 +260,10 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try path(.a | .[0:1]) catch .'
@@ -199,6 +275,10 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try path(.a | .[0:1]?) catch .'
@@ -209,6 +289,10 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(1 | .[0:1]) catch .'
   out:
@@ -218,6 +302,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try path(1 | .[0:1]) catch .'
@@ -228,6 +316,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try path(1 | .[0:1]?) catch .'
@@ -238,6 +330,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try path(1 | .[0:1]?) catch .'
@@ -248,6 +344,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try path(.a | .[]) catch .'
@@ -259,6 +359,10 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(.a | .[]?) catch .'
   in: {"a": 1}
@@ -268,6 +372,10 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(1 | .[]) catch .'
   out:
@@ -277,6 +385,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try path(1 | .[]?) catch .'
   out:
@@ -286,6 +398,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try (path([1,2,3,4,5,6,7,8,9][])) catch .'
   out:
@@ -295,6 +411,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try (path("longer string not truncated")) catch .'
   out:
@@ -304,3 +424,7 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false

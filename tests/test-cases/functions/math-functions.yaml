@@ -7,6 +7,10 @@
     output: '[*:NUMBER]'
   - input: '[INT,INT,INT]'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'map(log2)'
   in: [2, 4, 8]
@@ -17,6 +21,10 @@
     output: '[*:NUMBER]'
   - input: '[INT,INT,INT]'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'map(log / (2|log))'
   in: [2, 4, 8]
@@ -27,6 +35,10 @@
     output: '[*:NUMBER]'
   - input: '[INT,INT,INT]'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'def log1p_: 1 + . | log; map(log1p_ == log1p)'
   in: [4, 8, 16]
@@ -37,6 +49,10 @@
     output: '[*:BOOLEAN]'
   - input: '[INT,INT,INT]'
     output: '[*:BOOLEAN]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'log'
@@ -48,6 +64,10 @@
     output: 'NUMBER'
   - input: 'INT'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'exp'
   in: 2
@@ -58,6 +78,10 @@
     output: 'NUMBER'
   - input: 'INT'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'expm1'
   in: 2
@@ -68,6 +92,10 @@
     output: 'NUMBER'
   - input: 'INT'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'map(round)'
@@ -79,6 +107,10 @@
     output: '[*:NUMBER]'
   - input: '[FLOAT,FLOAT,FLOAT,FLOAT]'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'map(exp10)'
@@ -90,6 +122,10 @@
     output: '[*:NUMBER]'
   - input: '[INT,INT,FLOAT]'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
   numerical_errors: 1.0e-09
 
@@ -102,6 +138,10 @@
     output: '[*:NUMBER]'
   - input: '[INT,INT,FLOAT]'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '[0, 1, nan, infinite | ., -. | normals]'
   out:
@@ -111,6 +151,10 @@
     output: '[*:NUMBER]'
   - input: 'NULL'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[0, 2.2250738585072011e-308, 2.2250738585072014e-308, 1, nan, infinite | ., -. | normals]'
   out:
@@ -120,6 +164,10 @@
     output: '[*:NUMBER]'
   - input: 'NULL'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, 1.7.1)'
   failing: true
 
@@ -132,6 +180,10 @@
     output: '[*:NUMBER]'
   - input: '[FLOAT,FLOAT,FLOAT,FLOAT,INT,INT]'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'map(ceil)'
   in: [2.1, 2.7, -2.1, -2.7, 0, 42]
@@ -142,4 +194,8 @@
     output: '[*:NUMBER]'
   - input: '[FLOAT,FLOAT,FLOAT,FLOAT,INT,INT]'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'

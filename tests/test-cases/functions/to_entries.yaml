@@ -7,6 +7,10 @@
     output: '[*:{key:STRING,value:ANY}]'
   - input: '[INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try ("abcdefghijklm" | to_entries) catch .'
@@ -17,6 +21,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try ("abcdefghijklm" | to_entries) catch .'
@@ -27,4 +35,8 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.8.2, )'

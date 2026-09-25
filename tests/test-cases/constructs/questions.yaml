@@ -7,6 +7,10 @@
     output: 'STRING'
   - input: 'NULL'
     output: 'STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '(10, {a: 10}) | to_entries?'
   out:
@@ -16,6 +20,10 @@
     output: '[*:{key:STRING,value:10}]'
   - input: 'NULL'
     output: '[*:{key:STRING,value:10}]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'to_entries'
   in: [61, 62]
@@ -26,6 +34,10 @@
     output: '[*:{key:STRING,value:ANY}]'
   - input: '[INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '"foo\("a", error("b"), "c")"?'
@@ -36,6 +48,10 @@
     output: 'STRING'
   - input: 'NULL'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '{a: 10, b: (1, error("b"), 3)}?'
   out:
@@ -45,6 +61,10 @@
     output: '{a:10,b:1|3}'
   - input: 'NULL'
     output: '{a:10,b:1|3}'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[1, error(2), 3]?'
   out: []
@@ -53,6 +73,10 @@
     output: '[*:1|3]'
   - input: 'NULL'
     output: '[*:1|3]'
+  properties:
+    cardinality: ZERO
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '0?, 1?, true?, false?, null?'
   out:
@@ -66,6 +90,10 @@
     output: '0|1|BOOLEAN|NULL'
   - input: 'NULL'
     output: '0|1|BOOLEAN|NULL'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '1,2,3 as $a | $a?'
   out:
@@ -77,6 +105,10 @@
     output: '1|2|3'
   - input: 'NULL'
     output: '1|2|3'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '({a: 10}).a??????'
   out:
@@ -86,6 +118,10 @@
     output: '10'
   - input: 'NULL'
     output: '10'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[10]??????'
   out:
@@ -95,6 +131,10 @@
     output: '[10]'
   - input: 'NULL'
     output: '[10]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '({a:{b:[{c:10}]}}).a?.b?[0]?.c?'
   out:
@@ -104,6 +144,10 @@
     output: '10'
   - input: 'NULL'
     output: '10'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '1,2,3 | label $out | if . == 2 then break $out? else . end'
   out:

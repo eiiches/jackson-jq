@@ -7,6 +7,10 @@
     output: 'STRING'
   - input: 'BOOLEAN'
     output: '"__ERROR__"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'join(empty)'
@@ -17,6 +21,10 @@
     output: 'STRING'
   - input: 'FLOAT'
     output: 'ANY'
+  properties:
+    cardinality: ZERO
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'join(",")'
@@ -28,4 +36,8 @@
     output: 'STRING'
   - input: '{a:STRING,b:STRING}'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'

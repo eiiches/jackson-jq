@@ -7,6 +7,10 @@
     output: '[ANY,ANY,ANY]'
   - input: '{a:INT,b:[INT,{d:INT}]}'
     output: '[INT,[INT,{d:INT}],{d:INT}]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '. as {$a, $b: [$b, $b]} | [$a, $b]'
@@ -18,6 +22,10 @@
     output: '[ANY,ANY]'
   - input: '{a:INT,b:[INT,{d:INT}]}'
     output: '[INT,[INT,{d:INT}]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '. as {$a, $b: [$c, $c]} | [$a, $b, $c]'
@@ -29,6 +37,10 @@
     output: '[ANY,ANY,ANY]'
   - input: '{a:INT,b:[INT,{d:INT}]}'
     output: '[INT,[INT,{d:INT}],{d:INT}]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '. as [$a, $a] | $a'
@@ -40,6 +52,10 @@
     output: 'ANY'
   - input: '[INT,INT]'
     output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '. as {a: $a, b: $a} | $a'
@@ -51,6 +67,10 @@
     output: 'ANY'
   - input: '{a:INT,b:INT}'
     output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '. as {a: $v} | $v'
@@ -62,6 +82,10 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '. as {if: $v} | $v'
@@ -73,6 +97,10 @@
     output: 'ANY'
   - input: '{if:INT}'
     output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
   comment: 'a keyword is a valid object pattern key'
 
@@ -85,6 +113,10 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '. as {"\(.k)": $v} | $v'
@@ -96,6 +128,10 @@
     output: 'ANY'
   - input: '{a:INT,k:STRING}'
     output: 'INT|NULL|STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '. as {@text "\(.k)": $v} | $v'
@@ -107,6 +143,10 @@
     output: 'ANY'
   - input: '{a:INT,k:STRING}'
     output: 'INT|NULL|STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '. as {("a" + "b"): $v} | $v'
@@ -118,6 +158,10 @@
     output: 'ANY'
   - input: '{ab:INT}'
     output: 'INT|NULL'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '. as {$a} | $a'
@@ -129,6 +173,10 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '. as {$a: {$b}} | [$a, $b]'
@@ -140,6 +188,10 @@
     output: '[ANY,ANY]'
   - input: '{a:{b:INT}}'
     output: '[{b:INT},INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '[. as {("a", "b"): $v} | $v]'
@@ -151,6 +203,10 @@
     output: '[ANY]'
   - input: '{a:INT,b:INT}'
     output: '[INT|NULL]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
   comment: 'a key expression emitting multiple values matches once per value'
 
@@ -163,6 +219,10 @@
     output: '[ANY]'
   - input: '{a:INT,b:INT,k1:STRING,k2:STRING}'
     output: '[INT|NULL|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[. as {(.k1, .k2): $v, c: {$d}} | [$v, $d]]'
@@ -174,6 +234,10 @@
     output: '[[ANY,ANY]]'
   - input: '{a:INT,b:INT,c:{d:INT},k1:STRING,k2:STRING}'
     output: '[[INT|NULL|STRING|{d:INT},INT]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[path(. as {a: $a} | $a)]'
@@ -185,6 +249,10 @@
     output: '[[*:NUMBER|STRING]]'
   - input: '{a:INT}'
     output: '[[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[path(. as {(.k): $a} | $a)]'
@@ -196,6 +264,10 @@
     output: '[[*:NUMBER|STRING]]'
   - input: '{a:INT,k:STRING}'
     output: '[[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '. as {a: $v} | $v'
@@ -207,6 +279,10 @@
     output: 'ANY'
   - input: '{}'
     output: 'NULL'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'null as {a: $v} | $v'
@@ -218,6 +294,10 @@
     output: 'NULL'
   - input: 'NULL'
     output: 'NULL'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try (1 as {a: $v} | $v) catch "__ERROR__"'
@@ -229,6 +309,10 @@
     output: '"__ERROR__"'
   - input: 'NULL'
     output: '"__ERROR__"'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try ([] as {a: $v} | $v) catch "__ERROR__"'
@@ -240,6 +324,10 @@
     output: '"__ERROR__"'
   - input: 'NULL'
     output: '"__ERROR__"'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try (("x"?) as {a: $a} | $a) catch "__ERROR__"'
@@ -250,6 +338,10 @@
     output: '"__ERROR__"'
   - input: 'NULL'
     output: '"__ERROR__"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try (("x"?) as {a: $a} | $a) catch "__ERROR__"'
@@ -261,6 +353,10 @@
     output: '"__ERROR__"'
   - input: 'NULL'
     output: '"__ERROR__"'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: 'try ((try "x") as {a: $a} | $a) catch "__ERROR__"'
@@ -271,6 +367,10 @@
     output: '"__ERROR__"'
   - input: 'NULL'
     output: '"__ERROR__"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try ((try "x") as {a: $a} | $a) catch "__ERROR__"'
@@ -282,6 +382,10 @@
     output: '"__ERROR__"'
   - input: 'NULL'
     output: '"__ERROR__"'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: '["0", {} as {foo: $a} | $a]'
@@ -293,6 +397,10 @@
     output: '["0",NULL]'
   - input: 'NULL'
     output: '["0",NULL]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[{foo: 1}, {foo: 2} as {foo: $a} | $a]'
@@ -304,6 +412,10 @@
     output: '[{foo:1},2]'
   - input: 'NULL'
     output: '[{foo:1},2]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
   comment: 'an unparenthesized comma leaves earlier branches outside the binding'
 
@@ -316,6 +428,10 @@
     output: '[*:1|2]'
   - input: 'NULL'
     output: '[*:1|2]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
   comment: 'parentheses make the binding match every emitted value'
 
@@ -328,6 +444,10 @@
     output: '[ANY,ANY]'
   - input: '{a:[INT,INT],b:INT}'
     output: '[INT,INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
   comment: 'array elements are matched back to front, so .a[0] loses to the earlier .b'
 
@@ -341,6 +461,10 @@
     output: 'ANY'
   - input: '[{x:INT,y:INT},INT]'
     output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
   comment: 'the shadowed occurrence still branches over both keys, it just does not bind'
 
@@ -354,6 +478,10 @@
     output: 'ANY'
   - input: '[INT,{x:INT,y:INT}]'
     output: 'INT|NULL'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
   comment: 'and here the branching occurrence is the one that wins, since it is matched first'
 
@@ -366,6 +494,10 @@
     output: 'ANY'
   - input: '[[INT,INT],[INT,INT]]'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'foreach .[] as {a: $x, b: $x} (0; . + $x)'
@@ -377,4 +509,8 @@
     output: 'ANY'
   - input: '[{a:INT,b:INT}]'
     output: 'NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'

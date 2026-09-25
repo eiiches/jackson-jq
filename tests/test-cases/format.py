@@ -52,7 +52,7 @@ class FormattedTestCase:
     def __yaml__(self, dumper):
         root_node = yaml.nodes.MappingNode("tag:yaml.org,2002:map", [], flow_style=False)
         known_order = [
-            "q", "in", "out", "types", "v", "failing", "comment", "justification",
+            "q", "in", "out", "types", "properties", "v", "failing", "comment", "justification",
             "modules", "should_compile",
             "numerical_errors", "ignore_true_jq_behavior",
         ]
@@ -91,6 +91,20 @@ class FormattedTestCase:
                     item_node.value.append((dumper.represent_str("output"), out_node))
                     types_node.value.append(item_node)
                 root_node.value.append((dumper.represent_str("types"), types_node))
+            elif k == "properties":
+                props_node = yaml.nodes.MappingNode("tag:yaml.org,2002:map", [], flow_style=False)
+                for pk in ["cardinality", "depends_on_input", "depends_on_external_state"]:
+                    if pk in val:
+                        pv = val[pk]
+                        if pk == "cardinality":
+                            pv_node = yaml.nodes.ScalarNode("tag:yaml.org,2002:str", str(pv), style=None)
+                        elif isinstance(pv, bool):
+                            pv_node = dumper.represent_data(pv)
+                            pv_node.style = None
+                        else:
+                            pv_node = dumper.represent_data(pv)
+                        props_node.value.append((dumper.represent_str(pk), pv_node))
+                root_node.value.append((dumper.represent_str("properties"), props_node))
             elif k == "v":
                 v_node = dumper.represent_data(val)
                 v_node.style = "'"

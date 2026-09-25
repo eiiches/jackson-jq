@@ -6,6 +6,10 @@
     output: '[*:ANY]'
   - input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT]'
     output: '[*:INT]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
 
 - q: '[label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]'
   in: [11, 22, 33, 44, 55, 66, 77, 88, 99]
@@ -16,6 +20,10 @@
     output: '[*:ANY]'
   - input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT]'
     output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
 
 - q: '[foreach .[] as $item ([3, null]; label $out | if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]'
   in: [11, 22, 33, 44, 55, 66, 77, 88, 99]
@@ -26,6 +34,10 @@
     output: '[*:ANY]'
   - input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT]'
     output: '[*:INT|NULL]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
 
 - q: 'def myfirst(g): label $out | g | ., break $out; [myfirst(myfirst(1,2), 3)]'
   in: null
@@ -36,6 +48,10 @@
     output: '[*:1|2|3]'
   - input: 'NULL'
     output: '[*:1|2|3]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
   v: '[1.5, )'
   failing: true
   comment: 'Emits [1, 3]. `label`/`break` are matched by raw name at runtime (LabelPipeComponent, PipedQuery), but jq binds `break` to its lexically enclosing `label`. The inner myfirst is still on the stack while its output is consumed, so it swallows the outer `break $out`. Same bug reached through builtins: `[first(first(1,2), 3)]` emits [1, 3] from 1.6 on, where jq emits [1].'

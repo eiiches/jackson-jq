@@ -10,6 +10,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '.["x":"y"]'
@@ -21,6 +25,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '[0,1,2,3,4] | (.[1.5:2.5], .[1.5:-1.5], .[-1.5], .[1.5])'
@@ -34,6 +42,10 @@
     output: '0|1|2|3|4|NULL|[*:0|1|2|3|4]'
   - input: 'NULL'
     output: '0|1|2|3|4|NULL|[*:0|1|2|3|4]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '[0,1,2,3,4] | (.[1.5:2.5], .[1.5:-1.5], .[-1.5], .[1.5])'
@@ -47,6 +59,10 @@
     output: '0|1|2|3|4|NULL|[*:0|1|2|3|4]'
   - input: 'NULL'
     output: '0|1|2|3|4|NULL|[*:0|1|2|3|4]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: '[] | path(.[3.5])'
@@ -57,6 +73,10 @@
     output: '[*:NUMBER|STRING]'
   - input: 'NULL'
     output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[] | .[3.5] = 3'
   out:
@@ -66,6 +86,10 @@
     output: '[*:3|NULL]'
   - input: 'NULL'
     output: '[*:3|NULL]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[1,1,1,1,1] | .[-1.7] = 3'
   out:
@@ -75,6 +99,10 @@
     output: '[*:1|3|NULL]'
   - input: 'NULL'
     output: '[*:1|3|NULL]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[1,1,1,1,1] | .[-1.2] = 3'
   out:
@@ -84,6 +112,10 @@
     output: '[*:1|3|NULL]'
   - input: 'NULL'
     output: '[*:1|3|NULL]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '.[]["a","b"]'
   in: [{"a": 1, "b": 3}, {"a": 2, "b": 4}]
@@ -97,6 +129,10 @@
     output: 'ANY'
   - input: '[{a:INT,b:INT},{a:INT,b:INT}]'
     output: 'INT|NULL'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[][0, 1]'
   in: [[1, 3], [2, 4]]
@@ -110,6 +146,10 @@
     output: 'ANY'
   - input: '[[INT,INT],[INT,INT]]'
     output: 'INT'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[][0,1:1,2]'
   in: [[1, 3], [2, 4]]
@@ -127,6 +167,10 @@
     output: 'NULL|STRING|[*:ANY]'
   - input: '[[INT,INT],[INT,INT]]'
     output: '[*:INT]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[]."\("a","b")"'
   in: [{"a": 1, "b": 3}, {"a": 2, "b": 4}]
@@ -140,6 +184,10 @@
     output: 'ANY'
   - input: '[{a:INT,b:INT},{a:INT,b:INT}]'
     output: 'INT|NULL'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[["a","b"]]'
   in: ["a", "b", "a", "a", "b"]
@@ -150,6 +198,10 @@
     output: 'ANY'
   - input: '[STRING,STRING,STRING,STRING,STRING]'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'path(.[["a","b"]])'
   in: ["a", "b", "a", "a", "b"]
@@ -160,6 +212,10 @@
     output: '[*:NUMBER|STRING]'
   - input: '[STRING,STRING,STRING,STRING,STRING]'
     output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'getpath([["a","b"]])'
   in: ["a", "b", "a", "a", "b"]
@@ -170,6 +226,10 @@
     output: 'ANY'
   - input: '[STRING,STRING,STRING,STRING,STRING]'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try(.[["a","b"]] |= "c") catch .'
   in: ["a", "b", "a", "a", "b"]
@@ -180,6 +240,10 @@
     output: 'ANY'
   - input: '[STRING,STRING,STRING,STRING,STRING]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[[]]'
   in: ["a", "b", "a", "a", "b"]
@@ -190,6 +254,10 @@
     output: 'ANY'
   - input: '[STRING,STRING,STRING,STRING,STRING]'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'path(.[[]])'
   in: ["a", "b", "a", "a", "b"]
@@ -200,6 +268,10 @@
     output: '[*:NUMBER|STRING]'
   - input: '[STRING,STRING,STRING,STRING,STRING]'
     output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[2:0] = [999]'
   in: [0, 1, 2, 3, 4]
@@ -210,6 +282,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[2:2] = [999]'
   in: [0, 1, 2, 3, 4]
@@ -220,6 +296,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[2:3] = [999]'
   in: [0, 1, 2, 3, 4]
@@ -230,6 +310,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[2:-3] = [999]'
   in: [0, 1, 2, 3, 4]
@@ -240,6 +324,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[2:-2] = [999]'
   in: [0, 1, 2, 3, 4]
@@ -250,6 +338,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[2:-100] = [999]'
   in: [0, 1, 2, 3, 4]
@@ -260,6 +352,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[-100:0] = [999]'
   in: [0, 1, 2, 3, 4]
@@ -270,6 +366,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[-100:1] = [999]'
   in: [0, 1, 2, 3, 4]
@@ -280,6 +380,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try ((try "x")["bad":0]) catch "__ERROR__"'
   in: null
@@ -289,6 +393,10 @@
     output: '"__ERROR__"'
   - input: 'NULL'
     output: '"__ERROR__"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try ((try "x")["bad":0]) catch "__ERROR__"'
@@ -300,4 +408,8 @@
     output: '"__ERROR__"'
   - input: 'NULL'
     output: '"__ERROR__"'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'

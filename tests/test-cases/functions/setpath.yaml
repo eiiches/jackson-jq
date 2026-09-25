@@ -7,6 +7,10 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try setpath([{"start": "x", "end": "y"}]; []) catch .'
   in: null
@@ -17,6 +21,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try setpath([{"start": "x", "end": "y"}]; []) catch .'
@@ -28,6 +36,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: 'setpath(89; empty)'
@@ -38,6 +50,10 @@
     output: 'ANY'
   - input: '[]'
     output: 'ANY'
+  properties:
+    cardinality: ZERO
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '(try (setpath(scalars; floor)) catch ("__ERROR__"))'
@@ -49,6 +65,10 @@
     output: '"__ERROR__"'
   - input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT]'
     output: '"__ERROR__"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try (setpath([{}]; 9)) catch .'
@@ -60,6 +80,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try (setpath([{}]; 9)) catch .'
@@ -71,6 +95,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
 
@@ -83,4 +111,8 @@
     output: 'ANY'
   - input: '[INT,INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'

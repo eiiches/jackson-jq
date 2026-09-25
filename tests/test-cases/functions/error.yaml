@@ -6,6 +6,10 @@
     output: 'NEVER'
   - input: 'NULL'
     output: 'NEVER'
+  properties:
+    cardinality: ZERO
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try error catch .'
@@ -17,6 +21,10 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try error catch .'
   in: 0
@@ -27,6 +35,10 @@
     output: 'ANY'
   - input: 'INT'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'error(empty)'
   in: null
@@ -36,6 +48,10 @@
     output: 'NEVER'
   - input: 'NULL'
     output: 'NEVER'
+  properties:
+    cardinality: ZERO
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try error("a", error("foo")) catch .'
@@ -46,6 +62,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try error(error("foo")) catch .'
   out:
@@ -55,6 +75,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try error({x:0}) catch .'
   out:
@@ -64,6 +88,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'error(null)'
   out: []
@@ -72,6 +100,10 @@
     output: 'NEVER'
   - input: 'NULL'
     output: 'NEVER'
+  properties:
+    cardinality: ZERO
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try error(null) catch .'
@@ -82,5 +114,9 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ZERO
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true

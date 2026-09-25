@@ -7,4 +7,8 @@
     output: 'BOOLEAN'
   - input: 'NULL'
     output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.6, )'

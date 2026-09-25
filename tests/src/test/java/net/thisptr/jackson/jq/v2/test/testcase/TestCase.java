@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -51,6 +52,35 @@ public class TestCase {
 
 	@JsonProperty("types")
 	public List<TypeAssertion> types = Collections.emptyList();
+
+	public static class PropertyAssertion {
+		@JsonProperty("cardinality")
+		public Cardinality cardinality = Cardinality.UNKNOWN;
+
+		@JsonProperty("depends_on_input")
+		public boolean dependsOnInput = true;
+
+		@JsonProperty("depends_on_external_state")
+		public boolean dependsOnExternalState = true;
+
+		public PropertyAssertion() {
+		}
+
+		public PropertyAssertion(Cardinality cardinality, boolean dependsOnInput, boolean dependsOnExternalState) {
+			this.cardinality = cardinality;
+			this.dependsOnInput = dependsOnInput;
+			this.dependsOnExternalState = dependsOnExternalState;
+		}
+
+		@Override
+		public String toString() {
+			return String.format("{cardinality: %s, depends_on_input: %s, depends_on_external_state: %s}",
+					cardinality, dependsOnInput, dependsOnExternalState);
+		}
+	}
+
+	@JsonProperty("properties")
+	public @Nullable PropertyAssertion properties;
 
 	@JsonProperty("file")
 	public String file = "";

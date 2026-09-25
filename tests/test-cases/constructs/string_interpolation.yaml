@@ -6,6 +6,10 @@
     output: 'STRING'
   - input: 'NULL'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try (path("path: \([1,2][])")) catch .'
   out:
@@ -15,6 +19,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '"\/"'
   out:
@@ -24,3 +32,7 @@
     output: '"/"'
   - input: 'NULL'
     output: '"/"'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false

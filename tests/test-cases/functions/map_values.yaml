@@ -7,6 +7,10 @@
     output: 'ANY'
   - input: '{key1:BOOLEAN,key2:BOOLEAN}'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
 
 - q: 'map_values(select(.))'
@@ -18,6 +22,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: '{key1:BOOLEAN,key2:BOOLEAN}'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
   v: '[1.6, )'
 
 - q: 'map_values(if . == 2 then empty else . end)'
@@ -29,6 +37,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
 
 - q: 'map_values(if . == 2 then empty else . end)'
@@ -40,6 +52,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
   v: '[1.6, 1.7)'
 
 - q: 'map_values(if . == 2 then empty else . end)'
@@ -51,6 +67,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: '[INT,INT,INT]'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
   v: '[1.7, )'
 
 - q: 'map_values((., . + 10))'
@@ -62,6 +82,10 @@
     output: 'ANY'
   - input: '{a:INT,b:INT}'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
 
 - q: 'map_values((., . + 10))'
@@ -73,4 +97,8 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: '{a:INT,b:INT}'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
   v: '[1.6, )'

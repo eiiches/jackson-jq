@@ -14,6 +14,10 @@
     output: '99999999999999999999999'
   - input: 'NULL'
     output: '99999999999999999999999'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
 
 # An exponent beyond the double range stays exact as a literal, but collapses to an infinity as
@@ -26,6 +30,10 @@
     output: 'BOOLEAN'
   - input: 'NULL'
     output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 # Arithmetic is unaffected: operators still go through double.
@@ -37,4 +45,8 @@
     output: '[*:STRING]'
   - input: 'NULL'
     output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'

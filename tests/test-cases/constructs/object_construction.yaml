@@ -7,6 +7,10 @@
     output: '{a:ANY}'
   - input: '{a:INT}'
     output: '{a:INT}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '{ a, }'
   in: {"a": 1}
@@ -17,3 +21,7 @@
     output: '{a:ANY}'
   - input: '{a:INT}'
     output: '{a:INT}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false

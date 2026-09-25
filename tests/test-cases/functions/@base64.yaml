@@ -7,6 +7,10 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '@base64'
@@ -18,5 +22,9 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true

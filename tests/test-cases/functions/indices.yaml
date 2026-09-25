@@ -7,6 +7,10 @@
     output: 'NULL|[*:INT]'
   - input: 'NULL'
     output: 'NULL'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'indices("")'
@@ -18,6 +22,10 @@
     output: 'NULL|[*:INT]'
   - input: 'STRING'
     output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: 'indices("a")'
@@ -29,6 +37,10 @@
     output: 'NULL|[*:INT]'
   - input: '{a:INT}'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'indices("missing")'
@@ -40,6 +52,10 @@
     output: 'NULL|[*:INT]'
   - input: '{a:INT}'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'indices(("name") + ("Zm9v"))'
@@ -51,6 +67,10 @@
     output: 'NULL|[*:INT]'
   - input: '{foo:STRING,nameZm9v:STRING}'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try indices(0) catch .'
@@ -62,6 +82,10 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try indices(0) catch .'
@@ -73,4 +97,8 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'

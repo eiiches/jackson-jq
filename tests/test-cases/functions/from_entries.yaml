@@ -7,6 +7,10 @@
     output: '{*:ANY}'
   - input: '{}'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try from_entries catch .'
@@ -18,6 +22,10 @@
     output: 'ANY'
   - input: 'INT'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try from_entries catch .'
   in: [{"key": "a", "value": 1}, 1]
@@ -28,6 +36,10 @@
     output: 'ANY'
   - input: '[{key:STRING,value:INT},INT]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try from_entries catch .'
@@ -39,6 +51,10 @@
     output: 'ANY'
   - input: '[{key:STRING,value:INT},INT]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: '{a: {key: "a", value: 1}} | from_entries'
@@ -49,6 +65,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try from_entries catch .'
   in: [{}]
@@ -59,3 +79,7 @@
     output: 'ANY'
   - input: '[{}]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false

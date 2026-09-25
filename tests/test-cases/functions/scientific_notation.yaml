@@ -7,6 +7,10 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'tostring'
@@ -18,6 +22,10 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: '@sh'
@@ -29,6 +37,10 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: '@text'
@@ -40,6 +52,10 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '@text'
@@ -51,6 +67,10 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: '@json'
@@ -62,6 +82,10 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '@json'
@@ -73,6 +97,10 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: '@html'
@@ -84,6 +112,10 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '@html'
@@ -95,6 +127,10 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: '@uri'
@@ -106,6 +142,10 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '@uri'
@@ -117,6 +157,10 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: '@csv'
@@ -128,6 +172,10 @@
     output: 'STRING'
   - input: '[INT]'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '@csv'
@@ -139,6 +187,10 @@
     output: 'STRING'
   - input: '[INT]'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: '@tsv'
@@ -150,6 +202,10 @@
     output: 'STRING'
   - input: '[INT]'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '@tsv'
@@ -161,6 +217,10 @@
     output: 'STRING'
   - input: '[INT]'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: '"\(.)"'
@@ -172,6 +232,10 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '"\(.)"'
@@ -183,4 +247,8 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'

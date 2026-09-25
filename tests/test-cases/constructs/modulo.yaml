@@ -7,6 +7,10 @@
     output: 'NUMBER'
   - input: '[BOOLEAN]'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '(try ((((0.5 and 0.5), -1, ("foo" // 1)) % (null // 1))) catch ("__ERROR__"))'
@@ -18,6 +22,10 @@
     output: '"__ERROR__"'
   - input: 'FLOAT'
     output: '"__ERROR__"'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: '(try ((1 % true)) catch ("__ERROR__"))'
@@ -29,6 +37,10 @@
     output: '"__ERROR__"'
   - input: 'BOOLEAN'
     output: '"__ERROR__"'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, )'
 
 - q: 'try (1 % true) catch .'
@@ -39,6 +51,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'error("foo") % empty'
   out: []
@@ -47,6 +63,10 @@
     output: 'NEVER'
   - input: 'NULL'
     output: 'NEVER'
+  properties:
+    cardinality: ZERO
+    depends_on_input: false
+    depends_on_external_state: false
   comment: 'rhs is evaluated first'
 
 - q: 'try (empty % error("foo")) catch .'
@@ -57,6 +77,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '(64.5 % nan)'
   in: 84
@@ -67,6 +91,10 @@
     output: 'NUMBER'
   - input: 'INT'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '(64.5 % nan)'
@@ -78,6 +106,10 @@
     output: 'NUMBER'
   - input: 'INT'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
 
@@ -91,6 +123,10 @@
     output: 'BOOLEAN|NUMBER'
   - input: 'INT'
     output: 'BOOLEAN|NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '(nan % nan) | (., isnan)'
@@ -103,5 +139,9 @@
     output: 'BOOLEAN|NUMBER'
   - input: 'INT'
     output: 'BOOLEAN|NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true

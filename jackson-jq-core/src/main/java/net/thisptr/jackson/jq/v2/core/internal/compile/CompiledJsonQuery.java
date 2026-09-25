@@ -8,8 +8,9 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.RuntimeBindings;
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
+import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
-import net.thisptr.jackson.jq.v2.spi.Cardinality;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.type.FilterType;
 
@@ -46,8 +47,8 @@ final class CompiledJsonQuery<JsonNode> implements JsonQuery<JsonNode> {
 	}
 
 	@Override
-	public Cardinality getCardinality() {
-		return rootExpr.getCardinality();
+	public ExpressionProperties getProperties() {
+		return AnalyzedExpression.propertiesOf(rootExpr);
 	}
 
 	@Override

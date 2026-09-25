@@ -7,6 +7,10 @@
     output: '[*:ANY]'
   - input: '{a:NULL,b:[NULL,INT]}'
     output: '[*:INT|[NULL,INT]|{a:NULL,b:[NULL,INT]}]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
 
 - q: '[..]'
@@ -18,6 +22,10 @@
     output: '[*:ANY]'
   - input: '{a:NULL,b:[NULL,INT]}'
     output: '[*:INT|NULL|[NULL,INT]|{a:NULL,b:[NULL,INT]}]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 # A null root is emitted in every supported jq version. Only null-valued descendants changed in 1.6.
@@ -30,4 +38,8 @@
     output: '[*:ANY]'
   - input: 'NULL'
     output: '[*:NULL]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'

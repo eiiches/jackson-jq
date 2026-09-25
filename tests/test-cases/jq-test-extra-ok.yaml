@@ -10,6 +10,10 @@
     output: 'NULL|STRING|[*:ANY]'
   - input: '[INT,INT,INT,INT]'
     output: '[*:INT]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '10 % 3'
   in: null
@@ -20,6 +24,10 @@
     output: 'NUMBER'
   - input: 'NULL'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '2.5 * 4'
   in: null
@@ -30,6 +38,10 @@
     output: 'NUMBER'
   - input: 'NULL'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '. * 4'
   in: "ab"
@@ -40,6 +52,10 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'NULL|STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '3.2 - 1.6'
   in: null
@@ -50,6 +66,10 @@
     output: 'NUMBER'
   - input: 'NULL'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '1.6 + 1.6'
   in: null
@@ -60,6 +80,10 @@
     output: 'NUMBER'
   - input: 'NULL'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '.[:-1]'
   in: [0, 1, 2]
@@ -70,6 +94,10 @@
     output: 'NULL|STRING|[*:ANY]'
   - input: '[INT,INT,INT]'
     output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'if true then 1 else 0 end'
   in: null
@@ -80,6 +108,10 @@
     output: '0|1'
   - input: 'NULL'
     output: '1'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '.[] > 0, .[] <= 0, .[] != 0'
   in: [-1, 0, 1]
@@ -98,6 +130,10 @@
     output: 'BOOLEAN'
   - input: '[INT,INT,INT]'
     output: 'BOOLEAN'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'join(",")'
   in: ["a", "b", "c", null]
@@ -108,6 +144,10 @@
     output: 'STRING'
   - input: '[STRING,STRING,STRING,NULL]'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[] | test(["foo","i"])'
   in: ["Foobar", "baz"]
@@ -119,6 +159,10 @@
     output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]'
   - input: '[STRING,STRING]'
     output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '[.[]|iterables], [.[]|scalars], [.[]|arrays], [.[]|booleans], [.[]|nulls], [.[]|objects], [.[]|strings], [.[]|values], [.[]|numbers]'
   in: [1, null, {"foo": 10}, [10, 20], "test", false]
@@ -137,6 +181,10 @@
     output: '[*:BOOLEAN]|[*:BOOLEAN|NULL|NUMBER|STRING]|[*:BOOLEAN|NUMBER|STRING|[*:ANY]|{*:ANY}]|[*:NULL]|[*:NUMBER]|[*:STRING]|[*:[*:ANY]]|[*:[*:ANY]|{*:ANY}]|[*:{*:ANY}]'
   - input: '[INT,NULL,{foo:INT},[INT,INT],STRING,BOOLEAN]'
     output: '[*:BOOLEAN]|[*:BOOLEAN|NULL|NUMBER|STRING]|[*:BOOLEAN|NUMBER|STRING|[*:ANY]|[INT,INT]|{*:ANY}|{foo:INT}]|[*:NULL]|[*:NUMBER]|[*:STRING]|[*:[*:ANY]|[INT,INT]]|[*:[*:ANY]|[INT,INT]|{*:ANY}|{foo:INT}]|[*:{*:ANY}|{foo:INT}]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'sub(","; ":")'
   in: "a,b,c"
@@ -147,6 +195,10 @@
     output: 'STRING'
   - input: 'STRING'
     output: 'STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'gsub(","; ":")'
   in: "a,b,c"
@@ -157,6 +209,10 @@
     output: 'STRING'
   - input: 'STRING'
     output: 'STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'scan(",")'
   in: "a,b,c"
@@ -168,6 +224,10 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '{ids:[.ids|split(",")[]|tonumber|.+100],name}'
   in: {"ids": "12,15,23", "name": "jackson", "timestamp": 1418785331123}
@@ -178,6 +238,10 @@
     output: '{ids:[*:NUMBER],name:ANY}'
   - input: '{ids:STRING,name:STRING,timestamp:INT}'
     output: '{ids:[*:NUMBER],name:STRING}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '. * {content: {params: .content.params | split("&") | map(split("=") | {(.[0]):.[1]}) | add}}'
   in: {"foo": "kept", "content": {"bar": "preseved", "params": "qca=hoge&qcb=fuga"}}
@@ -188,6 +252,10 @@
     output: 'ANY'
   - input: '{content:{bar:STRING,params:STRING},foo:STRING}'
     output: '{content:{bar:STRING,params:NULL|NUMBER|STRING|[*:ANY]|{*:ANY}},foo:STRING}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.foo.bar'
   in: {}
@@ -198,6 +266,10 @@
     output: 'ANY'
   - input: '{}'
     output: 'NULL'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'with_entries({key: ("KEY_" + .key), value: (.value + 2, .value + 1)})'
   in: {"a": 10, "b": 20}
@@ -208,6 +280,10 @@
     output: '{*:ANY}'
   - input: '{a:INT,b:INT}'
     output: '{*:NUMBER}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'with_entries(empty)'
   in: {"a": 10, "b": 20}
@@ -218,6 +294,10 @@
     output: '{*:ANY}'
   - input: '{a:INT,b:INT}'
     output: '{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '{group_id: .content.group_id, tmp: .content.entries[] | {entry_id: .id, child_id: .children[]}} | {group_id, entry_id: .tmp.entry_id, child_id: .tmp.child_id}'
   in: {"content": {"group_id": 543, "entries": [{"id": 1, "children": [10, 11, 12]}, {"id": 2, "children": [20, 21, 22]}]}}
@@ -233,6 +313,10 @@
     output: '{child_id:ANY,entry_id:ANY,group_id:ANY}'
   - input: '{content:{entries:[{children:[INT,INT,INT],id:INT},{children:[INT,INT,INT],id:INT}],group_id:INT}}'
     output: '{child_id:INT,entry_id:INT,group_id:INT}'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'del(.content[1:3])'
   in: {"content": [0, 1, 2, 3]}
@@ -243,6 +327,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: '{content:[INT,INT,INT,INT]}'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'del(.content[1,2]), del(.content[1:-1])'
   in: {"content": [0, 1, 2, 3]}
@@ -254,6 +342,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: '{content:[INT,INT,INT,INT]}'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'del(.content[0]), del(.content[1:]), del(.content[]), del(.[])'
   in: {"content": [0, 1, 2, 3]}
@@ -267,6 +359,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: '{content:[INT,INT,INT,INT]}'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'del(.content[-1]), del(.content[-2:])'
   in: {"content": [0, 1, 2, 3]}
@@ -278,6 +374,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: '{content:[INT,INT,INT,INT]}'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: 'del(.content[-1]), del(.content[-2:])'
@@ -290,6 +390,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: '{content:[INT,INT,INT,INT]}'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
 
 - q: 'del(.content[0])'
@@ -301,6 +405,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: 'NULL'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'del(.foo?)'
   in: [1, 2]
@@ -311,6 +419,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: '[INT,INT]'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'del(.[1]?), del(.[1:2]?)'
   in: {"a": 10, "b": 20}
@@ -322,6 +434,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: '{a:INT,b:INT}'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '[-1, 1-3, -1+3, -1+(-3), -(1+3), -(-3)+1, -1-3]'
   in: null
@@ -332,6 +448,10 @@
     output: '[-1,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
   - input: 'NULL'
     output: '[-1,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[range(0; -5; -1)]'
   in: null
@@ -342,6 +462,10 @@
     output: '[*:NUMBER]'
   - input: 'NULL'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'gsub("\t"; "\\t")'
   in: "\t"
@@ -352,6 +476,10 @@
     output: 'STRING'
   - input: 'STRING'
     output: 'STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '["rsync", "--bwlimit", 2500, ., "baz@example.com:"] | @sh'
   in: "foo'bar\""
@@ -362,6 +490,10 @@
     output: 'STRING'
   - input: 'STRING'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '@sh'
   in: 10
@@ -372,6 +504,10 @@
     output: 'STRING'
   - input: 'INT'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '."foo"'
   in: {"foo": 10}
@@ -382,6 +518,10 @@
     output: 'ANY'
   - input: '{foo:INT}'
     output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[0]'
   in: null
@@ -392,6 +532,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'NULL'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '"\r\n\b\t\f\"\\"'
   in: null
@@ -402,6 +546,10 @@
     output: '"\r\n\b\t\f\"\\"'
   - input: 'NULL'
     output: '"\r\n\b\t\f\"\\"'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '"\(10)\("20")\({"30": 40})\(true)\(false)\(null)\([10])"'
   in: null
@@ -412,6 +560,10 @@
     output: 'STRING'
   - input: 'NULL'
     output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[foreach .[] as $item ([3, null]; label $out | if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]'
   in: [11, 22, 33, 44, 55, 66, 77, 88, 99]
@@ -422,6 +574,10 @@
     output: '[*:ANY]'
   - input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT]'
     output: '[*:INT|NULL]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
 
 - q: '[label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]'
   in: [11, 22, 33, 44, 55, 66, 77, 88, 99]
@@ -432,6 +588,10 @@
     output: '[*:ANY]'
   - input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT]'
     output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
 
 - q: 'label $out | [foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]'
   in: [11, 22, 33, 44, 55, 66, 77, 88, 99]
@@ -441,6 +601,10 @@
     output: '[*:ANY]'
   - input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT]'
     output: '[*:INT]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
 
 - q: '[foreach range(5) as $item (0; $item)]'
   in: null
@@ -451,6 +615,10 @@
     output: '[*:NUMBER]'
   - input: 'NULL'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try ([] * 10) catch .'
   in: null
@@ -461,6 +629,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try ([] + 10) catch .'
   in: null
@@ -471,6 +643,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try ([] - 10) catch .'
   in: null
@@ -481,6 +657,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try ([] / 10) catch .'
   in: null
@@ -491,6 +671,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try (10 | .[10]) catch .'
   in: null
@@ -501,6 +685,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try (10 | .[10]) catch .'
@@ -512,6 +700,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try (.[]) catch .'
@@ -523,6 +715,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try (.[]) catch .'
   in: 10
@@ -533,6 +729,10 @@
     output: 'ANY'
   - input: 'INT'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try (.[1:3]) catch .'
   in: {"a": 10}
@@ -543,6 +743,10 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try (.[1:3]) catch .'
@@ -554,6 +758,10 @@
     output: 'ANY'
   - input: '{a:INT}'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try (.[1:"a"]) catch .'
@@ -565,6 +773,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try (.[1:"a"]) catch .'
@@ -576,6 +788,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: 'try (.[1:"a"]) catch .'
@@ -587,6 +803,10 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try (.[1:"a"]) catch .'
@@ -598,6 +818,10 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, )'
 
 - q: 'try (.[[20]]) catch .'
@@ -609,6 +833,10 @@
     output: 'ANY'
   - input: 'INT'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try (.[[20]]) catch .'
@@ -620,6 +848,10 @@
     output: 'ANY'
   - input: 'INT'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: '-3.4 | length'
@@ -631,6 +863,10 @@
     output: 'NUMBER'
   - input: 'NULL'
     output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try length catch .'
   in: true
@@ -641,6 +877,10 @@
     output: 'ANY'
   - input: 'BOOLEAN'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try tonumber catch .'
   in: false
@@ -651,6 +891,10 @@
     output: 'ANY'
   - input: 'BOOLEAN'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.num_entries["1"] = 10'
   in: {}
@@ -661,6 +905,10 @@
     output: 'ANY'
   - input: '{}'
     output: '{num_entries:{"1":10}}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.num_entries["1"] = 10'
   in: {"num_entries": {"2": 20}}
@@ -671,6 +919,10 @@
     output: 'ANY'
   - input: '{num_entries:{"2":INT}}'
     output: '{num_entries:{"1":10,"2":INT}}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.num_entries["1"] = 10'
   in: null
@@ -681,6 +933,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: '{num_entries:{"1":10}}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'map(.[empty] = 20)[]'
   in: ["text", false, true, 10, {"a": 10}, [1, 2, 3], null]
@@ -697,6 +953,10 @@
     output: 'ANY'
   - input: '[STRING,BOOLEAN,BOOLEAN,INT,{a:INT},[INT,INT,INT],NULL]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try del(.[]) catch .'
   in: null
@@ -707,6 +967,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'map(try (.[] = 20) catch .)[]'
   in: ["text", false, 10, {"a": 10}, [1, 2, 3], null]
@@ -722,6 +986,10 @@
     output: 'ANY'
   - input: '[STRING,BOOLEAN,INT,{a:INT},[INT,INT,INT],NULL]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'map(try (.[1,2] = 30) catch .)[]'
   in: ["text", false, 10, {"a": 10}, [1, 2, 3], null]
@@ -737,6 +1005,10 @@
     output: 'ANY'
   - input: '[STRING,BOOLEAN,INT,{a:INT},[INT,INT,INT],NULL]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'map(try (.[1,2] = 30) catch .)[]'
@@ -753,6 +1025,10 @@
     output: 'ANY'
   - input: '[STRING,BOOLEAN,INT,{a:INT},[INT,INT,INT],NULL]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'map(try (.["foo","bar"] = 30) catch .)[]'
@@ -769,6 +1045,10 @@
     output: 'ANY'
   - input: '[STRING,BOOLEAN,INT,{a:INT,bar:INT,foo:INT},[INT,INT,INT],NULL]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'map(try (.["foo","bar"] = 30) catch .)[]'
@@ -785,6 +1065,10 @@
     output: 'ANY'
   - input: '[STRING,BOOLEAN,INT,{a:INT,bar:INT,foo:INT},[INT,INT,INT],NULL]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'map(try (.[1:3] = 30) catch .)[]'
@@ -802,6 +1086,10 @@
     output: 'ANY'
   - input: '[STRING,BOOLEAN,INT,{a:INT,bar:INT,foo:INT},[INT,INT],[INT,INT,INT,INT,INT],NULL]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'map(try (.[1:3] = 30) catch .)[]'
@@ -819,6 +1107,10 @@
     output: 'ANY'
   - input: '[STRING,BOOLEAN,INT,{a:INT,bar:INT,foo:INT},[INT,INT],[INT,INT,INT,INT,INT],NULL]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, 1.8.2)'
   failing: true
 
@@ -837,6 +1129,10 @@
     output: 'ANY'
   - input: '[STRING,BOOLEAN,INT,{a:INT,bar:INT,foo:INT},[INT,INT],[INT,INT,INT,INT,INT],NULL]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
   failing: true
 
@@ -855,6 +1151,10 @@
     output: 'ANY'
   - input: '[STRING,BOOLEAN,INT,{a:INT,bar:INT,foo:INT},[INT,INT],[INT,INT,INT,INT,INT],NULL]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'map(try (.[2:4] = [-1,-2]) catch .)[]'
@@ -872,6 +1172,10 @@
     output: 'ANY'
   - input: '[STRING,BOOLEAN,INT,{a:INT,bar:INT,foo:INT},[INT,INT],[INT,INT,INT,INT,INT],NULL]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.7, 1.8.2)'
   failing: true
 
@@ -890,6 +1194,10 @@
     output: 'ANY'
   - input: '[STRING,BOOLEAN,INT,{a:INT,bar:INT,foo:INT},[INT,INT],[INT,INT,INT,INT,INT],NULL]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
   failing: true
 
@@ -901,6 +1209,10 @@
     output: 'NEVER'
   - input: 'NULL'
     output: 'NEVER'
+  properties:
+    cardinality: ZERO
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[10]["10":null]?'
   in: null
@@ -910,6 +1222,10 @@
     output: 'NEVER'
   - input: 'NULL'
     output: 'NEVER'
+  properties:
+    cardinality: ZERO
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'map([try ((.[0] == 0, false) and (.a, true)) catch .])[]'
   in: [[0], [1]]
@@ -921,6 +1237,10 @@
     output: '[*:ANY]'
   - input: '[[INT],[INT]]'
     output: '[*:ANY]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'map([try ((.[0] == 0, false) and (.a, true)) catch .])[]'
@@ -933,6 +1253,10 @@
     output: '[*:ANY]'
   - input: '[[INT],[INT]]'
     output: '[*:ANY]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'map([try ((.[0] == 0, false) and (false, true)) catch .])[]'
@@ -945,6 +1269,10 @@
     output: '[*:ANY]'
   - input: '[[INT],[INT]]'
     output: '[*:ANY]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'map([try ((.[0] == 0, true) or (.a, true)) catch .])[]'
   in: [[0], [1]]
@@ -956,6 +1284,10 @@
     output: '[*:ANY]'
   - input: '[[INT],[INT]]'
     output: '[*:ANY]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'map([try ((.[0] == 0, true) or (.a, true)) catch .])[]'
@@ -968,6 +1300,10 @@
     output: '[*:ANY]'
   - input: '[[INT],[INT]]'
     output: '[*:ANY]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'map([try ((.[0] == 0, true) or (false, true)) catch .])[]'
@@ -980,6 +1316,10 @@
     output: '[*:ANY]'
   - input: '[[INT],[INT]]'
     output: '[*:ANY]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[]|gsub("(?<d>\\d)"; "\(.d|tonumber+1)")'
   in: ["1a2b3", "1a2b"]
@@ -991,6 +1331,10 @@
     output: 'STRING'
   - input: '[STRING,STRING]'
     output: 'STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '(null, 1.7976931348623157e+308, nan, infinite, -nan, -infinite) | [type, tojson, isinfinite, isfinite, isnan]'
   out:
@@ -1005,6 +1349,10 @@
     output: '["null",STRING,false,false,false]|["number",STRING,BOOLEAN,BOOLEAN,BOOLEAN]'
   - input: 'NULL'
     output: '["null",STRING,false,false,false]|["number",STRING,BOOLEAN,BOOLEAN,BOOLEAN]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: '(null, 1.7976931348623157e+308, nan, infinite, -nan, -infinite) | [type, tojson, isinfinite, isfinite, isnan]'
@@ -1020,6 +1368,10 @@
     output: '["null",STRING,false,false,false]|["number",STRING,BOOLEAN,BOOLEAN,BOOLEAN]'
   - input: 'NULL'
     output: '["null",STRING,false,false,false]|["number",STRING,BOOLEAN,BOOLEAN,BOOLEAN]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, 1.7.1)'
   failing: true
 
@@ -1036,6 +1388,10 @@
     output: '["null",STRING,false,false,false]|["number",STRING,BOOLEAN,BOOLEAN,BOOLEAN]'
   - input: 'NULL'
     output: '["null",STRING,false,false,false]|["number",STRING,BOOLEAN,BOOLEAN,BOOLEAN]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7.1, )'
 
 - q: '(., .) as {(.a, .b): $a, (.a, .b): $a} | [$a, $a]'
@@ -1054,6 +1410,10 @@
     output: '[ANY,ANY]'
   - input: '{a:STRING,b:STRING}'
     output: '[NULL|STRING,NULL|STRING]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'reduce [{a: 1, b: 4}, {a: 2, b: 5}, {a: 3, b: 6}][] as {"\("a","b")": $a} (("a", "b"); . + (($a, $a + 1) | tostring))'
   out:
@@ -1064,6 +1424,10 @@
     output: 'NULL|STRING'
   - input: 'NULL'
     output: 'NULL|STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'foreach [{a:1,b:2},{a:3,b:4},{a:5,b:6}][] as {"\("a","b")": $v} (0, 1; .+$v+1, .+$v; ., .*10)'
   out:
@@ -1120,6 +1484,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'foreach [1,2,3,4,5,6][] as $v (0; .+$v, .+$v+1; .)'
   out:
@@ -1140,6 +1508,10 @@
     output: 'NULL|NUMBER'
   - input: 'NULL'
     output: 'NULL|NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '.[] as [$n, $h] | try ($h | contains($n)) catch .'
   in: [[true, true], ["str", true], [false, true]]
@@ -1152,6 +1524,10 @@
     output: 'ANY'
   - input: '[[BOOLEAN,BOOLEAN],[STRING,BOOLEAN],[BOOLEAN,BOOLEAN]]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '.[] | [length, utf8bytelength]'
   in: ["\U00020BB7", "\U00020BB7", "\U00020B9F", "\U00020B9F", "\U0001D11E", "\U0001F5FC", "\U0001F5FC"]
@@ -1168,6 +1544,10 @@
     output: '[NUMBER,INT]'
   - input: '[STRING,STRING,STRING,STRING,STRING,STRING,STRING]'
     output: '[NUMBER,INT]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '.[] | .[0:1]'
@@ -1180,6 +1560,10 @@
     output: 'NULL|STRING|[*:ANY]'
   - input: '[STRING,STRING]'
     output: 'STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '(.)[0]?'
   in: [1, 2, 3]
@@ -1190,6 +1574,10 @@
     output: 'ANY'
   - input: '[INT,INT,INT]'
     output: 'INT'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try ((error("foo"))[10]?) catch .'
   out:
@@ -1199,6 +1587,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try ((error("foo"))?) catch .'
   out: []
@@ -1207,6 +1599,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: ZERO
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '.foreach'
   in: {"foreach": 10}
@@ -1217,6 +1613,10 @@
     output: 'ANY'
   - input: '{foreach:INT}'
     output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try (1,2,3,error("break"),4,5) catch .'
   in: null
@@ -1230,6 +1630,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try (1,2,3,error("break"),4,5)'
   in: null
@@ -1242,6 +1646,10 @@
     output: '1|2|3|4|5'
   - input: 'NULL'
     output: '1|2|3|4|5'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try "\(1,2,3,error("break"),4,5)" catch .'
   in: null
@@ -1255,6 +1663,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try "\(1,2)\(1,2,3,error("break"),4,5)" catch .'
   in: null
@@ -1271,6 +1683,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try "\(1,2,3,error("break"),4,5)\(1,2)" catch .'
   in: null
@@ -1284,6 +1700,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'label $out | label $out2 | ((try (break $out) catch .), (try (label $out2 | (1, break $out2)) catch .))'
   in: null
@@ -1295,6 +1715,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
 
 - q: 'try ("abcabc" | sub("a", "b", error("foo"); "1", "2", error("bar"); "", "g", error("baz"))) catch .'
   in: null
@@ -1307,6 +1731,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try ("abcabc" | sub("a", "b", error("foo"); "1", "2", error("bar"); "", "g", error("baz"))) catch .'
@@ -1318,6 +1746,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
 
@@ -1334,6 +1766,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try ("abcabc" | sub("a", "b", error("foo"); "1", "2"; "", "g", error("baz"))) catch .'
@@ -1349,6 +1785,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
 
@@ -1385,6 +1825,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try ("abcabc" | sub("a", "b", error("foo"); "1", "2"; "", "g")) catch .'
@@ -1404,6 +1848,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
 
@@ -1418,6 +1866,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.7)'
 
 - q: 'try ("abcabc" | sub("a"; "1", "2", error("bar"); "g")) catch .'
@@ -1429,6 +1881,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.7, )'
   failing: true
 
@@ -1441,6 +1897,10 @@
     output: 'STRING'
   - input: 'NULL'
     output: 'STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '"abcabc" | _match_impl("a", "b"; "", "g"; false, true)'
   in: null
@@ -1458,6 +1918,10 @@
     output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]'
   - input: 'NULL'
     output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try ("abcabc" | _match_impl("a", "b", error("foo"); "", "g", error("bar"); false, true, error("baz"))) catch .'
   in: null
@@ -1470,6 +1934,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try ("abcabc" | _match_impl("a", "b"; "", "g", error("bar"); false, true, error("baz"))) catch .'
   in: null
@@ -1484,6 +1952,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try ("abcabc" | _match_impl("a", "b"; "", "g"; false, true, error("baz"))) catch .'
   in: null
@@ -1502,6 +1974,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try ("abcabc" | match("a", "b"; "", "g")) catch .'
   in: null
@@ -1517,6 +1993,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'path((.a, .b)."\(1,2)")'
   in: null
@@ -1530,6 +2010,10 @@
     output: '[*:NUMBER|STRING]'
   - input: 'NULL'
     output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'path(((.A, .B).a, .b)."\(1,2)")'
   in: null
@@ -1545,6 +2029,10 @@
     output: '[*:NUMBER|STRING]'
   - input: 'NULL'
     output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'path(.)'
   in: null
@@ -1555,6 +2043,10 @@
     output: '[*:NUMBER|STRING]'
   - input: 'NULL'
     output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '[1,2,3,4,5] | (.[1:2], .[1:2]) = [1,2,3]'
   in: null
@@ -1565,6 +2057,10 @@
     output: '[*:1|2|3|4|5]'
   - input: 'NULL'
     output: '[*:1|2|3|4|5]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[1,2,3,4,5] | del(.[1:2], .[1:2])'
   in: null
@@ -1575,6 +2071,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: 'NULL'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[1,2,3] | (.[] | select(. > 1)) = ([10], [20])'
   in: null
@@ -1586,6 +2086,10 @@
     output: '[*:1|2|3|[10]|[20]]'
   - input: 'NULL'
     output: '[*:1|2|3|[10]|[20]]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[1,2,3] | (.[] | select(. > 1)) += (10, 20)'
   in: null
@@ -1597,6 +2101,10 @@
     output: '[*:NUMBER]'
   - input: 'NULL'
     output: '[*:NUMBER]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[1,null,3] | del(.[1].a)'
   in: null
@@ -1607,6 +2115,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: 'NULL'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '{a: null, b: 1} | del(.a[1])'
   in: null
@@ -1617,6 +2129,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: 'NULL'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'delpaths([["foo",1]])'
   in: {"bar": false}
@@ -1627,6 +2143,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: '{bar:BOOLEAN}'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'delpaths([[5,"a"]])'
   in: [1, null, 3]
@@ -1637,6 +2157,10 @@
     output: 'NULL|[*:ANY]|{*:ANY}'
   - input: '[INT,NULL,INT]'
     output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try (.["a"] = 3) catch .'
   in: 1
@@ -1647,6 +2171,10 @@
     output: 'ANY'
   - input: 'INT'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try (.["a"] = 3) catch .'
@@ -1658,6 +2186,10 @@
     output: 'ANY'
   - input: 'INT'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try (.[0] = 3) catch .'
@@ -1669,6 +2201,10 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try (.[0] = 3) catch .'
@@ -1680,6 +2216,10 @@
     output: 'ANY'
   - input: 'STRING'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try ([{b: 10}] | path(map(select(.b == 0)) | .[100:20])) catch .'
@@ -1691,6 +2231,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.8.2)'
 
 - q: 'try ([{b: 10}] | path(map(select(.b == 0)) | .[100:20])) catch .'
@@ -1702,6 +2246,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.8.2, )'
 
 - q: 'try (path(map(select(.a == 1))[].b)) catch .'
@@ -1713,6 +2261,10 @@
     output: 'ANY'
   - input: '[{a:INT},{a:INT}]'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '. as {"a":$a, "b":$b, "c":$c} | [$a,$b,$c]'
   in: {"a": 1, "b": 2, "c": 3}
@@ -1723,6 +2275,10 @@
     output: '[ANY,ANY,ANY]'
   - input: '{a:INT,b:INT,c:INT}'
     output: '[INT,INT,INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '. as {"outer":{"x": $x}, "x": $y} | [$x, $y]'
   in: {"outer": {"x": 1}, "x": 2}
@@ -1733,6 +2289,10 @@
     output: '[ANY,ANY]'
   - input: '{outer:{x:INT},x:INT}'
     output: '[INT,INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '. as {"outer":{"x": $x}, "x": $x} | $x'
   in: {"outer": {"x": 1}, "x": 2}
@@ -1743,6 +2303,10 @@
     output: 'ANY'
   - input: '{outer:{x:INT},x:INT}'
     output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '. as {"x": $x, "outer":{"x": $x}} | $x'
   in: {"outer": {"x": 1}, "x": 2}
@@ -1753,6 +2317,10 @@
     output: 'ANY'
   - input: '{outer:{x:INT},x:INT}'
     output: 'INT'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '{a: {t: 10}, b: {t: 20}, c: 30, d: 40} as {("a","b"): {t: $x}, ("c", "d"): $y} | [$x, $y]'
   in: null
@@ -1766,6 +2334,10 @@
     output: '[10|20|NULL,30|40|NULL|{t:10}|{t:20}]'
   - input: 'NULL'
     output: '[10|20|NULL,30|40|NULL|{t:10}|{t:20}]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '{a: {depth: 1, b: {depth: 2}}}'
   in: null
@@ -1776,3 +2348,7 @@
     output: '{a:{b:{depth:2},depth:1}}'
   - input: 'NULL'
     output: '{a:{b:{depth:2},depth:1}}'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false

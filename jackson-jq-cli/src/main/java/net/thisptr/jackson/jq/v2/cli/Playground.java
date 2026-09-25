@@ -1682,7 +1682,7 @@ final class Playground<N> {
 			return new EvaluationResult(null, null, 0, err, DiagnosticPhase.COMPILE, currentWarnings, null, null);
 		}
 		FilterType filterType = jq.getType();
-		Cardinality outputCardinality = jq.getCardinality();
+		Cardinality outputCardinality = jq.getProperties().cardinality();
 		if (!execute) {
 			return new EvaluationResult(null, null, 0, null, null, currentWarnings, filterType, outputCardinality);
 		}

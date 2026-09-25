@@ -8,6 +8,10 @@
     output: 'ANY'
   - input: 'NULL'
     output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[try (range((0, 1, error("foo")); (5, 10, error("bar")); (1, 2, error("baz")))) catch .]'
   out:
@@ -17,6 +21,10 @@
     output: '[*:ANY]'
   - input: 'NULL'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[try (range((0, 1, error("foo")); (5, 10, error("bar")); (1, 2))) catch .]'
   out:
@@ -26,6 +34,10 @@
     output: '[*:ANY]'
   - input: 'NULL'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[try (range((0, 1, error("foo")); (5, 10); (1, 2))) catch .]'
   out:
@@ -35,6 +47,10 @@
     output: '[*:ANY]'
   - input: 'NULL'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[try (range((0, 1, error("foo")); (5, 10, error("bar")))) catch .]'
   out:
@@ -44,6 +60,10 @@
     output: '[*:ANY]'
   - input: 'NULL'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
   comment: 'range(start; end; 1) and range(start; end) behave differently... when jq <= 1.5'
 
@@ -55,6 +75,10 @@
     output: '[*:ANY]'
   - input: 'NULL'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '[try (range((0, 1, error("foo")); (5, 10, error("bar")); 1)) catch .]'
@@ -65,6 +89,10 @@
     output: '[*:ANY]'
   - input: 'NULL'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[try (range((0, 1, error("foo")); (5, 10))) catch .]'
   out:
@@ -74,6 +102,10 @@
     output: '[*:ANY]'
   - input: 'NULL'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.5, 1.6)'
 
 - q: '[try (range((0, 1, error("foo")); (5, 10))) catch .]'
@@ -84,6 +116,10 @@
     output: '[*:ANY]'
   - input: 'NULL'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   v: '[1.6, )'
 
 - q: '[try (range((0, 1, error("foo")); (5, 10); 1)) catch .]'
@@ -94,3 +130,7 @@
     output: '[*:ANY]'
   - input: 'NULL'
     output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
