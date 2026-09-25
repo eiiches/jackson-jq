@@ -81,6 +81,28 @@ public class PropertyCheckTestCasesTest {
 						.as("actual output count is %d (> 1), so cardinality of %s must be UNKNOWN", actualOutputs.size(), desc)
 						.isEqualTo(Cardinality.UNKNOWN);
 			}
+
+			if (!actual.dependsOnInput()) {
+				JsonNode[] alternatives = new JsonNode[] {
+						env.getJsonProvider().createNull(),
+						env.getJsonProvider().createBoolean(true),
+						env.getJsonProvider().createNumber(12345),
+						env.getJsonProvider().createString("alt-input"),
+						env.getJsonProvider().createArray(List.of()),
+						env.getJsonProvider().createObject(Collections.emptyMap()),
+				};
+				for (JsonNode alt : alternatives) {
+					List<JsonNode> altOutputs = new ArrayList<>();
+					try {
+						query.apply(alt, altOutputs::add);
+						assertThat(altOutputs)
+								.as("actual outputs of %s on alternative input %s must equal outputs on %s when depends_on_input is false", desc, alt, tc.in)
+								.isEqualTo(actualOutputs);
+					} catch (Exception e) {
+						throw new AssertionError(String.format("Query %s marked depends_on_input=false threw exception on alternative input %s", desc, alt), e);
+					}
+				}
+			}
 		}
 	}
 

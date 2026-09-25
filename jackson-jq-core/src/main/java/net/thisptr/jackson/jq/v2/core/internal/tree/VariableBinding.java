@@ -32,7 +32,7 @@ public class VariableBinding<JsonNode> implements RewritableExpression<JsonNode>
 		this.value = value;
 		this.matcher = matcher;
 		this.body = body;
-		this.dependsOnInput = value.dependsOnInput() || matcher.dependsOnInput() || body.dependsOnInput();
+		this.dependsOnInput = value.dependsOnInput() || body.dependsOnInput();
 		this.dependsOnExternalState = value.dependsOnExternalState() || matcher.dependsOnExternalState() || body.dependsOnExternalState();
 		this.freeLocalSlots = FreeVariables.unionSets(FreeVariables.slotsOf(value), FreeVariables.minus(FreeVariables.slotsOf(body), boundSlots));
 		this.hasOpaqueVariableReference = FreeVariables.anyOpaque(value, body);

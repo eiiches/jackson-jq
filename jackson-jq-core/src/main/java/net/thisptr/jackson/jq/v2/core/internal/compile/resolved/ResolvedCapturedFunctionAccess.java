@@ -36,7 +36,7 @@ public class ResolvedCapturedFunctionAccess<JsonNode> implements RewritableExpre
 		this.frameClosureSlot = frameClosureSlot;
 		this.args = args;
 		this.info = info;
-		boolean ownInput = info == null || info.dependsOnInput();
+		boolean ownInput = info != null && info.dependsOnInput();
 		boolean ownExternal = info != null && info.dependsOnExternalState();
 		this.dependsOnInput = ownInput || args.stream().anyMatch(AnalyzedExpression::dependsOnInput);
 		this.dependsOnExternalState = ownExternal || args.stream().anyMatch(AnalyzedExpression::dependsOnExternalState);

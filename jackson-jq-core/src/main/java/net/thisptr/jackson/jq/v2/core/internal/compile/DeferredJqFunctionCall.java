@@ -20,6 +20,11 @@ public interface DeferredJqFunctionCall<JsonNode> extends AnalyzedExpression<Jso
 	List<AnalyzedExpression<JsonNode>> arguments();
 
 	@Override
+	default boolean dependsOnInput() {
+		return arguments().stream().anyMatch(AnalyzedExpression::dependsOnInput);
+	}
+
+	@Override
 	default boolean dependsOnExternalState() {
 		return arguments().stream().anyMatch(AnalyzedExpression::dependsOnExternalState);
 	}
