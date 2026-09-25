@@ -11,6 +11,7 @@ import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.ClosureSpec;
 import net.thisptr.jackson.jq.v2.core.internal.compile.Compiler;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
+import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Closure;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
@@ -19,11 +20,13 @@ import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
 	private final int slot;
@@ -167,6 +170,15 @@ public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpressio
 
 		Instance(Closure[] closureHolder) {
 			this.closureHolder = closureHolder;
+		}
+
+		@Override
+		public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {
+			return ExpressionPropertiesUtils.forwardAll(
+					resolvedBody.getCardinality(),
+					resolvedBody.dependsOnInput(),
+					resolvedBody.dependsOnExternalState(),
+					arguments);
 		}
 
 		@Override
