@@ -2,4 +2,9 @@
   in: 110
   out:
   - null
+  types:
+  - input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - input: 'INT'
+    output: 'ANY'
   v: '[1.5, )'

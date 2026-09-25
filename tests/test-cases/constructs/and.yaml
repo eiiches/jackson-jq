@@ -1,7 +1,17 @@
 - q: 'empty and error("foo")'
   out: []
+  types:
+  - input: 'ANY'
+    output: 'NEVER'
+  - input: 'NULL'
+    output: 'NEVER'
   comment: 'lhs is evaluated first'
 
 - q: 'try (error("foo") and empty) catch .'
   out:
   - "foo"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'

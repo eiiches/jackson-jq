@@ -2,14 +2,29 @@
   in: [61, 62]
   out:
   - [{"key": 0, "value": 61}, {"key": 1, "value": 62}]
+  types:
+  - input: 'ANY'
+    output: '[*:{key:STRING,value:ANY}]'
+  - input: '[INT,INT]'
+    output: 'ANY'
   v: '[1.5, )'
 
 - q: 'try ("abcdefghijklm" | to_entries) catch .'
   out:
   - "string (\"abcdefghij...) has no keys"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   v: '[1.5, 1.8.2)'
 
 - q: 'try ("abcdefghijklm" | to_entries) catch .'
   out:
   - "string (\"abcdefghijklm\") has no keys"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   v: '[1.8.2, )'

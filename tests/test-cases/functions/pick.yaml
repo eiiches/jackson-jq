@@ -2,6 +2,11 @@
   in: {"a": 1, "b": {"c": 2, "d": 3}, "e": 4}
   out:
   - {"a": 1, "b": {"c": 2}, "x": null}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT,b:{c:INT,d:INT},e:INT}'
+    output: 'ANY'
   v: '[1.7, )'
   comment: 'pick/1 is added in jq-1.7, so this test is only valid for versions 1.7 and above'
 
@@ -9,4 +14,9 @@
   in: [1, 2, 3, 4]
   out:
   - [1, null, 3]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT,INT]'
+    output: 'ANY'
   v: '[1.7, )'

@@ -2,10 +2,20 @@
   in: null
   out:
   - null
+  types:
+  - input: 'ANY'
+    output: 'NULL|NUMBER'
+  - input: 'NULL'
+    output: 'NULL'
   v: '[1.5, )'
 
 - q: 'rindex("a")'
   in: {"a": [10, 20]}
   out:
   - 20
+  types:
+  - input: 'ANY'
+    output: 'NULL|NUMBER'
+  - input: '{a:[INT,INT]}'
+    output: 'ANY'
   v: '[1.5, )'

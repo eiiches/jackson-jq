@@ -2,3 +2,8 @@
   in: "\U0001F604"
   out:
   - [128516]
+  types:
+  - input: 'ANY'
+    output: '[*:INT]'
+  - input: 'STRING'
+    output: '[*:INT]'

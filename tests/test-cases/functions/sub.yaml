@@ -4,28 +4,53 @@
   in: null
   out:
   - "ac"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   v: '[1.5, )'
 
 - q: 'try ("abc" | sub("b"; 1)) catch .'
   in: null
   out:
   - "string (\"a\") and number (1) cannot be added"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   v: '[1.5, )'
 
 - q: 'try ("abc" | sub("b"; true)) catch .'
   in: null
   out:
   - "string (\"a\") and boolean (true) cannot be added"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   v: '[1.5, )'
 
 - q: 'try ("abc" | sub("b"; [1])) catch .'
   in: null
   out:
   - "string (\"a\") and array ([1]) cannot be added"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   v: '[1.5, )'
 
 - q: 'try ("xxbyy" | sub("b"; {})) catch .'
   in: null
   out:
   - "string (\"xx\") and object ({}) cannot be added"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   v: '[1.5, )'

@@ -2,42 +2,77 @@
   in: {"a": 1, "b": [2, {"d": 3}]}
   out:
   - [1, [2, {"d": 3}], {"d": 3}]
+  types:
+  - input: 'ANY'
+    output: '[ANY,ANY,ANY]'
+  - input: '{a:INT,b:[INT,{d:INT}]}'
+    output: '[INT,[INT,{d:INT}],{d:INT}]'
   v: '[1.6, )'
 
 - q: '. as {$a, $b: [$b, $b]} | [$a, $b]'
   in: {"a": 1, "b": [2, {"d": 3}]}
   out:
   - [1, [2, {"d": 3}]]
+  types:
+  - input: 'ANY'
+    output: '[ANY,ANY]'
+  - input: '{a:INT,b:[INT,{d:INT}]}'
+    output: '[INT,[INT,{d:INT}]]'
   v: '[1.6, )'
 
 - q: '. as {$a, $b: [$c, $c]} | [$a, $b, $c]'
   in: {"a": 1, "b": [2, {"d": 3}]}
   out:
   - [1, [2, {"d": 3}], {"d": 3}]
+  types:
+  - input: 'ANY'
+    output: '[ANY,ANY,ANY]'
+  - input: '{a:INT,b:[INT,{d:INT}]}'
+    output: '[INT,[INT,{d:INT}],{d:INT}]'
   v: '[1.6, )'
 
 - q: '. as [$a, $a] | $a'
   in: [1, 2]
   out:
   - 2
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT]'
+    output: 'INT'
   v: '[1.5, )'
 
 - q: '. as {a: $a, b: $a} | $a'
   in: {"a": 1, "b": 2}
   out:
   - 1
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT,b:INT}'
+    output: 'INT'
   v: '[1.5, )'
 
 - q: '. as {a: $v} | $v'
   in: {"a": 1}
   out:
   - 1
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT}'
+    output: 'INT'
   v: '[1.5, )'
 
 - q: '. as {if: $v} | $v'
   in: {"if": 1}
   out:
   - 1
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{if:INT}'
+    output: 'INT'
   v: '[1.5, )'
   comment: 'a keyword is a valid object pattern key'
 
@@ -45,42 +80,77 @@
   in: {"a": 1}
   out:
   - 1
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT}'
+    output: 'INT'
   v: '[1.5, )'
 
 - q: '. as {"\(.k)": $v} | $v'
   in: {"k": "a", "a": 1}
   out:
   - 1
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT,k:STRING}'
+    output: 'INT|NULL|STRING'
   v: '[1.5, )'
 
 - q: '. as {@text "\(.k)": $v} | $v'
   in: {"k": "a", "a": 1}
   out:
   - 1
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT,k:STRING}'
+    output: 'INT|NULL|STRING'
   v: '[1.5, )'
 
 - q: '. as {("a" + "b"): $v} | $v'
   in: {"ab": 1}
   out:
   - 1
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{ab:INT}'
+    output: 'INT|NULL'
   v: '[1.5, )'
 
 - q: '. as {$a} | $a'
   in: {"a": 1}
   out:
   - 1
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT}'
+    output: 'INT'
   v: '[1.5, )'
 
 - q: '. as {$a: {$b}} | [$a, $b]'
   in: {"a": {"b": 2}}
   out:
   - [{"b": 2}, 2]
+  types:
+  - input: 'ANY'
+    output: '[ANY,ANY]'
+  - input: '{a:{b:INT}}'
+    output: '[{b:INT},INT]'
   v: '[1.6, )'
 
 - q: '[. as {("a", "b"): $v} | $v]'
   in: {"a": 1, "b": 2}
   out:
   - [1, 2]
+  types:
+  - input: 'ANY'
+    output: '[ANY]'
+  - input: '{a:INT,b:INT}'
+    output: '[INT|NULL]'
   v: '[1.5, )'
   comment: 'a key expression emitting multiple values matches once per value'
 
@@ -88,82 +158,152 @@
   in: {"k1": "a", "k2": "b", "a": 1, "b": 2}
   out:
   - [1, 2]
+  types:
+  - input: 'ANY'
+    output: '[ANY]'
+  - input: '{a:INT,b:INT,k1:STRING,k2:STRING}'
+    output: '[INT|NULL|STRING]'
   v: '[1.5, )'
 
 - q: '[. as {(.k1, .k2): $v, c: {$d}} | [$v, $d]]'
   in: {"k1": "a", "k2": "b", "a": 1, "b": 2, "c": {"d": 5}}
   out:
   - [[1, 5], [2, 5]]
+  types:
+  - input: 'ANY'
+    output: '[[ANY,ANY]]'
+  - input: '{a:INT,b:INT,c:{d:INT},k1:STRING,k2:STRING}'
+    output: '[[INT|NULL|STRING|{d:INT},INT]]'
   v: '[1.5, )'
 
 - q: '[path(. as {a: $a} | $a)]'
   in: {"a": 1}
   out:
   - [["a"]]
+  types:
+  - input: 'ANY'
+    output: '[[*:NUMBER|STRING]]'
+  - input: '{a:INT}'
+    output: '[[*:NUMBER|STRING]]'
   v: '[1.5, )'
 
 - q: '[path(. as {(.k): $a} | $a)]'
   in: {"k": "a", "a": 1}
   out:
   - [["a"]]
+  types:
+  - input: 'ANY'
+    output: '[[*:NUMBER|STRING]]'
+  - input: '{a:INT,k:STRING}'
+    output: '[[*:NUMBER|STRING]]'
   v: '[1.5, )'
 
 - q: '. as {a: $v} | $v'
   in: {}
   out:
   - null
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{}'
+    output: 'NULL'
   v: '[1.5, )'
 
 - q: 'null as {a: $v} | $v'
   in: null
   out:
   - null
+  types:
+  - input: 'ANY'
+    output: 'NULL'
+  - input: 'NULL'
+    output: 'NULL'
   v: '[1.5, )'
 
 - q: 'try (1 as {a: $v} | $v) catch "__ERROR__"'
   in: null
   out:
   - "__ERROR__"
+  types:
+  - input: 'ANY'
+    output: '"__ERROR__"'
+  - input: 'NULL'
+    output: '"__ERROR__"'
   v: '[1.5, )'
 
 - q: 'try ([] as {a: $v} | $v) catch "__ERROR__"'
   in: null
   out:
   - "__ERROR__"
+  types:
+  - input: 'ANY'
+    output: '"__ERROR__"'
+  - input: 'NULL'
+    output: '"__ERROR__"'
   v: '[1.5, )'
 
 - q: 'try (("x"?) as {a: $a} | $a) catch "__ERROR__"'
   in: null
   out: []
+  types:
+  - input: 'ANY'
+    output: '"__ERROR__"'
+  - input: 'NULL'
+    output: '"__ERROR__"'
   v: '[1.5, 1.7)'
 
 - q: 'try (("x"?) as {a: $a} | $a) catch "__ERROR__"'
   in: null
   out:
   - "__ERROR__"
+  types:
+  - input: 'ANY'
+    output: '"__ERROR__"'
+  - input: 'NULL'
+    output: '"__ERROR__"'
   v: '[1.7, )'
 
 - q: 'try ((try "x") as {a: $a} | $a) catch "__ERROR__"'
   in: null
   out: []
+  types:
+  - input: 'ANY'
+    output: '"__ERROR__"'
+  - input: 'NULL'
+    output: '"__ERROR__"'
   v: '[1.5, 1.7)'
 
 - q: 'try ((try "x") as {a: $a} | $a) catch "__ERROR__"'
   in: null
   out:
   - "__ERROR__"
+  types:
+  - input: 'ANY'
+    output: '"__ERROR__"'
+  - input: 'NULL'
+    output: '"__ERROR__"'
   v: '[1.7, )'
 
 - q: '["0", {} as {foo: $a} | $a]'
   in: null
   out:
   - ["0", null]
+  types:
+  - input: 'ANY'
+    output: '["0",NULL]'
+  - input: 'NULL'
+    output: '["0",NULL]'
   v: '[1.5, )'
 
 - q: '[{foo: 1}, {foo: 2} as {foo: $a} | $a]'
   in: null
   out:
   - [{"foo": 1}, 2]
+  types:
+  - input: 'ANY'
+    output: '[{foo:1},2]'
+  - input: 'NULL'
+    output: '[{foo:1},2]'
   v: '[1.5, )'
   comment: 'an unparenthesized comma leaves earlier branches outside the binding'
 
@@ -171,6 +311,11 @@
   in: null
   out:
   - [1, 2]
+  types:
+  - input: 'ANY'
+    output: '[*:1|2]'
+  - input: 'NULL'
+    output: '[*:1|2]'
   v: '[1.5, )'
   comment: 'parentheses make the binding match every emitted value'
 
@@ -178,6 +323,11 @@
   in: {"a": [1, 2], "b": 3}
   out:
   - [3, 2]
+  types:
+  - input: 'ANY'
+    output: '[ANY,ANY]'
+  - input: '{a:[INT,INT],b:INT}'
+    output: '[INT,INT]'
   v: '[1.5, )'
   comment: 'array elements are matched back to front, so .a[0] loses to the earlier .b'
 
@@ -186,6 +336,11 @@
   out:
   - 9
   - 9
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[{x:INT,y:INT},INT]'
+    output: 'INT'
   v: '[1.5, )'
   comment: 'the shadowed occurrence still branches over both keys, it just does not bind'
 
@@ -194,6 +349,11 @@
   out:
   - 1
   - 2
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,{x:INT,y:INT}]'
+    output: 'INT|NULL'
   v: '[1.5, )'
   comment: 'and here the branching occurrence is the one that wins, since it is matched first'
 
@@ -201,10 +361,20 @@
   in: [[1, 2], [3, 4]]
   out:
   - 6
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[[INT,INT],[INT,INT]]'
+    output: 'NUMBER'
   v: '[1.5, )'
 
 - q: 'foreach .[] as {a: $x, b: $x} (0; . + $x)'
   in: [{"a": 1, "b": 2}]
   out:
   - 1
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[{a:INT,b:INT}]'
+    output: 'NUMBER'
   v: '[1.5, )'

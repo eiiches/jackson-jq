@@ -28,6 +28,30 @@ public class TestCase {
 	@JsonProperty("out")
 	public List<JsonNode> out = Collections.emptyList();
 
+	public static class TypeAssertion {
+		@JsonProperty("input")
+		public String input = "";
+
+		@JsonProperty("output")
+		public String output = "";
+
+		public TypeAssertion() {
+		}
+
+		public TypeAssertion(String input, String output) {
+			this.input = input;
+			this.output = output;
+		}
+
+		@Override
+		public String toString() {
+			return String.format("{input: '%s', output: '%s'}", input, output);
+		}
+	}
+
+	@JsonProperty("types")
+	public List<TypeAssertion> types = Collections.emptyList();
+
 	@JsonProperty("file")
 	public String file = "";
 

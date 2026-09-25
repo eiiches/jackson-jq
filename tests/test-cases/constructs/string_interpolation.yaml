@@ -1,11 +1,26 @@
 - q: '"path: \(path(.)|tojson)"'
   out:
   - "path: []"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'NULL'
+    output: 'STRING'
 
 - q: 'try (path("path: \([1,2][])")) catch .'
   out:
   - "Invalid path expression with result \"path: 1\""
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
 
 - q: '"\/"'
   out:
   - "/"
+  types:
+  - input: 'ANY'
+    output: '"/"'
+  - input: 'NULL'
+    output: '"/"'

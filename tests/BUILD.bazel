@@ -14,6 +14,14 @@ test_case_suite(
 )
 
 test_case_suite(
+    name = "type-tests",
+    test_cases = TEST_CASES,
+    test_class = "net.thisptr.jackson.jq.v2.test.typecheck.TypeCheckTestCasesTest",
+    test_library = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/typecheck",
+    visibility = ["//visibility:private"],
+)
+
+test_case_suite(
     name = "jackson2-tests",
     test_cases = TEST_CASES,
     test_class = "net.thisptr.jackson.jq.v2.test.providers.jackson2.Jackson2JsonQueryTest",

@@ -2,4 +2,9 @@
   in: [65.9, 66.1]
   out:
   - "AB"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[FLOAT,FLOAT]'
+    output: 'STRING'
   v: '[1.5, )'

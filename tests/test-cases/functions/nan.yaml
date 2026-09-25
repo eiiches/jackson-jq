@@ -5,6 +5,11 @@
   - true
   - false
   - true
+  types:
+  - input: 'ANY'
+    output: 'BOOLEAN'
+  - input: 'NULL'
+    output: 'BOOLEAN'
 
 - q: '0 == nan, 0 > nan, 0 < nan, nan > 0, nan < 0'
   out:
@@ -13,6 +18,11 @@
   - false
   - false
   - true
+  types:
+  - input: 'ANY'
+    output: 'BOOLEAN'
+  - input: 'NULL'
+    output: 'BOOLEAN'
 
 - q: '0 == nan, 0 >= nan, 0 <= nan, nan >= 0, nan <= 0'
   out:
@@ -21,3 +31,8 @@
   - false
   - false
   - true
+  types:
+  - input: 'ANY'
+    output: 'BOOLEAN'
+  - input: 'NULL'
+    output: 'BOOLEAN'

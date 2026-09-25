@@ -2,8 +2,18 @@
   in: {"a": 1}
   out:
   - {"a": 1}
+  types:
+  - input: 'ANY'
+    output: '{a:ANY}'
+  - input: '{a:INT}'
+    output: '{a:INT}'
 
 - q: '{ a, }'
   in: {"a": 1}
   out:
   - {"a": 1}
+  types:
+  - input: 'ANY'
+    output: '{a:ANY}'
+  - input: '{a:INT}'
+    output: '{a:INT}'

@@ -2,4 +2,9 @@
   in: null
   out:
   - true
+  types:
+  - input: 'ANY'
+    output: 'BOOLEAN'
+  - input: 'NULL'
+    output: 'BOOLEAN'
   v: '[1.6, )'

@@ -4,16 +4,31 @@
   - [0]
   - [1]
   - [2]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '[INT,INT,INT,BOOLEAN,INT]'
+    output: '[*:NUMBER|STRING]'
   failing: true
   justification: The jq documentation explicitly states `$var.foo is not a valid or useful path expression in .`.
 
 - q: 'try (path(label $out | foreach [1,2,3][] as $item ([]; if $item == false then break $out else $item end; .))) catch .'
   out:
   - "Invalid path expression near attempt to iterate through [1,2,3]"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
 
 - q: 'try (path(label $out | foreach .[] as $item (path(.); if $item == false then break $out else $item end; .))) catch .'
   out:
   - "Cannot iterate over null (null)"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
 
 - q: 'path(label $out | foreach .[] as $item ([]; if $item == false then break $out else 10 end; $item))'
   in: [1, 2, 3, false, 4]
@@ -21,3 +36,8 @@
   - [0]
   - [1]
   - [2]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '[INT,INT,INT,BOOLEAN,INT]'
+    output: '[*:NUMBER|STRING]'

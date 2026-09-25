@@ -2,12 +2,22 @@
   in: 0.0
   out:
   - "0"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
   v: '[1.5, 1.7)'
 
 - q: '@text'
   in: 0.0
   out:
   - "0.0"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
   v: '[1.7, )'
   failing: true
 
@@ -15,11 +25,21 @@
   in: [0.0]
   out:
   - "[0]"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[INT]'
+    output: 'STRING'
   v: '[1.5, 1.7)'
 
 - q: '@text'
   in: [0.0]
   out:
   - "[0.0]"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[INT]'
+    output: 'STRING'
   v: '[1.7, )'
   failing: true

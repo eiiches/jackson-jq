@@ -2,10 +2,20 @@
   in: "98 97 122"
   out:
   - "__ERROR__"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
   v: '[1.5, )'
 
 - q: '(try (fromjson) catch ("__ERROR__"))'
   in: ""
   out:
   - "__ERROR__"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
   v: '[1.5, )'

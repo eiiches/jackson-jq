@@ -2,8 +2,18 @@
   in: ""
   out:
   - []
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'STRING'
+    output: '[*:STRING]'
   v: '[1.5, )'
 
 - q: 'split(empty)'
   in: []
   out: []
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: '[]'
+    output: 'ANY'

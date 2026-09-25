@@ -2,3 +2,8 @@
   in: [34, 115, 116, 114, 105, 110, 103, 34]
   out:
   - [34, 34, 103, 105, 110, 114, 115, 116]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: '[*:INT|NULL]'

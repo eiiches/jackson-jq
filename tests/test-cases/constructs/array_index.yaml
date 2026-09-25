@@ -5,12 +5,22 @@
   in: null
   out:
   - null
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   v: '[1.5, )'
 
 - q: '.["x":"y"]'
   in: null
   out:
   - null
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   v: '[1.5, )'
 
 - q: '[0,1,2,3,4] | (.[1.5:2.5], .[1.5:-1.5], .[-1.5], .[1.5])'
@@ -19,6 +29,11 @@
   - [1, 2, 3]
   - null
   - null
+  types:
+  - input: 'ANY'
+    output: '0|1|2|3|4|NULL|[*:0|1|2|3|4]'
+  - input: 'NULL'
+    output: '0|1|2|3|4|NULL|[*:0|1|2|3|4]'
   v: '[1.5, 1.7)'
 
 - q: '[0,1,2,3,4] | (.[1.5:2.5], .[1.5:-1.5], .[-1.5], .[1.5])'
@@ -27,23 +42,48 @@
   - [1, 2, 3]
   - 4
   - 1
+  types:
+  - input: 'ANY'
+    output: '0|1|2|3|4|NULL|[*:0|1|2|3|4]'
+  - input: 'NULL'
+    output: '0|1|2|3|4|NULL|[*:0|1|2|3|4]'
   v: '[1.7, )'
 
 - q: '[] | path(.[3.5])'
   out:
   - [3.5]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: 'NULL'
+    output: '[*:NUMBER|STRING]'
 
 - q: '[] | .[3.5] = 3'
   out:
   - [null, null, null, 3]
+  types:
+  - input: 'ANY'
+    output: '[*:3|NULL]'
+  - input: 'NULL'
+    output: '[*:3|NULL]'
 
 - q: '[1,1,1,1,1] | .[-1.7] = 3'
   out:
   - [1, 1, 1, 1, 3]
+  types:
+  - input: 'ANY'
+    output: '[*:1|3|NULL]'
+  - input: 'NULL'
+    output: '[*:1|3|NULL]'
 
 - q: '[1,1,1,1,1] | .[-1.2] = 3'
   out:
   - [1, 1, 1, 1, 3]
+  types:
+  - input: 'ANY'
+    output: '[*:1|3|NULL]'
+  - input: 'NULL'
+    output: '[*:1|3|NULL]'
 
 - q: '.[]["a","b"]'
   in: [{"a": 1, "b": 3}, {"a": 2, "b": 4}]
@@ -52,6 +92,11 @@
   - 2
   - 3
   - 4
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[{a:INT,b:INT},{a:INT,b:INT}]'
+    output: 'INT|NULL'
 
 - q: '.[][0, 1]'
   in: [[1, 3], [2, 4]]
@@ -60,6 +105,11 @@
   - 2
   - 3
   - 4
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[[INT,INT],[INT,INT]]'
+    output: 'INT'
 
 - q: '.[][0,1:1,2]'
   in: [[1, 3], [2, 4]]
@@ -72,6 +122,11 @@
   - []
   - [3]
   - [4]
+  types:
+  - input: 'ANY'
+    output: 'NULL|STRING|[*:ANY]'
+  - input: '[[INT,INT],[INT,INT]]'
+    output: '[*:INT]'
 
 - q: '.[]."\("a","b")"'
   in: [{"a": 1, "b": 3}, {"a": 2, "b": 4}]
@@ -80,84 +135,169 @@
   - 2
   - 3
   - 4
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[{a:INT,b:INT},{a:INT,b:INT}]'
+    output: 'INT|NULL'
 
 - q: '.[["a","b"]]'
   in: ["a", "b", "a", "a", "b"]
   out:
   - [0, 3]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: '[*:NUMBER]'
 
 - q: 'path(.[["a","b"]])'
   in: ["a", "b", "a", "a", "b"]
   out:
   - [["a", "b"]]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: '[*:NUMBER|STRING]'
 
 - q: 'getpath([["a","b"]])'
   in: ["a", "b", "a", "a", "b"]
   out:
   - [0, 3]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: 'ANY'
 
 - q: 'try(.[["a","b"]] |= "c") catch .'
   in: ["a", "b", "a", "a", "b"]
   out:
   - "Cannot update field at array index of array"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: 'ANY'
 
 - q: '.[[]]'
   in: ["a", "b", "a", "a", "b"]
   out:
   - []
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: '[*:NUMBER]'
 
 - q: 'path(.[[]])'
   in: ["a", "b", "a", "a", "b"]
   out:
   - [[]]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: '[*:NUMBER|STRING]'
 
 - q: '.[2:0] = [999]'
   in: [0, 1, 2, 3, 4]
   out:
   - [0, 1, 999, 2, 3, 4]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
 
 - q: '.[2:2] = [999]'
   in: [0, 1, 2, 3, 4]
   out:
   - [0, 1, 999, 2, 3, 4]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
 
 - q: '.[2:3] = [999]'
   in: [0, 1, 2, 3, 4]
   out:
   - [0, 1, 999, 3, 4]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
 
 - q: '.[2:-3] = [999]'
   in: [0, 1, 2, 3, 4]
   out:
   - [0, 1, 999, 2, 3, 4]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
 
 - q: '.[2:-2] = [999]'
   in: [0, 1, 2, 3, 4]
   out:
   - [0, 1, 999, 3, 4]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
 
 - q: '.[2:-100] = [999]'
   in: [0, 1, 2, 3, 4]
   out:
   - [0, 1, 999, 2, 3, 4]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
 
 - q: '.[-100:0] = [999]'
   in: [0, 1, 2, 3, 4]
   out:
   - [999, 0, 1, 2, 3, 4]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
 
 - q: '.[-100:1] = [999]'
   in: [0, 1, 2, 3, 4]
   out:
   - [999, 1, 2, 3, 4]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
 
 - q: 'try ((try "x")["bad":0]) catch "__ERROR__"'
   in: null
   out: []
+  types:
+  - input: 'ANY'
+    output: '"__ERROR__"'
+  - input: 'NULL'
+    output: '"__ERROR__"'
   v: '[1.5, 1.7)'
 
 - q: 'try ((try "x")["bad":0]) catch "__ERROR__"'
   in: null
   out:
   - "__ERROR__"
+  types:
+  - input: 'ANY'
+    output: '"__ERROR__"'
+  - input: 'NULL'
+    output: '"__ERROR__"'
   v: '[1.7, )'

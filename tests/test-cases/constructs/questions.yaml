@@ -2,27 +2,57 @@
   out:
   - "10\t20"
   - ""
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'NULL'
+    output: 'STRING'
 
 - q: '(10, {a: 10}) | to_entries?'
   out:
   - [{"key": "a", "value": 10}]
+  types:
+  - input: 'ANY'
+    output: '[*:{key:STRING,value:10}]'
+  - input: 'NULL'
+    output: '[*:{key:STRING,value:10}]'
 
 - q: 'to_entries'
   in: [61, 62]
   out:
   - [{"key": 0, "value": 61}, {"key": 1, "value": 62}]
+  types:
+  - input: 'ANY'
+    output: '[*:{key:STRING,value:ANY}]'
+  - input: '[INT,INT]'
+    output: 'ANY'
   v: '[1.5, )'
 
 - q: '"foo\("a", error("b"), "c")"?'
   out:
   - "fooa"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'NULL'
+    output: 'STRING'
 
 - q: '{a: 10, b: (1, error("b"), 3)}?'
   out:
   - {"a": 10, "b": 1}
+  types:
+  - input: 'ANY'
+    output: '{a:10,b:1|3}'
+  - input: 'NULL'
+    output: '{a:10,b:1|3}'
 
 - q: '[1, error(2), 3]?'
   out: []
+  types:
+  - input: 'ANY'
+    output: '[*:1|3]'
+  - input: 'NULL'
+    output: '[*:1|3]'
 
 - q: '0?, 1?, true?, false?, null?'
   out:
@@ -31,24 +61,49 @@
   - true
   - false
   - null
+  types:
+  - input: 'ANY'
+    output: '0|1|BOOLEAN|NULL'
+  - input: 'NULL'
+    output: '0|1|BOOLEAN|NULL'
 
 - q: '1,2,3 as $a | $a?'
   out:
   - 1
   - 2
   - 3
+  types:
+  - input: 'ANY'
+    output: '1|2|3'
+  - input: 'NULL'
+    output: '1|2|3'
 
 - q: '({a: 10}).a??????'
   out:
   - 10
+  types:
+  - input: 'ANY'
+    output: '10'
+  - input: 'NULL'
+    output: '10'
 
 - q: '[10]??????'
   out:
   - [10]
+  types:
+  - input: 'ANY'
+    output: '[10]'
+  - input: 'NULL'
+    output: '[10]'
 
 - q: '({a:{b:[{c:10}]}}).a?.b?[0]?.c?'
   out:
   - 10
+  types:
+  - input: 'ANY'
+    output: '10'
+  - input: 'NULL'
+    output: '10'
 
 - q: '1,2,3 | label $out | if . == 2 then break $out? else . end'
   out:

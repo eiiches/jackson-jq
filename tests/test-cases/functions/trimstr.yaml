@@ -2,34 +2,64 @@
   in: 4
   out:
   - "startswith() requires string inputs"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
   v: '[1.8.0, )'
 
 - q: 'try trimstr(123) catch .'
   in: "abc"
   out:
   - "startswith() requires string inputs"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
   v: '[1.8.0, )'
 
 - q: 'trimstr("foo")'
   in: "foobarfoo"
   out:
   - "bar"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'STRING'
   v: '[1.8.0, )'
 
 - q: 'trimstr("a")'
   in: "aba"
   out:
   - "b"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'STRING'
   v: '[1.8.0, )'
 
 - q: 'trimstr("")'
   in: "foobar"
   out:
   - ""
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'STRING'
   v: '[1.8.0, 1.8.2)'
 
 - q: 'trimstr("")'
   in: "foobar"
   out:
   - "foobar"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'STRING'
   v: '[1.8.2, )'

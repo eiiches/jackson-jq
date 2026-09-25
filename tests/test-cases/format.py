@@ -52,7 +52,7 @@ class FormattedTestCase:
     def __yaml__(self, dumper):
         root_node = yaml.nodes.MappingNode("tag:yaml.org,2002:map", [], flow_style=False)
         known_order = [
-            "q", "in", "out", "v", "failing", "comment", "justification",
+            "q", "in", "out", "types", "v", "failing", "comment", "justification",
             "modules", "should_compile",
             "numerical_errors", "ignore_true_jq_behavior",
         ]
@@ -81,6 +81,16 @@ class FormattedTestCase:
                     for o in val:
                         out_node.value.append(represent_json(dumper, o))
                 root_node.value.append((dumper.represent_str("out"), out_node))
+            elif k == "types":
+                types_node = yaml.nodes.SequenceNode("tag:yaml.org,2002:seq", [], flow_style=False)
+                for t in val:
+                    item_node = yaml.nodes.MappingNode("tag:yaml.org,2002:map", [], flow_style=False)
+                    in_node = yaml.nodes.ScalarNode("tag:yaml.org,2002:str", str(t["input"]), style="'")
+                    out_node = yaml.nodes.ScalarNode("tag:yaml.org,2002:str", str(t["output"]), style="'")
+                    item_node.value.append((dumper.represent_str("input"), in_node))
+                    item_node.value.append((dumper.represent_str("output"), out_node))
+                    types_node.value.append(item_node)
+                root_node.value.append((dumper.represent_str("types"), types_node))
             elif k == "v":
                 v_node = dumper.represent_data(val)
                 v_node.style = "'"

@@ -2,17 +2,32 @@
   in: [[0.0], true]
   out:
   - "bar"
+  types:
+  - input: 'ANY'
+    output: 'NULL|STRING'
+  - input: '[[INT],BOOLEAN]'
+    output: 'NULL|STRING'
 
 - q: '(0 * ("baz" * 1.0))'
   in: 2
   out:
   - null
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
   v: '[1.5, 1.7)'
 
 - q: '(0 * ("baz" * 1.0))'
   in: 2
   out:
   - ""
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
   v: '[1.7, )'
   failing: true
 
@@ -20,34 +35,69 @@
   in: "bar"
   out:
   - "baz"
+  types:
+  - input: 'ANY'
+    output: 'NULL|STRING'
+  - input: 'STRING'
+    output: 'NULL|STRING'
   v: '[1.5, 1.7)'
 
 - q: '("baz" * 0.5)'
   in: "bar"
   out:
   - ""
+  types:
+  - input: 'ANY'
+    output: 'NULL|STRING'
+  - input: 'STRING'
+    output: 'NULL|STRING'
   v: '[1.7, )'
   failing: true
 
 - q: '3 * "foo"'
   out:
   - "foofoofoo"
+  types:
+  - input: 'ANY'
+    output: 'NULL|STRING'
+  - input: 'NULL'
+    output: 'NULL|STRING'
 
 - q: '"foo" * -3'
   out:
   - null
+  types:
+  - input: 'ANY'
+    output: 'NULL|STRING'
+  - input: 'NULL'
+    output: 'NULL|STRING'
 
 - q: 'error("foo") * empty'
   out: []
+  types:
+  - input: 'ANY'
+    output: 'NEVER'
+  - input: 'NULL'
+    output: 'NEVER'
   comment: 'rhs is evaluated first'
 
 - q: 'try (empty * error("foo")) catch .'
   out:
   - "foo"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
 
 - q: '(try ((-1.5 * "baz")) catch ("__ERROR__"))'
   out:
   - "__ERROR__"
+  types:
+  - input: 'ANY'
+    output: 'NULL|STRING'
+  - input: 'NULL'
+    output: 'NULL|STRING'
   v: '[1.5, 1.8.0)'
   failing: true
   justification: jq interprets this as -(1.5 * baz) while jackson-jq as (-1.5) * baz. Defer resolution to future versions.
@@ -55,4 +105,9 @@
 - q: '(try ((-1.5 * "baz")) catch ("__ERROR__"))'
   out:
   - null
+  types:
+  - input: 'ANY'
+    output: 'NULL|STRING'
+  - input: 'NULL'
+    output: 'NULL|STRING'
   v: '[1.8.0, )'

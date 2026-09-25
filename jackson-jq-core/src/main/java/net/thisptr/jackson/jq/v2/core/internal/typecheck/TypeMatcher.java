@@ -31,7 +31,7 @@ import net.thisptr.jackson.jq.v2.spi.type.UnionType;
 /**
  * Matches actual types against scheme types and collects constraints for quantified variables.
  */
-final class TypeMatcher {
+public final class TypeMatcher {
 	private final Set<TypeVariable> quantified;
 	private final Map<TypeVariable, Type> upperBounds;
 	private final boolean strictSubtyping;
@@ -87,7 +87,7 @@ final class TypeMatcher {
 		return TypeSubstitution.apply(type, quantified, substitutions, upperBounds);
 	}
 
-	static boolean accepts(Type expected, Type actual) {
+	public static boolean accepts(Type expected, Type actual) {
 		TypeMatcher matcher = new TypeMatcher(Set.of());
 		return matcher.match(expected, actual);
 	}

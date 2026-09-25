@@ -1,3 +1,8 @@
 - q: '[path(.)]'
   out:
   - [[]]
+  types:
+  - input: 'ANY'
+    output: '[[*:NUMBER|STRING]]'
+  - input: 'NULL'
+    output: '[[*:NUMBER|STRING]]'

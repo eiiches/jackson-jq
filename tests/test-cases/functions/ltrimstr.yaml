@@ -4,46 +4,86 @@
   - ""
   - "oo"
   - "foo"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
   v: '[1.5, 1.8.0)'
 
 - q: 'del(ltrimstr(isnan))'
   in: [91, 34, 45, 49, 46, 49, 48, 55, 49, 52, 56, 55, 49, 55, 55, 57, 52, 48, 57, 48, 52, 98, 97, 122, 34, 93]
   out:
   - null
+  types:
+  - input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'NULL|[*:ANY]|{*:ANY}'
   v: '[1.5, 1.8.0)'
 
 - q: 'ltrimstr(0.0)'
   in: null
   out:
   - null
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   v: '[1.5, 1.8.0)'
 
 - q: 'try ltrimstr("foo") catch .'
   in: 4
   out:
   - "startswith() requires string inputs"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
   v: '[1.8.0, )'
 
 - q: 'try ltrimstr(123) catch .'
   in: "abc"
   out:
   - "startswith() requires string inputs"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
   v: '[1.8.0, )'
 
 - q: 'ltrimstr("foo")'
   in: "foobar"
   out:
   - "bar"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'STRING'
   v: '[1.5, )'
 
 - q: 'ltrimstr("bar")'
   in: "foobar"
   out:
   - "foobar"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'STRING'
   v: '[1.5, )'
 
 - q: 'ltrimstr("")'
   in: "foobar"
   out:
   - "foobar"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'STRING'
   v: '[1.5, )'

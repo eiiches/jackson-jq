@@ -2,31 +2,61 @@
   in: "foo"
   out:
   - "foo"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
 
 - q: 'getpath([{"start": "x", "end": "y"}])'
   in: null
   out:
   - null
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   v: '[1.5, )'
 
 - q: 'try (getpath([false, []])) catch .'
   out:
   - "Cannot index null with boolean"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   v: '[1.5, 1.8.2)'
 
 - q: 'try (getpath([false, []])) catch .'
   out:
   - "Cannot index null with boolean (false)"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   v: '[1.8.2, )'
 
 - q: 'try (setpath([false, []]; null)) catch .'
   out:
   - "Cannot index null with boolean"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   v: '[1.5, 1.8.2)'
 
 - q: 'try (setpath([false, []]; null)) catch .'
   out:
   - "Cannot index null with boolean (false)"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   v: '[1.8.2, )'
 
 # An array slice path segment must carry both "start" and "end". An explicit null means an open
@@ -35,12 +65,22 @@
   in: [1, 2, 3]
   out:
   - "Start and end indices of an array slice must be numbers"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT]'
+    output: 'ANY'
   v: '[1.5, 1.7)'
 
 - q: 'try (getpath([{}])) catch .'
   in: [1, 2, 3]
   out:
   - "Array/string slice indices must be integers"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT]'
+    output: 'ANY'
   v: '[1.7, )'
   failing: true
 
@@ -48,12 +88,22 @@
   in: [1, 2, 3]
   out:
   - "Start and end indices of an array slice must be numbers"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT]'
+    output: 'ANY'
   v: '[1.5, 1.7)'
 
 - q: 'try (getpath([{"start": 1}])) catch .'
   in: [1, 2, 3]
   out:
   - "Array/string slice indices must be integers"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT]'
+    output: 'ANY'
   v: '[1.7, )'
   failing: true
 
@@ -61,10 +111,20 @@
   in: [1, 2, 3]
   out:
   - [1, 2, 3]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT]'
+    output: 'ANY'
   v: '[1.5, )'
 
 - q: 'getpath([{"start": 1, "end": null}])'
   in: [1, 2, 3]
   out:
   - [2, 3]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT]'
+    output: 'ANY'
   v: '[1.5, )'

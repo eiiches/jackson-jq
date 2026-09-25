@@ -1,0 +1,32 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "typecheck",
+    testonly = True,
+    srcs = glob(["*.java"]),
+    release = 17,
+    visibility = ["//tests:__pkg__"],
+    runtime_deps = ["//jackson-jq-regex-impl-joni"],
+    deps = [
+        "//jackson-jq-core",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-jackson2",
+        "//jackson-jq-spi",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/testcase",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+        "@maven//:com_fasterxml_jackson_dataformat_jackson_dataformat_yaml",
+        "@maven//:org_assertj_assertj_core",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+    ],
+)
+
+java_binary(
+    name = "generate-type-assertions",
+    testonly = True,
+    main_class = "net.thisptr.jackson.jq.v2.test.typecheck.TypeAssertionGenerator",
+    runtime_deps = [
+        ":typecheck",
+        "//jackson-jq-regex-impl-joni",
+    ],
+)

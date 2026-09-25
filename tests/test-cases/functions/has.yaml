@@ -2,22 +2,42 @@
   in: null
   out:
   - false
+  types:
+  - input: 'ANY'
+    output: 'BOOLEAN'
+  - input: 'NULL'
+    output: 'BOOLEAN'
   v: '[1.5, )'
 
 - q: '[has(1.9), has(-0.9)]'
   in: [0, 1, 2]
   out:
   - [true, true]
+  types:
+  - input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN]'
+  - input: '[INT,INT,INT]'
+    output: '[BOOLEAN,BOOLEAN]'
   v: '[1.5, )'
 
 - q: '[has(-1), has(0), has(2), has(3)]'
   in: [0, 1, 2]
   out:
   - [false, true, true, false]
+  types:
+  - input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN]'
+  - input: '[INT,INT,INT]'
+    output: '[BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN]'
   v: '[1.5, )'
 
 - q: '[has(1e20), has(nan)]'
   in: [0, 1, 2]
   out:
   - [false, false]
+  types:
+  - input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN]'
+  - input: '[INT,INT,INT]'
+    output: '[BOOLEAN,BOOLEAN]'
   v: '[1.5, )'

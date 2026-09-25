@@ -2,15 +2,30 @@
   in: false
   out:
   - "__ERROR__"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'BOOLEAN'
+    output: '"__ERROR__"'
   v: '[1.5, )'
 
 - q: 'join(empty)'
   in: 0.7853981633974483
   out: []
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'FLOAT'
+    output: 'ANY'
   v: '[1.5, )'
 
 - q: 'join(",")'
   in: {"a": "x", "b": "y"}
   out:
   - "x,y"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '{a:STRING,b:STRING}'
+    output: 'STRING'
   v: '[1.5, )'

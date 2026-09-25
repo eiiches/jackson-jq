@@ -2,3 +2,8 @@
   in: [false, -0.5, "\n"]
   out:
   - "[false,-0.5,\"\\n\"]"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[BOOLEAN,FLOAT,STRING]'
+    output: 'STRING'

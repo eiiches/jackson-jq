@@ -2,6 +2,11 @@
   in: [false]
   out:
   - [0]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '[BOOLEAN]'
+    output: '[*:NUMBER|STRING]'
   v: '[1.5, )'
 
 - q: 'paths'
@@ -9,11 +14,21 @@
   out:
   - [0]
   - [0, 0]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '[[[NULL]]]'
+    output: '[*:NUMBER|STRING]'
   v: '[1.5, 1.6)'
 
 - q: 'paths'
   in: [null]
   out: []
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '[NULL]'
+    output: '[*:NUMBER|STRING]'
   v: '[1.5, 1.6)'
 
 # jq >= 1.7.1 defines paths(f) as `path(..|select(f))|select(length > 0)`, which evaluates f on
@@ -23,18 +38,33 @@
   in: 0.5
   out:
   - []
+  types:
+  - input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - input: 'FLOAT'
+    output: '[*:[*:NUMBER|STRING]]'
   v: '[1.5, 1.7.1)'
 
 - q: 'try [paths(endswith("foo"))] catch .'
   in: 0.5
   out:
   - "endswith() requires string inputs"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'FLOAT'
+    output: 'ANY'
   v: '[1.7.1, )'
 
 - q: '[paths(endswith("foo"))]'
   in: {"a": "xfoo"}
   out:
   - [["a"]]
+  types:
+  - input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - input: '{a:STRING}'
+    output: '[*:[*:NUMBER|STRING]]'
   v: '[1.5, 1.7.1)'
 
 # The root is evaluated before any child path is emitted.
@@ -42,6 +72,11 @@
   in: {"a": "xfoo"}
   out:
   - "endswith() requires string inputs"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:STRING}'
+    output: 'ANY'
   v: '[1.7.1, )'
 
 # The root matches, but its (empty) path is still not emitted.
@@ -49,6 +84,11 @@
   in: "xfoo"
   out:
   - []
+  types:
+  - input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - input: 'STRING'
+    output: '[*:[*:NUMBER|STRING]]'
   v: '[1.5, )'
 
 # jq 1.5's `..` skips null-valued members, so paths/0 does not yield their paths; from 1.6 on it
@@ -57,16 +97,31 @@
   in: {"a": null}
   out:
   - []
+  types:
+  - input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - input: '{a:NULL}'
+    output: '[*:[*:NUMBER|STRING]]'
   v: '[1.5, 1.6)'
 
 - q: '[paths]'
   in: {"a": null}
   out:
   - [["a"]]
+  types:
+  - input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - input: '{a:NULL}'
+    output: '[*:[*:NUMBER|STRING]]'
   v: '[1.6, )'
 
 - q: '[paths]'
   in: [null]
   out:
   - [[0]]
+  types:
+  - input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - input: '[NULL]'
+    output: '[*:[*:NUMBER|STRING]]'
   v: '[1.6, )'
