@@ -642,7 +642,8 @@ public class Main {
 			});
 			Playground<N> pg = new Playground<>(env, version, providerName, rawInputBytes, nullInput, rawInput, slurp,
 					query, jsonProvider, runtimeOptions, compileOptions, compact, rawOutput, warningsEnabled, inputFiles,
-					isVimMode(command, editor), System.out, System.err);
+					isVimMode(command, editor), command.hasOption(OPT_FROM_FILE.getOpt())
+					? Paths.get(command.getOptionValue(OPT_FROM_FILE.getOpt())) : null, System.out, System.err);
 			pg.setEvaluationExecutor(evalExecutor);
 			try {
 				pg.run(runner);

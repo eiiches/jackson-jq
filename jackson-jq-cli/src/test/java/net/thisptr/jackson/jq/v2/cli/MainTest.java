@@ -51,6 +51,47 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MainTest {
+	@Test
+	void vimWriteUsesFromFileAsCurrentFile(@TempDir Path tempDir) throws Exception {
+		Path queryFile = write(tempDir, "query.jq", ".\n");
+		Options options = new Options();
+		options.addOption(Option.builder("i").longOpt("interactive").get());
+		options.addOption(Option.builder("n").longOpt("null-input").get());
+		options.addOption(Option.builder("f").longOpt("from-file").hasArg().get());
+		options.addOption(Option.builder().longOpt("vim").hasArg().get());
+		CommandLine command = Main.createCommandLineParser().parse(options,
+				new String[] { "-in", "-f", queryFile.toString(), "--vim=true" });
+		TuiRunner runner = createTestRunner("", new ByteArrayOutputStream());
+		runner.dispatch(KeyEvent.ofChar('A'));
+		for (char c : "name".toCharArray()) {
+			runner.dispatch(KeyEvent.ofChar(c));
+		}
+		runner.dispatch(KeyEvent.ofKey(KeyCode.ESCAPE));
+		for (char c : ":w".toCharArray()) {
+			runner.dispatch(KeyEvent.ofChar(c));
+		}
+		runner.dispatch(KeyEvent.ofKey(KeyCode.ENTER));
+		for (char c : ":q".toCharArray()) {
+			runner.dispatch(KeyEvent.ofChar(c));
+		}
+		runner.dispatch(KeyEvent.ofKey(KeyCode.ENTER));
+		runner.dispatch(KeyEvent.ofChar('y'));
+
+		PrintStream originalOut = System.out;
+		PrintStream originalErr = System.err;
+		try {
+			System.setOut(new PrintStream(new ByteArrayOutputStream()));
+			System.setErr(new PrintStream(new ByteArrayOutputStream()));
+			Main.run(command, ".\n", Collections.emptyList(), Versions.JQ_1_6,
+					Jackson3JsonProvider.getInstance(), RuntimeOptions.newBuilder().build(),
+					warnTypeChecking(), runner, null);
+		} finally {
+			System.setOut(originalOut);
+			System.setErr(originalErr);
+		}
+		assertThat(Files.readString(queryFile)).isEqualTo(".name\n");
+	}
+
 	@ParameterizedTest
 	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
 	void evaluatesWithSelectedJsonProvider(String provider) throws Exception {

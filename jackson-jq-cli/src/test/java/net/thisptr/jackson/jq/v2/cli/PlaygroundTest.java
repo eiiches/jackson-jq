@@ -3,6 +3,8 @@ package net.thisptr.jackson.jq.v2.cli;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,6 +21,7 @@ import java.util.regex.Pattern;
 import dev.tamboui.backend.jline3.JLineBackend;
 import dev.tamboui.style.Color;
 import dev.tamboui.style.Style;
+import dev.tamboui.text.CharWidth;
 import dev.tamboui.text.Line;
 import dev.tamboui.text.Span;
 import dev.tamboui.tui.TuiConfig;
@@ -31,6 +34,7 @@ import dev.tamboui.tui.event.TickEvent;
 import org.jline.terminal.Size;
 import org.jline.terminal.impl.LineDisciplineTerminal;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import tools.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.v2.core.CompileOptions;
@@ -54,7 +58,36 @@ class PlaygroundTest {
 	private static final Jackson3JsonProvider JSON = Jackson3JsonProvider.getInstance();
 
 	@Test
-	void vimModeEditsQueryAndSubmitsWithColonQ() throws Exception {
+	void showsCurrentQueryFileOnBottomBorder() throws Exception {
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6), Versions.JQ_1_6, "jackson3",
+				null, true, false, false, ".", JSON,
+				RuntimeOptions.newBuilder().build(), CompileOptions.newBuilder().build(),
+				false, false, true, Collections.emptyList(), true,
+				Path.of("query-label-test.jq"),
+				new PrintStream(new ByteArrayOutputStream()), new PrintStream(new ByteArrayOutputStream()));
+		pg.run(createTestRunner(terminalOut,
+				KeyEvent.ofChar(':'), KeyEvent.ofChar('q'), KeyEvent.ofKey(KeyCode.ENTER), KeyEvent.ofChar('y')));
+		assertThat(terminalOut.toString(StandardCharsets.UTF_8)).contains("query-label-test.jq");
+	}
+
+	@Test
+	void queryFileLabelUsesRelativePathAndKeepsFilenameWhenNarrow() {
+		Path cwd = Path.of("").toAbsolutePath().normalize();
+		Path file = cwd.resolve("queries/界界/query.jq");
+		assertThat(Playground.queryFileLabel(file, 80, false)).isEqualTo(" queries/界界/query.jq ");
+		assertThat(Playground.queryFileLabel(file, 80, true)).isEqualTo(" queries/界界/query.jq [+] ");
+
+		String narrow = Playground.queryFileLabel(file, 15, true);
+		assertThat(narrow).startsWith(" …").endsWith(" [+] ");
+		assertThat(CharWidth.of(narrow)).isLessThanOrEqualTo(13);
+		assertThat(Playground.queryFileLabel(file, 4, false)).isEmpty();
+		assertThat(Playground.queryFileLabel(cwd.resolve("../other.jq").normalize(), 80, false)).isEqualTo(" ../other.jq ");
+	}
+
+	@Test
+	void vimModeEditsQueryAndSubmitsWithColonQBang() throws Exception {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		Playground<JsonNode> pg = new Playground<>(
 				Main.createEnvironment(JSON, Versions.JQ_1_6),
@@ -77,7 +110,7 @@ class PlaygroundTest {
 				new PrintStream(new ByteArrayOutputStream()));
 
 		assertThat(lineToPlainText(pg.buildGuideLine(Playground.Focus.QUERY)))
-				.contains("hjkl Navigate", ":q Apply & Exit")
+				.contains("hjkl Navigate", ":q/:q! Exit")
 				.doesNotContain("Esc Emit & Quit");
 
 		TuiRunner runner = createTestRunner(
@@ -90,6 +123,7 @@ class PlaygroundTest {
 				KeyEvent.ofKey(KeyCode.ESCAPE),
 				KeyEvent.ofChar(':'),
 				KeyEvent.ofChar('q'),
+				KeyEvent.ofChar('!'),
 				KeyEvent.ofKey(KeyCode.ENTER),
 				KeyEvent.ofChar('y'));
 
@@ -98,6 +132,202 @@ class PlaygroundTest {
 		assertThat(pg.getQuery()).isEqualTo(".name");
 		assertThat(pg.isAccepted()).isTrue();
 		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("\"Alice\"\n");
+	}
+
+	@Test
+	void vimWriteAndQuitSavesFileAndAppliesQueryAfterConfirmation(@TempDir Path tempDir) throws Exception {
+		Path queryFile = tempDir.resolve("query.jq");
+		Files.writeString(queryFile, ".");
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6), Versions.JQ_1_6, "jackson3",
+				"{\"name\":\"Alice\"}".getBytes(StandardCharsets.UTF_8),
+				false, false, false, ".", JSON,
+				RuntimeOptions.newBuilder().build(), CompileOptions.newBuilder().build(),
+				false, false, true, Collections.emptyList(), true, queryFile,
+				new PrintStream(out), new PrintStream(new ByteArrayOutputStream()));
+
+		assertThat(lineToPlainText(pg.buildGuideLine(Playground.Focus.QUERY)))
+				.contains(":wq Save & Exit");
+		pg.run(createTestRunner(new ByteArrayOutputStream(),
+				KeyEvent.ofChar('A'), KeyEvent.ofChar('n'), KeyEvent.ofChar('a'),
+				KeyEvent.ofChar('m'), KeyEvent.ofChar('e'), KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofChar(':'), KeyEvent.ofChar('w'), KeyEvent.ofChar('q'),
+				KeyEvent.ofKey(KeyCode.ENTER), KeyEvent.ofChar('y')));
+
+		assertThat(Files.readString(queryFile)).isEqualTo(".name\n");
+		assertThat(pg.isAccepted()).isTrue();
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("\"Alice\"\n");
+	}
+
+	@Test
+	void vimQuitRejectsUnsavedEditsAndNoResultExitLeavesFileUnchanged(@TempDir Path tempDir) throws Exception {
+		Path queryFile = tempDir.resolve("query.jq");
+		Files.writeString(queryFile, ".");
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		ByteArrayOutputStream err = new ByteArrayOutputStream();
+		ByteArrayOutputStream terminal = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6), Versions.JQ_1_6, "jackson3",
+				"{\"name\":\"Alice\"}".getBytes(StandardCharsets.UTF_8),
+				false, false, false, ".", JSON,
+				RuntimeOptions.newBuilder().build(), CompileOptions.newBuilder().build(),
+				false, false, true, Collections.emptyList(), true, queryFile,
+				new PrintStream(out), new PrintStream(err));
+
+		pg.run(createTestRunner(terminal,
+				KeyEvent.ofChar('A'), KeyEvent.ofChar('n'), KeyEvent.ofChar('a'),
+				KeyEvent.ofChar('m'), KeyEvent.ofChar('e'), KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofChar(':'), KeyEvent.ofChar('q'), KeyEvent.ofKey(KeyCode.ENTER),
+				KeyEvent.ofChar(':'), KeyEvent.ofChar('q'), KeyEvent.ofChar('!'),
+				KeyEvent.ofKey(KeyCode.ENTER), KeyEvent.ofChar('n')));
+
+		assertThat(terminal.toString(StandardCharsets.UTF_8)).contains("query.jq [+]", "Exit without results");
+		assertThat(Files.readString(queryFile)).isEqualTo(".");
+		assertThat(pg.isAccepted()).isFalse();
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEmpty();
+		assertThat(err.toString(StandardCharsets.UTF_8)).contains("jackson-jq");
+	}
+
+	@Test
+	void vimForceQuitCanReturnToEditorOrApplyUnsavedQuery(@TempDir Path tempDir) throws Exception {
+		Path queryFile = tempDir.resolve("query.jq");
+		Files.writeString(queryFile, ".");
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6), Versions.JQ_1_6, "jackson3",
+				"{\"name\":\"Alice\"}".getBytes(StandardCharsets.UTF_8),
+				false, false, false, ".", JSON,
+				RuntimeOptions.newBuilder().build(), CompileOptions.newBuilder().build(),
+				false, false, true, Collections.emptyList(), true, queryFile,
+				new PrintStream(out), new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(createTestRunner(new ByteArrayOutputStream(),
+				KeyEvent.ofChar('A'), KeyEvent.ofChar('n'), KeyEvent.ofChar('a'),
+				KeyEvent.ofChar('m'), KeyEvent.ofChar('e'), KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofChar(':'), KeyEvent.ofChar('q'), KeyEvent.ofChar('!'),
+				KeyEvent.ofKey(KeyCode.ENTER), KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofChar(':'), KeyEvent.ofChar('q'), KeyEvent.ofChar('!'),
+				KeyEvent.ofKey(KeyCode.ENTER), KeyEvent.ofKey(KeyCode.ENTER)));
+
+		assertThat(Files.readString(queryFile)).isEqualTo(".");
+		assertThat(pg.isAccepted()).isTrue();
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("\"Alice\"\n");
+	}
+
+	@Test
+	void vimExitCannotApplyCompileErrorWhileAutoRunIsPaused() throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		ByteArrayOutputStream terminal = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6), Versions.JQ_1_6, "jackson3",
+				null, true, false, false, ".", JSON,
+				RuntimeOptions.newBuilder().build(), CompileOptions.newBuilder().build(),
+				false, false, true, Collections.emptyList(), true,
+				new PrintStream(out), new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(createTestRunner(terminal,
+				KeyEvent.ofChar('p', KeyModifiers.CTRL),
+				KeyEvent.ofChar('A'), KeyEvent.ofChar('['), KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofChar(':'), KeyEvent.ofChar('q'), KeyEvent.ofChar('!'),
+				KeyEvent.ofKey(KeyCode.ENTER), KeyEvent.ofChar('y'), KeyEvent.ofChar('n')));
+
+		assertThat(pg.isAutomaticEvaluationPaused()).isTrue();
+		assertThat(terminal.toString(StandardCharsets.UTF_8)).contains("Apply unavailable: query does not compile");
+		assertThat(pg.isAccepted()).isFalse();
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEmpty();
+	}
+
+	@Test
+	void vimExitCannotApplyCurrentRuntimeError() throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		ByteArrayOutputStream terminal = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6), Versions.JQ_1_6, "jackson3",
+				"\"test\"".getBytes(StandardCharsets.UTF_8),
+				false, false, false, ".[]", JSON,
+				RuntimeOptions.newBuilder().build(), CompileOptions.newBuilder().build(),
+				false, false, true, Collections.emptyList(), true,
+				new PrintStream(out), new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(createTestRunner(terminal,
+				KeyEvent.ofChar(':'), KeyEvent.ofChar('q'), KeyEvent.ofKey(KeyCode.ENTER),
+				KeyEvent.ofChar('y'), KeyEvent.ofChar('n')));
+
+		assertThat(terminal.toString(StandardCharsets.UTF_8)).contains("Apply unavailable: query failed at runtime");
+		assertThat(pg.isAccepted()).isFalse();
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEmpty();
+	}
+
+	@Test
+	void vimExitIgnoresStaleRuntimeErrorAfterPausedEdit() throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6), Versions.JQ_1_6, "jackson3",
+				"\"test\"".getBytes(StandardCharsets.UTF_8),
+				false, false, false, ".[]", JSON,
+				RuntimeOptions.newBuilder().build(), CompileOptions.newBuilder().build(),
+				false, false, true, Collections.emptyList(), true,
+				new PrintStream(out), new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(createTestRunner(new ByteArrayOutputStream(),
+				KeyEvent.ofChar('p', KeyModifiers.CTRL),
+				KeyEvent.ofChar('c'), KeyEvent.ofChar('c'), KeyEvent.ofChar('.'),
+				KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofChar(':'), KeyEvent.ofChar('q'), KeyEvent.ofChar('!'),
+				KeyEvent.ofKey(KeyCode.ENTER), KeyEvent.ofChar('y')));
+
+		assertThat(pg.getQuery()).isEqualTo(".");
+		assertThat(pg.isAccepted()).isTrue();
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("\"test\"\n");
+	}
+
+	@Test
+	void vimExitCompilesPendingQueryWithoutWaitingForPreview() throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6), Versions.JQ_1_6, "jackson3",
+				"{\"name\":\"Alice\"}".getBytes(StandardCharsets.UTF_8),
+				false, false, false, ".", JSON,
+				RuntimeOptions.newBuilder().build(), CompileOptions.newBuilder().build(),
+				false, false, true, Collections.emptyList(), true,
+				new PrintStream(out), new PrintStream(new ByteArrayOutputStream()));
+		pg.setEvaluationExecutor(command -> {
+		});
+
+		pg.run(createTestRunner(new ByteArrayOutputStream(),
+				KeyEvent.ofChar('A'), KeyEvent.ofChar('n'), KeyEvent.ofChar('a'),
+				KeyEvent.ofChar('m'), KeyEvent.ofChar('e'), KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofChar(':'), KeyEvent.ofChar('q'), KeyEvent.ofChar('!'),
+				KeyEvent.ofKey(KeyCode.ENTER), KeyEvent.ofChar('y')));
+
+		assertThat(pg.getEvaluationStatus()).isEqualTo(Playground.EvaluationStatus.LOADING);
+		assertThat(pg.isAccepted()).isTrue();
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("\"Alice\"\n");
+	}
+
+	@Test
+	void vimExitRejectsCompileErrorWhilePreviewIsPending() throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		ByteArrayOutputStream terminal = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6), Versions.JQ_1_6, "jackson3",
+				null, true, false, false, ".", JSON,
+				RuntimeOptions.newBuilder().build(), CompileOptions.newBuilder().build(),
+				false, false, true, Collections.emptyList(), true,
+				new PrintStream(out), new PrintStream(new ByteArrayOutputStream()));
+		pg.setEvaluationExecutor(command -> {
+		});
+
+		pg.run(createTestRunner(terminal,
+				KeyEvent.ofChar('A'), KeyEvent.ofChar('['), KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofChar(':'), KeyEvent.ofChar('q'), KeyEvent.ofChar('!'),
+				KeyEvent.ofKey(KeyCode.ENTER), KeyEvent.ofKey(KeyCode.ENTER), KeyEvent.ofChar('n')));
+
+		assertThat(pg.getEvaluationStatus()).isEqualTo(Playground.EvaluationStatus.LOADING);
+		assertThat(terminal.toString(StandardCharsets.UTF_8)).contains("Apply unavailable: query does not compile");
+		assertThat(pg.isAccepted()).isFalse();
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEmpty();
 	}
 
 	@Test
@@ -171,6 +401,51 @@ class PlaygroundTest {
 
 		assertThat(pg.getFocus()).isEqualTo(Playground.Focus.DIAGNOSTICS);
 		assertThat(pg.isAccepted()).isFalse();
+	}
+
+	@Test
+	void supportsVimVisualSelectionInPlayground() throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6),
+				Versions.JQ_1_6,
+				"jackson3",
+				"{\"name\":\"Bob\",\"age\":30}".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				".name",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				Collections.emptyList(),
+				true,
+				new PrintStream(out),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(createTestRunner(
+				new ByteArrayOutputStream(),
+				KeyEvent.ofChar('0'),
+				KeyEvent.ofChar('v'),
+				KeyEvent.ofChar('e'),
+				KeyEvent.ofChar('c'),
+				KeyEvent.ofChar('.'),
+				KeyEvent.ofChar('a'),
+				KeyEvent.ofChar('g'),
+				KeyEvent.ofChar('e'),
+				KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofChar(':'),
+				KeyEvent.ofChar('q'),
+				KeyEvent.ofChar('!'),
+				KeyEvent.ofKey(KeyCode.ENTER),
+				KeyEvent.ofChar('y')));
+
+		assertThat(pg.getQuery()).isEqualTo(".age");
+		assertThat(pg.isAccepted()).isTrue();
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("30\n");
 	}
 
 	@Test

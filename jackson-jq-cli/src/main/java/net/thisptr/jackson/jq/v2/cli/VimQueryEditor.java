@@ -1,10 +1,18 @@
 package net.thisptr.jackson.jq.v2.cli;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,8 +28,12 @@ final class VimQueryEditor {
 	enum Mode {
 		NORMAL,
 		INSERT,
+		REPLACE,
 		COMMAND,
-		SEARCH
+		SEARCH,
+		VISUAL,
+		VISUAL_LINE,
+		VISUAL_BLOCK
 	}
 
 	record Result(boolean handled, boolean textChanged, boolean submitRequested) {
@@ -31,11 +43,35 @@ final class VimQueryEditor {
 		private static final Result NOT_HANDLED = new Result(false, false, false);
 	}
 
-	private record Snapshot(String text, int row, int col) {
+	private record Snapshot(String text, int row, int col, int preferredColumn) {
 	}
 
-	private record Register(String text, boolean linewise) {
-		private static final Register EMPTY = new Register("", false);
+	private enum RegisterType {
+		CHARACTERWISE,
+		LINEWISE,
+		BLOCKWISE
+	}
+
+	private record Register(String text, RegisterType type, int blockWidth) {
+		private static final Register EMPTY = new Register("", RegisterType.CHARACTERWISE, 0);
+
+		Register(String text, boolean linewise) {
+			this(text, linewise ? RegisterType.LINEWISE : RegisterType.CHARACTERWISE, 0);
+		}
+
+		boolean linewise() {
+			return type == RegisterType.LINEWISE;
+		}
+
+		boolean blockwise() {
+			return type == RegisterType.BLOCKWISE;
+		}
+	}
+
+	record VisualRange(int startCol, int endCol, boolean includesNewline) {
+	}
+
+	private record BlockInsertContext(int startRow, int endRow, int col, boolean append) {
 	}
 
 	private enum Operator {
@@ -111,24 +147,65 @@ final class VimQueryEditor {
 	private int previewSearchMatch = -1;
 	private int searchInputCursor;
 	private @Nullable String searchError;
+	private boolean awaitingReplace;
+	private int replaceCount = 1;
 	private boolean insertUndoCaptured;
+	private final Deque<Snapshot> replaceHistory = new ArrayDeque<>();
+	private int visualAnchorRow;
+	private int visualAnchorCol;
+	private @Nullable BlockInsertContext blockInsertContext;
+	private final StringBuilder blockInsertedText = new StringBuilder();
 	private @Nullable String message;
+	private int preferredColumn;
+	private @Nullable Path currentFile;
+	private String savedText;
+	private boolean savedEmptyHasNewline;
 
 	VimQueryEditor(TextAreaState state) {
+		this(state, null);
+	}
+
+	VimQueryEditor(TextAreaState state, @Nullable Path currentFile) {
 		this.state = state;
+		this.currentFile = currentFile;
+		String original = state.text();
+		String normalized = normalizeLineEndings(original);
+		this.savedEmptyHasNewline = normalized.equals("\n");
+		String visible = withoutFinalNewline(normalized);
+		if (!visible.equals(original)) {
+			int row = state.cursorRow();
+			int col = state.cursorCol();
+			boolean atEnd = row == state.lineCount() - 1 && col == state.getLine(row).length();
+			state.setText(visible);
+			if (atEnd) {
+				state.moveCursorToEnd();
+			} else {
+				setPosition(Math.min(row, state.lineCount() - 1), col);
+			}
+		}
+		this.savedText = state.text();
 		normalizeNormalCursor();
+		this.preferredColumn = state.cursorCol();
 	}
 
 	Mode mode() {
 		return mode;
 	}
 
+	boolean isVisualMode() {
+		return mode == Mode.VISUAL || mode == Mode.VISUAL_LINE || mode == Mode.VISUAL_BLOCK;
+	}
+
 	String modeLabel() {
 		return switch (mode) {
 			case NORMAL -> "NORMAL";
 			case INSERT -> "INSERT";
+			case REPLACE -> "REPLACE";
 			case COMMAND -> "COMMAND";
 			case SEARCH -> "SEARCH";
+			case VISUAL -> "VISUAL";
+			case VISUAL_LINE -> "VISUAL LINE";
+			case VISUAL_BLOCK -> "VISUAL BLOCK";
 		};
 	}
 
@@ -141,12 +218,24 @@ final class VimQueryEditor {
 	}
 
 	@Nullable
+	Path currentFile() {
+		return currentFile;
+	}
+
+	boolean hasUnsavedChanges() {
+		return !state.text().equals(savedText);
+	}
+
+	@Nullable
 	String statusText() {
 		if (mode == Mode.COMMAND) {
 			return ":" + command;
 		}
 		if (mode == Mode.SEARCH) {
 			return searchStatusText();
+		}
+		if (isVisualMode()) {
+			return visualStatusText();
 		}
 		if (message != null) {
 			return message;
@@ -155,6 +244,69 @@ final class VimQueryEditor {
 			return searchSummary(searchPattern, searchMatches, activeSearchMatch);
 		}
 		return null;
+	}
+
+	private String visualStatusText() {
+		if (mode == Mode.VISUAL_LINE) {
+			int lines = Math.abs(state.cursorRow() - visualAnchorRow) + 1;
+			return lines + (lines == 1 ? " line" : " lines");
+		}
+		if (mode == Mode.VISUAL_BLOCK) {
+			int lines = Math.abs(state.cursorRow() - visualAnchorRow) + 1;
+			int cols = Math.abs(state.cursorCol() - visualAnchorCol) + 1;
+			return lines + "x" + cols;
+		}
+		int anchorOffset = offsetForPosition(visualAnchorRow, visualAnchorCol);
+		int cursorOffset = offset();
+		int lines = Math.abs(state.cursorRow() - visualAnchorRow) + 1;
+		int chars = Math.abs(cursorOffset - anchorOffset) + 1;
+		if (lines > 1) {
+			return lines + " lines, " + chars + " characters";
+		}
+		return chars + (chars == 1 ? " character" : " characters");
+	}
+
+	@Nullable
+	VisualRange visualRangeOnRow(int row) {
+		if (!isVisualMode() || row < 0 || row >= state.lineCount()) {
+			return null;
+		}
+		String line = state.getLine(row);
+		if (mode == Mode.VISUAL_LINE) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			if (row >= minRow && row <= maxRow) {
+				return new VisualRange(0, line.length(), true);
+			}
+			return null;
+		}
+		if (mode == Mode.VISUAL_BLOCK) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			int minCol = Math.min(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
+			if (row >= minRow && row <= maxRow) {
+				int start = Math.min(minCol, line.length());
+				int end = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
+				return new VisualRange(start, end, false);
+			}
+			return null;
+		}
+		// Mode.VISUAL (characterwise)
+		int[] sel = characterwiseSelectionOffsets();
+		int startOffset = sel[0];
+		int endOffset = sel[1];
+		int lineStart = offsetForPosition(row, 0);
+		int lineEnd = lineStart + line.length();
+		if (lineEnd < startOffset || (lineStart >= endOffset && (startOffset < endOffset || lineStart > endOffset))) {
+			return null;
+		}
+		int startCol = Math.max(0, startOffset - lineStart);
+		int endCol = Math.min(line.length(), Math.max(startCol, endOffset - lineStart));
+		boolean includesNewline = endOffset > lineEnd;
+		return new VisualRange(startCol, endCol, includesNewline);
 	}
 
 	List<SearchMatch> visibleSearchMatches() {
@@ -174,7 +326,7 @@ final class VimQueryEditor {
 	}
 
 	void leaveFocus() {
-		if (mode == Mode.INSERT) {
+		if (mode == Mode.INSERT || mode == Mode.REPLACE) {
 			leaveInsertMode();
 		} else if (mode == Mode.SEARCH) {
 			cancelSearchInput(true);
@@ -185,15 +337,18 @@ final class VimQueryEditor {
 		command.setLength(0);
 		commandCursor = 0;
 		message = null;
+		preferredColumn = state.cursorCol();
 	}
 
 	Result handleKey(KeyEvent key) {
 		message = null;
 		Result result = switch (mode) {
 			case INSERT -> handleInsertKey(key);
+			case REPLACE -> handleReplaceKey(key);
 			case COMMAND -> handleCommandKey(key);
 			case SEARCH -> handleSearchKey(key);
 			case NORMAL -> handleNormalKey(key);
+			case VISUAL, VISUAL_LINE, VISUAL_BLOCK -> handleVisualKey(key);
 		};
 		if (result.textChanged()) {
 			recomputeCommittedSearch();
@@ -242,6 +397,9 @@ final class VimQueryEditor {
 			captureInsertUndo();
 			String before = state.text();
 			state.deleteBackward();
+			if (blockInsertContext != null && blockInsertedText.length() > 0) {
+				blockInsertedText.deleteCharAt(blockInsertedText.length() - 1);
+			}
 			return changedSince(before);
 		}
 		if (key.isDeleteForward() || key.code() == KeyCode.DELETE) {
@@ -290,6 +448,110 @@ final class VimQueryEditor {
 			if (str != null && !str.isEmpty() && (key.code() == KeyCode.CHAR || str.charAt(0) >= 32)) {
 				captureInsertUndo();
 				state.insert(str);
+				if (blockInsertContext != null) {
+					blockInsertedText.append(str);
+				}
+				return Result.CHANGED;
+			}
+		}
+		return Result.NOT_HANDLED;
+	}
+
+	private Result handleReplaceKey(KeyEvent key) {
+		if (isEscape(key)) {
+			leaveInsertMode();
+			return Result.HANDLED;
+		}
+		if (key.isConfirm() || key.code() == KeyCode.ENTER) {
+			captureInsertUndo();
+			replaceHistory.push(snapshot());
+			state.insert('\n');
+			return Result.CHANGED;
+		}
+		if (key.isUp()) {
+			state.moveCursorUp();
+			return Result.HANDLED;
+		}
+		if (key.isDown()) {
+			state.moveCursorDown();
+			return Result.HANDLED;
+		}
+		if (key.isLeft()) {
+			state.moveCursorLeft();
+			return Result.HANDLED;
+		}
+		if (key.isRight()) {
+			state.moveCursorRight();
+			return Result.HANDLED;
+		}
+		if (key.isHome() || (key.hasCtrl() && key.isChar('a'))) {
+			state.moveCursorToLineStart();
+			return Result.HANDLED;
+		}
+		if (key.isEnd() || (key.hasCtrl() && key.isChar('e'))) {
+			state.moveCursorToLineEnd();
+			return Result.HANDLED;
+		}
+		if (key.isDeleteBackward() || key.code() == KeyCode.BACKSPACE) {
+			if (!replaceHistory.isEmpty()) {
+				restore(replaceHistory.pop());
+				return Result.CHANGED;
+			}
+			if (state.cursorCol() > 0) {
+				state.moveCursorLeft();
+			}
+			return Result.HANDLED;
+		}
+		if (key.isDeleteForward() || key.code() == KeyCode.DELETE) {
+			if (state.cursorRow() == state.lineCount() - 1
+					&& state.cursorCol() == state.getLine(state.cursorRow()).length()) {
+				return Result.HANDLED;
+			}
+			captureInsertUndo();
+			String before = state.text();
+			state.deleteForward();
+			return changedSince(before);
+		}
+		if (key.hasCtrl() && key.isChar('u')) {
+			if (state.cursorCol() == 0) {
+				return Result.HANDLED;
+			}
+			captureInsertUndo();
+			replaceHistory.push(snapshot());
+			String before = state.text();
+			while (state.cursorCol() > 0) {
+				state.deleteBackward();
+			}
+			return changedSince(before);
+		}
+		if (key.hasCtrl() && key.isChar('k')) {
+			if (state.cursorCol() == state.getLine(state.cursorRow()).length()) {
+				return Result.HANDLED;
+			}
+			captureInsertUndo();
+			replaceHistory.push(snapshot());
+			String before = state.text();
+			while (state.cursorCol() < state.getLine(state.cursorRow()).length()) {
+				state.deleteForward();
+			}
+			return changedSince(before);
+		}
+		if (key.hasCtrl() && key.isChar('w')) {
+			if (state.cursorCol() == 0) {
+				return Result.HANDLED;
+			}
+			captureInsertUndo();
+			replaceHistory.push(snapshot());
+			String before = state.text();
+			deletePreviousWord();
+			return changedSince(before);
+		}
+		if (!key.hasCtrl() && !key.hasAlt()) {
+			String str = key.code() == KeyCode.TAB ? "\t" : key.string();
+			if (str != null && !str.isEmpty() && (key.code() == KeyCode.CHAR || key.code() == KeyCode.TAB || str.charAt(0) >= 32)) {
+				captureInsertUndo();
+				replaceHistory.push(snapshot());
+				replaceCharacterInMode(str);
 				return Result.CHANGED;
 			}
 		}
@@ -359,11 +621,22 @@ final class VimQueryEditor {
 			commandCursor = 0;
 			mode = Mode.NORMAL;
 			if (entered.equals("q")) {
+				if (hasUnsavedChanges()) {
+					message = "Unsaved changes (use :q! to exit without saving)";
+					return Result.HANDLED;
+				}
+				return Result.SUBMIT;
+			}
+			if (entered.equals("q!")) {
 				return Result.SUBMIT;
 			}
 			if (entered.equals("noh") || entered.equals("nohlsearch")) {
 				clearQuerySearch();
 				return Result.HANDLED;
+			}
+			Result fileResult = handleFileCommand(entered);
+			if (fileResult != null) {
+				return fileResult;
 			}
 			message = "Not an editor command: " + entered;
 			return Result.HANDLED;
@@ -377,6 +650,163 @@ final class VimQueryEditor {
 			}
 		}
 		return Result.HANDLED;
+	}
+
+	@Nullable
+	private Result handleFileCommand(String entered) {
+		String trimmed = entered.strip();
+		@Var int separator = 0;
+		while (separator < trimmed.length() && !Character.isWhitespace(trimmed.charAt(separator))) {
+			separator++;
+		}
+		@Var String name = trimmed.substring(0, separator);
+		boolean force = name.endsWith("!");
+		if (force) {
+			name = name.substring(0, name.length() - 1);
+		}
+		boolean writeAndQuit = name.equals("wq") && !force && separator == trimmed.length();
+		boolean write = name.equals("w") || name.equals("write") || writeAndQuit;
+		boolean saveAs = name.equals("saveas");
+		boolean read = name.equals("r") || name.equals("read");
+		boolean edit = name.equals("e") || name.equals("edit");
+		if (!write && !saveAs && !read && !edit) {
+			return null;
+		}
+		if (read && force) {
+			message = ":" + name + "! is not supported";
+			return Result.HANDLED;
+		}
+		String argument;
+		try {
+			argument = parseFileArgument(trimmed.substring(separator));
+		} catch (IllegalArgumentException e) {
+			message = e.getMessage();
+			return Result.HANDLED;
+		}
+		if (argument.isEmpty() && (saveAs || read)) {
+			message = "File name required";
+			return Result.HANDLED;
+		}
+		Path file;
+		try {
+			file = argument.isEmpty() ? currentFile : Path.of(argument);
+		} catch (InvalidPathException e) {
+			message = "Invalid file name: " + argument;
+			return Result.HANDLED;
+		}
+		if (file == null) {
+			message = "No current file";
+			return Result.HANDLED;
+		}
+		try {
+			if (read) {
+				return readFile(file);
+			}
+			if (edit) {
+				return editFile(file, force);
+			}
+			Result result = writeFile(file, force, saveAs);
+			return writeAndQuit ? Result.SUBMIT : result;
+		} catch (FileAlreadyExistsException e) {
+			message = "File already exists (use ! to overwrite): " + file;
+			return Result.HANDLED;
+		} catch (IOException | SecurityException e) {
+			message = "File error: " + e.getMessage();
+			return Result.HANDLED;
+		}
+	}
+
+	private static String parseFileArgument(String raw) {
+		StringBuilder path = new StringBuilder();
+		@Var boolean escaped = false;
+		@Var int pendingSpaces = 0;
+		for (int i = 0; i < raw.length(); i++) {
+			char c = raw.charAt(i);
+			if (escaped) {
+				path.append(" ".repeat(pendingSpaces)).append(c);
+				pendingSpaces = 0;
+				escaped = false;
+			} else if (c == '\\') {
+				escaped = true;
+			} else if (Character.isWhitespace(c)) {
+				if (!path.isEmpty()) {
+					pendingSpaces++;
+				}
+			} else {
+				path.append(" ".repeat(pendingSpaces)).append(c);
+				pendingSpaces = 0;
+			}
+		}
+		if (escaped) {
+			throw new IllegalArgumentException("Trailing backslash in file name");
+		}
+		return path.toString();
+	}
+
+	private Result writeFile(Path file, boolean force, boolean saveAs) throws IOException {
+		boolean current = currentFile != null && currentFile.toAbsolutePath().normalize().equals(file.toAbsolutePath().normalize());
+		String text = state.text().isEmpty() ? (savedEmptyHasNewline ? "\n" : "") : state.text() + "\n";
+		if (force || current) {
+			Files.writeString(file, text, StandardCharsets.UTF_8, StandardOpenOption.CREATE,
+					StandardOpenOption.TRUNCATE_EXISTING);
+		} else {
+			Files.writeString(file, text, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW);
+		}
+		if (saveAs) {
+			currentFile = file;
+		}
+		if (current || saveAs) {
+			savedText = state.text();
+			savedEmptyHasNewline = text.equals("\n");
+		}
+		message = "Written: " + file;
+		return Result.HANDLED;
+	}
+
+	private Result editFile(Path file, boolean force) throws IOException {
+		if (!force && hasUnsavedChanges()) {
+			message = "Unsaved changes (use :e! to discard them)";
+			return Result.HANDLED;
+		}
+		String normalized = normalizeLineEndings(Files.readString(file, StandardCharsets.UTF_8));
+		String text = withoutFinalNewline(normalized);
+		boolean changed = !state.text().equals(text);
+		setTextAndPosition(text, 0, 0);
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
+		undoStack.clear();
+		replaceHistory.clear();
+		currentFile = file;
+		savedText = text;
+		savedEmptyHasNewline = normalized.equals("\n");
+		message = "Opened: " + file;
+		return changed ? Result.CHANGED : Result.HANDLED;
+	}
+
+	private Result readFile(Path file) throws IOException {
+		String text = normalizeLineEndings(Files.readString(file, StandardCharsets.UTF_8));
+		if (text.isEmpty()) {
+			message = "Read: " + file;
+			return Result.HANDLED;
+		}
+		String inserted = withoutFinalNewline(text);
+		int row = state.cursorRow();
+		List<String> lines = lines();
+		lines.addAll(row + 1, Arrays.asList(inserted.split("\n", -1)));
+		pushUndo(snapshot());
+		setTextAndPosition(String.join("\n", lines), row + 1, 0);
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
+		message = "Read: " + file;
+		return Result.CHANGED;
+	}
+
+	private static String normalizeLineEndings(String text) {
+		return text.replace("\r\n", "\n");
+	}
+
+	private static String withoutFinalNewline(String text) {
+		return text.endsWith("\n") ? text.substring(0, text.length() - 1) : text;
 	}
 
 	private Result handleSearchKey(KeyEvent key) {
@@ -484,6 +914,29 @@ final class VimQueryEditor {
 			}
 			return completeCharacterMotion(target);
 		}
+		if (awaitingReplace) {
+			if (key.hasCtrl() || key.hasAlt()) {
+				clearPending();
+				return Result.HANDLED;
+			}
+			if (key.isConfirm() || key.code() == KeyCode.ENTER) {
+				return completeReplace("\n");
+			}
+			if (key.code() == KeyCode.TAB) {
+				return completeReplace("\t");
+			}
+			String target = key.string();
+			if (target != null && !target.isEmpty()) {
+				if ("\r".equals(target) || "\n".equals(target)) {
+					return completeReplace("\n");
+				}
+				if (key.code() == KeyCode.CHAR || target.charAt(0) >= 32) {
+					return completeReplace(target);
+				}
+			}
+			clearPending();
+			return Result.HANDLED;
+		}
 		if ((pendingOperator != null || pendingG) && key.code() != KeyCode.CHAR) {
 			clearPending();
 			return Result.HANDLED;
@@ -509,6 +962,12 @@ final class VimQueryEditor {
 		if (key.hasCtrl() && key.isChar('l')) {
 			clearQuerySearch();
 			return Result.HANDLED;
+		}
+		if (key.hasCtrl() && key.isCharIgnoreCase('v')) {
+			return enterVisualMode(Mode.VISUAL_BLOCK);
+		}
+		if (key.hasShift() && key.isCharIgnoreCase('v')) {
+			return enterVisualMode(Mode.VISUAL_LINE);
 		}
 		if (key.hasCtrl() || key.hasAlt()) {
 			return Result.NOT_HANDLED;
@@ -560,6 +1019,8 @@ final class VimQueryEditor {
 			case 'O' -> openLine(false);
 			case 'x' -> deleteCharacters(false, consumeCount());
 			case 'X' -> deleteCharacters(true, consumeCount());
+			case 'r' -> startReplace();
+			case 'R' -> enterReplaceMode();
 			case 'D' -> deleteToLineEnd(false);
 			case 'C' -> deleteToLineEnd(true);
 			case 'p' -> paste(true, consumeCount());
@@ -568,9 +1029,785 @@ final class VimQueryEditor {
 			case '/' -> enterSearchMode();
 			case 'n' -> navigateQuerySearch(true, consumeCount());
 			case 'N' -> navigateQuerySearch(false, consumeCount());
+			case 'v' -> enterVisualMode(Mode.VISUAL);
+			case 'V' -> enterVisualMode(Mode.VISUAL_LINE);
 			case ':' -> enterCommandMode();
 			default -> cancelPending();
 		};
+	}
+
+	private Result enterVisualMode(Mode targetMode) {
+		clearPending();
+		mode = targetMode;
+		visualAnchorRow = state.cursorRow();
+		visualAnchorCol = state.cursorCol();
+		return Result.HANDLED;
+	}
+
+	private Result handleVisualKey(KeyEvent key) {
+		if (isEscape(key)) {
+			mode = Mode.NORMAL;
+			preferredColumn = state.cursorCol();
+			clearPending();
+			return Result.HANDLED;
+		}
+		if (awaitingCharacterMotion != null) {
+			if (key.hasCtrl() || key.hasAlt()) {
+				clearPending();
+				return Result.HANDLED;
+			}
+			String target = key.string();
+			if (target == null || target.isEmpty()) {
+				clearPending();
+				return Result.HANDLED;
+			}
+			return completeVisualCharacterMotion(target);
+		}
+		if (awaitingReplace) {
+			if (key.hasCtrl() || key.hasAlt()) {
+				clearPending();
+				return Result.HANDLED;
+			}
+			if (key.isConfirm() || key.code() == KeyCode.ENTER) {
+				return completeVisualReplace("\n");
+			}
+			if (key.code() == KeyCode.TAB) {
+				return completeVisualReplace("\t");
+			}
+			String target = key.string();
+			if (target != null && !target.isEmpty()) {
+				if ("\r".equals(target) || "\n".equals(target)) {
+					return completeVisualReplace("\n");
+				}
+				if (key.code() == KeyCode.CHAR || target.charAt(0) >= 32) {
+					return completeVisualReplace(target);
+				}
+			}
+			clearPending();
+			return Result.HANDLED;
+		}
+		if (key.isUp()) {
+			return executeVisualMotion(Motion.LINE_UP);
+		}
+		if (key.isDown()) {
+			return executeVisualMotion(Motion.LINE_DOWN);
+		}
+		if (key.isLeft()) {
+			return executeVisualMotion(Motion.LEFT);
+		}
+		if (key.isRight()) {
+			return executeVisualMotion(Motion.RIGHT);
+		}
+		if (key.isHome()) {
+			return executeVisualMotion(Motion.LINE_START);
+		}
+		if (key.isEnd()) {
+			return executeVisualMotion(Motion.LINE_END);
+		}
+		if (key.isConfirm() || key.code() == KeyCode.ENTER) {
+			return executeVisualMotion(Motion.LINE_DOWN);
+		}
+		if (key.hasCtrl() && key.isCharIgnoreCase('v')) {
+			if (mode == Mode.VISUAL_BLOCK) {
+				mode = Mode.NORMAL;
+				preferredColumn = state.cursorCol();
+			} else {
+				mode = Mode.VISUAL_BLOCK;
+			}
+			clearPending();
+			return Result.HANDLED;
+		}
+		if (key.hasShift() && key.isCharIgnoreCase('v')) {
+			if (mode == Mode.VISUAL_LINE) {
+				mode = Mode.NORMAL;
+				preferredColumn = state.cursorCol();
+			} else {
+				mode = Mode.VISUAL_LINE;
+			}
+			clearPending();
+			return Result.HANDLED;
+		}
+		if (key.hasCtrl() && key.isChar('l')) {
+			clearQuerySearch();
+			return Result.HANDLED;
+		}
+		if (key.hasCtrl() || key.hasAlt()) {
+			return Result.NOT_HANDLED;
+		}
+		String str = key.string();
+		if (str == null || str.length() != 1) {
+			return Result.NOT_HANDLED;
+		}
+		char ch = str.charAt(0);
+		if ((ch >= '1' && ch <= '9') || (ch == '0' && count.length() > 0)) {
+			count.append(ch);
+			return Result.HANDLED;
+		}
+		if (pendingG) {
+			return handleVisualPendingG(ch);
+		}
+		if (pendingTextObjectScope != null) {
+			return completeVisualTextObject(ch);
+		}
+
+		return switch (ch) {
+			case 'v' -> {
+				if (mode == Mode.VISUAL) {
+					mode = Mode.NORMAL;
+					preferredColumn = state.cursorCol();
+				} else {
+					mode = Mode.VISUAL;
+				}
+				clearPending();
+				yield Result.HANDLED;
+			}
+			case 'V' -> {
+				if (mode == Mode.VISUAL_LINE) {
+					mode = Mode.NORMAL;
+					preferredColumn = state.cursorCol();
+				} else {
+					mode = Mode.VISUAL_LINE;
+				}
+				clearPending();
+				yield Result.HANDLED;
+			}
+			case 'h' -> executeVisualMotion(Motion.LEFT);
+			case 'j' -> executeVisualMotion(Motion.LINE_DOWN);
+			case 'k' -> executeVisualMotion(Motion.LINE_UP);
+			case 'l' -> executeVisualMotion(Motion.RIGHT);
+			case 'w' -> executeVisualMotion(Motion.WORD_FORWARD);
+			case 'b' -> executeVisualMotion(Motion.WORD_BACKWARD);
+			case 'e' -> executeVisualMotion(Motion.WORD_END);
+			case '0' -> executeVisualMotion(Motion.LINE_START);
+			case '$' -> executeVisualMotion(Motion.LINE_END);
+			case 'g' -> startGPrefix();
+			case 'G' -> executeVisualDocumentMotion(Motion.LAST_LINE);
+			case '%' -> executeVisualMotion(Motion.MATCHING_DELIMITER);
+			case 'f' -> awaitCharacter(Motion.FIND_FORWARD);
+			case 'F' -> awaitCharacter(Motion.FIND_BACKWARD);
+			case 't' -> awaitCharacter(Motion.TILL_FORWARD);
+			case 'T' -> awaitCharacter(Motion.TILL_BACKWARD);
+			case ';' -> repeatLastSearch(false);
+			case ',' -> repeatLastSearch(true);
+			case 'o' -> toggleVisualEndpoint(false);
+			case 'O' -> toggleVisualEndpoint(true);
+			case 'i' -> startTextObject(TextObjectScope.INNER);
+			case 'a' -> startTextObject(TextObjectScope.AROUND);
+			case 'y' -> yankVisualSelection();
+			case 'd', 'x' -> deleteVisualSelection();
+			case 'c', 's' -> changeVisualSelection();
+			case 'I' -> {
+				if (mode == Mode.VISUAL_BLOCK) {
+					yield beginBlockInsert(false);
+				}
+				yield executeVisualMotion(Motion.LINE_START);
+			}
+			case 'A' -> {
+				if (mode == Mode.VISUAL_BLOCK) {
+					yield beginBlockInsert(true);
+				}
+				yield executeVisualMotion(Motion.LINE_END);
+			}
+			case 'p', 'P' -> pasteVisualSelection();
+			case 'r' -> {
+				awaitingReplace = true;
+				yield Result.HANDLED;
+			}
+			case '>' -> indentVisualSelection(true);
+			case '<' -> indentVisualSelection(false);
+			case '~' -> toggleCaseVisualSelection();
+			case 'u' -> convertCaseVisualSelection(false);
+			case 'U' -> convertCaseVisualSelection(true);
+			case 'J' -> joinVisualSelection();
+			case ':' -> enterCommandMode();
+			default -> cancelPending();
+		};
+	}
+
+	private Result handleVisualPendingG(char ch) {
+		if (ch != 'g') {
+			clearPending();
+			return Result.HANDLED;
+		}
+		pendingG = false;
+		Integer target = consumeOptionalCount();
+		MotionResult result = resolveMotion(Motion.FIRST_LINE, 1, target == null ? 1 : target, null);
+		if (result == null) {
+			clearPending();
+			return Result.HANDLED;
+		}
+		return moveToVisual(result);
+	}
+
+	private Result executeVisualMotion(Motion motion) {
+		int repetitions = consumeCount();
+		MotionResult result = resolveMotion(motion, repetitions, null, null);
+		if (result == null) {
+			clearPending();
+			if (motion == Motion.LINE_END) {
+				preferredColumn = Integer.MAX_VALUE;
+			}
+			return Result.HANDLED;
+		}
+		Result res = moveToVisual(result);
+		if (motion == Motion.LINE_END) {
+			preferredColumn = Integer.MAX_VALUE;
+		} else if (motion != Motion.LINE_DOWN && motion != Motion.LINE_UP) {
+			preferredColumn = state.cursorCol();
+		}
+		return res;
+	}
+
+	private Result executeVisualDocumentMotion(Motion motion) {
+		Integer target = consumeOptionalCount();
+		MotionResult result = resolveMotion(motion, 1, target, null);
+		if (result == null) {
+			clearPending();
+			return Result.HANDLED;
+		}
+		Result res = moveToVisual(result);
+		preferredColumn = state.cursorCol();
+		return res;
+	}
+
+	private Result moveToVisual(MotionResult motion) {
+		setPositionFromOffset(motion.targetOffset());
+		normalizeNormalCursor();
+		clearPending();
+		return Result.HANDLED;
+	}
+
+	private Result completeVisualCharacterMotion(String target) {
+		Motion motion = awaitingCharacterMotion;
+		awaitingCharacterMotion = null;
+		if (motion == null) {
+			return Result.HANDLED;
+		}
+		int repetitions = consumeCount();
+		MotionResult result = resolveMotion(motion, repetitions, null, target);
+		if (result == null) {
+			clearPending();
+			return Result.HANDLED;
+		}
+		lastSearch = new CharacterSearch(motion, target);
+		Result res = moveToVisual(result);
+		preferredColumn = state.cursorCol();
+		return res;
+	}
+
+	private Result toggleVisualEndpoint(boolean sameLine) {
+		clearPending();
+		if (mode == Mode.VISUAL_BLOCK && sameLine) {
+			int curCol = state.cursorCol();
+			int targetCol = visualAnchorCol;
+			visualAnchorCol = curCol;
+			setPosition(state.cursorRow(), targetCol);
+			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
+			return Result.HANDLED;
+		}
+		int curRow = state.cursorRow();
+		int curCol = state.cursorCol();
+		setPosition(visualAnchorRow, visualAnchorCol);
+		visualAnchorRow = curRow;
+		visualAnchorCol = curCol;
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
+		return Result.HANDLED;
+	}
+
+	private Result completeVisualTextObject(char key) {
+		TextObjectScope scope = Objects.requireNonNull(pendingTextObjectScope);
+		pendingTextObjectScope = null;
+		TextObjectRange range;
+		if (key == 'w') {
+			range = resolveWordTextObject(scope, consumeCount());
+		} else {
+			Character opening = textObjectOpening(key);
+			if (opening == null) {
+				return cancelPending();
+			}
+			range = resolveTextObject(opening, scope, consumeCount());
+		}
+		if (range == null || range.start() == range.end()) {
+			return cancelPending();
+		}
+		int[] startPos = positionForOffset(state.text(), range.start());
+		int endCharOffset = Math.max(range.start(), previousOffset(range.end()));
+		int[] endPos = positionForOffset(state.text(), endCharOffset);
+		visualAnchorRow = startPos[0];
+		visualAnchorCol = startPos[1];
+		mode = Mode.VISUAL;
+		setPosition(endPos[0], endPos[1]);
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
+		clearPending();
+		return Result.HANDLED;
+	}
+
+	private Result beginBlockInsert(boolean append) {
+		int minRow = Math.min(visualAnchorRow, state.cursorRow());
+		int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+		int minCol = Math.min(visualAnchorCol, state.cursorCol());
+		int maxCol = Math.max(visualAnchorCol, state.cursorCol());
+		int insertCol = append ? maxCol + 1 : minCol;
+		blockInsertContext = new BlockInsertContext(minRow, maxRow, insertCol, append);
+		blockInsertedText.setLength(0);
+		setPosition(minRow, insertCol);
+		beginInsert(false);
+		return Result.HANDLED;
+	}
+
+	private Result completeVisualReplace(String target) {
+		clearPending();
+		Snapshot before = snapshot();
+		if (mode == Mode.VISUAL_BLOCK) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			int minCol = Math.min(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
+			List<String> lines = lines();
+			for (int r = minRow; r <= maxRow && r < lines.size(); r++) {
+				String line = lines.get(r);
+				if (minCol < line.length()) {
+					int end = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
+					String replacement = target.repeat(end - minCol);
+					lines.set(r, line.substring(0, minCol) + replacement + line.substring(end));
+				}
+			}
+			pushUndo(before);
+			mode = Mode.NORMAL;
+			setTextAndPosition(String.join("\n", lines), minRow, minCol);
+			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
+			return Result.CHANGED;
+		}
+		if (mode == Mode.VISUAL_LINE) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			List<String> lines = lines();
+			for (int r = minRow; r <= maxRow && r < lines.size(); r++) {
+				String line = lines.get(r);
+				lines.set(r, target.repeat(line.length()));
+			}
+			pushUndo(before);
+			mode = Mode.NORMAL;
+			setTextAndPosition(String.join("\n", lines), minRow, 0);
+			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
+			return Result.CHANGED;
+		}
+		int[] range = characterwiseSelectionOffsets();
+		String text = state.text();
+		StringBuilder sb = new StringBuilder();
+		for (int i = range[0]; i < range[1]; i++) {
+			char c = text.charAt(i);
+			sb.append(c == '\n' ? '\n' : target);
+		}
+		String newText = text.substring(0, range[0]) + sb + text.substring(range[1]);
+		pushUndo(before);
+		mode = Mode.NORMAL;
+		int[] pos = positionForOffset(newText, range[0]);
+		setTextAndPosition(newText, pos[0], pos[1]);
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
+		return Result.CHANGED;
+	}
+
+	private int[] characterwiseSelectionOffsets() {
+		String text = state.text();
+		if (text.isEmpty()) {
+			return new int[] { 0, 0 };
+		}
+		int anchor = offsetForPosition(visualAnchorRow, visualAnchorCol);
+		int cursor = offset();
+		int start = Math.min(anchor, cursor);
+		int endChar = Math.max(anchor, cursor);
+		@Var int end = nextOffset(endChar);
+		if (end == endChar && endChar < text.length()) {
+			end = Math.min(endChar + 1, text.length());
+		}
+		return new int[] { Math.min(start, text.length()), Math.min(end, text.length()) };
+	}
+
+	private void yankVisualSelectionSilently() {
+		if (mode == Mode.VISUAL_LINE) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			List<String> lines = lines();
+			int end = Math.min(lines.size(), maxRow + 1);
+			String joined = String.join("\n", lines.subList(minRow, end));
+			register = new Register(joined, RegisterType.LINEWISE, 0);
+		} else if (mode == Mode.VISUAL_BLOCK) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			int minCol = Math.min(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
+			List<String> blockLines = new ArrayList<>();
+			@Var int blockWidth = 0;
+			for (int r = minRow; r <= maxRow && r < state.lineCount(); r++) {
+				String line = state.getLine(r);
+				if (minCol < line.length()) {
+					int colEnd = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
+					blockLines.add(line.substring(minCol, colEnd));
+					blockWidth = Math.max(blockWidth, colEnd - minCol);
+				} else {
+					blockLines.add("");
+				}
+			}
+			int width = preferredColumn == Integer.MAX_VALUE ? blockWidth : maxCol - minCol + 1;
+			register = new Register(String.join("\n", blockLines), RegisterType.BLOCKWISE, width);
+		} else {
+			int[] range = characterwiseSelectionOffsets();
+			String selected = state.text().substring(range[0], range[1]);
+			register = new Register(selected, RegisterType.CHARACTERWISE, 0);
+		}
+	}
+
+	private Result yankVisualSelection() {
+		yankVisualSelectionSilently();
+		int targetRow = Math.min(visualAnchorRow, state.cursorRow());
+		int targetCol = mode == Mode.VISUAL_LINE ? 0 : Math.min(visualAnchorCol, state.cursorCol());
+		mode = Mode.NORMAL;
+		setPosition(targetRow, targetCol);
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
+		clearPending();
+		return Result.HANDLED;
+	}
+
+	private Result deleteVisualSelection() {
+		Snapshot before = snapshot();
+		yankVisualSelectionSilently();
+		if (mode == Mode.VISUAL_LINE) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			List<String> lines = lines();
+			int end = Math.min(lines.size(), maxRow + 1);
+			lines.subList(minRow, end).clear();
+			if (lines.isEmpty()) {
+				lines.add("");
+			}
+			int row = Math.min(minRow, lines.size() - 1);
+			pushUndo(before);
+			mode = Mode.NORMAL;
+			setTextAndPosition(String.join("\n", lines), row, 0);
+			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
+			clearPending();
+			return Result.CHANGED;
+		}
+		if (mode == Mode.VISUAL_BLOCK) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			int minCol = Math.min(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
+			List<String> lines = lines();
+			for (int r = minRow; r <= maxRow && r < lines.size(); r++) {
+				String line = lines.get(r);
+				if (minCol < line.length()) {
+					int colEnd = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
+					lines.set(r, line.substring(0, minCol) + line.substring(colEnd));
+				}
+			}
+			pushUndo(before);
+			mode = Mode.NORMAL;
+			setTextAndPosition(String.join("\n", lines), minRow, minCol);
+			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
+			clearPending();
+			return Result.CHANGED;
+		}
+		int[] range = characterwiseSelectionOffsets();
+		String text = state.text();
+		String newText = text.substring(0, range[0]) + text.substring(range[1]);
+		pushUndo(before);
+		mode = Mode.NORMAL;
+		int[] pos = positionForOffset(newText, range[0]);
+		setTextAndPosition(newText, pos[0], pos[1]);
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
+		clearPending();
+		return Result.CHANGED;
+	}
+
+	private Result changeVisualSelection() {
+		Snapshot before = snapshot();
+		yankVisualSelectionSilently();
+		if (mode == Mode.VISUAL_LINE) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			List<String> lines = lines();
+			int end = Math.min(lines.size(), maxRow + 1);
+			lines.subList(minRow, end).clear();
+			lines.add(minRow, "");
+			pushUndo(before);
+			setTextAndPosition(String.join("\n", lines), minRow, 0);
+			beginInsert(true);
+			return Result.CHANGED;
+		}
+		if (mode == Mode.VISUAL_BLOCK) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			int minCol = Math.min(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
+			List<String> lines = lines();
+			for (int r = minRow; r <= maxRow && r < lines.size(); r++) {
+				String line = lines.get(r);
+				if (minCol < line.length()) {
+					int colEnd = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
+					lines.set(r, line.substring(0, minCol) + line.substring(colEnd));
+				}
+			}
+			pushUndo(before);
+			blockInsertContext = new BlockInsertContext(minRow, maxRow, minCol, false);
+			blockInsertedText.setLength(0);
+			setTextAndPosition(String.join("\n", lines), minRow, minCol);
+			beginInsert(true);
+			return Result.CHANGED;
+		}
+		int[] range = characterwiseSelectionOffsets();
+		String text = state.text();
+		String newText = text.substring(0, range[0]) + text.substring(range[1]);
+		pushUndo(before);
+		int[] pos = positionForOffset(newText, range[0]);
+		setTextAndPosition(newText, pos[0], pos[1]);
+		beginInsert(true);
+		return Result.CHANGED;
+	}
+
+	private Result pasteVisualSelection() {
+		if (register.text().isEmpty() && !register.linewise() && !register.blockwise()) {
+			return deleteVisualSelection();
+		}
+		Snapshot before = snapshot();
+		Register toPaste = register;
+		yankVisualSelectionSilently();
+		if (mode == Mode.VISUAL_LINE) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			List<String> lines = lines();
+			int end = Math.min(lines.size(), maxRow + 1);
+			lines.subList(minRow, end).clear();
+			List<String> pastedLines = Arrays.asList(toPaste.text().split("\n", -1));
+			lines.addAll(minRow, pastedLines);
+			if (lines.isEmpty()) {
+				lines.add("");
+			}
+			pushUndo(before);
+			mode = Mode.NORMAL;
+			setTextAndPosition(String.join("\n", lines), minRow, 0);
+			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
+			clearPending();
+			return Result.CHANGED;
+		}
+		if (mode == Mode.VISUAL_BLOCK) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			int minCol = Math.min(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
+			List<String> lines = lines();
+			List<String> pastedLines = Arrays.asList(toPaste.text().split("\n", -1));
+			for (int i = 0; i <= maxRow - minRow; i++) {
+				int r = minRow + i;
+				if (r >= lines.size()) {
+					break;
+				}
+				String line = lines.get(r);
+				String part = i < pastedLines.size() ? pastedLines.get(i) : "";
+				int colEnd = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
+				String prefix = minCol < line.length() ? line.substring(0, minCol) : line;
+				String suffix = colEnd < line.length() ? line.substring(colEnd) : "";
+				lines.set(r, prefix + part + suffix);
+			}
+			pushUndo(before);
+			mode = Mode.NORMAL;
+			setTextAndPosition(String.join("\n", lines), minRow, minCol);
+			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
+			clearPending();
+			return Result.CHANGED;
+		}
+		int[] range = characterwiseSelectionOffsets();
+		String text = state.text();
+		String newText = text.substring(0, range[0]) + toPaste.text() + text.substring(range[1]);
+		pushUndo(before);
+		mode = Mode.NORMAL;
+		int[] pos = positionForOffset(newText, range[0]);
+		setTextAndPosition(newText, pos[0], pos[1]);
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
+		clearPending();
+		return Result.CHANGED;
+	}
+
+	private Result indentVisualSelection(boolean right) {
+		pushUndo(snapshot());
+		int minRow = Math.min(visualAnchorRow, state.cursorRow());
+		int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+		List<String> lines = lines();
+		for (int r = minRow; r <= maxRow && r < lines.size(); r++) {
+			String line = lines.get(r);
+			if (right) {
+				lines.set(r, "  " + line);
+			} else {
+				if (line.startsWith("  ")) {
+					lines.set(r, line.substring(2));
+				} else if (line.startsWith(" ")) {
+					lines.set(r, line.substring(1));
+				}
+			}
+		}
+		mode = Mode.NORMAL;
+		setTextAndPosition(String.join("\n", lines), minRow, 0);
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
+		clearPending();
+		return Result.CHANGED;
+	}
+
+	private Result convertCaseVisualSelection(boolean upper) {
+		pushUndo(snapshot());
+		if (mode == Mode.VISUAL_BLOCK) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			int minCol = Math.min(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
+			List<String> lines = lines();
+			for (int r = minRow; r <= maxRow && r < lines.size(); r++) {
+				String line = lines.get(r);
+				if (minCol < line.length()) {
+					int end = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
+					String segment = line.substring(minCol, end);
+					String converted = upper ? segment.toUpperCase(Locale.ROOT) : segment.toLowerCase(Locale.ROOT);
+					lines.set(r, line.substring(0, minCol) + converted + line.substring(end));
+				}
+			}
+			mode = Mode.NORMAL;
+			setTextAndPosition(String.join("\n", lines), minRow, minCol);
+		} else if (mode == Mode.VISUAL_LINE) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			List<String> lines = lines();
+			for (int r = minRow; r <= maxRow && r < lines.size(); r++) {
+				String line = lines.get(r);
+				lines.set(r, upper ? line.toUpperCase(Locale.ROOT) : line.toLowerCase(Locale.ROOT));
+			}
+			mode = Mode.NORMAL;
+			setTextAndPosition(String.join("\n", lines), minRow, 0);
+		} else {
+			int[] range = characterwiseSelectionOffsets();
+			String text = state.text();
+			String segment = text.substring(range[0], range[1]);
+			String converted = upper ? segment.toUpperCase(Locale.ROOT) : segment.toLowerCase(Locale.ROOT);
+			String newText = text.substring(0, range[0]) + converted + text.substring(range[1]);
+			mode = Mode.NORMAL;
+			int[] pos = positionForOffset(newText, range[0]);
+			setTextAndPosition(newText, pos[0], pos[1]);
+		}
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
+		clearPending();
+		return Result.CHANGED;
+	}
+
+	private Result toggleCaseVisualSelection() {
+		pushUndo(snapshot());
+		if (mode == Mode.VISUAL_BLOCK) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			int minCol = Math.min(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
+			List<String> lines = lines();
+			for (int r = minRow; r <= maxRow && r < lines.size(); r++) {
+				String line = lines.get(r);
+				if (minCol < line.length()) {
+					int end = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
+					String segment = line.substring(minCol, end);
+					StringBuilder toggled = new StringBuilder();
+					for (int i = 0; i < segment.length(); i++) {
+						char c = segment.charAt(i);
+						toggled.append(Character.isUpperCase(c) ? Character.toLowerCase(c) : Character.toUpperCase(c));
+					}
+					lines.set(r, line.substring(0, minCol) + toggled + line.substring(end));
+				}
+			}
+			mode = Mode.NORMAL;
+			setTextAndPosition(String.join("\n", lines), minRow, minCol);
+		} else if (mode == Mode.VISUAL_LINE) {
+			int minRow = Math.min(visualAnchorRow, state.cursorRow());
+			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+			List<String> lines = lines();
+			for (int r = minRow; r <= maxRow && r < lines.size(); r++) {
+				String line = lines.get(r);
+				StringBuilder toggled = new StringBuilder();
+				for (int i = 0; i < line.length(); i++) {
+					char c = line.charAt(i);
+					toggled.append(Character.isUpperCase(c) ? Character.toLowerCase(c) : Character.toUpperCase(c));
+				}
+				lines.set(r, toggled.toString());
+			}
+			mode = Mode.NORMAL;
+			setTextAndPosition(String.join("\n", lines), minRow, 0);
+		} else {
+			int[] range = characterwiseSelectionOffsets();
+			String text = state.text();
+			StringBuilder sb = new StringBuilder();
+			for (int i = range[0]; i < range[1]; i++) {
+				char c = text.charAt(i);
+				sb.append(Character.isUpperCase(c) ? Character.toLowerCase(c) : Character.toUpperCase(c));
+			}
+			String newText = text.substring(0, range[0]) + sb + text.substring(range[1]);
+			mode = Mode.NORMAL;
+			int[] pos = positionForOffset(newText, range[0]);
+			setTextAndPosition(newText, pos[0], pos[1]);
+		}
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
+		clearPending();
+		return Result.CHANGED;
+	}
+
+	private Result joinVisualSelection() {
+		pushUndo(snapshot());
+		int minRow = Math.min(visualAnchorRow, state.cursorRow());
+		@Var int maxRow = Math.max(visualAnchorRow, state.cursorRow());
+		if (minRow == maxRow && maxRow < state.lineCount() - 1) {
+			maxRow++;
+		}
+		List<String> lines = lines();
+		StringBuilder sb = new StringBuilder(lines.get(minRow));
+		for (int r = minRow + 1; r <= maxRow && r < lines.size(); r++) {
+			String trimmed = lines.get(r).stripLeading();
+			if (sb.length() > 0 && !trimmed.isEmpty()) {
+				sb.append(' ');
+			}
+			sb.append(trimmed);
+		}
+		int end = Math.min(lines.size(), maxRow + 1);
+		lines.subList(minRow, end).clear();
+		lines.add(minRow, sb.toString());
+		mode = Mode.NORMAL;
+		setTextAndPosition(String.join("\n", lines), minRow, 0);
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
+		clearPending();
+		return Result.CHANGED;
 	}
 
 	private Result startOperator(Operator operator) {
@@ -613,8 +1850,12 @@ final class VimQueryEditor {
 			case 'j' -> executeOperatorMotion(Motion.LINE_DOWN);
 			case 'k' -> executeOperatorMotion(Motion.LINE_UP);
 			case 'l' -> executeOperatorMotion(Motion.RIGHT);
-			case 'w' ->
-					executeOperatorMotion(operator == Operator.CHANGE && isOnWord() ? Motion.WORD_END : Motion.WORD_FORWARD);
+			case 'w' -> {
+				if (pendingTextObjectScope != null) {
+					yield completeWordTextObject();
+				}
+				yield executeOperatorMotion(operator == Operator.CHANGE && isOnWord() ? Motion.WORD_END : Motion.WORD_FORWARD);
+			}
 			case 'b' -> executeOperatorMotion(Motion.WORD_BACKWARD);
 			case 'e' -> executeOperatorMotion(Motion.WORD_END);
 			case '0' -> executeOperatorMotion(Motion.LINE_START);
@@ -640,6 +1881,9 @@ final class VimQueryEditor {
 	}
 
 	private Result completeTextObject(char key) {
+		if (key == 'w') {
+			return completeWordTextObject();
+		}
 		Character opening = textObjectOpening(key);
 		if (opening == null) {
 			return cancelPending();
@@ -652,6 +1896,52 @@ final class VimQueryEditor {
 			return cancelPending();
 		}
 		return applyCharacterwiseOperator(operator, range.start(), range.end());
+	}
+
+	private Result completeWordTextObject() {
+		Operator operator = Objects.requireNonNull(pendingOperator);
+		TextObjectScope scope = Objects.requireNonNull(pendingTextObjectScope);
+		TextObjectRange range = resolveWordTextObject(scope, 1);
+		if (range == null || range.start() == range.end()) {
+			return cancelPending();
+		}
+		return applyCharacterwiseOperator(operator, range.start(), range.end());
+	}
+
+	private @Nullable TextObjectRange resolveWordTextObject(TextObjectScope scope, int repetitions) {
+		String text = state.text();
+		if (text.isEmpty()) {
+			return null;
+		}
+		@Var int current = offset();
+		if (current >= text.length()) {
+			current = Math.max(0, text.length() - 1);
+		}
+		int initialClass = wordClass(text.charAt(current));
+		@Var int start = current;
+		while (start > 0 && wordClass(text.charAt(start - 1)) == initialClass && text.charAt(start - 1) != '\n') {
+			start--;
+		}
+		@Var int end = current;
+		while (end < text.length() && wordClass(text.charAt(end)) == initialClass && text.charAt(end) != '\n') {
+			end++;
+		}
+		if (scope == TextObjectScope.AROUND) {
+			@Var int trailing = end;
+			while (trailing < text.length() && wordClass(text.charAt(trailing)) == 0 && text.charAt(trailing) != '\n') {
+				trailing++;
+			}
+			if (trailing > end) {
+				end = trailing;
+			} else {
+				@Var int leading = start;
+				while (leading > 0 && wordClass(text.charAt(leading - 1)) == 0 && text.charAt(leading - 1) != '\n') {
+					leading--;
+				}
+				start = leading;
+			}
+		}
+		return new TextObjectRange(start, end);
 	}
 
 	private static @Nullable Character textObjectOpening(char key) {
@@ -687,7 +1977,9 @@ final class VimQueryEditor {
 		if (pendingOperator != null) {
 			return applyOperator(Objects.requireNonNull(pendingOperator), result);
 		}
-		return moveTo(result);
+		Result res = moveTo(result);
+		preferredColumn = state.cursorCol();
+		return res;
 	}
 
 	private Result repeatLastSearch(boolean reverse) {
@@ -711,16 +2003,27 @@ final class VimQueryEditor {
 		if (pendingOperator != null) {
 			return applyOperator(Objects.requireNonNull(pendingOperator), result);
 		}
-		return moveTo(result);
+		Result res = moveTo(result);
+		preferredColumn = state.cursorCol();
+		return res;
 	}
 
 	private Result executeStandaloneMotion(Motion motion, int repetitions, @Nullable Integer absoluteLine) {
 		MotionResult result = resolveMotion(motion, repetitions, absoluteLine, null);
 		if (result == null) {
 			clearPending();
+			if (motion == Motion.LINE_END) {
+				preferredColumn = Integer.MAX_VALUE;
+			}
 			return Result.HANDLED;
 		}
-		return moveTo(result);
+		Result res = moveTo(result);
+		if (motion == Motion.LINE_END) {
+			preferredColumn = Integer.MAX_VALUE;
+		} else if (motion != Motion.LINE_DOWN && motion != Motion.LINE_UP) {
+			preferredColumn = state.cursorCol();
+		}
+		return res;
 	}
 
 	private Result executeStandaloneDocumentMotion(Motion motion) {
@@ -1082,7 +2385,9 @@ final class VimQueryEditor {
 		if (targetRow == currentRow) {
 			return null;
 		}
-		int col = Math.min(state.cursorCol(), Math.max(0, state.getLine(targetRow).length() - 1));
+		String targetLine = state.getLine(targetRow);
+		int maxCol = Math.max(0, targetLine.length() - 1);
+		int col = Math.min(preferredColumn, maxCol);
 		return new MotionResult(offsetForPosition(targetRow, col), true, true);
 	}
 
@@ -1183,6 +2488,7 @@ final class VimQueryEditor {
 			beginInsert(true);
 		} else {
 			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
 			clearPending();
 		}
 		return Result.CHANGED;
@@ -1210,6 +2516,7 @@ final class VimQueryEditor {
 		if (operator == Operator.CHANGE) {
 			beginInsert(true);
 		} else {
+			preferredColumn = 0;
 			clearPending();
 		}
 		return Result.CHANGED;
@@ -1253,7 +2560,7 @@ final class VimQueryEditor {
 		}
 		@Var int target = start;
 		for (int n = 0; n < repetitions; n++) {
-			if (n > 0 && target < text.length()) {
+			if (target < text.length() - 1) {
 				target++;
 			}
 			while (target < text.length() && wordClass(text.charAt(target)) == 0) {
@@ -1387,6 +2694,8 @@ final class VimQueryEditor {
 		}
 		activeSearchMatch = index;
 		setPositionFromOffset(searchMatches.get(index).start());
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		clearPending();
 		return Result.HANDLED;
 	}
@@ -1420,12 +2729,14 @@ final class VimQueryEditor {
 		Snapshot start = searchStart;
 		if (restoreCursor && start != null) {
 			setPosition(start.row(), start.col());
+			preferredColumn = start.preferredColumn();
 		}
 		finishSearchInput();
 	}
 
 	private void finishSearchInput() {
 		mode = Mode.NORMAL;
+		preferredColumn = state.cursorCol();
 		searchInput.setLength(0);
 		searchInputCursor = 0;
 		previewSearchMatches = List.of();
@@ -1561,6 +2872,62 @@ final class VimQueryEditor {
 		pushUndo(before);
 		register = new Register(removed.toString(), false);
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
+		return Result.CHANGED;
+	}
+
+	private Result startReplace() {
+		replaceCount = consumeCount();
+		awaitingReplace = true;
+		return Result.HANDLED;
+	}
+
+	private Result completeReplace(String replacement) {
+		int repetitions = replaceCount;
+		clearPending();
+
+		String line = state.getLine(state.cursorRow());
+		if (line.isEmpty() || state.cursorCol() >= line.length()) {
+			return Result.HANDLED;
+		}
+
+		TextAreaState temp = new TextAreaState(line);
+		temp.moveCursorToStart();
+		while (temp.cursorCol() < state.cursorCol()) {
+			temp.moveCursorRight();
+		}
+
+		int initialLength = temp.getLine(0).length();
+		for (int i = 0; i < repetitions; i++) {
+			if (temp.cursorCol() >= temp.getLine(0).length()) {
+				return Result.HANDLED;
+			}
+			temp.deleteForward();
+		}
+		int charactersDeletedLength = initialLength - temp.getLine(0).length();
+
+		Snapshot before = snapshot();
+		int currentRow = state.cursorRow();
+		int currentCol = state.cursorCol();
+		List<String> lines = lines();
+
+		if (replacement.equals("\n")) {
+			String beforeBreak = line.substring(0, currentCol);
+			String afterBreak = line.substring(currentCol + charactersDeletedLength);
+			lines.set(currentRow, beforeBreak);
+			lines.add(currentRow + 1, afterBreak);
+			pushUndo(before);
+			setTextAndPosition(String.join("\n", lines), currentRow + 1, 0);
+		} else {
+			String inserted = replacement.repeat(repetitions);
+			String newLine = line.substring(0, currentCol) + inserted + line.substring(currentCol + charactersDeletedLength);
+			lines.set(currentRow, newLine);
+			pushUndo(before);
+			int targetCol = currentCol + (repetitions - 1) * replacement.length();
+			setTextAndPosition(String.join("\n", lines), currentRow, targetCol);
+		}
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		return Result.CHANGED;
 	}
 
@@ -1579,16 +2946,42 @@ final class VimQueryEditor {
 			beginInsert(!removed.isEmpty());
 		} else {
 			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
 		}
 		clearPending();
 		return removed.isEmpty() ? Result.HANDLED : Result.CHANGED;
 	}
 
 	private Result paste(boolean after, int repetitions) {
-		if (register.text().isEmpty() && !register.linewise()) {
+		if (register.text().isEmpty() && !register.linewise() && !register.blockwise()) {
 			return Result.HANDLED;
 		}
 		Snapshot before = snapshot();
+		if (register.blockwise()) {
+			List<String> lines = lines();
+			List<String> blockLines = Arrays.asList(register.text().split("\n", -1));
+			int startRow = state.cursorRow();
+			int col = state.cursorCol() + (after && !state.getLine(startRow).isEmpty() ? 1 : 0);
+			while (lines.size() < startRow + blockLines.size()) {
+				lines.add("");
+			}
+			for (int i = 0; i < blockLines.size(); i++) {
+				int r = startRow + i;
+				String line = lines.get(r);
+				String blockPart = blockLines.get(i).repeat(repetitions);
+				StringBuilder sb = new StringBuilder(line);
+				while (sb.length() < col) {
+					sb.append(' ');
+				}
+				sb.insert(col, blockPart);
+				lines.set(r, sb.toString());
+			}
+			pushUndo(before);
+			setTextAndPosition(String.join("\n", lines), startRow, col);
+			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
+			return Result.CHANGED;
+		}
 		if (register.linewise()) {
 			List<String> lines = lines();
 			List<String> pasted = Arrays.asList(register.text().split("\n", -1));
@@ -1602,6 +2995,8 @@ final class VimQueryEditor {
 				col++;
 			}
 			setTextAndPosition(String.join("\n", lines), row, col);
+			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
 		} else {
 			StringBuilder inserted = new StringBuilder();
 			for (int i = 0; i < repetitions; i++) {
@@ -1620,6 +3015,7 @@ final class VimQueryEditor {
 		}
 		pushUndo(before);
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		return Result.CHANGED;
 	}
 
@@ -1641,11 +3037,77 @@ final class VimQueryEditor {
 
 	private void leaveInsertMode() {
 		mode = Mode.NORMAL;
+		replaceHistory.clear();
+		if (blockInsertContext != null) {
+			finishBlockInsert();
+		}
 		if (state.cursorCol() > 0) {
 			state.moveCursorLeft();
 		}
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		clearPending();
+	}
+
+	private void finishBlockInsert() {
+		BlockInsertContext ctx = blockInsertContext;
+		blockInsertContext = null;
+		String inserted = blockInsertedText.toString();
+		blockInsertedText.setLength(0);
+		if (inserted.isEmpty() || ctx == null) {
+			return;
+		}
+		List<String> lines = lines();
+		for (int r = ctx.startRow() + 1; r <= ctx.endRow() && r < lines.size(); r++) {
+			String line = lines.get(r);
+			StringBuilder sb = new StringBuilder(line);
+			while (sb.length() < ctx.col()) {
+				sb.append(' ');
+			}
+			sb.insert(ctx.col(), inserted);
+			lines.set(r, sb.toString());
+		}
+		int targetRow = ctx.startRow();
+		int targetCol = Math.max(0, ctx.col() + inserted.length() - 1);
+		setTextAndPosition(String.join("\n", lines), targetRow, targetCol);
+	}
+
+	private Result enterReplaceMode() {
+		consumeCount();
+		beginReplace();
+		return Result.HANDLED;
+	}
+
+	private void beginReplace() {
+		clearPending();
+		mode = Mode.REPLACE;
+		replaceHistory.clear();
+		insertUndoCaptured = false;
+	}
+
+	private void replaceCharacterInMode(String str) {
+		String line = state.getLine(state.cursorRow());
+		int row = state.cursorRow();
+		int col = state.cursorCol();
+
+		if (col >= line.length()) {
+			state.insert(str);
+			return;
+		}
+
+		TextAreaState temp = new TextAreaState(line);
+		temp.moveCursorToStart();
+		while (temp.cursorCol() < col) {
+			temp.moveCursorRight();
+		}
+		int oldLen = temp.getLine(0).length();
+		temp.deleteForward();
+		int charLen = oldLen - temp.getLine(0).length();
+
+		List<String> lines = lines();
+		String newLine = line.substring(0, col) + str + line.substring(col + charLen);
+		lines.set(row, newLine);
+		setTextAndPosition(String.join("\n", lines), row, col + str.length());
 	}
 
 	private void captureInsertUndo() {
@@ -1710,7 +3172,7 @@ final class VimQueryEditor {
 	}
 
 	private Snapshot snapshot() {
-		return new Snapshot(state.text(), state.cursorRow(), state.cursorCol());
+		return new Snapshot(state.text(), state.cursorRow(), state.cursorCol(), preferredColumn);
 	}
 
 	private void pushUndo(Snapshot snapshot) {
@@ -1722,7 +3184,10 @@ final class VimQueryEditor {
 
 	private void restore(Snapshot snapshot) {
 		setTextAndPosition(snapshot.text(), snapshot.row(), snapshot.col());
-		normalizeNormalCursor();
+		preferredColumn = snapshot.preferredColumn();
+		if (mode == Mode.NORMAL) {
+			normalizeNormalCursor();
+		}
 	}
 
 	private List<String> lines() {
@@ -1828,6 +3293,8 @@ final class VimQueryEditor {
 		operatorCount = 1;
 		pendingG = false;
 		awaitingCharacterMotion = null;
+		awaitingReplace = false;
+		replaceCount = 1;
 	}
 
 	private static boolean isEscape(KeyEvent key) {
