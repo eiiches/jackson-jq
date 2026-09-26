@@ -107,7 +107,7 @@ public final class ModuleResolver<JsonNode> {
 	 * module implementing both has its Java and jq functions combined.
 	 * <p>
 	 * Public because an {@code Environment} may be handed either kind, or a hybrid of both, through
-	 * {@code addImportedModule}, and which one it got only matters here.
+	 * {@code importModule}, and which one it got only matters here.
 	 */
 	public JavaModule materialize(Module module) throws JsonQueryException {
 		if (module instanceof JqModule<?> jqModule) {

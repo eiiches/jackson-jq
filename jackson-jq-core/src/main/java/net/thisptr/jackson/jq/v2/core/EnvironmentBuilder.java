@@ -285,7 +285,9 @@ public final class EnvironmentBuilder<JsonNode> {
 	 * the first time a query actually calls into it, and a module implementing both contributes both
 	 * sets of functions.
 	 */
-	public EnvironmentBuilder<JsonNode> addImportedModule(String name, Module module) {
+	public EnvironmentBuilder<JsonNode> importModule(Module module, String name) {
+		Objects.requireNonNull(module, "module");
+		Objects.requireNonNull(name, "name");
 		importedModules.put(name, module);
 		return this;
 	}

@@ -105,7 +105,7 @@ class HostnameModuleTest {
 				FunctionSignature.of("hostname", 0), function,
 				FunctionSignature.of("hostname", 1), function);
 		return EnvironmentBuilder.withDefaultLoaders(JSON, Versions.JQ_1_7)
-				.addImportedModule("os", module)
+				.importModule(module, "os")
 				.build();
 	}
 

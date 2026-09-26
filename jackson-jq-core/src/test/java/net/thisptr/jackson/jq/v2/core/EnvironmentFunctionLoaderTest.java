@@ -519,14 +519,14 @@ public class EnvironmentFunctionLoaderTest {
 	public void aModuleBodyResolvesAgainstEveryFunctionLoader() {
 		Environment<JsonNode> env = builder()
 				.addFunctionLoader(constantLoader(FunctionSignature.of("helper", 0), "from-loader"))
-				.addImportedModule("lib", new SourceModule("def greet: helper;"))
+				.importModule(new SourceModule("def greet: helper;"), "lib")
 				.build();
 
 		assertThat(execute(env, "lib::greet")).extracting(JsonNode::asText).containsExactly("from-loader");
 	}
 
 	/**
-	 * Minimal jq-source module: {@code addImportedModule} takes either kind, and this one makes the
+	 * Minimal jq-source module: {@code importModule} takes either kind, and this one makes the
 	 * compiler go through ModuleResolver to compile it.
 	 */
 	private static final class SourceModule implements JqModule<JsonNode> {

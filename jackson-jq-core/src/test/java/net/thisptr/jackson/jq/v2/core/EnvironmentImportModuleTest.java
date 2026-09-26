@@ -31,10 +31,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Proves that {@link EnvironmentBuilder#addImportedModule(String, Module)} makes {@code alias::func(...)}
+ * Proves that {@link EnvironmentBuilder#importModule(Module, String)} makes {@code alias::func(...)}
  * calls resolvable without an explicit {@code import} statement in the query text.
  */
-public class EnvironmentAddImportedModuleTest {
+public class EnvironmentImportModuleTest {
 
 	private static final class InMemoryModuleLoader implements ModuleLoader<JsonNode> {
 		private final Map<String, Module> modules = new HashMap<>();
@@ -87,7 +87,7 @@ public class EnvironmentAddImportedModuleTest {
 	@Test
 	public void testImportedModuleUsableWithoutImportStatement() {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
-				.addImportedModule("math", new SourceModule("def square($x): $x * $x;"))
+				.importModule(new SourceModule("def square($x): $x * $x;"), "math")
 				.build();
 
 		JsonQuery<JsonNode> expr = env.compile("math::square(5)");
@@ -109,7 +109,7 @@ public class EnvironmentAddImportedModuleTest {
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
 				.clearModuleLoaders()
 				.addModuleLoader(moduleLoader)
-				.addImportedModule("foo", builderModule)
+				.importModule(builderModule, "foo")
 				.build();
 
 		JsonQuery<JsonNode> expr = env.compile("import \"foo\" as foo; foo::bar");
@@ -132,7 +132,7 @@ public class EnvironmentAddImportedModuleTest {
 		JavaModule variadicModule = () -> Collections.singletonMap(FunctionSignature.ofVariadic("greet"), countArgs);
 
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
-				.addImportedModule("m", variadicModule)
+				.importModule(variadicModule, "m")
 				.build();
 
 		JsonQuery<JsonNode> expr = env.compile("m::greet(1; 2; 3)");

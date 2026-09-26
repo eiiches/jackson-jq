@@ -369,7 +369,7 @@ public class ModuleResolverTest {
 		SourceModule module = loader.moduleAt("/first/helper", "helper");
 
 		Environment<JsonNode> env = builder()
-				.addImportedModule("m", module)
+				.importModule(module, "m")
 				.build();
 
 		assertThat(run(env, "m::three")).containsExactly("3");
@@ -390,8 +390,8 @@ public class ModuleResolverTest {
 				.put("unstated", "def n: length;");
 
 		Environment<JsonNode> env = builder()
-				.addImportedModule("stated", loader.moduleAt("/first/stated", "stated"))
-				.addImportedModule("unstated", loader.moduleAt("/first/unstated", "unstated"))
+				.importModule(loader.moduleAt("/first/stated", "stated"), "stated")
+				.importModule(loader.moduleAt("/first/unstated", "unstated"), "unstated")
 				.build();
 
 		assertThat(env.compile("stated::n", strict(StringType.getInstance())).getType().outputType())
@@ -411,7 +411,7 @@ public class ModuleResolverTest {
 				.put("stated", "#jackson-jq:type () => (STRING -> INT)\ndef n: length;");
 
 		Environment<JsonNode> env = builder()
-				.addImportedModule("stated", loader.moduleAt("/first/stated", "stated"))
+				.importModule(loader.moduleAt("/first/stated", "stated"), "stated")
 				.build();
 
 		assertThatThrownBy(() -> env.compile("stated::n", strict(NumericType.getInstance())))
@@ -429,7 +429,7 @@ public class ModuleResolverTest {
 				.addModuleLoader(new SingleModuleLoader(module))
 				.build();
 		Environment<JsonNode> importedEnvironment = builder()
-				.addImportedModule("hybrid", module)
+				.importModule(module, "hybrid")
 				.build();
 
 		assertThat(run(loaderEnvironment, "import \"hybrid\" as hybrid; [hybrid::java_helper, hybrid::from_jq]")).containsExactly("[7,7]");
@@ -458,7 +458,7 @@ public class ModuleResolverTest {
 				"def shared: 1;",
 				Collections.singletonMap(FunctionSignature.ofVariadic("shared"), constantFunction(2)));
 		Environment<JsonNode> env = builder()
-				.addImportedModule("hybrid", module)
+				.importModule(module, "hybrid")
 				.build();
 
 		assertThat(run(env, "[hybrid::shared, hybrid::shared(0)]")).containsExactly("[1,2]");

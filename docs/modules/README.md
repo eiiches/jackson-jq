@@ -38,7 +38,7 @@ later include replaces an earlier function with the same signature, and a local 
 precedence over both.
 
 An application can apply either directive to every query it compiles, instead of requiring one in
-the query text: `EnvironmentBuilder.addImportedModule("uuid", module)` binds the alias, and
+the query text: `EnvironmentBuilder.importModule(module, "uuid")` binds the alias, and
 `EnvironmentBuilder.includeModule(module)` exposes the module's functions unqualified. Both take a
 `JavaModule`, a `JqModule` or a hybrid directly, so a module the application already holds needs no
 loader and no import path. A query's own `import`/`include` shadows what the environment registered.

@@ -76,7 +76,7 @@ public interface Environment<JsonNode> {
 	}
 
 	/**
-	 * The modules registered with {@code EnvironmentBuilder.addImportedModule}, by the alias a query
+	 * The modules registered with {@code EnvironmentBuilder.importModule}, by the alias a query
 	 * calls them through.
 	 */
 	Map<String, Module> getImportedModules();
