@@ -552,6 +552,34 @@ class VimQueryEditorTest {
 	}
 
 	@Test
+	void writeAndQuitSavesCurrentFileBeforeRequestingSubmission() throws Exception {
+		Path file = tempDir.resolve("query.jq");
+		Files.writeString(file, ".");
+		TextAreaState state = new TextAreaState(".");
+		VimQueryEditor editor = new VimQueryEditor(state, file);
+
+		text(editor, "Aname");
+		escape(editor);
+		VimQueryEditor.Result result = command(editor, "wq");
+
+		assertThat(result.submitRequested()).isTrue();
+		assertThat(Files.readString(file)).isEqualTo(".name\n");
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.NORMAL);
+	}
+
+	@Test
+	void writeAndQuitKeepsEditorOpenWhenWriteFails() {
+		VimQueryEditor withoutFile = new VimQueryEditor(new TextAreaState("."));
+		assertThat(command(withoutFile, "wq").submitRequested()).isFalse();
+		assertThat(withoutFile.statusText()).isEqualTo("No current file");
+
+		Path missing = tempDir.resolve("missing/query.jq");
+		VimQueryEditor withUnwritableFile = new VimQueryEditor(new TextAreaState("."), missing);
+		assertThat(command(withUnwritableFile, "wq").submitRequested()).isFalse();
+		assertThat(withUnwritableFile.statusText()).startsWith("File error:");
+	}
+
+	@Test
 	void saveAsUsesEscapedPathAndRequiresForceToOverwrite() throws Exception {
 		Path file = tempDir.resolve("query file.jq");
 		Files.writeString(file, "old", StandardCharsets.UTF_8);
@@ -1905,10 +1933,10 @@ class VimQueryEditorTest {
 		}
 	}
 
-	private static void command(VimQueryEditor editor, String command) {
+	private static VimQueryEditor.Result command(VimQueryEditor editor, String command) {
 		key(editor, ':');
 		text(editor, command);
-		editor.handleKey(KeyEvent.ofKey(KeyCode.ENTER));
+		return editor.handleKey(KeyEvent.ofKey(KeyCode.ENTER));
 	}
 
 	private static void assertTextObject(String input, String command, String expected) {

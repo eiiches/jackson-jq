@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.cli;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ import dev.tamboui.tui.event.TickEvent;
 import org.jline.terminal.Size;
 import org.jline.terminal.impl.LineDisciplineTerminal;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import tools.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.v2.core.CompileOptions;
@@ -126,6 +128,32 @@ class PlaygroundTest {
 		pg.run(runner);
 
 		assertThat(pg.getQuery()).isEqualTo(".name");
+		assertThat(pg.isAccepted()).isTrue();
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("\"Alice\"\n");
+	}
+
+	@Test
+	void vimWriteAndQuitSavesFileAndAppliesQueryAfterConfirmation(@TempDir Path tempDir) throws Exception {
+		Path queryFile = tempDir.resolve("query.jq");
+		Files.writeString(queryFile, ".");
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6), Versions.JQ_1_6, "jackson3",
+				"{\"name\":\"Alice\"}".getBytes(StandardCharsets.UTF_8),
+				false, false, false, ".", JSON,
+				RuntimeOptions.newBuilder().build(), CompileOptions.newBuilder().build(),
+				false, false, true, Collections.emptyList(), true, queryFile,
+				new PrintStream(out), new PrintStream(new ByteArrayOutputStream()));
+
+		assertThat(lineToPlainText(pg.buildGuideLine(Playground.Focus.QUERY)))
+				.contains(":wq Save & Apply");
+		pg.run(createTestRunner(new ByteArrayOutputStream(),
+				KeyEvent.ofChar('A'), KeyEvent.ofChar('n'), KeyEvent.ofChar('a'),
+				KeyEvent.ofChar('m'), KeyEvent.ofChar('e'), KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofChar(':'), KeyEvent.ofChar('w'), KeyEvent.ofChar('q'),
+				KeyEvent.ofKey(KeyCode.ENTER), KeyEvent.ofChar('y')));
+
+		assertThat(Files.readString(queryFile)).isEqualTo(".name\n");
 		assertThat(pg.isAccepted()).isTrue();
 		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("\"Alice\"\n");
 	}

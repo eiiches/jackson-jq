@@ -2315,6 +2315,7 @@ final class Playground<N> {
 							addGuideItem(spans, "Ctrl+L", "Clear Search");
 						}
 						addGuideItem(spans, ":q", "Apply & Exit");
+						addGuideItem(spans, ":wq", "Save & Apply");
 					}
 				} else {
 					addGuideItem(spans, "Enter", "Newline");

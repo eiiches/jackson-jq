@@ -653,7 +653,8 @@ final class VimQueryEditor {
 		if (force) {
 			name = name.substring(0, name.length() - 1);
 		}
-		boolean write = name.equals("w") || name.equals("write");
+		boolean writeAndQuit = name.equals("wq") && !force && separator == trimmed.length();
+		boolean write = name.equals("w") || name.equals("write") || writeAndQuit;
 		boolean saveAs = name.equals("saveas");
 		boolean read = name.equals("r") || name.equals("read");
 		boolean edit = name.equals("e") || name.equals("edit");
@@ -693,7 +694,8 @@ final class VimQueryEditor {
 			if (edit) {
 				return editFile(file, force);
 			}
-			return writeFile(file, force, saveAs);
+			Result result = writeFile(file, force, saveAs);
+			return writeAndQuit ? Result.SUBMIT : result;
 		} catch (FileAlreadyExistsException e) {
 			message = "File already exists (use ! to overwrite): " + file;
 			return Result.HANDLED;
