@@ -1473,6 +1473,223 @@ class VimQueryEditorTest {
 		assertThat(blockRange.includesNewline()).isFalse();
 	}
 
+	@Test
+	void preservesPreferredColumnOnVerticalMotionAcrossEmptyAndShorterLines() {
+		TextAreaState state = new TextAreaState("0123456789\n\n0123456789");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg0");
+		text(editor, "8l");
+		assertThat(state.cursorRow()).isZero();
+		assertThat(state.cursorCol()).isEqualTo(8);
+
+		key(editor, 'j');
+		assertThat(state.cursorRow()).isEqualTo(1);
+		assertThat(state.cursorCol()).isZero();
+
+		key(editor, 'j');
+		assertThat(state.cursorRow()).isEqualTo(2);
+		assertThat(state.cursorCol()).isEqualTo(8);
+
+		key(editor, 'k');
+		assertThat(state.cursorRow()).isEqualTo(1);
+		assertThat(state.cursorCol()).isZero();
+
+		key(editor, 'k');
+		assertThat(state.cursorRow()).isZero();
+		assertThat(state.cursorCol()).isEqualTo(8);
+
+		TextAreaState state2 = new TextAreaState("0123456789\n01234\n0123456789");
+		VimQueryEditor editor2 = new VimQueryEditor(state2);
+		text(editor2, "gg0");
+		text(editor2, "8l");
+
+		key(editor2, 'j');
+		assertThat(state2.cursorRow()).isEqualTo(1);
+		assertThat(state2.cursorCol()).isEqualTo(4);
+
+		key(editor2, 'j');
+		assertThat(state2.cursorRow()).isEqualTo(2);
+		assertThat(state2.cursorCol()).isEqualTo(8);
+	}
+
+	@Test
+	void horizontalMotionUpdatesPreferredColumn() {
+		TextAreaState state = new TextAreaState("0123456789\n\n0123456789");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg0");
+		text(editor, "8l");
+		text(editor, "jj");
+		assertThat(state.cursorRow()).isEqualTo(2);
+		assertThat(state.cursorCol()).isEqualTo(8);
+
+		key(editor, 'h');
+		assertThat(state.cursorCol()).isEqualTo(7);
+
+		text(editor, "kk");
+		assertThat(state.cursorRow()).isZero();
+		assertThat(state.cursorCol()).isEqualTo(7);
+	}
+
+	@Test
+	void dollarMotionTracksEndOfLinesOfVaryingLengths() {
+		TextAreaState state = new TextAreaState("12345\n1234567890\n12");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg0");
+
+		key(editor, '$');
+		assertThat(state.cursorRow()).isZero();
+		assertThat(state.cursorCol()).isEqualTo(4);
+
+		key(editor, 'j');
+		assertThat(state.cursorRow()).isEqualTo(1);
+		assertThat(state.cursorCol()).isEqualTo(9);
+
+		key(editor, 'j');
+		assertThat(state.cursorRow()).isEqualTo(2);
+		assertThat(state.cursorCol()).isEqualTo(1);
+
+		key(editor, 'k');
+		assertThat(state.cursorRow()).isEqualTo(1);
+		assertThat(state.cursorCol()).isEqualTo(9);
+
+		key(editor, 'k');
+		assertThat(state.cursorRow()).isZero();
+		assertThat(state.cursorCol()).isEqualTo(4);
+
+		key(editor, 'h');
+		assertThat(state.cursorCol()).isEqualTo(3);
+
+		key(editor, 'j');
+		assertThat(state.cursorRow()).isEqualTo(1);
+		assertThat(state.cursorCol()).isEqualTo(3);
+	}
+
+	@Test
+	void preservesPreferredColumnInCharacterwiseVisualMode() {
+		TextAreaState state = new TextAreaState("0123456789\n\n0123456789");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg0");
+		text(editor, "8l");
+		key(editor, 'v');
+		text(editor, "jj");
+
+		assertThat(state.cursorRow()).isEqualTo(2);
+		assertThat(state.cursorCol()).isEqualTo(8);
+
+		VimQueryEditor.VisualRange r0 = editor.visualRangeOnRow(0);
+		assertThat(r0).isNotNull();
+		assertThat(Objects.requireNonNull(r0).startCol()).isEqualTo(8);
+		assertThat(r0.endCol()).isEqualTo(10);
+		assertThat(r0.includesNewline()).isTrue();
+
+		VimQueryEditor.VisualRange r1 = editor.visualRangeOnRow(1);
+		assertThat(r1).isNotNull();
+		assertThat(Objects.requireNonNull(r1).startCol()).isZero();
+		assertThat(r1.endCol()).isZero();
+		assertThat(r1.includesNewline()).isTrue();
+
+		VimQueryEditor.VisualRange r2 = editor.visualRangeOnRow(2);
+		assertThat(r2).isNotNull();
+		assertThat(Objects.requireNonNull(r2).startCol()).isZero();
+		assertThat(r2.endCol()).isEqualTo(9);
+		assertThat(r2.includesNewline()).isFalse();
+
+		key(editor, 'y');
+		text(editor, "Go");
+		escape(editor);
+		key(editor, 'p');
+		assertThat(state.text()).isEqualTo("0123456789\n\n0123456789\n89\n\n012345678");
+	}
+
+	@Test
+	void preservesPreferredColumnInVisualBlockMode() {
+		TextAreaState state = new TextAreaState("0123456789\n\n0123456789");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg0");
+		text(editor, "8l");
+		ctrlKey(editor, 'v');
+		text(editor, "jj");
+
+		assertThat(state.cursorRow()).isEqualTo(2);
+		assertThat(state.cursorCol()).isEqualTo(8);
+
+		VimQueryEditor.VisualRange r0 = editor.visualRangeOnRow(0);
+		assertThat(r0).isNotNull();
+		assertThat(Objects.requireNonNull(r0).startCol()).isEqualTo(8);
+		assertThat(r0.endCol()).isEqualTo(9);
+		assertThat(r0.includesNewline()).isFalse();
+
+		VimQueryEditor.VisualRange r1 = editor.visualRangeOnRow(1);
+		assertThat(r1).isNotNull();
+		assertThat(Objects.requireNonNull(r1).startCol()).isZero();
+		assertThat(r1.endCol()).isZero();
+		assertThat(r1.includesNewline()).isFalse();
+
+		VimQueryEditor.VisualRange r2 = editor.visualRangeOnRow(2);
+		assertThat(r2).isNotNull();
+		assertThat(Objects.requireNonNull(r2).startCol()).isEqualTo(8);
+		assertThat(r2.endCol()).isEqualTo(9);
+		assertThat(r2.includesNewline()).isFalse();
+
+		key(editor, 'y');
+		text(editor, "Go");
+		escape(editor);
+		key(editor, 'p');
+		assertThat(state.text()).isEqualTo("0123456789\n\n0123456789\n8\n\n8");
+	}
+
+	@Test
+	void visualBlockModeTracksEndOfLinesWithDollar() {
+		TextAreaState state = new TextAreaState("12345\n1234567890\n12");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg0");
+		ctrlKey(editor, 'v');
+		key(editor, '$');
+		text(editor, "2j");
+
+		VimQueryEditor.VisualRange r0 = editor.visualRangeOnRow(0);
+		assertThat(r0).isNotNull();
+		assertThat(Objects.requireNonNull(r0).startCol()).isZero();
+		assertThat(r0.endCol()).isEqualTo(5);
+
+		VimQueryEditor.VisualRange r1 = editor.visualRangeOnRow(1);
+		assertThat(r1).isNotNull();
+		assertThat(Objects.requireNonNull(r1).startCol()).isZero();
+		assertThat(r1.endCol()).isEqualTo(10);
+
+		VimQueryEditor.VisualRange r2 = editor.visualRangeOnRow(2);
+		assertThat(r2).isNotNull();
+		assertThat(Objects.requireNonNull(r2).startCol()).isZero();
+		assertThat(r2.endCol()).isEqualTo(2);
+
+		key(editor, 'y');
+		text(editor, "Go");
+		escape(editor);
+		key(editor, 'p');
+		assertThat(state.text()).isEqualTo("12345\n1234567890\n12\n12345\n1234567890\n12");
+	}
+
+	@Test
+	void undoRestoresPreferredColumn() {
+		TextAreaState state = new TextAreaState("0123456789\n\n0123456789");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg0");
+		text(editor, "8l");
+
+		text(editor, "rx");
+		text(editor, "jj");
+		assertThat(state.cursorRow()).isEqualTo(2);
+		assertThat(state.cursorCol()).isEqualTo(8);
+
+		key(editor, 'u');
+		assertThat(state.cursorRow()).isZero();
+		assertThat(state.cursorCol()).isEqualTo(8);
+
+		text(editor, "jj");
+		assertThat(state.cursorRow()).isEqualTo(2);
+		assertThat(state.cursorCol()).isEqualTo(8);
+	}
+
 	private static void text(VimQueryEditor editor, String text) {
 		for (int i = 0; i < text.length(); i++) {
 			key(editor, text.charAt(i));

@@ -36,7 +36,7 @@ final class VimQueryEditor {
 		private static final Result NOT_HANDLED = new Result(false, false, false);
 	}
 
-	private record Snapshot(String text, int row, int col) {
+	private record Snapshot(String text, int row, int col, int preferredColumn) {
 	}
 
 	private enum RegisterType {
@@ -149,10 +149,12 @@ final class VimQueryEditor {
 	private @Nullable BlockInsertContext blockInsertContext;
 	private final StringBuilder blockInsertedText = new StringBuilder();
 	private @Nullable String message;
+	private int preferredColumn;
 
 	VimQueryEditor(TextAreaState state) {
 		this.state = state;
 		normalizeNormalCursor();
+		this.preferredColumn = state.cursorCol();
 	}
 
 	Mode mode() {
@@ -242,10 +244,12 @@ final class VimQueryEditor {
 			int minRow = Math.min(visualAnchorRow, state.cursorRow());
 			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
 			int minCol = Math.min(visualAnchorCol, state.cursorCol());
-			int maxCol = Math.max(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
 			if (row >= minRow && row <= maxRow) {
 				int start = Math.min(minCol, line.length());
-				int end = Math.min(maxCol + 1, line.length());
+				int end = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
 				return new VisualRange(start, end, false);
 			}
 			return null;
@@ -293,6 +297,7 @@ final class VimQueryEditor {
 		command.setLength(0);
 		commandCursor = 0;
 		message = null;
+		preferredColumn = state.cursorCol();
 	}
 
 	Result handleKey(KeyEvent key) {
@@ -834,6 +839,7 @@ final class VimQueryEditor {
 	private Result handleVisualKey(KeyEvent key) {
 		if (isEscape(key)) {
 			mode = Mode.NORMAL;
+			preferredColumn = state.cursorCol();
 			clearPending();
 			return Result.HANDLED;
 		}
@@ -896,6 +902,7 @@ final class VimQueryEditor {
 		if (key.hasCtrl() && key.isCharIgnoreCase('v')) {
 			if (mode == Mode.VISUAL_BLOCK) {
 				mode = Mode.NORMAL;
+				preferredColumn = state.cursorCol();
 			} else {
 				mode = Mode.VISUAL_BLOCK;
 			}
@@ -905,6 +912,7 @@ final class VimQueryEditor {
 		if (key.hasShift() && key.isCharIgnoreCase('v')) {
 			if (mode == Mode.VISUAL_LINE) {
 				mode = Mode.NORMAL;
+				preferredColumn = state.cursorCol();
 			} else {
 				mode = Mode.VISUAL_LINE;
 			}
@@ -938,6 +946,7 @@ final class VimQueryEditor {
 			case 'v' -> {
 				if (mode == Mode.VISUAL) {
 					mode = Mode.NORMAL;
+					preferredColumn = state.cursorCol();
 				} else {
 					mode = Mode.VISUAL;
 				}
@@ -947,6 +956,7 @@ final class VimQueryEditor {
 			case 'V' -> {
 				if (mode == Mode.VISUAL_LINE) {
 					mode = Mode.NORMAL;
+					preferredColumn = state.cursorCol();
 				} else {
 					mode = Mode.VISUAL_LINE;
 				}
@@ -1026,9 +1036,18 @@ final class VimQueryEditor {
 		MotionResult result = resolveMotion(motion, repetitions, null, null);
 		if (result == null) {
 			clearPending();
+			if (motion == Motion.LINE_END) {
+				preferredColumn = Integer.MAX_VALUE;
+			}
 			return Result.HANDLED;
 		}
-		return moveToVisual(result);
+		Result res = moveToVisual(result);
+		if (motion == Motion.LINE_END) {
+			preferredColumn = Integer.MAX_VALUE;
+		} else if (motion != Motion.LINE_DOWN && motion != Motion.LINE_UP) {
+			preferredColumn = state.cursorCol();
+		}
+		return res;
 	}
 
 	private Result executeVisualDocumentMotion(Motion motion) {
@@ -1038,7 +1057,9 @@ final class VimQueryEditor {
 			clearPending();
 			return Result.HANDLED;
 		}
-		return moveToVisual(result);
+		Result res = moveToVisual(result);
+		preferredColumn = state.cursorCol();
+		return res;
 	}
 
 	private Result moveToVisual(MotionResult motion) {
@@ -1061,7 +1082,9 @@ final class VimQueryEditor {
 			return Result.HANDLED;
 		}
 		lastSearch = new CharacterSearch(motion, target);
-		return moveToVisual(result);
+		Result res = moveToVisual(result);
+		preferredColumn = state.cursorCol();
+		return res;
 	}
 
 	private Result toggleVisualEndpoint(boolean sameLine) {
@@ -1072,6 +1095,7 @@ final class VimQueryEditor {
 			visualAnchorCol = curCol;
 			setPosition(state.cursorRow(), targetCol);
 			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
 			return Result.HANDLED;
 		}
 		int curRow = state.cursorRow();
@@ -1080,6 +1104,7 @@ final class VimQueryEditor {
 		visualAnchorRow = curRow;
 		visualAnchorCol = curCol;
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		return Result.HANDLED;
 	}
 
@@ -1107,6 +1132,7 @@ final class VimQueryEditor {
 		mode = Mode.VISUAL;
 		setPosition(endPos[0], endPos[1]);
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		clearPending();
 		return Result.HANDLED;
 	}
@@ -1131,12 +1157,14 @@ final class VimQueryEditor {
 			int minRow = Math.min(visualAnchorRow, state.cursorRow());
 			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
 			int minCol = Math.min(visualAnchorCol, state.cursorCol());
-			int maxCol = Math.max(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
 			List<String> lines = lines();
 			for (int r = minRow; r <= maxRow && r < lines.size(); r++) {
 				String line = lines.get(r);
 				if (minCol < line.length()) {
-					int end = Math.min(maxCol + 1, line.length());
+					int end = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
 					String replacement = target.repeat(end - minCol);
 					lines.set(r, line.substring(0, minCol) + replacement + line.substring(end));
 				}
@@ -1145,6 +1173,7 @@ final class VimQueryEditor {
 			mode = Mode.NORMAL;
 			setTextAndPosition(String.join("\n", lines), minRow, minCol);
 			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
 			return Result.CHANGED;
 		}
 		if (mode == Mode.VISUAL_LINE) {
@@ -1159,6 +1188,7 @@ final class VimQueryEditor {
 			mode = Mode.NORMAL;
 			setTextAndPosition(String.join("\n", lines), minRow, 0);
 			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
 			return Result.CHANGED;
 		}
 		int[] range = characterwiseSelectionOffsets();
@@ -1174,6 +1204,7 @@ final class VimQueryEditor {
 		int[] pos = positionForOffset(newText, range[0]);
 		setTextAndPosition(newText, pos[0], pos[1]);
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		return Result.CHANGED;
 	}
 
@@ -1205,17 +1236,23 @@ final class VimQueryEditor {
 			int minRow = Math.min(visualAnchorRow, state.cursorRow());
 			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
 			int minCol = Math.min(visualAnchorCol, state.cursorCol());
-			int maxCol = Math.max(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
 			List<String> blockLines = new ArrayList<>();
+			@Var int blockWidth = 0;
 			for (int r = minRow; r <= maxRow && r < state.lineCount(); r++) {
 				String line = state.getLine(r);
 				if (minCol < line.length()) {
-					blockLines.add(line.substring(minCol, Math.min(maxCol + 1, line.length())));
+					int colEnd = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
+					blockLines.add(line.substring(minCol, colEnd));
+					blockWidth = Math.max(blockWidth, colEnd - minCol);
 				} else {
 					blockLines.add("");
 				}
 			}
-			register = new Register(String.join("\n", blockLines), RegisterType.BLOCKWISE, maxCol - minCol + 1);
+			int width = preferredColumn == Integer.MAX_VALUE ? blockWidth : maxCol - minCol + 1;
+			register = new Register(String.join("\n", blockLines), RegisterType.BLOCKWISE, width);
 		} else {
 			int[] range = characterwiseSelectionOffsets();
 			String selected = state.text().substring(range[0], range[1]);
@@ -1230,6 +1267,7 @@ final class VimQueryEditor {
 		mode = Mode.NORMAL;
 		setPosition(targetRow, targetCol);
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		clearPending();
 		return Result.HANDLED;
 	}
@@ -1251,6 +1289,7 @@ final class VimQueryEditor {
 			mode = Mode.NORMAL;
 			setTextAndPosition(String.join("\n", lines), row, 0);
 			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
 			clearPending();
 			return Result.CHANGED;
 		}
@@ -1258,12 +1297,14 @@ final class VimQueryEditor {
 			int minRow = Math.min(visualAnchorRow, state.cursorRow());
 			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
 			int minCol = Math.min(visualAnchorCol, state.cursorCol());
-			int maxCol = Math.max(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
 			List<String> lines = lines();
 			for (int r = minRow; r <= maxRow && r < lines.size(); r++) {
 				String line = lines.get(r);
 				if (minCol < line.length()) {
-					int colEnd = Math.min(maxCol + 1, line.length());
+					int colEnd = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
 					lines.set(r, line.substring(0, minCol) + line.substring(colEnd));
 				}
 			}
@@ -1271,6 +1312,7 @@ final class VimQueryEditor {
 			mode = Mode.NORMAL;
 			setTextAndPosition(String.join("\n", lines), minRow, minCol);
 			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
 			clearPending();
 			return Result.CHANGED;
 		}
@@ -1282,6 +1324,7 @@ final class VimQueryEditor {
 		int[] pos = positionForOffset(newText, range[0]);
 		setTextAndPosition(newText, pos[0], pos[1]);
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		clearPending();
 		return Result.CHANGED;
 	}
@@ -1305,12 +1348,14 @@ final class VimQueryEditor {
 			int minRow = Math.min(visualAnchorRow, state.cursorRow());
 			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
 			int minCol = Math.min(visualAnchorCol, state.cursorCol());
-			int maxCol = Math.max(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
 			List<String> lines = lines();
 			for (int r = minRow; r <= maxRow && r < lines.size(); r++) {
 				String line = lines.get(r);
 				if (minCol < line.length()) {
-					int colEnd = Math.min(maxCol + 1, line.length());
+					int colEnd = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
 					lines.set(r, line.substring(0, minCol) + line.substring(colEnd));
 				}
 			}
@@ -1353,6 +1398,7 @@ final class VimQueryEditor {
 			mode = Mode.NORMAL;
 			setTextAndPosition(String.join("\n", lines), minRow, 0);
 			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
 			clearPending();
 			return Result.CHANGED;
 		}
@@ -1360,7 +1406,9 @@ final class VimQueryEditor {
 			int minRow = Math.min(visualAnchorRow, state.cursorRow());
 			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
 			int minCol = Math.min(visualAnchorCol, state.cursorCol());
-			int maxCol = Math.max(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
 			List<String> lines = lines();
 			List<String> pastedLines = Arrays.asList(toPaste.text().split("\n", -1));
 			for (int i = 0; i <= maxRow - minRow; i++) {
@@ -1370,7 +1418,7 @@ final class VimQueryEditor {
 				}
 				String line = lines.get(r);
 				String part = i < pastedLines.size() ? pastedLines.get(i) : "";
-				int colEnd = Math.min(maxCol + 1, line.length());
+				int colEnd = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
 				String prefix = minCol < line.length() ? line.substring(0, minCol) : line;
 				String suffix = colEnd < line.length() ? line.substring(colEnd) : "";
 				lines.set(r, prefix + part + suffix);
@@ -1379,6 +1427,7 @@ final class VimQueryEditor {
 			mode = Mode.NORMAL;
 			setTextAndPosition(String.join("\n", lines), minRow, minCol);
 			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
 			clearPending();
 			return Result.CHANGED;
 		}
@@ -1390,6 +1439,7 @@ final class VimQueryEditor {
 		int[] pos = positionForOffset(newText, range[0]);
 		setTextAndPosition(newText, pos[0], pos[1]);
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		clearPending();
 		return Result.CHANGED;
 	}
@@ -1414,6 +1464,7 @@ final class VimQueryEditor {
 		mode = Mode.NORMAL;
 		setTextAndPosition(String.join("\n", lines), minRow, 0);
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		clearPending();
 		return Result.CHANGED;
 	}
@@ -1424,12 +1475,14 @@ final class VimQueryEditor {
 			int minRow = Math.min(visualAnchorRow, state.cursorRow());
 			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
 			int minCol = Math.min(visualAnchorCol, state.cursorCol());
-			int maxCol = Math.max(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
 			List<String> lines = lines();
 			for (int r = minRow; r <= maxRow && r < lines.size(); r++) {
 				String line = lines.get(r);
 				if (minCol < line.length()) {
-					int end = Math.min(maxCol + 1, line.length());
+					int end = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
 					String segment = line.substring(minCol, end);
 					String converted = upper ? segment.toUpperCase(Locale.ROOT) : segment.toLowerCase(Locale.ROOT);
 					lines.set(r, line.substring(0, minCol) + converted + line.substring(end));
@@ -1458,6 +1511,7 @@ final class VimQueryEditor {
 			setTextAndPosition(newText, pos[0], pos[1]);
 		}
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		clearPending();
 		return Result.CHANGED;
 	}
@@ -1468,12 +1522,14 @@ final class VimQueryEditor {
 			int minRow = Math.min(visualAnchorRow, state.cursorRow());
 			int maxRow = Math.max(visualAnchorRow, state.cursorRow());
 			int minCol = Math.min(visualAnchorCol, state.cursorCol());
-			int maxCol = Math.max(visualAnchorCol, state.cursorCol());
+			int maxCol = preferredColumn == Integer.MAX_VALUE
+					? Integer.MAX_VALUE
+					: Math.max(visualAnchorCol, state.cursorCol());
 			List<String> lines = lines();
 			for (int r = minRow; r <= maxRow && r < lines.size(); r++) {
 				String line = lines.get(r);
 				if (minCol < line.length()) {
-					int end = Math.min(maxCol + 1, line.length());
+					int end = Math.min(maxCol == Integer.MAX_VALUE ? line.length() : maxCol + 1, line.length());
 					String segment = line.substring(minCol, end);
 					StringBuilder toggled = new StringBuilder();
 					for (int i = 0; i < segment.length(); i++) {
@@ -1514,6 +1570,7 @@ final class VimQueryEditor {
 			setTextAndPosition(newText, pos[0], pos[1]);
 		}
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		clearPending();
 		return Result.CHANGED;
 	}
@@ -1540,6 +1597,7 @@ final class VimQueryEditor {
 		mode = Mode.NORMAL;
 		setTextAndPosition(String.join("\n", lines), minRow, 0);
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		clearPending();
 		return Result.CHANGED;
 	}
@@ -1711,7 +1769,9 @@ final class VimQueryEditor {
 		if (pendingOperator != null) {
 			return applyOperator(Objects.requireNonNull(pendingOperator), result);
 		}
-		return moveTo(result);
+		Result res = moveTo(result);
+		preferredColumn = state.cursorCol();
+		return res;
 	}
 
 	private Result repeatLastSearch(boolean reverse) {
@@ -1735,16 +1795,27 @@ final class VimQueryEditor {
 		if (pendingOperator != null) {
 			return applyOperator(Objects.requireNonNull(pendingOperator), result);
 		}
-		return moveTo(result);
+		Result res = moveTo(result);
+		preferredColumn = state.cursorCol();
+		return res;
 	}
 
 	private Result executeStandaloneMotion(Motion motion, int repetitions, @Nullable Integer absoluteLine) {
 		MotionResult result = resolveMotion(motion, repetitions, absoluteLine, null);
 		if (result == null) {
 			clearPending();
+			if (motion == Motion.LINE_END) {
+				preferredColumn = Integer.MAX_VALUE;
+			}
 			return Result.HANDLED;
 		}
-		return moveTo(result);
+		Result res = moveTo(result);
+		if (motion == Motion.LINE_END) {
+			preferredColumn = Integer.MAX_VALUE;
+		} else if (motion != Motion.LINE_DOWN && motion != Motion.LINE_UP) {
+			preferredColumn = state.cursorCol();
+		}
+		return res;
 	}
 
 	private Result executeStandaloneDocumentMotion(Motion motion) {
@@ -2106,7 +2177,9 @@ final class VimQueryEditor {
 		if (targetRow == currentRow) {
 			return null;
 		}
-		int col = Math.min(state.cursorCol(), Math.max(0, state.getLine(targetRow).length() - 1));
+		String targetLine = state.getLine(targetRow);
+		int maxCol = Math.max(0, targetLine.length() - 1);
+		int col = Math.min(preferredColumn, maxCol);
 		return new MotionResult(offsetForPosition(targetRow, col), true, true);
 	}
 
@@ -2207,6 +2280,7 @@ final class VimQueryEditor {
 			beginInsert(true);
 		} else {
 			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
 			clearPending();
 		}
 		return Result.CHANGED;
@@ -2234,6 +2308,7 @@ final class VimQueryEditor {
 		if (operator == Operator.CHANGE) {
 			beginInsert(true);
 		} else {
+			preferredColumn = 0;
 			clearPending();
 		}
 		return Result.CHANGED;
@@ -2411,6 +2486,8 @@ final class VimQueryEditor {
 		}
 		activeSearchMatch = index;
 		setPositionFromOffset(searchMatches.get(index).start());
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		clearPending();
 		return Result.HANDLED;
 	}
@@ -2444,12 +2521,14 @@ final class VimQueryEditor {
 		Snapshot start = searchStart;
 		if (restoreCursor && start != null) {
 			setPosition(start.row(), start.col());
+			preferredColumn = start.preferredColumn();
 		}
 		finishSearchInput();
 	}
 
 	private void finishSearchInput() {
 		mode = Mode.NORMAL;
+		preferredColumn = state.cursorCol();
 		searchInput.setLength(0);
 		searchInputCursor = 0;
 		previewSearchMatches = List.of();
@@ -2585,6 +2664,7 @@ final class VimQueryEditor {
 		pushUndo(before);
 		register = new Register(removed.toString(), false);
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		return Result.CHANGED;
 	}
 
@@ -2639,6 +2719,7 @@ final class VimQueryEditor {
 			setTextAndPosition(String.join("\n", lines), currentRow, targetCol);
 		}
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		return Result.CHANGED;
 	}
 
@@ -2657,6 +2738,7 @@ final class VimQueryEditor {
 			beginInsert(!removed.isEmpty());
 		} else {
 			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
 		}
 		clearPending();
 		return removed.isEmpty() ? Result.HANDLED : Result.CHANGED;
@@ -2689,6 +2771,7 @@ final class VimQueryEditor {
 			pushUndo(before);
 			setTextAndPosition(String.join("\n", lines), startRow, col);
 			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
 			return Result.CHANGED;
 		}
 		if (register.linewise()) {
@@ -2704,6 +2787,8 @@ final class VimQueryEditor {
 				col++;
 			}
 			setTextAndPosition(String.join("\n", lines), row, col);
+			normalizeNormalCursor();
+			preferredColumn = state.cursorCol();
 		} else {
 			StringBuilder inserted = new StringBuilder();
 			for (int i = 0; i < repetitions; i++) {
@@ -2722,6 +2807,7 @@ final class VimQueryEditor {
 		}
 		pushUndo(before);
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		return Result.CHANGED;
 	}
 
@@ -2751,6 +2837,7 @@ final class VimQueryEditor {
 			state.moveCursorLeft();
 		}
 		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
 		clearPending();
 	}
 
@@ -2877,7 +2964,7 @@ final class VimQueryEditor {
 	}
 
 	private Snapshot snapshot() {
-		return new Snapshot(state.text(), state.cursorRow(), state.cursorCol());
+		return new Snapshot(state.text(), state.cursorRow(), state.cursorCol(), preferredColumn);
 	}
 
 	private void pushUndo(Snapshot snapshot) {
@@ -2889,6 +2976,7 @@ final class VimQueryEditor {
 
 	private void restore(Snapshot snapshot) {
 		setTextAndPosition(snapshot.text(), snapshot.row(), snapshot.col());
+		preferredColumn = snapshot.preferredColumn();
 		if (mode == Mode.NORMAL) {
 			normalizeNormalCursor();
 		}
