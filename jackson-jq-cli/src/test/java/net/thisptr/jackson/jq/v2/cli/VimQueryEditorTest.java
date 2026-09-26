@@ -527,6 +527,45 @@ class VimQueryEditorTest {
 	}
 
 	@Test
+	void quitRequiresSavedTextUnlessForced() throws Exception {
+		Path file = tempDir.resolve("query.jq");
+		Files.writeString(file, ".");
+		TextAreaState state = new TextAreaState(".");
+		VimQueryEditor editor = new VimQueryEditor(state, file);
+
+		assertThat(editor.hasUnsavedChanges()).isFalse();
+		text(editor, "Aname");
+		escape(editor);
+		assertThat(editor.hasUnsavedChanges()).isTrue();
+		assertThat(command(editor, "q").submitRequested()).isFalse();
+		assertThat(editor.statusText()).startsWith("Unsaved changes");
+		assertThat(command(editor, "q!").submitRequested()).isTrue();
+		assertThat(Files.readString(file)).isEqualTo(".");
+
+		key(editor, 'u');
+		assertThat(editor.hasUnsavedChanges()).isFalse();
+		assertThat(command(editor, "q").submitRequested()).isTrue();
+
+		text(editor, "Aname");
+		escape(editor);
+		command(editor, "w");
+		assertThat(editor.hasUnsavedChanges()).isFalse();
+		assertThat(command(editor, "q").submitRequested()).isTrue();
+	}
+
+	@Test
+	void unnamedQueryTracksUnsavedChangesAndSaveAsClearsThem() {
+		VimQueryEditor editor = new VimQueryEditor(new TextAreaState("."));
+		text(editor, "Aname");
+		escape(editor);
+		assertThat(editor.hasUnsavedChanges()).isTrue();
+		assertThat(command(editor, "q").submitRequested()).isFalse();
+		command(editor, "saveas " + tempDir.resolve("query.jq"));
+		assertThat(editor.hasUnsavedChanges()).isFalse();
+		assertThat(command(editor, "q").submitRequested()).isTrue();
+	}
+
+	@Test
 	void writesCurrentFileAndKeepsAssociationWhenWritingAnotherFile() throws Exception {
 		Path current = tempDir.resolve("current.jq");
 		Path other = tempDir.resolve("other.jq");
@@ -609,17 +648,20 @@ class VimQueryEditorTest {
 
 		text(editor, "A | .second");
 		escape(editor);
+		assertThat(editor.hasUnsavedChanges()).isTrue();
 		command(editor, "edit");
 		assertThat(state.text()).isEqualTo(".first | .second");
 		assertThat(editor.statusText()).startsWith("Unsaved changes");
 		command(editor, "e!");
 		assertThat(state.text()).isEqualTo(".first");
+		assertThat(editor.hasUnsavedChanges()).isFalse();
 		key(editor, 'u');
 		assertThat(state.text()).isEqualTo(".first");
 
 		Files.writeString(file, ".changed", StandardCharsets.UTF_8);
 		command(editor, "e");
 		assertThat(state.text()).isEqualTo(".changed");
+		assertThat(editor.hasUnsavedChanges()).isFalse();
 
 		Path next = tempDir.resolve("next.jq");
 		Files.writeString(next, ".next", StandardCharsets.UTF_8);

@@ -222,6 +222,10 @@ final class VimQueryEditor {
 		return currentFile;
 	}
 
+	boolean hasUnsavedChanges() {
+		return !state.text().equals(savedText);
+	}
+
 	@Nullable
 	String statusText() {
 		if (mode == Mode.COMMAND) {
@@ -617,6 +621,13 @@ final class VimQueryEditor {
 			commandCursor = 0;
 			mode = Mode.NORMAL;
 			if (entered.equals("q")) {
+				if (hasUnsavedChanges()) {
+					message = "Unsaved changes (use :q! to exit without saving)";
+					return Result.HANDLED;
+				}
+				return Result.SUBMIT;
+			}
+			if (entered.equals("q!")) {
 				return Result.SUBMIT;
 			}
 			if (entered.equals("noh") || entered.equals("nohlsearch")) {
@@ -753,7 +764,7 @@ final class VimQueryEditor {
 	}
 
 	private Result editFile(Path file, boolean force) throws IOException {
-		if (!force && !state.text().equals(savedText)) {
+		if (!force && hasUnsavedChanges()) {
 			message = "Unsaved changes (use :e! to discard them)";
 			return Result.HANDLED;
 		}

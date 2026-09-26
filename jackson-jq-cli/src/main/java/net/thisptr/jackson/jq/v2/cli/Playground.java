@@ -96,6 +96,7 @@ final class Playground<N> {
 		NONE,
 		CONFIRM_QUIT,
 		CONFIRM_SUBMIT,
+		CONFIRM_VIM_EXIT,
 		OPTIONS,
 		EDIT_TYPE
 	}
@@ -162,6 +163,7 @@ final class Playground<N> {
 	private volatile boolean outputStale;
 	private boolean accepted;
 	private volatile EvaluationStatus evaluationStatus = EvaluationStatus.UP_TO_DATE;
+	private boolean vimExitCompilationFailed;
 	private volatile boolean redrawRequested;
 	private final SpinnerState spinnerState = new SpinnerState();
 	private @Nullable Executor evaluationExecutor;
@@ -743,6 +745,24 @@ final class Playground<N> {
 			}
 			return true;
 		}
+		if (modal == Modal.CONFIRM_VIM_EXIT) {
+			if (key.isCharIgnoreCase('n')) {
+				accepted = false;
+				runner.quit();
+				return true;
+			}
+			if (key.isCharIgnoreCase('y') || key.isConfirm() || key.code() == KeyCode.ENTER) {
+				if (vimExitBlockReason() == null) {
+					accepted = true;
+					runner.quit();
+				}
+				return true;
+			}
+			if (key.code() == KeyCode.ESCAPE || key.isCancel() || key.isCtrlC()) {
+				modal = Modal.NONE;
+			}
+			return true;
+		}
 		if (modal != Modal.NONE) {
 			if (key.isCharIgnoreCase('y')) {
 				accepted = (modal == Modal.CONFIRM_SUBMIT);
@@ -1019,9 +1039,23 @@ final class Playground<N> {
 			updateEvaluation();
 		}
 		if (result.submitRequested()) {
-			modal = Modal.CONFIRM_SUBMIT;
+			EvaluationResult check = computeEvaluation(jsonProvider, env, inputs, queryState.text(),
+					compileOptions, runtimeOptions, warningsEnabled, rawOutput, compact, false);
+			vimExitCompilationFailed = check.errorPhase() == DiagnosticPhase.COMPILE;
+			modal = Modal.CONFIRM_VIM_EXIT;
 		}
 		return result.handled();
+	}
+
+	@Nullable
+	private String vimExitBlockReason() {
+		if (vimExitCompilationFailed) {
+			return "Apply unavailable: query does not compile";
+		}
+		if (evaluationStatus == EvaluationStatus.FAILURE && errorPhase == DiagnosticPhase.RUNTIME) {
+			return "Apply unavailable: query failed at runtime";
+		}
+		return null;
 	}
 
 	private void leaveVimQueryFocus() {
@@ -1070,6 +1104,7 @@ final class Playground<N> {
 		Path currentQueryFile = vimQueryEditor == null ? null : vimQueryEditor.currentFile();
 		if (currentQueryFile != null) {
 			renderQueryFileLabel(frame.buffer(), queryRect, currentQueryFile,
+					Objects.requireNonNull(vimQueryEditor).hasUnsavedChanges(),
 					focus == Focus.QUERY ? Color.CYAN : Color.DARK_GRAY);
 		}
 		Rect queryInnerRect = queryBlock.inner(queryRect);
@@ -1353,7 +1388,7 @@ final class Playground<N> {
 			inputWidget.renderWithCursor(typeInputRect, frame.buffer(), typeInputState, frame);
 		} else if (modal != Modal.NONE) {
 			int dialogWidth = Math.min(64, Math.max(36, area.width() - 4));
-			int dialogHeight = 7;
+			int dialogHeight = modal == Modal.CONFIRM_VIM_EXIT ? 8 : 7;
 			int dialogX = area.left() + (area.width() - dialogWidth) / 2;
 			int dialogY = area.top() + (area.height() - dialogHeight) / 2;
 			Rect dialogArea = new Rect(dialogX, dialogY, dialogWidth, dialogHeight);
@@ -1374,14 +1409,25 @@ final class Playground<N> {
 					.borderColor(modal == Modal.CONFIRM_QUIT ? Color.RED : Color.GREEN)
 					.build();
 
+			String applyBlockReason = modal == Modal.CONFIRM_VIM_EXIT ? vimExitBlockReason() : null;
+			Text dialogText = modal == Modal.CONFIRM_VIM_EXIT
+					? Text.from(
+					Line.from(Span.raw("")),
+					Line.from(Span.styled(applyBlockReason == null ? "Choose how to exit." : applyBlockReason,
+							applyBlockReason == null ? Style.EMPTY.bold() : Style.EMPTY.bold().red())),
+					Line.from(Span.raw("")),
+					Line.from(Span.styled(applyBlockReason == null ? "[y/Enter] Apply and exit" : "[y/Enter] Apply unavailable",
+							applyBlockReason == null ? Style.EMPTY.yellow() : Style.EMPTY.dim())),
+					Line.from(Span.styled("[n] Exit without results", Style.EMPTY.yellow())),
+					Line.from(Span.styled("[Esc] Keep editing", Style.EMPTY.yellow())))
+					: Text.from(
+					Line.from(Span.raw("")),
+					Line.from(Span.styled(question, Style.EMPTY.bold())),
+					Line.from(Span.raw("")),
+					Line.from(Span.styled(options, Style.EMPTY.dim().yellow())));
 			Paragraph dialogContent = Paragraph.builder()
 					.block(dialogBlock)
-					.text(Text.from(
-							Line.from(Span.raw("")),
-							Line.from(Span.styled(question, Style.EMPTY.bold())),
-							Line.from(Span.raw("")),
-							Line.from(Span.styled(options, Style.EMPTY.dim().yellow()))
-					))
+					.text(dialogText)
 					.alignment(Alignment.CENTER)
 					.build();
 			frame.renderWidget(dialogContent, dialogArea);
@@ -2256,16 +2302,17 @@ final class Playground<N> {
 		buffer.setLine(area.left() + 1, area.top(), title);
 	}
 
-	private static void renderQueryFileLabel(Buffer buffer, Rect area, Path file, Color color) {
-		String label = queryFileLabel(file, area.width());
+	private static void renderQueryFileLabel(Buffer buffer, Rect area, Path file, boolean unsaved, Color color) {
+		String label = queryFileLabel(file, area.width(), unsaved);
 		if (!label.isEmpty()) {
 			buffer.setString(area.right() - 1 - CharWidth.of(label), area.bottom() - 1, label,
 					Style.EMPTY.fg(color));
 		}
 	}
 
-	static String queryFileLabel(Path file, int borderWidth) {
-		int maxPathWidth = borderWidth - 4;
+	static String queryFileLabel(Path file, int borderWidth, boolean unsaved) {
+		String marker = unsaved ? " [+]" : "";
+		int maxPathWidth = borderWidth - 4 - CharWidth.of(marker);
 		if (maxPathWidth < 1) {
 			return "";
 		}
@@ -2276,7 +2323,7 @@ final class Playground<N> {
 			}
 			path = "…" + path;
 		}
-		return " " + path + " ";
+		return " " + path + marker + " ";
 	}
 
 	Line buildGuideLine(Focus focus) {
@@ -2314,8 +2361,8 @@ final class Playground<N> {
 							addGuideItem(spans, "n/N", "Next/Previous");
 							addGuideItem(spans, "Ctrl+L", "Clear Search");
 						}
-						addGuideItem(spans, ":q", "Apply & Exit");
-						addGuideItem(spans, ":wq", "Save & Apply");
+						addGuideItem(spans, ":q/:q!", "Exit");
+						addGuideItem(spans, ":wq", "Save & Exit");
 					}
 				} else {
 					addGuideItem(spans, "Enter", "Newline");
