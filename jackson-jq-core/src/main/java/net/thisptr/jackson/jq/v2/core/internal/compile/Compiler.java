@@ -195,6 +195,16 @@ public class Compiler {
 
 		OptimizationOptions optimizationOptions = options.getOptimizationOptions();
 		CompileContext context = new CompileContext(exportTopLevelFunctions, meterRuntimeBudgets, optimizationOptions);
+		// Materialized up front, unlike a module reached through an alias -- that one waits for a call
+		// site to name it (see visit(FunctionCallAstNode)), but an unqualified name can only be looked up
+		// against the module's complete signature set, so there is nothing to defer. A JqModule therefore
+		// compiles once per compile() call, the resolver's lifetime being this compilation.
+		//
+		// This also runs for a module's own source, where it does nothing: a module compiles against the
+		// stripped environment ModuleResolver.moduleEnvironment() builds, which carries none of the
+		// caller's globals and includes nothing. A library resolves its own names against its own imports.
+		for (Module included : env.getIncludedModules())
+			context.addEnvironmentIncludedModule(scope.materialize(included));
 		FoldPlanner foldPlanner = context.foldPlanner();
 		boolean planFolds = meterRuntimeBudgets && foldPlanner.isEnabled();
 		if (planFolds)
@@ -1065,6 +1075,12 @@ public class Compiler {
 		}
 		if (factory != null)
 			return bindFunctionCall(bindContext, fullName, factory, compiledArgs);
+
+		// Below everything the environment names explicitly, above every loader -- so a module the
+		// environment includes shadows a builtin of the same signature, the way a query's own include does.
+		Function environmentIncluded = context.getEnvironmentIncludedFunction(signature);
+		if (environmentIncluded != null)
+			return bindFunctionCall(bindContext, fullName, environmentIncluded, compiledArgs);
 
 		for (FunctionLoader loader : env.getFunctionLoaders()) {
 			Map<FunctionSignature, Function> loadedFunctions = loader.getFunctions(env.getJqVersion());

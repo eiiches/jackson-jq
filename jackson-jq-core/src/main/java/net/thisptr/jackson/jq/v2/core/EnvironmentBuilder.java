@@ -22,6 +22,8 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
+import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
+import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.Type;
@@ -46,6 +48,9 @@ public final class EnvironmentBuilder<JsonNode> {
 	private final Map<FunctionSignature, JqFunction> jqFunctions = new HashMap<>();
 	private final Map<String, Environment.Constant<JsonNode>> constants = new HashMap<>();
 	private final Map<String, Module> importedModules = new HashMap<>();
+	// A list rather than a map: includes accumulate, and the order they were registered in is what
+	// decides which module answers a signature two of them export.
+	private final List<Module> includedModules = new ArrayList<>();
 
 	private EnvironmentBuilder(JsonProvider<JsonNode> jsonProvider, Version jqVersion) {
 		this.jsonProvider = jsonProvider;
@@ -276,17 +281,39 @@ public final class EnvironmentBuilder<JsonNode> {
 
 	/**
 	 * Makes {@code module}'s functions callable as {@code name::func(...)} without the query having
-	 * to {@code import} it. A {@link JavaModule} is used as it stands, a
-	 * {@link net.thisptr.jackson.jq.v2.spi.module.JqModule} is compiled the first time a query
-	 * actually calls into it, and a module implementing both contributes both sets of functions.
+	 * to {@code import} it. A {@link JavaModule} is used as it stands, a {@link JqModule} is compiled
+	 * the first time a query actually calls into it, and a module implementing both contributes both
+	 * sets of functions.
 	 */
 	public EnvironmentBuilder<JsonNode> addImportedModule(String name, Module module) {
 		importedModules.put(name, module);
 		return this;
 	}
 
+	/**
+	 * Makes every function {@code module} exports callable by its bare name, as a query's own
+	 * {@code include} directive would -- with no alias and no {@code ::} qualifier. A
+	 * {@link JavaModule} is used as it stands, a {@link JqModule} is compiled once per query
+	 * compilation, and a module implementing both contributes both sets of functions.
+	 * <p>
+	 * Registering two modules that export the same signature is allowed and the later registration
+	 * answers the call. What an environment includes sits below everything a query or the environment
+	 * names explicitly -- a lexically visible {@code def}, a module the query itself {@code include}s,
+	 * {@link #declareFunction} and {@link #defineFunction}/{@link #defineJqFunction} all take
+	 * precedence -- but above every {@link FunctionLoader}, so it does shadow a builtin of the same
+	 * signature. See {@code docs/resolution-order.md}.
+	 * <p>
+	 * A module the environment includes is not visible to the modules a query {@code import}s: a
+	 * library resolves its own names against its own imports, not against its caller's environment.
+	 */
+	public EnvironmentBuilder<JsonNode> includeModule(Module module) {
+		includedModules.add(Objects.requireNonNull(module, "module"));
+		return this;
+	}
+
 	public Environment<JsonNode> build() {
 		return new EnvironmentImpl<>(jsonProvider, jqVersion, moduleLoaders, functionLoaders,
-				declaredVariables, declaredFunctions, variables, functions, jqFunctions, constants, importedModules);
+				declaredVariables, declaredFunctions, variables, functions, jqFunctions, constants, importedModules,
+				includedModules);
 	}
 }

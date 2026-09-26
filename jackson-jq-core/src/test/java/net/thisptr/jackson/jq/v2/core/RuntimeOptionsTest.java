@@ -371,6 +371,35 @@ public class RuntimeOptionsTest {
 	}
 
 	@Test
+	public void includedModuleFunctionsDoNotDrawOnTheBudget() {
+		// Same rule for a module the environment includes: losing the `::` qualifier does not turn the
+		// module author's `def`s into the caller's.
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
+				.includeModule(new JqModule<JsonNode>() {
+					@Override
+					public String getSourceCode() {
+						return "def square($x): $x * $x;";
+					}
+
+					@Override
+					public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
+						throw new ModuleNotFoundException(importPath);
+					}
+
+					@Override
+					public JsonNode relativeData(String importPath, String searchPath) {
+						throw new ModuleNotFoundException(importPath);
+					}
+				})
+				.build();
+
+		List<JsonNode> out = new ArrayList<>();
+		env.compile("square(5)").withRuntimeOptions(maxUserDefinedFunctionCalls(0))
+				.apply(Jackson2JsonProvider.getInstance().createNull(), out::add);
+		assertThat(out).containsExactly(Jackson2JsonProvider.getInstance().createNumber(25));
+	}
+
+	@Test
 	public void theBudgetStartsOverOnEachInvocation() {
 		// The tally lives on the per-apply() Memory, so spending it all does not poison the next input.
 		JsonQuery<JsonNode> query = ENV.compile("def f: .; [f, f]").withRuntimeOptions(maxUserDefinedFunctionCalls(2));
