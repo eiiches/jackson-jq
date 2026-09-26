@@ -762,6 +762,14 @@ public final class TypeCheck {
 	private Type define(ResolvedFunctionDefinition<?> definition) {
 		definitions.put(definition.slot(), definition);
 		definitionClosures.put(definition.slot(), closuresOf(definition));
+		// A definition that states its own signature is taken at its word: there is nothing left to
+		// infer, and inferring anyway would only produce findings against the unconstrained input the
+		// generic pass invents -- findings reportUncalledDefinitions then releases, since a call to such
+		// a definition never specializes its body and so never supersedes them.
+		if (!definition.typeSchemes().isEmpty()) {
+			functions.put(definition.slot(), definition.typeSchemes());
+			return NeverType.getInstance();
+		}
 		TypeVariable input = fresh("Input");
 		List<FilterType> parameters = new ArrayList<>();
 		Map<TypeVariable, Type> quantified = new LinkedHashMap<>();
@@ -819,6 +827,11 @@ public final class TypeCheck {
 		ResolvedFunctionDefinition<?> definition = definitions.get(slot);
 		if (definition == null || definition.paramSlots().size() != args.size())
 			return applySchemes(call, name, args.size(), args, input, functions.getOrDefault(slot, dynamicFunction(args.size())));
+		// A definition that states what it accepts is checked against that statement rather than against
+		// the body it is about to run, so it rejects an input its body would only have failed on by
+		// accident -- and so a caller reads one signature instead of one per call site.
+		if (!definition.typeSchemes().isEmpty())
+			return applySchemes(call, name, args.size(), args, input, definition.typeSchemes());
 		// A parameter is a filter, not a value: the body decides what input to run it on, so what travels
 		// here is the argument itself together with the bindings it was written under.
 		specializedDefinitions.add(slot);

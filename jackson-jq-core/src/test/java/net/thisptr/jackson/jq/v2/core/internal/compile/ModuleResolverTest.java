@@ -14,9 +14,11 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
+import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
@@ -32,6 +34,11 @@ import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
+import net.thisptr.jackson.jq.v2.spi.type.AnyType;
+import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
+import net.thisptr.jackson.jq.v2.spi.type.NumericType;
+import net.thisptr.jackson.jq.v2.spi.type.StringType;
+import net.thisptr.jackson.jq.v2.spi.type.Type;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -246,6 +253,13 @@ public class ModuleResolverTest {
 		return actual;
 	}
 
+	private static CompileOptions strict(Type inputType) {
+		return CompileOptions.newBuilder()
+				.setTypeCheckMode(TypeCheckMode.STRICT)
+				.setInputType(inputType)
+				.build();
+	}
+
 	private static Function constantFunction(int value) {
 		return new Function() {
 			@Override
@@ -361,6 +375,48 @@ public class ModuleResolverTest {
 		assertThat(run(env, "m::three")).containsExactly("3");
 		// Nothing referenced it, so nothing compiled it.
 		assertThat(run(env, "1 + 1")).containsExactly("2");
+	}
+
+	/**
+	 * A module's jq source is the only place a definition it exports can state its signature, and this
+	 * is what carries the statement across the boundary: an export is a {@link Function}, and a caller
+	 * is typed from what that publishes. Without the statement the caller is told {@code ANY}, whatever
+	 * the body does.
+	 */
+	@Test
+	public void testImportedDefinitionPublishesTheTypeItStates() {
+		SourceLoader loader = new SourceLoader("/first")
+				.put("stated", "#jackson-jq:type () => (STRING -> INT)\ndef n: length;")
+				.put("unstated", "def n: length;");
+
+		Environment<JsonNode> env = builder()
+				.addImportedModule("stated", loader.moduleAt("/first/stated", "stated"))
+				.addImportedModule("unstated", loader.moduleAt("/first/unstated", "unstated"))
+				.build();
+
+		assertThat(env.compile("stated::n", strict(StringType.getInstance())).getType().outputType())
+				.isEqualTo(NumericType.of(NumberKind.INT));
+		assertThat(env.compile("unstated::n", strict(StringType.getInstance())).getType().outputType())
+				.isSameAs(AnyType.getInstance());
+		assertThat(run(env, "\"abc\" | stated::n")).containsExactly("3");
+	}
+
+	/**
+	 * The statement is checked at the call, so a module states the input its definition is written for
+	 * rather than leaving a caller to find out at runtime.
+	 */
+	@Test
+	public void testImportedDefinitionRejectsAnInputItDoesNotState() {
+		SourceLoader loader = new SourceLoader("/first")
+				.put("stated", "#jackson-jq:type () => (STRING -> INT)\ndef n: length;");
+
+		Environment<JsonNode> env = builder()
+				.addImportedModule("stated", loader.moduleAt("/first/stated", "stated"))
+				.build();
+
+		assertThatThrownBy(() -> env.compile("stated::n", strict(NumericType.getInstance())))
+				.isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("Type checking failed");
 	}
 
 	@Test

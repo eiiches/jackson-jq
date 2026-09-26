@@ -17,6 +17,8 @@ PARSER_BEGIN(AstParser)
 
 	import net.thisptr.jackson.jq.v2.spi.version.Version;
 	import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
+	import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+	import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
 	import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 	import net.thisptr.jackson.jq.v2.core.internal.ast.*;
@@ -66,6 +68,18 @@ PARSER_BEGIN(AstParser)
 		private SourceLocation locSince(AstNode begin) {
 			SourceLocation from = begin.location();
 			return SourceLocation.of(from.beginLine(), from.beginColumn(), token.endLine, token.endColumn);
+		}
+
+		/**
+		 * The schemes the run of {@code #jackson-jq:type} comments in front of a {@code def} states
+		 * for it. An empty run leaves the definition to be inferred from its body, as one written
+		 * before this notation existed is.
+		 */
+		private static List<TypeScheme<FunctionType>> typeSchemesOf(final List<Token> annotations, final int parameterCount) {
+			final List<TypeScheme<FunctionType>> schemes = new ArrayList<TypeScheme<FunctionType>>();
+			for (final Token annotation : annotations)
+				schemes.add(TypeAnnotation.parse(annotation.image, parameterCount, loc(annotation)));
+			return schemes;
 		}
 
 		public static AstNode parse(final String line, final Version version) throws JsonQueryException {
@@ -145,6 +159,12 @@ TOKEN_MGR_DECLS:
 	int depth = 0;
 	int stringInterpLevel = 0;
 }
+
+// A type annotation is an ordinary comment to jq and a declaration here, so it has to be matched
+// ahead of <COMMENT>. Declaration order only decides a tie in match length, so this has to consume
+// the line terminator that <COMMENT> consumes too -- stopping one character short would lose to it
+// wherever it appears.
+TOKEN: { <TYPE_ANNOTATION: "#jackson-jq:type" (~["\n","\r"])* ("\n"|"\r"|"\r\n")?> }
 
 SKIP: { <SPACES: " " | "\t" | "\r" | "\n"> | <COMMENT: "#" (~["\n","\r"])* ("\n"|"\r"|"\r\n")?> }
 
@@ -623,11 +643,17 @@ AstNode FunctionDefinition():
 {
 	final Token start = getToken(1);
 	final List<String> args = new ArrayList<String>();
+	final List<Token> annotations = new ArrayList<Token>();
+	Token annotation;
 	Token fname;
 	String tmp;
 	AstNode body;
 }
 {
+	(
+		annotation = <TYPE_ANNOTATION>
+		{ annotations.add(annotation); }
+	)*
 	<KEYWORD_DEF>
 	fname = <IDENTIFIER>
 	(
@@ -644,7 +670,7 @@ AstNode FunctionDefinition():
 	<COLON>
 	body = Expression()
 	<SEMICOLON>
-	{ return new FunctionDefinitionAstNode(locSince(start), FunctionSignature.of(fname.image, args.size()), args, body); }
+	{ return new FunctionDefinitionAstNode(locSince(start), FunctionSignature.of(fname.image, args.size()), args, body, typeSchemesOf(annotations, args.size())); }
 }
 
 String FunctionDefinitionParam():

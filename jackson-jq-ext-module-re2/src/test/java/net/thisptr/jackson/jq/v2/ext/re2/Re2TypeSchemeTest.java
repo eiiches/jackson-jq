@@ -24,12 +24,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * The signatures published by the regex primitives the jq-source {@code match}/{@code sub} surface is
- * built on. The jq-level definitions themselves are not covered here: a jq {@code def} is its own
- * inference boundary, so a call to one types as {@code ANY} whatever its body does.
+ * The signatures published by the regex primitives, and by the jq-source {@code match}/{@code sub}
+ * surface built on them -- which states its own with {@code #jackson-jq:type} comments, since a
+ * {@code def} left to its body would report the primitive's whole union or, where it dispatches on
+ * {@code $val|type}, nothing at all.
+ * <p>
+ * The surface is reached qualified, as an importer reaches it. The same assertions hold unqualified
+ * against the joni engine, whose {@code JqFunction}s state the same signatures.
  */
 class Re2TypeSchemeTest {
-	private static final String IMPORT = "import \"jackson-jq/re2/_impl\" as re2_impl; ";
+	private static final String IMPORT = "import \"jackson-jq/re2/_impl\" as re2_impl; "
+			+ "import \"jackson-jq/re2\" as re2; ";
 
 	private final Environment<JsonNode> environment = EnvironmentBuilder
 			.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_7).build();
@@ -43,6 +48,10 @@ class Re2TypeSchemeTest {
 
 	private Type outputOf(String query, Type inputType) throws JsonQueryException {
 		return environment.compile(IMPORT + query, strict(inputType)).getType().outputType();
+	}
+
+	private Type outputOf(String query) throws JsonQueryException {
+		return outputOf(query, StringType.getInstance());
 	}
 
 	@Test
@@ -80,6 +89,99 @@ class Re2TypeSchemeTest {
 	@Test
 	void substitutionAnswersAString() throws JsonQueryException {
 		assertThat(outputOf("re2_impl::_sub_impl(\"a\"; \"b\"; \"g\")", StringType.getInstance())).isSameAs(StringType.getInstance());
+	}
+
+	@Test
+	void aMatchIsAnObjectWhoseOwnStringIsNeverNull() throws JsonQueryException {
+		String match = "{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}";
+		assertThat(outputOf("re2::match(\"a\"; \"\")")).hasToString(match);
+		assertThat(outputOf("re2::match(\"a\")")).hasToString(match);
+		assertThat(outputOf("[re2::match(\"a\"; \"g\")]")).hasToString("[*:" + match + "]");
+	}
+
+	/**
+	 * The manual gives the one-argument form two spellings, {@code FILTER([REGEX])} and
+	 * {@code FILTER([REGEX, FLAGS])}, and those are the two this accepts.
+	 */
+	@Test
+	void aPatternAndItsFlagsMayArriveInOneArray() throws JsonQueryException {
+		assertThat(outputOf("re2::test([\"a\"])")).isSameAs(BooleanType.getInstance());
+		assertThat(outputOf("re2::test([\"a\", \"g\"])")).isSameAs(BooleanType.getInstance());
+	}
+
+	@Test
+	void aPatternThatIsNeitherAStringNorANonEmptyArrayIsRejected() {
+		for (String query : List.of("re2::match(123)", "re2::test([])", "re2::capture({})")) {
+			assertThatThrownBy(() -> outputOf(query))
+					.describedAs(query)
+					.isInstanceOf(JsonQueryException.class)
+					.hasMessageContaining("Type checking failed");
+		}
+	}
+
+	@Test
+	void testAnswersABooleanRatherThanThePrimitivesUnion() throws JsonQueryException {
+		assertThat(outputOf("re2::test(\"a\"; \"\")")).isSameAs(BooleanType.getInstance());
+		assertThat(outputOf("[re2::test(\"a\"; \"g\")]")).hasToString("[*:BOOLEAN]");
+	}
+
+	@Test
+	void captureIsKeyedByNamesOnlyKnownAtRuntime() throws JsonQueryException {
+		assertThat(outputOf("re2::capture(\"a\"; \"\")")).hasToString("{*:NULL|STRING}");
+		assertThat(outputOf("re2::capture(\"a\")")).hasToString("{*:NULL|STRING}");
+	}
+
+	@Test
+	void scanAnswersTheCapturesWhenThereAreAnyAndTheMatchWhenThereAreNot() throws JsonQueryException {
+		assertThat(outputOf("re2::scan(\"a\")")).hasToString("STRING|[*:NULL|STRING]");
+		assertThat(outputOf("re2::scan(\"a\"; \"g\")")).hasToString("STRING|[*:NULL|STRING]");
+	}
+
+	/**
+	 * The manual asks for string flags throughout, and every one-argument form here reaches its
+	 * two-argument counterpart with {@code ""}, so nothing on this surface has a reason to take a null.
+	 */
+	@Test
+	void noFlagsArgumentOnTheSurfaceTakesANull() {
+		for (String query : List.of("re2::match(\"a\"; null)", "re2::test(\"a\"; null)", "re2::capture(\"a\"; null)",
+				"re2::scan(\"a\"; null)", "re2::splits(\"a\"; null)", "re2::split(\"a\"; null)",
+				"re2::match([\"a\", null])", "re2::match([\"a\", \"g\", 1])", "re2_impl::_match_impl(\"a\"; null; false)")) {
+			assertThatThrownBy(() -> outputOf(query))
+					.describedAs(query)
+					.isInstanceOf(JsonQueryException.class)
+					.hasMessageContaining("Type checking failed");
+		}
+	}
+
+	@Test
+	void splittingAnswersStrings() throws JsonQueryException {
+		assertThat(outputOf("re2::splits(\"a\")")).isSameAs(StringType.getInstance());
+		assertThat(outputOf("re2::splits(\"a\"; \"g\")")).isSameAs(StringType.getInstance());
+		assertThat(outputOf("re2::split(\"a\"; \"g\")")).hasToString("[*:STRING]");
+	}
+
+	@Test
+	void theSubstitutionSurfaceAnswersAString() throws JsonQueryException {
+		for (String query : List.of("re2::sub(\"a\"; \"b\")", "re2::sub(\"a\"; \"b\"; \"g\")",
+				"re2::gsub(\"a\"; \"b\")", "re2::gsub(\"a\"; \"b\"; \"g\")")) {
+			assertThat(outputOf(query)).describedAs(query).isSameAs(StringType.getInstance());
+		}
+	}
+
+	/**
+	 * A null replacement contributes nothing instead of failing, and {@code gsub}'s {@code flags + "g"}
+	 * absorbs a null, but both are accidents of how the definitions are written rather than signatures to
+	 * publish.
+	 */
+	@Test
+	void theSubstitutionSurfaceTakesNeitherANullReplacementNorNullFlags() {
+		for (String query : List.of("re2::sub(\"a\"; null)", "re2::gsub(\"a\"; null)",
+				"re2::sub(\"a\"; \"b\"; null)", "re2::gsub(\"a\"; \"b\"; null)")) {
+			assertThatThrownBy(() -> outputOf(query))
+					.describedAs(query)
+					.isInstanceOf(JsonQueryException.class)
+					.hasMessageContaining("Type checking failed");
+		}
 	}
 
 	@Test

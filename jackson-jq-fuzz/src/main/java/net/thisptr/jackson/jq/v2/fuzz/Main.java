@@ -734,7 +734,7 @@ public class Main {
 	}
 
 	private static FunctionDefinitionAstNode functionDefinition(String name, List<String> args, AstNode body) {
-		return new FunctionDefinitionAstNode(SYNTHETIC, FunctionSignature.of(name, args.size()), args, body);
+		return new FunctionDefinitionAstNode(SYNTHETIC, FunctionSignature.of(name, args.size()), args, body, List.of());
 	}
 
 	private static FunctionCallAstNode functionCall(String name, List<AstNode> args) {

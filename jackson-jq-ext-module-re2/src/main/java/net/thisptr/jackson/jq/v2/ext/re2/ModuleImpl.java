@@ -33,24 +33,61 @@ import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 
 @ModuleRegistration(path = "jackson-jq/re2")
 public final class ModuleImpl implements JqModule<Object> {
+	/**
+	 * The jq-language surface over the regex primitives.
+	 * <p>
+	 * Every definition states the signature it answers with a {@code #jackson-jq:type} comment, because
+	 * left to its body a definition would instead report the primitive's whole {@code BOOLEAN|[Match]}
+	 * union -- or, where the body dispatches on {@code $val|type}, which type checking cannot read,
+	 * nothing at all.
+	 * <p>
+	 * A shape a definition names whole is rendered from {@link Types} rather than spelt out, so that the
+	 * signature it states cannot drift from the primitive it calls: printing and parsing a type are
+	 * inverses, so the text below is the same shape {@link MatchImplFunction} and
+	 * {@link SubImplFunction} publish. {@code scan} is the exception -- it names no shape of theirs, and
+	 * a union it assembles itself is clearer written out.
+	 */
 	private static final String SOURCE = """
 			import "jackson-jq/re2/_impl" as re2_impl;
+			#jackson-jq:type (STRING -> STRING; STRING -> STRING) => (STRING -> ${MATCH})
 			def match(re; mode): re2_impl::_match_impl(re; mode; false) | .[];
+			#jackson-jq:type (STRING -> STRING) => (STRING -> ${MATCH})
+			#jackson-jq:type (STRING -> [STRING]) => (STRING -> ${MATCH})
+			#jackson-jq:type (STRING -> [STRING, STRING]) => (STRING -> ${MATCH})
 			def match($val): ($val|type) as $vt | if $vt == "string" then match($val; "") elif $vt == "array" and ($val | length) > 1 then match($val[0]; $val[1]) elif $vt == "array" and ($val | length) > 0 then match($val[0]; "") else error($vt + " not a string or array") end;
+			#jackson-jq:type (STRING -> STRING; STRING -> STRING) => (STRING -> BOOLEAN)
 			def test(re; mode): re2_impl::_match_impl(re; mode; true);
+			#jackson-jq:type (STRING -> STRING) => (STRING -> BOOLEAN)
+			#jackson-jq:type (STRING -> [STRING]) => (STRING -> BOOLEAN)
+			#jackson-jq:type (STRING -> [STRING, STRING]) => (STRING -> BOOLEAN)
 			def test($val): ($val|type) as $vt | if $vt == "string" then test($val; "") elif $vt == "array" and ($val | length) > 1 then test($val[0]; $val[1]) elif $vt == "array" and ($val | length) > 0 then test($val[0]; "") else error($vt + " not a string or array") end;
+			#jackson-jq:type (STRING -> STRING; STRING -> STRING) => (STRING -> ${CAPTURES})
 			def capture(re; mods): match(re; mods) | reduce (.captures | .[] | select(.name != null) | {(.name): .string}) as $pair ({}; . + $pair);
+			#jackson-jq:type (STRING -> STRING) => (STRING -> ${CAPTURES})
+			#jackson-jq:type (STRING -> [STRING]) => (STRING -> ${CAPTURES})
+			#jackson-jq:type (STRING -> [STRING, STRING]) => (STRING -> ${CAPTURES})
 			def capture($val): ($val|type) as $vt | if $vt == "string" then capture($val; "") elif $vt == "array" and ($val | length) > 1 then capture($val[0]; $val[1]) elif $vt == "array" and ($val | length) > 0 then capture($val[0]; "") else error($vt + " not a string or array") end;
+			#jackson-jq:type (STRING -> STRING; STRING -> STRING) => (STRING -> STRING|[*:STRING|NULL])
 			def scan(re; flags): match(re; flags + "g") | if (.captures|length > 0) then [.captures | .[] | .string] else .string end;
+			#jackson-jq:type (STRING -> STRING) => (STRING -> STRING|[*:STRING|NULL])
 			def scan(re): scan(re; "");
+			#jackson-jq:type (STRING -> STRING; STRING -> STRING) => (STRING -> STRING)
 			def splits($re; flags): def _nwise(a; $n): if a|length <= $n then a else a[0:$n], _nwise(a[$n:]; $n) end; def _nwise($n): _nwise(.; $n); . as $s | [match($re; "g" + flags) | (.offset, .offset + .length)] | [0] + . + [$s|length] | _nwise(2) | $s[.[0]:.[1]];
+			#jackson-jq:type (STRING -> STRING) => (STRING -> STRING)
 			def splits($re): splits($re; "");
+			#jackson-jq:type (STRING -> STRING; STRING -> STRING) => (STRING -> [*:STRING])
 			def split($re; flags): [splits($re; flags)];
+			#jackson-jq:type (STRING -> STRING; ${CAPTURES} -> STRING) => (STRING -> STRING)
 			def sub($re; s): re2_impl::_sub_impl($re; s; "");
+			#jackson-jq:type (STRING -> STRING; ${CAPTURES} -> STRING; STRING -> STRING) => (STRING -> STRING)
 			def sub($re; s; flags): re2_impl::_sub_impl($re; s; flags);
+			#jackson-jq:type (STRING -> STRING; ${CAPTURES} -> STRING; STRING -> STRING) => (STRING -> STRING)
 			def gsub($re; s; flags): re2_impl::_sub_impl($re; s; flags + "g");
+			#jackson-jq:type (STRING -> STRING; ${CAPTURES} -> STRING) => (STRING -> STRING)
 			def gsub($re; s): re2_impl::_sub_impl($re; s; "g");
-			""";
+			"""
+			.replace("${MATCH}", Types.MATCH_OBJECT.toString())
+			.replace("${CAPTURES}", Types.CAPTURES.toString());
 
 	@Override
 	public String getSourceCode() {

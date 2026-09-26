@@ -18,6 +18,7 @@ jjq_java_test_suite(
         "RuntimeBindingsTest.java",
         "RuntimeOptionsTest.java",
         "TailCallTest.java",
+        "TypeAnnotationTest.java",
         "TypeCheckConstructCoverageTest.java",
         "TypeCheckFoldingTest.java",
         "TypeCheckTest.java",
