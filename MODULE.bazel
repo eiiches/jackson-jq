@@ -14,7 +14,7 @@ module(
 bazel_dep(name = "rules_java", version = "9.9.0")
 bazel_dep(name = "rules_jvm_external", version = "7.1")
 bazel_dep(name = "contrib_rules_jvm", version = "0.34.0")
-bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.4")
+bazel_dep(name = "buildifier_prebuilt", version = "10.1.0")
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "rules_spring", version = "2.6.3")
 

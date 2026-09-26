@@ -24,7 +24,7 @@ genrule(
     name = "zstd-jni-reachability-metadata",
     srcs = ["@zstd_jni_reachability_metadata//file"],
     outs = ["src/native/resources/META-INF/native-image/com.github.luben/zstd-jni/reachability-metadata.json"],
-    cmd = "cp $(location @zstd_jni_reachability_metadata//file) $@",
+    cmd = "cp $(execpath @zstd_jni_reachability_metadata//file) $@",
 )
 
 java_library(
@@ -64,7 +64,7 @@ sh_test(
     name = "jackson-jq-cli-native-smoke-test",
     size = "small",
     srcs = ["src/test/shell/native_smoke_test.sh"],
-    args = ["$(location :jackson-jq-cli-native)"],
+    args = ["$(rootpath :jackson-jq-cli-native)"],
     data = [":jackson-jq-cli-native"],
     tags = ["manual"],
 )
@@ -73,7 +73,7 @@ sh_test(
     name = "jackson-jq-cli-nested-jar-test",
     size = "small",
     srcs = ["src/test/shell/nested_jar_test.sh"],
-    args = ["$(location :jackson-jq-cli-bin.jar)"],
+    args = ["$(rootpath :jackson-jq-cli-bin.jar)"],
     data = [
         ":jackson-jq-cli-bin.jar",
         "@bazel_tools//tools/jdk:current_java_runtime",
