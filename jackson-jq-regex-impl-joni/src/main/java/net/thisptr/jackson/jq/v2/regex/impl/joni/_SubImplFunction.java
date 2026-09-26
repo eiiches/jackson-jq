@@ -29,21 +29,20 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.type.FilterType;
 import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
-import net.thisptr.jackson.jq.v2.spi.type.NullType;
-import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
 import net.thisptr.jackson.jq.v2.spi.type.StringType;
-import net.thisptr.jackson.jq.v2.spi.type.Type;
 import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
-import net.thisptr.jackson.jq.v2.spi.type.UnionType;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @FunctionRegistration(name = "_sub_impl", nargs = 3)
 public class _SubImplFunction implements Function {
-	private static final Type CAPTURES = ObjectType.of(Map.of(), UnionType.of(StringType.getInstance(), NullType.getInstance()));
+	private static final StringType STRING = StringType.getInstance();
+
 	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
-			TypeScheme.of(FunctionType.of(StringType.getInstance(), StringType.getInstance(), FilterType.of(StringType.getInstance(), StringType.getInstance()),
-					FilterType.of(CAPTURES, StringType.getInstance()),
-					FilterType.of(StringType.getInstance(), StringType.getInstance()))));
+			TypeScheme.of(FunctionType.of(STRING, STRING,
+					FilterType.of(STRING, STRING),
+					FilterType.of(Types.CAPTURES, STRING),
+					FilterType.of(STRING, STRING)))
+	);
 
 	@Override
 	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {

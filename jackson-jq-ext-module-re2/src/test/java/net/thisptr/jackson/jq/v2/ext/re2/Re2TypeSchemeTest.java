@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
 import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
 import net.thisptr.jackson.jq.v2.spi.type.NumericType;
 import net.thisptr.jackson.jq.v2.spi.type.StringType;
@@ -64,10 +65,16 @@ class Re2TypeSchemeTest {
 		});
 	}
 
+	/**
+	 * The primitive's last argument decides which of its two signatures a call has: the test mode answers
+	 * whether the regex matched, the match mode answers the matches themselves.
+	 */
 	@Test
-	void testModeAndMatchModeShareOneSignature() throws JsonQueryException {
-		Type output = outputOf("re2_impl::_match_impl(\"a\"; null; true)", StringType.getInstance());
-		assertThat(output.toString()).contains("BOOLEAN").contains("captures");
+	void theTestModeArgumentPicksTheSignature() throws JsonQueryException {
+		assertThat(outputOf("re2_impl::_match_impl(\"a\"; \"\"; true)", StringType.getInstance()))
+				.isSameAs(BooleanType.getInstance());
+		assertThat(outputOf("re2_impl::_match_impl(\"a\"; \"\"; false)", StringType.getInstance()).toString())
+				.startsWith("[*:{").contains("captures");
 	}
 
 	@Test

@@ -22,40 +22,27 @@ import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
 import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
 import net.thisptr.jackson.jq.v2.spi.type.FilterType;
 import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
-import net.thisptr.jackson.jq.v2.spi.type.NullType;
-import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
-import net.thisptr.jackson.jq.v2.spi.type.NumericType;
-import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
 import net.thisptr.jackson.jq.v2.spi.type.StringType;
-import net.thisptr.jackson.jq.v2.spi.type.Type;
 import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
-import net.thisptr.jackson.jq.v2.spi.type.UnionType;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 final class MatchImplFunction implements Function {
-	private static final Type CAPTURE;
-	private static final Type MATCH;
-	/**
-	 * The same signature the joni engine publishes; one jq-level surface is built on both.
-	 */
-	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES;
+	private static final StringType STRING = StringType.getInstance();
 
-	static {
-		CAPTURE = ObjectType.of(
-				"offset", NumericType.of(NumberKind.INT),
-				"length", NumericType.of(NumberKind.INT),
-				"string", UnionType.of(StringType.getInstance(), NullType.getInstance()),
-				"name", UnionType.of(StringType.getInstance(), NullType.getInstance()));
-		MATCH = ObjectType.of(
-				"offset", NumericType.of(NumberKind.INT),
-				"length", NumericType.of(NumberKind.INT),
-				"string", UnionType.of(StringType.getInstance(), NullType.getInstance()),
-				"captures", ArrayType.of(CAPTURE));
-		TYPE_SCHEMES = List.of(
-				TypeScheme.of(FunctionType.of(StringType.getInstance(), UnionType.of(BooleanType.getInstance(), ArrayType.of(MATCH)), FilterType.of(StringType.getInstance(), StringType.getInstance()),
-						FilterType.of(StringType.getInstance(), UnionType.of(StringType.getInstance(), NullType.getInstance())),
-						FilterType.of(StringType.getInstance(), BooleanType.getInstance()))));
-	}
+	/**
+	 * The last argument decides which signature a call has: the test mode answers whether the regex
+	 * matched, the match mode answers the matches themselves.
+	 */
+	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
+			TypeScheme.of(FunctionType.of(STRING, BooleanType.getInstance(),
+					FilterType.of(STRING, STRING),
+					FilterType.of(STRING, STRING),
+					FilterType.of(STRING, BooleanType.of(true)))),
+			TypeScheme.of(FunctionType.of(STRING, ArrayType.of(Types.MATCH_OBJECT),
+					FilterType.of(STRING, STRING),
+					FilterType.of(STRING, STRING),
+					FilterType.of(STRING, BooleanType.of(false))))
+	);
 
 	@Override
 	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {

@@ -26,37 +26,23 @@ import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
 import net.thisptr.jackson.jq.v2.spi.type.BooleanType;
 import net.thisptr.jackson.jq.v2.spi.type.FilterType;
 import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
-import net.thisptr.jackson.jq.v2.spi.type.NullType;
-import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
-import net.thisptr.jackson.jq.v2.spi.type.NumericType;
-import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
 import net.thisptr.jackson.jq.v2.spi.type.StringType;
-import net.thisptr.jackson.jq.v2.spi.type.Type;
 import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
-import net.thisptr.jackson.jq.v2.spi.type.UnionType;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @FunctionRegistration(name = "_match_impl", nargs = 3)
 public class _MatchImplFunction implements Function {
-	private static final Type CAPTURE_OBJECT_TYPE = ObjectType.of(
-			"offset", NumericType.of(NumberKind.INT),
-			"length", NumericType.of(NumberKind.INT),
-			"string", UnionType.of(StringType.getInstance(), NullType.getInstance()),
-			"name", UnionType.of(StringType.getInstance(), NullType.getInstance())
-	);
-
-	private static final Type MATCH_OBJECT_TYPE = ObjectType.of(
-			"offset", NumericType.of(NumberKind.INT),
-			"length", NumericType.of(NumberKind.INT),
-			"string", UnionType.of(StringType.getInstance(), NullType.getInstance()),
-			"captures", ArrayType.of(CAPTURE_OBJECT_TYPE)
-	);
+	private static final StringType STRING = StringType.getInstance();
 
 	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
-			TypeScheme.of(FunctionType.of(StringType.getInstance(), UnionType.of(BooleanType.getInstance(), ArrayType.of(MATCH_OBJECT_TYPE)),
-					FilterType.of(StringType.getInstance(), StringType.getInstance()),
-					FilterType.of(StringType.getInstance(), UnionType.of(StringType.getInstance(), NullType.getInstance())),
-					FilterType.of(StringType.getInstance(), BooleanType.getInstance())))
+			TypeScheme.of(FunctionType.of(STRING, BooleanType.getInstance(),
+					FilterType.of(STRING, STRING),
+					FilterType.of(STRING, STRING),
+					FilterType.of(STRING, BooleanType.of(true)))),
+			TypeScheme.of(FunctionType.of(STRING, ArrayType.of(Types.MATCH_OBJECT),
+					FilterType.of(STRING, STRING),
+					FilterType.of(STRING, STRING),
+					FilterType.of(STRING, BooleanType.of(false))))
 	);
 
 	@Override

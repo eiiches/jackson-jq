@@ -156,9 +156,9 @@
   - false
   types:
   - input: 'ANY'
-    output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]'
+    output: 'BOOLEAN'
   - input: '[STRING,STRING]'
-    output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]'
+    output: 'BOOLEAN'
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
@@ -221,9 +221,9 @@
   - ","
   types:
   - input: 'ANY'
-    output: 'ANY'
+    output: 'STRING|[*:NULL|STRING]'
   - input: 'STRING'
-    output: 'ANY'
+    output: 'STRING|[*:NULL|STRING]'
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
@@ -1915,9 +1915,9 @@
   - true
   types:
   - input: 'ANY'
-    output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]'
+    output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}]'
   - input: 'NULL'
-    output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]'
+    output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}]'
   properties:
     cardinality: UNKNOWN
     depends_on_input: false
