@@ -174,6 +174,50 @@ class PlaygroundTest {
 	}
 
 	@Test
+	void supportsVimVisualSelectionInPlayground() throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6),
+				Versions.JQ_1_6,
+				"jackson3",
+				"{\"name\":\"Bob\",\"age\":30}".getBytes(StandardCharsets.UTF_8),
+				false,
+				false,
+				false,
+				".name",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				true,
+				Collections.emptyList(),
+				true,
+				new PrintStream(out),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(createTestRunner(
+				new ByteArrayOutputStream(),
+				KeyEvent.ofChar('0'),
+				KeyEvent.ofChar('v'),
+				KeyEvent.ofChar('e'),
+				KeyEvent.ofChar('c'),
+				KeyEvent.ofChar('.'),
+				KeyEvent.ofChar('a'),
+				KeyEvent.ofChar('g'),
+				KeyEvent.ofChar('e'),
+				KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofChar(':'),
+				KeyEvent.ofChar('q'),
+				KeyEvent.ofKey(KeyCode.ENTER),
+				KeyEvent.ofChar('y')));
+
+		assertThat(pg.getQuery()).isEqualTo(".age");
+		assertThat(pg.isAccepted()).isTrue();
+		assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("30\n");
+	}
+
+	@Test
 	void initializesWithEvaluatedPreview() {
 		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
 		JsonNode input = JSON.createObject(Collections.singletonMap("name", JSON.createString("Alice")));

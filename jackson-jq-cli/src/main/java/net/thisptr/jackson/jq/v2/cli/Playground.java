@@ -1066,6 +1066,7 @@ final class Playground<N> {
 				.build();
 		textArea.render(queryEditorRect, frame.buffer(), queryState);
 		if (vimQueryEditor != null) {
+			renderQueryVisualSelection(frame.buffer(), queryEditorRect);
 			renderQuerySearchHighlights(frame.buffer(), queryEditorRect);
 		}
 		if (focus == Focus.QUERY && modal == Modal.NONE) {
@@ -2097,6 +2098,48 @@ final class Playground<N> {
 				Span.styled(" (Ctrl+P to toggle) ", Style.EMPTY.dim()));
 	}
 
+	private void renderQueryVisualSelection(Buffer buffer, Rect area) {
+		VimQueryEditor editor = Objects.requireNonNull(vimQueryEditor);
+		if (!editor.isVisualMode() || area.isEmpty()) {
+			return;
+		}
+		int gutterWidth = Math.max(2, String.valueOf(queryState.lineCount()).length()) + 2;
+		if (area.width() <= gutterWidth) {
+			return;
+		}
+		Rect textArea = new Rect(area.left() + gutterWidth, area.top(), area.width() - gutterWidth, area.height());
+		for (int row = 0; row < queryState.lineCount(); row++) {
+			int screenRow = row - queryState.scrollRow();
+			if (screenRow < 0 || screenRow >= textArea.height()) {
+				continue;
+			}
+			VimQueryEditor.VisualRange range = editor.visualRangeOnRow(row);
+			if (range == null) {
+				continue;
+			}
+			String line = queryState.getLine(row);
+			renderQueryVisualRange(buffer, textArea, screenRow, line, range.startCol(), range.endCol(), range.includesNewline());
+		}
+	}
+
+	private void renderQueryVisualRange(
+			Buffer buffer, Rect textArea, int screenRow, String line, int startCol, int endCol, boolean includesNewline) {
+		int scrollCol = queryState.scrollCol();
+		int safeScroll = Math.min(scrollCol, line.length());
+		int safeStart = Math.min(Math.max(startCol, safeScroll), line.length());
+		int safeEnd = Math.min(Math.max(safeStart, endCol), line.length());
+		int xStart = textArea.left() + CharWidth.of(line.substring(safeScroll, safeStart));
+		@Var int xEnd = textArea.left() + CharWidth.of(line.substring(safeScroll, safeEnd));
+		if (includesNewline && xEnd < textArea.right()) {
+			xEnd = Math.max(xEnd + 1, xStart + 1);
+		}
+		Style selectionStyle = Style.EMPTY.bg(Color.BLUE).fg(Color.WHITE);
+		for (int column = xStart; column < Math.min(textArea.right(), xEnd); column++) {
+			Cell cell = buffer.get(column, textArea.top() + screenRow);
+			buffer.set(column, textArea.top() + screenRow, cell.patchStyle(selectionStyle));
+		}
+	}
+
 	private void renderQuerySearchHighlights(Buffer buffer, Rect area) {
 		VimQueryEditor editor = Objects.requireNonNull(vimQueryEditor);
 		List<VimQueryEditor.SearchMatch> matches = editor.visibleSearchMatches();
@@ -2213,6 +2256,13 @@ final class Playground<N> {
 					} else if (vimQueryEditor.mode() == VimQueryEditor.Mode.COMMAND) {
 						addGuideItem(spans, "Enter", "Run Command");
 						addGuideItem(spans, "Esc", "Cancel");
+					} else if (vimQueryEditor.isVisualMode()) {
+						addGuideItem(spans, "Esc", "Normal Mode");
+						addGuideItem(spans, "d/x", "Delete");
+						addGuideItem(spans, "y", "Yank");
+						addGuideItem(spans, "c", "Change");
+						addGuideItem(spans, "o", "Other End");
+						addGuideItem(spans, "hjkl", "Select");
 					} else {
 						addGuideItem(spans, "hjkl", "Navigate");
 						addGuideItem(spans, "i/a", "Insert");

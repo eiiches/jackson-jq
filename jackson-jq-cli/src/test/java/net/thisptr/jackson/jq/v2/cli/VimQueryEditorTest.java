@@ -1,5 +1,7 @@
 package net.thisptr.jackson.jq.v2.cli;
 
+import java.util.Objects;
+
 import dev.tamboui.tui.event.KeyCode;
 import dev.tamboui.tui.event.KeyEvent;
 import dev.tamboui.tui.event.KeyModifiers;
@@ -1062,6 +1064,415 @@ class VimQueryEditorTest {
 		assertThat(state.cursorCol()).isEqualTo(1);
 	}
 
+	@Test
+	void entersAndExitsCharacterwiseVisualMode() {
+		TextAreaState state = new TextAreaState("hello world");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0w");
+		key(editor, 'v');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.VISUAL);
+		assertThat(editor.modeLabel()).isEqualTo("VISUAL");
+		assertThat(editor.isVisualMode()).isTrue();
+		assertThat(editor.statusText()).isEqualTo("1 character");
+
+		text(editor, "ll");
+		assertThat(editor.statusText()).isEqualTo("3 characters");
+
+		key(editor, 'v');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.NORMAL);
+		assertThat(editor.isVisualMode()).isFalse();
+
+		key(editor, 'v');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.VISUAL);
+		escape(editor);
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.NORMAL);
+	}
+
+	@Test
+	void characterwiseVisualDeletesAndYanks() {
+		TextAreaState state = new TextAreaState("hello beautiful world");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0wve");
+		key(editor, 'y');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.NORMAL);
+		assertThat(state.text()).isEqualTo("hello beautiful world");
+
+		text(editor, "0wved");
+		assertThat(state.text()).isEqualTo("hello  world");
+
+		key(editor, 'u');
+		assertThat(state.text()).isEqualTo("hello beautiful world");
+
+		text(editor, "$p");
+		assertThat(state.text()).contains("beautiful");
+	}
+
+	@Test
+	void characterwiseVisualChangesAndUndoes() {
+		TextAreaState state = new TextAreaState("foo.bar");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0ve");
+		key(editor, 'c');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.INSERT);
+		text(editor, "baz");
+		escape(editor);
+
+		assertThat(state.text()).isEqualTo("baz.bar");
+		key(editor, 'u');
+		assertThat(state.text()).isEqualTo("foo.bar");
+	}
+
+	@Test
+	void characterwiseVisualToggleEndpointsWithO() {
+		TextAreaState state = new TextAreaState("abcdef");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0lvll");
+		assertThat(state.cursorCol()).isEqualTo(3);
+		key(editor, 'o');
+		assertThat(state.cursorCol()).isEqualTo(1);
+		key(editor, 'h');
+		assertThat(state.cursorCol()).isZero();
+		key(editor, 'o');
+		assertThat(state.cursorCol()).isEqualTo(3);
+		key(editor, 'd');
+		assertThat(state.text()).isEqualTo("ef");
+	}
+
+	@Test
+	void characterwiseVisualReplaceAndCaseConversion() {
+		TextAreaState state = new TextAreaState("hello WORLD");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0vl");
+		key(editor, '~');
+		assertThat(state.text()).isEqualTo("HEllo WORLD");
+
+		text(editor, "0vll");
+		key(editor, 'u');
+		assertThat(state.text()).isEqualTo("hello WORLD");
+
+		text(editor, "0vll");
+		key(editor, 'U');
+		assertThat(state.text()).isEqualTo("HELlo WORLD");
+
+		text(editor, "0vl");
+		text(editor, "rx");
+		assertThat(state.text()).isEqualTo("xxLlo WORLD");
+	}
+
+	@Test
+	void characterwiseVisualPastesOverSelection() {
+		TextAreaState state = new TextAreaState("one two three");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0vey"); // yank "one"
+		text(editor, "wvep"); // select "two" and paste "one" over it
+		assertThat(state.text()).isEqualTo("one one three");
+
+		text(editor, "wvep"); // paste again (register now has "two"!)
+		assertThat(state.text()).isEqualTo("one one two");
+	}
+
+	@Test
+	void entersAndExitsLinewiseVisualMode() {
+		TextAreaState state = new TextAreaState("line 1\nline 2\nline 3");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg");
+
+		key(editor, 'V');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.VISUAL_LINE);
+		assertThat(editor.modeLabel()).isEqualTo("VISUAL LINE");
+		assertThat(editor.statusText()).isEqualTo("1 line");
+
+		key(editor, 'j');
+		assertThat(editor.statusText()).isEqualTo("2 lines");
+
+		key(editor, 'V');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.NORMAL);
+
+		shiftKey(editor, 'v');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.VISUAL_LINE);
+		escape(editor);
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.NORMAL);
+	}
+
+	@Test
+	void linewiseVisualDeletesAndYanks() {
+		TextAreaState state = new TextAreaState("a\nb\nc\nd");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg");
+
+		text(editor, "jVj");
+		key(editor, 'y');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.NORMAL);
+		assertThat(state.text()).isEqualTo("a\nb\nc\nd");
+
+		text(editor, "Vjd");
+		assertThat(state.text()).isEqualTo("a\nd");
+
+		key(editor, 'P');
+		assertThat(state.text()).isEqualTo("a\nb\nc\nd");
+
+		key(editor, 'u');
+		key(editor, 'u');
+		assertThat(state.text()).isEqualTo("a\nb\nc\nd");
+	}
+
+	@Test
+	void linewiseVisualIndentsAndOutdents() {
+		TextAreaState state = new TextAreaState("foo\nbar\nbaz");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg");
+
+		text(editor, "Vj>");
+		assertThat(state.text()).isEqualTo("  foo\n  bar\nbaz");
+
+		text(editor, "Vj<");
+		assertThat(state.text()).isEqualTo("foo\nbar\nbaz");
+	}
+
+	@Test
+	void linewiseVisualJoinsLines() {
+		TextAreaState state = new TextAreaState("foo\n  bar\n  baz");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg");
+
+		text(editor, "VjJ");
+		assertThat(state.text()).isEqualTo("foo bar\n  baz");
+	}
+
+	@Test
+	void linewiseVisualChanges() {
+		TextAreaState state = new TextAreaState("first\nsecond\nthird");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg");
+
+		text(editor, "jVc");
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.INSERT);
+		text(editor, "replacement");
+		escape(editor);
+		assertThat(state.text()).isEqualTo("first\nreplacement\nthird");
+	}
+
+	@Test
+	void entersAndExitsBlockwiseVisualMode() {
+		TextAreaState state = new TextAreaState("1234\n5678\nabcd");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg");
+
+		ctrlKey(editor, 'v');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.VISUAL_BLOCK);
+		assertThat(editor.modeLabel()).isEqualTo("VISUAL BLOCK");
+		assertThat(editor.statusText()).isEqualTo("1x1");
+
+		text(editor, "2jl");
+		assertThat(editor.statusText()).isEqualTo("3x2");
+
+		ctrlKey(editor, 'v');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.NORMAL);
+
+		ctrlKey(editor, 'v');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.VISUAL_BLOCK);
+		escape(editor);
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.NORMAL);
+	}
+
+	@Test
+	void blockwiseVisualDeletesAndYanks() {
+		TextAreaState state = new TextAreaState("abcdef\nabcdef\nabcdef");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg");
+
+		text(editor, "0l");
+		ctrlKey(editor, 'v');
+		text(editor, "j2l");
+		key(editor, 'd');
+		assertThat(state.text()).isEqualTo("aef\naef\nabcdef");
+
+		key(editor, 'u');
+		assertThat(state.text()).isEqualTo("abcdef\nabcdef\nabcdef");
+	}
+
+	@Test
+	void blockwiseVisualPastesBlockOnSuccessiveLines() {
+		TextAreaState state = new TextAreaState("xx\nyy\nzz");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg");
+
+		text(editor, "0");
+		ctrlKey(editor, 'v');
+		text(editor, "j");
+		key(editor, 'y'); // yank "x\ny" block
+
+		text(editor, "$p"); // paste block at end of lines
+		assertThat(state.text()).isEqualTo("xxx\nyyy\nzz");
+	}
+
+	@Test
+	void blockwiseVisualInsertReplicatesAcrossRows() {
+		TextAreaState state = new TextAreaState("apple\nbanana\ncherry");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg");
+
+		text(editor, "0");
+		ctrlKey(editor, 'v');
+		text(editor, "2j");
+		key(editor, 'I');
+		text(editor, "# ");
+		escape(editor);
+
+		assertThat(state.text()).isEqualTo("# apple\n# banana\n# cherry");
+
+		key(editor, 'u');
+		assertThat(state.text()).isEqualTo("apple\nbanana\ncherry");
+	}
+
+	@Test
+	void blockwiseVisualAppendReplicatesAcrossRows() {
+		TextAreaState state = new TextAreaState("one\ntwo\nsix");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg");
+
+		text(editor, "0");
+		ctrlKey(editor, 'v');
+		text(editor, "2j2l");
+		key(editor, 'A');
+		text(editor, ";");
+		escape(editor);
+
+		assertThat(state.text()).isEqualTo("one;\ntwo;\nsix;");
+	}
+
+	@Test
+	void blockwiseVisualChangeReplicatesAcrossRows() {
+		TextAreaState state = new TextAreaState("var1 = 1\nvar2 = 2\nvar3 = 3");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg");
+
+		text(editor, "0");
+		ctrlKey(editor, 'v');
+		text(editor, "2j3l");
+		key(editor, 'c');
+		text(editor, "val");
+		escape(editor);
+
+		assertThat(state.text()).isEqualTo("val = 1\nval = 2\nval = 3");
+	}
+
+	@Test
+	void blockwiseVisualToggleEndpointsWithOAndCapitalO() {
+		TextAreaState state = new TextAreaState("12345\n67890");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg");
+
+		text(editor, "0");
+		ctrlKey(editor, 'v');
+		text(editor, "j2l");
+		assertThat(state.cursorRow()).isEqualTo(1);
+		assertThat(state.cursorCol()).isEqualTo(2);
+
+		key(editor, 'O'); // horizontal opposite on same line
+		assertThat(state.cursorRow()).isEqualTo(1);
+		assertThat(state.cursorCol()).isZero();
+
+		key(editor, 'o'); // diagonal opposite
+		assertThat(state.cursorRow()).isZero();
+		assertThat(state.cursorCol()).isEqualTo(2);
+	}
+
+	@Test
+	void switchesBetweenVisualModesDirectly() {
+		TextAreaState state = new TextAreaState("hello\nworld");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg");
+
+		key(editor, 'v');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.VISUAL);
+
+		key(editor, 'V');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.VISUAL_LINE);
+
+		ctrlKey(editor, 'v');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.VISUAL_BLOCK);
+
+		key(editor, 'v');
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.VISUAL);
+
+		escape(editor);
+		assertThat(editor.mode()).isEqualTo(VimQueryEditor.Mode.NORMAL);
+	}
+
+	@Test
+	void supportsTextObjectsInVisualMode() {
+		TextAreaState state = new TextAreaState("foo(\"hello world\")");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0fhl");
+		text(editor, "vi\"");
+		key(editor, 'd');
+		assertThat(state.text()).isEqualTo("foo(\"\")");
+
+		key(editor, 'u');
+		text(editor, "0fhl");
+		text(editor, "va\"");
+		key(editor, 'd');
+		assertThat(state.text()).isEqualTo("foo()");
+	}
+
+	@Test
+	void supportsWordTextObjectsInOperatorPendingMode() {
+		TextAreaState state = new TextAreaState("foo bar baz");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "0wdiw");
+		assertThat(state.text()).isEqualTo("foo  baz");
+
+		key(editor, 'u');
+		text(editor, "0wdaw");
+		assertThat(state.text()).isEqualTo("foo baz");
+	}
+
+	@Test
+	void computesVisualRangeOnRowCorrectly() {
+		TextAreaState state = new TextAreaState("abcd\nefgh\nijkl");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		text(editor, "gg");
+
+		text(editor, "0l");
+		key(editor, 'v');
+		text(editor, "j");
+		VimQueryEditor.VisualRange r0 = editor.visualRangeOnRow(0);
+		assertThat(r0).isNotNull();
+		assertThat(Objects.requireNonNull(r0).startCol()).isEqualTo(1);
+		assertThat(r0.endCol()).isEqualTo(4);
+		assertThat(r0.includesNewline()).isTrue();
+
+		VimQueryEditor.VisualRange r1 = editor.visualRangeOnRow(1);
+		assertThat(r1).isNotNull();
+		assertThat(Objects.requireNonNull(r1).startCol()).isZero();
+		assertThat(r1.endCol()).isEqualTo(2);
+
+		assertThat(editor.visualRangeOnRow(2)).isNull();
+
+		key(editor, 'V');
+		VimQueryEditor.VisualRange lineRange = editor.visualRangeOnRow(0);
+		assertThat(lineRange).isNotNull();
+		assertThat(Objects.requireNonNull(lineRange).startCol()).isZero();
+		assertThat(lineRange.endCol()).isEqualTo(4);
+		assertThat(lineRange.includesNewline()).isTrue();
+
+		ctrlKey(editor, 'v');
+		VimQueryEditor.VisualRange blockRange = editor.visualRangeOnRow(0);
+		assertThat(blockRange).isNotNull();
+		assertThat(Objects.requireNonNull(blockRange).startCol()).isEqualTo(1);
+		assertThat(blockRange.endCol()).isEqualTo(2);
+		assertThat(blockRange.includesNewline()).isFalse();
+	}
+
 	private static void text(VimQueryEditor editor, String text) {
 		for (int i = 0; i < text.length(); i++) {
 			key(editor, text.charAt(i));
@@ -1082,6 +1493,14 @@ class VimQueryEditorTest {
 
 	private static void key(VimQueryEditor editor, char key) {
 		editor.handleKey(KeyEvent.ofChar(key));
+	}
+
+	private static void ctrlKey(VimQueryEditor editor, char key) {
+		editor.handleKey(KeyEvent.ofChar(key, KeyModifiers.CTRL));
+	}
+
+	private static void shiftKey(VimQueryEditor editor, char key) {
+		editor.handleKey(KeyEvent.ofChar(key, KeyModifiers.SHIFT));
 	}
 
 	private static void escape(VimQueryEditor editor) {
