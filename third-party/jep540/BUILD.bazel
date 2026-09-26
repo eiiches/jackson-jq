@@ -8,6 +8,6 @@ sh_test(
     name = "classpath_exception_test",
     size = "small",
     srcs = ["classpath_exception_test.sh"],
-    args = ["$(locations @jep540_sources//:sources)"],
+    args = ["$(rootpaths @jep540_sources//:sources)"],
     data = ["@jep540_sources//:sources"],
 )
