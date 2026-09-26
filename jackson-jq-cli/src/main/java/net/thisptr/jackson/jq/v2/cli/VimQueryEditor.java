@@ -159,6 +159,7 @@ final class VimQueryEditor {
 	private int preferredColumn;
 	private @Nullable Path currentFile;
 	private String savedText;
+	private boolean savedEmptyHasNewline;
 
 	VimQueryEditor(TextAreaState state) {
 		this(state, null);
@@ -167,6 +168,21 @@ final class VimQueryEditor {
 	VimQueryEditor(TextAreaState state, @Nullable Path currentFile) {
 		this.state = state;
 		this.currentFile = currentFile;
+		String original = state.text();
+		String normalized = normalizeLineEndings(original);
+		this.savedEmptyHasNewline = normalized.equals("\n");
+		String visible = withoutFinalNewline(normalized);
+		if (!visible.equals(original)) {
+			int row = state.cursorRow();
+			int col = state.cursorCol();
+			boolean atEnd = row == state.lineCount() - 1 && col == state.getLine(row).length();
+			state.setText(visible);
+			if (atEnd) {
+				state.moveCursorToEnd();
+			} else {
+				setPosition(Math.min(row, state.lineCount() - 1), col);
+			}
+		}
 		this.savedText = state.text();
 		normalizeNormalCursor();
 		this.preferredColumn = state.cursorCol();
@@ -716,17 +732,19 @@ final class VimQueryEditor {
 
 	private Result writeFile(Path file, boolean force, boolean saveAs) throws IOException {
 		boolean current = currentFile != null && currentFile.toAbsolutePath().normalize().equals(file.toAbsolutePath().normalize());
+		String text = state.text().isEmpty() ? (savedEmptyHasNewline ? "\n" : "") : state.text() + "\n";
 		if (force || current) {
-			Files.writeString(file, state.text(), StandardCharsets.UTF_8, StandardOpenOption.CREATE,
+			Files.writeString(file, text, StandardCharsets.UTF_8, StandardOpenOption.CREATE,
 					StandardOpenOption.TRUNCATE_EXISTING);
 		} else {
-			Files.writeString(file, state.text(), StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW);
+			Files.writeString(file, text, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW);
 		}
 		if (saveAs) {
 			currentFile = file;
 		}
 		if (current || saveAs) {
 			savedText = state.text();
+			savedEmptyHasNewline = text.equals("\n");
 		}
 		message = "Written: " + file;
 		return Result.HANDLED;
@@ -737,7 +755,8 @@ final class VimQueryEditor {
 			message = "Unsaved changes (use :e! to discard them)";
 			return Result.HANDLED;
 		}
-		String text = Files.readString(file, StandardCharsets.UTF_8);
+		String normalized = normalizeLineEndings(Files.readString(file, StandardCharsets.UTF_8));
+		String text = withoutFinalNewline(normalized);
 		boolean changed = !state.text().equals(text);
 		setTextAndPosition(text, 0, 0);
 		normalizeNormalCursor();
@@ -746,17 +765,18 @@ final class VimQueryEditor {
 		replaceHistory.clear();
 		currentFile = file;
 		savedText = text;
+		savedEmptyHasNewline = normalized.equals("\n");
 		message = "Opened: " + file;
 		return changed ? Result.CHANGED : Result.HANDLED;
 	}
 
 	private Result readFile(Path file) throws IOException {
-		String text = Files.readString(file, StandardCharsets.UTF_8);
+		String text = normalizeLineEndings(Files.readString(file, StandardCharsets.UTF_8));
 		if (text.isEmpty()) {
 			message = "Read: " + file;
 			return Result.HANDLED;
 		}
-		String inserted = text.endsWith("\n") ? text.substring(0, text.length() - 1) : text;
+		String inserted = withoutFinalNewline(text);
 		int row = state.cursorRow();
 		List<String> lines = lines();
 		lines.addAll(row + 1, Arrays.asList(inserted.split("\n", -1)));
@@ -766,6 +786,14 @@ final class VimQueryEditor {
 		preferredColumn = state.cursorCol();
 		message = "Read: " + file;
 		return Result.CHANGED;
+	}
+
+	private static String normalizeLineEndings(String text) {
+		return text.replace("\r\n", "\n");
+	}
+
+	private static String withoutFinalNewline(String text) {
+		return text.endsWith("\n") ? text.substring(0, text.length() - 1) : text;
 	}
 
 	private Result handleSearchKey(KeyEvent key) {

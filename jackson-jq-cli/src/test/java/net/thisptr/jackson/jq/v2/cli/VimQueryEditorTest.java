@@ -538,17 +538,17 @@ class VimQueryEditorTest {
 		escape(editor);
 		command(editor, "write " + other);
 		assertThat(editor.currentFile()).isEqualTo(current);
-		assertThat(Files.readString(other)).isEqualTo(".name");
+		assertThat(Files.readString(other)).isEqualTo(".name\n");
 		assertThat(Files.readString(current)).isEqualTo(".");
 		command(editor, "e");
 		assertThat(editor.statusText()).startsWith("Unsaved changes");
 
 		command(editor, "w");
-		assertThat(Files.readString(current)).isEqualTo(".name");
+		assertThat(Files.readString(current)).isEqualTo(".name\n");
 		command(editor, "w " + other);
 		assertThat(editor.statusText()).startsWith("File already exists");
 		command(editor, "w! " + other);
-		assertThat(Files.readString(other)).isEqualTo(".name");
+		assertThat(Files.readString(other)).isEqualTo(".name\n");
 	}
 
 	@Test
@@ -564,12 +564,12 @@ class VimQueryEditorTest {
 		assertThat(Files.readString(file)).isEqualTo("old");
 		command(editor, "saveas! " + escaped);
 		assertThat(editor.currentFile()).isEqualTo(file);
-		assertThat(Files.readString(file)).isEqualTo(".value");
+		assertThat(Files.readString(file)).isEqualTo(".value\n");
 
 		text(editor, "A | .name");
 		escape(editor);
 		command(editor, "w");
-		assertThat(Files.readString(file)).isEqualTo(".value | .name");
+		assertThat(Files.readString(file)).isEqualTo(".value | .name\n");
 	}
 
 	@Test
@@ -601,7 +601,7 @@ class VimQueryEditorTest {
 		text(editor, "A | .value");
 		escape(editor);
 		command(editor, "w");
-		assertThat(Files.readString(next)).isEqualTo(".next | .value");
+		assertThat(Files.readString(next)).isEqualTo(".next | .value\n");
 		assertThat(Files.readString(file)).isEqualTo(".changed");
 	}
 
@@ -647,6 +647,85 @@ class VimQueryEditorTest {
 		command(editor, "e " + tempDir.resolve("missing.jq"));
 		assertThat(editor.statusText()).startsWith("File error:");
 		assertThat(state.text()).isEqualTo(".");
+	}
+
+	@Test
+	void hidesOnlyTheFileTerminatingNewline() {
+		TextAreaState oneLine = new TextAreaState("first\n");
+		new VimQueryEditor(oneLine);
+		assertThat(oneLine.text()).isEqualTo("first");
+		assertThat(oneLine.lineCount()).isEqualTo(1);
+
+		TextAreaState blankLastLine = new TextAreaState("first\n\n");
+		new VimQueryEditor(blankLastLine);
+		assertThat(blankLastLine.text()).isEqualTo("first\n");
+		assertThat(blankLastLine.lineCount()).isEqualTo(2);
+
+		TextAreaState windowsLines = new TextAreaState("first\r\nsecond\r\n");
+		new VimQueryEditor(windowsLines);
+		assertThat(windowsLines.text()).isEqualTo("first\nsecond");
+		assertThat(windowsLines.lineCount()).isEqualTo(2);
+	}
+
+	@Test
+	void savesOneTerminatingNewlineAndPreservesEmptyFileCases() throws Exception {
+		Path file = tempDir.resolve("query.jq");
+		TextAreaState state = new TextAreaState("value");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		command(editor, "saveas " + file);
+		assertThat(Files.readString(file)).isEqualTo("value\n");
+		command(editor, "e");
+		assertThat(state.text()).isEqualTo("value");
+		assertThat(state.lineCount()).isEqualTo(1);
+
+		Path empty = tempDir.resolve("empty.jq");
+		command(new VimQueryEditor(new TextAreaState("")), "saveas " + empty);
+		assertThat(Files.readString(empty)).isEmpty();
+
+		Path newlineOnly = tempDir.resolve("newline-only.jq");
+		Files.writeString(newlineOnly, "\n");
+		TextAreaState blank = new TextAreaState("\n");
+		VimQueryEditor blankEditor = new VimQueryEditor(blank, newlineOnly);
+		assertThat(blank.text()).isEmpty();
+		assertThat(blank.lineCount()).isEqualTo(1);
+		command(blankEditor, "w");
+		assertThat(Files.readString(newlineOnly)).isEqualTo("\n");
+	}
+
+	@Test
+	void enterAtEndCreatesAVisibleBlankLine() throws Exception {
+		Path file = tempDir.resolve("query.jq");
+		TextAreaState state = new TextAreaState("value\n");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		key(editor, 'A');
+		editor.handleKey(KeyEvent.ofKey(KeyCode.ENTER));
+		escape(editor);
+		assertThat(state.text()).isEqualTo("value\n");
+		assertThat(state.lineCount()).isEqualTo(2);
+		command(editor, "saveas " + file);
+		assertThat(Files.readString(file)).isEqualTo("value\n\n");
+	}
+
+	@Test
+	void normalizesWindowsLineEndingsWhenEditingAndReading() throws Exception {
+		Path file = tempDir.resolve("windows.jq");
+		Files.writeString(file, "one\r\ntwo\r\n");
+		TextAreaState state = new TextAreaState(".");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		command(editor, "e " + file);
+		assertThat(state.text()).isEqualTo("one\ntwo");
+		command(editor, "w");
+		assertThat(Files.readString(file)).isEqualTo("one\ntwo\n");
+
+		Path extra = tempDir.resolve("extra.jq");
+		Files.writeString(extra, "three\r\nfour\r\n");
+		text(editor, "gg");
+		command(editor, "r " + extra);
+		assertThat(state.text()).isEqualTo("one\nthree\nfour\ntwo");
+		key(editor, 'u');
+		assertThat(state.text()).isEqualTo("one\ntwo");
+		command(editor, "e");
+		assertThat(editor.statusText()).startsWith("Opened:");
 	}
 
 	@Test

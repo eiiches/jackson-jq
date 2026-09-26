@@ -53,7 +53,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MainTest {
 	@Test
 	void vimWriteUsesFromFileAsCurrentFile(@TempDir Path tempDir) throws Exception {
-		Path queryFile = write(tempDir, "query.jq", ".");
+		Path queryFile = write(tempDir, "query.jq", ".\n");
 		Options options = new Options();
 		options.addOption(Option.builder("i").longOpt("interactive").get());
 		options.addOption(Option.builder("n").longOpt("null-input").get());
@@ -82,14 +82,14 @@ class MainTest {
 		try {
 			System.setOut(new PrintStream(new ByteArrayOutputStream()));
 			System.setErr(new PrintStream(new ByteArrayOutputStream()));
-			Main.run(command, ".", Collections.emptyList(), Versions.JQ_1_6,
+			Main.run(command, ".\n", Collections.emptyList(), Versions.JQ_1_6,
 					Jackson3JsonProvider.getInstance(), RuntimeOptions.newBuilder().build(),
 					warnTypeChecking(), runner, null);
 		} finally {
 			System.setOut(originalOut);
 			System.setErr(originalErr);
 		}
-		assertThat(Files.readString(queryFile)).isEqualTo(".name");
+		assertThat(Files.readString(queryFile)).isEqualTo(".name\n");
 	}
 
 	@ParameterizedTest
