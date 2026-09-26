@@ -36,6 +36,7 @@ public final class GraalVmSmokeTest {
 		assertQuery(jsonProvider, env, "import \"jackson-jq/http\" as http; true", "null", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/zstd\" as zstd; zstd::decompress_text", "\"KLUv/QRYKQAAaGVsbG+jbZ+I\"", "hello");
 		assertQuery(jsonProvider, env, "import \"jackson-jq/random\" as random; random::random | . >= 0 and . < 1", "null", true);
+		assertQuery(jsonProvider, env, "import \"jackson-jq/os\" as os; true", "null", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/re2\" as re; re::test(\"a.c\")", "\"abc\"", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/time\" as time; 1477162342372 | time::strftime(\"yyyy-MM-dd HH:mm:ss.SSSXXX\"; \"UTC\")", "null", "2016-10-22 18:52:22.372Z");
 		assertQuery(jsonProvider, env, "import \"jackson-jq/uri\" as uri; uri::uridecode", "\"%66%6f%6f\"", "foo");
