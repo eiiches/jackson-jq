@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -190,6 +191,16 @@ final class Playground<N> {
 			   String initialQuery, JsonProvider<?> jsonProvider,
 			   RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
 			   boolean warningsEnabled, List<String> inputFiles, boolean vimMode, PrintStream out, PrintStream err) {
+		this(env, version, providerName, rawInputBytes, nullInput, rawInput, slurp, initialQuery, jsonProvider,
+				runtimeOptions, compileOptions, compact, rawOutput, warningsEnabled, inputFiles, vimMode, null, out, err);
+	}
+
+	Playground(Environment<?> env, Version version, String providerName, byte @Nullable [] rawInputBytes,
+			   boolean nullInput, boolean rawInput, boolean slurp,
+			   String initialQuery, JsonProvider<?> jsonProvider,
+			   RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
+			   boolean warningsEnabled, List<String> inputFiles, boolean vimMode, @Nullable Path queryFile,
+			   PrintStream out, PrintStream err) {
 		this.env = env;
 		this.version = version;
 		this.providerName = providerName;
@@ -208,7 +219,7 @@ final class Playground<N> {
 		this.err = err;
 		this.queryState = new TextAreaState(initialQuery);
 		this.queryState.moveCursorToEnd();
-		this.vimQueryEditor = vimMode ? new VimQueryEditor(this.queryState) : null;
+		this.vimQueryEditor = vimMode ? new VimQueryEditor(this.queryState, queryFile) : null;
 
 		updateInputs();
 	}

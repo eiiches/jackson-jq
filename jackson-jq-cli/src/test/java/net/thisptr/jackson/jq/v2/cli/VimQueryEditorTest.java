@@ -1,5 +1,8 @@
 package net.thisptr.jackson.jq.v2.cli;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
 
 import dev.tamboui.tui.event.KeyCode;
@@ -7,10 +10,14 @@ import dev.tamboui.tui.event.KeyEvent;
 import dev.tamboui.tui.event.KeyModifiers;
 import dev.tamboui.widgets.input.TextAreaState;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class VimQueryEditorTest {
+	@TempDir
+	Path tempDir;
+
 	@Test
 	void groupsAnInsertSessionIntoOneUndoEntry() {
 		TextAreaState state = new TextAreaState(".");
@@ -517,6 +524,125 @@ class VimQueryEditorTest {
 		text(editor, ":nope");
 		editor.handleKey(KeyEvent.ofKey(KeyCode.ENTER));
 		assertThat(editor.statusText()).isEqualTo("Not an editor command: nope");
+	}
+
+	@Test
+	void writesCurrentFileAndKeepsAssociationWhenWritingAnotherFile() throws Exception {
+		Path current = tempDir.resolve("current.jq");
+		Path other = tempDir.resolve("other.jq");
+		Files.writeString(current, ".", StandardCharsets.UTF_8);
+		TextAreaState state = new TextAreaState(".");
+		VimQueryEditor editor = new VimQueryEditor(state, current);
+
+		text(editor, "Aname");
+		escape(editor);
+		command(editor, "write " + other);
+		assertThat(Files.readString(other)).isEqualTo(".name");
+		assertThat(Files.readString(current)).isEqualTo(".");
+		command(editor, "e");
+		assertThat(editor.statusText()).startsWith("Unsaved changes");
+
+		command(editor, "w");
+		assertThat(Files.readString(current)).isEqualTo(".name");
+		command(editor, "w " + other);
+		assertThat(editor.statusText()).startsWith("File already exists");
+		command(editor, "w! " + other);
+		assertThat(Files.readString(other)).isEqualTo(".name");
+	}
+
+	@Test
+	void saveAsUsesEscapedPathAndRequiresForceToOverwrite() throws Exception {
+		Path file = tempDir.resolve("query file.jq");
+		Files.writeString(file, "old", StandardCharsets.UTF_8);
+		TextAreaState state = new TextAreaState(".value");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		String escaped = file.toString().replace(" ", "\\ ");
+
+		command(editor, "saveas " + escaped);
+		assertThat(editor.statusText()).startsWith("File already exists");
+		assertThat(Files.readString(file)).isEqualTo("old");
+		command(editor, "saveas! " + escaped);
+		assertThat(Files.readString(file)).isEqualTo(".value");
+
+		text(editor, "A | .name");
+		escape(editor);
+		command(editor, "w");
+		assertThat(Files.readString(file)).isEqualTo(".value | .name");
+	}
+
+	@Test
+	void editChecksUnsavedChangesAndResetsUndoHistory() throws Exception {
+		Path file = tempDir.resolve("query.jq");
+		Files.writeString(file, ".first", StandardCharsets.UTF_8);
+		TextAreaState state = new TextAreaState(".first");
+		VimQueryEditor editor = new VimQueryEditor(state, file);
+
+		text(editor, "A | .second");
+		escape(editor);
+		command(editor, "edit");
+		assertThat(state.text()).isEqualTo(".first | .second");
+		assertThat(editor.statusText()).startsWith("Unsaved changes");
+		command(editor, "e!");
+		assertThat(state.text()).isEqualTo(".first");
+		key(editor, 'u');
+		assertThat(state.text()).isEqualTo(".first");
+
+		Files.writeString(file, ".changed", StandardCharsets.UTF_8);
+		command(editor, "e");
+		assertThat(state.text()).isEqualTo(".changed");
+
+		Path next = tempDir.resolve("next.jq");
+		Files.writeString(next, ".next", StandardCharsets.UTF_8);
+		command(editor, "edit " + next);
+		assertThat(state.text()).isEqualTo(".next");
+		text(editor, "A | .value");
+		escape(editor);
+		command(editor, "w");
+		assertThat(Files.readString(next)).isEqualTo(".next | .value");
+		assertThat(Files.readString(file)).isEqualTo(".changed");
+	}
+
+	@Test
+	void undoToSavedTextAllowsEditWithoutForce() throws Exception {
+		Path file = tempDir.resolve("query.jq");
+		Files.writeString(file, ".", StandardCharsets.UTF_8);
+		TextAreaState state = new TextAreaState(".");
+		VimQueryEditor editor = new VimQueryEditor(state, file);
+		text(editor, "Aname");
+		escape(editor);
+		key(editor, 'u');
+		command(editor, "e");
+		assertThat(editor.statusText()).startsWith("Opened:");
+	}
+
+	@Test
+	void readInsertsAfterCurrentLineAndCanBeUndone() throws Exception {
+		Path file = tempDir.resolve("lines.jq");
+		Files.writeString(file, "one\ntwo\n", StandardCharsets.UTF_8);
+		TextAreaState state = new TextAreaState("top\nbottom");
+		VimQueryEditor editor = new VimQueryEditor(state);
+
+		text(editor, "gg");
+		command(editor, "read " + file);
+		assertThat(state.text()).isEqualTo("top\none\ntwo\nbottom");
+		key(editor, 'u');
+		assertThat(state.text()).isEqualTo("top\nbottom");
+		command(editor, "r! " + file);
+		assertThat(editor.statusText()).contains("not supported");
+		assertThat(state.text()).isEqualTo("top\nbottom");
+	}
+
+	@Test
+	void missingFileAndMissingNameLeaveBufferIntact() {
+		TextAreaState state = new TextAreaState(".");
+		VimQueryEditor editor = new VimQueryEditor(state);
+		command(editor, "w");
+		assertThat(editor.statusText()).isEqualTo("No current file");
+		command(editor, "saveas");
+		assertThat(editor.statusText()).isEqualTo("File name required");
+		command(editor, "e " + tempDir.resolve("missing.jq"));
+		assertThat(editor.statusText()).startsWith("File error:");
+		assertThat(state.text()).isEqualTo(".");
 	}
 
 	@Test
@@ -1694,6 +1820,12 @@ class VimQueryEditorTest {
 		for (int i = 0; i < text.length(); i++) {
 			key(editor, text.charAt(i));
 		}
+	}
+
+	private static void command(VimQueryEditor editor, String command) {
+		key(editor, ':');
+		text(editor, command);
+		editor.handleKey(KeyEvent.ofKey(KeyCode.ENTER));
 	}
 
 	private static void assertTextObject(String input, String command, String expected) {

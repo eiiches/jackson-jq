@@ -1,5 +1,12 @@
 package net.thisptr.jackson.jq.v2.cli;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -150,9 +157,17 @@ final class VimQueryEditor {
 	private final StringBuilder blockInsertedText = new StringBuilder();
 	private @Nullable String message;
 	private int preferredColumn;
+	private @Nullable Path currentFile;
+	private String savedText;
 
 	VimQueryEditor(TextAreaState state) {
+		this(state, null);
+	}
+
+	VimQueryEditor(TextAreaState state, @Nullable Path currentFile) {
 		this.state = state;
+		this.currentFile = currentFile;
+		this.savedText = state.text();
 		normalizeNormalCursor();
 		this.preferredColumn = state.cursorCol();
 	}
@@ -587,6 +602,10 @@ final class VimQueryEditor {
 				clearQuerySearch();
 				return Result.HANDLED;
 			}
+			Result fileResult = handleFileCommand(entered);
+			if (fileResult != null) {
+				return fileResult;
+			}
 			message = "Not an editor command: " + entered;
 			return Result.HANDLED;
 		}
@@ -599,6 +618,149 @@ final class VimQueryEditor {
 			}
 		}
 		return Result.HANDLED;
+	}
+
+	@Nullable
+	private Result handleFileCommand(String entered) {
+		String trimmed = entered.strip();
+		@Var int separator = 0;
+		while (separator < trimmed.length() && !Character.isWhitespace(trimmed.charAt(separator))) {
+			separator++;
+		}
+		@Var String name = trimmed.substring(0, separator);
+		boolean force = name.endsWith("!");
+		if (force) {
+			name = name.substring(0, name.length() - 1);
+		}
+		boolean write = name.equals("w") || name.equals("write");
+		boolean saveAs = name.equals("saveas");
+		boolean read = name.equals("r") || name.equals("read");
+		boolean edit = name.equals("e") || name.equals("edit");
+		if (!write && !saveAs && !read && !edit) {
+			return null;
+		}
+		if (read && force) {
+			message = ":" + name + "! is not supported";
+			return Result.HANDLED;
+		}
+		String argument;
+		try {
+			argument = parseFileArgument(trimmed.substring(separator));
+		} catch (IllegalArgumentException e) {
+			message = e.getMessage();
+			return Result.HANDLED;
+		}
+		if (argument.isEmpty() && (saveAs || read)) {
+			message = "File name required";
+			return Result.HANDLED;
+		}
+		Path file;
+		try {
+			file = argument.isEmpty() ? currentFile : Path.of(argument);
+		} catch (InvalidPathException e) {
+			message = "Invalid file name: " + argument;
+			return Result.HANDLED;
+		}
+		if (file == null) {
+			message = "No current file";
+			return Result.HANDLED;
+		}
+		try {
+			if (read) {
+				return readFile(file);
+			}
+			if (edit) {
+				return editFile(file, force);
+			}
+			return writeFile(file, force, saveAs);
+		} catch (FileAlreadyExistsException e) {
+			message = "File already exists (use ! to overwrite): " + file;
+			return Result.HANDLED;
+		} catch (IOException | SecurityException e) {
+			message = "File error: " + e.getMessage();
+			return Result.HANDLED;
+		}
+	}
+
+	private static String parseFileArgument(String raw) {
+		StringBuilder path = new StringBuilder();
+		@Var boolean escaped = false;
+		@Var int pendingSpaces = 0;
+		for (int i = 0; i < raw.length(); i++) {
+			char c = raw.charAt(i);
+			if (escaped) {
+				path.append(" ".repeat(pendingSpaces)).append(c);
+				pendingSpaces = 0;
+				escaped = false;
+			} else if (c == '\\') {
+				escaped = true;
+			} else if (Character.isWhitespace(c)) {
+				if (!path.isEmpty()) {
+					pendingSpaces++;
+				}
+			} else {
+				path.append(" ".repeat(pendingSpaces)).append(c);
+				pendingSpaces = 0;
+			}
+		}
+		if (escaped) {
+			throw new IllegalArgumentException("Trailing backslash in file name");
+		}
+		return path.toString();
+	}
+
+	private Result writeFile(Path file, boolean force, boolean saveAs) throws IOException {
+		boolean current = currentFile != null && currentFile.toAbsolutePath().normalize().equals(file.toAbsolutePath().normalize());
+		if (force || current) {
+			Files.writeString(file, state.text(), StandardCharsets.UTF_8, StandardOpenOption.CREATE,
+					StandardOpenOption.TRUNCATE_EXISTING);
+		} else {
+			Files.writeString(file, state.text(), StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW);
+		}
+		if (saveAs) {
+			currentFile = file;
+		}
+		if (current || saveAs) {
+			savedText = state.text();
+		}
+		message = "Written: " + file;
+		return Result.HANDLED;
+	}
+
+	private Result editFile(Path file, boolean force) throws IOException {
+		if (!force && !state.text().equals(savedText)) {
+			message = "Unsaved changes (use :e! to discard them)";
+			return Result.HANDLED;
+		}
+		String text = Files.readString(file, StandardCharsets.UTF_8);
+		boolean changed = !state.text().equals(text);
+		setTextAndPosition(text, 0, 0);
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
+		undoStack.clear();
+		replaceHistory.clear();
+		currentFile = file;
+		savedText = text;
+		message = "Opened: " + file;
+		return changed ? Result.CHANGED : Result.HANDLED;
+	}
+
+	private Result readFile(Path file) throws IOException {
+		String text = Files.readString(file, StandardCharsets.UTF_8);
+		if (text.isEmpty()) {
+			message = "Read: " + file;
+			return Result.HANDLED;
+		}
+		String inserted = text.endsWith("\n") ? text.substring(0, text.length() - 1) : text;
+		int row = state.cursorRow();
+		List<String> lines = lines();
+		lines.addAll(row + 1, Arrays.asList(inserted.split("\n", -1)));
+		pushUndo(snapshot());
+		setTextAndPosition(String.join("\n", lines), row + 1, 0);
+		normalizeNormalCursor();
+		preferredColumn = state.cursorCol();
+		message = "Read: " + file;
+		return Result.CHANGED;
 	}
 
 	private Result handleSearchKey(KeyEvent key) {
