@@ -1067,6 +1067,11 @@ final class Playground<N> {
 				.borderColor(focus == Focus.QUERY ? Color.CYAN : Color.DARK_GRAY)
 				.build();
 		frame.renderWidget(queryBlock, queryRect);
+		Path currentQueryFile = vimQueryEditor == null ? null : vimQueryEditor.currentFile();
+		if (currentQueryFile != null) {
+			renderQueryFileLabel(frame.buffer(), queryRect, currentQueryFile,
+					focus == Focus.QUERY ? Color.CYAN : Color.DARK_GRAY);
+		}
 		Rect queryInnerRect = queryBlock.inner(queryRect);
 		Rect queryEditorRect = new Rect(
 				queryInnerRect.x(), queryInnerRect.y(), queryInnerRect.width(), Math.max(0, queryInnerRect.height() - 1));
@@ -2249,6 +2254,29 @@ final class Playground<N> {
 			return;
 		}
 		buffer.setLine(area.left() + 1, area.top(), title);
+	}
+
+	private static void renderQueryFileLabel(Buffer buffer, Rect area, Path file, Color color) {
+		String label = queryFileLabel(file, area.width());
+		if (!label.isEmpty()) {
+			buffer.setString(area.right() - 1 - CharWidth.of(label), area.bottom() - 1, label,
+					Style.EMPTY.fg(color));
+		}
+	}
+
+	static String queryFileLabel(Path file, int borderWidth) {
+		int maxPathWidth = borderWidth - 4;
+		if (maxPathWidth < 1) {
+			return "";
+		}
+		@Var String path = Path.of("").toAbsolutePath().normalize().relativize(file.toAbsolutePath().normalize()).toString();
+		if (CharWidth.of(path) > maxPathWidth) {
+			while (!path.isEmpty() && CharWidth.of("…" + path) > maxPathWidth) {
+				path = path.substring(path.offsetByCodePoints(0, 1));
+			}
+			path = "…" + path;
+		}
+		return " " + path + " ";
 	}
 
 	Line buildGuideLine(Focus focus) {

@@ -202,6 +202,11 @@ final class VimQueryEditor {
 	}
 
 	@Nullable
+	Path currentFile() {
+		return currentFile;
+	}
+
+	@Nullable
 	String statusText() {
 		if (mode == Mode.COMMAND) {
 			return ":" + command;

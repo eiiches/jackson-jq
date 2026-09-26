@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.cli;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,6 +20,7 @@ import java.util.regex.Pattern;
 import dev.tamboui.backend.jline3.JLineBackend;
 import dev.tamboui.style.Color;
 import dev.tamboui.style.Style;
+import dev.tamboui.text.CharWidth;
 import dev.tamboui.text.Line;
 import dev.tamboui.text.Span;
 import dev.tamboui.tui.TuiConfig;
@@ -52,6 +54,34 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PlaygroundTest {
 
 	private static final Jackson3JsonProvider JSON = Jackson3JsonProvider.getInstance();
+
+	@Test
+	void showsCurrentQueryFileOnBottomBorder() throws Exception {
+		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
+		Playground<JsonNode> pg = new Playground<>(
+				Main.createEnvironment(JSON, Versions.JQ_1_6), Versions.JQ_1_6, "jackson3",
+				null, true, false, false, ".", JSON,
+				RuntimeOptions.newBuilder().build(), CompileOptions.newBuilder().build(),
+				false, false, true, Collections.emptyList(), true,
+				Path.of("query-label-test.jq"),
+				new PrintStream(new ByteArrayOutputStream()), new PrintStream(new ByteArrayOutputStream()));
+		pg.run(createTestRunner(terminalOut,
+				KeyEvent.ofChar(':'), KeyEvent.ofChar('q'), KeyEvent.ofKey(KeyCode.ENTER), KeyEvent.ofChar('y')));
+		assertThat(terminalOut.toString(StandardCharsets.UTF_8)).contains("query-label-test.jq");
+	}
+
+	@Test
+	void queryFileLabelUsesRelativePathAndKeepsFilenameWhenNarrow() {
+		Path cwd = Path.of("").toAbsolutePath().normalize();
+		Path file = cwd.resolve("queries/界界/query.jq");
+		assertThat(Playground.queryFileLabel(file, 80)).isEqualTo(" queries/界界/query.jq ");
+
+		String narrow = Playground.queryFileLabel(file, 15);
+		assertThat(narrow).startsWith(" …").endsWith("query.jq ");
+		assertThat(CharWidth.of(narrow)).isLessThanOrEqualTo(13);
+		assertThat(Playground.queryFileLabel(file, 4)).isEmpty();
+		assertThat(Playground.queryFileLabel(cwd.resolve("../other.jq").normalize(), 80)).isEqualTo(" ../other.jq ");
+	}
 
 	@Test
 	void vimModeEditsQueryAndSubmitsWithColonQ() throws Exception {

@@ -537,6 +537,7 @@ class VimQueryEditorTest {
 		text(editor, "Aname");
 		escape(editor);
 		command(editor, "write " + other);
+		assertThat(editor.currentFile()).isEqualTo(current);
 		assertThat(Files.readString(other)).isEqualTo(".name");
 		assertThat(Files.readString(current)).isEqualTo(".");
 		command(editor, "e");
@@ -562,6 +563,7 @@ class VimQueryEditorTest {
 		assertThat(editor.statusText()).startsWith("File already exists");
 		assertThat(Files.readString(file)).isEqualTo("old");
 		command(editor, "saveas! " + escaped);
+		assertThat(editor.currentFile()).isEqualTo(file);
 		assertThat(Files.readString(file)).isEqualTo(".value");
 
 		text(editor, "A | .name");
@@ -594,6 +596,7 @@ class VimQueryEditorTest {
 		Path next = tempDir.resolve("next.jq");
 		Files.writeString(next, ".next", StandardCharsets.UTF_8);
 		command(editor, "edit " + next);
+		assertThat(editor.currentFile()).isEqualTo(next);
 		assertThat(state.text()).isEqualTo(".next");
 		text(editor, "A | .value");
 		escape(editor);
@@ -636,6 +639,7 @@ class VimQueryEditorTest {
 	void missingFileAndMissingNameLeaveBufferIntact() {
 		TextAreaState state = new TextAreaState(".");
 		VimQueryEditor editor = new VimQueryEditor(state);
+		assertThat(editor.currentFile()).isNull();
 		command(editor, "w");
 		assertThat(editor.statusText()).isEqualTo("No current file");
 		command(editor, "saveas");
