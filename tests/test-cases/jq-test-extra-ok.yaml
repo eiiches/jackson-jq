@@ -1898,36 +1898,32 @@
   - input: 'NULL'
     output: 'STRING'
   properties:
-    cardinality: UNKNOWN
+    cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
-- q: '"abcabc" | _match_impl("a", "b"; "", "g"; false, true)'
+- q: '"abcabc" | test("a", "b"; "", "g")'
   in: null
   out:
-  - [{"offset": 0, "length": 1, "string": "a", "captures": []}]
-  - [{"offset": 1, "length": 1, "string": "b", "captures": []}]
-  - [{"offset": 0, "length": 1, "string": "a", "captures": []}, {"offset": 3, "length": 1, "string": "a", "captures": []}]
-  - [{"offset": 1, "length": 1, "string": "b", "captures": []}, {"offset": 4, "length": 1, "string": "b", "captures": []}]
   - true
   - true
   - true
   - true
   types:
   - input: 'ANY'
-    output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}]'
+    output: 'BOOLEAN'
   - input: 'NULL'
-    output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}]'
+    output: 'BOOLEAN'
   properties:
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
 
-- q: 'try ("abcabc" | _match_impl("a", "b", error("foo"); "", "g", error("bar"); false, true, error("baz"))) catch .'
+- q: 'try ("abcabc" | match("a", "b", error("foo"); "", "g")) catch .'
   in: null
   out:
-  - [{"offset": 0, "length": 1, "string": "a", "captures": []}]
-  - [{"offset": 1, "length": 1, "string": "b", "captures": []}]
+  - {"offset": 0, "length": 1, "string": "a", "captures": []}
+  - {"offset": 1, "length": 1, "string": "b", "captures": []}
   - "foo"
   types:
   - input: 'ANY'
@@ -1939,13 +1935,15 @@
     depends_on_input: false
     depends_on_external_state: false
 
-- q: 'try ("abcabc" | _match_impl("a", "b"; "", "g", error("bar"); false, true, error("baz"))) catch .'
+- q: 'try ("abcabc" | match("a", "b"; "", "g", error("bar"))) catch .'
   in: null
   out:
-  - [{"offset": 0, "length": 1, "string": "a", "captures": []}]
-  - [{"offset": 1, "length": 1, "string": "b", "captures": []}]
-  - [{"offset": 0, "length": 1, "string": "a", "captures": []}, {"offset": 3, "length": 1, "string": "a", "captures": []}]
-  - [{"offset": 1, "length": 1, "string": "b", "captures": []}, {"offset": 4, "length": 1, "string": "b", "captures": []}]
+  - {"offset": 0, "length": 1, "string": "a", "captures": []}
+  - {"offset": 1, "length": 1, "string": "b", "captures": []}
+  - {"offset": 0, "length": 1, "string": "a", "captures": []}
+  - {"offset": 3, "length": 1, "string": "a", "captures": []}
+  - {"offset": 1, "length": 1, "string": "b", "captures": []}
+  - {"offset": 4, "length": 1, "string": "b", "captures": []}
   - "bar"
   types:
   - input: 'ANY'
@@ -1957,18 +1955,14 @@
     depends_on_input: false
     depends_on_external_state: false
 
-- q: 'try ("abcabc" | _match_impl("a", "b"; "", "g"; false, true, error("baz"))) catch .'
+- q: 'try ("abcabc" | test("a", "b"; "", "g", error("bar"))) catch .'
   in: null
   out:
-  - [{"offset": 0, "length": 1, "string": "a", "captures": []}]
-  - [{"offset": 1, "length": 1, "string": "b", "captures": []}]
-  - [{"offset": 0, "length": 1, "string": "a", "captures": []}, {"offset": 3, "length": 1, "string": "a", "captures": []}]
-  - [{"offset": 1, "length": 1, "string": "b", "captures": []}, {"offset": 4, "length": 1, "string": "b", "captures": []}]
   - true
   - true
   - true
   - true
-  - "baz"
+  - "bar"
   types:
   - input: 'ANY'
     output: 'ANY'

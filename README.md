@@ -13,7 +13,7 @@ Getting started
 ---------------
 
 Java 17 or later is required.
-If you use Maven, add `jackson-jq-core` and the appropriate JSON provider to the `<dependencies>` section of your POM. Add the regex implementation only if your application uses regex functions.
+If you use Maven, add `jackson-jq-core` and the appropriate JSON provider to the `<dependencies>` section of your POM. Add a regex engine only if your application uses regex functions; they are provided by an extension module rather than being builtins.
 
 ```xml
 <dependency>
@@ -22,12 +22,12 @@ If you use Maven, add `jackson-jq-core` and the appropriate JSON provider to the
 	<version>2.0.0-alpha2</version>
 </dependency>
 
-<!-- Optional: add this dependency if your application uses regex functions -->
+<!-- Optional: add this dependency if your application uses regex functions. The module has to be
+     enabled as well -- see docs/regex.md. -->
 <dependency>
 	<groupId>net.thisptr.jackson.jq.v2</groupId>
-	<artifactId>jackson-jq-regex-impl-joni</artifactId>
+	<artifactId>jackson-jq-ext-module-joni</artifactId>
 	<version>2.0.0-alpha2</version>
-	<scope>runtime</scope>
 </dependency>
 
 <!-- Choose one JSON provider that matches the JSON library your application uses -->
@@ -154,6 +154,6 @@ License
 This software is licensed under the Apache License, Version 2.0, with the following exceptions:
 
 * [tests/test-cases](tests/test-cases) contains test cases from [stedolan/jq](https://github.com/stedolan/jq).
-* [CoreJqLibrary.java](jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/builtins/library/CoreJqLibrary.java) and [RegexJqLibrary.java](jackson-jq-regex-impl-joni/src/main/java/net/thisptr/jackson/jq/v2/regex/impl/joni/RegexJqLibrary.java) contain function definitions extracted from [jqlang/jq](https://github.com/jqlang/jq).
+* [CoreJqLibrary.java](jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/builtins/library/CoreJqLibrary.java), [JoniRegexModule.java](jackson-jq-ext-module-joni/src/main/java/net/thisptr/jackson/jq/v2/ext/joni/JoniRegexModule.java) and [Re2RegexModule.java](jackson-jq-ext-module-re2/src/main/java/net/thisptr/jackson/jq/v2/ext/re2/Re2RegexModule.java) contain function definitions extracted from [jqlang/jq](https://github.com/jqlang/jq).
 
 See [LICENSE](LICENSE) for details.

@@ -77,6 +77,6 @@ def test($val): ...;
 A module's jq source is the only place a definition it exports can state its signature, and stating
 one is what makes the module's surface typed for whoever imports it. `jackson-jq/re2` is written this
 way: see
-[`ModuleImpl`](../jackson-jq-ext-module-re2/src/main/java/net/thisptr/jackson/jq/v2/ext/re2/ModuleImpl.java),
+[`Re2RegexModule`](../jackson-jq-ext-module-re2/src/main/java/net/thisptr/jackson/jq/v2/ext/re2/Re2RegexModule.java),
 which renders its shapes from the same Java constants its primitives publish, so a stated signature
 cannot drift from the primitive behind it.

@@ -9,7 +9,9 @@ module net.thisptr.jackson.jq.v2.ext.module.re2 {
 	requires transitive net.thisptr.jackson.jq.v2.spi;
 	requires static org.jspecify;
 
+	exports net.thisptr.jackson.jq.v2.ext.re2;
+
 	provides Module with
-			net.thisptr.jackson.jq.v2.ext.re2.ModuleImpl,
+			net.thisptr.jackson.jq.v2.ext.re2.Re2RegexModule,
 			net.thisptr.jackson.jq.v2.ext.re2.InternalModuleImpl;
 }

@@ -20,6 +20,7 @@ publish_all(
         "//jackson-jq-ext-module-fs:jackson-jq-ext-module-fs.publish",
         "//jackson-jq-ext-module-gzip:jackson-jq-ext-module-gzip.publish",
         "//jackson-jq-ext-module-http:jackson-jq-ext-module-http.publish",
+        "//jackson-jq-ext-module-joni:jackson-jq-ext-module-joni.publish",
         "//jackson-jq-ext-module-os:jackson-jq-ext-module-os.publish",
         "//jackson-jq-ext-module-random:jackson-jq-ext-module-random.publish",
         "//jackson-jq-ext-module-re2:jackson-jq-ext-module-re2.publish",
@@ -39,7 +40,6 @@ publish_all(
         # unstable jdk.incubator.json pinned to an OpenJDK commit, and only runs on a JDK 26
         # started with --add-modules jdk.incubator.json.
         # "//jackson-jq-json-provider-impl-jep540:jackson-jq-json-provider-impl-jep540.publish",
-        "//jackson-jq-regex-impl-joni:jackson-jq-regex-impl-joni.publish",
         "//jackson-jq-spi:jackson-jq-spi.publish",
     ],
 )

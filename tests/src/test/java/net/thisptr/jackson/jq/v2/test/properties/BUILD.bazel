@@ -7,9 +7,9 @@ jjq_java_library(
     srcs = glob(["*.java"]),
     release = 17,
     visibility = ["//tests:__pkg__"],
-    runtime_deps = ["//jackson-jq-regex-impl-joni"],
     deps = [
         "//jackson-jq-core",
+        "//jackson-jq-ext-module-joni",
         "//jackson-jq-json-provider",
         "//jackson-jq-json-provider-impl-jackson2",
         "//jackson-jq-spi",
@@ -27,6 +27,6 @@ java_binary(
     main_class = "net.thisptr.jackson.jq.v2.test.properties.PropertyAssertionGenerator",
     runtime_deps = [
         ":properties",
-        "//jackson-jq-regex-impl-joni",
+        "//jackson-jq-ext-module-joni",
     ],
 )

@@ -18,6 +18,7 @@ import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
+import net.thisptr.jackson.jq.v2.ext.joni.JoniRegexModule;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.type.Type;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
@@ -43,6 +44,9 @@ public class TypeCheckTestCasesTest {
 					.addModuleLoader(ClassPathModuleLoader.getInstance());
 		}
 		Environment<JsonNode> env = envBuilder
+				// Regex is an extension module; the suite includes it because jq's test cases call
+				// test, match, sub and the rest by their bare names.
+				.includeModule(JoniRegexModule.getInstance())
 				.defineVariable("ENV", () -> envBuilder.getJsonProvider().createObject(Collections.singletonMap("PAGER", envBuilder.getJsonProvider().createString("less"))))
 				.build();
 

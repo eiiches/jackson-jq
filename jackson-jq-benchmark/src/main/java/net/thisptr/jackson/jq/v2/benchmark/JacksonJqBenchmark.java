@@ -18,6 +18,7 @@ import org.openjdk.jmh.infra.Blackhole;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.ext.joni.JoniRegexModule;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
@@ -50,7 +51,10 @@ public class JacksonJqBenchmark {
 		String jsonInput = requiredProperty(Main.INPUT_PROPERTY);
 		JsonProvider<Object> jsonProvider = Main.resolveProvider(jsonProviderName);
 		Version version = Main.resolveVersion(jqVersion);
-		environment = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version).build();
+		environment = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
+				// The query comes from a system property, so regex is included in case it uses it.
+				.includeModule(JoniRegexModule.getInstance())
+				.build();
 		input = jsonProvider.parse(jsonInput);
 		compiledQuery = environment.compile(jqExpression);
 	}

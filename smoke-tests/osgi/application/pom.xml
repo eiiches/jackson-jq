@@ -19,6 +19,14 @@
 			<version>${jackson-jq.version}</version>
 		</dependency>
 		<dependency>
+			<!-- Compiled against for includeModule(JoniRegexModule.getInstance()); the bundle itself is
+			     resolved at runtime from the runtime module. -->
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-joni</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
 			<artifactId>jackson-jq-json-provider-impl-jackson2</artifactId>
 			<version>${jackson-jq.version}</version>
