@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.core.function.loaders.ClassPathFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.function.loaders.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -37,7 +37,7 @@ public class FunctionContractTest {
 	@Test
 	public void allCoreFunctionsDeclareConservativeProperties() {
 		for (Version version : Versions.versions()) {
-			Map<FunctionSignature, Function> functions = ClassPathFunctionLoader.getInstance().getFunctions(version);
+			Map<FunctionSignature, Function> functions = BuiltinFunctionLoader.getInstance().getFunctions(version);
 			assertThat(functions).isNotEmpty();
 			for (Map.Entry<FunctionSignature, Function> entry : functions.entrySet()) {
 				FunctionSignature signature = entry.getKey();
@@ -83,7 +83,7 @@ public class FunctionContractTest {
 	@Test
 	public void functionCardinalityContracts() {
 		for (Version version : Versions.versions()) {
-			Map<FunctionSignature, Function> functions = ClassPathFunctionLoader.getInstance().getFunctions(version);
+			Map<FunctionSignature, Function> functions = BuiltinFunctionLoader.getInstance().getFunctions(version);
 			for (String name : List.of("tonumber", "has", "index", "rindex", "indices")) {
 				for (Map.Entry<FunctionSignature, Function> entry : functions.entrySet()) {
 					if (entry.getKey().name().equals(name)) {

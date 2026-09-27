@@ -1,7 +1,5 @@
 package net.thisptr.jackson.jq.v2.core.internal.builtins.library;
 
-import java.util.ServiceLoader;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
@@ -9,7 +7,6 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.JqLibrary;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,10 +15,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class CoreJqLibraryTest {
 	@Test
-	public void discoverableThroughServiceLoader() {
-		assertThat(ServiceLoader.load(JqLibrary.class, getClass().getClassLoader()))
-				.anyMatch(CoreJqLibrary.class::isInstance);
-		assertThat(new CoreJqLibrary().getJqFunctions()).hasSizeGreaterThan(0);
+	public void definesJqFunctions() {
+		assertThat(new CoreJqLibrary().getJqFunctions()).isNotEmpty();
 	}
 
 	@Test

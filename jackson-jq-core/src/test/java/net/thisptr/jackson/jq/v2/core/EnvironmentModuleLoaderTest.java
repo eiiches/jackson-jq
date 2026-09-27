@@ -11,10 +11,10 @@ import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
-import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
@@ -79,18 +79,17 @@ public class EnvironmentModuleLoaderTest {
 	}
 
 	/**
-	 * The class loader the overload names has to reach both default loaders, not just the module one:
-	 * a loader that sees no providers leaves the environment without even the jq builtins.
+	 * The class loader the overload names is the module loader's, and only the module loader's: the
+	 * builtins are registered in code, so a loader that sees nothing at all costs the environment its
+	 * {@code import}s and nothing else.
 	 */
 	@Test
-	public void testExplicitClassLoaderReachesBothDefaultLoaders() throws Exception {
+	public void testExplicitClassLoaderReachesOnlyTheModuleLoader() throws Exception {
 		try (URLClassLoader nothingRegistered = new URLClassLoader(new URL[0], null)) {
 			Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6, nothingRegistered).build();
 
 			assertThat(env.getModuleLoaders()).hasSize(1);
-			assertThatThrownBy(() -> env.compile("not"))
-					.isInstanceOf(JsonQueryException.class)
-					.hasMessageContaining("not/0");
+			assertThatCode(() -> env.compile("not")).doesNotThrowAnyException();
 			assertThatThrownBy(() -> env.compile("import \"foo\" as foo; foo::bar"))
 					.isInstanceOf(ModuleNotFoundException.class);
 		}

@@ -2,7 +2,10 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 
 jjq_java_library(
     name = "loaders",
-    srcs = ["ClassPathFunctionLoader.java"],
+    srcs = [
+        "BuiltinFunctionLoader.java",
+        "ClassPathFunctionLoader.java",
+    ],
     release = 17,
     visibility = [
         "//jackson-jq-cli:__subpackages__",
@@ -11,6 +14,12 @@ jjq_java_library(
     ],
     deps = [
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/function",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/builtins",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/builtins/filters",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/builtins/library",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/builtins/math",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/function/utils",
+        "//jackson-jq-json-provider",
         "//jackson-jq-spi",
     ],
 )

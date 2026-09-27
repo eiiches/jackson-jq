@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
-import net.thisptr.jackson.jq.v2.core.function.loaders.ClassPathFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.function.loaders.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.env.ConstantImpl;
 import net.thisptr.jackson.jq.v2.core.internal.env.EnvironmentImpl;
 import net.thisptr.jackson.jq.v2.core.internal.env.VariableImpl;
@@ -58,30 +58,29 @@ public final class EnvironmentBuilder<JsonNode> {
 	}
 
 	/**
-	 * Starts a builder that already knows how to find what is on the classpath: a
-	 * {@link ClassPathModuleLoader} for {@code import}ed modules, and a {@link ClassPathFunctionLoader}
-	 * for functions -- which is where the jq builtins come from. Drop either with
-	 * {@link #clearModuleLoaders()} or {@link #clearFunctionLoaders()}.
+	 * Starts a builder with the jq builtins and with the {@code import}able modules that are on the
+	 * classpath: a {@link BuiltinFunctionLoader} for functions, and a {@link ClassPathModuleLoader}
+	 * for modules. Drop either with {@link #clearFunctionLoaders()} or {@link #clearModuleLoaders()}.
 	 * <p>
-	 * Both discover their providers through this class's own {@link ClassLoader}. Where that is not
-	 * the one that can see the application's providers -- an OSGi bundle, a JPMS layer, a plugin
-	 * class loader -- name the right one with {@link #withDefaultLoaders(JsonProvider, Version, ClassLoader)}.
+	 * Only the module loader discovers anything -- the builtins are registered in code -- and it does so
+	 * through this class's own {@link ClassLoader}. Where that is not the one that can see the
+	 * application's modules -- an OSGi bundle, a JPMS layer, a plugin class loader -- name the right one
+	 * with {@link #withDefaultLoaders(JsonProvider, Version, ClassLoader)}.
 	 */
 	public static <JsonNode> EnvironmentBuilder<JsonNode> withDefaultLoaders(JsonProvider<JsonNode> jsonProvider, Version jqVersion) {
 		return withDefaultLoaders(jsonProvider, jqVersion, EnvironmentBuilder.class.getClassLoader());
 	}
 
 	/**
-	 * Same as {@link #withDefaultLoaders(JsonProvider, Version)}, but both default loaders discover
-	 * their providers through {@code classLoader} instead of this class's own.
+	 * Same as {@link #withDefaultLoaders(JsonProvider, Version)}, but the default module loader discovers
+	 * its providers through {@code classLoader} instead of this class's own.
 	 *
-	 * @param classLoader the class loader both {@link ClassPathModuleLoader} and
-	 * {@link ClassPathFunctionLoader} search for providers
+	 * @param classLoader the class loader {@link ClassPathModuleLoader} searches for providers
 	 */
 	public static <JsonNode> EnvironmentBuilder<JsonNode> withDefaultLoaders(JsonProvider<JsonNode> jsonProvider, Version jqVersion, ClassLoader classLoader) {
 		EnvironmentBuilder<JsonNode> builder = new EnvironmentBuilder<>(Objects.requireNonNull(jsonProvider, "jsonProvider"), Objects.requireNonNull(jqVersion, "jqVersion"));
 		builder.addModuleLoader(new ClassPathModuleLoader<>(classLoader));
-		builder.addFunctionLoader(new ClassPathFunctionLoader(classLoader));
+		builder.addFunctionLoader(BuiltinFunctionLoader.getInstance());
 		return builder;
 	}
 
@@ -117,7 +116,7 @@ public final class EnvironmentBuilder<JsonNode> {
 	/**
 	 * Appends a loader to the ones this environment consults. They are asked in the order they were
 	 * added, and the first one to supply the called signature answers it -- so a loader added after
-	 * the default {@link ClassPathFunctionLoader} extends the builtins rather than shadowing them.
+	 * the default {@link BuiltinFunctionLoader} extends the builtins rather than shadowing them.
 	 * To shadow a name, define it on the environment itself with {@link #defineFunction} or
 	 * {@link #defineJqFunction}, which beat every loader, or take over the search order with
 	 * {@link #clearFunctionLoaders()}.

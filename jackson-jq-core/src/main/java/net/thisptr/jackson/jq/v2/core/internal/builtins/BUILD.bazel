@@ -15,7 +15,6 @@ jjq_java_library(
         "AtShFunction.java",
         "AtUriFunction.java",
         "BuiltinTypes.java",
-        "BuiltinsFunction.java",
         "ContainsFunction.java",
         "DelPathsFunction.java",
         "EmptyFunction.java",
@@ -67,7 +66,6 @@ jjq_java_library(
     release = 17,
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
-        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/function/loaders",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/commons/collection",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/commons/pair",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/commons/range",
