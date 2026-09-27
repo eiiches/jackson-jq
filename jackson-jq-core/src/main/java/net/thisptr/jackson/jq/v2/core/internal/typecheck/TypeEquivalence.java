@@ -25,7 +25,7 @@ final class TypeEquivalence {
 	}
 
 	private static boolean equivalent(Type left, Type right,
-									  Deque<TypeVariable> leftBinders, Deque<TypeVariable> rightBinders) {
+			Deque<TypeVariable> leftBinders, Deque<TypeVariable> rightBinders) {
 		if (left instanceof TypeVariable || right instanceof TypeVariable) {
 			if (!(left instanceof TypeVariable leftVariable) || !(right instanceof TypeVariable rightVariable))
 				return false;

@@ -87,7 +87,7 @@ public final class TypeScheme<T> {
 	 * @throws IllegalArgumentException if a free variable is not quantified
 	 */
 	public static TypeScheme<FunctionType> of(Map<? extends TypeVariable, ? extends Type> variables,
-											  FunctionType type) {
+			FunctionType type) {
 		return new TypeScheme<>(variables, type);
 	}
 
@@ -167,7 +167,7 @@ public final class TypeScheme<T> {
 	}
 
 	private static void collectFreeVariables(Type type, Deque<TypeVariable> recursiveVariables,
-											 Set<TypeVariable> free) {
+			Set<TypeVariable> free) {
 		if (type instanceof TypeVariable variable) {
 			if (!recursiveVariables.contains(variable))
 				free.add(variable);

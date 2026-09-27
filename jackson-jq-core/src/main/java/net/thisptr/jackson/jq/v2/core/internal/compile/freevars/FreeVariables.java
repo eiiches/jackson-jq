@@ -105,7 +105,9 @@ public interface FreeVariables {
 		return false;
 	}
 
-	/** Subtracts the given slots from a set. Never mutates {@code slots}. */
+	/**
+	 * Subtracts the given slots from a set. Never mutates {@code slots}.
+	 */
 	static Set<Integer> minus(Set<Integer> slots, Collection<Integer> toRemove) {
 		if (slots.isEmpty() || toRemove.isEmpty())
 			return slots;

@@ -46,7 +46,7 @@ public class ValueLiteral<JsonNode> implements ConstantExpression<StackFrame, Js
 	}
 
 	private ValueLiteral(Type type, JsonNode value, @Nullable String stringLiteral,
-						 @Nullable BigDecimal numberLiteral) {
+			@Nullable BigDecimal numberLiteral) {
 		this.type = type;
 		this.value = value;
 		this.stringLiteral = stringLiteral;

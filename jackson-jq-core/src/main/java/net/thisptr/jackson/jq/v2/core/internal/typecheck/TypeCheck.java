@@ -227,7 +227,7 @@ public final class TypeCheck {
 	}
 
 	public static Type run(@Nullable AnalyzedExpression<?> expression,
-						   Map<AnalyzedExpression<?>, SourceLocation> locations, CompileOptions options) throws JsonQueryException {
+			Map<AnalyzedExpression<?>, SourceLocation> locations, CompileOptions options) throws JsonQueryException {
 		if (options.getTypeCheckMode() == TypeCheckMode.OFF || expression == null)
 			return AnyType.getInstance();
 		TypeCheck check = new TypeCheck(locations, options);
@@ -716,7 +716,7 @@ public final class TypeCheck {
 	 * slot before the closure is built.
 	 */
 	private Type capturedCall(AnalyzedExpression<?> call, String name, int closureSlot,
-							  List<? extends AnalyzedExpression<?>> args, Type input) {
+			List<? extends AnalyzedExpression<?>> args, Type input) {
 		Closures enclosing = closures.peek();
 		Integer slot = enclosing == null ? null : enclosing.functions().get(closureSlot);
 		if (slot == null)
@@ -913,7 +913,7 @@ public final class TypeCheck {
 	 * back to {@code fallback}, because a wrong answer here would reject a query the runtime handles.
 	 */
 	private Type specialize(AnalyzedExpression<?> body, Type input, Map<Integer, Argument> filters,
-							Map<Integer, Type> values, Closures bodyClosures, Supplier<Type> fallback) {
+			Map<Integer, Type> values, Closures bodyClosures, Supplier<Type> fallback) {
 		Specialization key = new Specialization(body, input, Map.copyOf(filters), Map.copyOf(values), bodyClosures);
 		Type memoized = specializations.get(key);
 		if (memoized != null)
@@ -950,7 +950,7 @@ public final class TypeCheck {
 	}
 
 	private Type runBody(AnalyzedExpression<?> body, Type input, Map<Integer, Argument> filters,
-						 Map<Integer, Type> values, Closures bodyClosures) {
+			Map<Integer, Type> values, Closures bodyClosures) {
 		// A body sees its own parameters and nothing else of the caller's scope -- what it did capture
 		// reaches it as a ResolvedCaptured*Access, typed from `closures` instead. Installing exactly the
 		// parameters, rather than adding them on top of what the caller had, is also what makes the memo
@@ -1215,8 +1215,8 @@ public final class TypeCheck {
 	}
 
 	private Type applySchemes(AnalyzedExpression<?> expression, String name, int callArity,
-							  List<? extends AnalyzedExpression<?>> arguments,
-							  Type input, List<TypeScheme<FunctionType>> schemes) {
+			List<? extends AnalyzedExpression<?>> arguments,
+			Type input, List<TypeScheme<FunctionType>> schemes) {
 		String function = name + "/" + callArity;
 		List<MatchedOverload> matched = new ArrayList<>();
 		@Var boolean hasMatchingArity = false;
@@ -1704,11 +1704,15 @@ public final class TypeCheck {
 		Iteration run(Type accumulator);
 	}
 
-	/** What one pass of a loop body leaves the accumulator at, and what that pass emits. */
+	/**
+	 * What one pass of a loop body leaves the accumulator at, and what that pass emits.
+	 */
 	private record Iteration(Type updated, Type emitted) {
 	}
 
-	/** Where an accumulator settled, and everything the loop emitted on the way. */
+	/**
+	 * Where an accumulator settled, and everything the loop emitted on the way.
+	 */
 	private record Accumulation(Type output, Type emitted) {
 	}
 

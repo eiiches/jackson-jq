@@ -18,7 +18,7 @@ public class FunctionDefinitionAstNode extends AbstractAstNode {
 	private final List<TypeScheme<FunctionType>> typeSchemes;
 
 	public FunctionDefinitionAstNode(SourceLocation location, FunctionSignature signature, List<String> args, AstNode body,
-									 List<TypeScheme<FunctionType>> typeSchemes) {
+			List<TypeScheme<FunctionType>> typeSchemes) {
 		super(location);
 		this.signature = signature;
 		this.args = args;

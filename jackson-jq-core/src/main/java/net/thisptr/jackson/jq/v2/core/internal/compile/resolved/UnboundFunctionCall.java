@@ -29,7 +29,7 @@ public final class UnboundFunctionCall<JsonNode> implements RewritableExpression
 	private final ExpressionProperties properties;
 
 	public UnboundFunctionCall(BindContext<JsonNode> bindContext, String name, Function factory,
-							   List<AnalyzedExpression<JsonNode>> args, List<TypeScheme<FunctionType>> typeSchemes) {
+			List<AnalyzedExpression<JsonNode>> args, List<TypeScheme<FunctionType>> typeSchemes) {
 		this.bindContext = bindContext;
 		this.name = name;
 		this.factory = factory;

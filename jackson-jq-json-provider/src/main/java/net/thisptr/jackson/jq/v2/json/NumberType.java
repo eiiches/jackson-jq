@@ -33,7 +33,9 @@ public enum NumberType {
 	 */
 	DOUBLE,
 
-	/** The value is held as a {@code float}. */
+	/**
+	 * The value is held as a {@code float}.
+	 */
 	FLOAT,
 
 	/**

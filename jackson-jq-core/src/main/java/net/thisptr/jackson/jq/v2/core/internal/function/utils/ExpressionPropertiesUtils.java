@@ -16,7 +16,7 @@ public final class ExpressionPropertiesUtils {
 	 * Propagates cardinality and both dependencies from every argument because each receives the call input.
 	 */
 	public static ExpressionProperties forwardAll(Cardinality cardinality, boolean readsInput,
-												  boolean readsExternalState, List<ExpressionProperties> arguments) {
+			boolean readsExternalState, List<ExpressionProperties> arguments) {
 		@Var Cardinality combinedCardinality = cardinality;
 		@Var boolean dependsOnInput = readsInput;
 		@Var boolean dependsOnExternalState = readsExternalState;
@@ -32,7 +32,7 @@ public final class ExpressionPropertiesUtils {
 	 * Propagates external state and cardinality from evaluated arguments, but not input dependency.
 	 */
 	public static ExpressionProperties evaluateOnFixedInput(Cardinality cardinality, boolean readsInput,
-															boolean readsExternalState, List<ExpressionProperties> arguments) {
+			boolean readsExternalState, List<ExpressionProperties> arguments) {
 		@Var Cardinality combinedCardinality = cardinality;
 		@Var boolean dependsOnExternalState = readsExternalState;
 		for (ExpressionProperties argument : arguments) {
@@ -49,7 +49,7 @@ public final class ExpressionPropertiesUtils {
 	 * filter parameter's cardinality.
 	 */
 	public static ExpressionProperties forwardDependencies(Cardinality cardinality, boolean readsInput,
-														   boolean readsExternalState, List<ExpressionProperties> arguments) {
+			boolean readsExternalState, List<ExpressionProperties> arguments) {
 		@Var boolean dependsOnInput = readsInput;
 		@Var boolean dependsOnExternalState = readsExternalState;
 		for (ExpressionProperties argument : arguments) {

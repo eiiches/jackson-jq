@@ -90,7 +90,7 @@ public final class RecursiveType implements Type {
 	}
 
 	private static boolean guarded(Type type, TypeVariable variable, boolean beneathContainer,
-								   IdentityHashMap<Type, Boolean> visited) {
+			IdentityHashMap<Type, Boolean> visited) {
 		if (variable.equals(type))
 			return beneathContainer;
 		if (visited.put(type, Boolean.TRUE) != null)

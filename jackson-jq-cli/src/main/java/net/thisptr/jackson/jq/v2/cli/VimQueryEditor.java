@@ -2062,7 +2062,7 @@ final class VimQueryEditor {
 	}
 
 	private @Nullable MotionResult resolveMotion(Motion motion, int repetitions,
-												 @Nullable Integer absoluteLine, @Nullable String searchTarget) {
+			@Nullable Integer absoluteLine, @Nullable String searchTarget) {
 		int current = offset();
 		int lineStart = current - state.cursorCol();
 		int lineEnd = lineStart + state.getLine(state.cursorRow()).length();
