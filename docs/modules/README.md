@@ -1,6 +1,6 @@
 # Using extension modules
 
-Additional functions that are not part of jq are available through separate extension modules. An extension module can implement `JavaModule` for functions written in Java and ready to call, `JqModule` for jq source that the compiler compiles, or both. In a hybrid module, the jq source can call the Java functions, and the materialized module exports both sets. Add only the dependencies your application needs and configure its `Environment` with a `ClassPathModuleLoader` -- `EnvironmentBuilder.withDefaultLoaders(...)` installs one already, over this library's own class loader or over one you name. An environment can hold several loaders, asked in the order they were added: `addModuleLoader(...)` appends one (see [FileSystemModuleTest.java](../../examples/FileSystemModuleTest.java), which searches the classpath and then the filesystem), and `clearModuleLoaders()` drops the default when the search order should be entirely yours.
+Additional functions that are not part of jq are available through separate extension modules. An extension module can implement `JavaModule` for functions written in Java and ready to call, `JqModule` for jq source that the compiler compiles, or both. In a hybrid module, the jq source can call the Java functions, and the materialized module exports both sets. Add only the dependencies your application needs. `EnvironmentBuilder.withDefaultLoaders(...)` installs jq's builtin functions but no module loader. Register a module directly, or add a `ClassPathModuleLoader` to discover module services. Other loaders, such as the one in [FileSystemModuleTest.java](../../examples/FileSystemModuleTest.java), can be added in the order they should be searched.
 
 For example, add the UUID extension:
 
@@ -10,6 +10,22 @@ For example, add the UUID extension:
 	<artifactId>jackson-jq-ext-module-uuid</artifactId>
 	<version>2.0.0-alpha2</version>
 </dependency>
+```
+
+Make it available for query imports by registering its instance:
+
+```java
+Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
+        .registerModule(new UuidModule())
+        .build();
+```
+
+Alternatively, discover all visible module services explicitly:
+
+```java
+Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
+        .addModuleLoader(new ClassPathModuleLoader<>(App.class.getClassLoader()))
+        .build();
 ```
 
 Import the module in the jq program:
@@ -36,3 +52,9 @@ An explicit `import` keeps extension functions under its module namespace, while
 them to that compilation's unqualified function namespace. Conflicting includes are allowed; a
 later include replaces an earlier function with the same signature, and a local `def` takes
 precedence over both.
+
+An application can apply either directive to every query it compiles, instead of requiring one in
+the query text: `EnvironmentBuilder.importModule(module, "uuid")` binds the alias, and
+`EnvironmentBuilder.includeModule(module)` exposes the module's functions unqualified. Both take a
+`JavaModule`, a `JqModule` or a hybrid directly, so a module the application already holds needs no
+loader and no import path. A query's own `import`/`include` shadows what the environment registered.

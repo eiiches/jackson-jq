@@ -9,6 +9,19 @@ import io.quarkus.runtime.annotations.QuarkusMain;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
+import net.thisptr.jackson.jq.v2.ext.binary.BinaryModule;
+import net.thisptr.jackson.jq.v2.ext.fs.FsModule;
+import net.thisptr.jackson.jq.v2.ext.gzip.GzipModule;
+import net.thisptr.jackson.jq.v2.ext.http.HttpModule;
+import net.thisptr.jackson.jq.v2.ext.joni.JoniRegexModule;
+import net.thisptr.jackson.jq.v2.ext.os.OsModule;
+import net.thisptr.jackson.jq.v2.ext.random.RandomModule;
+import net.thisptr.jackson.jq.v2.ext.re2.Re2RegexModule;
+import net.thisptr.jackson.jq.v2.ext.time.TimeModule;
+import net.thisptr.jackson.jq.v2.ext.uri.UriModule;
+import net.thisptr.jackson.jq.v2.ext.uuid.UuidModule;
+import net.thisptr.jackson.jq.v2.ext.zstd.ZstdModule;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
@@ -28,9 +41,30 @@ public class QuarkusSmokeTestMain implements QuarkusApplication {
 
 	private static <JsonNode> void testWithJsonProvider(JsonProvider<JsonNode> jsonProvider) throws Exception {
 		Version version = Version.valueOf("1.6");
-		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version, QuarkusSmokeTestMain.class.getClassLoader())
-				.build();
+		EnvironmentBuilder<JsonNode> registered = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
+				.registerModule(new BinaryModule())
+				.registerModule(new FsModule())
+				.registerModule(new GzipModule())
+				.registerModule(new HttpModule())
+				.registerModule(new JoniRegexModule())
+				.registerModule(new OsModule())
+				.registerModule(new RandomModule())
+				.registerModule(new Re2RegexModule())
+				.registerModule(new TimeModule())
+				.registerModule(new UriModule())
+				.registerModule(new UuidModule())
+				.registerModule(new ZstdModule())
+				.includeModule(new JoniRegexModule());
+		assertModules(jsonProvider, registered.build());
 
+		Environment<JsonNode> discovered = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
+				.addModuleLoader(new ClassPathModuleLoader<>(QuarkusSmokeTestMain.class.getClassLoader()))
+				.includeModule(new JoniRegexModule())
+				.build();
+		assertModules(jsonProvider, discovered);
+	}
+
+	private static <JsonNode> void assertModules(JsonProvider<JsonNode> jsonProvider, Environment<JsonNode> env) throws Exception {
 		assertQuery(jsonProvider, env, "length", "[1,2]", 2);
 		assertQuery(jsonProvider, env, "test(\"a.c\")", "\"abc\"", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/binary\" as binary; \"hello\" | binary::encode_text | binary::decode_text", "null", "hello");
@@ -39,6 +73,7 @@ public class QuarkusSmokeTestMain implements QuarkusApplication {
 		assertQuery(jsonProvider, env, "import \"jackson-jq/http\" as http; true", "null", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/zstd\" as zstd; zstd::decompress_text", "\"KLUv/QRYKQAAaGVsbG+jbZ+I\"", "hello");
 		assertQuery(jsonProvider, env, "import \"jackson-jq/random\" as random; random::random | . >= 0 and . < 1", "null", true);
+		assertQuery(jsonProvider, env, "import \"jackson-jq/os\" as os; true", "null", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/re2\" as re; re::test(\"a.c\")", "\"abc\"", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/time\" as time; 1477162342372 | time::strftime(\"yyyy-MM-dd HH:mm:ss.SSSXXX\"; \"UTC\")", "null", "2016-10-22 18:52:22.372Z");
 		assertQuery(jsonProvider, env, "import \"jackson-jq/uri\" as uri; uri::uridecode", "\"%66%6f%6f\"", "foo");

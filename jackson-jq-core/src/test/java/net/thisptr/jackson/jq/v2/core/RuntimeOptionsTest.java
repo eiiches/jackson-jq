@@ -346,7 +346,36 @@ public class RuntimeOptionsTest {
 		// A module's `def`s are the module author's, not the caller's -- they compile to the same node as a
 		// query-text def but must stay off the budget, exactly like a jq-source builtin.
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
-				.addImportedModule("math", new JqModule<JsonNode>() {
+				.importModule(new JqModule<JsonNode>() {
+					@Override
+					public String getSourceCode() {
+						return "def square($x): $x * $x;";
+					}
+
+					@Override
+					public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
+						throw new ModuleNotFoundException(importPath);
+					}
+
+					@Override
+					public JsonNode relativeData(String importPath, String searchPath) {
+						throw new ModuleNotFoundException(importPath);
+					}
+				}, "math")
+				.build();
+
+		List<JsonNode> out = new ArrayList<>();
+		env.compile("math::square(5)").withRuntimeOptions(maxUserDefinedFunctionCalls(0))
+				.apply(Jackson2JsonProvider.getInstance().createNull(), out::add);
+		assertThat(out).containsExactly(Jackson2JsonProvider.getInstance().createNumber(25));
+	}
+
+	@Test
+	public void includedModuleFunctionsDoNotDrawOnTheBudget() {
+		// Same rule for a module the environment includes: losing the `::` qualifier does not turn the
+		// module author's `def`s into the caller's.
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
+				.includeModule(new JqModule<JsonNode>() {
 					@Override
 					public String getSourceCode() {
 						return "def square($x): $x * $x;";
@@ -365,7 +394,7 @@ public class RuntimeOptionsTest {
 				.build();
 
 		List<JsonNode> out = new ArrayList<>();
-		env.compile("math::square(5)").withRuntimeOptions(maxUserDefinedFunctionCalls(0))
+		env.compile("square(5)").withRuntimeOptions(maxUserDefinedFunctionCalls(0))
 				.apply(Jackson2JsonProvider.getInstance().createNull(), out::add);
 		assertThat(out).containsExactly(Jackson2JsonProvider.getInstance().createNumber(25));
 	}
@@ -457,7 +486,7 @@ public class RuntimeOptionsTest {
 		// A module's expressions are the module author's, not the caller's: only the call written in the
 		// query text is tallied, and here it emits one value.
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
-				.addImportedModule("gen", new JqModule<JsonNode>() {
+				.importModule(new JqModule<JsonNode>() {
 					@Override
 					public String getSourceCode() {
 						return """
@@ -475,7 +504,7 @@ public class RuntimeOptionsTest {
 					public JsonNode relativeData(String importPath, String searchPath) {
 						throw new ModuleNotFoundException(importPath);
 					}
-				})
+				}, "gen")
 				.build();
 
 		List<JsonNode> out = new ArrayList<>();

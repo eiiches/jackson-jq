@@ -3,7 +3,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "debug",
     srcs = [
-        "ModuleImpl.java",
+        "DebugModule.java",
     ],
     release = 17,
     visibility = ["//jackson-jq-ext-module-debug:__subpackages__"],

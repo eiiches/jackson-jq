@@ -160,6 +160,7 @@ public class CompileContext {
 	private final Map<FunctionSignature, Integer> rootFunctionSlots;
 	private final Map<String, JavaModule> importedModules;
 	private final Map<FunctionSignature, Function> includedFunctions;
+	private final Map<FunctionSignature, Function> environmentIncludedFunctions;
 	private final Map<String, Object> importedVariableDefaults;
 
 	public CompileContext() {
@@ -196,6 +197,7 @@ public class CompileContext {
 		this.rootFunctionSlots = new HashMap<>();
 		this.importedModules = new HashMap<>();
 		this.includedFunctions = new HashMap<>();
+		this.environmentIncludedFunctions = new HashMap<>();
 		this.importedVariableDefaults = new HashMap<>();
 	}
 
@@ -256,6 +258,24 @@ public class CompileContext {
 	public @Nullable Function getIncludedFunction(FunctionSignature signature) {
 		Function function = includedFunctions.get(signature);
 		return function != null ? function : includedFunctions.get(signature.asVariadic());
+	}
+
+	/**
+	 * Records a module the {@code Environment} was told to include, whose functions are callable by
+	 * their bare names throughout this compilation.
+	 * <p>
+	 * Kept apart from {@link #addIncludedModule} because the two are different priority tiers: a
+	 * module the query itself {@code include}s outranks everything the environment registers, while
+	 * this one is consulted only after the environment's own declarations and definitions have had
+	 * their turn. Within the tier, a later registration replaces an identical signature.
+	 */
+	public void addEnvironmentIncludedModule(JavaModule module) {
+		environmentIncludedFunctions.putAll(module.getFunctions());
+	}
+
+	public @Nullable Function getEnvironmentIncludedFunction(FunctionSignature signature) {
+		Function function = environmentIncludedFunctions.get(signature);
+		return function != null ? function : environmentIncludedFunctions.get(signature.asVariadic());
 	}
 
 	/**

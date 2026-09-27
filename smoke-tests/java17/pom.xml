@@ -64,7 +64,7 @@
 		</dependency>
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
-			<artifactId>jackson-jq-regex-impl-joni</artifactId>
+			<artifactId>jackson-jq-ext-module-joni</artifactId>
 			<version>${jackson-jq.version}</version>
 		</dependency>
 		<dependency>
@@ -90,6 +90,11 @@
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
 			<artifactId>jackson-jq-ext-module-random</artifactId>
+			<version>${jackson-jq.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-os</artifactId>
 			<version>${jackson-jq.version}</version>
 		</dependency>
 		<dependency>

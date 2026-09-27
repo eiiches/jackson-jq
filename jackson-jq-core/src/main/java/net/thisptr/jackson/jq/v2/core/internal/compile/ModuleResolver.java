@@ -67,6 +67,9 @@ public final class ModuleResolver<JsonNode> {
 		Maybe<JsonNode> search = searchOverride(origin, path, metadata);
 		if (search.isPresent())
 			return compile(requireNonNull(origin).relativeImport(path, env.getJsonProvider().getString(search.get())));
+		Module registered = env.getRegisteredModules().get(path);
+		if (registered != null)
+			return materialize(registered);
 
 		@Var Module module = null;
 		for (ModuleLoader<JsonNode> loader : env.getModuleLoaders()) {
@@ -107,7 +110,7 @@ public final class ModuleResolver<JsonNode> {
 	 * module implementing both has its Java and jq functions combined.
 	 * <p>
 	 * Public because an {@code Environment} may be handed either kind, or a hybrid of both, through
-	 * {@code addImportedModule}, and which one it got only matters here.
+	 * {@code importModule}, and which one it got only matters here.
 	 */
 	public JavaModule materialize(Module module) throws JsonQueryException {
 		if (module instanceof JqModule<?> jqModule) {

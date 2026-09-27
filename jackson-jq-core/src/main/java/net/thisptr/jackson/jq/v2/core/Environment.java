@@ -75,7 +75,25 @@ public interface Environment<JsonNode> {
 		Supplier<JsonNode> getValue();
 	}
 
+	/**
+	 * The modules registered with {@code EnvironmentBuilder.importModule}, by the alias a query
+	 * calls them through.
+	 */
 	Map<String, Module> getImportedModules();
+
+	/**
+	 * The modules registered with {@code EnvironmentBuilder.includeModule}, in registration order --
+	 * whose functions every query compiled here can call by their bare names. A later registration
+	 * answers a signature an earlier one also exports.
+	 */
+	List<Module> getIncludedModules();
+
+	/**
+	 * Modules registered for query {@code import} and {@code include} directives, keyed by import
+	 * path. These take precedence over module loaders and remain available after
+	 * {@link EnvironmentBuilder#clearModuleLoaders()}.
+	 */
+	Map<String, Module> getRegisteredModules();
 
 	/**
 	 * Compiles {@code expression} with default options.

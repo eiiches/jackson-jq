@@ -54,6 +54,12 @@
 		</dependency>
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-os</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
 			<artifactId>jackson-jq-ext-module-re2</artifactId>
 			<version>${jackson-jq.version}</version>
 			<scope>runtime</scope>
@@ -96,7 +102,7 @@
 		</dependency>
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
-			<artifactId>jackson-jq-regex-impl-joni</artifactId>
+			<artifactId>jackson-jq-ext-module-joni</artifactId>
 			<version>${jackson-jq.version}</version>
 			<scope>runtime</scope>
 			<exclusions>

@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.core.function.loaders.ClassPathFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.function.loaders.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
@@ -26,8 +26,8 @@ class BuiltinTypeSchemeCoverageTest {
 	void everyRegisteredBuiltinDeclaresSchemesForItsArity() {
 		List<String> problems = new ArrayList<>();
 		for (Version jqVersion : Versions.versions()) {
-			Map<FunctionSignature, Function> functions = ClassPathFunctionLoader.getInstance().getFunctions(jqVersion);
-			// Guards against the check passing vacuously if discovery ever stops finding the builtins.
+			Map<FunctionSignature, Function> functions = BuiltinFunctionLoader.getInstance().getFunctions(jqVersion);
+			// Guards against the check passing vacuously if the registry ever stops holding the builtins.
 			assertThat(functions).describedAs("registered builtins for jq %s", jqVersion)
 					.hasSizeGreaterThan(70)
 					.containsKeys(FunctionSignature.of("length", 0), FunctionSignature.of("sort_by", 1),

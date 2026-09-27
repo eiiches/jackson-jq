@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.compile.resolved;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +27,8 @@ import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
+import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
@@ -53,8 +56,11 @@ public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpressio
 	private final int tailCallSlot;
 	private final Set<Integer> freeLocalSlots;
 	private final boolean hasOpaqueVariableReference;
+	// What a #jackson-jq:type comment in front of this def stated, or empty for one that stated
+	// nothing and is read from its body instead.
+	private final List<TypeScheme<FunctionType>> typeSchemes;
 
-	public ResolvedFunctionDefinition(int slot, ClosureSpec closureSpec, int fnSize, List<String> paramNames, List<Integer> paramSlots, AnalyzedExpression<JsonNode> resolvedBody, int ownClosureSlot, int definerClosureSlot, boolean metered, int tailCallSlot) {
+	public ResolvedFunctionDefinition(int slot, ClosureSpec closureSpec, int fnSize, List<String> paramNames, List<Integer> paramSlots, AnalyzedExpression<JsonNode> resolvedBody, int ownClosureSlot, int definerClosureSlot, boolean metered, int tailCallSlot, List<TypeScheme<FunctionType>> typeSchemes) {
 		this.slot = slot;
 		this.closureSpec = closureSpec;
 		this.fnSize = fnSize;
@@ -65,6 +71,7 @@ public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpressio
 		this.definerClosureSlot = definerClosureSlot;
 		this.metered = metered;
 		this.tailCallSlot = tailCallSlot;
+		this.typeSchemes = typeSchemes;
 		// Capturing a variable directly off the enclosing frame (isLocalInParent) is a plain local-slot
 		// read from this node's own perspective -- subtractable by an enclosing `as $x | ...`, just like
 		// ResolvedLocalVariableAccess. Reaching one further via the enclosing frame's own closure is a
@@ -139,12 +146,20 @@ public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpressio
 		return hasOpaqueVariableReference;
 	}
 
+	/**
+	 * The signatures this definition states for itself, or empty when it states none. A caller is
+	 * checked against a stated signature instead of against the body it is about to run.
+	 */
+	public List<TypeScheme<FunctionType>> typeSchemes() {
+		return typeSchemes;
+	}
+
 	@Override
 	public AnalyzedExpression<JsonNode> rewriteChildren(ExpressionRewriter<JsonNode> rewriter) {
 		AnalyzedExpression<JsonNode> rewritten = rewriter.rewrite(resolvedBody);
 		return rewritten == resolvedBody
 				? this
-				: new ResolvedFunctionDefinition<>(slot, closureSpec, fnSize, paramNames, paramSlots, rewritten, ownClosureSlot, definerClosureSlot, metered, tailCallSlot);
+				: new ResolvedFunctionDefinition<>(slot, closureSpec, fnSize, paramNames, paramSlots, rewritten, ownClosureSlot, definerClosureSlot, metered, tailCallSlot, typeSchemes);
 	}
 
 	@Override
@@ -170,6 +185,24 @@ public class ResolvedFunctionDefinition<JsonNode> implements RewritableExpressio
 
 		Instance(Closure[] closureHolder) {
 			this.closureHolder = closureHolder;
+		}
+
+		/**
+		 * What this definition stated for itself, which is how a scheme written in a module's jq source
+		 * reaches the compilation that imports it: an export is this {@link Function}, and a call to one
+		 * is typed from what it publishes here. A definition that stated nothing publishes the
+		 * all-{@code ANY} default, as every undeclared function does.
+		 */
+		@Override
+		public List<TypeScheme<FunctionType>> types(Version jqVersion, int arity) {
+			if (typeSchemes.isEmpty())
+				return Function.super.types(jqVersion, arity);
+			List<TypeScheme<FunctionType>> applicable = new ArrayList<>();
+			for (TypeScheme<FunctionType> scheme : typeSchemes) {
+				if (scheme.body().parameterTypes().size() == arity)
+					applicable.add(scheme);
+			}
+			return applicable;
 		}
 
 		@Override

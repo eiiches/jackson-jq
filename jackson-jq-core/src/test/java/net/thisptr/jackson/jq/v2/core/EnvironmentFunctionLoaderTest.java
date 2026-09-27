@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
-import net.thisptr.jackson.jq.v2.core.function.loaders.ClassPathFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.function.loaders.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -32,8 +32,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 // proves addFunctionLoader() actually takes effect on the built Environment.
 public class EnvironmentFunctionLoaderTest {
 	@Test
-	public void classPathLoaderKeepsJavaAndJqDefinitionsSeparate() {
-		ClassPathFunctionLoader loader = ClassPathFunctionLoader.getInstance();
+	public void builtinLoaderKeepsJavaAndJqDefinitionsSeparate() {
+		FunctionLoader loader = BuiltinFunctionLoader.getInstance();
 
 		assertThat(loader.getFunctions(Versions.JQ_1_6))
 				.containsKey(FunctionSignature.of("length", 0))
@@ -98,7 +98,7 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	/**
-	 * A loader is appended after the default {@link ClassPathFunctionLoader}, and the first loader to
+	 * A loader is appended after the default {@link BuiltinFunctionLoader}, and the first loader to
 	 * supply a name answers -- so an added loader extends the builtins, it does not shadow them.
 	 */
 	@Test
@@ -421,7 +421,7 @@ public class EnvironmentFunctionLoaderTest {
 	}
 
 	@Test
-	public void testDefaultEnvironmentHasTheClassPathFunctionLoader() {
+	public void testDefaultEnvironmentHasTheBuiltinFunctionLoader() {
 		assertThat(builder().build().getFunctionLoaders()).hasSize(1);
 	}
 
@@ -519,14 +519,14 @@ public class EnvironmentFunctionLoaderTest {
 	public void aModuleBodyResolvesAgainstEveryFunctionLoader() {
 		Environment<JsonNode> env = builder()
 				.addFunctionLoader(constantLoader(FunctionSignature.of("helper", 0), "from-loader"))
-				.addImportedModule("lib", new SourceModule("def greet: helper;"))
+				.importModule(new SourceModule("def greet: helper;"), "lib")
 				.build();
 
 		assertThat(execute(env, "lib::greet")).extracting(JsonNode::asText).containsExactly("from-loader");
 	}
 
 	/**
-	 * Minimal jq-source module: {@code addImportedModule} takes either kind, and this one makes the
+	 * Minimal jq-source module: {@code importModule} takes either kind, and this one makes the
 	 * compiler go through ModuleResolver to compile it.
 	 */
 	private static final class SourceModule implements JqModule<JsonNode> {

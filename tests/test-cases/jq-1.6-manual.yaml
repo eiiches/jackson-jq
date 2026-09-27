@@ -2529,9 +2529,9 @@
   - true
   types:
   - input: 'ANY'
-    output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]'
+    output: 'BOOLEAN'
   - input: 'STRING'
-    output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]'
+    output: 'BOOLEAN'
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
@@ -2545,9 +2545,9 @@
   - true
   types:
   - input: 'ANY'
-    output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]'
+    output: 'BOOLEAN'
   - input: '[STRING,STRING]'
-    output: 'BOOLEAN|[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:NULL|STRING}]'
+    output: 'BOOLEAN'
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
@@ -2561,9 +2561,9 @@
   - {"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}
   types:
   - input: 'ANY'
-    output: 'ANY'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
   - input: 'STRING'
-    output: 'ANY'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
@@ -2576,9 +2576,9 @@
   - {"offset": 0, "length": 3, "string": "foo", "captures": []}
   types:
   - input: 'ANY'
-    output: 'ANY'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
   - input: 'STRING'
-    output: 'ANY'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
@@ -2592,9 +2592,9 @@
   - {"offset": 8, "length": 3, "string": "FOO", "captures": []}
   types:
   - input: 'ANY'
-    output: 'ANY'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
   - input: 'STRING'
-    output: 'ANY'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
@@ -2608,9 +2608,9 @@
   - {"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": -1, "string": null, "length": 0, "name": "bar123"}]}
   types:
   - input: 'ANY'
-    output: 'ANY'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
   - input: 'STRING'
-    output: 'ANY'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
@@ -2638,9 +2638,9 @@
   - {"a": "xyzzy", "n": "14"}
   types:
   - input: 'ANY'
-    output: '{*:ANY}'
+    output: '{*:NULL|STRING}'
   - input: 'STRING'
-    output: '{*:ANY}'
+    output: '{*:NULL|STRING}'
   properties:
     cardinality: UNKNOWN
     depends_on_input: true

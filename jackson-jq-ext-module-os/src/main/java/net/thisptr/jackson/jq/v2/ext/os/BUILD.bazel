@@ -1,0 +1,15 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "os",
+    srcs = [
+        "HostnameFunction.java",
+        "OsModule.java",
+    ],
+    release = 17,
+    visibility = ["//jackson-jq-ext-module-os:__subpackages__"],
+    deps = [
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi",
+    ],
+)

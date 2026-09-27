@@ -24,6 +24,7 @@ import net.thisptr.jackson.jq.v2.core.internal.typecheck.ConstantTypes;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
+import net.thisptr.jackson.jq.v2.ext.joni.JoniRegexModule;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.NullType;
@@ -145,6 +146,9 @@ public class TypeAssertionGenerator {
 					.addModuleLoader(ClassPathModuleLoader.getInstance());
 		}
 		return envBuilder
+				// Regex is an extension module; the suite includes it because jq's test cases call
+				// test, match, sub and the rest by their bare names.
+				.includeModule(new JoniRegexModule())
 				.defineVariable("ENV", () -> envBuilder.getJsonProvider().createObject(Collections.singletonMap("PAGER", envBuilder.getJsonProvider().createString("less"))))
 				.build();
 	}

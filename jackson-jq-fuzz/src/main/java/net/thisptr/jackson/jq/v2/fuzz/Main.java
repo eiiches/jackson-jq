@@ -35,7 +35,7 @@ import org.apache.commons.cli.help.HelpFormatter;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
-import net.thisptr.jackson.jq.v2.core.function.loaders.ClassPathFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.function.loaders.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayMatcherAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AsBindingAstNode;
@@ -284,7 +284,7 @@ public class Main {
 
 			Set<String> exclusions = new HashSet<>(ALWAYS_EXCLUDED_FUNCTIONS);
 			exclusions.addAll(EXCLUDED_FUNCTIONS.getOrDefault(v, Collections.emptySet()));
-			ClassPathFunctionLoader.getInstance().getFunctions(v).forEach((signature, factory) -> {
+			BuiltinFunctionLoader.getInstance().getFunctions(v).forEach((signature, factory) -> {
 				String name = signature.name();
 				if (exclusions.contains(signature.toString()) || exclusions.contains(name))
 					return;
@@ -734,7 +734,7 @@ public class Main {
 	}
 
 	private static FunctionDefinitionAstNode functionDefinition(String name, List<String> args, AstNode body) {
-		return new FunctionDefinitionAstNode(SYNTHETIC, FunctionSignature.of(name, args.size()), args, body);
+		return new FunctionDefinitionAstNode(SYNTHETIC, FunctionSignature.of(name, args.size()), args, body, List.of());
 	}
 
 	private static FunctionCallAstNode functionCall(String name, List<AstNode> args) {

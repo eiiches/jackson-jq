@@ -2,10 +2,11 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 module net.thisptr.jackson.jq.v2.ext.module.uuid {
+	exports net.thisptr.jackson.jq.v2.ext.uuid;
 	requires static org.jspecify;
 	requires transitive net.thisptr.jackson.jq.v2.spi;
 	requires net.thisptr.jackson.jq.v2.json;
 
 	provides net.thisptr.jackson.jq.v2.spi.module.Module with
-			net.thisptr.jackson.jq.v2.ext.uuid.ModuleImpl;
+			net.thisptr.jackson.jq.v2.ext.uuid.UuidModule;
 }

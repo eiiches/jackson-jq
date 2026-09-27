@@ -30,6 +30,7 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	private final JsonProvider<JsonNode> jsonProvider;
 	private final Version jqVersion;
 	private final List<ModuleLoader<JsonNode>> moduleLoaders;
+	private final Map<String, Module> registeredModules;
 	private final List<FunctionLoader> functionLoaders;
 	private final Map<String, Type> declaredVariables;
 	private final Set<FunctionSignature> declaredFunctions;
@@ -38,16 +39,20 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	private final Map<FunctionSignature, JqFunction> jqFunctions;
 	private final Map<String, Constant<JsonNode>> constants;
 	private final Map<String, Module> importedModules;
+	private final List<Module> includedModules;
 
 	public EnvironmentImpl(JsonProvider<JsonNode> jsonProvider, Version jqVersion,
-						   List<ModuleLoader<JsonNode>> moduleLoaders, List<FunctionLoader> functionLoaders,
+						   List<ModuleLoader<JsonNode>> moduleLoaders, Map<String, Module> registeredModules,
+						   List<FunctionLoader> functionLoaders,
 						   Map<String, Type> declaredVariables, Set<FunctionSignature> declaredFunctions,
 						   Map<String, Variable<JsonNode>> variables, Map<FunctionSignature, Function> functions,
 						   Map<FunctionSignature, JqFunction> jqFunctions,
-						   Map<String, Constant<JsonNode>> constants, Map<String, Module> importedModules) {
+						   Map<String, Constant<JsonNode>> constants, Map<String, Module> importedModules,
+						   List<Module> includedModules) {
 		this.jsonProvider = jsonProvider;
 		this.jqVersion = jqVersion;
 		this.moduleLoaders = new ArrayList<>(moduleLoaders);
+		this.registeredModules = new HashMap<>(registeredModules);
 		this.functionLoaders = new ArrayList<>(functionLoaders);
 		this.declaredVariables = new HashMap<>(declaredVariables);
 		this.declaredFunctions = new HashSet<>(declaredFunctions);
@@ -56,6 +61,7 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 		this.jqFunctions = new HashMap<>(jqFunctions);
 		this.constants = new HashMap<>(constants);
 		this.importedModules = new HashMap<>(importedModules);
+		this.includedModules = new ArrayList<>(includedModules);
 	}
 
 	@Override
@@ -71,6 +77,11 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	@Override
 	public List<ModuleLoader<JsonNode>> getModuleLoaders() {
 		return Collections.unmodifiableList(moduleLoaders);
+	}
+
+	@Override
+	public Map<String, Module> getRegisteredModules() {
+		return Collections.unmodifiableMap(registeredModules);
 	}
 
 	@Override
@@ -111,6 +122,11 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	@Override
 	public Map<String, Module> getImportedModules() {
 		return Collections.unmodifiableMap(importedModules);
+	}
+
+	@Override
+	public List<Module> getIncludedModules() {
+		return Collections.unmodifiableList(includedModules);
 	}
 
 	@Override

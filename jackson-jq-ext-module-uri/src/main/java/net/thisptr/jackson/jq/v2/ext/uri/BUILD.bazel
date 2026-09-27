@@ -3,7 +3,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "uri",
     srcs = [
-        "ModuleImpl.java",
+        "UriModule.java",
     ],
     release = 17,
     visibility = ["//jackson-jq-ext-module-uri:__subpackages__"],

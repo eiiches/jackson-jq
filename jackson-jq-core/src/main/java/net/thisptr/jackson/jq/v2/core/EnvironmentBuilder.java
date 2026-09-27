@@ -10,18 +10,20 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
-import net.thisptr.jackson.jq.v2.core.function.loaders.ClassPathFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.function.loaders.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.env.ConstantImpl;
 import net.thisptr.jackson.jq.v2.core.internal.env.EnvironmentImpl;
 import net.thisptr.jackson.jq.v2.core.internal.env.VariableImpl;
 import net.thisptr.jackson.jq.v2.core.internal.function.loaders.CachedFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.typecheck.ConstantTypes;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
-import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
+import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
+import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
+import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.Type;
@@ -37,6 +39,7 @@ public final class EnvironmentBuilder<JsonNode> {
 	private final Version jqVersion;
 
 	private final List<ModuleLoader<JsonNode>> moduleLoaders = new ArrayList<>();
+	private final Map<String, Module> registeredModules = new HashMap<>();
 	private final List<FunctionLoader> functionLoaders = new ArrayList<>();
 
 	private final Map<String, Type> declaredVariables = new HashMap<>();
@@ -46,6 +49,9 @@ public final class EnvironmentBuilder<JsonNode> {
 	private final Map<FunctionSignature, JqFunction> jqFunctions = new HashMap<>();
 	private final Map<String, Environment.Constant<JsonNode>> constants = new HashMap<>();
 	private final Map<String, Module> importedModules = new HashMap<>();
+	// A list rather than a map: includes accumulate, and the order they were registered in is what
+	// decides which module answers a signature two of them export.
+	private final List<Module> includedModules = new ArrayList<>();
 
 	private EnvironmentBuilder(JsonProvider<JsonNode> jsonProvider, Version jqVersion) {
 		this.jsonProvider = jsonProvider;
@@ -53,30 +59,12 @@ public final class EnvironmentBuilder<JsonNode> {
 	}
 
 	/**
-	 * Starts a builder that already knows how to find what is on the classpath: a
-	 * {@link ClassPathModuleLoader} for {@code import}ed modules, and a {@link ClassPathFunctionLoader}
-	 * for functions -- which is where the jq builtins come from. Drop either with
-	 * {@link #clearModuleLoaders()} or {@link #clearFunctionLoaders()}.
-	 * <p>
-	 * Both discover their providers through this class's own {@link ClassLoader}. Where that is not
-	 * the one that can see the application's providers -- an OSGi bundle, a JPMS layer, a plugin
-	 * class loader -- name the right one with {@link #withDefaultLoaders(JsonProvider, Version, ClassLoader)}.
+	 * Starts a builder with jq's builtin functions. Modules must be registered with
+	 * {@link #registerModule(Module)} or supplied through {@link #addModuleLoader(ModuleLoader)}.
 	 */
 	public static <JsonNode> EnvironmentBuilder<JsonNode> withDefaultLoaders(JsonProvider<JsonNode> jsonProvider, Version jqVersion) {
-		return withDefaultLoaders(jsonProvider, jqVersion, EnvironmentBuilder.class.getClassLoader());
-	}
-
-	/**
-	 * Same as {@link #withDefaultLoaders(JsonProvider, Version)}, but both default loaders discover
-	 * their providers through {@code classLoader} instead of this class's own.
-	 *
-	 * @param classLoader the class loader both {@link ClassPathModuleLoader} and
-	 * {@link ClassPathFunctionLoader} search for providers
-	 */
-	public static <JsonNode> EnvironmentBuilder<JsonNode> withDefaultLoaders(JsonProvider<JsonNode> jsonProvider, Version jqVersion, ClassLoader classLoader) {
 		EnvironmentBuilder<JsonNode> builder = new EnvironmentBuilder<>(Objects.requireNonNull(jsonProvider, "jsonProvider"), Objects.requireNonNull(jqVersion, "jqVersion"));
-		builder.addModuleLoader(new ClassPathModuleLoader<>(classLoader));
-		builder.addFunctionLoader(new ClassPathFunctionLoader(classLoader));
+		builder.addFunctionLoader(BuiltinFunctionLoader.getInstance());
 		return builder;
 	}
 
@@ -99,9 +87,9 @@ public final class EnvironmentBuilder<JsonNode> {
 	}
 
 	/**
-	 * Removes every module loader added so far, including the default one
-	 * {@link #withDefaultLoaders} installed -- the way to take over the search order completely.
-	 * An environment left with no module loaders fails every {@code import} and {@code include} with
+	 * Removes every module loader added so far, leaving the loader search order empty.
+	 * Modules added with {@link #registerModule(Module)} remain available. An environment with
+	 * neither loaders nor registered modules fails every {@code import} and {@code include} with
 	 * {@code ModuleNotFoundException}.
 	 */
 	public EnvironmentBuilder<JsonNode> clearModuleLoaders() {
@@ -110,9 +98,38 @@ public final class EnvironmentBuilder<JsonNode> {
 	}
 
 	/**
+	 * Makes {@code module} available to query {@code import} and {@code include} directives under
+	 * every {@link ModuleRegistration#path()} declared on its class. The module need not be
+	 * discoverable through {@link java.util.ServiceLoader}. A later registration for the same path
+	 * replaces an earlier one, and available modules take precedence over module loaders.
+	 *
+	 * @throws IllegalArgumentException if the module declares no registration paths
+	 */
+	public EnvironmentBuilder<JsonNode> registerModule(Module module) {
+		Objects.requireNonNull(module, "module");
+		ModuleRegistration[] registrations = module.getClass().getAnnotationsByType(ModuleRegistration.class);
+		if (registrations.length == 0)
+			throw new IllegalArgumentException("Module " + module.getClass().getName() + " has no @ModuleRegistration path");
+		for (ModuleRegistration registration : registrations)
+			registeredModules.put(registration.path(), module);
+		return this;
+	}
+
+	/**
+	 * Makes {@code module} available to query {@code import} and {@code include} directives under
+	 * {@code modulePathOverride} instead of its {@link ModuleRegistration} paths. A later
+	 * registration for the same path replaces an earlier one, and available modules take
+	 * precedence over module loaders.
+	 */
+	public EnvironmentBuilder<JsonNode> registerModule(String modulePathOverride, Module module) {
+		registeredModules.put(Objects.requireNonNull(modulePathOverride, "modulePathOverride"), Objects.requireNonNull(module, "module"));
+		return this;
+	}
+
+	/**
 	 * Appends a loader to the ones this environment consults. They are asked in the order they were
 	 * added, and the first one to supply the called signature answers it -- so a loader added after
-	 * the default {@link ClassPathFunctionLoader} extends the builtins rather than shadowing them.
+	 * the default {@link BuiltinFunctionLoader} extends the builtins rather than shadowing them.
 	 * To shadow a name, define it on the environment itself with {@link #defineFunction} or
 	 * {@link #defineJqFunction}, which beat every loader, or take over the search order with
 	 * {@link #clearFunctionLoaders()}.
@@ -276,17 +293,41 @@ public final class EnvironmentBuilder<JsonNode> {
 
 	/**
 	 * Makes {@code module}'s functions callable as {@code name::func(...)} without the query having
-	 * to {@code import} it. A {@link JavaModule} is used as it stands, a
-	 * {@link net.thisptr.jackson.jq.v2.spi.module.JqModule} is compiled the first time a query
-	 * actually calls into it, and a module implementing both contributes both sets of functions.
+	 * to {@code import} it. A {@link JavaModule} is used as it stands, a {@link JqModule} is compiled
+	 * the first time a query actually calls into it, and a module implementing both contributes both
+	 * sets of functions.
 	 */
-	public EnvironmentBuilder<JsonNode> addImportedModule(String name, Module module) {
+	public EnvironmentBuilder<JsonNode> importModule(Module module, String name) {
+		Objects.requireNonNull(module, "module");
+		Objects.requireNonNull(name, "name");
 		importedModules.put(name, module);
 		return this;
 	}
 
+	/**
+	 * Makes every function {@code module} exports callable by its bare name, as a query's own
+	 * {@code include} directive would -- with no alias and no {@code ::} qualifier. A
+	 * {@link JavaModule} is used as it stands, a {@link JqModule} is compiled once per query
+	 * compilation, and a module implementing both contributes both sets of functions.
+	 * <p>
+	 * Registering two modules that export the same signature is allowed and the later registration
+	 * answers the call. What an environment includes sits below everything a query or the environment
+	 * names explicitly -- a lexically visible {@code def}, a module the query itself {@code include}s,
+	 * {@link #declareFunction} and {@link #defineFunction}/{@link #defineJqFunction} all take
+	 * precedence -- but above every {@link FunctionLoader}, so it does shadow a builtin of the same
+	 * signature. See {@code docs/resolution-order.md}.
+	 * <p>
+	 * A module the environment includes is not visible to the modules a query {@code import}s: a
+	 * library resolves its own names against its own imports, not against its caller's environment.
+	 */
+	public EnvironmentBuilder<JsonNode> includeModule(Module module) {
+		includedModules.add(Objects.requireNonNull(module, "module"));
+		return this;
+	}
+
 	public Environment<JsonNode> build() {
-		return new EnvironmentImpl<>(jsonProvider, jqVersion, moduleLoaders, functionLoaders,
-				declaredVariables, declaredFunctions, variables, functions, jqFunctions, constants, importedModules);
+		return new EnvironmentImpl<>(jsonProvider, jqVersion, moduleLoaders, registeredModules, functionLoaders,
+				declaredVariables, declaredFunctions, variables, functions, jqFunctions, constants, importedModules,
+				includedModules);
 	}
 }

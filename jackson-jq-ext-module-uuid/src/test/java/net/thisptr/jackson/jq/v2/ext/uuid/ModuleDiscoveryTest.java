@@ -18,7 +18,7 @@ public class ModuleDiscoveryTest {
 
 	@Test
 	public void exposesFunctions() {
-		ModuleImpl module = new ModuleImpl();
+		UuidModule module = new UuidModule();
 		assertThat(module.getFunctions().keySet()).containsExactlyInAnyOrder(
 				FunctionSignature.of("uuid4", 0),
 				FunctionSignature.of("uuid3", 1),
@@ -27,7 +27,7 @@ public class ModuleDiscoveryTest {
 
 	@Test
 	public void functionContract() {
-		ModuleImpl module = new ModuleImpl();
+		UuidModule module = new UuidModule();
 		Function uuid3 = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("uuid3", 1)));
 		ExpressionProperties uuid3Properties = uuid3.analyze(Versions.JQ_1_6, List.of(PURE_ARGUMENT));
 		assertThat(uuid3Properties.dependsOnInput()).isTrue();

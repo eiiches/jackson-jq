@@ -29,7 +29,7 @@ class RandomTypeSchemeTest {
 	private static final String IMPORT = "import \"jackson-jq/random\" as random; ";
 
 	private final Environment<JsonNode> environment = EnvironmentBuilder
-			.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_7).build();
+			.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_7).registerModule(new RandomModule()).build();
 
 	private static CompileOptions strict(Type inputType) {
 		return CompileOptions.newBuilder()
@@ -44,7 +44,7 @@ class RandomTypeSchemeTest {
 
 	@Test
 	void everyRegisteredSignatureDeclaresSchemesForItsArity() {
-		new ModuleImpl().getFunctions().forEach((signature, function) -> {
+		new RandomModule().getFunctions().forEach((signature, function) -> {
 			// No module function is variadic, so every registration names a concrete arity.
 			int arity = Objects.requireNonNull(signature.arity(), "arity");
 			List<TypeScheme<FunctionType>> schemes = function.types(Versions.JQ_1_7, arity);

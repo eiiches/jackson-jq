@@ -4,11 +4,12 @@ import net.thisptr.jackson.jq.v2.spi.module.Module;
 
 @NullMarked
 module net.thisptr.jackson.jq.v2.ext.module.zstd {
+	exports net.thisptr.jackson.jq.v2.ext.zstd;
 	requires com.github.luben.zstd_jni;
 	requires net.thisptr.jackson.jq.v2.json;
 	requires transitive net.thisptr.jackson.jq.v2.spi;
 	requires static org.jspecify;
 
 	provides Module with
-			net.thisptr.jackson.jq.v2.ext.zstd.ModuleImpl;
+			net.thisptr.jackson.jq.v2.ext.zstd.ZstdModule;
 }
