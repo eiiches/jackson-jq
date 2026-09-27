@@ -8,7 +8,14 @@ import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 
 @ModuleRegistration(path = "jackson-jq/zstd")
-public final class ModuleImpl implements JavaModule {
+public final class ZstdModule implements JavaModule {
+
+	/**
+	 * Required by ServiceLoader.
+	 */
+	public ZstdModule() {
+	}
+
 	private static final Map<FunctionSignature, Function> FUNCTIONS = Map.of(
 			FunctionSignature.of("compress_binary", 0), new ZstdFunction("compress_binary", true, false),
 			FunctionSignature.of("compress_text", 0), new ZstdFunction("compress_text", true, true),

@@ -11,7 +11,14 @@ import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 
 @ModuleRegistration(path = "jackson-jq/time")
-public final class ModuleImpl implements JavaModule {
+public final class TimeModule implements JavaModule {
+
+	/**
+	 * Required by ServiceLoader.
+	 */
+	public TimeModule() {
+	}
+
 	private static final Map<FunctionSignature, Function> FUNCTIONS = Map.of(
 			FunctionSignature.of("strftime", 1), new StrFTimeFunction(),
 			FunctionSignature.of("strftime", 2), new StrFTimeFunction(),

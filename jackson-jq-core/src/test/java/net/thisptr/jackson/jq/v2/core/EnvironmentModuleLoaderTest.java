@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
+import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
@@ -23,9 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Covers what an {@link Environment} ends up with: the loader {@link EnvironmentBuilder#withDefaultLoaders}
- * installs, and how {@link EnvironmentBuilder#clearModuleLoaders()} and
- * {@link EnvironmentBuilder#addModuleLoader} change it.
+ * Covers the module loaders and registrations retained by an {@link Environment}.
  */
 public class EnvironmentModuleLoaderTest {
 	private static class SourceModule implements JqModule<JsonNode> {
@@ -87,18 +86,17 @@ public class EnvironmentModuleLoaderTest {
 	}
 
 	@Test
-	public void testDefaultEnvironmentHasTheClassPathLoader() {
-		assertThat(builder().build().getModuleLoaders()).hasSize(1);
+	public void testDefaultEnvironmentHasNoModuleLoaders() {
+		assertThat(builder().build().getModuleLoaders()).isEmpty();
 	}
 
 	@Test
-	public void testAddedLoadersFollowTheDefaultInOrder() {
+	public void testAddedLoadersRetainTheirOrder() {
 		ModuleLoader<JsonNode> first = new StubModuleLoader();
 		ModuleLoader<JsonNode> second = new StubModuleLoader();
 
 		assertThat(builder().addModuleLoader(first).addModuleLoader(second).build().getModuleLoaders())
-				.hasSize(3)
-				.endsWith(first, second);
+				.containsExactly(first, second);
 	}
 
 	@Test
@@ -121,14 +119,13 @@ public class EnvironmentModuleLoaderTest {
 	}
 
 	/**
-	 * The class loader the overload names is the module loader's, and only the module loader's: the
-	 * builtins are registered in code, so a loader that sees nothing at all costs the environment its
-	 * {@code import}s and nothing else.
+	 * An explicitly added classpath loader uses the class loader it was given. Builtins remain
+	 * available even when that loader discovers no modules.
 	 */
 	@Test
 	public void testExplicitClassLoaderReachesOnlyTheModuleLoader() throws Exception {
 		try (URLClassLoader nothingRegistered = new URLClassLoader(new URL[0], null)) {
-			Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6, nothingRegistered).build();
+			Environment<JsonNode> env = builder().addModuleLoader(new ClassPathModuleLoader<>(nothingRegistered)).build();
 
 			assertThat(env.getModuleLoaders()).hasSize(1);
 			assertThatCode(() -> env.compile("not")).doesNotThrowAnyException();
@@ -207,7 +204,7 @@ public class EnvironmentModuleLoaderTest {
 	public void testRegisteredModulesAreNotModifiableThroughTheEnvironment() {
 		Environment<JsonNode> env = builder().registerModule("chosen", new SourceModule(1)).build();
 
-		assertThat(env.getModuleLoaders()).hasSize(1);
+		assertThat(env.getModuleLoaders()).isEmpty();
 		assertThatThrownBy(() -> env.getRegisteredModules().put("other", new SourceModule(2)))
 				.isInstanceOf(UnsupportedOperationException.class);
 	}

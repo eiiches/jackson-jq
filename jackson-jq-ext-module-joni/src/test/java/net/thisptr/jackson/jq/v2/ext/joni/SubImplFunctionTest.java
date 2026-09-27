@@ -96,7 +96,7 @@ public class SubImplFunctionTest {
 	}
 
 	private static List<JsonNode> apply(String queryText, String input, RuntimeOptions options, Version version) {
-		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, version).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, version).registerModule(new JoniRegexModule()).build();
 		JsonQuery<JsonNode> query = environment.compile(IMPORT + queryText).withRuntimeOptions(options);
 		List<JsonNode> out = new ArrayList<>();
 		query.apply(JSON_PROVIDER.createString(input), out::add);

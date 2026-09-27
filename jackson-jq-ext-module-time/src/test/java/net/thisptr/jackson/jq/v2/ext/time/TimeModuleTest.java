@@ -56,7 +56,7 @@ public class TimeModuleTest {
 
 	@Test
 	public void exposesFunctions() {
-		ModuleImpl module = new ModuleImpl();
+		TimeModule module = new TimeModule();
 		assertThat(module.getFunctions().keySet()).containsExactlyInAnyOrder(
 				FunctionSignature.of("strftime", 1),
 				FunctionSignature.of("strftime", 2),
@@ -67,7 +67,7 @@ public class TimeModuleTest {
 
 	@Test
 	public void functionContract() {
-		ModuleImpl module = new ModuleImpl();
+		TimeModule module = new TimeModule();
 		Function strftime1 = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("strftime", 1)));
 		ExpressionProperties strftime1Properties = strftime1.analyze(Versions.JQ_1_6, List.of(PURE_ARGUMENT));
 		assertThat(strftime1Properties.dependsOnInput()).isTrue();
@@ -91,7 +91,7 @@ public class TimeModuleTest {
 	}
 
 	private List<JsonNode> run(String expression) throws JsonQueryException {
-		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).registerModule(new TimeModule())
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/time\" as ext; " + expression);
 		List<JsonNode> results = new ArrayList<>();

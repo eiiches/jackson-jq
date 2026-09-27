@@ -10,6 +10,7 @@ import tools.jackson.databind.node.StringNode;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.ext.joni.JoniRegexModule;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
@@ -19,10 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * jq's regular-expression functions -- {@code test}, {@code match}, {@code capture}, {@code scan},
  * {@code split/2}, {@code splits}, {@code sub}, {@code gsub} -- are not builtins. They ship in
- * jackson-jq-ext-module-joni, and nothing installs them implicitly. There are three ways to reach them:
- * {@code includeModule} for bare names, {@code importModule} for a namespace the environment picks, or
- * an {@code import} directive in the query itself. With none of them, {@code test("^a")} fails to
- * compile.
+ * jackson-jq-ext-module-joni, and nothing installs them implicitly. An environment may include
+ * them, bind an alias, register a query import path, or search ServiceLoader modules explicitly.
  */
 public class JoniRegexTest {
 
@@ -33,7 +32,7 @@ public class JoniRegexTest {
 	@Test
 	public void includedModuleMakesRegexFunctionsCallableByBareName() {
 		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2)
-				.includeModule(JoniRegexModule.getInstance())
+				.includeModule(new JoniRegexModule())
 				.build();
 
 		JsonQuery<JsonNode> query = environment.compile("test(\"^a\")");
@@ -50,7 +49,7 @@ public class JoniRegexTest {
 	@Test
 	public void importedModuleIsCallableUnderTheNameTheEnvironmentGivesIt() {
 		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2)
-				.importModule(JoniRegexModule.getInstance(), "re")
+				.importModule(new JoniRegexModule(), "re")
 				.build();
 
 		JsonQuery<JsonNode> query = environment.compile("re::scan(\"[0-9]\")");
@@ -60,12 +59,24 @@ public class JoniRegexTest {
 	}
 
 	/**
-	 * A query can reach the same module on its own, under a namespace of its choosing, without the
-	 * environment naming it.
+	 * Registering a module lets a query choose its namespace with an {@code import} directive.
 	 */
 	@Test
-	public void queryCanImportTheModuleItself() {
+	public void queryCanImportAnExplicitlyRegisteredModule() {
 		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2)
+				.registerModule(new JoniRegexModule())
+				.build();
+
+		JsonQuery<JsonNode> query = environment.compile("import \"jackson-jq/joni\" as re; re::gsub(\"\\\\s+\"; \"-\")");
+
+		List<JsonNode> output = query.apply(StringNode.valueOf("a b  c"));
+		assertThat(output).containsExactly(StringNode.valueOf("a-b-c"));
+	}
+
+	@Test
+	public void queryCanImportAServiceLoadedModule() {
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(Jackson3JsonProvider.getInstance(), Versions.JQ_1_8_2)
+				.addModuleLoader(new ClassPathModuleLoader<>(JoniRegexTest.class.getClassLoader()))
 				.build();
 
 		JsonQuery<JsonNode> query = environment.compile("import \"jackson-jq/joni\" as re; re::gsub(\"\\\\s+\"; \"-\")");

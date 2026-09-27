@@ -6,7 +6,20 @@ import java.util.List;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
+import net.thisptr.jackson.jq.v2.ext.binary.BinaryModule;
+import net.thisptr.jackson.jq.v2.ext.debug.DebugModule;
+import net.thisptr.jackson.jq.v2.ext.fs.FsModule;
+import net.thisptr.jackson.jq.v2.ext.gzip.GzipModule;
+import net.thisptr.jackson.jq.v2.ext.http.HttpModule;
 import net.thisptr.jackson.jq.v2.ext.joni.JoniRegexModule;
+import net.thisptr.jackson.jq.v2.ext.os.OsModule;
+import net.thisptr.jackson.jq.v2.ext.random.RandomModule;
+import net.thisptr.jackson.jq.v2.ext.re2.Re2RegexModule;
+import net.thisptr.jackson.jq.v2.ext.time.TimeModule;
+import net.thisptr.jackson.jq.v2.ext.uri.UriModule;
+import net.thisptr.jackson.jq.v2.ext.uuid.UuidModule;
+import net.thisptr.jackson.jq.v2.ext.zstd.ZstdModule;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
@@ -26,10 +39,31 @@ public final class JacksonJqModuleSmokeTest {
 
 	private static <JsonNode> void testWithJsonProvider(JsonProvider<JsonNode> jsonProvider) throws Exception {
 		Version version = Version.valueOf("1.6");
-		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version, JacksonJqModuleSmokeTest.class.getClassLoader())
-				.includeModule(JoniRegexModule.getInstance())
-				.build();
+		EnvironmentBuilder<JsonNode> registered = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
+				.registerModule(new BinaryModule())
+				.registerModule(new DebugModule())
+				.registerModule(new FsModule())
+				.registerModule(new GzipModule())
+				.registerModule(new HttpModule())
+				.registerModule(new JoniRegexModule())
+				.registerModule(new OsModule())
+				.registerModule(new RandomModule())
+				.registerModule(new Re2RegexModule())
+				.registerModule(new TimeModule())
+				.registerModule(new UriModule())
+				.registerModule(new UuidModule())
+				.registerModule(new ZstdModule())
+				.includeModule(new JoniRegexModule());
+		assertModules(jsonProvider, registered.build());
 
+		Environment<JsonNode> discovered = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
+				.addModuleLoader(new ClassPathModuleLoader<>(JacksonJqModuleSmokeTest.class.getClassLoader()))
+				.includeModule(new JoniRegexModule())
+				.build();
+		assertModules(jsonProvider, discovered);
+	}
+
+	private static <JsonNode> void assertModules(JsonProvider<JsonNode> jsonProvider, Environment<JsonNode> env) throws Exception {
 		assertQuery(jsonProvider, env, "length", "[1,2]", 2);
 		assertQuery(jsonProvider, env, "test(\"a.c\")", "\"abc\"", true);
 		assertQuery(jsonProvider, env, "import \"jackson-jq/binary\" as binary; \"hello\" | binary::encode_text | binary::decode_text", "null", "hello");

@@ -37,12 +37,18 @@ directive does, without needing one in the query text:
 
 ```java
 Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
-        .includeModule(JoniRegexModule.getInstance())
+        .includeModule(new JoniRegexModule())
         .build();
 ```
 
 A query can instead reach the functions under a namespace, which cannot collide with anything else
 the environment provides:
+
+```java
+Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
+        .registerModule(new JoniRegexModule())
+        .build();
+```
 
 ```jq
 import "jackson-jq/joni" as re;
@@ -58,7 +64,7 @@ include "jackson-jq/joni";
 "abc" | test("^a")
 ```
 
-`Re2RegexModule.getInstance()` and `"jackson-jq/re2"` are the equivalents for the re2 engine. Both
+`new Re2RegexModule()` and `"jackson-jq/re2"` are the equivalents for the re2 engine. Both
 engines export the same signatures, so a program written against one compiles against the other; only
 pattern syntax and the flag set differ. Registering both and leaving both unqualified is possible but
 pointless -- the later registration answers the call. See

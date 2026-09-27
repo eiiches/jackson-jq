@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RandomModuleTest {
 	@Test
 	public void returnsAValueInTheExpectedRange() throws JsonQueryException {
-		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).registerModule(new RandomModule())
 				.build();
 
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/random\" as ext; ext::random");
@@ -32,14 +32,14 @@ public class RandomModuleTest {
 
 	@Test
 	public void exposesFunctions() {
-		ModuleImpl module = new ModuleImpl();
+		RandomModule module = new RandomModule();
 		assertThat(module.getFunctions().keySet()).containsExactlyInAnyOrder(
 				FunctionSignature.of("random", 0));
 	}
 
 	@Test
 	public void functionContract() {
-		ModuleImpl module = new ModuleImpl();
+		RandomModule module = new RandomModule();
 		module.getFunctions().values().forEach(fn -> {
 			ExpressionProperties properties = fn.analyze(Versions.JQ_1_6, List.of());
 			assertThat(properties.dependsOnInput()).isFalse();

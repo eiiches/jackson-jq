@@ -35,7 +35,7 @@ public class FsModuleTest {
 
 	@Test
 	public void exposesFunctions() {
-		assertThat(new ModuleImpl().getFunctions().keySet()).containsExactlyInAnyOrder(
+		assertThat(new FsModule().getFunctions().keySet()).containsExactlyInAnyOrder(
 				FunctionSignature.of("read_text", 1),
 				FunctionSignature.of("read_text", 2),
 				FunctionSignature.of("read_binary", 1),
@@ -598,7 +598,7 @@ public class FsModuleTest {
 	}
 
 	private static <JsonNode> List<JsonNode> run(JsonProvider<JsonNode> provider, String expression, JsonNode input, RuntimeOptions options) {
-		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(provider, Versions.JQ_1_8_2).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(provider, Versions.JQ_1_8_2).registerModule(new FsModule()).build();
 		JsonQuery<JsonNode> query = environment.compile(IMPORT + expression).withRuntimeOptions(options);
 		return query.apply(input);
 	}

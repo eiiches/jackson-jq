@@ -17,7 +17,6 @@ import net.thisptr.jackson.jq.v2.core.internal.env.VariableImpl;
 import net.thisptr.jackson.jq.v2.core.internal.function.loaders.CachedFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.typecheck.ConstantTypes;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
-import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
@@ -60,28 +59,11 @@ public final class EnvironmentBuilder<JsonNode> {
 	}
 
 	/**
-	 * Starts a builder with the jq builtins and with the {@code import}able modules that are on the
-	 * classpath: a {@link BuiltinFunctionLoader} for functions, and a {@link ClassPathModuleLoader}
-	 * for modules. Drop either with {@link #clearFunctionLoaders()} or {@link #clearModuleLoaders()}.
-	 * <p>
-	 * Only the module loader discovers anything -- the builtins are registered in code -- and it does so
-	 * through this class's own {@link ClassLoader}. Where that is not the one that can see the
-	 * application's modules -- an OSGi bundle, a JPMS layer, a plugin class loader -- name the right one
-	 * with {@link #withDefaultLoaders(JsonProvider, Version, ClassLoader)}.
+	 * Starts a builder with jq's builtin functions. Modules must be registered with
+	 * {@link #registerModule(Module)} or supplied through {@link #addModuleLoader(ModuleLoader)}.
 	 */
 	public static <JsonNode> EnvironmentBuilder<JsonNode> withDefaultLoaders(JsonProvider<JsonNode> jsonProvider, Version jqVersion) {
-		return withDefaultLoaders(jsonProvider, jqVersion, EnvironmentBuilder.class.getClassLoader());
-	}
-
-	/**
-	 * Same as {@link #withDefaultLoaders(JsonProvider, Version)}, but the default module loader discovers
-	 * its providers through {@code classLoader} instead of this class's own.
-	 *
-	 * @param classLoader the class loader {@link ClassPathModuleLoader} searches for providers
-	 */
-	public static <JsonNode> EnvironmentBuilder<JsonNode> withDefaultLoaders(JsonProvider<JsonNode> jsonProvider, Version jqVersion, ClassLoader classLoader) {
 		EnvironmentBuilder<JsonNode> builder = new EnvironmentBuilder<>(Objects.requireNonNull(jsonProvider, "jsonProvider"), Objects.requireNonNull(jqVersion, "jqVersion"));
-		builder.addModuleLoader(new ClassPathModuleLoader<>(classLoader));
 		builder.addFunctionLoader(BuiltinFunctionLoader.getInstance());
 		return builder;
 	}
@@ -105,8 +87,7 @@ public final class EnvironmentBuilder<JsonNode> {
 	}
 
 	/**
-	 * Removes every module loader added so far, including the default one
-	 * {@link #withDefaultLoaders} installed -- the way to take over the loader search order completely.
+	 * Removes every module loader added so far, leaving the loader search order empty.
 	 * Modules added with {@link #registerModule(Module)} remain available. An environment with
 	 * neither loaders nor registered modules fails every {@code import} and {@code include} with
 	 * {@code ModuleNotFoundException}.

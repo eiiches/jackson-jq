@@ -10,7 +10,14 @@ import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 
 @ModuleRegistration(path = "jackson-jq/uri")
-public final class ModuleImpl implements JavaModule {
+public final class UriModule implements JavaModule {
+
+	/**
+	 * Required by ServiceLoader.
+	 */
+	public UriModule() {
+	}
+
 	private static final Map<FunctionSignature, Function> FUNCTIONS = Map.of(
 			FunctionSignature.of("uridecode", 0), new UriDecodeFunction(),
 			FunctionSignature.of("uriparse", 0), new UriParseFunction());

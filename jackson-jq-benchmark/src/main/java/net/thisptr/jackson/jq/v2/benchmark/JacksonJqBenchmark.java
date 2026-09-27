@@ -53,7 +53,7 @@ public class JacksonJqBenchmark {
 		Version version = Main.resolveVersion(jqVersion);
 		environment = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
 				// The query comes from a system property, so regex is included in case it uses it.
-				.includeModule(JoniRegexModule.getInstance())
+				.includeModule(new JoniRegexModule())
 				.build();
 		input = jsonProvider.parse(jsonInput);
 		compiledQuery = environment.compile(jqExpression);

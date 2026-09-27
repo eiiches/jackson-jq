@@ -553,6 +553,14 @@ class MainTest {
 	}
 
 	@Test
+	void cliDiscoversClasspathModulesExplicitly() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(Jackson3JsonProvider.getInstance(), Versions.JQ_1_6);
+
+		assertThat(env.compile("import \"jackson-jq/joni\" as re; \"abc\" | re::test(\"^a\")"))
+				.isNotNull();
+	}
+
+	@Test
 	void rejectsUnknownJsonProvider() {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> Main.resolveProvider("unknown"))

@@ -41,7 +41,7 @@ public class RegexFunctionContractTest {
 
 	@Test
 	public void valueParameterSpecializationPreservesMultipleArgumentOutputs() {
-		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7).registerModule(new JoniRegexModule()).build();
 		JsonQuery<JsonNode> query = environment.compile(IMPORT + "joni::splits((\"a\", \"b\"))");
 		List<JsonNode> output = new ArrayList<>();
 		query.apply(JSON_PROVIDER.createString("aba"), output::add);
@@ -50,7 +50,7 @@ public class RegexFunctionContractTest {
 
 	@Test
 	public void invalidConstantRegexFallsBackToRuntimeEvaluation() {
-		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_7).registerModule(new JoniRegexModule()).build();
 		JsonQuery<JsonNode> query = environment.compile(IMPORT + "joni::test(\"[\"; \"\")");
 		assertThatThrownBy(() -> query.apply(JSON_PROVIDER.createString("input"), ignored -> {
 		}))

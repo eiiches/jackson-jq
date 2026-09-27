@@ -69,7 +69,7 @@ public abstract class AbstractJsonQueryTest<T> {
 		Environment<T> env = envBuilder
 				// Regex is an extension module; the suite includes it because jq's test cases call
 				// test, match, sub and the rest by their bare names.
-				.includeModule(JoniRegexModule.getInstance())
+				.includeModule(new JoniRegexModule())
 				.defineVariable("ENV", () -> envBuilder.getJsonProvider().createObject(Collections.singletonMap("PAGER", envBuilder.getJsonProvider().createString("less"))))
 				.build();
 

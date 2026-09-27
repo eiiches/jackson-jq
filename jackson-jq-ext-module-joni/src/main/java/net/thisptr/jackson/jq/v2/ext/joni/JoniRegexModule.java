@@ -39,13 +39,12 @@ import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 /**
  * jq's regular-expression functions, backed by Joni.
  * <p>
- * An application that wants them callable by their bare names hands {@link #getInstance()} to
+ * An application that wants them callable by their bare names hands a new instance to
  * {@code EnvironmentBuilder.includeModule(...)}; a query can reach them itself by importing or
  * including {@code "jackson-jq/joni"}. Nothing installs them implicitly.
  */
 @ModuleRegistration(path = "jackson-jq/joni")
 public final class JoniRegexModule implements JqModule<Object>, JavaModule {
-	private static final JoniRegexModule INSTANCE = new JoniRegexModule();
 	private static final Map<FunctionSignature, Function> FUNCTIONS = Map.of(
 			FunctionSignature.of("_match_impl", 3), new MatchImplFunction(),
 			FunctionSignature.of("_sub_impl", 3), new SubImplFunction());
@@ -106,12 +105,9 @@ public final class JoniRegexModule implements JqModule<Object>, JavaModule {
 			.replace("${CAPTURES}", Types.CAPTURES.toString());
 
 	/**
-	 * Returns the module.
-	 *
-	 * @return the singleton instance
+	 * Required by ServiceLoader.
 	 */
-	public static JoniRegexModule getInstance() {
-		return INSTANCE;
+	public JoniRegexModule() {
 	}
 
 	@Override

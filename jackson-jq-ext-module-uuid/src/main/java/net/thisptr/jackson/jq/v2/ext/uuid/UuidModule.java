@@ -10,7 +10,14 @@ import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 
 @ModuleRegistration(path = "jackson-jq/uuid")
-public final class ModuleImpl implements JavaModule {
+public final class UuidModule implements JavaModule {
+
+	/**
+	 * Required by ServiceLoader.
+	 */
+	public UuidModule() {
+	}
+
 	private static final Map<FunctionSignature, Function> FUNCTIONS = Map.of(
 			FunctionSignature.of("uuid4", 0), new Uuid4Function(),
 			FunctionSignature.of("uuid3", 1), new Uuid35Function(3),

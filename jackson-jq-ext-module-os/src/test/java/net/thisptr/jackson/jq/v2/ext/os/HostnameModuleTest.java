@@ -33,7 +33,7 @@ class HostnameModuleTest {
 
 	@Test
 	void registersBothSignaturesAndDeclaresExternalState() {
-		ModuleImpl module = new ModuleImpl();
+		OsModule module = new OsModule();
 		assertThat(module.getFunctions().keySet()).containsExactlyInAnyOrder(
 				FunctionSignature.of("hostname", 0), FunctionSignature.of("hostname", 1));
 		module.getFunctions().forEach((signature, function) -> {
@@ -50,7 +50,7 @@ class HostnameModuleTest {
 
 	@Test
 	void findsTheModuleAndInfersStringResults() {
-		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON, Versions.JQ_1_7).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON, Versions.JQ_1_7).registerModule(new OsModule()).build();
 		CompileOptions strict = CompileOptions.newBuilder().setTypeCheckMode(TypeCheckMode.STRICT).build();
 		assertThat(environment.compile("import \"jackson-jq/os\" as os; os::hostname", strict).getType().outputType())
 				.isSameAs(StringType.getInstance());
@@ -104,7 +104,7 @@ class HostnameModuleTest {
 		JavaModule module = () -> Map.of(
 				FunctionSignature.of("hostname", 0), function,
 				FunctionSignature.of("hostname", 1), function);
-		return EnvironmentBuilder.withDefaultLoaders(JSON, Versions.JQ_1_7)
+		return EnvironmentBuilder.withDefaultLoaders(JSON, Versions.JQ_1_7).registerModule(new OsModule())
 				.importModule(module, "os")
 				.build();
 	}

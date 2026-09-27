@@ -59,9 +59,9 @@ public class MatchImplFunctionTest {
 	}
 
 	private static List<String> run(String expression) throws JsonQueryException {
-		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_8_2)
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_8_2).registerModule(new JoniRegexModule())
 				.clearModuleLoaders()
-				.registerModule(JoniRegexModule.getInstance())
+				.registerModule(new JoniRegexModule())
 				.build();
 		return environment.compile(IMPORT + expression).apply(JSON_PROVIDER.createNull())
 				.stream().map(JSON_PROVIDER::format).toList();

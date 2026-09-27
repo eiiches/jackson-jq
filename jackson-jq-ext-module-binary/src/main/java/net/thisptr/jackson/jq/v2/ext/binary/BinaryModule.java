@@ -8,7 +8,14 @@ import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 
 @ModuleRegistration(path = "jackson-jq/binary")
-public final class ModuleImpl implements JavaModule {
+public final class BinaryModule implements JavaModule {
+
+	/**
+	 * Required by ServiceLoader.
+	 */
+	public BinaryModule() {
+	}
+
 	private static final DecodeTextFunction DECODE_TEXT = new DecodeTextFunction();
 	private static final EncodeTextFunction ENCODE_TEXT = new EncodeTextFunction();
 	private static final Map<FunctionSignature, Function> FUNCTIONS = Map.of(

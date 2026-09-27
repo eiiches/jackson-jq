@@ -28,6 +28,72 @@
 		</dependency>
 		<dependency>
 			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-binary</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-fs</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-gzip</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-http</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-random</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-os</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-re2</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-time</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-uri</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-uuid</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
+			<artifactId>jackson-jq-ext-module-zstd</artifactId>
+			<version>${jackson-jq.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.thisptr.jackson.jq.v2</groupId>
 			<artifactId>jackson-jq-json-provider-impl-jackson2</artifactId>
 			<version>${jackson-jq.version}</version>
 		</dependency>

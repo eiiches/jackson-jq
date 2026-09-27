@@ -13,7 +13,14 @@ import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 
 @ModuleRegistration(path = "jackson-jq/fs")
-public final class ModuleImpl implements JavaModule {
+public final class FsModule implements JavaModule {
+
+	/**
+	 * Required by ServiceLoader.
+	 */
+	public FsModule() {
+	}
+
 	private static final Map<FunctionSignature, Function> FUNCTIONS = Map.ofEntries(
 			Map.entry(FunctionSignature.of("read_text", 1), FileReadFunction.text()),
 			Map.entry(FunctionSignature.of("read_text", 2), FileReadFunction.text()),

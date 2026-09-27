@@ -4,7 +4,7 @@ jjq_java_library(
     name = "os",
     srcs = [
         "HostnameFunction.java",
-        "ModuleImpl.java",
+        "OsModule.java",
     ],
     release = 17,
     visibility = ["//jackson-jq-ext-module-os:__subpackages__"],

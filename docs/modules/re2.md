@@ -4,6 +4,9 @@ Maven artifact: `jackson-jq-ext-module-re2`
 
 jq module: `jackson-jq/re2`
 
+Register `new Re2RegexModule()` with `EnvironmentBuilder.registerModule(...)` before
+compiling a query that imports this path, or add `ClassPathModuleLoader` explicitly.
+
 This module provides jq's regular-expression functions using [RE2/J](https://github.com/google/re2j), which guarantees linear-time matching but does not support backreferences or look-around assertions. For the engine jq itself uses, see [`jackson-jq/joni`](joni.md). Add the artifact and import it explicitly:
 
 ```jq
@@ -27,7 +30,7 @@ An application that wants them available to every query it compiles registers th
 
 ```java
 Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
-        .includeModule(Re2RegexModule.getInstance())
+        .includeModule(new Re2RegexModule())
         .build();
 ```
 

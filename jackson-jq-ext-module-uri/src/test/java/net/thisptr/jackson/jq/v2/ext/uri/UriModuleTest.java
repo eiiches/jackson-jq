@@ -28,7 +28,7 @@ public class UriModuleTest {
 
 	@Test
 	public void exposesFunctions() {
-		ModuleImpl module = new ModuleImpl();
+		UriModule module = new UriModule();
 		assertThat(module.getFunctions().keySet()).containsExactlyInAnyOrder(
 				FunctionSignature.of("uridecode", 0),
 				FunctionSignature.of("uriparse", 0));
@@ -36,7 +36,7 @@ public class UriModuleTest {
 
 	@Test
 	public void functionContract() {
-		ModuleImpl module = new ModuleImpl();
+		UriModule module = new UriModule();
 		module.getFunctions().values().forEach(fn -> {
 			ExpressionProperties properties = fn.analyze(Versions.JQ_1_6, List.of());
 			assertThat(properties.dependsOnInput()).isTrue();
@@ -45,7 +45,7 @@ public class UriModuleTest {
 	}
 
 	private List<JsonNode> run(String expression) throws JsonQueryException {
-		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).registerModule(new UriModule())
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/uri\" as ext; " + expression);
 		List<JsonNode> results = new ArrayList<>();

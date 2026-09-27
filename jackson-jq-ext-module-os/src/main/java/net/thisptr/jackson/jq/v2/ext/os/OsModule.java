@@ -8,7 +8,14 @@ import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 
 @ModuleRegistration(path = "jackson-jq/os")
-public final class ModuleImpl implements JavaModule {
+public final class OsModule implements JavaModule {
+
+	/**
+	 * Required by ServiceLoader.
+	 */
+	public OsModule() {
+	}
+
 	private static final HostnameFunction HOSTNAME = new HostnameFunction();
 	private static final Map<FunctionSignature, Function> FUNCTIONS = Map.of(
 			FunctionSignature.of("hostname", 0), HOSTNAME,

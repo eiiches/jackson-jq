@@ -53,8 +53,8 @@ public class JoniModuleTest {
 	 */
 	@Test
 	public void includeModuleExposesRegexFunctionsWithoutAQualifier() {
-		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_8_2)
-				.includeModule(JoniRegexModule.getInstance())
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_8_2).registerModule(new JoniRegexModule())
+				.includeModule(new JoniRegexModule())
 				.build();
 		assertThat(environment.compile("\"abc\" | test(\"^a\")").apply(JSON_PROVIDER.createNull()))
 				.containsExactly(JSON_PROVIDER.createBoolean(true));
@@ -99,9 +99,9 @@ public class JoniModuleTest {
 	}
 
 	private static Environment<JsonNode> environment() {
-		return EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_8_2)
+		return EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_8_2).registerModule(new JoniRegexModule())
 				.clearModuleLoaders()
-				.registerModule(JoniRegexModule.getInstance())
+				.registerModule(new JoniRegexModule())
 				.build();
 	}
 }

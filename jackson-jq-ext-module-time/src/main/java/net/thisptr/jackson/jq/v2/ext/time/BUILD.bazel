@@ -3,7 +3,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "time",
     srcs = [
-        "ModuleImpl.java",
+        "TimeModule.java",
     ],
     release = 17,
     visibility = ["//jackson-jq-ext-module-time:__subpackages__"],

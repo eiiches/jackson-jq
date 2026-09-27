@@ -36,9 +36,9 @@ class Re2TypeSchemeTest {
 	private static final String IMPORT = "import \"jackson-jq/re2\" as re2; ";
 
 	private final Environment<JsonNode> environment = EnvironmentBuilder
-			.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_7)
+			.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_7).registerModule(new Re2RegexModule())
 			.clearModuleLoaders()
-			.registerModule(Re2RegexModule.getInstance())
+			.registerModule(new Re2RegexModule())
 			.build();
 
 	private static CompileOptions strict(Type inputType) {
@@ -58,7 +58,7 @@ class Re2TypeSchemeTest {
 
 	@Test
 	void everyRegisteredSignatureDeclaresSchemesForItsArity() {
-		Re2RegexModule.getInstance().getFunctions().forEach((signature, function) -> {
+		new Re2RegexModule().getFunctions().forEach((signature, function) -> {
 			// No module function is variadic, so every registration names a concrete arity.
 			int arity = Objects.requireNonNull(signature.arity(), "arity");
 			List<TypeScheme<FunctionType>> schemes = function.types(Versions.JQ_1_7, arity);
@@ -70,7 +70,7 @@ class Re2TypeSchemeTest {
 
 	@Test
 	void bothPrimitivesTakeAStringInput() {
-		Re2RegexModule.getInstance().getFunctions().forEach((signature, function) -> {
+		new Re2RegexModule().getFunctions().forEach((signature, function) -> {
 			for (TypeScheme<FunctionType> scheme : function.types(Versions.JQ_1_7, 3))
 				assertThat(scheme.body().returnType().inputType()).describedAs("%s", signature).isSameAs(StringType.getInstance());
 		});

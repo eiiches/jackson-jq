@@ -32,7 +32,7 @@ public class ZstdModuleTest {
 
 	@Test
 	public void exposesFunctions() {
-		assertThat(new ModuleImpl().getFunctions().keySet()).containsExactlyInAnyOrder(
+		assertThat(new ZstdModule().getFunctions().keySet()).containsExactlyInAnyOrder(
 				FunctionSignature.of("compress_binary", 0),
 				FunctionSignature.of("compress_text", 0),
 				FunctionSignature.of("compress_text", 1),
@@ -173,7 +173,7 @@ public class ZstdModuleTest {
 	}
 
 	private static <JsonNode> List<JsonNode> run(JsonProvider<JsonNode> jsonProvider, String expression, JsonNode input, RuntimeOptions options) {
-		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_8_2).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_8_2).registerModule(new ZstdModule()).build();
 		JsonQuery<JsonNode> query = environment.compile(IMPORT + expression).withRuntimeOptions(options);
 		List<JsonNode> results = new ArrayList<>();
 		query.apply(input, results::add);

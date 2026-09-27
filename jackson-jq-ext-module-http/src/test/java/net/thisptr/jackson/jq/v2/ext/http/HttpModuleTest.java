@@ -93,7 +93,7 @@ public class HttpModuleTest {
 
 	@Test
 	public void exposesGetFunction() {
-		assertThat(new ModuleImpl().getFunctions().keySet()).containsExactlyInAnyOrder(FunctionSignature.of("get", 1), FunctionSignature.of("get", 2));
+		assertThat(new HttpModule().getFunctions().keySet()).containsExactlyInAnyOrder(FunctionSignature.of("get", 1), FunctionSignature.of("get", 2));
 	}
 
 	@Test
@@ -165,7 +165,7 @@ public class HttpModuleTest {
 	@Test
 	public void fallsBackToBase64WhenBinaryIsUnsupported() {
 		JsonProvider<JsonElement> provider = GsonJsonProvider.getInstance();
-		Environment<JsonElement> environment = EnvironmentBuilder.withDefaultLoaders(provider, Versions.JQ_1_8_2).build();
+		Environment<JsonElement> environment = EnvironmentBuilder.withDefaultLoaders(provider, Versions.JQ_1_8_2).registerModule(new HttpModule()).build();
 		JsonQuery<JsonElement> query = environment.compile(IMPORT + "http::get(" + quotedUrl("/binary") + ")");
 		JsonElement response = query.apply(provider.createNull()).get(0);
 		JsonElement rawBody = provider.getObjectMemberOrThrow(response, "raw_body");
@@ -242,7 +242,7 @@ public class HttpModuleTest {
 	}
 
 	private static List<JsonNode> run(String argument, RuntimeOptions options) {
-		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_8_2).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_8_2).registerModule(new HttpModule()).build();
 		JsonQuery<JsonNode> query = environment.compile(IMPORT + "http::get(" + argument + ")").withRuntimeOptions(options);
 		return query.apply(JSON_PROVIDER.createNull());
 	}

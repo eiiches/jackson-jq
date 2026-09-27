@@ -47,6 +47,7 @@ import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
 import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.ext.joni.JoniRegexModule;
@@ -501,9 +502,10 @@ public class Main {
 
 	static <N> Environment<N> createEnvironment(JsonProvider<N> jsonProvider, Version version) {
 		return EnvironmentBuilder.withDefaultLoaders(jsonProvider, version)
+				.addModuleLoader(new ClassPathModuleLoader<>(Main.class.getClassLoader()))
 				// jq's regex functions are an extension module; the command line includes it so that
 				// `test`, `match` and the rest answer by their bare names, as they do in jq itself.
-				.includeModule(JoniRegexModule.getInstance())
+				.includeModule(new JoniRegexModule())
 				.defineFunction(FunctionSignature.of("env", 0), new Function() {
 					@Override
 					public ExpressionProperties analyze(Version jqVersion, List<ExpressionProperties> arguments) {

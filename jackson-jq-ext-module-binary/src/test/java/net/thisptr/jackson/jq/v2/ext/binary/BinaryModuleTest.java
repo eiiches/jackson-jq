@@ -31,7 +31,7 @@ public class BinaryModuleTest {
 
 	@Test
 	public void exposesFunctions() {
-		assertThat(new ModuleImpl().getFunctions().keySet()).containsExactlyInAnyOrder(
+		assertThat(new BinaryModule().getFunctions().keySet()).containsExactlyInAnyOrder(
 				FunctionSignature.of("decode_text", 0),
 				FunctionSignature.of("decode_text", 1),
 				FunctionSignature.of("encode_text", 0),
@@ -202,7 +202,7 @@ public class BinaryModuleTest {
 	}
 
 	private static <JsonNode> List<JsonNode> run(JsonProvider<JsonNode> jsonProvider, String expression, JsonNode input, RuntimeOptions options) {
-		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_8_2).build();
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(jsonProvider, Versions.JQ_1_8_2).registerModule(new BinaryModule()).build();
 		JsonQuery<JsonNode> query = environment.compile(IMPORT + expression).withRuntimeOptions(options);
 		List<JsonNode> results = new ArrayList<>();
 		query.apply(input, results::add);

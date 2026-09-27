@@ -31,7 +31,7 @@ class ZstdTypeSchemeTest {
 	private static final String IMPORT = "import \"jackson-jq/zstd\" as zstd; ";
 
 	private final Environment<JsonNode> environment = EnvironmentBuilder
-			.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_7).build();
+			.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_7).registerModule(new ZstdModule()).build();
 
 	private static CompileOptions strict(Type inputType) {
 		return CompileOptions.newBuilder()
@@ -46,7 +46,7 @@ class ZstdTypeSchemeTest {
 
 	@Test
 	void everyRegisteredSignatureDeclaresSchemesForItsArity() {
-		new ModuleImpl().getFunctions().forEach((signature, function) -> {
+		new ZstdModule().getFunctions().forEach((signature, function) -> {
 			// No module function is variadic, so every registration names a concrete arity.
 			int arity = Objects.requireNonNull(signature.arity(), "arity");
 			List<TypeScheme<FunctionType>> schemes = function.types(Versions.JQ_1_7, arity);

@@ -46,7 +46,7 @@ public class DebugModuleTest {
 
 	@Test
 	public void emitsScopeAndInputInformation() throws JsonQueryException {
-		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).registerModule(new DebugModule())
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::debug_scope");
 		List<JsonNode> results = new ArrayList<>();
@@ -58,7 +58,7 @@ public class DebugModuleTest {
 
 	@Test
 	public void exposesFunctions() {
-		ModuleImpl module = new ModuleImpl();
+		DebugModule module = new DebugModule();
 		assertThat(module.getFunctions().keySet()).containsExactlyInAnyOrder(
 				FunctionSignature.of("debug_scope", 0),
 				FunctionSignature.of("debug_expr", 1),
@@ -67,7 +67,7 @@ public class DebugModuleTest {
 
 	@Test
 	public void functionContract() {
-		ModuleImpl module = new ModuleImpl();
+		DebugModule module = new DebugModule();
 		module.getFunctions().forEach((signature, fn) -> {
 			int arity = signature.arity() == null ? 0 : signature.arity();
 			ExpressionProperties properties = fn.analyze(Versions.JQ_1_6,
@@ -78,14 +78,14 @@ public class DebugModuleTest {
 
 	@Test
 	public void debugScopeDependsOnFlags() {
-		ModuleImpl module = new ModuleImpl();
+		DebugModule module = new DebugModule();
 		Function fn = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("debug_scope", 0)));
 		assertThat(fn.analyze(Versions.JQ_1_6, List.of()).dependsOnInput()).isTrue();
 	}
 
 	@Test
 	public void debugExprIsItselfConstant() {
-		ModuleImpl module = new ModuleImpl();
+		DebugModule module = new DebugModule();
 		Function fn = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("debug_expr", 1)));
 		ExpressionProperties properties = fn.analyze(Versions.JQ_1_6,
 				List.of(new ExpressionProperties(Cardinality.ONE, true, true)));
@@ -111,7 +111,7 @@ public class DebugModuleTest {
 
 	@Test
 	public void debugExprOmitsVariableDependency() throws JsonQueryException {
-		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).registerModule(new DebugModule())
 				.defineVariable("x", () -> Jackson2JsonProvider.getInstance().createNumber(1))
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::debug_expr($x)");
@@ -125,7 +125,7 @@ public class DebugModuleTest {
 
 	@Test
 	public void debugExprNeverEvaluatesItsArgument() throws JsonQueryException {
-		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).registerModule(new DebugModule())
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::debug_expr(error(\"boom\"))");
 		List<JsonNode> results = new ArrayList<>();
@@ -226,7 +226,7 @@ public class DebugModuleTest {
 
 	@Test
 	public void dumpExprNeverEvaluatesItsArgument() throws JsonQueryException {
-		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).registerModule(new DebugModule())
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::dump_expr(error(\"boom\"))");
 		List<JsonNode> results = new ArrayList<>();
@@ -235,7 +235,7 @@ public class DebugModuleTest {
 	}
 
 	private static JsonNode debugExpr(String filter) throws JsonQueryException {
-		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).registerModule(new DebugModule())
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::debug_expr(" + filter + ")");
 		List<JsonNode> results = new ArrayList<>();
@@ -245,7 +245,7 @@ public class DebugModuleTest {
 	}
 
 	private static JsonNode dumpExpr(String filter) throws JsonQueryException {
-		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6)
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_6).registerModule(new DebugModule())
 				.build();
 		JsonQuery<JsonNode> query = env.compile("import \"jackson-jq/debug\" as debug; debug::dump_expr(" + filter + ")");
 		List<JsonNode> results = new ArrayList<>();
@@ -255,7 +255,7 @@ public class DebugModuleTest {
 	}
 
 	private static JsonNode dumpExpression(Expression<?, JsonNode> argument) throws JsonQueryException {
-		ModuleImpl module = new ModuleImpl();
+		DebugModule module = new DebugModule();
 		Function fn = Objects.requireNonNull(module.getFunctions().get(FunctionSignature.of("dump_expr", 1)));
 		@SuppressWarnings("unchecked")
 		Expression<RuntimeContext, JsonNode> castArg = (Expression<RuntimeContext, JsonNode>) argument;
