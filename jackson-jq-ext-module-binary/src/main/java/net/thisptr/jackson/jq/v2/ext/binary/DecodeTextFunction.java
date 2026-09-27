@@ -1,6 +1,12 @@
 package net.thisptr.jackson.jq.v2.ext.binary;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -12,6 +18,7 @@ import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -57,16 +64,34 @@ final class DecodeTextFunction implements Function {
 			public void apply(Context context, JsonNode input, Path<JsonNode> inputPath, Output<JsonNode> output) throws JsonQueryException {
 				byte[] bytes = BinarySupport.getInputBytes(jsonProvider, FUNCTION, input);
 				if (optionsExpression == null) {
-					String text = BinarySupport.decodeText(FUNCTION, bytes, StandardCharsets.UTF_8, context.getRuntimeLimits());
+					String text = decodeText(bytes, StandardCharsets.UTF_8, context.getRuntimeLimits());
 					output.emit(jsonProvider.createString(text), UntrackedPath.getInstance());
 					return;
 				}
 				optionsExpression.apply(context, input, inputPath, (optionsNode, optionsPath) -> {
 					Charset charset = BinarySupport.parseCharset(jsonProvider, FUNCTION, optionsNode);
-					String text = BinarySupport.decodeText(FUNCTION, bytes, charset, context.getRuntimeLimits());
+					String text = decodeText(bytes, charset, context.getRuntimeLimits());
 					output.emit(jsonProvider.createString(text), UntrackedPath.getInstance());
 				});
 			}
 		};
+	}
+
+	private static String decodeText(byte[] bytes, Charset charset, RuntimeLimits limits) {
+		StringBuilder result = new StringBuilder();
+		try (Reader reader = new InputStreamReader(new ByteArrayInputStream(bytes), charset.newDecoder()
+				.onMalformedInput(CodingErrorAction.REPORT)
+				.onUnmappableCharacter(CodingErrorAction.REPORT))) {
+			char[] buffer = new char[8192];
+			for (int count; (count = reader.read(buffer)) != -1; ) {
+				BinarySupport.checkStringLength(limits, (long) result.length() + count);
+				result.append(buffer, 0, count);
+			}
+		} catch (CharacterCodingException e) {
+			throw new JsonQueryException(FUNCTION + " failed to decode the input using " + charset.name() + ": " + e.getMessage(), e);
+		} catch (IOException e) {
+			throw new JsonQueryException(FUNCTION + " failed: " + e.getMessage(), e);
+		}
+		return result.toString();
 	}
 }

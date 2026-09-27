@@ -13,8 +13,10 @@ import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
 import net.thisptr.jackson.jq.v2.spi.type.BinaryType;
 import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
 import net.thisptr.jackson.jq.v2.spi.type.NumericType;
 import net.thisptr.jackson.jq.v2.spi.type.StringType;
 import net.thisptr.jackson.jq.v2.spi.type.Type;
@@ -61,6 +63,21 @@ class BinaryTypeSchemeTest {
 		assertThat(outputOf("binary::encode_text", StringType.getInstance())).isSameAs(BinaryType.getInstance());
 		assertThat(outputOf("binary::decode_text", BinaryType.getInstance())).isSameAs(StringType.getInstance());
 		assertThat(outputOf("binary::encode_text | binary::decode_text", StringType.getInstance())).isSameAs(StringType.getInstance());
+	}
+
+	@Test
+	void binaryConversionsDeclareTheirOutputTypes() throws JsonQueryException {
+		Type integer = NumericType.of(NumberKind.INT);
+		Type bytes = ArrayType.of(integer);
+		assertThat(outputOf("binary::size", BinaryType.getInstance())).isEqualTo(integer);
+		assertThat(outputOf("binary::to_hex", BinaryType.getInstance())).isSameAs(StringType.getInstance());
+		assertThat(outputOf("binary::from_hex", StringType.getInstance())).isSameAs(BinaryType.getInstance());
+		assertThat(outputOf("binary::to_base64", BinaryType.getInstance())).isSameAs(StringType.getInstance());
+		assertThat(outputOf("binary::from_base64", StringType.getInstance())).isSameAs(BinaryType.getInstance());
+		assertThat(outputOf("binary::to_base64url", BinaryType.getInstance())).isSameAs(StringType.getInstance());
+		assertThat(outputOf("binary::from_base64url", StringType.getInstance())).isSameAs(BinaryType.getInstance());
+		assertThat(outputOf("binary::to_bytes", BinaryType.getInstance())).isEqualTo(bytes);
+		assertThat(outputOf("binary::from_bytes", bytes)).isSameAs(BinaryType.getInstance());
 	}
 
 	@Test

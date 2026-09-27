@@ -1,14 +1,6 @@
 package net.thisptr.jackson.jq.v2.ext.binary;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
-import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Iterator;
@@ -43,11 +35,23 @@ final class BinarySupport {
 			return jsonProvider.getBinaryAsByteArray(input);
 		if (type != JsonNodeType.STRING)
 			throw new JsonQueryException(function + " requires binary or Base64 string input, but got " + type);
+		return decodeBase64(function, jsonProvider.getString(input));
+	}
+
+	static byte[] decodeBase64(String function, String text) {
 		try {
-			return Base64.getDecoder().decode(jsonProvider.getString(input));
+			return Base64.getDecoder().decode(text);
 		} catch (IllegalArgumentException e) {
 			throw new JsonQueryException(function + " input must be valid Base64", e);
 		}
+	}
+
+	static String encodeBase64(byte[] bytes, boolean urlSafe, RuntimeLimits limits) {
+		long encodedLength = urlSafe
+				? 4L * (bytes.length / 3L) + (bytes.length % 3 == 0 ? 0 : bytes.length % 3 + 1)
+				: 4L * ((bytes.length + 2L) / 3L);
+		checkStringLength(limits, encodedLength);
+		return (urlSafe ? Base64.getUrlEncoder().withoutPadding() : Base64.getEncoder()).encodeToString(bytes);
 	}
 
 	static <JsonNode> String getInputText(JsonProvider<JsonNode> jsonProvider, String function, JsonNode input) {
@@ -78,38 +82,6 @@ final class BinarySupport {
 		} catch (IllegalArgumentException e) {
 			throw new JsonQueryException(function + " unsupported encoding: " + name, e);
 		}
-	}
-
-	static byte[] encodeText(String function, String text, Charset charset) {
-		try {
-			ByteBuffer encoded = charset.newEncoder()
-					.onMalformedInput(CodingErrorAction.REPORT)
-					.onUnmappableCharacter(CodingErrorAction.REPORT)
-					.encode(CharBuffer.wrap(text));
-			byte[] bytes = new byte[encoded.remaining()];
-			encoded.get(bytes);
-			return bytes;
-		} catch (CharacterCodingException e) {
-			throw new JsonQueryException(function + " failed to encode the input using " + charset.name() + ": " + e.getMessage(), e);
-		}
-	}
-
-	static String decodeText(String function, byte[] bytes, Charset charset, RuntimeLimits limits) {
-		StringBuilder result = new StringBuilder();
-		try (Reader reader = new InputStreamReader(new ByteArrayInputStream(bytes), charset.newDecoder()
-				.onMalformedInput(CodingErrorAction.REPORT)
-				.onUnmappableCharacter(CodingErrorAction.REPORT))) {
-			char[] buffer = new char[8192];
-			for (int count; (count = reader.read(buffer)) != -1; ) {
-				checkStringLength(limits, (long) result.length() + count);
-				result.append(buffer, 0, count);
-			}
-		} catch (CharacterCodingException e) {
-			throw new JsonQueryException(function + " failed to decode the input using " + charset.name() + ": " + e.getMessage(), e);
-		} catch (IOException e) {
-			throw new JsonQueryException(function + " failed: " + e.getMessage(), e);
-		}
-		return result.toString();
 	}
 
 	static <JsonNode> JsonNode createBinaryValue(JsonProvider<JsonNode> jsonProvider, byte[] bytes, boolean binarySupported, RuntimeLimits limits) {
