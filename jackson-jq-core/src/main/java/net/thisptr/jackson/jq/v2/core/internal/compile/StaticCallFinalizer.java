@@ -30,7 +30,7 @@ final class StaticCallFinalizer {
 	}
 
 	private static <N> AnalyzedExpression<N> finalizeExpression(Environment<N> env, FoldPlanner planner,
-																AnalyzedExpression<N> expression) throws JsonQueryException {
+			AnalyzedExpression<N> expression) throws JsonQueryException {
 		if (expression instanceof UnboundFunctionCall<N> call) {
 			List<AnalyzedExpression<N>> arguments = call.args().stream()
 					.map(argument -> finalizeUnchecked(env, planner, argument))
@@ -57,7 +57,7 @@ final class StaticCallFinalizer {
 	}
 
 	private static <N> AnalyzedExpression<N> finalizeUnchecked(Environment<N> env, FoldPlanner planner,
-															   AnalyzedExpression<N> expression) {
+			AnalyzedExpression<N> expression) {
 		try {
 			return finalizeExpression(env, planner, expression);
 		} catch (JsonQueryException e) {

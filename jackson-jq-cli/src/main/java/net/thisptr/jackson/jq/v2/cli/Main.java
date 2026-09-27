@@ -529,20 +529,20 @@ public class Main {
 	}
 
 	private static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider,
-								RuntimeOptions runtimeOptions, CompileOptions compileOptions) throws Exception {
+			RuntimeOptions runtimeOptions, CompileOptions compileOptions) throws Exception {
 		run(command, query, inputFiles, version, jsonProvider, runtimeOptions, compileOptions, null);
 	}
 
 	static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider,
-						RuntimeOptions runtimeOptions, CompileOptions compileOptions,
-						@Nullable TuiRunner customRunner) throws Exception {
+			RuntimeOptions runtimeOptions, CompileOptions compileOptions,
+			@Nullable TuiRunner customRunner) throws Exception {
 		run(command, query, inputFiles, version, jsonProvider, runtimeOptions, compileOptions, customRunner,
 				System.getenv("EDITOR"));
 	}
 
 	static <N> void run(CommandLine command, String query, List<String> inputFiles, Version version, JsonProvider<N> jsonProvider,
-						RuntimeOptions runtimeOptions, @Var CompileOptions compileOptions,
-						@Nullable TuiRunner customRunner, @Nullable String editor) throws Exception {
+			RuntimeOptions runtimeOptions, @Var CompileOptions compileOptions,
+			@Nullable TuiRunner customRunner, @Nullable String editor) throws Exception {
 		Environment<N> env = createEnvironment(jsonProvider, version);
 		boolean warningsEnabled = !command.hasOption(OPT_NO_WARNINGS.getLongOpt());
 		/*

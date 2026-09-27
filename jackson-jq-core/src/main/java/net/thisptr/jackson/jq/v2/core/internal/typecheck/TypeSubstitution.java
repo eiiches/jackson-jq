@@ -65,7 +65,7 @@ final class TypeSubstitution {
 	}
 
 	static Type apply(Type type, Set<TypeVariable> quantified, Map<TypeVariable, Type> substitutions,
-					  Map<TypeVariable, Type> upperBounds) {
+			Map<TypeVariable, Type> upperBounds) {
 		Objects.requireNonNull(type, "type");
 		Objects.requireNonNull(quantified, "quantified");
 		Objects.requireNonNull(substitutions, "substitutions");
@@ -74,7 +74,7 @@ final class TypeSubstitution {
 	}
 
 	private static Type apply(Type type, Set<TypeVariable> quantified, Map<TypeVariable, Type> substitutions,
-							  Map<TypeVariable, Type> upperBounds, Deque<TypeVariable> recursiveVariables) {
+			Map<TypeVariable, Type> upperBounds, Deque<TypeVariable> recursiveVariables) {
 		if (type instanceof TypeVariable variable) {
 			for (TypeVariable recursiveVariable : recursiveVariables) {
 				if (recursiveVariable.equals(variable))

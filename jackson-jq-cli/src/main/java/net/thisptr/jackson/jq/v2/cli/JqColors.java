@@ -29,7 +29,7 @@ final class JqColors {
 	private final String keyColor;
 
 	JqColors(String nullColor, String falseColor, String trueColor, String numberColor,
-			 String stringColor, String arrayColor, String objectColor, String keyColor) {
+			String stringColor, String arrayColor, String objectColor, String keyColor) {
 		this.nullColor = nullColor;
 		this.falseColor = falseColor;
 		this.trueColor = trueColor;

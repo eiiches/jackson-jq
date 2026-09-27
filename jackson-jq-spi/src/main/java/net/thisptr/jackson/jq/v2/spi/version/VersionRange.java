@@ -37,7 +37,7 @@ public final class VersionRange {
 	 * they are equal but not both inclusive
 	 */
 	VersionRange(@Nullable Version minVersion, boolean minInclusive,
-				 @Nullable Version maxVersion, boolean maxInclusive) {
+			@Nullable Version maxVersion, boolean maxInclusive) {
 		this.minVersion = minVersion;
 		this.minInclusive = minVersion != null && minInclusive;
 		this.maxVersion = maxVersion;
@@ -65,7 +65,7 @@ public final class VersionRange {
 	 * they are equal but not both inclusive
 	 */
 	public static VersionRange of(@Nullable Version minVersion, boolean minInclusive,
-								  @Nullable Version maxVersion, boolean maxInclusive) {
+			@Nullable Version maxVersion, boolean maxInclusive) {
 		return new VersionRange(minVersion, minInclusive, maxVersion, maxInclusive);
 	}
 

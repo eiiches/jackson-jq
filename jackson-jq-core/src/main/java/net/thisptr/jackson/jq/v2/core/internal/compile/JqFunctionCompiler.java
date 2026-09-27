@@ -276,7 +276,7 @@ final class JqFunctionCompiler {
 		final ResolvedFunction<N> resolved;
 
 		AbstractBoundJqFunction(String name, List<FunctionParameter> paramNames, List<TypeScheme<FunctionType>> typeSchemes,
-								List<AnalyzedExpression<N>> args, ResolvedFunction<N> resolved) {
+				List<AnalyzedExpression<N>> args, ResolvedFunction<N> resolved) {
 			this.name = name;
 			this.paramNames = paramNames;
 			this.typeSchemes = typeSchemes;
@@ -345,7 +345,7 @@ final class JqFunctionCompiler {
 
 	private static final class FramedJqFunction<N> extends AbstractBoundJqFunction<N> {
 		FramedJqFunction(String name, List<FunctionParameter> paramNames, List<TypeScheme<FunctionType>> typeSchemes,
-						 List<AnalyzedExpression<N>> args, ResolvedFunction<N> resolved) {
+				List<AnalyzedExpression<N>> args, ResolvedFunction<N> resolved) {
 			super(name, paramNames, typeSchemes, args, resolved);
 		}
 
@@ -374,7 +374,7 @@ final class JqFunctionCompiler {
 	 */
 	private static final class InlinedJqFunction<N> extends AbstractBoundJqFunction<N> {
 		InlinedJqFunction(String name, List<FunctionParameter> paramNames, List<TypeScheme<FunctionType>> typeSchemes,
-						  List<AnalyzedExpression<N>> args, ResolvedFunction<N> resolved) {
+				List<AnalyzedExpression<N>> args, ResolvedFunction<N> resolved) {
 			super(name, paramNames, typeSchemes, args, resolved);
 		}
 

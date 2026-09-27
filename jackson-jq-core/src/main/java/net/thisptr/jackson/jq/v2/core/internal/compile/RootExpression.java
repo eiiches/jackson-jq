@@ -81,14 +81,14 @@ public class RootExpression<JsonNode> implements AnalyzedExpression<JsonNode> {
 	}
 
 	public RootExpression(int frameSize, int globalCount, int outputCounterCount, int innerOutputIndex, AnalyzedExpression<JsonNode> inner,
-						  Set<String> definedVariables,
-						  Set<FunctionSignature> definedFunctions,
-						  Map<String, Integer> globalVariableIndices,
-						  Map<FunctionSignature, Integer> globalFunctionIndices,
-						  Set<String> declaredVariables,
-						  Set<FunctionSignature> declaredFunctions,
-						  Map<FunctionSignature, Integer> rootFunctionSlots,
-						  Type outputType) {
+			Set<String> definedVariables,
+			Set<FunctionSignature> definedFunctions,
+			Map<String, Integer> globalVariableIndices,
+			Map<FunctionSignature, Integer> globalFunctionIndices,
+			Set<String> declaredVariables,
+			Set<FunctionSignature> declaredFunctions,
+			Map<FunctionSignature, Integer> rootFunctionSlots,
+			Type outputType) {
 		this.frameSize = frameSize;
 		this.globalCount = globalCount;
 		this.outputCounterCount = outputCounterCount;

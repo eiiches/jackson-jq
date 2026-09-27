@@ -22,7 +22,7 @@ public final class ResolvedFunctionCall<JsonNode> implements AnalyzedExpression<
 	private final boolean hasOpaqueVariableReference;
 
 	public ResolvedFunctionCall(Expression<StackFrame, JsonNode> function, ExpressionProperties properties,
-								List<? extends Expression<StackFrame, JsonNode>> arguments) {
+			List<? extends Expression<StackFrame, JsonNode>> arguments) {
 		this.function = function;
 		this.properties = properties;
 		this.freeLocalSlots = FreeVariables.unionAll(arguments);

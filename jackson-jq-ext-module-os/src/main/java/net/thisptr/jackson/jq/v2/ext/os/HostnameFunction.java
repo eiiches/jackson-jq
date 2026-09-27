@@ -109,7 +109,7 @@ final class HostnameFunction implements Function {
 	}
 
 	private <Context extends RuntimeContext, JsonNode> void emit(JsonProvider<JsonNode> provider,
-																 Context context, Output<JsonNode> output, boolean fqdn) throws JsonQueryException {
+			Context context, Output<JsonNode> output, boolean fqdn) throws JsonQueryException {
 		HostNames names;
 		try {
 			names = lookup.lookup(fqdn);

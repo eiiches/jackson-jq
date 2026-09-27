@@ -39,7 +39,7 @@ public final class JqFunction {
 	 * {@link FunctionSignature#of})
 	 */
 	JqFunction(String name, List<FunctionParameter> parameters, String body, @Nullable VersionRange version,
-			   List<? extends TypeScheme<FunctionType>> typeSchemes) {
+			List<? extends TypeScheme<FunctionType>> typeSchemes) {
 		Objects.requireNonNull(parameters, "parameters");
 		for (FunctionParameter parameter : parameters)
 			Objects.requireNonNull(parameter, "parameters must not contain null elements");
@@ -99,7 +99,7 @@ public final class JqFunction {
 	 * {@link FunctionSignature#of}), or a scheme declares the wrong number of parameters
 	 */
 	public static JqFunction of(String name, List<FunctionParameter> parameters, String body,
-								List<? extends TypeScheme<FunctionType>> typeSchemes) {
+			List<? extends TypeScheme<FunctionType>> typeSchemes) {
 		return new JqFunction(name, parameters, body, null, typeSchemes);
 	}
 
@@ -117,7 +117,7 @@ public final class JqFunction {
 	 * {@link FunctionSignature#of}), or a scheme declares the wrong number of parameters
 	 */
 	public static JqFunction of(String name, List<FunctionParameter> parameters, String body,
-								@Nullable VersionRange version, List<? extends TypeScheme<FunctionType>> typeSchemes) {
+			@Nullable VersionRange version, List<? extends TypeScheme<FunctionType>> typeSchemes) {
 		return new JqFunction(name, parameters, body, version, typeSchemes);
 	}
 

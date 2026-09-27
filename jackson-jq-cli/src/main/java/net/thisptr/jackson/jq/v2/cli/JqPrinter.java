@@ -36,7 +36,7 @@ final class JqPrinter {
 	}
 
 	private static <N> void append(JsonProvider<N> provider, StringBuilder out, N node,
-								   @Nullable String indent, @Nullable JqColors colors, int depth) {
+			@Nullable String indent, @Nullable JqColors colors, int depth) {
 		JsonNodeType type = provider.getNodeType(node);
 		switch (type) {
 			case ARRAY -> appendArray(provider, out, node, indent, colors, depth);
@@ -46,7 +46,7 @@ final class JqPrinter {
 	}
 
 	private static <N> void appendArray(JsonProvider<N> provider, StringBuilder out, N node,
-										@Nullable String indent, @Nullable JqColors colors, int depth) {
+			@Nullable String indent, @Nullable JqColors colors, int depth) {
 		Iterator<N> it = provider.getArrayElements(node);
 		if (!it.hasNext()) {
 			if (colors != null) {
@@ -90,7 +90,7 @@ final class JqPrinter {
 	}
 
 	private static <N> void appendObject(JsonProvider<N> provider, StringBuilder out, N node,
-										 @Nullable String indent, @Nullable JqColors colors, int depth) {
+			@Nullable String indent, @Nullable JqColors colors, int depth) {
 		Iterator<Map.Entry<String, N>> it = provider.getObjectMembers(node);
 		if (!it.hasNext()) {
 			if (colors != null) {
@@ -148,7 +148,7 @@ final class JqPrinter {
 	}
 
 	private static <N> void appendScalar(JsonProvider<N> provider, StringBuilder out, N node,
-										 @Nullable JqColors colors) {
+			@Nullable JqColors colors) {
 		if (colors == null) {
 			out.append(provider.format(node));
 			return;

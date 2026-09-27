@@ -171,38 +171,38 @@ final class Playground<N> {
 	private @Nullable TuiRunner runner;
 
 	Playground(Environment<?> env, Version version, String providerName, byte @Nullable [] rawInputBytes,
-			   boolean nullInput, boolean rawInput, boolean slurp,
-			   String initialQuery, JsonProvider<?> jsonProvider,
-			   RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
-			   boolean warningsEnabled, PrintStream out, PrintStream err) {
+			boolean nullInput, boolean rawInput, boolean slurp,
+			String initialQuery, JsonProvider<?> jsonProvider,
+			RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
+			boolean warningsEnabled, PrintStream out, PrintStream err) {
 		this(env, version, providerName, rawInputBytes, nullInput, rawInput, slurp, initialQuery, jsonProvider,
 				runtimeOptions, compileOptions, compact, rawOutput, warningsEnabled, Collections.emptyList(), out, err);
 	}
 
 	Playground(Environment<?> env, Version version, String providerName, byte @Nullable [] rawInputBytes,
-			   boolean nullInput, boolean rawInput, boolean slurp,
-			   String initialQuery, JsonProvider<?> jsonProvider,
-			   RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
-			   boolean warningsEnabled, List<String> inputFiles, PrintStream out, PrintStream err) {
+			boolean nullInput, boolean rawInput, boolean slurp,
+			String initialQuery, JsonProvider<?> jsonProvider,
+			RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
+			boolean warningsEnabled, List<String> inputFiles, PrintStream out, PrintStream err) {
 		this(env, version, providerName, rawInputBytes, nullInput, rawInput, slurp, initialQuery, jsonProvider,
 				runtimeOptions, compileOptions, compact, rawOutput, warningsEnabled, inputFiles, false, out, err);
 	}
 
 	Playground(Environment<?> env, Version version, String providerName, byte @Nullable [] rawInputBytes,
-			   boolean nullInput, boolean rawInput, boolean slurp,
-			   String initialQuery, JsonProvider<?> jsonProvider,
-			   RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
-			   boolean warningsEnabled, List<String> inputFiles, boolean vimMode, PrintStream out, PrintStream err) {
+			boolean nullInput, boolean rawInput, boolean slurp,
+			String initialQuery, JsonProvider<?> jsonProvider,
+			RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
+			boolean warningsEnabled, List<String> inputFiles, boolean vimMode, PrintStream out, PrintStream err) {
 		this(env, version, providerName, rawInputBytes, nullInput, rawInput, slurp, initialQuery, jsonProvider,
 				runtimeOptions, compileOptions, compact, rawOutput, warningsEnabled, inputFiles, vimMode, null, out, err);
 	}
 
 	Playground(Environment<?> env, Version version, String providerName, byte @Nullable [] rawInputBytes,
-			   boolean nullInput, boolean rawInput, boolean slurp,
-			   String initialQuery, JsonProvider<?> jsonProvider,
-			   RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
-			   boolean warningsEnabled, List<String> inputFiles, boolean vimMode, @Nullable Path queryFile,
-			   PrintStream out, PrintStream err) {
+			boolean nullInput, boolean rawInput, boolean slurp,
+			String initialQuery, JsonProvider<?> jsonProvider,
+			RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
+			boolean warningsEnabled, List<String> inputFiles, boolean vimMode, @Nullable Path queryFile,
+			PrintStream out, PrintStream err) {
 		this.env = env;
 		this.version = version;
 		this.providerName = providerName;
@@ -227,23 +227,23 @@ final class Playground<N> {
 	}
 
 	Playground(Environment<N> env, byte @Nullable [] rawInputBytes, boolean nullInput, boolean rawInput, boolean slurp,
-			   String initialQuery, JsonProvider<N> jsonProvider,
-			   RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
-			   boolean warningsEnabled, PrintStream out, PrintStream err) {
+			String initialQuery, JsonProvider<N> jsonProvider,
+			RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
+			boolean warningsEnabled, PrintStream out, PrintStream err) {
 		this(env, Versions.JQ_1_6, Main.resolveProviderName(jsonProvider), rawInputBytes, nullInput, rawInput, slurp,
 				initialQuery, jsonProvider, runtimeOptions, compileOptions, compact, rawOutput, warningsEnabled, out, err);
 	}
 
 	Playground(Environment<N> env, List<N> inputs, String initialQuery, JsonProvider<N> jsonProvider,
-			   RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
-			   boolean warningsEnabled, PrintStream out, PrintStream err) {
+			RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
+			boolean warningsEnabled, PrintStream out, PrintStream err) {
 		this(env, serializeInputs(inputs, jsonProvider), false, false, false, initialQuery, jsonProvider,
 				runtimeOptions, compileOptions, compact, rawOutput, warningsEnabled, out, err);
 	}
 
 	Playground(Environment<N> env, List<N> inputs, String initialQuery, JsonProvider<N> jsonProvider,
-			   RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
-			   PrintStream out, PrintStream err) {
+			RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
+			PrintStream out, PrintStream err) {
 		this(env, inputs, initialQuery, jsonProvider, runtimeOptions, compileOptions, compact, rawOutput, true, out, err);
 	}
 
