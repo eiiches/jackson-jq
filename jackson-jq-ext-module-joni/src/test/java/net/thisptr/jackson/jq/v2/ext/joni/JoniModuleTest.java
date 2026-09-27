@@ -99,6 +99,9 @@ public class JoniModuleTest {
 	}
 
 	private static Environment<JsonNode> environment() {
-		return EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_8_2).build();
+		return EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_8_2)
+				.clearModuleLoaders()
+				.registerModule(JoniRegexModule.getInstance())
+				.build();
 	}
 }

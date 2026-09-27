@@ -27,8 +27,13 @@
  */
 package net.thisptr.jackson.jq.v2.ext.re2;
 
+import java.util.Map;
+
+import net.thisptr.jackson.jq.v2.spi.Function;
+import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 
 /**
@@ -39,8 +44,11 @@ import net.thisptr.jackson.jq.v2.spi.module.JqModule;
  * including {@code "jackson-jq/re2"}.
  */
 @ModuleRegistration(path = "jackson-jq/re2")
-public final class Re2RegexModule implements JqModule<Object> {
+public final class Re2RegexModule implements JqModule<Object>, JavaModule {
 	private static final Re2RegexModule INSTANCE = new Re2RegexModule();
+	private static final Map<FunctionSignature, Function> FUNCTIONS = Map.of(
+			FunctionSignature.of("_match_impl", 3), new MatchImplFunction(),
+			FunctionSignature.of("_sub_impl", 3), new SubImplFunction());
 
 	/**
 	 * The jq-language surface over the regex primitives.
@@ -57,15 +65,14 @@ public final class Re2RegexModule implements JqModule<Object> {
 	 * a union it assembles itself is clearer written out.
 	 */
 	private static final String SOURCE = """
-			import "jackson-jq/re2/_impl" as re2_impl;
 			#jackson-jq:type (STRING -> STRING; STRING -> STRING) => (STRING -> ${MATCH})
-			def match(re; mode): re2_impl::_match_impl(re; mode; false) | .[];
+			def match(re; mode): _match_impl(re; mode; false) | .[];
 			#jackson-jq:type (STRING -> STRING) => (STRING -> ${MATCH})
 			#jackson-jq:type (STRING -> [STRING]) => (STRING -> ${MATCH})
 			#jackson-jq:type (STRING -> [STRING, STRING]) => (STRING -> ${MATCH})
 			def match($val): ($val|type) as $vt | if $vt == "string" then match($val; "") elif $vt == "array" and ($val | length) > 1 then match($val[0]; $val[1]) elif $vt == "array" and ($val | length) > 0 then match($val[0]; "") else error($vt + " not a string or array") end;
 			#jackson-jq:type (STRING -> STRING; STRING -> STRING) => (STRING -> BOOLEAN)
-			def test(re; mode): re2_impl::_match_impl(re; mode; true);
+			def test(re; mode): _match_impl(re; mode; true);
 			#jackson-jq:type (STRING -> STRING) => (STRING -> BOOLEAN)
 			#jackson-jq:type (STRING -> [STRING]) => (STRING -> BOOLEAN)
 			#jackson-jq:type (STRING -> [STRING, STRING]) => (STRING -> BOOLEAN)
@@ -87,13 +94,13 @@ public final class Re2RegexModule implements JqModule<Object> {
 			#jackson-jq:type (STRING -> STRING; STRING -> STRING) => (STRING -> [*:STRING])
 			def split($re; flags): [splits($re; flags)];
 			#jackson-jq:type (STRING -> STRING; ${CAPTURES} -> STRING) => (STRING -> STRING)
-			def sub($re; s): re2_impl::_sub_impl($re; s; "");
+			def sub($re; s): _sub_impl($re; s; "");
 			#jackson-jq:type (STRING -> STRING; ${CAPTURES} -> STRING; STRING -> STRING) => (STRING -> STRING)
-			def sub($re; s; flags): re2_impl::_sub_impl($re; s; flags);
+			def sub($re; s; flags): _sub_impl($re; s; flags);
 			#jackson-jq:type (STRING -> STRING; ${CAPTURES} -> STRING; STRING -> STRING) => (STRING -> STRING)
-			def gsub($re; s; flags): re2_impl::_sub_impl($re; s; flags + "g");
+			def gsub($re; s; flags): _sub_impl($re; s; flags + "g");
 			#jackson-jq:type (STRING -> STRING; ${CAPTURES} -> STRING) => (STRING -> STRING)
-			def gsub($re; s): re2_impl::_sub_impl($re; s; "g");
+			def gsub($re; s): _sub_impl($re; s; "g");
 			"""
 			.replace("${MATCH}", Types.MATCH_OBJECT.toString())
 			.replace("${CAPTURES}", Types.CAPTURES.toString());
@@ -105,6 +112,11 @@ public final class Re2RegexModule implements JqModule<Object> {
 	 */
 	public static Re2RegexModule getInstance() {
 		return INSTANCE;
+	}
+
+	@Override
+	public Map<FunctionSignature, Function> getFunctions() {
+		return FUNCTIONS;
 	}
 
 	@Override

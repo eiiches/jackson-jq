@@ -11,7 +11,5 @@ module net.thisptr.jackson.jq.v2.ext.module.re2 {
 
 	exports net.thisptr.jackson.jq.v2.ext.re2;
 
-	provides Module with
-			net.thisptr.jackson.jq.v2.ext.re2.Re2RegexModule,
-			net.thisptr.jackson.jq.v2.ext.re2.InternalModuleImpl;
+	provides Module with net.thisptr.jackson.jq.v2.ext.re2.Re2RegexModule;
 }

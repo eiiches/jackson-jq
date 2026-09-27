@@ -101,6 +101,9 @@ public class Re2ModuleTest {
 	}
 
 	private static Environment<JsonNode> environment() {
-		return EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_8_2).build();
+		return EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_8_2)
+				.clearModuleLoaders()
+				.registerModule(Re2RegexModule.getInstance())
+				.build();
 	}
 }

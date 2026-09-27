@@ -11,7 +11,5 @@ module net.thisptr.jackson.jq.v2.ext.module.joni {
 
 	exports net.thisptr.jackson.jq.v2.ext.joni;
 
-	provides Module with
-			net.thisptr.jackson.jq.v2.ext.joni.JoniRegexModule,
-			net.thisptr.jackson.jq.v2.ext.joni.InternalModuleImpl;
+	provides Module with net.thisptr.jackson.jq.v2.ext.joni.JoniRegexModule;
 }
