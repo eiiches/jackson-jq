@@ -1595,7 +1595,9 @@ class PlaygroundTest {
 				terminalOut,
 				KeyEvent.ofChar('o', KeyModifiers.CTRL),
 				KeyEvent.ofKey(KeyCode.DOWN),
+				KeyEvent.ofKey(KeyCode.DOWN),
 				KeyEvent.ofChar(' '),
+				KeyEvent.ofKey(KeyCode.UP),
 				KeyEvent.ofKey(KeyCode.UP),
 				KeyEvent.ofChar(' '),
 				KeyEvent.ofKey(KeyCode.ESCAPE),
@@ -1663,6 +1665,50 @@ class PlaygroundTest {
 		assertThat(pg.isSlurp()).isTrue();
 		assertThat(pg.isCompact()).isTrue();
 		assertThat(pg.isRawOutput()).isTrue();
+	}
+
+	@Test
+	void yamlShortcutsUpdateInputPreviewAndOutput() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		TuiRunner runner = createTestRunner(new ByteArrayOutputStream(),
+				KeyEvent.ofChar('o', KeyModifiers.CTRL),
+				KeyEvent.ofChar('Y'),
+				KeyEvent.ofChar('y'),
+				KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofChar('y'));
+		Playground<JsonNode> pg = new Playground<>(env,
+				"name: Ada\n".getBytes(StandardCharsets.UTF_8), false, false, false, ".", JSON,
+				RuntimeOptions.newBuilder().build(), CompileOptions.newBuilder().build(), false, false,
+				true, new PrintStream(out), new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(runner);
+
+		assertThat(pg.finalCommand()).contains(" -y", " -Y");
+		assertThat(pg.getPreviewLines()).contains("---", "name: \"Ada\"");
+		assertThat(out.toString(StandardCharsets.UTF_8)).contains("---", "name: \"Ada\"");
+	}
+
+	@Test
+	void arrowKeysFollowYamlRowsAndWrapInOptionsDialog() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		TuiRunner runner = createTestRunner(new ByteArrayOutputStream(),
+				KeyEvent.ofChar('o', KeyModifiers.CTRL),
+				KeyEvent.ofKey(KeyCode.UP),
+				KeyEvent.ofKey(KeyCode.DOWN),
+				KeyEvent.ofKey(KeyCode.DOWN),
+				KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofKey(KeyCode.ESCAPE),
+				KeyEvent.ofChar('y'));
+		Playground<JsonNode> pg = new Playground<>(env,
+				"null\n".getBytes(StandardCharsets.UTF_8), false, false, false, ".", JSON,
+				RuntimeOptions.newBuilder().build(), CompileOptions.newBuilder().build(), false, false,
+				true, new PrintStream(new ByteArrayOutputStream()), new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(runner);
+
+		assertThat(pg.getSelectedOptionIndex()).isEqualTo(15);
 	}
 
 	@Test
@@ -1831,6 +1877,8 @@ class PlaygroundTest {
 				KeyEvent.ofKey(KeyCode.DOWN),
 				KeyEvent.ofKey(KeyCode.DOWN),
 				KeyEvent.ofKey(KeyCode.DOWN),
+				KeyEvent.ofKey(KeyCode.DOWN),
+				KeyEvent.ofKey(KeyCode.DOWN),
 				KeyEvent.ofKey(KeyCode.RIGHT),
 				KeyEvent.ofKey(KeyCode.DOWN),
 				KeyEvent.ofChar(' '),
@@ -1866,7 +1914,7 @@ class PlaygroundTest {
 		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
 		List<Event> events = new ArrayList<>();
 		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < 8; i++) {
 			events.add(KeyEvent.ofKey(KeyCode.DOWN));
 		}
 		events.add(KeyEvent.ofChar('1'));
@@ -1908,6 +1956,36 @@ class PlaygroundTest {
 	}
 
 	@Test
+	void outputLimitEditorSkipsZeroAndBackspaceRestoresUnlimited() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		List<Event> events = new ArrayList<>();
+		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
+		for (int i = 0; i < 13; i++)
+			events.add(KeyEvent.ofKey(KeyCode.DOWN));
+		events.add(KeyEvent.ofChar('0'));
+		events.add(KeyEvent.ofChar('1'));
+		events.add(KeyEvent.ofKey(KeyCode.BACKSPACE));
+		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE));
+		events.add(KeyEvent.ofChar('y'));
+
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				Collections.singletonList(JSON.createNull()),
+				".",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(createTestRunner(new ByteArrayOutputStream(), events));
+		assertThat(pg.getRuntimeOptions().getMaxOutputsPerExpression()).isEqualTo(Long.MAX_VALUE);
+	}
+
+	@Test
 	void ignoresRuntimeLimitDigitsThatWouldOverflow() throws Exception {
 		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
 		RuntimeOptions initialOptions = RuntimeOptions.newBuilder()
@@ -1916,7 +1994,7 @@ class PlaygroundTest {
 				.build();
 		List<Event> events = new ArrayList<>();
 		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < 8; i++) {
 			events.add(KeyEvent.ofKey(KeyCode.DOWN));
 		}
 		events.add(KeyEvent.ofChar('9'));
@@ -1952,7 +2030,7 @@ class PlaygroundTest {
 		ByteArrayOutputStream err = new ByteArrayOutputStream();
 		List<Event> events = new ArrayList<>();
 		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < 8; i++) {
 			events.add(KeyEvent.ofKey(KeyCode.DOWN));
 		}
 		events.add(KeyEvent.ofChar('3'));
@@ -3533,7 +3611,7 @@ class PlaygroundTest {
 		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
 		List<Event> events = new ArrayList<>();
 		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
-		for (int i = 0; i < 12; i++) {
+		for (int i = 0; i < 14; i++) {
 			events.add(KeyEvent.ofKey(KeyCode.DOWN));
 		}
 		// Default is WARN. Cycle forward: WARN -> STRICT
@@ -3570,7 +3648,7 @@ class PlaygroundTest {
 		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
 		List<Event> events = new ArrayList<>();
 		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
-		for (int i = 0; i < 13; i++) {
+		for (int i = 0; i < 15; i++) {
 			events.add(KeyEvent.ofKey(KeyCode.DOWN));
 		}
 		events.add(KeyEvent.ofKey(KeyCode.ENTER)); // open EDIT_TYPE
@@ -3611,7 +3689,7 @@ class PlaygroundTest {
 		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
 		List<Event> events = new ArrayList<>();
 		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
-		for (int i = 0; i < 14; i++) {
+		for (int i = 0; i < 16; i++) {
 			events.add(KeyEvent.ofKey(KeyCode.DOWN));
 		}
 		events.add(KeyEvent.ofKey(KeyCode.ENTER)); // open EDIT_TYPE
@@ -3657,7 +3735,7 @@ class PlaygroundTest {
 		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
 		List<Event> events = new ArrayList<>();
 		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
-		for (int i = 0; i < 13; i++) {
+		for (int i = 0; i < 15; i++) {
 			events.add(KeyEvent.ofKey(KeyCode.DOWN));
 		}
 		events.add(KeyEvent.ofKey(KeyCode.ENTER)); // open EDIT_TYPE
@@ -3697,7 +3775,7 @@ class PlaygroundTest {
 		List<Event> events = new ArrayList<>();
 		// First set to STRING
 		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
-		for (int i = 0; i < 13; i++) {
+		for (int i = 0; i < 15; i++) {
 			events.add(KeyEvent.ofKey(KeyCode.DOWN));
 		}
 		events.add(KeyEvent.ofKey(KeyCode.ENTER));
@@ -3738,7 +3816,7 @@ class PlaygroundTest {
 		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
 		List<Event> events = new ArrayList<>();
 		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
-		for (int i = 0; i < 13; i++) {
+		for (int i = 0; i < 15; i++) {
 			events.add(KeyEvent.ofKey(KeyCode.DOWN));
 		}
 		events.add(KeyEvent.ofChar('i', KeyModifiers.CTRL)); // infer type
@@ -3774,7 +3852,7 @@ class PlaygroundTest {
 		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
 		List<Event> events = new ArrayList<>();
 		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
-		for (int i = 0; i < 13; i++) {
+		for (int i = 0; i < 15; i++) {
 			events.add(KeyEvent.ofKey(KeyCode.DOWN));
 		}
 		events.add(KeyEvent.ofChar('i', KeyModifiers.CTRL)); // infer type
@@ -3809,7 +3887,7 @@ class PlaygroundTest {
 		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
 		List<Event> events = new ArrayList<>();
 		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
-		for (int i = 0; i < 13; i++) {
+		for (int i = 0; i < 15; i++) {
 			events.add(KeyEvent.ofKey(KeyCode.DOWN));
 		}
 		events.add(KeyEvent.ofChar('i', KeyModifiers.CTRL)); // infer type
@@ -3844,7 +3922,7 @@ class PlaygroundTest {
 		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
 		List<Event> events = new ArrayList<>();
 		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
-		for (int i = 0; i < 13; i++) {
+		for (int i = 0; i < 15; i++) {
 			events.add(KeyEvent.ofKey(KeyCode.DOWN));
 		}
 		events.add(KeyEvent.ofChar('i')); // plain 'i' should not infer
@@ -3879,7 +3957,7 @@ class PlaygroundTest {
 		ByteArrayOutputStream terminalOut = new ByteArrayOutputStream();
 		List<Event> events = new ArrayList<>();
 		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
-		for (int i = 0; i < 13; i++) {
+		for (int i = 0; i < 15; i++) {
 			events.add(KeyEvent.ofKey(KeyCode.DOWN));
 		}
 		events.add(KeyEvent.ofKey(KeyCode.ENTER)); // open EDIT_TYPE

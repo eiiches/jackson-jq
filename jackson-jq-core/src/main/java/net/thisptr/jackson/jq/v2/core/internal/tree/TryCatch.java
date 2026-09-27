@@ -12,6 +12,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -115,6 +116,8 @@ public class TryCatch<JsonNode> implements RewritableExpression<JsonNode>, FreeV
 			if (e.boundary == boundary)
 				throw e.exception;
 			throw e;
+		} catch (RuntimeLimitExceededException e) {
+			throw e;
 		} catch (JsonQueryException e) {
 			if (catchExpr != null) {
 				catchExpr.apply(frame, e.toJson(jsonProvider), path instanceof UntrackedPath ? UntrackedPath.getInstance() : UnrepresentablePath.getInstance(), output);
@@ -125,6 +128,8 @@ public class TryCatch<JsonNode> implements RewritableExpression<JsonNode>, FreeV
 	private void applyLegacy(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		try {
 			tryExpr.apply(frame, in, path, output);
+		} catch (RuntimeLimitExceededException e) {
+			throw e;
 		} catch (JsonQueryException e) {
 			if (catchExpr != null) {
 				catchExpr.apply(frame, e.toJson(jsonProvider), path instanceof UntrackedPath ? UntrackedPath.getInstance() : UnrepresentablePath.getInstance(), output);

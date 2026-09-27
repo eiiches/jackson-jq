@@ -77,7 +77,15 @@ assert_output() {
 
 for provider in jackson2 jackson3 fastjson2 gson jakarta; do
     assert_output '{"value":2}' --json-provider "$provider" -cn '{value: 1 + 1}'
+    assert_output '---
+value: 2' --json-provider "$provider" -yn '{value: 1 + 1}'
 done
+
+yaml_value="$(printf '%s\n' '---' 'value: 2' | "$java_cmd" -jar "$jar_file" -Yc '.value')"
+if [ "$yaml_value" != '2' ]; then
+    echo "YAML input produced: $yaml_value" >&2
+    exit 1
+fi
 
 assert_output '"bcd"' -n '"abcde" | match("bcd").string'
 assert_output 'true' -n \

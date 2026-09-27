@@ -30,8 +30,8 @@ public final class RuntimeLimitsImpl implements RuntimeLimits {
 			throw new IllegalArgumentException("maxBinaryLength must not be negative");
 		if (maxUserDefinedFunctionCalls < 0)
 			throw new IllegalArgumentException("maxUserDefinedFunctionCalls must not be negative");
-		if (maxOutputsPerExpression < 0)
-			throw new IllegalArgumentException("maxOutputsPerExpression must not be negative");
+		if (maxOutputsPerExpression < 1)
+			throw new IllegalArgumentException("maxOutputsPerExpression must be positive");
 		this.maxArrayLength = maxArrayLength;
 		this.maxObjectMemberCount = maxObjectMemberCount;
 		this.maxStringLength = maxStringLength;

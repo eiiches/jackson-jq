@@ -81,7 +81,15 @@ final class Playground<N> {
 	private static final int TYPE_CHECK_OPTION = 12;
 	private static final int INPUT_TYPE_OPTION = 13;
 	private static final int OUTPUT_TYPE_OPTION = 14;
-	private static final int OPTION_COUNT = OUTPUT_TYPE_OPTION + 1;
+	private static final int YAML_INPUT_OPTION = 15;
+	private static final int YAML_OUTPUT_OPTION = 16;
+	private static final int[] OPTION_ORDER = {
+			0, YAML_INPUT_OPTION, 1, 2, 3, YAML_OUTPUT_OPTION, 4, 5,
+			MAX_STRING_LENGTH_OPTION, MAX_BINARY_LENGTH_OPTION, MAX_ARRAY_LENGTH_OPTION,
+			MAX_OBJECT_MEMBER_COUNT_OPTION, MAX_USER_DEFINED_FUNCTION_CALLS_OPTION,
+			MAX_OUTPUTS_PER_EXPRESSION_OPTION, TYPE_CHECK_OPTION, INPUT_TYPE_OPTION,
+			OUTPUT_TYPE_OPTION
+	};
 	private static final int LIMIT_FLAG_WIDTH = 35;
 	private static final int LIMIT_VALUE_WIDTH = 20;
 
@@ -120,6 +128,7 @@ final class Playground<N> {
 	private final byte @Nullable [] rawInputBytes;
 	private final boolean nullInput;
 	private boolean rawInput;
+	private boolean yamlInput;
 	private boolean slurp;
 	private RuntimeOptions runtimeOptions;
 	private CompileOptions compileOptions;
@@ -131,6 +140,7 @@ final class Playground<N> {
 	private @Nullable Type targetTypeResult = null;
 	private boolean compact;
 	private boolean rawOutput;
+	private boolean yamlOutput;
 	private final boolean warningsEnabled;
 	private final List<String> inputFiles;
 	private final PrintStream out;
@@ -203,6 +213,17 @@ final class Playground<N> {
 			RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
 			boolean warningsEnabled, List<String> inputFiles, boolean vimMode, @Nullable Path queryFile,
 			PrintStream out, PrintStream err) {
+		this(env, version, providerName, rawInputBytes, nullInput, rawInput, slurp, initialQuery, jsonProvider,
+				runtimeOptions, compileOptions, compact, rawOutput, warningsEnabled, inputFiles, vimMode, queryFile,
+				out, err, false, false);
+	}
+
+	Playground(Environment<?> env, Version version, String providerName, byte @Nullable [] rawInputBytes,
+			boolean nullInput, boolean rawInput, boolean slurp,
+			String initialQuery, JsonProvider<?> jsonProvider,
+			RuntimeOptions runtimeOptions, CompileOptions compileOptions, boolean compact, boolean rawOutput,
+			boolean warningsEnabled, List<String> inputFiles, boolean vimMode, @Nullable Path queryFile,
+			PrintStream out, PrintStream err, boolean yamlInput, boolean yamlOutput) {
 		this.env = env;
 		this.version = version;
 		this.providerName = providerName;
@@ -210,11 +231,13 @@ final class Playground<N> {
 		this.rawInputBytes = rawInputBytes;
 		this.nullInput = nullInput;
 		this.rawInput = rawInput;
+		this.yamlInput = yamlInput;
 		this.slurp = slurp;
 		this.runtimeOptions = runtimeOptions;
 		this.compileOptions = compileOptions;
 		this.compact = compact;
 		this.rawOutput = rawOutput;
+		this.yamlOutput = yamlOutput;
 		this.warningsEnabled = warningsEnabled;
 		this.inputFiles = List.copyOf(inputFiles);
 		this.out = out;
@@ -276,7 +299,8 @@ final class Playground<N> {
 						Collections.singletonList(new ByteArrayInputStream(rawInputBytes)),
 						false,
 						rawInput,
-						slurp);
+						slurp,
+						yamlInput);
 				source.readAll(newInputs::add);
 			} catch (Exception e) {
 				inputErrorMessage = e.getMessage();
@@ -389,10 +413,22 @@ final class Playground<N> {
 		return UnionType.of(types);
 	}
 
+	private void selectAdjacentOption(int direction) {
+		for (int position = 0; position < OPTION_ORDER.length; position++) {
+			if (OPTION_ORDER[position] == selectedOptionIndex) {
+				selectedOptionIndex = OPTION_ORDER[Math.floorMod(position + direction, OPTION_ORDER.length)];
+				return;
+			}
+		}
+		throw new IllegalStateException("Unknown option index: " + selectedOptionIndex);
+	}
+
 	private void toggleOption(int index) {
 		switch (index) {
 			case 0:
 				rawInput = !rawInput;
+				if (rawInput)
+					yamlInput = false;
 				updateInputs();
 				break;
 			case 1:
@@ -401,10 +437,28 @@ final class Playground<N> {
 				break;
 			case 2:
 				compact = !compact;
+				if (compact)
+					yamlOutput = false;
 				updateEvaluation();
 				break;
 			case 3:
 				rawOutput = !rawOutput;
+				if (rawOutput)
+					yamlOutput = false;
+				updateEvaluation();
+				break;
+			case YAML_INPUT_OPTION:
+				yamlInput = !yamlInput;
+				if (yamlInput)
+					rawInput = false;
+				updateInputs();
+				break;
+			case YAML_OUTPUT_OPTION:
+				yamlOutput = !yamlOutput;
+				if (yamlOutput) {
+					compact = false;
+					rawOutput = false;
+				}
 				updateEvaluation();
 				break;
 			case 4:
@@ -433,7 +487,8 @@ final class Playground<N> {
 		long current = getRuntimeLimit(index);
 		long maximum = getRuntimeLimitMaximum(index);
 		if (current == maximum) {
-			setRuntimeLimit(index, digit);
+			if (index != MAX_OUTPUTS_PER_EXPRESSION_OPTION || digit != 0)
+				setRuntimeLimit(index, digit);
 			return;
 		}
 		if (current <= (maximum - digit) / 10) {
@@ -447,7 +502,8 @@ final class Playground<N> {
 		if (current == maximum) {
 			return;
 		}
-		setRuntimeLimit(index, current == 0 ? maximum : current / 10);
+		long shortened = current / 10;
+		setRuntimeLimit(index, current == 0 || (index == MAX_OUTPUTS_PER_EXPRESSION_OPTION && shortened == 0) ? maximum : shortened);
 	}
 
 	private static long getRuntimeLimitMaximum(int index) {
@@ -542,11 +598,11 @@ final class Playground<N> {
 				return true;
 			}
 			if (key.isUp() || key.isChar('k')) {
-				selectedOptionIndex = (selectedOptionIndex + OPTION_COUNT - 1) % OPTION_COUNT;
+				selectAdjacentOption(-1);
 				return true;
 			}
 			if (key.isDown() || key.isChar('j')) {
-				selectedOptionIndex = (selectedOptionIndex + 1) % OPTION_COUNT;
+				selectAdjacentOption(1);
 				return true;
 			}
 			if (key.isLeft() || key.isChar('h')) {
@@ -583,6 +639,14 @@ final class Playground<N> {
 			}
 			if (key.isChar('R')) {
 				toggleOption(0);
+				return true;
+			}
+			if (key.isChar('Y')) {
+				toggleOption(YAML_INPUT_OPTION);
+				return true;
+			}
+			if (key.isChar('y')) {
+				toggleOption(YAML_OUTPUT_OPTION);
 				return true;
 			}
 			if (key.isChar('s') || key.isChar('S')) {
@@ -1040,7 +1104,7 @@ final class Playground<N> {
 		}
 		if (result.submitRequested()) {
 			EvaluationResult check = computeEvaluation(jsonProvider, env, inputs, queryState.text(),
-					compileOptions, runtimeOptions, warningsEnabled, rawOutput, compact, false);
+					compileOptions, runtimeOptions, warningsEnabled, rawOutput, compact, yamlOutput, false);
 			vimExitCompilationFailed = check.errorPhase() == DiagnosticPhase.COMPILE;
 			modal = Modal.CONFIRM_VIM_EXIT;
 		}
@@ -1292,10 +1356,12 @@ final class Playground<N> {
 			List<Line> optionLines = new ArrayList<>();
 			optionLines.add(Line.styled(" Input:", Style.EMPTY.bold()));
 			optionLines.add(buildOptionLine(0, rawInput, "-R, --raw-input", "read each line as string"));
+			optionLines.add(buildOptionLine(YAML_INPUT_OPTION, yamlInput, "-Y, --yaml-input", "read YAML documents"));
 			optionLines.add(buildOptionLine(1, slurp, "-s, --slurp", "read all inputs into an array"));
 			optionLines.add(Line.styled(" Output:", Style.EMPTY.bold()));
 			optionLines.add(buildOptionLine(2, compact, "-c, --compact", "compact JSON output"));
 			optionLines.add(buildOptionLine(3, rawOutput, "-r, --raw-output", "output raw strings"));
+			optionLines.add(buildOptionLine(YAML_OUTPUT_OPTION, yamlOutput, "-y, --yaml-output", "write YAML documents"));
 			optionLines.add(Line.styled(" Engine:", Style.EMPTY.bold()));
 			optionLines.add(buildSelectorLine(4, "Version:", "< " + version + " >"));
 			optionLines.add(buildSelectorLine(5, "Provider:", "< " + providerName + " >"));
@@ -1306,11 +1372,9 @@ final class Playground<N> {
 			optionLines.add(buildRuntimeLimitLine(MAX_OBJECT_MEMBER_COUNT_OPTION, "--max-object-member-count", "object members"));
 			optionLines.add(buildRuntimeLimitLine(MAX_USER_DEFINED_FUNCTION_CALLS_OPTION, "--max-user-defined-function-calls", "query calls"));
 			optionLines.add(buildRuntimeLimitLine(MAX_OUTPUTS_PER_EXPRESSION_OPTION, "--max-outputs-per-expression", "expression outputs"));
-			optionLines.add(Line.styled(" Compiler:", Style.EMPTY.bold()));
 			optionLines.add(buildSelectorLine(TYPE_CHECK_OPTION, "--type-check:", "< " + compileOptions.getTypeCheckMode().name().toLowerCase(Locale.ROOT) + " >"));
 			optionLines.add(buildTypeOptionLine(INPUT_TYPE_OPTION, "--input-type:", compileOptions.getInputType()));
 			optionLines.add(buildTypeOptionLine(OUTPUT_TYPE_OPTION, "--output-type:", compileOptions.getOutputType()));
-			optionLines.add(Line.from(Span.raw("")));
 			optionLines.add(Line.from(
 					Span.styled("  [↑↓] Select  [0-9/⌫] Edit  [Space/←→] Change  [Esc] Close", Style.EMPTY.dim().yellow())
 			));
@@ -1495,15 +1559,17 @@ final class Playground<N> {
 	private static int getOptionLineIndex(int index) {
 		return switch (index) {
 			case 0 -> 1;
-			case 1 -> 2;
-			case 2 -> 4;
-			case 3 -> 5;
-			case 4 -> 7;
-			case 5 -> 8;
-			case 6, 7, 8, 9, 10, 11 -> 10 + (index - FIRST_RUNTIME_LIMIT_OPTION);
-			case TYPE_CHECK_OPTION -> 17;
-			case INPUT_TYPE_OPTION -> 18;
-			case OUTPUT_TYPE_OPTION -> 19;
+			case YAML_INPUT_OPTION -> 2;
+			case 1 -> 3;
+			case 2 -> 5;
+			case 3 -> 6;
+			case YAML_OUTPUT_OPTION -> 7;
+			case 4 -> 9;
+			case 5 -> 10;
+			case 6, 7, 8, 9, 10, 11 -> 12 + (index - FIRST_RUNTIME_LIMIT_OPTION);
+			case TYPE_CHECK_OPTION -> 18;
+			case INPUT_TYPE_OPTION -> 19;
+			case OUTPUT_TYPE_OPTION -> 20;
 			default -> 0;
 		};
 	}
@@ -1727,6 +1793,7 @@ final class Playground<N> {
 			boolean warningsEnabled,
 			boolean rawOutput,
 			boolean compact,
+			boolean yamlOutput,
 			boolean execute) {
 		List<Diagnostic> currentWarnings = new ArrayList<>();
 		CompileOptions.Builder optsBuilder = compileOptions.toBuilder();
@@ -1758,7 +1825,9 @@ final class Playground<N> {
 					count[0]++;
 					items.add(output);
 					String formatted;
-					if (provider.isString(output) && rawOutput) {
+					if (yamlOutput) {
+						formatted = YamlCodec.print(provider, output).stripTrailing();
+					} else if (provider.isString(output) && rawOutput) {
 						formatted = provider.getString(output);
 					} else if (compact) {
 						formatted = provider.format(output);
@@ -1828,6 +1897,7 @@ final class Playground<N> {
 		boolean currentWarningsEnabled = warningsEnabled;
 		boolean currentRawOutput = rawOutput;
 		boolean currentCompact = compact;
+		boolean currentYamlOutput = yamlOutput;
 
 		Executor executor = this.evaluationExecutor;
 		TuiRunner r = this.runner;
@@ -1839,7 +1909,7 @@ final class Playground<N> {
 				EvaluationResult res = computeEvaluation(
 						provider, environment, inList, queryText,
 						currentCompileOptions, currentRuntimeOptions,
-						currentWarningsEnabled, currentRawOutput, currentCompact,
+						currentWarningsEnabled, currentRawOutput, currentCompact, currentYamlOutput,
 						execute);
 				if (r.isRunning()) {
 					r.runOnRenderThread(() -> {
@@ -1861,7 +1931,7 @@ final class Playground<N> {
 			applyEvaluationResult(computeEvaluation(
 					provider, environment, inList, queryText,
 					currentCompileOptions, currentRuntimeOptions,
-					currentWarningsEnabled, currentRawOutput, currentCompact,
+					currentWarningsEnabled, currentRawOutput, currentCompact, currentYamlOutput,
 					execute));
 		}
 	}
@@ -1929,11 +1999,17 @@ final class Playground<N> {
 		if (rawOutput) {
 			command.append(" -r");
 		}
+		if (yamlOutput) {
+			command.append(" -y");
+		}
 		if (nullInput) {
 			command.append(" -n");
 		}
 		if (rawInput) {
 			command.append(" -R");
+		}
+		if (yamlInput) {
+			command.append(" -Y");
 		}
 		if (slurp) {
 			command.append(" -s");
@@ -1990,7 +2066,9 @@ final class Playground<N> {
 			JsonQuery<T> jq = ((Environment<T>) environment).compile(queryState.text(), compileOptions).withRuntimeOptions(runtimeOptions);
 			for (Object tree : inList) {
 				jq.apply((T) tree, output -> {
-					if (provider.isString(output) && rawOutput) {
+					if (yamlOutput) {
+						out.print(YamlCodec.print(provider, output));
+					} else if (provider.isString(output) && rawOutput) {
 						out.println(provider.getString(output));
 					} else if (compact) {
 						out.println(provider.format(output));

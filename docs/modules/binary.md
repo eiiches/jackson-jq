@@ -4,7 +4,7 @@ Maven artifact: `jackson-jq-ext-module-binary`
 
 jq module: `jackson-jq/binary`
 
-This module provides functions to decode and encode text from and to binary values:
+This module provides functions to inspect binary values and convert them to and from text, hex, Base64, Base64URL, and byte arrays:
 
 ```jq
 import "jackson-jq/binary" as binary;
@@ -19,6 +19,28 @@ piped directly into `binary::decode_text`.
 | --- | --- | --- |
 | `decode_text/{0,1}` | a binary value, or a string containing standard Base64 | a string |
 | `encode_text/{0,1}` | a string | a binary value |
+| `size/0` | a binary value | its byte count |
+| `to_hex/0` | a binary value | a lowercase hex string |
+| `from_hex/0` | a hex string | a binary value |
+| `to_base64/0` | a binary value | a padded standard Base64 string |
+| `from_base64/0` | a standard Base64 string | a binary value |
+| `to_base64url/0` | a binary value | an unpadded Base64URL string |
+| `from_base64url/0` | a Base64URL string | a binary value |
+| `to_bytes/0` | a binary value | an array of integers from 0 to 255 |
+| `from_bytes/0` | an array of integers from 0 to 255 | a binary value |
+
+Every function that accepts a binary value also accepts its standard Base64 string representation,
+including on providers with native binary nodes. `from_hex` accepts uppercase or lowercase hex digits
+and rejects whitespace, invalid digits, and an odd number of digits. `from_bytes` rejects values that
+are not exact integers from 0 to 255.
+`from_base64url` accepts padded and unpadded Base64URL; `to_base64url` always omits padding.
+
+```jq
+"hello" | binary::encode_text | binary::size             # 5
+"hello" | binary::encode_text | binary::to_hex           # "68656c6c6f"
+"68656c6c6f" | binary::from_hex | binary::decode_text  # "hello"
+[0, 127, 255] | binary::from_bytes | binary::to_bytes   # [0, 127, 255]
+```
 
 ```console
 $ jackson-jq -n 'import "jackson-jq/binary" as binary; "hello" | binary::encode_text | binary::decode_text'
@@ -40,5 +62,6 @@ $ jackson-jq -n 'import "jackson-jq/binary" as binary; "あ" | binary::encode_te
 jackson-jq: error: binary::encode_text failed to encode the input using ISO-8859-1: ...
 ```
 
-`RuntimeOptions.Builder.setMaxBinaryLength(...)` bounds binary results produced by `encode_text`, while
-`setMaxStringLength(...)` bounds Base64 results and the text returned by `decode_text`.
+`RuntimeOptions.Builder.setMaxBinaryLength(...)` bounds native binary results, while
+`setMaxStringLength(...)` bounds Base64 fallback values and strings returned by conversions.
+`setMaxArrayLength(...)` bounds arrays returned by `to_bytes`.

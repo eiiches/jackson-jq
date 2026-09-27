@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
+import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
 import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -114,6 +115,21 @@ public class RuntimeOptionsTest {
 		assertThatThrownBy(() -> RuntimeOptions.newBuilder().setMaxBinaryLength(-1))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("maxBinaryLength must not be negative");
+	}
+
+	@Test
+	public void outputLimitMustBePositive() {
+		for (long invalid : List.of(-1L, 0L)) {
+			assertThatThrownBy(() -> RuntimeOptions.newBuilder().setMaxOutputsPerExpression(invalid))
+					.isInstanceOf(IllegalArgumentException.class)
+					.hasMessage("maxOutputsPerExpression must be positive");
+			assertThatThrownBy(() -> new RuntimeLimitsImpl(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE,
+					Integer.MAX_VALUE, Long.MAX_VALUE, invalid))
+					.isInstanceOf(IllegalArgumentException.class)
+					.hasMessage("maxOutputsPerExpression must be positive");
+		}
+		assertThat(maxOutputsPerExpression(1).getMaxOutputsPerExpression()).isEqualTo(1);
+		assertThat(maxOutputsPerExpression(Long.MAX_VALUE).getMaxOutputsPerExpression()).isEqualTo(Long.MAX_VALUE);
 	}
 
 	// --- maxArrayLength -----------------------------------------------------------------------
@@ -428,6 +444,58 @@ public class RuntimeOptionsTest {
 		assertThatThrownBy(() -> run("reduce range(0; 10000000) as $x (0; . + 1)", maxOutputsPerExpression(1000)))
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum of 1000 outputs per expression");
+	}
+
+	@Test
+	public void outputLimitCannotBeCaughtByTryOrOptionalOperator() {
+		for (var version : List.of(Versions.JQ_1_6, Versions.JQ_1_8_2)) {
+			Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), version).build();
+			for (String query : List.of("try (range(0; .) | empty) catch empty", "(range(0; .) | empty)?")) {
+				assertThatThrownBy(() -> env.compile(query).withRuntimeOptions(maxOutputsPerExpression(10)).apply(in("20")))
+						.isInstanceOf(RuntimeLimitExceededException.class)
+						.hasMessageContaining("maximum of 10 outputs per expression");
+			}
+		}
+	}
+
+	@Test
+	public void outputLimitFromJavaFunctionCannotBeCaught() {
+		Function nativeStream = new Function() {
+			@Override
+			public <Context extends RuntimeContext, N> Expression<Context, N> bind(BindContext<N> bindCtx, List<Expression<Context, N>> args) {
+				JsonProvider<N> provider = bindCtx.getJsonProvider();
+				return (context, in, path, output) -> {
+					for (int i = 0; i < 20; ++i)
+						output.emit(provider.createNumber(i), UntrackedPath.getInstance());
+				};
+			}
+		};
+		for (var version : List.of(Versions.JQ_1_6, Versions.JQ_1_8_2)) {
+			Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), version)
+					.defineFunction(FunctionSignature.of("native_stream", 0), nativeStream)
+					.build();
+			assertThatThrownBy(() -> env.compile("try (native_stream | empty) catch empty")
+					.withRuntimeOptions(maxOutputsPerExpression(10)).apply(in("null")))
+					.isInstanceOf(RuntimeLimitExceededException.class)
+					.hasMessageContaining("maximum of 10 outputs per expression");
+		}
+	}
+
+	@Test
+	public void otherRuntimeLimitsCannotBeCaughtButJqErrorsCan() {
+		for (var version : List.of(Versions.JQ_1_6, Versions.JQ_1_8_2)) {
+			Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), version).build();
+			assertThatThrownBy(() -> env.compile("try ([range(0; .)] | empty) catch empty")
+					.withRuntimeOptions(maxArrayLength(2)).apply(in("3")))
+					.isInstanceOf(RuntimeLimitExceededException.class);
+			assertThatThrownBy(() -> env.compile("def f: f; try f catch empty")
+					.withRuntimeOptions(maxUserDefinedFunctionCalls(2)).apply(in("null")))
+					.isInstanceOf(RuntimeLimitExceededException.class);
+			List<JsonNode> out = new ArrayList<>();
+			env.compile("try error(\"boom\") catch \"caught\"").withRuntimeOptions(maxOutputsPerExpression(10))
+					.apply(in("null"), out::add);
+			assertThat(out).containsExactly(in("\"caught\""));
+		}
 	}
 
 	@Test

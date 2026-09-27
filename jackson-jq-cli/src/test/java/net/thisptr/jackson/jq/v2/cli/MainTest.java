@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -103,6 +104,85 @@ class MainTest {
 	void defaultsToJackson3() throws Exception {
 		assertThat(run("{\"foo\":41}", "--compact", ".foo + 1"))
 				.isEqualTo("42\n");
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
+	void readsYamlDocumentsWithSelectedJsonProvider(String provider) throws Exception {
+		assertThat(run("---\nname: first\nitems: [1, 2]\n---\nname: second\nitems: []\n",
+				"--json-provider", provider, "-Yc", ".name, (.items | length)"))
+				.isEqualTo("\"first\"\n2\n\"second\"\n0\n");
+	}
+
+	@Test
+	void slurpsYamlDocumentsAcrossFiles(@TempDir Path dir) throws Exception {
+		Path first = write(dir, "first.yaml", "---\na: 1\n---\na: 2\n");
+		Path second = write(dir, "second.yaml", "---\na: 3\n");
+		assertThat(run("", "-Ysc", "map(.a)", first.toString(), second.toString()))
+				.isEqualTo("[1,2,3]\n");
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
+	void writesEachResultAsYamlDocument(String provider) throws Exception {
+		String yaml = run("{\"a\":[1,2]}", "--json-provider", provider, "-y", "., .a");
+		assertThat(yaml).contains("---\n");
+		assertThat(run(yaml, "-Yc", "."))
+				.isEqualTo("{\"a\":[1,2]}\n[1,2]\n");
+	}
+
+	@Test
+	void preservesYamlNumberValue() throws Exception {
+		String decimal = "123456789012345678901234567890.12345678901234567890";
+		assertThat(YamlCodec.print(Jackson3JsonProvider.getInstance(),
+				Jackson3JsonProvider.getInstance().createNumber(new BigDecimal(decimal))))
+				.contains("123456789012345678901234567890.1234567890123456789");
+	}
+
+	@Test
+	void rejectsConflictingYamlOptions() throws Exception {
+		Options options = new Options();
+		for (String opt : List.of("R", "Y", "y", "r", "c", "C", "M")) {
+			options.addOption(Option.builder(opt).get());
+		}
+		for (String conflict : List.of("-r", "-c", "-C", "-M")) {
+			CommandLine command = Main.createCommandLineParser().parse(options, new String[] { "-y", conflict });
+			assertThatIllegalArgumentException().isThrownBy(() -> Main.validateYamlOptions(command));
+		}
+		CommandLine command = Main.createCommandLineParser().parse(options, new String[] { "-Y", "-R" });
+		assertThatIllegalArgumentException().isThrownBy(() -> Main.validateYamlOptions(command));
+	}
+
+	@Test
+	void playgroundReadsAndWritesYaml() throws Exception {
+		Options options = new Options();
+		options.addOption(Option.builder("i").longOpt("interactive").get());
+		options.addOption(Option.builder("Y").get());
+		options.addOption(Option.builder("y").get());
+		CommandLine command = Main.createCommandLineParser().parse(options, new String[] { "-iYy" });
+		TuiRunner runner = createTestRunner("", new ByteArrayOutputStream());
+		runner.dispatch(KeyEvent.ofKey(KeyCode.ESCAPE));
+		runner.dispatch(KeyEvent.ofChar('y'));
+
+		InputStream originalIn = System.in;
+		PrintStream originalOut = System.out;
+		PrintStream originalErr = System.err;
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		ByteArrayOutputStream errors = new ByteArrayOutputStream();
+		try {
+			System.setIn(new ByteArrayInputStream("name: Ada\n".getBytes(StandardCharsets.UTF_8)));
+			System.setOut(new PrintStream(output));
+			System.setErr(new PrintStream(errors));
+			Main.run(command, "{greeting: .name}", Collections.emptyList(), Versions.JQ_1_6,
+					Jackson3JsonProvider.getInstance(), RuntimeOptions.newBuilder().build(),
+					warnTypeChecking(), runner, null);
+		} finally {
+			System.setIn(originalIn);
+			System.setOut(originalOut);
+			System.setErr(originalErr);
+		}
+		assertThat(output.toString(StandardCharsets.UTF_8)).contains("---", "greeting: \"Ada\"");
+		assertThat(errors.toString(StandardCharsets.UTF_8)).contains("jackson-jq -y -Y --");
 	}
 
 	@Test
@@ -403,7 +483,7 @@ class MainTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "--max-string-length", "--max-binary-length", "--max-array-length", "--max-object-member-count", "--max-user-defined-function-calls", "--max-outputs-per-expression" })
+	@ValueSource(strings = { "--max-string-length", "--max-binary-length", "--max-array-length", "--max-object-member-count", "--max-user-defined-function-calls" })
 	void rejectsInvalidRuntimeLimits(String option) {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> Main.createRuntimeOptions(parseLimits(option, "-1")))
@@ -411,6 +491,17 @@ class MainTest {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> Main.createRuntimeOptions(parseLimits(option, "many")))
 				.withMessage("invalid " + option + ": many (expected a non-negative integer)");
+	}
+
+	@Test
+	void rejectsNonPositiveOutputLimit() throws Exception {
+		for (String value : List.of("-1", "0", "many")) {
+			assertThatIllegalArgumentException()
+					.isThrownBy(() -> Main.createRuntimeOptions(parseLimits("--max-outputs-per-expression", value)))
+					.withMessage("invalid --max-outputs-per-expression: " + value + " (expected a positive integer)");
+		}
+		assertThat(Main.createRuntimeOptions(parseLimits("--max-outputs-per-expression", "1"))
+				.getMaxOutputsPerExpression()).isEqualTo(1);
 	}
 
 	@Test

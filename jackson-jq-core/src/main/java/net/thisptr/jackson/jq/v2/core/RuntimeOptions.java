@@ -252,11 +252,11 @@ public final class RuntimeOptions {
 		 *
 		 * @param maxOutputsPerExpression the maximum number of values one expression may emit; {@link Long#MAX_VALUE} for no limit
 		 * @return this, for chaining
-		 * @throws IllegalArgumentException if {@code maxOutputsPerExpression} is negative
+		 * @throws IllegalArgumentException if {@code maxOutputsPerExpression} is less than one
 		 */
 		public Builder setMaxOutputsPerExpression(long maxOutputsPerExpression) {
-			if (maxOutputsPerExpression < 0)
-				throw new IllegalArgumentException("maxOutputsPerExpression must not be negative");
+			if (maxOutputsPerExpression < 1)
+				throw new IllegalArgumentException("maxOutputsPerExpression must be positive");
 			this.maxOutputsPerExpression = maxOutputsPerExpression;
 			return this;
 		}

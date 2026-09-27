@@ -1,6 +1,10 @@
 package net.thisptr.jackson.jq.v2.ext.binary;
 
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -58,18 +62,32 @@ final class EncodeTextFunction implements Function {
 			public void apply(Context context, JsonNode input, Path<JsonNode> inputPath, Output<JsonNode> output) throws JsonQueryException {
 				String text = BinarySupport.getInputText(jsonProvider, FUNCTION, input);
 				if (optionsExpression == null) {
-					byte[] bytes = BinarySupport.encodeText(FUNCTION, text, StandardCharsets.UTF_8);
+					byte[] bytes = encodeText(text, StandardCharsets.UTF_8);
 					JsonNode result = BinarySupport.createBinaryValue(jsonProvider, bytes, binarySupported, context.getRuntimeLimits());
 					output.emit(result, UntrackedPath.getInstance());
 					return;
 				}
 				optionsExpression.apply(context, input, inputPath, (optionsNode, optionsPath) -> {
 					Charset charset = BinarySupport.parseCharset(jsonProvider, FUNCTION, optionsNode);
-					byte[] bytes = BinarySupport.encodeText(FUNCTION, text, charset);
+					byte[] bytes = encodeText(text, charset);
 					JsonNode result = BinarySupport.createBinaryValue(jsonProvider, bytes, binarySupported, context.getRuntimeLimits());
 					output.emit(result, UntrackedPath.getInstance());
 				});
 			}
 		};
+	}
+
+	private static byte[] encodeText(String text, Charset charset) {
+		try {
+			ByteBuffer encoded = charset.newEncoder()
+					.onMalformedInput(CodingErrorAction.REPORT)
+					.onUnmappableCharacter(CodingErrorAction.REPORT)
+					.encode(CharBuffer.wrap(text));
+			byte[] bytes = new byte[encoded.remaining()];
+			encoded.get(bytes);
+			return bytes;
+		} catch (CharacterCodingException e) {
+			throw new JsonQueryException(FUNCTION + " failed to encode the input using " + charset.name() + ": " + e.getMessage(), e);
+		}
 	}
 }

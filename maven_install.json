@@ -6,7 +6,7 @@
     "com.fasterxml.jackson.core:jackson-annotations": 1690295661,
     "com.fasterxml.jackson.core:jackson-core": -2136216747,
     "com.fasterxml.jackson.core:jackson-databind": -647579619,
-    "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml": 1804531274,
+    "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml": -1464666275,
     "com.github.luben:zstd-jni": 558948238,
     "com.google.code.findbugs:jsr305": 495355163,
     "com.google.code.gson:gson": -1136023703,

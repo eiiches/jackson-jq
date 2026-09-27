@@ -85,7 +85,6 @@ maven.artifact(
     version = JACKSON2_VERSION,
 )
 maven.artifact(
-    testonly = True,
     artifact = "jackson-dataformat-yaml",
     group = "com.fasterxml.jackson.dataformat",
     version = JACKSON2_VERSION,

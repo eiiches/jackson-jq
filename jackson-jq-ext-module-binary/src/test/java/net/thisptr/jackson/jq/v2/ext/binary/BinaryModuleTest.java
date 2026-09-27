@@ -35,7 +35,123 @@ public class BinaryModuleTest {
 				FunctionSignature.of("decode_text", 0),
 				FunctionSignature.of("decode_text", 1),
 				FunctionSignature.of("encode_text", 0),
-				FunctionSignature.of("encode_text", 1));
+				FunctionSignature.of("encode_text", 1),
+				FunctionSignature.of("size", 0),
+				FunctionSignature.of("to_hex", 0),
+				FunctionSignature.of("from_hex", 0),
+				FunctionSignature.of("to_base64", 0),
+				FunctionSignature.of("from_base64", 0),
+				FunctionSignature.of("to_base64url", 0),
+				FunctionSignature.of("from_base64url", 0),
+				FunctionSignature.of("to_bytes", 0),
+				FunctionSignature.of("from_bytes", 0));
+	}
+
+	@Test
+	public void convertsNativeBinaryValues() {
+		byte[] bytes = new byte[] { 0, 1, 127, (byte) 128, (byte) 255 };
+		JsonNode binary = BINARY_PROVIDER.createBinary(bytes);
+		assertThat(BINARY_PROVIDER.getNumberAsIntExact(one(BINARY_PROVIDER, "binary::size", binary, unlimited()))).isEqualTo(5);
+		assertThat(text(BINARY_PROVIDER, "binary::to_hex", binary)).isEqualTo("00017f80ff");
+		assertThat(text(BINARY_PROVIDER, "binary::to_base64", binary)).isEqualTo("AAF/gP8=");
+		assertThat(text(BINARY_PROVIDER, "binary::to_base64url", binary)).isEqualTo("AAF_gP8");
+		assertThat(BINARY_PROVIDER.getArrayElements(one(BINARY_PROVIDER, "binary::to_bytes", binary, unlimited())))
+				.toIterable().extracting(BINARY_PROVIDER::getNumberAsIntExact).containsExactly(0, 1, 127, 128, 255);
+
+		assertThat(BINARY_PROVIDER.getBinaryAsByteArray(one(BINARY_PROVIDER, "binary::from_hex", BINARY_PROVIDER.createString("00017F80ff"), unlimited())))
+				.containsExactly(bytes);
+		assertThat(BINARY_PROVIDER.getBinaryAsByteArray(one(BINARY_PROVIDER, "binary::from_base64", BINARY_PROVIDER.createString("AAF/gP8="), unlimited())))
+				.containsExactly(bytes);
+		assertThat(BINARY_PROVIDER.getBinaryAsByteArray(one(BINARY_PROVIDER, "binary::from_base64url", BINARY_PROVIDER.createString("AAF_gP8"), unlimited())))
+				.containsExactly(bytes);
+		assertThat(BINARY_PROVIDER.getBinaryAsByteArray(one(BINARY_PROVIDER, "binary::from_base64url", BINARY_PROVIDER.createString("AAF_gP8="), unlimited())))
+				.containsExactly(bytes);
+		assertThat(BINARY_PROVIDER.getBinaryAsByteArray(one(BINARY_PROVIDER, "[0, 1, 127, 128, 255] | binary::from_bytes", BINARY_PROVIDER.createNull(), unlimited())))
+				.containsExactly(bytes);
+	}
+
+	@Test
+	public void convertsBase64FallbackValues() {
+		JsonElement binary = BASE64_PROVIDER.createString("AAF/gP8=");
+		assertThat(BASE64_PROVIDER.getNumberAsIntExact(one(BASE64_PROVIDER, "binary::size", binary, unlimited()))).isEqualTo(5);
+		assertThat(text(BASE64_PROVIDER, "binary::to_hex", binary)).isEqualTo("00017f80ff");
+		assertThat(text(BASE64_PROVIDER, "binary::to_base64", binary)).isEqualTo("AAF/gP8=");
+		assertThat(text(BASE64_PROVIDER, "binary::to_base64url", binary)).isEqualTo("AAF_gP8");
+		assertThat(text(BASE64_PROVIDER, "binary::from_hex", BASE64_PROVIDER.createString("00017F80ff"))).isEqualTo("AAF/gP8=");
+		assertThat(text(BASE64_PROVIDER, "binary::from_base64", binary)).isEqualTo("AAF/gP8=");
+		assertThat(text(BASE64_PROVIDER, "binary::from_base64url", BASE64_PROVIDER.createString("AAF_gP8"))).isEqualTo("AAF/gP8=");
+		assertThat(text(BASE64_PROVIDER, "[0, 1, 127, 128, 255] | binary::from_bytes", BASE64_PROVIDER.createNull())).isEqualTo("AAF/gP8=");
+		assertThat(text(BASE64_PROVIDER, "binary::to_bytes | binary::from_bytes", binary)).isEqualTo("AAF/gP8=");
+	}
+
+	@Test
+	public void convertsEmptyValues() {
+		JsonNode empty = BINARY_PROVIDER.createBinary(new byte[0]);
+		assertThat(BINARY_PROVIDER.getNumberAsIntExact(one(BINARY_PROVIDER, "binary::size", empty, unlimited()))).isZero();
+		assertThat(text(BINARY_PROVIDER, "binary::to_hex", empty)).isEmpty();
+		assertThat(text(BINARY_PROVIDER, "binary::to_base64", empty)).isEmpty();
+		assertThat(text(BINARY_PROVIDER, "binary::to_base64url", empty)).isEmpty();
+		assertThat(BINARY_PROVIDER.getArrayLength(one(BINARY_PROVIDER, "binary::to_bytes", empty, unlimited()))).isZero();
+		assertThat(BINARY_PROVIDER.getBinaryAsByteArray(one(BINARY_PROVIDER, "binary::from_hex", BINARY_PROVIDER.createString(""), unlimited()))).isEmpty();
+		assertThat(BINARY_PROVIDER.getBinaryAsByteArray(one(BINARY_PROVIDER, "binary::from_base64", BINARY_PROVIDER.createString(""), unlimited()))).isEmpty();
+		assertThat(BINARY_PROVIDER.getBinaryAsByteArray(one(BINARY_PROVIDER, "binary::from_base64url", BINARY_PROVIDER.createString(""), unlimited()))).isEmpty();
+		assertThat(BINARY_PROVIDER.getBinaryAsByteArray(one(BINARY_PROVIDER, "[] | binary::from_bytes", BINARY_PROVIDER.createNull(), unlimited()))).isEmpty();
+	}
+
+	@Test
+	public void rejectsInvalidConversionInputs() {
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::size", BINARY_PROVIDER.createNumber(1), unlimited()))
+				.hasMessageContaining("binary::size requires binary or Base64 string input");
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::to_hex", BINARY_PROVIDER.createString("%%%"), unlimited()))
+				.hasMessageContaining("binary::to_hex input must be valid Base64");
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::from_hex", BINARY_PROVIDER.createString("0"), unlimited()))
+				.hasMessageContaining("even number of hex digits");
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::from_hex", BINARY_PROVIDER.createString("0g"), unlimited()))
+				.hasMessageContaining("invalid hex digit");
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::from_hex", BINARY_PROVIDER.createString("00  01"), unlimited()))
+				.hasMessageContaining("invalid hex digit");
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::from_base64", BINARY_PROVIDER.createString("%%%"), unlimited()))
+				.hasMessageContaining("binary::from_base64 input must be valid Base64");
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::from_base64url", BINARY_PROVIDER.createString("AAF/gP8="), unlimited()))
+				.hasMessageContaining("binary::from_base64url input must be valid Base64URL");
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::from_base64", BINARY_PROVIDER.createBinary(new byte[0]), unlimited()))
+				.hasMessageContaining("binary::from_base64 requires string input");
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::from_bytes", BINARY_PROVIDER.createNull(), unlimited()))
+				.hasMessageContaining("binary::from_bytes requires an array");
+		for (String invalid : List.of("[-1]", "[256]", "[1.5]", "[null]", "[\"1\"]")) {
+			assertThatThrownBy(() -> run(BINARY_PROVIDER, invalid + " | binary::from_bytes", BINARY_PROVIDER.createNull(), unlimited()))
+					.hasMessageContaining("binary::from_bytes element 0 must be an integer from 0 to 255");
+		}
+	}
+
+	@Test
+	public void conversionFunctionsEnforceOutputLimits() {
+		JsonNode binary = BINARY_PROVIDER.createBinary(new byte[] { 1, 2, 3 });
+		RuntimeOptions shortString = RuntimeOptions.newBuilder().setMaxStringLength(3).build();
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::to_hex", binary, shortString)).hasMessageContaining("maximum string length of 3");
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::to_base64", binary, shortString)).hasMessageContaining("maximum string length of 3");
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::to_base64url", binary, shortString)).hasMessageContaining("maximum string length of 3");
+		JsonNode oneByte = BINARY_PROVIDER.createBinary(new byte[] { (byte) 0xfb });
+		assertThat(text(BINARY_PROVIDER, "binary::to_base64url", oneByte)).isEqualTo("-w");
+		assertThat(BINARY_PROVIDER.getString(one(BINARY_PROVIDER, "binary::to_base64url", oneByte,
+				RuntimeOptions.newBuilder().setMaxStringLength(2).build()))).isEqualTo("-w");
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::to_base64url", oneByte,
+				RuntimeOptions.newBuilder().setMaxStringLength(1).build())).hasMessageContaining("maximum string length of 1");
+		RuntimeOptions shortArray = RuntimeOptions.newBuilder().setMaxArrayLength(2).build();
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::to_bytes", binary, shortArray)).hasMessageContaining("maximum array length of 2");
+		RuntimeOptions shortBinary = RuntimeOptions.newBuilder().setMaxBinaryLength(2).build();
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::from_hex", BINARY_PROVIDER.createString("010203"), shortBinary))
+				.hasMessageContaining("maximum binary length of 2");
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::from_base64", BINARY_PROVIDER.createString("AQID"), shortBinary))
+				.hasMessageContaining("maximum binary length of 2");
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::from_base64url", BINARY_PROVIDER.createString("AQID"), shortBinary))
+				.hasMessageContaining("maximum binary length of 2");
+		JsonNode byteArray = BINARY_PROVIDER.createArray(List.of(BINARY_PROVIDER.createNumber(1), BINARY_PROVIDER.createNumber(2), BINARY_PROVIDER.createNumber(3)));
+		assertThatThrownBy(() -> run(BINARY_PROVIDER, "binary::from_bytes", byteArray, shortBinary))
+				.hasMessageContaining("maximum binary length of 2");
+		RuntimeOptions shortFallback = RuntimeOptions.newBuilder().setMaxStringLength(3).build();
+		assertThatThrownBy(() -> run(BASE64_PROVIDER, "binary::from_hex", BASE64_PROVIDER.createString("010203"), shortFallback))
+				.hasMessageContaining("maximum string length of 3");
 	}
 
 	@Test

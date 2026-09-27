@@ -42,6 +42,11 @@ final class InputSources {
 	 * @return the source to read the input with
 	 */
 	static <N> InputSource<N> create(JsonProvider<N> provider, List<InputStream> streams, boolean nullInput, boolean rawInput, boolean slurp) {
+		return create(provider, streams, nullInput, rawInput, slurp, false);
+	}
+
+	static <N> InputSource<N> create(JsonProvider<N> provider, List<InputStream> streams, boolean nullInput, boolean rawInput, boolean slurp,
+			boolean yamlInput) {
 		if (nullInput)
 			return consumer -> consumer.accept(provider.createNull());
 		if (rawInput && slurp)
@@ -49,7 +54,12 @@ final class InputSources {
 		if (rawInput)
 			return consumer -> forEachLine(streams, line -> consumer.accept(provider.createString(line)));
 		if (slurp)
-			return consumer -> consumer.accept(provider.createArray(readValues(provider, streams)));
+			return consumer -> consumer.accept(provider.createArray(readValues(provider, streams, yamlInput)));
+		if (yamlInput)
+			return consumer -> {
+				for (InputStream stream : streams)
+					YamlCodec.read(provider, stream, consumer);
+			};
 		return consumer -> {
 			for (InputStream stream : streams) {
 				try (JsonParser<N> parser = provider.createParser(stream)) {
@@ -124,8 +134,13 @@ final class InputSources {
 	 * @param streams the streams to read, in order
 	 * @return the values, in input order
 	 */
-	private static <N> List<N> readValues(JsonProvider<N> provider, List<InputStream> streams) {
+	private static <N> List<N> readValues(JsonProvider<N> provider, List<InputStream> streams, boolean yamlInput) {
 		List<N> values = new ArrayList<>();
+		if (yamlInput) {
+			for (InputStream stream : streams)
+				YamlCodec.read(provider, stream, values::add);
+			return values;
+		}
 		for (InputStream stream : streams) {
 			try (JsonParser<N> parser = provider.createParser(stream)) {
 				for (@Var Maybe<N> value = parser.next(); value.isPresent(); value = parser.next())
