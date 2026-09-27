@@ -1,9 +1,10 @@
 package net.thisptr.jackson.jq.v2.test.comparator;
 
 import java.io.Serial;
-import java.math.BigDecimal;
 import java.util.Iterator;
 import java.util.Map;
+
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -11,8 +12,8 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 /**
  * The comparator used to check test output against the golden data in {@code tests/test-cases}.
  *
- * <p>It adds two things to {@link JsonNodeComparator}: an optional numerical tolerance (the
- * {@code numerical_errors} test case property), and optional strict field ordering, which the jq
+ * <p>It adds two things to {@link JsonNodeComparator}: an optional floating-point tolerance (the
+ * {@code float_tolerance} test case property), and optional strict field ordering, which the jq
  * ordering deliberately ignores but the golden data is written to preserve. Every harness turns
  * strict field ordering on, since jackson-jq reproduces jq's field order.
  *
@@ -26,20 +27,43 @@ public class TestJsonNodeComparator<T> extends JsonNodeComparator<T> {
 	private static final long serialVersionUID = 1L;
 
 	private final boolean strictFieldOrder;
-	private final double numericalErrors;
+	private final @Nullable FloatTolerance floatTolerance;
 
-	public TestJsonNodeComparator(JsonProvider<T> jsonProvider, boolean strictFieldOrder, double numericalErrors) {
+	public TestJsonNodeComparator(JsonProvider<T> jsonProvider, boolean strictFieldOrder, @Nullable FloatTolerance floatTolerance) {
 		super(jsonProvider);
 		this.strictFieldOrder = strictFieldOrder;
-		this.numericalErrors = numericalErrors;
+		this.floatTolerance = floatTolerance;
+	}
+
+	public TestJsonNodeComparator(JsonProvider<T> jsonProvider, boolean strictFieldOrder) {
+		this(jsonProvider, strictFieldOrder, null);
+	}
+
+	private static long toUlpIndex(double v) {
+		long bits = Double.doubleToRawLongBits(v);
+		long mag = bits & 0x7FFF_FFFF_FFFF_FFFFL;
+		return bits < 0 ? -mag : mag;
+	}
+
+	private static boolean withinUlps(double a, double b, long maxUlps) {
+		if (Double.isNaN(a) || Double.isNaN(b))
+			return false;
+		if (Double.isInfinite(a) || Double.isInfinite(b))
+			return Double.compare(a, b) == 0;
+		long idxA = toUlpIndex(a);
+		long idxB = toUlpIndex(b);
+		if ((idxA < 0 && idxB > 0) || (idxA > 0 && idxB < 0)) {
+			return (Math.abs(idxA) <= maxUlps) && (Math.abs(idxB) <= maxUlps - Math.abs(idxA));
+		}
+		return Math.abs(idxA - idxB) <= maxUlps;
 	}
 
 	@Override
 	protected int compareNumberNode(T o1, T o2) {
-		if (numericalErrors > 0) {
-			BigDecimal a = jsonProvider.getNumberAsBigDecimalExact(o1);
-			BigDecimal b = jsonProvider.getNumberAsBigDecimalExact(o2);
-			if (a != null && b != null && a.subtract(b).abs().compareTo(BigDecimal.valueOf(numericalErrors)) < 0)
+		if (floatTolerance != null && floatTolerance.ulps() != null) {
+			double a = jsonProvider.getNumberAsDoubleRounded(o1);
+			double b = jsonProvider.getNumberAsDoubleRounded(o2);
+			if (withinUlps(a, b, floatTolerance.ulps()))
 				return 0;
 		}
 		return super.compareNumberNode(o1, o2);

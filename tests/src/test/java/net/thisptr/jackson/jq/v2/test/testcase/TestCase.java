@@ -16,6 +16,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
+import net.thisptr.jackson.jq.v2.test.comparator.FloatTolerance;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -94,8 +95,8 @@ public class TestCase {
 	@JsonProperty("ignore_true_jq_behavior")
 	public boolean ignoreTrueJqBehavior = false;
 
-	@JsonProperty("numerical_errors")
-	public double numericalErrors = 0;
+	@JsonProperty("float_tolerance")
+	public @Nullable FloatTolerance floatTolerance;
 
 	/**
 	 * jq modules this test case needs on the module search path, keyed by path relative to the

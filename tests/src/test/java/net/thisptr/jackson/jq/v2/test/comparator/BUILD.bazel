@@ -3,11 +3,15 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "comparator",
     testonly = True,
-    srcs = ["TestJsonNodeComparator.java"],
+    srcs = [
+        "FloatTolerance.java",
+        "TestJsonNodeComparator.java",
+    ],
     release = 17,
     visibility = ["//tests:__subpackages__"],
     deps = [
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/json/comparator",
         "//jackson-jq-json-provider",
+        "@maven//:com_fasterxml_jackson_core_jackson_annotations",
     ],
 )

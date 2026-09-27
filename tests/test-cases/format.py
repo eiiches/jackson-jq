@@ -54,7 +54,7 @@ class FormattedTestCase:
         known_order = [
             "q", "in", "out", "types", "properties", "v", "failing", "comment", "justification",
             "modules", "should_compile",
-            "numerical_errors", "ignore_true_jq_behavior",
+            "float_tolerance", "ignore_true_jq_behavior",
         ]
         keys = [k for k in known_order if k in self.data]
         for k in self.data:
