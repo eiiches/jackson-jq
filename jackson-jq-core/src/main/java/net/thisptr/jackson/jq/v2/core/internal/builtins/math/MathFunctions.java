@@ -167,9 +167,11 @@ public class MathFunctions {
 
 	@FunctionRegistration(name = "log2", nargs = 0)
 	public static class Log2Function extends AbstractMathFunction {
+		private static final double LN2 = Math.log(2);
+
 		@Override
 		protected double f(double v) {
-			return Math.log10(v) / Math.log10(2);
+			return Math.log(v) / LN2;
 		}
 	}
 
