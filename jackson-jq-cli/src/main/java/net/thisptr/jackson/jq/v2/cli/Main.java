@@ -345,8 +345,8 @@ public class Main {
 				.setMaxBinaryLength(parseLimit(command, OPT_MAX_BINARY_LENGTH))
 				.setMaxArrayLength(parseLimit(command, OPT_MAX_ARRAY_LENGTH))
 				.setMaxObjectMemberCount(parseLimit(command, OPT_MAX_OBJECT_MEMBER_COUNT))
-				.setMaxUserDefinedFunctionCalls(parseLongLimit(command, OPT_MAX_USER_DEFINED_FUNCTION_CALLS))
-				.setMaxOutputsPerExpression(parseLongLimit(command, OPT_MAX_OUTPUTS_PER_EXPRESSION))
+				.setMaxUserDefinedFunctionCalls(parseLongLimit(command, OPT_MAX_USER_DEFINED_FUNCTION_CALLS, 0))
+				.setMaxOutputsPerExpression(parseLongLimit(command, OPT_MAX_OUTPUTS_PER_EXPRESSION, 1))
 				.build();
 	}
 
@@ -429,17 +429,18 @@ public class Main {
 		}
 	}
 
-	private static long parseLongLimit(CommandLine command, Option option) {
+	private static long parseLongLimit(CommandLine command, Option option, long minimum) {
 		String value = command.getOptionValue(option.getLongOpt());
 		if (value == null)
 			return Long.MAX_VALUE;
 		try {
 			long limit = Long.parseLong(value);
-			if (limit < 0)
+			if (limit < minimum)
 				throw new NumberFormatException();
 			return limit;
 		} catch (NumberFormatException e) {
-			throw new IllegalArgumentException("invalid --" + option.getLongOpt() + ": " + value + " (expected a non-negative integer)", e);
+			String expected = minimum == 0 ? "non-negative" : "positive";
+			throw new IllegalArgumentException("invalid --" + option.getLongOpt() + ": " + value + " (expected a " + expected + " integer)", e);
 		}
 	}
 

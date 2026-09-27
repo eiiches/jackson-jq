@@ -403,7 +403,7 @@ class MainTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "--max-string-length", "--max-binary-length", "--max-array-length", "--max-object-member-count", "--max-user-defined-function-calls", "--max-outputs-per-expression" })
+	@ValueSource(strings = { "--max-string-length", "--max-binary-length", "--max-array-length", "--max-object-member-count", "--max-user-defined-function-calls" })
 	void rejectsInvalidRuntimeLimits(String option) {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> Main.createRuntimeOptions(parseLimits(option, "-1")))
@@ -411,6 +411,17 @@ class MainTest {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> Main.createRuntimeOptions(parseLimits(option, "many")))
 				.withMessage("invalid " + option + ": many (expected a non-negative integer)");
+	}
+
+	@Test
+	void rejectsNonPositiveOutputLimit() throws Exception {
+		for (String value : List.of("-1", "0", "many")) {
+			assertThatIllegalArgumentException()
+					.isThrownBy(() -> Main.createRuntimeOptions(parseLimits("--max-outputs-per-expression", value)))
+					.withMessage("invalid --max-outputs-per-expression: " + value + " (expected a positive integer)");
+		}
+		assertThat(Main.createRuntimeOptions(parseLimits("--max-outputs-per-expression", "1"))
+				.getMaxOutputsPerExpression()).isEqualTo(1);
 	}
 
 	@Test

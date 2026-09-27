@@ -433,7 +433,8 @@ final class Playground<N> {
 		long current = getRuntimeLimit(index);
 		long maximum = getRuntimeLimitMaximum(index);
 		if (current == maximum) {
-			setRuntimeLimit(index, digit);
+			if (index != MAX_OUTPUTS_PER_EXPRESSION_OPTION || digit != 0)
+				setRuntimeLimit(index, digit);
 			return;
 		}
 		if (current <= (maximum - digit) / 10) {
@@ -447,7 +448,8 @@ final class Playground<N> {
 		if (current == maximum) {
 			return;
 		}
-		setRuntimeLimit(index, current == 0 ? maximum : current / 10);
+		long shortened = current / 10;
+		setRuntimeLimit(index, current == 0 || (index == MAX_OUTPUTS_PER_EXPRESSION_OPTION && shortened == 0) ? maximum : shortened);
 	}
 
 	private static long getRuntimeLimitMaximum(int index) {

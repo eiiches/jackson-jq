@@ -1908,6 +1908,36 @@ class PlaygroundTest {
 	}
 
 	@Test
+	void outputLimitEditorSkipsZeroAndBackspaceRestoresUnlimited() throws Exception {
+		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
+		List<Event> events = new ArrayList<>();
+		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
+		for (int i = 0; i < 11; i++)
+			events.add(KeyEvent.ofKey(KeyCode.DOWN));
+		events.add(KeyEvent.ofChar('0'));
+		events.add(KeyEvent.ofChar('1'));
+		events.add(KeyEvent.ofKey(KeyCode.BACKSPACE));
+		events.add(KeyEvent.ofChar('o', KeyModifiers.CTRL));
+		events.add(KeyEvent.ofKey(KeyCode.ESCAPE));
+		events.add(KeyEvent.ofChar('y'));
+
+		Playground<JsonNode> pg = new Playground<>(
+				env,
+				Collections.singletonList(JSON.createNull()),
+				".",
+				JSON,
+				RuntimeOptions.newBuilder().build(),
+				CompileOptions.newBuilder().build(),
+				false,
+				false,
+				new PrintStream(new ByteArrayOutputStream()),
+				new PrintStream(new ByteArrayOutputStream()));
+
+		pg.run(createTestRunner(new ByteArrayOutputStream(), events));
+		assertThat(pg.getRuntimeOptions().getMaxOutputsPerExpression()).isEqualTo(Long.MAX_VALUE);
+	}
+
+	@Test
 	void ignoresRuntimeLimitDigitsThatWouldOverflow() throws Exception {
 		Environment<JsonNode> env = Main.createEnvironment(JSON, Versions.JQ_1_6);
 		RuntimeOptions initialOptions = RuntimeOptions.newBuilder()

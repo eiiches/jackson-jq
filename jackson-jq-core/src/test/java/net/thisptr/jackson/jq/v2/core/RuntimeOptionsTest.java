@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
+import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
 import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -114,6 +115,21 @@ public class RuntimeOptionsTest {
 		assertThatThrownBy(() -> RuntimeOptions.newBuilder().setMaxBinaryLength(-1))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("maxBinaryLength must not be negative");
+	}
+
+	@Test
+	public void outputLimitMustBePositive() {
+		for (long invalid : List.of(-1L, 0L)) {
+			assertThatThrownBy(() -> RuntimeOptions.newBuilder().setMaxOutputsPerExpression(invalid))
+					.isInstanceOf(IllegalArgumentException.class)
+					.hasMessage("maxOutputsPerExpression must be positive");
+			assertThatThrownBy(() -> new RuntimeLimitsImpl(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE,
+					Integer.MAX_VALUE, Long.MAX_VALUE, invalid))
+					.isInstanceOf(IllegalArgumentException.class)
+					.hasMessage("maxOutputsPerExpression must be positive");
+		}
+		assertThat(maxOutputsPerExpression(1).getMaxOutputsPerExpression()).isEqualTo(1);
+		assertThat(maxOutputsPerExpression(Long.MAX_VALUE).getMaxOutputsPerExpression()).isEqualTo(Long.MAX_VALUE);
 	}
 
 	// --- maxArrayLength -----------------------------------------------------------------------
