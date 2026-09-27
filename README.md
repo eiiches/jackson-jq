@@ -76,6 +76,8 @@ $ java -jar jackson-jq-cli-2.0.0-alpha2.jar --help
  -r, --raw-output           --       output raw strings, not JSON texts
  -n, --null-input           --       use `null` as the single input value
  -R, --raw-input            --       read each line as string instead of JSON
+ -Y, --yaml-input           --       read YAML documents instead of JSON
+ -y, --yaml-output          --       write each result as a YAML document
  -s, --slurp                --       read all inputs into an array and use it
                                       as the single input value
  -f, --from-file <arg>      --       load the filter from a file

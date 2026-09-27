@@ -109,6 +109,14 @@ public class Main {
 			.longOpt("raw-input")
 			.desc("read each line as string instead of JSON")
 			.get();
+	private static final Option OPT_YAML_INPUT = Option.builder("Y")
+			.longOpt("yaml-input")
+			.desc("read YAML documents instead of JSON")
+			.get();
+	private static final Option OPT_YAML_OUTPUT = Option.builder("y")
+			.longOpt("yaml-output")
+			.desc("write each result as a YAML document")
+			.get();
 	private static final Option OPT_SLURP = Option.builder("s")
 			.longOpt("slurp")
 			.desc("read all inputs into an array and use it as the single input value")
@@ -234,6 +242,8 @@ public class Main {
 		options.addOption(OPT_RAW_OUTPUT);
 		options.addOption(OPT_NULL_INPUT);
 		options.addOption(OPT_RAW_INPUT);
+		options.addOption(OPT_YAML_INPUT);
+		options.addOption(OPT_YAML_OUTPUT);
 		options.addOption(OPT_SLURP);
 		options.addOption(OPT_FROM_FILE);
 		options.addOption(OPT_VERSION);
@@ -260,6 +270,13 @@ public class Main {
 			rest = command.getArgList();
 		} catch (ParseException e) {
 			System.err.println("invalid arguments: " + Arrays.toString(args));
+			System.exit(1);
+			throw e;
+		}
+		try {
+			validateYamlOptions(command);
+		} catch (IllegalArgumentException e) {
+			System.err.println("invalid arguments: " + e.getMessage());
 			System.exit(1);
 			throw e;
 		}
@@ -348,6 +365,17 @@ public class Main {
 				.setMaxUserDefinedFunctionCalls(parseLongLimit(command, OPT_MAX_USER_DEFINED_FUNCTION_CALLS, 0))
 				.setMaxOutputsPerExpression(parseLongLimit(command, OPT_MAX_OUTPUTS_PER_EXPRESSION, 1))
 				.build();
+	}
+
+	static void validateYamlOptions(CommandLine command) {
+		if (command.hasOption(OPT_YAML_INPUT.getOpt()) && command.hasOption(OPT_RAW_INPUT.getOpt()))
+			throw new IllegalArgumentException("-Y/--yaml-input cannot be combined with -R/--raw-input");
+		if (command.hasOption(OPT_YAML_OUTPUT.getOpt())) {
+			for (Option incompatible : List.of(OPT_RAW_OUTPUT, OPT_COMPACT, OPT_COLOR_OUTPUT, OPT_MONOCHROME_OUTPUT)) {
+				if (command.hasOption(incompatible.getOpt()))
+					throw new IllegalArgumentException("-y/--yaml-output cannot be combined with -" + incompatible.getOpt());
+			}
+		}
 	}
 
 	/**
@@ -570,6 +598,7 @@ public class Main {
 			}).build();
 		}
 		boolean compact = command.hasOption(OPT_COMPACT.getOpt());
+		boolean yamlOutput = command.hasOption(OPT_YAML_OUTPUT.getOpt());
 		boolean rawOutput = command.hasOption(OPT_RAW_OUTPUT.getOpt());
 		boolean nullInput = command.hasOption(OPT_NULL_INPUT.getOpt());
 		boolean forceColor = command.hasOption(OPT_COLOR_OUTPUT.getOpt());
@@ -650,7 +679,8 @@ public class Main {
 			Playground<N> pg = new Playground<>(env, version, providerName, rawInputBytes, nullInput, rawInput, slurp,
 					query, jsonProvider, runtimeOptions, compileOptions, compact, rawOutput, warningsEnabled, inputFiles,
 					isVimMode(command, editor), command.hasOption(OPT_FROM_FILE.getOpt())
-					? Paths.get(command.getOptionValue(OPT_FROM_FILE.getOpt())) : null, System.out, System.err);
+					? Paths.get(command.getOptionValue(OPT_FROM_FILE.getOpt())) : null, System.out, System.err,
+					command.hasOption(OPT_YAML_INPUT.getOpt()), yamlOutput);
 			pg.setEvaluationExecutor(evalExecutor);
 			try {
 				pg.run(runner);
@@ -661,12 +691,14 @@ public class Main {
 		}
 		InputSource<N> input = InputSources.create(jsonProvider, streams, nullInput,
 				command.hasOption(OPT_RAW_INPUT.getOpt()),
-				command.hasOption(OPT_SLURP.getOpt()));
+				command.hasOption(OPT_SLURP.getOpt()), command.hasOption(OPT_YAML_INPUT.getOpt()));
 		JsonQuery<N> jq = compileOrExit(env, query, compileOptions).withRuntimeOptions(runtimeOptions);
 		input.readAll(tree -> {
 			try {
 				jq.apply(tree, out -> {
-					if (jsonProvider.isString(out) && rawOutput) {
+					if (yamlOutput) {
+						System.out.print(YamlCodec.print(jsonProvider, out));
+					} else if (jsonProvider.isString(out) && rawOutput) {
 						System.out.println(jsonProvider.getString(out));
 					} else if (compact) {
 						System.out.println(JqPrinter.print(jsonProvider, out, null, colors));
