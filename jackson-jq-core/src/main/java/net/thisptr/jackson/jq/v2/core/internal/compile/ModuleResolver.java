@@ -67,6 +67,9 @@ public final class ModuleResolver<JsonNode> {
 		Maybe<JsonNode> search = searchOverride(origin, path, metadata);
 		if (search.isPresent())
 			return compile(requireNonNull(origin).relativeImport(path, env.getJsonProvider().getString(search.get())));
+		Module registered = env.getRegisteredModules().get(path);
+		if (registered != null)
+			return materialize(registered);
 
 		@Var Module module = null;
 		for (ModuleLoader<JsonNode> loader : env.getModuleLoaders()) {

@@ -89,6 +89,13 @@ public interface Environment<JsonNode> {
 	List<Module> getIncludedModules();
 
 	/**
+	 * Modules registered for query {@code import} and {@code include} directives, keyed by import
+	 * path. These take precedence over module loaders and remain available after
+	 * {@link EnvironmentBuilder#clearModuleLoaders()}.
+	 */
+	Map<String, Module> getRegisteredModules();
+
+	/**
 	 * Compiles {@code expression} with default options.
 	 *
 	 * @param expression the jq expression to compile

@@ -22,6 +22,7 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.JqFunction;
+import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
@@ -39,6 +40,7 @@ public final class EnvironmentBuilder<JsonNode> {
 	private final Version jqVersion;
 
 	private final List<ModuleLoader<JsonNode>> moduleLoaders = new ArrayList<>();
+	private final Map<String, Module> registeredModules = new HashMap<>();
 	private final List<FunctionLoader> functionLoaders = new ArrayList<>();
 
 	private final Map<String, Type> declaredVariables = new HashMap<>();
@@ -104,12 +106,42 @@ public final class EnvironmentBuilder<JsonNode> {
 
 	/**
 	 * Removes every module loader added so far, including the default one
-	 * {@link #withDefaultLoaders} installed -- the way to take over the search order completely.
-	 * An environment left with no module loaders fails every {@code import} and {@code include} with
+	 * {@link #withDefaultLoaders} installed -- the way to take over the loader search order completely.
+	 * Modules added with {@link #registerModule(Module)} remain available. An environment with
+	 * neither loaders nor registered modules fails every {@code import} and {@code include} with
 	 * {@code ModuleNotFoundException}.
 	 */
 	public EnvironmentBuilder<JsonNode> clearModuleLoaders() {
 		moduleLoaders.clear();
+		return this;
+	}
+
+	/**
+	 * Makes {@code module} available to query {@code import} and {@code include} directives under
+	 * every {@link ModuleRegistration#path()} declared on its class. The module need not be
+	 * discoverable through {@link java.util.ServiceLoader}. A later registration for the same path
+	 * replaces an earlier one, and available modules take precedence over module loaders.
+	 *
+	 * @throws IllegalArgumentException if the module declares no registration paths
+	 */
+	public EnvironmentBuilder<JsonNode> registerModule(Module module) {
+		Objects.requireNonNull(module, "module");
+		ModuleRegistration[] registrations = module.getClass().getAnnotationsByType(ModuleRegistration.class);
+		if (registrations.length == 0)
+			throw new IllegalArgumentException("Module " + module.getClass().getName() + " has no @ModuleRegistration path");
+		for (ModuleRegistration registration : registrations)
+			registeredModules.put(registration.path(), module);
+		return this;
+	}
+
+	/**
+	 * Makes {@code module} available to query {@code import} and {@code include} directives under
+	 * {@code modulePathOverride} instead of its {@link ModuleRegistration} paths. A later
+	 * registration for the same path replaces an earlier one, and available modules take
+	 * precedence over module loaders.
+	 */
+	public EnvironmentBuilder<JsonNode> registerModule(String modulePathOverride, Module module) {
+		registeredModules.put(Objects.requireNonNull(modulePathOverride, "modulePathOverride"), Objects.requireNonNull(module, "module"));
 		return this;
 	}
 
@@ -313,7 +345,7 @@ public final class EnvironmentBuilder<JsonNode> {
 	}
 
 	public Environment<JsonNode> build() {
-		return new EnvironmentImpl<>(jsonProvider, jqVersion, moduleLoaders, functionLoaders,
+		return new EnvironmentImpl<>(jsonProvider, jqVersion, moduleLoaders, registeredModules, functionLoaders,
 				declaredVariables, declaredFunctions, variables, functions, jqFunctions, constants, importedModules,
 				includedModules);
 	}
