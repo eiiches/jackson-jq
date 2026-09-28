@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
-import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
@@ -23,6 +22,7 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.exception.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
@@ -65,7 +65,7 @@ public class EnvironmentIncludeModuleTest {
 	 * A module an environment includes may be jq source rather than Java, in which case the compiler
 	 * compiles it before it lowers the query that will call into it.
 	 */
-	private static final class SourceModule implements JqModule<JsonNode> {
+	private static final class SourceModule implements JqModule {
 		private final String source;
 
 		SourceModule(String source) {
@@ -77,15 +77,7 @@ public class EnvironmentIncludeModuleTest {
 			return source;
 		}
 
-		@Override
-		public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
-			throw new ModuleNotFoundException(importPath);
-		}
 
-		@Override
-		public JsonNode relativeData(String importPath, String searchPath) {
-			throw new ModuleNotFoundException(importPath);
-		}
 	}
 
 	/**

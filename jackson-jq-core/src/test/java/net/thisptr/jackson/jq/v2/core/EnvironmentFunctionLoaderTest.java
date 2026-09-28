@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
 import net.thisptr.jackson.jq.v2.core.function.loaders.BuiltinFunctionLoader;
-import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
@@ -529,7 +528,7 @@ public class EnvironmentFunctionLoaderTest {
 	 * Minimal jq-source module: {@code importModule} takes either kind, and this one makes the
 	 * compiler go through ModuleResolver to compile it.
 	 */
-	private static final class SourceModule implements JqModule<JsonNode> {
+	private static final class SourceModule implements JqModule {
 		private final String source;
 
 		SourceModule(String source) {
@@ -541,14 +540,6 @@ public class EnvironmentFunctionLoaderTest {
 			return source;
 		}
 
-		@Override
-		public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
-			throw new ModuleNotFoundException(importPath);
-		}
 
-		@Override
-		public JsonNode relativeData(String importPath, String searchPath) {
-			throw new ModuleNotFoundException(importPath);
-		}
 	}
 }

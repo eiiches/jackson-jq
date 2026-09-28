@@ -1,16 +1,14 @@
-package net.thisptr.jackson.jq.v2.core.module;
+package net.thisptr.jackson.jq.v2.spi.exception;
 
 import java.io.Serial;
 
-import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-
 /**
- * Reports that a {@link ModuleLoader} could not resolve an imported path.
+ * Reports that a module or module loader could not resolve an imported path.
  * <p>
- * This is the "I don't have it" answer, as opposed to "I have it but reading it failed": a loader
- * that found the module and then failed to read it throws a plain {@link JsonQueryException}
- * instead. The compiler, searching the environment's module loaders in turn, relies on the
- * distinction to decide whether to try the next loader or to give up.
+ * This is the "I don't have it" answer, as opposed to "I have it but reading it failed": a
+ * provider that found the module and then failed to read it throws a plain
+ * {@link JsonQueryException} instead. The compiler relies on this distinction when trying the
+ * importing module and then the environment's loaders.
  */
 public class ModuleNotFoundException extends JsonQueryException {
 	@Serial

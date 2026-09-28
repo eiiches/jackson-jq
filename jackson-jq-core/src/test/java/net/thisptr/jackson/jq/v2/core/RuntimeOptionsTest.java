@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
-import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
@@ -362,21 +361,13 @@ public class RuntimeOptionsTest {
 		// A module's `def`s are the module author's, not the caller's -- they compile to the same node as a
 		// query-text def but must stay off the budget, exactly like a jq-source builtin.
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
-				.importModule(new JqModule<JsonNode>() {
+				.importModule(new JqModule() {
 					@Override
 					public String getSourceCode() {
 						return "def square($x): $x * $x;";
 					}
 
-					@Override
-					public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
-						throw new ModuleNotFoundException(importPath);
-					}
 
-					@Override
-					public JsonNode relativeData(String importPath, String searchPath) {
-						throw new ModuleNotFoundException(importPath);
-					}
 				}, "math")
 				.build();
 
@@ -391,21 +382,13 @@ public class RuntimeOptionsTest {
 		// Same rule for a module the environment includes: losing the `::` qualifier does not turn the
 		// module author's `def`s into the caller's.
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
-				.includeModule(new JqModule<JsonNode>() {
+				.includeModule(new JqModule() {
 					@Override
 					public String getSourceCode() {
 						return "def square($x): $x * $x;";
 					}
 
-					@Override
-					public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
-						throw new ModuleNotFoundException(importPath);
-					}
 
-					@Override
-					public JsonNode relativeData(String importPath, String searchPath) {
-						throw new ModuleNotFoundException(importPath);
-					}
 				})
 				.build();
 
@@ -554,7 +537,7 @@ public class RuntimeOptionsTest {
 		// A module's expressions are the module author's, not the caller's: only the call written in the
 		// query text is tallied, and here it emits one value.
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
-				.importModule(new JqModule<JsonNode>() {
+				.importModule(new JqModule() {
 					@Override
 					public String getSourceCode() {
 						return """
@@ -563,15 +546,7 @@ public class RuntimeOptionsTest {
 								""";
 					}
 
-					@Override
-					public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
-						throw new ModuleNotFoundException(importPath);
-					}
 
-					@Override
-					public JsonNode relativeData(String importPath, String searchPath) {
-						throw new ModuleNotFoundException(importPath);
-					}
 				}, "gen")
 				.build();
 

@@ -12,11 +12,11 @@ import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
-import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.exception.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
@@ -59,17 +59,15 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	 * A module file this loader read. It knows both where it is and which search path it was found
 	 * under, which is everything an import written inside it needs to resolve.
 	 */
-	private static final class FileSystemJqModule<JsonNode> implements JqModule<JsonNode> {
+	private static final class FileSystemJqModule implements JqModule {
 		private final Path searchPath;
 		private final Path modulePath;
 		private final String source;
-		private final JsonProvider<JsonNode> jsonProvider;
 
-		FileSystemJqModule(Path searchPath, Path modulePath, String source, JsonProvider<JsonNode> jsonProvider) {
+		FileSystemJqModule(Path searchPath, Path modulePath, String source) {
 			this.searchPath = searchPath;
 			this.modulePath = modulePath;
 			this.source = source;
-			this.jsonProvider = jsonProvider;
 		}
 
 		@Override
@@ -94,18 +92,22 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		}
 
 		@Override
-		public JqModule<JsonNode> relativeImport(String importPath, String searchPathOverride) throws JsonQueryException {
+		public JqModule loadModule(String importPath, @Nullable String searchPathOverride) throws JsonQueryException {
+			if (searchPathOverride == null)
+				throw new ModuleNotFoundException(importPath);
 			Path resolvedPath = resolveOverride(importPath, searchPathOverride);
 			Path filePath = findFile(searchPath, resolvedPath, "jq");
 			if (filePath == null)
 				throw new ModuleNotFoundException(importPath);
 			// Still the caller's search path: a module reached through an override belongs to the
 			// same tree, so its own relative imports are bounded the same way.
-			return new FileSystemJqModule<>(searchPath, filePath, read(filePath, "module", importPath), jsonProvider);
+			return new FileSystemJqModule(searchPath, filePath, read(filePath, "module", importPath));
 		}
 
 		@Override
-		public JsonNode relativeData(String importPath, String searchPathOverride) throws JsonQueryException {
+		public <JsonNode> JsonNode loadData(String importPath, @Nullable String searchPathOverride, JsonProvider<JsonNode> jsonProvider) throws JsonQueryException {
+			if (searchPathOverride == null)
+				throw new ModuleNotFoundException(importPath);
 			Path resolvedPath = resolveOverride(importPath, searchPathOverride);
 			Path filePath = findFile(searchPath, resolvedPath, "json");
 			if (filePath == null)
@@ -119,7 +121,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		 */
 		@Override
 		public boolean equals(@Nullable Object o) {
-			if (!(o instanceof FileSystemJqModule<?> that))
+			if (!(o instanceof FileSystemJqModule that))
 				return false;
 			return modulePath.equals(that.modulePath);
 		}
@@ -213,7 +215,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		for (Path searchPath : searchPaths) {
 			Path filePath = findFile(searchPath, resolveModulePath(searchPath, path), "jq");
 			if (filePath != null)
-				return new FileSystemJqModule<>(searchPath, filePath, read(filePath, "module", path), jsonProvider);
+				return new FileSystemJqModule(searchPath, filePath, read(filePath, "module", path));
 		}
 		throw new ModuleNotFoundException(path);
 	}

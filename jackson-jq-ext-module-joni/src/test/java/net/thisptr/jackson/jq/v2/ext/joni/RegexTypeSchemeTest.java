@@ -39,6 +39,7 @@ class RegexTypeSchemeTest {
 			.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_7).registerModule(new JoniRegexModule())
 			.clearModuleLoaders()
 			.registerModule(new JoniRegexModule())
+			.importModule(new JoniRegexPrimitives(), "impl")
 			.build();
 
 	private static CompileOptions strict(Type inputType) {
@@ -58,7 +59,7 @@ class RegexTypeSchemeTest {
 
 	@Test
 	void everyRegisteredSignatureDeclaresSchemesForItsArity() {
-		new JoniRegexModule().getFunctions().forEach((signature, function) -> {
+		new JoniRegexPrimitives().getFunctions().forEach((signature, function) -> {
 			// No module function is variadic, so every registration names a concrete arity.
 			int arity = Objects.requireNonNull(signature.arity(), "arity");
 			List<TypeScheme<FunctionType>> schemes = function.types(Versions.JQ_1_7, arity);
@@ -70,7 +71,7 @@ class RegexTypeSchemeTest {
 
 	@Test
 	void bothPrimitivesTakeAStringInput() {
-		new JoniRegexModule().getFunctions().forEach((signature, function) -> {
+		new JoniRegexPrimitives().getFunctions().forEach((signature, function) -> {
 			for (TypeScheme<FunctionType> scheme : function.types(Versions.JQ_1_7, 3))
 				assertThat(scheme.body().returnType().inputType()).describedAs("%s", signature)
 						.isSameAs(StringType.getInstance());
@@ -83,18 +84,18 @@ class RegexTypeSchemeTest {
 	 */
 	@Test
 	void theTestModeArgumentPicksTheSignature() throws JsonQueryException {
-		assertThat(outputOf("joni::_match_impl(\"a\"; \"\"; true)")).isSameAs(BooleanType.getInstance());
-		assertThat(outputOf("joni::_match_impl(\"a\"; \"\"; false)").toString()).startsWith("[*:{").contains("captures");
+		assertThat(outputOf("impl::_match_impl(\"a\"; \"\"; true)")).isSameAs(BooleanType.getInstance());
+		assertThat(outputOf("impl::_match_impl(\"a\"; \"\"; false)").toString()).startsWith("[*:{").contains("captures");
 	}
 
 	@Test
 	void substitutionAnswersAString() throws JsonQueryException {
-		assertThat(outputOf("joni::_sub_impl(\"a\"; \"b\"; \"g\")")).isSameAs(StringType.getInstance());
+		assertThat(outputOf("impl::_sub_impl(\"a\"; \"b\"; \"g\")")).isSameAs(StringType.getInstance());
 	}
 
 	@Test
 	void aNonStringInputIsRejected() {
-		assertThatThrownBy(() -> outputOf("joni::_sub_impl(\"a\"; \"b\"; \"g\")", NumericType.getInstance()))
+		assertThatThrownBy(() -> outputOf("impl::_sub_impl(\"a\"; \"b\"; \"g\")", NumericType.getInstance()))
 				.isInstanceOf(JsonQueryException.class)
 				.hasMessageContaining("Type checking failed");
 	}
@@ -153,7 +154,7 @@ class RegexTypeSchemeTest {
 	void noFlagsArgumentOnTheSurfaceTakesANull() {
 		for (String query : List.of("joni::match(\"a\"; null)", "joni::test(\"a\"; null)", "joni::capture(\"a\"; null)",
 				"joni::scan(\"a\"; null)", "joni::splits(\"a\"; null)", "joni::split(\"a\"; null)",
-				"joni::match([\"a\", null])", "joni::match([\"a\", \"g\", 1])", "joni::_match_impl(\"a\"; null; false)")) {
+				"joni::match([\"a\", null])", "joni::match([\"a\", \"g\", 1])", "impl::_match_impl(\"a\"; null; false)")) {
 			assertThatThrownBy(() -> outputOf(query))
 					.describedAs(query)
 					.isInstanceOf(JsonQueryException.class)

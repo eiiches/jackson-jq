@@ -42,6 +42,7 @@ jjq_java_library(
         "LengthFunction.java",
         "MaxByFunction.java",
         "MinByFunction.java",
+        "ModuleMetaFunction.java",
         "NanFunction.java",
         "NotFunction.java",
         "NowFunction.java",

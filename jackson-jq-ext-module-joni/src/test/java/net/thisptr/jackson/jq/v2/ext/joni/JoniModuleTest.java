@@ -87,6 +87,10 @@ public class JoniModuleTest {
 	public void doesNotRegisterRegexFunctionsGlobally() {
 		Environment<JsonNode> environment = environment();
 		assertThatThrownBy(() -> environment.compile("\"a\" | test(\"a\")")).isInstanceOf(JsonQueryException.class);
+		assertThatThrownBy(() -> environment.compile(IMPORT + "re::_match_impl(\"a\"; \"\"; true)"))
+				.isInstanceOf(JsonQueryException.class);
+		assertThatThrownBy(() -> environment.compile("import \"impl\" as impl; impl::_match_impl(\"a\"; \"\"; true)"))
+				.isInstanceOf(JsonQueryException.class);
 	}
 
 	private static List<JsonNode> run(String expression) throws JsonQueryException {

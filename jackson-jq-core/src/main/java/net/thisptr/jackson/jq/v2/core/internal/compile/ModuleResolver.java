@@ -17,27 +17,28 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModuleMeta;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
-import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.exception.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
 /**
- * Turns the paths in {@code import}/{@code include} statements into usable modules: asks the
- * environment's {@link ModuleLoader}s for them, compiles the ones that come back as jq source, and
- * remembers what it has compiled.
+ * Turns the paths in {@code import}/{@code include} statements into usable modules: checks the
+ * importing module's own dependencies, then asks the environment's {@link ModuleLoader}s, compiles
+ * the ones that come back as jq source, and remembers what it has compiled.
  * <p>
  * One resolver serves one compilation. Everything it remembers -- which module compiled to what,
  * which modules are still being compiled -- lasts exactly as long as that, so it is reached from a
- * single thread and can never hand a later compilation something resolved against a different set
- * of loaders. Loaders themselves stay stateless: they read, they do not compile and they do not
- * cache.
+ * a single compilation and can never hand a later compilation something resolved against a
+ * different set of loaders. Runtime {@code modulemeta} performs only raw, uncached lookups; it does
+ * not touch those compilation maps. Loaders themselves stay stateless: they read, they do not
+ * compile and they do not cache.
  */
 public final class ModuleResolver<JsonNode> {
 	private final Environment<JsonNode> env;
@@ -45,12 +46,12 @@ public final class ModuleResolver<JsonNode> {
 	/**
 	 * Compiled modules. Two imports reaching the same module compile it once.
 	 */
-	private final Map<JqModule<JsonNode>, JavaModule> compiled = new HashMap<>();
+	private final Map<JqModule, JavaModule> compiled = new HashMap<>();
 
 	/**
 	 * Modules being compiled right now -- an import of one of these is a cycle.
 	 */
-	private final Set<JqModule<JsonNode>> compiling = new HashSet<>();
+	private final Set<JqModule> compiling = new HashSet<>();
 
 	private @Nullable Environment<JsonNode> moduleEnv;
 
@@ -63,13 +64,30 @@ public final class ModuleResolver<JsonNode> {
 	 *
 	 * @param origin the module the import statement appears in, or {@code null} at the top level
 	 */
-	public JavaModule resolveModule(@Nullable JqModule<JsonNode> origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
+	public JavaModule resolveModule(@Nullable JqModule origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
+		return materialize(loadModule(origin, path, metadata));
+	}
+
+	/**
+	 * Finds a module without compiling its source or resolving its dependencies. Runtime
+	 * {@code modulemeta} uses this path so it can report missing dependencies.
+	 */
+	public Module loadModule(@Nullable JqModule origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		Maybe<JsonNode> search = searchOverride(origin, path, metadata);
-		if (search.isPresent())
-			return compile(requireNonNull(origin).relativeImport(path, env.getJsonProvider().getString(search.get())));
+		if (origin != null) {
+			@Var @Nullable Module local = null;
+			try {
+				local = origin.loadModule(path, search.isPresent() ? env.getJsonProvider().getString(search.get()) : null);
+			} catch (ModuleNotFoundException e) {
+				if (search.isPresent())
+					throw e;
+			}
+			if (local != null)
+				return local;
+		}
 		Module registered = env.getRegisteredModules().get(path);
 		if (registered != null)
-			return materialize(registered);
+			return registered;
 
 		@Var Module module = null;
 		for (ModuleLoader<JsonNode> loader : env.getModuleLoaders()) {
@@ -82,7 +100,7 @@ public final class ModuleResolver<JsonNode> {
 		}
 		if (module == null)
 			throw new ModuleNotFoundException(path);
-		return materialize(module);
+		return module;
 	}
 
 	/**
@@ -90,10 +108,16 @@ public final class ModuleResolver<JsonNode> {
 	 *
 	 * @param origin the module the import statement appears in, or {@code null} at the top level
 	 */
-	public JsonNode resolveData(@Nullable JqModule<JsonNode> origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
+	public JsonNode resolveData(@Nullable JqModule origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		Maybe<JsonNode> search = searchOverride(origin, path, metadata);
-		if (search.isPresent())
-			return requireNonNull(origin).relativeData(path, env.getJsonProvider().getString(search.get()));
+		if (origin != null) {
+			try {
+				return origin.loadData(path, search.isPresent() ? env.getJsonProvider().getString(search.get()) : null, env.getJsonProvider());
+			} catch (ModuleNotFoundException e) {
+				if (search.isPresent())
+					throw e;
+			}
+		}
 
 		for (ModuleLoader<JsonNode> loader : env.getModuleLoaders()) {
 			try {
@@ -113,11 +137,8 @@ public final class ModuleResolver<JsonNode> {
 	 * {@code importModule}, and which one it got only matters here.
 	 */
 	public JavaModule materialize(Module module) throws JsonQueryException {
-		if (module instanceof JqModule<?> jqModule) {
-			@SuppressWarnings("unchecked") // A loader of ours produced it, so its node type is ours.
-			JqModule<JsonNode> typed = (JqModule<JsonNode>) jqModule;
-			return compile(typed);
-		}
+		if (module instanceof JqModule jqModule)
+			return compile(jqModule);
 		if (module instanceof JavaModule javaModule)
 			return javaModule;
 		throw new JsonQueryException(String.format("module %s is neither a JqModule nor a JavaModule", module.getClass().getName()));
@@ -128,7 +149,7 @@ public final class ModuleResolver<JsonNode> {
 	 * something inside a module: there is nothing for a top-level script to be relative to. The
 	 * value has to be a string -- jq ignores a non-textual one, we would rather say so.
 	 */
-	private Maybe<JsonNode> searchOverride(@Nullable JqModule<JsonNode> origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
+	private Maybe<JsonNode> searchOverride(@Nullable JqModule origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = env.getJsonProvider();
 		Maybe<JsonNode> search = metadata.isPresent() ? jsonProvider.getObjectMember(metadata.get(), "search") : Maybe.absent();
 		if (!search.isPresent()) {
@@ -145,17 +166,11 @@ public final class ModuleResolver<JsonNode> {
 		return search;
 	}
 
-	private static <JsonNode> JqModule<JsonNode> requireNonNull(@Nullable JqModule<JsonNode> origin) {
-		if (origin == null)
-			throw new IllegalStateException("a relative import without an origin should have been rejected already");
-		return origin;
-	}
-
 	/**
 	 * Compiles a module's source, having first resolved its own imports -- which is where this
 	 * recurses, and where a cycle shows up.
 	 */
-	private JavaModule compile(JqModule<JsonNode> module) throws JsonQueryException {
+	private JavaModule compile(JqModule module) throws JsonQueryException {
 		JavaModule alreadyCompiled = compiled.get(module);
 		if (alreadyCompiled != null)
 			return alreadyCompiled;
@@ -181,7 +196,7 @@ public final class ModuleResolver<JsonNode> {
 	 * Compiles jq source into a module: runs it once so every exported {@code def} lands in its slot
 	 * with its closures bound, then reads those out.
 	 */
-	private static <JsonNode> JavaModule compileSource(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, JqModule<JsonNode> sourceModule, Map<FunctionSignature, Function> javaFunctions) throws JsonQueryException {
+	private static <JsonNode> JavaModule compileSource(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, JqModule sourceModule, Map<FunctionSignature, Function> javaFunctions) throws JsonQueryException {
 		AstNode ast = AstParser.parse(sourceModule.getSourceCode() + " null", env.getJqVersion());
 		AnalyzedExpression<JsonNode> compiled = Compiler.compileModule(env, options, scope, ast);
 		if (!(compiled instanceof RootExpression<JsonNode> rootExpr))

@@ -41,6 +41,7 @@ import net.thisptr.jackson.jq.v2.core.internal.builtins.LTrimStrFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.LengthFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.MaxByFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.MinByFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.ModuleMetaFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.NanFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.NotFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.NowFunction;
@@ -162,6 +163,7 @@ public final class BuiltinFunctionLoader implements FunctionLoader {
 			new MathFunctions.TanhFunction(),
 			new MaxByFunction(),
 			new MinByFunction(),
+			new ModuleMetaFunction(),
 			new NanFunction(),
 			new NotFunction(),
 			new NowFunction(),

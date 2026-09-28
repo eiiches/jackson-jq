@@ -23,8 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class MatchImplFunctionTest {
 	private static final JsonProvider<JsonNode> JSON_PROVIDER = Jackson2JsonProvider.getInstance();
-	private static final String IMPORT = "import \"jackson-jq/joni\" as joni; ";
-
 	private static final String A_AT_0 = "[{\"offset\":0,\"length\":1,\"string\":\"a\",\"captures\":[]}]";
 	private static final String B_AT_1 = "[{\"offset\":1,\"length\":1,\"string\":\"b\",\"captures\":[]}]";
 	private static final String A_AT_0_AND_3 = "[{\"offset\":0,\"length\":1,\"string\":\"a\",\"captures\":[]},"
@@ -37,34 +35,33 @@ public class MatchImplFunctionTest {
 	 */
 	@Test
 	public void everyArgumentCombinationIsProducedInOrder() {
-		assertThat(run("\"abcabc\" | joni::_match_impl(\"a\", \"b\"; \"\", \"g\"; false, true)"))
+		assertThat(run("\"abcabc\" | impl::_match_impl(\"a\", \"b\"; \"\", \"g\"; false, true)"))
 				.containsExactly(A_AT_0, B_AT_1, A_AT_0_AND_3, B_AT_1_AND_4, "true", "true", "true", "true");
 	}
 
 	@Test
 	public void aFailingRegexIsReportedAfterTheCombinationsThatSucceeded() {
-		assertThat(run("try (\"abcabc\" | joni::_match_impl(\"a\", \"b\", error(\"foo\"); \"\", \"g\", error(\"bar\"); false, true, error(\"baz\"))) catch ."))
+		assertThat(run("try (\"abcabc\" | impl::_match_impl(\"a\", \"b\", error(\"foo\"); \"\", \"g\", error(\"bar\"); false, true, error(\"baz\"))) catch ."))
 				.containsExactly(A_AT_0, B_AT_1, "\"foo\"");
 	}
 
 	@Test
 	public void aFailingFlagsArgumentIsReportedAfterTheCombinationsThatSucceeded() {
-		assertThat(run("try (\"abcabc\" | joni::_match_impl(\"a\", \"b\"; \"\", \"g\", error(\"bar\"); false, true, error(\"baz\"))) catch ."))
+		assertThat(run("try (\"abcabc\" | impl::_match_impl(\"a\", \"b\"; \"\", \"g\", error(\"bar\"); false, true, error(\"baz\"))) catch ."))
 				.containsExactly(A_AT_0, B_AT_1, A_AT_0_AND_3, B_AT_1_AND_4, "\"bar\"");
 	}
 
 	@Test
 	public void aFailingTestModeIsReportedAfterTheCombinationsThatSucceeded() {
-		assertThat(run("try (\"abcabc\" | joni::_match_impl(\"a\", \"b\"; \"\", \"g\"; false, true, error(\"baz\"))) catch ."))
+		assertThat(run("try (\"abcabc\" | impl::_match_impl(\"a\", \"b\"; \"\", \"g\"; false, true, error(\"baz\"))) catch ."))
 				.containsExactly(A_AT_0, B_AT_1, A_AT_0_AND_3, B_AT_1_AND_4, "true", "true", "true", "true", "\"baz\"");
 	}
 
 	private static List<String> run(String expression) throws JsonQueryException {
-		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_8_2).registerModule(new JoniRegexModule())
-				.clearModuleLoaders()
-				.registerModule(new JoniRegexModule())
+		Environment<JsonNode> environment = EnvironmentBuilder.withDefaultLoaders(JSON_PROVIDER, Versions.JQ_1_8_2)
+				.importModule(new JoniRegexPrimitives(), "impl")
 				.build();
-		return environment.compile(IMPORT + expression).apply(JSON_PROVIDER.createNull())
+		return environment.compile(expression).apply(JSON_PROVIDER.createNull())
 				.stream().map(value -> JsonCodec.format(JSON_PROVIDER, value)).toList();
 	}
 }

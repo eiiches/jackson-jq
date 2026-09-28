@@ -10,10 +10,10 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
-import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.exception.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
@@ -52,7 +52,7 @@ public class InMemoryJqModuleTest {
 		}
 	}
 
-	private static final class InMemoryJqModule implements JqModule<JsonNode> {
+	private static final class InMemoryJqModule implements JqModule {
 		private final String name;
 		private final String source;
 
@@ -64,18 +64,6 @@ public class InMemoryJqModuleTest {
 		@Override
 		public String getSourceCode() {
 			return source;
-		}
-
-		@Override
-		public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
-			// `import "x" {search: "./"}` means "next to me", and nothing is next to a module that
-			// lives in a map. A loader that reads files answers this one instead.
-			throw new ModuleNotFoundException(importPath);
-		}
-
-		@Override
-		public JsonNode relativeData(String importPath, String searchPath) {
-			throw new ModuleNotFoundException(importPath);
 		}
 
 		/**

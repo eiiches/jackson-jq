@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.google.gson.JsonElement;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +20,10 @@ import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
-import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
+import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -30,9 +31,11 @@ import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.exception.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
+import net.thisptr.jackson.jq.v2.spi.module.ModuleMeta;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
@@ -58,7 +61,7 @@ public class ModuleResolverTest {
 	private static final class SourceLoader implements ModuleLoader<JsonNode> {
 		private final String root;
 		private final Map<String, String> sources = new HashMap<>();
-		private final Map<String, JsonNode> datas = new HashMap<>();
+		private final Map<String, Integer> datas = new HashMap<>();
 		private final List<String> requested = new ArrayList<>();
 
 		SourceLoader(String root) {
@@ -70,7 +73,7 @@ public class ModuleResolverTest {
 			return this;
 		}
 
-		SourceLoader putData(String path, JsonNode data) {
+		SourceLoader putData(String path, int data) {
 			datas.put(root + "/" + path, data);
 			return this;
 		}
@@ -84,7 +87,7 @@ public class ModuleResolverTest {
 		@Override
 		public JsonNode loadData(String path, Maybe<JsonNode> metadata) {
 			requested.add(path);
-			return dataAt(root + "/" + path, path);
+			return dataAt(root + "/" + path, path, Jackson2JsonProvider.getInstance());
 		}
 
 		SourceModule moduleAt(String name, String path) {
@@ -94,23 +97,38 @@ public class ModuleResolverTest {
 			return new SourceModule(this, name, source);
 		}
 
-		JsonNode dataAt(String name, String path) {
-			JsonNode data = datas.get(name);
+		<T> T dataAt(String name, String path, JsonProvider<T> jsonProvider) {
+			Integer data = datas.get(name);
 			if (data == null)
 				throw new ModuleNotFoundException(path);
-			return data;
+			return jsonProvider.createNumber(data);
 		}
 	}
 
-	private static final class SourceModule implements JqModule<JsonNode> {
+	private static final class SourceModule implements JqModule {
 		private final SourceLoader owner;
 		private final String name;
 		private final String source;
+		private final Map<String, Module> bundledModules;
+		private final Map<String, Module> relativeModules;
+		private final Map<String, Integer> bundledData;
 
 		SourceModule(SourceLoader owner, String name, String source) {
+			this(owner, name, source, Map.of(), Map.of(), Map.of());
+		}
+
+		SourceModule(SourceLoader owner, String name, String source, Map<String, Module> bundledModules, Map<String, Module> relativeModules) {
+			this(owner, name, source, bundledModules, relativeModules, Map.of());
+		}
+
+		SourceModule(SourceLoader owner, String name, String source, Map<String, Module> bundledModules, Map<String, Module> relativeModules,
+				Map<String, Integer> bundledData) {
 			this.owner = owner;
 			this.name = name;
 			this.source = source;
+			this.bundledModules = Map.copyOf(bundledModules);
+			this.relativeModules = Map.copyOf(relativeModules);
+			this.bundledData = Map.copyOf(bundledData);
 		}
 
 		@Override
@@ -126,13 +144,28 @@ public class ModuleResolverTest {
 		}
 
 		@Override
-		public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
+		public Module loadModule(String importPath, @Nullable String searchPath) {
+			if (searchPath == null) {
+				Module bundled = bundledModules.get(importPath);
+				if (bundled != null)
+					return bundled;
+				throw new ModuleNotFoundException(importPath);
+			}
+			Module relative = relativeModules.get(importPath);
+			if (relative != null)
+				return relative;
 			return owner.moduleAt(resolve(importPath, searchPath), importPath);
 		}
 
 		@Override
-		public JsonNode relativeData(String importPath, String searchPath) {
-			return owner.dataAt(resolve(importPath, searchPath), importPath);
+		public <T> T loadData(String importPath, @Nullable String searchPath, JsonProvider<T> jsonProvider) {
+			if (searchPath == null) {
+				Integer bundled = bundledData.get(importPath);
+				if (bundled != null)
+					return jsonProvider.createNumber(bundled);
+				throw new ModuleNotFoundException(importPath);
+			}
+			return owner.dataAt(resolve(importPath, searchPath), importPath, jsonProvider);
 		}
 
 		@Override
@@ -151,7 +184,7 @@ public class ModuleResolverTest {
 		}
 	}
 
-	private static final class HybridModule implements JavaModule, JqModule<JsonNode> {
+	private static final class HybridModule implements JavaModule, JqModule {
 		private final String source;
 		private final Map<FunctionSignature, Function> functions;
 
@@ -170,15 +203,6 @@ public class ModuleResolverTest {
 			return functions;
 		}
 
-		@Override
-		public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
-			throw new ModuleNotFoundException(importPath);
-		}
-
-		@Override
-		public JsonNode relativeData(String importPath, String searchPath) {
-			throw new ModuleNotFoundException(importPath);
-		}
 
 		@Override
 		public String toString() {
@@ -352,7 +376,7 @@ public class ModuleResolverTest {
 				.addModuleLoader(other)
 				.addModuleLoader(new SourceLoader("/first")
 						.put("lib/a", "import \"nums\" as $nums {search: \"./\"}; def one: $nums::nums;")
-						.putData("lib/nums", IntNode.valueOf(7)))
+						.putData("lib/nums", 7))
 				.build();
 
 		assertThat(run(env, "import \"lib/a\" as a; a::one")).containsExactly("7");
@@ -557,5 +581,206 @@ public class ModuleResolverTest {
 		assertThat(run(env, "import \"a\" as a; import \"b\" as b; [a::one, b::two]")).containsExactly("[3,3]");
 		assertThat(loader.requested).containsExactly("a", "c", "b", "c");
 		assertThat(env.compile("import \"c\" as c; c::three")).isNotNull();
+	}
+
+	@Test
+	public void testBundledModuleIsVisibleOnlyToItsImporter() {
+		SourceLoader loader = new SourceLoader("/first");
+		JavaModule yaml = () -> Map.of(FunctionSignature.of("from_yaml", 0), constantFunction(7));
+		SourceModule wrapper = new SourceModule(loader, "/first/wrapper",
+				"import \"jackson-jq/yaml\" as yaml; def read_yaml: yaml::from_yaml;",
+				Map.of("jackson-jq/yaml", yaml), Map.of());
+		SourceModule unrelated = new SourceModule(loader, "/first/unrelated",
+				"import \"jackson-jq/yaml\" as yaml; def read_yaml: yaml::from_yaml;");
+		Environment<JsonNode> env = builder()
+				.registerModule("wrapper", wrapper)
+				.registerModule("unrelated", unrelated)
+				.build();
+
+		assertThat(run(env, "import \"wrapper\" as w; w::read_yaml")).containsExactly("7");
+		assertThatThrownBy(() -> env.compile("import \"jackson-jq/yaml\" as yaml; yaml::from_yaml"))
+				.isInstanceOf(ModuleNotFoundException.class);
+		assertThatThrownBy(() -> env.compile("import \"unrelated\" as u; u::read_yaml"))
+				.isInstanceOf(ModuleNotFoundException.class);
+	}
+
+	@Test
+	public void testBundledModuleTakesPrecedenceOverEnvironmentRegistration() {
+		SourceLoader loader = new SourceLoader("/first");
+		JavaModule bundled = () -> Map.of(FunctionSignature.of("value", 0), constantFunction(1));
+		JavaModule registered = () -> Map.of(FunctionSignature.of("value", 0), constantFunction(2));
+		SourceModule wrapper = new SourceModule(loader, "/first/wrapper",
+				"import \"dependency\" as dep; def value: dep::value;",
+				Map.of("dependency", bundled), Map.of());
+		Environment<JsonNode> env = builder()
+				.registerModule("wrapper", wrapper)
+				.registerModule("dependency", registered)
+				.build();
+
+		assertThat(run(env, "import \"wrapper\" as w; w::value")).containsExactly("1");
+		assertThat(run(env, "import \"dependency\" as dep; dep::value")).containsExactly("2");
+	}
+
+	@Test
+	public void testModuleLocalDataTakesPrecedenceWithoutLeaking() {
+		SourceLoader loader = new SourceLoader("/first").putData("payload", 2);
+		SourceModule wrapper = new SourceModule(loader, "/first/wrapper",
+				"import \"payload\" as $p; def value: $p::p;",
+				Map.of(), Map.of(), Map.of("payload", 1));
+		Environment<JsonNode> env = builder().registerModule("wrapper", wrapper).addModuleLoader(loader).build();
+
+		assertThat(run(env, "import \"wrapper\" as w; w::value")).containsExactly("1");
+		assertThat(run(env, "import \"payload\" as $p; $p::p")).containsExactly("2");
+	}
+
+	@Test
+	public void testSameModuleAndLocalDependenciesWithDifferentJsonProviders() {
+		SourceLoader owner = new SourceLoader("/first");
+		SourceModule child = new SourceModule(owner, "/first/child", "def value: 40;");
+		SourceModule wrapper = new SourceModule(owner, "/first/wrapper",
+				"import \"child\" as child; import \"payload\" as $p; def value: child::value + $p::p;",
+				Map.of("child", child), Map.of(), Map.of("payload", 2));
+		String query = "import \"wrapper\" as w; w::value";
+
+		Environment<JsonNode> jackson = builder().registerModule("wrapper", wrapper).build();
+		assertThat(run(jackson, query)).containsExactly("42");
+
+		GsonJsonProvider gsonProvider = GsonJsonProvider.getInstance();
+		Environment<JsonElement> gson = EnvironmentBuilder.withDefaultLoaders(gsonProvider, Versions.JQ_1_6)
+				.registerModule("wrapper", wrapper)
+				.build();
+		assertThat(gson.compile(query).apply(gsonProvider.createNull()))
+				.containsExactly(gsonProvider.createNumber(42));
+	}
+
+	@Test
+	public void testMissingPlainDataFallsThroughButMissingRelativeDataDoesNot() {
+		SourceLoader local = new SourceLoader("/first");
+		SourceLoader dataLoader = new SourceLoader("/second").putData("payload", 2);
+		SourceModule plain = new SourceModule(local, "/first/plain",
+				"import \"payload\" as $p; def value: $p::p;");
+		SourceModule relative = new SourceModule(local, "/first/relative",
+				"import \"payload\" as $p {search: \"./\"}; def value: $p::p;");
+		Environment<JsonNode> env = builder()
+				.registerModule("plain", plain)
+				.registerModule("relative", relative)
+				.addModuleLoader(dataLoader)
+				.build();
+
+		assertThat(run(env, "import \"plain\" as p; p::value")).containsExactly("2");
+		assertThatThrownBy(() -> env.compile("import \"relative\" as r; r::value"))
+				.isInstanceOf(ModuleNotFoundException.class);
+		assertThat(dataLoader.requested).containsExactly("payload");
+	}
+
+	@Test
+	public void testImportedModuleDoesNotInheritItsParentBundles() {
+		SourceLoader loader = new SourceLoader("/first");
+		JavaModule yaml = () -> Map.of(FunctionSignature.of("from_yaml", 0), constantFunction(7));
+		SourceModule child = new SourceModule(loader, "/first/child",
+				"import \"jackson-jq/yaml\" as yaml; def value: yaml::from_yaml;");
+		SourceModule wrapper = new SourceModule(loader, "/first/wrapper",
+				"import \"child\" as child; def value: child::value;",
+				Map.of("child", child, "jackson-jq/yaml", yaml), Map.of());
+		JavaModule fallback = () -> Map.of(FunctionSignature.of("value", 0), constantFunction(9));
+		Environment<JsonNode> env = builder().registerModule("wrapper", wrapper).registerModule("child", fallback).build();
+
+		assertThatThrownBy(() -> env.compile("import \"wrapper\" as w; w::value"))
+				.isInstanceOf(ModuleNotFoundException.class);
+	}
+
+	@Test
+	public void testRelativeJavaModuleIsVisibleOnlyToItsImporter() {
+		SourceLoader loader = new SourceLoader("/first");
+		JavaModule primitives = () -> Map.of(FunctionSignature.of("value_from_impl", 0), constantFunction(3));
+		SourceModule wrapper = new SourceModule(loader, "/first/wrapper",
+				"include \"impl\" {search: \"./\"}; def value: value_from_impl;",
+				Map.of(), Map.of("impl", primitives));
+		Environment<JsonNode> env = builder().registerModule("wrapper", wrapper).build();
+
+		assertThat(run(env, "import \"wrapper\" as w; w::value")).containsExactly("3");
+		assertThatThrownBy(() -> env.compile("import \"impl\" as impl; impl::value_from_impl"))
+				.isInstanceOf(ModuleNotFoundException.class);
+	}
+
+	@Test
+	public void testModuleMetaInspectsSourceWithoutResolvingDependencies() {
+		SourceLoader loader = new SourceLoader("/first");
+		SourceModule module = new SourceModule(loader, "/first/broken",
+				"module {version: \"1\"}; import \"missing\" as dep; include \"also_missing\"; def value: dep::value;");
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
+				.registerModule("broken", module).build();
+
+		JsonNode metadata = env.compile("\"broken\" | modulemeta").apply(NullNode.getInstance()).get(0);
+		assertThat(metadata.path("version").asText()).isEqualTo("1");
+		assertThat(metadata.path("deps").get(0).path("relpath").asText()).isEqualTo("missing");
+		assertThat(metadata.path("deps").get(1).path("relpath").asText()).isEqualTo("also_missing");
+		assertThat(metadata.path("deps").get(1).has("as")).isFalse();
+		assertThat(metadata.path("defs").get(0).asText()).isEqualTo("value/0");
+		assertThatThrownBy(() -> env.compile("import \"broken\" as b; b::value"))
+				.isInstanceOf(ModuleNotFoundException.class);
+	}
+
+	@Test
+	public void testModuleMetaUsesCallersPrivateModules() {
+		SourceLoader loader = new SourceLoader("/first");
+		SourceModule privateModule = new SourceModule(loader, "/first/private", "def hidden: 1;");
+		SourceModule wrapper = new SourceModule(loader, "/first/wrapper",
+				"def inspect: \"private\" | modulemeta;",
+				Map.of("private", privateModule), Map.of());
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
+				.registerModule("wrapper", wrapper).build();
+
+		JsonNode metadata = env.compile("import \"wrapper\" as w; w::inspect").apply(NullNode.getInstance()).get(0);
+		assertThat(metadata.path("defs").get(0).asText()).isEqualTo("hidden/0");
+		assertThatThrownBy(() -> env.compile("\"private\" | modulemeta").apply(NullNode.getInstance()))
+				.isInstanceOf(ModuleNotFoundException.class);
+	}
+
+	@Test
+	public void testModuleMetaReportsJavaAndHybridFunctions() {
+		ModuleMeta customMetadata = new ModuleMeta() {
+			@Override
+			public <T> Map<String, T> getMetadata(JsonProvider<T> jsonProvider) {
+				return Map.of("kind", jsonProvider.createString("java"));
+			}
+		};
+		JavaModule javaModule = new JavaModule() {
+			@Override
+			public Map<FunctionSignature, Function> getFunctions() {
+				return Map.of(FunctionSignature.of("read", 0), constantFunction(1));
+			}
+
+			@Override
+			public ModuleMeta getModuleMeta() {
+				return customMetadata;
+			}
+		};
+		HybridModule hybrid = new HybridModule("module {kind: \"hybrid\"}; def jq: 1;",
+				Map.of(FunctionSignature.of("java", 0), constantFunction(2)));
+		Environment<JsonNode> recent = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
+				.registerModule("java", javaModule).registerModule("hybrid", hybrid).build();
+		JsonNode javaMetadata = recent.compile("\"java\" | modulemeta").apply(NullNode.getInstance()).get(0);
+		assertThat(javaMetadata.path("kind").asText()).isEqualTo("java");
+		assertThat(javaMetadata.path("defs").get(0).asText()).isEqualTo("read/0");
+		JsonNode hybridMetadata = recent.compile("\"hybrid\" | modulemeta").apply(NullNode.getInstance()).get(0);
+		assertThat(hybridMetadata.path("kind").asText()).isEqualTo("hybrid");
+		assertThat(hybridMetadata.path("defs").toString()).isEqualTo("[\"jq/0\",\"java/0\"]");
+		assertThat(run(recent, "[\"java\", \"hybrid\"][] | modulemeta | .kind"))
+				.containsExactly("\"java\"", "\"hybrid\"");
+
+		Environment<JsonNode> old = builder().registerModule("java", javaModule).build();
+		assertThat(old.compile("\"java\" | modulemeta").apply(NullNode.getInstance()).get(0).has("defs")).isFalse();
+	}
+
+	@Test
+	public void testModuleMetaValidatesInputAndCanBeShadowed() {
+		Environment<JsonNode> env = builder().build();
+		assertThatThrownBy(() -> env.compile("1 | modulemeta").apply(NullNode.getInstance()))
+				.isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("modulemeta input module name must be a string");
+		assertThatThrownBy(() -> env.compile("\"missing\" | modulemeta").apply(NullNode.getInstance()))
+				.isInstanceOf(ModuleNotFoundException.class);
+		assertThat(run(env, "def modulemeta: 42; \"missing\" | modulemeta")).containsExactly("42");
 	}
 }

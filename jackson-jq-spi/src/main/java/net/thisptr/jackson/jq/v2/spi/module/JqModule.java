@@ -1,6 +1,10 @@
 package net.thisptr.jackson.jq.v2.spi.module;
 
+import org.jspecify.annotations.Nullable;
+
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.exception.ModuleNotFoundException;
 
 /**
  * A {@link Module} that is still jq source. A module loader returns one of these when an import
@@ -10,9 +14,12 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
  * An implementation may also implement {@link JavaModule}. The compiler makes a hybrid's Java
  * functions available to this source and exports both sets after compilation.
  * <p>
- * Loaders implement this themselves -- there is no shared implementation to extend -- because only
- * the loader knows where the module came from, which is what the two {@code relative*} methods and
- * {@link #equals} answer.
+ * A jq module works with any JSON provider. Its source and module imports are provider independent;
+ * data imports are constructed with the provider supplied to {@link #loadData}.
+ * <p>
+ * Loaders and in-memory modules implement this themselves -- there is no shared implementation to
+ * extend. The two {@code load*} methods resolve imports against the module's own location or
+ * contents, and {@link #equals} identifies the same module across repeated imports.
  * <p>
  * <b>Implementations must implement {@link #equals} and {@link Object#hashCode} to mean "the same
  * module".</b> Two instances holding the same module file are equal even when they were reached by
@@ -23,11 +30,8 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
  * <p>
  * {@link Object#toString} is worth overriding too: it is what names the module when a circular
  * import is reported.
- *
- * @param <JsonNode> the JSON node type
  */
-public non-sealed interface JqModule<JsonNode> extends Module {
-
+public non-sealed interface JqModule extends Module {
 	/**
 	 * Returns this module's jq source.
 	 *
@@ -36,28 +40,37 @@ public non-sealed interface JqModule<JsonNode> extends Module {
 	String getSourceCode();
 
 	/**
-	 * Resolves an import written inside this module against this module's own location -- what
-	 * {@code import "d" as d {search: "./"}} means when it appears here.
+	 * Resolves a module import written inside this module's source. An ordinary import passes
+	 * {@code null} for {@code searchPath}; an import with a {@code search} override passes its value.
 	 * <p>
-	 * Only this module can answer it: an import relative to it is relative to wherever its loader
-	 * found it, which nothing else knows.
+	 * A module found here is available only while compiling this module, before the importing
+	 * environment's registrations and loaders. A {@link ModuleNotFoundException} from an ordinary
+	 * import lets resolution continue there. A relative import must be resolved here.
 	 *
 	 * @param importPath the import path, as written in the statement
-	 * @param searchPath the {@code search} metadata value, as written
-	 * @return the resolved module
-	 * @throws JsonQueryException if the path does not resolve -- {@code ModuleNotFoundException} --
-	 * or resolved but could not be read
+	 * @param searchPath the {@code search} metadata value, or {@code null} for an ordinary import
+	 * @return the resolved jq or Java module
+	 * @throws ModuleNotFoundException if this module cannot resolve the path
+	 * @throws JsonQueryException if it found the module but could not read it
 	 */
-	JqModule<JsonNode> relativeImport(String importPath, String searchPath) throws JsonQueryException;
+	default Module loadModule(String importPath, @Nullable String searchPath) throws JsonQueryException {
+		throw new ModuleNotFoundException(importPath);
+	}
 
 	/**
-	 * The same as {@link #relativeImport}, for an {@code import path as $NAME} statement.
+	 * Resolves a data import written inside this module's source, on the same terms as
+	 * {@link #loadModule(String, String)}. Construct the result with {@code jsonProvider} so it
+	 * belongs to the environment compiling this module.
 	 *
+	 * @param <JsonNode> the active environment's JSON node type
 	 * @param importPath the import path, as written in the statement
-	 * @param searchPath the {@code search} metadata value, as written
-	 * @return the resolved data
-	 * @throws JsonQueryException if the path does not resolve -- {@code ModuleNotFoundException} --
-	 * or resolved but could not be read
+	 * @param searchPath the {@code search} metadata value, or {@code null} for an ordinary import
+	 * @param jsonProvider the active environment's JSON provider, used to construct the data
+	 * @return the resolved data in the active environment's node type
+	 * @throws ModuleNotFoundException if this module cannot resolve the path
+	 * @throws JsonQueryException if it found the data but could not read it
 	 */
-	JsonNode relativeData(String importPath, String searchPath) throws JsonQueryException;
+	default <JsonNode> JsonNode loadData(String importPath, @Nullable String searchPath, JsonProvider<JsonNode> jsonProvider) throws JsonQueryException {
+		throw new ModuleNotFoundException(importPath);
+	}
 }
