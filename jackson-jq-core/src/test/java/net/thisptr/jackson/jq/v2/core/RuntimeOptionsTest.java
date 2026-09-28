@@ -361,7 +361,7 @@ public class RuntimeOptionsTest {
 		// A module's `def`s are the module author's, not the caller's -- they compile to the same node as a
 		// query-text def but must stay off the budget, exactly like a jq-source builtin.
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
-				.importModule(new JqModule<JsonNode>() {
+				.importModule(new JqModule() {
 					@Override
 					public String getSourceCode() {
 						return "def square($x): $x * $x;";
@@ -382,7 +382,7 @@ public class RuntimeOptionsTest {
 		// Same rule for a module the environment includes: losing the `::` qualifier does not turn the
 		// module author's `def`s into the caller's.
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
-				.includeModule(new JqModule<JsonNode>() {
+				.includeModule(new JqModule() {
 					@Override
 					public String getSourceCode() {
 						return "def square($x): $x * $x;";
@@ -537,7 +537,7 @@ public class RuntimeOptionsTest {
 		// A module's expressions are the module author's, not the caller's: only the call written in the
 		// query text is tallied, and here it emits one value.
 		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
-				.importModule(new JqModule<JsonNode>() {
+				.importModule(new JqModule() {
 					@Override
 					public String getSourceCode() {
 						return """

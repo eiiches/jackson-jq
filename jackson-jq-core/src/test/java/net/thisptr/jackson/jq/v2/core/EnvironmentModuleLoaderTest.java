@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Covers the module loaders and registrations retained by an {@link Environment}.
  */
 public class EnvironmentModuleLoaderTest {
-	private static class SourceModule implements JqModule<JsonNode> {
+	private static class SourceModule implements JqModule {
 		private final int value;
 
 		SourceModule(int value) {

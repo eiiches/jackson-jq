@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.spi.module;
 
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.exception.ModuleNotFoundException;
 
@@ -12,6 +13,9 @@ import net.thisptr.jackson.jq.v2.spi.exception.ModuleNotFoundException;
  * <p>
  * An implementation may also implement {@link JavaModule}. The compiler makes a hybrid's Java
  * functions available to this source and exports both sets after compilation.
+ * <p>
+ * A jq module works with any JSON provider. Its source and module imports are provider independent;
+ * data imports are constructed with the provider supplied to {@link #loadData}.
  * <p>
  * Loaders and in-memory modules implement this themselves -- there is no shared implementation to
  * extend. The two {@code load*} methods resolve imports against the module's own location or
@@ -26,10 +30,8 @@ import net.thisptr.jackson.jq.v2.spi.exception.ModuleNotFoundException;
  * <p>
  * {@link Object#toString} is worth overriding too: it is what names the module when a circular
  * import is reported.
- *
- * @param <JsonNode> the JSON node type
  */
-public non-sealed interface JqModule<JsonNode> extends Module {
+public non-sealed interface JqModule extends Module {
 	/**
 	 * Returns this module's jq source.
 	 *
@@ -57,15 +59,18 @@ public non-sealed interface JqModule<JsonNode> extends Module {
 
 	/**
 	 * Resolves a data import written inside this module's source, on the same terms as
-	 * {@link #loadModule(String, String)}.
+	 * {@link #loadModule(String, String)}. Construct the result with {@code jsonProvider} so it
+	 * belongs to the environment compiling this module.
 	 *
+	 * @param <JsonNode> the active environment's JSON node type
 	 * @param importPath the import path, as written in the statement
 	 * @param searchPath the {@code search} metadata value, or {@code null} for an ordinary import
-	 * @return the resolved data
+	 * @param jsonProvider the active environment's JSON provider, used to construct the data
+	 * @return the resolved data in the active environment's node type
 	 * @throws ModuleNotFoundException if this module cannot resolve the path
 	 * @throws JsonQueryException if it found the data but could not read it
 	 */
-	default JsonNode loadData(String importPath, @Nullable String searchPath) throws JsonQueryException {
+	default <JsonNode> JsonNode loadData(String importPath, @Nullable String searchPath, JsonProvider<JsonNode> jsonProvider) throws JsonQueryException {
 		throw new ModuleNotFoundException(importPath);
 	}
 }

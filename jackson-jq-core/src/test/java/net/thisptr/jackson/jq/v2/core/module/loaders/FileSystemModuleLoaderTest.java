@@ -173,7 +173,7 @@ public class FileSystemModuleLoaderTest {
 	/**
 	 * What the other loader in {@link #testModuleCanImportFromAnotherLoader} serves.
 	 */
-	private static final class OtherLoaderJqModule implements JqModule<JsonNode> {
+	private static final class OtherLoaderJqModule implements JqModule {
 		@Override
 		public String getSourceCode() {
 			return "def two: 2;";

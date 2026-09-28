@@ -16,9 +16,9 @@ import net.thisptr.jackson.jq.v2.spi.module.Module;
  */
 public final class ModuleScope<JsonNode> {
 	private final ModuleResolver<JsonNode> resolver;
-	private final @Nullable JqModule<JsonNode> currentModule;
+	private final @Nullable JqModule currentModule;
 
-	ModuleScope(ModuleResolver<JsonNode> resolver, @Nullable JqModule<JsonNode> currentModule) {
+	ModuleScope(ModuleResolver<JsonNode> resolver, @Nullable JqModule currentModule) {
 		this.resolver = resolver;
 		this.currentModule = currentModule;
 	}

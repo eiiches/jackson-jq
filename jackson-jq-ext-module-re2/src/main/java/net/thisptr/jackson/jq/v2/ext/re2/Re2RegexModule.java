@@ -42,7 +42,7 @@ import net.thisptr.jackson.jq.v2.spi.module.Module;
  * including {@code "jackson-jq/re2"}.
  */
 @ModuleRegistration(path = "jackson-jq/re2")
-public final class Re2RegexModule implements JqModule<Object> {
+public final class Re2RegexModule implements JqModule {
 	private static final Module PRIMITIVES = new Re2RegexPrimitives();
 
 	/**

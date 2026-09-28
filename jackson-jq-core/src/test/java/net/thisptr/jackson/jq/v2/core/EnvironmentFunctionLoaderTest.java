@@ -528,7 +528,7 @@ public class EnvironmentFunctionLoaderTest {
 	 * Minimal jq-source module: {@code importModule} takes either kind, and this one makes the
 	 * compiler go through ModuleResolver to compile it.
 	 */
-	private static final class SourceModule implements JqModule<JsonNode> {
+	private static final class SourceModule implements JqModule {
 		private final String source;
 
 		SourceModule(String source) {

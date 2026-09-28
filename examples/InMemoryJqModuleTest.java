@@ -52,7 +52,7 @@ public class InMemoryJqModuleTest {
 		}
 	}
 
-	private static final class InMemoryJqModule implements JqModule<JsonNode> {
+	private static final class InMemoryJqModule implements JqModule {
 		private final String name;
 		private final String source;
 

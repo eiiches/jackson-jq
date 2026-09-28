@@ -12,8 +12,10 @@ jjq_java_test_suite(
     deps = [
         "//jackson-jq-core",
         "//jackson-jq-json-provider",
+        "//jackson-jq-json-provider-impl-gson",
         "//jackson-jq-json-provider-impl-jackson2",
         "//jackson-jq-spi",
         "@maven//:com_fasterxml_jackson_core_jackson_databind",
+        "@maven//:com_google_code_gson_gson",
     ],
 )

@@ -65,7 +65,7 @@ public class EnvironmentIncludeModuleTest {
 	 * A module an environment includes may be jq source rather than Java, in which case the compiler
 	 * compiles it before it lowers the query that will call into it.
 	 */
-	private static final class SourceModule implements JqModule<JsonNode> {
+	private static final class SourceModule implements JqModule {
 		private final String source;
 
 		SourceModule(String source) {

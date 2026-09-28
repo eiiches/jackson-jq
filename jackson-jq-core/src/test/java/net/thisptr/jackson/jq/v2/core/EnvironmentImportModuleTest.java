@@ -61,7 +61,7 @@ public class EnvironmentImportModuleTest {
 	 * A module added to an environment may be jq source rather than Java: the compiler compiles it
 	 * the first time a query calls into it.
 	 */
-	private static final class SourceModule implements JqModule<JsonNode> {
+	private static final class SourceModule implements JqModule {
 		private final String source;
 
 		SourceModule(String source) {

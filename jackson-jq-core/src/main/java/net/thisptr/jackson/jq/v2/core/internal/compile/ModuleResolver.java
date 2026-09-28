@@ -45,12 +45,12 @@ public final class ModuleResolver<JsonNode> {
 	/**
 	 * Compiled modules. Two imports reaching the same module compile it once.
 	 */
-	private final Map<JqModule<JsonNode>, JavaModule> compiled = new HashMap<>();
+	private final Map<JqModule, JavaModule> compiled = new HashMap<>();
 
 	/**
 	 * Modules being compiled right now -- an import of one of these is a cycle.
 	 */
-	private final Set<JqModule<JsonNode>> compiling = new HashSet<>();
+	private final Set<JqModule> compiling = new HashSet<>();
 
 	private @Nullable Environment<JsonNode> moduleEnv;
 
@@ -63,7 +63,7 @@ public final class ModuleResolver<JsonNode> {
 	 *
 	 * @param origin the module the import statement appears in, or {@code null} at the top level
 	 */
-	public JavaModule resolveModule(@Nullable JqModule<JsonNode> origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
+	public JavaModule resolveModule(@Nullable JqModule origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		Maybe<JsonNode> search = searchOverride(origin, path, metadata);
 		if (origin != null) {
 			@Var @Nullable Module local = null;
@@ -99,11 +99,11 @@ public final class ModuleResolver<JsonNode> {
 	 *
 	 * @param origin the module the import statement appears in, or {@code null} at the top level
 	 */
-	public JsonNode resolveData(@Nullable JqModule<JsonNode> origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
+	public JsonNode resolveData(@Nullable JqModule origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		Maybe<JsonNode> search = searchOverride(origin, path, metadata);
 		if (origin != null) {
 			try {
-				return origin.loadData(path, search.isPresent() ? env.getJsonProvider().getString(search.get()) : null);
+				return origin.loadData(path, search.isPresent() ? env.getJsonProvider().getString(search.get()) : null, env.getJsonProvider());
 			} catch (ModuleNotFoundException e) {
 				if (search.isPresent())
 					throw e;
@@ -128,11 +128,8 @@ public final class ModuleResolver<JsonNode> {
 	 * {@code importModule}, and which one it got only matters here.
 	 */
 	public JavaModule materialize(Module module) throws JsonQueryException {
-		if (module instanceof JqModule<?> jqModule) {
-			@SuppressWarnings("unchecked") // A loader of ours produced it, so its node type is ours.
-			JqModule<JsonNode> typed = (JqModule<JsonNode>) jqModule;
-			return compile(typed);
-		}
+		if (module instanceof JqModule jqModule)
+			return compile(jqModule);
 		if (module instanceof JavaModule javaModule)
 			return javaModule;
 		throw new JsonQueryException(String.format("module %s is neither a JqModule nor a JavaModule", module.getClass().getName()));
@@ -143,7 +140,7 @@ public final class ModuleResolver<JsonNode> {
 	 * something inside a module: there is nothing for a top-level script to be relative to. The
 	 * value has to be a string -- jq ignores a non-textual one, we would rather say so.
 	 */
-	private Maybe<JsonNode> searchOverride(@Nullable JqModule<JsonNode> origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
+	private Maybe<JsonNode> searchOverride(@Nullable JqModule origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		JsonProvider<JsonNode> jsonProvider = env.getJsonProvider();
 		Maybe<JsonNode> search = metadata.isPresent() ? jsonProvider.getObjectMember(metadata.get(), "search") : Maybe.absent();
 		if (!search.isPresent()) {
@@ -164,7 +161,7 @@ public final class ModuleResolver<JsonNode> {
 	 * Compiles a module's source, having first resolved its own imports -- which is where this
 	 * recurses, and where a cycle shows up.
 	 */
-	private JavaModule compile(JqModule<JsonNode> module) throws JsonQueryException {
+	private JavaModule compile(JqModule module) throws JsonQueryException {
 		JavaModule alreadyCompiled = compiled.get(module);
 		if (alreadyCompiled != null)
 			return alreadyCompiled;
@@ -190,7 +187,7 @@ public final class ModuleResolver<JsonNode> {
 	 * Compiles jq source into a module: runs it once so every exported {@code def} lands in its slot
 	 * with its closures bound, then reads those out.
 	 */
-	private static <JsonNode> JavaModule compileSource(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, JqModule<JsonNode> sourceModule, Map<FunctionSignature, Function> javaFunctions) throws JsonQueryException {
+	private static <JsonNode> JavaModule compileSource(Environment<JsonNode> env, CompileOptions options, ModuleScope<JsonNode> scope, JqModule sourceModule, Map<FunctionSignature, Function> javaFunctions) throws JsonQueryException {
 		AstNode ast = AstParser.parse(sourceModule.getSourceCode() + " null", env.getJqVersion());
 		AnalyzedExpression<JsonNode> compiled = Compiler.compileModule(env, options, scope, ast);
 		if (!(compiled instanceof RootExpression<JsonNode> rootExpr))

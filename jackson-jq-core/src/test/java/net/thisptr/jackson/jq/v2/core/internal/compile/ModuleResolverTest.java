@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.google.gson.JsonElement;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +21,9 @@ import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
+import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -58,7 +60,7 @@ public class ModuleResolverTest {
 	private static final class SourceLoader implements ModuleLoader<JsonNode> {
 		private final String root;
 		private final Map<String, String> sources = new HashMap<>();
-		private final Map<String, JsonNode> datas = new HashMap<>();
+		private final Map<String, Integer> datas = new HashMap<>();
 		private final List<String> requested = new ArrayList<>();
 
 		SourceLoader(String root) {
@@ -70,7 +72,7 @@ public class ModuleResolverTest {
 			return this;
 		}
 
-		SourceLoader putData(String path, JsonNode data) {
+		SourceLoader putData(String path, int data) {
 			datas.put(root + "/" + path, data);
 			return this;
 		}
@@ -84,7 +86,7 @@ public class ModuleResolverTest {
 		@Override
 		public JsonNode loadData(String path, Maybe<JsonNode> metadata) {
 			requested.add(path);
-			return dataAt(root + "/" + path, path);
+			return dataAt(root + "/" + path, path, Jackson2JsonProvider.getInstance());
 		}
 
 		SourceModule moduleAt(String name, String path) {
@@ -94,21 +96,21 @@ public class ModuleResolverTest {
 			return new SourceModule(this, name, source);
 		}
 
-		JsonNode dataAt(String name, String path) {
-			JsonNode data = datas.get(name);
+		<T> T dataAt(String name, String path, JsonProvider<T> jsonProvider) {
+			Integer data = datas.get(name);
 			if (data == null)
 				throw new ModuleNotFoundException(path);
-			return data;
+			return jsonProvider.createNumber(data);
 		}
 	}
 
-	private static final class SourceModule implements JqModule<JsonNode> {
+	private static final class SourceModule implements JqModule {
 		private final SourceLoader owner;
 		private final String name;
 		private final String source;
 		private final Map<String, Module> bundledModules;
 		private final Map<String, Module> relativeModules;
-		private final Map<String, JsonNode> bundledData;
+		private final Map<String, Integer> bundledData;
 
 		SourceModule(SourceLoader owner, String name, String source) {
 			this(owner, name, source, Map.of(), Map.of(), Map.of());
@@ -119,7 +121,7 @@ public class ModuleResolverTest {
 		}
 
 		SourceModule(SourceLoader owner, String name, String source, Map<String, Module> bundledModules, Map<String, Module> relativeModules,
-				Map<String, JsonNode> bundledData) {
+				Map<String, Integer> bundledData) {
 			this.owner = owner;
 			this.name = name;
 			this.source = source;
@@ -155,14 +157,14 @@ public class ModuleResolverTest {
 		}
 
 		@Override
-		public JsonNode loadData(String importPath, @Nullable String searchPath) {
+		public <T> T loadData(String importPath, @Nullable String searchPath, JsonProvider<T> jsonProvider) {
 			if (searchPath == null) {
-				JsonNode bundled = bundledData.get(importPath);
+				Integer bundled = bundledData.get(importPath);
 				if (bundled != null)
-					return bundled;
+					return jsonProvider.createNumber(bundled);
 				throw new ModuleNotFoundException(importPath);
 			}
-			return owner.dataAt(resolve(importPath, searchPath), importPath);
+			return owner.dataAt(resolve(importPath, searchPath), importPath, jsonProvider);
 		}
 
 		@Override
@@ -181,7 +183,7 @@ public class ModuleResolverTest {
 		}
 	}
 
-	private static final class HybridModule implements JavaModule, JqModule<JsonNode> {
+	private static final class HybridModule implements JavaModule, JqModule {
 		private final String source;
 		private final Map<FunctionSignature, Function> functions;
 
@@ -373,7 +375,7 @@ public class ModuleResolverTest {
 				.addModuleLoader(other)
 				.addModuleLoader(new SourceLoader("/first")
 						.put("lib/a", "import \"nums\" as $nums {search: \"./\"}; def one: $nums::nums;")
-						.putData("lib/nums", IntNode.valueOf(7)))
+						.putData("lib/nums", 7))
 				.build();
 
 		assertThat(run(env, "import \"lib/a\" as a; a::one")).containsExactly("7");
@@ -620,10 +622,10 @@ public class ModuleResolverTest {
 
 	@Test
 	public void testModuleLocalDataTakesPrecedenceWithoutLeaking() {
-		SourceLoader loader = new SourceLoader("/first").putData("payload", IntNode.valueOf(2));
+		SourceLoader loader = new SourceLoader("/first").putData("payload", 2);
 		SourceModule wrapper = new SourceModule(loader, "/first/wrapper",
 				"import \"payload\" as $p; def value: $p::p;",
-				Map.of(), Map.of(), Map.of("payload", IntNode.valueOf(1)));
+				Map.of(), Map.of(), Map.of("payload", 1));
 		Environment<JsonNode> env = builder().registerModule("wrapper", wrapper).addModuleLoader(loader).build();
 
 		assertThat(run(env, "import \"wrapper\" as w; w::value")).containsExactly("1");
@@ -631,9 +633,29 @@ public class ModuleResolverTest {
 	}
 
 	@Test
+	public void testSameModuleAndLocalDependenciesWithDifferentJsonProviders() {
+		SourceLoader owner = new SourceLoader("/first");
+		SourceModule child = new SourceModule(owner, "/first/child", "def value: 40;");
+		SourceModule wrapper = new SourceModule(owner, "/first/wrapper",
+				"import \"child\" as child; import \"payload\" as $p; def value: child::value + $p::p;",
+				Map.of("child", child), Map.of(), Map.of("payload", 2));
+		String query = "import \"wrapper\" as w; w::value";
+
+		Environment<JsonNode> jackson = builder().registerModule("wrapper", wrapper).build();
+		assertThat(run(jackson, query)).containsExactly("42");
+
+		GsonJsonProvider gsonProvider = GsonJsonProvider.getInstance();
+		Environment<JsonElement> gson = EnvironmentBuilder.withDefaultLoaders(gsonProvider, Versions.JQ_1_6)
+				.registerModule("wrapper", wrapper)
+				.build();
+		assertThat(gson.compile(query).apply(gsonProvider.createNull()))
+				.containsExactly(gsonProvider.createNumber(42));
+	}
+
+	@Test
 	public void testMissingPlainDataFallsThroughButMissingRelativeDataDoesNot() {
 		SourceLoader local = new SourceLoader("/first");
-		SourceLoader dataLoader = new SourceLoader("/second").putData("payload", IntNode.valueOf(2));
+		SourceLoader dataLoader = new SourceLoader("/second").putData("payload", 2);
 		SourceModule plain = new SourceModule(local, "/first/plain",
 				"import \"payload\" as $p; def value: $p::p;");
 		SourceModule relative = new SourceModule(local, "/first/relative",

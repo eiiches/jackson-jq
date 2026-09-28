@@ -6,6 +6,8 @@ A `JqModule` can supply modules and data for imports in its own source through `
 `loadData()`. The compiler asks it first; for an ordinary import, `ModuleNotFoundException` lets
 environment registrations and loaders answer instead. A `{search: ...}` import must be answered by
 the importing module. Dependencies it supplies are not registered for unrelated queries or modules.
+The jq module itself is independent of the JSON provider. Its `loadData()` method receives the
+environment's provider and must use it to construct imported data.
 Joni and RE2 use this route for their private Java implementations. Only definitions in each
 wrapper's jq source are exported, so its included implementation functions remain internal.
 

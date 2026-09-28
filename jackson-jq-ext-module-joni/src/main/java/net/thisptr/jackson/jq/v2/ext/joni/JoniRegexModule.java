@@ -42,7 +42,7 @@ import net.thisptr.jackson.jq.v2.spi.module.Module;
  * including {@code "jackson-jq/joni"}. Nothing installs them implicitly.
  */
 @ModuleRegistration(path = "jackson-jq/joni")
-public final class JoniRegexModule implements JqModule<Object> {
+public final class JoniRegexModule implements JqModule {
 	private static final Module PRIMITIVES = new JoniRegexPrimitives();
 
 	/**
