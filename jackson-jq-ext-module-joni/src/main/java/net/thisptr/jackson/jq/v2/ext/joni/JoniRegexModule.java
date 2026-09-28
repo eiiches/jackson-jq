@@ -27,14 +27,12 @@
  */
 package net.thisptr.jackson.jq.v2.ext.joni;
 
-import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.spi.Function;
-import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
-import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
-import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
+import net.thisptr.jackson.jq.v2.spi.exception.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.spi.module.JqModule;
+import net.thisptr.jackson.jq.v2.spi.module.Module;
 
 /**
  * jq's regular-expression functions, backed by Joni.
@@ -44,10 +42,8 @@ import net.thisptr.jackson.jq.v2.spi.module.JqModule;
  * including {@code "jackson-jq/joni"}. Nothing installs them implicitly.
  */
 @ModuleRegistration(path = "jackson-jq/joni")
-public final class JoniRegexModule implements JqModule<Object>, JavaModule {
-	private static final Map<FunctionSignature, Function> FUNCTIONS = Map.of(
-			FunctionSignature.of("_match_impl", 3), new MatchImplFunction(),
-			FunctionSignature.of("_sub_impl", 3), new SubImplFunction());
+public final class JoniRegexModule implements JqModule<Object> {
+	private static final Module PRIMITIVES = new JoniRegexPrimitives();
 
 	/**
 	 * The jq-language surface over the regex primitives.
@@ -64,6 +60,7 @@ public final class JoniRegexModule implements JqModule<Object>, JavaModule {
 	 * a union it assembles itself is clearer written out.
 	 */
 	private static final String SOURCE = """
+			include "impl" {search: "./"};
 			#jackson-jq:type (STRING -> STRING; STRING -> STRING) => (STRING -> ${MATCH})
 			def match(re; mode): _match_impl(re; mode; false) | .[];
 			#jackson-jq:type (STRING -> STRING) => (STRING -> ${MATCH})
@@ -111,23 +108,15 @@ public final class JoniRegexModule implements JqModule<Object>, JavaModule {
 	}
 
 	@Override
-	public Map<FunctionSignature, Function> getFunctions() {
-		return FUNCTIONS;
-	}
-
-	@Override
 	public String getSourceCode() {
 		return SOURCE;
 	}
 
 	@Override
-	public JqModule<Object> relativeImport(String importPath, String searchPath) throws JsonQueryException {
-		throw new JsonQueryException("jackson-jq/joni has no relative modules");
-	}
-
-	@Override
-	public Object relativeData(String importPath, String searchPath) throws JsonQueryException {
-		throw new JsonQueryException("jackson-jq/joni has no relative data");
+	public Module loadModule(String importPath, @Nullable String searchPath) {
+		if (importPath.equals("impl") && "./".equals(searchPath))
+			return PRIMITIVES;
+		throw new ModuleNotFoundException(importPath);
 	}
 
 	@Override

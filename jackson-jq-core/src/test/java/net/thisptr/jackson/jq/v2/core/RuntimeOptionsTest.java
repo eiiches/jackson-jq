@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitsImpl;
-import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
@@ -368,15 +367,7 @@ public class RuntimeOptionsTest {
 						return "def square($x): $x * $x;";
 					}
 
-					@Override
-					public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
-						throw new ModuleNotFoundException(importPath);
-					}
 
-					@Override
-					public JsonNode relativeData(String importPath, String searchPath) {
-						throw new ModuleNotFoundException(importPath);
-					}
 				}, "math")
 				.build();
 
@@ -397,15 +388,7 @@ public class RuntimeOptionsTest {
 						return "def square($x): $x * $x;";
 					}
 
-					@Override
-					public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
-						throw new ModuleNotFoundException(importPath);
-					}
 
-					@Override
-					public JsonNode relativeData(String importPath, String searchPath) {
-						throw new ModuleNotFoundException(importPath);
-					}
 				})
 				.build();
 
@@ -563,15 +546,7 @@ public class RuntimeOptionsTest {
 								""";
 					}
 
-					@Override
-					public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
-						throw new ModuleNotFoundException(importPath);
-					}
 
-					@Override
-					public JsonNode relativeData(String importPath, String searchPath) {
-						throw new ModuleNotFoundException(importPath);
-					}
 				}, "gen")
 				.build();
 

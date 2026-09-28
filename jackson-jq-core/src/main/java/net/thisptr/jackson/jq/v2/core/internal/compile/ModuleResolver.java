@@ -17,21 +17,21 @@ import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModuleMeta;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
-import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.internal.javacc.AstParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.exception.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
 /**
- * Turns the paths in {@code import}/{@code include} statements into usable modules: asks the
- * environment's {@link ModuleLoader}s for them, compiles the ones that come back as jq source, and
- * remembers what it has compiled.
+ * Turns the paths in {@code import}/{@code include} statements into usable modules: checks the
+ * importing module's own dependencies, then asks the environment's {@link ModuleLoader}s, compiles
+ * the ones that come back as jq source, and remembers what it has compiled.
  * <p>
  * One resolver serves one compilation. Everything it remembers -- which module compiled to what,
  * which modules are still being compiled -- lasts exactly as long as that, so it is reached from a
@@ -65,8 +65,17 @@ public final class ModuleResolver<JsonNode> {
 	 */
 	public JavaModule resolveModule(@Nullable JqModule<JsonNode> origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		Maybe<JsonNode> search = searchOverride(origin, path, metadata);
-		if (search.isPresent())
-			return compile(requireNonNull(origin).relativeImport(path, env.getJsonProvider().getString(search.get())));
+		if (origin != null) {
+			@Var @Nullable Module local = null;
+			try {
+				local = origin.loadModule(path, search.isPresent() ? env.getJsonProvider().getString(search.get()) : null);
+			} catch (ModuleNotFoundException e) {
+				if (search.isPresent())
+					throw e;
+			}
+			if (local != null)
+				return materialize(local);
+		}
 		Module registered = env.getRegisteredModules().get(path);
 		if (registered != null)
 			return materialize(registered);
@@ -92,8 +101,14 @@ public final class ModuleResolver<JsonNode> {
 	 */
 	public JsonNode resolveData(@Nullable JqModule<JsonNode> origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		Maybe<JsonNode> search = searchOverride(origin, path, metadata);
-		if (search.isPresent())
-			return requireNonNull(origin).relativeData(path, env.getJsonProvider().getString(search.get()));
+		if (origin != null) {
+			try {
+				return origin.loadData(path, search.isPresent() ? env.getJsonProvider().getString(search.get()) : null);
+			} catch (ModuleNotFoundException e) {
+				if (search.isPresent())
+					throw e;
+			}
+		}
 
 		for (ModuleLoader<JsonNode> loader : env.getModuleLoaders()) {
 			try {
@@ -143,12 +158,6 @@ public final class ModuleResolver<JsonNode> {
 		if (origin == null)
 			throw new JsonQueryException("search path can only be overriden from imported modules, but not from a top-level unnamed module");
 		return search;
-	}
-
-	private static <JsonNode> JqModule<JsonNode> requireNonNull(@Nullable JqModule<JsonNode> origin) {
-		if (origin == null)
-			throw new IllegalStateException("a relative import without an origin should have been rejected already");
-		return origin;
 	}
 
 	/**

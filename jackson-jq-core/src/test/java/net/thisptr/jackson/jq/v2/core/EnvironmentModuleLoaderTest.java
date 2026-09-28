@@ -10,12 +10,12 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
-import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.annotations.ModuleRegistration;
+import net.thisptr.jackson.jq.v2.spi.exception.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
@@ -39,15 +39,7 @@ public class EnvironmentModuleLoaderTest {
 			return "def value: " + value + ";";
 		}
 
-		@Override
-		public JqModule<JsonNode> relativeImport(String importPath, String searchPath) {
-			throw new ModuleNotFoundException(importPath);
-		}
 
-		@Override
-		public JsonNode relativeData(String importPath, String searchPath) {
-			throw new ModuleNotFoundException(importPath);
-		}
 	}
 
 	@ModuleRegistration(path = "first")

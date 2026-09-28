@@ -2,6 +2,13 @@
 
 Additional functions that are not part of jq are available through separate extension modules. An extension module can implement `JavaModule` for functions written in Java and ready to call, `JqModule` for jq source that the compiler compiles, or both. In a hybrid module, the jq source can call the Java functions, and the materialized module exports both sets. Add only the dependencies your application needs. `EnvironmentBuilder.withDefaultLoaders(...)` installs jq's builtin functions but no module loader. Register a module directly, or add a `ClassPathModuleLoader` to discover module services. Other loaders, such as the one in [FileSystemModuleTest.java](../../examples/FileSystemModuleTest.java), can be added in the order they should be searched.
 
+A `JqModule` can supply modules and data for imports in its own source through `loadModule()` and
+`loadData()`. The compiler asks it first; for an ordinary import, `ModuleNotFoundException` lets
+environment registrations and loaders answer instead. A `{search: ...}` import must be answered by
+the importing module. Dependencies it supplies are not registered for unrelated queries or modules.
+Joni and RE2 use this route for their private Java implementations. Only definitions in each
+wrapper's jq source are exported, so its included implementation functions remain internal.
+
 For example, add the UUID extension:
 
 ```xml

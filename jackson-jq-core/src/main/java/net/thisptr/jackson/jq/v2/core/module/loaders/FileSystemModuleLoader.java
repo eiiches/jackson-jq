@@ -12,11 +12,11 @@ import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
-import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.exception.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
 
@@ -94,7 +94,9 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		}
 
 		@Override
-		public JqModule<JsonNode> relativeImport(String importPath, String searchPathOverride) throws JsonQueryException {
+		public JqModule<JsonNode> loadModule(String importPath, @Nullable String searchPathOverride) throws JsonQueryException {
+			if (searchPathOverride == null)
+				throw new ModuleNotFoundException(importPath);
 			Path resolvedPath = resolveOverride(importPath, searchPathOverride);
 			Path filePath = findFile(searchPath, resolvedPath, "jq");
 			if (filePath == null)
@@ -105,7 +107,9 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 		}
 
 		@Override
-		public JsonNode relativeData(String importPath, String searchPathOverride) throws JsonQueryException {
+		public JsonNode loadData(String importPath, @Nullable String searchPathOverride) throws JsonQueryException {
+			if (searchPathOverride == null)
+				throw new ModuleNotFoundException(importPath);
 			Path resolvedPath = resolveOverride(importPath, searchPathOverride);
 			Path filePath = findFile(searchPath, resolvedPath, "json");
 			if (filePath == null)

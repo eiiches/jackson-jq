@@ -4,7 +4,6 @@ jjq_java_library(
     name = "module",
     srcs = [
         "ModuleLoader.java",
-        "ModuleNotFoundException.java",
     ],
     release = 17,
     visibility = ["//jackson-jq-core:__subpackages__"],
