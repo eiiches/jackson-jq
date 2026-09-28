@@ -5,11 +5,17 @@ import java.util.Locale;
 
 import net.thisptr.jackson.jq.v2.core.internal.commons.collection.Lists;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
+import net.thisptr.jackson.jq.v2.json.FormatOptions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class JsonNodeUtils {
+	private static final FormatOptions LEGACY_FORMAT_OPTIONS = FormatOptions.newBuilder()
+			.setLowerCaseExponent(true)
+			.setRoundNumbersToDouble(true)
+			.build();
+
 	private JsonNodeUtils() {
 	}
 
@@ -52,13 +58,9 @@ public class JsonNodeUtils {
 	}
 
 	public static <JsonNode> String toString(JsonProvider<JsonNode> jsonProvider, JsonNode node, Version version) {
-		String text = jsonProvider.format(node);
-		if (version.compareTo(Versions.JQ_1_7) < 0) {
-			if (jsonProvider.isNumber(node)) {
-				return text.replace('E', 'e');
-			}
-		}
-		return text;
+		if (version.compareTo(Versions.JQ_1_7) < 0)
+			return jsonProvider.format(node, LEGACY_FORMAT_OPTIONS);
+		return jsonProvider.format(node);
 	}
 
 	/**

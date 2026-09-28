@@ -1,29 +1,19 @@
 package net.thisptr.jackson.jq.v2.json.impl.fastjson2;
 
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONException;
-import com.alibaba.fastjson2.JSONFactory;
 import com.alibaba.fastjson2.JSONObject;
-import com.alibaba.fastjson2.JSONReader;
-import com.alibaba.fastjson2.JSONWriter;
-import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
-import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.NumberType;
@@ -408,74 +398,6 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 		return node;
 	}
 
-	@Override
-	public String format(Object node) {
-		if (node == null)
-			return "null";
-		if (node instanceof Number number) {
-			if (number instanceof Double || number instanceof Float)
-				return formatDouble(number.doubleValue());
-			return number.toString();
-		}
-		if (node instanceof Boolean)
-			return node.toString();
-		if (node instanceof String)
-			return JSON.toJSONString(node);
-		if (node instanceof byte[])
-			return JSON.toJSONString(node, JSONWriter.Feature.WriteByteArrayAsBase64);
-		if (node instanceof JSONArray arr) {
-			StringBuilder result = new StringBuilder("[");
-			@Var boolean first = true;
-			for (Object value : arr) {
-				if (!first)
-					result.append(',');
-				first = false;
-				result.append(format(value));
-			}
-			return result.append(']').toString();
-		}
-		if (node instanceof JSONObject obj) {
-			StringBuilder result = new StringBuilder("{");
-			@Var boolean first = true;
-			for (Map.Entry<String, Object> entry : obj.entrySet()) {
-				if (!first)
-					result.append(',');
-				first = false;
-				result.append(JSON.toJSONString(entry.getKey()));
-				result.append(':');
-				result.append(format(entry.getValue()));
-			}
-			return result.append('}').toString();
-		}
-		throw new IllegalStateException("Unknown Fastjson2 node type: " + node.getClass());
-	}
-
-	private static String formatDouble(double value) {
-		if (Double.isNaN(value))
-			return "null";
-		if (Double.isInfinite(value))
-			return value > 0 ? "1.7976931348623157e+308" : "-1.7976931348623157e+308";
-		if (value == Math.floor(value) && Math.abs(value) < Long.MAX_VALUE)
-			return String.valueOf((long) value);
-		return normalizeExponent(String.valueOf(value));
-	}
-
-	private static String normalizeExponent(@Var String text) {
-		text = text.replace('e', 'E');
-		int exponent = text.indexOf('E');
-		if (exponent >= 0 && exponent + 1 < text.length()) {
-			char sign = text.charAt(exponent + 1);
-			if (sign != '+' && sign != '-')
-				text = text.substring(0, exponent + 1) + "+" + text.substring(exponent + 1);
-		}
-		return text;
-	}
-
-	@Override
-	public JsonParser<Object> createParser(InputStream in) {
-		return new Fastjson2Parser(in);
-	}
-
 	private static JSONObject requireObject(Object node) {
 		if (!(node instanceof JSONObject obj))
 			throw new IllegalArgumentException("Expected an object node");
@@ -488,28 +410,4 @@ public class Fastjson2JsonProvider implements JsonProvider<Object> {
 		return arr;
 	}
 
-	private static class Fastjson2Parser implements JsonParser<Object> {
-		private final JSONReader reader;
-
-		Fastjson2Parser(InputStream in) {
-			JSONReader.Context context = JSONFactory.createReadContext(JSONReader.Feature.UseDoubleForDecimals);
-			this.reader = JSONReader.of(in, StandardCharsets.UTF_8, context);
-		}
-
-		@Override
-		public Maybe<Object> next() {
-			try {
-				if (reader.isEnd())
-					return Maybe.absent();
-				return Maybe.of(reader.readAny());
-			} catch (JSONException e) {
-				throw new JsonException(e);
-			}
-		}
-
-		@Override
-		public void close() {
-			reader.close();
-		}
-	}
 }

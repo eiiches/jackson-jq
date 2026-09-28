@@ -561,22 +561,42 @@ public interface JsonProvider<JsonNode> {
 	 * underlying JSON library's default: non-finite doubles are substituted with a finite value
 	 * ({@code NaN} becomes {@code null}; {@code Infinity}/{@code -Infinity} become the maximum/minimum
 	 * finite double), and HTML-significant characters ({@code <}, {@code >}, {@code &}, {@code '})
-	 * are not Unicode-escaped.
+	 * are not Unicode-escaped. The default implementation uses this provider's node accessors and
+	 * preserves the precision and scale of {@link BigDecimal} nodes.
 	 *
 	 * @param node the JSON node
 	 * @return the JSON text representation of {@code node}
 	 */
-	String format(JsonNode node);
+	default String format(JsonNode node) {
+		return DefaultJsonFormatter.format(this, node, FormatOptions.getDefaultInstance());
+	}
+
+	/**
+	 * Serializes the node using the given number formatting options. The options apply recursively
+	 * to numbers in arrays and objects.
+	 *
+	 * @param node the JSON node
+	 * @param options the number formatting options
+	 * @return the JSON text representation of {@code node}
+	 */
+	default String format(JsonNode node, FormatOptions options) {
+		if (options == FormatOptions.getDefaultInstance())
+			return format(node);
+		return DefaultJsonFormatter.format(this, node, options);
+	}
 
 	/**
 	 * Creates a parser reading a sequence of JSON values from the given UTF-8 stream.
 	 * <p>
-	 * The stream is read lazily as values are pulled, and is closed when the parser is closed.
+	 * The default implementation builds values with this provider's node factories. It reads lazily
+	 * as values are pulled and closes the stream when the parser is closed.
 	 *
 	 * @param in the stream to read from
 	 * @return a parser over {@code in}
 	 */
-	JsonParser<JsonNode> createParser(InputStream in);
+	default JsonParser<JsonNode> createParser(InputStream in) {
+		return new DefaultJsonParser<>(this, in);
+	}
 
 	/**
 	 * Parses multiple JSON documents from a string.

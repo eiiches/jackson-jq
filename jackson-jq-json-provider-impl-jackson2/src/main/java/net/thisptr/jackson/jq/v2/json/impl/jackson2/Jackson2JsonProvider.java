@@ -1,7 +1,5 @@
 package net.thisptr.jackson.jq.v2.json.impl.jackson2;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -11,7 +9,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -29,9 +26,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
-import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.NumberType;
@@ -45,7 +40,7 @@ public class Jackson2JsonProvider implements JsonProvider<JsonNode> {
 			NumberType.BIG_DECIMAL,
 			NumberType.FLOAT,
 			NumberType.DOUBLE));
-	private static final Jackson2JsonProvider DEFAULT_INSTANCE = new Jackson2JsonProvider(new ObjectMapper().registerModule(JsonQueryJacksonModule.getInstance()));
+	private static final Jackson2JsonProvider DEFAULT_INSTANCE = new Jackson2JsonProvider(new ObjectMapper());
 
 	private final ObjectMapper mapper;
 
@@ -452,57 +447,9 @@ public class Jackson2JsonProvider implements JsonProvider<JsonNode> {
 		return node.deepCopy();
 	}
 
-	@Override
-	public String format(JsonNode node) {
-		try {
-			return mapper.writeValueAsString(node);
-		} catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	@Override
-	public JsonParser<JsonNode> createParser(InputStream in) {
-		try {
-			return new JacksonJsonParser(mapper.getFactory().createParser(in));
-		} catch (IOException e) {
-			throw new JsonException(e);
-		}
-	}
-
 	/**
 	 * Reads one value per call off a streaming parser. {@code ObjectReader#readValues} is deliberately
 	 * not used: it unwraps a root-level array into its elements, whereas an array is a single value here.
 	 */
-	private static class JacksonJsonParser implements JsonParser<JsonNode> {
-		private final com.fasterxml.jackson.core.JsonParser parser;
-
-		JacksonJsonParser(com.fasterxml.jackson.core.JsonParser parser) {
-			this.parser = parser;
-		}
-
-		@Override
-		public Maybe<JsonNode> next() {
-			try {
-				// readValueAsTree() binds the token the parser already sits on, so without advancing
-				// first it would return the same value forever.
-				if (parser.nextToken() == null)
-					return Maybe.absent();
-				JsonNode value = parser.readValueAsTree();
-				return Maybe.of(value);
-			} catch (IOException e) {
-				throw new JsonException(e);
-			}
-		}
-
-		@Override
-		public void close() {
-			try {
-				parser.close();
-			} catch (IOException e) {
-				throw new JsonException(e);
-			}
-		}
-	}
 
 }

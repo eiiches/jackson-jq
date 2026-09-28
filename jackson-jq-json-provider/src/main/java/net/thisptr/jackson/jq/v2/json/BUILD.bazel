@@ -4,6 +4,9 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "json",
     srcs = [
+        "DefaultJsonFormatter.java",
+        "DefaultJsonParser.java",
+        "FormatOptions.java",
         "JsonException.java",
         "JsonNodeType.java",
         "JsonParser.java",

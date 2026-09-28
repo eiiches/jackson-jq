@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.json;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
@@ -946,6 +948,23 @@ public interface JsonProviderContractTest<T> {
 		assertThat(json).isEqualTo("0");
 	}
 
+	@Test
+	default void testFormatOptionsApplyToNestedNumbersWithoutChangingStrings() {
+		T node = getProvider().parse("{\"E\":[1.50,1e-7,\"E1E+2\"],\"n\":9007199254740993}");
+		assertThat(getProvider().format(node, FormatOptions.newBuilder().build())).isEqualTo(getProvider().format(node));
+		assertThat(getProvider().format(node)).isEqualTo("{\"E\":[1.50,1E-7,\"E1E+2\"],\"n\":9007199254740993}");
+		assertThat(getProvider().format(node, FormatOptions.newBuilder()
+				.setLowerCaseExponent(true).setRoundNumbersToDouble(true).build()))
+				.isEqualTo("{\"E\":[1.5,1.0e-7,\"E1E+2\"],\"n\":9007199254740992}");
+	}
+
+	@Test
+	default void testFormatOptionsCanChangeExponentCaseIndependently() {
+		T node = getProvider().parse("1e-7");
+		assertThat(getProvider().format(node, FormatOptions.newBuilder().setLowerCaseExponent(true).build())).isEqualTo("1e-7");
+		assertThat(getProvider().format(node, FormatOptions.newBuilder().setRoundNumbersToDouble(true).build())).isEqualTo("1.0E-7");
+	}
+
 	// ================================
 	// parse Tests
 	// ================================
@@ -1010,6 +1029,33 @@ public interface JsonProviderContractTest<T> {
 	}
 
 	@Test
+	default void testParsePreservesNumberPrecisionAndScale() {
+		String hugeInteger = "123456789012345678901234567890";
+		String preciseDecimal = "3.14159265358979323846264338327950288";
+		assertThat(getProvider().getNumberAsIntExact(getProvider().parse("2147483647"))).isEqualTo(Integer.MAX_VALUE);
+		assertThat(getProvider().getNumberAsLongExact(getProvider().parse("2147483648"))).isEqualTo(2147483648L);
+		assertThat(getProvider().getNumberAsBigIntegerExact(getProvider().parse(hugeInteger)))
+				.isEqualTo(new BigInteger(hugeInteger));
+		assertThat(getProvider().getNumberAsBigDecimalExact(getProvider().parse(preciseDecimal)))
+				.isEqualTo(new BigDecimal(preciseDecimal));
+		assertThat(parseStream("1.50 0.0 1e10 " + preciseDecimal))
+				.containsExactly("1.50", "0.0", "1E+10", preciseDecimal);
+	}
+
+	@Test
+	default void testCreateParserRejectsInvalidJsonSyntax() {
+		for (String json : List.of("{\"a\":}", "[1,]", "{\"a\":1,}", "01", "1.", "1e", "\"bad\\x\"", "\"line\nfeed\""))
+			assertThatThrownBy(() -> parseStream(json)).as(json).isInstanceOf(JsonException.class);
+	}
+
+	@Test
+	default void testCreateParserRejectsMalformedUtf8() {
+		try (JsonParser<T> parser = getProvider().createParser(new ByteArrayInputStream(new byte[] { '"', (byte) 0xc3, '"' }))) {
+			assertThatThrownBy(parser::next).isInstanceOf(JsonException.class);
+		}
+	}
+
+	@Test
 	default void testCreateParserReadsValuesWithoutSeparatingWhitespace() {
 		assertThat(parseStream("{\"a\":1}{\"b\":2}[1][2]"))
 				.containsExactly("{\"a\":1}", "{\"b\":2}", "[1]", "[2]");
@@ -1050,6 +1096,22 @@ public interface JsonProviderContractTest<T> {
 			assertThat(parser.next().isAbsent()).isTrue();
 			assertThat(parser.next().isAbsent()).isTrue();
 		}
+	}
+
+	@Test
+	default void testCreateParserClosesInputStream() {
+		AtomicBoolean closed = new AtomicBoolean();
+		InputStream in = new ByteArrayInputStream("1".getBytes(StandardCharsets.UTF_8)) {
+			@Override
+			public void close() {
+				closed.set(true);
+			}
+		};
+		try (JsonParser<T> parser = getProvider().createParser(in)) {
+			assertThat(parser.next().isPresent()).isTrue();
+			assertThat(closed).isFalse();
+		}
+		assertThat(closed).isTrue();
 	}
 
 	@Test

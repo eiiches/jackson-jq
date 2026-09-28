@@ -1,13 +1,7 @@
 package net.thisptr.jackson.jq.v2.json.impl.jep540;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PushbackReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -17,22 +11,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.errorprone.annotations.Var;
-import jdk.incubator.json.Json;
 import jdk.incubator.json.JsonArray;
 import jdk.incubator.json.JsonBoolean;
 import jdk.incubator.json.JsonNull;
 import jdk.incubator.json.JsonNumber;
 import jdk.incubator.json.JsonObject;
-import jdk.incubator.json.JsonParseException;
 import jdk.incubator.json.JsonString;
 import jdk.incubator.json.JsonValue;
 import jdk.incubator.json.JsonValueException;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
-import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.NumberType;
@@ -363,18 +352,6 @@ public final class Jep540JsonProvider implements JsonProvider<JsonValue> {
 		return node;
 	}
 
-	@Override
-	public String format(JsonValue node) {
-		StringBuilder result = new StringBuilder();
-		appendJson(result, node);
-		return result.toString();
-	}
-
-	@Override
-	public JsonParser<JsonValue> createParser(InputStream in) {
-		return new Jep540Parser(new PushbackReader(new InputStreamReader(in, StandardCharsets.UTF_8), 1));
-	}
-
 	private static JsonNumber requireNumber(JsonValue node) {
 		if (node instanceof JsonNumber value)
 			return value;
@@ -405,81 +382,6 @@ public final class Jep540JsonProvider implements JsonProvider<JsonValue> {
 		return Double.isFinite(value) && value >= Long.MIN_VALUE && value < 0x1p63 ? (long) value : null;
 	}
 
-	private static void appendJson(StringBuilder result, JsonValue node) {
-		switch (node) {
-			case JsonNull _ -> result.append("null");
-			case JsonBoolean value -> result.append(value.asBoolean());
-			case JsonNumber value -> result.append(formatNumber(value));
-			case JsonString value -> result.append(value);
-			case JsonArray value -> appendArray(result, value);
-			case JsonObject value -> appendObject(result, value);
-		}
-	}
-
-	private static void appendArray(StringBuilder result, JsonArray array) {
-		result.append('[');
-		List<JsonValue> values = array.asList();
-		for (int i = 0; i < values.size(); ++i) {
-			if (i != 0)
-				result.append(',');
-			appendJson(result, values.get(i));
-		}
-		result.append(']');
-	}
-
-	private static void appendObject(StringBuilder result, JsonObject object) {
-		result.append('{');
-		@Var boolean first = true;
-		for (Map.Entry<String, JsonValue> entry : object.asMap().entrySet()) {
-			if (!first)
-				result.append(',');
-			first = false;
-			result.append(JsonString.of(entry.getKey())).append(':');
-			appendJson(result, entry.getValue());
-		}
-		result.append('}');
-	}
-
-	private static String formatNumber(JsonNumber number) {
-		if (number instanceof FloatingPointJsonNumber floatingPoint) {
-			if (Double.isNaN(floatingPoint.value))
-				return "null";
-			if (Double.isInfinite(floatingPoint.value))
-				return floatingPoint.value > 0 ? "1.7976931348623157e+308" : "-1.7976931348623157e+308";
-			return formatDouble(floatingPoint.value);
-		}
-
-		String source = number.toString();
-		BigDecimal decimal = new BigDecimal(source);
-		if (decimal.signum() == 0)
-			return "0";
-		if (source.indexOf('.') < 0 && source.indexOf('e') < 0 && source.indexOf('E') < 0)
-			return decimal.toBigIntegerExact().toString();
-
-		double value = decimal.doubleValue();
-		if (!Double.isFinite(value) || BigDecimal.valueOf(value).compareTo(decimal) != 0)
-			return decimal.toString();
-		return formatDouble(value);
-	}
-
-	private static String formatDouble(double value) {
-		if (value == 0 || (value == Math.floor(value) && Math.abs(value) < Long.MAX_VALUE))
-			return Long.toString((long) value);
-		@Var String text = Double.toString(value).replace('e', 'E');
-		int exponentIndex = text.indexOf('E');
-		if (exponentIndex >= 0 && text.charAt(exponentIndex + 1) != '-')
-			text = text.substring(0, exponentIndex + 1) + "+" + text.substring(exponentIndex + 1);
-		return text;
-	}
-
-	private static boolean isJsonWhitespace(int ch) {
-		return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r';
-	}
-
-	private static boolean startsStructuredValue(int ch) {
-		return ch == '{' || ch == '[' || ch == '"';
-	}
-
 	private static final class DefaultInstanceHolder {
 		private static final Jep540JsonProvider INSTANCE = new Jep540JsonProvider();
 	}
@@ -487,118 +389,6 @@ public final class Jep540JsonProvider implements JsonProvider<JsonValue> {
 	/**
 	 * Reads one top-level value at a time and delegates each complete value to JEP 540.
 	 */
-	private static final class Jep540Parser implements JsonParser<JsonValue> {
-		private final PushbackReader in;
-		private boolean exhausted;
-
-		Jep540Parser(PushbackReader in) {
-			this.in = in;
-		}
-
-		@Override
-		public Maybe<JsonValue> next() {
-			if (exhausted)
-				return Maybe.absent();
-			try {
-				int first = readFirst();
-				if (first < 0) {
-					exhausted = true;
-					return Maybe.absent();
-				}
-				String value = readValue(first);
-				try {
-					return Maybe.of(Json.parse(value));
-				} catch (JsonParseException | IllegalArgumentException e) {
-					throw new JsonException(e);
-				}
-			} catch (IOException e) {
-				throw new JsonException(e);
-			}
-		}
-
-		private int readFirst() throws IOException {
-			for (@Var int ch = in.read(); ch >= 0; ch = in.read()) {
-				if (!isJsonWhitespace(ch))
-					return ch;
-			}
-			return -1;
-		}
-
-		private String readValue(int first) throws IOException {
-			StringBuilder result = new StringBuilder().append((char) first);
-			if (first == '"')
-				readString(result);
-			else if (first == '{' || first == '[')
-				readStructure(result, first);
-			else
-				readPrimitive(result);
-			return result.toString();
-		}
-
-		private void readString(StringBuilder result) throws IOException {
-			@Var boolean escaped = false;
-			for (@Var int ch = in.read(); ch >= 0; ch = in.read()) {
-				result.append((char) ch);
-				if (escaped) {
-					escaped = false;
-				} else if (ch == '\\') {
-					escaped = true;
-				} else if (ch == '"') {
-					return;
-				}
-			}
-		}
-
-		private void readStructure(StringBuilder result, int first) throws IOException {
-			ArrayDeque<Character> expected = new ArrayDeque<>();
-			expected.push(first == '{' ? '}' : ']');
-			@Var boolean inString = false;
-			@Var boolean escaped = false;
-			for (@Var int ch = in.read(); ch >= 0; ch = in.read()) {
-				result.append((char) ch);
-				if (inString) {
-					if (escaped)
-						escaped = false;
-					else if (ch == '\\')
-						escaped = true;
-					else if (ch == '"')
-						inString = false;
-				} else if (ch == '"') {
-					inString = true;
-				} else if (ch == '{') {
-					expected.push('}');
-				} else if (ch == '[') {
-					expected.push(']');
-				} else if (ch == '}' || ch == ']') {
-					if (expected.isEmpty() || expected.pop() != ch)
-						throw new JsonException("Mismatched JSON delimiters");
-					if (expected.isEmpty())
-						return;
-				}
-			}
-		}
-
-		private void readPrimitive(StringBuilder result) throws IOException {
-			for (@Var int ch = in.read(); ch >= 0; ch = in.read()) {
-				if (isJsonWhitespace(ch))
-					return;
-				if (startsStructuredValue(ch)) {
-					in.unread(ch);
-					return;
-				}
-				result.append((char) ch);
-			}
-		}
-
-		@Override
-		public void close() {
-			try {
-				in.close();
-			} catch (IOException e) {
-				throw new JsonException(e);
-			}
-		}
-	}
 
 	private static final class FloatingPointJsonNumber implements JsonNumber {
 		private final double value;

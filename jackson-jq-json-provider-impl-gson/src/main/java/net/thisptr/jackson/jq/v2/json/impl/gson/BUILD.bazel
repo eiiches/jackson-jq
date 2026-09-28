@@ -4,7 +4,6 @@ jjq_java_library(
     name = "gson",
     srcs = [
         "GsonJsonProvider.java",
-        "GsonUtils.java",
     ],
     release = 17,
     visibility = ["//jackson-jq-json-provider-impl-gson:__subpackages__"],
