@@ -27,7 +27,6 @@
     depends_on_input: true
     depends_on_external_state: false
   v: '[1.7, )'
-  failing: true
 
 - q: '@text'
   in: [0.0]
@@ -58,4 +57,3 @@
     depends_on_input: true
     depends_on_external_state: false
   v: '[1.7, )'
-  failing: true

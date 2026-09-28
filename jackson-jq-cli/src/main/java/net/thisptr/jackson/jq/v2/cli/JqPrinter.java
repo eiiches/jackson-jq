@@ -8,6 +8,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 
 /**
  * Unified JSON printer for jq-compatible output formatting.
@@ -123,7 +124,7 @@ final class JqPrinter {
 			}
 
 			// Format key using provider's string formatting
-			String formattedKey = provider.format(provider.createString(entry.getKey()));
+			String formattedKey = JsonCodec.format(provider, provider.createString(entry.getKey()));
 			if (colors != null) {
 				out.append(colors.colorize(colors.keyColor(), formattedKey));
 				out.append(colors.colorize(colors.objectColor(), ":"));
@@ -150,7 +151,7 @@ final class JqPrinter {
 	private static <N> void appendScalar(JsonProvider<N> provider, StringBuilder out, N node,
 			@Nullable JqColors colors) {
 		if (colors == null) {
-			out.append(provider.format(node));
+			out.append(JsonCodec.format(provider, node));
 			return;
 		}
 
@@ -161,12 +162,12 @@ final class JqPrinter {
 				yield colors.colorize(b ? colors.trueColor() : colors.falseColor(), Boolean.toString(b));
 			}
 			case NUMBER -> {
-				String num = provider.format(node);
+				String num = JsonCodec.format(provider, node);
 				String color = "null".equals(num) ? colors.nullColor() : colors.numberColor();
 				yield colors.colorize(color, num);
 			}
-			case STRING, BINARY -> colors.colorize(colors.stringColor(), provider.format(node));
-			case OBJECT, ARRAY -> provider.format(node);
+			case STRING, BINARY -> colors.colorize(colors.stringColor(), JsonCodec.format(provider, node));
+			case OBJECT, ARRAY -> JsonCodec.format(provider, node);
 		};
 		out.append(formatted);
 	}

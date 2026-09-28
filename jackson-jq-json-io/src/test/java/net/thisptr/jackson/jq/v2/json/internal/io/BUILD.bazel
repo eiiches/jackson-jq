@@ -1,0 +1,8 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_test_suite")
+
+jjq_java_test_suite(
+    srcs = ["FormatOptionsTest.java"],
+    release = 17,
+    visibility = ["//jackson-jq-json-io:__subpackages__"],
+    deps = ["//jackson-jq-json-io"],
+)

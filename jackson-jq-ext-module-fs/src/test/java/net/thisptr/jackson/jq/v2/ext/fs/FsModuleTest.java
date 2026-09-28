@@ -20,6 +20,7 @@ import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -578,7 +579,7 @@ public class FsModuleTest {
 	}
 
 	private static <JsonNode> String quote(JsonProvider<JsonNode> provider, Path path) {
-		return provider.format(provider.createString(path.toString()));
+		return JsonCodec.format(provider, provider.createString(path.toString()));
 	}
 
 	private static RuntimeOptions unlimited() {

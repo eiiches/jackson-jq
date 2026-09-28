@@ -1,9 +1,9 @@
-package net.thisptr.jackson.jq.v2.json;
+package net.thisptr.jackson.jq.v2.json.internal.io;
 
 import java.io.Serial;
 
 /**
- * Reports a failure to parse or otherwise interpret raw JSON text via a {@link JsonProvider}.
+ * Reports a failure to parse or otherwise interpret raw JSON text.
  */
 public class JsonException extends RuntimeException {
 	@Serial

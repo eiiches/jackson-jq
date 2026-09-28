@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -101,7 +102,7 @@ public class JoinFunction implements Function {
 					} else if (itemType == JsonNodeType.NULL) {
 						// append nothing
 					} else if (version.compareTo(Versions.JQ_1_6) >= 0 && (itemType == JsonNodeType.NUMBER || itemType == JsonNodeType.BOOLEAN)) {
-						append(limits, builder, jsonProvider.format(item));
+						append(limits, builder, JsonCodec.format(jsonProvider, item));
 					} else {
 						if (version.compareTo(Versions.JQ_1_6) >= 0)
 							throw new JsonQueryTypeException("%s and %s cannot be added", ExceptionMessages.describe(jsonProvider, version, jsonProvider.createString(builder.toString())), ExceptionMessages.describe(jsonProvider, version, item));

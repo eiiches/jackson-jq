@@ -1,14 +1,13 @@
 package net.thisptr.jackson.jq.v2.cli;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 
 /**
  * Renders a JSON value the way jq's pretty printer does.
  * <p>
- * Only {@link JsonProvider} accessors are used, so every provider produces identical output. jq
- * indents structure and never scalars, so scalars are handed straight to
- * {@link JsonProvider#format(Object)}: that keeps each provider's jq number rules -- NaN, Infinity,
- * whole doubles, exact decimals -- and needs no knowledge of how numbers are represented.
+ * The shared {@link JsonCodec} supplies jq's number formatting rules for scalars. jq indents
+ * structure and never scalars, so providers need only supply node accessors.
  */
 final class JqPrettyPrinter {
 	private JqPrettyPrinter() {

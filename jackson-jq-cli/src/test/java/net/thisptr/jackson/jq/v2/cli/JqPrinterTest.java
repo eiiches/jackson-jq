@@ -16,6 +16,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -159,10 +160,10 @@ class JqPrinterTest {
 	}
 
 	private static <N> String printPretty(JsonProvider<N> provider, String json, @Nullable JqColors colors) {
-		return JqPrinter.print(provider, provider.parse(json), "  ", colors);
+		return JqPrinter.print(provider, JsonCodec.parse(provider, json), "  ", colors);
 	}
 
 	private static <N> String printCompact(JsonProvider<N> provider, String json, @Nullable JqColors colors) {
-		return JqPrinter.print(provider, provider.parse(json), null, colors);
+		return JqPrinter.print(provider, JsonCodec.parse(provider, json), null, colors);
 	}
 }

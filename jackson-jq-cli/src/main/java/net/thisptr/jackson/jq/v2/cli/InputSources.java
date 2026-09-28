@@ -12,9 +12,10 @@ import java.util.function.Consumer;
 
 import com.google.errorprone.annotations.Var;
 
-import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonParser;
 
 /**
  * Builds the {@link InputSource} selected by jq's input options.
@@ -62,7 +63,7 @@ final class InputSources {
 			};
 		return consumer -> {
 			for (InputStream stream : streams) {
-				try (JsonParser<N> parser = provider.createParser(stream)) {
+				try (JsonParser<N> parser = JsonCodec.createParser(provider, stream)) {
 					for (@Var Maybe<N> value = parser.next(); value.isPresent(); value = parser.next())
 						consumer.accept(value.get());
 				}
@@ -142,7 +143,7 @@ final class InputSources {
 			return values;
 		}
 		for (InputStream stream : streams) {
-			try (JsonParser<N> parser = provider.createParser(stream)) {
+			try (JsonParser<N> parser = JsonCodec.createParser(provider, stream)) {
 				for (@Var Maybe<N> value = parser.next(); value.isPresent(); value = parser.next())
 					values.add(value.get());
 			}

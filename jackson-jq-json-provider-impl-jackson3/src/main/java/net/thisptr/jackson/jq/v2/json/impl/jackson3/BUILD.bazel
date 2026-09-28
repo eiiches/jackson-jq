@@ -4,7 +4,6 @@ jjq_java_library(
     name = "jackson3",
     srcs = [
         "Jackson3JsonProvider.java",
-        "JsonQueryJacksonModule.java",
     ],
     release = 17,
     visibility = ["//jackson-jq-json-provider-impl-jackson3:__subpackages__"],

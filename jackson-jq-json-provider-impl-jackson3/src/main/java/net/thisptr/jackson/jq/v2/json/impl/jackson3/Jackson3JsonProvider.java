@@ -1,6 +1,5 @@
 package net.thisptr.jackson.jq.v2.json.impl.jackson3;
 
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -11,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
-import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
@@ -29,9 +27,7 @@ import tools.jackson.databind.node.NumericNode;
 import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.databind.node.StringNode;
 
-import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
-import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.NumberType;
@@ -45,7 +41,7 @@ public class Jackson3JsonProvider implements JsonProvider<JsonNode> {
 			NumberType.BIG_DECIMAL,
 			NumberType.FLOAT,
 			NumberType.DOUBLE));
-	private static final Jackson3JsonProvider DEFAULT_INSTANCE = new Jackson3JsonProvider(JsonMapper.builder().addModule(JsonQueryJacksonModule.getInstance()).build());
+	private static final Jackson3JsonProvider DEFAULT_INSTANCE = new Jackson3JsonProvider(JsonMapper.builder().build());
 
 	private final ObjectMapper mapper;
 
@@ -449,57 +445,9 @@ public class Jackson3JsonProvider implements JsonProvider<JsonNode> {
 		return node.deepCopy();
 	}
 
-	@Override
-	public String format(JsonNode node) {
-		try {
-			return mapper.writeValueAsString(node);
-		} catch (JacksonException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	@Override
-	public JsonParser<JsonNode> createParser(InputStream in) {
-		try {
-			return new JacksonJsonParser(mapper.createParser(in));
-		} catch (JacksonException e) {
-			throw new JsonException(e);
-		}
-	}
-
 	/**
 	 * Reads one value per call off a streaming parser. {@code ObjectReader#readValues} is deliberately
 	 * not used: it unwraps a root-level array into its elements, whereas an array is a single value here.
 	 */
-	private static class JacksonJsonParser implements JsonParser<JsonNode> {
-		private final tools.jackson.core.JsonParser parser;
-
-		JacksonJsonParser(tools.jackson.core.JsonParser parser) {
-			this.parser = parser;
-		}
-
-		@Override
-		public Maybe<JsonNode> next() {
-			try {
-				// readValueAsTree() binds the token the parser already sits on, so without advancing
-				// first it would return the same value forever.
-				if (parser.nextToken() == null)
-					return Maybe.absent();
-				JsonNode value = parser.readValueAsTree();
-				return Maybe.of(value);
-			} catch (JacksonException e) {
-				throw new JsonException(e);
-			}
-		}
-
-		@Override
-		public void close() {
-			try {
-				parser.close();
-			} catch (JacksonException e) {
-				throw new JsonException(e);
-			}
-		}
-	}
 
 }

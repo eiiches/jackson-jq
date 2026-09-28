@@ -10,6 +10,7 @@ import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,6 +65,6 @@ public class MatchImplFunctionTest {
 				.registerModule(new JoniRegexModule())
 				.build();
 		return environment.compile(IMPORT + expression).apply(JSON_PROVIDER.createNull())
-				.stream().map(JSON_PROVIDER::format).toList();
+				.stream().map(value -> JsonCodec.format(JSON_PROVIDER, value)).toList();
 	}
 }

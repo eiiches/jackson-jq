@@ -10,6 +10,7 @@ import com.google.errorprone.annotations.Var;
 import net.thisptr.jackson.jq.v2.ext.time.internal.misc.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -71,7 +72,7 @@ public class StrFTimeFunction implements Function {
 				Preconditions.checkInputType(jsonProvider, "strftime", in, JsonNodeType.NUMBER);
 				Long epochSeconds = jsonProvider.getNumberAsLongTruncated(in);
 				if (epochSeconds == null) // NaN, an infinity, or beyond long range.
-					throw new JsonQueryException("date \"" + jsonProvider.format(in) + "\" does not fit in a number of seconds since the epoch");
+					throw new JsonQueryException("date \"" + JsonCodec.format(jsonProvider, in) + "\" does not fit in a number of seconds since the epoch");
 				try {
 					args.get(0).apply(context, in, UntrackedPath.getInstance(), (fmt, opath) -> {
 						if (!jsonProvider.isString(fmt))

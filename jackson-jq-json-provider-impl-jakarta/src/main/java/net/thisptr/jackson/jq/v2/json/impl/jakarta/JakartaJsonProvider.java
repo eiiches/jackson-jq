@@ -1,14 +1,8 @@
 package net.thisptr.jackson.jq.v2.json.impl.jakarta;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -16,7 +10,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import com.google.errorprone.annotations.Var;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonNumber;
 import jakarta.json.JsonObject;
@@ -24,9 +17,7 @@ import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
-import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.NumberType;
@@ -431,19 +422,6 @@ public class JakartaJsonProvider implements JsonProvider<JsonValue> {
 		return node;
 	}
 
-	@Override
-	public String format(JsonValue node) {
-		StringBuilder result = new StringBuilder();
-		appendJson(result, node);
-		return result.toString();
-	}
-
-	@Override
-	public JsonParser<JsonValue> createParser(InputStream in) {
-		return new JsonPParser(delegate, new InputStreamReader(in, StandardCharsets.UTF_8));
-	}
-
-
 	private JsonValue createFloatingPointNumber(double value) {
 		return new FloatingPointJsonNumber(value);
 	}
@@ -462,191 +440,6 @@ public class JakartaJsonProvider implements JsonProvider<JsonValue> {
 	 * Input is buffered only as far as the current value extends, so arbitrarily long sequences stream
 	 * with memory proportional to the largest single value rather than to the whole input.
 	 */
-	private static final class JsonPParser implements JsonParser<JsonValue> {
-		private final jakarta.json.spi.JsonProvider delegate;
-		private final Reader in;
-		private char[] buf = new char[1024];
-		/**
-		 * Start of the not-yet-parsed input within {@link #buf}.
-		 */
-		private int start;
-		/**
-		 * End of the valid input within {@link #buf}.
-		 */
-		private int end;
-		private boolean eof;
-
-		JsonPParser(jakarta.json.spi.JsonProvider delegate, Reader in) {
-			this.delegate = delegate;
-			this.in = in;
-		}
-
-		@Override
-		public Maybe<JsonValue> next() {
-			try {
-				// Parsson reports hasNext() == true on a fresh parser without reading the input, so end
-				// of input has to be detected here rather than by asking the parser.
-				if (!skipWhitespace())
-					return Maybe.absent();
-				try (jakarta.json.stream.JsonParser parser = delegate.createParser(new Window())) {
-					parser.next();
-					JsonValue value = parser.getValue();
-					// The offset counts the characters of this one value, which came out of buf and so
-					// always fits in an int.
-					start += (int) parser.getLocation().getStreamOffset();
-					return Maybe.of(value);
-				}
-			} catch (IOException | jakarta.json.JsonException e) {
-				throw new JsonException(e);
-			}
-		}
-
-		/**
-		 * Advances {@link #start} to the next non-whitespace character.
-		 *
-		 * @return {@code false} if the input is exhausted
-		 */
-		private boolean skipWhitespace() throws IOException {
-			while (true) {
-				while (start < end) {
-					if (!isJsonWhitespace(buf[start]))
-						return true;
-					++start;
-				}
-				if (!fill())
-					return false;
-			}
-		}
-
-		/**
-		 * Reads more input into {@link #buf}, compacting or growing it as needed. Characters before
-		 * {@link #start} have been parsed already and may be discarded; the rest must be preserved.
-		 *
-		 * @return {@code false} if the input is exhausted
-		 */
-		private boolean fill() throws IOException {
-			if (eof)
-				return false;
-			if (end == buf.length) {
-				if (start > 0) {
-					System.arraycopy(buf, start, buf, 0, end - start);
-					end -= start;
-					start = 0;
-				} else {
-					buf = Arrays.copyOf(buf, buf.length * 2);
-				}
-			}
-			int count = in.read(buf, end, buf.length - end);
-			if (count < 0) {
-				eof = true;
-				return false;
-			}
-			end += count;
-			return true;
-		}
-
-		@Override
-		public void close() {
-			try {
-				in.close();
-			} catch (IOException e) {
-				throw new JsonException(e);
-			}
-		}
-
-		/**
-		 * A view of the buffered input starting at {@link #start}, handed to one underlying parser.
-		 * Closing it does not close the underlying reader, which outlives any single value.
-		 */
-		private final class Window extends Reader {
-			private int pos = start;
-
-			@Override
-			public int read(char[] cbuf, int off, int len) throws IOException {
-				if (len == 0)
-					return 0;
-				while (pos >= end) {
-					int previousStart = start;
-					if (!fill())
-						return -1;
-					pos -= previousStart - start; // fill() may have compacted the buffer
-				}
-				int count = Math.min(len, end - pos);
-				System.arraycopy(buf, pos, cbuf, off, count);
-				pos += count;
-				return count;
-			}
-
-			@Override
-			public void close() {
-				// The underlying reader is shared across values and is closed by JsonPParser.close().
-			}
-		}
-	}
-
-	private void appendJson(StringBuilder result, JsonValue node) {
-		switch (node.getValueType()) {
-			case NULL -> result.append("null");
-			case TRUE -> result.append("true");
-			case FALSE -> result.append("false");
-			case STRING -> result.append(delegate.createValue(((JsonString) node).getString()));
-			case NUMBER -> result.append(formatNumber((JsonNumber) node));
-			case ARRAY -> appendArray(result, (JsonArray) node);
-			case OBJECT -> appendObject(result, (JsonObject) node);
-		}
-	}
-
-	private void appendArray(StringBuilder result, JsonArray array) {
-		result.append('[');
-		for (int i = 0; i < array.size(); ++i) {
-			if (i != 0)
-				result.append(',');
-			appendJson(result, array.get(i));
-		}
-		result.append(']');
-	}
-
-	private void appendObject(StringBuilder result, JsonObject object) {
-		result.append('{');
-		@Var boolean first = true;
-		for (Map.Entry<String, JsonValue> entry : object.entrySet()) {
-			if (!first)
-				result.append(',');
-			first = false;
-			result.append(delegate.createValue(entry.getKey())).append(':');
-			appendJson(result, entry.getValue());
-		}
-		result.append('}');
-	}
-
-	private static String formatNumber(JsonNumber number) {
-		double value = number.doubleValue();
-		if (Double.isNaN(value))
-			return "null";
-		if (Double.isInfinite(value))
-			return value > 0 ? "1.7976931348623157e+308" : "-1.7976931348623157e+308";
-		if (number.isIntegral())
-			return number.bigIntegerValue().toString();
-		// A non-integral JsonNumber that is not one of our own wrappers holds an exact decimal.
-		// Render it exactly when a double cannot represent its value, so that e.g.
-		// "3.14159265358979323846264338327950288" | tonumber does not print as 3.141592653589793.
-		// Values a double does represent keep the double formatting: preserving their scale as
-		// well (1.50 rather than 1.5) is jq 1.7 literal preservation, which jackson-jq does not
-		// implement on the parse path, and doing it here alone would print a parsed 0.0 as "0.0".
-		if (!(number instanceof FloatingPointJsonNumber) && BigDecimal.valueOf(value).compareTo(number.bigDecimalValue()) != 0)
-			return number.bigDecimalValue().toString();
-		if (value == Math.floor(value) && Math.abs(value) < Long.MAX_VALUE)
-			return Long.toString((long) value);
-		@Var String text = Double.toString(value).replace('e', 'E');
-		int exponentIndex = text.indexOf('E');
-		if (exponentIndex >= 0 && text.charAt(exponentIndex + 1) != '-')
-			text = text.substring(0, exponentIndex + 1) + "+" + text.substring(exponentIndex + 1);
-		return text;
-	}
-
-	private static boolean isJsonWhitespace(char ch) {
-		return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r';
-	}
 
 	private static class DefaultInstanceHolder {
 		private static final JakartaJsonProvider INSTANCE = new JakartaJsonProvider(jakarta.json.spi.JsonProvider.provider());
@@ -711,7 +504,7 @@ public class JakartaJsonProvider implements JsonProvider<JsonValue> {
 
 		@Override
 		public String toString() {
-			return formatNumber(this);
+			return Double.toString(value);
 		}
 
 		@Override

@@ -1,35 +1,23 @@
 package net.thisptr.jackson.jq.v2.json.impl.gson;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.errorprone.annotations.Var;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonIOException;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonStreamParser;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
-import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 import net.thisptr.jackson.jq.v2.json.NumberType;
@@ -45,7 +33,7 @@ public class GsonJsonProvider implements JsonProvider<JsonElement> {
 			NumberType.BIG_DECIMAL,
 			NumberType.FLOAT,
 			NumberType.DOUBLE));
-	private static final GsonJsonProvider DEFAULT_INSTANCE = new GsonJsonProvider(GsonUtils.createJqCompatibleGson());
+	private static final GsonJsonProvider DEFAULT_INSTANCE = new GsonJsonProvider(new Gson());
 
 	private final Gson gson;
 
@@ -447,123 +435,9 @@ public class GsonJsonProvider implements JsonProvider<JsonElement> {
 		return node.deepCopy();
 	}
 
-	@Override
-	public String format(JsonElement node) {
-		return toJqString(node);
-	}
-
 	/**
 	 * Converts a JsonElement to a jq-compatible JSON string.
 	 * Handles NaN, Infinity, and number formatting.
 	 */
-	private String toJqString(JsonElement node) {
-		if (node == null || node.isJsonNull()) {
-			return "null";
-		}
-		if (node.isJsonPrimitive()) {
-			JsonPrimitive primitive = node.getAsJsonPrimitive();
-			if (primitive.isNumber()) {
-				Number number = primitive.getAsNumber();
-				// Exact numbers keep their exact representation, mirroring Jackson's Int/Long/
-				// BigInteger/BigDecimal nodes; narrowing them to double here would print e.g.
-				// 2871948651097801136 as 2871948651097801000 and 1.50 as 1.5. Only genuine
-				// floating-point values go through jq's double formatting. (Numbers straight from
-				// the parser are Gson's LazilyParsedNumber and take the double path, which is what
-				// Jackson's parse-to-double does.)
-				if (number instanceof Integer || number instanceof Long || number instanceof BigInteger || number instanceof BigDecimal)
-					return number.toString();
-				return GsonUtils.formatDouble(number.doubleValue());
-			}
-			if (primitive.isBoolean()) {
-				return String.valueOf(primitive.getAsBoolean());
-			}
-			if (primitive.isString()) {
-				// Need proper JSON string escaping
-				return gson.toJson(primitive.getAsString());
-			}
-		}
-		if (node.isJsonArray()) {
-			JsonArray array = node.getAsJsonArray();
-			StringBuilder sb = new StringBuilder("[");
-			@Var boolean first = true;
-			for (JsonElement element : array) {
-				if (!first) {
-					sb.append(",");
-				}
-				first = false;
-				sb.append(toJqString(element));
-			}
-			sb.append("]");
-			return sb.toString();
-		}
-		if (node.isJsonObject()) {
-			JsonObject obj = node.getAsJsonObject();
-			StringBuilder sb = new StringBuilder("{");
-			@Var boolean first = true;
-			for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
-				if (!first) {
-					sb.append(",");
-				}
-				first = false;
-				sb.append(gson.toJson(entry.getKey()));
-				sb.append(":");
-				sb.append(toJqString(entry.getValue()));
-			}
-			sb.append("}");
-			return sb.toString();
-		}
-		return gson.toJson(node);
-	}
-
-	@Override
-	public JsonParser<JsonElement> createParser(InputStream in) {
-		return new JsonStreamParserAdapter(in);
-	}
-
-	private static class JsonStreamParserAdapter implements JsonParser<JsonElement> {
-		private final Reader reader;
-		private final JsonStreamParser parser;
-
-		JsonStreamParserAdapter(InputStream in) {
-			this.reader = new InputStreamReader(in, StandardCharsets.UTF_8);
-			this.parser = new JsonStreamParser(reader);
-		}
-
-		@Override
-		public Maybe<JsonElement> next() {
-			try {
-				if (!hasNext())
-					return Maybe.absent();
-				return Maybe.of(parser.next());
-			} catch (JsonParseException e) {
-				throw new JsonException(e);
-			}
-		}
-
-		/**
-		 * Reports whether another value follows. Gson signals end of input by throwing
-		 * {@link EOFException} out of {@code hasNext()} rather than returning {@code false}; a value
-		 * that is merely truncated throws from {@code next()} instead, so treating this one case as
-		 * end of input does not swallow malformed JSON.
-		 */
-		private boolean hasNext() {
-			try {
-				return parser.hasNext();
-			} catch (JsonIOException e) {
-				if (e.getCause() instanceof EOFException)
-					return false;
-				throw new JsonException(e);
-			}
-		}
-
-		@Override
-		public void close() {
-			try {
-				reader.close();
-			} catch (IOException e) {
-				throw new JsonException(e);
-			}
-		}
-	}
 
 }

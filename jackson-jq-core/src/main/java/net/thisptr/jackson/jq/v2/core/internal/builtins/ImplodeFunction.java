@@ -8,6 +8,7 @@ import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -52,7 +53,7 @@ public class ImplodeFunction implements Function {
 				JsonNode ch = iter.next();
 				Integer codepoint = jsonProvider.getNumberAsIntTruncated(ch);
 				if (codepoint == null) // NaN, an infinity, or beyond int range.
-					throw new JsonQueryException("Cannot use " + jsonProvider.format(ch) + " as a unicode codepoint");
+					throw new JsonQueryException("Cannot use " + JsonCodec.format(jsonProvider, ch) + " as a unicode codepoint");
 				builder.append((char) codepoint.intValue());
 			}
 

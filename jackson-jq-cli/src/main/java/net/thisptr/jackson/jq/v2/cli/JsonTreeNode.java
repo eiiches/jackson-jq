@@ -12,6 +12,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 
 final class JsonTreeNode {
 	private static final int DEFAULT_EXPAND_DEPTH = 1;
@@ -173,7 +174,7 @@ final class JsonTreeNode {
 			summary = "[ " + length + (length == 1 ? " item" : " items") + " ]";
 		} else if (type == JsonNodeType.STRING) {
 			isLeaf = true;
-			summary = provider.format(node);
+			summary = JsonCodec.format(provider, node);
 		} else if (type == JsonNodeType.NULL) {
 			isLeaf = true;
 			summary = "null";
@@ -182,7 +183,7 @@ final class JsonTreeNode {
 			summary = "<binary " + provider.getBinaryAsByteArray(node).length + " bytes>";
 		} else {
 			isLeaf = true;
-			summary = provider.format(node);
+			summary = JsonCodec.format(provider, node);
 		}
 
 		StringBuilder display = new StringBuilder();

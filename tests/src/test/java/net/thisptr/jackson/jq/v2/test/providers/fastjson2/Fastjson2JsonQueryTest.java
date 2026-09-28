@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.fastjson2.Fastjson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.test.AbstractJsonQueryTest;
 
 /**
@@ -21,6 +22,6 @@ public class Fastjson2JsonQueryTest extends AbstractJsonQueryTest<Object> {
 
 	@Override
 	protected Object parseTestNode(JsonNode node) {
-		return getJsonProvider().parse(node.toString());
+		return JsonCodec.parse(getJsonProvider(), node.toString());
 	}
 }

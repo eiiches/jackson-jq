@@ -10,6 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -63,13 +64,13 @@ class JqPrettyPrinterTest {
 
 	@ParameterizedTest
 	@ValueSource(strings = { "jackson2", "jackson3", "fastjson2", "gson", "jakarta" })
-	void keepsJqNumberFormattingOfParsedNumbers(String provider) {
-		// Scalars go through the provider's own format(), so indenting cannot change a number.
+	void keepsCodecNumberFormattingOfParsedNumbers(String provider) {
+		// Indenting preserves the codec's number formatting.
 		assertThat(print(provider, "{\"exp\":1e10,\"whole\":1.0}")).isEqualTo("""
 				\
 				{
-				  "exp": 10000000000,
-				  "whole": 1
+				  "exp": 1E+10,
+				  "whole": 1.0
 				}""");
 	}
 
@@ -109,12 +110,12 @@ class JqPrettyPrinterTest {
 	}
 
 	private static <N> String printWith(JsonProvider<N> provider, String json, String indent) {
-		return JqPrettyPrinter.print(provider, provider.parse(json), indent);
+		return JqPrettyPrinter.print(provider, JsonCodec.parse(provider, json), indent);
 	}
 
 	private static <N> void assertScalarMatchesFormat(JsonProvider<N> provider, String json) {
-		N node = provider.parse(json);
-		assertThat(JqPrettyPrinter.print(provider, node, "  ")).isEqualTo(provider.format(node));
+		N node = JsonCodec.parse(provider, json);
+		assertThat(JqPrettyPrinter.print(provider, node, "  ")).isEqualTo(JsonCodec.format(provider, node));
 	}
 
 	private static <N> String printNonFinite(JsonProvider<N> provider) {

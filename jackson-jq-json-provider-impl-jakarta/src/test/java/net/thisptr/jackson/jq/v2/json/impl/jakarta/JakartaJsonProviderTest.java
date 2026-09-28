@@ -6,7 +6,8 @@ import java.util.List;
 import jakarta.json.JsonValue;
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.json.JsonException;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -22,7 +23,7 @@ class JakartaJsonProviderTest {
 
 	@Test
 	void readsMultipleTopLevelValues() {
-		List<JsonValue> values = provider.parseAll("""
+		List<JsonValue> values = JsonCodec.parseAll(provider, """
 				1
 				{"value": [true, "}"]}[2] "text"\
 				""");
@@ -36,13 +37,13 @@ class JakartaJsonProviderTest {
 
 	@Test
 	void strictParsingRejectsMalformedBoundaries() {
-		assertThatThrownBy(() -> provider.parse("{}[]"))
+		assertThatThrownBy(() -> JsonCodec.parse(provider, "{}[]"))
 				.isInstanceOf(JsonException.class)
 				.hasMessage("trailing content");
 		// The underlying JSON-P parser reports these, so only the rejection is asserted, not the wording.
-		assertThatThrownBy(() -> provider.parseAll("{]"))
+		assertThatThrownBy(() -> JsonCodec.parseAll(provider, "{]"))
 				.isInstanceOf(JsonException.class);
-		assertThatThrownBy(() -> provider.parseAll("\"unterminated"))
+		assertThatThrownBy(() -> JsonCodec.parseAll(provider, "\"unterminated"))
 				.isInstanceOf(JsonException.class);
 	}
 }

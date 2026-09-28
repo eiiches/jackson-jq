@@ -1,0 +1,18 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_mrjar", "jjq_maven_artifact")
+
+package(default_visibility = ["//visibility:public"])
+
+jjq_java_mrjar(
+    name = "jackson-jq-json-io-mrjar",
+    osgi = True,
+    osgi_exports = "net.thisptr.jackson.jq.v2.json.internal.io",
+    packages = [
+        "//jackson-jq-json-io/src/main/java:module-info",
+        "//jackson-jq-json-io/src/main/java/net/thisptr/jackson/jq/v2/json/internal/io",
+    ],
+)
+
+jjq_maven_artifact(
+    name = "jackson-jq-json-io",
+    artifact = ":jackson-jq-json-io-mrjar",
+)

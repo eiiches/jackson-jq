@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.function.Executable;
 
@@ -34,8 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertAll;
  * inferred by the compiler.
  */
 public class PropertyCheckTestCasesTest {
-	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-
 	private void testVersion(TestCase tc, Version version, @Nullable Path moduleSearchPath) throws Throwable {
 		EnvironmentBuilder<JsonNode> envBuilder = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), version);
 		if (moduleSearchPath != null) {
@@ -124,7 +121,7 @@ public class PropertyCheckTestCasesTest {
 	}
 
 	public void test(String tcText) throws Throwable {
-		TestCase tc = JSON_MAPPER.readValue(tcText, TestCase.class);
+		TestCase tc = TestCaseLoader.parseTestCase(tcText);
 		if (!tc.shouldCompile || tc.properties == null) {
 			return;
 		}

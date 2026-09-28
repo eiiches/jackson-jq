@@ -8,6 +8,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 
 final class JsonPrettyPrinter {
 	private JsonPrettyPrinter() {
@@ -15,7 +16,7 @@ final class JsonPrettyPrinter {
 
 	static <N> String print(JsonProvider<N> provider, N node, @Nullable String indent) {
 		if (indent == null)
-			return provider.format(node);
+			return JsonCodec.format(provider, node);
 		StringBuilder out = new StringBuilder();
 		append(provider, out, node, indent, 0);
 		return out.toString();
@@ -27,7 +28,7 @@ final class JsonPrettyPrinter {
 		} else if (provider.getNodeType(node) == JsonNodeType.OBJECT) {
 			appendObject(provider, out, node, indent, depth);
 		} else {
-			out.append(provider.format(node));
+			out.append(JsonCodec.format(provider, node));
 		}
 	}
 
@@ -55,7 +56,7 @@ final class JsonPrettyPrinter {
 				out.append(',');
 			empty = false;
 			appendNewLine(out, indent, depth + 1);
-			out.append(provider.format(provider.createString(entry.getKey()))).append(": ");
+			out.append(JsonCodec.format(provider, provider.createString(entry.getKey()))).append(": ");
 			append(provider, out, entry.getValue(), indent, depth + 1);
 		}
 		if (!empty)

@@ -6,6 +6,7 @@ import net.thisptr.jackson.jq.v2.spi.module.Module;
 module net.thisptr.jackson.jq.v2.ext.module.re2 {
 	requires re2j;
 	requires net.thisptr.jackson.jq.v2.json;
+	requires net.thisptr.jackson.jq.v2.json.io;
 	requires transitive net.thisptr.jackson.jq.v2.spi;
 	requires static org.jspecify;
 

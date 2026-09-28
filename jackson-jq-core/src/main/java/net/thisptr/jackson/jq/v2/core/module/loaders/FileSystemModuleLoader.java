@@ -15,6 +15,7 @@ import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
@@ -203,7 +204,7 @@ public class FileSystemModuleLoader<JsonNode> implements ModuleLoader<JsonNode> 
 	}
 
 	private static <JsonNode> JsonNode parseData(JsonProvider<JsonNode> jsonProvider, Path filePath, String path) throws JsonQueryException {
-		List<JsonNode> values = jsonProvider.parseAll(read(filePath, "data", path));
+		List<JsonNode> values = JsonCodec.parseAll(jsonProvider, read(filePath, "data", path));
 		return jsonProvider.createArray(values);
 	}
 

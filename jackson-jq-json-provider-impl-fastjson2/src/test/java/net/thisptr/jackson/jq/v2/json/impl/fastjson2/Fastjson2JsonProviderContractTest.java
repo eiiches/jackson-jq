@@ -4,12 +4,11 @@ import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 
-import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.JsonProviderContractTest;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Contract tests for {@link Fastjson2JsonProvider}.
@@ -29,8 +28,8 @@ public class Fastjson2JsonProviderContractTest implements JsonProviderContractTe
 	void testFormatBinaryAsBase64() {
 		Object binary = getProvider().createBinary(new byte[] { 0, 1, 127, -128 });
 
-		assertThat(getProvider().format(binary)).isEqualTo("\"AAF/gA==\"");
-		assertThat(getProvider().format(getProvider().createObject(Collections.singletonMap("binary", binary))))
+		assertThat(JsonCodec.format(getProvider(), binary)).isEqualTo("\"AAF/gA==\"");
+		assertThat(JsonCodec.format(getProvider(), getProvider().createObject(Collections.singletonMap("binary", binary))))
 				.isEqualTo("{\"binary\":\"AAF/gA==\"}");
 	}
 
@@ -52,19 +51,4 @@ public class Fastjson2JsonProviderContractTest implements JsonProviderContractTe
 				getProvider().getObjectMemberOrThrow(original, "binary"))).containsExactly(1, 2, 3);
 	}
 
-	/**
-	 * Fastjson2 deliberately accepts a missing object value such as {@code {"a":}} and omits the member.
-	 * Retain its native parser behavior while checking the malformed forms that it does reject.
-	 */
-	@Override
-	@Test
-	public void testCreateParserOnMalformedInput() {
-		assertThatThrownBy(() -> parseStream("{,,,"))
-				.isInstanceOf(JsonException.class);
-		assertThatThrownBy(() -> parseStream("[1,2"))
-				.isInstanceOf(JsonException.class);
-		assertThatThrownBy(() -> parseStream("{\"a\":1"))
-				.isInstanceOf(JsonException.class);
-		assertThat(getProvider().hasObjectMember(getProvider().parse("{\"a\":}"), "a")).isFalse();
-	}
 }

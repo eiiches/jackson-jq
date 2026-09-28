@@ -8,7 +8,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.function.Executable;
@@ -42,8 +41,6 @@ import static org.junit.jupiter.api.Assertions.assertAll;
  * @param <T> The JSON node type used by the JsonProvider implementation
  */
 public abstract class AbstractJsonQueryTest<T> {
-	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-
 	/**
 	 * The JsonProvider under test.
 	 *
@@ -123,7 +120,7 @@ public abstract class AbstractJsonQueryTest<T> {
 	}
 
 	private void testVersion(String tcText, Version jqVersion) throws Throwable {
-		TestCase tc = JSON_MAPPER.readValue(tcText, TestCase.class);
+		TestCase tc = TestCaseLoader.parseTestCase(tcText);
 		Path moduleSearchPath = tc.modules.isEmpty() ? null : ModuleFixtures.materialize(tc.modules);
 		try {
 			if (tc.version == null || tc.version.contains(jqVersion)) {

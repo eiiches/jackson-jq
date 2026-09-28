@@ -20,6 +20,7 @@ import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.ext.joni.JoniRegexModule;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @BenchmarkMode(Mode.AverageTime)
@@ -55,7 +56,7 @@ public class JacksonJqBenchmark {
 				// The query comes from a system property, so regex is included in case it uses it.
 				.includeModule(new JoniRegexModule())
 				.build();
-		input = jsonProvider.parse(jsonInput);
+		input = JsonCodec.parse(jsonProvider, jsonInput);
 		compiledQuery = environment.compile(jqExpression);
 	}
 

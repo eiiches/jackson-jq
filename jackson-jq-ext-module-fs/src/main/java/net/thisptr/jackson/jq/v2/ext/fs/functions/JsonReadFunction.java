@@ -7,10 +7,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import net.thisptr.jackson.jq.v2.json.JsonException;
-import net.thisptr.jackson.jq.v2.json.JsonParser;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonException;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonParser;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -115,7 +116,7 @@ public final class JsonReadFunction implements Function {
 
 	private <JsonNode> void readSingle(JsonProvider<JsonNode> jsonProvider, java.nio.file.Path file, Output<JsonNode> output) {
 		try (InputStream in = Files.newInputStream(file);
-			 JsonParser<JsonNode> parser = jsonProvider.createParser(in)) {
+			 JsonParser<JsonNode> parser = JsonCodec.createParser(jsonProvider, in)) {
 			Maybe<JsonNode> first;
 			try {
 				first = parser.next();
@@ -142,7 +143,7 @@ public final class JsonReadFunction implements Function {
 
 	private <JsonNode> void readStream(JsonProvider<JsonNode> jsonProvider, java.nio.file.Path file, Output<JsonNode> output) {
 		try (InputStream in = Files.newInputStream(file);
-			 JsonParser<JsonNode> parser = jsonProvider.createParser(in)) {
+			 JsonParser<JsonNode> parser = JsonCodec.createParser(jsonProvider, in)) {
 			while (true) {
 				Maybe<JsonNode> next;
 				try {
