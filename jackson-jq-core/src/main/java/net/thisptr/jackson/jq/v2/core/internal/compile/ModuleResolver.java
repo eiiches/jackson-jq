@@ -35,9 +35,10 @@ import net.thisptr.jackson.jq.v2.spi.module.Module;
  * <p>
  * One resolver serves one compilation. Everything it remembers -- which module compiled to what,
  * which modules are still being compiled -- lasts exactly as long as that, so it is reached from a
- * single thread and can never hand a later compilation something resolved against a different set
- * of loaders. Loaders themselves stay stateless: they read, they do not compile and they do not
- * cache.
+ * a single compilation and can never hand a later compilation something resolved against a
+ * different set of loaders. Runtime {@code modulemeta} performs only raw, uncached lookups; it does
+ * not touch those compilation maps. Loaders themselves stay stateless: they read, they do not
+ * compile and they do not cache.
  */
 public final class ModuleResolver<JsonNode> {
 	private final Environment<JsonNode> env;
@@ -64,6 +65,14 @@ public final class ModuleResolver<JsonNode> {
 	 * @param origin the module the import statement appears in, or {@code null} at the top level
 	 */
 	public JavaModule resolveModule(@Nullable JqModule origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
+		return materialize(loadModule(origin, path, metadata));
+	}
+
+	/**
+	 * Finds a module without compiling its source or resolving its dependencies. Runtime
+	 * {@code modulemeta} uses this path so it can report missing dependencies.
+	 */
+	public Module loadModule(@Nullable JqModule origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
 		Maybe<JsonNode> search = searchOverride(origin, path, metadata);
 		if (origin != null) {
 			@Var @Nullable Module local = null;
@@ -74,11 +83,11 @@ public final class ModuleResolver<JsonNode> {
 					throw e;
 			}
 			if (local != null)
-				return materialize(local);
+				return local;
 		}
 		Module registered = env.getRegisteredModules().get(path);
 		if (registered != null)
-			return materialize(registered);
+			return registered;
 
 		@Var Module module = null;
 		for (ModuleLoader<JsonNode> loader : env.getModuleLoaders()) {
@@ -91,7 +100,7 @@ public final class ModuleResolver<JsonNode> {
 		}
 		if (module == null)
 			throw new ModuleNotFoundException(path);
-		return materialize(module);
+		return module;
 	}
 
 	/**

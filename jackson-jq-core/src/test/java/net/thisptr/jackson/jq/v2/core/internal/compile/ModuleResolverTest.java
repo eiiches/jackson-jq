@@ -35,6 +35,7 @@ import net.thisptr.jackson.jq.v2.spi.exception.ModuleNotFoundException;
 import net.thisptr.jackson.jq.v2.spi.module.JavaModule;
 import net.thisptr.jackson.jq.v2.spi.module.JqModule;
 import net.thisptr.jackson.jq.v2.spi.module.Module;
+import net.thisptr.jackson.jq.v2.spi.module.ModuleMeta;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
@@ -700,5 +701,86 @@ public class ModuleResolverTest {
 		assertThat(run(env, "import \"wrapper\" as w; w::value")).containsExactly("3");
 		assertThatThrownBy(() -> env.compile("import \"impl\" as impl; impl::value_from_impl"))
 				.isInstanceOf(ModuleNotFoundException.class);
+	}
+
+	@Test
+	public void testModuleMetaInspectsSourceWithoutResolvingDependencies() {
+		SourceLoader loader = new SourceLoader("/first");
+		SourceModule module = new SourceModule(loader, "/first/broken",
+				"module {version: \"1\"}; import \"missing\" as dep; include \"also_missing\"; def value: dep::value;");
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
+				.registerModule("broken", module).build();
+
+		JsonNode metadata = env.compile("\"broken\" | modulemeta").apply(NullNode.getInstance()).get(0);
+		assertThat(metadata.path("version").asText()).isEqualTo("1");
+		assertThat(metadata.path("deps").get(0).path("relpath").asText()).isEqualTo("missing");
+		assertThat(metadata.path("deps").get(1).path("relpath").asText()).isEqualTo("also_missing");
+		assertThat(metadata.path("deps").get(1).has("as")).isFalse();
+		assertThat(metadata.path("defs").get(0).asText()).isEqualTo("value/0");
+		assertThatThrownBy(() -> env.compile("import \"broken\" as b; b::value"))
+				.isInstanceOf(ModuleNotFoundException.class);
+	}
+
+	@Test
+	public void testModuleMetaUsesCallersPrivateModules() {
+		SourceLoader loader = new SourceLoader("/first");
+		SourceModule privateModule = new SourceModule(loader, "/first/private", "def hidden: 1;");
+		SourceModule wrapper = new SourceModule(loader, "/first/wrapper",
+				"def inspect: \"private\" | modulemeta;",
+				Map.of("private", privateModule), Map.of());
+		Environment<JsonNode> env = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
+				.registerModule("wrapper", wrapper).build();
+
+		JsonNode metadata = env.compile("import \"wrapper\" as w; w::inspect").apply(NullNode.getInstance()).get(0);
+		assertThat(metadata.path("defs").get(0).asText()).isEqualTo("hidden/0");
+		assertThatThrownBy(() -> env.compile("\"private\" | modulemeta").apply(NullNode.getInstance()))
+				.isInstanceOf(ModuleNotFoundException.class);
+	}
+
+	@Test
+	public void testModuleMetaReportsJavaAndHybridFunctions() {
+		ModuleMeta customMetadata = new ModuleMeta() {
+			@Override
+			public <T> Map<String, T> getMetadata(JsonProvider<T> jsonProvider) {
+				return Map.of("kind", jsonProvider.createString("java"));
+			}
+		};
+		JavaModule javaModule = new JavaModule() {
+			@Override
+			public Map<FunctionSignature, Function> getFunctions() {
+				return Map.of(FunctionSignature.of("read", 0), constantFunction(1));
+			}
+
+			@Override
+			public ModuleMeta getModuleMeta() {
+				return customMetadata;
+			}
+		};
+		HybridModule hybrid = new HybridModule("module {kind: \"hybrid\"}; def jq: 1;",
+				Map.of(FunctionSignature.of("java", 0), constantFunction(2)));
+		Environment<JsonNode> recent = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), Versions.JQ_1_8_2)
+				.registerModule("java", javaModule).registerModule("hybrid", hybrid).build();
+		JsonNode javaMetadata = recent.compile("\"java\" | modulemeta").apply(NullNode.getInstance()).get(0);
+		assertThat(javaMetadata.path("kind").asText()).isEqualTo("java");
+		assertThat(javaMetadata.path("defs").get(0).asText()).isEqualTo("read/0");
+		JsonNode hybridMetadata = recent.compile("\"hybrid\" | modulemeta").apply(NullNode.getInstance()).get(0);
+		assertThat(hybridMetadata.path("kind").asText()).isEqualTo("hybrid");
+		assertThat(hybridMetadata.path("defs").toString()).isEqualTo("[\"jq/0\",\"java/0\"]");
+		assertThat(run(recent, "[\"java\", \"hybrid\"][] | modulemeta | .kind"))
+				.containsExactly("\"java\"", "\"hybrid\"");
+
+		Environment<JsonNode> old = builder().registerModule("java", javaModule).build();
+		assertThat(old.compile("\"java\" | modulemeta").apply(NullNode.getInstance()).get(0).has("defs")).isFalse();
+	}
+
+	@Test
+	public void testModuleMetaValidatesInputAndCanBeShadowed() {
+		Environment<JsonNode> env = builder().build();
+		assertThatThrownBy(() -> env.compile("1 | modulemeta").apply(NullNode.getInstance()))
+				.isInstanceOf(JsonQueryException.class)
+				.hasMessageContaining("modulemeta input module name must be a string");
+		assertThatThrownBy(() -> env.compile("\"missing\" | modulemeta").apply(NullNode.getInstance()))
+				.isInstanceOf(ModuleNotFoundException.class);
+		assertThat(run(env, "def modulemeta: 42; \"missing\" | modulemeta")).containsExactly("42");
 	}
 }

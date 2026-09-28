@@ -4,6 +4,8 @@ jjq_java_library(
     name = "utils",
     srcs = [
         "ExpressionPropertiesUtils.java",
+        "ModuleMetaBindContext.java",
+        "ModuleMetaLookup.java",
         "Preconditions.java",
     ],
     release = 17,

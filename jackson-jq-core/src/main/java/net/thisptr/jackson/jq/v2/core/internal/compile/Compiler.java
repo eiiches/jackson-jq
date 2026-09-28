@@ -76,6 +76,8 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.ResolvedTailCall
 import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.TailCallArgument;
 import net.thisptr.jackson.jq.v2.core.internal.compile.resolved.UnboundFunctionCall;
 import net.thisptr.jackson.jq.v2.core.internal.diagnostics.PipeParenthesesCheck;
+import net.thisptr.jackson.jq.v2.core.internal.function.utils.ModuleMetaBindContext;
+import net.thisptr.jackson.jq.v2.core.internal.function.utils.ModuleMetaLookup;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ArrayConstruction;
@@ -340,11 +342,11 @@ public class Compiler {
 				if (factory == null) {
 					throw new JsonQueryException(String.format("Function %s::%s does not exist", call.moduleName(), call.signature()));
 				}
-				return bindFunctionCall(bindContextOf(env), call.moduleName() + "::" + call.signature().name(), factory, meteredArgs);
+				return bindFunctionCall(bindContextOf(env, scope), call.moduleName() + "::" + call.signature().name(), factory, meteredArgs);
 			}
 
 			SymbolLocation location = context.getFunctionLocation(call.signature());
-			AnalyzedExpression<N> compiled = compileFunctionCall(env, context, call.signature(), location, meteredArgs);
+			AnalyzedExpression<N> compiled = compileFunctionCall(env, context, scope, call.signature(), location, meteredArgs);
 			if (inTailPosition && context.tailCallsEnabled() && context.isInsideDefinitionBody())
 				return asTailCall(call.signature(), location, compiled, compiledArgs, meteredArgs);
 			return compiled;
@@ -569,7 +571,7 @@ public class Compiler {
 				// Everything but the last is evaluated for its effect and discarded -- a `def` statement, most
 				// of the time -- so only the last carries this expression's own values, and tail position.
 				context.setTailPosition(inTailPosition && i == expressions.size() - 1);
-				AnalyzedExpression<N> expression = compileNonNull(env, context, q);
+				AnalyzedExpression<N> expression = compileNonNull(env, context, scope, q);
 				newExpressions.add(expression);
 				if (expression instanceof ResolvedFunctionDefinition<?> def)
 					definedFunctionSlots.add(def.slot());
@@ -587,21 +589,21 @@ public class Compiler {
 
 		@Override
 		public FieldConstruction<N> visit(ObjectConstructionAstNode.IdentifierKeyFieldConstructionAst field) throws JsonQueryException {
-			AnalyzedExpression<N> value = compile(env, context, field.value);
+			AnalyzedExpression<N> value = compile(env, context, scope, field.value);
 			return new IdentifierKeyFieldConstruction<>(env.getJsonProvider(), field.key, value, env.getJqVersion(), context.outputCounterOf(value));
 		}
 
 		@Override
 		public FieldConstruction<N> visit(ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst field) throws JsonQueryException {
-			AnalyzedExpression<N> key = compileNonNull(env, context, field.key());
-			AnalyzedExpression<N> value = compileNonNull(env, context, field.value());
+			AnalyzedExpression<N> key = compileNonNull(env, context, scope, field.key());
+			AnalyzedExpression<N> value = compileNonNull(env, context, scope, field.value());
 			return new JsonQueryKeyFieldConstruction<>(env.getJsonProvider(), key, value, env.getJqVersion(), context.outputCounterOf(key), context.outputCounterOf(value));
 		}
 
 		@Override
 		public FieldConstruction<N> visit(ObjectConstructionAstNode.StringKeyFieldConstructionAst field) throws JsonQueryException {
-			AnalyzedExpression<N> key = compileNonNull(env, context, field.key);
-			AnalyzedExpression<N> value = compile(env, context, field.value);
+			AnalyzedExpression<N> key = compileNonNull(env, context, scope, field.key);
+			AnalyzedExpression<N> value = compile(env, context, scope, field.value);
 			return new StringKeyFieldConstruction<>(env.getJsonProvider(), key, value, env.getJqVersion(), context.outputCounterOf(key), context.outputCounterOf(value));
 		}
 
@@ -614,7 +616,7 @@ public class Compiler {
 
 		@Override
 		public AnalyzedExpression<N> visit(ArrayConstructionAstNode arr) throws JsonQueryException {
-			AnalyzedExpression<N> compiledArrayItems = compile(env, context, arr.q);
+			AnalyzedExpression<N> compiledArrayItems = compile(env, context, scope, arr.q);
 			return new ArrayConstruction<>(env.getJsonProvider(), compiledArrayItems, context.outputCounterOf(compiledArrayItems));
 		}
 
@@ -628,14 +630,14 @@ public class Compiler {
 				return new Comma<>(operands);
 			}
 
-			AnalyzedExpression<N> lhs = compileNonNull(env, context, bin.lhs);
-			AnalyzedExpression<N> rhs = compileNonNull(env, context, bin.rhs);
+			AnalyzedExpression<N> lhs = compileNonNull(env, context, scope, bin.lhs);
+			AnalyzedExpression<N> rhs = compileNonNull(env, context, scope, bin.rhs);
 			return compileBinaryOperator(bin.operator, lhs, rhs, context.outputCounterOf(lhs), context.outputCounterOf(rhs), env.getJqVersion(), env.getJsonProvider());
 		}
 
 		@Override
 		public AnalyzedExpression<N> visit(NegativeExpressionAstNode neg) throws JsonQueryException {
-			AnalyzedExpression<N> compiledNegated = compileNonNull(env, context, neg.value());
+			AnalyzedExpression<N> compiledNegated = compileNonNull(env, context, scope, neg.value());
 			return new NegativeExpression<>(env.getJsonProvider(), compiledNegated, env.getJqVersion(), context.outputCounterOf(compiledNegated));
 		}
 
@@ -647,14 +649,14 @@ public class Compiler {
 			// most one value. A condition itself never does -- the branch still has to run after it.
 			@Var boolean conditionsEmitAtMostOne = true;
 			for (Pair<AstNode, AstNode> sw : cond.switches()) {
-				AnalyzedExpression<N> newIf = compileNonNull(env, context, sw._1);
+				AnalyzedExpression<N> newIf = compileNonNull(env, context, scope, sw._1);
 				conditionsEmitAtMostOne = conditionsEmitAtMostOne && newIf.getCardinality() != Cardinality.UNKNOWN;
 				context.setTailPosition(inTailPosition && conditionsEmitAtMostOne);
-				AnalyzedExpression<N> newThen = compileNonNull(env, context, sw._2);
+				AnalyzedExpression<N> newThen = compileNonNull(env, context, scope, sw._2);
 				newSwitches.add(Pair.of(newIf, newThen));
 			}
 			context.setTailPosition(inTailPosition && conditionsEmitAtMostOne);
-			AnalyzedExpression<N> newElse = compileNonNull(env, context, cond.otherwise());
+			AnalyzedExpression<N> newElse = compileNonNull(env, context, scope, cond.otherwise());
 			int[] conditionOutputIndices = new int[newSwitches.size()];
 			for (int i = 0; i < conditionOutputIndices.length; ++i)
 				conditionOutputIndices[i] = context.outputCounterOf(newSwitches.get(i)._1);
@@ -663,15 +665,15 @@ public class Compiler {
 
 		@Override
 		public AnalyzedExpression<N> visit(TryCatchAstNode tc) throws JsonQueryException {
-			AnalyzedExpression<N> newTry = compileNonNull(env, context, tc.tryExpr());
-			AnalyzedExpression<N> newCatch = compile(env, context, tc.catchExpr());
+			AnalyzedExpression<N> newTry = compileNonNull(env, context, scope, tc.tryExpr());
+			AnalyzedExpression<N> newCatch = compile(env, context, scope, tc.catchExpr());
 			countLegacyTryBarrier();
 			return new TryCatch<>(env.getJsonProvider(), newTry, newCatch, env.getJqVersion());
 		}
 
 		@Override
 		public AnalyzedExpression<N> visit(TryCatchAstNode.Question question) throws JsonQueryException {
-			AnalyzedExpression<N> expression = compileNonNull(env, context, question.tryExpr());
+			AnalyzedExpression<N> expression = compileNonNull(env, context, scope, question.tryExpr());
 			countLegacyTryBarrier();
 			return new TryCatch<>(env.getJsonProvider(), expression, env.getJqVersion());
 		}
@@ -715,14 +717,14 @@ public class Compiler {
 				// operands have already emitted and finished by then, which is why they place no condition
 				// on the last one.
 				context.setTailPosition(inTailPosition && pending.isEmpty());
-				operands.add(compileNonNull(env, context, operand));
+				operands.add(compileNonNull(env, context, scope, operand));
 			}
 		}
 
 		@Override
 		public AnalyzedExpression<N> visit(ReduceExpressionAstNode red) throws JsonQueryException {
-			AnalyzedExpression<N> compiledIter = compileNonNull(env, context, red.iterExpr());
-			AnalyzedExpression<N> compiledInit = compileNonNull(env, context, red.initExpr());
+			AnalyzedExpression<N> compiledIter = compileNonNull(env, context, scope, red.iterExpr());
+			AnalyzedExpression<N> compiledInit = compileNonNull(env, context, scope, red.initExpr());
 			CompiledMatcher<N> matcherResult = compileMatcher(red.matcher());
 			@Var PatternMatcher<N> compiledMatcher = matcherResult.matcher();
 
@@ -735,7 +737,7 @@ public class Compiler {
 					slots.put(varName, context.getVariableSlot(varName));
 				}
 				compiledMatcher = compiledMatcher.resolveSlots(new SlotResolver(slots));
-				AnalyzedExpression<N> compiledReduce = compileNonNull(env, context, red.reduceExpr());
+				AnalyzedExpression<N> compiledReduce = compileNonNull(env, context, scope, red.reduceExpr());
 				return new ReduceExpression<>(env.getJsonProvider(), compiledMatcher, compiledInit, compiledReduce, compiledIter, new HashSet<>(slots.values()), context.outputCounterOf(compiledInit), context.outputCounterOf(compiledReduce), context.outputCounterOf(compiledIter));
 			} finally {
 				context.popScope();
@@ -744,8 +746,8 @@ public class Compiler {
 
 		@Override
 		public AnalyzedExpression<N> visit(ForeachExpressionAstNode fe) throws JsonQueryException {
-			AnalyzedExpression<N> compiledIter = compileNonNull(env, context, fe.iterExpr());
-			AnalyzedExpression<N> compiledInit = compileNonNull(env, context, fe.initExpr());
+			AnalyzedExpression<N> compiledIter = compileNonNull(env, context, scope, fe.iterExpr());
+			AnalyzedExpression<N> compiledInit = compileNonNull(env, context, scope, fe.initExpr());
 			CompiledMatcher<N> matcherResult = compileMatcher(fe.matcher());
 			@Var PatternMatcher<N> compiledMatcher = matcherResult.matcher();
 
@@ -758,8 +760,8 @@ public class Compiler {
 					slots.put(varName, context.getVariableSlot(varName));
 				}
 				compiledMatcher = compiledMatcher.resolveSlots(new SlotResolver(slots));
-				AnalyzedExpression<N> compiledUpdate = compileNonNull(env, context, fe.updateExpr());
-				AnalyzedExpression<N> compiledExtract = compile(env, context, fe.extractExpr());
+				AnalyzedExpression<N> compiledUpdate = compileNonNull(env, context, scope, fe.updateExpr());
+				AnalyzedExpression<N> compiledExtract = compile(env, context, scope, fe.extractExpr());
 				return new ForeachExpression<>(compiledMatcher, compiledInit, compiledUpdate, compiledExtract, compiledIter, new HashSet<>(slots.values()), context.outputCounterOf(compiledInit), context.outputCounterOf(compiledUpdate), context.outputCounterOf(compiledIter));
 			} finally {
 				context.popScope();
@@ -768,15 +770,15 @@ public class Compiler {
 
 		@Override
 		public AnalyzedExpression<N> visit(FormattingFilterAstNode ff) throws JsonQueryException {
-			return compileFunctionCall(env, context, ff.signature(), Collections.emptyList());
+			return compileFunctionCall(env, context, scope, ff.signature(), Collections.emptyList());
 		}
 
 		@Override
 		public AnalyzedExpression<N> visit(StringInterpolationAstNode si) throws JsonQueryException {
 			List<Pair<Integer, AnalyzedExpression<N>>> compiledInterpolations = new ArrayList<>();
 			for (Pair<Integer, AstNode> pair : si.interpolations())
-				compiledInterpolations.add(Pair.of(pair._1, compileNonNull(env, context, pair._2)));
-			AnalyzedExpression<N> compiledFormatter = compile(env, context, si.formatter());
+				compiledInterpolations.add(Pair.of(pair._1, compileNonNull(env, context, scope, pair._2)));
+			AnalyzedExpression<N> compiledFormatter = compile(env, context, scope, si.formatter());
 			int[] interpolationOutputIndices = new int[compiledInterpolations.size()];
 			for (int i = 0; i < interpolationOutputIndices.length; ++i)
 				interpolationOutputIndices[i] = context.outputCounterOf(compiledInterpolations.get(i)._2);
@@ -785,9 +787,9 @@ public class Compiler {
 
 		@Override
 		public AnalyzedExpression<N> visit(BracketFieldAccessAstNode bfa) throws JsonQueryException {
-			AnalyzedExpression<N> target = compileNonNull(env, context, bfa.target());
-			@Var AnalyzedExpression<N> start = compile(env, context, bfa.startExpr());
-			@Var AnalyzedExpression<N> end = compile(env, context, bfa.endExpr());
+			AnalyzedExpression<N> target = compileNonNull(env, context, scope, bfa.target());
+			@Var AnalyzedExpression<N> start = compile(env, context, scope, bfa.startExpr());
+			@Var AnalyzedExpression<N> end = compile(env, context, scope, bfa.endExpr());
 			if (start == null)
 				start = new ValueLiteral<>(NullType.getInstance(), env.getJsonProvider().createNull());
 			if (end == null)
@@ -801,20 +803,20 @@ public class Compiler {
 
 		@Override
 		public AnalyzedExpression<N> visit(IdentifierFieldAccessAstNode ifa) throws JsonQueryException {
-			AnalyzedExpression<N> target = compileNonNull(env, context, ifa.target());
+			AnalyzedExpression<N> target = compileNonNull(env, context, scope, ifa.target());
 			return new IdentifierFieldAccess<>(env.getJsonProvider(), target, ifa.field(), ifa.permissive(), env.getJqVersion(), context.outputCounterOf(target));
 		}
 
 		@Override
 		public AnalyzedExpression<N> visit(StringFieldAccessAstNode sfa) throws JsonQueryException {
-			AnalyzedExpression<N> target = compileNonNull(env, context, sfa.target());
-			AnalyzedExpression<N> key = compileNonNull(env, context, sfa.key());
+			AnalyzedExpression<N> target = compileNonNull(env, context, scope, sfa.target());
+			AnalyzedExpression<N> key = compileNonNull(env, context, scope, sfa.key());
 			return new StringFieldAccess<>(env.getJsonProvider(), target, key, sfa.permissive(), env.getJqVersion(), context.outputCounterOf(target), context.outputCounterOf(key));
 		}
 
 		@Override
 		public AnalyzedExpression<N> visit(BracketExtractFieldAccessAstNode befa) throws JsonQueryException {
-			AnalyzedExpression<N> target = compileNonNull(env, context, befa.target());
+			AnalyzedExpression<N> target = compileNonNull(env, context, scope, befa.target());
 			return new BracketExtractFieldAccess<>(env.getJsonProvider(), target, befa.permissive(), env.getJqVersion(), context.outputCounterOf(target));
 		}
 
@@ -891,7 +893,7 @@ public class Compiler {
 				// A def body is the one place tail position starts: what the body emits is what the call emits,
 				// and the call's frame is gone by the time anything downstream sees a value.
 				context.setTailPosition(true);
-				compiledBody = compileNonNull(env, context, fd.body());
+				compiledBody = compileNonNull(env, context, scope, fd.body());
 				fnSize = context.getSlotCount();
 				closureSpec = context.getClosureSpec();
 				tailCallSlot = context.currentScopeTailCallSlot();
@@ -977,7 +979,7 @@ public class Compiler {
 
 		@Override
 		public CompiledFieldMatcher<N> visit(ObjectMatcherAstNode.ExpressionKeyFieldMatcher field) throws JsonQueryException {
-			AnalyzedExpression<N> name = compileNonNull(env, context, field.name());
+			AnalyzedExpression<N> name = compileNonNull(env, context, scope, field.name());
 			CompiledMatcher<N> matcherResult = compileMatcher(field.matcher());
 			ObjectMatcher.FieldMatcher<N> compiled = new ObjectMatcher.FieldMatcher<>(false, null, name, matcherResult.matcher(), context.outputCounterOf(name));
 			return new CompiledFieldMatcher<>(compiled, matcherResult.variableNames());
@@ -1023,8 +1025,8 @@ public class Compiler {
 	 * loader that supplies the name at any of those three steps answers the call, so an earlier loader's
 	 * variadic function beats a later loader's exact one.
 	 */
-	private static <N> AnalyzedExpression<N> compileFunctionCall(Environment<N> env, CompileContext context, FunctionSignature signature, List<AnalyzedExpression<N>> compiledArgs) throws JsonQueryException {
-		return compileFunctionCall(env, context, signature, context.getFunctionLocation(signature), compiledArgs);
+	private static <N> AnalyzedExpression<N> compileFunctionCall(Environment<N> env, CompileContext context, ModuleScope<N> scope, FunctionSignature signature, List<AnalyzedExpression<N>> compiledArgs) throws JsonQueryException {
+		return compileFunctionCall(env, context, scope, signature, context.getFunctionLocation(signature), compiledArgs);
 	}
 
 	/**
@@ -1035,9 +1037,9 @@ public class Compiler {
 	 * finds that chain already in place and answers from it -- same slot, but without the definition's
 	 * dependency facts or its parameter names.
 	 */
-	private static <N> AnalyzedExpression<N> compileFunctionCall(Environment<N> env, CompileContext context, FunctionSignature signature, @Nullable SymbolLocation loc, List<AnalyzedExpression<N>> compiledArgs) throws JsonQueryException {
+	private static <N> AnalyzedExpression<N> compileFunctionCall(Environment<N> env, CompileContext context, ModuleScope<N> scope, FunctionSignature signature, @Nullable SymbolLocation loc, List<AnalyzedExpression<N>> compiledArgs) throws JsonQueryException {
 		String fullName = signature.name();
-		BindContext<N> bindContext = bindContextOf(env);
+		BindContext<N> bindContext = bindContextOf(env, scope);
 		if (loc != null) {
 			int slot = loc.slot;
 			FunctionDependsOnInfo info = loc.dependsOnInfo;
@@ -1105,10 +1107,10 @@ public class Compiler {
 	 * bind path -- {@code Resolved*FunctionAccess.apply}, which re-binds on every evaluation -- allocates
 	 * nothing.
 	 */
-	private static <N> BindContext<N> bindContextOf(Environment<N> env) {
+	private static <N> BindContext<N> bindContextOf(Environment<N> env, ModuleScope<N> scope) {
 		JsonProvider<N> jsonProvider = env.getJsonProvider();
 		Version jqVersion = env.getJqVersion();
-		return new BindContext<>() {
+		return new ModuleMetaBindContext<>() {
 			@Override
 			public JsonProvider<N> getJsonProvider() {
 				return jsonProvider;
@@ -1117,6 +1119,11 @@ public class Compiler {
 			@Override
 			public Version getJqVersion() {
 				return jqVersion;
+			}
+
+			@Override
+			public ModuleMetaLookup<N> getModuleMetaLookup() {
+				return scope;
 			}
 		};
 	}

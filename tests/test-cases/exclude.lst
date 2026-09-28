@@ -2,7 +2,6 @@ env.PAGER
 try error("\($__loc__)") catch .
 
 # modules
-modulemeta
 include "c"; [a, c]
 import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]
 import "test_bind_order" as check; check::check

@@ -3858,7 +3858,6 @@
   out:
   - {"whatever": null, "deps": [{"as": "foo", "is_data": false, "relpath": "a"}, {"search": "./", "as": "d", "is_data": false, "relpath": "d"}, {"search": "./", "as": "d2", "is_data": false, "relpath": "d"}, {"search": "./../lib/jq", "as": "e", "is_data": false, "relpath": "e"}, {"search": "./../lib/jq", "as": "f", "is_data": false, "relpath": "f"}, {"as": "d", "is_data": true, "relpath": "data"}]}
   v: '[1.5, 1.7)'
-  failing: true
   modules:
     a.jq: |
       module {version:1.7};

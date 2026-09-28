@@ -4293,7 +4293,6 @@
   out:
   - {"whatever": null, "deps": [{"as": "foo", "is_data": false, "relpath": "a"}, {"search": "./", "as": "d", "is_data": false, "relpath": "d"}, {"search": "./", "as": "d2", "is_data": false, "relpath": "d"}, {"search": "./../lib/jq", "as": "e", "is_data": false, "relpath": "e"}, {"search": "./../lib/jq", "as": "f", "is_data": false, "relpath": "f"}, {"as": "d", "is_data": true, "relpath": "data"}]}
   v: '[1.5, 1.7)'
-  failing: true
   modules:
     a.jq: |
       module {version:1.7};
@@ -4323,6 +4322,17 @@
       def bah: "bah";
     lib/jq/f.jq: |
       def f: "f is here";
+
+- q: 'modulemeta'
+  in: "simple"
+  out:
+  - {"version": "1.0", "deps": [], "defs": ["one/0", "two/1"]}
+  v: '[1.7, )'
+  modules:
+    simple.jq: |
+      module {version: "1.0"};
+      def one: 1;
+      def two(x): x + 1;
 
 - q: 'import "test_bind_order" as check; check::check'
   in: null
