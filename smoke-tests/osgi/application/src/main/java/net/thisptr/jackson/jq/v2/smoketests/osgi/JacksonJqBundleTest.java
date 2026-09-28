@@ -96,7 +96,9 @@ public class JacksonJqBundleTest {
 
 	private static <JsonNode> void assertQuery(JsonProvider<JsonNode> jsonProvider, Environment<JsonNode> env, String expression, String inputJson, Object expected) throws Exception {
 		JsonQuery<JsonNode> query = env.compile(expression);
-		JsonNode input = jsonProvider.parse(inputJson);
+		List<JsonNode> parsed = new ArrayList<>();
+		env.compile("fromjson").apply(jsonProvider.createString(inputJson), parsed::add);
+		JsonNode input = parsed.get(0);
 		List<JsonNode> output = new ArrayList<>();
 		query.apply(input, output::add);
 		assertEquals(Collections.singletonList(toJsonNode(jsonProvider, expected)), output);

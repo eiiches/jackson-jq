@@ -26,6 +26,7 @@ import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.FunctionSignature;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
@@ -234,7 +235,7 @@ public class HttpModuleTest {
 	}
 
 	private static String quotedUrl(String path) {
-		return JSON_PROVIDER.format(JSON_PROVIDER.createString(baseUrl + path));
+		return JsonCodec.format(JSON_PROVIDER, JSON_PROVIDER.createString(baseUrl + path));
 	}
 
 	private static RuntimeOptions unlimited() {

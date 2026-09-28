@@ -5,6 +5,7 @@ import jakarta.json.JsonValue;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jakarta.JakartaJsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.test.AbstractJsonQueryTest;
 
 /**
@@ -22,6 +23,6 @@ public class JakartaJsonQueryTest extends AbstractJsonQueryTest<JsonValue> {
 
 	@Override
 	protected JsonValue parseTestNode(JsonNode node) {
-		return JakartaJsonProvider.getInstance().parse(node.toString());
+		return JsonCodec.parse(JakartaJsonProvider.getInstance(), node.toString());
 	}
 }

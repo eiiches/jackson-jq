@@ -1,7 +1,9 @@
-package net.thisptr.jackson.jq.v2.json;
+package net.thisptr.jackson.jq.v2.json.internal.io;
+
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
 /**
- * Controls how {@link JsonProvider#format(Object, FormatOptions)} renders JSON numbers.
+ * Controls how {@link JsonCodec#format(JsonProvider, Object, FormatOptions)} renders JSON numbers.
  * <p>
  * Instances are immutable and can be reused across calls. Build one with {@link #newBuilder()}.
  * Options apply to numbers at every depth of the value.

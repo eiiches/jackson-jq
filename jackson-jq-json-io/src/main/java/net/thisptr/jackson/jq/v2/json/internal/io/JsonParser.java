@@ -1,6 +1,8 @@
-package net.thisptr.jackson.jq.v2.json;
+package net.thisptr.jackson.jq.v2.json.internal.io;
 
 import java.io.Closeable;
+
+import net.thisptr.jackson.jq.v2.json.Maybe;
 
 /**
  * Reads a sequence of JSON values from a stream, one value at a time.

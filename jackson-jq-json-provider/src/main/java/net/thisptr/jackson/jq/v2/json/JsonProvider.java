@@ -1,18 +1,12 @@
 package net.thisptr.jackson.jq.v2.json;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -21,7 +15,7 @@ import org.jspecify.annotations.Nullable;
  * or a Jakarta JSON-P {@code JsonValue}) without depending on any one of them directly.
  * <p>
  * The type parameter {@code JsonNode} is the native, immutable tree node type of the underlying JSON
- * library; implementations wrap that library's parser/tree-model APIs. Nodes are expected to be
+ * library; implementations expose that library's tree-model operations. Nodes are expected to be
  * treated as immutable by callers: mutating operations return new nodes rather than modifying
  * existing ones in place.
  * <p>
@@ -556,81 +550,4 @@ public interface JsonProvider<JsonNode> {
 	 */
 	JsonNode deepCopy(JsonNode node);
 
-	/**
-	 * Serializes the node to a JSON string, following jq's serialization semantics rather than the
-	 * underlying JSON library's default: non-finite doubles are substituted with a finite value
-	 * ({@code NaN} becomes {@code null}; {@code Infinity}/{@code -Infinity} become the maximum/minimum
-	 * finite double), and HTML-significant characters ({@code <}, {@code >}, {@code &}, {@code '})
-	 * are not Unicode-escaped. The default implementation uses this provider's node accessors and
-	 * preserves the precision and scale of {@link BigDecimal} nodes.
-	 *
-	 * @param node the JSON node
-	 * @return the JSON text representation of {@code node}
-	 */
-	default String format(JsonNode node) {
-		return DefaultJsonFormatter.format(this, node, FormatOptions.getDefaultInstance());
-	}
-
-	/**
-	 * Serializes the node using the given number formatting options. The options apply recursively
-	 * to numbers in arrays and objects.
-	 *
-	 * @param node the JSON node
-	 * @param options the number formatting options
-	 * @return the JSON text representation of {@code node}
-	 */
-	default String format(JsonNode node, FormatOptions options) {
-		if (options == FormatOptions.getDefaultInstance())
-			return format(node);
-		return DefaultJsonFormatter.format(this, node, options);
-	}
-
-	/**
-	 * Creates a parser reading a sequence of JSON values from the given UTF-8 stream.
-	 * <p>
-	 * The default implementation builds values with this provider's node factories. It reads lazily
-	 * as values are pulled and closes the stream when the parser is closed.
-	 *
-	 * @param in the stream to read from
-	 * @return a parser over {@code in}
-	 */
-	default JsonParser<JsonNode> createParser(InputStream in) {
-		return new DefaultJsonParser<>(this, in);
-	}
-
-	/**
-	 * Parses multiple JSON documents from a string.
-	 * Used for loading configuration files containing multiple JSON values.
-	 *
-	 * @param json the JSON text to parse
-	 * @return the parsed JSON nodes, in document order
-	 * @throws JsonException if any document fails to parse
-	 */
-	default List<JsonNode> parseAll(String json) {
-		List<JsonNode> result = new ArrayList<>();
-		try (JsonParser<JsonNode> parser = createParser(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)))) {
-			for (@Var Maybe<JsonNode> value = parser.next(); value.isPresent(); value = parser.next())
-				result.add(value.get());
-		}
-		return result;
-	}
-
-	/**
-	 * Parses a JSON string strictly: the string must contain exactly one JSON value, with no
-	 * leading/trailing garbage other than whitespace, and must not be empty or whitespace-only.
-	 *
-	 * @param json the JSON string to parse
-	 * @return the parsed JSON node
-	 * @throws JsonException if parsing fails, {@code json} is empty or whitespace-only, or trailing content exists
-	 */
-	default JsonNode parse(String json) {
-		try (JsonParser<JsonNode> parser = createParser(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)))) {
-			Maybe<JsonNode> value = parser.next();
-			if (value.isAbsent())
-				throw new JsonException("empty input");
-			if (parser.next().isPresent())
-				throw new JsonException("trailing content");
-			return value.get();
-		}
-	}
 }

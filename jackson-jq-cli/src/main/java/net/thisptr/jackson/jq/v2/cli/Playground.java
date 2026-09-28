@@ -60,6 +60,7 @@ import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
 import net.thisptr.jackson.jq.v2.core.internal.typecheck.ConstantTypes;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.FilterType;
@@ -274,7 +275,7 @@ final class Playground<N> {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		for (N in : inputs) {
 			try {
-				baos.write(jsonProvider.format(in).getBytes(StandardCharsets.UTF_8));
+				baos.write(JsonCodec.format(jsonProvider, in).getBytes(StandardCharsets.UTF_8));
 				baos.write('\n');
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
@@ -1830,7 +1831,7 @@ final class Playground<N> {
 					} else if (provider.isString(output) && rawOutput) {
 						formatted = provider.getString(output);
 					} else if (compact) {
-						formatted = provider.format(output);
+						formatted = JsonCodec.format(provider, output);
 					} else {
 						formatted = JqPrettyPrinter.print(provider, output, PRETTY_INDENT);
 					}
@@ -2071,7 +2072,7 @@ final class Playground<N> {
 					} else if (provider.isString(output) && rawOutput) {
 						out.println(provider.getString(output));
 					} else if (compact) {
-						out.println(provider.format(output));
+						out.println(JsonCodec.format(provider, output));
 					} else {
 						out.println(JqPrettyPrinter.print(provider, output, PRETTY_INDENT));
 					}

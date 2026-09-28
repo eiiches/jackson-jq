@@ -79,6 +79,7 @@ jjq_java_library(
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/path/utils",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/tree/binaryop",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/version",
+        "//jackson-jq-json-io",
         "//jackson-jq-json-provider",
         "//jackson-jq-spi",
     ],

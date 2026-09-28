@@ -5,8 +5,9 @@ import java.util.List;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
-import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonException;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -48,9 +49,9 @@ public class FromJsonFunction implements Function {
 
 			JsonNode tree;
 			try {
-				tree = jsonProvider.parse(jsonProvider.getString(in));
+				tree = JsonCodec.parse(jsonProvider, jsonProvider.getString(in));
 			} catch (JsonException e) {
-				throw new JsonQueryException(String.format("failed to parse %s as json", jsonProvider.format(in)), e);
+				throw new JsonQueryException(String.format("failed to parse %s as json", JsonCodec.format(jsonProvider, in)), e);
 			}
 			output.emit(tree, UntrackedPath.getInstance());
 		};

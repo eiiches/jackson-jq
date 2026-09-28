@@ -22,7 +22,6 @@ public class Jackson2JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 
 	@Override
 	protected JsonNode parseTestNode(JsonNode node) {
-		// Test data is already in Jackson JsonNode format
 		return node;
 	}
 }

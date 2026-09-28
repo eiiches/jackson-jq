@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.v2.json;
+package net.thisptr.jackson.jq.v2.json.internal.io;
 
 import org.junit.jupiter.api.Test;
 

@@ -14,6 +14,7 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 import net.thisptr.jackson.jq.v2.test.evaluator.Evaluator;
 
@@ -42,7 +43,7 @@ public class JacksonJqRunner<N> implements Evaluator {
 		try {
 			expr.apply(in, out -> {
 				try {
-					values.add(MAPPER.readTree(jsonProvider.format(out)));
+					values.add(MAPPER.readTree(JsonCodec.format(jsonProvider, out)));
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}
@@ -68,7 +69,7 @@ public class JacksonJqRunner<N> implements Evaluator {
 				try {
 					Environment<N> env = EnvironmentBuilder.withDefaultLoaders(jsonProvider, jqVersion).build();
 					JsonQuery<N> jq = env.compile(exprText);
-					N nativeIn = jsonProvider.parse(in.toString());
+					N nativeIn = JsonCodec.parse(jsonProvider, in.toString());
 					result.set(doEvaluate(jq, nativeIn));
 				} catch (Throwable e) {
 					exception.set(e);

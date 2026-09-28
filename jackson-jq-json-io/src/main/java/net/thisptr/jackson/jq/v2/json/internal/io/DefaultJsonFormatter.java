@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.v2.json;
+package net.thisptr.jackson.jq.v2.json.internal.io;
 
 import java.math.BigDecimal;
 import java.util.Base64;
@@ -7,6 +7,9 @@ import java.util.Map;
 
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
+
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.NumberType;
 
 final class DefaultJsonFormatter {
 	private DefaultJsonFormatter() {

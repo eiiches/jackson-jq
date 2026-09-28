@@ -11,11 +11,13 @@ jjq_java_library(
     release = 17,
     visibility = ["//jackson-jq-benchmark:__subpackages__"],
     runtime_deps = [
+        "//jackson-jq-json-io",
         "@maven//:org_eclipse_parsson_parsson",
     ],
     deps = [
         "//jackson-jq-core",
         "//jackson-jq-ext-module-joni",
+        "//jackson-jq-json-io",
         "//jackson-jq-json-provider",
         "//jackson-jq-json-provider-impl-fastjson2",
         "//jackson-jq-json-provider-impl-gson",

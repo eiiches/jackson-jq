@@ -35,6 +35,7 @@ jjq_java_library(
         "//jackson-jq-ext-module-uri",
         "//jackson-jq-ext-module-uuid",
         "//jackson-jq-ext-module-zstd",
+        "//jackson-jq-json-io",
         "//jackson-jq-json-provider",
         "//jackson-jq-json-provider-impl-fastjson2",
         "//jackson-jq-json-provider-impl-gson",

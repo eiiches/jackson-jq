@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
@@ -117,9 +118,9 @@ class EnvironmentVariableTypeTest {
 
 	@Test
 	void constantContainerTypesDescribeTheirContents() throws JsonQueryException {
-		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.parse("[1, \"a\"]"))))
+		assertThat(typeOfVariable(b -> b.defineConstant("x", JsonCodec.parse(PROVIDER, "[1, \"a\"]"))))
 				.isEqualTo(ArrayType.of(List.of(NumericType.of(1), StringType.of("a"))));
-		assertThat(typeOfVariable(b -> b.defineConstant("x", PROVIDER.parse("{\"a\": 1, \"b\": {\"c\": \"s\"}}"))))
+		assertThat(typeOfVariable(b -> b.defineConstant("x", JsonCodec.parse(PROVIDER, "{\"a\": 1, \"b\": {\"c\": \"s\"}}"))))
 				.isEqualTo(ObjectType.of(
 						"a", NumericType.of(1),
 						"b", ObjectType.of("c", StringType.of("s"))));
@@ -163,7 +164,7 @@ class EnvironmentVariableTypeTest {
 	void aConstantObjectIsClosed() throws JsonQueryException {
 		List<Diagnostic> diagnostics = new ArrayList<>();
 		Environment<JsonNode> environment = builder()
-				.defineConstant("cfg", PROVIDER.parse("{\"a\": 1}"))
+				.defineConstant("cfg", JsonCodec.parse(PROVIDER, "{\"a\": 1}"))
 				.build();
 		assertThat(environment.compile("$cfg.typo", strict(diagnostics)).getType().outputType()).isSameAs(NullType.getInstance());
 		assertThat(diagnostics).singleElement().satisfies(diagnostic ->

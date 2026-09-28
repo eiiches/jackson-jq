@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.JsonProviderContractTest;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,8 +28,8 @@ public class Fastjson2JsonProviderContractTest implements JsonProviderContractTe
 	void testFormatBinaryAsBase64() {
 		Object binary = getProvider().createBinary(new byte[] { 0, 1, 127, -128 });
 
-		assertThat(getProvider().format(binary)).isEqualTo("\"AAF/gA==\"");
-		assertThat(getProvider().format(getProvider().createObject(Collections.singletonMap("binary", binary))))
+		assertThat(JsonCodec.format(getProvider(), binary)).isEqualTo("\"AAF/gA==\"");
+		assertThat(JsonCodec.format(getProvider(), getProvider().createObject(Collections.singletonMap("binary", binary))))
 				.isEqualTo("{\"binary\":\"AAF/gA==\"}");
 	}
 

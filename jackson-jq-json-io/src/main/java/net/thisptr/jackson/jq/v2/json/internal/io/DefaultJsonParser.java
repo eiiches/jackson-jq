@@ -1,4 +1,4 @@
-package net.thisptr.jackson.jq.v2.json;
+package net.thisptr.jackson.jq.v2.json.internal.io;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.errorprone.annotations.Var;
+
+import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.Maybe;
 
 final class DefaultJsonParser<N> implements JsonParser<N> {
 	private final JsonProvider<N> provider;

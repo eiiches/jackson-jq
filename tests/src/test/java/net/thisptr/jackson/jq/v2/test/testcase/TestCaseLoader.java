@@ -5,12 +5,21 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.cfg.JsonNodeFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 public class TestCaseLoader {
-	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-	private static final ObjectMapper YAML_MAPPER = new YAMLMapper();
+	private static final ObjectMapper JSON_MAPPER = JsonMapper.builder()
+			.enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+			.disable(JsonNodeFeature.STRIP_TRAILING_BIGDECIMAL_ZEROES)
+			.build();
+	private static final ObjectMapper YAML_MAPPER = YAMLMapper.builder()
+			.enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+			.disable(JsonNodeFeature.STRIP_TRAILING_BIGDECIMAL_ZEROES)
+			.build();
 
 	private static List<TestCase> loadTestCases(String resourceName, InputStream in) throws IOException {
 		TestCase[] result;
@@ -25,6 +34,10 @@ public class TestCaseLoader {
 			tc.file = resourceName;
 		}
 		return List.of(result);
+	}
+
+	public static TestCase parseTestCase(String json) throws IOException {
+		return JSON_MAPPER.readValue(json, TestCase.class);
 	}
 
 	public static Stream<String> loadTestCasesAsJsonStrings(String resourceName) throws IOException {

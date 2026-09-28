@@ -13,6 +13,7 @@ import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.path.IntIndexPath;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.RootPath;
@@ -29,7 +30,7 @@ public class PathOperationsTest {
 		List<JsonNode> values = new ArrayList<>();
 		List<Path<JsonNode>> paths = new ArrayList<>();
 
-		PathOperations.resolve(JSON_PROVIDER, path, JSON_PROVIDER.parse("[10,20]"), RootPath.getInstance(), (value, valuePath) -> {
+		PathOperations.resolve(JSON_PROVIDER, path, JsonCodec.parse(JSON_PROVIDER, "[10,20]"), RootPath.getInstance(), (value, valuePath) -> {
 			values.add(value);
 			paths.add(Objects.requireNonNull(valuePath));
 		}, false, Versions.JQ_1_8_2);
@@ -45,7 +46,7 @@ public class PathOperationsTest {
 		List<JsonNode> values = new ArrayList<>();
 		List<Path<JsonNode>> paths = new ArrayList<>();
 
-		PathOperations.resolve(JSON_PROVIDER, path, JSON_PROVIDER.parse("[10,20]"), RootPath.getInstance(), (value, valuePath) -> {
+		PathOperations.resolve(JSON_PROVIDER, path, JsonCodec.parse(JSON_PROVIDER, "[10,20]"), RootPath.getInstance(), (value, valuePath) -> {
 			values.add(value);
 			paths.add(Objects.requireNonNull(valuePath));
 		}, false, Versions.JQ_1_8_2);
@@ -58,24 +59,24 @@ public class PathOperationsTest {
 	void mutatesAndExtendsArraysThroughIntIndexPath() {
 		JsonNode replaced = PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendIndex(-1),
-				JSON_PROVIDER.parse("[1,2]"),
+				JsonCodec.parse(JSON_PROVIDER, "[1,2]"),
 				oldValue -> JSON_PROVIDER.createNumber(9),
 				Versions.JQ_1_8_2);
 		JsonNode extended = PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendIndex(2),
-				JSON_PROVIDER.parse("[1]"),
+				JsonCodec.parse(JSON_PROVIDER, "[1]"),
 				oldValue -> JSON_PROVIDER.createNumber(9),
 				Versions.JQ_1_8_2);
 
-		assertThat(replaced).isEqualTo(JSON_PROVIDER.parse("[1,9]"));
-		assertThat(extended).isEqualTo(JSON_PROVIDER.parse("[1,null,9]"));
+		assertThat(replaced).isEqualTo(JsonCodec.parse(JSON_PROVIDER, "[1,9]"));
+		assertThat(extended).isEqualTo(JsonCodec.parse(JSON_PROVIDER, "[1,null,9]"));
 	}
 
 	@Test
 	void rejectsInvalidIntIndexPathMutations() {
 		assertThatThrownBy(() -> PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendIndex(-3),
-				JSON_PROVIDER.parse("[1,2]"),
+				JsonCodec.parse(JSON_PROVIDER, "[1,2]"),
 				oldValue -> JSON_PROVIDER.createNumber(9),
 				Versions.JQ_1_8_2))
 				.hasMessage("Out of bounds negative array index");
@@ -92,38 +93,38 @@ public class PathOperationsTest {
 	void mutatesAndExtendsArraysThroughNumberIndexPath() {
 		JsonNode replaced = PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendIndex(JSON_PROVIDER, JSON_PROVIDER.createNumber(-1)),
-				JSON_PROVIDER.parse("[1,2]"),
+				JsonCodec.parse(JSON_PROVIDER, "[1,2]"),
 				oldValue -> JSON_PROVIDER.createNumber(9),
 				Versions.JQ_1_8_2);
 		JsonNode extended = PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendIndex(JSON_PROVIDER, JSON_PROVIDER.createNumber(2)),
-				JSON_PROVIDER.parse("[1]"),
+				JsonCodec.parse(JSON_PROVIDER, "[1]"),
 				oldValue -> JSON_PROVIDER.createNumber(9),
 				Versions.JQ_1_8_2);
 
-		assertThat(replaced).isEqualTo(JSON_PROVIDER.parse("[1,9]"));
-		assertThat(extended).isEqualTo(JSON_PROVIDER.parse("[1,null,9]"));
+		assertThat(replaced).isEqualTo(JsonCodec.parse(JSON_PROVIDER, "[1,9]"));
+		assertThat(extended).isEqualTo(JsonCodec.parse(JSON_PROVIDER, "[1,null,9]"));
 	}
 
 	@Test
 	void rejectsInvalidNumberIndexPathMutations() {
 		assertThatThrownBy(() -> PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendIndex(JSON_PROVIDER, JSON_PROVIDER.createNumber(-3)),
-				JSON_PROVIDER.parse("[1,2]"),
+				JsonCodec.parse(JSON_PROVIDER, "[1,2]"),
 				oldValue -> JSON_PROVIDER.createNumber(9),
 				Versions.JQ_1_8_2))
 				.hasMessage("Out of bounds negative array index");
 
 		assertThatThrownBy(() -> PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendIndex(JSON_PROVIDER, JSON_PROVIDER.createNumber(Double.NaN)),
-				JSON_PROVIDER.parse("[1,2]"),
+				JsonCodec.parse(JSON_PROVIDER, "[1,2]"),
 				oldValue -> JSON_PROVIDER.createNumber(9),
 				Versions.JQ_1_8_2))
 				.hasMessage("Cannot use nan as array index");
 
 		assertThatThrownBy(() -> PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendIndex(JSON_PROVIDER, JSON_PROVIDER.createNumber(Double.POSITIVE_INFINITY)),
-				JSON_PROVIDER.parse("[1,2]"),
+				JsonCodec.parse(JSON_PROVIDER, "[1,2]"),
 				oldValue -> JSON_PROVIDER.createNumber(9),
 				Versions.JQ_1_8_2))
 				.hasMessage("Cannot use infinite as array index");
@@ -133,18 +134,18 @@ public class PathOperationsTest {
 	void mutatesObjectFieldsPreservingFieldOrder() {
 		JsonNode updated = PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendKey("b"),
-				JSON_PROVIDER.parse("{\"a\":1,\"b\":2,\"c\":3}"),
+				JsonCodec.parse(JSON_PROVIDER, "{\"a\":1,\"b\":2,\"c\":3}"),
 				oldValue -> JSON_PROVIDER.createNumber(20),
 				Versions.JQ_1_8_2);
 
-		assertThat(JSON_PROVIDER.format(updated)).isEqualTo("{\"a\":1,\"b\":20,\"c\":3}");
+		assertThat(JsonCodec.format(JSON_PROVIDER, updated)).isEqualTo("{\"a\":1,\"b\":20,\"c\":3}");
 	}
 
 	@Test
 	void mutatesObjectFieldsAppendingNewKeys() {
 		JsonNode extended = PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendKey("d"),
-				JSON_PROVIDER.parse("{\"a\":1,\"b\":2}"),
+				JsonCodec.parse(JSON_PROVIDER, "{\"a\":1,\"b\":2}"),
 				oldValue -> {
 					// A location that holds nothing yet is presented as a JSON null, never as Java null.
 					assertThat(JSON_PROVIDER.getNodeType(oldValue)).isEqualTo(JsonNodeType.NULL);
@@ -152,38 +153,38 @@ public class PathOperationsTest {
 				},
 				Versions.JQ_1_8_2);
 
-		assertThat(JSON_PROVIDER.format(extended)).isEqualTo("{\"a\":1,\"b\":2,\"d\":4}");
+		assertThat(JsonCodec.format(JSON_PROVIDER, extended)).isEqualTo("{\"a\":1,\"b\":2,\"d\":4}");
 	}
 
 	@Test
 	void mutatesArraySliceWithShorterReplacement() {
 		List<JsonNode> capturedOldSlice = new ArrayList<>();
-		JsonNode replacement = JSON_PROVIDER.parse("[9]");
+		JsonNode replacement = JsonCodec.parse(JSON_PROVIDER, "[9]");
 
 		JsonNode result = PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendIndexRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(1), JSON_PROVIDER.createNumber(4)),
-				JSON_PROVIDER.parse("[0,1,2,3,4]"),
+				JsonCodec.parse(JSON_PROVIDER, "[0,1,2,3,4]"),
 				oldValue -> {
 					capturedOldSlice.add(oldValue);
 					return replacement;
 				},
 				Versions.JQ_1_8_2);
 
-		assertThat(capturedOldSlice).containsExactly(JSON_PROVIDER.parse("[1,2,3]"));
-		assertThat(result).isEqualTo(JSON_PROVIDER.parse("[0,9,4]"));
+		assertThat(capturedOldSlice).containsExactly(JsonCodec.parse(JSON_PROVIDER, "[1,2,3]"));
+		assertThat(result).isEqualTo(JsonCodec.parse(JSON_PROVIDER, "[0,9,4]"));
 	}
 
 	@Test
 	void mutatesArraySliceWithLongerReplacement() {
-		JsonNode replacement = JSON_PROVIDER.parse("[8,9,10]");
+		JsonNode replacement = JsonCodec.parse(JSON_PROVIDER, "[8,9,10]");
 
 		JsonNode result = PathOperations.mutate(JSON_PROVIDER, RuntimeLimitsImpl.UNLIMITED,
 				RootPath.<JsonNode>getInstance().appendIndexRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(1), JSON_PROVIDER.createNumber(2)),
-				JSON_PROVIDER.parse("[0,1,2]"),
+				JsonCodec.parse(JSON_PROVIDER, "[0,1,2]"),
 				oldValue -> replacement,
 				Versions.JQ_1_8_2);
 
-		assertThat(result).isEqualTo(JSON_PROVIDER.parse("[0,8,9,10,2]"));
+		assertThat(result).isEqualTo(JsonCodec.parse(JSON_PROVIDER, "[0,8,9,10,2]"));
 	}
 
 	@Test
@@ -191,11 +192,11 @@ public class PathOperationsTest {
 		List<JsonNode> values = new ArrayList<>();
 		Path<JsonNode> path = RootPath.<JsonNode>getInstance().appendIndexRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(1), JSON_PROVIDER.createNumber(10));
 
-		PathOperations.resolve(JSON_PROVIDER, path, JSON_PROVIDER.parse("[0,1,2]"), RootPath.getInstance(), (value, valuePath) -> {
+		PathOperations.resolve(JSON_PROVIDER, path, JsonCodec.parse(JSON_PROVIDER, "[0,1,2]"), RootPath.getInstance(), (value, valuePath) -> {
 			values.add(value);
 		}, false, Versions.JQ_1_8_2);
 
-		assertThat(values).containsExactly(JSON_PROVIDER.parse("[1,2]"));
+		assertThat(values).containsExactly(JsonCodec.parse(JSON_PROVIDER, "[1,2]"));
 	}
 
 	@Test
@@ -203,47 +204,47 @@ public class PathOperationsTest {
 		List<JsonNode> values = new ArrayList<>();
 		Path<JsonNode> path = RootPath.<JsonNode>getInstance().appendIndexRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(5), JSON_PROVIDER.createNumber(10));
 
-		PathOperations.resolve(JSON_PROVIDER, path, JSON_PROVIDER.parse("[0,1,2]"), RootPath.getInstance(), (value, valuePath) -> {
+		PathOperations.resolve(JSON_PROVIDER, path, JsonCodec.parse(JSON_PROVIDER, "[0,1,2]"), RootPath.getInstance(), (value, valuePath) -> {
 			values.add(value);
 		}, false, Versions.JQ_1_8_2);
 
-		assertThat(values).containsExactly(JSON_PROVIDER.parse("[]"));
+		assertThat(values).containsExactly(JsonCodec.parse(JSON_PROVIDER, "[]"));
 	}
 
 	@Test
 	void resolvesArrayIndexOfAllMatches() {
 		List<JsonNode> values = new ArrayList<>();
-		Path<JsonNode> path = RootPath.<JsonNode>getInstance().appendIndexOf(JSON_PROVIDER, JSON_PROVIDER.parse("[1,2]"));
+		Path<JsonNode> path = RootPath.<JsonNode>getInstance().appendIndexOf(JSON_PROVIDER, JsonCodec.parse(JSON_PROVIDER, "[1,2]"));
 
-		PathOperations.resolve(JSON_PROVIDER, path, JSON_PROVIDER.parse("[1,2,3,1,2]"), RootPath.getInstance(), (value, valuePath) -> {
+		PathOperations.resolve(JSON_PROVIDER, path, JsonCodec.parse(JSON_PROVIDER, "[1,2,3,1,2]"), RootPath.getInstance(), (value, valuePath) -> {
 			values.add(value);
 		}, false, Versions.JQ_1_8_2);
 
-		assertThat(values).containsExactly(JSON_PROVIDER.parse("[0,3]"));
+		assertThat(values).containsExactly(JsonCodec.parse(JSON_PROVIDER, "[0,3]"));
 	}
 
 	@Test
 	void resolvesArrayIndexOfNoMatches() {
 		List<JsonNode> values = new ArrayList<>();
-		Path<JsonNode> path = RootPath.<JsonNode>getInstance().appendIndexOf(JSON_PROVIDER, JSON_PROVIDER.parse("[9,9]"));
+		Path<JsonNode> path = RootPath.<JsonNode>getInstance().appendIndexOf(JSON_PROVIDER, JsonCodec.parse(JSON_PROVIDER, "[9,9]"));
 
-		PathOperations.resolve(JSON_PROVIDER, path, JSON_PROVIDER.parse("[1,2,3]"), RootPath.getInstance(), (value, valuePath) -> {
+		PathOperations.resolve(JSON_PROVIDER, path, JsonCodec.parse(JSON_PROVIDER, "[1,2,3]"), RootPath.getInstance(), (value, valuePath) -> {
 			values.add(value);
 		}, false, Versions.JQ_1_8_2);
 
-		assertThat(values).containsExactly(JSON_PROVIDER.parse("[]"));
+		assertThat(values).containsExactly(JsonCodec.parse(JSON_PROVIDER, "[]"));
 	}
 
 	@Test
 	void resolvesArrayIndexOfEmptySubsequenceToEmptyResult() {
 		List<JsonNode> values = new ArrayList<>();
-		Path<JsonNode> path = RootPath.<JsonNode>getInstance().appendIndexOf(JSON_PROVIDER, JSON_PROVIDER.parse("[]"));
+		Path<JsonNode> path = RootPath.<JsonNode>getInstance().appendIndexOf(JSON_PROVIDER, JsonCodec.parse(JSON_PROVIDER, "[]"));
 
-		PathOperations.resolve(JSON_PROVIDER, path, JSON_PROVIDER.parse("[1,2,3]"), RootPath.getInstance(), (value, valuePath) -> {
+		PathOperations.resolve(JSON_PROVIDER, path, JsonCodec.parse(JSON_PROVIDER, "[1,2,3]"), RootPath.getInstance(), (value, valuePath) -> {
 			values.add(value);
 		}, false, Versions.JQ_1_8_2);
 
-		assertThat(values).containsExactly(JSON_PROVIDER.parse("[]"));
+		assertThat(values).containsExactly(JsonCodec.parse(JSON_PROVIDER, "[]"));
 	}
 
 	@Test

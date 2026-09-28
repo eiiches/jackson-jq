@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.exception;
 import java.io.Serial;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 public class JsonQueryUserException extends JsonQueryException {
@@ -14,7 +15,7 @@ public class JsonQueryUserException extends JsonQueryException {
 	public <JsonNode> JsonQueryUserException(JsonProvider<JsonNode> jsonProvider, JsonNode value) {
 		super(jsonProvider.isString(value)
 				? jsonProvider.getString(value)
-				: jsonProvider.format(value));
+				: JsonCodec.format(jsonProvider, value));
 		this.value = value;
 	}
 

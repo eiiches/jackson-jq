@@ -26,9 +26,10 @@ import java.util.zip.InflaterInputStream;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
-import net.thisptr.jackson.jq.v2.json.JsonException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonException;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
@@ -330,7 +331,7 @@ public class HttpGetFunction implements Function {
 			return jsonProvider.createString(text);
 		}
 		try {
-			JsonNode body = jsonProvider.parse(text);
+			JsonNode body = JsonCodec.parse(jsonProvider, text);
 			checkNodeLimits(jsonProvider, limits, body);
 			return body;
 		} catch (JsonException e) {

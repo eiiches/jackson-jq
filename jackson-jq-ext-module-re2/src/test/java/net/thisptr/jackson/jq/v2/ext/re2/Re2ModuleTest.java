@@ -12,6 +12,7 @@ import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,7 +27,7 @@ public class Re2ModuleTest {
 		assertThat(run("\"abc\" | re::test(\"^a\")")).containsExactly(JSON_PROVIDER.createBoolean(true));
 		assertThat(run("\"abc\" | re::test([\"^a\", \"\"])")).containsExactly(JSON_PROVIDER.createBoolean(true));
 		assertThat(run("\"abc\" | re::match(\"b\"; \"\") | [.offset, .length, .string]")).singleElement().satisfies(result ->
-				assertThat(JSON_PROVIDER.format(result)).isEqualTo("[1,1,\"b\"]"));
+				assertThat(JsonCodec.format(JSON_PROVIDER, result)).isEqualTo("[1,1,\"b\"]"));
 		assertThat(run("\"abc\" | re::match([\"b\", \"\"]) | .string")).extracting(JSON_PROVIDER::getString).containsExactly("b");
 		assertThat(run("\"abc\" | re::capture(\"(?<value>b)\"; \"\") | .value")).extracting(JSON_PROVIDER::getString).containsExactly("b");
 		assertThat(run("\"abc\" | re::capture([\"(?P<value>b)\", \"\"]) | .value")).extracting(JSON_PROVIDER::getString).containsExactly("b");
@@ -60,7 +61,7 @@ public class Re2ModuleTest {
 	@Test
 	public void reportsCodePointOffsetsAndAdvancesZeroWidthMatchesByCodePoint() {
 		assertThat(run("\"a😀b\" | re::match(\"😀\"; \"\") | [.offset, .length]")).singleElement().satisfies(result ->
-				assertThat(JSON_PROVIDER.format(result)).isEqualTo("[1,1]"));
+				assertThat(JsonCodec.format(JSON_PROVIDER, result)).isEqualTo("[1,1]"));
 		assertThat(run("\"a😀b\" | re::gsub(\"\"; \"X\")")).extracting(JSON_PROVIDER::getString).containsExactly("XaX😀XbX");
 	}
 

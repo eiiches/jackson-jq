@@ -9,6 +9,7 @@ import com.google.errorprone.annotations.Var;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,7 +32,7 @@ public class PathTest {
 				jsonProvider.createString("a"),
 				jsonProvider.createNumber(2),
 				jsonProvider.createNumber(4),
-				jsonProvider.parse("{\"start\":null,\"end\":3}"),
+				JsonCodec.parse(jsonProvider, "{\"start\":null,\"end\":3}"),
 				searchSequence);
 		assertThat(((IndexOfPath<JsonNode>) path).getSearchSequence()).isSameAs(searchSequence);
 	}
@@ -54,7 +55,7 @@ public class PathTest {
 		JsonNode end = jsonProvider.createBoolean(false);
 
 		assertThat(IndexRangePath.of(parent, start, end).toJsonList(jsonProvider))
-				.containsExactly(jsonProvider.parse("{\"start\":\"start\",\"end\":false}"));
+				.containsExactly(JsonCodec.parse(jsonProvider, "{\"start\":\"start\",\"end\":false}"));
 	}
 
 	@Test

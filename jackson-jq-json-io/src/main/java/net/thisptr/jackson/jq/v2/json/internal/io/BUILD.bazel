@@ -1,0 +1,16 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "io",
+    srcs = [
+        "DefaultJsonFormatter.java",
+        "DefaultJsonParser.java",
+        "FormatOptions.java",
+        "JsonCodec.java",
+        "JsonException.java",
+        "JsonParser.java",
+    ],
+    release = 17,
+    visibility = ["//jackson-jq-json-io:__subpackages__"],
+    deps = ["//jackson-jq-json-provider"],
+)

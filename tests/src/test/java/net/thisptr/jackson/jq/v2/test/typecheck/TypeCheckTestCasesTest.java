@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.function.Executable;
 
@@ -34,8 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertAll;
  * produced by the compiler, and that the runtime output values conform to the expected output type.
  */
 public class TypeCheckTestCasesTest {
-	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-
 	private void testVersion(TestCase tc, Version version, @Nullable Path moduleSearchPath) {
 		EnvironmentBuilder<JsonNode> envBuilder = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), version);
 		if (moduleSearchPath != null) {
@@ -84,7 +81,7 @@ public class TypeCheckTestCasesTest {
 	}
 
 	public void test(String tcText) throws Throwable {
-		TestCase tc = JSON_MAPPER.readValue(tcText, TestCase.class);
+		TestCase tc = TestCaseLoader.parseTestCase(tcText);
 		if (!tc.shouldCompile || tc.types == null || tc.types.isEmpty()) {
 			return;
 		}

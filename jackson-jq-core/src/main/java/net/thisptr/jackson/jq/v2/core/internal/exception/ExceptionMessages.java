@@ -6,6 +6,7 @@ import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public final class ExceptionMessages {
@@ -24,7 +25,7 @@ public final class ExceptionMessages {
 	public static <JsonNode> String describe(JsonProvider<JsonNode> jsonProvider, Version version, JsonNode node) {
 		@Var String json;
 		try {
-			json = truncate(jsonProvider.format(node), version);
+			json = truncate(JsonCodec.format(jsonProvider, node), version);
 		} catch (Exception e) {
 			json = "<failed to format json>";
 		}
@@ -69,7 +70,7 @@ public final class ExceptionMessages {
 	public static <JsonNode> String cannotIndex(JsonProvider<JsonNode> jsonProvider, Version version, String inType, JsonNode accessor) {
 		JsonNodeType accessorType = jsonProvider.getNodeType(accessor);
 		if (version.compareTo(Version.of(1, 8, 2)) >= 0) {
-			String formatted = truncate(jsonProvider.format(accessor), version);
+			String formatted = truncate(JsonCodec.format(jsonProvider, accessor), version);
 			return String.format("Cannot index %s with %s (%s)", inType, typeName(accessorType), formatted);
 		} else {
 			if (accessorType == JsonNodeType.STRING) {

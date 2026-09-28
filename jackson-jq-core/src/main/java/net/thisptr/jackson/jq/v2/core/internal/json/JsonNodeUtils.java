@@ -5,9 +5,10 @@ import java.util.Locale;
 
 import net.thisptr.jackson.jq.v2.core.internal.commons.collection.Lists;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
-import net.thisptr.jackson.jq.v2.json.FormatOptions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.FormatOptions;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class JsonNodeUtils {
@@ -54,13 +55,13 @@ public class JsonNodeUtils {
 	}
 
 	public static <JsonNode> String toString(JsonProvider<JsonNode> jsonProvider, JsonNode node) {
-		return jsonProvider.format(node);
+		return JsonCodec.format(jsonProvider, node);
 	}
 
 	public static <JsonNode> String toString(JsonProvider<JsonNode> jsonProvider, JsonNode node, Version version) {
 		if (version.compareTo(Versions.JQ_1_7) < 0)
-			return jsonProvider.format(node, LEGACY_FORMAT_OPTIONS);
-		return jsonProvider.format(node);
+			return JsonCodec.format(jsonProvider, node, LEGACY_FORMAT_OPTIONS);
+		return JsonCodec.format(jsonProvider, node);
 	}
 
 	/**

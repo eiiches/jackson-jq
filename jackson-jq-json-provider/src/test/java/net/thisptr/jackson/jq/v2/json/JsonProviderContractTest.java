@@ -19,6 +19,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 import net.thisptr.jackson.jq.v2.json.internal.collections.JsonList;
+import net.thisptr.jackson.jq.v2.json.internal.io.FormatOptions;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonException;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonParser;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -535,14 +539,14 @@ public interface JsonProviderContractTest<T> {
 	}
 
 	default void assertTypePredicates(T node, JsonNodeType expected) {
-		assertThat(getProvider().getNodeType(node)).as("getNodeType(%s)", getProvider().format(node)).isEqualTo(expected);
-		assertThat(getProvider().isObject(node)).as("isObject(%s)", getProvider().format(node)).isEqualTo(expected == JsonNodeType.OBJECT);
-		assertThat(getProvider().isArray(node)).as("isArray(%s)", getProvider().format(node)).isEqualTo(expected == JsonNodeType.ARRAY);
-		assertThat(getProvider().isString(node)).as("isString(%s)", getProvider().format(node)).isEqualTo(expected == JsonNodeType.STRING);
-		assertThat(getProvider().isNumber(node)).as("isNumber(%s)", getProvider().format(node)).isEqualTo(expected == JsonNodeType.NUMBER);
-		assertThat(getProvider().isBoolean(node)).as("isBoolean(%s)", getProvider().format(node)).isEqualTo(expected == JsonNodeType.BOOLEAN);
-		assertThat(getProvider().isNull(node)).as("isNull(%s)", getProvider().format(node)).isEqualTo(expected == JsonNodeType.NULL);
-		assertThat(getProvider().isBinary(node)).as("isBinary(%s)", getProvider().format(node)).isEqualTo(expected == JsonNodeType.BINARY);
+		assertThat(getProvider().getNodeType(node)).as("getNodeType(%s)", JsonCodec.format(getProvider(), node)).isEqualTo(expected);
+		assertThat(getProvider().isObject(node)).as("isObject(%s)", JsonCodec.format(getProvider(), node)).isEqualTo(expected == JsonNodeType.OBJECT);
+		assertThat(getProvider().isArray(node)).as("isArray(%s)", JsonCodec.format(getProvider(), node)).isEqualTo(expected == JsonNodeType.ARRAY);
+		assertThat(getProvider().isString(node)).as("isString(%s)", JsonCodec.format(getProvider(), node)).isEqualTo(expected == JsonNodeType.STRING);
+		assertThat(getProvider().isNumber(node)).as("isNumber(%s)", JsonCodec.format(getProvider(), node)).isEqualTo(expected == JsonNodeType.NUMBER);
+		assertThat(getProvider().isBoolean(node)).as("isBoolean(%s)", JsonCodec.format(getProvider(), node)).isEqualTo(expected == JsonNodeType.BOOLEAN);
+		assertThat(getProvider().isNull(node)).as("isNull(%s)", JsonCodec.format(getProvider(), node)).isEqualTo(expected == JsonNodeType.NULL);
+		assertThat(getProvider().isBinary(node)).as("isBinary(%s)", JsonCodec.format(getProvider(), node)).isEqualTo(expected == JsonNodeType.BINARY);
 	}
 
 	/**
@@ -555,7 +559,7 @@ public interface JsonProviderContractTest<T> {
 		Map<JsonNodeType, List<T>> samples = new LinkedHashMap<>();
 		samples.put(JsonNodeType.NULL, JsonList.of(
 				getProvider().createNull(),
-				getProvider().parse("null")));
+				JsonCodec.parse(getProvider(), "null")));
 		samples.put(JsonNodeType.BOOLEAN, JsonList.of(
 				getProvider().createBoolean(true),
 				getProvider().createBoolean(false)));
@@ -810,7 +814,7 @@ public interface JsonProviderContractTest<T> {
 	default void testFormat() {
 		T obj = getProvider().createObject(mapOf("name", getProvider().createString("test"), "value", getProvider().createNumber(42)));
 
-		String json = getProvider().format(obj);
+		String json = JsonCodec.format(getProvider(), obj);
 		assertThat(json).contains("\"name\"");
 		assertThat(json).contains("\"test\"");
 		assertThat(json).contains("\"value\"");
@@ -819,7 +823,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testFromString() {
-		T node = getProvider().parse("{\"foo\": 123, \"bar\": true}");
+		T node = JsonCodec.parse(getProvider(), "{\"foo\": 123, \"bar\": true}");
 
 		assertThat(getProvider().getNodeType(node)).isEqualTo(JsonNodeType.OBJECT);
 		assertThat(getProvider().getNumberAsIntExact(getProvider().getObjectMemberOrThrow(node, "foo"))).isEqualTo(123);
@@ -828,7 +832,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testFromStringArray() {
-		T node = getProvider().parse("[1, 2, 3]");
+		T node = JsonCodec.parse(getProvider(), "[1, 2, 3]");
 
 		assertThat(getProvider().getNodeType(node)).isEqualTo(JsonNodeType.ARRAY);
 		assertThat(getProvider().getArrayLength(node)).isEqualTo(3);
@@ -836,10 +840,10 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testFromStringPrimitives() {
-		assertThat(getProvider().getNodeType(getProvider().parse("null"))).isEqualTo(JsonNodeType.NULL);
-		assertThat(getProvider().getNodeType(getProvider().parse("true"))).isEqualTo(JsonNodeType.BOOLEAN);
-		assertThat(getProvider().getNodeType(getProvider().parse("123"))).isEqualTo(JsonNodeType.NUMBER);
-		assertThat(getProvider().getNodeType(getProvider().parse("\"hello\""))).isEqualTo(JsonNodeType.STRING);
+		assertThat(getProvider().getNodeType(JsonCodec.parse(getProvider(), "null"))).isEqualTo(JsonNodeType.NULL);
+		assertThat(getProvider().getNodeType(JsonCodec.parse(getProvider(), "true"))).isEqualTo(JsonNodeType.BOOLEAN);
+		assertThat(getProvider().getNodeType(JsonCodec.parse(getProvider(), "123"))).isEqualTo(JsonNodeType.NUMBER);
+		assertThat(getProvider().getNodeType(JsonCodec.parse(getProvider(), "\"hello\""))).isEqualTo(JsonNodeType.STRING);
 	}
 
 	// ===================
@@ -853,7 +857,7 @@ public interface JsonProviderContractTest<T> {
 
 		T copy = getProvider().deepCopy(original);
 
-		assertThat(getProvider().format(copy)).isEqualTo(getProvider().format(original));
+		assertThat(JsonCodec.format(getProvider(), copy)).isEqualTo(JsonCodec.format(getProvider(), original));
 		assertThat(getProvider().getNumberAsIntExact(getProvider().getObjectMemberOrThrow(getProvider().getObjectMemberOrThrow(copy, "nested"), "value"))).isEqualTo(42);
 	}
 
@@ -912,7 +916,7 @@ public interface JsonProviderContractTest<T> {
 	default void testFormatOnNaN() {
 		// format on NaN should return "null" (jq behavior)
 		T node = getProvider().createNumber(Double.NaN);
-		String json = getProvider().format(node);
+		String json = JsonCodec.format(getProvider(), node);
 		assertThat(json).isEqualTo("null");
 	}
 
@@ -920,7 +924,7 @@ public interface JsonProviderContractTest<T> {
 	default void testFormatOnPositiveInfinity() {
 		// format on positive infinity should return the max double value
 		T node = getProvider().createNumber(Double.POSITIVE_INFINITY);
-		String json = getProvider().format(node);
+		String json = JsonCodec.format(getProvider(), node);
 		assertThat(json).contains("1.7976931348623157e+308");
 	}
 
@@ -928,7 +932,7 @@ public interface JsonProviderContractTest<T> {
 	default void testFormatOnNegativeInfinity() {
 		// format on negative infinity should return the negative max double value
 		T node = getProvider().createNumber(Double.NEGATIVE_INFINITY);
-		String json = getProvider().format(node);
+		String json = JsonCodec.format(getProvider(), node);
 		assertThat(json).contains("-1.7976931348623157e+308");
 	}
 
@@ -936,7 +940,7 @@ public interface JsonProviderContractTest<T> {
 	default void testFormatOnWholeNumberDouble() {
 		// format on a whole number double like 0.0 should serialize without decimal (jq behavior)
 		T node = getProvider().createNumber(0.0);
-		String json = getProvider().format(node);
+		String json = JsonCodec.format(getProvider(), node);
 		assertThat(json).isEqualTo("0");
 	}
 
@@ -944,25 +948,25 @@ public interface JsonProviderContractTest<T> {
 	default void testFormatOnNegativeZero() {
 		// format on -0.0 should serialize as "0" (jq behavior)
 		T node = getProvider().createNumber(-0.0);
-		String json = getProvider().format(node);
+		String json = JsonCodec.format(getProvider(), node);
 		assertThat(json).isEqualTo("0");
 	}
 
 	@Test
 	default void testFormatOptionsApplyToNestedNumbersWithoutChangingStrings() {
-		T node = getProvider().parse("{\"E\":[1.50,1e-7,\"E1E+2\"],\"n\":9007199254740993}");
-		assertThat(getProvider().format(node, FormatOptions.newBuilder().build())).isEqualTo(getProvider().format(node));
-		assertThat(getProvider().format(node)).isEqualTo("{\"E\":[1.50,1E-7,\"E1E+2\"],\"n\":9007199254740993}");
-		assertThat(getProvider().format(node, FormatOptions.newBuilder()
+		T node = JsonCodec.parse(getProvider(), "{\"E\":[1.50,1e-7,\"E1E+2\"],\"n\":9007199254740993}");
+		assertThat(JsonCodec.format(getProvider(), node, FormatOptions.newBuilder().build())).isEqualTo(JsonCodec.format(getProvider(), node));
+		assertThat(JsonCodec.format(getProvider(), node)).isEqualTo("{\"E\":[1.50,1E-7,\"E1E+2\"],\"n\":9007199254740993}");
+		assertThat(JsonCodec.format(getProvider(), node, FormatOptions.newBuilder()
 				.setLowerCaseExponent(true).setRoundNumbersToDouble(true).build()))
 				.isEqualTo("{\"E\":[1.5,1.0e-7,\"E1E+2\"],\"n\":9007199254740992}");
 	}
 
 	@Test
 	default void testFormatOptionsCanChangeExponentCaseIndependently() {
-		T node = getProvider().parse("1e-7");
-		assertThat(getProvider().format(node, FormatOptions.newBuilder().setLowerCaseExponent(true).build())).isEqualTo("1e-7");
-		assertThat(getProvider().format(node, FormatOptions.newBuilder().setRoundNumbersToDouble(true).build())).isEqualTo("1.0E-7");
+		T node = JsonCodec.parse(getProvider(), "1e-7");
+		assertThat(JsonCodec.format(getProvider(), node, FormatOptions.newBuilder().setLowerCaseExponent(true).build())).isEqualTo("1e-7");
+		assertThat(JsonCodec.format(getProvider(), node, FormatOptions.newBuilder().setRoundNumbersToDouble(true).build())).isEqualTo("1.0E-7");
 	}
 
 	// ================================
@@ -972,28 +976,28 @@ public interface JsonProviderContractTest<T> {
 	@Test
 	default void testParseWithEmptyString() {
 		// parse on empty string should throw exception
-		assertThatThrownBy(() -> getProvider().parse(""))
+		assertThatThrownBy(() -> JsonCodec.parse(getProvider(), ""))
 				.isInstanceOf(JsonException.class);
 	}
 
 	@Test
 	default void testParseWithTrailingContent() {
 		// parse with trailing content should throw exception
-		assertThatThrownBy(() -> getProvider().parse("123 456"))
+		assertThatThrownBy(() -> JsonCodec.parse(getProvider(), "123 456"))
 				.isInstanceOf(JsonException.class);
 	}
 
 	@Test
 	default void testParseWithWhitespaceOnly() {
 		// parse on whitespace-only string should throw exception
-		assertThatThrownBy(() -> getProvider().parse("   "))
+		assertThatThrownBy(() -> JsonCodec.parse(getProvider(), "   "))
 				.isInstanceOf(JsonException.class);
 	}
 
 	@Test
 	default void testParseWithValidJson() {
 		// parse with valid JSON should work
-		T node = getProvider().parse("{\"key\": \"value\"}");
+		T node = JsonCodec.parse(getProvider(), "{\"key\": \"value\"}");
 		assertThat(getProvider().getNodeType(node)).isEqualTo(JsonNodeType.OBJECT);
 		assertThat(getProvider().getString(getProvider().getObjectMemberOrThrow(node, "key"))).isEqualTo("value");
 	}
@@ -1004,9 +1008,9 @@ public interface JsonProviderContractTest<T> {
 
 	default List<String> parseStream(String json) {
 		List<String> result = new ArrayList<>();
-		try (JsonParser<T> parser = getProvider().createParser(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)))) {
+		try (JsonParser<T> parser = JsonCodec.createParser(getProvider(), new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)))) {
 			for (Maybe<T> value = parser.next(); value.isPresent(); value = parser.next())
-				result.add(getProvider().format(value.get()));
+				result.add(JsonCodec.format(getProvider(), value.get()));
 		}
 		return result;
 	}
@@ -1014,7 +1018,7 @@ public interface JsonProviderContractTest<T> {
 	@Test
 	default void testCreateParserReportsAbsentAtEndOfInput() {
 		// A JSON null document is a value, so it must not be confused with the end of the input.
-		try (JsonParser<T> parser = getProvider().createParser(new ByteArrayInputStream("null".getBytes(StandardCharsets.UTF_8)))) {
+		try (JsonParser<T> parser = JsonCodec.createParser(getProvider(), new ByteArrayInputStream("null".getBytes(StandardCharsets.UTF_8)))) {
 			Maybe<T> first = parser.next();
 			assertThat(first.isPresent()).isTrue();
 			assertThat(getProvider().getNodeType(first.get())).isEqualTo(JsonNodeType.NULL);
@@ -1032,11 +1036,11 @@ public interface JsonProviderContractTest<T> {
 	default void testParsePreservesNumberPrecisionAndScale() {
 		String hugeInteger = "123456789012345678901234567890";
 		String preciseDecimal = "3.14159265358979323846264338327950288";
-		assertThat(getProvider().getNumberAsIntExact(getProvider().parse("2147483647"))).isEqualTo(Integer.MAX_VALUE);
-		assertThat(getProvider().getNumberAsLongExact(getProvider().parse("2147483648"))).isEqualTo(2147483648L);
-		assertThat(getProvider().getNumberAsBigIntegerExact(getProvider().parse(hugeInteger)))
+		assertThat(getProvider().getNumberAsIntExact(JsonCodec.parse(getProvider(), "2147483647"))).isEqualTo(Integer.MAX_VALUE);
+		assertThat(getProvider().getNumberAsLongExact(JsonCodec.parse(getProvider(), "2147483648"))).isEqualTo(2147483648L);
+		assertThat(getProvider().getNumberAsBigIntegerExact(JsonCodec.parse(getProvider(), hugeInteger)))
 				.isEqualTo(new BigInteger(hugeInteger));
-		assertThat(getProvider().getNumberAsBigDecimalExact(getProvider().parse(preciseDecimal)))
+		assertThat(getProvider().getNumberAsBigDecimalExact(JsonCodec.parse(getProvider(), preciseDecimal)))
 				.isEqualTo(new BigDecimal(preciseDecimal));
 		assertThat(parseStream("1.50 0.0 1e10 " + preciseDecimal))
 				.containsExactly("1.50", "0.0", "1E+10", preciseDecimal);
@@ -1050,7 +1054,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testCreateParserRejectsMalformedUtf8() {
-		try (JsonParser<T> parser = getProvider().createParser(new ByteArrayInputStream(new byte[] { '"', (byte) 0xc3, '"' }))) {
+		try (JsonParser<T> parser = JsonCodec.createParser(getProvider(), new ByteArrayInputStream(new byte[] { '"', (byte) 0xc3, '"' }))) {
 			assertThatThrownBy(parser::next).isInstanceOf(JsonException.class);
 		}
 	}
@@ -1091,7 +1095,7 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testCreateParserKeepsReportingAbsentAfterExhaustion() {
-		try (JsonParser<T> parser = getProvider().createParser(new ByteArrayInputStream("1".getBytes(StandardCharsets.UTF_8)))) {
+		try (JsonParser<T> parser = JsonCodec.createParser(getProvider(), new ByteArrayInputStream("1".getBytes(StandardCharsets.UTF_8)))) {
 			assertThat(parser.next().isPresent()).isTrue();
 			assertThat(parser.next().isAbsent()).isTrue();
 			assertThat(parser.next().isAbsent()).isTrue();
@@ -1107,7 +1111,7 @@ public interface JsonProviderContractTest<T> {
 				closed.set(true);
 			}
 		};
-		try (JsonParser<T> parser = getProvider().createParser(in)) {
+		try (JsonParser<T> parser = JsonCodec.createParser(getProvider(), in)) {
 			assertThat(parser.next().isPresent()).isTrue();
 			assertThat(closed).isFalse();
 		}
@@ -1154,7 +1158,7 @@ public interface JsonProviderContractTest<T> {
 		// format() should not escape HTML-like characters (<, >, &, ')
 		// This is important for jq @json format compatibility
 		T node = getProvider().createString("<>&'\"");
-		String json = getProvider().format(node);
+		String json = JsonCodec.format(getProvider(), node);
 		// The string should be JSON-escaped for quotes and backslashes,
 		// but HTML characters should NOT be Unicode-escaped
 		assertThat(json).isEqualTo("\"<>&'\\\"\"");
@@ -1164,7 +1168,7 @@ public interface JsonProviderContractTest<T> {
 	default void testFormatObjectWithHtmlCharacters() {
 		// Verify HTML characters in object values are not escaped
 		T obj = getProvider().createObject(Collections.singletonMap("html", getProvider().createString("<tag>")));
-		String json = getProvider().format(obj);
+		String json = JsonCodec.format(getProvider(), obj);
 		assertThat(json).contains("\"<tag>\"");
 		assertThat(json).doesNotContain("\\u003c"); // Should not Unicode-escape <
 	}
@@ -1192,8 +1196,8 @@ public interface JsonProviderContractTest<T> {
 				getProvider().createNumber(3.14159),
 				getProvider().createNumber(new BigInteger("123456789012345678901234567890")),
 				getProvider().createNumber(new BigDecimal("1.5")),
-				getProvider().parse("1"),
-				getProvider().parse("1e10"));
+				JsonCodec.parse(getProvider(), "1"),
+				JsonCodec.parse(getProvider(), "1e10"));
 		for (T number : numbers) {
 			NumberType type = getProvider().getNumberType(number);
 			assertThat(type).isNotNull();
