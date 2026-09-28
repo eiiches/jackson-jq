@@ -320,6 +320,7 @@ def jjq_java_library(
             name = name + "-checkstyle",
             srcs = checkstyle_srcs,
             config = "//build-tools/checkstyle:checkstyle-config",
+            tags = ["checkstyle"],
         )
 
 def jjq_java_module_info(
@@ -466,4 +467,5 @@ def jjq_java_test_suite(
         name = name + "-checkstyle",
         srcs = srcs,
         config = "//build-tools/checkstyle:checkstyle-config",
+        tags = ["checkstyle"],
     )
