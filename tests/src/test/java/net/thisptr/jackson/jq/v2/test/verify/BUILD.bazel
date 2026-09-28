@@ -1,4 +1,4 @@
-load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+load("//build-tools/bazel:defs.bzl", "jjq_java_library", "jjq_java_test_suite")
 
 jjq_java_library(
     name = "verify",
@@ -15,5 +15,15 @@ jjq_java_library(
         "@maven//:com_fasterxml_jackson_core_jackson_databind",
         "@maven//:org_assertj_assertj_core",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
+    ],
+)
+
+jjq_java_test_suite(
+    srcs = ["DivergenceTest.java"],
+    release = 17,
+    visibility = ["//tests:__pkg__"],
+    deps = [
+        ":verify",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/testcase",
     ],
 )

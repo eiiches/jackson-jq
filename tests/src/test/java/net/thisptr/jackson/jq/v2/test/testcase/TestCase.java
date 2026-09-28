@@ -92,8 +92,13 @@ public class TestCase {
 	@JsonProperty("should_compile")
 	public boolean shouldCompile = true;
 
-	@JsonProperty("ignore_true_jq_behavior")
-	public boolean ignoreTrueJqBehavior = false;
+	public enum Divergence {
+		ALWAYS,
+		ON_MACOS
+	}
+
+	@JsonProperty("diverges_from_jq")
+	public @Nullable Divergence divergesFromJq;
 
 	@JsonProperty("float_tolerance")
 	public @Nullable FloatTolerance floatTolerance;

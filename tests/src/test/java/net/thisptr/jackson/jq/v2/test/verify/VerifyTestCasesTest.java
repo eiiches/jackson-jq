@@ -38,6 +38,11 @@ import static org.junit.jupiter.api.Assertions.assertAll;
  * pass to research and annotate the correct {@code v:} range.
  */
 public class VerifyTestCasesTest {
+	static boolean expectsDivergence(TestCase tc, String osName) {
+		return tc.divergesFromJq == TestCase.Divergence.ALWAYS
+				|| (tc.divergesFromJq == TestCase.Divergence.ON_MACOS && osName.startsWith("Mac"));
+	}
+
 	private void verify(TestCase tc, JqExecutables.JqExecutable e, @Nullable Path moduleSearchPath) throws Throwable {
 		String command = String.format("%s '%s' <<< '%s'", e.executable(), tc.q, tc.in);
 
@@ -55,12 +60,13 @@ public class VerifyTestCasesTest {
 		Path moduleSearchPath = tc.modules.isEmpty() ? null : ModuleFixtures.materialize(tc.modules);
 		try {
 			List<Executable> testExecutables = new ArrayList<>();
+			boolean expectsDivergence = expectsDivergence(tc, System.getProperty("os.name", ""));
 			for (JqExecutables.JqExecutable e : JqExecutables.ALL) {
 				if (tc.version == null || tc.version.contains(e.jqVersion())) {
-					if (!tc.shouldCompile || tc.ignoreTrueJqBehavior) {
+					if (!tc.shouldCompile || expectsDivergence) {
 						testExecutables.add(() -> {
 							assertThat(catchThrowable(() -> verify(tc, e, moduleSearchPath)))
-									.describedAs("Test case marked as should_compile = false or ignore_true_jq_behavior = true should fail against actual jq.")
+									.describedAs("Test case marked as should_compile = false or diverges_from_jq should fail against actual jq.")
 									.isInstanceOf(Throwable.class);
 						});
 					} else {
