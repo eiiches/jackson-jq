@@ -24,6 +24,9 @@ jobs:
     - name: Check Bazel formatting
       run: bazel run //:buildifier_test
 
+    - name: Check Java style
+      run: bazel test --remote_download_outputs=minimal --build_tests_only --test_tag_filters=checkstyle //...
+
   build:
     runs-on: ubuntu-26.04
     timeout-minutes: 30
@@ -46,7 +49,7 @@ jobs:
         build-buddy-api-key: ${{ secrets.BUILD_BUDDY_API_KEY }}
 
     - name: Build and test
-      run: bazel test --remote_download_outputs=minimal //...
+      run: bazel test --remote_download_outputs=minimal --test_tag_filters=-checkstyle //...
 
     - name: Install artifacts for Maven consumers
       run: bazel run //:maven_install
@@ -152,4 +155,4 @@ jobs:
         build-buddy-api-key: ${{ secrets.BUILD_BUDDY_API_KEY }}
 
     - name: Build and test
-      run: bazel test --remote_download_outputs=minimal -- //...
+      run: bazel test --remote_download_outputs=minimal --test_tag_filters=-checkstyle -- //...
