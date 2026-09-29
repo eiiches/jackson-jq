@@ -1,4 +1,4 @@
-load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+load("//build-tools/bazel:defs.bzl", "jjq_java_library", "jjq_java_test_suite")
 
 jjq_java_library(
     name = "testcase",
@@ -19,5 +19,15 @@ jjq_java_library(
         "@maven//:com_fasterxml_jackson_core_jackson_core",
         "@maven//:com_fasterxml_jackson_core_jackson_databind",
         "@maven//:com_fasterxml_jackson_dataformat_jackson_dataformat_yaml",
+    ],
+)
+
+jjq_java_test_suite(
+    srcs = ["ExpectationsTest.java"],
+    release = 17,
+    visibility = ["//tests:__pkg__"],
+    deps = [
+        ":testcase",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/version",
     ],
 )

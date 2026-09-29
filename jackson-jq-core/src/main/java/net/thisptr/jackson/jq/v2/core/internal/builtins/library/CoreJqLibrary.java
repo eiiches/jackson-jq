@@ -199,6 +199,8 @@ public class CoreJqLibrary implements JqLibrary {
 	private static final List<JqFunction> FUNCTIONS = List.of(
 			JqFunction.of("@text", args(), "tostring"),
 			JqFunction.of("@json", args(), "tojson"),
+			JqFunction.of("todate", args(), "todateiso8601"),
+			JqFunction.of("fromdate", args(), "fromdateiso8601"),
 			// jq 1.5's `..` skips null-valued members, so their paths are not yielded; from 1.6 on it visits them.
 			JqFunction.of("paths", args(), "paths(true)", VersionRange.valueOf("[1.6, )")),
 			JqFunction.of("paths", args(), "paths(. != null)", VersionRange.valueOf("[, 1.6)")),

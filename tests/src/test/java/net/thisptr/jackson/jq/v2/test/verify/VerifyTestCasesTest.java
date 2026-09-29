@@ -38,19 +38,15 @@ import static org.junit.jupiter.api.Assertions.assertAll;
  * pass to research and annotate the correct {@code v:} range.
  */
 public class VerifyTestCasesTest {
-	static boolean expectsDivergence(TestCase tc, String osName) {
-		return tc.divergesFromJq == TestCase.Divergence.ALWAYS
-				|| (tc.divergesFromJq == TestCase.Divergence.ON_MACOS && osName.startsWith("Mac"));
-	}
-
 	private void verify(TestCase tc, JqExecutables.JqExecutable e, @Nullable Path moduleSearchPath) throws Throwable {
 		String command = String.format("%s '%s' <<< '%s'", e.executable(), tc.q, tc.in);
 
 		Evaluator.Result result = new JqRunner(e.executable(), moduleSearchPath).evaluate(tc.q, tc.in, Duration.ofSeconds(2));
-		assertThat(result.error()).as("%s", command).isNull();
+		TestCase.Expectation expected = tc.expectations != null ? tc.expectations.resolve(e.jqVersion(), true, System.getProperty("os.name", "")) : null;
+		assertThat(result.error() != null).as("%s", command).isEqualTo(expected != null && expected.error);
 
 		Comparator<JsonNode> comparator = new TestJsonNodeComparator<>(Jackson2JsonProvider.getInstance(), true, tc.floatTolerance);
-		assertThat(tc.out).as("%s", command)
+		assertThat(expected != null ? expected.values() : tc.out).as("%s", command)
 				.usingElementComparator(comparator)
 				.isEqualTo(result.values());
 	}
@@ -60,19 +56,24 @@ public class VerifyTestCasesTest {
 		Path moduleSearchPath = tc.modules.isEmpty() ? null : ModuleFixtures.materialize(tc.modules);
 		try {
 			List<Executable> testExecutables = new ArrayList<>();
-			boolean expectsDivergence = expectsDivergence(tc, System.getProperty("os.name", ""));
 			for (JqExecutables.JqExecutable e : JqExecutables.ALL) {
-				if (tc.version == null || tc.version.contains(e.jqVersion())) {
-					if (!tc.shouldCompile || expectsDivergence) {
+				if (tc.expectations != null) {
+					testExecutables.add(() -> verify(tc, e, moduleSearchPath));
+					continue;
+				}
+				if (tc.appliesTo(e.jqVersion())) {
+					if (!tc.shouldCompile) {
 						testExecutables.add(() -> {
 							assertThat(catchThrowable(() -> verify(tc, e, moduleSearchPath)))
-									.describedAs("Test case marked as should_compile = false or diverges_from_jq should fail against actual jq.")
+									.describedAs("Test case marked as should_compile = false should fail against actual jq.")
 									.isInstanceOf(Throwable.class);
 						});
 					} else {
 						testExecutables.add(() -> verify(tc, e, moduleSearchPath));
 					}
 				} else {
+					// A version the case says nothing about has to be one real jq gets wrong, or the range
+					// is narrower than it needs to be.
 					testExecutables.add(() -> {
 						assertThat(catchThrowable(() -> verify(tc, e, moduleSearchPath)))
 								.describedAs("The version range excludes %s, but the test case succeeds anyway: %s", e.jqVersion(), tcText)

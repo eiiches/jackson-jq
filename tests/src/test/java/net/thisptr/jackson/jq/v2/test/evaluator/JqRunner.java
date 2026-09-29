@@ -91,9 +91,7 @@ public class JqRunner implements Evaluator {
 			try (InputStream stderr = p.getErrorStream()) {
 				String message = new String(ByteStreams.toByteArray(stderr), StandardCharsets.UTF_8);
 				String[] tokens = message.trim().split(": ", 3);
-				if (tokens.length != 3)
-					throw new IllegalStateException("invalid jq error format: " + message);
-				error = tokens[2];
+				error = tokens.length == 3 ? tokens[2] : message.trim();
 			}
 		}
 

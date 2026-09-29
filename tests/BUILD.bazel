@@ -1,7 +1,50 @@
 load("@rules_jq//:defs.bzl", "jq_binaries_rootpath")
 load(":test_case_suite.bzl", "test_case_suite")
 
-TEST_CASES = glob(["test-cases/**/*.yaml"])
+# The cases whose expected output holds whatever the local time zone is, which is why these suites can
+# take the zone of the machine running them. The ones that depend on it live in test-cases/timezones, one
+# file per zone, and belong to the per-zone suites below.
+TEST_CASES = glob(
+    ["test-cases/**/*.yaml"],
+    exclude = ["test-cases/timezones/*.yaml"],
+)
+
+# The type and property suites take those as well: neither compares outputs, and an inferred type or an
+# expression property is the same whatever the zone is.
+ALL_TEST_CASES = glob(["test-cases/**/*.yaml"])
+
+# The cases in test-cases/timezones depend on the local time zone, so each file is run under the zone it
+# was written for. Tokyo says nothing about a zone that is not a whole number of hours from UTC, keeps
+# daylight saving, or has no abbreviation of its own, hence the other three. Kiritimati is the furthest
+# ahead on Earth and Etc/GMT+12 the furthest behind -- the offset Howland Island keeps, whose zone the
+# database spells with the sign the other way round. Chatham is a quarter of an hour off the hour and
+# moves for daylight saving.
+#
+# Everything else says the same thing in any zone; a case that does not -- including one only jq 1.6 gets
+# wrong, which needs a version range the other zones would call untrue -- belongs in the per-zone file
+# rather than in test-cases/functions.
+#
+# Only the two suites that compare outputs are repeated per zone: one against real jq, one against this
+# library. The others read the whole corpus once, since neither the JSON provider in use nor an inferred
+# type nor an expression property depends on the zone.
+ZONE_RUNS = {
+    "tokyo": {
+        "test_cases": ["test-cases/timezones/tokyo.yaml"],
+        "tz": "Asia/Tokyo",
+    },
+    "kiritimati": {
+        "test_cases": ["test-cases/timezones/kiritimati.yaml"],
+        "tz": "Pacific/Kiritimati",
+    },
+    "howland": {
+        "test_cases": ["test-cases/timezones/howland.yaml"],
+        "tz": "Etc/GMT+12",
+    },
+    "chatham": {
+        "test_cases": ["test-cases/timezones/chatham.yaml"],
+        "tz": "Pacific/Chatham",
+    },
+}
 
 test_case_suite(
     name = "verify-test-cases",
@@ -13,9 +56,23 @@ test_case_suite(
     visibility = ["//visibility:private"],
 )
 
+[test_case_suite(
+    name = "verify-test-cases-" + zone,
+    data = ["@jq_binaries//:all"],
+    env = {
+        "JQ_BIN_DIR": jq_binaries_rootpath(),
+        "TZ": run["tz"],
+    },
+    jvm_flags = ["-Duser.timezone=" + run["tz"]],
+    test_cases = run["test_cases"],
+    test_class = "net.thisptr.jackson.jq.v2.test.verify.VerifyTestCasesTest",
+    test_library = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/verify",
+    visibility = ["//visibility:private"],
+) for zone, run in ZONE_RUNS.items()]
+
 test_case_suite(
     name = "type-tests",
-    test_cases = TEST_CASES,
+    test_cases = ALL_TEST_CASES,
     test_class = "net.thisptr.jackson.jq.v2.test.typecheck.TypeCheckTestCasesTest",
     test_library = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/typecheck",
     visibility = ["//visibility:private"],
@@ -23,7 +80,7 @@ test_case_suite(
 
 test_case_suite(
     name = "property-tests",
-    test_cases = TEST_CASES,
+    test_cases = ALL_TEST_CASES,
     test_class = "net.thisptr.jackson.jq.v2.test.properties.PropertyCheckTestCasesTest",
     test_library = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/properties",
     visibility = ["//visibility:private"],
@@ -44,6 +101,16 @@ test_case_suite(
     test_library = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/providers/jackson3",
     visibility = ["//visibility:private"],
 )
+
+[test_case_suite(
+    name = "jackson3-tests-" + zone,
+    env = {"TZ": run["tz"]},
+    jvm_flags = ["-Duser.timezone=" + run["tz"]],
+    test_cases = run["test_cases"],
+    test_class = "net.thisptr.jackson.jq.v2.test.providers.jackson3.Jackson3JsonQueryTest",
+    test_library = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/providers/jackson3",
+    visibility = ["//visibility:private"],
+) for zone, run in ZONE_RUNS.items()]
 
 test_case_suite(
     name = "fastjson2-tests",

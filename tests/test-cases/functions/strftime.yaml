@@ -1,0 +1,543 @@
+- q: 'strftime("%Y-%m-%dT%H:%M:%SZ")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "2023-11-14T22:13:20Z"
+
+- q: 'strftime("%A, %B %e, %Y")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "Tuesday, November 14, 2023"
+
+- q: 'strftime("%a|%b|%h|%c|%x|%X")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "Tue|Nov|Nov|Tue Nov 14 22:13:20 2023|11/14/23|22:13:20"
+
+- q: 'strftime("%C|%d|%D|%e|%F|%g|%G")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "20|14|11/14/23|14|2023-11-14|23|2023"
+
+- q: 'strftime("%H|%I|%j|%k|%l|%m|%M")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "22|10|318|22|10|11|13"
+
+- q: 'strftime("%p|%r|%R|%S|%T")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "PM|10:13:20 PM|22:13|20|22:13:20"
+
+# macOS jq 1.7 and later format %P differently.
+- q: 'strftime("%P")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "pm"
+    macos:
+    - v: '[1.7, )'
+      out:
+      - "P"
+
+- q: 'strftime("%u|%U|%V|%w|%W|%y|%Y")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "2|46|46|2|46|23|2023"
+
+- q: 'strftime("%n|%t|%%")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "\n|\t|%"
+
+# Darwin strftime interprets these specifiers instead of echoing them as glibc does.
+- q: 'strftime("%q|%E|%O|%Ea|%OY")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'glibc writes unsupported conversions unchanged, while Darwin interprets these specifiers'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "%q|%E|%O|%Ea|%OY"
+    macos:
+    - v: '[1.7, )'
+      out:
+      - "q|||Tue|2023"
+
+- q: 'strftime("%-d|%_d")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "14|14"
+
+# macOS jq 1.7 and later interpret these width modifiers differently.
+- q: 'strftime("%03d|%5Y|%1d")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "014|02023|14"
+    macos:
+    - v: '[1.7, )'
+      out:
+      - "3d|5Y|1d"
+
+# Darwin strftime does not apply these GNU case modifiers.
+- q: 'strftime("%^a|%^b|%#p|%#a")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "TUE|NOV|pm|TUE"
+    macos:
+    - v: '[1.7, )'
+      out:
+      - "^a|^b|#p|#a"
+
+- q: 'strftime("%Od|%EY|%Ec")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "14|2023|Tue Nov 14 22:13:20 2023"
+
+- q: 'strftime("%Y-%m-%dT%H:%M:%SZ")'
+  in: 1700000000.75
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'FLOAT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'a fraction of a second is dropped'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "2023-11-14T22:13:20Z"
+
+- q: 'strftime("%Y-%m-%dT%H:%M:%SZ")'
+  in: [2023, 10, 14, 22, 13, 20, 2, 317]
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "2023-11-14T22:13:20Z"
+
+- q: 'strftime("%A|%a|%j|%u|%w")'
+  in: [2023, 10, 14, 22, 13, 20, 0, 0]
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'jq 1.8.0 started working the weekday and the day of the year out from the date, instead of writing out the ones the array carries'
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - "Sunday|Sun|001|7|0"
+    - v: '[1.8.0, )'
+      out:
+      - "Tuesday|Tue|318|2|2"
+
+- q: 'strftime("%Y-%m-%d")'
+  in: [2023, 12, 1, 0, 0, 0, 0, 0]
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'jq 1.8.0 started settling a broken-down time onto the calendar before writing it out'
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - "2023-13-01"
+    - v: '[1.8.0, )'
+      out:
+      - "2024-01-01"
+
+- q: 'strftime("%Y-%m-%dT%H:%M:%S")'
+  in: [2023, 10, 14, 22, 13, 75, 0, 0]
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'jq 1.8.0 started settling a broken-down time onto the calendar before writing it out'
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - "2023-11-14T22:13:75"
+    - v: '[1.8.0, )'
+      out:
+      - "2023-11-14T22:14:15"
+
+# Darwin strftime pads this year to four digits in jq 1.7 and later.
+- q: 'strftime("%Y-%m-%dT%H:%M:%SZ")'
+  in: [1, 0, 1, 0, 0, 0, 1, 0]
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'glibc does not pad %Y here, while Darwin writes four year digits'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "1-01-01T00:00:00Z"
+    macos:
+    - v: '[1.7, )'
+      out:
+      - "0001-01-01T00:00:00Z"
+
+- q: 'strftime("%Y-%m-%d|%C|%y|%G|%g")'
+  in: [-5000, 0, 1, 0, 0, 0, 3, 0]
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "-5000-01-01|-50|00|-5000|00"
+
+- q: 'try strftime("%Y-%m-%d") catch .'
+  in: [2023, 10, 14]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'jq 1.8.0 started reading an array with fewer than eight elements, filling in the rest with zero'
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - "strftime/1 requires parsed datetime inputs"
+    - v: '[1.8.0, )'
+      out:
+      - "2023-11-14"
+
+- q: 'try strftime("%Y") catch .'
+  in: "2023-11-14T22:13:20Z"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "strftime/1 requires parsed datetime inputs"
+
+- q: 'try strftime("%Y") catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "strftime/1 requires parsed datetime inputs"
+
+- q: 'try strftime("%Y") catch .'
+  in: [2023, "8", 30, 0, 0, 0, 6, 272]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,STRING,INT,INT,INT,INT,INT,INT]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "strftime/1 requires parsed datetime inputs"
+
+- q: 'try strftime(3) catch .'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'jq 1.5 through 1.7.1 abort on a non-string format, while jackson-jq raises a catchable error'
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out: []
+      error: true
+    - v: '[1.8.0, )'
+      out:
+      - "strftime/1 requires a string format"
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - "strftime/1 requires a string format"
+
+- q: '[strftime("%Y", "%m")]'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'INT'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["2023", "11"]
+
+- q: '[strftime(empty)]'
+  in: "not a time"
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'STRING'
+    output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'the input is only looked at once there is a format to write it with'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - []
+
+- q: '[1700000000, 0] | map(strftime("%Y"))'
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["2023", "1970"]

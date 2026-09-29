@@ -1,9 +1,12 @@
 package net.thisptr.jackson.jq.v2.test.testcase;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,9 +15,11 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
 import net.thisptr.jackson.jq.v2.test.comparator.FloatTolerance;
 
@@ -29,6 +34,150 @@ public class TestCase {
 
 	@JsonProperty("out")
 	public List<JsonNode> out = Collections.emptyList();
+
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	public static class Expectation {
+		@JsonProperty("v")
+		@JsonDeserialize(using = VersionRangeDeserializer.class)
+		@JsonSerialize(using = ToStringSerializer.class)
+		public @Nullable VersionRange version;
+
+		@JsonProperty("out")
+		public @Nullable List<JsonNode> out;
+
+		@JsonIgnore
+		public List<JsonNode> values() {
+			return Objects.requireNonNull(out, "expectation row requires out");
+		}
+
+		@JsonProperty("error")
+		public boolean error;
+
+		public boolean contains(Version version) {
+			return Objects.requireNonNull(this.version, "expectation row requires v").contains(version);
+		}
+	}
+
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	public static class Expectations {
+		@JsonProperty("default")
+		public List<Expectation> defaultRows = Collections.emptyList();
+
+		@JsonProperty("macos")
+		public List<Expectation> macos = Collections.emptyList();
+
+		@JsonProperty("jjq")
+		public List<Expectation> jjq = Collections.emptyList();
+
+		public Expectation resolve(Version version, boolean realJq, String osName) {
+			Expectation base = find(defaultRows, version);
+			if (base == null) {
+				Expectation unsupported = new Expectation();
+				unsupported.out = Collections.emptyList();
+				unsupported.error = true;
+				return unsupported;
+			}
+			Expectation override = find(realJq ? (osName.startsWith("Mac") ? macos : Collections.emptyList()) : jjq, version);
+			return override != null ? override : base;
+		}
+
+		private static @Nullable Expectation find(List<Expectation> rows, Version version) {
+			for (Expectation row : rows) {
+				if (row.contains(version))
+					return row;
+			}
+			return null;
+		}
+
+		public boolean hasDefault(Version version) {
+			return find(defaultRows, version) != null;
+		}
+
+		public void validate() {
+			if (defaultRows.isEmpty())
+				throw new IllegalArgumentException("expectations.default must contain at least one row");
+			validateRows("default", defaultRows);
+			validateRows("macos", macos);
+			validateRows("jjq", jjq);
+			for (Expectation row : concat(macos, jjq)) {
+				VersionRange range = Objects.requireNonNull(row.version);
+				if (!coveredByDefault(range))
+					throw new IllegalArgumentException("expectation override range is not covered by default: " + row.version);
+				for (Expectation base : defaultRows) {
+					if (overlaps(range, Objects.requireNonNull(base.version)) && row.error == base.error && Objects.equals(row.values(), base.values()))
+						throw new IllegalArgumentException("expectation override equals default over " + base.version);
+				}
+			}
+		}
+
+		private boolean coveredByDefault(VersionRange range) {
+			// Check boundaries as well as configured versions, so a gap between releases is rejected.
+			List<VersionRange> ranges = new ArrayList<>();
+			for (Expectation row : defaultRows)
+				ranges.add(Objects.requireNonNull(row.version));
+			ranges.sort((a, b) -> compareLower(a, b));
+			@Var VersionRange remainder = range;
+			for (VersionRange candidate : ranges) {
+				if (endsBefore(candidate, remainder))
+					continue;
+				if (compareLower(candidate, remainder) > 0)
+					return false;
+				if (compareUpper(candidate, remainder) >= 0)
+					return true;
+				remainder = VersionRange.of(candidate.maxVersion(), !candidate.maxInclusive(), remainder.maxVersion(), remainder.maxInclusive());
+			}
+			return false;
+		}
+
+		private static List<Expectation> concat(List<Expectation> first, List<Expectation> second) {
+			List<Expectation> result = new ArrayList<>(first);
+			result.addAll(second);
+			return result;
+		}
+
+		private static void validateRows(String name, List<Expectation> rows) {
+			for (int i = 0; i < rows.size(); i++) {
+				if (rows.get(i).version == null)
+					throw new IllegalArgumentException("expectations." + name + " row requires v");
+				if (rows.get(i).out == null)
+					throw new IllegalArgumentException("expectations." + name + " row requires out");
+				for (int j = 0; j < i; j++) {
+					VersionRange a = Objects.requireNonNull(rows.get(i).version);
+					VersionRange b = Objects.requireNonNull(rows.get(j).version);
+					if (overlaps(a, b))
+						throw new IllegalArgumentException("overlapping expectations." + name + " ranges");
+				}
+			}
+		}
+
+		private static boolean endsBefore(VersionRange a, VersionRange b) {
+			if (a.maxVersion() == null || b.minVersion() == null)
+				return false;
+			int result = a.maxVersion().compareTo(b.minVersion());
+			return result < 0 || (result == 0 && (!a.maxInclusive() || !b.minInclusive()));
+		}
+
+		private static boolean overlaps(VersionRange a, VersionRange b) {
+			return compareLower(a, b) <= 0 ? !endsBefore(a, b) : !endsBefore(b, a);
+		}
+
+		private static int compareLower(VersionRange a, VersionRange b) {
+			if (a.minVersion() == null || b.minVersion() == null)
+				return a.minVersion() == b.minVersion() ? 0 : a.minVersion() == null ? -1 : 1;
+			int result = a.minVersion().compareTo(b.minVersion());
+			return result != 0 ? result : Boolean.compare(b.minInclusive(), a.minInclusive());
+		}
+
+		private static int compareUpper(VersionRange a, VersionRange b) {
+			if (a.maxVersion() == null || b.maxVersion() == null)
+				return a.maxVersion() == b.maxVersion() ? 0 : a.maxVersion() == null ? 1 : -1;
+			int result = a.maxVersion().compareTo(b.maxVersion());
+			return result != 0 ? result : Boolean.compare(a.maxInclusive(), b.maxInclusive());
+		}
+	}
+
+	@JsonProperty("expectations")
+	public @Nullable Expectations expectations;
 
 	public static class TypeAssertion {
 		@JsonProperty("input")
@@ -92,14 +241,6 @@ public class TestCase {
 	@JsonProperty("should_compile")
 	public boolean shouldCompile = true;
 
-	public enum Divergence {
-		ALWAYS,
-		ON_MACOS
-	}
-
-	@JsonProperty("diverges_from_jq")
-	public @Nullable Divergence divergesFromJq;
-
 	@JsonProperty("float_tolerance")
 	public @Nullable FloatTolerance floatTolerance;
 
@@ -112,11 +253,41 @@ public class TestCase {
 	@JsonProperty("modules")
 	public Map<String, String> modules = Collections.emptyMap();
 
+	/**
+	 * The jq versions the case applies to, or {@code null} for all of them. More than one range says a
+	 * version in between behaves differently, which is how a release that is wrong on its own gets left
+	 * out without giving up the ones either side of it.
+	 */
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	@JsonProperty("v")
-	@JsonDeserialize(using = VersionRangeDeserializer.class)
-	@JsonSerialize(using = ToStringSerializer.class)
-	public @Nullable VersionRange version;
+	@JsonDeserialize(contentUsing = VersionRangeDeserializer.class)
+	@JsonSerialize(contentUsing = ToStringSerializer.class)
+	public @Nullable List<VersionRange> version;
+
+	/**
+	 * Whether this case says anything about {@code jqVersion}.
+	 */
+	public boolean appliesTo(Version jqVersion) {
+		return contains(version, jqVersion);
+	}
+
+	public boolean appliesToAssertions(Version jqVersion) {
+		return expectations != null ? expectations.hasDefault(jqVersion) : appliesTo(jqVersion);
+	}
+
+	public boolean hasAssertionVersionSelection() {
+		return expectations != null || version != null;
+	}
+
+	private static boolean contains(@Nullable List<VersionRange> ranges, Version jqVersion) {
+		if (ranges == null)
+			return true;
+		for (VersionRange range : ranges) {
+			if (range.contains(jqVersion))
+				return true;
+		}
+		return false;
+	}
 
 	@JsonProperty("comment")
 	public @Nullable String comment;

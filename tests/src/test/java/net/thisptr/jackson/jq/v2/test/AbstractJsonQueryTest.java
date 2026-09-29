@@ -71,6 +71,25 @@ public abstract class AbstractJsonQueryTest<T> {
 				.build();
 
 		String command = String.format("jq (v%s) '%s' <<< '%s'", version, tc.q, tc.in);
+		if (tc.expectations != null) {
+			TestCase.Expectation expected = tc.expectations.resolve(version, false, System.getProperty("os.name", ""));
+			List<T> values = new ArrayList<>();
+			@Var Throwable error = null;
+			try {
+				JsonQuery<T> query = env.compile(tc.q);
+				query.apply(parseTestNode(tc.in), values::add);
+			} catch (Throwable e) {
+				error = e;
+			}
+			assertThat(error != null).as("%s error", command).isEqualTo(expected.error);
+			List<T> expectedValues = new ArrayList<>();
+			for (JsonNode node : expected.values())
+				expectedValues.add(parseTestNode(node));
+			assertThat(values).as("%s output", command)
+					.usingElementComparator(new TestJsonNodeComparator<>(getJsonProvider(), true, tc.floatTolerance))
+					.isEqualTo(expectedValues);
+			return;
+		}
 
 		if (!tc.shouldCompile) {
 			assertThatThrownBy(() -> env.compile(tc.q)).isInstanceOf(JsonQueryException.class);
@@ -123,7 +142,7 @@ public abstract class AbstractJsonQueryTest<T> {
 		TestCase tc = TestCaseLoader.parseTestCase(tcText);
 		Path moduleSearchPath = tc.modules.isEmpty() ? null : ModuleFixtures.materialize(tc.modules);
 		try {
-			if (tc.version == null || tc.version.contains(jqVersion)) {
+			if (tc.expectations != null || tc.appliesTo(jqVersion)) {
 				test(tc, jqVersion, moduleSearchPath);
 			}
 		} finally {

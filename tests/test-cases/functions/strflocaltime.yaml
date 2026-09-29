@@ -1,0 +1,57 @@
+- q: 'try strflocaltime("%Y") catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "strflocaltime/1 requires parsed datetime inputs"
+
+- q: 'try strflocaltime("%Y") catch .'
+  in: "2023-11-14T22:13:20Z"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "strflocaltime/1 requires parsed datetime inputs"
+
+- q: 'try strflocaltime(3) catch .'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'jq 1.6 and 1.7 abort on a non-string format, while jackson-jq raises a catchable error; jq 1.5 does not define strflocaltime'
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out: []
+      error: true
+    - v: '[1.8.0, )'
+      out:
+      - "strflocaltime/1 requires a string format"
+    jjq:
+    - v: '[1.6, 1.8.0)'
+      out:
+      - "strflocaltime/1 requires a string format"

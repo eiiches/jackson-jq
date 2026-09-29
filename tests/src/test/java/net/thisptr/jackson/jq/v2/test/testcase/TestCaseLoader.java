@@ -13,10 +13,12 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 public class TestCaseLoader {
 	private static final ObjectMapper JSON_MAPPER = JsonMapper.builder()
+			.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
 			.enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
 			.disable(JsonNodeFeature.STRIP_TRAILING_BIGDECIMAL_ZEROES)
 			.build();
 	private static final ObjectMapper YAML_MAPPER = YAMLMapper.builder()
+			.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
 			.enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
 			.disable(JsonNodeFeature.STRIP_TRAILING_BIGDECIMAL_ZEROES)
 			.build();
@@ -32,12 +34,23 @@ public class TestCaseLoader {
 		}
 		for (TestCase tc : result) {
 			tc.file = resourceName;
+			validate(tc);
 		}
 		return List.of(result);
 	}
 
 	public static TestCase parseTestCase(String json) throws IOException {
-		return JSON_MAPPER.readValue(json, TestCase.class);
+		TestCase tc = JSON_MAPPER.readValue(json, TestCase.class);
+		validate(tc);
+		return tc;
+	}
+
+	private static void validate(TestCase tc) {
+		if (tc.expectations != null) {
+			if (tc.version != null || tc.failing != null || !tc.shouldCompile)
+				throw new IllegalArgumentException("expectations cannot be combined with legacy output controls: " + tc.q);
+			tc.expectations.validate();
+		}
 	}
 
 	public static Stream<String> loadTestCasesAsJsonStrings(String resourceName) throws IOException {

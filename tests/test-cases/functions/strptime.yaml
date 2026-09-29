@@ -1,0 +1,625 @@
+- q: 'strptime("%Y-%m-%dT%H:%M:%SZ")'
+  in: "2023-11-14T22:13:20Z"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 14, 22, 13, 20, 2, 317]
+
+- q: 'strptime("%F")'
+  in: "2023-11-14"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 14, 0, 0, 0, 2, 317]
+
+- q: 'strptime("%c")'
+  in: "Tue Nov 14 22:13:20 2023"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 14, 22, 13, 20, 2, 317]
+
+- q: 'strptime("%D %T")'
+  in: "11/14/23 22:13:20"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 14, 22, 13, 20, 2, 317]
+
+- q: 'strptime("%B %e, %Y")'
+  in: "November 14, 2023"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 14, 0, 0, 0, 2, 317]
+
+- q: 'strptime("%b %d %Y")'
+  in: "nov 14 2023"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'a month or a weekday is matched whatever its case, in full or abbreviated'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 14, 0, 0, 0, 2, 317]
+
+# macOS jq 1.7 and later derive a different day from this %j parse.
+- q: 'strptime("%Y %j")'
+  in: "2023 318"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'a day of the year gives the month and the day of the month, when the format did not'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 14, 0, 0, 0, 2, 317]
+
+# macOS jq 1.7 and later derive a different day from this %j parse.
+- q: 'strptime("%Y %j %m")'
+  in: "2023 100 11"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'on glibc, the supplied month stands and the day of the month comes from the day of the year; Darwin computes a different day'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 10, 0, 0, 0, 5, 99]
+    macos:
+    - v: '[1.7, )'
+      out:
+      - [2023, 10, -204, 0, 0, 0, 1, 99]
+
+- q: 'strptime("%Y %U %w")'
+  in: "2023 46 2"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'a week of the year and a weekday together give a date'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 14, 0, 0, 0, 2, 317]
+
+# Darwin strptime does not support %u, so jq cannot produce the expected date.
+- q: 'strptime("%Y %W %u")'
+  in: "2023 46 2"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 14, 0, 0, 0, 2, 317]
+
+- q: 'strptime("%C %y")'
+  in: "20 23"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 0, 0, 0, 0, 0, 6, -1]
+
+- q: 'strptime("%y")'
+  in: "69"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'a two-digit year from 69 on is in the twentieth century'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [1969, 0, 0, 0, 0, 0, 2, -1]
+
+- q: 'strptime("%y")'
+  in: "68"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2068, 0, 0, 0, 0, 0, 6, -1]
+
+- q: 'strptime("%I:%M:%S %p")'
+  in: "10:13:20 PM"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out:
+      - [1899, 11, 31, 22, 13, 20, 0, 364]
+    - v: '[1.6, )'
+      out:
+      - [1900, 0, 0, 22, 13, 20, 8, 367]
+    macos:
+    - v: '[1.7, )'
+      out:
+      - [1900, 0, 0, 22, 13, 20, 6, -1]
+
+- q: 'strptime("%r")'
+  in: "12:00:00 AM"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out:
+      - [1899, 11, 31, 0, 0, 0, 0, 364]
+    - v: '[1.6, )'
+      out:
+      - [1900, 0, 0, 0, 0, 0, 8, 367]
+    macos:
+    - v: '[1.7, )'
+      out:
+      - [1900, 0, 0, 0, 0, 0, 6, -1]
+
+# macOS jq 1.7 and later parse this input differently.
+- q: 'strptime("%Y-%m-%dT%H:%M:%S%z")'
+  in: "2023-11-14T22:13:20+0900"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'glibc discards the parsed offset, while Darwin applies it to the returned time'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 14, 22, 13, 20, 2, 317]
+    macos:
+    - v: '[1.7, )'
+      out:
+      - [2023, 10, 14, 13, 13, 20, 2, 317]
+
+- q: 'strptime("%Y-%m-%d %Z")'
+  in: "2023-11-14 UTC"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 14, 0, 0, 0, 2, 317]
+
+# macOS jq 1.7 and later reject leading whitespace for this format.
+- q: 'strptime("%Y-%m-%d")'
+  in: "  2023-11-14"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'whitespace in front of a field is skipped'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 14, 0, 0, 0, 2, 317]
+    macos:
+    - v: '[1.7, )'
+      out: []
+      error: true
+
+- q: 'strptime("%Y-%m-%d")'
+  in: "2023-11-14 extra"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'what the format did not read comes back as a ninth element, as long as it starts with whitespace'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 14, 0, 0, 0, 2, 317, " extra"]
+
+# macOS jq 1.7 and later reject this ambiguous field width.
+- q: 'strptime("%m%d")'
+  in: "318"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'a digit that could not fit in the field is left for the next one'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [1900, 2, 18, 0, 0, 0, 0, 76]
+    macos:
+    - v: '[1.7, )'
+      out: []
+      error: true
+
+# Darwin strptime handles this %j input differently, so jq does not produce the expected date.
+- q: 'strptime("%Y %j")'
+  in: "2023 366"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'glibc leaves the overflowing day in December, while Darwin normalizes it to January of the next year'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 11, 32, 0, 0, 0, 1, 365]
+    macos:
+    - v: '[1.7, )'
+      out:
+      - [2024, 0, 1, 0, 0, 0, 1, 0]
+
+- q: 'strptime("")'
+  in: ""
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'jq 1.5 settles a parse with no date onto the calendar; glibc in later versions reports a weekday and day of year out of range'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out:
+      - [1899, 11, 31, 0, 0, 0, 0, 364]
+    - v: '[1.6, )'
+      out:
+      - [1900, 0, 0, 0, 0, 0, 8, 367]
+    macos:
+    - v: '[1.7, )'
+      out:
+      - [1900, 0, 0, 0, 0, 0, 6, -1]
+
+- q: 'strptime("%T")'
+  in: "22:13:20"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'jq 1.5 settles a parse with no date onto the calendar; glibc in later versions reports a weekday and day of year out of range'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out:
+      - [1899, 11, 31, 22, 13, 20, 0, 364]
+    - v: '[1.6, )'
+      out:
+      - [1900, 0, 0, 22, 13, 20, 8, 367]
+    macos:
+    - v: '[1.7, )'
+      out:
+      - [1900, 0, 0, 22, 13, 20, 6, -1]
+
+- q: 'strptime("%a")'
+  in: "Tue"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'jq 1.5 reports an unspecified day of year as zero; glibc in later versions reports one out of range'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out:
+      - [1900, 0, 0, 0, 0, 0, 2, 0]
+    - v: '[1.6, )'
+      out:
+      - [1900, 0, 0, 0, 0, 0, 2, 367]
+    macos:
+    - v: '[1.7, )'
+      out:
+      - [1900, 0, 0, 0, 0, 0, 6, -1]
+
+# Darwin strptime handles this %j input differently, so jq does not produce the expected fields.
+- q: 'strptime("%j")'
+  in: "318"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out:
+      - [1900, 0, 0, 0, 0, 0, 0, 317]
+    - v: '[1.6, )'
+      out:
+      - [1900, 0, 0, 0, 0, 0, 8, 317]
+    macos:
+    - v: '[1.7, )'
+      out: []
+      error: true
+
+- q: 'try strptime("%Y-%m-%d") catch .'
+  in: "2023-11-14!"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "date \"2023-11-14!\" does not match format \"%Y-%m-%d\""
+
+- q: 'try strptime("%Y-%m-%d") catch .'
+  in: "2023/11/14"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "date \"2023/11/14\" does not match format \"%Y-%m-%d\""
+
+- q: 'try strptime("%m") catch .'
+  in: "14"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "date \"14\" does not match format \"%m\""
+
+- q: 'try strptime("%Y") catch .'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "strptime/1 requires string inputs and arguments"
+
+- q: 'try strptime("%Y") catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "strptime/1 requires string inputs and arguments"
+
+- q: 'try strptime(1) catch .'
+  in: "2023"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "strptime/1 requires string inputs and arguments"
+
+- q: 'map(strptime("%Y-%m-%d")[0])'
+  in: ["2023-11-14", "1999-01-01"]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: '[STRING,STRING]'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 1999]

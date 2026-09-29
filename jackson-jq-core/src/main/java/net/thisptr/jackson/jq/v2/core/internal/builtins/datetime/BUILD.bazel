@@ -1,0 +1,30 @@
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "datetime",
+    srcs = [
+        "AbstractStrFTimeFunction.java",
+        "AbstractTimeSplitFunction.java",
+        "BrokenDownTime.java",
+        "BrokenDownTimes.java",
+        "CStrftime.java",
+        "CStrptime.java",
+        "FromDateIso8601Function.java",
+        "GmTimeFunction.java",
+        "LocalTimeFunction.java",
+        "MkTimeFunction.java",
+        "StrFLocalTimeFunction.java",
+        "StrFTimeFunction.java",
+        "StrPTimeFunction.java",
+        "ToDateIso8601Function.java",
+    ],
+    release = 17,
+    visibility = ["//jackson-jq-core:__subpackages__"],
+    deps = [
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/function/utils",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/json",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/version",
+        "//jackson-jq-json-provider",
+        "//jackson-jq-spi",
+    ],
+)

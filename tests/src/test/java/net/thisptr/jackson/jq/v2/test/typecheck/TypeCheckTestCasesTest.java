@@ -69,11 +69,11 @@ public class TypeCheckTestCasesTest {
 
 	private static Version selectVersion(TestCase tc) {
 		List<Version> versions = Versions.versions();
-		if (tc.version == null) {
+		if (!tc.hasAssertionVersionSelection()) {
 			return Versions.JQ_1_7;
 		}
 		for (int i = versions.size() - 1; i >= 0; i--) {
-			if (tc.version.contains(versions.get(i))) {
+			if (tc.appliesToAssertions(versions.get(i))) {
 				return versions.get(i);
 			}
 		}

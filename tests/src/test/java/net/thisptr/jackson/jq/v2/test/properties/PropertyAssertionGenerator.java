@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
@@ -29,7 +30,10 @@ import net.thisptr.jackson.jq.v2.test.testcase.ModuleFixtures;
 import net.thisptr.jackson.jq.v2.test.testcase.TestCase;
 
 public class PropertyAssertionGenerator {
-	private static final ObjectMapper YAML_MAPPER = new YAMLMapper();
+	// A case's v: takes one range or a list of them, so the single value has to read as a list.
+	private static final ObjectMapper YAML_MAPPER = YAMLMapper.builder()
+			.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+			.build();
 
 	public static void main(String[] args) throws Exception {
 		Path repoRoot = Path.of(args.length > 0 ? args[0] : ".");
@@ -102,11 +106,11 @@ public class PropertyAssertionGenerator {
 
 	private static Version selectVersion(TestCase tc) {
 		List<Version> versions = Versions.versions();
-		if (tc.version == null) {
+		if (!tc.hasAssertionVersionSelection()) {
 			return Versions.JQ_1_7;
 		}
 		for (int i = versions.size() - 1; i >= 0; i--) {
-			if (tc.version.contains(versions.get(i))) {
+			if (tc.appliesToAssertions(versions.get(i))) {
 				return versions.get(i);
 			}
 		}

@@ -1,13 +1,11 @@
-package net.thisptr.jackson.jq.v2.core.internal.builtins;
+package net.thisptr.jackson.jq.v2.core.internal.builtins.datetime;
 
-import java.time.Instant;
-import java.time.format.DateTimeParseException;
+import java.time.DateTimeException;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
-import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
-import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -20,14 +18,20 @@ import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
 import net.thisptr.jackson.jq.v2.spi.type.NumericType;
-import net.thisptr.jackson.jq.v2.spi.type.StringType;
 import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
-@FunctionRegistration(name = "fromdateiso8601", nargs = 0)
-public class FromDateIso8601Function implements Function {
+/**
+ * {@code mktime}, the number of seconds since the epoch a broken-down time names in UTC.
+ * <p>
+ * The weekday and the day of the year are not read: the date comes from the year, month and day alone,
+ * and a field outside its usual range carries into the one above it, so a 13th month is January of the
+ * year after. A fraction of a second is dropped.
+ */
+@FunctionRegistration(name = "mktime", nargs = 0)
+public class MkTimeFunction implements Function {
 	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
-			TypeScheme.of(FunctionType.of(StringType.getInstance(), NumericType.getInstance())));
+			TypeScheme.of(FunctionType.of(BrokenDownTimes.INPUT_TYPE, NumericType.getInstance())));
 
 	@Override
 	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {
@@ -42,19 +46,18 @@ public class FromDateIso8601Function implements Function {
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
+		Version version = bindCtx.getJqVersion();
 		return (scope, in, ipath, output) -> {
-			Preconditions.checkInputType(jsonProvider, "fromdateiso8601", in, JsonNodeType.STRING);
+			if (!jsonProvider.isArray(in))
+				throw new JsonQueryException("mktime requires array inputs");
+			BrokenDownTime time = BrokenDownTimes.read(jsonProvider, in, version, "mktime requires parsed datetime inputs");
+			long epochSeconds;
 			try {
-				String iso8601String = jsonProvider.getString(in);
-				// In future versions of JQ, it may need to be revisited due to fractional support: https://github.com/jqlang/jq/issues/1409
-				if (iso8601String.length() > 20) {
-					throw new JsonQueryException(String.format("date \"%s\" does not match format \"%%Y-%%m-%%dT%%H:%%M:%%SZ\"", iso8601String));
-				}
-				long epochSeconds = Instant.parse(iso8601String).getEpochSecond();
-				output.emit(JsonNodeUtils.asNumericNode(jsonProvider, epochSeconds), UntrackedPath.getInstance());
-			} catch (DateTimeParseException e) {
-				throw new JsonQueryException(e);
+				epochSeconds = time.toEpochSeconds(ZoneOffset.UTC);
+			} catch (DateTimeException e) {
+				throw new JsonQueryException("the broken-down time names a date too far from the epoch", e);
 			}
+			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, epochSeconds), UntrackedPath.getInstance());
 		};
 	}
 }

@@ -1,0 +1,269 @@
+- q: 'gmtime'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  - input: 'INT'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 14, 22, 13, 20, 2, 317]
+
+- q: 'gmtime'
+  in: 1700000000.25
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  - input: 'FLOAT'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 14, 22, 13, 20.25, 2, 317]
+
+- q: 'gmtime'
+  in: -1.5
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  - input: 'FLOAT'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [1969, 11, 31, 23, 59, 59.5, 3, 364]
+
+- q: 'gmtime'
+  in: 0
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  - input: 'INT'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [1970, 0, 1, 0, 0, 0, 4, 0]
+
+- q: 'gmtime'
+  in: -2208988800
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  - input: 'INT'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [1900, 0, 1, 0, 0, 0, 1, 0]
+
+- q: 'try gmtime catch .'
+  in: "2023-11-14T22:13:20Z"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "gmtime() requires numeric inputs"
+
+- q: 'try gmtime catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "gmtime() requires numeric inputs"
+
+- q: 'try gmtime catch .'
+  in: []
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "gmtime() requires numeric inputs"
+
+# macOS jq converts NaN to an epoch date instead of reporting this error.
+- q: 'try (nan | gmtime) catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  comment: 'jq 1.5 and 1.6 misspell this message; jackson-jq uses the corrected spelling on every supported version'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "errror converting number of seconds since epoch to datetime"
+    - v: '[1.7, )'
+      out:
+      - "error converting number of seconds since epoch to datetime"
+    macos:
+    - v: '[1.7, )'
+      out:
+      - [1970, 0, 1, 0, 0, null, 4, 0]
+    jjq:
+    - v: '[1.5, 1.7)'
+      out:
+      - "error converting number of seconds since epoch to datetime"
+
+- q: 'try (infinite | gmtime) catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  comment: 'jq 1.5 and 1.6 misspell this message, so it is verified against real jq from 1.7 on; jackson-jq raises the same error on every supported version'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "errror converting number of seconds since epoch to datetime"
+    - v: '[1.7, )'
+      out:
+      - "error converting number of seconds since epoch to datetime"
+    jjq:
+    - v: '[1.5, 1.7)'
+      out:
+      - "error converting number of seconds since epoch to datetime"
+
+- q: 'try (-infinite | gmtime) catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  comment: 'jq 1.5 and 1.6 misspell this message, so it is verified against real jq from 1.7 on; jackson-jq raises the same error on every supported version'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "errror converting number of seconds since epoch to datetime"
+    - v: '[1.7, )'
+      out:
+      - "error converting number of seconds since epoch to datetime"
+    jjq:
+    - v: '[1.5, 1.7)'
+      out:
+      - "error converting number of seconds since epoch to datetime"
+
+- q: 'try (1e300 | gmtime) catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  comment: 'jq 1.5 and 1.6 misspell this message, so it is verified against real jq from 1.7 on; jackson-jq raises the same error on every supported version'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "errror converting number of seconds since epoch to datetime"
+    - v: '[1.7, )'
+      out:
+      - "error converting number of seconds since epoch to datetime"
+    jjq:
+    - v: '[1.5, 1.7)'
+      out:
+      - "error converting number of seconds since epoch to datetime"
+
+- q: 'gmtime|.[5]'
+  in: 1700000000.5
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'FLOAT'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 20.5
+
+- q: 'map(gmtime[0])'
+  in: [0, 1000000000, 2000000000]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: '[INT,INT,INT]'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [1970, 2001, 2033]
