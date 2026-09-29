@@ -13,7 +13,6 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class JsonNodeUtils {
 	private static final FormatOptions LEGACY_FORMAT_OPTIONS = FormatOptions.newBuilder()
-			.setLowerCaseExponent(true)
 			.setRoundNumbersToDouble(true)
 			.build();
 

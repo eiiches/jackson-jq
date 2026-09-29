@@ -11,11 +11,11 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 public final class FormatOptions {
 	private static final FormatOptions DEFAULT = new FormatOptions(false, false);
 
-	private final boolean lowerCaseExponent;
+	private final boolean lowerCaseDecimalExponent;
 	private final boolean roundNumbersToDouble;
 
-	private FormatOptions(boolean lowerCaseExponent, boolean roundNumbersToDouble) {
-		this.lowerCaseExponent = lowerCaseExponent;
+	private FormatOptions(boolean lowerCaseDecimalExponent, boolean roundNumbersToDouble) {
+		this.lowerCaseDecimalExponent = lowerCaseDecimalExponent;
 		this.roundNumbersToDouble = roundNumbersToDouble;
 	}
 
@@ -24,7 +24,8 @@ public final class FormatOptions {
 	}
 
 	/**
-	 * Creates a builder that preserves exact decimal values and uses uppercase exponents.
+	 * Creates a builder that preserves exact decimal values and their exponent case.
+	 * Computed floating-point values use jq-style lowercase exponents.
 	 *
 	 * @return a new builder
 	 */
@@ -39,17 +40,18 @@ public final class FormatOptions {
 	 */
 	public Builder toBuilder() {
 		return new Builder()
-				.setLowerCaseExponent(lowerCaseExponent)
+				.setLowerCaseDecimalExponent(lowerCaseDecimalExponent)
 				.setRoundNumbersToDouble(roundNumbersToDouble);
 	}
 
 	/**
-	 * Returns whether number exponents use {@code e} instead of {@code E}.
+	 * Returns whether exponents of values formatted from {@code BigDecimal} use {@code e} instead of {@code E}.
+	 * Computed floating-point exponents always use {@code e}.
 	 *
-	 * @return whether exponents are lowercase
+	 * @return whether decimal exponents are lowercase
 	 */
-	public boolean getLowerCaseExponent() {
-		return lowerCaseExponent;
+	public boolean getLowerCaseDecimalExponent() {
+		return lowerCaseDecimalExponent;
 	}
 
 	/**
@@ -65,20 +67,21 @@ public final class FormatOptions {
 	 * Builds a {@link FormatOptions} instance.
 	 */
 	public static final class Builder {
-		private boolean lowerCaseExponent;
+		private boolean lowerCaseDecimalExponent;
 		private boolean roundNumbersToDouble;
 
 		private Builder() {
 		}
 
 		/**
-		 * Sets whether number exponents use {@code e} instead of {@code E}.
+		 * Sets whether exponents of values formatted from {@code BigDecimal} use {@code e} instead of {@code E}.
+		 * Computed floating-point exponents always use {@code e}.
 		 *
-		 * @param lowerCaseExponent whether exponents are lowercase
+		 * @param lowerCaseDecimalExponent whether decimal exponents are lowercase
 		 * @return this, for chaining
 		 */
-		public Builder setLowerCaseExponent(boolean lowerCaseExponent) {
-			this.lowerCaseExponent = lowerCaseExponent;
+		public Builder setLowerCaseDecimalExponent(boolean lowerCaseDecimalExponent) {
+			this.lowerCaseDecimalExponent = lowerCaseDecimalExponent;
 			return this;
 		}
 
@@ -99,9 +102,9 @@ public final class FormatOptions {
 		 * @return the options
 		 */
 		public FormatOptions build() {
-			if (!lowerCaseExponent && !roundNumbersToDouble)
+			if (!lowerCaseDecimalExponent && !roundNumbersToDouble)
 				return DEFAULT;
-			return new FormatOptions(lowerCaseExponent, roundNumbersToDouble);
+			return new FormatOptions(lowerCaseDecimalExponent, roundNumbersToDouble);
 		}
 	}
 }

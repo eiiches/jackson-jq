@@ -8,7 +8,7 @@ class FormatOptionsTest {
 	@Test
 	void builderDefaultsShareAnInstance() {
 		FormatOptions first = FormatOptions.newBuilder().build();
-		assertThat(first.getLowerCaseExponent()).isFalse();
+		assertThat(first.getLowerCaseDecimalExponent()).isFalse();
 		assertThat(first.getRoundNumbersToDouble()).isFalse();
 		assertThat(FormatOptions.newBuilder().build()).isSameAs(first);
 		assertThat(first.toBuilder().build()).isSameAs(first);
@@ -17,13 +17,13 @@ class FormatOptionsTest {
 	@Test
 	void toBuilderCarriesBothSettings() {
 		FormatOptions original = FormatOptions.newBuilder()
-				.setLowerCaseExponent(true)
+				.setLowerCaseDecimalExponent(true)
 				.setRoundNumbersToDouble(true)
 				.build();
 		FormatOptions copy = original.toBuilder().build();
-		assertThat(copy.getLowerCaseExponent()).isTrue();
+		assertThat(copy.getLowerCaseDecimalExponent()).isTrue();
 		assertThat(copy.getRoundNumbersToDouble()).isTrue();
-		assertThat(copy.toBuilder().setRoundNumbersToDouble(false).build().getLowerCaseExponent()).isTrue();
+		assertThat(copy.toBuilder().setRoundNumbersToDouble(false).build().getLowerCaseDecimalExponent()).isTrue();
 		assertThat(original.getRoundNumbersToDouble()).isTrue();
 	}
 }

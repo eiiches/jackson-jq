@@ -1,3 +1,19 @@
+- q: '1790700612.751727 * 1.0 | tostring'
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'NULL'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "1790700612.751727"
+
 - q: 'tostring'
   in: 5.244348724433776e+63
   types:
