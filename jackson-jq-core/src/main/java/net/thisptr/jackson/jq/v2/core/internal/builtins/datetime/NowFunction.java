@@ -1,5 +1,6 @@
-package net.thisptr.jackson.jq.v2.core.internal.builtins;
+package net.thisptr.jackson.jq.v2.core.internal.builtins.datetime;
 
+import java.time.Instant;
 import java.util.List;
 
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
@@ -38,7 +39,11 @@ public class NowFunction implements Function {
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
 		return (scope, in, ipath, output) -> {
-			output.emit(jsonProvider.createNumber(System.currentTimeMillis() / 1000.0), UntrackedPath.getInstance());
+			output.emit(jsonProvider.createNumber(epochSeconds(Instant.now())), UntrackedPath.getInstance());
 		};
+	}
+
+	static double epochSeconds(Instant instant) {
+		return instant.getEpochSecond() + (instant.getNano() / 1_000) / 1_000_000.0;
 	}
 }

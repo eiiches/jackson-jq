@@ -13,6 +13,7 @@ jjq_java_library(
         "GmTimeFunction.java",
         "LocalTimeFunction.java",
         "MkTimeFunction.java",
+        "NowFunction.java",
         "StrFLocalTimeFunction.java",
         "StrFTimeFunction.java",
         "StrPTimeFunction.java",

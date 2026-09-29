@@ -43,7 +43,6 @@ import net.thisptr.jackson.jq.v2.core.internal.builtins.MinByFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.ModuleMetaFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.NanFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.NotFunction;
-import net.thisptr.jackson.jq.v2.core.internal.builtins.NowFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.PathFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.PathsFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.RIndexFunction;
@@ -64,6 +63,7 @@ import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.FromDateIso8601
 import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.GmTimeFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.LocalTimeFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.MkTimeFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.NowFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.StrFLocalTimeFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.StrFTimeFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.StrPTimeFunction;

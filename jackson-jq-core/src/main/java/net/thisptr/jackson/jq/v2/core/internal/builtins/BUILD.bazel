@@ -44,7 +44,6 @@ jjq_java_library(
         "ModuleMetaFunction.java",
         "NanFunction.java",
         "NotFunction.java",
-        "NowFunction.java",
         "PathFunction.java",
         "PathsFunction.java",
         "RIndexFunction.java",
