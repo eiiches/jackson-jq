@@ -5,11 +5,12 @@ import java.util.Base64;
 
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @FunctionRegistration(name = "@base64", nargs = 0)
 public class AtBase64Function extends AbstractAtFormattingFunction {
 	@Override
-	public String convert(String text) throws JsonQueryException {
+	public String convert(String text, Version version) throws JsonQueryException {
 		return Base64.getEncoder().encodeToString(text.getBytes(StandardCharsets.UTF_8));
 	}
 }

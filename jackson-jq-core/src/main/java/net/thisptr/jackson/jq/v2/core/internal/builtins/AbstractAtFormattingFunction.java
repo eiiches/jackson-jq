@@ -44,11 +44,11 @@ public abstract class AbstractAtFormattingFunction implements Function {
 			String text = jsonProvider.isString(in)
 					? jsonProvider.getString(in)
 					: JsonNodeUtils.toString(jsonProvider, in, version);
-			String formatted = convert(text);
+			String formatted = convert(text, version);
 			RuntimeLimitChecks.checkStringLength(scope.getRuntimeLimits(), formatted.length());
 			output.emit(jsonProvider.createString(formatted), UntrackedPath.getInstance());
 		};
 	}
 
-	public abstract String convert(String text) throws JsonQueryException;
+	public abstract String convert(String text, Version version) throws JsonQueryException;
 }

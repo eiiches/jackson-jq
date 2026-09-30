@@ -26,7 +26,7 @@ public class AtBase64dFunction extends AbstractAtFormattingFunction {
 	}
 
 	@Override
-	public String convert(String text) throws JsonQueryException {
+	public String convert(String text, Version version) throws JsonQueryException {
 		try {
 			return new String(Base64.getDecoder().decode(text), StandardCharsets.UTF_8);
 		} catch (Throwable th) {
