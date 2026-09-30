@@ -15,6 +15,59 @@
     depends_on_input: false
     depends_on_external_state: false
 
+- q: 'def f: 1; . | (def f: 2; f) | f, .'
+  in: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1
+      - 2
+  types:
+  - input: 'ANY'
+    output: '1|2'
+  - input: 'NULL'
+    output: '1|2'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'def f: 1; . | [def f: 2; f] | f, .'
+  in: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1
+      - [2]
+  types:
+  - input: 'ANY'
+    output: '1|[*:2]'
+  - input: 'NULL'
+    output: '1|[*:2]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'def f: 1; . | {(def f: "foo"; f): f}'
+  in: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - {"foo": 1}
+  types:
+  - input: 'ANY'
+    output: '{*:1}'
+  - input: 'NULL'
+    output: '{*:1}'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
 - q: 'def f: "outer"; [(def f: "inner"; f), f]'
   in: null
   expectations:

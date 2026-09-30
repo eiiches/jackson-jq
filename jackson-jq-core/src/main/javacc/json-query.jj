@@ -981,6 +981,7 @@ void ObjectField(final List<ObjectConstructionAstNode.FieldConstructionAst> fiel
 		<OPEN_PAR>
 		key = Expression()
 		<CLOSE_PAR>
+		{ key = new ParenAstNode(locSince(start), key); }
 		<COLON>
 		value = ObjectFieldValue()
 		{ fields.add(new ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst(locSince(start), key, value)); }

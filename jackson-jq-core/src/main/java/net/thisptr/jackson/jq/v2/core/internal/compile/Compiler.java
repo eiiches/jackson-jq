@@ -621,8 +621,13 @@ public class Compiler {
 
 		@Override
 		public AnalyzedExpression<N> visit(ArrayConstructionAstNode arr) throws JsonQueryException {
-			AnalyzedExpression<N> compiledArrayItems = compile(env, context, scope, arr.q);
-			return new ArrayConstruction<>(env.getJsonProvider(), compiledArrayItems, context.outputCounterOf(compiledArrayItems));
+			context.pushLocalScope();
+			try {
+				AnalyzedExpression<N> compiledArrayItems = compile(env, context, scope, arr.q);
+				return new ArrayConstruction<>(env.getJsonProvider(), compiledArrayItems, context.outputCounterOf(compiledArrayItems));
+			} finally {
+				context.popScope();
+			}
 		}
 
 		@Override

@@ -145,8 +145,7 @@ public class ObjectConstructionAstNode extends AbstractAstNode {
 
 		@Override
 		public String toString() {
-			String result = "(" + key.toString() + ")";
-			return result + ": " + value;
+			return key + ": " + value;
 		}
 	}
 }
