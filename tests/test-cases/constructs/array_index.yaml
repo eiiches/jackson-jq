@@ -1,6 +1,62 @@
 - q: '[1, 2][:]'
   should_compile: false
 
+- q: '.[0.9:0.2]'
+  in: [42]
+  out:
+  - [42]
+  types:
+  - input: 'ANY'
+    output: 'NULL|STRING|[*:ANY]'
+  - input: '[INT]'
+    output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.[0.9:0], .[-0.1:-0.9], .[1.9:1.2]]'
+  in: [0, 1, 2]
+  out:
+  - [[], [2], [1]]
+  types:
+  - input: 'ANY'
+    output: '[NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY]]'
+  - input: '[INT,INT,INT]'
+    output: '[[*:INT],[*:INT],[*:INT]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[0.9:0.2] = [9]'
+  in: [0, 1, 2]
+  out:
+  - [9, 1, 2]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT]'
+    output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[0.9:0.2]'
+  in: abc
+  out:
+  - a
+  types:
+  - input: 'ANY'
+    output: 'NULL|STRING|[*:ANY]'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
 - q: '.[@base64 : "foo"]'
   in: null
   out:

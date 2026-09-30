@@ -209,9 +209,11 @@ public final class PathOperations {
 			start = 0;
 		if (end > size)
 			end = size;
-		if (start > end)
-			return new LongRange((long) start, (long) start);
-		return new LongRange((long) start, (long) Math.ceil(end));
+		long startIndex = (long) start;
+		long endIndex = (long) Math.ceil(end);
+		if (startIndex >= endIndex)
+			return new LongRange(startIndex, startIndex);
+		return new LongRange(startIndex, endIndex);
 	}
 
 	public static <JsonNode> void resolveArrayRangeIndex(JsonProvider<JsonNode> jsonProvider, JsonNode parent, Path<JsonNode> parentPath, Output<JsonNode> output, JsonNode start, JsonNode end, boolean permissive, Version version) throws JsonQueryException {
