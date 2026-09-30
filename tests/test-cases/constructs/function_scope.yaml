@@ -1,0 +1,50 @@
+- q: 'def f: "outer"; (def f: "inner"; f) | f'
+  in: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "outer"
+  types:
+  - input: 'ANY'
+    output: '"outer"'
+  - input: 'NULL'
+    output: '"outer"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'def f: "outer"; [(def f: "inner"; f), f]'
+  in: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["inner", "outer"]
+  types:
+  - input: 'ANY'
+    output: '[*:"inner"|"outer"]'
+  - input: 'NULL'
+    output: '[*:"inner"|"outer"]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'def f: "outer"; (def f: "left"; f) | (def f: "right"; f) | f'
+  in: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "outer"
+  types:
+  - input: 'ANY'
+    output: '"outer"'
+  - input: 'NULL'
+    output: '"outer"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false

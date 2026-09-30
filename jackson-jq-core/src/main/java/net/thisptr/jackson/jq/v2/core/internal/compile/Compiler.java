@@ -319,8 +319,13 @@ public class Compiler {
 
 		@Override
 		public AnalyzedExpression<N> visit(ParenAstNode paren) throws JsonQueryException {
-			context.setTailPosition(inTailPosition);
-			return compileNonNull(env, context, scope, paren.value());
+			context.pushLocalScope();
+			try {
+				context.setTailPosition(inTailPosition);
+				return compileNonNull(env, context, scope, paren.value());
+			} finally {
+				context.popScope();
+			}
 		}
 
 		@Override
@@ -708,10 +713,8 @@ public class Compiler {
 					pending.push(bin.lhs);
 					continue;
 				}
-				if (operand instanceof ParenAstNode paren) {
-					pending.push(paren.value());
-					continue;
-				}
+				// Parentheses establish a lexical scope, so compile them as an operand instead of
+				// flattening through them.
 				// Only the last operand inherits tail position: an earlier one is followed by operands the
 				// enclosing Comma still has to run, so unwinding past them would lose their values. Earlier
 				// operands have already emitted and finished by then, which is why they place no condition

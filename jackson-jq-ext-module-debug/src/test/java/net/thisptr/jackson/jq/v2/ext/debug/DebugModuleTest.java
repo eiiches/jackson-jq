@@ -179,13 +179,16 @@ public class DebugModuleTest {
 		assertThat(expressions.get(1).get("class").asText()).endsWith(".ThisObject");
 	}
 
-	// `,` is a binary AST node, but a chain of them compiles to a single n-ary Comma so that
-	// evaluating it costs one stack frame rather than one per comma. Parentheses are transparent.
+	// `,` is a binary AST node, but an unparenthesized chain compiles to a single n-ary Comma so
+	// that evaluating it costs one stack frame rather than one per comma. Parentheses retain their
+	// lexical scope, so a grouped chain stays a nested operand.
 	// The operands read `.` so that the chain is not folded away as a constant argument first.
 	@Test
 	public void dumpExprFlattensACommaChain() throws JsonQueryException {
 		assertThat(commaOperandsOf(dumpExpr("(.a, .b, .c, .d)"))).hasSize(4);
-		assertThat(commaOperandsOf(dumpExpr("(.a, ((.b, .c)), .d)"))).hasSize(4);
+		JsonNode groupedOperands = commaOperandsOf(dumpExpr("(.a, ((.b, .c)), .d)"));
+		assertThat(groupedOperands).hasSize(3);
+		assertThat(commaOperandsOf(groupedOperands.get(1))).hasSize(2);
 	}
 
 	private static JsonNode commaOperandsOf(JsonNode dumped) {
