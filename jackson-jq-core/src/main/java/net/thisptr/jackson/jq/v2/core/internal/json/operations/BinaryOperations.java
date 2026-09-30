@@ -85,9 +85,11 @@ public final class BinaryOperations {
 					: Double.isInfinite(lhsDouble) ? (lhsDouble > 0 ? Long.MAX_VALUE : Long.MIN_VALUE)
 					: (long) lhsDouble;
 
-			// If divisor is NaN, return the dividend (jq 1.5 behavior)
-			if (Double.isNaN(rhsDouble))
+			if (Double.isNaN(rhsDouble)) {
+				if (version.compareTo(Versions.JQ_1_7) >= 0)
+					return jsonProvider.createNumber(Double.NaN);
 				return JsonNodeUtils.asNumericNode(jsonProvider, dividend);
+			}
 
 			long divisor = Double.isInfinite(rhsDouble)
 					? (rhsDouble > 0 ? Long.MAX_VALUE : Long.MIN_VALUE)

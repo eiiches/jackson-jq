@@ -97,21 +97,20 @@
     depends_on_external_state: false
   v: '[1.5, 1.7)'
 
-- q: '(64.5 % nan)'
+- q: '(64.5 % nan) | isnan'
   in: 84
   out:
-  - null
+  - true
   types:
   - input: 'ANY'
-    output: 'NUMBER'
+    output: 'BOOLEAN'
   - input: 'INT'
-    output: 'NUMBER'
+    output: 'BOOLEAN'
   properties:
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
   v: '[1.7, )'
-  failing: true
 
 - q: '(nan % nan) | (., isnan)'
   in: 84
@@ -129,19 +128,49 @@
     depends_on_external_state: false
   v: '[1.5, 1.7)'
 
-- q: '(nan % nan) | (., isnan)'
+- q: '(nan % nan) | isnan'
   in: 84
   out:
-  - null
   - true
   types:
   - input: 'ANY'
-    output: 'BOOLEAN|NUMBER'
+    output: 'BOOLEAN'
   - input: 'INT'
-    output: 'BOOLEAN|NUMBER'
+    output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  v: '[1.7, )'
+
+- q: '0 % nan | (isnan, tojson)'
+  in: null
+  out:
+  - false
+  - '0'
+  types:
+  - input: 'ANY'
+    output: 'BOOLEAN|STRING'
+  - input: 'NULL'
+    output: 'BOOLEAN|STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  v: '[1.5, 1.7)'
+
+- q: '0 % nan | (isnan, tojson)'
+  in: null
+  out:
+  - true
+  - 'null'
+  types:
+  - input: 'ANY'
+    output: 'BOOLEAN|STRING'
+  - input: 'NULL'
+    output: 'BOOLEAN|STRING'
   properties:
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
   v: '[1.7, )'
-  failing: true
