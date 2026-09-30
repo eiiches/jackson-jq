@@ -1,0 +1,152 @@
+- q: '@base64d'
+  in: 720
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "�"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: 781
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "�"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: 528
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "�"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: 803
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "�"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "8J+YgA=="
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "😀"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "4oI="
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "�"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "4UFC"
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "�AB"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "7aCA"
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "�"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "4iih"
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "�(�"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
