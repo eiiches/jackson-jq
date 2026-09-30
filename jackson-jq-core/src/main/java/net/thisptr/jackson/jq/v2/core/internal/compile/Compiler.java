@@ -779,8 +779,14 @@ public class Compiler {
 		@Override
 		public AnalyzedExpression<N> visit(StringInterpolationAstNode si) throws JsonQueryException {
 			List<Pair<Integer, AnalyzedExpression<N>>> compiledInterpolations = new ArrayList<>();
-			for (Pair<Integer, AstNode> pair : si.interpolations())
-				compiledInterpolations.add(Pair.of(pair._1, compileNonNull(env, context, scope, pair._2)));
+			for (Pair<Integer, AstNode> pair : si.interpolations()) {
+				context.pushLocalScope();
+				try {
+					compiledInterpolations.add(Pair.of(pair._1, compileNonNull(env, context, scope, pair._2)));
+				} finally {
+					context.popScope();
+				}
+			}
 			AnalyzedExpression<N> compiledFormatter = compile(env, context, scope, si.formatter());
 			int[] interpolationOutputIndices = new int[compiledInterpolations.size()];
 			for (int i = 0; i < interpolationOutputIndices.length; ++i)
