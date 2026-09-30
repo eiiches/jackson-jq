@@ -57,6 +57,9 @@ public class MkTimeFunction implements Function {
 			} catch (DateTimeException e) {
 				throw new JsonQueryException("the broken-down time names a date too far from the epoch", e);
 			}
+			// jq treats timegm's -1 result as a conversion failure, even for a valid pre-epoch time.
+			if (epochSeconds == -1)
+				throw new JsonQueryException("invalid gmtime representation");
 			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, epochSeconds), UntrackedPath.getInstance());
 		};
 	}
