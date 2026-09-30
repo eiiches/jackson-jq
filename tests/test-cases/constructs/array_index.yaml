@@ -65,6 +65,141 @@
     depends_on_external_state: false
   v: '[1.7, )'
 
+- q: '[.[0:nan], .[2:nan], .[5:nan], .[-1:nan], .[-100:nan]]'
+  in: [0, 1, 2, 3, 4]
+  out:
+  - [[], [], [], [], []]
+  types:
+  - input: 'ANY'
+    output: '[NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY]]'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[[*:INT],[*:INT],[*:INT],[*:INT],[*:INT]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, 1.7)'
+
+- q: '[.[0:nan], .[2:nan], .[5:nan], .[-1:nan], .[-100:nan]]'
+  in: [0, 1, 2, 3, 4]
+  out:
+  - [[0, 1, 2, 3, 4], [2, 3, 4], [], [4], [0, 1, 2, 3, 4]]
+  types:
+  - input: 'ANY'
+    output: '[NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY]]'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[[*:INT],[*:INT],[*:INT],[*:INT],[*:INT]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.7, )'
+
+- q: '[.[nan:2], .[nan:nan], .[nan:0], .[nan:-1]]'
+  in: [0, 1, 2, 3, 4]
+  out:
+  - [[0, 1], [0, 1, 2, 3, 4], [], [0, 1, 2, 3]]
+  types:
+  - input: 'ANY'
+    output: '[NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY]]'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[[*:INT],[*:INT],[*:INT],[*:INT]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.7, )'
+
+- q: '[.[null:nan], .[2:nan], .[-1:nan]]'
+  in: "abcde"
+  out:
+  - ["", "", ""]
+  types:
+  - input: 'ANY'
+    output: '[NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY]]'
+  - input: 'STRING'
+    output: '[STRING,STRING,STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, 1.7)'
+
+- q: '[.[null:nan], .[2:nan], .[-1:nan]]'
+  in: "abcde"
+  out:
+  - ["abcde", "cde", "e"]
+  types:
+  - input: 'ANY'
+    output: '[NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY]]'
+  - input: 'STRING'
+    output: '[STRING,STRING,STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.7, )'
+
+- q: '[.[nan:2], .[nan:nan]]'
+  in: "abcde"
+  out:
+  - ["ab", "abcde"]
+  types:
+  - input: 'ANY'
+    output: '[NULL|STRING|[*:ANY],NULL|STRING|[*:ANY]]'
+  - input: 'STRING'
+    output: '[STRING,STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.7, )'
+
+- q: '.[2:nan] = [999]'
+  in: [0, 1, 2, 3, 4]
+  out:
+  - [0, 1, 999, 2, 3, 4]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, 1.7)'
+
+- q: '.[2:nan] = [999]'
+  in: [0, 1, 2, 3, 4]
+  out:
+  - [0, 1, 999]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.7, )'
+
+- q: '.[nan:2] = [999]'
+  in: [0, 1, 2, 3, 4]
+  out:
+  - [999, 2, 3, 4]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.7, )'
+
 - q: '[] | path(.[3.5])'
   out:
   - [3.5]

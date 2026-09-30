@@ -197,7 +197,7 @@ public class DelPathsFunction implements Function {
 			JsonNode start = PathUtils.getSliceBound(jsonProvider, rangeNode, "start");
 			JsonNode end = PathUtils.getSliceBound(jsonProvider, rangeNode, "end");
 			PathOperations.requireValidRangeBounds(jsonProvider, start, end, JsonNodeType.ARRAY, version);
-			deleteRanges.add(PathOperations.resolveRange(jsonProvider, start, end, size));
+			deleteRanges.add(PathOperations.resolveRange(jsonProvider, start, end, size, version));
 		}
 
 		List<JsonNode> out = new ArrayList<>();

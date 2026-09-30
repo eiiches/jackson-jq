@@ -133,3 +133,48 @@
     depends_on_input: true
     depends_on_external_state: false
   v: '[1.5, )'
+
+- q: 'delpaths([[{"start": 2, "end": nan}]])'
+  in: [1, 2, 3]
+  out:
+  - [1, 2, 3]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT]'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, 1.7)'
+
+- q: 'delpaths([[{"start": 2, "end": nan}]])'
+  in: [1, 2, 3]
+  out:
+  - [1, 2]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT]'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.7, )'
+
+- q: 'delpaths([[{"start": nan, "end": 2}]])'
+  in: [1, 2, 3]
+  out:
+  - [3]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT]'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.7, )'

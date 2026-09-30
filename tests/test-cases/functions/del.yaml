@@ -29,3 +29,48 @@
     - v: '[1.5, )'
       out:
       - {}
+
+- q: '[.[2:nan] |= map(. * 10), del(.[2:nan])]'
+  in: [0, 1, 2, 3, 4]
+  out:
+  - [[0, 1, 2, 3, 4], [0, 1, 2, 3, 4]]
+  types:
+  - input: 'ANY'
+    output: '[ANY,NULL|[*:ANY]|{*:ANY}]'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[[*:NUMBER],NULL|[*:ANY]|{*:ANY}]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, 1.7)'
+
+- q: '[.[2:nan] |= map(. * 10), del(.[2:nan])]'
+  in: [0, 1, 2, 3, 4]
+  out:
+  - [[0, 1, 20, 30, 40], [0, 1]]
+  types:
+  - input: 'ANY'
+    output: '[ANY,NULL|[*:ANY]|{*:ANY}]'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[[*:NUMBER],NULL|[*:ANY]|{*:ANY}]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.7, )'
+
+- q: '[del(.[nan:2]), del(.[nan:nan])]'
+  in: [0, 1, 2, 3, 4]
+  out:
+  - [[2, 3, 4], []]
+  types:
+  - input: 'ANY'
+    output: '[NULL|[*:ANY]|{*:ANY},NULL|[*:ANY]|{*:ANY}]'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[NULL|[*:ANY]|{*:ANY},NULL|[*:ANY]|{*:ANY}]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.7, )'
