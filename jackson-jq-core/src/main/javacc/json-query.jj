@@ -696,10 +696,14 @@ AstNode PrimaryExpression():
 }
 {
 	(
-		tmp = FunctionDefinition()
-		{ exprs.add(tmp); }
-	)*
-	(
+		(
+			tmp = FunctionDefinition()
+			{ exprs.add(tmp); }
+		)+
+		// A def scopes the rest of this expression, including any following comma or pipe.
+		// Parsing only the next primary here would let the outer expression take that pipe.
+		tmp = Expression()
+	|
 		tmp = ThisObjectAccess()
 		(
 			<QUESTION>
