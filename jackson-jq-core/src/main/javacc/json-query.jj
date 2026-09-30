@@ -801,7 +801,8 @@ AstNode TryCatchExpression():
 }
 {
 	<KEYWORD_TRY>
-	tryExpr = Expression()
+	// A bare try covers one primary; parentheses are required to include infix operators.
+	tryExpr = PrimaryExpression()
 	(
 		<KEYWORD_CATCH>
 		catchExpr = PrimaryExpression()
