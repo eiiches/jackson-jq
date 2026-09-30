@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
@@ -62,20 +64,29 @@ public abstract class AbstractFieldAccess<JsonNode> implements RewritableExpress
 		return FreeVariables.anyOpaque(target);
 	}
 
-	protected static <JsonNode> void emitAllPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode pobj, Path<JsonNode> ppath, Output<JsonNode> output, boolean tracking, Version version) throws JsonQueryException {
-		if (tracking && PathUtils.isLost(ppath))
-			throw new JsonQueryException(String.format("Invalid path expression near attempt to iterate through %s", JsonNodeUtils.toString(jsonProvider, pobj)));
+	private static <JsonNode> String describeKey(JsonProvider<JsonNode> jsonProvider, JsonNode key, Version version) {
+		return ExceptionMessages.truncate(JsonNodeUtils.toString(jsonProvider, key, version), version, ExceptionMessages.SHORT_BUFFER_SIZE);
+	}
+
+	private static <JsonNode> String describeTarget(JsonProvider<JsonNode> jsonProvider, JsonNode pobj, Version version) {
+		return ExceptionMessages.truncate(JsonNodeUtils.toString(jsonProvider, pobj, version), version, ExceptionMessages.LONG_BUFFER_SIZE);
+	}
+
+	protected static <JsonNode> void emitAllPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode pobj, Path<JsonNode> ppath, Output<JsonNode> output, Version version) throws JsonQueryException {
+		@Nullable Path<JsonNode> path = PathUtils.recover(jsonProvider, version, ppath, pobj);
+		if (path == null)
+			throw new JsonQueryException(String.format("Invalid path expression near attempt to iterate through %s", describeTarget(jsonProvider, pobj, version)));
 		if (jsonProvider.isNull(pobj)) {
 			if (!permissive)
 				throw new JsonQueryException("Cannot iterate over null (null)");
 		} else if (jsonProvider.isArray(pobj)) {
 			for (int i = 0; i < jsonProvider.getArrayLength(pobj); ++i)
-				output.emit(jsonProvider.getArrayElement(pobj, i), ppath.appendIndex(i));
+				output.emit(jsonProvider.getArrayElement(pobj, i), path.appendIndex(i));
 		} else if (jsonProvider.isObject(pobj)) {
 			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectMembers(pobj);
 			while (iter.hasNext()) {
 				Map.Entry<String, JsonNode> entry = iter.next();
-				output.emit(entry.getValue(), ppath.appendKey(entry.getKey()));
+				output.emit(entry.getValue(), path.appendKey(entry.getKey()));
 			}
 		} else {
 			if (!permissive)
@@ -83,33 +94,37 @@ public abstract class AbstractFieldAccess<JsonNode> implements RewritableExpress
 		}
 	}
 
-	protected static <JsonNode> void emitObjectFieldPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, String key, JsonNode pobj, Path<JsonNode> ppath, Output<JsonNode> output, boolean tracking, Version version) throws JsonQueryException {
-		if (tracking && PathUtils.isLost(ppath))
-			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(jsonProvider, jsonProvider.createString(key)), JsonNodeUtils.toString(jsonProvider, pobj)));
-		PathOperations.resolveObjectField(jsonProvider, pobj, ppath, output, key, permissive, version);
+	protected static <JsonNode> void emitObjectFieldPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, String key, JsonNode pobj, Path<JsonNode> ppath, Output<JsonNode> output, Version version) throws JsonQueryException {
+		@Nullable Path<JsonNode> path = PathUtils.recover(jsonProvider, version, ppath, pobj);
+		if (path == null)
+			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", describeKey(jsonProvider, jsonProvider.createString(key), version), describeTarget(jsonProvider, pobj, version)));
+		PathOperations.resolveObjectField(jsonProvider, pobj, path, output, key, permissive, version);
 	}
 
-	protected static <JsonNode> void emitArrayIndexPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode index, JsonNode pobj, Path<JsonNode> ppath, Output<JsonNode> output, boolean tracking, Version version) throws JsonQueryException {
+	protected static <JsonNode> void emitArrayIndexPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode index, JsonNode pobj, Path<JsonNode> ppath, Output<JsonNode> output, Version version) throws JsonQueryException {
 		assert jsonProvider.isNumber(index);
-		if (tracking && PathUtils.isLost(ppath))
-			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(jsonProvider, index), JsonNodeUtils.toString(jsonProvider, pobj)));
-		PathOperations.resolveArrayIndex(jsonProvider, pobj, ppath, output, index, permissive, version);
+		@Nullable Path<JsonNode> path = PathUtils.recover(jsonProvider, version, ppath, pobj);
+		if (path == null)
+			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", describeKey(jsonProvider, index, version), describeTarget(jsonProvider, pobj, version)));
+		PathOperations.resolveArrayIndex(jsonProvider, pobj, path, output, index, permissive, version);
 	}
 
-	protected static <JsonNode> void emitIndexOfPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode subseqToLookFor, JsonNode pobj, Path<JsonNode> ppath, Output<JsonNode> output, boolean tracking, Version version) throws JsonQueryException {
+	protected static <JsonNode> void emitIndexOfPath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode subseqToLookFor, JsonNode pobj, Path<JsonNode> ppath, Output<JsonNode> output, Version version) throws JsonQueryException {
 		assert jsonProvider.isArray(subseqToLookFor);
-		if (tracking && PathUtils.isLost(ppath))
-			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", JsonNodeUtils.toString(jsonProvider, subseqToLookFor), JsonNodeUtils.toString(jsonProvider, pobj)));
-		PathOperations.resolveArrayIndexOf(jsonProvider, pobj, ppath, output, subseqToLookFor, permissive, version);
+		@Nullable Path<JsonNode> path = PathUtils.recover(jsonProvider, version, ppath, pobj);
+		if (path == null)
+			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", describeKey(jsonProvider, subseqToLookFor, version), describeTarget(jsonProvider, pobj, version)));
+		PathOperations.resolveArrayIndexOf(jsonProvider, pobj, path, output, subseqToLookFor, permissive, version);
 	}
 
-	protected static <JsonNode> void emitIndexRangePath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode start, JsonNode end, JsonNode pobj, Path<JsonNode> ppath, Output<JsonNode> output, boolean tracking, Version version) throws JsonQueryException {
-		if (tracking && PathUtils.isLost(ppath)) {
+	protected static <JsonNode> void emitIndexRangePath(JsonProvider<JsonNode> jsonProvider, boolean permissive, JsonNode start, JsonNode end, JsonNode pobj, Path<JsonNode> ppath, Output<JsonNode> output, Version version) throws JsonQueryException {
+		@Nullable Path<JsonNode> path = PathUtils.recover(jsonProvider, version, ppath, pobj);
+		if (path == null) {
 			Map<String, JsonNode> subpath = new LinkedHashMap<>();
 			subpath.put("start", start);
 			subpath.put("end", end);
-			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", ExceptionMessages.truncate(JsonNodeUtils.toString(jsonProvider, jsonProvider.createObject(subpath)), version), JsonNodeUtils.toString(jsonProvider, pobj)));
+			throw new JsonQueryException(String.format("Invalid path expression near attempt to access element %s of %s", describeKey(jsonProvider, jsonProvider.createObject(subpath), version), describeTarget(jsonProvider, pobj, version)));
 		}
-		PathOperations.resolveArrayRangeIndex(jsonProvider, pobj, ppath, output, start, end, permissive, version);
+		PathOperations.resolveArrayRangeIndex(jsonProvider, pobj, path, output, start, end, permissive, version);
 	}
 }

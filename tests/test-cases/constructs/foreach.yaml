@@ -13,8 +13,6 @@
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  failing: true
-  justification: The jq documentation explicitly states `$var.foo is not a valid or useful path expression in .`.
 
 - q: 'try (path(label $out | foreach [1,2,3][] as $item ([]; if $item == false then break $out else $item end; .))) catch .'
   out:
@@ -57,3 +55,122 @@
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
+
+- q: '[path(foreach .a[] as $x (1; null))]'
+  in: {"a": [null, null]}
+  types:
+  - input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - input: '{a:[NULL,NULL]}'
+    output: '[*:[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'only the source moves the traversal along; the accumulator is a value of its own'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [["a", 0], ["a", 1]]
+
+- q: '[path(foreach .[] as $x (.; .))]'
+  in: [1, 2, 3]
+  types:
+  - input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - input: '[INT,INT,INT]'
+    output: '[*:[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out: []
+      error: true
+
+- q: '[path(foreach .a as $x (1; 2; null))]'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[[*:NUMBER|STRING]]'
+  - input: '{a:NULL}'
+    output: '[[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [["a"]]
+
+- q: '[path(foreach empty as $x (1; null))]'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - input: '{a:NULL}'
+    output: '[*:[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - []
+
+- q: '[path(limit(1; .a[]))]'
+  in: {"a": [1, 2]}
+  types:
+  - input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - input: '{a:[INT,INT]}'
+    output: '[*:[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'jq 1.5 does not keep the position across a label, so it loses a path jq 1.6 keeps; jackson-jq keeps it on every version'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out: []
+      error: true
+    - v: '[1.6, )'
+      out:
+      - [["a", 0]]
+    jjq:
+    - v: '[1.5, 1.6)'
+      out:
+      - [["a", 0]]
+
+- q: 'del(limit(1; .a[]))'
+  in: {"a": [1, 2]}
+  types:
+  - input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - input: '{a:[INT,INT]}'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'jq 1.5 does not keep the position across a label, so it loses a path jq 1.6 keeps; jackson-jq keeps it on every version'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out: []
+      error: true
+    - v: '[1.6, )'
+      out:
+      - {"a": [2]}
+    jjq:
+    - v: '[1.5, 1.6)'
+      out:
+      - {"a": [2]}

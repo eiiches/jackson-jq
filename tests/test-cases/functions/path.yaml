@@ -428,3 +428,723 @@
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
+
+- q: 'path(1)'
+  in: 1
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: 'INT'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'jq compares the result against the value at the tracked path by identity; a number was a bare double below 1.7, and a literal one from then on'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - []
+    - v: '[1.7, )'
+      out: []
+      error: true
+
+- q: 'path(1e0)'
+  in: 1
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: 'INT'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - []
+    - v: '[1.7, )'
+      out: []
+      error: true
+
+- q: 'path(2)'
+  in: 1
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: 'INT'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out: []
+      error: true
+
+- q: 'path(true)'
+  in: true
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: 'BOOLEAN'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - []
+
+- q: 'path(false)'
+  in: false
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: 'BOOLEAN'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - []
+
+- q: 'path(false)'
+  in: true
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: 'BOOLEAN'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out: []
+      error: true
+
+- q: 'path(null)'
+  in: 1
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: 'INT'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out: []
+      error: true
+
+- q: 'path("a")'
+  in: "a"
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: 'STRING'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'a string is never the value at the tracked path unless it is the very same string'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out: []
+      error: true
+
+- q: 'path([])'
+  in: []
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '[]'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out: []
+      error: true
+
+- q: 'path({})'
+  in: {}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out: []
+      error: true
+
+- q: 'path(. as $x | $x)'
+  in: 1
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: 'INT'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'the very same value, passed along through a variable'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - []
+
+- q: 'path(.a | null)'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:NULL}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["a"]
+
+- q: 'path(.a | true)'
+  in: {"a": true}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:BOOLEAN}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["a"]
+
+- q: 'path(.a | false)'
+  in: {"a": true}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:BOOLEAN}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out: []
+      error: true
+
+- q: 'path(.a | "x")'
+  in: {"a": "x"}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:STRING}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out: []
+      error: true
+
+- q: 'path(.a | 1)'
+  in: {"a": 1}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:INT}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - ["a"]
+    - v: '[1.7, )'
+      out: []
+      error: true
+
+- q: 'path(.a | 1 | 2)'
+  in: {"a": 2}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:INT}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'a stage that has no path leaves the position the first one lost alone'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - ["a"]
+    - v: '[1.7, )'
+      out: []
+      error: true
+
+- q: 'path(.a | 1 | null)'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:NULL}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["a"]
+
+- q: 'path(.a | [1] | null)'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:NULL}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["a"]
+
+- q: 'path(.a | (null | null))'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:NULL}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["a"]
+
+- q: 'path(.a | try null)'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:NULL}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["a"]
+
+- q: 'path(.a | first(null))'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:NULL}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'jq 1.5 does not keep the position across a label, so it loses a path jq 1.6 keeps; jackson-jq keeps it on every version'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out: []
+      error: true
+    - v: '[1.6, )'
+      out:
+      - ["a"]
+    jjq:
+    - v: '[1.5, 1.6)'
+      out:
+      - ["a"]
+
+- q: 'path(limit(1; .a | null))'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:NULL}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'jq 1.5 does not keep the position across a label, so it loses a path jq 1.6 keeps; jackson-jq keeps it on every version'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out: []
+      error: true
+    - v: '[1.6, )'
+      out:
+      - ["a"]
+    jjq:
+    - v: '[1.5, 1.6)'
+      out:
+      - ["a"]
+
+- q: 'path(.a | label $out | null)'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:NULL}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["a"]
+
+- q: 'path(.a | if true then null else 1 end)'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:NULL}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["a"]
+
+- q: 'path(.a | null | .b)'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:NULL}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'a step resumes from the position too, not just path/1'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["a", "b"]
+
+- q: 'path(.a | .b | null)'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:NULL}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["a", "b"]
+
+- q: 'path(.a | null | .b | null)'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:NULL}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["a", "b"]
+
+- q: '[path(.a, null)]'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - input: '{a:NULL}'
+    output: '[*:[*:NUMBER|STRING]]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'the other branch of a comma starts from where the comma did, not from where its sibling got to'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out: []
+      error: true
+
+- q: 'path(if .a then 1 else null end)'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - input: '{a:NULL}'
+    output: '[*:NUMBER|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'jq 1.5 lets an if condition move the traversal along, which jq 1.6 corrected; jackson-jq uses the corrected behaviour on every version'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out:
+      - ["a"]
+    - v: '[1.6, )'
+      out: []
+      error: true
+    jjq:
+    - v: '[1.5, 1.6)'
+      out: []
+      error: true
+
+- q: 'try path(1 | .a) catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "Invalid path expression near attempt to access element \"a\" of 1"
+
+- q: 'try path(.a | {"b": 1} | .b) catch .'
+  in: {"a": {"b": 1}}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:{b:INT}}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "Invalid path expression near attempt to access element \"b\" of {\"b\":1}"
+
+- q: 'try (path([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])) catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Invalid path expression with result [1,2,3,4,5,6,7,8,9,10,11,1..."
+    - v: '[1.8.2, )'
+      out:
+      - "Invalid path expression with result [1,2,3,4,5,6,7,8,9,10,11,...]"
+
+- q: 'try (path("aaaaaaaaaaaaaaaaaaaaaaaaaaaa")) catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'one character past the boundary the case above pins'
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Invalid path expression with result \"aaaaaaaaaaaaaaaaaaaaaaaaa..."
+    - v: '[1.8.2, )'
+      out:
+      - "Invalid path expression with result \"aaaaaaaaaaaaaaaaaaaaaaaa...\""
+
+- q: 'try (path("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" | .b)) catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Invalid path expression near attempt to access element \"b\" of \"aaaaaaaaaaaaaaaaaaaaaaaaa..."
+    - v: '[1.8.2, )'
+      out:
+      - "Invalid path expression near attempt to access element \"b\" of \"aaaaaaaaaaaaaaaaaaaaaaaa...\""
+
+- q: 'try (path("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" | .[])) catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Invalid path expression near attempt to iterate through \"aaaaaaaaaaaaaaaaaaaaaaaaa..."
+    - v: '[1.8.2, )'
+      out:
+      - "Invalid path expression near attempt to iterate through \"aaaaaaaaaaaaaaaaaaaaaaaa...\""
+
+- q: 'try (path(1 | .["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"])) catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'jq gives the key a smaller buffer than the value until 1.8.2, which uses one size everywhere'
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Invalid path expression near attempt to access element \"aaaaaaaaaa... of 1"
+    - v: '[1.8.2, )'
+      out:
+      - "Invalid path expression near attempt to access element \"aaaaaaaaaaaaaaaaaaaaaaaa...\" of 1"
+
+- q: 'try (path(1e1000)) catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "Invalid path expression with result 1.7976931348623157e+308"
+    - v: '[1.7, )'
+      out:
+      - "Invalid path expression with result 1E+1000"
+
+- q: 'try (path(100000000000000000000000)) catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "Invalid path expression with result 1e+23"
+    - v: '[1.7, )'
+      out:
+      - "Invalid path expression with result 100000000000000000000000"

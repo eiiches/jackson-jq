@@ -7,6 +7,7 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
+import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -75,7 +76,7 @@ public class StringFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> {
 				memory.countOutput(targetOutputIndex);
 				if (!jsonProvider.isString(key) && !permissive)
 					throw new IllegalStateException(); // FIXME: exception type
-				emitObjectFieldPath(jsonProvider, permissive, jsonProvider.getString(key), pobj, ppath, output, !(path instanceof UntrackedPath), version);
+				emitObjectFieldPath(jsonProvider, permissive, jsonProvider.getString(key), pobj, PathUtils.stale(ppath, path, in), output, version);
 			});
 		});
 	}

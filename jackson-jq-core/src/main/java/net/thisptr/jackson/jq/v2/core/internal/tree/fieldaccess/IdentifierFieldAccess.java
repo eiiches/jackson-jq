@@ -3,13 +3,13 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.fieldaccess;
 import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
-import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class IdentifierFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> {
@@ -44,7 +44,7 @@ public class IdentifierFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNod
 		Memory memory = frame.getEnclosingMemory();
 		target.apply(frame, in, path, (pobj, ppath) -> {
 			memory.countOutput(targetOutputIndex);
-			emitObjectFieldPath(jsonProvider, permissive, field, pobj, ppath, output, !(path instanceof UntrackedPath), version);
+			emitObjectFieldPath(jsonProvider, permissive, field, pobj, PathUtils.stale(ppath, path, in), output, version);
 		});
 	}
 }

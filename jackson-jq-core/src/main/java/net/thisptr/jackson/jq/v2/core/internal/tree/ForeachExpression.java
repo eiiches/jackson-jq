@@ -10,12 +10,12 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
+import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.matcher.PatternMatcher;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
-import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class ForeachExpression<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
@@ -122,32 +122,33 @@ public class ForeachExpression<JsonNode> implements RewritableExpression<JsonNod
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		Memory memory = frame.getEnclosingMemory();
-		initExpr.apply(frame, in, ipath, (accumulator, accumulatorPath) -> {
+		initExpr.apply(frame, in, UntrackedPath.getInstance(), (accumulator, accumulatorPath) -> {
 			memory.countOutput(initOutputIndex);
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
 			JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
+			// Only the source moves the traversal along: the accumulator is a value of its own, so
+			// whatever the body makes of it is emitted from wherever the current item is. A body that
+			// hands back the item unchanged therefore keeps the item's path, and anything else loses it.
 			@SuppressWarnings("unchecked")
-			Path<JsonNode>[] accumulatorPaths = (Path<JsonNode>[]) new Path<?>[] { accumulatorPath };
+			Path<JsonNode>[] outputPaths = (Path<JsonNode>[]) new Path<?>[] { ipath };
 
 			// The matcher binds its variables straight into the frame, so by the time onMatch runs
 			// updateExpr can simply read them.
 			PatternMatcher.OnMatch onMatch = () -> {
-				updateExpr.apply(frame, accumulators[0], extractExpr != null ? UntrackedPath.getInstance() : accumulatorPaths[0], (newaccumulator, newaccumulatorPath) -> {
+				updateExpr.apply(frame, accumulators[0], UntrackedPath.getInstance(), (newaccumulator, newaccumulatorPath) -> {
 					memory.countOutput(updateOutputIndex);
 					if (extractExpr != null) {
-						extractExpr.apply(frame, newaccumulator, !(ipath instanceof UntrackedPath) && newaccumulatorPath instanceof UntrackedPath ? UnrepresentablePath.getInstance() : newaccumulatorPath, output);
+						extractExpr.apply(frame, newaccumulator, UntrackedPath.getInstance(), (extracted, extractedPath) -> output.emit(extracted, outputPaths[0]));
 					} else {
-						output.emit(newaccumulator, newaccumulatorPath);
+						output.emit(newaccumulator, outputPaths[0]);
 					}
 					accumulators[0] = newaccumulator;
-					accumulatorPaths[0] = !(ipath instanceof UntrackedPath) && newaccumulatorPath instanceof UntrackedPath
-							? UnrepresentablePath.getInstance()
-							: newaccumulatorPath;
 				});
 			};
 			iterExpr.apply(frame, in, ipath, (item, itemPath) -> {
 				memory.countOutput(iterOutputIndex);
+				outputPaths[0] = PathUtils.stale(UntrackedPath.getInstance(), itemPath, item);
 				matcher.matchWithPath(frame, item, itemPath, onMatch);
 			});
 		});

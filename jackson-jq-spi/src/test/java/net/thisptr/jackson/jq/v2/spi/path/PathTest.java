@@ -71,9 +71,25 @@ public class PathTest {
 	void rejectsLostPath() {
 		Jackson2JsonProvider jsonProvider = new Jackson2JsonProvider(new ObjectMapper());
 
-		assertThatThrownBy(() -> UnrepresentablePath.<JsonNode>getInstance().toJsonList(jsonProvider))
+		assertThatThrownBy(() -> UnrepresentablePath.of(RootPath.<JsonNode>getInstance(), jsonProvider.createNull()).toJsonList(jsonProvider))
 				.isInstanceOf(Exception.class)
 				.hasMessage("Invalid path expression");
+	}
+
+	@Test
+	void stalePathKeepsThePositionItWasLostAt() {
+		Jackson2JsonProvider jsonProvider = new Jackson2JsonProvider(new ObjectMapper());
+
+		Path<JsonNode> lastValid = RootPath.<JsonNode>getInstance().appendKey("a");
+		JsonNode valueAtLastValid = jsonProvider.createNull();
+		Path<JsonNode> stale = UnrepresentablePath.of(lastValid, valueAtLastValid);
+
+		assertThat(stale).isInstanceOf(UnrepresentablePath.class);
+		assertThat(((UnrepresentablePath<JsonNode>) stale).getLastValidPath()).isSameAs(lastValid);
+		assertThat(((UnrepresentablePath<JsonNode>) stale).getValueAtLastValidPath()).isSameAs(valueAtLastValid);
+		assertThat(stale.getParentPath()).isNull();
+		// A path that already went stale keeps the position it first lost.
+		assertThat(UnrepresentablePath.of(stale, jsonProvider.createNumber(1))).isSameAs(stale);
 	}
 
 	@Test
