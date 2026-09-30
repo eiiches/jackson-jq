@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.builtins;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
@@ -19,17 +20,17 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 public abstract class AbstractPureJsonArgumentFunction implements Function {
 	protected abstract <JsonNode> JsonNode fn(JsonProvider<JsonNode> jsonProvider, List<JsonNode> args) throws JsonQueryException;
 
-	private <JsonNode> void combinations(JsonProvider<JsonNode> jsonProvider, Output<JsonNode> output, List<JsonNode> args, int index, List<List<JsonNode>> argmat) throws JsonQueryException {
-		if (index >= argmat.size()) {
+	private <Context extends RuntimeContext, JsonNode> void combinations(JsonProvider<JsonNode> jsonProvider, Context frame, JsonNode in, Output<JsonNode> output,
+			List<Expression<Context, JsonNode>> expressions, List<JsonNode> args, int index) throws JsonQueryException {
+		if (index < 0) {
 			output.emit(fn(jsonProvider, args), UntrackedPath.getInstance());
 			return;
 		}
 
-		for (JsonNode arg : argmat.get(index)) {
-			args.add(arg);
-			combinations(jsonProvider, output, args, index + 1, argmat);
-			args.remove(args.size() - 1);
-		}
+		expressions.get(index).apply(frame, in, UntrackedPath.getInstance(), (value, path) -> {
+			args.set(index, value);
+			combinations(jsonProvider, frame, in, output, expressions, args, index - 1);
+		});
 	}
 
 	@Override
@@ -40,15 +41,7 @@ public abstract class AbstractPureJsonArgumentFunction implements Function {
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
-		return (frame, in, ipath, output) -> {
-			List<List<JsonNode>> _args = new ArrayList<>(args.size());
-			for (Expression<Context, JsonNode> arg : args) {
-				List<JsonNode> out = new ArrayList<>();
-				arg.apply(frame, in, UntrackedPath.getInstance(), (v, opath) -> out.add(v));
-				_args.add(out);
-			}
-
-			combinations(jsonProvider, output, new ArrayList<>(_args.size()), 0, _args);
-		};
+		return (frame, in, ipath, output) -> combinations(jsonProvider, frame, in, output, args,
+				new ArrayList<>(Collections.nCopies(args.size(), null)), args.size() - 1);
 	}
 }
