@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
@@ -26,6 +28,7 @@ public class ReduceExpression<JsonNode> implements RewritableExpression<JsonNode
 	private final int reduceOutputIndex;
 	private final int iterOutputIndex;
 	private final Set<Integer> matcherSlots;
+	private final boolean sourceSeesNullAfterFirstInitValue;
 
 	@Override
 	public Cardinality getCardinality() {
@@ -47,6 +50,7 @@ public class ReduceExpression<JsonNode> implements RewritableExpression<JsonNode
 		this.initExpr = initExpr;
 		this.reduceExpr = reduceExpr;
 		this.iterExpr = iterExpr;
+		this.sourceSeesNullAfterFirstInitValue = initExpr.getCardinality() == Cardinality.UNKNOWN;
 		// reduceExpr sees the accumulator rather than `.`, and the accumulator is determined entirely by
 		// initExpr and iterExpr, so its own input dependency is discharged by theirs.
 		// dependsOnExternalState stays a flat OR: rebinding `.` cannot make a clock or a file read
@@ -74,6 +78,14 @@ public class ReduceExpression<JsonNode> implements RewritableExpression<JsonNode
 
 	public PatternMatcher<JsonNode> matcher() {
 		return matcher;
+	}
+
+	/**
+	 * Whether this reduce hands its source a null for every init value after the first, which every jq
+	 * from 1.5 to 1.8.2 does wherever the init can emit a second value.
+	 */
+	public boolean sourceSeesNullAfterFirstInitValue() {
+		return sourceSeesNullAfterFirstInitValue;
 	}
 
 	// reduce iterExpr as matcher (initExpr; reduceExpr)
@@ -111,8 +123,17 @@ public class ReduceExpression<JsonNode> implements RewritableExpression<JsonNode
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> ipath, Output<JsonNode> output) throws JsonQueryException {
 		Memory memory = frame.getEnclosingMemory();
+		// jq reads `.` off the stack with DUPN when it enters the fold, which leaves a null behind in the
+		// slot the value came from: iterExpr sees the real input only while the first initExpr value is
+		// folded, and null for every initExpr value after it. Every version from 1.5 through 1.8.2 does
+		// this -- jq 1.8.0 fixed foreach and left reduce alone. Wrap in array to allow mutation inside
+		// lambda; an initExpr that cannot emit a second value never reaches the null and needs no state.
+		boolean @Nullable [] firstInitValue = sourceSeesNullAfterFirstInitValue ? new boolean[] { true } : null;
 		initExpr.apply(frame, in, UntrackedPath.getInstance(), (accumulator, opath) -> {
 			memory.countOutput(initOutputIndex);
+			JsonNode iterInput = firstInitValue == null || firstInitValue[0] ? in : jsonProvider.createNull();
+			if (firstInitValue != null)
+				firstInitValue[0] = false;
 			// Wrap in array to allow mutation inside lambda
 			@SuppressWarnings("unchecked")
 			JsonNode[] accumulators = (JsonNode[]) new Object[] { accumulator };
@@ -127,7 +148,7 @@ public class ReduceExpression<JsonNode> implements RewritableExpression<JsonNode
 				});
 				accumulators[0] = reduceResult.isEmpty() ? jsonProvider.createNull() : reduceResult.get(reduceResult.size() - 1);
 			};
-			iterExpr.apply(frame, in, UntrackedPath.getInstance(), (item, opath2) -> {
+			iterExpr.apply(frame, iterInput, UntrackedPath.getInstance(), (item, opath2) -> {
 				memory.countOutput(iterOutputIndex);
 				matcher.match(frame, item, onMatch);
 			});

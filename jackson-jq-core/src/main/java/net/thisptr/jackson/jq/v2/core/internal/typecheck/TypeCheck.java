@@ -584,11 +584,25 @@ public final class TypeCheck {
 	}
 
 	/**
+	 * The input SOURCE runs on, which is the expression's own input only for the first INIT value.
+	 * <p>
+	 * jq reads {@code .} off the stack with {@code DUPN} when it enters the loop, which leaves a null
+	 * behind in the slot the value came from, so SOURCE sees null for every INIT value after the first.
+	 * The expression itself decides whether that applies to it: {@code reduce} always does this, and
+	 * {@code foreach} only before jq 1.8. Both ask for an INIT that can emit a second value at all, and
+	 * {@link Cardinality#UNKNOWN} also covers "one or more", so this errs towards admitting a null the
+	 * loop may never feed in.
+	 */
+	private static Type sourceInput(boolean sourceSeesNullAfterFirstInitValue, Type input) {
+		return sourceSeesNullAfterFirstInitValue ? UnionType.of(input, NullType.getInstance()) : input;
+	}
+
+	/**
 	 * {@code reduce SOURCE as $x (INIT; UPDATE)}: the accumulator starts at INIT and each item replaces it
 	 * with UPDATE's value, so the result is whatever the accumulator can settle at.
 	 */
 	private Type reduce(ReduceExpression<?> reduce, Type input) {
-		Type item = infer(reduce.iterExpr(), input);
+		Type item = infer(reduce.iterExpr(), sourceInput(reduce.sourceSeesNullAfterFirstInitValue(), input));
 		Type initial = infer(reduce.initExpr(), input);
 		return withPatternBindings(reduce.matcher(), item, () ->
 				accumulate(reduce, initial, accumulator -> {
