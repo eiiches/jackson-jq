@@ -1,6 +1,9 @@
 package net.thisptr.jackson.jq.v2.core.internal.tree;
 
+import java.math.BigDecimal;
 import java.util.Set;
+
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
@@ -9,7 +12,9 @@ import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.NumberType;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -68,6 +73,16 @@ public class NegativeExpression<JsonNode> implements RewritableExpression<JsonNo
 			memory.countOutput(valueOutputIndex);
 			if (!jsonProvider.isNumber(v))
 				throw new JsonQueryTypeException("%s cannot be negated", ExceptionMessages.describe(jsonProvider, version, v));
+			if (version.compareTo(Versions.JQ_1_8_0) >= 0) {
+				NumberType type = jsonProvider.getNumberType(v);
+				if (type != NumberType.DOUBLE && type != NumberType.FLOAT) {
+					@Nullable BigDecimal exact = jsonProvider.getNumberAsBigDecimalExact(v);
+					if (exact != null) {
+						output.emit(jsonProvider.createNumber(exact.negate()), UntrackedPath.getInstance());
+						return;
+					}
+				}
+			}
 			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, -jsonProvider.getNumberAsDoubleRounded(v)), UntrackedPath.getInstance());
 		});
 	}

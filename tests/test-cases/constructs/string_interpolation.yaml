@@ -11,6 +11,25 @@
     depends_on_input: true
     depends_on_external_state: false
 
+- q: '["\(-1.0)", (-1.0 | tostring), ({n: -1.0} | tojson), (1.0 - 2.0 | tostring)]'
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - ["-1", "-1", '{"n":-1}', "-1"]
+    - v: '[1.8.0, )'
+      out:
+      - ["-1.0", "-1.0", '{"n":-1.0}', "-1"]
+  types:
+  - input: 'ANY'
+    output: '[STRING,STRING,STRING,STRING]'
+  - input: 'NULL'
+    output: '[STRING,STRING,STRING,STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
 - q: 'try (path("path: \([1,2][])")) catch .'
   out:
   - "Invalid path expression with result \"path: 1\""
