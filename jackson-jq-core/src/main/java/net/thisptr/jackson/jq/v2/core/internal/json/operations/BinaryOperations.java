@@ -15,6 +15,7 @@ import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
+import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
@@ -111,9 +112,9 @@ public final class BinaryOperations {
 			}
 			return JsonNodeUtils.asNumericNode(jsonProvider, ld * rd);
 		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.NUMBER) {
-			return repeat(jsonProvider, limits, lhs, jsonProvider.getNumberAsDoubleRounded(rhs));
+			return repeat(jsonProvider, limits, lhs, jsonProvider.getNumberAsDoubleRounded(rhs), version);
 		} else if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.STRING) {
-			return repeat(jsonProvider, limits, rhs, jsonProvider.getNumberAsDoubleRounded(lhs));
+			return repeat(jsonProvider, limits, rhs, jsonProvider.getNumberAsDoubleRounded(lhs), version);
 		} else if (ltype == JsonNodeType.OBJECT && rtype == JsonNodeType.OBJECT) {
 			return mergeRecursive(jsonProvider, limits, lhs, rhs);
 		} else {
@@ -121,9 +122,14 @@ public final class BinaryOperations {
 		}
 	}
 
-	private static <JsonNode> JsonNode repeat(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, JsonNode str, double count) {
-		if (count <= 0)
+	private static <JsonNode> JsonNode repeat(JsonProvider<JsonNode> jsonProvider, RuntimeLimits limits, JsonNode str, double count, Version version) {
+		if (Double.isNaN(count) || count < 0 || (Double.isInfinite(count) && version.compareTo(Versions.JQ_1_7) < 0))
 			return jsonProvider.createNull();
+		if (count < 1) {
+			if (version.compareTo(Versions.JQ_1_7) >= 0)
+				return jsonProvider.createString("");
+			return count == 0 ? jsonProvider.createNull() : str;
+		}
 		if (count < 2)
 			return str;
 		String text = jsonProvider.getString(str);
