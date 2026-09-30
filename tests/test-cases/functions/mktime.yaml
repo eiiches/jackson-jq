@@ -141,6 +141,15 @@
       out:
       - 0
       error: true
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try mktime catch .'
   types:
