@@ -71,7 +71,8 @@ final class BrokenDownTimes {
 					throw new JsonQueryException(message);
 				fields[i] = Integer.MIN_VALUE;
 			} else {
-				fields[i] = (int) Math.max(Integer.MIN_VALUE, Math.min(Integer.MAX_VALUE, value));
+				fields[i] = i == 0 ? readYear(value, fieldsMayBeMissing)
+						: (int) Math.max(Integer.MIN_VALUE, Math.min(Integer.MAX_VALUE, value));
 			}
 		}
 
@@ -86,6 +87,18 @@ final class BrokenDownTimes {
 		time.wday = fields[6];
 		time.yday = fields[7];
 		return time;
+	}
+
+	private static int readYear(double value, boolean jq18OrLater) {
+		if (!jq18OrLater) {
+			// Older jq converts an out-of-range year directly to the C int minimum.
+			return value < Integer.MIN_VALUE || value > Integer.MAX_VALUE ? Integer.MIN_VALUE : (int) value;
+		}
+		// jq 1.8 first stores the year relative to 1900 in a C int, then adds 1900 back.
+		// The addition can wrap even when the input itself fits in an int.
+		double relativeYear = value - 1900;
+		int tmYear = (int) Math.max(Integer.MIN_VALUE, Math.min(Integer.MAX_VALUE, relativeYear));
+		return tmYear + 1900;
 	}
 
 	/**

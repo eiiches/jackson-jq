@@ -15,6 +15,33 @@
       out:
       - "2023-11-14T22:13:20Z"
 
+- q: 'strftime("%Y-%m-%dT%H:%M:%SZ")'
+  in: [1.7976931348623157e308, 0, 1, 0, 0, 0, 4, 0]
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[FLOAT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - "-2147483648-01-01T00:00:00Z"
+    - v: '[1.8.0, )'
+      out:
+      - "-2147481749-01-01T00:00:00Z"
+    macos:
+    - v: '[1.7, 1.8.0)'
+      out:
+      - "2147483647-01-01T00:00:00Z"
+    - v: '[1.8.0, )'
+      out:
+      - "2147485547-01-01T00:00:00Z"
+
 - q: 'strftime("%A, %B %e, %Y")'
   in: 1700000000
   types:

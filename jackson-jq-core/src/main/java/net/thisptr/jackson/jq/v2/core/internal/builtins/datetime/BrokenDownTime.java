@@ -170,7 +170,6 @@ final class BrokenDownTime {
 	 * Carries every out-of-range field into the one above it, the way {@code mktime} does, and recomputes
 	 * {@link #wday} and {@link #yday} for the date that results.
 	 *
-	 * @throws DateTimeException if the carried date is outside the range a date can be written for
 	 */
 	public void normalize() {
 		long minutes = min + Math.floorDiv(sec, 60);
@@ -180,9 +179,13 @@ final class BrokenDownTime {
 		long days = mday + Math.floorDiv(hours, 24);
 		int hoursOfDay = Math.floorMod(hours, 24);
 
-		LocalDate date = dateAt(year, month, days);
+		// Gregorian dates repeat every 400 years. Normalize in a nearby cycle so even a year
+		// outside LocalDate's range can be carried without changing its calendar fields.
+		long cycleYear = 2000 + Math.floorMod((long) year - 2000, 400);
+		long yearShift = year - cycleYear;
+		LocalDate date = dateAt(cycleYear, month, days);
 
-		year = date.getYear();
+		year = (int) (date.getYear() + yearShift);
 		month = date.getMonthValue() - 1;
 		mday = date.getDayOfMonth();
 		hour = hoursOfDay;
