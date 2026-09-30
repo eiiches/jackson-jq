@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.function.UnaryOperator;
 
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -10,7 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 @FunctionRegistration(name = "@base64", nargs = 0)
 public class AtBase64Function extends AbstractAtFormattingFunction {
 	@Override
-	public String convert(String text, Version version) throws JsonQueryException {
+	public String convert(String text, Version version, UnaryOperator<String> describe) throws JsonQueryException {
 		return Base64.getEncoder().encodeToString(text.getBytes(StandardCharsets.UTF_8));
 	}
 }

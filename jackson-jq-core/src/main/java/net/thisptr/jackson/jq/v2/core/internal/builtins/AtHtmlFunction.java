@@ -1,12 +1,14 @@
 package net.thisptr.jackson.jq.v2.core.internal.builtins;
 
+import java.util.function.UnaryOperator;
+
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @FunctionRegistration(name = "@html", nargs = 0)
 public class AtHtmlFunction extends AbstractAtFormattingFunction {
 	@Override
-	public String convert(String text, Version version) {
+	public String convert(String text, Version version, UnaryOperator<String> describe) {
 		StringBuilder builder = new StringBuilder();
 		for (int i = 0; i < text.length(); ++i) {
 			char ch = text.charAt(i);

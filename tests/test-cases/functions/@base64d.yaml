@@ -150,3 +150,236 @@
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
+
+- q: '@base64d'
+  in: 'WyJiYXIiXQ=="name"'
+  comment: 'jq stops decoding at the first = and discards the rest of the input, so the quoted text after the padding is ignored rather than rejected'
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "[\"bar\"]"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "YWJjZA=X"
+  comment: 'a single = ends the input just as a full pad does'
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "abcd"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "YQ==YQ=="
+  comment: 'the second base64 chunk is past the padding and never read'
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "a"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "YQ="
+  comment: 'one pad character where two are canonical'
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "a"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: ""
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - ""
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "="
+  comment: 'an input that is nothing but padding decodes to nothing'
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - ""
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "=abc"
+  comment: 'leading padding discards the whole input'
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - ""
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "YWJjZA"
+  comment: 'unpadded input decodes from the trailing group'
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "abcd"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "+/+/"
+  comment: '+ and / are in the alphabet; the bytes they make are not valid UTF-8'
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "���"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "a"
+  comment: 'a trailing group of one character carries too few bits to make a byte'
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out: []
+      error: true
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "AAAAA"
+  comment: 'the leftover character after a complete group is an error just the same'
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out: []
+      error: true
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "ab!cd"
+  comment: 'a character outside the alphabet is rejected'
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out: []
+      error: true
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  in: "-_"
+  comment: 'the URL-safe alphabet is not the one jq decodes'
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out: []
+      error: true
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false

@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.function.UnaryOperator;
 
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
@@ -10,7 +11,7 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 @FunctionRegistration(name = "@uri", nargs = 0)
 public class AtUriFunction extends AbstractAtFormattingFunction {
 	@Override
-	public String convert(String text, Version version) {
+	public String convert(String text, Version version, UnaryOperator<String> describe) {
 		String encoded = URLEncoder.encode(text, StandardCharsets.UTF_8)
 				.replace("+", "%20")
 				.replace("%7E", "~");
