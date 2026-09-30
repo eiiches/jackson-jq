@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
+import com.google.errorprone.annotations.Var;
+
+import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
@@ -51,19 +53,28 @@ public class GroupByFunction implements Function {
 			Preconditions.checkInputType(jsonProvider, "group_by", in, JsonNodeType.ARRAY);
 
 			JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
-			TreeMap<JsonNode, List<JsonNode>> result = new TreeMap<>(comparator);
+			List<Pair<JsonNode, JsonNode>> keyed = new ArrayList<>(jsonProvider.getArrayLength(in));
 			Iterator<JsonNode> iter = jsonProvider.getArrayElements(in);
 			while (iter.hasNext()) {
 				JsonNode i = iter.next();
 				List<JsonNode> fxList = new ArrayList<>();
 				args.get(0).apply(frame, i, UntrackedPath.getInstance(), (v, opath) -> fxList.add(v));
 				JsonNode fx = JsonNodeUtils.asArrayNode(jsonProvider, fxList);
-				List<JsonNode> values = result.computeIfAbsent(fx, k -> new ArrayList<>());
-				values.add(i);
+				keyed.add(Pair.of(i, fx));
 			}
 
-			List<JsonNode> groups = new ArrayList<>(result.size());
-			for (List<JsonNode> values : result.values())
+			keyed.sort((o1, o2) -> comparator.compareForSorting(o1._2, o2._2));
+
+			List<JsonNode> groups = new ArrayList<>();
+			@Var List<JsonNode> values = new ArrayList<>();
+			for (int j = 0; j < keyed.size(); j++) {
+				if (j > 0 && comparator.compare(keyed.get(j - 1)._2, keyed.get(j)._2) != 0) {
+					groups.add(JsonNodeUtils.asArrayNode(jsonProvider, values));
+					values = new ArrayList<>();
+				}
+				values.add(keyed.get(j)._1);
+			}
+			if (!values.isEmpty())
 				groups.add(JsonNodeUtils.asArrayNode(jsonProvider, values));
 			output.emit(JsonNodeUtils.asArrayNode(jsonProvider, groups), UntrackedPath.getInstance());
 		};

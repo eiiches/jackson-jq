@@ -153,4 +153,14 @@ public class JsonNodeComparator<JsonNode> implements Comparator<JsonNode>, Seria
 			case OBJECT -> compareObjectNode(o1, o2);
 		};
 	}
+
+	/**
+	 * Sorts values with NaN keys stably while retaining {@link #compare(Object, Object)} for
+	 * jq comparisons, where NaN is less than itself. Two keys that compare less than each
+	 * other must tie for sorting; otherwise a stable sort reverses their input order.
+	 */
+	public int compareForSorting(JsonNode o1, JsonNode o2) {
+		int result = compare(o1, o2);
+		return result < 0 && compare(o2, o1) < 0 ? 0 : result;
+	}
 }
