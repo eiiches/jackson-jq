@@ -617,7 +617,7 @@ public final class TypeCheck {
 	 * point.
 	 */
 	private Type foreach(ForeachExpression<?> foreach, Type input) {
-		Type item = infer(foreach.iterExpr(), input);
+		Type item = infer(foreach.iterExpr(), sourceInput(foreach.sourceSeesNullAfterFirstInitValue(), input));
 		Type initial = infer(foreach.initExpr(), input);
 		AnalyzedExpression<?> extract = foreach.extractExpr();
 		Accumulation result = withPatternBindings(foreach.matcher(), item, () ->

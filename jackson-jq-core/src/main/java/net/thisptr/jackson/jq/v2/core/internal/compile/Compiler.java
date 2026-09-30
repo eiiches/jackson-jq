@@ -765,7 +765,7 @@ public class Compiler {
 				compiledMatcher = compiledMatcher.resolveSlots(new SlotResolver(slots));
 				AnalyzedExpression<N> compiledUpdate = compileNonNull(env, context, scope, fe.updateExpr());
 				AnalyzedExpression<N> compiledExtract = compile(env, context, scope, fe.extractExpr());
-				return new ForeachExpression<>(compiledMatcher, compiledInit, compiledUpdate, compiledExtract, compiledIter, new HashSet<>(slots.values()), context.outputCounterOf(compiledInit), context.outputCounterOf(compiledUpdate), context.outputCounterOf(compiledIter));
+				return new ForeachExpression<>(env.getJsonProvider(), compiledMatcher, compiledInit, compiledUpdate, compiledExtract, compiledIter, env.getJqVersion(), new HashSet<>(slots.values()), context.outputCounterOf(compiledInit), context.outputCounterOf(compiledUpdate), context.outputCounterOf(compiledIter));
 			} finally {
 				context.popScope();
 			}
