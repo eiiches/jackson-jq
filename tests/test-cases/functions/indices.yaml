@@ -13,6 +13,36 @@
     depends_on_external_state: false
   v: '[1.5, )'
 
+- q: 'indices({})'
+  in: null
+  out:
+  - null
+  types:
+  - input: 'ANY'
+    output: 'NULL|[*:INT]'
+  - input: 'NULL'
+    output: 'NULL'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, )'
+
+- q: 'indices({"a": 1})'
+  in: null
+  out:
+  - null
+  types:
+  - input: 'ANY'
+    output: 'NULL|[*:INT]'
+  - input: 'NULL'
+    output: 'NULL'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, )'
+
 - q: 'indices("")'
   in: "x"
   out:
