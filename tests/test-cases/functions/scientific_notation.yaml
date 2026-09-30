@@ -1,22 +1,21 @@
-- q: 'tostring'
-  in: 5.244348724433776e+63
-  out:
-  - "5.244348724433776e+63"
+- q: '1790700612.751727 * 1.0 | tostring'
   types:
   - input: 'ANY'
     output: 'STRING'
-  - input: 'INT'
+  - input: 'NULL'
     output: 'STRING'
   properties:
     cardinality: ONE
-    depends_on_input: true
+    depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "1790700612.751727"
 
 - q: 'tostring'
   in: 5.244348724433776e+63
-  out:
-  - "5.244348724433776E+63"
   types:
   - input: 'ANY'
     output: 'STRING'
@@ -26,7 +25,14 @@
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "5.244348724433776e+63"
+    - v: '[1.7, )'
+      out:
+      - "5.244348724433776E+63"
 
 - q: '@sh'
   in: 1.0e+64
@@ -45,8 +51,6 @@
 
 - q: '@text'
   in: 5.244348724433776e+63
-  out:
-  - "5.244348724433776e+63"
   types:
   - input: 'ANY'
     output: 'STRING'
@@ -56,27 +60,17 @@
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
-
-- q: '@text'
-  in: 5.244348724433776e+63
-  out:
-  - "5.244348724433776E+63"
-  types:
-  - input: 'ANY'
-    output: 'STRING'
-  - input: 'INT'
-    output: 'STRING'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.7, )'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "5.244348724433776e+63"
+    - v: '[1.7, )'
+      out:
+      - "5.244348724433776E+63"
 
 - q: '@json'
   in: 5.244348724433776e+63
-  out:
-  - "5.244348724433776e+63"
   types:
   - input: 'ANY'
     output: 'STRING'
@@ -86,27 +80,17 @@
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
-
-- q: '@json'
-  in: 5.244348724433776e+63
-  out:
-  - "5.244348724433776E+63"
-  types:
-  - input: 'ANY'
-    output: 'STRING'
-  - input: 'INT'
-    output: 'STRING'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.7, )'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "5.244348724433776e+63"
+    - v: '[1.7, )'
+      out:
+      - "5.244348724433776E+63"
 
 - q: '@html'
   in: 5.244348724433776e+63
-  out:
-  - "5.244348724433776e+63"
   types:
   - input: 'ANY'
     output: 'STRING'
@@ -116,27 +100,17 @@
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
-
-- q: '@html'
-  in: 5.244348724433776e+63
-  out:
-  - "5.244348724433776E+63"
-  types:
-  - input: 'ANY'
-    output: 'STRING'
-  - input: 'INT'
-    output: 'STRING'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.7, )'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "5.244348724433776e+63"
+    - v: '[1.7, )'
+      out:
+      - "5.244348724433776E+63"
 
 - q: '@uri'
   in: 5.244348724433776e+63
-  out:
-  - "5.244348724433776e%2B63"
   types:
   - input: 'ANY'
     output: 'STRING'
@@ -146,27 +120,17 @@
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
-
-- q: '@uri'
-  in: 5.244348724433776e+63
-  out:
-  - "5.244348724433776E%2B63"
-  types:
-  - input: 'ANY'
-    output: 'STRING'
-  - input: 'INT'
-    output: 'STRING'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.7, )'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "5.244348724433776e%2B63"
+    - v: '[1.7, )'
+      out:
+      - "5.244348724433776E%2B63"
 
 - q: '@csv'
   in: [5.244348724433776e+63]
-  out:
-  - "5.244348724433776e+63"
   types:
   - input: 'ANY'
     output: 'STRING'
@@ -176,27 +140,17 @@
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
-
-- q: '@csv'
-  in: [5.244348724433776e+63]
-  out:
-  - "5.244348724433776E+63"
-  types:
-  - input: 'ANY'
-    output: 'STRING'
-  - input: '[INT]'
-    output: 'STRING'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.7, )'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "5.244348724433776e+63"
+    - v: '[1.7, )'
+      out:
+      - "5.244348724433776E+63"
 
 - q: '@tsv'
   in: [5.244348724433776e+63]
-  out:
-  - "5.244348724433776e+63"
   types:
   - input: 'ANY'
     output: 'STRING'
@@ -206,27 +160,17 @@
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
-
-- q: '@tsv'
-  in: [5.244348724433776e+63]
-  out:
-  - "5.244348724433776E+63"
-  types:
-  - input: 'ANY'
-    output: 'STRING'
-  - input: '[INT]'
-    output: 'STRING'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.7, )'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "5.244348724433776e+63"
+    - v: '[1.7, )'
+      out:
+      - "5.244348724433776E+63"
 
 - q: '"\(.)"'
   in: 5.244348724433776e+63
-  out:
-  - "5.244348724433776e+63"
   types:
   - input: 'ANY'
     output: 'STRING'
@@ -236,19 +180,11 @@
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
-
-- q: '"\(.)"'
-  in: 5.244348724433776e+63
-  out:
-  - "5.244348724433776E+63"
-  types:
-  - input: 'ANY'
-    output: 'STRING'
-  - input: 'INT'
-    output: 'STRING'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.7, )'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "5.244348724433776e+63"
+    - v: '[1.7, )'
+      out:
+      - "5.244348724433776E+63"

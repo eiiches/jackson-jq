@@ -45,6 +45,15 @@ def represent_json(dumper, value):
     raise ValueError(f"unsupported type: {type(value)}")
 
 
+def represent_version(dumper, value):
+    if isinstance(value, list):
+        node = yaml.nodes.SequenceNode("tag:yaml.org,2002:seq", [], flow_style=False)
+        for version_range in value:
+            node.value.append(yaml.nodes.ScalarNode("tag:yaml.org,2002:str", str(version_range), style="'"))
+        return node
+    return yaml.nodes.ScalarNode("tag:yaml.org,2002:str", str(value), style="'")
+
+
 class FormattedTestCase:
     def __init__(self, data):
         self.data = data
@@ -54,7 +63,7 @@ class FormattedTestCase:
         known_order = [
             "q", "in", "out", "types", "properties", "v", "failing", "comment", "justification",
             "modules", "should_compile",
-            "float_tolerance", "diverges_from_jq",
+            "float_tolerance", "expectations",
         ]
         keys = [k for k in known_order if k in self.data]
         for k in self.data:
@@ -106,9 +115,8 @@ class FormattedTestCase:
                         props_node.value.append((dumper.represent_str(pk), pv_node))
                 root_node.value.append((dumper.represent_str("properties"), props_node))
             elif k == "v":
-                v_node = dumper.represent_data(val)
-                v_node.style = "'"
-                root_node.value.append((dumper.represent_str("v"), v_node))
+                # One range, or a list of them when a version in between behaves differently.
+                root_node.value.append((dumper.represent_str("v"), represent_version(dumper, val)))
             elif k == "comment":
                 c_node = dumper.represent_data(val)
                 c_node.style = "'"
@@ -124,6 +132,26 @@ class FormattedTestCase:
                         mv_node = dumper.represent_data(mv)
                     modules_node.value.append((mk_node, mv_node))
                 root_node.value.append((dumper.represent_str("modules"), modules_node))
+            elif k == "expectations":
+                expectations_node = yaml.nodes.MappingNode("tag:yaml.org,2002:map", [], flow_style=False)
+                for target in ("default", "macos", "jjq"):
+                    if target not in val:
+                        continue
+                    rows_node = yaml.nodes.SequenceNode("tag:yaml.org,2002:seq", [], flow_style=False)
+                    for row in val[target]:
+                        if "v" not in row or "out" not in row:
+                            raise ValueError(f"expectations.{target} rows require both v and out")
+                        row_node = yaml.nodes.MappingNode("tag:yaml.org,2002:map", [], flow_style=False)
+                        row_node.value.append((dumper.represent_str("v"), represent_version(dumper, row["v"])))
+                        out_node = yaml.nodes.SequenceNode("tag:yaml.org,2002:seq", [], flow_style=not row["out"])
+                        for output in row["out"]:
+                            out_node.value.append(represent_json(dumper, output))
+                        row_node.value.append((dumper.represent_str("out"), out_node))
+                        if "error" in row:
+                            row_node.value.append((dumper.represent_str("error"), dumper.represent_data(row["error"])))
+                        rows_node.value.append(row_node)
+                    expectations_node.value.append((dumper.represent_str(target), rows_node))
+                root_node.value.append((dumper.represent_str(k), expectations_node))
             else:
                 root_node.value.append((dumper.represent_str(k), dumper.represent_data(val)))
         return root_node

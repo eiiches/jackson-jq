@@ -159,6 +159,17 @@ class JqPrinterTest {
 		assertThat(printCompact(provider, "{\"a\":[1,null]}", null)).isEqualTo("{\"a\":[1,null]}");
 	}
 
+	@Test
+	void formatsComputedDoublesWithJqNotation() {
+		Jackson3JsonProvider provider = Jackson3JsonProvider.getInstance();
+		assertThat(JqPrinter.print(provider, provider.createNumber(1_790_700_612.751727), null, null))
+				.isEqualTo("1790700612.751727");
+		assertThat(JqPrinter.print(provider, provider.createArray(List.of(
+				provider.createNumber(0.0001), provider.createNumber(0.00001),
+				provider.createNumber(1e16), provider.createNumber(1.2e16))), null, null))
+				.isEqualTo("[0.0001,1e-05,1e+16,12000000000000000]");
+	}
+
 	private static <N> String printPretty(JsonProvider<N> provider, String json, @Nullable JqColors colors) {
 		return JqPrinter.print(provider, JsonCodec.parse(provider, json), "  ", colors);
 	}

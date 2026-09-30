@@ -958,15 +958,15 @@ public interface JsonProviderContractTest<T> {
 		assertThat(JsonCodec.format(getProvider(), node, FormatOptions.newBuilder().build())).isEqualTo(JsonCodec.format(getProvider(), node));
 		assertThat(JsonCodec.format(getProvider(), node)).isEqualTo("{\"E\":[1.50,1E-7,\"E1E+2\"],\"n\":9007199254740993}");
 		assertThat(JsonCodec.format(getProvider(), node, FormatOptions.newBuilder()
-				.setLowerCaseExponent(true).setRoundNumbersToDouble(true).build()))
-				.isEqualTo("{\"E\":[1.5,1.0e-7,\"E1E+2\"],\"n\":9007199254740992}");
+				.setRoundNumbersToDouble(true).build()))
+				.isEqualTo("{\"E\":[1.5,1e-07,\"E1E+2\"],\"n\":9007199254740992}");
 	}
 
 	@Test
 	default void testFormatOptionsCanChangeExponentCaseIndependently() {
 		T node = JsonCodec.parse(getProvider(), "1e-7");
-		assertThat(JsonCodec.format(getProvider(), node, FormatOptions.newBuilder().setLowerCaseExponent(true).build())).isEqualTo("1e-7");
-		assertThat(JsonCodec.format(getProvider(), node, FormatOptions.newBuilder().setRoundNumbersToDouble(true).build())).isEqualTo("1.0E-7");
+		assertThat(JsonCodec.format(getProvider(), node, FormatOptions.newBuilder().setLowerCaseDecimalExponent(true).build())).isEqualTo("1e-7");
+		assertThat(JsonCodec.format(getProvider(), node, FormatOptions.newBuilder().setRoundNumbersToDouble(true).build())).isEqualTo("1e-07");
 	}
 
 	// ================================

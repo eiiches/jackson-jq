@@ -2304,22 +2304,46 @@
   in: "2015-03-05T23:51:47Z"
   out:
   - 1425599507
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'STRING'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
-  failing: true
 
 - q: 'strptime("%Y-%m-%dT%H:%M:%SZ")'
   in: "2015-03-05T23:51:47Z"
   out:
   - [2015, 2, 5, 23, 51, 47, 4, 63]
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
   v: '[1.5, )'
-  failing: true
 
 - q: 'strptime("%Y-%m-%dT%H:%M:%SZ")|mktime'
   in: "2015-03-05T23:51:47Z"
   out:
   - 1425599507
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'STRING'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
   v: '[1.5, )'
-  failing: true
 
 - q: '.[] == 1'
   in: [1, 1.0, "1", "banana"]

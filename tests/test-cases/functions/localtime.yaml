@@ -1,0 +1,57 @@
+- q: 'try localtime catch .'
+  in: "2023-11-14T22:13:20Z"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "localtime() requires numeric inputs"
+
+- q: 'try localtime catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "localtime() requires numeric inputs"
+
+# macOS jq 1.7 and later convert NaN to an epoch date.
+- q: 'try (nan | localtime) catch .'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: true
+  comment: 'on Linux, localtime reports this the same way on every version that has it; macOS jq 1.7 and later convert NaN to an epoch date'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out: []
+      error: true
+    - v: '[1.6, )'
+      out:
+      - "error converting number of seconds since epoch to datetime"
+    macos:
+    - v: '[1.7, )'
+      out:
+      - [1970, 0, 1, 0, 0, null, 4, 0]

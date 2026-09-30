@@ -1,0 +1,599 @@
+- q: 'localtime'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  - input: 'INT'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - [2023, 10, 15, 12, 13, 20, 3, 318]
+
+- q: 'localtime'
+  in: 0
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  - input: 'INT'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - [1969, 11, 31, 13, 20, 0, 3, 364]
+
+- q: 'localtime'
+  in: 1700000000.25
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  - input: 'FLOAT'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - [2023, 10, 15, 12, 13, 20.25, 3, 318]
+
+- q: 'localtime|mktime'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'INT'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'mktime reads a broken-down time as a UTC one, so a local time does not come back as the number it was made from'
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - 1700050400
+
+- q: '[gmtime[3], localtime[3]]'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER]'
+  - input: 'INT'
+    output: '[NUMBER,NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - [22, 12]
+
+- q: 'strflocaltime("%Y-%m-%dT%H:%M:%S")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "2023-11-15T12:13:20"
+
+# macOS jq 1.7 already returns the newer timezone offset.
+- q: 'strflocaltime("%Z %z")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'on glibc before jq 1.8.0, the time handed to the C library carried no UTC offset, so %z wrote +0000'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out: []
+      error: true
+    - v: '[1.6, 1.8.0)'
+      out:
+      - "+14 +0000"
+    - v: '[1.8.0, )'
+      out:
+      - "+14 +1400"
+    macos:
+    - v: '[1.7, 1.8.0)'
+      out:
+      - "+14 +1400"
+
+# macOS jq 1.7 already returns the newer timezone offset.
+- q: 'strflocaltime("%Z %z")'
+  in: 1688000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'a date on the other side of the year, which in a zone that keeps daylight saving is the other offset'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out: []
+      error: true
+    - v: '[1.6, 1.8.0)'
+      out:
+      - "+14 +0000"
+    - v: '[1.8.0, )'
+      out:
+      - "+14 +1400"
+    macos:
+    - v: '[1.7, 1.8.0)'
+      out:
+      - "+14 +1400"
+
+# macOS jq 1.7 already returns the newer timezone offset.
+- q: 'strftime("%z|%Z")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'on glibc before jq 1.8.0, the time named no zone of its own, so %Z wrote the local zone name even for UTC time'
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - "+0000|+14"
+    - v: '[1.8.0, )'
+      out:
+      - "+0000|GMT"
+    macos:
+    - v: '[1.7, 1.8.0)'
+      out:
+      - "+1400|+14"
+    - v: '[1.8.0, )'
+      out:
+      - "+0000|UTC"
+
+- q: 'strflocaltime("%s")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: '%s reads the broken-down fields as a local wall-clock time, which for strflocaltime is the number it started from'
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "1700000000"
+
+# macOS jq 1.8 and later interpret this UTC datetime differently.
+- q: 'strftime("%s")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'on glibc, %s reads UTC fields as local wall-clock time and assumes standard time because the fields do not indicate daylight saving'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "1699949600"
+    macos:
+    - v: '[1.8.0, )'
+      out:
+      - "1700000000"
+
+# macOS jq 1.8 and later interpret this UTC datetime differently.
+- q: 'strftime("%s")'
+  in: 1688000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'on glibc, %s reads UTC fields as local wall-clock time and assumes standard time because the fields do not indicate daylight saving'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "1687949600"
+    macos:
+    - v: '[1.8.0, )'
+      out:
+      - "1688000000"
+
+# macOS jq 1.7 already returns the newer timezone offset.
+- q: 'strflocaltime("%Y-%m-%dT%H:%M:%S %Z %z %s")'
+  in: [2023, 10, 14, 22, 13, 20, 2, 317]
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'a broken-down time is already local; on glibc, jq 1.8.0 settles it onto the calendar and applies the zone offset'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out: []
+      error: true
+    - v: '[1.6, 1.8.0)'
+      out:
+      - "2023-11-14T22:13:20 +14 +0000 1699949600"
+    - v: '[1.8.0, )'
+      out:
+      - "2023-11-14T22:13:20 +14 +1400 1699949600"
+    macos:
+    - v: '[1.7, 1.8.0)'
+      out:
+      - "2023-11-14T22:13:20 +14 +1400 1699949600"
+
+# macOS jq 1.7 already returns the newer timezone offset.
+- q: 'strflocaltime("%Y-%m-%dT%H:%M:%S %Z %z %s")'
+  in: [2023, 6, 1, 12, 0, 0, 0, 0]
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'a broken-down time is already local; on glibc, jq 1.8.0 settles it onto the calendar and applies the zone offset'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out: []
+      error: true
+    - v: '[1.6, 1.8.0)'
+      out:
+      - "2023-07-01T12:00:00 +14 +0000 1688162400"
+    - v: '[1.8.0, )'
+      out:
+      - "2023-07-01T12:00:00 +14 +1400 1688162400"
+    macos:
+    - v: '[1.7, 1.8.0)'
+      out:
+      - "2023-07-01T12:00:00 +14 +1400 1688162400"
+
+- q: 'strptime("%s")'
+  in: "1700000000"
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: '%s reads its seconds as a local time'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [2023, 10, 15, 12, 13, 20, 3, 318]
+
+- q: 'gmtime|mktime'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'INT'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'the answer does not depend on the local zone, and this is here to keep it that way: jq 1.6 alone breaks it under a zone that keeps daylight saving, which only a per-zone file can say'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1700000000
+
+- q: 'gmtime|mktime'
+  in: 1700000000.75
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'FLOAT'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'the answer does not depend on the local zone, and this is here to keep it that way: jq 1.6 alone breaks it under a zone that keeps daylight saving, which only a per-zone file can say'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1700000000
+
+- q: 'mktime'
+  in: [2023, 10, 14, 22, 13, 20, 2, 317]
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'the answer does not depend on the local zone, and this is here to keep it that way: jq 1.6 alone breaks it under a zone that keeps daylight saving, which only a per-zone file can say'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1700000000
+
+- q: 'mktime'
+  in: [2023, 12, 1, 0, 0, 0, 0, 0]
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'a field past the end of its range carries into the one above it, on every version. the answer does not depend on the local zone, and this is here to keep it that way: jq 1.6 alone breaks it under a zone that keeps daylight saving, which only a per-zone file can say'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1704067200
+
+- q: 'mktime'
+  in: [2023, 0, 32, 0, 0, 0, 0, 0]
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'the answer does not depend on the local zone, and this is here to keep it that way: jq 1.6 alone breaks it under a zone that keeps daylight saving, which only a per-zone file can say'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1675209600
+
+- q: 'mktime'
+  in: [2023, -1, 1, 0, 0, 0, 0, 0]
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'the answer does not depend on the local zone, and this is here to keep it that way: jq 1.6 alone breaks it under a zone that keeps daylight saving, which only a per-zone file can say'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1669852800
+
+- q: 'mktime'
+  in: [2023, 10, 14, 22, 13, 75, 0, 0]
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'the answer does not depend on the local zone, and this is here to keep it that way: jq 1.6 alone breaks it under a zone that keeps daylight saving, which only a per-zone file can say'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1700000055
+
+- q: 'mktime'
+  in: [2023, 10, 14, 22, 13, 20, 99, 999]
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'the weekday and the day of the year are not read. the answer does not depend on the local zone, and this is here to keep it that way: jq 1.6 alone breaks it under a zone that keeps daylight saving, which only a per-zone file can say'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1700000000
+
+- q: 'mktime'
+  in: [2023, 10, 14, 22, 13, 20.75, 2, 317]
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: '[INT,INT,INT,INT,INT,FLOAT,INT,INT]'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'a fraction of a second is dropped. the answer does not depend on the local zone, and this is here to keep it that way: jq 1.6 alone breaks it under a zone that keeps daylight saving, which only a per-zone file can say'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1700000000
+
+- q: 'mktime'
+  in: [2023, 10, 14, 22, 13, 20, 2, 317, "ignored"]
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT,STRING]'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'the text strptime adds for what it did not parse is not read. the answer does not depend on the local zone, and this is here to keep it that way: jq 1.6 alone breaks it under a zone that keeps daylight saving, which only a per-zone file can say'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1700000000
+
+- q: 'map(mktime)'
+  in: [[2023, 0, 1, 0, 0, 0, 0, 0], [2023, 5, 15, 12, 30, 0, 0, 0]]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: '[[INT,INT,INT,INT,INT,INT,INT,INT],[INT,INT,INT,INT,INT,INT,INT,INT]]'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'the answer does not depend on the local zone, and this is here to keep it that way: jq 1.6 alone breaks it under a zone that keeps daylight saving, which only a per-zone file can say'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - [1672531200, 1686832200]
+
+- q: 'strptime("%Y-%m-%dT%H:%M:%SZ")|mktime'
+  in: "2023-11-14T22:13:20Z"
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'STRING'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'the answer does not depend on the local zone, and this is here to keep it that way: jq 1.6 alone breaks it under a zone that keeps daylight saving, which only a per-zone file can say'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1700000000
+
+- q: 'strptime("%Y-%m-%d")|mktime'
+  in: "2023-11-14 extra"
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'STRING'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'the answer does not depend on the local zone, and this is here to keep it that way: jq 1.6 alone breaks it under a zone that keeps daylight saving, which only a per-zone file can say'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1699920000
+
+- q: 'todate|fromdate'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'INT'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'the answer does not depend on the local zone, and this is here to keep it that way: jq 1.6 alone breaks it under a zone that keeps daylight saving, which only a per-zone file can say'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1700000000
+
+- q: 'fromdate'
+  in: "2023-11-14T22:13:20Z"
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'STRING'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'the answer does not depend on the local zone, and this is here to keep it that way: jq 1.6 alone breaks it under a zone that keeps daylight saving, which only a per-zone file can say'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 1700000000

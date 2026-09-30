@@ -15,6 +15,7 @@ jjq_java_library(
     deps = [
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/function",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/builtins",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/builtins/datetime",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/builtins/filters",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/builtins/library",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/builtins/math",

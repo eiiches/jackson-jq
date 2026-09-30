@@ -20,7 +20,6 @@ import net.thisptr.jackson.jq.v2.core.internal.builtins.EmptyFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.EndsWithFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.ErrorFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.ExplodeFunction;
-import net.thisptr.jackson.jq.v2.core.internal.builtins.FromDateIso8601Function;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.FromEntriesFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.FromJsonFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.GetPathFunction;
@@ -44,7 +43,6 @@ import net.thisptr.jackson.jq.v2.core.internal.builtins.MinByFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.ModuleMetaFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.NanFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.NotFunction;
-import net.thisptr.jackson.jq.v2.core.internal.builtins.NowFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.PathFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.PathsFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.RIndexFunction;
@@ -55,13 +53,21 @@ import net.thisptr.jackson.jq.v2.core.internal.builtins.SetPathFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.SortByFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.SplitFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.StartsWithFunction;
-import net.thisptr.jackson.jq.v2.core.internal.builtins.ToDateIso8601Function;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.ToEntriesFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.ToJsonFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.ToNumberFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.ToStringFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.TypeFunction;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.Utf8ByteLengthFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.FromDateIso8601Function;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.GmTimeFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.LocalTimeFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.MkTimeFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.NowFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.StrFLocalTimeFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.StrFTimeFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.StrPTimeFunction;
+import net.thisptr.jackson.jq.v2.core.internal.builtins.datetime.ToDateIso8601Function;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.filters.CsvFilter;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.filters.TsvFilter;
 import net.thisptr.jackson.jq.v2.core.internal.builtins.library.CoreJqLibrary;
@@ -124,6 +130,7 @@ public final class BuiltinFunctionLoader implements FunctionLoader {
 			new FromEntriesFunction(),
 			new FromJsonFunction(),
 			new GetPathFunction(),
+			new GmTimeFunction(),
 			new GroupByFunction(),
 			new HasFunction(),
 			new ImplodeFunction(),
@@ -138,6 +145,7 @@ public final class BuiltinFunctionLoader implements FunctionLoader {
 			new KeysFunction(),
 			new KeysUnsortedFunction(),
 			new LengthFunction(),
+			new LocalTimeFunction(),
 			new LTrimStrFunction(),
 			new MathFunctions.AcosFunction(),
 			new MathFunctions.AsinFunction(),
@@ -163,6 +171,7 @@ public final class BuiltinFunctionLoader implements FunctionLoader {
 			new MathFunctions.TanhFunction(),
 			new MaxByFunction(),
 			new MinByFunction(),
+			new MkTimeFunction(),
 			new ModuleMetaFunction(),
 			new NanFunction(),
 			new NotFunction(),
@@ -178,6 +187,9 @@ public final class BuiltinFunctionLoader implements FunctionLoader {
 			new SortByFunction(),
 			new SplitFunction(),
 			new StartsWithFunction(),
+			new StrFLocalTimeFunction(),
+			new StrFTimeFunction(),
+			new StrPTimeFunction(),
 			new ToDateIso8601Function(),
 			new ToEntriesFunction(),
 			new ToJsonFunction(),

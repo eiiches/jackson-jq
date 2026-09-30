@@ -100,6 +100,16 @@ class MainTest {
 				.isEqualTo("42\n");
 	}
 
+	@ParameterizedTest
+	@ValueSource(strings = { "1.5", "1.6", "1.7", "1.7.1", "1.8.0", "1.8.1", "1.8.2" })
+	void formatsComputedDoubleLikeJq(String version) throws Exception {
+		for (String provider : List.of("jackson2", "jackson3", "fastjson2", "gson", "jakarta")) {
+			assertThat(run("", "--json-provider", provider, "--jq", version, "-n",
+					"1790700612.751727 * 1.0 | tostring"))
+					.isEqualTo("\"1790700612.751727\"\n");
+		}
+	}
+
 	@Test
 	void defaultsToJackson3() throws Exception {
 		assertThat(run("{\"foo\":41}", "--compact", ".foo + 1"))

@@ -12,16 +12,6 @@ bsearch(0)
 bsearch(4)
 bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end
 
-# time
-gmtime
-fromdate
-strptime("%Y-%m-%dT%H:%M:%SZ")|mktime
-strftime("%A, %B %d, %Y")
-strptime("%Y-%m-%dT%H:%M:%SZ")
-[strptime("%Y-%m-%dT%H:%M:%SZ")|(.,mktime)]
-strftime("%Y-%m-%dT%H:%M:%SZ")
-strftime("%A, %B %e, %Y")
-
 # streams
 . as $dot|fromstream($dot|tostream)|.==$dot
 fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))

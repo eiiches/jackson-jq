@@ -168,9 +168,9 @@
   - "Aa\r\n\t\b\f\u03BC"
   types:
   - input: 'ANY'
-    output: "\"Aa\\r\\n\\t\\b\\f\u03BC\""
+    output: '"Aa\r\n\t\b\fμ"'
   - input: 'NULL'
-    output: "\"Aa\\r\\n\\t\\b\\f\u03BC\""
+    output: '"Aa\r\n\t\b\fμ"'
   properties:
     cardinality: ONE
     depends_on_input: false
@@ -4161,22 +4161,46 @@
   in: [2015, 2, 5, 23, 51, 47, 4, 63]
   out:
   - "2015-03-05T23:51:47Z"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
   v: '[1.5, )'
-  failing: true
 
 - q: 'strftime("%A, %B %d, %Y")'
   in: 1435677542.822351
   out:
   - "Tuesday, June 30, 2015"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'FLOAT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
   v: '[1.5, )'
-  failing: true
 
 - q: 'gmtime'
   in: 1425599507
   out:
   - [2015, 2, 5, 23, 51, 47, 4, 63]
+  types:
+  - input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  - input: 'INT'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   v: '[1.5, )'
-  failing: true
 
 - q: 'import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]'
   in: null
@@ -4292,6 +4316,15 @@
   in: "c"
   out:
   - {"whatever": null, "deps": [{"as": "foo", "is_data": false, "relpath": "a"}, {"search": "./", "as": "d", "is_data": false, "relpath": "d"}, {"search": "./", "as": "d2", "is_data": false, "relpath": "d"}, {"search": "./../lib/jq", "as": "e", "is_data": false, "relpath": "e"}, {"search": "./../lib/jq", "as": "f", "is_data": false, "relpath": "f"}, {"as": "d", "is_data": true, "relpath": "data"}]}
+  types:
+  - input: 'ANY'
+    output: '{*:ANY}'
+  - input: 'STRING'
+    output: '{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
   v: '[1.5, 1.7)'
   modules:
     a.jq: |
@@ -4327,6 +4360,15 @@
   in: "simple"
   out:
   - {"version": "1.0", "deps": [], "defs": ["one/0", "two/1"]}
+  types:
+  - input: 'ANY'
+    output: '{*:ANY}'
+  - input: 'STRING'
+    output: '{*:ANY}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
   v: '[1.7, )'
   modules:
     simple.jq: |

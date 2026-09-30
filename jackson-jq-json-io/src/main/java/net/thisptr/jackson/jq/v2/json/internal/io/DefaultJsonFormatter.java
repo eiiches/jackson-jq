@@ -5,12 +5,23 @@ import java.util.Base64;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.NumberType;
 
+/**
+ * Formats JSON values using jq-style notation for computed floating-point numbers.
+ * <p>
+ * jq's exponent letter depends on whether a number is an unchanged decimal literal or a
+ * computed double:
+ * <table>
+ * <caption>Exponent letter used by jq</caption>
+ * <tr><th scope="col">jq version</th><th scope="col">Decimal literal</th><th scope="col">Computed double</th></tr>
+ * <tr><td>{@code [1.5, 1.7)}</td><td>{@code e}</td><td>{@code e}</td></tr>
+ * <tr><td>{@code [1.7, )}</td><td>{@code E}</td><td>{@code e}</td></tr>
+ * </table>
+ */
 final class DefaultJsonFormatter {
 	private DefaultJsonFormatter() {
 	}
@@ -57,12 +68,12 @@ final class DefaultJsonFormatter {
 
 	private static <N> void appendNumber(StringBuilder result, JsonProvider<N> provider, N node, FormatOptions options) {
 		if (options.getRoundNumbersToDouble()) {
-			appendDouble(result, provider.getNumberAsDoubleRounded(node), options);
+			appendDouble(result, provider.getNumberAsDoubleRounded(node));
 			return;
 		}
 		NumberType type = provider.getNumberType(node);
 		if (type == NumberType.DOUBLE || type == NumberType.FLOAT) {
-			appendDouble(result, provider.getNumberAsDoubleRounded(node), options);
+			appendDouble(result, provider.getNumberAsDoubleRounded(node));
 			return;
 		}
 		@Nullable BigDecimal exact = provider.getNumberAsBigDecimalExact(node);
@@ -73,14 +84,14 @@ final class DefaultJsonFormatter {
 				result.append(exact.toBigIntegerExact());
 			return;
 		}
-		appendDouble(result, provider.getNumberAsDoubleRounded(node), options);
+		appendDouble(result, provider.getNumberAsDoubleRounded(node));
 	}
 
 	private static void appendNumberText(StringBuilder result, String text, FormatOptions options) {
-		result.append(options.getLowerCaseExponent() ? text.replace('E', 'e') : text);
+		result.append(options.getLowerCaseDecimalExponent() ? text.replace('E', 'e') : text);
 	}
 
-	private static void appendDouble(StringBuilder result, double value, FormatOptions options) {
+	private static void appendDouble(StringBuilder result, double value) {
 		if (Double.isNaN(value)) {
 			result.append("null");
 			return;
@@ -89,15 +100,29 @@ final class DefaultJsonFormatter {
 			result.append(value > 0 ? "1.7976931348623157e+308" : "-1.7976931348623157e+308");
 			return;
 		}
-		if (value == 0 || (value == Math.floor(value) && value >= Long.MIN_VALUE && value < 0x1p63)) {
-			result.append((long) value);
+		if (value == 0) {
+			result.append('0');
 			return;
 		}
-		@Var String text = Double.toString(value).replace('e', 'E');
-		int exponent = text.indexOf('E');
-		if (exponent >= 0 && text.charAt(exponent + 1) != '-')
-			text = text.substring(0, exponent + 1) + "+" + text.substring(exponent + 1);
-		appendNumberText(result, text, options);
+		BigDecimal decimal = BigDecimal.valueOf(value).stripTrailingZeros();
+		int digits = decimal.precision();
+		int decimalPoint = digits - decimal.scale();
+		if (decimalPoint > -4 && decimalPoint <= digits + 15) {
+			result.append(decimal.toPlainString());
+			return;
+		}
+		String significand = decimal.unscaledValue().abs().toString();
+		if (decimal.signum() < 0)
+			result.append('-');
+		result.append(significand.charAt(0));
+		if (significand.length() > 1)
+			result.append('.').append(significand, 1, significand.length());
+		int exponent = decimalPoint - 1;
+		result.append('e').append(exponent < 0 ? '-' : '+');
+		int magnitude = Math.abs(exponent);
+		if (magnitude < 10)
+			result.append('0');
+		result.append(magnitude);
 	}
 
 	private static void appendString(StringBuilder result, String value) {
