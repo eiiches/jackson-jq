@@ -2,8 +2,9 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins.math;
 
 import java.util.List;
 
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
+import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
-import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
@@ -40,8 +41,10 @@ public class MathFunctions {
 		@Override
 		public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 			JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
+			Version version = bindCtx.getJqVersion();
 			return (scope, in, ipath, output) -> {
-				Preconditions.checkInputType(jsonProvider, "mathfunc", in, JsonNodeType.NUMBER);
+				if (jsonProvider.getNodeType(in) != JsonNodeType.NUMBER)
+					throw new JsonQueryTypeException("%s number required", ExceptionMessages.describe(jsonProvider, version, in));
 				output.emit(jsonProvider.createNumber(f(jsonProvider.getNumberAsDoubleRounded(in))), UntrackedPath.getInstance());
 			};
 		}

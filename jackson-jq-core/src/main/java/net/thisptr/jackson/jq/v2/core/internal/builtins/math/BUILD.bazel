@@ -11,6 +11,7 @@ jjq_java_library(
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/builtins",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/exception",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/function/utils",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/json",
         "//jackson-jq-json-provider",

@@ -201,6 +201,52 @@
     depends_on_external_state: false
   v: '[1.6, )'
 
+# Reduced from fuzzing seed -7375452986580138970 (jq 1.8.2).
+- q: 'try ceil catch .'
+  in: "1"
+  out:
+  - 'string ("1") number required'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.6, )'
+
+- q: 'try (ceil) catch (@html)'
+  in: "1"
+  out:
+  - 'string (&quot;1&quot;) number required'
+  types:
+  - input: 'ANY'
+    output: 'NUMBER|STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.6, )'
+
+- q: 'try ceil catch .'
+  in: null
+  out:
+  - 'null (null) number required'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.6, )'
+
 # jq evaluates the second argument first, so an empty stream skips gmtime.
 - q: 'pow(gmtime; empty)'
   in: null
