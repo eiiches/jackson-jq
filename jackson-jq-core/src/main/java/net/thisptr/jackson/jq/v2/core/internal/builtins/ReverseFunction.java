@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import net.thisptr.jackson.jq.v2.core.internal.commons.strings.UnicodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
@@ -67,28 +68,37 @@ public class ReverseFunction implements Function {
 				return;
 			}
 
-			// below are to emulate jq behavior
+			// Below are to emulate jq behavior. jq defines reverse as [.[length - 1 - range(0;length)]],
+			// so an input that has a length but cannot be indexed by a number fails on the very first
+			// index it tries, length - 1, and a length of zero indexes nothing and answers [].
 
 			if (type == JsonNodeType.STRING) {
-				if (jsonProvider.getString(in).isEmpty()) {
+				int length = UnicodeUtils.lengthUtf32(jsonProvider.getString(in));
+				if (length == 0) {
 					output.emit(emptyArray, UntrackedPath.getInstance());
 					return;
 				}
-				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
+				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(length - 1)));
 			}
 			if (type == JsonNodeType.NUMBER) {
-				if (jsonProvider.getNumberAsDoubleRounded(in) == 0.0) {
+				// The index keeps jq's double arithmetic, hence createNumber(double) rather than
+				// JsonNodeUtils#asNumericNode: a whole value beyond a double's mantissa renders the way jq
+				// renders it, e.g. 2871948651097801000 rather than the exact 2871948651097801216. NaN is not
+				// equal to zero, so it takes the error path as it does in jq.
+				double length = Math.abs(jsonProvider.getNumberAsDoubleRounded(in));
+				if (length == 0.0) {
 					output.emit(emptyArray, UntrackedPath.getInstance());
 					return;
 				}
-				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
+				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(length - 1)));
 			}
 			if (type == JsonNodeType.OBJECT) {
-				if (jsonProvider.getObjectMemberCount(in) == 0) {
+				int length = jsonProvider.getObjectMemberCount(in);
+				if (length == 0) {
 					output.emit(emptyArray, UntrackedPath.getInstance());
 					return;
 				}
-				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(0)));
+				throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, in, jsonProvider.createNumber(length - 1)));
 			}
 			if (type == JsonNodeType.BOOLEAN) {
 				throw new JsonQueryTypeException("%s has no length", ExceptionMessages.describe(jsonProvider, version, in));
