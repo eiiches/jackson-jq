@@ -25,3 +25,57 @@
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
+
+- q: '{(.): empty}'
+  in: 1
+  out: []
+  types:
+  - input: 'ANY'
+    output: '{}'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: ZERO
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '{(.): (."foo"?)}'
+  in: [1]
+  out: []
+  types:
+  - input: 'ANY'
+    output: '{*:ANY}'
+  - input: '[INT]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try {(.): error("boom")} catch .'
+  in: 1
+  out:
+  - "boom"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try {(.): 1} catch .'
+  in: 1
+  out:
+  - "Cannot use number (1) as object key"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
