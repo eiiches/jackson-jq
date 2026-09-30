@@ -71,6 +71,8 @@ public class ToDateIso8601Function implements Function {
 					}
 				}
 			}
+			// A format this short, written out as a date and a time of day, cannot outgrow any buffer jq
+			// would give the C library for it, so there is no failure to report.
 			output.emit(jsonProvider.createString(CStrftime.format(FORMAT, time, ZoneOffset.UTC)), UntrackedPath.getInstance());
 		};
 	}

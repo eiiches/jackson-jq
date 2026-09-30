@@ -55,3 +55,25 @@
     - v: '[1.6, 1.8.0)'
       out:
       - "strflocaltime/1 requires a string format"
+
+- q: 'try strflocaltime("%200B") catch .'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'the result is 200 bytes in every zone, so it outgrows the buffer wherever this runs; Darwin takes no field width and writes 200B instead'
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - "strflocaltime/1: unknown system failure"
+    macos:
+    - v: '[1.7, )'
+      out:
+      - "200B"
