@@ -5,6 +5,7 @@ import java.util.Map;
 
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryUserException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
+import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -48,14 +49,15 @@ public class ErrorFunction implements Function {
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
+		boolean errorOnNull = bindCtx.getJqVersion().compareTo(Versions.JQ_1_7) >= 0;
 		return (frame, in, ipath, output) -> {
 			if (args.isEmpty()) {
-				if (jsonProvider.isNull(in))
+				if (!errorOnNull && jsonProvider.isNull(in))
 					return;
 				throw new JsonQueryUserException(jsonProvider, in);
 			} else {
 				args.get(0).apply(frame, in, UntrackedPath.getInstance(), (out, opath) -> {
-					if (jsonProvider.isNull(out))
+					if (!errorOnNull && jsonProvider.isNull(out))
 						return;
 					throw new JsonQueryUserException(jsonProvider, out);
 				});
