@@ -79,6 +79,8 @@ public final class BinaryOperations {
 		if (ltype == JsonNodeType.NUMBER && rtype == JsonNodeType.NUMBER) {
 			double lhsDouble = jsonProvider.getNumberAsDoubleRounded(lhs);
 			double rhsDouble = jsonProvider.getNumberAsDoubleRounded(rhs);
+			if (Double.isNaN(lhsDouble) && version.compareTo(Versions.JQ_1_7) >= 0)
+				return jsonProvider.createNumber(Double.NaN);
 
 			// Handle Infinity: convert to long representation
 			long dividend = Double.isNaN(lhsDouble) ? 0L
