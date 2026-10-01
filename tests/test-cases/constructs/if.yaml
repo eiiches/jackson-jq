@@ -53,3 +53,89 @@
     depends_on_input: true
     depends_on_external_state: false
   v: '[1.7, )'
+
+# Fuzz iteration 8436: a definition in a condition must not replace the outer function.
+- q: 'def f: "outer"; if def f: true; f then [] else 0 end | f'
+  in: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "outer"
+  types:
+  - input: 'ANY'
+    output: '"outer"'
+  - input: 'NULL'
+    output: '"outer"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'def f: "outer"; [if true then def f: "inner"; f else 0 end, f]'
+  in: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["inner", "outer"]
+  types:
+  - input: 'ANY'
+    output: '[*:"inner"|"outer"|0]'
+  - input: 'NULL'
+    output: '[*:"inner"|"outer"]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'def f: "outer"; if false then 0 else def f: "inner"; f end | f'
+  in: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "outer"
+  types:
+  - input: 'ANY'
+    output: '"outer"'
+  - input: 'NULL'
+    output: '"outer"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'def f: "outer"; if false then 0 elif def f: true; f then [] else 0 end | f'
+  in: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "outer"
+  types:
+  - input: 'ANY'
+    output: '"outer"'
+  - input: 'NULL'
+    output: '"outer"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'def f: "outer"; if false then def f: "inner"; f elif true then f else 0 end | f'
+  in: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "outer"
+  types:
+  - input: 'ANY'
+    output: '"outer"'
+  - input: 'NULL'
+    output: '"outer"'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false

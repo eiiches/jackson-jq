@@ -659,14 +659,32 @@ public class Compiler {
 			// most one value. A condition itself never does -- the branch still has to run after it.
 			@Var boolean conditionsEmitAtMostOne = true;
 			for (Pair<AstNode, AstNode> sw : cond.switches()) {
-				AnalyzedExpression<N> newIf = compileNonNull(env, context, scope, sw._1);
+				AnalyzedExpression<N> newIf;
+				context.pushLocalScope();
+				try {
+					newIf = compileNonNull(env, context, scope, sw._1);
+				} finally {
+					context.popScope();
+				}
 				conditionsEmitAtMostOne = conditionsEmitAtMostOne && newIf.getCardinality() != Cardinality.UNKNOWN;
-				context.setTailPosition(inTailPosition && conditionsEmitAtMostOne);
-				AnalyzedExpression<N> newThen = compileNonNull(env, context, scope, sw._2);
+				AnalyzedExpression<N> newThen;
+				context.pushLocalScope();
+				try {
+					context.setTailPosition(inTailPosition && conditionsEmitAtMostOne);
+					newThen = compileNonNull(env, context, scope, sw._2);
+				} finally {
+					context.popScope();
+				}
 				newSwitches.add(Pair.of(newIf, newThen));
 			}
-			context.setTailPosition(inTailPosition && conditionsEmitAtMostOne);
-			AnalyzedExpression<N> newElse = compileNonNull(env, context, scope, cond.otherwise());
+			AnalyzedExpression<N> newElse;
+			context.pushLocalScope();
+			try {
+				context.setTailPosition(inTailPosition && conditionsEmitAtMostOne);
+				newElse = compileNonNull(env, context, scope, cond.otherwise());
+			} finally {
+				context.popScope();
+			}
 			int[] conditionOutputIndices = new int[newSwitches.size()];
 			for (int i = 0; i < conditionOutputIndices.length; ++i)
 				conditionOutputIndices[i] = context.outputCounterOf(newSwitches.get(i)._1);
