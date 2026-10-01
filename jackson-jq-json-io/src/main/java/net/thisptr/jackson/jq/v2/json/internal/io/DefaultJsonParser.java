@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PushbackReader;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -159,14 +158,11 @@ final class DefaultJsonParser<N> implements JsonParser<N> {
 			for (ch = reader.read(); isDigit(ch); ch = reader.read())
 				text.append((char) ch);
 		}
-		@Var boolean decimal = false;
 		if (ch == '.') {
-			decimal = true;
 			text.append('.');
 			ch = readDigits(text, reader.read());
 		}
 		if (ch == 'e' || ch == 'E') {
-			decimal = true;
 			text.append((char) ch);
 			ch = reader.read();
 			if (ch == '+' || ch == '-') {
@@ -177,14 +173,10 @@ final class DefaultJsonParser<N> implements JsonParser<N> {
 		}
 		if (ch >= 0)
 			reader.unread(ch);
-		if (decimal)
-			return provider.createNumber(new BigDecimal(text.toString()));
-		BigInteger integer = new BigInteger(text.toString());
-		if (integer.bitLength() < 32)
-			return provider.createNumber(integer.intValue());
-		if (integer.bitLength() < 64)
-			return provider.createNumber(integer.longValue());
-		return provider.createNumber(integer);
+		// Every parsed number keeps its literal, as a program literal and tonumber do. Spelling an integer
+		// as an int node instead would make it indistinguishable from a number this library computed, and
+		// the two differ: jq negates a literal zero to +0 but a computed one to -0 from 1.8.0 on.
+		return provider.createNumber(new BigDecimal(text.toString()));
 	}
 
 	private int readDigits(StringBuilder text, @Var int ch) throws IOException {

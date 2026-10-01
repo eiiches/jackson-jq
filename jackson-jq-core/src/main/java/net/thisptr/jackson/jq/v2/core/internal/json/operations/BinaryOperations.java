@@ -52,7 +52,11 @@ public final class BinaryOperations {
 			double ld = jsonProvider.getNumberAsDoubleRounded(lhs);
 			double rd = jsonProvider.getNumberAsDoubleRounded(rhs);
 			if (ld == (long) ld && rd == (long) rd) {
-				return JsonNodeUtils.asNumericNode(jsonProvider, (long) ld - (long) rd);
+				long result = (long) ld - (long) rd;
+				// A long carries no sign of zero. Only the IEEE result distinguishes -0 from 0, and jq
+				// keeps that distinction, so fall through to the double path whenever the result is zero.
+				if (result != 0L)
+					return JsonNodeUtils.asNumericNode(jsonProvider, result);
 			}
 			return JsonNodeUtils.asNumericNode(jsonProvider, ld - rd);
 		} else if (ltype == JsonNodeType.ARRAY && rtype == JsonNodeType.ARRAY) {
@@ -112,7 +116,11 @@ public final class BinaryOperations {
 			double ld = jsonProvider.getNumberAsDoubleRounded(lhs);
 			double rd = jsonProvider.getNumberAsDoubleRounded(rhs);
 			if (ld == (long) ld && rd == (long) rd) {
-				return JsonNodeUtils.asNumericNode(jsonProvider, ((long) ld) * (long) rd);
+				long result = ((long) ld) * (long) rd;
+				// A long carries no sign of zero. Only the IEEE result distinguishes -0 from 0, and jq
+				// keeps that distinction, so fall through to the double path whenever the result is zero.
+				if (result != 0L)
+					return JsonNodeUtils.asNumericNode(jsonProvider, result);
 			}
 			return JsonNodeUtils.asNumericNode(jsonProvider, ld * rd);
 		} else if (ltype == JsonNodeType.STRING && rtype == JsonNodeType.NUMBER) {
@@ -177,7 +185,11 @@ public final class BinaryOperations {
 			double ld = jsonProvider.getNumberAsDoubleRounded(lhs);
 			double rd = jsonProvider.getNumberAsDoubleRounded(rhs);
 			if (ld == (long) ld && rd == (long) rd) {
-				return JsonNodeUtils.asNumericNode(jsonProvider, (long) ld + (long) rd);
+				long result = (long) ld + (long) rd;
+				// A long carries no sign of zero. Only the IEEE result distinguishes -0 from 0, and jq
+				// keeps that distinction, so fall through to the double path whenever the result is zero.
+				if (result != 0L)
+					return JsonNodeUtils.asNumericNode(jsonProvider, result);
 			}
 			return JsonNodeUtils.asNumericNode(jsonProvider, ld + rd);
 		} else if (ltype == JsonNodeType.ARRAY && rtype == JsonNodeType.ARRAY) {

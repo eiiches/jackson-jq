@@ -34,6 +34,10 @@ public class JsonNodeUtils {
 	}
 
 	public static <JsonNode> JsonNode asNumericNode(JsonProvider<JsonNode> jsonProvider, double value) {
+		// Narrowing -0.0 to an int would drop the sign of the zero, which jq prints as -0. Everything else
+		// survives the narrowing below unchanged.
+		if (value == 0.0 && Math.copySign(1.0, value) < 0)
+			return jsonProvider.createNumber(value);
 		if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE && value == Math.rint(value))
 			return jsonProvider.createNumber((int) value);
 		if (value >= Long.MIN_VALUE && value < 0x1p63 && value == Math.rint(value))

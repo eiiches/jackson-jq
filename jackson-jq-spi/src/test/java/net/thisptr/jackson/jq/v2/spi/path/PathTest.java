@@ -1,7 +1,9 @@
 package net.thisptr.jackson.jq.v2.spi.path;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,11 +30,17 @@ public class PathTest {
 
 		List<JsonNode> result = path.toJsonList(jsonProvider);
 
+		// Built rather than parsed: the path carries the very nodes it was given, and a parsed 3 keeps the
+		// literal it was parsed from, so it is not the same node as the int one above.
+		Map<String, JsonNode> expectedRange = new LinkedHashMap<>();
+		expectedRange.put("start", jsonProvider.createNull());
+		expectedRange.put("end", jsonProvider.createNumber(3));
+
 		assertThat(result).containsExactly(
 				jsonProvider.createString("a"),
 				jsonProvider.createNumber(2),
 				jsonProvider.createNumber(4),
-				JsonCodec.parse(jsonProvider, "{\"start\":null,\"end\":3}"),
+				jsonProvider.createObject(expectedRange),
 				searchSequence);
 		assertThat(((IndexOfPath<JsonNode>) path).getSearchSequence()).isSameAs(searchSequence);
 	}

@@ -74,8 +74,12 @@ public class NegativeExpression<JsonNode> implements RewritableExpression<JsonNo
 			if (!jsonProvider.isNumber(v))
 				throw new JsonQueryTypeException("%s cannot be negated", ExceptionMessages.describe(jsonProvider, version, v));
 			if (version.compareTo(Versions.JQ_1_8_0) >= 0) {
+				// Only a number still carrying its decimal literal negates to +0; one this library computed
+				// negates as a double, so its zero comes out as -0. BIG_DECIMAL and UNKNOWN are what a parsed
+				// number reports -- the same pair the formatter prints by literal text -- whereas an int, long
+				// or BigInteger node can only have been computed.
 				NumberType type = jsonProvider.getNumberType(v);
-				if (type != NumberType.DOUBLE && type != NumberType.FLOAT) {
+				if (type == NumberType.BIG_DECIMAL || type == NumberType.UNKNOWN) {
 					@Nullable BigDecimal exact = jsonProvider.getNumberAsBigDecimalExact(v);
 					if (exact != null) {
 						output.emit(jsonProvider.createNumber(exact.negate()), UntrackedPath.getInstance());

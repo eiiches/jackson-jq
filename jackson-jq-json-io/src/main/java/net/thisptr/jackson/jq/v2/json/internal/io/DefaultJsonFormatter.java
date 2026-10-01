@@ -101,6 +101,10 @@ final class DefaultJsonFormatter {
 			return;
 		}
 		if (value == 0) {
+			// jq prints a negative zero as -0, at every version. BigDecimal has no negative zero, so the
+			// sign has to be read off the double before converting below.
+			if (Math.copySign(1.0, value) < 0)
+				result.append('-');
 			result.append('0');
 			return;
 		}

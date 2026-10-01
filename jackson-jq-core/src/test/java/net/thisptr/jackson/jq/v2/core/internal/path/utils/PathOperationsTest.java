@@ -35,7 +35,8 @@ public class PathOperationsTest {
 			paths.add(Objects.requireNonNull(valuePath));
 		}, false, Versions.JQ_1_8_2);
 
-		assertThat(values).containsExactly(JSON_PROVIDER.createNumber(20));
+		// The resolved value is the parsed element itself, which keeps the literal it was parsed from.
+		assertThat(values).containsExactly(JsonCodec.parse(JSON_PROVIDER, "20"));
 		assertThat(paths).singleElement().isInstanceOf(IntIndexPath.class);
 		assertThat(paths.get(0).toJsonList(JSON_PROVIDER)).containsExactly(JSON_PROVIDER.createNumber(-1));
 	}
@@ -68,8 +69,10 @@ public class PathOperationsTest {
 				oldValue -> JSON_PROVIDER.createNumber(9),
 				Versions.JQ_1_8_2);
 
-		assertThat(replaced).isEqualTo(JsonCodec.parse(JSON_PROVIDER, "[1,9]"));
-		assertThat(extended).isEqualTo(JsonCodec.parse(JSON_PROVIDER, "[1,null,9]"));
+		// Compare the serialized form: the replacement is an int node while the parsed elements around it
+		// keep their literal, and the two spell 9 the same but are not the same node.
+		assertThat(JsonCodec.format(JSON_PROVIDER, replaced)).isEqualTo("[1,9]");
+		assertThat(JsonCodec.format(JSON_PROVIDER, extended)).isEqualTo("[1,null,9]");
 	}
 
 	@Test
@@ -102,8 +105,8 @@ public class PathOperationsTest {
 				oldValue -> JSON_PROVIDER.createNumber(9),
 				Versions.JQ_1_8_2);
 
-		assertThat(replaced).isEqualTo(JsonCodec.parse(JSON_PROVIDER, "[1,9]"));
-		assertThat(extended).isEqualTo(JsonCodec.parse(JSON_PROVIDER, "[1,null,9]"));
+		assertThat(JsonCodec.format(JSON_PROVIDER, replaced)).isEqualTo("[1,9]");
+		assertThat(JsonCodec.format(JSON_PROVIDER, extended)).isEqualTo("[1,null,9]");
 	}
 
 	@Test
@@ -220,7 +223,9 @@ public class PathOperationsTest {
 			values.add(value);
 		}, false, Versions.JQ_1_8_2);
 
-		assertThat(values).containsExactly(JsonCodec.parse(JSON_PROVIDER, "[0,3]"));
+		// The match offsets are computed, so they are int nodes rather than the decimals a parsed [0,3]
+		// would hold; compare the serialized form.
+		assertThat(values).singleElement().extracting(value -> JsonCodec.format(JSON_PROVIDER, value)).isEqualTo("[0,3]");
 	}
 
 	@Test

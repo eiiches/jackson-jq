@@ -1,0 +1,257 @@
+# jq keeps the IEEE sign of a zero it computes, and prints it as -0. A zero that still carries the
+# decimal literal it was parsed from is a different value to jq: from 1.8.0 on, unary minus negates
+# such a zero to +0 and only a computed zero to -0. Before 1.8.0 every zero negated to -0.
+#
+# These assert through tojson on purpose. A bare -0 in an expectation parses to a value the comparator
+# treats as equal to 0, so asserting the number directly would pass either way.
+
+# The last two carry a -0 on through further arithmetic, where the integer fast paths of minus and
+# multiply would otherwise reduce it to a long and lose the sign.
+- q: '[0*-1, -1*0, 0.0*-1, 0/-1, -1e-300*1e-300, (1-1|-.), ([0,0]|add|-.), (0*-1)-0, (0*-1)*1] | map(tojson)'
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["-0", "-0", "-0", "-0", "-0", "-0", "-0", "-0", "-0"]
+
+- q: '[({}|length|-.), ([]|length|-.), (""|length|-.), ([1]|keys|.[0]|-.), ([1]|to_entries|.[0].key|-.), ("abc"|indices("a")|.[0]|-.), ([[0]]|[paths]|.[0]|.[0]|-.)] | map(tojson)'
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["-0", "-0", "-0", "-0", "-0", "-0", "-0"]
+
+- q: '[(""|utf8bytelength|-.), ("a"|match("a").offset|-.), ("a"|[splits("a")]|.[0]|length|-.)] | map(tojson)'
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - ["-0", "-0", "-0"]
+
+- q: '[(0|floor|-.), (0|sqrt|-.), (0|todate|fromdate|-.), (0|gmtime|.[1]|-.)] | map(tojson)'
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["-0", "-0", "-0", "-0"]
+
+- q: '[(0|ceil|-.), (-0.5|ceil), (-0.2|round), (-0.49999999999999994|round)] | map(tojson)'
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - ["-0", "-0", "-0", "-0"]
+
+# IEEE addition and subtraction give +0 here, and jq agrees.
+- q: '[0-0, 0+0, (0*-1)+0, ((0-5)%5|-.)] | map(tojson)'
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["0", "0", "0", "-0"]
+
+# jq 1.8.0 changed unary minus on a number that still carries its decimal literal. From then on the
+# literal is negated as a decimal, keeping its scale -- 0.00 negates to 0.00, not to 0 or -0 -- which
+# is what tells that path apart from rebuilding the value as a double.
+- q: '[(0|-.), (0.0|-.), (0.00|-.), (-0.0|-.), ("0"|tonumber|-.), (0|tojson|fromjson|-.), ([0]|add|-.), ([0]|.[0]|-.)] | map(tojson)'
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - ["-0", "-0", "-0", "0", "-0", "-0", "-0", "-0"]
+    - v: '[1.8.0, )'
+      out:
+      - ["0", "0.0", "0.00", "0.0", "0", "0", "0", "0"]
+
+# range emits the start value itself, literal and all; only the values after it are computed.
+- q: '[range(3)|-.] | map(tojson)'
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - ["-0", "-1", "-2"]
+    - v: '[1.8.0, )'
+      out:
+      - ["0", "-1", "-2"]
+
+- q: '[range(0;3;1)|-.] | map(tojson)'
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - ["-0", "-1", "-2"]
+    - v: '[1.8.0, )'
+      out:
+      - ["0", "-1", "-2"]
+
+- q: '[range(-1;2)|-.] | map(tojson)'
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - ["1", "-0", "-1"]
+
+- q: '[range(0.00;1)] | map(tojson)'
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - ["0"]
+    - v: '[1.7, )'
+      out:
+      - ["0.00"]
+
+# Known divergence. Up to 1.7.1 jq's constant folder computed % with fmod, so a folded modulo with a
+# negative dividend yielded -0, while the same expression evaluated at run time yielded +0
+# ([-5][0]%5 is "0" on every version). jq 1.8.0 made the folded result agree with the runtime one.
+# This library folds by evaluating the very same modulo, so it cannot produce the old inconsistency.
+- q: '[-5%5, -5%5.0, -5.5%5] | map(tojson)'
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - ["-0", "-0", "-0"]
+    - v: '[1.8.0, )'
+      out:
+      - ["0", "0", "0"]
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - ["0", "0", "0"]
+
+# Known divergence. A parsed number is held as a BigDecimal, which has no negative zero, so the sign of
+# a parsed -0.0 is lost here while jq keeps it. Everything else about the literal survives, its scale
+# included -- only the sign goes. Keeping it needs the raw literal text in the number model.
+- q: '["-0.0", "-0", "-0.00"] | map(fromjson|tojson)'
+  types:
+  - input: 'ANY'
+    output: '[*:STRING]'
+  - input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - ["-0", "-0", "-0"]
+    - v: '[1.7, )'
+      out:
+      - ["-0.0", "-0", "-0.00"]
+    jjq:
+    - v: '[1.5, 1.7)'
+      out:
+      - ["0", "0", "0"]
+    - v: '[1.7, )'
+      out:
+      - ["0.0", "0", "0.00"]

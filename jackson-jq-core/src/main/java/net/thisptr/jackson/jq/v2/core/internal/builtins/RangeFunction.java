@@ -1,5 +1,6 @@
 package net.thisptr.jackson.jq.v2.core.internal.builtins;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -95,7 +96,9 @@ public class RangeFunction implements Function {
 	}
 
 	private static <JsonNode> void range1(JsonProvider<JsonNode> jsonProvider, Output<JsonNode> output, JsonNode end) throws JsonQueryException {
-		range2(jsonProvider, output, jsonProvider.createNumber(0), end);
+		// jq defines range($x) as range(0; $x), so the implicit start is the literal 0 of that definition
+		// and has to carry a literal like any other: range(3) negates to 0, not -0, on jq 1.8.
+		range2(jsonProvider, output, jsonProvider.createNumber(BigDecimal.ZERO), end);
 	}
 
 	private static <JsonNode> JsonNode range2(JsonProvider<JsonNode> jsonProvider, Output<JsonNode> output, JsonNode start, JsonNode end) throws JsonQueryException {
@@ -103,9 +106,15 @@ public class RangeFunction implements Function {
 			throw new JsonQueryTypeException("Range bounds must be numeric");
 		double _start = jsonProvider.getNumberAsDoubleRounded(start);
 		double _end = jsonProvider.getNumberAsDoubleRounded(end);
-		@Var double i;
-		for (i = _start; i < _end; i += 1)
-			output.emit(JsonNodeUtils.asNumericNode(jsonProvider, i), UntrackedPath.getInstance());
+		// jq emits the start node itself, literal and all, and only computes the values after it:
+		// range(0.00; 1) is 0.00, and range(3) negates to 0 rather than -0 on jq 1.8. range3 below
+		// already works this way because it steps with plus/1 from the start node.
+		@Var double i = _start;
+		if (i < _end) {
+			output.emit(start, UntrackedPath.getInstance());
+			for (i += 1; i < _end; i += 1)
+				output.emit(JsonNodeUtils.asNumericNode(jsonProvider, i), UntrackedPath.getInstance());
+		}
 		return JsonNodeUtils.asNumericNode(jsonProvider, i);
 	}
 
