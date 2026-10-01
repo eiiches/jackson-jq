@@ -8,9 +8,10 @@ public final class Jq18BinaryOperatorTable implements BinaryOperatorTable {
 	private final EnumMap<BinaryOperator, BinaryOperatorInfo> operatorInfo = new EnumMap<>(BinaryOperator.class);
 
 	private Jq18BinaryOperatorTable() {
-		put(BinaryOperator.PIPE, 8, BinaryOperatorInfo.Associativity.RIGHT);
-		put(BinaryOperator.BINDING_PIPE, 7, BinaryOperatorInfo.Associativity.RIGHT);
-		put(BinaryOperator.COMMA, 7, BinaryOperatorInfo.Associativity.LEFT);
+		put(BinaryOperator.PIPE, 9, BinaryOperatorInfo.Associativity.RIGHT);
+		put(BinaryOperator.BINDING_PIPE, 8, BinaryOperatorInfo.Associativity.RIGHT);
+		put(BinaryOperator.COMMA, 8, BinaryOperatorInfo.Associativity.LEFT);
+		put(BinaryOperator.DEFAULT, 7, BinaryOperatorInfo.Associativity.LEFT);
 		put(BinaryOperator.ASSIGN, 6, BinaryOperatorInfo.Associativity.RIGHT);
 		put(BinaryOperator.UPDATE, 6, BinaryOperatorInfo.Associativity.RIGHT);
 		put(BinaryOperator.DEFAULT_EQUAL, 6, BinaryOperatorInfo.Associativity.RIGHT);
@@ -19,8 +20,7 @@ public final class Jq18BinaryOperatorTable implements BinaryOperatorTable {
 		put(BinaryOperator.TIMES_EQUAL, 6, BinaryOperatorInfo.Associativity.RIGHT);
 		put(BinaryOperator.DIVIDE_EQUAL, 6, BinaryOperatorInfo.Associativity.RIGHT);
 		put(BinaryOperator.MODULO_EQUAL, 6, BinaryOperatorInfo.Associativity.RIGHT);
-		put(BinaryOperator.DEFAULT, 5, BinaryOperatorInfo.Associativity.LEFT);
-		put(BinaryOperator.OR, 4, BinaryOperatorInfo.Associativity.LEFT);
+		put(BinaryOperator.OR, 5, BinaryOperatorInfo.Associativity.LEFT);
 		put(BinaryOperator.AND, 4, BinaryOperatorInfo.Associativity.LEFT);
 		put(BinaryOperator.LESS_EQUAL, 3, BinaryOperatorInfo.Associativity.LEFT);
 		put(BinaryOperator.LESS, 3, BinaryOperatorInfo.Associativity.LEFT);

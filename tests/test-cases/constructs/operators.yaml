@@ -225,3 +225,203 @@
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
+
+# The assignment operators bind tighter than //, so the alternative takes the whole assignment as its
+# left operand. Here that operand is an object, which is truthy, so the alternative keeps it.
+- q: '.a = false // "x"'
+  in: null
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: '"x"|{a:false}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - {"a": false}
+
+# An assignment whose right-hand side emits nothing emits nothing itself, and never evaluates the
+# path, so the alternative takes over even though the input cannot be indexed with a string.
+- q: '.foo = empty // "number"'
+  in: 21
+  types:
+  - input: 'ANY'
+    output: '"number"'
+  - input: 'INT'
+    output: '"number"'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "number"
+
+- q: '.a |= false // "x"'
+  in: null
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: '"x"|{a:false}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - {"a": false}
+
+- q: '.a //= false // "x"'
+  in: null
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: '"x"|{a:false}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - {"a": false}
+
+# The left operand of // stops before the assignment, so "x" is never asked to be a path expression.
+- q: '"x" // .a = 1'
+  in: null
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: '"x"|{a:1}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "x"
+
+# A comma stays looser than //, so only the second assignment gets an alternative.
+- q: '.a = 1, .b = 2 // 3'
+  in: null
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: '3|{a:1}|{b:2}'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - {"a": 1}
+      - {"b": 2}
+
+# `or` stays tighter than the assignment, so it forms the assigned value rather than consuming it.
+- q: '.a = 1 or 2'
+  in: null
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: '{a:true}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - {"a": true}
+
+# All three levels at once: '(.a = empty) // (false or true)'.
+- q: '.a = empty // false or true'
+  in: null
+  types:
+  - input: 'ANY'
+    output: 'true'
+  - input: 'NULL'
+    output: 'true'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - true
+
+# `and` binds tighter than `or`, so this is 'true or (false and false)'.
+- q: 'true or false and false'
+  in: null
+  types:
+  - input: 'ANY'
+    output: 'true'
+  - input: 'NULL'
+    output: 'true'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - true
+
+# `or` short-circuits on a truthy left operand, so neither operand of `and` is reached and the
+# error is never raised.
+- q: 'true or error("boom") and false'
+  in: null
+  types:
+  - input: 'ANY'
+    output: 'true'
+  - input: 'NULL'
+    output: 'true'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - true
+
+# The comparisons stay tighter than `and`: '(1 < 2) and (2 < 1)'.
+- q: '1 < 2 and 2 < 1'
+  in: null
+  types:
+  - input: 'ANY'
+    output: 'BOOLEAN'
+  - input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - false
