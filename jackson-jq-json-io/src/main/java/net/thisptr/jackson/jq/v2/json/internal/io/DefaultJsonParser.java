@@ -19,11 +19,13 @@ import net.thisptr.jackson.jq.v2.json.Maybe;
 
 final class DefaultJsonParser<N> implements JsonParser<N> {
 	private final JsonProvider<N> provider;
+	private final ParseOptions options;
 	private final PushbackReader reader;
 	private boolean exhausted;
 
-	DefaultJsonParser(JsonProvider<N> provider, InputStream in) {
+	DefaultJsonParser(JsonProvider<N> provider, InputStream in, ParseOptions options) {
 		this.provider = provider;
+		this.options = options;
 		this.reader = new PushbackReader(new InputStreamReader(in, StandardCharsets.UTF_8.newDecoder()
 				.onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT)), 1);
 	}
@@ -173,9 +175,14 @@ final class DefaultJsonParser<N> implements JsonParser<N> {
 		}
 		if (ch >= 0)
 			reader.unread(ch);
-		// Every parsed number keeps its literal, as a program literal and tonumber do. Spelling an integer
-		// as an int node instead would make it indistinguishable from a number this library computed, and
-		// the two differ: jq negates a literal zero to +0 but a computed one to -0 from 1.8.0 on.
+		// jq held every number as a double before 1.7, so round as we read rather than only on output:
+		// that is what makes two literals which round to the same double one value, as they are there.
+		if (options.getRoundNumbersToDouble())
+			return provider.createNumber(Double.parseDouble(text.toString()));
+		// Otherwise every parsed number keeps its literal, as a program literal and tonumber do. Spelling
+		// an integer as an int node instead would make it indistinguishable from a number this library
+		// computed, and the two differ: jq negates a literal zero to +0 but a computed one to -0 from
+		// 1.8.0 on.
 		return provider.createNumber(new BigDecimal(text.toString()));
 	}
 

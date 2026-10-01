@@ -2,10 +2,11 @@ package net.thisptr.jackson.jq.v2.test.providers.gson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.gson.GsonJsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
+import net.thisptr.jackson.jq.v2.json.internal.io.ParseOptions;
 import net.thisptr.jackson.jq.v2.test.AbstractJsonQueryTest;
 
 /**
@@ -23,8 +24,8 @@ public class GsonJsonQueryTest extends AbstractJsonQueryTest<JsonElement> {
 	}
 
 	@Override
-	protected JsonElement parseTestNode(JsonNode node) {
-		// Convert Jackson JsonNode to Gson JsonElement via JSON string
-		return JsonParser.parseString(node.toString());
+	protected JsonElement parseTestNode(JsonNode node, ParseOptions parseOptions) {
+		// Read it the way the library itself would, so the jq version's number handling applies
+		return JsonCodec.parse(getJsonProvider(), node.toString(), parseOptions);
 	}
 }

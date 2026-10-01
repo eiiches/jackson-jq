@@ -57,6 +57,7 @@ import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
 import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
+import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.typecheck.ConstantTypes;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -301,7 +302,8 @@ final class Playground<N> {
 						false,
 						rawInput,
 						slurp,
-						yamlInput);
+						yamlInput,
+						JsonNodeUtils.parseOptions(version));
 				source.readAll(newInputs::add);
 			} catch (Exception e) {
 				inputErrorMessage = e.getMessage();

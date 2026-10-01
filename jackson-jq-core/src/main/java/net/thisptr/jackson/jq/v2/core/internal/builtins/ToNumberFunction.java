@@ -8,6 +8,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
+import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -57,9 +58,19 @@ public class ToNumberFunction implements Function {
 				// numeral; earlier versions trim it.
 				String str = version.compareTo(Versions.JQ_1_8_0) < 0 ? raw.trim() : raw;
 				try {
-					// Parse via BigDecimal first to preserve the exact literal value (e.g. large
-					// integers, trailing decimal zeros) instead of rounding through a double.
-					output.emit(jsonProvider.createNumber(new BigDecimal(str)), UntrackedPath.getInstance());
+					// BigDecimal decides what counts as a plain decimal numeral here, as it always has; a
+					// string it rejects falls through to the Infinity/NaN literals below.
+					BigDecimal exact = new BigDecimal(str);
+					// Before 1.7 jq held every numeral it read as a double, so round here too: printing it
+					// rounded is not enough, or two numerals that share a double would stay distinct values.
+					// Read the text rather than narrow `exact`, which has already lost the sign of -0.0.
+					if (JsonNodeUtils.roundsParsedNumbersToDouble(version)) {
+						output.emit(jsonProvider.createNumber(Double.parseDouble(str)), UntrackedPath.getInstance());
+						return;
+					}
+					// From 1.7 on, keep the exact literal value (e.g. large integers, trailing decimal
+					// zeros) instead of rounding through a double.
+					output.emit(jsonProvider.createNumber(exact), UntrackedPath.getInstance());
 					return;
 				} catch (NumberFormatException e) {
 					// Not a plain decimal numeral; check for Infinity/NaN below.

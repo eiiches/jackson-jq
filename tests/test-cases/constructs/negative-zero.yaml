@@ -227,9 +227,11 @@
       out:
       - ["0", "0", "0"]
 
-# Known divergence. A parsed number is held as a BigDecimal, which has no negative zero, so the sign of
-# a parsed -0.0 is lost here while jq keeps it. Everything else about the literal survives, its scale
-# included -- only the sign goes. Keeping it needs the raw literal text in the number model.
+# Known divergence from 1.7 on, where a parsed number is held as a BigDecimal and that has no negative
+# zero, so the sign of a parsed -0.0 is lost while jq keeps it. Everything else about the literal
+# survives, its scale included -- only the sign goes. Keeping it needs the raw literal text in the
+# number model. Before 1.7 a parsed number is rounded to a double, which does carry the sign, so the
+# versions below 1.7 agree with jq here and need no override.
 - q: '["-0.0", "-0", "-0.00"] | map(fromjson|tojson)'
   types:
   - input: 'ANY'
@@ -249,9 +251,6 @@
       out:
       - ["-0.0", "-0", "-0.00"]
     jjq:
-    - v: '[1.5, 1.7)'
-      out:
-      - ["0", "0", "0"]
     - v: '[1.7, )'
       out:
       - ["0.0", "0", "0.00"]

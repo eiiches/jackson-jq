@@ -9,10 +9,14 @@ import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.internal.io.FormatOptions;
 import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
+import net.thisptr.jackson.jq.v2.json.internal.io.ParseOptions;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class JsonNodeUtils {
 	private static final FormatOptions LEGACY_FORMAT_OPTIONS = FormatOptions.newBuilder()
+			.setRoundNumbersToDouble(true)
+			.build();
+	private static final ParseOptions LEGACY_PARSE_OPTIONS = ParseOptions.newBuilder()
 			.setRoundNumbersToDouble(true)
 			.build();
 
@@ -65,6 +69,27 @@ public class JsonNodeUtils {
 		if (version.compareTo(Versions.JQ_1_7) < 0)
 			return JsonCodec.format(jsonProvider, node, LEGACY_FORMAT_OPTIONS);
 		return JsonCodec.format(jsonProvider, node);
+	}
+
+	/**
+	 * Returns the options for reading JSON the way the given jq version holds it.
+	 * <p>
+	 * jq kept no decimal literal before 1.7 -- every number was a {@code double} -- so rounding has to
+	 * happen as the text is read, not only when it is printed. Reading exactly and rounding on output
+	 * would spell the number right but still compare two literals that share a {@code double} as
+	 * different values.
+	 */
+	public static ParseOptions parseOptions(Version version) {
+		return roundsParsedNumbersToDouble(version) ? LEGACY_PARSE_OPTIONS : ParseOptions.newBuilder().build();
+	}
+
+	/**
+	 * Returns whether the given jq version holds every number it reads as a {@code double}, keeping no
+	 * decimal literal. True before 1.7. Reading a numeral anywhere -- JSON text, {@code tonumber} -- has
+	 * to obey this, or two numerals that share a {@code double} would wrongly stay distinct values.
+	 */
+	public static boolean roundsParsedNumbersToDouble(Version version) {
+		return version.compareTo(Versions.JQ_1_7) < 0;
 	}
 
 	/**

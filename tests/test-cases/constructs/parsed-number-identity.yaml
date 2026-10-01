@@ -1,0 +1,66 @@
+# jq kept no decimal literal before 1.7: every number it read was a double. Two literals that round to
+# the same double are therefore one value there -- they compare equal, and unique keeps one of them --
+# while from 1.7 on each keeps the literal it was written as and the two stay distinct.
+#
+# Rounding only on output would spell these right and still compare them wrong, so the rounding happens
+# as the text is read.
+
+- q: '[(.[0] == .[1]), ([.[]] | unique | length), (.[0] > .[1])]'
+  in: [9007199254740993, 9007199254740992]
+  types:
+  - input: 'ANY'
+    output: '[BOOLEAN,NUMBER,BOOLEAN]'
+  - input: '[INT,INT]'
+    output: '[BOOLEAN,NUMBER,BOOLEAN]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - [true, 1, false]
+    - v: '[1.7, )'
+      out:
+      - [false, 2, true]
+
+# Through fromjson rather than a fixture, so the literals reach the parser exactly as written -- a
+# trailing zero would not survive the test file's own YAML round-trip.
+- q: '[("9007199254740993"|fromjson|tojson), ("1.50"|fromjson|tojson), ("100000000000000000000000000"|fromjson|tojson), ("1e2"|fromjson|tojson)]'
+  types:
+  - input: 'ANY'
+    output: '[STRING,STRING,STRING,STRING]'
+  - input: 'NULL'
+    output: '[STRING,STRING,STRING,STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - ["9007199254740992", "1.5", "1e+26", "100"]
+    - v: '[1.7, )'
+      out:
+      - ["9007199254740993", "1.50", "100000000000000000000000000", "1E+2"]
+
+- q: '[(("9007199254740993"|fromjson) == ("9007199254740992"|fromjson)), ([("9007199254740993"|fromjson), ("9007199254740992"|fromjson)] | unique | length)]'
+  types:
+  - input: 'ANY'
+    output: '[BOOLEAN,NUMBER]'
+  - input: 'NULL'
+    output: '[BOOLEAN,NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - [true, 1]
+    - v: '[1.7, )'
+      out:
+      - [false, 2]

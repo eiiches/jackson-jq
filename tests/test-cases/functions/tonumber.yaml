@@ -112,13 +112,10 @@
     depends_on_input: true
     depends_on_external_state: false
 
-# jackson-jq parses strings via BigDecimal to preserve the exact literal value and scale, rather
-# than narrowing through double, on every version. Real jq only stopped narrowing in 1.7
-# (1.5/1.6 print 2871948651097801000 here), so the golden expectation is scoped to 1.7+.
+# jq kept the exact literal only from 1.7 on; before that it narrowed every numeral it read through a
+# double, so this one comes back as 2871948651097801000.
 - q: 'tonumber'
   in: "2871948651097801136"
-  out:
-  - 2871948651097801136
   types:
   - input: 'ANY'
     output: 'NUMBER'
@@ -128,7 +125,14 @@
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - 2871948651097801000
+    - v: '[1.7, )'
+      out:
+      - 2871948651097801136
 
 - q: 'tonumber'
   in: "1.50"

@@ -47,6 +47,7 @@ import net.thisptr.jackson.jq.v2.core.RuntimeOptions;
 import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
 import net.thisptr.jackson.jq.v2.core.diagnostic.Diagnostic;
 import net.thisptr.jackson.jq.v2.core.diagnostic.SourceLocation;
+import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
@@ -691,7 +692,8 @@ public class Main {
 		}
 		InputSource<N> input = InputSources.create(jsonProvider, streams, nullInput,
 				command.hasOption(OPT_RAW_INPUT.getOpt()),
-				command.hasOption(OPT_SLURP.getOpt()), command.hasOption(OPT_YAML_INPUT.getOpt()));
+				command.hasOption(OPT_SLURP.getOpt()), command.hasOption(OPT_YAML_INPUT.getOpt()),
+				JsonNodeUtils.parseOptions(version));
 		JsonQuery<N> jq = compileOrExit(env, query, compileOptions).withRuntimeOptions(runtimeOptions);
 		input.readAll(tree -> {
 			try {

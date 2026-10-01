@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
+import net.thisptr.jackson.jq.v2.json.internal.io.ParseOptions;
 import net.thisptr.jackson.jq.v2.test.AbstractJsonQueryTest;
 
 /**
@@ -21,7 +23,9 @@ public class Jackson2JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 	}
 
 	@Override
-	protected JsonNode parseTestNode(JsonNode node) {
-		return node;
+	protected JsonNode parseTestNode(JsonNode node, ParseOptions parseOptions) {
+		// The test data is already a Jackson 2 tree, but read it through the library anyway so the jq
+		// version's number handling applies, as it does for every other provider.
+		return JsonCodec.parse(getJsonProvider(), node.toString(), parseOptions);
 	}
 }

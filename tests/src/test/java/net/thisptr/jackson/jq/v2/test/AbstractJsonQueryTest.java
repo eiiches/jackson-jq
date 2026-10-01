@@ -15,11 +15,13 @@ import org.junit.jupiter.api.function.Executable;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.ext.joni.JoniRegexModule;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
+import net.thisptr.jackson.jq.v2.json.internal.io.ParseOptions;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 import net.thisptr.jackson.jq.v2.test.comparator.TestJsonNodeComparator;
@@ -52,9 +54,17 @@ public abstract class AbstractJsonQueryTest<T> {
 	 * Parse a Jackson JsonNode (from test data) to the provider's native type.
 	 *
 	 * @param node The Jackson JsonNode from test data
+	 * @param parseOptions how the jq version under test holds the numbers it reads
 	 * @return The equivalent node in the provider's type
 	 */
-	protected abstract T parseTestNode(JsonNode node);
+	protected abstract T parseTestNode(JsonNode node, ParseOptions parseOptions);
+
+	/**
+	 * Converts an expectation, which is already written as the result and so needs no rounding.
+	 */
+	private T parseExpectedNode(JsonNode node) {
+		return parseTestNode(node, ParseOptions.newBuilder().build());
+	}
 
 	private void test(TestCase tc, Version version, @Nullable Path moduleSearchPath) {
 		EnvironmentBuilder<T> envBuilder = EnvironmentBuilder.withDefaultLoaders(getJsonProvider(), version);
@@ -77,14 +87,14 @@ public abstract class AbstractJsonQueryTest<T> {
 			@Var Throwable error = null;
 			try {
 				JsonQuery<T> query = env.compile(tc.q);
-				query.apply(parseTestNode(tc.in), values::add);
+				query.apply(parseTestNode(tc.in, JsonNodeUtils.parseOptions(version)), values::add);
 			} catch (Throwable e) {
 				error = e;
 			}
 			assertThat(error != null).as("%s error", command).isEqualTo(expected.error);
 			List<T> expectedValues = new ArrayList<>();
 			for (JsonNode node : expected.values())
-				expectedValues.add(parseTestNode(node));
+				expectedValues.add(parseExpectedNode(node));
 			assertThat(values).as("%s output", command)
 					.usingElementComparator(new TestJsonNodeComparator<>(getJsonProvider(), true, tc.floatTolerance))
 					.isEqualTo(expectedValues);
@@ -97,10 +107,10 @@ public abstract class AbstractJsonQueryTest<T> {
 		}
 
 		// Convert test data from Jackson JsonNode to provider's type
-		T input = parseTestNode(tc.in);
+		T input = parseTestNode(tc.in, JsonNodeUtils.parseOptions(version));
 		List<T> expectedOut = new ArrayList<>();
 		for (JsonNode outNode : tc.out) {
-			expectedOut.add(parseTestNode(outNode));
+			expectedOut.add(parseExpectedNode(outNode));
 		}
 
 		Comparator<T> comparator = new TestJsonNodeComparator<>(getJsonProvider(), true, tc.floatTolerance);

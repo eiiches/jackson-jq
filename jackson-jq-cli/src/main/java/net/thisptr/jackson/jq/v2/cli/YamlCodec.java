@@ -14,6 +14,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
+import net.thisptr.jackson.jq.v2.json.internal.io.ParseOptions;
 
 /**
  * Converts YAML documents at the CLI boundary, independently of the selected JSON provider.
@@ -30,10 +31,10 @@ final class YamlCodec {
 	private YamlCodec() {
 	}
 
-	static <N> void read(JsonProvider<N> provider, InputStream stream, Consumer<N> consumer) {
+	static <N> void read(JsonProvider<N> provider, InputStream stream, ParseOptions parseOptions, Consumer<N> consumer) {
 		try (JsonParser parser = YAML.createParser(stream)) {
 			for (JsonNode document = YAML.readTree(parser); document != null; document = YAML.readTree(parser)) {
-				consumer.accept(JsonCodec.parse(provider, document.toString()));
+				consumer.accept(JsonCodec.parse(provider, document.toString(), parseOptions));
 			}
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
