@@ -42,3 +42,243 @@
     depends_on_input: true
     depends_on_external_state: false
   v: '[1.5, )'
+
+- q: 'try reverse catch .'
+  in: "foo eyJmb28iOiJhIn0= bar - object"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Cannot index string with number"
+    - v: '[1.8.2, )'
+      out:
+      - "Cannot index string with number (32)"
+
+- q: 'try reverse catch .'
+  in: "abc"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Cannot index string with number"
+    - v: '[1.8.2, )'
+      out:
+      - "Cannot index string with number (2)"
+
+- q: 'try reverse catch .'
+  in: "a"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Cannot index string with number"
+    - v: '[1.8.2, )'
+      out:
+      - "Cannot index string with number (0)"
+
+- q: 'try reverse catch .'
+  in: "aé😀b"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Cannot index string with number"
+    - v: '[1.8.2, )'
+      out:
+      - "Cannot index string with number (3)"
+
+- q: 'try reverse catch .'
+  in: {"a": 1, "b": 2}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:INT,b:INT}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Cannot index object with number"
+    - v: '[1.8.2, )'
+      out:
+      - "Cannot index object with number (1)"
+
+- q: 'try reverse catch .'
+  in: 5
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Cannot index number with number"
+    - v: '[1.8.2, )'
+      out:
+      - "Cannot index number with number (4)"
+
+- q: 'try reverse catch .'
+  in: -3
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Cannot index number with number"
+    - v: '[1.8.2, )'
+      out:
+      - "Cannot index number with number (2)"
+
+- q: 'try reverse catch .'
+  in: 2.5
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'FLOAT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Cannot index number with number"
+    - v: '[1.8.2, )'
+      out:
+      - "Cannot index number with number (1.5)"
+
+- q: 'try reverse catch .'
+  in: 0.5
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'FLOAT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Cannot index number with number"
+    - v: '[1.8.2, )'
+      out:
+      - "Cannot index number with number (-0.5)"
+
+- q: 'try reverse catch .'
+  in: 2871948651097801136
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Cannot index number with number"
+    - v: '[1.8.2, )'
+      out:
+      - "Cannot index number with number (2871948651097801000)"
+
+- q: 'nan | try reverse catch .'
+  in: null
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Cannot index number with number"
+    - v: '[1.8.2, )'
+      out:
+      - "Cannot index number with number (null)"
+
+- q: 'infinite | try reverse catch .'
+  in: null
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - "Cannot index number with number"
+    - v: '[1.8.2, )'
+      out:
+      - "Cannot index number with number (1.7976931348623157e+308)"

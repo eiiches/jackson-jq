@@ -99,6 +99,92 @@
   v: '[1.6, )'
 
 - q: 'map(round)'
+  in: [1e300, -1e300, 1e18, -1e18, 1e17]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: '[INT,INT,INT,INT,INT]'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - [1e300, -1e300, 1e18, -1e18, 1e17]
+
+- q: 'map(round)'
+  in: [4503599627370495.5, -4503599627370495.5, 4503599627370496, -4503599627370496]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: '[FLOAT,FLOAT,INT,INT]'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - [4503599627370496, -4503599627370496, 4503599627370496, -4503599627370496]
+
+- q: 'map(round)'
+  in: [0.5, -0.5, 0.49999999999999994, 1.5, -1.5]
+  types:
+  - input: 'ANY'
+    output: '[*:NUMBER]'
+  - input: '[FLOAT,FLOAT,FLOAT,FLOAT,FLOAT]'
+    output: '[*:NUMBER]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - [1, -1, 0, 2, -2]
+
+- q: '[(nan | round | isnan), (infinite | round | isinfinite), (-infinite | round | isinfinite), ((-infinite | round) < 0)]'
+  types:
+  - input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN]'
+  - input: 'NULL'
+    output: '[BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN]'
+  properties:
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - [true, true, true, true]
+
+# The fuzz reproducer, asserted as a comparison rather than a printed value: jq 1.7 alone prints this
+# double as 3.162277660168379e+44, which reads back as a different double.
+- q: 'round == .'
+  in: 3.1622776601683794e44
+  types:
+  - input: 'ANY'
+    output: 'BOOLEAN'
+  - input: 'INT'
+    output: 'BOOLEAN'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.6, )'
+      out:
+      - true
+
+- q: 'map(round)'
   in: [2.49, 2.5, -2.49, -2.5]
   out:
   - [2, 3, -2, -3]
@@ -200,3 +286,111 @@
     depends_on_input: true
     depends_on_external_state: false
   v: '[1.6, )'
+
+# Reduced from fuzzing seed -7375452986580138970 (jq 1.8.2).
+- q: 'try ceil catch .'
+  in: "1"
+  out:
+  - 'string ("1") number required'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.6, )'
+
+- q: 'try (ceil) catch (@html)'
+  in: "1"
+  out:
+  - 'string (&quot;1&quot;) number required'
+  types:
+  - input: 'ANY'
+    output: 'NUMBER|STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.6, )'
+
+- q: 'try ceil catch .'
+  in: null
+  out:
+  - 'null (null) number required'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.6, )'
+
+# jq evaluates the second argument first, so an empty stream skips gmtime.
+- q: 'pow(gmtime; empty)'
+  in: null
+  out: []
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  properties:
+    cardinality: ZERO
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, )'
+
+- q: 'atan2(gmtime; empty)'
+  in: null
+  out: []
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  properties:
+    cardinality: ZERO
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, )'
+
+- q: 'try pow(empty; gmtime) catch .'
+  in: null
+  out:
+  - 'gmtime() requires numeric inputs'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, )'
+
+- q: 'pow((2, 3); (2, 3))'
+  in: null
+  out: [4, 9, 8, 27]
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  v: '[1.5, )'
+
+- q: 'try pow((2, error("boom")); 3) catch .'
+  in: null
+  out: [8, "boom"]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  v: '[1.5, )'

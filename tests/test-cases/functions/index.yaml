@@ -13,6 +13,21 @@
     depends_on_external_state: false
   v: '[1.5, )'
 
+- q: 'index({})'
+  in: null
+  out:
+  - null
+  types:
+  - input: 'ANY'
+    output: 'NULL|NUMBER'
+  - input: 'NULL'
+    output: 'NULL'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, )'
+
 - q: 'index("a")'
   in: {"a": [10, 20]}
   out:

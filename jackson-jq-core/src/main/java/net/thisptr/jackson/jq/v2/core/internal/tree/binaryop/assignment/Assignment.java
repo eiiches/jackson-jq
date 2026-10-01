@@ -6,8 +6,6 @@ import java.util.List;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
-import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
-import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathOperations;
@@ -61,13 +59,7 @@ public class Assignment<JsonNode> extends AbstractBinaryOperatorExpression<JsonN
 			List<Path<JsonNode>> lpaths = new ArrayList<>();
 			lhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
 				memory.countOutput(lhsOutputIndex);
-				@Var Path<JsonNode> lpath = lpath0;
-				// `VALUE | path(VALUE) => []`
-				if (PathUtils.isLost(lpath) && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)
-					lpath = RootPath.getInstance();
-				if (PathUtils.isLost(lpath))
-					throw new JsonQueryException(String.format("Invalid path expression with result %s", JsonNodeUtils.toString(jsonProvider, lval)));
-				lpaths.add(lpath);
+				lpaths.add(PathUtils.requirePath(jsonProvider, version, lpath0, in, lval));
 			});
 			@Var JsonNode out = in;
 			RuntimeLimits limits = frame.getRuntimeLimits();

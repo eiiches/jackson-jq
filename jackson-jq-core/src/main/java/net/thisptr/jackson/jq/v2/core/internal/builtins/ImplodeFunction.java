@@ -52,9 +52,16 @@ public class ImplodeFunction implements Function {
 			while (iter.hasNext()) {
 				JsonNode ch = iter.next();
 				Integer codepoint = jsonProvider.getNumberAsIntTruncated(ch);
-				if (codepoint == null) // NaN, an infinity, or beyond int range.
-					throw new JsonQueryException("Cannot use " + JsonCodec.format(jsonProvider, ch) + " as a unicode codepoint");
-				builder.append((char) codepoint.intValue());
+				if (codepoint == null) {
+					if (jsonProvider.getNumberAsBigIntegerTruncated(ch) == null)
+						throw new JsonQueryException("Cannot use " + JsonCodec.format(jsonProvider, ch) + " as a unicode codepoint");
+					builder.appendCodePoint(0xFFFD);
+				} else if (codepoint < Character.MIN_CODE_POINT || codepoint > Character.MAX_CODE_POINT
+						|| (codepoint >= Character.MIN_SURROGATE && codepoint <= Character.MAX_SURROGATE)) {
+					builder.appendCodePoint(0xFFFD);
+				} else {
+					builder.appendCodePoint(codepoint);
+				}
 			}
 
 			RuntimeLimitChecks.checkStringLength(scope.getRuntimeLimits(), builder.length());

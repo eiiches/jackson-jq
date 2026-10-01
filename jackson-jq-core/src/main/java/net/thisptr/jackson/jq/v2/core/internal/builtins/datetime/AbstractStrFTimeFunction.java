@@ -8,6 +8,7 @@ import java.util.TimeZone;
 
 import com.google.errorprone.annotations.Var;
 
+import net.thisptr.jackson.jq.v2.core.internal.commons.strings.UnicodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -71,6 +72,11 @@ abstract class AbstractStrFTimeFunction implements Function {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
 		Version version = bindCtx.getJqVersion();
 		String parsedDatetimeRequired = name + "/1 requires parsed datetime inputs";
+		String unknownSystemFailure = name + "/1: unknown system failure";
+		// The C library reports the same nothing for a result that does not fit the buffer and for one of
+		// no length at all, and jq took either as a failure until 1.8.0 told them apart. Only an empty
+		// format writes nothing, so this is what makes strftime("") a failure on the versions before it.
+		boolean emptyResultFails = version.compareTo(Versions.JQ_1_8_0) < 0;
 		return (scope, in, ipath, output) -> {
 			args.get(0).apply(scope, in, UntrackedPath.getInstance(), (format, formatPath) -> {
 				if (!jsonProvider.isNumber(in) && !jsonProvider.isArray(in))
@@ -100,9 +106,23 @@ abstract class AbstractStrFTimeFunction implements Function {
 				} catch (DateTimeException e) {
 					throw new JsonQueryException(parsedDatetimeRequired, e);
 				}
-				output.emit(jsonProvider.createString(CStrftime.format(jsonProvider.getString(format), time, zone)), UntrackedPath.getInstance());
+				String formatString = jsonProvider.getString(format);
+				String written = CStrftime.format(formatString, time, zone, bufferSize(formatString));
+				if (written == null || (emptyResultFails && written.isEmpty()))
+					throw new JsonQueryException(unknownSystemFailure);
+				output.emit(jsonProvider.createString(written), UntrackedPath.getInstance());
 			});
 		};
+	}
+
+	/**
+	 * The buffer jq gives the C library to write into: room for the format itself and a hundred bytes
+	 * more. A result the C library cannot fit in it is the system failure {@code strftime} reports,
+	 * whatever the format asked for -- a field width of its own, or simply more conversions than there
+	 * is room for.
+	 */
+	private static int bufferSize(String format) {
+		return (int) Math.min(UnicodeUtils.lengthUtf8(format) + 100L, Integer.MAX_VALUE);
 	}
 
 	private static String standardZoneAbbreviation(ZoneId zone) {

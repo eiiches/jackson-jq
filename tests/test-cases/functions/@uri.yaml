@@ -27,3 +27,43 @@
     depends_on_input: true
     depends_on_external_state: false
   v: '[1.7, )'
+
+- q: '@uri'
+  in: "'[]'"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "'%5B%5D'"
+    - v: '[1.7, )'
+      out:
+      - "%27%5B%5D%27"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@uri'
+  in: "!~*()_-."
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      out:
+      - "!~*()_-."
+    - v: '[1.7, )'
+      out:
+      - "%21~%2A%28%29_-."
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'STRING'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false

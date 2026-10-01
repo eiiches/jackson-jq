@@ -946,10 +946,10 @@ public interface JsonProviderContractTest<T> {
 
 	@Test
 	default void testFormatOnNegativeZero() {
-		// format on -0.0 should serialize as "0" (jq behavior)
+		// jq prints a negative zero as -0, on every version from 1.5 on
 		T node = getProvider().createNumber(-0.0);
 		String json = JsonCodec.format(getProvider(), node);
-		assertThat(json).isEqualTo("0");
+		assertThat(json).isEqualTo("-0");
 	}
 
 	@Test

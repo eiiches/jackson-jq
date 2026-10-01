@@ -8,6 +8,8 @@ import java.util.Locale;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
+import net.thisptr.jackson.jq.v2.core.internal.commons.strings.UnicodeUtils;
+
 /**
  * Writes a {@link BrokenDownTime} out the way the C library's {@code strftime} does in the C locale,
  * which is the contract jq's {@code strftime} and {@code strflocaltime} pass on to their callers.
@@ -16,6 +18,10 @@ import org.jspecify.annotations.Nullable;
  * field width, then an optional {@code E} or {@code O} modifier, then the conversion character. Anything
  * the C library does not recognise -- an unknown conversion character, or a modifier that character does
  * not take -- is written out as it was read, padded to the requested width.
+ * <p>
+ * The C library writes into a buffer of a fixed size, and reports a failure rather than a result where
+ * what it has to write and the NUL byte that ends it do not both fit in it. A caller that has to be able
+ * to write anything therefore has to say how much room it has.
  * <p>
  * Every rule here was established by running the C library through jq rather than by reading its source.
  */
@@ -58,15 +64,40 @@ final class CStrftime {
 	}
 
 	/**
-	 * Formats {@code time} against {@code format}.
+	 * Formats {@code time} against a {@code format} short enough that no buffer can be too small for the
+	 * result -- one of the fixed formats jq writes itself. A format that came from a query has a buffer of
+	 * its own and goes through {@link #format(String, BrokenDownTime, ZoneId, int)}.
 	 *
 	 * @param zone the zone {@code %s} reads the broken-down fields as, which is the local zone whether or
 	 * not the time itself is a UTC one -- as the C library does
 	 */
 	public static String format(String format, BrokenDownTime time, ZoneId zone) {
+		return write(format, time, zone, Integer.MAX_VALUE).toString();
+	}
+
+	/**
+	 * Formats {@code time} against {@code format} into a buffer of {@code maxBytes} bytes, or returns
+	 * {@code null} where the result and the NUL byte that ends it do not both fit in it -- the failure the
+	 * C library reports by writing nothing a caller can read. A result of no length at all is not one: an
+	 * empty format writes an empty string into any buffer with room for the NUL byte.
+	 *
+	 * @param zone the zone {@code %s} reads the broken-down fields as, which is the local zone whether or
+	 * not the time itself is a UTC one -- as the C library does
+	 */
+	public static @Nullable String format(String format, BrokenDownTime time, ZoneId zone, int maxBytes) {
+		StringBuilder out = write(format, time, zone, maxBytes);
+		// write() gives up as soon as what it holds is over the buffer counted in UTF-16 units, which no
+		// UTF-8 form is shorter than, so this settles every result it gave up on without counting it out.
+		if (out.length() >= maxBytes)
+			return null;
+		String result = out.toString();
+		return UnicodeUtils.lengthUtf8(result) >= maxBytes ? null : result;
+	}
+
+	private static StringBuilder write(String format, BrokenDownTime time, ZoneId zone, int maxBytes) {
 		StringBuilder out = new StringBuilder();
 		@Var int i = 0;
-		while (i < format.length()) {
+		while (i < format.length() && out.length() < maxBytes) {
 			char c = format.charAt(i);
 			if (c != '%') {
 				out.append(c);
@@ -99,9 +130,13 @@ final class CStrftime {
 				}
 			}
 
-			@Var int width = 0;
+			// The width is counted in a long and cut back to the size of the buffer. A field is never
+			// shorter than the width asked for, so a width that already fills the buffer overflows it
+			// whatever it is cut back to, and the digits past that only have to be read, not written.
+			@Var long requestedWidth = 0;
 			while (i < format.length() && format.charAt(i) >= '0' && format.charAt(i) <= '9')
-				width = width * 10 + (format.charAt(i++) - '0');
+				requestedWidth = Math.min(requestedWidth * 10 + (format.charAt(i++) - '0'), maxBytes);
+			int width = (int) requestedWidth;
 
 			@Var char modifier = 0;
 			if (i + 1 < format.length() && (format.charAt(i) == 'E' || format.charAt(i) == 'O'))
@@ -135,7 +170,7 @@ final class CStrftime {
 			out.append(pad(converted, Math.max(width, noPad ? 1 : defaultWidth(conversion)),
 					padFlag != 0 ? padFlag : defaultPadChar(conversion), NUMERIC.indexOf(conversion) >= 0));
 		}
-		return out.toString();
+		return out;
 	}
 
 	private static boolean rejects(char modifier, char conversion) {
@@ -231,7 +266,9 @@ final class CStrftime {
 
 	/**
 	 * Writes a zone offset as {@code +hhmm}, which the C library pads unlike any other conversion: a field
-	 * width widens the digits after the sign, and pads what is in front of it as well.
+	 * width widens the digits after the sign, and pads what is in front of it as well. The width is the one
+	 * the caller has already cut back to the buffer it writes into; a field this pads out to twice it is
+	 * over that buffer either way.
 	 */
 	private static String zoneOffset(int offsetSeconds, int width, boolean noPad, char padFlag) {
 		int magnitude = Math.abs(offsetSeconds);

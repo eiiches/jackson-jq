@@ -2,6 +2,8 @@ package net.thisptr.jackson.jq.v2.core.internal.tree;
 
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
+
 import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
@@ -79,11 +81,14 @@ public class JsonQueryKeyFieldConstruction<JsonNode> implements FieldConstructio
 		Memory memory = frame.getEnclosingMemory();
 		key.apply(frame, in, UntrackedPath.getInstance(), (k, opath) -> {
 			memory.countOutput(keyOutputIndex);
-			if (!jsonProvider.isString(k))
-				throw new JsonQueryTypeException("Cannot use %s as object key", ExceptionMessages.describe(jsonProvider, version, k));
+			// jq checks the key's type at INSERT, once the value expression has produced something to store
+			// under it, so a value expression that emits nothing -- or fails first -- never reaches the check.
+			@Nullable String name = jsonProvider.isString(k) ? jsonProvider.getString(k) : null;
 			value.apply(frame, in, UntrackedPath.getInstance(), (v, opath2) -> {
 				memory.countOutput(valueOutputIndex);
-				consumer.accept(jsonProvider.getString(k), v);
+				if (name == null)
+					throw new JsonQueryTypeException("Cannot use %s as object key", ExceptionMessages.describe(jsonProvider, version, k));
+				consumer.accept(name, v);
 			});
 		});
 	}

@@ -30,6 +30,86 @@
     depends_on_external_state: false
   v: '[1.5.0, )'
 
+- q: 'todateiso8601'
+  in: [1.7976931348623157e308, 0, 1, 0, 0, 0, 4, 0]
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[FLOAT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - "-2147483648-01-01T00:00:00Z"
+    - v: '[1.8.0, )'
+      out:
+      - "-2147481749-01-01T00:00:00Z"
+    overrides:
+    - v: '[1.7, 1.8.0)'
+      os: MACOS
+      out:
+      - "2147483647-01-01T00:00:00Z"
+    - v: '[1.8.0, )'
+      os: MACOS
+      out:
+      - "2147485547-01-01T00:00:00Z"
+
+- q: 'todateiso8601'
+  in: [2147483648, 0, 1, 0, 0, 0, 4, 0]
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "-2147483648-01-01T00:00:00Z"
+    overrides:
+    - v: '[1.7, 1.8.0)'
+      os: MACOS
+      out:
+      - "2147483647-01-01T00:00:00Z"
+    - v: '[1.8.0, )'
+      os: MACOS
+      out:
+      - "2147483648-01-01T00:00:00Z"
+
+- q: 'todateiso8601'
+  in: [-2147483648, 0, 1, 0, 0, 0, 4, 0]
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - "-2147483648-01-01T00:00:00Z"
+    - v: '[1.8.0, )'
+      out:
+      - "-2147481748-01-01T00:00:00Z"
+    overrides:
+    - v: '[1.7, 1.8.0)'
+      os: MACOS
+      out:
+      - "2147483648-01-01T00:00:00Z"
+
 # Darwin strftime pads this noncanonical year to four digits, unlike glibc.
 - q: 'todateiso8601'
   in: [49, 57, 55, 48, 45, 48, 49, 45, 48, 49, 84, 48, 48, 58, 48, 48, 58, 49, 57, 90]
@@ -50,8 +130,9 @@
     - v: '[1.8.0, )'
       out:
       - "53-11-26T00:45:48Z"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "0049-58-55T48:45:48Z"
 
@@ -120,11 +201,13 @@
     - v: '[1.7, )'
       out:
       - "error converting number of seconds since epoch to datetime"
-    macos:
+    overrides:
     - v: '[1.7, 1.8.0)'
+      os: MACOS
       out:
       - "1970-01-01T00:00:00Z"
     - v: '[1.8.0, )'
+      os: MACOS
       out:
       - "strftime/1 requires parsed datetime inputs"
     jjq:

@@ -2,8 +2,9 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins.math;
 
 import java.util.List;
 
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
+import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
-import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
@@ -40,8 +41,10 @@ public class MathFunctions {
 		@Override
 		public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 			JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
+			Version version = bindCtx.getJqVersion();
 			return (scope, in, ipath, output) -> {
-				Preconditions.checkInputType(jsonProvider, "mathfunc", in, JsonNodeType.NUMBER);
+				if (jsonProvider.getNodeType(in) != JsonNodeType.NUMBER)
+					throw new JsonQueryTypeException("%s number required", ExceptionMessages.describe(jsonProvider, version, in));
 				output.emit(jsonProvider.createNumber(f(jsonProvider.getNumberAsDoubleRounded(in))), UntrackedPath.getInstance());
 			};
 		}
@@ -121,7 +124,15 @@ public class MathFunctions {
 	public static class RoundFunction extends AbstractMathFunction {
 		@Override
 		protected double f(double v) {
-			return v >= 0 ? Math.round(v) : -Math.round(-v);
+			// jq calls C's round(), which returns a double: NaN, the infinities and every double of
+			// magnitude 2^52 or greater are already integral and round to themselves. Math.round returns
+			// a long instead and saturates such inputs to Long.MAX_VALUE, so only delegate to it below
+			// that threshold, where a long holds the result exactly. Negating around Math.round is what
+			// rounds ties away from zero as C's round() does, and copySign restores the sign of the
+			// argument, which round() keeps and a long cannot carry.
+			if (!(Math.abs(v) < 0x1p52))
+				return v;
+			return Math.copySign(v >= 0 ? Math.round(v) : -Math.round(-v), v);
 		}
 	}
 

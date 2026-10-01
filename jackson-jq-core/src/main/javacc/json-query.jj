@@ -696,10 +696,14 @@ AstNode PrimaryExpression():
 }
 {
 	(
-		tmp = FunctionDefinition()
-		{ exprs.add(tmp); }
-	)*
-	(
+		(
+			tmp = FunctionDefinition()
+			{ exprs.add(tmp); }
+		)+
+		// A def scopes the rest of this expression, including any following comma or pipe.
+		// Parsing only the next primary here would let the outer expression take that pipe.
+		tmp = Expression()
+	|
 		tmp = ThisObjectAccess()
 		(
 			<QUESTION>
@@ -801,7 +805,8 @@ AstNode TryCatchExpression():
 }
 {
 	<KEYWORD_TRY>
-	tryExpr = Expression()
+	// A bare try covers one primary; parentheses are required to include infix operators.
+	tryExpr = PrimaryExpression()
 	(
 		<KEYWORD_CATCH>
 		catchExpr = PrimaryExpression()
@@ -976,6 +981,7 @@ void ObjectField(final List<ObjectConstructionAstNode.FieldConstructionAst> fiel
 		<OPEN_PAR>
 		key = Expression()
 		<CLOSE_PAR>
+		{ key = new ParenAstNode(locSince(start), key); }
 		<COLON>
 		value = ObjectFieldValue()
 		{ fields.add(new ObjectConstructionAstNode.JsonQueryKeyFieldConstructionAst(locSince(start), key, value)); }

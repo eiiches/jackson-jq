@@ -252,11 +252,11 @@ public class EnvironmentPocTest {
 				.defineFunction(FunctionSignature.of("probe", 1), probe)
 				.build();
 
-		// Top-level `.` is not fixed, so this only resolves as constant if error(null)'s
-		// dependsOnInput() correctly reflects that its literal argument doesn't depend on input.
+		// Top-level `.` is not fixed. The error still has no input dependency, but a folded
+		// terminal error cannot be exposed as a ConstantExpression with result values.
 		env.compile("probe(error(null))");
 		assertThat(isConstantExpression(captured.get(captured.size() - 1))).isTrue();
-		assertThat(captured.get(captured.size() - 1)).isInstanceOf(ConstantExpression.class);
+		assertThat(captured.get(captured.size() - 1)).isNotInstanceOf(ConstantExpression.class);
 	}
 
 	@Test

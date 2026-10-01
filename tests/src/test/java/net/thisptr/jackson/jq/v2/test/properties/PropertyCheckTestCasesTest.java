@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.jspecify.annotations.Nullable;
@@ -50,10 +51,7 @@ public class PropertyCheckTestCasesTest {
 		JsonQuery<JsonNode> query = env.compile(tc.q);
 		ExpressionProperties actual = query.getProperties();
 
-		TestCase.PropertyAssertion expected = tc.properties;
-		if (expected == null) {
-			return;
-		}
+		TestCase.PropertyAssertion expected = Objects.requireNonNull(tc.properties);
 
 		String desc = String.format("jq (v%s) '%s'", version, tc.q);
 		assertThat(actual.cardinality())
@@ -66,7 +64,8 @@ public class PropertyCheckTestCasesTest {
 				.as("depends_on_external_state of %s", desc)
 				.isEqualTo(expected.dependsOnExternalState);
 
-		if (!Boolean.TRUE.equals(tc.failing)) {
+		boolean expectedError = tc.expectations != null && tc.expectations.resolve(version, false, System.getProperty("os.name", ""), System.getProperty("os.arch", "")).error;
+		if (!Boolean.TRUE.equals(tc.failing) && !expectedError) {
 			List<JsonNode> actualOutputs = new ArrayList<>();
 			query.apply(tc.in, actualOutputs::add);
 			if (actual.cardinality() == Cardinality.ZERO) {
@@ -122,8 +121,13 @@ public class PropertyCheckTestCasesTest {
 
 	public void test(String tcText) throws Throwable {
 		TestCase tc = TestCaseLoader.parseTestCase(tcText);
-		if (!tc.shouldCompile || tc.properties == null) {
+		if (!tc.shouldCompile) {
 			return;
+		}
+		if (tc.properties == null) {
+			if (Boolean.TRUE.equals(tc.failing))
+				return;
+			throw new AssertionError(String.format("Missing properties for jq '%s' in %s", tc.q, tc.file));
 		}
 
 		Path moduleSearchPath = tc.modules.isEmpty() ? null : ModuleFixtures.materialize(tc.modules);

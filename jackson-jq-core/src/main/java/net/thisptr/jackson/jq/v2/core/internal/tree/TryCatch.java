@@ -8,13 +8,13 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
-import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
@@ -120,7 +120,7 @@ public class TryCatch<JsonNode> implements RewritableExpression<JsonNode>, FreeV
 			throw e;
 		} catch (JsonQueryException e) {
 			if (catchExpr != null) {
-				catchExpr.apply(frame, e.toJson(jsonProvider), path instanceof UntrackedPath ? UntrackedPath.getInstance() : UnrepresentablePath.getInstance(), output);
+				catchExpr.apply(frame, e.toJson(jsonProvider), PathUtils.stale(UntrackedPath.getInstance(), path, in), output);
 			}
 		}
 	}
@@ -132,7 +132,7 @@ public class TryCatch<JsonNode> implements RewritableExpression<JsonNode>, FreeV
 			throw e;
 		} catch (JsonQueryException e) {
 			if (catchExpr != null) {
-				catchExpr.apply(frame, e.toJson(jsonProvider), path instanceof UntrackedPath ? UntrackedPath.getInstance() : UnrepresentablePath.getInstance(), output);
+				catchExpr.apply(frame, e.toJson(jsonProvider), PathUtils.stale(UntrackedPath.getInstance(), path, in), output);
 			}
 		}
 	}

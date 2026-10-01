@@ -10,3 +10,93 @@
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
+
+- q: '[reduce . as $x (0, 9; $x)]'
+  in: "abc"
+  out:
+  - ["abc", null]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: 'STRING'
+    output: '[*:0|9|NULL|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'jq reads `.` off the stack with DUPN when it enters the fold, which leaves a null behind: the source sees the real input only while the first init value is folded, and null for every init value after it. Every version from 1.5 through 1.8.2 does this; jq 1.8.0 fixed foreach and left reduce alone.'
+
+- q: '[reduce . as $x (0, 9, 8; $x)]'
+  in: "abc"
+  out:
+  - ["abc", null, null]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: 'STRING'
+    output: '[*:0|8|9|NULL|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'Only the first init value gets the input; the third is null like the second.'
+
+- q: '[reduce (., .) as $x (0, 9; $x)]'
+  in: "abc"
+  out:
+  - ["abc", null]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: 'STRING'
+    output: '[*:0|9|NULL|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'Every source value of one init iteration sees the same input, so the second fold reduces null over null.'
+
+- q: '[reduce empty as $x (., .; 0)]'
+  in: "abc"
+  out:
+  - ["abc", "abc"]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: 'STRING'
+    output: '[*:0|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'The init expression itself keeps `.` -- only the source is fed the null.'
+
+- q: '[., (reduce . as $x (0, 9; $x)), .]'
+  in: "abc"
+  out:
+  - ["abc", "abc", null, "abc"]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: 'STRING'
+    output: '[*:0|9|NULL|STRING]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'The null stays inside the fold: `.` is what it was once the reduce is done.'
+
+- q: '[try (reduce (endswith(tojson)) as $x (0, 9; $x)) catch .]'
+  in: "-0.55353"
+  out:
+  - [false, "endswith() requires string inputs"]
+  types:
+  - input: 'ANY'
+    output: '[*:ANY]'
+  - input: 'STRING'
+    output: '[*:ANY]'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'A source that requires a string input folds the first init value and then raises on the null the second one hands it.'

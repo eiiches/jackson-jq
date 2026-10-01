@@ -6,6 +6,7 @@ import jdk.incubator.json.JsonValue;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jep540.Jep540JsonProvider;
 import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
+import net.thisptr.jackson.jq.v2.json.internal.io.ParseOptions;
 import net.thisptr.jackson.jq.v2.test.AbstractJsonQueryTest;
 
 /**
@@ -22,7 +23,7 @@ public class Jep540JsonQueryTest extends AbstractJsonQueryTest<JsonValue> {
 	}
 
 	@Override
-	protected JsonValue parseTestNode(JsonNode node) {
-		return JsonCodec.parse(Jep540JsonProvider.getInstance(), node.toString());
+	protected JsonValue parseTestNode(JsonNode node, ParseOptions parseOptions) {
+		return JsonCodec.parse(Jep540JsonProvider.getInstance(), node.toString(), parseOptions);
 	}
 }

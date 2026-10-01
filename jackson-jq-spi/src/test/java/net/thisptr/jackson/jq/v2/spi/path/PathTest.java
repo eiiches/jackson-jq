@@ -1,7 +1,9 @@
 package net.thisptr.jackson.jq.v2.spi.path;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,11 +30,17 @@ public class PathTest {
 
 		List<JsonNode> result = path.toJsonList(jsonProvider);
 
+		// Built rather than parsed: the path carries the very nodes it was given, and a parsed 3 keeps the
+		// literal it was parsed from, so it is not the same node as the int one above.
+		Map<String, JsonNode> expectedRange = new LinkedHashMap<>();
+		expectedRange.put("start", jsonProvider.createNull());
+		expectedRange.put("end", jsonProvider.createNumber(3));
+
 		assertThat(result).containsExactly(
 				jsonProvider.createString("a"),
 				jsonProvider.createNumber(2),
 				jsonProvider.createNumber(4),
-				JsonCodec.parse(jsonProvider, "{\"start\":null,\"end\":3}"),
+				jsonProvider.createObject(expectedRange),
 				searchSequence);
 		assertThat(((IndexOfPath<JsonNode>) path).getSearchSequence()).isSameAs(searchSequence);
 	}
@@ -71,9 +79,25 @@ public class PathTest {
 	void rejectsLostPath() {
 		Jackson2JsonProvider jsonProvider = new Jackson2JsonProvider(new ObjectMapper());
 
-		assertThatThrownBy(() -> UnrepresentablePath.<JsonNode>getInstance().toJsonList(jsonProvider))
+		assertThatThrownBy(() -> UnrepresentablePath.of(RootPath.<JsonNode>getInstance(), jsonProvider.createNull()).toJsonList(jsonProvider))
 				.isInstanceOf(Exception.class)
 				.hasMessage("Invalid path expression");
+	}
+
+	@Test
+	void stalePathKeepsThePositionItWasLostAt() {
+		Jackson2JsonProvider jsonProvider = new Jackson2JsonProvider(new ObjectMapper());
+
+		Path<JsonNode> lastValid = RootPath.<JsonNode>getInstance().appendKey("a");
+		JsonNode valueAtLastValid = jsonProvider.createNull();
+		Path<JsonNode> stale = UnrepresentablePath.of(lastValid, valueAtLastValid);
+
+		assertThat(stale).isInstanceOf(UnrepresentablePath.class);
+		assertThat(((UnrepresentablePath<JsonNode>) stale).getLastValidPath()).isSameAs(lastValid);
+		assertThat(((UnrepresentablePath<JsonNode>) stale).getValueAtLastValidPath()).isSameAs(valueAtLastValid);
+		assertThat(stale.getParentPath()).isNull();
+		// A path that already went stale keeps the position it first lost.
+		assertThat(UnrepresentablePath.of(stale, jsonProvider.createNumber(1))).isSameAs(stale);
 	}
 
 	@Test

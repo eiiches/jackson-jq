@@ -33,6 +33,63 @@
       - -2208988800
 
 - q: 'try mktime catch .'
+  in: [1969, 11, 31, 23, 59, 59, 3, 364]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'The fuzz input names epoch second -1, which jq treats as an invalid gmtime representation.'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "invalid gmtime representation"
+
+- q: 'try mktime catch .'
+  in: [1970, 0, 1, 0, 0, -1]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,INT,INT,INT,INT,INT]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'A minimal broken-down time can reach the same -1 epoch second by carrying a negative seconds field.'
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - "mktime requires parsed datetime inputs"
+    - v: '[1.8.0, )'
+      out:
+      - "invalid gmtime representation"
+
+- q: 'mktime'
+  in: [1969, 11, 31, 23, 59, 57, 3, 364]
+  types:
+  - input: 'ANY'
+    output: 'NUMBER'
+  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'NUMBER'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'The nearby valid negative timestamp remains convertible.'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - -3
+
+- q: 'try mktime catch .'
   in: [2023, 10, 14]
   types:
   - input: 'ANY'
@@ -95,8 +152,9 @@
     - v: '[1.8.0, )'
       out:
       - -2209075200
-    macos:
+    overrides:
     - v: '[1.8.0, )'
+      os: MACOS
       out:
       - "invalid gmtime representation"
 
@@ -141,6 +199,15 @@
       out:
       - 0
       error: true
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try mktime catch .'
   types:

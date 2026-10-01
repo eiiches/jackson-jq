@@ -60,7 +60,7 @@ public class SortByFunction implements Function {
 				zipped.add(Pair.of(item, jsonProvider.createArray(values)));
 			}
 
-			zipped.sort((o1, o2) -> comparator.compare(o1._2, o2._2));
+			zipped.sort((o1, o2) -> comparator.compareForSorting(o1._2, o2._2));
 
 			output.emit(JsonNodeUtils.asArrayNode(jsonProvider, Pair._1(zipped)), UntrackedPath.getInstance());
 		};

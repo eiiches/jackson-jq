@@ -3,11 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins;
 import java.util.List;
 import java.util.Map;
 
-import com.google.errorprone.annotations.Var;
-
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
-import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
-import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathUtils;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
@@ -17,7 +13,6 @@ import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
-import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
 import net.thisptr.jackson.jq.v2.spi.path.RootPath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -48,15 +43,10 @@ public class PathFunction implements Function {
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
+		Version version = bindCtx.getJqVersion();
 		return (frame, in, ipath, output) -> {
 			args.get(0).apply(frame, in, RootPath.getInstance(), (obj, path0) -> {
-				@Var Path<JsonNode> path = path0;
-				// `VALUE | path(VALUE) => []`
-				if (PathUtils.isLost(path) && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, obj) == 0)
-					path = RootPath.getInstance();
-				if (PathUtils.isLost(path))
-					throw new JsonQueryException(String.format("Invalid path expression with result %s", JsonNodeUtils.toString(jsonProvider, obj)));
-
+				Path<JsonNode> path = PathUtils.requirePath(jsonProvider, version, path0, in, obj);
 				JsonNode out = jsonProvider.createArray(path.toJsonList(jsonProvider));
 				output.emit(out, UntrackedPath.getInstance());
 			});

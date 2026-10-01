@@ -319,8 +319,13 @@ public class Compiler {
 
 		@Override
 		public AnalyzedExpression<N> visit(ParenAstNode paren) throws JsonQueryException {
-			context.setTailPosition(inTailPosition);
-			return compileNonNull(env, context, scope, paren.value());
+			context.pushLocalScope();
+			try {
+				context.setTailPosition(inTailPosition);
+				return compileNonNull(env, context, scope, paren.value());
+			} finally {
+				context.popScope();
+			}
 		}
 
 		@Override
@@ -616,8 +621,13 @@ public class Compiler {
 
 		@Override
 		public AnalyzedExpression<N> visit(ArrayConstructionAstNode arr) throws JsonQueryException {
-			AnalyzedExpression<N> compiledArrayItems = compile(env, context, scope, arr.q);
-			return new ArrayConstruction<>(env.getJsonProvider(), compiledArrayItems, context.outputCounterOf(compiledArrayItems));
+			context.pushLocalScope();
+			try {
+				AnalyzedExpression<N> compiledArrayItems = compile(env, context, scope, arr.q);
+				return new ArrayConstruction<>(env.getJsonProvider(), compiledArrayItems, context.outputCounterOf(compiledArrayItems));
+			} finally {
+				context.popScope();
+			}
 		}
 
 		@Override
@@ -708,10 +718,8 @@ public class Compiler {
 					pending.push(bin.lhs);
 					continue;
 				}
-				if (operand instanceof ParenAstNode paren) {
-					pending.push(paren.value());
-					continue;
-				}
+				// Parentheses establish a lexical scope, so compile them as an operand instead of
+				// flattening through them.
 				// Only the last operand inherits tail position: an earlier one is followed by operands the
 				// enclosing Comma still has to run, so unwinding past them would lose their values. Earlier
 				// operands have already emitted and finished by then, which is why they place no condition
@@ -762,7 +770,7 @@ public class Compiler {
 				compiledMatcher = compiledMatcher.resolveSlots(new SlotResolver(slots));
 				AnalyzedExpression<N> compiledUpdate = compileNonNull(env, context, scope, fe.updateExpr());
 				AnalyzedExpression<N> compiledExtract = compile(env, context, scope, fe.extractExpr());
-				return new ForeachExpression<>(compiledMatcher, compiledInit, compiledUpdate, compiledExtract, compiledIter, new HashSet<>(slots.values()), context.outputCounterOf(compiledInit), context.outputCounterOf(compiledUpdate), context.outputCounterOf(compiledIter));
+				return new ForeachExpression<>(env.getJsonProvider(), compiledMatcher, compiledInit, compiledUpdate, compiledExtract, compiledIter, env.getJqVersion(), new HashSet<>(slots.values()), context.outputCounterOf(compiledInit), context.outputCounterOf(compiledUpdate), context.outputCounterOf(compiledIter));
 			} finally {
 				context.popScope();
 			}
@@ -776,8 +784,14 @@ public class Compiler {
 		@Override
 		public AnalyzedExpression<N> visit(StringInterpolationAstNode si) throws JsonQueryException {
 			List<Pair<Integer, AnalyzedExpression<N>>> compiledInterpolations = new ArrayList<>();
-			for (Pair<Integer, AstNode> pair : si.interpolations())
-				compiledInterpolations.add(Pair.of(pair._1, compileNonNull(env, context, scope, pair._2)));
+			for (Pair<Integer, AstNode> pair : si.interpolations()) {
+				context.pushLocalScope();
+				try {
+					compiledInterpolations.add(Pair.of(pair._1, compileNonNull(env, context, scope, pair._2)));
+				} finally {
+					context.popScope();
+				}
+			}
 			AnalyzedExpression<N> compiledFormatter = compile(env, context, scope, si.formatter());
 			int[] interpolationOutputIndices = new int[compiledInterpolations.size()];
 			for (int i = 0; i < interpolationOutputIndices.length; ++i)

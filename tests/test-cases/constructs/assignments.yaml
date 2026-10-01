@@ -41,7 +41,6 @@
     depends_on_input: true
     depends_on_external_state: false
   v: '[1.7, )'
-  failing: true
 
 - q: '1 = 3'
   in: 1
@@ -72,7 +71,6 @@
     depends_on_input: true
     depends_on_external_state: false
   v: '[1.7, )'
-  failing: true
 
 - q: '[1,2,3] | (.[] | select(. > 1)) |= (. + 10, . + 20)'
   out:
@@ -379,3 +377,105 @@
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
+
+- q: '(.a | true) = 9'
+  in: {"a": true}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:BOOLEAN}'
+    output: '{a:9|BOOLEAN}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'the left-hand side keeps the position it reached, so the assignment lands there'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - {"a": 9}
+
+- q: '(.a | true) |= 9'
+  in: {"a": true}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:BOOLEAN}'
+    output: '{a:9|BOOLEAN}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - {"a": 9}
+
+- q: '(.a | null) = 9'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'NULL'
+    output: '{a:9|NULL}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - {"a": 9}
+
+- q: '(.a | "x") = 9'
+  in: {"a": "x"}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:STRING}'
+    output: '{a:9|STRING}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out: []
+      error: true
+
+- q: '.a |= (null | .b | 1)'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:NULL}'
+    output: '{a:1}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - {"a": 1}
+
+- q: '(.a | null) += 1'
+  in: {"a": null}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{a:NULL}'
+    output: '{a:1|NULL}'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - {"a": 1}

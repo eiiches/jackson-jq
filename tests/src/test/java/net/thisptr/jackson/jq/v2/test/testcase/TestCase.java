@@ -26,6 +26,32 @@ import net.thisptr.jackson.jq.v2.test.comparator.FloatTolerance;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TestCase {
+	public enum OperatingSystem {
+		MACOS,
+		LINUX;
+
+		public static OperatingSystem fromSystemProperty(String osName) {
+			if (osName.startsWith("Mac"))
+				return MACOS;
+			if (osName.startsWith("Linux"))
+				return LINUX;
+			throw new IllegalArgumentException("unsupported operating system: " + osName);
+		}
+	}
+
+	public enum Architecture {
+		AARCH64,
+		AMD64;
+
+		public static Architecture fromSystemProperty(String osArch) {
+			if (osArch.equals("aarch64") || osArch.equals("arm64"))
+				return AARCH64;
+			if (osArch.equals("amd64") || osArch.equals("x86_64"))
+				return AMD64;
+			throw new IllegalArgumentException("unsupported architecture: " + osArch);
+		}
+	}
+
 	@JsonProperty("q")
 	public String q = "";
 
@@ -53,8 +79,22 @@ public class TestCase {
 		@JsonProperty("error")
 		public boolean error;
 
+		@JsonProperty("timeout")
+		@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+		public boolean timeout;
+
+		@JsonProperty("os")
+		public @Nullable OperatingSystem os;
+
+		@JsonProperty("arch")
+		public @Nullable Architecture arch;
+
 		public boolean contains(Version version) {
 			return Objects.requireNonNull(this.version, "expectation row requires v").contains(version);
+		}
+
+		public boolean matchesPlatform(@Nullable OperatingSystem os, @Nullable Architecture arch) {
+			return (this.os == null || this.os.equals(os)) && (this.arch == null || this.arch.equals(arch));
 		}
 	}
 
@@ -63,13 +103,13 @@ public class TestCase {
 		@JsonProperty("default")
 		public List<Expectation> defaultRows = Collections.emptyList();
 
-		@JsonProperty("macos")
-		public List<Expectation> macos = Collections.emptyList();
+		@JsonProperty("overrides")
+		public List<Expectation> overrides = Collections.emptyList();
 
 		@JsonProperty("jjq")
 		public List<Expectation> jjq = Collections.emptyList();
 
-		public Expectation resolve(Version version, boolean realJq, String osName) {
+		public Expectation resolve(Version version, boolean realJq, String osName, String osArch) {
 			Expectation base = find(defaultRows, version);
 			if (base == null) {
 				Expectation unsupported = new Expectation();
@@ -77,8 +117,32 @@ public class TestCase {
 				unsupported.error = true;
 				return unsupported;
 			}
-			Expectation override = find(realJq ? (osName.startsWith("Mac") ? macos : Collections.emptyList()) : jjq, version);
+			if (!realJq) {
+				Expectation jjqRow = find(jjq, version);
+				return jjqRow != null ? jjqRow : base;
+			}
+			@Var @Nullable OperatingSystem os;
+			try {
+				os = OperatingSystem.fromSystemProperty(osName);
+			} catch (IllegalArgumentException unsupportedOs) {
+				os = null;
+			}
+			@Var @Nullable Architecture arch;
+			try {
+				arch = Architecture.fromSystemProperty(osArch);
+			} catch (IllegalArgumentException unsupportedArch) {
+				arch = null;
+			}
+			Expectation override = findOverride(version, os, arch);
 			return override != null ? override : base;
+		}
+
+		private @Nullable Expectation findOverride(Version version, @Nullable OperatingSystem os, @Nullable Architecture arch) {
+			for (Expectation row : overrides) {
+				if (row.contains(version) && row.matchesPlatform(os, arch))
+					return row;
+			}
+			return null;
 		}
 
 		private static @Nullable Expectation find(List<Expectation> rows, Version version) {
@@ -94,17 +158,15 @@ public class TestCase {
 		}
 
 		public void validate() {
-			if (defaultRows.isEmpty())
-				throw new IllegalArgumentException("expectations.default must contain at least one row");
-			validateRows("default", defaultRows);
-			validateRows("macos", macos);
-			validateRows("jjq", jjq);
-			for (Expectation row : concat(macos, jjq)) {
+			validateDefaultExpectations();
+			validateOverrideExpectations();
+			validateJjqExpectations();
+			for (Expectation row : concat(overrides, jjq)) {
 				VersionRange range = Objects.requireNonNull(row.version);
 				if (!coveredByDefault(range))
 					throw new IllegalArgumentException("expectation override range is not covered by default: " + row.version);
 				for (Expectation base : defaultRows) {
-					if (overlaps(range, Objects.requireNonNull(base.version)) && row.error == base.error && Objects.equals(row.values(), base.values()))
+					if (overlaps(range, Objects.requireNonNull(base.version)) && row.timeout == base.timeout && row.error == base.error && Objects.equals(row.out, base.out))
 						throw new IllegalArgumentException("expectation override equals default over " + base.version);
 				}
 			}
@@ -135,16 +197,63 @@ public class TestCase {
 			return result;
 		}
 
-		private static void validateRows(String name, List<Expectation> rows) {
+		private void validateDefaultExpectations() {
+			if (defaultRows.isEmpty())
+				throw new IllegalArgumentException("expectations.default must contain at least one row");
+			for (Expectation row : defaultRows)
+				validatePlainExpectation(row, "default");
+			validateDisjointRanges(defaultRows, "default");
+		}
+
+		private void validateOverrideExpectations() {
+			for (Expectation row : overrides) {
+				if (row.version == null)
+					throw new IllegalArgumentException("expectations.overrides row requires v");
+				if (row.os == null && row.arch == null)
+					throw new IllegalArgumentException("expectations.overrides row requires os or arch");
+				if (row.timeout) {
+					if (row.out != null || row.error)
+						throw new IllegalArgumentException("expectations.overrides timeout row cannot specify out or error");
+				} else if (row.out == null) {
+					throw new IllegalArgumentException("expectations.overrides row requires out");
+				}
+			}
+			for (OperatingSystem os : OperatingSystem.values()) {
+				for (Architecture arch : Architecture.values()) {
+					for (int i = 0; i < overrides.size(); i++) {
+						Expectation row = overrides.get(i);
+						if (!row.matchesPlatform(os, arch))
+							continue;
+						for (int j = 0; j < i; j++) {
+							Expectation previous = overrides.get(j);
+							if (previous.matchesPlatform(os, arch) && overlaps(Objects.requireNonNull(row.version), Objects.requireNonNull(previous.version)))
+								throw new IllegalArgumentException("overlapping expectations.overrides ranges for " + os + "/" + arch);
+						}
+					}
+				}
+			}
+		}
+
+		private void validateJjqExpectations() {
+			for (Expectation row : jjq)
+				validatePlainExpectation(row, "jjq");
+			validateDisjointRanges(jjq, "jjq");
+		}
+
+		private static void validatePlainExpectation(Expectation row, String name) {
+			if (row.version == null)
+				throw new IllegalArgumentException("expectations." + name + " row requires v");
+			if (row.os != null || row.arch != null || row.timeout)
+				throw new IllegalArgumentException("expectations." + name + " row cannot specify os, arch, or timeout");
+			if (row.out == null)
+				throw new IllegalArgumentException("expectations." + name + " row requires out");
+		}
+
+		private static void validateDisjointRanges(List<Expectation> rows, String name) {
 			for (int i = 0; i < rows.size(); i++) {
-				if (rows.get(i).version == null)
-					throw new IllegalArgumentException("expectations." + name + " row requires v");
-				if (rows.get(i).out == null)
-					throw new IllegalArgumentException("expectations." + name + " row requires out");
+				VersionRange range = Objects.requireNonNull(rows.get(i).version);
 				for (int j = 0; j < i; j++) {
-					VersionRange a = Objects.requireNonNull(rows.get(i).version);
-					VersionRange b = Objects.requireNonNull(rows.get(j).version);
-					if (overlaps(a, b))
+					if (overlaps(range, Objects.requireNonNull(rows.get(j).version)))
 						throw new IllegalArgumentException("overlapping expectations." + name + " ranges");
 				}
 			}

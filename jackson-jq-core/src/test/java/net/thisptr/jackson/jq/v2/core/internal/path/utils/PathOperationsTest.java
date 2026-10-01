@@ -35,7 +35,8 @@ public class PathOperationsTest {
 			paths.add(Objects.requireNonNull(valuePath));
 		}, false, Versions.JQ_1_8_2);
 
-		assertThat(values).containsExactly(JSON_PROVIDER.createNumber(20));
+		// The resolved value is the parsed element itself, which keeps the literal it was parsed from.
+		assertThat(values).containsExactly(JsonCodec.parse(JSON_PROVIDER, "20"));
 		assertThat(paths).singleElement().isInstanceOf(IntIndexPath.class);
 		assertThat(paths.get(0).toJsonList(JSON_PROVIDER)).containsExactly(JSON_PROVIDER.createNumber(-1));
 	}
@@ -68,8 +69,10 @@ public class PathOperationsTest {
 				oldValue -> JSON_PROVIDER.createNumber(9),
 				Versions.JQ_1_8_2);
 
-		assertThat(replaced).isEqualTo(JsonCodec.parse(JSON_PROVIDER, "[1,9]"));
-		assertThat(extended).isEqualTo(JsonCodec.parse(JSON_PROVIDER, "[1,null,9]"));
+		// Compare the serialized form: the replacement is an int node while the parsed elements around it
+		// keep their literal, and the two spell 9 the same but are not the same node.
+		assertThat(JsonCodec.format(JSON_PROVIDER, replaced)).isEqualTo("[1,9]");
+		assertThat(JsonCodec.format(JSON_PROVIDER, extended)).isEqualTo("[1,null,9]");
 	}
 
 	@Test
@@ -102,8 +105,8 @@ public class PathOperationsTest {
 				oldValue -> JSON_PROVIDER.createNumber(9),
 				Versions.JQ_1_8_2);
 
-		assertThat(replaced).isEqualTo(JsonCodec.parse(JSON_PROVIDER, "[1,9]"));
-		assertThat(extended).isEqualTo(JsonCodec.parse(JSON_PROVIDER, "[1,null,9]"));
+		assertThat(JsonCodec.format(JSON_PROVIDER, replaced)).isEqualTo("[1,9]");
+		assertThat(JsonCodec.format(JSON_PROVIDER, extended)).isEqualTo("[1,null,9]");
 	}
 
 	@Test
@@ -220,7 +223,9 @@ public class PathOperationsTest {
 			values.add(value);
 		}, false, Versions.JQ_1_8_2);
 
-		assertThat(values).containsExactly(JsonCodec.parse(JSON_PROVIDER, "[0,3]"));
+		// The match offsets are computed, so they are int nodes rather than the decimals a parsed [0,3]
+		// would hold; compare the serialized form.
+		assertThat(values).singleElement().extracting(value -> JsonCodec.format(JSON_PROVIDER, value)).isEqualTo("[0,3]");
 	}
 
 	@Test
@@ -250,31 +255,53 @@ public class PathOperationsTest {
 	@Test
 	void testResolveRange() {
 		// normal range [1, 3)
-		LongRange r1 = PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(1), JSON_PROVIDER.createNumber(3), 5);
+		LongRange r1 = PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(1), JSON_PROVIDER.createNumber(3), 5, Versions.JQ_1_8_2);
 		assertThat(r1).isEqualTo(LongRange.of(1, 3));
 
 		// null start defaults to 0, null end defaults to size
-		LongRange r2 = PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNull(), JSON_PROVIDER.createNull(), 5);
+		LongRange r2 = PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNull(), JSON_PROVIDER.createNull(), 5, Versions.JQ_1_8_2);
 		assertThat(r2).isEqualTo(LongRange.of(0, 5));
 
 		// negative indices offset from size: [-3, -1) on size 5 -> [2, 4)
-		LongRange r3 = PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(-3), JSON_PROVIDER.createNumber(-1), 5);
+		LongRange r3 = PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(-3), JSON_PROVIDER.createNumber(-1), 5, Versions.JQ_1_8_2);
 		assertThat(r3).isEqualTo(LongRange.of(2, 4));
 
 		// start beyond size clamped to [size, size)
-		LongRange r4 = PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(10), JSON_PROVIDER.createNumber(12), 5);
+		LongRange r4 = PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(10), JSON_PROVIDER.createNumber(12), 5, Versions.JQ_1_8_2);
 		assertThat(r4).isEqualTo(LongRange.of(5, 5));
 
 		// negative start clamped to 0
-		LongRange r5 = PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(-10), JSON_PROVIDER.createNumber(3), 5);
+		LongRange r5 = PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(-10), JSON_PROVIDER.createNumber(3), 5, Versions.JQ_1_8_2);
 		assertThat(r5).isEqualTo(LongRange.of(0, 3));
 
 		// end beyond size clamped to size
-		LongRange r6 = PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(2), JSON_PROVIDER.createNumber(10), 5);
+		LongRange r6 = PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(2), JSON_PROVIDER.createNumber(10), 5, Versions.JQ_1_8_2);
 		assertThat(r6).isEqualTo(LongRange.of(2, 5));
 
 		// inverted range (start > end) returns empty range at start
-		LongRange r7 = PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(4), JSON_PROVIDER.createNumber(2), 5);
+		LongRange r7 = PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(4), JSON_PROVIDER.createNumber(2), 5, Versions.JQ_1_8_2);
 		assertThat(r7).isEqualTo(LongRange.of(4, 4));
+	}
+
+	@Test
+	void testResolveRangeWithNaNBounds() {
+		JsonNode nan = JSON_PROVIDER.createNumber(Double.NaN);
+		JsonNode two = JSON_PROVIDER.createNumber(2);
+
+		// jq-1.7 reads a NaN bound as an omitted one
+		assertThat(PathOperations.resolveRange(JSON_PROVIDER, nan, two, 5, Versions.JQ_1_8_2)).isEqualTo(LongRange.of(0, 2));
+		assertThat(PathOperations.resolveRange(JSON_PROVIDER, two, nan, 5, Versions.JQ_1_8_2)).isEqualTo(LongRange.of(2, 5));
+		assertThat(PathOperations.resolveRange(JSON_PROVIDER, nan, nan, 5, Versions.JQ_1_8_2)).isEqualTo(LongRange.of(0, 5));
+		assertThat(PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNull(), nan, 19, Versions.JQ_1_8_2)).isEqualTo(LongRange.of(0, 19));
+
+		// a normalized bound still goes through the usual clamps
+		assertThat(PathOperations.resolveRange(JSON_PROVIDER, nan, JSON_PROVIDER.createNumber(-1), 5, Versions.JQ_1_8_2)).isEqualTo(LongRange.of(0, 4));
+		assertThat(PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(5), nan, 5, Versions.JQ_1_8_2)).isEqualTo(LongRange.of(5, 5));
+
+		// before jq-1.7 a NaN end leaves an empty range at the start instead
+		assertThat(PathOperations.resolveRange(JSON_PROVIDER, two, nan, 5, Versions.JQ_1_6)).isEqualTo(LongRange.of(2, 2));
+		assertThat(PathOperations.resolveRange(JSON_PROVIDER, nan, nan, 5, Versions.JQ_1_6)).isEqualTo(LongRange.of(0, 0));
+		assertThat(PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(-100), nan, 5, Versions.JQ_1_6)).isEqualTo(LongRange.of(0, 0));
+		assertThat(PathOperations.resolveRange(JSON_PROVIDER, JSON_PROVIDER.createNumber(7), nan, 5, Versions.JQ_1_6)).isEqualTo(LongRange.of(5, 5));
 	}
 }

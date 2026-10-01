@@ -5,6 +5,7 @@ import tools.jackson.databind.JsonNode;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.impl.jackson3.Jackson3JsonProvider;
 import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
+import net.thisptr.jackson.jq.v2.json.internal.io.ParseOptions;
 import net.thisptr.jackson.jq.v2.test.AbstractJsonQueryTest;
 
 /**
@@ -22,8 +23,8 @@ public class Jackson3JsonQueryTest extends AbstractJsonQueryTest<JsonNode> {
 	}
 
 	@Override
-	protected JsonNode parseTestNode(com.fasterxml.jackson.databind.JsonNode node) {
+	protected JsonNode parseTestNode(com.fasterxml.jackson.databind.JsonNode node, ParseOptions parseOptions) {
 		// Convert Jackson 2 JsonNode (from test data) to Jackson 3 JsonNode via JSON string
-		return JsonCodec.parse(Jackson3JsonProvider.getInstance(), node.toString());
+		return JsonCodec.parse(Jackson3JsonProvider.getInstance(), node.toString(), parseOptions);
 	}
 }

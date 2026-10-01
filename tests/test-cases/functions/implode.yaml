@@ -12,3 +12,55 @@
     depends_on_input: true
     depends_on_external_state: false
   v: '[1.5, )'
+
+- q: 'implode'
+  in: [-1.5]
+  out:
+  - "\uFFFD"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.7, )'
+
+- q: 'implode'
+  in: [55295, 55296, 57343, 57344]
+  out:
+  - "\uD7FF\uFFFD\uFFFD\uE000"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.7, )'
+
+- q: 'implode'
+  in: [1114111, 1114112, 2147483648]
+  out:
+  - "\U0010FFFF\uFFFD\uFFFD"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.7, )'
+
+- q: 'implode'
+  in: [128512, 65.9]
+  out:
+  - "\U0001F600A"
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, )'

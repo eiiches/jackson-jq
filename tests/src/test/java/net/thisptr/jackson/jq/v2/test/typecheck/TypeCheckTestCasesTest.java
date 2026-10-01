@@ -82,8 +82,13 @@ public class TypeCheckTestCasesTest {
 
 	public void test(String tcText) throws Throwable {
 		TestCase tc = TestCaseLoader.parseTestCase(tcText);
-		if (!tc.shouldCompile || tc.types == null || tc.types.isEmpty()) {
+		if (!tc.shouldCompile) {
 			return;
+		}
+		if (tc.types == null || tc.types.isEmpty()) {
+			if (Boolean.TRUE.equals(tc.failing))
+				return;
+			throw new AssertionError(String.format("Missing types for jq '%s' in %s", tc.q, tc.file));
 		}
 
 		Path moduleSearchPath = tc.modules.isEmpty() ? null : ModuleFixtures.materialize(tc.modules);

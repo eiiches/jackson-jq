@@ -70,6 +70,8 @@ public class IndicesFunction implements Function {
 			PathOperations.resolveArrayIndex(jsonProvider, haystack, UntrackedPath.getInstance(), output, needle, false, version);
 		} else if (needleType == JsonNodeType.ARRAY) {
 			PathOperations.resolveArrayIndexOf(jsonProvider, haystack, UntrackedPath.getInstance(), output, needle, false, version);
+		} else if (needleType == JsonNodeType.OBJECT && haystackType == JsonNodeType.NULL) {
+			output.emit(jsonProvider.createNull(), UntrackedPath.getInstance());
 		} else {
 			throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, haystack, needle));
 		}

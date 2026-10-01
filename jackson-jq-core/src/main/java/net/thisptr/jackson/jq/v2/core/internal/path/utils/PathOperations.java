@@ -185,7 +185,7 @@ public final class PathOperations {
 			throw new JsonQueryTypeException(ExceptionMessages.invalidSliceBounds(version, inType));
 	}
 
-	public static <JsonNode> LongRange resolveRange(JsonProvider<JsonNode> jsonProvider, JsonNode startNode, JsonNode endNode, long size) {
+	public static <JsonNode> LongRange resolveRange(JsonProvider<JsonNode> jsonProvider, JsonNode startNode, JsonNode endNode, long size, Version version) {
 		assert jsonProvider.isNull(startNode) || jsonProvider.isNumber(startNode);
 		assert jsonProvider.isNull(endNode) || jsonProvider.isNumber(endNode);
 		@Var double start = jsonProvider.isNumber(startNode)
@@ -194,15 +194,26 @@ public final class PathOperations {
 		@Var double end = jsonProvider.isNumber(endNode)
 				? resolveToPositiveIndex(jsonProvider, endNode, size)
 				: size;
+		// Every comparison below is false once a bound is NaN, so a NaN bound survives the clamps
+		// untouched and ends up meaning whatever they leave behind.
+		// jq-1.7: [0,1,2,3,4]|.[2:nan] #=> [2,3,4] -- a NaN bound reads as an omitted one
+		// jq-1.6: [0,1,2,3,4]|.[2:nan] #=> [] -- a NaN end leaves an empty slice at the start instead
+		// A NaN start aborts jq-1.6 outright, so 0 there is our choice rather than its behavior.
+		if (Double.isNaN(start))
+			start = 0;
+		if (Double.isNaN(end))
+			end = version.compareTo(Versions.JQ_1_7) < 0 ? start : size;
 		if (start >= size)
 			return new LongRange(size, size);
 		if (start < 0)
 			start = 0;
 		if (end > size)
 			end = size;
-		if (start > end)
-			return new LongRange((long) start, (long) start);
-		return new LongRange((long) start, (long) Math.ceil(end));
+		long startIndex = (long) start;
+		long endIndex = (long) Math.ceil(end);
+		if (startIndex >= endIndex)
+			return new LongRange(startIndex, startIndex);
+		return new LongRange(startIndex, endIndex);
 	}
 
 	public static <JsonNode> void resolveArrayRangeIndex(JsonProvider<JsonNode> jsonProvider, JsonNode parent, Path<JsonNode> parentPath, Output<JsonNode> output, JsonNode start, JsonNode end, boolean permissive, Version version) throws JsonQueryException {
@@ -215,13 +226,13 @@ public final class PathOperations {
 			}
 		}
 		if (parentType == JsonNodeType.ARRAY) {
-			LongRange range = resolveRange(jsonProvider, start, end, jsonProvider.getArrayLength(parent));
+			LongRange range = resolveRange(jsonProvider, start, end, jsonProvider.getArrayLength(parent), version);
 			List<JsonNode> subarray = new ArrayList<>((int) range.length());
 			for (long index = range.startInclusive(); index < range.endExclusive(); ++index)
 				subarray.add(jsonProvider.getArrayElement(parent, (int) index));
 			output.emit(jsonProvider.createArray(subarray), parentPath.appendIndexRange(jsonProvider, start, end));
 		} else if (parentType == JsonNodeType.STRING) {
-			LongRange range = resolveRange(jsonProvider, start, end, UnicodeUtils.lengthUtf32(jsonProvider.getString(parent)));
+			LongRange range = resolveRange(jsonProvider, start, end, UnicodeUtils.lengthUtf32(jsonProvider.getString(parent)), version);
 			JsonNode substring = jsonProvider.createString(UnicodeUtils.substringUtf32(jsonProvider.getString(parent), (int) range.startInclusive(), (int) range.endExclusive()));
 			output.emit(substring, parentPath.appendIndexRange(jsonProvider, start, end));
 		} else if (parentType == JsonNodeType.NULL) {
@@ -373,7 +384,7 @@ public final class PathOperations {
 		if (inType == JsonNodeType.ARRAY || inType == JsonNodeType.STRING || inType == JsonNodeType.NULL)
 			requireValidRangeBounds(jsonProvider, start, end, inType == JsonNodeType.NULL ? JsonNodeType.ARRAY : inType, version);
 		if (inType == JsonNodeType.ARRAY) {
-			LongRange range = resolveRange(jsonProvider, start, end, jsonProvider.getArrayLength(in));
+			LongRange range = resolveRange(jsonProvider, start, end, jsonProvider.getArrayLength(in), version);
 
 			List<JsonNode> oldSlice = new ArrayList<>((int) range.length());
 			for (long index = range.startInclusive(); index < range.endExclusive(); ++index)

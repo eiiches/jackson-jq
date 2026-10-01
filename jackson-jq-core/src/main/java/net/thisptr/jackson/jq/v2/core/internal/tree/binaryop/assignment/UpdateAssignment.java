@@ -3,12 +3,8 @@ package net.thisptr.jackson.jq.v2.core.internal.tree.binaryop.assignment;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.errorprone.annotations.Var;
-
 import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryUndefinedBehaviorException;
-import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
-import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathOperations;
@@ -61,13 +57,7 @@ public class UpdateAssignment<JsonNode> extends AbstractBinaryOperatorExpression
 		Memory memory = frame.getEnclosingMemory();
 		lhs.apply(frame, in, RootPath.getInstance(), (lval, lpath0) -> {
 			memory.countOutput(lhsOutputIndex);
-			@Var Path<JsonNode> lpath = lpath0;
-			// `VALUE | path(VALUE) => []`
-			if (PathUtils.isLost(lpath) && JsonNodeUtils.isValueNode(jsonProvider, in) && new JsonNodeComparator<>(jsonProvider).compare(in, lval) == 0)
-				lpath = RootPath.getInstance();
-			if (PathUtils.isLost(lpath))
-				throw new JsonQueryException(String.format("Invalid path expression with result %s", JsonNodeUtils.toString(jsonProvider, lval)));
-
+			Path<JsonNode> lpath = PathUtils.requirePath(jsonProvider, version, lpath0, in, lval);
 			out[0] = PathOperations.mutate(jsonProvider, frame.getRuntimeLimits(), lpath, out[0], (lval_) -> {
 				List<JsonNode> rvals = new ArrayList<>();
 				rhs.apply(frame, lval_, UntrackedPath.getInstance(), (v, opath) -> {

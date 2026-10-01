@@ -47,6 +47,7 @@ class ParenAstNodeTest {
 	void requiredParenthesesRemainOwnedByTheirConstructs() throws JsonQueryException {
 		assertPrintedAs("def f($arg): $arg; f(1)", "def f($arg): $arg; f(1)");
 		assertPrintedAs("{(.foo): 1}", "{(.foo): 1}");
+		assertPrintedAs("{((.foo)): 1}", "{((.foo)): 1}");
 		assertPrintedAs(". as {(.key): $value} | $value", ". as {(.key): $value} | $value");
 		assertPrintedAs("\"\\(.foo)\"", "\"\\(.foo)\"");
 	}

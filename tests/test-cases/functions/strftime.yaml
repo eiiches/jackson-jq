@@ -15,6 +15,35 @@
       out:
       - "2023-11-14T22:13:20Z"
 
+- q: 'strftime("%Y-%m-%dT%H:%M:%SZ")'
+  in: [1.7976931348623157e308, 0, 1, 0, 0, 0, 4, 0]
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: '[FLOAT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - "-2147483648-01-01T00:00:00Z"
+    - v: '[1.8.0, )'
+      out:
+      - "-2147481749-01-01T00:00:00Z"
+    overrides:
+    - v: '[1.7, 1.8.0)'
+      os: MACOS
+      out:
+      - "2147483647-01-01T00:00:00Z"
+    - v: '[1.8.0, )'
+      os: MACOS
+      out:
+      - "2147485547-01-01T00:00:00Z"
+
 - q: 'strftime("%A, %B %e, %Y")'
   in: 1700000000
   types:
@@ -117,8 +146,9 @@
     - v: '[1.5, )'
       out:
       - "pm"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "P"
 
@@ -174,8 +204,9 @@
     - v: '[1.5, )'
       out:
       - "%q|%E|%O|%Ea|%OY"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "q|||Tue|2023"
 
@@ -213,8 +244,9 @@
     - v: '[1.5, )'
       out:
       - "014|02023|14"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "3d|5Y|1d"
 
@@ -235,8 +267,9 @@
     - v: '[1.5, )'
       out:
       - "TUE|NOV|pm|TUE"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "^a|^b|#p|#a"
 
@@ -373,8 +406,9 @@
     - v: '[1.5, )'
       out:
       - "1-01-01T00:00:00Z"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "0001-01-01T00:00:00Z"
 
@@ -541,3 +575,219 @@
     - v: '[1.5, )'
       out:
       - ["2023", "1970"]
+
+- q: 'strftime("%c%c%c%c")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'jq writes the result into a buffer of the byte length of the format plus a hundred, and this is the longest result that fits one'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "Tue Nov 14 22:13:20 2023Tue Nov 14 22:13:20 2023Tue Nov 14 22:13:20 2023Tue Nov 14 22:13:20 2023"
+
+- q: 'try strftime("%c%c%c%c%c") catch .'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'a hundred and twenty bytes of result into a buffer of a hundred and ten'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "strftime/1: unknown system failure"
+
+- q: 'try strftime("") catch .'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'the C library reports the same nothing for a result that does not fit and for one of no length at all, and jq 1.8.0 started telling them apart'
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      out:
+      - "strftime/1: unknown system failure"
+    - v: '[1.8.0, )'
+      out:
+      - ""
+
+- q: 'try strftime("%200B") catch .'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'Darwin takes no field width, so %200B writes 200B there and nothing overflows'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "strftime/1: unknown system failure"
+    overrides:
+    - v: '[1.7, )'
+      os: MACOS
+      out:
+      - "200B"
+
+- q: 'strftime("%104B")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "                                                                                                November"
+    overrides:
+    - v: '[1.7, )'
+      os: MACOS
+      out:
+      - "104B"
+
+- q: 'try strftime("%105B") catch .'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'one byte more than %104B, which is one more than the buffer a five byte format gets'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "strftime/1: unknown system failure"
+    overrides:
+    - v: '[1.7, )'
+      os: MACOS
+      out:
+      - "105B"
+
+- q: 'strftime("あいうえお%104B")'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'STRING'
+  - input: 'INT'
+    output: 'STRING'
+  properties:
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'both the format and the result are counted in bytes, not characters: a hundred and nineteen bytes into a buffer of a hundred and twenty'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "あいうえお                                                                                                November"
+    overrides:
+    - v: '[1.7, )'
+      os: MACOS
+      out:
+      - "あいうえお104B"
+
+- q: 'try strftime("あいうえお%105B") catch .'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "strftime/1: unknown system failure"
+    overrides:
+    - v: '[1.7, )'
+      os: MACOS
+      out:
+      - "あいうえお105B"
+
+- q: 'try strftime("%2147483648B") catch .'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'a width too large to count in an int overflows the buffer like any other'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "strftime/1: unknown system failure"
+    overrides:
+    - v: '[1.7, )'
+      os: MACOS
+      out:
+      - "2147483648B"
+
+- q: 'try strftime("%52z") catch .'
+  in: 1700000000
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'INT'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: '%z pads both sides of the sign, so it fills twice the width it is given: %51z writes 102 bytes and fits, %52z writes 104 into a buffer of 104'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - "strftime/1: unknown system failure"
+    overrides:
+    - v: '[1.7, )'
+      os: MACOS
+      out:
+      - "52z"

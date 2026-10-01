@@ -10,6 +10,7 @@ import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
+import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
 import net.thisptr.jackson.jq.v2.core.internal.tree.literal.ValueLiteral;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -116,7 +117,7 @@ public class BracketFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> 
 					memory.countOutput(endOutputIndex);
 					target.apply(frame, in, path, (pobj, ppath) -> {
 						memory.countOutput(targetOutputIndex);
-						emitIndexRangePath(jsonProvider, permissive, start, end, pobj, ppath, output, !(path instanceof UntrackedPath), version);
+						emitIndexRangePath(jsonProvider, permissive, start, end, pobj, PathUtils.stale(ppath, path, in), output, version);
 					});
 				});
 			});
@@ -127,11 +128,11 @@ public class BracketFieldAccess<JsonNode> extends AbstractFieldAccess<JsonNode> 
 					memory.countOutput(targetOutputIndex);
 					JsonNodeType accessorType = jsonProvider.getNodeType(accessor);
 					if (accessorType == JsonNodeType.NUMBER) {
-						emitArrayIndexPath(jsonProvider, permissive, accessor, pobj, ppath, output, !(path instanceof UntrackedPath), version);
+						emitArrayIndexPath(jsonProvider, permissive, accessor, pobj, PathUtils.stale(ppath, path, in), output, version);
 					} else if (accessorType == JsonNodeType.STRING) {
-						emitObjectFieldPath(jsonProvider, permissive, jsonProvider.getString(accessor), pobj, ppath, output, !(path instanceof UntrackedPath), version);
+						emitObjectFieldPath(jsonProvider, permissive, jsonProvider.getString(accessor), pobj, PathUtils.stale(ppath, path, in), output, version);
 					} else if (accessorType == JsonNodeType.ARRAY) {
-						emitIndexOfPath(jsonProvider, permissive, accessor, pobj, ppath, output, !(path instanceof UntrackedPath), version);
+						emitIndexOfPath(jsonProvider, permissive, accessor, pobj, PathUtils.stale(ppath, path, in), output, version);
 					} else {
 						if (!permissive)
 							throw new JsonQueryException(ExceptionMessages.cannotIndex(jsonProvider, version, pobj, accessor));

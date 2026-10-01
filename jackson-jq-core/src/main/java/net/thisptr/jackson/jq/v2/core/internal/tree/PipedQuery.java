@@ -7,11 +7,11 @@ import net.thisptr.jackson.jq.v2.core.internal.compile.freevars.FreeVariables;
 import net.thisptr.jackson.jq.v2.core.internal.memory.Memory;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
+import net.thisptr.jackson.jq.v2.core.internal.path.utils.PathUtils;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.Path;
-import net.thisptr.jackson.jq.v2.spi.path.UnrepresentablePath;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 
 public class PipedQuery<JsonNode> implements RewritableExpression<JsonNode>, FreeVariables {
@@ -72,10 +72,23 @@ public class PipedQuery<JsonNode> implements RewritableExpression<JsonNode>, Fre
 	@Override
 	public void apply(StackFrame frame, JsonNode in, Path<JsonNode> path, Output<JsonNode> output) throws JsonQueryException {
 		Memory memory = frame.getEnclosingMemory();
+		if (path instanceof UntrackedPath) {
+			// No path is being tracked, and neither stage can start one, so there is nothing to record.
+			left.apply(frame, in, path, (value, outputPath) -> {
+				memory.countOutput(leftOutputIndex);
+				right.apply(frame, value, outputPath, output);
+			});
+			return;
+		}
+		// A pipe is where a path goes stale: whichever stage fails to produce one, the position the
+		// traversal had reached is the path and value that stage was handed. jq keeps that pair so a
+		// later step, or path/1, can resume from it.
 		left.apply(frame, in, path, (value, outputPath) -> {
 			memory.countOutput(leftOutputIndex);
-			Path<JsonNode> nextPath = !(path instanceof UntrackedPath) && outputPath instanceof UntrackedPath ? UnrepresentablePath.getInstance() : outputPath;
-			right.apply(frame, value, nextPath, output);
+			Path<JsonNode> nextPath = PathUtils.stale(outputPath, path, in);
+			right.apply(frame, value, nextPath, (rightValue, rightPath) -> {
+				output.emit(rightValue, PathUtils.stale(rightPath, nextPath, value));
+			});
 		});
 	}
 }

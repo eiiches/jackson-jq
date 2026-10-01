@@ -47,6 +47,20 @@ class CommaOperatorAstTest {
 		assertOperator(BinaryOperator.PLUS, comma.lhs);
 	}
 
+	@Test
+	void definitionAfterCommaScopesItsContinuation() throws JsonQueryException {
+		BinaryOpAstNode comma = assertOperator(BinaryOperator.COMMA, AstParser.parse("1, def f: 2; f | 4", Versions.JQ_1_6));
+		assertThat(comma.lhs.toString()).isEqualTo("1");
+		assertThat(comma.rhs).isInstanceOf(SemicolonOperatorAstNode.class);
+		SemicolonOperatorAstNode definition = (SemicolonOperatorAstNode) comma.rhs;
+		assertThat(definition.expressions()).hasSize(2);
+		assertOperator(BinaryOperator.PIPE, definition.expressions().get(1));
+
+		BinaryOpAstNode groupedPipe = assertOperator(BinaryOperator.PIPE, AstParser.parse("1, (def f: 2; f) | 4", Versions.JQ_1_6));
+		BinaryOpAstNode groupedComma = assertOperator(BinaryOperator.COMMA, groupedPipe.lhs);
+		assertThat(groupedComma.rhs).isInstanceOf(ParenAstNode.class);
+	}
+
 	private static BinaryOpAstNode assertOperator(BinaryOperator operator, AstNode node) {
 		assertThat(node).isInstanceOf(BinaryOpAstNode.class);
 		BinaryOpAstNode binary = (BinaryOpAstNode) node;

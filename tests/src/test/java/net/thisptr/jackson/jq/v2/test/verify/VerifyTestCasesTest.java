@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.jspecify.annotations.Nullable;
@@ -38,11 +39,24 @@ import static org.junit.jupiter.api.Assertions.assertAll;
  * pass to research and annotate the correct {@code v:} range.
  */
 public class VerifyTestCasesTest {
+	private static final Duration JQ_TIMEOUT = Duration.ofSeconds(10);
+
 	private void verify(TestCase tc, JqExecutables.JqExecutable e, @Nullable Path moduleSearchPath) throws Throwable {
 		String command = String.format("%s '%s' <<< '%s'", e.executable(), tc.q, tc.in);
+		TestCase.Expectation expected = tc.expectations != null
+				? tc.expectations.resolve(e.jqVersion(), true, System.getProperty("os.name", ""), System.getProperty("os.arch", ""))
+				: null;
 
-		Evaluator.Result result = new JqRunner(e.executable(), moduleSearchPath).evaluate(tc.q, tc.in, Duration.ofSeconds(2));
-		TestCase.Expectation expected = tc.expectations != null ? tc.expectations.resolve(e.jqVersion(), true, System.getProperty("os.name", "")) : null;
+		Evaluator.Result result;
+		try {
+			result = new JqRunner(e.executable(), moduleSearchPath).evaluate(tc.q, tc.in, JQ_TIMEOUT);
+		} catch (TimeoutException timeoutException) {
+			if (expected != null && expected.timeout)
+				return;
+			throw new AssertionError(String.format("jq timed out after %s: %s", JQ_TIMEOUT, command), timeoutException);
+		}
+		if (expected != null && expected.timeout)
+			throw new AssertionError(String.format("jq completed instead of timing out after %s: %s", JQ_TIMEOUT, command));
 		assertThat(result.error() != null).as("%s", command).isEqualTo(expected != null && expected.error);
 
 		Comparator<JsonNode> comparator = new TestJsonNodeComparator<>(Jackson2JsonProvider.getInstance(), true, tc.floatTolerance);

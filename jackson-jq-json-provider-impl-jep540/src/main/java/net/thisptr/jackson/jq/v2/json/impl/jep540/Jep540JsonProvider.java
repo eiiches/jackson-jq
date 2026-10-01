@@ -73,12 +73,12 @@ public final class Jep540JsonProvider implements JsonProvider<JsonValue> {
 
 	@Override
 	public JsonValue createNumber(long value) {
-		return JsonNumber.of(value);
+		return new LongJsonNumber(value);
 	}
 
 	@Override
 	public JsonValue createNumber(int value) {
-		return JsonNumber.of(value);
+		return new IntJsonNumber(value);
 	}
 
 	@Override
@@ -93,12 +93,12 @@ public final class Jep540JsonProvider implements JsonProvider<JsonValue> {
 
 	@Override
 	public JsonValue createNumber(BigInteger value) {
-		return JsonNumber.of(value.toString());
+		return new BigIntegerJsonNumber(value);
 	}
 
 	@Override
 	public JsonValue createNumber(BigDecimal value) {
-		return JsonNumber.of(value.toString());
+		return new BigDecimalJsonNumber(value);
 	}
 
 	@Override
@@ -175,8 +175,16 @@ public final class Jep540JsonProvider implements JsonProvider<JsonValue> {
 
 	@Override
 	public NumberType getNumberType(JsonValue node) {
-		JsonNumber number = requireNumber(node);
-		return number instanceof FloatingPointJsonNumber floatingPoint ? floatingPoint.type : NumberType.UNKNOWN;
+		// JEP 540 keeps no Java type on a number of its own, so anything but the classes below came straight
+		// from its parser. Callers that tell a parsed number from a computed one rely on that.
+		return switch (requireNumber(node)) {
+			case FloatingPointJsonNumber floatingPoint -> floatingPoint.type;
+			case IntJsonNumber ignored -> NumberType.INT;
+			case LongJsonNumber ignored -> NumberType.LONG;
+			case BigIntegerJsonNumber ignored -> NumberType.BIG_INTEGER;
+			case BigDecimalJsonNumber ignored -> NumberType.BIG_DECIMAL;
+			default -> NumberType.UNKNOWN;
+		};
 	}
 
 	@Override
@@ -419,6 +427,142 @@ public final class Jep540JsonProvider implements JsonProvider<JsonValue> {
 		@Override
 		public String toString() {
 			return text;
+		}
+	}
+
+	/**
+	 * JEP 540 keeps no Java type on a number, so these hold the value in the type it was created from and
+	 * {@link #getNumberType} reads that type back off the class. It lets an int node be told apart from a
+	 * decimal one as the other providers allow -- a distinction jq needs, since it negates a number still
+	 * carrying its parsed literal to {@code +0} but one this library computed to {@code -0}.
+	 */
+	private static final class IntJsonNumber implements JsonNumber {
+		private final int value;
+
+		IntJsonNumber(int value) {
+			this.value = value;
+		}
+
+		@Override
+		public int asInt() {
+			return value;
+		}
+
+		@Override
+		public long asLong() {
+			return value;
+		}
+
+		@Override
+		public double asDouble() {
+			return value;
+		}
+
+		@Override
+		public String toString() {
+			return Integer.toString(value);
+		}
+	}
+
+	private static final class LongJsonNumber implements JsonNumber {
+		private final long value;
+
+		LongJsonNumber(long value) {
+			this.value = value;
+		}
+
+		@Override
+		public int asInt() {
+			if ((int) value != value)
+				throw new JsonValueException("Cannot convert " + value + " to int");
+			return (int) value;
+		}
+
+		@Override
+		public long asLong() {
+			return value;
+		}
+
+		@Override
+		public double asDouble() {
+			return value;
+		}
+
+		@Override
+		public String toString() {
+			return Long.toString(value);
+		}
+	}
+
+	private static final class BigIntegerJsonNumber implements JsonNumber {
+		private final BigInteger value;
+
+		BigIntegerJsonNumber(BigInteger value) {
+			this.value = value;
+		}
+
+		@Override
+		public int asInt() {
+			try {
+				return value.intValueExact();
+			} catch (ArithmeticException e) {
+				throw new JsonValueException("Cannot convert " + value + " to int");
+			}
+		}
+
+		@Override
+		public long asLong() {
+			try {
+				return value.longValueExact();
+			} catch (ArithmeticException e) {
+				throw new JsonValueException("Cannot convert " + value + " to long");
+			}
+		}
+
+		@Override
+		public double asDouble() {
+			return value.doubleValue();
+		}
+
+		@Override
+		public String toString() {
+			return value.toString();
+		}
+	}
+
+	private static final class BigDecimalJsonNumber implements JsonNumber {
+		private final BigDecimal value;
+
+		BigDecimalJsonNumber(BigDecimal value) {
+			this.value = value;
+		}
+
+		@Override
+		public int asInt() {
+			try {
+				return value.intValueExact();
+			} catch (ArithmeticException e) {
+				throw new JsonValueException("Cannot convert " + value + " to int");
+			}
+		}
+
+		@Override
+		public long asLong() {
+			try {
+				return value.longValueExact();
+			} catch (ArithmeticException e) {
+				throw new JsonValueException("Cannot convert " + value + " to long");
+			}
+		}
+
+		@Override
+		public double asDouble() {
+			return value.doubleValue();
+		}
+
+		@Override
+		public String toString() {
+			return value.toString();
 		}
 	}
 }
