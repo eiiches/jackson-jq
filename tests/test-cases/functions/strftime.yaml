@@ -34,11 +34,13 @@
     - v: '[1.8.0, )'
       out:
       - "-2147481749-01-01T00:00:00Z"
-    macos:
+    overrides:
     - v: '[1.7, 1.8.0)'
+      os: MACOS
       out:
       - "2147483647-01-01T00:00:00Z"
     - v: '[1.8.0, )'
+      os: MACOS
       out:
       - "2147485547-01-01T00:00:00Z"
 
@@ -144,8 +146,9 @@
     - v: '[1.5, )'
       out:
       - "pm"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "P"
 
@@ -201,8 +204,9 @@
     - v: '[1.5, )'
       out:
       - "%q|%E|%O|%Ea|%OY"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "q|||Tue|2023"
 
@@ -240,8 +244,9 @@
     - v: '[1.5, )'
       out:
       - "014|02023|14"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "3d|5Y|1d"
 
@@ -262,8 +267,9 @@
     - v: '[1.5, )'
       out:
       - "TUE|NOV|pm|TUE"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "^a|^b|#p|#a"
 
@@ -400,8 +406,9 @@
     - v: '[1.5, )'
       out:
       - "1-01-01T00:00:00Z"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "0001-01-01T00:00:00Z"
 
@@ -643,8 +650,9 @@
     - v: '[1.5, )'
       out:
       - "strftime/1: unknown system failure"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "200B"
 
@@ -664,8 +672,9 @@
     - v: '[1.5, )'
       out:
       - "                                                                                                November"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "104B"
 
@@ -686,8 +695,9 @@
     - v: '[1.5, )'
       out:
       - "strftime/1: unknown system failure"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "105B"
 
@@ -708,8 +718,9 @@
     - v: '[1.5, )'
       out:
       - "あいうえお                                                                                                November"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "あいうえお104B"
 
@@ -729,8 +740,9 @@
     - v: '[1.5, )'
       out:
       - "strftime/1: unknown system failure"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "あいうえお105B"
 
@@ -751,8 +763,9 @@
     - v: '[1.5, )'
       out:
       - "strftime/1: unknown system failure"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "2147483648B"
 
@@ -773,7 +786,8 @@
     - v: '[1.5, )'
       out:
       - "strftime/1: unknown system failure"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "52z"

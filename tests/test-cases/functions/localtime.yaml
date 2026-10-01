@@ -51,7 +51,8 @@
     - v: '[1.6, )'
       out:
       - "error converting number of seconds since epoch to datetime"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - [1970, 0, 1, 0, 0, null, 4, 0]

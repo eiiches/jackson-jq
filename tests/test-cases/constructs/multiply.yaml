@@ -89,6 +89,7 @@
     depends_on_external_state: false
 
 - q: 'infinite * ""'
+  # jq 1.7 and 1.7.1 on macOS AARCH64 convert infinity to a large repetition count and do not finish promptly.
   expectations:
     default:
     - v: '[1.5, 1.7)'
@@ -97,6 +98,11 @@
     - v: '[1.7, )'
       out:
       - ""
+    overrides:
+    - v: '[1.7, 1.8.0)'
+      os: MACOS
+      arch: AARCH64
+      timeout: true
   types:
   - input: 'ANY'
     output: 'NULL|STRING'

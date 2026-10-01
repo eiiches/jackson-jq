@@ -152,8 +152,9 @@
     - v: '[1.8.0, )'
       out:
       - -2209075200
-    macos:
+    overrides:
     - v: '[1.8.0, )'
+      os: MACOS
       out:
       - "invalid gmtime representation"
 

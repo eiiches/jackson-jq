@@ -82,7 +82,7 @@ public abstract class AbstractJsonQueryTest<T> {
 
 		String command = String.format("jq (v%s) '%s' <<< '%s'", version, tc.q, tc.in);
 		if (tc.expectations != null) {
-			TestCase.Expectation expected = tc.expectations.resolve(version, false, System.getProperty("os.name", ""));
+			TestCase.Expectation expected = tc.expectations.resolve(version, false, System.getProperty("os.name", ""), System.getProperty("os.arch", ""));
 			List<T> values = new ArrayList<>();
 			@Var Throwable error = null;
 			try {

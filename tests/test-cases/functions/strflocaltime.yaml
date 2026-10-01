@@ -73,7 +73,8 @@
     - v: '[1.6, )'
       out:
       - "strflocaltime/1: unknown system failure"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "200B"

@@ -64,7 +64,7 @@ public class PropertyCheckTestCasesTest {
 				.as("depends_on_external_state of %s", desc)
 				.isEqualTo(expected.dependsOnExternalState);
 
-		boolean expectedError = tc.expectations != null && tc.expectations.resolve(version, false, System.getProperty("os.name", "")).error;
+		boolean expectedError = tc.expectations != null && tc.expectations.resolve(version, false, System.getProperty("os.name", ""), System.getProperty("os.arch", "")).error;
 		if (!Boolean.TRUE.equals(tc.failing) && !expectedError) {
 			List<JsonNode> actualOutputs = new ArrayList<>();
 			query.apply(tc.in, actualOutputs::add);

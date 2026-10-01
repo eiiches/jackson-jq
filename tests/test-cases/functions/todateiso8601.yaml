@@ -49,11 +49,13 @@
     - v: '[1.8.0, )'
       out:
       - "-2147481749-01-01T00:00:00Z"
-    macos:
+    overrides:
     - v: '[1.7, 1.8.0)'
+      os: MACOS
       out:
       - "2147483647-01-01T00:00:00Z"
     - v: '[1.8.0, )'
+      os: MACOS
       out:
       - "2147485547-01-01T00:00:00Z"
 
@@ -73,11 +75,13 @@
     - v: '[1.5, )'
       out:
       - "-2147483648-01-01T00:00:00Z"
-    macos:
+    overrides:
     - v: '[1.7, 1.8.0)'
+      os: MACOS
       out:
       - "2147483647-01-01T00:00:00Z"
     - v: '[1.8.0, )'
+      os: MACOS
       out:
       - "2147483648-01-01T00:00:00Z"
 
@@ -100,8 +104,9 @@
     - v: '[1.8.0, )'
       out:
       - "-2147481748-01-01T00:00:00Z"
-    macos:
+    overrides:
     - v: '[1.7, 1.8.0)'
+      os: MACOS
       out:
       - "2147483648-01-01T00:00:00Z"
 
@@ -125,8 +130,9 @@
     - v: '[1.8.0, )'
       out:
       - "53-11-26T00:45:48Z"
-    macos:
+    overrides:
     - v: '[1.7, )'
+      os: MACOS
       out:
       - "0049-58-55T48:45:48Z"
 
@@ -195,11 +201,13 @@
     - v: '[1.7, )'
       out:
       - "error converting number of seconds since epoch to datetime"
-    macos:
+    overrides:
     - v: '[1.7, 1.8.0)'
+      os: MACOS
       out:
       - "1970-01-01T00:00:00Z"
     - v: '[1.8.0, )'
+      os: MACOS
       out:
       - "strftime/1 requires parsed datetime inputs"
     jjq:
