@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.jspecify.annotations.Nullable;
@@ -38,10 +39,17 @@ import static org.junit.jupiter.api.Assertions.assertAll;
  * pass to research and annotate the correct {@code v:} range.
  */
 public class VerifyTestCasesTest {
+	private static final Duration JQ_TIMEOUT = Duration.ofSeconds(10);
+
 	private void verify(TestCase tc, JqExecutables.JqExecutable e, @Nullable Path moduleSearchPath) throws Throwable {
 		String command = String.format("%s '%s' <<< '%s'", e.executable(), tc.q, tc.in);
 
-		Evaluator.Result result = new JqRunner(e.executable(), moduleSearchPath).evaluate(tc.q, tc.in, Duration.ofSeconds(2));
+		Evaluator.Result result;
+		try {
+			result = new JqRunner(e.executable(), moduleSearchPath).evaluate(tc.q, tc.in, JQ_TIMEOUT);
+		} catch (TimeoutException timeoutException) {
+			throw new AssertionError(String.format("jq timed out after %s: %s", JQ_TIMEOUT, command), timeoutException);
+		}
 		TestCase.Expectation expected = tc.expectations != null ? tc.expectations.resolve(e.jqVersion(), true, System.getProperty("os.name", "")) : null;
 		assertThat(result.error() != null).as("%s", command).isEqualTo(expected != null && expected.error);
 
