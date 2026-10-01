@@ -5,7 +5,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import net.thisptr.jackson.jq.v2.core.internal.commons.strings.Strings;
-import net.thisptr.jackson.jq.v2.core.internal.exception.IllegalJsonInputException;
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
+import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -62,7 +63,7 @@ public class AtShFunction implements Function {
 					} else if (isValueNode(iType)) {
 						tokens.add(JsonNodeUtils.toString(jsonProvider, i, version));
 					} else {
-						throw new IllegalJsonInputException(iType + " cannot be escaped for shell");
+						throw new JsonQueryTypeException("%s can not be escaped for shell", ExceptionMessages.describe(jsonProvider, version, i));
 					}
 				}
 				output.emit(jsonProvider.createString(Strings.join(" ", tokens)), UntrackedPath.getInstance());
@@ -71,7 +72,7 @@ public class AtShFunction implements Function {
 			} else if (isValueNode(type)) {
 				output.emit(jsonProvider.createString(JsonNodeUtils.toString(jsonProvider, in, version)), UntrackedPath.getInstance());
 			} else {
-				throw new IllegalJsonInputException(type + " cannot be escaped for shell");
+				throw new JsonQueryTypeException("%s can not be escaped for shell", ExceptionMessages.describe(jsonProvider, version, in));
 			}
 		};
 	}

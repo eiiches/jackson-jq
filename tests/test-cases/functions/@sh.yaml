@@ -97,3 +97,111 @@
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
+
+- q: 'try (@sh) catch .'
+  in: {"foo": false}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 'object ({"foo":false}) can not be escaped for shell'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{foo:BOOLEAN}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try (@sh) catch .'
+  in: {}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 'object ({}) can not be escaped for shell'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try (@sh) catch .'
+  in: [{"foo": false}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 'object ({"foo":false}) can not be escaped for shell'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[{foo:BOOLEAN}]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try (@sh) catch .'
+  in: [[1, 2]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 'array ([1,2]) can not be escaped for shell'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[[INT,INT]]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try (@sh) catch .'
+  in: {"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": 1}
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - 'object ({"aaaaaaaaa...) can not be escaped for shell'
+    - v: '[1.8.2, )'
+      out:
+      - 'object ({"aaaaaaaaaaaaaaaaaaaaaaa...}) can not be escaped for shell'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:INT}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try (@sh) catch .'
+  in: [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - 'array ([1,2,3,4,5,...) can not be escaped for shell'
+    - v: '[1.8.2, )'
+      out:
+      - 'array ([1,2,3,4,5,6,7,8,9,10,11,...]) can not be escaped for shell'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[[INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT]]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
