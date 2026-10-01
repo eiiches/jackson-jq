@@ -69,3 +69,84 @@
     depends_on_input: true
     depends_on_external_state: false
   v: '[1.5, )'
+
+# Reduced from fuzzing seed 8489274197939303642 (jq 1.8.2).
+- q: 'try group_by(.) catch .'
+  in: {ceil: true}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 'object ({"ceil":true}) and array ([[true]]) cannot be sorted, as they are not both arrays'
+
+- q: 'try group_by(.) catch .'
+  in: {}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 'object ({}) and array ([]) cannot be sorted, as they are not both arrays'
+
+- q: 'try group_by(error("boom")) catch .'
+  in: {a: 1}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - boom
+
+- q: 'try group_by(.) catch .'
+  in: 1
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 'Cannot iterate over number (1)'
+
+# Keep the original expression to cover key evaluation through nested foreach filters.
+- q: >-
+    try (group_by(foreach (if @html then foreach ("%27foo%27foo [\"YmFy\"] bar") as $x ("0"; "{&quot;foo&quot;:&quot;foo%2520baz%2520bar&quot;,&quot;bar&quot;:&quot;foo%2520baz%2520bar&quot;}") else "array" end) as $x ("foo true"; . + $x))) catch (.)
+  in: {ceil: true}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - 'object ({"ceil":true}) and array ([["foo true...) cannot be sorted, as they are not both arrays'
+    - v: '[1.8.2, )'
+      out:
+      - 'object ({"ceil":true}) and array ([["foo true{&quot;foo&quo...]) cannot be sorted, as they are not both arrays'

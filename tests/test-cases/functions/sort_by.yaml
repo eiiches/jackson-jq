@@ -23,3 +23,18 @@
     depends_on_input: true
     depends_on_external_state: false
   v: '[1.5, )'
+
+- q: 'try sort_by(.) catch .'
+  in: {a: 1}
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      out:
+      - 'object ({"a":1}) and array ([[1]]) cannot be sorted, as they are not both arrays'
