@@ -18,18 +18,30 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public abstract class AbstractPureJsonArgumentFunction implements Function {
-	protected abstract <JsonNode> JsonNode fn(JsonProvider<JsonNode> jsonProvider, List<JsonNode> args) throws JsonQueryException;
+	/**
+	 * Computes the single value this call emits for one combination of argument values.
+	 *
+	 * @param <JsonNode> the JSON node type
+	 * @param jsonProvider the JSON provider that owns the arguments
+	 * @param version the jq compatibility version the call is bound for
+	 * @param in the input the arguments were evaluated against, which some jq versions name in a type
+	 * error even though the result itself does not depend on it
+	 * @param args the evaluated arguments, in source order
+	 * @return the value to emit
+	 * @throws JsonQueryException if the arguments are not acceptable
+	 */
+	protected abstract <JsonNode> JsonNode fn(JsonProvider<JsonNode> jsonProvider, Version version, JsonNode in, List<JsonNode> args) throws JsonQueryException;
 
-	private <Context extends RuntimeContext, JsonNode> void combinations(JsonProvider<JsonNode> jsonProvider, Context frame, JsonNode in, Output<JsonNode> output,
-			List<Expression<Context, JsonNode>> expressions, List<JsonNode> args, int index) throws JsonQueryException {
+	private <Context extends RuntimeContext, JsonNode> void combinations(JsonProvider<JsonNode> jsonProvider, Version version, Context frame, JsonNode in,
+			Output<JsonNode> output, List<Expression<Context, JsonNode>> expressions, List<JsonNode> args, int index) throws JsonQueryException {
 		if (index < 0) {
-			output.emit(fn(jsonProvider, args), UntrackedPath.getInstance());
+			output.emit(fn(jsonProvider, version, in, args), UntrackedPath.getInstance());
 			return;
 		}
 
 		expressions.get(index).apply(frame, in, UntrackedPath.getInstance(), (value, path) -> {
 			args.set(index, value);
-			combinations(jsonProvider, frame, in, output, expressions, args, index - 1);
+			combinations(jsonProvider, version, frame, in, output, expressions, args, index - 1);
 		});
 	}
 
@@ -41,7 +53,8 @@ public abstract class AbstractPureJsonArgumentFunction implements Function {
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
-		return (frame, in, ipath, output) -> combinations(jsonProvider, frame, in, output, args,
+		Version version = bindCtx.getJqVersion();
+		return (frame, in, ipath, output) -> combinations(jsonProvider, version, frame, in, output, args,
 				new ArrayList<>(Collections.nCopies(args.size(), null)), args.size() - 1);
 	}
 }

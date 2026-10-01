@@ -340,6 +340,8 @@
   types:
   - input: 'ANY'
     output: 'ANY'
+  - input: 'NULL'
+    output: 'NUMBER'
   properties:
     cardinality: ZERO
     depends_on_input: true
@@ -352,6 +354,8 @@
   types:
   - input: 'ANY'
     output: 'ANY'
+  - input: 'NULL'
+    output: 'NUMBER'
   properties:
     cardinality: ZERO
     depends_on_input: true
@@ -365,6 +369,8 @@
   types:
   - input: 'ANY'
     output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   properties:
     cardinality: UNKNOWN
     depends_on_input: true
@@ -376,6 +382,8 @@
   out: [4, 9, 8, 27]
   types:
   - input: 'ANY'
+    output: 'NUMBER'
+  - input: 'NULL'
     output: 'NUMBER'
   properties:
     cardinality: UNKNOWN
@@ -389,8 +397,222 @@
   types:
   - input: 'ANY'
     output: 'ANY'
+  - input: 'NULL'
+    output: 'ANY'
   properties:
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
   v: '[1.5, )'
+
+# Reduced from fuzzing seed -2028724035404052110 (jq 1.8.2), which caught the same
+# "number required" type error missing from the zero-argument math functions.
+- q: 'try sqrt catch .'
+  in: {}
+  out:
+  - 'object ({}) number required'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, )'
+
+- q: 'try sqrt catch .'
+  in: []
+  out:
+  - 'array ([]) number required'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, )'
+
+- q: 'try sqrt catch .'
+  in: true
+  out:
+  - 'boolean (true) number required'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'BOOLEAN'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, )'
+
+# pow and atan2 take their operands as arguments, so they report the same error for an
+# operand in either position. jq never looks at the input's own type.
+- q: 'try pow(.;2) catch .'
+  in: {}
+  out:
+  - 'object ({}) number required'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, )'
+
+- q: 'try pow(2;.) catch .'
+  in: {}
+  out:
+  - 'object ({}) number required'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '{}'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, )'
+
+- q: 'try atan2(.;1) catch .'
+  in: []
+  out:
+  - 'array ([]) number required'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, )'
+
+- q: 'try atan2(1;.) catch .'
+  in: true
+  out:
+  - 'boolean (true) number required'
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'BOOLEAN'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  v: '[1.5, )'
+
+# jq 1.5 names the input; jq 1.6 and later name the argument they rejected.
+- q: 'try pow(.[0];.[1]) catch .'
+  in: ["a", 2]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[STRING,INT]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out:
+      - 'array (["a",2]) number required'
+    - v: '[1.6, )'
+      out:
+      - 'string ("a") number required'
+
+- q: 'try pow(.[0];.[1]) catch .'
+  in: [2, "b"]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,STRING]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out:
+      - 'array ([2,"b"]) number required'
+    - v: '[1.6, )'
+      out:
+      - 'string ("b") number required'
+
+# Both arguments are rejected, and jq 1.6 and later report the first one.
+- q: 'try pow(.[0];.[1]) catch .'
+  in: ["a", "b"]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[STRING,STRING]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out:
+      - 'array (["a","b"]) number required'
+    - v: '[1.6, )'
+      out:
+      - 'string ("a") number required'
+
+- q: 'try atan2(.[0];.[1]) catch .'
+  in: [2, "b"]
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: '[INT,STRING]'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      out:
+      - 'array ([2,"b"]) number required'
+    - v: '[1.6, )'
+      out:
+      - 'string ("b") number required'
+
+# jq 1.8.2 widened the buffer it copies the described value into and closes the quote it cut.
+- q: 'try pow(.;2) catch .'
+  in: "abcdefghijklmnopqrstuvwxyz0123456789"
+  types:
+  - input: 'ANY'
+    output: 'ANY'
+  - input: 'STRING'
+    output: 'ANY'
+  properties:
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      out:
+      - 'string ("abcdefghij...) number required'
+    - v: '[1.8.2, )'
+      out:
+      - 'string ("abcdefghijklmnopqrstuvwx...") number required'
