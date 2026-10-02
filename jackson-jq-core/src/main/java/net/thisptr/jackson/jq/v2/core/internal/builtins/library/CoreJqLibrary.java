@@ -2,7 +2,7 @@
  * Most of the function definitions in this file originate from builtin.jq (*1)
  * in the official jq repository.
  *
- * 1) https://github.com/stedolan/jq/blob/master/src/builtin.jq
+ * 1) https://github.com/jqlang/jq/blob/master/src/builtin.jq
  *
  * jq is copyright (C) 2012 Stephen Dolan
  *

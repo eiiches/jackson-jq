@@ -23,6 +23,8 @@ public class VersionRangeDeserializer extends StdDeserializer<VersionRange> {
 		String text = p.readValueAs(String.class);
 		if (text == null)
 			return null;
+		if (!text.startsWith("[") || !text.endsWith(")"))
+			throw new IllegalArgumentException("test case range must use [inclusive, exclusive): " + text);
 		return VersionRange.valueOf(text);
 	}
 }

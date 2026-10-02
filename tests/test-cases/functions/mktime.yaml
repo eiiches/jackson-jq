@@ -1,260 +1,302 @@
 - q: 'mktime'
-  in: [1970, 0, 1, 0, 0, 0, 4, 0]
-  types:
-  - input: 'ANY'
-    output: 'NUMBER'
-  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
-    output: 'NUMBER'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: [1970, 0, 1, 0, 0, 0, 4, 0]
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - 0
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'mktime'
-  in: [1900, 0, 1, 0, 0, 0, 1, 0]
-  types:
-  - input: 'ANY'
-    output: 'NUMBER'
-  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
-    output: 'NUMBER'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: [1900, 0, 1, 0, 0, 0, 1, 0]
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - -2208988800
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try mktime catch .'
-  in: [1969, 11, 31, 23, 59, 59, 3, 364]
+  input: [1969, 11, 31, 23, 59, 59, 3, 364]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "invalid gmtime representation"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
   comment: 'The fuzz input names epoch second -1, which jq treats as an invalid gmtime representation.'
-  expectations:
-    default:
-    - v: '[1.5, )'
-      out:
-      - "invalid gmtime representation"
 
 - q: 'try mktime catch .'
-  in: [1970, 0, 1, 0, 0, -1]
+  input: [1970, 0, 1, 0, 0, -1]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - "mktime requires parsed datetime inputs"
+    - v: '[1.8.0, )'
+      output:
+      - "invalid gmtime representation"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
   comment: 'A minimal broken-down time can reach the same -1 epoch second by carrying a negative seconds field.'
-  expectations:
-    default:
-    - v: '[1.5, 1.8.0)'
-      out:
-      - "mktime requires parsed datetime inputs"
-    - v: '[1.8.0, )'
-      out:
-      - "invalid gmtime representation"
 
 - q: 'mktime'
-  in: [1969, 11, 31, 23, 59, 57, 3, 364]
+  input: [1969, 11, 31, 23, 59, 57, 3, 364]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - -3
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NUMBER'
-  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
     output: 'NUMBER'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
   comment: 'The nearby valid negative timestamp remains convertible.'
-  expectations:
-    default:
-    - v: '[1.5, )'
-      out:
-      - -3
 
 - q: 'try mktime catch .'
-  in: [2023, 10, 14]
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: '[INT,INT,INT]'
-    output: 'ANY'
-  properties:
-    cardinality: UNKNOWN
-    depends_on_input: true
-    depends_on_external_state: false
-  comment: 'jq 1.8.0 started reading an array with fewer than eight elements, filling in the rest with zero'
+  input: [2023, 10, 14]
   expectations:
     default:
     - v: '[1.5, 1.8.0)'
-      out:
+      output:
       - "mktime requires parsed datetime inputs"
     - v: '[1.8.0, )'
-      out:
+      output:
       - 1699920000
-
-- q: 'try mktime catch .'
-  in: [2023]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
   comment: 'jq 1.8.0 started reading an array with fewer than eight elements, filling in the rest with zero'
+
+- q: 'try mktime catch .'
+  input: [2023]
   expectations:
     default:
     - v: '[1.5, 1.8.0)'
-      out:
+      output:
       - "mktime requires parsed datetime inputs"
     - v: '[1.8.0, )'
-      out:
+      output:
       - 1672444800
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  comment: 'jq 1.8.0 started reading an array with fewer than eight elements, filling in the rest with zero'
 
 # Linux jq 1.8 and later accept an empty datetime array; macOS jq reports an error.
 - q: 'try mktime catch .'
-  in: []
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: '[]'
-    output: 'ANY'
-  properties:
-    cardinality: UNKNOWN
-    depends_on_input: true
-    depends_on_external_state: false
-  comment: 'on Linux, jq 1.8.0 started reading an array with fewer than eight elements, so an empty one names the zeroth of January 1900'
+  input: []
   expectations:
     default:
     - v: '[1.5, 1.8.0)'
-      out:
+      output:
       - "mktime requires parsed datetime inputs"
     - v: '[1.8.0, )'
-      out:
+      output:
       - -2209075200
     overrides:
     - v: '[1.8.0, )'
       os: MACOS
-      out:
+      output:
       - "invalid gmtime representation"
-
-- q: 'try mktime catch .'
-  in: "2023-11-14T22:13:20Z"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: '[]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
+  comment: 'on Linux, jq 1.8.0 started reading an array with fewer than eight elements, so an empty one names the zeroth of January 1900'
+
+- q: 'try mktime catch .'
+  input: "2023-11-14T22:13:20Z"
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "mktime requires array inputs"
-
-- q: 'try mktime catch .'
-  in: 1700000000
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
+
+- q: 'try mktime catch .'
+  input: 1700000000
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "mktime requires array inputs"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '0, ("not a datetime" | mktime)'
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - 0
-      error: true
+      runtime_error: "jq: error (at <stdin>:0): mktime requires array inputs\n"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'try mktime catch .'
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: 'NULL'
-    output: 'ANY'
-  properties:
-    cardinality: UNKNOWN
-    depends_on_input: true
-    depends_on_external_state: false
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "mktime requires array inputs"
-
-- q: 'try mktime catch .'
-  in: [2023, "8", 30, 0, 0, 0, 6, 272]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,STRING,INT,INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
+
+- q: 'try mktime catch .'
+  input: [2023, "8", 30, 0, 0, 0, 6, 272]
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "mktime requires parsed datetime inputs"
-
-- q: 'try mktime catch .'
-  in: [2023, null, 30, 0, 0, 0, 6, 272]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,NULL,INT,INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,STRING,INT,INT,INT,INT,INT,INT]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
+
+- q: 'try mktime catch .'
+  input: [2023, null, 30, 0, 0, 0, 6, 272]
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "mktime requires parsed datetime inputs"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT,NULL,INT,INT,INT,INT,INT,INT]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false

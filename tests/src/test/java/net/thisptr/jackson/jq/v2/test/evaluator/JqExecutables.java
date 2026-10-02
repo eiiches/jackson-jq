@@ -9,12 +9,22 @@ import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 /**
  * The single, explicit source of truth for which real {@code jq} binaries this test suite
- * expects to find on the host and what they're called. Deliberately independent of
+ * expects and what they're called. Bazel developer tools use their declared jq runfiles;
+ * other callers can supply a directory or resolve the names on {@code PATH}. This is independent of
  * {@link net.thisptr.jackson.jq.v2.core.version.Versions#versions()} (the core library's registry of
  * versions it implements), since binary naming is a test-environment concern, not a library one.
  */
 public final class JqExecutables {
+	private static final String BAZEL_JQ_BIN_DIR = "jackson_jq.test.jq_bin_dir";
+
 	private static String bin(String executable) {
+		String runfile = System.getProperty(BAZEL_JQ_BIN_DIR);
+		if (runfile != null) {
+			String runfiles = System.getenv("JAVA_RUNFILES");
+			if (runfiles == null)
+				throw new IllegalStateException("JAVA_RUNFILES is not set for Bazel jq binaries");
+			return Paths.get(runfiles, "_main", runfile, executable).toString();
+		}
 		String binDir = System.getenv("JQ_BIN_DIR");
 		return binDir == null ? executable : Paths.get(binDir, executable).toString();
 	}
@@ -35,7 +45,7 @@ public final class JqExecutables {
 				new JqExecutable(bin("jq-1.8.0"), Version.of(1, 8, 0)),
 				new JqExecutable(bin("jq-1.8.1"), Version.of(1, 8, 1)),
 				new JqExecutable(bin("jq-1.8.2"), Version.of(1, 8, 2)));
-		if (System.getenv("JQ_BIN_DIR") == null)
+		if (System.getProperty(BAZEL_JQ_BIN_DIR) == null && System.getenv("JQ_BIN_DIR") == null)
 			return all;
 
 		List<JqExecutable> selected = new ArrayList<>();

@@ -1,50 +1,68 @@
 - q: 'nan == nan, nan > nan, nan < nan, nan >= nan, nan <= nan'
-  out:
-  - false
-  - false
-  - true
-  - false
-  - true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - false
+      - false
+      - true
+      - false
+      - true
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'BOOLEAN'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'BOOLEAN'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '0 == nan, 0 > nan, 0 < nan, nan > 0, nan < 0'
-  out:
-  - false
-  - true
-  - false
-  - false
-  - true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - false
+      - true
+      - false
+      - false
+      - true
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'BOOLEAN'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'BOOLEAN'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '0 == nan, 0 >= nan, 0 <= nan, nan >= 0, nan <= 0'
-  out:
-  - false
-  - true
-  - false
-  - false
-  - true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - false
+      - true
+      - false
+      - false
+      - true
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'BOOLEAN'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'BOOLEAN'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false

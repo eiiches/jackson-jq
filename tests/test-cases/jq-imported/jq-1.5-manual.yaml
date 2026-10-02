@@ -1,0 +1,3609 @@
+# This file is generated from jqlang/jq files. Different license terms apply:
+#
+# jq is copyright (C) 2012 Stephen Dolan
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# jq's documentation (everything found under the docs/ subdirectory in
+# the source tree) is licensed under the Creative Commons CC BY 3.0
+# license, which can be found at:
+#
+#          https://creativecommons.org/licenses/by/3.0/
+#
+- q: '.'
+  input: "Hello, world!"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "Hello, world!"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.foo'
+  input: {"foo": 42, "bar": "less interesting data"}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 42
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{bar:STRING,foo:INT}'
+    output: 'INT'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.foo'
+  input: {"notfoo": true, "alsonotfoo": false}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{alsonotfoo:BOOLEAN,notfoo:BOOLEAN}'
+    output: 'NULL'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.["foo"]'
+  input: {"foo": 42}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 42
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{foo:INT}'
+    output: 'INT'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.foo?'
+  input: {"foo": 42, "bar": "less interesting data"}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 42
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{bar:STRING,foo:INT}'
+    output: 'INT'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.foo?'
+  input: {"notfoo": true, "alsonotfoo": false}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{alsonotfoo:BOOLEAN,notfoo:BOOLEAN}'
+    output: 'NULL'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.["foo"]?'
+  input: {"foo": 42}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 42
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{foo:INT}'
+    output: 'INT'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.foo?]'
+  input: [1, 2]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - []
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[INT,INT]'
+    output: '[]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[0]'
+  input: [{"name": "JSON", "good": true}, {"name": "XML", "good": false}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"name": "JSON", "good": true}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[{good:BOOLEAN,name:STRING},{good:BOOLEAN,name:STRING}]'
+    output: '{good:BOOLEAN,name:STRING}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[2]'
+  input: [{"name": "JSON", "good": true}, {"name": "XML", "good": false}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[{good:BOOLEAN,name:STRING},{good:BOOLEAN,name:STRING}]'
+    output: 'NULL'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[2:4]'
+  input: ["a", "b", "c", "d", "e"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["c", "d"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|STRING|[*:ANY]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[2:4]'
+  input: "abcdefghi"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "cd"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|STRING|[*:ANY]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[:3]'
+  input: ["a", "b", "c", "d", "e"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["a", "b", "c"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|STRING|[*:ANY]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[-2:]'
+  input: ["a", "b", "c", "d", "e"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["d", "e"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|STRING|[*:ANY]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[-2]'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 2
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: 'INT'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[]'
+  input: [{"name": "JSON", "good": true}, {"name": "XML", "good": false}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"name": "JSON", "good": true}
+      - {"name": "XML", "good": false}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[{good:BOOLEAN,name:STRING},{good:BOOLEAN,name:STRING}]'
+    output: '{good:BOOLEAN,name:STRING}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[]'
+  input: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output: []
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[]'
+    output: 'NEVER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[]'
+  input: {"a": 1, "b": 1}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+      - 1
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{a:INT,b:INT}'
+    output: 'INT'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.foo, .bar'
+  input: {"foo": 42, "bar": "something else", "baz": true}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 42
+      - "something else"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{bar:STRING,baz:BOOLEAN,foo:INT}'
+    output: 'INT|STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.user, .projects[]'
+  input: {"user": "stedolan", "projects": ["jq", "wikiflow"]}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "stedolan"
+      - "jq"
+      - "wikiflow"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{projects:[STRING,STRING],user:STRING}'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[4,2]'
+  input: ["a", "b", "c", "d", "e"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "e"
+      - "c"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] | .name'
+  input: [{"name": "JSON", "good": true}, {"name": "XML", "good": false}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "JSON"
+      - "XML"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[{good:BOOLEAN,name:STRING},{good:BOOLEAN,name:STRING}]'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.user, .projects[]]'
+  input: {"user": "stedolan", "projects": ["jq", "wikiflow"]}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["stedolan", "jq", "wikiflow"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '{projects:[STRING,STRING],user:STRING}'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '{user, title: .titles[]}'
+  input: {"user": "stedolan", "titles": ["JQ Primer", "More JQ"]}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"user": "stedolan", "title": "JQ Primer"}
+      - {"user": "stedolan", "title": "More JQ"}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{title:ANY,user:ANY}'
+  - v: '[1.5, )'
+    input: '{titles:[STRING,STRING],user:STRING}'
+    output: '{title:STRING,user:STRING}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '{(.user): .titles}'
+  input: {"user": "stedolan", "titles": ["JQ Primer", "More JQ"]}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"stedolan": ["JQ Primer", "More JQ"]}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{*:ANY}'
+  - v: '[1.5, )'
+    input: '{titles:[STRING,STRING],user:STRING}'
+    output: '{*:[STRING,STRING]}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.a + 1'
+  input: {"a": 7}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 8
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{a:INT}'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.a + .b'
+  input: {"a": [1, 2], "b": [3, 4]}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 3, 4]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{a:[INT,INT],b:[INT,INT]}'
+    output: '[INT,INT,INT,INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.a + null'
+  input: {"a": 1}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{a:INT}'
+    output: 'INT'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.a + 1'
+  input: {}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{}'
+    output: '1'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '{a: 1} + {b: 2} + {c: 3} + {a: 42}'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": 42, "b": 2, "c": 3}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{a:42,b:2,c:3}'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '{a:42,b:2,c:3}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '4 - .a'
+  input: {"a": 3}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{a:INT}'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '. - ["xml", "yaml"]'
+  input: ["xml", "yaml", "json"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["json"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING]'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '10 / . * 3'
+  input: 5
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 6
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '. / ", "'
+  input: "a, b,c,d, e"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["a", "b,c,d", "e"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '{"k": {"a": 1, "b": 2}} * {"k": {"a": 0,"c": 3}}'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"k": {"a": 0, "b": 2, "c": 3}}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{k:{a:0,b:2,c:3}}'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '{k:{a:0,b:2,c:3}}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '.[] | (1 / .)?'
+  input: [1, 0, -1]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+      - -1
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] | length'
+  input: [[1, 2], "string", {"a": 2}, null]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 2
+      - 6
+      - 1
+      - 0
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: '[[INT,INT],STRING,{a:INT},NULL]'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'keys'
+  input: {"abc": 1, "abcd": 2, "Foo": 3}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["Foo", "abc", "abcd"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:INT]|[*:STRING]'
+  - v: '[1.5, )'
+    input: '{Foo:INT,abc:INT,abcd:INT}'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'keys'
+  input: [42, 3, 35]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 1, 2]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:INT]|[*:STRING]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: '[*:INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'map(has("foo"))'
+  input: [{"foo": 42}, {}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [true, false]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:BOOLEAN]'
+  - v: '[1.5, )'
+    input: '[{foo:INT},{}]'
+    output: '[*:BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'map(has(2))'
+  input: [[0, 1], ["a", "b", "c"]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [false, true]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:BOOLEAN]'
+  - v: '[1.5, )'
+    input: '[[INT,INT],[STRING,STRING,STRING]]'
+    output: '[*:BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] | in({"foo": 42})'
+  input: ["foo", "bar"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+      - false
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[STRING,STRING]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'map(in([0,1]))'
+  input: [2, 0]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [false, true]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:BOOLEAN]'
+  - v: '[1.5, )'
+    input: '[INT,INT]'
+    output: '[*:BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'path(.a[0].b)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["a", 0, "b"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER|STRING]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER|STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[path(..)]'
+  input: {"a": [{"b": 1}]}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[], ["a"], ["a", 0], ["a", 0, "b"]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - v: '[1.5, )'
+    input: '{a:[{b:INT}]}'
+    output: '[*:[*:NUMBER|STRING]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'del(.foo)'
+  input: {"foo": 42, "bar": 9001, "baz": 42}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"bar": 9001, "baz": 42}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '{bar:INT,baz:INT,foo:INT}'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'del(.[1, 2])'
+  input: ["foo", "bar", "baz"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["foo"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING]'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'to_entries'
+  input: {"a": 1, "b": 2}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [{"key": "a", "value": 1}, {"key": "b", "value": 2}]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:{key:STRING,value:ANY}]'
+  - v: '[1.5, )'
+    input: '{a:INT,b:INT}'
+    output: '[*:{key:STRING,value:INT}]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'from_entries'
+  input: [{"key": "a", "value": 1}, {"key": "b", "value": 2}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": 1, "b": 2}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{*:ANY}'
+  - v: '[1.5, )'
+    input: '[{key:STRING,value:INT},{key:STRING,value:INT}]'
+    output: '{*:INT}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'with_entries(.key |= "KEY_" + .)'
+  input: {"a": 1, "b": 2}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"KEY_a": 1, "KEY_b": 2}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{*:ANY}'
+  - v: '[1.5, )'
+    input: '{a:INT,b:INT}'
+    output: '{*:INT}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'map(select(. >= 2))'
+  input: [1, 5, 3, 0, 7]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [5, 3, 7]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] | select(.id == "second")'
+  input: [{"id": "first", "val": 1}, {"id": "second", "val": 2}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"id": "second", "val": 2}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[{id:STRING,val:INT},{id:STRING,val:INT}]'
+    output: '{id:STRING,val:INT}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[]|numbers'
+  input: [[], {}, 1, "foo", null, true, false]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: '[[],{},INT,STRING,NULL,BOOLEAN,BOOLEAN]'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '1, empty, 2'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+      - 2
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '1|2'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '1|2'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[1,2,empty,3]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 3]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:1|2|3]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:1|2|3]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'try error("\($__loc__)") catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "{\"file\":\"<top-level>\",\"line\":1}"
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "Variable $__loc__ is not defined"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'map(.+1)'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [2, 3, 4]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'map_values(.+1)'
+  input: {"a": 1, "b": 2, "c": 3}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": 2, "b": 3, "c": 4}
+  types:
+  - v: '[1.5, 1.7)'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.7, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, 1.7)'
+    input: '{a:INT,b:INT,c:INT}'
+    output: 'ANY'
+  - v: '[1.7, )'
+    input: '{a:INT,b:INT,c:INT}'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[paths]'
+  input: [1, [[], {"a": 2}]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[0], [1], [1, 0], [1, 1], [1, 1, "a"]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - v: '[1.5, )'
+    input: '[INT,[[],{a:INT}]]'
+    output: '[*:[*:NUMBER|STRING]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[paths(scalars)]'
+  input: [1, [[], {"a": 2}]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[0], [1, 1, "a"]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:[*:NUMBER|STRING]]'
+  - v: '[1.5, )'
+    input: '[INT,[[],{a:INT}]]'
+    output: '[*:[*:NUMBER|STRING]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'add'
+  input: ["a", "b", "c"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "abc"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|NUMBER|STRING|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING]'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'add'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 6
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|NUMBER|STRING|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: 'INT'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'add'
+  input: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|NUMBER|STRING|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '[]'
+    output: 'NULL'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'any'
+  input: [true, false]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[BOOLEAN,BOOLEAN]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'any'
+  input: [false, false]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - false
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[BOOLEAN,BOOLEAN]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'any'
+  input: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - false
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'all'
+  input: [true, false]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - false
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[BOOLEAN,BOOLEAN]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'all'
+  input: [true, true]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[BOOLEAN,BOOLEAN]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'all'
+  input: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'flatten'
+  input: [1, [2], [[3]]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 3]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[INT,[INT],[[INT]]]'
+    output: '[*:ANY]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'flatten(1)'
+  input: [1, [2], [[3]]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, [3]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[INT,[INT],[[INT]]]'
+    output: '[*:ANY]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'flatten'
+  input: [[]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - []
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[[]]'
+    output: '[*:ANY]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'flatten'
+  input: [{"foo": "bar"}, [{"foo": "baz"}]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [{"foo": "bar"}, {"foo": "baz"}]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[{foo:STRING},[{foo:STRING}]]'
+    output: '[*:ANY]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'range(2;4)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 2
+      - 3
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[range(2;4)]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [2, 3]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[range(4)]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 1, 2, 3]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[range(0;10;3)]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 3, 6, 9]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[range(0;10;-1)]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - []
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[range(0;-5;-1)]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, -1, -2, -3, -4]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'floor'
+  input: 3.14159
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 3
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: 'FLOAT'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'sqrt'
+  input: 9
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 3
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] | tonumber'
+  input: [1, "1"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+      - 1
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: '[INT,STRING]'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] | tostring'
+  input: [1, "1", [1]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "1"
+      - "1"
+      - "[1]"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: '[INT,STRING,[INT]]'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'map(type)'
+  input: [0, false, [], {}, null, "hello"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["number", "boolean", "array", "object", "null", "string"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:"array"|"binary"|"boolean"|"null"|"number"|"object"|"string"]'
+  - v: '[1.5, )'
+    input: '[INT,BOOLEAN,[],{},NULL,STRING]'
+    output: '[*:"array"|"boolean"|"null"|"number"|"object"|"string"]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] | (infinite * .) < 0'
+  input: [-1, 1]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+      - false
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[INT,INT]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'infinite, nan | type'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "number"
+      - "number"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '"number"'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '"number"'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'sort'
+  input: [8, 3, null, 6]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [null, 3, 6, 8]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[INT,INT,NULL,INT]'
+    output: '[*:INT|NULL]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'sort_by(.foo)'
+  input: [{"foo": 4, "bar": 10}, {"foo": 3, "bar": 100}, {"foo": 2, "bar": 1}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [{"foo": 2, "bar": 1}, {"foo": 3, "bar": 100}, {"foo": 4, "bar": 10}]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[{bar:INT,foo:INT},{bar:INT,foo:INT},{bar:INT,foo:INT}]'
+    output: '[*:{bar:INT,foo:INT}]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'group_by(.foo)'
+  input: [{"foo": 1, "bar": 10}, {"foo": 3, "bar": 100}, {"foo": 1, "bar": 1}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[{"foo": 1, "bar": 10}, {"foo": 1, "bar": 1}], [{"foo": 3, "bar": 100}]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:[*:ANY]]'
+  - v: '[1.5, )'
+    input: '[{bar:INT,foo:INT},{bar:INT,foo:INT},{bar:INT,foo:INT}]'
+    output: '[*:[*:{bar:INT,foo:INT}]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'min'
+  input: [5, 4, 2, 7]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 2
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT]'
+    output: 'INT'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'max_by(.foo)'
+  input: [{"foo": 1, "bar": 14}, {"foo": 2, "bar": 3}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"foo": 2, "bar": 3}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[{bar:INT,foo:INT},{bar:INT,foo:INT}]'
+    output: '{bar:INT,foo:INT}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'unique'
+  input: [1, 2, 5, 3, 5, 3, 1, 3]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 3, 5]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: '[*:INT|NULL]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'unique_by(.foo)'
+  input: [{"foo": 1, "bar": 2}, {"foo": 1, "bar": 3}, {"foo": 4, "bar": 5}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[{bar:INT,foo:INT},{bar:INT,foo:INT},{bar:INT,foo:INT}]'
+    output: '[*:NULL|{bar:INT,foo:INT}]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'unique_by(length)'
+  input: ["chunky", "bacon", "kitten", "cicada", "asparagus"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["bacon", "chunky", "asparagus"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: '[*:NULL|STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'reverse'
+  input: [1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [4, 3, 2, 1]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]|[]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT]'
+    output: '[*:INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'contains("bar")'
+  input: "foobar"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'contains(["baz", "bar"])'
+  input: ["foobar", "foobaz", "blarp"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'contains(["bazzzzz", "bar"])'
+  input: ["foobar", "foobaz", "blarp"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - false
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'contains({foo: 12, bar: [{barp: 12}]})'
+  input: {"foo": 12, "bar": [1, 2, {"barp": 12, "blip": 13}]}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '{bar:[INT,INT,{barp:INT,blip:INT}],foo:INT}'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'contains({foo: 12, bar: [{barp: 15}]})'
+  input: {"foo": 12, "bar": [1, 2, {"barp": 12, "blip": 13}]}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - false
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '{bar:[INT,INT,{barp:INT,blip:INT}],foo:INT}'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'indices(", ")'
+  input: "a,b, cd, efg, hijk"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [3, 7, 12]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:INT]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[*:INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'indices(1)'
+  input: [0, 1, 2, 1, 3, 1, 4]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 3, 5]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'indices([1,2])'
+  input: [0, 1, 2, 3, 1, 4, 2, 5, 1, 2, 6, 7]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 8]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'index(", ")'
+  input: "a,b, cd, efg, hijk"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 3
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|NUMBER'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'NULL|NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'rindex(", ")'
+  input: "a,b, cd, efg, hijk"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 12
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|NUMBER'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'NULL|NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'inside("foobar")'
+  input: "bar"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'inside(["foobar", "foobaz", "blarp"])'
+  input: ["baz", "bar"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[STRING,STRING]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'inside(["foobar", "foobaz", "blarp"])'
+  input: ["bazzzzz", "bar"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - false
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[STRING,STRING]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})'
+  input: {"foo": 12, "bar": [{"barp": 12}]}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '{bar:[{barp:INT}],foo:INT}'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})'
+  input: {"foo": 12, "bar": [{"barp": 15}]}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - false
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '{bar:[{barp:INT}],foo:INT}'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.[]|startswith("foo")]'
+  input: ["fo", "foo", "barfoo", "foobar", "barfoob"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [false, true, false, true, false]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:BOOLEAN]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: '[*:BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.[]|endswith("foo")]'
+  input: ["foobar", "barfoo"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [false, true]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:BOOLEAN]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING]'
+    output: '[*:BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'combinations'
+  input: [[1, 2], [3, 4]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 3]
+      - [1, 4]
+      - [2, 3]
+      - [2, 4]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[[INT,INT],[INT,INT]]'
+    output: '[*:INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'combinations(2)'
+  input: [0, 1]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 0]
+      - [0, 1]
+      - [1, 0]
+      - [1, 1]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[INT,INT]'
+    output: '[*:INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.[]|ltrimstr("foo")]'
+  input: ["fo", "foo", "barfoo", "foobar", "afoo"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["fo", "", "barfoo", "bar", "afoo"]
+  types:
+  - v: '[1.5, 1.8.0)'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.8.0, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.[]|rtrimstr("foo")]'
+  input: ["fo", "foo", "barfoo", "foobar", "foob"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["fo", "", "bar", "foobar", "foob"]
+  types:
+  - v: '[1.5, 1.8.0)'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.8.0, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'explode'
+  input: "foobar"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [102, 111, 111, 98, 97, 114]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:INT]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[*:INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'implode'
+  input: [65, 66, 67]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "ABC"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'split(", ")'
+  input: "a, b,c,d, e, "
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["a", "b,c,d", "e", ""]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'join(", ")'
+  input: ["a", "b,c,d", "e"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "a, b,c,d, e"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING]'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[while(.<100; .*2)]'
+  input: 1
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 4, 8, 16, 32, 64]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]'
+  input: 4
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 24
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'recurse(.foo[])'
+  input: {"foo": [{"foo": []}, {"foo": [{"foo": []}]}]}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"foo": [{"foo": []}, {"foo": [{"foo": []}]}]}
+      - {"foo": []}
+      - {"foo": [{"foo": []}]}
+      - {"foo": []}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{foo:[{foo:[]},{foo:[{foo:[]}]}]}'
+    output: '{foo:[]}|{foo:[{foo:[]},{foo:[{foo:[]}]}]}|{foo:[{foo:[]}]}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'recurse'
+  input: {"a": 0, "b": [1]}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": 0, "b": [1]}
+      - 0
+      - [1]
+      - 1
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{a:INT,b:[INT]}'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'recurse(. * .; . < 20)'
+  input: 2
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 2
+      - 4
+      - 16
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '..|.a?'
+  input: [[{"a": 1}]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[[{a:INT}]]'
+    output: 'INT'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'env.PAGER'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "less"
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "Function env/0 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'transpose'
+  input: [[1], [2, 3]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[1, 2], [null, 3]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:[*:ANY]]|[]'
+  - v: '[1.5, )'
+    input: '[[INT],[INT,INT]]'
+    output: '[*:[*:INT|NULL]]|[]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'bsearch(0)'
+  input: [0, 1]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 0
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "Function bsearch/1 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'bsearch(0)'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - -1
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "Function bsearch/1 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 3, 4]
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "Function bsearch/1 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '"The input was \(.), which is one less than \(.+1)"'
+  input: 42
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "The input was 42, which is one less than 43"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.[]|tostring]'
+  input: [1, "foo", ["foo"]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["1", "foo", "[\"foo\"]"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: '[INT,STRING,[STRING]]'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.[]|tojson]'
+  input: [1, "foo", ["foo"]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["1", "\"foo\"", "[\"foo\"]"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: '[INT,STRING,[STRING]]'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.[]|tojson|fromjson]'
+  input: [1, "foo", ["foo"]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, "foo", ["foo"]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[INT,STRING,[STRING]]'
+    output: '[*:ANY]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@html'
+  input: "This works if x < y"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "This works if x &lt; y"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@sh "echo \(.)"'
+  input: "O'Hara's Ale"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "echo 'O'\\''Hara'\\''s Ale'"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'fromdate'
+  input: "2015-03-05T23:51:47Z"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1425599507
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'strptime("%Y-%m-%dT%H:%M:%SZ")'
+  input: "2015-03-05T23:51:47Z"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [2015, 2, 5, 23, 51, 47, 4, 63]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+
+- q: 'strptime("%Y-%m-%dT%H:%M:%SZ")|mktime'
+  input: "2015-03-05T23:51:47Z"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1425599507
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+
+- q: '.[] == 1'
+  input: [1, 1.0, "1", "banana"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+      - true
+      - false
+      - false
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[INT,INT,STRING,STRING]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'if . == 0 then "zero" elif . == 1 then "one" else "many" end'
+  input: 2
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "many"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '"many"|"one"|"zero"'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '"many"|"one"|"zero"'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '. < 5'
+  input: 2
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '42 and "a string"'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'true'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'true'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '(true, false) or false'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+      - false
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '(true, true) and (true, false)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+      - false
+      - true
+      - false
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[true, false | not]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [false, true]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:BOOLEAN]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '.foo // 42'
+  input: {"foo": 19}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 19
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{foo:INT}'
+    output: 'INT'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.foo // 42'
+  input: {}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 42
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{}'
+    output: '42'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try .a catch ". is not an object"'
+  input: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ". is not an object"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'BOOLEAN'
+    output: '". is not an object"'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.[]|try .a]'
+  input: [{}, true, {"a": 1}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [null, 1]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[{},BOOLEAN,{a:INT}]'
+    output: '[*:INT|NULL]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try error("some exception") catch .'
+  input: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "some exception"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'BOOLEAN'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[.[]|(.a)?]'
+  input: [{}, true, {"a": 1}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [null, 1]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[{},BOOLEAN,{a:INT}]'
+    output: '[*:INT|NULL]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'test("foo")'
+  input: "foo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] | test("a b c # spaces are ignored"; "ix")'
+  input: ["xabcd", "ABC"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[STRING,STRING]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'match("(abc)+"; "g")'
+  input: "abc abc"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"offset": 0, "length": 3, "string": "abc", "captures": [{"offset": 0, "length": 3, "string": "abc", "name": null}]}
+      - {"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'match("foo")'
+  input: "foo bar foo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"offset": 0, "length": 3, "string": "foo", "captures": []}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'match(["foo", "ig"])'
+  input: "foo bar FOO"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"offset": 0, "length": 3, "string": "foo", "captures": []}
+      - {"offset": 8, "length": 3, "string": "FOO", "captures": []}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'match("foo (?<bar123>bar)? foo"; "ig")'
+  input: "foo bar foo foo  foo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"offset": 0, "length": 11, "string": "foo bar foo", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]}
+      - {"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": -1, "string": null, "length": 0, "name": "bar123"}]}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[ match("."; "g")] | length'
+  input: "abc"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 3
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'capture("(?<a>[a-z]+)-(?<n>[0-9]+)")'
+  input: "xyzzy-14"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": "xyzzy", "n": "14"}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{*:NULL|STRING}'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '{*:NULL|STRING}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.bar as $x | .foo | . + $x'
+  input: {"foo": 10, "bar": 200}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 210
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{bar:INT,foo:INT}'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '. as $i|[(.*2|. as $i| $i), $i]'
+  input: 5
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [10, 5]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[ANY,ANY]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '[NUMBER,INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '. as [$a, $b, {c: $c}] | $a + $b + $c'
+  input: [2, 3, {"c": 4, "d": 5}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 9
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT,INT,{c:INT,d:INT}]'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] as [$a, $b] | {a: $a, b: $b}'
+  input: [[0], [0, 1], [2, 1, 0]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": 0, "b": null}
+      - {"a": 0, "b": 1}
+      - {"a": 2, "b": 1}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{a:ANY,b:ANY}'
+  - v: '[1.5, )'
+    input: '[[INT],[INT,INT],[INT,INT,INT]]'
+    output: '{a:INT,b:INT|NULL}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'def addvalue(f): . + [f]; map(addvalue(.[0]))'
+  input: [[1, 2], [10, 20]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[1, 2, 1], [10, 20, 10]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[[INT,INT],[INT,INT]]'
+    output: '[*:[INT,INT,*:INT]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'def addvalue(f): f as $x | map(. + $x); addvalue(.[0])'
+  input: [[1, 2], [10, 20]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[1, 2, 1, 2], [10, 20, 1, 2]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[[INT,INT],[INT,INT]]'
+    output: '[*:[INT,INT,INT,INT]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'reduce .[] as $item (0; . + $item)'
+  input: [10, 2, 5, 3]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 20
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT]'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[limit(3;.[])]'
+  input: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 1, 2]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[first(range(.)), last(range(.)), nth(./2; range(.))]'
+  input: 10
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 9, 5]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NULL|NUMBER]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '[*:NULL|NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[range(.)]|[first, last, nth(5)]'
+  input: 10
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 9, 5]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[NULL|NUMBER,NULL|NUMBER,NULL|NUMBER]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '[NULL|NUMBER,NULL|NUMBER,NULL|NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[foreach .[] as $item ([[],[]]; if $item == null then [[],.[0]] else [(.[0] + [$item]),[]] end; if $item == null then .[1] else empty end)]'
+  input: [1, 2, 3, 4, null, "a", "b", null]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[1, 2, 3, 4], ["a", "b"]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:[*:ANY]]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,NULL,STRING,STRING,NULL]'
+    output: '[*:[*:INT|NULL|STRING]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'def range(init; upto; by): def _range: if (by > 0 and . < upto) or (by < 0 and . > upto) then ., ((.+by)|_range) else . end; if by == 0 then init else init|_range end | select((by > 0 and . < upto) or (by < 0 and . > upto)); range(0; 10; 3)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 0
+      - 3
+      - 6
+      - 9
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'def while(cond; update): def _while: if cond then ., (update | _while) else empty end; _while; [while(.<100; .*2)]'
+  input: 1
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 4, 8, 16, 32, 64]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])]'
+  input: 1
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[[0], 2], [[0]]]
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "Function truncate_stream/1 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [2]
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "Function truncate_stream/1 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '. as $dot|fromstream($dot|tostream)|.==$dot'
+  input: [0, [1, {"a": 1}, {"b": 2}]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "Function tostream/0 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '(..|select(type=="boolean")) |= if . then 1 else 0 end'
+  input: [true, false, [5, true, [true, [false]], false]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 0, [5, 1, [1, [0]], 0]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[BOOLEAN,BOOLEAN,[INT,BOOLEAN,[BOOLEAN,[BOOLEAN]],BOOLEAN]]'
+    output: 'BOOLEAN|INT|[*:0|1|BOOLEAN]|[*:0|1|BOOLEAN|[*:0|1|BOOLEAN]]|[*:0|1|BOOLEAN|[*:BOOLEAN|INT|[*:0|1|BOOLEAN|[*:0|1|BOOLEAN]]]]|[*:BOOLEAN|INT|[*:0|1|BOOLEAN]|[*:0|1|BOOLEAN|[*:0|1|BOOLEAN]]|[*:0|1|BOOLEAN|[*:BOOLEAN|INT|[*:0|1|BOOLEAN|[*:0|1|BOOLEAN]]]]|[*:BOOLEAN|INT|[*:0|1|BOOLEAN]|[*:0|1|BOOLEAN|[*:0|1|BOOLEAN]]|[*:0|1|BOOLEAN|[*:BOOLEAN|INT|[*:0|1|BOOLEAN|[*:0|1|BOOLEAN]]]]|[*:BOOLEAN|INT|[*:0|1|BOOLEAN]|[*:0|1|BOOLEAN|[*:0|1|BOOLEAN]]|[*:0|1|BOOLEAN|[*:BOOLEAN|INT|[*:0|1|BOOLEAN|[*:0|1|BOOLEAN]]]]|[*:BOOLEAN|INT|[*:0|1|BOOLEAN]|[*:0|1|BOOLEAN|[*:0|1|BOOLEAN]]|[*:0|1|BOOLEAN|[*:BOOLEAN|INT|[*:0|1|BOOLEAN|[*:0|1|BOOLEAN]]]]|[*:BOOLEAN|INT|[*:0|1|BOOLEAN|[*:0|1|BOOLEAN]]]]|[*:BOOLEAN|INT|[*:0|1|BOOLEAN|[*:0|1|BOOLEAN]]]]|[*:BOOLEAN|INT|[*:0|1|BOOLEAN|[*:0|1|BOOLEAN]]]]|[*:BOOLEAN|INT|[*:0|1|BOOLEAN|[*:0|1|BOOLEAN]]]]|[*:BOOLEAN|INT|[*:0|1|BOOLEAN|[*:0|1|BOOLEAN]]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.foo += 1'
+  input: {"foo": 42}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"foo": 43}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{foo:INT}'
+    output: '{foo:NUMBER}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false

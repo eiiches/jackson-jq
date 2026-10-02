@@ -1,13 +1,19 @@
 - q: 'unique_by(nan) | sort_by(.)'
-  in: [34, 115, 116, 114, 105, 110, 103, 34]
-  out:
-  - [34, 34, 103, 105, 110, 114, 115, 116]
+  input: [34, 115, 116, 114, 105, 110, 103, 34]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [34, 34, 103, 105, 110, 114, 115, 116]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:ANY]'
-  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
     output: '[*:INT|NULL]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false

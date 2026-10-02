@@ -1,12 +1,18 @@
 - q: '"path: \(path(.)|tojson)"'
-  out:
-  - "path: []"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "path: []"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
@@ -15,43 +21,58 @@
   expectations:
     default:
     - v: '[1.5, 1.8.0)'
-      out:
-      - ["-1", "-1", '{"n":-1}', "-1"]
+      output:
+      - ["-1", "-1", "{\"n\":-1}", "-1"]
     - v: '[1.8.0, )'
-      out:
-      - ["-1.0", "-1.0", '{"n":-1.0}', "-1"]
+      output:
+      - ["-1.0", "-1.0", "{\"n\":-1.0}", "-1"]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[STRING,STRING,STRING,STRING]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[STRING,STRING,STRING,STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'try (path("path: \([1,2][])")) catch .'
-  out:
-  - "Invalid path expression with result \"path: 1\""
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "Invalid path expression with result \"path: 1\""
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '"\/"'
-  out:
-  - "/"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "/"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"/"'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '"/"'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false

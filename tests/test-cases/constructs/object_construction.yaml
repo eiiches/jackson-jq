@@ -1,81 +1,117 @@
 - q: '{ a }'
-  in: {"a": 1}
-  out:
-  - {"a": 1}
+  input: {"a": 1}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": 1}
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '{a:ANY}'
-  - input: '{a:INT}'
+  - v: '[1.5, )'
+    input: '{a:INT}'
     output: '{a:INT}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '{ a, }'
-  in: {"a": 1}
-  out:
-  - {"a": 1}
+  input: {"a": 1}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": 1}
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '{a:ANY}'
-  - input: '{a:INT}'
+  - v: '[1.5, )'
+    input: '{a:INT}'
     output: '{a:INT}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '{(.): empty}'
-  in: 1
-  out: []
+  input: 1
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output: []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '{}'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: ZERO
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '{(.): (."foo"?)}'
-  in: [1]
-  out: []
+  input: [1]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output: []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '{*:ANY}'
-  - input: '[INT]'
+  - v: '[1.5, )'
+    input: '[INT]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'try {(.): error("boom")} catch .'
-  in: 1
-  out:
-  - "boom"
+  input: 1
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "boom"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'try {(.): 1} catch .'
-  in: 1
-  out:
-  - "Cannot use number (1) as object key"
+  input: 1
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "Cannot use number (1) as object key"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false

@@ -1,66 +1,132 @@
 - q: 'implode'
-  in: [65.9, 66.1]
-  out:
-  - "AB"
+  input: [65.9, 66.1]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "AB"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: '[FLOAT,FLOAT]'
+  - v: '[1.5, )'
+    input: '[FLOAT,FLOAT]'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'implode'
-  in: [-1.5]
-  out:
-  - "\uFFFD"
+  input: [-1.5]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv_unicode.c:77: jvp_utf8_encode: Assertion `codepoint >= 0 && codepoint <= 0x10FFFF' failed.\n"
+    - v: '[1.6, 1.7)'
+      output: []
+      runtime_error: "jq-1.6: src/jv_unicode.c:101: jvp_utf8_encode: Assertion `codepoint >= 0 && codepoint <= 0x10FFFF' failed.\n"
+    - v: '[1.7, )'
+      output:
+      - "\ufffd"
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - "\ufffd"
+      incompat_type: INTENTIONAL
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: '[FLOAT]'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: 'implode'
-  in: [55295, 55296, 57343, 57344]
-  out:
-  - "\uD7FF\uFFFD\uFFFD\uE000"
+  input: [55295, 55296, 57343, 57344]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv_print.c:74: jvp_dump_string: Assertion `c != -1' failed.\n"
+    - v: '[1.6, 1.7)'
+      output: []
+      runtime_error: "jq-1.6: src/jv_print.c:125: jvp_dump_string: Assertion `c != -1' failed.\n"
+    - v: '[1.7, )'
+      output:
+      - "\ud7ff\ufffd\ufffd\ue000"
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - "\ud7ff\ufffd\ufffd\ue000"
+      incompat_type: JACKSON_JQ_BUG
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT]'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: 'implode'
-  in: [1114111, 1114112, 2147483648]
-  out:
-  - "\U0010FFFF\uFFFD\uFFFD"
+  input: [1114111, 1114112, 2147483648]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv_unicode.c:77: jvp_utf8_encode: Assertion `codepoint >= 0 && codepoint <= 0x10FFFF' failed.\n"
+    - v: '[1.6, 1.7)'
+      output: []
+      runtime_error: "jq-1.6: src/jv_unicode.c:101: jvp_utf8_encode: Assertion `codepoint >= 0 && codepoint <= 0x10FFFF' failed.\n"
+    - v: '[1.7, )'
+      output:
+      - "\U0010ffff\ufffd\ufffd"
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - "\U0010ffff\ufffd\ufffd"
+      incompat_type: INTENTIONAL
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: 'implode'
-  in: [128512, 65.9]
-  out:
-  - "\U0001F600A"
+  input: [128512, 65.9]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "\U0001f600A"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: '[INT,FLOAT]'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'

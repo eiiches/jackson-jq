@@ -1,50 +1,59 @@
 - q: 'max_by(nan)'
-  in: [1, 2]
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: '[INT,INT]'
-    output: 'INT'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: [1, 2]
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - 1
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT,INT]'
+    output: 'INT'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'max_by([nan])'
-  in: [1, 2]
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: '[INT,INT]'
-    output: 'INT'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: [1, 2]
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - 1
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT,INT]'
+    output: 'INT'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'max_by(0)'
-  in: [1, 2]
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: '[INT,INT]'
-    output: 'INT'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: [1, 2]
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - 2
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT,INT]'
+    output: 'INT'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false

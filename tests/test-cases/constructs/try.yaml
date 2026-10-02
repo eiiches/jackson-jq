@@ -1,99 +1,126 @@
 # An unparenthesized try covers only the next primary expression. Later comma
 # operands can still emit values and raise errors after the try has finished.
 - q: 'try .[0:1], .foo'
-  in: "false"
-  out:
-  - "f"
+  input: "false"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "f"
+      runtime_error: "jq: error (at <stdin>:0): Cannot index string with string \"foo\"\n"
+    - v: '[1.8.2, )'
+      output:
+      - "f"
+      runtime_error: "jq: error (at <stdin>:0): Cannot index string with string (\"foo\")\n"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  expectations:
-    default:
-    - v: '[1.5, )'
-      out:
-      - "f"
-      error: true
 
 # Reduced from fuzzing seed -1834952929741171381 (jq 1.8.2). The final
 # assignment must fail after the slice and indices filters emit their values.
 - q: 'try (.[null:-0.5]), indices("[]"), .foo += "x"'
-  in: "false"
-  out:
-  - "false"
-  - []
+  input: "false"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "false"
+      - []
+      runtime_error: "jq: error (at <stdin>:0): Cannot index string with string \"foo\"\n"
+    - v: '[1.8.2, )'
+      output:
+      - "false"
+      - []
+      runtime_error: "jq: error (at <stdin>:0): Cannot index string with string (\"foo\")\n"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  expectations:
-    default:
-    - v: '[1.5, )'
-      out:
-      - "false"
-      - []
-      error: true
 
 # Keep the original fuzz expression to cover its URI format and interpolation.
 - q: 'try (.[null : -0.5]), indices("[]"), .foo += @uri "foo \(pow(1; 0))"'
-  in: "false"
-  out:
-  - "false"
-  - []
+  input: "false"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "false"
+      - []
+      runtime_error: "jq: error (at <stdin>:0): Cannot index string with string \"foo\"\n"
+    - v: '[1.8.2, )'
+      output:
+      - "false"
+      - []
+      runtime_error: "jq: error (at <stdin>:0): Cannot index string with string (\"foo\")\n"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  expectations:
-    default:
-    - v: '[1.5, )'
-      out:
-      - "false"
-      - []
-      error: true
 
 # Parentheses keep both comma operands inside the try.
 - q: 'try (.[0:1], .foo)'
-  in: "false"
-  out:
-  - "f"
+  input: "false"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "f"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 # Catch applies to the preceding try; the following comma operand runs after it.
 - q: 'try error("boom") catch "caught", 1'
-  in: null
-  out:
-  - "caught"
-  - 1
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "caught"
+      - 1
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"caught"|1'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '"caught"|1'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false

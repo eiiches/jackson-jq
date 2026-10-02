@@ -1,80 +1,107 @@
 - q: 'try strflocaltime("%Y") catch .'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: strflocaltime/1 is not defined at <top-level>, line 1:\ntry strflocaltime(\"%Y\") catch .    \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - "strflocaltime/1 requires parsed datetime inputs"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.6, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.6, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: true
-  expectations:
-    default:
-    - v: '[1.6, )'
-      out:
-      - "strflocaltime/1 requires parsed datetime inputs"
 
 - q: 'try strflocaltime("%Y") catch .'
-  in: "2023-11-14T22:13:20Z"
+  input: "2023-11-14T22:13:20Z"
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: strflocaltime/1 is not defined at <top-level>, line 1:\ntry strflocaltime(\"%Y\") catch .    \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - "strflocaltime/1 requires parsed datetime inputs"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'ANY'
   properties:
+  - v: '[1.6, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: true
-  expectations:
-    default:
-    - v: '[1.6, )'
-      out:
-      - "strflocaltime/1 requires parsed datetime inputs"
 
 - q: 'try strflocaltime(3) catch .'
-  in: 1700000000
+  input: 1700000000
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: strflocaltime/1 is not defined at <top-level>, line 1:\ntry strflocaltime(3) catch .    \njq: 1 compile error\n"
+    - v: '[1.6, 1.7)'
+      output: []
+      runtime_error: "jq-1.6: src/jv.c:745: jv_string_value: Assertion `jv_get_kind(j) == JV_KIND_STRING' failed.\n"
+    - v: '[1.7, 1.7.1)'
+      output: []
+      runtime_error: "jq-1.7: src/jv.c:1376: jv_string_value: Assertion `JVP_HAS_KIND(j, JV_KIND_STRING)' failed.\n"
+    - v: '[1.7.1, 1.8.0)'
+      output: []
+      runtime_error: "jq-1.7.1: src/jv.c:1370: jv_string_value: Assertion `JVP_HAS_KIND(j, JV_KIND_STRING)' failed.\n"
+    - v: '[1.8.0, )'
+      output:
+      - "strflocaltime/1 requires a string format"
+    jjq:
+    - v: '[1.6, 1.8.0)'
+      output:
+      - "strflocaltime/1 requires a string format"
+      incompat_type: INTENTIONAL
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'INT'
+  - v: '[1.6, )'
+    input: 'INT'
     output: 'ANY'
   properties:
+  - v: '[1.6, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: true
   comment: 'jq 1.6 and 1.7 abort on a non-string format, while jackson-jq raises a catchable error; jq 1.5 does not define strflocaltime'
-  expectations:
-    default:
-    - v: '[1.5, 1.8.0)'
-      out: []
-      error: true
-    - v: '[1.8.0, )'
-      out:
-      - "strflocaltime/1 requires a string format"
-    jjq:
-    - v: '[1.6, 1.8.0)'
-      out:
-      - "strflocaltime/1 requires a string format"
 
 - q: 'try strflocaltime("%200B") catch .'
-  in: 1700000000
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: 'INT'
-    output: 'ANY'
-  properties:
-    cardinality: UNKNOWN
-    depends_on_input: true
-    depends_on_external_state: true
-  comment: 'the result is 200 bytes in every zone, so it outgrows the buffer wherever this runs; Darwin takes no field width and writes 200B instead'
+  input: 1700000000
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: strflocaltime/1 is not defined at <top-level>, line 1:\ntry strflocaltime(\"%200B\") catch .    \njq: 1 compile error\n"
     - v: '[1.6, )'
-      out:
+      output:
       - "strflocaltime/1: unknown system failure"
     overrides:
     - v: '[1.7, )'
       os: MACOS
-      out:
+      output:
       - "200B"
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.6, )'
+    input: 'INT'
+    output: 'ANY'
+  properties:
+  - v: '[1.6, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+  comment: 'the result is 200 bytes in every zone, so it outgrows the buffer wherever this runs; Darwin takes no field width and writes 200B instead'

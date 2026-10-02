@@ -6,13 +6,14 @@ jjq_java_library(
     testonly = True,
     srcs = glob(["*.java"]),
     release = 17,
-    visibility = ["//tests:__pkg__"],
+    visibility = ["//tests:__subpackages__"],
     deps = [
         "//jackson-jq-core",
         "//jackson-jq-ext-module-joni",
         "//jackson-jq-json-provider",
         "//jackson-jq-json-provider-impl-jackson2",
         "//jackson-jq-spi",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/comparator",
         "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/testcase",
         "@maven//:com_fasterxml_jackson_core_jackson_databind",
         "@maven//:com_fasterxml_jackson_dataformat_jackson_dataformat_yaml",
@@ -25,6 +26,7 @@ java_binary(
     name = "generate-property-assertions",
     testonly = True,
     main_class = "net.thisptr.jackson.jq.v2.test.properties.PropertyAssertionGenerator",
+    visibility = ["//visibility:public"],
     runtime_deps = [
         ":properties",
         "//jackson-jq-ext-module-joni",

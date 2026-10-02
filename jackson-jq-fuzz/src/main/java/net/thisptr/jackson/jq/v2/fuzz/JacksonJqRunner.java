@@ -48,9 +48,9 @@ public class JacksonJqRunner<N> implements Evaluator {
 					throw new RuntimeException(e);
 				}
 			});
-			return new Result(values, null);
+			return new Result(values, null, null, null);
 		} catch (Throwable th) {
-			return new Result(values, th);
+			return new Result(values, th, ErrorPhase.RUNTIME, th.getMessage());
 		}
 	}
 

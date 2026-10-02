@@ -1,0 +1,171 @@
+# This file is generated from jqlang/jq files. Different license terms apply:
+#
+# jq is copyright (C) 2012 Stephen Dolan
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# jq's documentation (everything found under the docs/ subdirectory in
+# the source tree) is licensed under the Creative Commons CC BY 3.0
+# license, which can be found at:
+#
+#          https://creativecommons.org/licenses/by/3.0/
+#
+- q: '.[] as $n | $n+0 | [., tostring, . == $n]'
+  input: [-9007199254740993, -9007199254740992, 9007199254740992, 9007199254740993, 13911860366432393]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [-9007199254740992, "-9007199254740992", true]
+      - [-9007199254740992, "-9007199254740992", true]
+      - [9007199254740992, "9007199254740992", true]
+      - [9007199254740992, "9007199254740992", true]
+      - [13911860366432392, "13911860366432392", true]
+    - v: '[1.7, 1.7.1)'
+      output:
+      - [-9007199254740992, "-9007199254740992", true]
+      - [-9007199254740992, "-9007199254740992", true]
+      - [9007199254740992, "9007199254740992", true]
+      - [9007199254740992, "9007199254740992", true]
+      - [13911860366432390, "13911860366432390", true]
+    - v: '[1.7.1, )'
+      output:
+      - [-9007199254740992, "-9007199254740992", true]
+      - [-9007199254740992, "-9007199254740992", true]
+      - [9007199254740992, "9007199254740992", true]
+      - [9007199254740992, "9007199254740992", true]
+      - [13911860366432392, "13911860366432392", true]
+    jjq:
+    - v: '[1.7, )'
+      output:
+      - [-9007199254740992, "-9007199254740992", false]
+      - [-9007199254740992, "-9007199254740992", true]
+      - [9007199254740992, "9007199254740992", true]
+      - [9007199254740992, "9007199254740992", false]
+      - [13911860366432392, "13911860366432392", false]
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[ANY,STRING,BOOLEAN]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
+    output: '[NUMBER,STRING,BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'fromjson | isnan'
+  input: "nan1234"
+  expectations:
+    default:
+    - v: '[1.5, 1.7.1)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Invalid literal at EOF at line 1, column 7 (while parsing 'nan1234')\n"
+    - v: '[1.7.1, 1.8.0)'
+      output:
+      - true
+    - v: '[1.8.0, )'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Invalid numeric literal at EOF at line 1, column 7 (while parsing 'nan1234')\n"
+    jjq:
+    - v: '[1.7.1, 1.8.0)'
+      output: []
+      runtime_error: "failed to parse \"nan1234\" as json"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try ["ok", setpath([1]; 1)] catch ["ko", .]'
+  input: {"hi": "hello"}
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - ["ko", "Cannot index object with number"]
+    - v: '[1.8.2, )'
+      output:
+      - ["ko", "Cannot index object with number (1)"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '["ko",ANY]|["ok",ANY]'
+  - v: '[1.5, )'
+    input: '{hi:STRING}'
+    output: '["ko",ANY]|["ok",ANY]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try ltrimstr(1) catch "x", try rtrimstr(1) catch "x" | "ok"'
+  input: "hi"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "ok"
+      - "ok"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '"ok"'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '"ok"'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try ltrimstr("x") catch "x", try rtrimstr("x") catch "x" | "ok"'
+  input: {"hey": []}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "ok"
+      - "ok"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '"ok"'
+  - v: '[1.5, )'
+    input: '{hey:[]}'
+    output: '"ok"'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false

@@ -1,186 +1,267 @@
 - q: 'error'
-  in: null
-  types:
-  - input: 'ANY'
-    output: 'NEVER'
-  - input: 'NULL'
-    output: 'NEVER'
-  properties:
-    cardinality: ZERO
-    depends_on_input: true
-    depends_on_external_state: false
+  input: null
   expectations:
     default:
     - v: '[1.5, 1.7)'
-      out: []
+      output: []
     - v: '[1.7, )'
-      out: []
-      error: true
+      output: []
+      runtime_error: "jq: error (at <stdin>:0) (not a string): null\n"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NEVER'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NEVER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ZERO
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try error catch .'
-  in: "foo"
-  out:
-  - "foo"
+  input: "foo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "foo"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'try error catch .'
-  in: 0
-  out:
-  - 0
+  input: 0
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 0
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'error(empty)'
-  in: null
-  out: []
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output: []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NEVER'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NEVER'
   properties:
+  - v: '[1.5, )'
     cardinality: ZERO
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'try error("a", error("foo")) catch .'
-  out:
-  - "a"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "a"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'try error(error("foo")) catch .'
-  out:
-  - "foo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "foo"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'try error({x:0}) catch .'
-  out:
-  - {"x": 0}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"x": 0}
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'error(null)'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output: []
+    - v: '[1.7, )'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0) (not a string): null\n"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NEVER'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NEVER'
   properties:
+  - v: '[1.5, )'
     cardinality: ZERO
     depends_on_input: false
     depends_on_external_state: false
-  expectations:
-    default:
-    - v: '[1.5, 1.7)'
-      out: []
-    - v: '[1.7, )'
-      out: []
-      error: true
 
 - q: 'try error(null) catch .'
-  out:
-  - null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output: []
+    - v: '[1.7, )'
+      output:
+      - null
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: 'try error(null) catch "__ERROR__"'
-  types:
-  - input: 'ANY'
-    output: '"__ERROR__"'
-  - input: 'NULL'
-    output: '"__ERROR__"'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
   expectations:
     default:
     - v: '[1.5, 1.7)'
-      out: []
+      output: []
     - v: '[1.7, )'
-      out:
+      output:
       - "__ERROR__"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '"__ERROR__"'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '"__ERROR__"'
+  properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: 'try (null | error) catch "__ERROR__"'
-  types:
-  - input: 'ANY'
-    output: '"__ERROR__"'
-  - input: 'NULL'
-    output: '"__ERROR__"'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
   expectations:
     default:
     - v: '[1.5, 1.7)'
-      out: []
+      output: []
     - v: '[1.7, )'
-      out:
+      output:
       - "__ERROR__"
-
-- q: 'try error(rindex("z")) catch "__ERROR__"'
-  in: "x"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"__ERROR__"'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '"__ERROR__"'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'try error(rindex("z")) catch "__ERROR__"'
+  input: "x"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output: []
+    - v: '[1.7, )'
+      output:
+      - "__ERROR__"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '"__ERROR__"'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '"__ERROR__"'
+  properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  expectations:
-    default:
-    - v: '[1.5, 1.7)'
-      out: []
-    - v: '[1.7, )'
-      out:
-      - "__ERROR__"

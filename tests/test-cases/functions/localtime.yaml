@@ -1,58 +1,70 @@
 - q: 'try localtime catch .'
-  in: "2023-11-14T22:13:20Z"
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: 'STRING'
-    output: 'ANY'
-  properties:
-    cardinality: UNKNOWN
-    depends_on_input: true
-    depends_on_external_state: true
-  expectations:
-    default:
-    - v: '[1.6, )'
-      out:
-      - "localtime() requires numeric inputs"
-
-- q: 'try localtime catch .'
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: 'NULL'
-    output: 'ANY'
-  properties:
-    cardinality: UNKNOWN
-    depends_on_input: true
-    depends_on_external_state: true
-  expectations:
-    default:
-    - v: '[1.6, )'
-      out:
-      - "localtime() requires numeric inputs"
-
-# macOS jq 1.7 and later convert NaN to an epoch date.
-- q: 'try (nan | localtime) catch .'
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: 'NULL'
-    output: 'ANY'
-  properties:
-    cardinality: UNKNOWN
-    depends_on_input: false
-    depends_on_external_state: true
-  comment: 'on Linux, localtime reports this the same way on every version that has it; macOS jq 1.7 and later convert NaN to an epoch date'
+  input: "2023-11-14T22:13:20Z"
   expectations:
     default:
     - v: '[1.5, 1.6)'
-      out: []
-      error: true
+      compile_error: "jq: error: localtime/0 is not defined at <top-level>, line 1:\ntry localtime catch .    \njq: 1 compile error\n"
     - v: '[1.6, )'
-      out:
+      output:
+      - "localtime() requires numeric inputs"
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.6, )'
+    input: 'STRING'
+    output: 'ANY'
+  properties:
+  - v: '[1.6, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+
+- q: 'try localtime catch .'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: localtime/0 is not defined at <top-level>, line 1:\ntry localtime catch .    \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - "localtime() requires numeric inputs"
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.6, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.6, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+
+# macOS jq 1.7 and later convert NaN to an epoch date.
+- q: 'try (nan | localtime) catch .'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: localtime/0 is not defined at <top-level>, line 1:\ntry (nan | localtime) catch .           \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
       - "error converting number of seconds since epoch to datetime"
     overrides:
     - v: '[1.7, )'
       os: MACOS
-      out:
+      output:
       - [1970, 0, 1, 0, 0, null, 4, 0]
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.6, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.6, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: true
+  comment: 'on Linux, localtime reports this the same way on every version that has it; macOS jq 1.7 and later convert NaN to an epoch date'

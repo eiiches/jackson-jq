@@ -1,141 +1,192 @@
 - q: 'if true then 1 else 2 end'
-  out:
-  - 1
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '1|2'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '1'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'if false then 1 end'
-  in: 2
-  out:
-  - 2
+  input: 2
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected end (Unix shell quoting issues?) at <top-level>, line 1:\nif false then 1 end                \njq: error: Possibly unterminated 'if' statement at <top-level>, line 1:\nif false then 1 end\njq: 2 compile errors\n"
+    - v: '[1.7, )'
+      output:
+      - 2
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - 2.0
+      incompat_type: INTENTIONAL
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'INT'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: 'if false then 1 elif false then 2 else 3 end'
-  out:
-  - 3
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 3
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '3'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '3'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'if false then 1 elif false then 2 end'
-  in: 3
-  out:
-  - 3
+  input: 3
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected end (Unix shell quoting issues?) at <top-level>, line 1:\nif false then 1 elif false then 2 end                                  \njq: error: Possibly unterminated 'if' statement at <top-level>, line 1:\nif false then 1 elif false then 2 end\njq: 2 compile errors\n"
+    - v: '[1.7, )'
+      output:
+      - 3
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - 3.0
+      incompat_type: INTENTIONAL
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'INT'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 # Fuzz iteration 8436: a definition in a condition must not replace the outer function.
 - q: 'def f: "outer"; if def f: true; f then [] else 0 end | f'
-  in: null
+  input: null
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "outer"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"outer"'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '"outer"'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'def f: "outer"; [if true then def f: "inner"; f else 0 end, f]'
-  in: null
+  input: null
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - ["inner", "outer"]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:"inner"|"outer"|0]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:"inner"|"outer"]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'def f: "outer"; if false then 0 else def f: "inner"; f end | f'
-  in: null
+  input: null
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "outer"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"outer"'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '"outer"'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'def f: "outer"; if false then 0 elif def f: true; f then [] else 0 end | f'
-  in: null
+  input: null
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "outer"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"outer"'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '"outer"'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'def f: "outer"; if false then def f: "inner"; f elif true then f else 0 end | f'
-  in: null
+  input: null
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "outer"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"outer"'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '"outer"'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false

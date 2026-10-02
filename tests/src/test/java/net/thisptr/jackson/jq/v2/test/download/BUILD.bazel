@@ -1,0 +1,50 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_jq//:defs.bzl", "jq_binaries_rootpath")
+load("//build-tools/bazel:defs.bzl", "jjq_java_library", "jjq_java_test_suite")
+
+jjq_java_library(
+    name = "download",
+    testonly = True,
+    srcs = [
+        "DownloadTestCases.java",
+        "UpstreamCorpus.java",
+    ],
+    release = 17,
+    visibility = ["//tests:__pkg__"],
+    deps = [
+        "//jackson-jq-core",
+        "//jackson-jq-spi",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/comparator",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/evaluator",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/properties",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/testcase",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/typecheck",
+        "@maven//:com_fasterxml_jackson_core_jackson_core",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+        "@maven//:com_fasterxml_jackson_dataformat_jackson_dataformat_yaml",
+        "@maven//:commons_cli_commons_cli",
+    ],
+)
+
+jjq_java_test_suite(
+    srcs = ["DownloadTestCasesTest.java"],
+    release = 17,
+    visibility = ["//tests:__pkg__"],
+    deps = [
+        ":download",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/version",
+    ],
+)
+
+java_binary(
+    name = "download-test-cases",
+    testonly = True,
+    data = ["@jq_binaries//:all"],
+    jvm_flags = ["-Djackson_jq.test.jq_bin_dir=" + jq_binaries_rootpath()],
+    main_class = "net.thisptr.jackson.jq.v2.test.download.DownloadTestCases",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":download",
+        "//jackson-jq-ext-module-joni",
+    ],
+)

@@ -1,229 +1,372 @@
 - q: 'isempty(empty)'
-  in: null
-  out:
-  - true
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\nisempty(empty)\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - true
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'BOOLEAN'
-  - input: 'NULL'
+  - v: '[1.6, )'
+    input: 'NULL'
     output: 'BOOLEAN'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.6, )'
 
 - q: 'isempty(.[])'
-  in: []
-  out:
-  - true
+  input: []
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\nisempty(.[])\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - true
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'BOOLEAN'
-  - input: '[]'
+  - v: '[1.6, )'
+    input: '[]'
     output: 'BOOLEAN'
   properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.6, )'
-
-- q: 'isempty(.[])'
-  in: [1, 2, 3]
-  out:
-  - false
-  types:
-  - input: 'ANY'
-    output: 'BOOLEAN'
-  - input: '[INT,INT,INT]'
-    output: 'BOOLEAN'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.6, )'
-
-- q: 'isempty(range(3))'
-  in: null
-  out:
-  - false
-  types:
-  - input: 'ANY'
-    output: 'BOOLEAN'
-  - input: 'NULL'
-    output: 'BOOLEAN'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
-  v: '[1.6, )'
-
-- q: '[.[] | isempty(select(. > 1))]'
-  in: [1, 2]
-  out:
-  - [true, false]
-  types:
-  - input: 'ANY'
-    output: '[*:BOOLEAN]'
-  - input: '[INT,INT]'
-    output: '[*:BOOLEAN]'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.6, )'
-
-- q: 'isempty(isempty(empty))'
-  in: null
-  out:
-  - false
-  types:
-  - input: 'ANY'
-    output: 'BOOLEAN'
-  - input: 'NULL'
-    output: 'BOOLEAN'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
-  v: '[1.6, )'
-
-- q: 'isempty(isempty(1))'
-  in: null
-  out:
-  - false
-  types:
-  - input: 'ANY'
-    output: 'BOOLEAN'
-  - input: 'NULL'
-    output: 'BOOLEAN'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
-  v: '[1.6, )'
-  comment: 'Nesting works because IsEmptyFunction short-circuits on a per-invocation identity token rather than on a `label` name.'
-
-- q: 'isempty(1, error("foo"))'
-  in: null
-  out:
-  - false
-  types:
-  - input: 'ANY'
-    output: 'BOOLEAN'
-  - input: 'NULL'
-    output: 'BOOLEAN'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
-  v: '[1.6, )'
-  comment: 'isempty stops at the first output, so error("foo") is never evaluated.'
-
-- q: 'try isempty(error("foo")) catch .'
-  in: null
-  out:
-  - "foo"
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: 'NULL'
-    output: 'ANY'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
-  v: '[1.6, )'
-
-- q: 'isempty(error("foo")?)'
-  in: null
-  out:
-  - true
-  types:
-  - input: 'ANY'
-    output: 'BOOLEAN'
-  - input: 'NULL'
-    output: 'BOOLEAN'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
-  v: '[1.6, )'
-
-- q: 'isempty((1, 2)?)'
-  in: null
-  out:
-  - false
-  types:
-  - input: 'ANY'
-    output: 'BOOLEAN'
-  - input: 'NULL'
-    output: 'BOOLEAN'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
-  v: '[1.6, )'
-
-- q: 'try path(isempty(.a)) catch .'
-  in: {"a": 1}
-  out:
-  - "Invalid path expression with result false"
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: '{a:INT}'
-    output: 'ANY'
-  properties:
+  - v: '[1.6, 1.7)'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.6, )'
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
-- q: '[isempty(try (1, 2) catch .)]'
-  in: null
-  out:
-  - [false, false]
+- q: 'isempty(.[])'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\nisempty(.[])\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - false
   types:
-  - input: 'ANY'
-    output: '[*:BOOLEAN]'
-  - input: 'NULL'
-    output: '[*:BOOLEAN]'
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.6, )'
+    input: '[INT,INT,INT]'
+    output: 'BOOLEAN'
   properties:
+  - v: '[1.6, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'isempty(range(3))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\nisempty(range(3))\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - false
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.6, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.6, 1.7)'
+
+- q: '[.[] | isempty(select(. > 1))]'
+  input: [1, 2]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\n[.[] | isempty(select(. > 1))]       \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [true, false]
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: '[*:BOOLEAN]'
+  - v: '[1.6, )'
+    input: '[INT,INT]'
+    output: '[*:BOOLEAN]'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'isempty(isempty(empty))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\nisempty(isempty(empty))\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - false
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.6, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'isempty(isempty(1))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\nisempty(isempty(1))\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - false
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.6, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  comment: 'Nesting works because IsEmptyFunction short-circuits on a per-invocation identity token rather than on a `label` name.'
+
+- q: 'isempty(1, error("foo"))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\nisempty(1, error(\"foo\"))\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - false
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.6, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  comment: 'isempty stops at the first output, so error("foo") is never evaluated.'
+
+- q: 'try isempty(error("foo")) catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\ntry isempty(error(\"foo\")) catch .    \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - "foo"
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.6, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.6, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'isempty(error("foo")?)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\nisempty(error(\"foo\")?)\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - true
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.6, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'isempty((1, 2)?)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\nisempty((1, 2)?)\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - false
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.6, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'try path(isempty(.a)) catch .'
+  input: {"a": 1}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\ntry path(isempty(.a)) catch .         \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - "Invalid path expression with result false"
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.6, )'
+    input: '{a:INT}'
+    output: 'ANY'
+  properties:
+  - v: '[1.6, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[isempty(try (1, 2) catch .)]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\n[isempty(try (1, 2) catch .)] \njq: 1 compile error\n"
+    - v: '[1.6, 1.7)'
+      output:
+      - [false, false]
+    - v: '[1.7, )'
+      output:
+      - [false]
+  types:
+  - v: '[1.6, 1.7)'
+    input: 'ANY'
+    output: '[*:BOOLEAN]'
+  - v: '[1.7, )'
+    input: 'ANY'
+    output: '[BOOLEAN]'
+  - v: '[1.6, 1.7)'
+    input: 'NULL'
+    output: '[*:BOOLEAN]'
+  - v: '[1.7, )'
+    input: 'NULL'
+    output: '[BOOLEAN]'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
   comment: 'Two outputs. IsEmptyFunction does not branch on version; TryCatch does. Before 1.7 a `try` also catches errors raised downstream of it (TryCatch.applyLegacy), so it intercepts the short-circuit and runs its catch body, which emits again and re-triggers it. jq 1.6 behaves the same way for the same reason: its isempty is `0 == ((label $go | g | (1, break $go)) // 0)`, and the `try` swallows that break too.'
 
 - q: '[isempty(try (1, 2) catch .)]'
-  in: null
-  out:
-  - [false]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\n[isempty(try (1, 2) catch .)] \njq: 1 compile error\n"
+    - v: '[1.6, 1.7)'
+      output:
+      - [false, false]
+    - v: '[1.7, )'
+      output:
+      - [false]
   types:
-  - input: 'ANY'
+  - v: '[1.6, 1.7)'
+    input: 'ANY'
+    output: '[*:BOOLEAN]'
+  - v: '[1.7, )'
+    input: 'ANY'
     output: '[BOOLEAN]'
-  - input: 'NULL'
+  - v: '[1.6, 1.7)'
+    input: 'NULL'
+    output: '[*:BOOLEAN]'
+  - v: '[1.7, )'
+    input: 'NULL'
     output: '[BOOLEAN]'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.7, )'
   comment: 'One output. From 1.7 on TryCatch tunnels downstream errors through nested `try`s and rethrows them at their own boundary (DOWNSTREAM_ERRORS_ESCAPE_SINCE), so the short-circuit escapes the `try` rather than being caught by it. jq 1.7 made the matching change and redefined isempty as `first((g|false), true)`.'
 
 - q: 'isempty((1?), error("y"))'
-  in: null
-  out:
-  - false
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\nisempty((1?), error(\"y\"))\njq: 1 compile error\n"
+    - v: '[1.6, 1.7)'
+      output:
+      - false
+      runtime_error: "jq: error (at <stdin>:0): y\n"
+    - v: '[1.7, )'
+      output:
+      - false
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'BOOLEAN'
-  - input: 'NULL'
+  - v: '[1.6, )'
+    input: 'NULL'
     output: 'BOOLEAN'
   properties:
+  - v: '[1.6, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.7, )'
   comment: 'From 1.7 on the break escapes the `?`, so error("y") is never evaluated. jq 1.6 raises "y" and then emits false.'

@@ -1,76 +1,117 @@
 # The replacement is concatenated onto the text preceding the match, so null contributes
 # nothing and any other non-string is a type error.
 - q: '"abc" | sub("b"; null)'
-  in: null
-  out:
-  - "ac"
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "ac"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'try ("abc" | sub("b"; 1)) catch .'
-  in: null
-  out:
-  - "string (\"a\") and number (1) cannot be added"
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "string (\"a\") and number (1) cannot be added"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'try ("abc" | sub("b"; true)) catch .'
-  in: null
-  out:
-  - "string (\"a\") and boolean (true) cannot be added"
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "string (\"a\") and boolean (true) cannot be added"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'try ("abc" | sub("b"; [1])) catch .'
-  in: null
-  out:
-  - "string (\"a\") and array ([1]) cannot be added"
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "string (\"a\") and array ([1]) cannot be added"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'try ("xxbyy" | sub("b"; {})) catch .'
-  in: null
-  out:
-  - "string (\"xx\") and object ({}) cannot be added"
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "string (\"xx\") and object ({}) cannot be added"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'

@@ -1,18 +1,13 @@
 package net.thisptr.jackson.jq.v2.test.typecheck;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Map;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.errorprone.annotations.Var;
 import org.jspecify.annotations.Nullable;
 
@@ -31,216 +26,168 @@ import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.NullType;
 import net.thisptr.jackson.jq.v2.spi.type.Type;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
+import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
 import net.thisptr.jackson.jq.v2.test.testcase.ModuleFixtures;
 import net.thisptr.jackson.jq.v2.test.testcase.TestCase;
+import net.thisptr.jackson.jq.v2.test.testcase.TestCaseFiles;
+import net.thisptr.jackson.jq.v2.test.testcase.TestCaseFormatter;
+import net.thisptr.jackson.jq.v2.test.testcase.VersionedRows;
 
-public class TypeAssertionGenerator {
-	// A case's v: takes one range or a list of them, so the single value has to read as a list.
-	private static final ObjectMapper YAML_MAPPER = YAMLMapper.builder()
-			.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
-			.build();
+/**
+ * Rewrites the {@code types:} rows of golden test cases from the types the compiler infers.
+ *
+ * <pre>
+ * bazelisk run //:generate-type-assertions -- tests/test-cases/functions/pow.yaml
+ * bazelisk run //:generate-type-assertions -- --check tests/test-cases
+ * </pre>
+ *
+ * <p>Each case is compiled on every jq version it has an expectation for, once for an unknown input
+ * and once for its own, and the versions that agree are joined into one {@code v:} range. A version
+ * the query does not compile on contributes no row, which is how a case calling a builtin that
+ * arrived in jq 1.6 ends up with a range starting there.
+ */
+public final class TypeAssertionGenerator {
+	private static final Jackson2JsonProvider PROVIDER = Jackson2JsonProvider.getInstance();
 
-	public static void main(String[] args) throws Exception {
-		Path repoRoot = Path.of(args.length > 0 ? args[0] : ".");
-		Path testCasesDir = repoRoot.resolve("tests/test-cases");
-		if (!Files.isDirectory(testCasesDir)) {
-			System.err.println("Test cases directory not found at: " + testCasesDir);
-			System.exit(1);
-		}
-
-		List<Path> yamlFiles = new ArrayList<>();
-		try (Stream<Path> stream = Files.walk(testCasesDir)) {
-			stream.filter(p -> p.toString().endsWith(".yaml") || p.toString().endsWith(".yml"))
-					.forEach(yamlFiles::add);
-		}
-		Collections.sort(yamlFiles);
-
-		System.out.printf("Found %d YAML files to process.%n", yamlFiles.size());
-		@Var int totalTestCases = 0;
-		@Var int updatedTestCases = 0;
-
-		for (Path yamlFile : yamlFiles) {
-			List<TestCase> testCases;
-			try {
-				TestCase[] array = YAML_MAPPER.readValue(yamlFile.toFile(), TestCase[].class);
-				testCases = List.of(array);
-			} catch (Exception e) {
-				System.err.printf("Skipping %s (cannot parse as TestCase[]): %s%n", yamlFile, e.getMessage());
+	/**
+	 * The output types inferred for one case, keyed by the input type they were inferred for.
+	 */
+	private static Map<String, Map<Version, String>> infer(TestCase tc, @Nullable Path moduleRoot) {
+		Type inputType = tc.input.isNull() ? NullType.getInstance() : ConstantTypes.shapeOf(PROVIDER, tc.input);
+		List<Type> inputTypes = inputType instanceof AnyType
+				? List.of(AnyType.getInstance())
+				: List.of(AnyType.getInstance(), inputType);
+		Map<String, Map<Version, String>> outputs = new LinkedHashMap<>();
+		for (Version version : Versions.versions()) {
+			if (!tc.expectations.hasDefault(version))
 				continue;
-			}
-
-			@Var boolean modified = false;
-			List<List<TestCase.TypeAssertion>> computedTypes = new ArrayList<>();
-
-			for (TestCase tc : testCases) {
-				totalTestCases++;
-				if (!tc.shouldCompile) {
-					computedTypes.add(null);
-					continue;
-				}
-
-				Version version = selectVersion(tc);
-				Path moduleSearchPath = tc.modules.isEmpty() ? null : ModuleFixtures.materialize(tc.modules);
-				try {
-					Environment<JsonNode> env = buildEnvironment(version, moduleSearchPath);
-
-					// 1. Any input type
-					Type inputType1 = AnyType.getInstance();
-					CompileOptions options1 = CompileOptions.newBuilder()
+			try {
+				Environment<JsonNode> environment = environment(version, moduleRoot);
+				for (Type input : inputTypes) {
+					CompileOptions options = CompileOptions.newBuilder()
 							.setTypeCheckMode(TypeCheckMode.WARN)
-							.setInputType(inputType1)
+							.setInputType(input)
 							.build();
-					JsonQuery<JsonNode> q1 = env.compile(tc.q, options1);
-					String outType1 = q1.getType().outputType().toString();
-
-					// 2. Concrete input type
-					Type inputType2 = tc.in == null || tc.in.isNull()
-							? NullType.getInstance()
-							: ConstantTypes.shapeOf(Jackson2JsonProvider.getInstance(), tc.in);
-					CompileOptions options2 = CompileOptions.newBuilder()
-							.setTypeCheckMode(TypeCheckMode.WARN)
-							.setInputType(inputType2)
-							.build();
-					JsonQuery<JsonNode> q2 = env.compile(tc.q, options2);
-					String inType2 = inputType2.toString();
-					String outType2 = q2.getType().outputType().toString();
-
-					List<TestCase.TypeAssertion> assertions = List.of(
-							new TestCase.TypeAssertion("ANY", outType1),
-							new TestCase.TypeAssertion(inType2, outType2));
-					computedTypes.add(assertions);
-					modified = true;
-					updatedTestCases++;
-				} catch (Exception e) {
-					System.err.printf("Error evaluating types for %s: '%s': %s%n", yamlFile.getFileName(), tc.q, e.getMessage());
-					computedTypes.add(null);
-				} finally {
-					if (moduleSearchPath != null) {
-						ModuleFixtures.cleanup(moduleSearchPath);
-					}
+					JsonQuery<JsonNode> query = environment.compile(tc.q, options);
+					outputs.computeIfAbsent(input.toString(), key -> new LinkedHashMap<>())
+							.put(version, query.getType().outputType().toString());
 				}
-			}
-
-			if (modified) {
-				applyTypesToYaml(yamlFile, computedTypes);
+			} catch (Exception doesNotCompile) {
+				// A version the query does not compile on has no inferred type to assert.
 			}
 		}
-
-		System.out.printf("Done! Updated %d of %d test cases across %d files.%n", updatedTestCases, totalTestCases, yamlFiles.size());
+		return outputs;
 	}
 
-	private static Version selectVersion(TestCase tc) {
-		List<Version> versions = Versions.versions();
-		if (!tc.hasAssertionVersionSelection()) {
-			return Versions.JQ_1_7;
-		}
-		for (int i = versions.size() - 1; i >= 0; i--) {
-			if (tc.appliesToAssertions(versions.get(i))) {
-				return versions.get(i);
-			}
-		}
-		return Versions.JQ_1_7;
+	/**
+	 * The {@code types:} rows one case asserts, empty when the query compiles on no version it
+	 * expects.
+	 *
+	 * @param tc the case to infer for
+	 * @param moduleRoot the module search root the case needs, or null when it needs none
+	 * @return one row per input type and version range, in version order
+	 */
+	public static List<TestCase.TypeAssertion> assertionsFor(TestCase tc, @Nullable Path moduleRoot) {
+		return rows(infer(tc, moduleRoot));
 	}
 
-	private static Environment<JsonNode> buildEnvironment(Version version, @Nullable Path moduleSearchPath) {
-		EnvironmentBuilder<JsonNode> envBuilder = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), version);
-		if (moduleSearchPath != null) {
-			envBuilder.clearModuleLoaders()
-					.addModuleLoader(new FileSystemModuleLoader<>(envBuilder.getJsonProvider(), moduleSearchPath))
+	private static List<TestCase.TypeAssertion> rows(Map<String, Map<Version, String>> outputs) {
+		List<TestCase.TypeAssertion> rows = new ArrayList<>();
+		for (Map.Entry<String, Map<Version, String>> entry : outputs.entrySet()) {
+			for (VersionedRows.Row<String> row : VersionedRows.merge(Versions.versions(), entry.getValue())) {
+				TestCase.TypeAssertion assertion = new TestCase.TypeAssertion(VersionRange.valueOf(row.range()));
+				assertion.input = entry.getKey();
+				assertion.output = row.value();
+				rows.add(assertion);
+			}
+		}
+		return rows;
+	}
+
+	private static Environment<JsonNode> environment(Version version, @Nullable Path moduleRoot) throws Exception {
+		EnvironmentBuilder<JsonNode> builder = EnvironmentBuilder.withDefaultLoaders(PROVIDER, version);
+		if (moduleRoot != null) {
+			builder.clearModuleLoaders()
+					.addModuleLoader(new FileSystemModuleLoader<>(PROVIDER, moduleRoot))
 					.addModuleLoader(ClassPathModuleLoader.getInstance());
 		}
-		return envBuilder
+		return builder
 				// Regex is an extension module; the suite includes it because jq's test cases call
 				// test, match, sub and the rest by their bare names.
 				.includeModule(new JoniRegexModule())
-				.defineVariable("ENV", () -> envBuilder.getJsonProvider().createObject(Collections.singletonMap("PAGER", envBuilder.getJsonProvider().createString("less"))))
+				.defineVariable("ENV", () -> PROVIDER.createObject(Collections.singletonMap("PAGER", PROVIDER.createString("less"))))
 				.build();
 	}
 
-	private static void applyTypesToYaml(Path yamlFile, List<List<TestCase.TypeAssertion>> computedTypes) throws IOException {
-		List<String> lines = Files.readAllLines(yamlFile, StandardCharsets.UTF_8);
-		List<String> newLines = new ArrayList<>();
-		@Var int tcIndex = -1;
-		@Var boolean inOut = false;
-		@Var boolean inTypes = false;
-
-		for (int i = 0; i < lines.size(); i++) {
-			String line = lines.get(i);
-			String trimmed = line.trim();
-
-			if (trimmed.startsWith("- q:") || trimmed.startsWith("-  q:")) {
-				tcIndex++;
-				inOut = false;
-				inTypes = false;
-				newLines.add(line);
-				continue;
-			}
-
-			if (trimmed.startsWith("out:") || trimmed.startsWith("out :")) {
-				inOut = true;
-				newLines.add(line);
-				// If out is flow-style e.g. "out: []" or "out: [1, 2]"
-				if (trimmed.endsWith("]") || trimmed.endsWith("}")) {
-					inOut = false;
-					insertTypesIfPresent(newLines, computedTypes, tcIndex);
-				}
-				continue;
-			}
-
-			if (inOut) {
-				// We are inside out block (sequence elements like "  - ...")
-				// Check if the current line is still part of out
-				if (line.startsWith("  - ") || line.startsWith("    ") || line.startsWith("  [") || line.startsWith("  {") || line.startsWith("  \"") || line.startsWith("  '") || line.startsWith("  null") || line.startsWith("  true") || line.startsWith("  false") || (trimmed.startsWith("-") && line.startsWith("  "))) {
-					newLines.add(line);
+	/**
+	 * Writes each case's rows, or reports the ones that differ from what is committed.
+	 */
+	private static int generate(Path file, boolean check) throws Exception {
+		TestCaseFormatter.Document document = TestCaseFormatter.read(file);
+		@Var int changed = 0;
+		for (TestCaseFormatter.Entry entry : document.entries()) {
+			TestCase tc = entry.testCase();
+			Path moduleRoot = tc.modules.isEmpty() ? null : ModuleFixtures.materialize(tc.modules);
+			try {
+				List<TestCase.TypeAssertion> rows = assertionsFor(tc, moduleRoot);
+				if (check) {
+					if (!equal(tc.types, rows)) {
+						changed++;
+						System.out.printf("%s: '%s' types differ%n  committed: %s%n  inferred:  %s%n",
+								file, tc.q, render(tc.types), render(rows));
+					}
 					continue;
-				} else {
-					// out block ended
-					inOut = false;
-					insertTypesIfPresent(newLines, computedTypes, tcIndex);
 				}
+				tc.types = rows;
+				changed++;
+			} finally {
+				if (moduleRoot != null)
+					ModuleFixtures.cleanup(moduleRoot);
 			}
-
-			if (trimmed.startsWith("types:")) {
-				inTypes = true;
-				continue; // Skip old types line
-			}
-
-			if (inTypes) {
-				if (line.startsWith("  - ") || line.startsWith("    ") || line.startsWith("  types:") || trimmed.startsWith("input:") || trimmed.startsWith("output:")) {
-					continue; // Skip old types content
-				} else {
-					inTypes = false;
-				}
-			}
-
-			newLines.add(line);
 		}
-
-		if (inOut) {
-			insertTypesIfPresent(newLines, computedTypes, tcIndex);
+		if (!check) {
+			TestCaseFormatter.write(file, document);
+			System.out.printf("%s: wrote types for %d of %d cases%n", file, changed, document.entries().size());
 		}
-
-		@Var String content = String.join("\n", newLines);
-		if (!content.endsWith("\n")) {
-			content += "\n";
-		}
-		Files.writeString(yamlFile, content, StandardCharsets.UTF_8);
+		return changed;
 	}
 
-	private static void insertTypesIfPresent(List<String> newLines, List<List<TestCase.TypeAssertion>> computedTypes, int tcIndex) {
-		if (tcIndex >= 0 && tcIndex < computedTypes.size()) {
-			List<TestCase.TypeAssertion> assertions = computedTypes.get(tcIndex);
-			if (assertions != null && !assertions.isEmpty()) {
-				newLines.add("  types:");
-				for (TestCase.TypeAssertion ta : assertions) {
-					newLines.add("  - input: '" + escapeSingleQuotes(ta.input) + "'");
-					newLines.add("    output: '" + escapeSingleQuotes(ta.output) + "'");
-				}
-			}
+	private static boolean equal(List<TestCase.TypeAssertion> committed, List<TestCase.TypeAssertion> inferred) {
+		if (committed.size() != inferred.size())
+			return false;
+		for (int i = 0; i < committed.size(); i++) {
+			TestCase.TypeAssertion a = committed.get(i);
+			TestCase.TypeAssertion b = inferred.get(i);
+			if (!a.version.equals(b.version) || !a.input.equals(b.input) || !a.output.equals(b.output))
+				return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Rows as the report shows them; their own toString leaves the range out.
+	 */
+	private static String render(List<TestCase.TypeAssertion> rows) {
+		List<String> rendered = new ArrayList<>();
+		for (TestCase.TypeAssertion row : rows)
+			rendered.add(String.format("{v: '%s', input: '%s', output: '%s'}", TestCaseFormatter.range(row.version), row.input, row.output));
+		return String.join(", ", rendered);
+	}
+
+	public static void main(String[] args) throws Exception {
+		TestCaseFiles.Invocation invocation = TestCaseFiles.parse(args, "generate-type-assertions");
+		@Var int differing = 0;
+		for (Path file : invocation.files()) {
+			if (generate(file, invocation.check()) > 0 && invocation.check())
+				differing++;
+		}
+		if (invocation.check()) {
+			System.out.printf("%d of %d files differ%n", differing, invocation.files().size());
+			if (differing > 0)
+				System.exit(1);
 		}
 	}
 
-	private static String escapeSingleQuotes(String s) {
-		return s.replace("'", "''");
+	private TypeAssertionGenerator() {
 	}
 }

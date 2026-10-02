@@ -1,0 +1,379 @@
+# This file is generated from jqlang/jq files. Different license terms apply:
+#
+# jq is copyright (C) 2012 Stephen Dolan
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# jq's documentation (everything found under the docs/ subdirectory in
+# the source tree) is licensed under the Creative Commons CC BY 3.0
+# license, which can be found at:
+#
+#          https://creativecommons.org/licenses/by/3.0/
+#
+- q: '(. + 2) * 5'
+  input: 1
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 15
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[ .[] | . * 2]'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [2, 4, 6]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'utf8bytelength'
+  input: "\u03bc"
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: utf8bytelength/0 is not defined at <top-level>, line 1:\nutf8bytelength\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - 2
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'INT'
+  - v: '[1.6, )'
+    input: 'STRING'
+    output: 'INT'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'getpath(["a","b"])'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[getpath(["a","b"], ["a","c"])]'
+  input: {"a": {"b": 0, "c": 1}}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 1]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '{a:{b:INT,c:INT}}'
+    output: '[*:ANY]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'setpath(["a","b"]; 1)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": {"b": 1}}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'setpath(["a","b"]; 1)'
+  input: {"a": {"b": 0}}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": {"b": 1}}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{a:{b:INT}}'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'setpath([0,"a"]; 1)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [{"a": 1}]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'delpaths([["a","b"]])'
+  input: {"a": {"b": 1}, "x": {"y": 2}}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": {}, "x": {"y": 2}}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '{a:{b:INT},x:{y:INT}}'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'join(" ")'
+  input: ["a", 1, 2.3, true, null, false]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): string (\" \") and number (1) cannot be added\n"
+    - v: '[1.6, )'
+      output:
+      - "a 1 2.3 true  false"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, 1.6)'
+    input: '[STRING,INT,FLOAT,BOOLEAN,NULL,BOOLEAN]'
+    output: 'ANY'
+  - v: '[1.6, )'
+    input: '[STRING,INT,FLOAT,BOOLEAN,NULL,BOOLEAN]'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'walk( if type == "object" then with_entries( .key |= sub( "^_+"; "") ) else . end )'
+  input: [{"_a": {"__b": 2}}]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: walk/1 is not defined at <top-level>, line 1:\nwalk( if type == \"object\" then with_entries( .key |= sub( \"^_+\"; \"\") ) else . end )\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [{"a": {"b": 2}}]
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.6, 1.7)'
+    input: '[{_a:{__b:INT}}]'
+    output: '[*:NULL|{*:INT}]'
+  - v: '[1.7, )'
+    input: '[{_a:{__b:INT}}]'
+    output: '[*:ANY]'
+  properties:
+  - v: '[1.6, 1.7)'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '$ENV.PAGER'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: ENV/0 is not defined at <top-level>, line 1:\n$ENV.PAGER\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - "less"
+    jjq:
+    - v: '[1.5, 1.6)'
+      output:
+      - "less"
+      incompat_type: INTENTIONAL
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '@base64'
+  input: "This is a message"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "VGhpcyBpcyBhIG1lc3NhZ2U="
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  input: "VGhpcyBpcyBhIG1lc3NhZ2U="
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
+    - v: '[1.6, )'
+      output:
+      - "This is a message"
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}'
+  input: [{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n.[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}                             \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - {"a": 1, "b": 2, "d": 3, "e": 4}
+      - {"a": 1, "b": 2, "d": 3, "e": 4}
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: .[] as {$a, $b, c: {$d, $e}}"
+      incompat_type: UNCLASSIFIED
+
+- q: '.[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}'
+  input: [{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n.[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}                         \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - {"a": 1, "b": 2, "d": 3, "e": null}
+      - {"a": 1, "b": 2, "d": null, "e": 4}
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: .[] as {$a, $b, c: {$d}}"
+      incompat_type: UNCLASSIFIED
+
+- q: '.[] as [$a] ?// [$b] | if $a != null then error("err: \($a)") else {$a,$b} end'
+  input: [[3]]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n.[] as [$a] ?// [$b] | if $a != null then error(\"err: \\($a)\") else {$a,$b} end            \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - {"a": null, "b": 3}
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: .[] as [$a]"
+      incompat_type: UNCLASSIFIED

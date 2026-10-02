@@ -1,43 +1,58 @@
 - q: '(try (join("foo")) catch ("__ERROR__"))'
-  in: false
-  out:
-  - "__ERROR__"
+  input: false
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "__ERROR__"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'BOOLEAN'
     output: '"__ERROR__"'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'join(empty)'
-  in: 0.7853981633974483
-  out: []
+  input: 0.7853981633974483
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output: []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'FLOAT'
+  - v: '[1.5, )'
+    input: 'FLOAT'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: ZERO
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'join(",")'
-  in: {"a": "x", "b": "y"}
-  out:
-  - "x,y"
+  input: {"a": "x", "b": "y"}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "x,y"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: '{a:STRING,b:STRING}'
+  - v: '[1.5, )'
+    input: '{a:STRING,b:STRING}'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'

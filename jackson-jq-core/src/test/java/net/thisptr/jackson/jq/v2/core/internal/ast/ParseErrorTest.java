@@ -21,6 +21,15 @@ class ParseErrorTest {
 	}
 
 	@Test
+	void aSliceNeedsAtLeastOneOfItsBounds() {
+		assertThatThrownBy(() -> parse("[1, 2][:]"))
+				.isInstanceOf(JsonQueryException.class)
+				.hasMessageStartingWith("syntax error, unexpected ']'")
+				.hasMessageContaining(" at line 1, column 9:\n")
+				.hasMessageEndingWith("    [1, 2][:]\n            ^");
+	}
+
+	@Test
 	void runningOutOfInputIsSaidInWords() {
 		assertThatThrownBy(() -> parse(".foo |"))
 				.isInstanceOf(JsonQueryException.class)

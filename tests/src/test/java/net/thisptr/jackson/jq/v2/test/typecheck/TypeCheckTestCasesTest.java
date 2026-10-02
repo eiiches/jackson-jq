@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.test.typecheck;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -14,6 +15,8 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
+import net.thisptr.jackson.jq.v2.core.internal.typecheck.ConstantTypes;
+import net.thisptr.jackson.jq.v2.core.internal.typecheck.TypeMatcher;
 import net.thisptr.jackson.jq.v2.core.module.loaders.ClassPathModuleLoader;
 import net.thisptr.jackson.jq.v2.core.module.loaders.FileSystemModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
@@ -30,10 +33,10 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 
 /**
  * Verifies that the {@code types} assertions in golden test data match the actual inferred types
- * produced by the compiler, and that the runtime output values conform to the expected output type.
+ * produced by the compiler, and that recorded output values conform to the inferred output type.
  */
 public class TypeCheckTestCasesTest {
-	private void testVersion(TestCase tc, Version version, @Nullable Path moduleSearchPath) {
+	private void testVersion(TestCase tc, List<TestCase.TypeAssertion> rows, Version version, @Nullable Path moduleSearchPath) {
 		EnvironmentBuilder<JsonNode> envBuilder = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), version);
 		if (moduleSearchPath != null) {
 			envBuilder.clearModuleLoaders()
@@ -46,15 +49,15 @@ public class TypeCheckTestCasesTest {
 				.includeModule(new JoniRegexModule())
 				.defineVariable("ENV", () -> envBuilder.getJsonProvider().createObject(Collections.singletonMap("PAGER", envBuilder.getJsonProvider().createString("less"))))
 				.build();
+		TestCase.AbstractExpectation expectation = tc.expectations.resolve(version, false,
+				System.getProperty("os.name", ""), System.getProperty("os.arch", ""));
 
-		// 1. Verify inferred output type for each type assertion
-		for (TestCase.TypeAssertion ta : tc.types) {
-			Type inputType = Type.valueOf(ta.input);
-			Type expectedOutputType = Type.valueOf(ta.output);
-
+		// One environment per version; the rows of that version differ only in the input type they
+		// compile the query with.
+		for (TestCase.TypeAssertion ta : rows) {
 			CompileOptions options = CompileOptions.newBuilder()
 					.setTypeCheckMode(TypeCheckMode.WARN)
-					.setInputType(inputType)
+					.setInputType(Type.valueOf(ta.input))
 					.build();
 
 			JsonQuery<JsonNode> query = env.compile(tc.q, options);
@@ -63,38 +66,54 @@ public class TypeCheckTestCasesTest {
 			String desc = String.format("jq (v%s) '%s' with input type %s", version, tc.q, ta.input);
 			assertThat(actualOutputType)
 					.as(desc)
-					.isEqualTo(expectedOutputType);
+					.isEqualTo(Type.valueOf(ta.output));
+			if (expectation.output != null) {
+				for (JsonNode output : expectation.output) {
+					assertThat(TypeMatcher.accepts(actualOutputType, ConstantTypes.of(env.getJsonProvider(), output)))
+							.as("recorded output %s must match inferred output type %s of %s", output, actualOutputType, desc)
+							.isTrue();
+				}
+			}
 		}
 	}
 
-	private static Version selectVersion(TestCase tc) {
-		List<Version> versions = Versions.versions();
-		if (!tc.hasAssertionVersionSelection()) {
-			return Versions.JQ_1_7;
+	/**
+	 * The rows that claim something about {@code version}.
+	 */
+	private static List<TestCase.TypeAssertion> rowsFor(TestCase tc, Version version) {
+		if (!tc.appliesToAssertions(version))
+			return List.of();
+		List<TestCase.TypeAssertion> rows = new ArrayList<>();
+		for (TestCase.TypeAssertion ta : tc.types) {
+			if (ta.appliesTo(version))
+				rows.add(ta);
 		}
-		for (int i = versions.size() - 1; i >= 0; i--) {
-			if (tc.appliesToAssertions(versions.get(i))) {
-				return versions.get(i);
-			}
-		}
-		return Versions.JQ_1_7;
+		return rows;
 	}
 
 	public void test(String tcText) throws Throwable {
 		TestCase tc = TestCaseLoader.parseTestCase(tcText);
-		if (!tc.shouldCompile) {
-			return;
-		}
-		if (tc.types == null || tc.types.isEmpty()) {
-			if (Boolean.TRUE.equals(tc.failing))
-				return;
-			throw new AssertionError(String.format("Missing types for jq '%s' in %s", tc.q, tc.file));
-		}
-
 		Path moduleSearchPath = tc.modules.isEmpty() ? null : ModuleFixtures.materialize(tc.modules);
 		try {
-			Version version = selectVersion(tc);
-			testVersion(tc, version, moduleSearchPath);
+			if (tc.types.isEmpty()) {
+				if (TypeAssertionGenerator.assertionsFor(tc, moduleSearchPath).isEmpty())
+					return;
+				throw new AssertionError(String.format("Missing types for jq '%s' in %s", tc.q, tc.file));
+			}
+			// Checking a row on every version it covers only reports the versions a row names, so a row
+			// that names none has to be caught here rather than going unchecked.
+			for (TestCase.TypeAssertion ta : tc.types) {
+				if (Versions.versions().stream().noneMatch(version -> ta.appliesTo(version) && tc.appliesToAssertions(version)))
+					throw new IllegalArgumentException("type assertion and case ranges match no configured version: " + tc.q);
+			}
+
+			List<Executable> checks = new ArrayList<>();
+			for (Version version : Versions.versions()) {
+				List<TestCase.TypeAssertion> rows = rowsFor(tc, version);
+				if (!rows.isEmpty())
+					checks.add(() -> testVersion(tc, rows, version, moduleSearchPath));
+			}
+			assertAll(tc.q, checks);
 		} finally {
 			if (moduleSearchPath != null) {
 				ModuleFixtures.cleanup(moduleSearchPath);

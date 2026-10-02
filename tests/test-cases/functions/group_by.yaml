@@ -1,152 +1,209 @@
 - q: 'group_by(nan)'
-  in: [1, 2]
-  out:
-  - [[1], [2]]
-  types:
-  - input: 'ANY'
-    output: '[*:[*:ANY]]'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.5, )'
-
-- q: 'group_by(nan)'
-  in: [1970, 0, 1, 9, 0, 18, 4, 0]
-  types:
-  - input: 'ANY'
-    output: '[*:[*:ANY]]'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: [1, 2]
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
+      - [[1], [2]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:[*:ANY]]'
+  - v: '[1.5, )'
+    input: '[INT,INT]'
+    output: '[*:[*:INT]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'group_by(nan)'
+  input: [1970, 0, 1, 9, 0, 18, 4, 0]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
       - [[1970], [0], [1], [9], [0], [18], [4], [0]]
     overrides:
     - v: '[1.7, )'
       os: MACOS
-      out:
+      output:
       - [[0], [0], [1], [9], [1970], [18], [4], [0]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:[*:ANY]]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: '[*:[*:INT]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'group_by(if . % 2 == 0 then nan else 0 end)'
-  in: [4, 1, 3, 2]
-  out:
-  - [[4], [2], [1, 3]]
+  input: [4, 1, 3, 2]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[4], [2], [1, 3]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:[*:ANY]]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT]'
+    output: '[*:[*:INT]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'group_by([nan])'
-  in: [1, 2]
-  out:
-  - [[1], [2]]
+  input: [1, 2]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[1], [2]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:[*:ANY]]'
+  - v: '[1.5, )'
+    input: '[INT,INT]'
+    output: '[*:[*:INT]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'group_by(.)'
-  in: [2, 1, 2]
-  out:
-  - [[1], [2, 2]]
+  input: [2, 1, 2]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[1], [2, 2]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:[*:ANY]]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: '[*:[*:INT]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 # Reduced from fuzzing seed 8489274197939303642 (jq 1.8.2).
 - q: 'try group_by(.) catch .'
-  in: {ceil: true}
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  properties:
-    cardinality: UNKNOWN
-    depends_on_input: true
-    depends_on_external_state: false
+  input: {"ceil": true}
   expectations:
     default:
     - v: '[1.5, )'
-      out:
-      - 'object ({"ceil":true}) and array ([[true]]) cannot be sorted, as they are not both arrays'
+      output:
+      - "object ({\"ceil\":true}) and array ([[true]]) cannot be sorted, as they are not both arrays"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{ceil:BOOLEAN}'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try group_by(.) catch .'
-  in: {}
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  properties:
-    cardinality: UNKNOWN
-    depends_on_input: true
-    depends_on_external_state: false
+  input: {}
   expectations:
     default:
     - v: '[1.5, )'
-      out:
-      - 'object ({}) and array ([]) cannot be sorted, as they are not both arrays'
+      output:
+      - "object ({}) and array ([]) cannot be sorted, as they are not both arrays"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{}'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try group_by(error("boom")) catch .'
-  in: {a: 1}
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  properties:
-    cardinality: UNKNOWN
-    depends_on_input: true
-    depends_on_external_state: false
+  input: {"a": 1}
   expectations:
     default:
     - v: '[1.5, )'
-      out:
-      - boom
+      output:
+      - "boom"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{a:INT}'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try group_by(.) catch .'
-  in: 1
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  properties:
-    cardinality: UNKNOWN
-    depends_on_input: true
-    depends_on_external_state: false
+  input: 1
   expectations:
     default:
     - v: '[1.5, )'
-      out:
-      - 'Cannot iterate over number (1)'
-
-# Keep the original expression to cover key evaluation through nested foreach filters.
-- q: >-
-    try (group_by(foreach (if @html then foreach ("%27foo%27foo [\"YmFy\"] bar") as $x ("0"; "{&quot;foo&quot;:&quot;foo%2520baz%2520bar&quot;,&quot;bar&quot;:&quot;foo%2520baz%2520bar&quot;}") else "array" end) as $x ("foo true"; . + $x))) catch (.)
-  in: {ceil: true}
+      output:
+      - "Cannot iterate over number (1)"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
+
+# Keep the original expression to cover key evaluation through nested foreach filters.
+- q: 'try (group_by(foreach (if @html then foreach ("%27foo%27foo [\"YmFy\"] bar") as $x ("0"; "{&quot;foo&quot;:&quot;foo%2520baz%2520bar&quot;,&quot;bar&quot;:&quot;foo%2520baz%2520bar&quot;}") else "array" end) as $x ("foo true"; . + $x))) catch (.)'
+  input: {"ceil": true}
   expectations:
     default:
     - v: '[1.5, 1.8.2)'
-      out:
-      - 'object ({"ceil":true}) and array ([["foo true...) cannot be sorted, as they are not both arrays'
+      output:
+      - "object ({\"ceil\":true}) and array ([[\"foo true...) cannot be sorted, as they are not both arrays"
     - v: '[1.8.2, )'
-      out:
-      - 'object ({"ceil":true}) and array ([["foo true{&quot;foo&quo...]) cannot be sorted, as they are not both arrays'
+      output:
+      - "object ({\"ceil\":true}) and array ([[\"foo true{&quot;foo&quo...]) cannot be sorted, as they are not both arrays"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{ceil:BOOLEAN}'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
