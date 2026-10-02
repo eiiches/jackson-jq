@@ -12,7 +12,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.function.Executable;
 
+import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.impl.jackson2.Jackson2JsonProvider;
+import net.thisptr.jackson.jq.v2.spi.version.Version;
+import net.thisptr.jackson.jq.v2.spi.version.VersionRange;
 import net.thisptr.jackson.jq.v2.test.comparator.TestJsonNodeComparator;
 import net.thisptr.jackson.jq.v2.test.evaluator.Evaluator;
 import net.thisptr.jackson.jq.v2.test.evaluator.JqExecutables;
@@ -22,79 +25,90 @@ import net.thisptr.jackson.jq.v2.test.testcase.TestCase;
 import net.thisptr.jackson.jq.v2.test.testcase.TestCaseLoader;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
 /**
- * Verifies that the {@code out} expectations in the golden test data under
+ * Verifies that the expectations in the golden test data under
  * {@code tests/test-cases} actually match what the real {@code jq} CLI produces.
  *
  * <p>This is deliberately independent of any {@link net.thisptr.jackson.jq.v2.json.JsonProvider}
  * (unlike {@link AbstractJsonQueryTest}, which checks this library's own implementation against
  * the same golden data), so it only needs to run once rather than once per JsonProvider module.
  *
- * <p>Golden-data cases with no explicit {@code v:} range apply to every configured
- * {@link JqExecutables#ALL} entry. Real jq's behavior has changed across 1.7/1.8.x in ways the
- * mostly 1.5/1.6-sourced golden data was never scoped for, so widening a case needs a dedicated
- * pass to research and annotate the correct {@code v:} range.
+ * <p>Every case must cover every supported jq version and known OS/architecture pair. A
+ * default row covers every pair unless a matching platform override replaces it.
  */
 public class VerifyTestCasesTest {
-	private static final Duration JQ_TIMEOUT = Duration.ofSeconds(10);
+	// The downloader gives jq 20 seconds. A recorded timeout should still be slow after 4 seconds,
+	// while a recorded result gets 100 seconds so a slower verification machine can finish it.
+	private static final Duration EXPECTED_TIMEOUT_CHECK = Duration.ofSeconds(4);
+	private static final Duration COMPLETION_TIMEOUT = Duration.ofSeconds(100);
+
+	static void validateVersionRanges(TestCase tc, Version latestVersion) {
+		for (TestCase.AbstractExpectation row : tc.expectations.defaultRows)
+			validateVersionRange("expectations.default", row.version, latestVersion);
+		for (TestCase.AbstractExpectation row : tc.expectations.overrides)
+			validateVersionRange("expectations.overrides", row.version, latestVersion);
+		for (TestCase.AbstractExpectation row : tc.expectations.jjq)
+			validateVersionRange("expectations.jjq", row.version, latestVersion);
+		for (TestCase.TypeAssertion row : tc.types)
+			validateVersionRange("types", row.version, latestVersion);
+		for (TestCase.PropertyAssertion row : tc.properties)
+			validateVersionRange("properties", row.version, latestVersion);
+	}
+
+	private static void validateVersionRange(String group, VersionRange range, Version latestVersion) {
+		if (range.minVersion() == null || !range.minInclusive())
+			throw new IllegalArgumentException(group + " range must have an inclusive start: " + range);
+		if (range.maxVersion() != null && range.contains(latestVersion))
+			throw new IllegalArgumentException(group + " range covering jq " + latestVersion + " must have an open end: " + range);
+		if (range.maxInclusive())
+			throw new IllegalArgumentException(group + " range must have an exclusive end: " + range);
+	}
 
 	private void verify(TestCase tc, JqExecutables.JqExecutable e, @Nullable Path moduleSearchPath) throws Throwable {
-		String command = String.format("%s '%s' <<< '%s'", e.executable(), tc.q, tc.in);
-		TestCase.Expectation expected = tc.expectations != null
-				? tc.expectations.resolve(e.jqVersion(), true, System.getProperty("os.name", ""), System.getProperty("os.arch", ""))
-				: null;
+		String command = String.format("%s '%s' <<< '%s'", e.executable(), tc.q, tc.input);
+		TestCase.AbstractExpectation expected = tc.expectations.resolve(e.jqVersion(), true, System.getProperty("os.name", ""), System.getProperty("os.arch", ""));
+		if (expected.unstable())
+			return;
+		boolean timedOut = expected.timedOut();
+		Duration timeout = timedOut ? EXPECTED_TIMEOUT_CHECK : COMPLETION_TIMEOUT;
 
 		Evaluator.Result result;
 		try {
-			result = new JqRunner(e.executable(), moduleSearchPath).evaluate(tc.q, tc.in, JQ_TIMEOUT);
+			result = new JqRunner(e.executable(), moduleSearchPath).evaluate(tc.q, tc.input, timeout);
 		} catch (TimeoutException timeoutException) {
-			if (expected != null && expected.timeout)
+			if (timedOut)
 				return;
-			throw new AssertionError(String.format("jq timed out after %s: %s", JQ_TIMEOUT, command), timeoutException);
+			throw new AssertionError(String.format("jq timed out after %s: %s", timeout, command), timeoutException);
 		}
-		if (expected != null && expected.timeout)
-			throw new AssertionError(String.format("jq completed instead of timing out after %s: %s", JQ_TIMEOUT, command));
-		assertThat(result.error() != null).as("%s", command).isEqualTo(expected != null && expected.error);
+		if (timedOut)
+			throw new AssertionError(String.format("jq completed instead of timing out after %s: %s", timeout, command));
+		Evaluator.ErrorPhase expectedPhase = expected.compileError != null ? Evaluator.ErrorPhase.COMPILE
+				: expected.runtimeError != null ? Evaluator.ErrorPhase.RUNTIME : null;
+		assertThat(result.errorPhase()).as("%s error phase", command).isEqualTo(expectedPhase);
 
 		Comparator<JsonNode> comparator = new TestJsonNodeComparator<>(Jackson2JsonProvider.getInstance(), true, tc.floatTolerance);
-		assertThat(expected != null ? expected.values() : tc.out).as("%s", command)
+		assertThat(expected.output == null ? List.<JsonNode>of() : expected.values()).as("%s", command)
 				.usingElementComparator(comparator)
 				.isEqualTo(result.values());
 	}
 
 	public void test(String tcText) throws Throwable {
 		TestCase tc = TestCaseLoader.parseTestCase(tcText);
+		List<Version> versions = Versions.versions();
+		try {
+			validateVersionRanges(tc, versions.get(versions.size() - 1));
+			tc.expectations.validateCoverage(versions);
+			tc.expectations.validateNoRedundantOverrides(versions, tc.floatTolerance);
+		} catch (IllegalArgumentException failure) {
+			throw new IllegalArgumentException(tc.describe() + ": " + failure.getMessage(), failure);
+		}
 		Path moduleSearchPath = tc.modules.isEmpty() ? null : ModuleFixtures.materialize(tc.modules);
 		try {
 			List<Executable> testExecutables = new ArrayList<>();
-			for (JqExecutables.JqExecutable e : JqExecutables.ALL) {
-				if (tc.expectations != null) {
-					testExecutables.add(() -> verify(tc, e, moduleSearchPath));
-					continue;
-				}
-				if (tc.appliesTo(e.jqVersion())) {
-					if (!tc.shouldCompile) {
-						testExecutables.add(() -> {
-							assertThat(catchThrowable(() -> verify(tc, e, moduleSearchPath)))
-									.describedAs("Test case marked as should_compile = false should fail against actual jq.")
-									.isInstanceOf(Throwable.class);
-						});
-					} else {
-						testExecutables.add(() -> verify(tc, e, moduleSearchPath));
-					}
-				} else {
-					// A version the case says nothing about has to be one real jq gets wrong, or the range
-					// is narrower than it needs to be.
-					testExecutables.add(() -> {
-						assertThat(catchThrowable(() -> verify(tc, e, moduleSearchPath)))
-								.describedAs("The version range excludes %s, but the test case succeeds anyway: %s", e.jqVersion(), tcText)
-								.isInstanceOf(Throwable.class);
-					});
-				}
-			}
+			for (JqExecutables.JqExecutable e : JqExecutables.ALL)
+				testExecutables.add(() -> verify(tc, e, moduleSearchPath));
 			assertAll(testExecutables);
 		} finally {
 			if (moduleSearchPath != null)

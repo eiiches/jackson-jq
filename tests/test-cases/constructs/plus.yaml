@@ -1,39 +1,61 @@
 - q: 'error("foo") + empty'
-  out: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output: []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NEVER'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NEVER'
   properties:
+  - v: '[1.5, )'
     cardinality: ZERO
     depends_on_input: false
     depends_on_external_state: false
   comment: 'rhs is evaluated first'
 
 - q: 'try (empty + error("foo")) catch .'
-  out:
-  - "foo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "foo"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'try (path(.[] + .[])) catch .'
-  in: [1, 2]
-  out:
-  - "Invalid path expression with result 2"
+  input: [1, 2]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "Invalid path expression with result 2"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false

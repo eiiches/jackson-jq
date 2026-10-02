@@ -7,7 +7,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.jspecify.annotations.Nullable;
 
 public interface Evaluator {
-	record Result(List<JsonNode> values, @Nullable Throwable error) {
+	enum ErrorPhase {
+		COMPILE,
+		RUNTIME
+	}
+
+	record Result(List<JsonNode> values, @Nullable Throwable error, @Nullable ErrorPhase errorPhase,
+				  @Nullable String stderr) {
 	}
 
 	Result evaluate(String expr, JsonNode in, Duration timeout) throws Throwable;

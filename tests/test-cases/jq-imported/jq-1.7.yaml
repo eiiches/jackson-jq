@@ -1,0 +1,2797 @@
+# This file is generated from jqlang/jq files. Different license terms apply:
+#
+# jq is copyright (C) 2012 Stephen Dolan
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# jq's documentation (everything found under the docs/ subdirectory in
+# the source tree) is licensed under the Creative Commons CC BY 3.0
+# license, which can be found at:
+#
+#          https://creativecommons.org/licenses/by/3.0/
+#
+- q: '@text,@json,([1,.]|@csv,@tsv),@html,@uri,@sh,(@base64|.,@base64d)'
+  input: "!()<>&'\"\t"
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - "!()<>&'\"\t"
+      - "\"!()<>&'\\\"\\t\""
+      - "1,\"!()<>&'\"\"\t\""
+      - "1\t!()<>&'\"\\t"
+      - "!()&lt;&gt;&amp;&apos;&quot;\t"
+      - "!()%3C%3E%26'%22%09"
+      - "'!()<>&'\\''\"\t'"
+      - "ISgpPD4mJyIJ"
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
+    - v: '[1.6, 1.7)'
+      output:
+      - "!()<>&'\"\t"
+      - "\"!()<>&'\\\"\\t\""
+      - "1,\"!()<>&'\"\"\t\""
+      - "1\t!()<>&'\"\\t"
+      - "!()&lt;&gt;&amp;&apos;&quot;\t"
+      - "!()%3C%3E%26'%22%09"
+      - "'!()<>&'\\''\"\t'"
+      - "ISgpPD4mJyIJ"
+      - "!()<>&'\"\t"
+    - v: '[1.7, )'
+      output:
+      - "!()<>&'\"\t"
+      - "\"!()<>&'\\\"\\t\""
+      - "1,\"!()<>&'\"\"\t\""
+      - "1\t!()<>&'\"\\t"
+      - "!()&lt;&gt;&amp;&apos;&quot;\t"
+      - "%21%28%29%3C%3E%26%27%22%09"
+      - "'!()<>&'\\''\"\t'"
+      - "ISgpPD4mJyIJ"
+      - "!()<>&'\"\t"
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.6, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.e0, .E1, .E-1, .E+1'
+  input: {"e0": 1, "E1": 2, "E": 3}
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: Invalid numeric literal at EOF at line 1, column 3 (while parsing '.e0') at <top-level>, line 1:\n.e0, .E1, .E-1, .E+1\njq: error: Invalid numeric literal at EOF at line 1, column 3 (while parsing '.E1') at <top-level>, line 1:\n.e0, .E1, .E-1, .E+1     \njq: error: Invalid numeric literal at EOF at line 1, column 4 (while parsing '.E-1') at <top-level>, line 1:\n.e0, .E1, .E-1, .E+1          \njq: error: Invalid numeric literal at EOF at line 1, column 4 (while parsing '.E+1') at <top-level>, line 1:\n.e0, .E1, .E-1, .E+1                \njq: 4 compile errors\n"
+    - v: '[1.7, )'
+      output:
+      - 1
+      - 2
+      - 2
+      - 4
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - 1.0
+      - 2.0
+      - 2
+      - 4
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{E:INT,E1:INT,e0:INT}'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'map(try .a[] catch ., try .a.[] catch ., .a[]?, .a.[]?)'
+  input: [{"a": [1, 2]}, {"a": 123}]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected '[', expecting FORMAT or QQSTRING_START (Unix shell quoting issues?) at <top-level>, line 1:\nmap(try .a[] catch ., try .a.[] catch ., .a[]?, .a.[]?)                             \njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - [1, 2, 1, 2, 1, 2, 1, 2, "Cannot iterate over number (123)", "Cannot iterate over number (123)"]
+    jjq:
+    - v: '[1.7, )'
+      compile_error: "syntax error, unexpected '[', expecting <IDENTIFIER_AFTER_DOT> or '@' or '\\\"' at line 1, column 30:\n    map(try .a[] catch ., try .a.[] catch ., .a[]?, .a.[]?)\n                                 ^"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '[.[-4,-3,-2,-1,0,1,2,3]]'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [null, 1, 2, 3, 1, 2, 3, null]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: '[*:INT|NULL]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[limit(0; error)]'
+  input: "badness"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): badness\n"
+    - v: '[1.7, )'
+      output:
+      - []
+    jjq:
+    - v: '[1.7, )'
+      output: []
+      runtime_error: "badness"
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[limit(1; 1, error)]'
+  input: "badness"
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): badness\n"
+    - v: '[1.6, )'
+      output:
+      - [1]
+    jjq:
+    - v: '[1.6, )'
+      output: []
+      runtime_error: "badness"
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:1]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[*:1]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[first(range(.)), last(range(.))]'
+  input: 10
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 9]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NULL|NUMBER]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '[*:NULL|NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[nth(0,5,9,10,15; range(.)), try nth(-1; range(.)) catch .]'
+  input: 10
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [0, 5, 9, 9, 9, "nth doesn't support negative indices"]
+    - v: '[1.7, )'
+      output:
+      - [0, 5, 9, "nth doesn't support negative indices"]
+    jjq:
+    - v: '[1.7, )'
+      output:
+      - [0, 5, 9, 9, 9, "nth doesn't support negative indices"]
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '[*:ANY]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '1e-19 + 1e-20 - 5e-21'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1.05e-19
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '1 / 1e-17'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1.0e+17
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '(1e999999999, 10e999999999) > (1e-1147483646, 0.1e-1147483646)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+      - true
+      - true
+      - true
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "Unexpected exception during compilation"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '[(infinite, -infinite) % (1, -1, infinite)]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output: []
+      runtime_error: "jq exited with status 136 without an error message"
+    - v: '[1.7, )'
+      output:
+      - [0, 0, 0, 0, 0, -1]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - [0, 0, 0, 0, 0, -1]
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[nan % 1, 1 % nan | isnan]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [false, false]
+    - v: '[1.7, )'
+      output:
+      - [true, true]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:BOOLEAN]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g; def f: 4; [f, def f: g; def g: 5; f, g]+[f,g]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [4, 1, 2, 3, 3, 5, 4, 1, 2, 3, 3]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:4|5]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:4|5]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'any(true, error; .)'
+  input: "badness"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): badness\n"
+    - v: '[1.7, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.7, )'
+      output: []
+      runtime_error: "badness"
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'all(false, error; .)'
+  input: "badness"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): badness\n"
+    - v: '[1.7, )'
+      output:
+      - false
+    jjq:
+    - v: '[1.7, )'
+      output: []
+      runtime_error: "badness"
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'any(not)'
+  input: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - false
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'all(not)'
+  input: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'any(not)'
+  input: [false]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[BOOLEAN]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'all(not)'
+  input: [false]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[BOOLEAN]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[any,all]'
+  input: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [false, true]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN]'
+  - v: '[1.5, )'
+    input: '[]'
+    output: '[BOOLEAN,BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[any,all]'
+  input: [true]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [true, true]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN]'
+  - v: '[1.5, )'
+    input: '[BOOLEAN]'
+    output: '[BOOLEAN,BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[any,all]'
+  input: [false]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [false, false]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN]'
+  - v: '[1.5, )'
+    input: '[BOOLEAN]'
+    output: '[BOOLEAN,BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[any,all]'
+  input: [true, false]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [true, false]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN]'
+  - v: '[1.5, )'
+    input: '[BOOLEAN,BOOLEAN]'
+    output: '[BOOLEAN,BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[any,all]'
+  input: [null, null, true]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [true, false]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN]'
+  - v: '[1.5, )'
+    input: '[NULL,NULL,BOOLEAN]'
+    output: '[BOOLEAN,BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'setpath([-1]; 1)'
+  input: [0]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'pick(.a.b.c)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: pick/1 is not defined at <top-level>, line 1:\npick(.a.b.c)\njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - {"a": {"b": {"c": null}}}
+  types:
+  - v: '[1.7, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.7, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'pick(first)'
+  input: [1, 2]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: pick/1 is not defined at <top-level>, line 1:\npick(first)\njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - [1]
+  types:
+  - v: '[1.7, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.7, )'
+    input: '[INT,INT]'
+    output: 'ANY'
+  properties:
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'pick(first|first)'
+  input: [[10, 20], 30]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: pick/1 is not defined at <top-level>, line 1:\npick(first|first)\njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - [[10]]
+  types:
+  - v: '[1.7, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.7, )'
+    input: '[[INT,INT],INT]'
+    output: 'ANY'
+  properties:
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try pick(last) catch .'
+  input: [1, 2]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: pick/1 is not defined at <top-level>, line 1:\ntry pick(last) catch .    \njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - "Out of bounds negative array index"
+  types:
+  - v: '[1.7, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.7, )'
+    input: '[INT,INT]'
+    output: 'ANY'
+  properties:
+  - v: '[1.7, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '(.[] | select(. >= 2)) |= empty'
+  input: [1, 5, 3, 0, 7]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - null
+    - v: '[1.6, 1.7)'
+      output:
+      - [1, 3, 7]
+    - v: '[1.7, )'
+      output:
+      - [1, 0]
+    jjq:
+    - v: '[1.5, )'
+      output: []
+      runtime_error: "`|= empty` is undefined. See https://github.com/stedolan/jq/issues/897"
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] |= select(. % 2 == 0)'
+  input: [0, 1, 2, 3, 4, 5]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): null (null) and number (2) cannot be divided (remainder)\n"
+    - v: '[1.7, )'
+      output:
+      - [0, 2, 4]
+    jjq:
+    - v: '[1.7, )'
+      output: []
+      runtime_error: "`|= empty` is undefined. See https://github.com/stedolan/jq/issues/897"
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT]'
+    output: '[*:INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.foo[1,4,2,3] |= empty'
+  input: {"foo": [0, 1, 2, 3, 4, 5]}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - null
+    - v: '[1.6, 1.7)'
+      output:
+      - {"foo": [0, 2, 4]}
+    - v: '[1.7, )'
+      output:
+      - {"foo": [0, 5]}
+    jjq:
+    - v: '[1.5, )'
+      output: []
+      runtime_error: "`|= empty` is undefined. See https://github.com/stedolan/jq/issues/897"
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{foo:[INT,INT,INT,INT,INT,INT]}'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[if true then 3 end]'
+  input: 7
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected end (Unix shell quoting issues?) at <top-level>, line 1:\n[if true then 3 end]                \njq: error: Possibly unterminated 'if' statement at <top-level>, line 1:\n[if true then 3 end] \njq: 2 compile errors\n"
+    - v: '[1.7, )'
+      output:
+      - [3]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - [3]
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[ANY]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '[3]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[if false then 3 end]'
+  input: 7
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected end (Unix shell quoting issues?) at <top-level>, line 1:\n[if false then 3 end]                 \njq: error: Possibly unterminated 'if' statement at <top-level>, line 1:\n[if false then 3 end] \njq: 2 compile errors\n"
+    - v: '[1.7, )'
+      output:
+      - [7]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - [7.0]
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[ANY]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '[INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[if false then 3 else . end]'
+  input: 7
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [7]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[ANY]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '[INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[if false then 3 elif false then 4 end]'
+  input: 7
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected end (Unix shell quoting issues?) at <top-level>, line 1:\n[if false then 3 elif false then 4 end]                                   \njq: error: Possibly unterminated 'if' statement at <top-level>, line 1:\n[if false then 3 elif false then 4 end] \njq: 2 compile errors\n"
+    - v: '[1.7, )'
+      output:
+      - [7]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - [7.0]
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[ANY]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '[INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[if false then 3 elif false then 4 else . end]'
+  input: 7
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [7]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[ANY]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '[INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[contains(""), contains("\u0000")]'
+  input: "\0"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [true, true]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[BOOLEAN,BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[contains(""), contains("a"), contains("ab"), contains("c"), contains("d")]'
+  input: "ab\0cd"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [true, true, true, false, false]
+    - v: '[1.7, )'
+      output:
+      - [true, true, true, true, true]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - [true, true, true, true, true]
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[contains("cd"), contains("b\u0000"), contains("ab\u0000")]'
+  input: "ab\0cd"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [false, true, true]
+    - v: '[1.7, )'
+      output:
+      - [true, true, true]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - [true, true, true]
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN,BOOLEAN]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[BOOLEAN,BOOLEAN,BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[contains("b\u0000c"), contains("b\u0000cd"), contains("b\u0000cd")]'
+  input: "ab\0cd"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [true, true, true]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN,BOOLEAN]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[BOOLEAN,BOOLEAN,BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[contains("@"), contains("\u0000@"), contains("\u0000what")]'
+  input: "ab\0cd"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [false, true, true]
+    - v: '[1.7, )'
+      output:
+      - [false, false, false]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - [false, false, false]
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN,BOOLEAN]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[BOOLEAN,BOOLEAN,BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] | try error catch .'
+  input: [1, null, 2]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - 1
+      - 2
+    - v: '[1.7, )'
+      output:
+      - 1
+      - null
+      - 2
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT,NULL,INT]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[ index("aba"), rindex("aba"), indices("aba") ]'
+  input: "xababababax"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [1, 5, [1, 5]]
+    - v: '[1.7, )'
+      output:
+      - [1, 7, [1, 3, 5, 7]]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - [1, 7, [1, 3, 5, 7]]
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[NULL|NUMBER,NULL|NUMBER,NULL|[*:INT]]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[NULL|NUMBER,NULL|NUMBER,[*:INT]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.[] * "abc"]'
+  input: [-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 3.7, 10.0]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [null, null, null, "abc", "abc", "abc", "abcabcabc", "abcabcabcabcabcabcabcabcabcabc"]
+    - v: '[1.7, )'
+      output:
+      - [null, null, "", "", "abc", "abc", "abcabcabc", "abcabcabcabcabcabcabcabcabcabc"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[INT,FLOAT,INT,FLOAT,INT,FLOAT,FLOAT,INT]'
+    output: '[*:NULL|STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[. * (nan,-nan)]'
+  input: "abc"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [null, null]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[*:NULL|STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'has(nan)'
+  input: [0, 1, 2]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - false
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'transpose'
+  input: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - []
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:[*:ANY]]|[]'
+  - v: '[1.5, )'
+    input: '[]'
+    output: '[*:[*:NULL]]|[]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'bsearch(0,2,4)'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - -1
+      - -2
+      - -2
+      - -1
+      - -2
+      - -2
+      - -1
+      - -2
+      - -2
+      - -1
+      - -2
+      - -2
+      - -1
+      - -2
+      - -2
+      - -1
+      - -2
+      - -2
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -4
+      - 1
+      - -1
+      - -2
+      - -2
+      - -1
+      - -2
+      - -2
+      - -1
+      - -2
+      - -2
+      - -1
+      - -2
+      - -2
+      - -1
+      - -2
+      - -2
+      - -1
+      - -2
+      - -2
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -4
+    - v: '[1.7, )'
+      output:
+      - -1
+      - 1
+      - -4
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "Function bsearch/1 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'try strftime("%Y-%m-%dT%H:%M:%SZ") catch .'
+  input: ["a", 1, 2, 3, 4, 5, 6, 7]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "strftime/1 requires parsed datetime inputs"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[STRING,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+
+- q: 'try strflocaltime("%Y-%m-%dT%H:%M:%SZ") catch .'
+  input: ["a", 1, 2, 3, 4, 5, 6, 7]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: strflocaltime/1 is not defined at <top-level>, line 1:\ntry strflocaltime(\"%Y-%m-%dT%H:%M:%SZ\") catch .    \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - "strflocaltime/1 requires parsed datetime inputs"
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.6, )'
+    input: '[STRING,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'ANY'
+  properties:
+  - v: '[1.6, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+
+- q: 'try mktime catch .'
+  input: ["a", 1, 2, 3, 4, 5, 6, 7]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "mktime requires parsed datetime inputs"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[STRING,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'module []; 0'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - 0
+    - v: '[1.7, 1.8.0)'
+      compile_error: "jq: error: Module metadata must be an object at <top-level>, line 1:\nmodule []; 0\njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      compile_error: "jq: error: Module metadata must be an object at <top-level>, line 1, column 8:\n    module []; 0\n           ^^\njq: 1 compile error\n"
+    jjq:
+    - v: '[1.7, )'
+      output:
+      - 0
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '0'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '0'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'try (1/0) catch .'
+  input: 0
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: Division by zero? at <top-level>, line 1:\ntry (1/0) catch .     \njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - "number (1) and number (0) cannot be divided because the divisor is zero"
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - "number (1) and number (0) cannot be divided because the divisor is zero"
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'try (0/0) catch .'
+  input: 0
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - null
+    - v: '[1.7, )'
+      output:
+      - "number (0) and number (0) cannot be divided because the divisor is zero"
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - "number (0) and number (0) cannot be divided because the divisor is zero"
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'try (1%0) catch .'
+  input: 0
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "number (1) and number (0) cannot be divided (remainder) because the divisor is zero"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round] == $powers'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: round/0 is not defined at <top-level>, line 1:\n[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round] == $powers                                                        \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - true
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.6, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'range(5;13)|IN(range(0;10;3))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: IN/1 is not defined at <top-level>, line 1:\nrange(5;13)|IN(range(0;10;3))            \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - false
+      - true
+      - false
+      - false
+      - true
+      - false
+      - false
+      - false
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Function IN/1 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'index("")'
+  input: ""
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      timeout: true
+    - v: '[1.7, )'
+      output:
+      - null
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - null
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|NUMBER'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'NULL|NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'builtins|length > 10'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: builtins/0 is not defined at <top-level>, line 1:\nbuiltins|length > 10\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - true
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.6, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '"-1"|IN(builtins[] / "/"|.[1])'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: IN/1 is not defined at <top-level>, line 1:\n\"-1\"|IN(builtins[] / \"/\"|.[1])     \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - false
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Function IN/1 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'all(builtins[] / "/"; .[1]|tonumber >= 0)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: builtins/0 is not defined at <top-level>, line 1:\nall(builtins[] / \"/\"; .[1]|tonumber >= 0)    \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - true
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.6, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'builtins|any(.[:1] == "_")'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: builtins/0 is not defined at <top-level>, line 1:\nbuiltins|any(.[:1] == \"_\")\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - false
+    jjq:
+    - v: '[1.6, )'
+      output:
+      - true
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.6, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'map(. == 1)'
+  input: [1, 1.0, 1.000, 1.00, 1, 1]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [true, true, true, true, true, true]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:BOOLEAN]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT]'
+    output: '[*:BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[0] | tostring'
+  input: [13911860366432393]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "13911860366432392"
+    - v: '[1.7, )'
+      output:
+      - "13911860366432393"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: '[INT]'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.x | tojson'
+  input: {"x": 13911860366432393}
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "13911860366432392"
+    - v: '[1.7, )'
+      output:
+      - "13911860366432393"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: '{x:INT}'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '13911860366432393 == 13911860366432392'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - true
+    - v: '[1.7, )'
+      output:
+      - false
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - false
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'false'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'false'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '. - 10'
+  input: 13911860366432393
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - 13911860366432382
+    - v: '[1.7, 1.7.1)'
+      output:
+      - 13911860366432380
+    - v: '[1.7.1, )'
+      output:
+      - 13911860366432382
+    jjq:
+    - v: '[1.7, 1.7.1)'
+      output:
+      - 13911860366432382
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[0] - 10'
+  input: [13911860366432393]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - 13911860366432382
+    - v: '[1.7, 1.7.1)'
+      output:
+      - 13911860366432380
+    - v: '[1.7.1, )'
+      output:
+      - 13911860366432382
+    jjq:
+    - v: '[1.7, 1.7.1)'
+      output:
+      - 13911860366432382
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT]'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.x - 10'
+  input: {"x": 13911860366432393}
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - 13911860366432382
+    - v: '[1.7, 1.7.1)'
+      output:
+      - 13911860366432380
+    - v: '[1.7.1, )'
+      output:
+      - 13911860366432382
+    jjq:
+    - v: '[1.7, 1.7.1)'
+      output:
+      - 13911860366432382
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{x:INT}'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '. |= try . catch .'
+  input: 1
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - 1
+    - v: '[1.6, 1.7)'
+      output:
+      - {"__jq": 0}
+    - v: '[1.7, )'
+      output:
+      - 1
+    jjq:
+    - v: '[1.6, 1.7)'
+      output:
+      - 1.0
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'abs'
+  input: "abc"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: abs/0 is not defined at <top-level>, line 1:\nabs\njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - "abc"
+    jjq:
+    - v: '[1.7, )'
+      compile_error: "Function abs/0 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'map(abs)'
+  input: [0, 0, -10, -1.1]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: abs/0 is not defined at <top-level>, line 1:\nmap(abs)    \njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - [0, 0, 10, 1.1]
+    jjq:
+    - v: '[1.7, )'
+      compile_error: "Function abs/0 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'map(fabs == length) | unique'
+  input: [-10, -1.1, -0.1, 1000000000000000002]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: fabs/0 is not defined at <top-level>, line 1:\nmap(fabs == length) | unique    \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [true]
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Function fabs/0 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'map(abs)'
+  input: [0.1, 1000000000000000002]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: abs/0 is not defined at <top-level>, line 1:\nmap(abs)    \njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - [0.1, 1000000000000000002]
+    jjq:
+    - v: '[1.7, )'
+      compile_error: "Function abs/0 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '123 as $label | $label'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected label, expecting IDENT (Unix shell quoting issues?) at <top-level>, line 1:\n123 as $label | $label        \njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - 123
+    jjq:
+    - v: '[1.7, )'
+      compile_error: "syntax error, unexpected 'label', expecting <IDENTIFIER> at line 1, column 9:\n    123 as $label | $label\n            ^"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '[ label $if | range(10) | ., (select(. == 5) | break $if) ]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected if, expecting IDENT (Unix shell quoting issues?) at <top-level>, line 1:\n[ label $if | range(10) | ., (select(. == 5) | break $if) ]         \njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - [0, 1, 2, 3, 4, 5]
+    jjq:
+    - v: '[1.7, )'
+      compile_error: "syntax error, unexpected 'if', expecting <IDENTIFIER> at line 1, column 10:\n    [ label $if | range(10) | ., (select(. == 5) | break $if) ]\n             ^"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'reduce .[] as $then (4 as $else | $else; . as $elif | . + $then * $elif)'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected then, expecting IDENT (Unix shell quoting issues?) at <top-level>, line 1:\nreduce .[] as $then (4 as $else | $else; . as $elif | . + $then * $elif)               \njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - 96
+    jjq:
+    - v: '[1.7, )'
+      compile_error: "syntax error, unexpected 'then', expecting <IDENTIFIER> at line 1, column 16:\n    reduce .[] as $then (4 as $else | $else; . as $elif | . + $then * $elif)\n                   ^"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '1 as $foreach | 2 as $and | 3 as $or | { $foreach, $and, $or, a }'
+  input: {"a": 4, "b": 5}
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected foreach, expecting IDENT (Unix shell quoting issues?) at <top-level>, line 1:\n1 as $foreach | 2 as $and | 3 as $or | { $foreach, $and, $or, a }      \njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - {"foreach": 1, "and": 2, "or": 3, "a": 4}
+    jjq:
+    - v: '[1.7, )'
+      compile_error: "syntax error, unexpected 'foreach', expecting <IDENTIFIER> at line 1, column 7:\n    1 as $foreach | 2 as $and | 3 as $or | { $foreach, $and, $or, a }\n          ^"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '[ foreach .[] as $try (1 as $catch | $catch - 1; . + $try; .) ]'
+  input: [10, 9, 8, 7]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected try, expecting IDENT (Unix shell quoting issues?) at <top-level>, line 1:\n[ foreach .[] as $try (1 as $catch | $catch - 1; . + $try; .) ]                  \njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - [10, 19, 27, 34]
+    jjq:
+    - v: '[1.7, )'
+      compile_error: "syntax error, unexpected 'try', expecting <IDENTIFIER> at line 1, column 19:\n    [ foreach .[] as $try (1 as $catch | $catch - 1; . + $try; .) ]\n                      ^"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '{ a, $__loc__, c }'
+  input: {"a": [1, 2, 3], "b": "foo", "c": {"hi": "hey"}}
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected __loc__, expecting IDENT (Unix shell quoting issues?) at <top-level>, line 1:\n{ a, $__loc__, c }      \njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - {"a": [1, 2, 3], "__loc__": {"file": "<top-level>", "line": 1}, "c": {"hi": "hey"}}
+    jjq:
+    - v: '[1.7, )'
+      compile_error: "Variable $__loc__ is not defined"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '1 as $x | "2" as $y | "3" as $z | { $x, as, $y: 4, ($z): 5, if: 6, foo: 7 }'
+  input: {"as": 8}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected ',', expecting ':' (Unix shell quoting issues?) at <top-level>, line 1:\n1 as $x | \"2\" as $y | \"3\" as $z | { $x, as, $y: 4, ($z): 5, if: 6, foo: 7 }                                          \njq: error: syntax error, unexpected ':', expecting '}' (Unix shell quoting issues?) at <top-level>, line 1:\n1 as $x | \"2\" as $y | \"3\" as $z | { $x, as, $y: 4, ($z): 5, if: 6, foo: 7 }                                              \njq: 2 compile errors\n"
+    - v: '[1.6, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected ',', expecting ':' (Unix shell quoting issues?) at <top-level>, line 1:\n1 as $x | \"2\" as $y | \"3\" as $z | { $x, as, $y: 4, ($z): 5, if: 6, foo: 7 }                                          \njq: error: syntax error, unexpected ':', expecting '}' (Unix shell quoting issues?) at <top-level>, line 1:\n1 as $x | \"2\" as $y | \"3\" as $z | { $x, as, $y: 4, ($z): 5, if: 6, foo: 7 }                                              \njq: error: May need parentheses around object key expression at <top-level>, line 1:\n1 as $x | \"2\" as $y | \"3\" as $z | { $x, as, $y: 4, ($z): 5, if: 6, foo: 7 }                                    \njq: 3 compile errors\n"
+    - v: '[1.7, )'
+      output:
+      - {"x": 1, "as": 8, "2": 4, "3": 5, "if": 6, "foo": 7}
+    jjq:
+    - v: '[1.7, )'
+      compile_error: "syntax error, unexpected ':', expecting '}' or ',' at line 1, column 47:\n    1 as $x | \"2\" as $y | \"3\" as $z | { $x, as, $y: 4, ($z): 5, if: 6, foo: 7 }\n                                                  ^"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'fromjson | isnan'
+  input: "nan"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Invalid literal at EOF at line 1, column 3 (while parsing 'nan')\n"
+    - v: '[1.7, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.7, )'
+      output: []
+      runtime_error: "failed to parse \"nan\" as json"
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try input catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "break"
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "Function input/0 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'debug'
+  input: 1
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "Function debug/0 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '"foo" | try ((try . catch "caught too much") | error) catch "caught just right"'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "caught just right"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '"caught just right"'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '"caught just right"'
+  properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '.[]|(try (if .=="hi" then . else error end) catch empty) | "\(.) there!"'
+  input: ["hi", "ho"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "hi there!"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: '[STRING,STRING]'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try (["hi","ho"]|.[]|(try . catch (if .=="ho" then "BROKEN"|error else empty end)) | if .=="ho" then error else "\(.) there!" end) catch "caught outside \(.)"'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "hi there!"
+      - "caught outside BROKEN"
+    - v: '[1.7, )'
+      output:
+      - "hi there!"
+      - "caught outside ho"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '.[]|(try . catch (if .=="ho" then "BROKEN"|error else empty end)) | if .=="ho" then error else "\(.) there!" end'
+  input: ["hi", "ho"]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "hi there!"
+      runtime_error: "jq: error (at <stdin>:0): BROKEN\n"
+    - v: '[1.7, )'
+      output:
+      - "hi there!"
+      runtime_error: "jq: error (at <stdin>:0): ho\n"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: '[STRING,STRING]'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try (try error catch "inner catch \(.)") catch "outer catch \(.)"'
+  input: "foo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "inner catch foo"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try ((try error catch "inner catch \(.)")|error) catch "outer catch \(.)"'
+  input: "foo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "outer catch inner catch foo"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'first(.?,.?)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - null
+    - v: '[1.6, 1.7)'
+      output:
+      - null
+      - null
+    - v: '[1.7, )'
+      output:
+      - null
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NULL'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '{foo: "bar"} | .foo |= .?'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - {"foo": "bar"}
+    - v: '[1.6, 1.7)'
+      output:
+      - {}
+    - v: '[1.7, )'
+      output:
+      - {"foo": "bar"}
+    jjq:
+    - v: '[1.6, 1.7)'
+      output:
+      - {"foo": "bar"}
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{foo:"bar"}'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '{foo:"bar"}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '. |= try 2'
+  input: 1
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - 2
+    - v: '[1.6, 1.7)'
+      output:
+      - null
+    - v: '[1.7, )'
+      output:
+      - 2
+    jjq:
+    - v: '[1.6, 1.7)'
+      output:
+      - 2
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '2'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '2'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '. |= try 2 catch 3'
+  input: 1
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - 2
+    - v: '[1.6, 1.7)'
+      output:
+      - 3
+    - v: '[1.7, )'
+      output:
+      - 2
+    jjq:
+    - v: '[1.6, 1.7)'
+      output:
+      - 2
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '2|3'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '2|3'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] |= try tonumber'
+  input: ["1", "2a", "3", 4]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - null
+    - v: '[1.6, 1.7)'
+      output:
+      - ["2a", 4]
+    - v: '[1.7, )'
+      output:
+      - [1, 3, 4]
+    jjq:
+    - v: '[1.5, )'
+      output: []
+      runtime_error: "`|= empty` is undefined. See https://github.com/stedolan/jq/issues/897"
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,INT]'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'any(keys[]|tostring?;true)'
+  input: {"a": "1", "b": "2", "c": "3"}
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - false
+    - v: '[1.7, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - true
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: '{a:STRING,b:STRING,c:STRING}'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'implode|explode'
+  input: [-1, 0, 1, 2, 3, 1114111, 1114112, 55295, 55296, 57343, 57344, 1.1, 1.9]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv_unicode.c:77: jvp_utf8_encode: Assertion `codepoint >= 0 && codepoint <= 0x10FFFF' failed.\n"
+    - v: '[1.6, 1.7)'
+      output: []
+      runtime_error: "jq-1.6: src/jv_unicode.c:101: jvp_utf8_encode: Assertion `codepoint >= 0 && codepoint <= 0x10FFFF' failed.\n"
+    - v: '[1.7, )'
+      output:
+      - [65533, 0, 1, 2, 3, 1114111, 65533, 55295, 65533, 65533, 57344, 1, 1]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - [65533, 0, 1, 2, 3, 1114111, 65533, 55295, 65533, 65533, 57344, 1, 1]
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,FLOAT,FLOAT]'
+    output: '[*:INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'walk(.)'
+  input: {"x": 0}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: walk/1 is not defined at <top-level>, line 1:\nwalk(.)\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - {"x": 0}
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.6, 1.7)'
+    input: '{x:INT}'
+    output: 'NULL|{*:INT|NULL}'
+  - v: '[1.7, )'
+    input: '{x:INT}'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+  - v: '[1.6, 1.7)'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'walk(1)'
+  input: {"x": 0}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: walk/1 is not defined at <top-level>, line 1:\nwalk(1)\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - 1
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: '1'
+  - v: '[1.6, )'
+    input: '{x:INT}'
+    output: '1'
+  properties:
+  - v: '[1.6, 1.7)'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[walk(.,1)]'
+  input: {"x": 0}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: walk/1 is not defined at <top-level>, line 1:\n[walk(.,1)] \njq: 1 compile error\n"
+    - v: '[1.6, 1.7)'
+      output:
+      - [{"x": 1}, 1]
+    - v: '[1.7, )'
+      output:
+      - [{"x": 0}, 1]
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.6, 1.7)'
+    input: '{x:INT}'
+    output: '[*:1|NULL|{*:INT|NULL}]'
+  - v: '[1.7, )'
+    input: '{x:INT}'
+    output: '[*:1|NULL|[*:ANY]|{*:ANY}]'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'walk(select(IN({}, []) | not))'
+  input: {"a": 1, "b": []}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: walk/1 is not defined at <top-level>, line 1:\nwalk(select(IN({}, []) | not))\njq: 1 compile error\n"
+    - v: '[1.6, 1.7)'
+      output:
+      - null
+    - v: '[1.7, )'
+      output:
+      - {"a": 1}
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Function IN/1 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '[range(10)] | .[1.2:3.5]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 3]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[range(10)] | .[1.5:3.5]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 3]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[range(10)] | .[1.7:3.5]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 3]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[range(10)] | .[1.7:4294967295]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 3, 4, 5, 6, 7, 8, 9]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[range(10)] | .[1.7:-4294967296]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - []
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[[range(10)] | .[1.1,1.5,1.7]]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [null, null, null]
+    - v: '[1.7, )'
+      output:
+      - [1, 1, 1]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NULL|NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NULL|NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[range(5)] | .[1.1] = 5'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 5, 2, 3, 4]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NULL|NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NULL|NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[range(3)] | .[nan:1]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv_aux.c:47: parse_slice: Assertion `0 <= start && start <= end && end <= len' failed.\n"
+    - v: '[1.6, 1.7)'
+      output: []
+      runtime_error: "jq-1.6: src/jv_aux.c:47: parse_slice: Assertion `0 <= start && start <= end && end <= len' failed.\n"
+    - v: '[1.7, )'
+      output:
+      - [0]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - [0]
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[range(3)] | .[1:nan]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - []
+    - v: '[1.7, )'
+      output:
+      - [1, 2]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[range(3)] | .[nan]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|NUMBER'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NULL|NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'try ([range(3)] | .[nan] = 9) catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "Out of bounds negative array index"
+    - v: '[1.7, )'
+      output:
+      - "Cannot set array element at NaN index"
+    jjq:
+    - v: '[1.5, )'
+      output:
+      - "Cannot use nan as array index"
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'try ("foobar" | .[1.5:3.5] = "xyz") catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "Cannot update field at object index of string"
+    - v: '[1.7, )'
+      output:
+      - "Cannot update string slices"
+    jjq:
+    - v: '[1.7, )'
+      output:
+      - "Cannot update field at object index of string"
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'try ([range(10)] | .[1.5:3.5] = ["xyz"]) catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, "xyz", 4, 5, 6, 7, 8, 9]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'try ("foobar" | .[1.5]) catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "Cannot index string with number"
+    - v: '[1.8.2, )'
+      output:
+      - "Cannot index string with number (1.5)"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false

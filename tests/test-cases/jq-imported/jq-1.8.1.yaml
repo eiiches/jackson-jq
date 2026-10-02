@@ -1,0 +1,94 @@
+# This file is generated from jqlang/jq files. Different license terms apply:
+#
+# jq is copyright (C) 2012 Stephen Dolan
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# jq's documentation (everything found under the docs/ subdirectory in
+# the source tree) is licensed under the Creative Commons CC BY 3.0
+# license, which can be found at:
+#
+#          https://creativecommons.org/licenses/by/3.0/
+#
+- q: '[strptime("%FT%T")|(.,mktime)]'
+  input: "2025-06-07T08:09:10"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[2025, 5, 7, 8, 9, 10, 6, 157], 1749283750]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER|[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[*:NUMBER|[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+
+- q: 'last(range(365 * 67)|("1970-03-01T01:02:03Z"|strptime("%Y-%m-%dT%H:%M:%SZ")|mktime) + (86400 * .)|strftime("%Y-%m-%dT%H:%M:%SZ")|strptime("%Y-%m-%dT%H:%M:%SZ"))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [2037, 1, 11, 1, 2, 3, 3, 41]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NULL|[NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,NUMBER,*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: true
+
+- q: 'strflocaltime("" | ., @uri)'
+  input: 0
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: strflocaltime/1 is not defined at <top-level>, line 1:\nstrflocaltime(\"\" | ., @uri)\njq: 1 compile error\n"
+    - v: '[1.6, 1.8.0)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): strflocaltime/1: unknown system failure\n"
+    - v: '[1.8.0, )'
+      output:
+      - ""
+      - ""
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.6, )'
+    input: 'INT'
+    output: 'STRING'
+  properties:
+  - v: '[1.6, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true

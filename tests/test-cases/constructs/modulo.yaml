@@ -1,239 +1,393 @@
 - q: '((-1.0 - -1.0) % -1.5)'
-  in: [false]
-  out:
-  - 0
+  input: [false]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 0
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NUMBER'
-  - input: '[BOOLEAN]'
+  - v: '[1.5, )'
+    input: '[BOOLEAN]'
     output: 'NUMBER'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '(try ((((0.5 and 0.5), -1, ("foo" // 1)) % (null // 1))) catch ("__ERROR__"))'
-  in: 0.5
-  out:
-  - "__ERROR__"
+  input: 0.5
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "__ERROR__"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"__ERROR__"'
-  - input: 'FLOAT'
+  - v: '[1.5, )'
+    input: 'FLOAT'
     output: '"__ERROR__"'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '(try ((1 % true)) catch ("__ERROR__"))'
-  in: true
-  out:
-  - "__ERROR__"
+  input: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "__ERROR__"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"__ERROR__"'
-  - input: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'BOOLEAN'
     output: '"__ERROR__"'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'try (1 % true) catch .'
-  out:
-  - "number (1) and boolean (true) cannot be divided (remainder)"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "number (1) and boolean (true) cannot be divided (remainder)"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'error("foo") % empty'
-  out: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output: []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NEVER'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NEVER'
   properties:
+  - v: '[1.5, )'
     cardinality: ZERO
     depends_on_input: false
     depends_on_external_state: false
   comment: 'rhs is evaluated first'
 
 - q: 'try (empty % error("foo")) catch .'
-  out:
-  - "foo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "foo"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
-- q: '(64.5 % nan)'
-  in: 84
-  out:
-  - 64
+- q: '(64.5 % nan) | [isnan, isinfinite, tostring]'
+  input: 84
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [false, false, "64"]
+    - v: '[1.7, )'
+      output:
+      - [true, false, "null"]
   types:
-  - input: 'ANY'
-    output: 'NUMBER'
-  - input: 'INT'
-    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN,STRING]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '[BOOLEAN,BOOLEAN,STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
 
 - q: '(64.5 % nan) | isnan'
-  in: 84
-  out:
-  - true
+  input: 84
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - false
+    - v: '[1.7, )'
+      output:
+      - true
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'BOOLEAN'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'BOOLEAN'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.7, )'
 
-- q: '(nan % nan) | (., isnan)'
-  in: 84
-  out:
-  - 0
-  - false
+- q: '(nan % nan) | ([isnan, isinfinite, tostring], isnan)'
+  input: 84
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [false, false, "0"]
+      - false
+    - v: '[1.7, )'
+      output:
+      - [true, false, "null"]
+      - true
   types:
-  - input: 'ANY'
-    output: 'BOOLEAN|NUMBER'
-  - input: 'INT'
-    output: 'BOOLEAN|NUMBER'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN|[BOOLEAN,BOOLEAN,STRING]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'BOOLEAN|[BOOLEAN,BOOLEAN,STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
 
 - q: '(nan % nan) | isnan'
-  in: 84
-  out:
-  - true
+  input: 84
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - false
+    - v: '[1.7, )'
+      output:
+      - true
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'BOOLEAN'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'BOOLEAN'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: '0 % nan | (isnan, tojson)'
-  in: null
-  out:
-  - false
-  - '0'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - false
+      - "0"
+    - v: '[1.7, )'
+      output:
+      - true
+      - "null"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'BOOLEAN|STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'BOOLEAN|STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
 
 - q: '0 % nan | (isnan, tojson)'
-  in: null
-  out:
-  - true
-  - 'null'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - false
+      - "0"
+    - v: '[1.7, )'
+      output:
+      - true
+      - "null"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'BOOLEAN|STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'BOOLEAN|STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: '(nan % infinite) | (isnan, tojson)'
-  out:
-  - false
-  - '0'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - false
+      - "0"
+    - v: '[1.7, )'
+      output:
+      - true
+      - "null"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN|STRING'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'BOOLEAN|STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
 
 - q: '(nan % infinite) | (isnan, tojson)'
-  out:
-  - true
-  - 'null'
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - false
+      - "0"
+    - v: '[1.7, )'
+      output:
+      - true
+      - "null"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN|STRING'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'BOOLEAN|STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: '(-2 | log1p) % infinite | isnan'
-  out:
-  - true
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: log1p/0 is not defined at <top-level>, line 1:\n(-2 | log1p) % infinite | isnan      \njq: 1 compile error\n"
+    - v: '[1.6, 1.7)'
+      output:
+      - false
+    - v: '[1.7, )'
+      output:
+      - true
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.6, )'
+    input: 'NULL'
     output: 'BOOLEAN'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: '(nan) % (length) | isnan'
-  in: -1.7976931348623157e+308
-  out:
-  - true
+  input: -1.7976931348623157e+308
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - false
+    - v: '[1.7, )'
+      output:
+      - true
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'BOOLEAN'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: '(nan % 0) | isnan'
-  out:
-  - true
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): number (null) and number (0) cannot be divided (remainder) because the divisor is zero\n"
+    - v: '[1.7, )'
+      output:
+      - true
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'BOOLEAN'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.7, )'

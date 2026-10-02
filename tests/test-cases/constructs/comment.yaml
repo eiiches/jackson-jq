@@ -1,12 +1,18 @@
 - q: '10 # comment'
-  out:
-  - 10
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 10
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '10'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '10'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false

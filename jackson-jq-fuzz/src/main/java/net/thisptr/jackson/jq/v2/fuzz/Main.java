@@ -621,7 +621,9 @@ public class Main {
 			try {
 				actual = actualEvaluator.evaluate(expr.toString(), in, timeout);
 			} catch (Throwable e) {
-				actual = new Evaluator.Result(Collections.emptyList(), e);
+				Evaluator.ErrorPhase phase = e instanceof TimeoutException ? null
+						: e instanceof JsonQueryException ? Evaluator.ErrorPhase.COMPILE : Evaluator.ErrorPhase.RUNTIME;
+				actual = new Evaluator.Result(Collections.emptyList(), e, phase, e.getMessage());
 			}
 
 			@Var Category category = null;

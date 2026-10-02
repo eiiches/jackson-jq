@@ -1,4 +1,5 @@
 load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_jq//:defs.bzl", "jq_binaries_rootpath")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -8,6 +9,8 @@ package(default_visibility = ["//visibility:public"])
 java_binary(
     name = "jackson-jq-fuzz",
     testonly = True,
+    data = ["@jq_binaries//:all"],
+    jvm_flags = ["-Djackson_jq.test.jq_bin_dir=" + jq_binaries_rootpath()],
     main_class = "net.thisptr.jackson.jq.v2.fuzz.Main",
     runtime_deps = ["//jackson-jq-fuzz/src/main/java/net/thisptr/jackson/jq/v2/fuzz"],
 )

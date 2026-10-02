@@ -1,207 +1,275 @@
 - q: '@sh'
-  in: 0.0
-  out:
-  - "0"
+  input: 0.0
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "0"
+    - v: '[1.7, )'
+      output:
+      - "0.0"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
 
 - q: '@sh'
-  in: 0.0
-  out:
-  - "0.0"
+  input: 0.0
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "0"
+    - v: '[1.7, )'
+      output:
+      - "0.0"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: '@sh'
-  in: [0.0]
-  out:
-  - "0"
+  input: [0.0]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "0"
+    - v: '[1.7, )'
+      output:
+      - "0.0"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: '[INT]'
+  - v: '[1.5, )'
+    input: '[INT]'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
 
 - q: '@sh'
-  in: [0.0]
-  out:
-  - "0.0"
+  input: [0.0]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "0"
+    - v: '[1.7, )'
+      output:
+      - "0.0"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: '[INT]'
+  - v: '[1.5, )'
+    input: '[INT]'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: '@sh'
-  in: "\0"
-  out:
-  - "'\\0'"
+  input: "\0"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "'\\0'"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '[range(0; 128)] | implode | @sh'
-  out:
-  - "'\\0\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F !\"#$%&'\\''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7F'"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "'\\0\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\e\x1c\x1d\x1e\x1f !\"#$%&'\\''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f'"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '[[range(0; 128)] | implode] | @sh'
-  out:
-  - "'\\0\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F !\"#$%&'\\''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7F'"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "'\\0\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\e\x1c\x1d\x1e\x1f !\"#$%&'\\''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f'"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'try (@sh) catch .'
-  in: {"foo": false}
+  input: {"foo": false}
   expectations:
     default:
     - v: '[1.5, )'
-      out:
-      - 'object ({"foo":false}) can not be escaped for shell'
+      output:
+      - "object ({\"foo\":false}) can not be escaped for shell"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '{foo:BOOLEAN}'
+  - v: '[1.5, )'
+    input: '{foo:BOOLEAN}'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'try (@sh) catch .'
-  in: {}
+  input: {}
   expectations:
     default:
     - v: '[1.5, )'
-      out:
-      - 'object ({}) can not be escaped for shell'
+      output:
+      - "object ({}) can not be escaped for shell"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '{}'
+  - v: '[1.5, )'
+    input: '{}'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'try (@sh) catch .'
-  in: [{"foo": false}]
+  input: [{"foo": false}]
   expectations:
     default:
     - v: '[1.5, )'
-      out:
-      - 'object ({"foo":false}) can not be escaped for shell'
+      output:
+      - "object ({\"foo\":false}) can not be escaped for shell"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[{foo:BOOLEAN}]'
+  - v: '[1.5, )'
+    input: '[{foo:BOOLEAN}]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'try (@sh) catch .'
-  in: [[1, 2]]
+  input: [[1, 2]]
   expectations:
     default:
     - v: '[1.5, )'
-      out:
-      - 'array ([1,2]) can not be escaped for shell'
+      output:
+      - "array ([1,2]) can not be escaped for shell"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[[INT,INT]]'
+  - v: '[1.5, )'
+    input: '[[INT,INT]]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'try (@sh) catch .'
-  in: {"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": 1}
+  input: {"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": 1}
   expectations:
     default:
     - v: '[1.5, 1.8.2)'
-      out:
-      - 'object ({"aaaaaaaaa...) can not be escaped for shell'
+      output:
+      - "object ({\"aaaaaaaaa...) can not be escaped for shell"
     - v: '[1.8.2, )'
-      out:
-      - 'object ({"aaaaaaaaaaaaaaaaaaaaaaa...}) can not be escaped for shell'
+      output:
+      - "object ({\"aaaaaaaaaaaaaaaaaaaaaaa...}) can not be escaped for shell"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:INT}'
+  - v: '[1.5, )'
+    input: '{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:INT}'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'try (@sh) catch .'
-  in: [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]]
+  input: [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]]
   expectations:
     default:
     - v: '[1.5, 1.8.2)'
-      out:
-      - 'array ([1,2,3,4,5,...) can not be escaped for shell'
+      output:
+      - "array ([1,2,3,4,5,...) can not be escaped for shell"
     - v: '[1.8.2, )'
-      out:
-      - 'array ([1,2,3,4,5,6,7,8,9,10,11,...]) can not be escaped for shell'
+      output:
+      - "array ([1,2,3,4,5,6,7,8,9,10,11,...]) can not be escaped for shell"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[[INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT]]'
+  - v: '[1.5, )'
+    input: '[[INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT]]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false

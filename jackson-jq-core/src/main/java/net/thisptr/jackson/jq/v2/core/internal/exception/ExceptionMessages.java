@@ -45,7 +45,7 @@ public final class ExceptionMessages {
 
 	public static <JsonNode> String cannotSort(JsonProvider<JsonNode> jsonProvider, Version version, JsonNode input, JsonNode keys) {
 		return String.format("%s and %s cannot be sorted, as they are not both arrays",
-					describe(jsonProvider, version, input), describe(jsonProvider, version, keys));
+				describe(jsonProvider, version, input), describe(jsonProvider, version, keys));
 	}
 
 	/**

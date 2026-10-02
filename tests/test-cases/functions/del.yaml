@@ -1,76 +1,116 @@
 - q: 'del(values)'
-  in: 110
-  out:
-  - null
-  types:
-  - input: 'ANY'
-    output: 'NULL|[*:ANY]|{*:ANY}'
-  - input: 'INT'
-    output: 'ANY'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.5, )'
-
-- q: 'del(.a | null)'
-  in: {"a": null}
-  types:
-  - input: 'ANY'
-    output: 'NULL|[*:ANY]|{*:ANY}'
-  - input: '{a:NULL}'
-    output: 'NULL|[*:ANY]|{*:ANY}'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: 110
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
+      - null
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'del(.a | null)'
+  input: {"a": null}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
       - {}
-
-- q: '[.[2:nan] |= map(. * 10), del(.[2:nan])]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [[0, 1, 2, 3, 4], [0, 1, 2, 3, 4]]
   types:
-  - input: 'ANY'
-    output: '[ANY,NULL|[*:ANY]|{*:ANY}]'
-  - input: '[INT,INT,INT,INT,INT]'
-    output: '[[*:NUMBER],NULL|[*:ANY]|{*:ANY}]'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '{a:NULL}'
+    output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
 
 - q: '[.[2:nan] |= map(. * 10), del(.[2:nan])]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [[0, 1, 20, 30, 40], [0, 1]]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [[0, 1, 2, 3, 4], [0, 1, 2, 3, 4]]
+    - v: '[1.7, )'
+      output:
+      - [[0, 1, 20, 30, 40], [0, 1]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[ANY,NULL|[*:ANY]|{*:ANY}]'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[[*:NUMBER],NULL|[*:ANY]|{*:ANY}]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
+
+- q: '[.[2:nan] |= map(. * 10), del(.[2:nan])]'
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [[0, 1, 2, 3, 4], [0, 1, 2, 3, 4]]
+    - v: '[1.7, )'
+      output:
+      - [[0, 1, 20, 30, 40], [0, 1]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[ANY,NULL|[*:ANY]|{*:ANY}]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
+    output: '[[*:NUMBER],NULL|[*:ANY]|{*:ANY}]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '[del(.[nan:2]), del(.[nan:nan])]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [[2, 3, 4], []]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv_aux.c:47: parse_slice: Assertion `0 <= start && start <= end && end <= len' failed.\n"
+    - v: '[1.6, 1.7)'
+      output: []
+      runtime_error: "jq-1.6: src/jv_aux.c:47: parse_slice: Assertion `0 <= start && start <= end && end <= len' failed.\n"
+    - v: '[1.7, )'
+      output:
+      - [[2, 3, 4], []]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - [[2.0, 3.0, 4.0], [0.0, 1.0, 2.0, 3.0, 4.0]]
+      incompat_type: INTENTIONAL
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[NULL|[*:ANY]|{*:ANY},NULL|[*:ANY]|{*:ANY}]'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[NULL|[*:ANY]|{*:ANY},NULL|[*:ANY]|{*:ANY}]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'

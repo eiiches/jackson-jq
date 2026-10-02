@@ -1,75 +1,118 @@
 - q: '[recurse]'
-  in: {"a": null, "b": [null, 1]}
-  out:
-  - [{"a": null, "b": [null, 1]}, [null, 1], 1]
+  input: {"a": null, "b": [null, 1]}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - [{"a": null, "b": [null, 1]}, [null, 1], 1]
+    - v: '[1.6, )'
+      output:
+      - [{"a": null, "b": [null, 1]}, null, [null, 1], null, 1]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:ANY]'
-  - input: '{a:NULL,b:[NULL,INT]}'
+  - v: '[1.5, )'
+    input: '{a:NULL,b:[NULL,INT]}'
     output: '[*:ANY]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.6)'
 
 - q: '[recurse]'
-  in: {"a": null, "b": [null, 1]}
-  out:
-  - [{"a": null, "b": [null, 1]}, null, [null, 1], null, 1]
+  input: {"a": null, "b": [null, 1]}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - [{"a": null, "b": [null, 1]}, [null, 1], 1]
+    - v: '[1.6, )'
+      output:
+      - [{"a": null, "b": [null, 1]}, null, [null, 1], null, 1]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:ANY]'
-  - input: '{a:NULL,b:[NULL,INT]}'
+  - v: '[1.5, )'
+    input: '{a:NULL,b:[NULL,INT]}'
     output: '[*:ANY]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.6, )'
 
 - q: '[recurse(.[]?)]'
-  in: [null]
-  out:
-  - [[null]]
+  input: [null]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - [[null]]
+    - v: '[1.6, )'
+      output:
+      - [[null], null]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:ANY]'
-  - input: '[NULL]'
+  - v: '[1.5, 1.6)'
+    input: '[NULL]'
     output: '[*:[NULL]]'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.5, 1.6)'
-
-- q: '[recurse(.[]?)]'
-  in: [null]
-  out:
-  - [[null], null]
-  types:
-  - input: 'ANY'
-    output: '[*:ANY]'
-  - input: '[NULL]'
+  - v: '[1.6, )'
+    input: '[NULL]'
     output: '[*:NULL|[NULL]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.6, )'
+
+- q: '[recurse(.[]?)]'
+  input: [null]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - [[null]]
+    - v: '[1.6, )'
+      output:
+      - [[null], null]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, 1.6)'
+    input: '[NULL]'
+    output: '[*:[NULL]]'
+  - v: '[1.6, )'
+    input: '[NULL]'
+    output: '[*:NULL|[NULL]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 # A null root is emitted in every supported jq version.
 - q: '[recurse]'
-  in: null
-  out:
-  - [null]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [null]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:ANY]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:ANY]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'

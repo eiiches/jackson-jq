@@ -1,85 +1,124 @@
 - q: 'from_entries'
-  in: {}
-  out:
-  - {}
+  input: {}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {}
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '{*:ANY}'
-  - input: '{}'
+  - v: '[1.5, )'
+    input: '{}'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'try from_entries catch .'
-  in: 1
-  out:
-  - "Cannot iterate over number (1)"
+  input: 1
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "Cannot iterate over number (1)"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'try from_entries catch .'
-  in: [{"key": "a", "value": 1}, 1]
-  out:
-  - "Cannot index number with string \"key\""
+  input: [{"key": "a", "value": 1}, 1]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "Cannot index number with string \"key\""
+    - v: '[1.8.2, )'
+      output:
+      - "Cannot index number with string (\"key\")"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[{key:STRING,value:INT},INT]'
+  - v: '[1.5, )'
+    input: '[{key:STRING,value:INT},INT]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.8.2)'
 
 - q: 'try from_entries catch .'
-  in: [{"key": "a", "value": 1}, 1]
-  out:
-  - "Cannot index number with string (\"key\")"
+  input: [{"key": "a", "value": 1}, 1]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "Cannot index number with string \"key\""
+    - v: '[1.8.2, )'
+      output:
+      - "Cannot index number with string (\"key\")"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[{key:STRING,value:INT},INT]'
+  - v: '[1.5, )'
+    input: '[{key:STRING,value:INT},INT]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.8.2, )'
 
 - q: '{a: {key: "a", value: 1}} | from_entries'
-  out:
-  - {"a": 1}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": 1}
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'try from_entries catch .'
-  in: [{}]
-  out:
-  - "Cannot use null (null) as object key"
+  input: [{}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "Cannot use null (null) as object key"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[{}]'
+  - v: '[1.5, )'
+    input: '[{}]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false

@@ -1,0 +1,32 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_jq//:defs.bzl", "jq_binaries_rootpath")
+load("//build-tools/bazel:defs.bzl", "jjq_java_library")
+
+jjq_java_library(
+    name = "expectations",
+    testonly = True,
+    srcs = ["ExpectationGenerator.java"],
+    release = 17,
+    visibility = ["//tests:__subpackages__"],
+    deps = [
+        "//jackson-jq-core",
+        "//jackson-jq-ext-module-joni",
+        "//jackson-jq-json-provider-impl-jackson2",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/exception",
+        "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/version",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/comparator",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/evaluator",
+        "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/testcase",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+    ],
+)
+
+java_binary(
+    name = "generate-expectations",
+    testonly = True,
+    data = ["@jq_binaries//:all"],
+    jvm_flags = ["-Djackson_jq.test.jq_bin_dir=" + jq_binaries_rootpath()],
+    main_class = "net.thisptr.jackson.jq.v2.test.expectations.ExpectationGenerator",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":expectations"],
+)

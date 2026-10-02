@@ -1,171 +1,255 @@
 - q: 'paths'
-  in: [false]
-  out:
-  - [0]
+  input: [false]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:NUMBER|STRING]'
-  - input: '[BOOLEAN]'
+  - v: '[1.5, )'
+    input: '[BOOLEAN]'
     output: '[*:NUMBER|STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'paths'
-  in: [[[null]]]
-  out:
-  - [0]
-  - [0, 0]
+  input: [[[null]]]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - [0]
+      - [0, 0]
+    - v: '[1.6, )'
+      output:
+      - [0]
+      - [0, 0]
+      - [0, 0, 0]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:NUMBER|STRING]'
-  - input: '[[[NULL]]]'
+  - v: '[1.5, )'
+    input: '[[[NULL]]]'
     output: '[*:NUMBER|STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.6)'
 
 - q: 'paths'
-  in: [null]
-  out: []
+  input: [null]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+    - v: '[1.6, )'
+      output:
+      - [0]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:NUMBER|STRING]'
-  - input: '[NULL]'
+  - v: '[1.5, )'
+    input: '[NULL]'
     output: '[*:NUMBER|STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.6)'
 
 # jq >= 1.7.1 defines paths(f) as `path(..|select(f))|select(length > 0)`, which evaluates f on
 # the root value as well. The empty path is still excluded from the output, so the only visible
 # difference is that errors raised by f on the root now propagate.
 - q: '[paths(endswith("foo"))]'
-  in: 0.5
-  out:
-  - []
+  input: 0.5
+  expectations:
+    default:
+    - v: '[1.5, 1.7.1)'
+      output:
+      - []
+    - v: '[1.7.1, )'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): endswith() requires string inputs\n"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:[*:NUMBER|STRING]]'
-  - input: 'FLOAT'
+  - v: '[1.5, )'
+    input: 'FLOAT'
     output: '[*:[*:NUMBER|STRING]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7.1)'
 
 - q: 'try [paths(endswith("foo"))] catch .'
-  in: 0.5
-  out:
-  - "endswith() requires string inputs"
+  input: 0.5
+  expectations:
+    default:
+    - v: '[1.5, 1.7.1)'
+      output:
+      - []
+    - v: '[1.7.1, )'
+      output:
+      - "endswith() requires string inputs"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'FLOAT'
+  - v: '[1.5, )'
+    input: 'FLOAT'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7.1, )'
 
 - q: '[paths(endswith("foo"))]'
-  in: {"a": "xfoo"}
-  out:
-  - [["a"]]
+  input: {"a": "xfoo"}
+  expectations:
+    default:
+    - v: '[1.5, 1.7.1)'
+      output:
+      - [["a"]]
+    - v: '[1.7.1, )'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): endswith() requires string inputs\n"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:[*:NUMBER|STRING]]'
-  - input: '{a:STRING}'
+  - v: '[1.5, )'
+    input: '{a:STRING}'
     output: '[*:[*:NUMBER|STRING]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7.1)'
 
 # The root is evaluated before any child path is emitted.
 - q: 'try [paths(endswith("foo"))] catch .'
-  in: {"a": "xfoo"}
-  out:
-  - "endswith() requires string inputs"
+  input: {"a": "xfoo"}
+  expectations:
+    default:
+    - v: '[1.5, 1.7.1)'
+      output:
+      - [["a"]]
+    - v: '[1.7.1, )'
+      output:
+      - "endswith() requires string inputs"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '{a:STRING}'
+  - v: '[1.5, )'
+    input: '{a:STRING}'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7.1, )'
 
 # The root matches, but its (empty) path is still not emitted.
 - q: '[paths(endswith("foo"))]'
-  in: "xfoo"
-  out:
-  - []
+  input: "xfoo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:[*:NUMBER|STRING]]'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: '[*:[*:NUMBER|STRING]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 # jq 1.5's `..` skips null-valued members, so paths/0 does not yield their paths; from 1.6 on it
 # does.
 - q: '[paths]'
-  in: {"a": null}
-  out:
-  - []
+  input: {"a": null}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - []
+    - v: '[1.6, )'
+      output:
+      - [["a"]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:[*:NUMBER|STRING]]'
-  - input: '{a:NULL}'
+  - v: '[1.5, )'
+    input: '{a:NULL}'
     output: '[*:[*:NUMBER|STRING]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.6)'
 
 - q: '[paths]'
-  in: {"a": null}
-  out:
-  - [["a"]]
+  input: {"a": null}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - []
+    - v: '[1.6, )'
+      output:
+      - [["a"]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:[*:NUMBER|STRING]]'
-  - input: '{a:NULL}'
+  - v: '[1.5, )'
+    input: '{a:NULL}'
     output: '[*:[*:NUMBER|STRING]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.6, )'
 
 - q: '[paths]'
-  in: [null]
-  out:
-  - [[0]]
+  input: [null]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - []
+    - v: '[1.6, )'
+      output:
+      - [[0]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:[*:NUMBER|STRING]]'
-  - input: '[NULL]'
+  - v: '[1.5, )'
+    input: '[NULL]'
     output: '[*:[*:NUMBER|STRING]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.6, )'
