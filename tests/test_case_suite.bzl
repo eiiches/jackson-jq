@@ -17,7 +17,8 @@ def test_case_suite(
         visibility,
         data = [],
         env = {},
-        jvm_flags = []):
+        jvm_flags = [],
+        timeout = "short"):
     """Creates one standalone java_test per YAML test-case resource.
 
     Args:
@@ -29,6 +30,7 @@ def test_case_suite(
       data: Runtime data required by the test.
       env: Environment variables for every generated test.
       jvm_flags: JVM flags for every generated test.
+      timeout: Bazel timeout for every generated test.
     """
     tests = []
     seen = {}
@@ -55,6 +57,7 @@ def test_case_suite(
                 "@maven//:org_junit_jupiter_junit_jupiter_api",
             ],
             size = "small",
+            timeout = timeout,
             use_testrunner = False,
             visibility = visibility,
         )

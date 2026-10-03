@@ -10,6 +10,31 @@ alias(
     actual = "//build-tools/idea-format:idea-format",
 )
 
+alias(
+    name = "format-test-cases",
+    actual = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/testcase:format-test-cases",
+)
+
+alias(
+    name = "download-test-cases",
+    actual = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/download:download-test-cases",
+)
+
+alias(
+    name = "generate-type-assertions",
+    actual = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/typecheck:generate-type-assertions",
+)
+
+alias(
+    name = "generate-property-assertions",
+    actual = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/properties:generate-property-assertions",
+)
+
+alias(
+    name = "generate-expectations",
+    actual = "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/expectations:generate-expectations",
+)
+
 publish_all(
     name = "maven_install",
     publishers = [

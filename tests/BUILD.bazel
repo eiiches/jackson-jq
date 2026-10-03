@@ -48,6 +48,7 @@ ZONE_RUNS = {
 
 test_case_suite(
     name = "verify-test-cases",
+    timeout = "moderate",
     data = ["@jq_binaries//:all"],
     env = {"JQ_BIN_DIR": jq_binaries_rootpath()},
     test_cases = TEST_CASES,
@@ -58,6 +59,7 @@ test_case_suite(
 
 [test_case_suite(
     name = "verify-test-cases-" + zone,
+    timeout = "moderate",
     data = ["@jq_binaries//:all"],
     env = {
         "JQ_BIN_DIR": jq_binaries_rootpath(),

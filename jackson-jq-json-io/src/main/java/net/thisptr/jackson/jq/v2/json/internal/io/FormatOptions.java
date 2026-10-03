@@ -3,20 +3,23 @@ package net.thisptr.jackson.jq.v2.json.internal.io;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
 /**
- * Controls how {@link JsonCodec#format(JsonProvider, Object, FormatOptions)} renders JSON numbers.
+ * Controls how {@link JsonCodec#format(JsonProvider, Object, FormatOptions)} renders JSON numbers,
+ * and how long an output it will build before giving up.
  * <p>
  * Instances are immutable and can be reused across calls. Build one with {@link #newBuilder()}.
- * Options apply to numbers at every depth of the value.
+ * Number options apply at every depth of the value.
  */
 public final class FormatOptions {
-	private static final FormatOptions DEFAULT = new FormatOptions(false, false);
+	private static final FormatOptions DEFAULT = new FormatOptions(false, false, Integer.MAX_VALUE);
 
 	private final boolean lowerCaseDecimalExponent;
 	private final boolean roundNumbersToDouble;
+	private final int maxLength;
 
-	private FormatOptions(boolean lowerCaseDecimalExponent, boolean roundNumbersToDouble) {
+	private FormatOptions(boolean lowerCaseDecimalExponent, boolean roundNumbersToDouble, int maxLength) {
 		this.lowerCaseDecimalExponent = lowerCaseDecimalExponent;
 		this.roundNumbersToDouble = roundNumbersToDouble;
+		this.maxLength = maxLength;
 	}
 
 	static FormatOptions getDefaultInstance() {
@@ -41,7 +44,8 @@ public final class FormatOptions {
 	public Builder toBuilder() {
 		return new Builder()
 				.setLowerCaseDecimalExponent(lowerCaseDecimalExponent)
-				.setRoundNumbersToDouble(roundNumbersToDouble);
+				.setRoundNumbersToDouble(roundNumbersToDouble)
+				.setMaxLength(maxLength);
 	}
 
 	/**
@@ -64,11 +68,22 @@ public final class FormatOptions {
 	}
 
 	/**
+	 * Returns the longest output formatting will build before it throws
+	 * {@link JsonSizeExceededException}.
+	 *
+	 * @return the maximum output length in UTF-16 code units; {@link Integer#MAX_VALUE} for no limit
+	 */
+	public int getMaxLength() {
+		return maxLength;
+	}
+
+	/**
 	 * Builds a {@link FormatOptions} instance.
 	 */
 	public static final class Builder {
 		private boolean lowerCaseDecimalExponent;
 		private boolean roundNumbersToDouble;
+		private int maxLength = Integer.MAX_VALUE;
 
 		private Builder() {
 		}
@@ -97,14 +112,30 @@ public final class FormatOptions {
 		}
 
 		/**
+		 * Sets the longest output formatting may build. Formatting stops with
+		 * {@link JsonSizeExceededException} as soon as the next piece would carry the output past the
+		 * cap, so an output too large to want is never built in full.
+		 *
+		 * @param maxLength the maximum output length in UTF-16 code units; {@link Integer#MAX_VALUE} for no limit
+		 * @return this, for chaining
+		 * @throws IllegalArgumentException if {@code maxLength} is negative
+		 */
+		public Builder setMaxLength(int maxLength) {
+			if (maxLength < 0)
+				throw new IllegalArgumentException("maxLength must not be negative");
+			this.maxLength = maxLength;
+			return this;
+		}
+
+		/**
 		 * Builds the options, reusing the shared instance for the defaults.
 		 *
 		 * @return the options
 		 */
 		public FormatOptions build() {
-			if (!lowerCaseDecimalExponent && !roundNumbersToDouble)
+			if (!lowerCaseDecimalExponent && !roundNumbersToDouble && maxLength == Integer.MAX_VALUE)
 				return DEFAULT;
-			return new FormatOptions(lowerCaseDecimalExponent, roundNumbersToDouble);
+			return new FormatOptions(lowerCaseDecimalExponent, roundNumbersToDouble, maxLength);
 		}
 	}
 }

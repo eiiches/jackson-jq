@@ -1,0 +1,514 @@
+# This file is generated from jqlang/jq files. Different license terms apply:
+#
+# jq is copyright (C) 2012 Stephen Dolan
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# jq's documentation (everything found under the docs/ subdirectory in
+# the source tree) is licensed under the Creative Commons CC BY 3.0
+# license, which can be found at:
+#
+#          https://creativecommons.org/licenses/by/3.0/
+#
+- q: '[match(""; "g")]'
+  input: "ab"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [{"offset": 0, "length": 0, "string": "", "captures": []}, {"offset": 1, "length": 0, "string": "", "captures": []}]
+    - v: '[1.7, )'
+      output:
+      - [{"offset": 0, "length": 0, "string": "", "captures": []}, {"offset": 1, "length": 0, "string": "", "captures": []}, {"offset": 2, "length": 0, "string": "", "captures": []}]
+    jjq:
+    - v: '[1.7, )'
+      output:
+      - [{"offset": 0, "length": 0, "string": "", "captures": []}, {"offset": 1, "length": 0, "string": "", "captures": []}]
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[*:{captures:[*:{length:INT,name:NULL|STRING,offset:INT,string:NULL|STRING}],length:INT,offset:INT,string:STRING}]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'gsub("(.*)"; ""; "x")'
+  input: ""
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      timeout: true
+    - v: '[1.6, )'
+      output:
+      - ""
+    jjq:
+    - v: '[1.5, 1.6)'
+      output:
+      - ""
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'gsub(""; "a"; "g")'
+  input: ""
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      timeout: true
+    - v: '[1.6, )'
+      output:
+      - "a"
+    jjq:
+    - v: '[1.5, 1.6)'
+      output:
+      - "a"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'gsub("^"; ""; "g")'
+  input: "a"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      timeout: true
+    - v: '[1.7, )'
+      output:
+      - "a"
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - "a"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'gsub(""; "a"; "g")'
+  input: "a"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      timeout: true
+    - v: '[1.7, )'
+      output:
+      - "aaa"
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - "aaa"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'gsub("$"; "a"; "g")'
+  input: "a"
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      timeout: true
+    - v: '[1.6, )'
+      output:
+      - "aa"
+    jjq:
+    - v: '[1.5, 1.6)'
+      output:
+      - "aa"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'gsub("^"; "a")'
+  input: ""
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      timeout: true
+    - v: '[1.6, )'
+      output:
+      - "a"
+    jjq:
+    - v: '[1.5, 1.6)'
+      output:
+      - "a"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'gsub("(?=u)"; "u")'
+  input: "qux"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      timeout: true
+    - v: '[1.7, )'
+      output:
+      - "quux"
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - "quux"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'gsub("^.*a"; "b")'
+  input: "aaa"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "b"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'gsub("^.*?a"; "b")'
+  input: "aaa"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "bbb"
+    - v: '[1.7, )'
+      output:
+      - "baa"
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - "baa"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[gsub("a"; "b", "c")]'
+  input: "a"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["b", "c"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.[] | scan("b+"; "i")]'
+  input: ["", "bBb", "abcABBBCabbbc"]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: scan/2 is not defined at <top-level>, line 1:\n[.[] | scan(\"b+\"; \"i\")]       \njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - ["bBb", "b", "BBB", "bbb"]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - ["bBb", "b", "BBB", "bbb"]
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING|[*:NULL|STRING]]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING]'
+    output: '[*:STRING|[*:NULL|STRING]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'gsub("(?<x>.)(?<y>[0-9])"; "\(.x|ascii_downcase)\(.y)")'
+  input: "A1 B2 CD"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "a1 b2 CD"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'gsub("\\b(?<x>.)"; "\(.x|ascii_downcase)")'
+  input: "ABC DEF"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "abc def"
+    - v: '[1.7, )'
+      output:
+      - "aBC dEF"
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - "aBC dEF"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'gsub("[^a-z]*(?<x>[a-z]*)"; "Z\(.x)")'
+  input: "123foo456bar"
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      timeout: true
+    - v: '[1.6, 1.7)'
+      output:
+      - "ZfooZbar"
+    - v: '[1.7, )'
+      output:
+      - "ZfooZbarZ"
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - "ZfooZbarZ"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[sub("a"; "b", "c")]'
+  input: "a"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["b", "c"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[sub("(?<a>.)"; "\(.a|ascii_upcase)", "\(.a|ascii_downcase)", "c")]'
+  input: "aB"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["AB", "aB", "cB"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[gsub("(?<a>.)"; "\(.a|ascii_upcase)", "\(.a|ascii_downcase)", "c")]'
+  input: "aB"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - ["AB", "aB", "cB", "Ab", "ab", "cb", "Ac", "ac", "cc"]
+    - v: '[1.7, )'
+      output:
+      - ["AB", "ab", "cc"]
+    jjq:
+    - v: '[1.7, )'
+      output:
+      - ["AB", "aB", "cB", "Ab", "ab", "cb", "Ac", "ac", "cc"]
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[splits("")]'
+  input: "ab"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - ["", "a", "b"]
+    - v: '[1.7, )'
+      output:
+      - ["", "a", "b", ""]
+    jjq:
+    - v: '[1.7, )'
+      output:
+      - ["", "a", "b"]
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false

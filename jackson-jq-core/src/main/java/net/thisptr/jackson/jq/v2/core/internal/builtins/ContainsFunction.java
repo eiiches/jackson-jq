@@ -1,5 +1,8 @@
 package net.thisptr.jackson.jq.v2.core.internal.builtins;
 
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -62,40 +65,98 @@ public class ContainsFunction implements Function {
 	}
 
 	private static <JsonNode> boolean contains(JsonProvider<JsonNode> jsonProvider, JsonNode needle, JsonNode haystack) {
-		JsonNodeType hType = jsonProvider.getNodeType(haystack);
-		JsonNodeType nType = jsonProvider.getNodeType(needle);
-		if (hType == JsonNodeType.STRING && nType == JsonNodeType.STRING) {
-			return jsonProvider.getString(haystack).contains(jsonProvider.getString(needle));
-		} else if (hType == JsonNodeType.ARRAY && nType == JsonNodeType.ARRAY) {
-			Iterator<JsonNode> nIter = jsonProvider.getArrayElements(needle);
-			while (nIter.hasNext()) {
-				JsonNode n = nIter.next();
-				@Var boolean found = false;
-				Iterator<JsonNode> hIter = jsonProvider.getArrayElements(haystack);
-				while (hIter.hasNext()) {
-					JsonNode h = hIter.next();
-					if (contains(jsonProvider, n, h)) {
-						found = true;
-						break;
+		Deque<ContainmentFrame<JsonNode>> stack = new ArrayDeque<>();
+		JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
+		stack.push(new ContainmentFrame<>(needle, haystack));
+		@Var boolean result = false;
+		while (!stack.isEmpty()) {
+			ContainmentFrame<JsonNode> current = stack.peek();
+			switch (current.state) {
+				case START -> {
+					JsonNodeType hType = jsonProvider.getNodeType(current.haystack);
+					JsonNodeType nType = jsonProvider.getNodeType(current.needle);
+					if (hType == JsonNodeType.ARRAY && nType == JsonNodeType.ARRAY) {
+						current.needleElements = jsonProvider.getArrayElements(current.needle);
+						current.state = State.ARRAY_NEEDLE;
+					} else if (hType == JsonNodeType.OBJECT && nType == JsonNodeType.OBJECT) {
+						current.objectMembers = jsonProvider.getObjectMembers(current.needle);
+						current.state = State.OBJECT_FIELD;
+					} else {
+						result = (hType == JsonNodeType.STRING && nType == JsonNodeType.STRING)
+								? jsonProvider.getString(current.haystack).contains(jsonProvider.getString(current.needle))
+								: comparator.compare(current.haystack, current.needle) == 0;
+						stack.pop();
 					}
 				}
-				if (!found)
-					return false;
+				case ARRAY_NEEDLE -> {
+					if (!current.needleElements.hasNext()) {
+						result = true;
+						stack.pop();
+					} else {
+						current.currentNeedle = current.needleElements.next();
+						current.haystackElements = jsonProvider.getArrayElements(current.haystack);
+						current.state = State.ARRAY_HAYSTACK;
+					}
+				}
+				case ARRAY_HAYSTACK -> {
+					if (!current.haystackElements.hasNext()) {
+						result = false;
+						stack.pop();
+					} else {
+						current.state = State.ARRAY_AFTER_CHILD;
+						stack.push(new ContainmentFrame<>(current.currentNeedle, current.haystackElements.next()));
+					}
+				}
+				case ARRAY_AFTER_CHILD -> current.state = result ? State.ARRAY_NEEDLE : State.ARRAY_HAYSTACK;
+				case OBJECT_FIELD -> {
+					if (!current.objectMembers.hasNext()) {
+						result = true;
+						stack.pop();
+					} else {
+						Map.Entry<String, JsonNode> field = current.objectMembers.next();
+						Maybe<JsonNode> value = jsonProvider.getObjectMember(current.haystack, field.getKey());
+						if (value.isAbsent()) {
+							result = false;
+							stack.pop();
+						} else {
+							current.state = State.OBJECT_AFTER_CHILD;
+							stack.push(new ContainmentFrame<>(field.getValue(), value.get()));
+						}
+					}
+				}
+				case OBJECT_AFTER_CHILD -> {
+					if (result)
+						current.state = State.OBJECT_FIELD;
+					else
+						stack.pop();
+				}
 			}
-			return true;
-		} else if (hType == JsonNodeType.OBJECT && nType == JsonNodeType.OBJECT) {
-			Iterator<Map.Entry<String, JsonNode>> iter = jsonProvider.getObjectMembers(needle);
-			while (iter.hasNext()) {
-				Map.Entry<String, JsonNode> field = iter.next();
-				Maybe<JsonNode> tmp = jsonProvider.getObjectMember(haystack, field.getKey());
-				if (tmp.isAbsent())
-					return false;
-				if (!contains(jsonProvider, field.getValue(), tmp.get()))
-					return false;
-			}
-			return true;
-		} else {
-			return new JsonNodeComparator<>(jsonProvider).compare(haystack, needle) == 0;
+		}
+		return result;
+	}
+
+	private enum State {
+		START,
+		ARRAY_NEEDLE,
+		ARRAY_HAYSTACK,
+		ARRAY_AFTER_CHILD,
+		OBJECT_FIELD,
+		OBJECT_AFTER_CHILD
+	}
+
+	private static final class ContainmentFrame<JsonNode> {
+		private final JsonNode needle;
+		private final JsonNode haystack;
+		private State state = State.START;
+		private Iterator<JsonNode> needleElements = Collections.emptyIterator();
+		private Iterator<JsonNode> haystackElements = Collections.emptyIterator();
+		private Iterator<Map.Entry<String, JsonNode>> objectMembers = Collections.emptyIterator();
+		private JsonNode currentNeedle;
+
+		private ContainmentFrame(JsonNode needle, JsonNode haystack) {
+			this.needle = needle;
+			this.haystack = haystack;
+			this.currentNeedle = needle;
 		}
 	}
 }

@@ -1,0 +1,2297 @@
+# This file is generated from jqlang/jq files. Different license terms apply:
+#
+# jq is copyright (C) 2012 Stephen Dolan
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# jq's documentation (everything found under the docs/ subdirectory in
+# the source tree) is licensed under the Creative Commons CC BY 3.0
+# license, which can be found at:
+#
+#          https://creativecommons.org/licenses/by/3.0/
+#
+- q: '{x:-1},{x:-.},{x:-.|abs}'
+  input: 1
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: abs/0 is not defined at <top-level>, line 1:\n{x:-1},{x:-.},{x:-.|abs}                    \njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - {"x": -1}
+      - {"x": -1}
+      - {"x": 1}
+    jjq:
+    - v: '[1.7, )'
+      compile_error: "Function abs/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '"u\vw"'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: Invalid escape at line 1, column 4 (while parsing '\"\\v\"') at <top-level>, line 1:\n\"u\\vw\"  \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      compile_error: "jq: error: Invalid escape at line 1, column 4 (while parsing '\"\\v\"') at <top-level>, line 1, column 3:\n    \"u\\vw\"\n      ^^\njq: 1 compile error\n"
+
+- q: '@text,@json,([1,.]|@csv,@tsv),@html,(@uri|.,@urid),@sh,(@base64|.,@base64d)'
+  input: "!()<>&'\"\t"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "!()<>&'\"\t"
+      - "\"!()<>&'\\\"\\t\""
+      - "1,\"!()<>&'\"\"\t\""
+      - "1\t!()<>&'\"\\t"
+      - "!()&lt;&gt;&amp;&apos;&quot;\t"
+      - "!()%3C%3E%26'%22%09"
+      runtime_error: "jq: error (at <stdin>:0): urid is not a valid format\n"
+    - v: '[1.7, 1.8.0)'
+      output:
+      - "!()<>&'\"\t"
+      - "\"!()<>&'\\\"\\t\""
+      - "1,\"!()<>&'\"\"\t\""
+      - "1\t!()<>&'\"\\t"
+      - "!()&lt;&gt;&amp;&apos;&quot;\t"
+      - "%21%28%29%3C%3E%26%27%22%09"
+      runtime_error: "jq: error (at <stdin>:0): urid is not a valid format\n"
+    - v: '[1.8.0, )'
+      output:
+      - "!()<>&'\"\t"
+      - "\"!()<>&'\\\"\\t\""
+      - "1,\"!()<>&'\"\"\t\""
+      - "1\t!()<>&'\"\\t"
+      - "!()&lt;&gt;&amp;&apos;&quot;\t"
+      - "%21%28%29%3C%3E%26%27%22%09"
+      - "!()<>&'\"\t"
+      - "'!()<>&'\\''\"\t'"
+      - "ISgpPD4mJyIJ"
+      - "!()<>&'\"\t"
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function @urid/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '@urid'
+  input: "%CE%BC"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): urid is not a valid format\n"
+    - v: '[1.8.0, )'
+      output:
+      - "\u03bc"
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function @urid/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '{1+2:3}'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected LITERAL (Unix shell quoting issues?) at <top-level>, line 1:\n{1+2:3} \njq: 1 compile error\n"
+    - v: '[1.6, 1.8.0)'
+      compile_error: "jq: error: syntax error, unexpected LITERAL (Unix shell quoting issues?) at <top-level>, line 1:\n{1+2:3} \njq: error: May need parentheses around object key expression at <top-level>, line 1:\n{1+2:3} \njq: 2 compile errors\n"
+    - v: '[1.8.0, )'
+      compile_error: "jq: error: syntax error, unexpected LITERAL at <top-level>, line 1, column 2:\n    {1+2:3}\n     ^\njq: error: May need parentheses around object key expression at <top-level>, line 1, column 2:\n    {1+2:3}\n     ^^^\njq: 2 compile errors\n"
+
+- q: 'try ["OK", (.[] | error)] catch ["KO", .]'
+  input: {"a": ["b"], "c": ["d"]}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["KO", ["b"]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '["KO",ANY]|[*:"OK"]'
+  - v: '[1.5, )'
+    input: '{a:[STRING],c:[STRING]}'
+    output: '["KO",ANY]|[*:"OK"]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try (.[999999999] = 0) catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      timeout: true
+    - v: '[1.7, 1.8.0)'
+      output: []
+      runtime_error: "jq: error: cannot allocate memory\n"
+    - v: '[1.8.0, )'
+      output:
+      - "Array index too large"
+    overrides:
+    - v: '[1.7, 1.8.0)'
+      os: MACOS
+      timeout: true
+    jjq:
+    - v: '[1.7, )'
+      output: []
+      limit_exceeded: true
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[-foreach -.[] as $x (0; . + $x)]'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: syntax error, unexpected '-' (Unix shell quoting issues?) at <top-level>, line 1:\n[-foreach -.[] as $x (0; . + $x)]          \njq: error: syntax error, unexpected '(', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n[-foreach -.[] as $x (0; . + $x)]                     \njq: 2 compile errors\n"
+    - v: '[1.8.0, )'
+      output:
+      - [1, 3, 6]
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - [1, 3, 6]
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[foreach .[] / .[] as $i (0; . + $i)]'
+  input: [1, 2]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: syntax error, unexpected '/', expecting FIELD or as or '.' or '[' (Unix shell quoting issues?) at <top-level>, line 1:\n[foreach .[] / .[] as $i (0; . + $i)]             \njq: error: syntax error, unexpected '(', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n[foreach .[] / .[] as $i (0; . + $i)]                         \njq: 2 compile errors\n"
+    - v: '[1.8.0, )'
+      output:
+      - [1, 3, 3.5, 4.5]
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "syntax error, unexpected '/', expecting '.' or '[' or '?' or 'as' at line 1, column 14:\n    [foreach .[] / .[] as $i (0; . + $i)]\n                 ^"
+      incompat_type: UNCLASSIFIED
+
+- q: '[foreach .[] as $x (0; . + $x) as $x | $x]'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: syntax error, unexpected as (Unix shell quoting issues?) at <top-level>, line 1:\n[foreach .[] as $x (0; . + $x) as $x | $x]                               \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - [1, 3, 6]
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - [1, 3, 6]
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[foreach range(5) as $x (0; .+$x | select($x!=2); [$x,.])]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - [[0, 0], [1, 1], [3, 3], [4, 7]]
+    - v: '[1.8.0, 1.8.1)'
+      output:
+      - [[0, 0], [1, 1], [3, 4], [4, 8]]
+    - v: '[1.8.1, )'
+      output:
+      - [[0, 0], [1, 1], [3, 3], [4, 7]]
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - [[0, 0], [1, 1], [3, 4], [4, 8]]
+      incompat_type: UNCLASSIFIED
+    - v: '[1.8.1, )'
+      output:
+      - [[0, 0], [1, 1], [3, 4], [4, 8]]
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:[NUMBER,NULL|NUMBER]]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:[NUMBER,NULL|NUMBER]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'try limit(-1; error) catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output: []
+    - v: '[1.7, 1.8.0)'
+      output:
+      - null
+    - v: '[1.8.0, )'
+      output:
+      - "limit doesn't support negative count"
+    jjq:
+    - v: '[1.8.0, )'
+      output:
+      - null
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[skip(3; .[])]'
+  input: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: skip/2 is not defined at <top-level>, line 1:\n[skip(3; .[])] \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - [4, 5, 6, 7, 8, 9]
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function skip/2 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '[skip(0,2,3,4; .[])]'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: skip/2 is not defined at <top-level>, line 1:\n[skip(0,2,3,4; .[])] \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - [1, 2, 3, 3]
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function skip/2 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '[skip(3; .[])]'
+  input: []
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: skip/2 is not defined at <top-level>, line 1:\n[skip(3; .[])] \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - []
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function skip/2 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: 'try skip(-1; error) catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: skip/2 is not defined at <top-level>, line 1:\ntry skip(-1; error) catch .    \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - "skip doesn't support negative count"
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function skip/2 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: 'nth(1; 0,1,error("foo"))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): foo\n"
+    - v: '[1.6, )'
+      output:
+      - 1
+    jjq:
+    - v: '[1.6, )'
+      output: []
+      runtime_error: "foo"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '0|1|NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '0|1|NULL'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[first(range(.)), last(range(.))]'
+  input: 0
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - [null]
+    - v: '[1.8.0, )'
+      output:
+      - []
+    jjq:
+    - v: '[1.8.0, )'
+      output:
+      - [null]
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NULL|NUMBER]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '[*:NULL|NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '1 + 2 as $x | -$x'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - -1
+    - v: '[1.8.0, )'
+      output:
+      - -3
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '"x" as $x | "a"+"y" as $y | $x+","+$y'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - "ax,y"
+    - v: '[1.8.0, )'
+      output:
+      - "x,ay"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '. as $foo | [$foo, $bar]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: bar/0 is not defined at <top-level>, line 1:\n. as $foo | [$foo, $bar]                   \njq: 1 compile error\n"
+    - v: '[1.6, 1.8.0)'
+      compile_error: "jq: error: $bar is not defined at <top-level>, line 1:\n. as $foo | [$foo, $bar]                   \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      compile_error: "jq: error: $bar is not defined at <top-level>, line 1, column 20:\n    . as $foo | [$foo, $bar]\n                       ^^^^\njq: 1 compile error\n"
+
+- q: '. as {(true):$foo} | $foo'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Cannot index null with boolean\n"
+    - v: '[1.6, 1.8.0)'
+      compile_error: "jq: error: Cannot use boolean (true) as object key at <top-level>, line 1:\n. as {(true):$foo} | $foo      \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      compile_error: "jq: error: Cannot use boolean (true) as object key at <top-level>, line 1, column 8:\n    . as {(true):$foo} | $foo\n           ^^^^\njq: 1 compile error\n"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[-1 as $x | 1,$x]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - [-1, -1]
+    - v: '[1.8.0, )'
+      output:
+      - [1, -1]
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - [1, -1]
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:-1|1]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:-1|1]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'map(toboolean)'
+  input: ["false", "true", false, true]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: toboolean/0 is not defined at <top-level>, line 1:\nmap(toboolean)    \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - [false, true, false, true]
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function toboolean/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '.[] | try toboolean catch .'
+  input: [null, 0, "tru", "truee", "fals", "falsee", [], {}]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: toboolean/0 is not defined at <top-level>, line 1:\n.[] | try toboolean catch .          \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - "null (null) cannot be parsed as a boolean"
+      - "number (0) cannot be parsed as a boolean"
+      - "string (\"tru\") cannot be parsed as a boolean"
+      - "string (\"truee\") cannot be parsed as a boolean"
+      - "string (\"fals\") cannot be parsed as a boolean"
+      - "string (\"falsee\") cannot be parsed as a boolean"
+      - "array ([]) cannot be parsed as a boolean"
+      - "object ({}) cannot be parsed as a boolean"
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function toboolean/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '[add(null), add(range(range(10))), add(empty), add(10,range(10))]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: add/1 is not defined at <top-level>, line 1:\n[add(null), add(range(range(10))), add(empty), add(10,range(10))] \njq: error: add/1 is not defined at <top-level>, line 1:\n[add(null), add(range(range(10))), add(empty), add(10,range(10))]            \njq: error: add/1 is not defined at <top-level>, line 1:\n[add(null), add(range(range(10))), add(empty), add(10,range(10))]                                   \njq: error: add/1 is not defined at <top-level>, line 1:\n[add(null), add(range(range(10))), add(empty), add(10,range(10))]                                               \njq: 4 compile errors\n"
+    - v: '[1.8.0, )'
+      output:
+      - [null, 120, null, 55]
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function add/1 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '.sum = add(.arr[])'
+  input: {"arr": []}
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: add/1 is not defined at <top-level>, line 1:\n.sum = add(.arr[])       \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - {"arr": [], "sum": null}
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function add/1 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: 'add({(.[]):1}) | keys'
+  input: ["a", "a", "b", "a", "d", "b", "d", "a", "d"]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: add/1 is not defined at <top-level>, line 1:\nadd({(.[]):1}) | keys\njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - ["a", "b", "d"]
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function add/1 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '[-reduce -.[] as $x (0; . + $x)]'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: syntax error, unexpected '-' (Unix shell quoting issues?) at <top-level>, line 1:\n[-reduce -.[] as $x (0; . + $x)]         \njq: error: syntax error, unexpected '(', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n[-reduce -.[] as $x (0; . + $x)]                    \njq: 2 compile errors\n"
+    - v: '[1.8.0, )'
+      output:
+      - [6]
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - [6]
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[ANY]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: '[NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[reduce .[] / .[] as $i (0; . + $i)]'
+  input: [1, 2]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: syntax error, unexpected '/', expecting FIELD or as or '.' or '[' (Unix shell quoting issues?) at <top-level>, line 1:\n[reduce .[] / .[] as $i (0; . + $i)]            \njq: error: syntax error, unexpected '(', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n[reduce .[] / .[] as $i (0; . + $i)]                        \njq: 2 compile errors\n"
+    - v: '[1.8.0, )'
+      output:
+      - [4.5]
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "syntax error, unexpected '/', expecting '.' or '[' or '?' or 'as' at line 1, column 13:\n    [reduce .[] / .[] as $i (0; . + $i)]\n                ^"
+      incompat_type: UNCLASSIFIED
+
+- q: 'reduce .[] as $x (0; . + $x) as $x | $x'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected as, expecting $end (Unix shell quoting issues?) at <top-level>, line 1:\nreduce .[] as $x (0; . + $x) as $x | $x                             \njq: 1 compile error\n"
+    - v: '[1.7, 1.8.0)'
+      compile_error: "jq: error: syntax error, unexpected as, expecting end of file (Unix shell quoting issues?) at <top-level>, line 1:\nreduce .[] as $x (0; . + $x) as $x | $x                             \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - 6
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - 6
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'reduce range(5) as $x (0; .+$x | select($x!=2))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - 7
+    - v: '[1.8.0, 1.8.1)'
+      output:
+      - 8
+    - v: '[1.8.1, )'
+      output:
+      - 7
+    jjq:
+    - v: '[1.8.0, 1.8.1)'
+      output:
+      - 7
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|NUMBER'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NULL|NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[-if true then 1 else 2 end]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [-1]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[-1|-2]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[-1]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '{x: if true then 1 else 2 end}'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: syntax error, unexpected if (Unix shell quoting issues?) at <top-level>, line 1:\n{x: if true then 1 else 2 end}    \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - {"x": 1}
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - {"x": 1}
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{x:1|2}'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '{x:1}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'if true then [.] else . end []'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected '[', expecting $end (Unix shell quoting issues?) at <top-level>, line 1:\nif true then [.] else . end []                            \njq: 1 compile error\n"
+    - v: '[1.7, 1.8.0)'
+      compile_error: "jq: error: syntax error, unexpected '[', expecting end of file (Unix shell quoting issues?) at <top-level>, line 1:\nif true then [.] else . end []                            \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - null
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "syntax error, unexpected '[', expecting <EOF> or 'and' or 'or' or '//' or '==' at line 1, column 29:\n    if true then [.] else . end []\n                                ^"
+      incompat_type: UNCLASSIFIED
+
+- q: '[if error then 1 else 2 end?]'
+  input: "foo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - []
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "syntax error, unexpected '?', expecting 'and' or 'or' or '//' or '==' or '!=' at line 1, column 28:\n    [if error then 1 else 2 end?]\n                               ^"
+      incompat_type: UNCLASSIFIED
+
+- q: 'try error(0) // 1'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '1'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '1'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '1, try error(2), 3'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+      - 3
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '1|3'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '1|3'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '1 + try 2 catch 3 + 4'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 7
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[-try .]'
+  input: 1
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [-1]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '[*:INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try -.? catch .'
+  input: "foo"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output: []
+    - v: '[1.7, )'
+      output:
+      - "string (\"foo\") cannot be negated"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '{x: try 1, y: try error catch 2, z: if true then 3 end}'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: syntax error, unexpected try (Unix shell quoting issues?) at <top-level>, line 1:\n{x: try 1, y: try error catch 2, z: if true then 3 end}    \njq: error: syntax error, unexpected try (Unix shell quoting issues?) at <top-level>, line 1:\n{x: try 1, y: try error catch 2, z: if true then 3 end}              \njq: error: syntax error, unexpected if (Unix shell quoting issues?) at <top-level>, line 1:\n{x: try 1, y: try error catch 2, z: if true then 3 end}                                    \njq: 3 compile errors\n"
+    - v: '[1.8.0, )'
+      output:
+      - {"x": 1, "y": 2, "z": 3}
+    jjq:
+    - v: '[1.5, 1.7)'
+      output: []
+      incompat_type: UNCLASSIFIED
+    - v: '[1.7, 1.8.0)'
+      output:
+      - {"x": 1, "y": 2, "z": 3}
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{x:1,y:2,z:ANY}'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '{x:1,y:2,z:3}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '{x: 1 + 2, y: false or true, z: null // 3}'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: syntax error, unexpected '+', expecting '}' (Unix shell quoting issues?) at <top-level>, line 1:\n{x: 1 + 2, y: false or true, z: null // 3}      \njq: error: syntax error, unexpected or, expecting '}' (Unix shell quoting issues?) at <top-level>, line 1:\n{x: 1 + 2, y: false or true, z: null // 3}                    \njq: error: syntax error, unexpected //, expecting '}' (Unix shell quoting issues?) at <top-level>, line 1:\n{x: 1 + 2, y: false or true, z: null // 3}                                     \njq: 3 compile errors\n"
+    - v: '[1.8.0, )'
+      output:
+      - {"x": 3, "y": true, "z": 3}
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - {"x": 3, "y": true, "z": 3}
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{x:NUMBER,y:true,z:3}'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '{x:NUMBER,y:true,z:3}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[.[]|trimstr("foo")]'
+  input: ["fo", "foo", "barfoo", "foobarfoo", "foob"]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: trimstr/1 is not defined at <top-level>, line 1:\n[.[]|trimstr(\"foo\")]     \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - ["fo", "", "bar", "bar", "b"]
+  types:
+  - v: '[1.8.0, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.8.0, )'
+    input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.8.0, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'map(trim), map(ltrim), map(rtrim)'
+  input: [" \n\t\r\f\v", "", "  ", "a", " a ", "abc", "  abc  ", "  abc", "abc  "]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: trim/0 is not defined at <top-level>, line 1:\nmap(trim), map(ltrim), map(rtrim)    \njq: error: ltrim/0 is not defined at <top-level>, line 1:\nmap(trim), map(ltrim), map(rtrim)               \njq: error: rtrim/0 is not defined at <top-level>, line 1:\nmap(trim), map(ltrim), map(rtrim)                           \njq: 3 compile errors\n"
+    - v: '[1.8.0, )'
+      output:
+      - ["", "", "", "a", "a", "abc", "abc", "abc", "abc"]
+      - ["", "", "", "a", "a ", "abc", "abc  ", "abc", "abc  "]
+      - ["", "", "", "a", " a", "abc", "  abc", "  abc", "abc"]
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function trim/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: 'trim, ltrim, rtrim'
+  input: "\t\n\v\f\r \N\_\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\L\P\u202f\u205f\u3000abc\t\n\v\f\r \N\_\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\L\P\u202f\u205f\u3000"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: trim/0 is not defined at <top-level>, line 1:\ntrim, ltrim, rtrim\njq: error: ltrim/0 is not defined at <top-level>, line 1:\ntrim, ltrim, rtrim      \njq: error: rtrim/0 is not defined at <top-level>, line 1:\ntrim, ltrim, rtrim             \njq: 3 compile errors\n"
+    - v: '[1.8.0, )'
+      output:
+      - "abc"
+      - "abc\t\n\v\f\r \N\_\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\L\P\u202f\u205f\u3000"
+      - "\t\n\v\f\r \N\_\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\L\P\u202f\u205f\u3000abc"
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function trim/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: 'try trim catch ., try ltrim catch ., try rtrim catch .'
+  input: 123
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: trim/0 is not defined at <top-level>, line 1:\ntry trim catch ., try ltrim catch ., try rtrim catch .    \njq: error: ltrim/0 is not defined at <top-level>, line 1:\ntry trim catch ., try ltrim catch ., try rtrim catch .                      \njq: error: rtrim/0 is not defined at <top-level>, line 1:\ntry trim catch ., try ltrim catch ., try rtrim catch .                                         \njq: 3 compile errors\n"
+    - v: '[1.8.0, )'
+      output:
+      - "trim input must be a string"
+      - "trim input must be a string"
+      - "trim input must be a string"
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function trim/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: 'index("!")'
+  input: "\u0437\u0434\u0440\u0430\u0432\u0441\u0442\u0432\u0443\u0439 \u043c\u0438\u0440!"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - 27
+    - v: '[1.8.0, )'
+      output:
+      - 14
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - 14
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|NUMBER'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'NULL|NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[:rindex("x")]'
+  input: "\u6b63xyz"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - "\u6b63xy"
+    - v: '[1.8.0, )'
+      output:
+      - "\u6b63"
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - "\u6b63"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|STRING|[*:ANY]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'indices("o")'
+  input: "\U0001f1ec\U0001f1e7oo"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - [8, 9]
+    - v: '[1.8.0, )'
+      output:
+      - [2, 3]
+    jjq:
+    - v: '[1.5, )'
+      output:
+      - [4, 5]
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:INT]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[*:INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'indices("o")'
+  input: "\u0192oo"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - [2, 3]
+    - v: '[1.8.0, )'
+      output:
+      - [1, 2]
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - [1, 2]
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:INT]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[*:INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '. * 100000 | [.[:10],.[-10:]]'
+  input: "abc"
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      unstable: true
+    - v: '[1.6, )'
+      output:
+      - ["abcabcabca", "cabcabcabc"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[NULL|STRING|[*:ANY],NULL|STRING|[*:ANY]]'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: '[NULL,NULL]|[STRING,STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '. * 1000000000'
+  input: ""
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      timeout: true
+    - v: '[1.6, )'
+      output:
+      - ""
+    jjq:
+    - v: '[1.5, 1.6)'
+      output:
+      - ""
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'NULL|STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try (. * 1000000000) catch .'
+  input: "abc"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      timeout: true
+    - v: '[1.8.0, )'
+      output:
+      - "Repeat string result too long"
+    jjq:
+    - v: '[1.8.0, )'
+      output: []
+      limit_exceeded: true
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'bsearch(0,1,2,3,4)'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - 0
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - 0
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - 0
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - 2
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - 2
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - 0
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - 0
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - 0
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - 2
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - 2
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - 1
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - 0
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - 0
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - 0
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - 2
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - 2
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - 0
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - 0
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - 0
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -1
+      - -1
+      - -2
+      - -2
+      - -2
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - 2
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+      - 2
+      - -3
+      - -3
+      - -3
+      - -3
+      - -4
+    - v: '[1.7, )'
+      output:
+      - -1
+      - 0
+      - 1
+      - 2
+      - -4
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "Function bsearch/1 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: 'bsearch({x:1})'
+  input: [{"x": 0}, {"x": 1}, {"x": 2}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "Function bsearch/1 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: 'try ["OK", bsearch(0)] catch ["KO",.]'
+  input: "aa"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - ["KO", "Cannot index string with number"]
+    - v: '[1.8.0, )'
+      output:
+      - ["KO", "string (\"aa\") cannot be searched from"]
+    jjq:
+    - v: '[1.5, )'
+      compile_error: "Function bsearch/1 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: 'strftime("%Y-%m-%dT%H:%M:%SZ")'
+  input: [2024, 2, 15]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): strftime/1 requires parsed datetime inputs\n"
+    - v: '[1.8.0, )'
+      output:
+      - "2024-03-15T00:00:00Z"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+
+- q: 'mktime'
+  input: [2024, 8, 21]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): mktime requires parsed datetime inputs\n"
+    - v: '[1.8.0, )'
+      output:
+      - 1726876800
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try ["OK", strftime([])] catch ["KO", .]'
+  input: 0
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv.c:736: jv_string_value: Assertion `jv_get_kind(j) == JV_KIND_STRING' failed.\n"
+    - v: '[1.6, 1.7)'
+      output: []
+      runtime_error: "jq-1.6: src/jv.c:745: jv_string_value: Assertion `jv_get_kind(j) == JV_KIND_STRING' failed.\n"
+    - v: '[1.7, 1.7.1)'
+      output: []
+      runtime_error: "jq-1.7: src/jv.c:1376: jv_string_value: Assertion `JVP_HAS_KIND(j, JV_KIND_STRING)' failed.\n"
+    - v: '[1.7.1, 1.8.0)'
+      output: []
+      runtime_error: "jq-1.7.1: src/jv.c:1370: jv_string_value: Assertion `JVP_HAS_KIND(j, JV_KIND_STRING)' failed.\n"
+    - v: '[1.8.0, )'
+      output:
+      - ["KO", "strftime/1 requires a string format"]
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - ["KO", "strftime/1 requires a string format"]
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '["KO",ANY]|[*:"OK"]'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '["KO",ANY]|[*:"OK"]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+
+- q: 'try ["OK", strflocaltime({})] catch ["KO", .]'
+  input: 0
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: strflocaltime/1 is not defined at <top-level>, line 1:\ntry [\"OK\", strflocaltime({})] catch [\"KO\", .]           \njq: 1 compile error\n"
+    - v: '[1.6, 1.7)'
+      output: []
+      runtime_error: "jq-1.6: src/jv.c:745: jv_string_value: Assertion `jv_get_kind(j) == JV_KIND_STRING' failed.\n"
+    - v: '[1.7, 1.7.1)'
+      output: []
+      runtime_error: "jq-1.7: src/jv.c:1376: jv_string_value: Assertion `JVP_HAS_KIND(j, JV_KIND_STRING)' failed.\n"
+    - v: '[1.7.1, 1.8.0)'
+      output: []
+      runtime_error: "jq-1.7.1: src/jv.c:1370: jv_string_value: Assertion `JVP_HAS_KIND(j, JV_KIND_STRING)' failed.\n"
+    - v: '[1.8.0, )'
+      output:
+      - ["KO", "strflocaltime/1 requires a string format"]
+    jjq:
+    - v: '[1.6, 1.8.0)'
+      output:
+      - ["KO", "strflocaltime/1 requires a string format"]
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: '["KO",ANY]|[*:"OK"]'
+  - v: '[1.6, )'
+    input: 'INT'
+    output: '["KO",ANY]|[*:"OK"]'
+  properties:
+  - v: '[1.6, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: true
+
+- q: 'try (.-.) catch .'
+  input: "very-long-string"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "string (\"very-long-...) and string (\"very-long-...) cannot be subtracted"
+    - v: '[1.8.2, )'
+      output:
+      - "string (\"very-long-string\") and string (\"very-long-string\") cannot be subtracted"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: "\"x\" * range(0; 12; 2) + \"\u2606\" * 5 | try -. catch ."
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - "string (\"\u2606\u2606\u2606\ufffd...) cannot be negated"
+      - "string (\"xx\u2606\u2606\ufffd...) cannot be negated"
+      - "string (\"xxxx\u2606\u2606...) cannot be negated"
+      - "string (\"xxxxxx\u2606\ufffd...) cannot be negated"
+      - "string (\"xxxxxxxx\ufffd...) cannot be negated"
+      - "string (\"xxxxxxxxxx...) cannot be negated"
+    - v: '[1.8.0, 1.8.2)'
+      output:
+      - "string (\"\u2606\u2606\u2606...) cannot be negated"
+      - "string (\"xx\u2606\u2606...) cannot be negated"
+      - "string (\"xxxx\u2606\u2606...) cannot be negated"
+      - "string (\"xxxxxx\u2606...) cannot be negated"
+      - "string (\"xxxxxxxx...) cannot be negated"
+      - "string (\"xxxxxxxxxx...) cannot be negated"
+    - v: '[1.8.2, )'
+      output:
+      - "string (\"\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xx\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xxxx\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xxxxxx\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xxxxxxxx\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xxxxxxxxxx\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+    jjq:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "string (\"\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xx\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xxxx\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xxxxxx\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xxxxxxxx\u2606\u2606...) cannot be negated"
+      - "string (\"xxxxxxxxxx...) cannot be negated"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '{'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected $end (Unix shell quoting issues?) at <top-level>, line 1:\n{\njq: 1 compile error\n"
+    - v: '[1.7, 1.8.0)'
+      compile_error: "jq: error: syntax error, unexpected end of file (Unix shell quoting issues?) at <top-level>, line 1:\n{\njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      compile_error: "jq: error: syntax error, unexpected end of file at <top-level>, line 1, column 1:\n    {\n    ^\njq: 1 compile error\n"
+
+- q: '.[0] | tostring | . == if have_decnum then "13911860366432393" else "13911860366432392" end'
+  input: [13911860366432393]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: have_decnum/0 is not defined at <top-level>, line 1:\n.[0] | tostring | . == if have_decnum then \"13911860366432393\" else \"13911860366432392\" end                          \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function have_decnum/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '.x | tojson | . == if have_decnum then "13911860366432393" else "13911860366432392" end'
+  input: {"x": 13911860366432393}
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: have_decnum/0 is not defined at <top-level>, line 1:\n.x | tojson | . == if have_decnum then \"13911860366432393\" else \"13911860366432392\" end                      \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function have_decnum/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '(13911860366432393 == 13911860366432392) | . == if have_decnum then false else true end'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: have_decnum/0 is not defined at <top-level>, line 1:\n(13911860366432393 == 13911860366432392) | . == if have_decnum then false else true end                                                   \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function have_decnum/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '-. | tojson == if have_decnum then "-13911860366432393" else "-13911860366432392" end'
+  input: 13911860366432393
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: have_decnum/0 is not defined at <top-level>, line 1:\n-. | tojson == if have_decnum then \"-13911860366432393\" else \"-13911860366432392\" end                  \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function have_decnum/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '-. | tojson == if have_decnum then "0.12345678901234567890123456789" else "0.12345678901234568" end'
+  input: -0.12345678901234567890123456789
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: have_decnum/0 is not defined at <top-level>, line 1:\n-. | tojson == if have_decnum then \"0.12345678901234567890123456789\" else \"0.12345678901234568\" end                  \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function have_decnum/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '[1E+1000,-1E+1000 | tojson] == if have_decnum then ["1E+1000","-1E+1000"] else ["1.7976931348623157e+308","-1.7976931348623157e+308"] end'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: have_decnum/0 is not defined at <top-level>, line 1:\n[1E+1000,-1E+1000 | tojson] == if have_decnum then [\"1E+1000\",\"-1E+1000\"] else [\"1.7976931348623157e+308\",\"-1.7976931348623157e+308\"] end                                  \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function have_decnum/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: 'map(fabs)'
+  input: [0, 0, -10, -1.1]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: fabs/0 is not defined at <top-level>, line 1:\nmap(fabs)    \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [0, 0, 10, 1.1]
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Function fabs/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: 'map(abs == length) | unique'
+  input: [-10, -1.1, -0.1, 1000000000000000002]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: abs/0 is not defined at <top-level>, line 1:\nmap(abs == length) | unique    \njq: 1 compile error\n"
+    - v: '[1.7, )'
+      output:
+      - [true]
+    jjq:
+    - v: '[1.7, )'
+      compile_error: "Function abs/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '[1E+1000,-1E+1000 | abs | tojson] | unique == if have_decnum then ["1E+1000"] else ["1.7976931348623157e+308"] end'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: abs/0 is not defined at <top-level>, line 1:\n[1E+1000,-1E+1000 | abs | tojson] | unique == if have_decnum then [\"1E+1000\"] else [\"1.7976931348623157e+308\"] end                    \njq: error: have_decnum/0 is not defined at <top-level>, line 1:\n[1E+1000,-1E+1000 | abs | tojson] | unique == if have_decnum then [\"1E+1000\"] else [\"1.7976931348623157e+308\"] end                                                 \njq: 2 compile errors\n"
+    - v: '[1.7, 1.8.0)'
+      compile_error: "jq: error: have_decnum/0 is not defined at <top-level>, line 1:\n[1E+1000,-1E+1000 | abs | tojson] | unique == if have_decnum then [\"1E+1000\"] else [\"1.7976931348623157e+308\"] end                                                 \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function abs/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '[1E+1000,-1E+1000 | length | tojson] | unique == if have_decnum then ["1E+1000"] else ["1.7976931348623157e+308"] end'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: have_decnum/0 is not defined at <top-level>, line 1:\n[1E+1000,-1E+1000 | length | tojson] | unique == if have_decnum then [\"1E+1000\"] else [\"1.7976931348623157e+308\"] end                                                    \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function have_decnum/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: '.[] | try (fromjson | isnan) catch .'
+  input: ["NaN", "-NaN", "NaN1", "NaN10", "NaN100", "NaN1000", "NaN10000", "NaN100000"]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - true
+      - true
+      - "Invalid numeric literal at EOF at line 1, column 4 (while parsing 'NaN1')"
+      - "Invalid numeric literal at EOF at line 1, column 5 (while parsing 'NaN10')"
+      - "Invalid numeric literal at EOF at line 1, column 6 (while parsing 'NaN100')"
+      - "Invalid numeric literal at EOF at line 1, column 7 (while parsing 'NaN1000')"
+      - "Invalid numeric literal at EOF at line 1, column 8 (while parsing 'NaN10000')"
+      - "Invalid numeric literal at EOF at line 1, column 9 (while parsing 'NaN100000')"
+    - v: '[1.7, 1.8.0)'
+      output:
+      - true
+      - true
+      - true
+      - true
+      - true
+      - true
+      - true
+      - true
+    - v: '[1.8.0, )'
+      output:
+      - true
+      - true
+      - "Invalid numeric literal at EOF at line 1, column 4 (while parsing 'NaN1')"
+      - "Invalid numeric literal at EOF at line 1, column 5 (while parsing 'NaN10')"
+      - "Invalid numeric literal at EOF at line 1, column 6 (while parsing 'NaN100')"
+      - "Invalid numeric literal at EOF at line 1, column 7 (while parsing 'NaN1000')"
+      - "Invalid numeric literal at EOF at line 1, column 8 (while parsing 'NaN10000')"
+      - "Invalid numeric literal at EOF at line 1, column 9 (while parsing 'NaN100000')"
+    jjq:
+    - v: '[1.5, )'
+      output:
+      - "failed to parse \"NaN\" as json"
+      - "failed to parse \"-NaN\" as json"
+      - "failed to parse \"NaN1\" as json"
+      - "failed to parse \"NaN10\" as json"
+      - "failed to parse \"NaN100\" as json"
+      - "failed to parse \"NaN1000\" as json"
+      - "failed to parse \"NaN10000\" as json"
+      - "failed to parse \"NaN100000\" as json"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING,STRING,STRING,STRING]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] |= try tonumber'
+  input: ["1", "2a", "3", " 4", "5 ", "6.7", ".89", "-876", "+5.43", 21]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - null
+    - v: '[1.6, 1.7)'
+      output:
+      - ["2a", " 4", "6.7", "-876", 21]
+    - v: '[1.7, 1.8.0)'
+      output:
+      - [1, 3, 4, 5, 6.7, 0.89, -876, 5.43, 21]
+    - v: '[1.8.0, )'
+      output:
+      - [1, 3, 6.7, 0.89, -876, 5.43, 21]
+    jjq:
+    - v: '[1.5, )'
+      output: []
+      runtime_error: "`|= empty` is undefined. See https://github.com/stedolan/jq/issues/897"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING,STRING,STRING,STRING,STRING,INT]'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try 0[implode] catch .'
+  input: []
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - "Cannot index number with string \"\""
+    - v: '[1.6, 1.7)'
+      output:
+      - "Cannot index number with string \" \""
+    - v: '[1.7, 1.8.0)'
+      output:
+      - "Cannot index number with string \"input/0\""
+    - v: '[1.8.0, 1.8.2)'
+      output:
+      - "Cannot index number with string \"\""
+    - v: '[1.8.2, )'
+      output:
+      - "Cannot index number with string (\"\")"
+    overrides:
+    - v: '[1.7, 1.8.0)'
+      os: MACOS
+      output:
+      - "Cannot index number with string \"\""
+    jjq:
+    - v: '[1.6, 1.8.0)'
+      output:
+      - "Cannot index number with string \"\""
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try fromjson catch .'
+  input: "{'a': 123}"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - "Invalid numeric literal at line 1, column 5 (while parsing '{'a': 123}')"
+    - v: '[1.8.0, )'
+      output:
+      - "Invalid string literal; expected \", but got ' at line 1, column 5 (while parsing '{'a': 123}')"
+    jjq:
+    - v: '[1.5, )'
+      output:
+      - "failed to parse \"{'a': 123}\" as json"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] as [$x, $y] | try ["ok", ($x | ltrimstr($y))] catch ["ko", .]'
+  input: [["hi", 1], [1, "hi"], ["hi", "hi"], [1, 1]]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - ["ok", "hi"]
+      - ["ok", 1]
+      - ["ok", ""]
+      - ["ok", 1]
+    - v: '[1.8.0, )'
+      output:
+      - ["ko", "startswith() requires string inputs"]
+      - ["ko", "startswith() requires string inputs"]
+      - ["ok", ""]
+      - ["ko", "startswith() requires string inputs"]
+  types:
+  - v: '[1.5, 1.8.0)'
+    input: 'ANY'
+    output: '["ko",ANY]|["ok",STRING]'
+  - v: '[1.8.0, )'
+    input: 'ANY'
+    output: '["ko",ANY]|["ok",ANY]'
+  - v: '[1.5, 1.8.0)'
+    input: '[[STRING,INT],[INT,STRING],[STRING,STRING],[INT,INT]]'
+    output: '["ko",ANY]|[*:"ok"]'
+  - v: '[1.8.0, )'
+    input: '[[STRING,INT],[INT,STRING],[STRING,STRING],[INT,INT]]'
+    output: '["ko",ANY]|["ok",INT|STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] as [$x, $y] | try ["ok", ($x | rtrimstr($y))] catch ["ko", .]'
+  input: [["hi", 1], [1, "hi"], ["hi", "hi"], [1, 1]]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - ["ok", "hi"]
+      - ["ok", 1]
+      - ["ok", ""]
+      - ["ok", 1]
+    - v: '[1.8.0, )'
+      output:
+      - ["ko", "endswith() requires string inputs"]
+      - ["ko", "endswith() requires string inputs"]
+      - ["ok", ""]
+      - ["ko", "endswith() requires string inputs"]
+  types:
+  - v: '[1.5, 1.8.0)'
+    input: 'ANY'
+    output: '["ko",ANY]|["ok",STRING]'
+  - v: '[1.8.0, )'
+    input: 'ANY'
+    output: '["ko",ANY]|["ok",ANY]'
+  - v: '[1.5, 1.8.0)'
+    input: '[[STRING,INT],[INT,STRING],[STRING,STRING],[INT,INT]]'
+    output: '["ko",ANY]|[*:"ok"]'
+  - v: '[1.8.0, )'
+    input: '[[STRING,INT],[INT,STRING],[STRING,STRING],[INT,INT]]'
+    output: '["ko",ANY]|["ok",INT|STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try ["OK", setpath([[1]]; 1)] catch ["KO", .]'
+  input: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["KO", "Cannot update field at array index of array"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '["KO",ANY]|[*:"OK"]'
+  - v: '[1.5, )'
+    input: '[]'
+    output: '["KO",ANY]|[*:"OK"]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'foreach .[] as $x (0, 1; . + $x)'
+  input: [1, 2]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - 1
+      - 3
+      runtime_error: "jq: error (at <stdin>:0): Cannot iterate over null (null)\n"
+    - v: '[1.8.0, )'
+      output:
+      - 1
+      - 3
+      - 2
+      - 4
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, 1.8.0)'
+    input: '[INT,INT]'
+    output: 'ANY'
+  - v: '[1.8.0, )'
+    input: '[INT,INT]'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false

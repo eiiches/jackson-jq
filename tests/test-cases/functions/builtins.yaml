@@ -1,14 +1,21 @@
 - q: 'builtins | contains(["length/0"])'
-  in: null
-  out:
-  - true
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: builtins/0 is not defined at <top-level>, line 1:\nbuiltins | contains([\"length/0\"])\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - true
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'BOOLEAN'
-  - input: 'NULL'
+  - v: '[1.6, )'
+    input: 'NULL'
     output: 'BOOLEAN'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.6, )'

@@ -1,102 +1,143 @@
 - q: '(1 * "bar")'
-  in: [[0.0], true]
-  out:
-  - "bar"
+  input: [[0.0], true]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "bar"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|STRING'
-  - input: '[[INT],BOOLEAN]'
+  - v: '[1.5, )'
+    input: '[[INT],BOOLEAN]'
     output: 'NULL|STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '(0 * ("baz" * 1.0))'
-  in: 2
-  out:
-  - null
+  input: 2
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - null
+    - v: '[1.7, )'
+      output:
+      - ""
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
 
 - q: '(0 * ("baz" * 1.0))'
-  in: 2
-  out:
-  - ""
+  input: 2
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - null
+    - v: '[1.7, )'
+      output:
+      - ""
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: '("baz" * 0.5)'
-  in: "bar"
-  out:
-  - "baz"
+  input: "bar"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "baz"
+    - v: '[1.7, )'
+      output:
+      - ""
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|STRING'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'NULL|STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
 
 - q: '("baz" * 0.5)'
-  in: "bar"
-  out:
-  - ""
+  input: "bar"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "baz"
+    - v: '[1.7, )'
+      output:
+      - ""
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|STRING'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'NULL|STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: 'nan * "x"'
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - null
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NULL|STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
+# jq 1.7 and 1.7.1 on macOS AARCH64 convert infinity to a large repetition count and do not finish promptly.
 - q: 'infinite * ""'
-  # jq 1.7 and 1.7.1 on macOS AARCH64 convert infinity to a large repetition count and do not finish promptly.
   expectations:
     default:
     - v: '[1.5, 1.7)'
-      out:
+      output:
       - null
     - v: '[1.7, )'
-      out:
+      output:
       - ""
     overrides:
     - v: '[1.7, 1.8.0)'
@@ -104,11 +145,14 @@
       arch: AARCH64
       timeout: true
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NULL|STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
@@ -117,17 +161,20 @@
   expectations:
     default:
     - v: '[1.5, 1.7)'
-      out:
+      output:
       - "x"
     - v: '[1.7, )'
-      out:
+      output:
       - ""
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NULL|STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
@@ -136,14 +183,17 @@
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "xxx"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NULL|STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
@@ -152,96 +202,160 @@
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "xxx"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NULL|STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '3 * "foo"'
-  out:
-  - "foofoofoo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "foofoofoo"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NULL|STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '"foo" * -3'
-  out:
-  - null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NULL|STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'error("foo") * empty'
-  out: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output: []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NEVER'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NEVER'
   properties:
+  - v: '[1.5, )'
     cardinality: ZERO
     depends_on_input: false
     depends_on_external_state: false
   comment: 'rhs is evaluated first'
 
 - q: 'try (empty * error("foo")) catch .'
-  out:
-  - "foo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "foo"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '(try ((-1.5 * "baz")) catch ("__ERROR__"))'
-  out:
-  - "__ERROR__"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - "__ERROR__"
+    - v: '[1.8.0, )'
+      output:
+      - null
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - null
+      incompat_type: JACKSON_JQ_BUG
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NULL|STRING'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, 1.8.0)'
-  failing: true
   justification: jq interprets this as -(1.5 * baz) while jackson-jq as (-1.5) * baz. Defer resolution to future versions.
 
 - q: '(try ((-1.5 * "baz")) catch ("__ERROR__"))'
-  out:
-  - null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - "__ERROR__"
+    - v: '[1.8.0, )'
+      output:
+      - null
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - null
+      incompat_type: INTENTIONAL
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NULL|STRING'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.8.0, )'

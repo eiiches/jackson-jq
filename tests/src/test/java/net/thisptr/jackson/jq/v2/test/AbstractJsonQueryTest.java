@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,15 +21,15 @@ import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.ext.joni.JoniRegexModule;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.internal.io.ParseOptions;
-import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
+import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 import net.thisptr.jackson.jq.v2.test.comparator.TestJsonNodeComparator;
+import net.thisptr.jackson.jq.v2.test.evaluator.EvaluationLimits;
 import net.thisptr.jackson.jq.v2.test.testcase.ModuleFixtures;
 import net.thisptr.jackson.jq.v2.test.testcase.TestCase;
 import net.thisptr.jackson.jq.v2.test.testcase.TestCaseLoader;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
 /**
@@ -80,61 +79,49 @@ public abstract class AbstractJsonQueryTest<T> {
 				.defineVariable("ENV", () -> envBuilder.getJsonProvider().createObject(Collections.singletonMap("PAGER", envBuilder.getJsonProvider().createString("less"))))
 				.build();
 
-		String command = String.format("jq (v%s) '%s' <<< '%s'", version, tc.q, tc.in);
-		if (tc.expectations != null) {
-			TestCase.Expectation expected = tc.expectations.resolve(version, false, System.getProperty("os.name", ""), System.getProperty("os.arch", ""));
-			List<T> values = new ArrayList<>();
-			@Var Throwable error = null;
-			try {
-				JsonQuery<T> query = env.compile(tc.q);
-				query.apply(parseTestNode(tc.in, JsonNodeUtils.parseOptions(version)), values::add);
-			} catch (Throwable e) {
-				error = e;
-			}
-			assertThat(error != null).as("%s error", command).isEqualTo(expected.error);
-			List<T> expectedValues = new ArrayList<>();
-			for (JsonNode node : expected.values())
-				expectedValues.add(parseExpectedNode(node));
-			assertThat(values).as("%s output", command)
-					.usingElementComparator(new TestJsonNodeComparator<>(getJsonProvider(), true, tc.floatTolerance))
-					.isEqualTo(expectedValues);
+		String command = String.format("jq (v%s) '%s' <<< '%s'", version, tc.q, tc.input);
+		TestCase.AbstractExpectation expected = tc.expectations.resolve(version, false, System.getProperty("os.name", ""), System.getProperty("os.arch", ""));
+		boolean explicitJjq = tc.expectations.hasJjq(version);
+		if (expected.timedOut() || expected.unstable())
 			return;
-		}
-
-		if (!tc.shouldCompile) {
-			assertThatThrownBy(() -> env.compile(tc.q)).isInstanceOf(JsonQueryException.class);
-			return;
-		}
-
-		// Convert test data from Jackson JsonNode to provider's type
-		T input = parseTestNode(tc.in, JsonNodeUtils.parseOptions(version));
-		List<T> expectedOut = new ArrayList<>();
-		for (JsonNode outNode : tc.out) {
-			expectedOut.add(parseExpectedNode(outNode));
-		}
-
-		Comparator<T> comparator = new TestJsonNodeComparator<>(getJsonProvider(), true, tc.floatTolerance);
-
-		@Var boolean failed = false;
+		List<T> values = new ArrayList<>();
+		@Var Throwable error = null;
+		@Var boolean compiled = false;
 		try {
-			JsonQuery<T> q = env.compile(tc.q);
-			List<T> out = new ArrayList<>();
-			q.apply(input, out::add);
-			assertThat(out).as("%s", command)
-					.usingElementComparator(comparator)
-					.isEqualTo(expectedOut);
+			JsonQuery<T> query = env.compile(tc.q);
+			compiled = true;
+			query.withRuntimeOptions(EvaluationLimits.OPTIONS)
+					.apply(parseTestNode(tc.input, JsonNodeUtils.parseOptions(version)), values::add);
 		} catch (Throwable e) {
-			failed = true;
-			if (!Boolean.TRUE.equals(tc.failing)) {
-				if (e instanceof AssertionError)
-					throw e;
-				e.addSuppressed(new RuntimeException("NOTE: " + command));
-				throw e;
-			}
+			error = e;
 		}
-
-		if (Boolean.TRUE.equals(tc.failing))
-			assertThat(failed).describedAs("The test case is marked as failing but completed successfully: %s", command).isTrue();
+		if (!explicitJjq && (expected.compileError != null || expected.runtimeError != null)) {
+			assertThat(error).as("%s: expected an error", command).isNotNull()
+					.isNotInstanceOf(RuntimeLimitExceededException.class);
+			return;
+		}
+		if (expected.limitExceeded()) {
+			assertThat(error).as("%s: expected a runtime limit to be exceeded", command)
+					.isInstanceOf(RuntimeLimitExceededException.class);
+		} else {
+			assertThat(error instanceof RuntimeLimitExceededException).as("%s: unexpected runtime limit", command).isFalse();
+		}
+		if (expected.compileError != null) {
+			assertThat(compiled).as("%s: expected compilation to fail", command).isFalse();
+			assertThat(error).as("%s: expected a compilation error", command).isNotNull();
+			return;
+		}
+		assertThat(compiled).as("%s: expected compilation to succeed, but got %s", command, error).isTrue();
+		if (expected.runtimeError != null)
+			assertThat(error).as("%s: expected an evaluation error, but query completed with output %s", command, values).isNotNull();
+		else if (!expected.limitExceeded())
+			assertThat(error).as("%s: expected successful execution", command).isNull();
+		List<T> expectedValues = new ArrayList<>();
+		for (JsonNode node : expected.values())
+			expectedValues.add(parseExpectedNode(node));
+		assertThat(values).as("%s output", command)
+				.usingElementComparator(new TestJsonNodeComparator<>(getJsonProvider(), true, tc.floatTolerance))
+				.isEqualTo(expectedValues);
 	}
 
 	protected final void run(String[] args) throws IOException {
@@ -152,9 +139,7 @@ public abstract class AbstractJsonQueryTest<T> {
 		TestCase tc = TestCaseLoader.parseTestCase(tcText);
 		Path moduleSearchPath = tc.modules.isEmpty() ? null : ModuleFixtures.materialize(tc.modules);
 		try {
-			if (tc.expectations != null || tc.appliesTo(jqVersion)) {
-				test(tc, jqVersion, moduleSearchPath);
-			}
+			test(tc, jqVersion, moduleSearchPath);
 		} finally {
 			if (moduleSearchPath != null)
 				ModuleFixtures.cleanup(moduleSearchPath);

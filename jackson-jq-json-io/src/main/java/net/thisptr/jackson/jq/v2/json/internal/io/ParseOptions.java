@@ -4,18 +4,22 @@ import net.thisptr.jackson.jq.v2.json.JsonProvider;
 
 /**
  * Controls how {@link JsonCodec#parse(JsonProvider, String, ParseOptions)} and its siblings hold the
- * JSON numbers they read.
+ * JSON numbers they read and bound containers they build.
  * <p>
  * Instances are immutable and can be reused across calls. Build one with {@link #newBuilder()}.
- * Options apply to numbers at every depth of the value.
+ * Options apply at every depth of the value.
  */
 public final class ParseOptions {
-	private static final ParseOptions DEFAULT = new ParseOptions(false);
+	private static final ParseOptions DEFAULT = new ParseOptions(false, Integer.MAX_VALUE, Integer.MAX_VALUE);
 
 	private final boolean roundNumbersToDouble;
+	private final int maxArrayLength;
+	private final int maxObjectMemberCount;
 
-	private ParseOptions(boolean roundNumbersToDouble) {
+	private ParseOptions(boolean roundNumbersToDouble, int maxArrayLength, int maxObjectMemberCount) {
 		this.roundNumbersToDouble = roundNumbersToDouble;
+		this.maxArrayLength = maxArrayLength;
+		this.maxObjectMemberCount = maxObjectMemberCount;
 	}
 
 	static ParseOptions getDefaultInstance() {
@@ -38,7 +42,9 @@ public final class ParseOptions {
 	 */
 	public Builder toBuilder() {
 		return new Builder()
-				.setRoundNumbersToDouble(roundNumbersToDouble);
+				.setRoundNumbersToDouble(roundNumbersToDouble)
+				.setMaxArrayLength(maxArrayLength)
+				.setMaxObjectMemberCount(maxObjectMemberCount);
 	}
 
 	/**
@@ -52,10 +58,30 @@ public final class ParseOptions {
 	}
 
 	/**
+	 * Returns the largest array this parser may build.
+	 *
+	 * @return the maximum array length
+	 */
+	public int getMaxArrayLength() {
+		return maxArrayLength;
+	}
+
+	/**
+	 * Returns the largest object this parser may build.
+	 *
+	 * @return the maximum object member count
+	 */
+	public int getMaxObjectMemberCount() {
+		return maxObjectMemberCount;
+	}
+
+	/**
 	 * Builds a {@link ParseOptions} instance.
 	 */
 	public static final class Builder {
 		private boolean roundNumbersToDouble;
+		private int maxArrayLength = Integer.MAX_VALUE;
+		private int maxObjectMemberCount = Integer.MAX_VALUE;
 
 		private Builder() {
 		}
@@ -75,14 +101,40 @@ public final class ParseOptions {
 		}
 
 		/**
+		 * Sets the maximum array length. The default is unbounded.
+		 *
+		 * @param maxArrayLength the maximum array length
+		 * @return this, for chaining
+		 */
+		public Builder setMaxArrayLength(int maxArrayLength) {
+			if (maxArrayLength < 0)
+				throw new IllegalArgumentException("maxArrayLength must not be negative");
+			this.maxArrayLength = maxArrayLength;
+			return this;
+		}
+
+		/**
+		 * Sets the maximum object member count. The default is unbounded.
+		 *
+		 * @param maxObjectMemberCount the maximum object member count
+		 * @return this, for chaining
+		 */
+		public Builder setMaxObjectMemberCount(int maxObjectMemberCount) {
+			if (maxObjectMemberCount < 0)
+				throw new IllegalArgumentException("maxObjectMemberCount must not be negative");
+			this.maxObjectMemberCount = maxObjectMemberCount;
+			return this;
+		}
+
+		/**
 		 * Builds the options, reusing the shared instance for the defaults.
 		 *
 		 * @return the options
 		 */
 		public ParseOptions build() {
-			if (!roundNumbersToDouble)
+			if (!roundNumbersToDouble && maxArrayLength == Integer.MAX_VALUE && maxObjectMemberCount == Integer.MAX_VALUE)
 				return DEFAULT;
-			return new ParseOptions(roundNumbersToDouble);
+			return new ParseOptions(roundNumbersToDouble, maxArrayLength, maxObjectMemberCount);
 		}
 	}
 }

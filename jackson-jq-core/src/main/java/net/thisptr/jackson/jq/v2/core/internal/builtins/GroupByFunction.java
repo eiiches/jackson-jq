@@ -8,8 +8,9 @@ import java.util.Map;
 import com.google.errorprone.annotations.Var;
 
 import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
+import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
-import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -49,12 +50,17 @@ public class GroupByFunction implements Function {
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
+		Version version = bindCtx.getJqVersion();
 		return (frame, in, ipath, output) -> {
-			Preconditions.checkInputType(jsonProvider, "group_by", in, JsonNodeType.ARRAY);
+			JsonNodeType inputType = jsonProvider.getNodeType(in);
+			if (inputType != JsonNodeType.ARRAY && inputType != JsonNodeType.OBJECT)
+				throw new JsonQueryTypeException("Cannot iterate over %s", ExceptionMessages.describe(jsonProvider, version, in));
 
 			JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
-			List<Pair<JsonNode, JsonNode>> keyed = new ArrayList<>(jsonProvider.getArrayLength(in));
-			Iterator<JsonNode> iter = jsonProvider.getArrayElements(in);
+			List<Pair<JsonNode, JsonNode>> keyed = new ArrayList<>(inputType == JsonNodeType.ARRAY
+					? jsonProvider.getArrayLength(in) : jsonProvider.getObjectMemberCount(in));
+			Iterator<JsonNode> iter = inputType == JsonNodeType.ARRAY
+					? jsonProvider.getArrayElements(in) : jsonProvider.getObjectMemberValues(in);
 			while (iter.hasNext()) {
 				JsonNode i = iter.next();
 				List<JsonNode> fxList = new ArrayList<>();
@@ -62,6 +68,9 @@ public class GroupByFunction implements Function {
 				JsonNode fx = JsonNodeUtils.asArrayNode(jsonProvider, fxList);
 				keyed.add(Pair.of(i, fx));
 			}
+			if (inputType == JsonNodeType.OBJECT)
+				throw new JsonQueryTypeException(ExceptionMessages.cannotSort(jsonProvider, version, in,
+						jsonProvider.createArray(Pair._2(keyed))));
 
 			keyed.sort((o1, o2) -> comparator.compareForSorting(o1._2, o2._2));
 

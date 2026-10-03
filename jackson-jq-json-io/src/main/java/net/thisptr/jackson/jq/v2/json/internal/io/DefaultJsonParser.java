@@ -7,17 +7,41 @@ import java.io.PushbackReader;
 import java.math.BigDecimal;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.google.errorprone.annotations.Var;
+import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
 
 final class DefaultJsonParser<N> implements JsonParser<N> {
+	private static final class Frame<N> {
+		private final @Nullable List<N> values;
+		private final @Nullable Map<String, N> members;
+		private @Nullable String key;
+
+		private Frame(@Nullable List<N> values, @Nullable Map<String, N> members, @Nullable String key) {
+			this.values = values;
+			this.members = members;
+			this.key = key;
+		}
+
+		private static <N> Frame<N> array() {
+			return new Frame<>(new ArrayList<>(), null, null);
+		}
+
+		private static <N> Frame<N> object(String key) {
+			return new Frame<>(null, new LinkedHashMap<>(), key);
+		}
+	}
+
 	private final JsonProvider<N> provider;
 	private final ParseOptions options;
 	private final PushbackReader reader;
@@ -46,10 +70,94 @@ final class DefaultJsonParser<N> implements JsonParser<N> {
 		}
 	}
 
-	private N readValue(int ch) throws IOException {
+	private N readValue(@Var int ch) throws IOException {
+		Deque<Frame<N>> open = new ArrayDeque<>();
+		while (true) {
+			@Var N value;
+			if (ch == '[') {
+				ch = nextNonWhitespace();
+				if (ch != ']') {
+					Frame<N> frame = Frame.array();
+					checkArraySize(frame);
+					open.push(frame);
+					continue;
+				}
+				value = provider.createArray(List.of());
+			} else if (ch == '{') {
+				ch = nextNonWhitespace();
+				if (ch != '}') {
+					Frame<N> frame = Frame.object(readObjectKey(ch));
+					checkObjectSize(frame);
+					open.push(frame);
+					ch = nextNonWhitespace();
+					continue;
+				}
+				value = provider.createObject(Map.of());
+			} else {
+				value = readScalar(ch);
+			}
+
+			while (true) {
+				if (open.isEmpty())
+					return value;
+				Frame<N> frame = open.element();
+				ch = nextNonWhitespace();
+				if (frame.values != null) {
+					frame.values.add(value);
+					if (ch == ']') {
+						value = provider.createArray(frame.values);
+						open.pop();
+						continue;
+					}
+					if (ch != ',')
+						throw invalid("Expected ',' or ']'");
+					ch = nextNonWhitespace();
+					checkArraySize(frame);
+					break;
+				}
+				Map<String, N> members = Objects.requireNonNull(frame.members);
+				String key = Objects.requireNonNull(frame.key);
+				members.put(key, value);
+				if (ch == '}') {
+					value = provider.createObject(members);
+					open.pop();
+					continue;
+				}
+				if (ch != ',')
+					throw invalid("Expected ',' or '}'");
+				frame.key = readObjectKey(nextNonWhitespace());
+				checkObjectSize(frame);
+				ch = nextNonWhitespace();
+				break;
+			}
+		}
+	}
+
+	private void checkArraySize(Frame<N> frame) {
+		int size = Objects.requireNonNull(frame.values).size();
+		if (size >= options.getMaxArrayLength())
+			throw new JsonSizeExceededException(JsonSizeExceededException.Kind.ARRAY,
+					(long) size + 1, options.getMaxArrayLength());
+	}
+
+	private void checkObjectSize(Frame<N> frame) {
+		Map<String, N> members = Objects.requireNonNull(frame.members);
+		if (!members.containsKey(Objects.requireNonNull(frame.key)) && members.size() >= options.getMaxObjectMemberCount())
+			throw new JsonSizeExceededException(JsonSizeExceededException.Kind.OBJECT,
+					(long) members.size() + 1, options.getMaxObjectMemberCount());
+	}
+
+	private String readObjectKey(int ch) throws IOException {
+		if (ch != '"')
+			throw invalid("Expected object key");
+		String key = readString();
+		if (nextNonWhitespace() != ':')
+			throw invalid("Expected ':' after object key");
+		return key;
+	}
+
+	private N readScalar(int ch) throws IOException {
 		return switch (ch) {
-			case '{' -> readObject();
-			case '[' -> readArray();
 			case '"' -> provider.createString(readString());
 			case 't' -> {
 				readLiteral("rue");
@@ -69,43 +177,6 @@ final class DefaultJsonParser<N> implements JsonParser<N> {
 				throw invalid("Unexpected character: " + (char) ch);
 			}
 		};
-	}
-
-	private N readObject() throws IOException {
-		Map<String, N> members = new LinkedHashMap<>();
-		@Var int ch = nextNonWhitespace();
-		if (ch == '}')
-			return provider.createObject(members);
-		while (true) {
-			if (ch != '"')
-				throw invalid("Expected object key");
-			String key = readString();
-			if (nextNonWhitespace() != ':')
-				throw invalid("Expected ':' after object key");
-			members.put(key, readValue(nextNonWhitespace()));
-			ch = nextNonWhitespace();
-			if (ch == '}')
-				return provider.createObject(members);
-			if (ch != ',')
-				throw invalid("Expected ',' or '}'");
-			ch = nextNonWhitespace();
-		}
-	}
-
-	private N readArray() throws IOException {
-		List<N> values = new ArrayList<>();
-		@Var int ch = nextNonWhitespace();
-		if (ch == ']')
-			return provider.createArray(values);
-		while (true) {
-			values.add(readValue(ch));
-			ch = nextNonWhitespace();
-			if (ch == ']')
-				return provider.createArray(values);
-			if (ch != ',')
-				throw invalid("Expected ',' or ']'");
-			ch = nextNonWhitespace();
-		}
 	}
 
 	private String readString() throws IOException {

@@ -4,7 +4,6 @@ import java.util.List;
 
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
-import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
@@ -41,8 +40,7 @@ public class ToJsonFunction implements Function {
 		Version version = bindCtx.getJqVersion();
 		return (scope, in, ipath, output) -> {
 
-			String text = JsonNodeUtils.toString(jsonProvider, in, version);
-			RuntimeLimitChecks.checkStringLength(scope.getRuntimeLimits(), text.length());
+			String text = JsonNodeUtils.toString(jsonProvider, in, version, scope.getRuntimeLimits());
 			output.emit(jsonProvider.createString(text), UntrackedPath.getInstance());
 		};
 	}

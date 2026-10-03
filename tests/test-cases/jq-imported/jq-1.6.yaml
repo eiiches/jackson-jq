@@ -1,0 +1,1192 @@
+# This file is generated from jqlang/jq files. Different license terms apply:
+#
+# jq is copyright (C) 2012 Stephen Dolan
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# jq's documentation (everything found under the docs/ subdirectory in
+# the source tree) is licensed under the Creative Commons CC BY 3.0
+# license, which can be found at:
+#
+#          https://creativecommons.org/licenses/by/3.0/
+#
+- q: '@text,@json,([1,.] | (@csv, @tsv)),@html,@uri,@sh,@base64,(@base64 | @base64d)'
+  input: "<>&'\"\t"
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - "<>&'\"\t"
+      - "\"<>&'\\\"\\t\""
+      - "1,\"<>&'\"\"\t\""
+      - "1\t<>&'\"\\t"
+      - "&lt;&gt;&amp;&apos;&quot;\t"
+      - "%3C%3E%26'%22%09"
+      - "'<>&'\\''\"\t'"
+      - "PD4mJyIJ"
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
+    - v: '[1.6, 1.7)'
+      output:
+      - "<>&'\"\t"
+      - "\"<>&'\\\"\\t\""
+      - "1,\"<>&'\"\"\t\""
+      - "1\t<>&'\"\\t"
+      - "&lt;&gt;&amp;&apos;&quot;\t"
+      - "%3C%3E%26'%22%09"
+      - "'<>&'\\''\"\t'"
+      - "PD4mJyIJ"
+      - "<>&'\"\t"
+    - v: '[1.7, )'
+      output:
+      - "<>&'\"\t"
+      - "\"<>&'\\\"\\t\""
+      - "1,\"<>&'\"\"\t\""
+      - "1\t<>&'\"\\t"
+      - "&lt;&gt;&amp;&apos;&quot;\t"
+      - "%3C%3E%26%27%22%09"
+      - "'<>&'\\''\"\t'"
+      - "PD4mJyIJ"
+      - "<>&'\"\t"
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.6, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '@base64d'
+  input: "Zm/Ds2Jhcgo="
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
+    - v: '[1.6, )'
+      output:
+      - "fo\xf3bar\n"
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '{(0):1}'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv.c:1110: jv_object_set: Assertion `jv_get_kind(key) == JV_KIND_STRING' failed.\n"
+    - v: '[1.6, 1.8.0)'
+      compile_error: "jq: error: Cannot use number (0) as object key at <top-level>, line 1:\n{(0):1} \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      compile_error: "jq: error: Cannot use number (0) as object key at <top-level>, line 1, column 3:\n    {(0):1}\n      ^\njq: 1 compile error\n"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '{non_const:., (0):1}'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Cannot use number (0) as object key\n"
+    - v: '[1.6, 1.8.0)'
+      compile_error: "jq: error: Cannot use number (0) as object key at <top-level>, line 1:\n{non_const:., (0):1}              \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      compile_error: "jq: error: Cannot use number (0) as object key at <top-level>, line 1, column 16:\n    {non_const:., (0):1}\n                   ^\njq: 1 compile error\n"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[range(0,1;3,4)]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - [0, 1, 2, 3, 1, 2, 3]
+    - v: '[1.6, )'
+      output:
+      - [0, 1, 2, 0, 1, 2, 3, 1, 2, 1, 2, 3]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[range(0,1;4,5;1,2)]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 1, 2, 3, 0, 2, 0, 1, 2, 3, 4, 0, 2, 4, 1, 2, 3, 1, 3, 1, 2, 3, 4, 1, 3]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'first(1,error("foo"))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - 1
+      runtime_error: "jq: error (at <stdin>:0): foo\n"
+    - v: '[1.6, )'
+      output:
+      - 1
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '1'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '1'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'reduce range(65540;65536;-1) as $i ([]; .[$i] = $i)|.[65536:]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - [null, null, null, null, null]
+    - v: '[1.6, )'
+      output:
+      - [null, 65537, 65538, 65539, 65540]
+    jjq:
+    - v: '[1.5, 1.6)'
+      output:
+      - [null, 65537, 65538, 65539, 65540]
+      incompat_type: INTENTIONAL
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NULL|NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NULL|NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'utf8bytelength'
+  input: "asdf\u03bc"
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: utf8bytelength/0 is not defined at <top-level>, line 1:\nutf8bytelength\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - 6
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'INT'
+  - v: '[1.6, )'
+    input: 'STRING'
+    output: 'INT'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.[] | try utf8bytelength catch .]'
+  input: [[], {}, [1, 2], 55, true, false]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: utf8bytelength/0 is not defined at <top-level>, line 1:\n[.[] | try utf8bytelength catch .]           \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - ["array ([]) only strings have UTF-8 byte length", "object ({}) only strings have UTF-8 byte length", "array ([1,2]) only strings have UTF-8 byte length", "number (55) only strings have UTF-8 byte length", "boolean (true) only strings have UTF-8 byte length", "boolean (false) only strings have UTF-8 byte length"]
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.6, )'
+    input: '[[],{},[INT,INT],INT,BOOLEAN,BOOLEAN]'
+    output: '[*:ANY]'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'reduce . as $n (.; .)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NULL'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '. as {$a, b: [$c, {$d}]} | [$a, $c, $d]'
+  input: {"a": 1, "b": [2, {"d": 3}]}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 3]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[ANY,ANY,ANY]'
+  - v: '[1.5, )'
+    input: '{a:INT,b:[INT,{d:INT}]}'
+    output: '[INT,INT,INT]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '. as {$a, $b:[$c, $d]}| [$a, $b, $c, $d]'
+  input: {"a": 1, "b": [2, {"d": 3}]}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected ':', expecting ',' or '}' (Unix shell quoting issues?) at <top-level>, line 1:\n. as {$a, $b:[$c, $d]}| [$a, $b, $c, $d]            \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [1, [2, {"d": 3}], 2, {"d": 3}]
+    jjq:
+    - v: '[1.5, 1.6)'
+      output:
+      - [1.0, [2.0, {"d": 3.0}], 2.0, {"d": 3.0}]
+      incompat_type: INTENTIONAL
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[ANY,ANY,ANY,ANY]'
+  - v: '[1.5, )'
+    input: '{a:INT,b:[INT,{d:INT}]}'
+    output: '[INT,[INT,{d:INT}],INT,{d:INT}]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] | . as {$a, b: [$c, {$d}]} ?// [$a, {$b}, $e] ?// $f | [$a, $b, $c, $d, $e, $f]'
+  input: [{"a": 1, "b": [2, {"d": 3}]}, [4, {"b": 5, "c": 6}, 7, 8, 9], "foo"]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n.[] | . as {$a, b: [$c, {$d}]} ?// [$a, {$b}, $e] ?// $f | [$a, $b, $c, $d, $e, $f]                               \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [1, null, 2, 3, null, null]
+      - [4, 5, null, null, 7, null]
+      - [null, null, null, null, null, "foo"]
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: .[] | . as {$a, b: [$c, {$d}]}"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '.[] | . as {a:$a} ?// {a:$a} ?// {a:$a} | $a'
+  input: [[3], [4], [5], 6]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n.[] | . as {a:$a} ?// {a:$a} ?// {a:$a} | $a                  \njq: 1 compile error\n"
+    - v: '[1.6, 1.8.2)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Cannot index array with string \"a\"\n"
+    - v: '[1.8.2, )'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Cannot index array with string (\"a\")\n"
+
+- q: '.[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a'
+  input: [[3], [4], [5], 6]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n.[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a              \njq: 1 compile error\n"
+    - v: '[1.6, 1.8.2)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Cannot index array with string \"a\"\n"
+    - v: '[1.8.2, )'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Cannot index array with string (\"a\")\n"
+
+- q: '[[3],[4],[5],6][] | . as {a:$a} ?// {a:$a} ?// {a:$a} | $a'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n[[3],[4],[5],6][] | . as {a:$a} ?// {a:$a} ?// {a:$a} | $a                                \njq: 1 compile error\n"
+    - v: '[1.6, 1.8.2)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Cannot index array with string \"a\"\n"
+    - v: '[1.8.2, )'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Cannot index array with string (\"a\")\n"
+
+- q: '[[3],[4],[5],6] | .[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n[[3],[4],[5],6] | .[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a                                \njq: 1 compile error\n"
+    - v: '[1.6, 1.8.2)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Cannot index array with string \"a\"\n"
+    - v: '[1.8.2, )'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Cannot index array with string (\"a\")\n"
+
+- q: '.[] | . as {a:$a} ?// {a:$a} ?// $a | $a'
+  input: [[3], [4], [5], 6]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n.[] | . as {a:$a} ?// {a:$a} ?// $a | $a                  \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [3]
+      - [4]
+      - [5]
+      - 6
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: .[] | . as {a: $a}"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '.[] as {a:$a} ?// {a:$a} ?// $a | $a'
+  input: [[3], [4], [5], 6]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n.[] as {a:$a} ?// {a:$a} ?// $a | $a              \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [3]
+      - [4]
+      - [5]
+      - 6
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: .[] as {a: $a}"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '[[3],[4],[5],6][] | . as {a:$a} ?// {a:$a} ?// $a | $a'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n[[3],[4],[5],6][] | . as {a:$a} ?// {a:$a} ?// $a | $a                                \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [3]
+      - [4]
+      - [5]
+      - 6
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: [[3], [4], [5], 6][] | . as {a: $a}"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '[[3],[4],[5],6] | .[] as {a:$a} ?// {a:$a} ?// $a | $a'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n[[3],[4],[5],6] | .[] as {a:$a} ?// {a:$a} ?// $a | $a                                \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [3]
+      - [4]
+      - [5]
+      - 6
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: [[3], [4], [5], 6] | .[] as {a: $a}"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '.[] | . as {a:$a} ?// $a ?// {a:$a} | $a'
+  input: [[3], [4], [5], 6]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n.[] | . as {a:$a} ?// $a ?// {a:$a} | $a                  \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [3]
+      - [4]
+      - [5]
+      - 6
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: .[] | . as {a: $a}"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '.[] as {a:$a} ?// $a ?// {a:$a} | $a'
+  input: [[3], [4], [5], 6]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n.[] as {a:$a} ?// $a ?// {a:$a} | $a              \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [3]
+      - [4]
+      - [5]
+      - 6
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: .[] as {a: $a}"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '[[3],[4],[5],6][] | . as {a:$a} ?// $a ?// {a:$a} | $a'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n[[3],[4],[5],6][] | . as {a:$a} ?// $a ?// {a:$a} | $a                                \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [3]
+      - [4]
+      - [5]
+      - 6
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: [[3], [4], [5], 6][] | . as {a: $a}"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '[[3],[4],[5],6] | .[] as {a:$a} ?// $a ?// {a:$a} | $a'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n[[3],[4],[5],6] | .[] as {a:$a} ?// $a ?// {a:$a} | $a                                \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [3]
+      - [4]
+      - [5]
+      - 6
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: [[3], [4], [5], 6] | .[] as {a: $a}"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '.[] | . as $a ?// {a:$a} ?// {a:$a} | $a'
+  input: [[3], [4], [5], 6]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n.[] | . as $a ?// {a:$a} ?// {a:$a} | $a              \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [3]
+      - [4]
+      - [5]
+      - 6
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: .[] | . as $a"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '.[] as $a ?// {a:$a} ?// {a:$a} | $a'
+  input: [[3], [4], [5], 6]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n.[] as $a ?// {a:$a} ?// {a:$a} | $a          \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [3]
+      - [4]
+      - [5]
+      - 6
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: .[] as $a"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '[[3],[4],[5],6][] | . as $a ?// {a:$a} ?// {a:$a} | $a'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n[[3],[4],[5],6][] | . as $a ?// {a:$a} ?// {a:$a} | $a                            \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [3]
+      - [4]
+      - [5]
+      - 6
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: [[3], [4], [5], 6][] | . as $a"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '[[3],[4],[5],6] | .[] as $a ?// {a:$a} ?// {a:$a} | $a'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: syntax error, unexpected '?', expecting '|' (Unix shell quoting issues?) at <top-level>, line 1:\n[[3],[4],[5],6] | .[] as $a ?// {a:$a} ?// {a:$a} | $a                            \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [3]
+      - [4]
+      - [5]
+      - 6
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Assignment or label must be followed by pipes: [[3], [4], [5], 6] | .[] as $a"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'try delpaths(0) catch .'
+  input: {}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv_aux.c:579: jv_sort: Assertion `jv_get_kind(objects) == JV_KIND_ARRAY' failed.\n"
+    - v: '[1.6, )'
+      output:
+      - "Paths must be specified as an array"
+    jjq:
+    - v: '[1.5, 1.6)'
+      output:
+      - "Paths must be specified as an array"
+      incompat_type: INTENTIONAL
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{}'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'del(.[1], .[-6], .[2], .[-3:9])'
+  input: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - [0, 3, 4, 5, 6, 9]
+    - v: '[1.6, )'
+      output:
+      - [0, 3, 5, 6, 9]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] | try (getpath(["a",0,"b"]) |= 5) catch .'
+  input: [null, {"b": 0}, {"a": 0}, {"a": null}, {"a": [0, 1]}, {"a": {"b": 1}}, {"a": [{}]}, {"a": [{"c": 3}]}]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - 5
+      - "Invalid path expression with result null"
+      - "Cannot index number with number"
+      - "Invalid path expression with result null"
+      - "Cannot index number with string \"b\""
+      - "Cannot index object with number"
+      - "Invalid path expression with result null"
+      - "Invalid path expression with result null"
+    - v: '[1.6, 1.8.2)'
+      output:
+      - {"a": [{"b": 5}]}
+      - {"b": 0, "a": [{"b": 5}]}
+      - "Cannot index number with number"
+      - {"a": [{"b": 5}]}
+      - "Cannot index number with string \"b\""
+      - "Cannot index object with number"
+      - {"a": [{"b": 5}]}
+      - {"a": [{"c": 3, "b": 5}]}
+    - v: '[1.8.2, )'
+      output:
+      - {"a": [{"b": 5}]}
+      - {"b": 0, "a": [{"b": 5}]}
+      - "Cannot index number with number (0)"
+      - {"a": [{"b": 5}]}
+      - "Cannot index number with string (\"b\")"
+      - "Cannot index object with number (0)"
+      - {"a": [{"b": 5}]}
+      - {"a": [{"c": 3, "b": 5}]}
+    jjq:
+    - v: '[1.5, 1.6)'
+      output:
+      - {"a": [{"b": 5}]}
+      - {"b": 0.0, "a": [{"b": 5}]}
+      - "Cannot index number with number"
+      - {"a": [{"b": 5}]}
+      - "Cannot index number with string \"b\""
+      - "Cannot index object with number"
+      - {"a": [{"b": 5}]}
+      - {"a": [{"c": 3.0, "b": 5}]}
+      incompat_type: INTENTIONAL
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[NULL,{b:INT},{a:INT},{a:NULL},{a:[INT,INT]},{a:{b:INT}},{a:[{}]},{a:[{c:INT}]}]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[if 1,null,2 then 3 else 4 end]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [3, 4, 3]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:3|4]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:3|4]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[if empty then 3 else 4 end]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - []
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:3|4]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:3|4]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[if 1 then 3,4 else 5 end]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [3, 4]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:3|4|5]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:3|4]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[if null then 3 else 5,6 end]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [5, 6]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:5|6]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:5|6]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'from_entries'
+  input: [{"key": "a", "value": 1}, {"Key": "b", "Value": 2}, {"name": "c", "value": 3}, {"Name": "d", "Value": 4}]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Cannot use null (null) as object key\n"
+    - v: '[1.6, )'
+      output:
+      - {"a": 1, "b": 2, "c": 3, "d": 4}
+    jjq:
+    - v: '[1.5, 1.6)'
+      output:
+      - {"a": 1.0, "b": 2.0, "c": 3.0, "d": 4.0}
+      incompat_type: INTENTIONAL
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '{*:ANY}'
+  - v: '[1.5, )'
+    input: '[{key:STRING,value:INT},{Key:STRING,Value:INT},{name:STRING,value:INT},{Name:STRING,Value:INT}]'
+    output: '{*:INT}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'strftime("%A, %B %d, %Y")'
+  input: 1435677542.822351
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "Tuesday, June 30, 2015"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'FLOAT'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: true
+
+- q: 'module (.+1); 0'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: Module metadata must be constant. at <top-level>, line 1:\nmodule (.+1); 0\njq: 1 compile error\n"
+    - v: '[1.6, 1.8.0)'
+      compile_error: "jq: error: Module metadata must be constant at <top-level>, line 1:\nmodule (.+1); 0\njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      compile_error: "jq: error: Module metadata must be constant at <top-level>, line 1, column 8:\n    module (.+1); 0\n           ^^^^^\njq: 1 compile error\n"
+    jjq:
+    - v: '[1.5, )'
+      output:
+      - 0
+      incompat_type: JACKSON_JQ_BUG
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '0'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '0'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'include "a" (.+1); 0'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: Module metadata must be constant. at <top-level>, line 1:\ninclude \"a\" (.+1); 0\njq: 1 compile error\n"
+    - v: '[1.6, 1.8.0)'
+      compile_error: "jq: error: Module metadata must be constant at <top-level>, line 1:\ninclude \"a\" (.+1); 0\njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      compile_error: "jq: error: Module metadata must be constant at <top-level>, line 1, column 13:\n    include \"a\" (.+1); 0\n                ^^^^^\njq: 1 compile error\n"
+
+- q: 'include "a" []; 0'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv.c:1109: jv_object_set: Assertion `jv_get_kind(object) == JV_KIND_OBJECT' failed.\n"
+    - v: '[1.6, 1.8.0)'
+      compile_error: "jq: error: Module metadata must be an object at <top-level>, line 1:\ninclude \"a\" []; 0\njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      compile_error: "jq: error: Module metadata must be an object at <top-level>, line 1, column 13:\n    include \"a\" []; 0\n                ^^\njq: 1 compile error\n"
+
+- q: 'include "\ "; 0'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error: Invalid escape at line 1, column 4 (while parsing '\"\\ \"') at <top-level>, line 1:\ninclude \"\\ \"; 0         \njq-1.5: ../../../compile.c:177: block_const: Assertion `block_is_const(b)' failed.\n"
+    - v: '[1.6, 1.8.0)'
+      compile_error: "jq: error: Invalid escape at line 1, column 4 (while parsing '\"\\ \"') at <top-level>, line 1:\ninclude \"\\ \"; 0         \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      compile_error: "jq: error: Invalid escape at line 1, column 4 (while parsing '\"\\ \"') at <top-level>, line 1, column 10:\n    include \"\\ \"; 0\n             ^^\njq: 1 compile error\n"
+
+- q: 'include "\(a)"; 0'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../compile.c:177: block_const: Assertion `block_is_const(b)' failed.\n"
+    - v: '[1.6, 1.8.0)'
+      compile_error: "jq: error: Import path must be constant at <top-level>, line 1:\ninclude \"\\(a)\"; 0        \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      compile_error: "jq: error: Import path must be constant at <top-level>, line 1, column 9:\n    include \"\\(a)\"; 0\n            ^^^^^^\njq: 1 compile error\n"
+
+- q: 'join(",")'
+  input: ["1", 2, true, false, 3.4]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): string (\",\") and number (2) cannot be added\n"
+    - v: '[1.6, )'
+      output:
+      - "1,2,true,false,3.4"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, 1.6)'
+    input: '[STRING,INT,BOOLEAN,BOOLEAN,FLOAT]'
+    output: 'ANY'
+  - v: '[1.6, )'
+    input: '[STRING,INT,BOOLEAN,BOOLEAN,FLOAT]'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] | join(",")'
+  input: [[], [null], [null, null], [null, null, null]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ""
+      - ""
+      - ","
+      - ",,"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: '[[],[NULL],[NULL,NULL],[NULL,NULL,NULL]]'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.[] | join(",")'
+  input: [["a", null], [null, "a"]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "a,"
+      - ",a"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: '[[STRING,NULL],[NULL,STRING]]'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try join(",") catch .'
+  input: ["1", "2", [3, 4, 5]]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - "string (\",\") and array ([3,4,5]) cannot be added"
+    - v: '[1.6, )'
+      output:
+      - "string (\"1,2,\") and array ([3,4,5]) cannot be added"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,[INT,INT,INT]]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'INDEX(range(5)|[., "foo\(.)"]; .[0])'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: INDEX/2 is not defined at <top-level>, line 1:\nINDEX(range(5)|[., \"foo\\(.)\"]; .[0])\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - {"0": [0, "foo0"], "1": [1, "foo1"], "2": [2, "foo2"], "3": [3, "foo3"], "4": [4, "foo4"]}
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Function INDEX/2 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'JOIN({"0":[0,"abc"],"1":[1,"bcd"],"2":[2,"def"],"3":[3,"efg"],"4":[4,"fgh"]}; .[0]|tostring)'
+  input: [[5, "foo"], [3, "bar"], [1, "foobar"]]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: JOIN/2 is not defined at <top-level>, line 1:\nJOIN({\"0\":[0,\"abc\"],\"1\":[1,\"bcd\"],\"2\":[2,\"def\"],\"3\":[3,\"efg\"],\"4\":[4,\"fgh\"]}; .[0]|tostring)\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [[[5, "foo"], null], [[3, "bar"], [3, "efg"]], [[1, "foobar"], [1, "bcd"]]]
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Function JOIN/2 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'range(5;10)|IN(range(10))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: IN/1 is not defined at <top-level>, line 1:\nrange(5;10)|IN(range(10))            \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - true
+      - true
+      - true
+      - true
+      - true
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Function IN/1 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'range(10;12)|IN(range(10))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: IN/1 is not defined at <top-level>, line 1:\nrange(10;12)|IN(range(10))             \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - false
+      - false
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Function IN/1 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'IN(range(10;20); range(10))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: IN/2 is not defined at <top-level>, line 1:\nIN(range(10;20); range(10))\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - false
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Function IN/2 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: 'IN(range(5;20); range(10))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: IN/2 is not defined at <top-level>, line 1:\nIN(range(5;20); range(10))\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.6, )'
+      compile_error: "Function IN/2 does not exist"
+      incompat_type: JACKSON_JQ_BUG
+
+- q: '(.a as $x | .b) = "b"'
+  input: {"a": null, "b": null}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Invalid path expression near attempt to access element \"b\" of {\"a\":null,\"b\":null}\n"
+    - v: '[1.6, )'
+      output:
+      - {"a": null, "b": "b"}
+    jjq:
+    - v: '[1.5, 1.6)'
+      output:
+      - {"a": null, "b": "b"}
+      incompat_type: INTENTIONAL
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{a:NULL,b:NULL}'
+    output: '{a:NULL,b:"b"}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '(.. | select(type == "object" and has("b") and (.b | type) == "array")|.b) |= .[0]'
+  input: {"a": {"b": [1, {"b": 3}]}}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": {"b": 1}}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{a:{b:[INT,{b:INT}]}}'
+    output: 'INT|[*:INT|{b:INT|{b:INT}}|{b:INT}]|{a:INT|[*:INT|{b:INT|{b:INT}}|{b:INT}]|{a:{b:INT}|{b:[*:INT|{b:INT|{b:INT}}|{b:INT}]|{b:INT}}}|{b:INT|[*:INT|[*:INT|{b:INT|{b:INT}}|{b:INT}]|{a:{b:INT}|{b:[*:INT|{b:INT|{b:INT}}|{b:INT}]|{b:INT}}}|{b:INT|[*:INT|{b:INT|{b:INT}}|{b:INT}]|{a:{b:INT}|{b:[*:INT|{b:INT|{b:INT}}|{b:INT}]|{b:INT}}}|{b:INT|{b:INT}}|{b:INT}|{b:[*:INT|{b:INT|{b:INT}}|{b:INT}]|{b:INT}}}|{b:INT|{b:INT}}|{b:INT}|{b:[*:INT|{b:INT|{b:INT}}|{b:INT}]|{b:INT}}]|[*:INT|{b:INT|{b:INT}}|{b:INT}]|{a:{b:INT}|{b:[*:INT|{b:INT|{b:INT}}|{b:INT}]|{b:INT}}}|{b:INT|{b:INT}}|{b:INT}|{b:[*:INT|{b:INT|{b:INT}}|{b:INT}]|{b:INT}}}|{b:INT|{b:INT}}|{b:INT}|{b:[*:INT|{b:INT|{b:INT}}|{b:INT}]|{b:INT}}}|{a:{b:INT}|{b:[*:INT|{b:INT|{b:INT}}|{b:INT}]|{b:INT}}}|{b:INT|{b:INT}}|{b:INT}|{b:[*:INT|{b:INT|{b:INT}}|{b:INT}]|{b:INT}}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'isempty(1,error("foo"))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: isempty/1 is not defined at <top-level>, line 1:\nisempty(1,error(\"foo\"))\njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - false
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.6, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false

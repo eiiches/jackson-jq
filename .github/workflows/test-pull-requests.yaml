@@ -24,6 +24,15 @@ jobs:
     - name: Check Bazel formatting
       run: bazel run //:buildifier_test
 
+    - name: Check test-case formatting
+      run: bazel run //:format-test-cases -- --check tests/test-cases
+
+    - name: Check test-case type assertions
+      run: bazel run //:generate-type-assertions -- --check tests/test-cases
+
+    - name: Check test-case property assertions
+      run: bazel run //:generate-property-assertions -- --check tests/test-cases
+
     - name: Check Java style
       run: bazel test --remote_download_outputs=minimal --build_tests_only --test_tag_filters=checkstyle //...
 

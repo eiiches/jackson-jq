@@ -1,13 +1,19 @@
 - q: 'tojson'
-  in: [false, -0.5, "\n"]
-  out:
-  - "[false,-0.5,\"\\n\"]"
+  input: [false, -0.5, "\n"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "[false,-0.5,\"\\n\"]"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: '[BOOLEAN,FLOAT,STRING]'
+  - v: '[1.5, )'
+    input: '[BOOLEAN,FLOAT,STRING]'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false

@@ -1,209 +1,245 @@
 - q: 'todate'
-  in: 1700000000
-  types:
-  - input: 'ANY'
-    output: 'STRING'
-  - input: 'INT'
-    output: 'STRING'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: 1700000000
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "2023-11-14T22:13:20Z"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'todate'
-  in: [2023, 10, 14, 22, 13, 20, 2, 317]
-  types:
-  - input: 'ANY'
-    output: 'STRING'
-  - input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
-    output: 'STRING'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: [2023, 10, 14, 22, 13, 20, 2, 317]
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "2023-11-14T22:13:20Z"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT,INT,INT]'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'todate'
-  in: 0
-  types:
-  - input: 'ANY'
-    output: 'STRING'
-  - input: 'INT'
-    output: 'STRING'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: 0
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "1970-01-01T00:00:00Z"
-
-- q: 'todate'
-  in: 253402300799
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
+
+- q: 'todate'
+  input: 253402300799
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "9999-12-31T23:59:59Z"
-
-- q: 'todate'
-  in: 1000000000000000
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'todate'
+  input: 1000000000000000
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "31690708-07-05T01:46:40Z"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'STRING'
+  properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
   comment: '%Y is not padded, so a year past four digits is written with the digits it has'
-  expectations:
-    default:
-    - v: '[1.5, )'
-      out:
-      - "31690708-07-05T01:46:40Z"
 
 # macOS jq 1.7 and later pad the year to four digits.
 - q: 'todate'
-  in: -62135596800
-  types:
-  - input: 'ANY'
-    output: 'STRING'
-  - input: 'INT'
-    output: 'STRING'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: -62135596800
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "1-01-01T00:00:00Z"
     overrides:
     - v: '[1.7, )'
       os: MACOS
-      out:
+      output:
       - "0001-01-01T00:00:00Z"
-
-- q: 'map(todate)'
-  in: [0, 1700000000]
   types:
-  - input: 'ANY'
-    output: '[*:STRING]'
-  - input: '[INT,INT]'
-    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
+
+- q: 'map(todate)'
+  input: [0, 1700000000]
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - ["1970-01-01T00:00:00Z", "2023-11-14T22:13:20Z"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: '[INT,INT]'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'try todate catch .'
-  in: "2023-11-14T22:13:20Z"
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: 'STRING'
-    output: 'ANY'
-  properties:
-    cardinality: UNKNOWN
-    depends_on_input: true
-    depends_on_external_state: false
+  input: "2023-11-14T22:13:20Z"
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "strftime/1 requires parsed datetime inputs"
-
-- q: 'try fromdate catch .'
-  in: "2023-11-14T22:13:20.5Z"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
+
+- q: 'try fromdate catch .'
+  input: "2023-11-14T22:13:20.5Z"
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "date \"2023-11-14T22:13:20.5Z\" does not match format \"%Y-%m-%dT%H:%M:%SZ\""
-
-- q: 'try fromdate catch .'
-  in: "2023-11-14"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
+
+- q: 'try fromdate catch .'
+  input: "2023-11-14"
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "date \"2023-11-14\" does not match format \"%Y-%m-%dT%H:%M:%SZ\""
-
-- q: 'try fromdate catch .'
-  in: 1700000000
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
+
+- q: 'try fromdate catch .'
+  input: 1700000000
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "strptime/1 requires string inputs and arguments"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '"now" | (now | type)'
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "number"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"number"'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '"number"'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: true
-  expectations:
-    default:
-    - v: '[1.5, )'
-      out:
-      - "number"

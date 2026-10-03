@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.jspecify.annotations.Nullable;
@@ -34,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
  * inferred by the compiler.
  */
 public class PropertyCheckTestCasesTest {
-	private void testVersion(TestCase tc, Version version, @Nullable Path moduleSearchPath) throws Throwable {
+	private void testVersion(TestCase tc, TestCase.PropertyAssertion expected, Version version, @Nullable Path moduleSearchPath) throws Throwable {
 		EnvironmentBuilder<JsonNode> envBuilder = EnvironmentBuilder.withDefaultLoaders(Jackson2JsonProvider.getInstance(), version);
 		if (moduleSearchPath != null) {
 			envBuilder.clearModuleLoaders()
@@ -51,8 +50,6 @@ public class PropertyCheckTestCasesTest {
 		JsonQuery<JsonNode> query = env.compile(tc.q);
 		ExpressionProperties actual = query.getProperties();
 
-		TestCase.PropertyAssertion expected = Objects.requireNonNull(tc.properties);
-
 		String desc = String.format("jq (v%s) '%s'", version, tc.q);
 		assertThat(actual.cardinality())
 				.as("cardinality of %s", desc)
@@ -64,10 +61,11 @@ public class PropertyCheckTestCasesTest {
 				.as("depends_on_external_state of %s", desc)
 				.isEqualTo(expected.dependsOnExternalState);
 
-		boolean expectedError = tc.expectations != null && tc.expectations.resolve(version, false, System.getProperty("os.name", ""), System.getProperty("os.arch", "")).error;
-		if (!Boolean.TRUE.equals(tc.failing) && !expectedError) {
+		TestCase.AbstractExpectation expectationRow = tc.expectations.resolve(version, false, System.getProperty("os.name", ""), System.getProperty("os.arch", ""));
+		if (expectationRow.runtimeError == null && expectationRow.compileError == null
+				&& !expectationRow.limitExceeded() && !expectationRow.timedOut() && !expectationRow.unstable()) {
 			List<JsonNode> actualOutputs = new ArrayList<>();
-			query.apply(tc.in, actualOutputs::add);
+			query.apply(tc.input, actualOutputs::add);
 			if (actual.cardinality() == Cardinality.ZERO) {
 				assertThat(actualOutputs)
 						.as("cardinality of %s is ZERO, but actual output count is %d", desc, actualOutputs.size())
@@ -96,7 +94,7 @@ public class PropertyCheckTestCasesTest {
 					try {
 						query.apply(alt, altOutputs::add);
 						assertThat(altOutputs)
-								.as("actual outputs of %s on alternative input %s must equal outputs on %s when depends_on_input is false", desc, alt, tc.in)
+								.as("actual outputs of %s on alternative input %s must equal outputs on %s when depends_on_input is false", desc, alt, tc.input)
 								.isEqualTo(actualOutputs);
 					} catch (Exception e) {
 						throw new AssertionError(String.format("Query %s marked depends_on_input=false threw exception on alternative input %s", desc, alt), e);
@@ -106,34 +104,32 @@ public class PropertyCheckTestCasesTest {
 		}
 	}
 
-	private static Version selectVersion(TestCase tc) {
-		List<Version> versions = Versions.versions();
-		if (!tc.hasAssertionVersionSelection()) {
-			return Versions.JQ_1_7;
-		}
-		for (int i = versions.size() - 1; i >= 0; i--) {
-			if (tc.appliesToAssertions(versions.get(i))) {
-				return versions.get(i);
-			}
-		}
-		return Versions.JQ_1_7;
-	}
-
 	public void test(String tcText) throws Throwable {
 		TestCase tc = TestCaseLoader.parseTestCase(tcText);
-		if (!tc.shouldCompile) {
-			return;
-		}
-		if (tc.properties == null) {
-			if (Boolean.TRUE.equals(tc.failing))
-				return;
-			throw new AssertionError(String.format("Missing properties for jq '%s' in %s", tc.q, tc.file));
-		}
-
 		Path moduleSearchPath = tc.modules.isEmpty() ? null : ModuleFixtures.materialize(tc.modules);
 		try {
-			Version version = selectVersion(tc);
-			testVersion(tc, version, moduleSearchPath);
+			if (tc.properties.isEmpty()) {
+				if (PropertyAssertionGenerator.assertionsFor(tc, moduleSearchPath).isEmpty())
+					return;
+				throw new AssertionError(String.format("Missing properties for jq '%s' in %s", tc.q, tc.file));
+			}
+			for (TestCase.PropertyAssertion row : tc.properties) {
+				if (Versions.versions().stream().noneMatch(version -> row.appliesTo(version) && tc.appliesToAssertions(version)))
+					throw new IllegalArgumentException("property assertion and case ranges match no configured version: " + tc.q);
+			}
+
+			List<Executable> checks = new ArrayList<>();
+			for (Version version : Versions.versions()) {
+				if (!tc.appliesToAssertions(version))
+					continue;
+				for (TestCase.PropertyAssertion row : tc.properties) {
+					if (row.appliesTo(version)) {
+						checks.add(() -> testVersion(tc, row, version, moduleSearchPath));
+						break;
+					}
+				}
+			}
+			assertAll(tc.q, checks);
 		} finally {
 			if (moduleSearchPath != null) {
 				ModuleFixtures.cleanup(moduleSearchPath);

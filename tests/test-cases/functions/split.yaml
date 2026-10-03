@@ -1,27 +1,38 @@
 - q: 'split("baz")'
-  in: ""
-  out:
-  - []
+  input: ""
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:STRING]'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: '[*:STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'split(empty)'
-  in: []
-  out: []
+  input: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output: []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:STRING]'
-  - input: '[]'
+  - v: '[1.5, )'
+    input: '[]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: ZERO
     depends_on_input: true
     depends_on_external_state: false

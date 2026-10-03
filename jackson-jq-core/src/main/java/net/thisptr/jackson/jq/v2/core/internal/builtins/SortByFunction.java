@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 import net.thisptr.jackson.jq.v2.core.internal.commons.pair.Pair;
+import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
+import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
-import net.thisptr.jackson.jq.v2.core.internal.function.utils.Preconditions;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
 import net.thisptr.jackson.jq.v2.core.internal.json.comparator.JsonNodeComparator;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
@@ -47,18 +48,26 @@ public class SortByFunction implements Function {
 	@Override
 	public <Context extends RuntimeContext, JsonNode> Expression<Context, JsonNode> bind(BindContext<JsonNode> bindCtx, List<Expression<Context, JsonNode>> args) {
 		JsonProvider<JsonNode> jsonProvider = bindCtx.getJsonProvider();
+		Version version = bindCtx.getJqVersion();
 		return (frame, items, ipath, output) -> {
-			Preconditions.checkInputType(jsonProvider, "sort_by", items, JsonNodeType.ARRAY);
+			JsonNodeType inputType = jsonProvider.getNodeType(items);
+			if (inputType != JsonNodeType.ARRAY && inputType != JsonNodeType.OBJECT)
+				throw new JsonQueryTypeException("Cannot iterate over %s", ExceptionMessages.describe(jsonProvider, version, items));
 
 			JsonNodeComparator<JsonNode> comparator = new JsonNodeComparator<>(jsonProvider);
-			List<Pair<JsonNode, JsonNode>> zipped = new ArrayList<>(jsonProvider.getArrayLength(items));
-			Iterator<JsonNode> iter = jsonProvider.getArrayElements(items);
+			List<Pair<JsonNode, JsonNode>> zipped = new ArrayList<>(inputType == JsonNodeType.ARRAY
+					? jsonProvider.getArrayLength(items) : jsonProvider.getObjectMemberCount(items));
+			Iterator<JsonNode> iter = inputType == JsonNodeType.ARRAY
+					? jsonProvider.getArrayElements(items) : jsonProvider.getObjectMemberValues(items);
 			while (iter.hasNext()) {
 				JsonNode item = iter.next();
 				List<JsonNode> values = new ArrayList<>();
 				args.get(0).apply(frame, item, UntrackedPath.getInstance(), (v, opath) -> values.add(v));
 				zipped.add(Pair.of(item, jsonProvider.createArray(values)));
 			}
+			if (inputType == JsonNodeType.OBJECT)
+				throw new JsonQueryTypeException(ExceptionMessages.cannotSort(jsonProvider, version, items,
+						jsonProvider.createArray(Pair._2(zipped))));
 
 			zipped.sort((o1, o2) -> comparator.compareForSorting(o1._2, o2._2));
 

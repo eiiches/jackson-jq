@@ -142,6 +142,15 @@ public class RuntimeOptionsTest {
 	}
 
 	@Test
+	public void fromjsonRespectsArrayLength() {
+		JsonProvider<JsonNode> provider = Jackson2JsonProvider.getInstance();
+		assertThatCode(() -> run("fromjson", maxArrayLength(2), provider.createString("[1,2]"))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run("fromjson", maxArrayLength(2), provider.createString("[1,2,3]")))
+				.isInstanceOf(RuntimeLimitExceededException.class)
+				.hasMessageContaining("Array of 3 elements exceeds the maximum array size of 2");
+	}
+
+	@Test
 	public void arrayConcatenationIsBounded() {
 		assertThatCode(() -> run("reduce range(0; .) as $i ([]; . + [$i])", maxArrayLength(100), in("100"))).doesNotThrowAnyException();
 		assertThatThrownBy(() -> run("reduce range(0; .) as $i ([]; . + [$i])", maxArrayLength(100), in("101")))
@@ -183,6 +192,15 @@ public class RuntimeOptionsTest {
 	}
 
 	@Test
+	public void fromjsonRespectsObjectMemberCount() {
+		JsonProvider<JsonNode> provider = Jackson2JsonProvider.getInstance();
+		assertThatCode(() -> run("fromjson", maxObjectMemberCount(1), provider.createString("{\"a\":1,\"a\":2}"))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run("fromjson", maxObjectMemberCount(1), provider.createString("{\"a\":1,\"b\":2}")))
+				.isInstanceOf(RuntimeLimitExceededException.class)
+				.hasMessageContaining("Object of 2 members exceeds the maximum object size of 1");
+	}
+
+	@Test
 	public void recursiveObjectMergeIsBounded() {
 		assertThatThrownBy(() -> run("{a: 1, b: .} * {c: 3}", maxObjectMemberCount(2), in("2")))
 				.isInstanceOf(RuntimeLimitExceededException.class);
@@ -209,6 +227,15 @@ public class RuntimeOptionsTest {
 		assertThatThrownBy(() -> run("reduce range(0; .) as $i (\"\"; . + \"x\")", maxStringLength(100), in("101")))
 				.isInstanceOf(RuntimeLimitExceededException.class)
 				.hasMessageContaining("maximum string length of 100");
+	}
+
+	@Test
+	public void fromjsonRespectsInputStringLength() {
+		JsonProvider<JsonNode> provider = Jackson2JsonProvider.getInstance();
+		assertThatCode(() -> run("fromjson", maxStringLength(5), provider.createString("[1,2]"))).doesNotThrowAnyException();
+		assertThatThrownBy(() -> run("fromjson", maxStringLength(5), provider.createString("[1,2,3]")))
+				.isInstanceOf(RuntimeLimitExceededException.class)
+				.hasMessageContaining("String of 7 characters exceeds the maximum string length of 5");
 	}
 
 	@Test
@@ -263,6 +290,34 @@ public class RuntimeOptionsTest {
 		assertThatCode(() -> run("tojson", maxStringLength(7), in("[1, 2, 3]"))).doesNotThrowAnyException();
 		assertThatThrownBy(() -> run("tojson", maxStringLength(6), in("[1, 2, 3]")))
 				.isInstanceOf(RuntimeLimitExceededException.class);
+	}
+
+	@Test
+	public void tojsonIsRejectedWithoutSerializingTheWholeValue() {
+		// The reported length is the budget it broke, not the 200,002 characters the value would have
+		// serialized to: the formatter gives up as it writes rather than measuring afterwards. A value
+		// this deep is also the case that used to exhaust the Java stack instead of answering at all.
+		assertThatThrownBy(() -> run("reduce range(.) as $_ ([];[.]) | tojson", maxStringLength(100), in("100000")))
+				.isInstanceOf(RuntimeLimitExceededException.class)
+				.hasMessageContaining("String of 101 characters exceeds the maximum string length of 100");
+		assertThatThrownBy(() -> run("reduce range(.) as $_ ([];[.]) | tostring", maxStringLength(100), in("100000")))
+				.isInstanceOf(RuntimeLimitExceededException.class)
+				.hasMessageContaining("String of 101 characters");
+	}
+
+	@Test
+	public void tojsonOfADeeplyNestedValueIsNotBoundedByTheJavaStack() {
+		// 100,001 levels deep, two brackets each. Walked by recursion this exhausted the Java stack
+		// somewhere around 5,000 levels instead of answering.
+		assertThat(run("reduce range(.) as $_ ([];[.]) | tojson | length", RuntimeOptions.newBuilder().build(), in("100000")))
+				.extracting(Object::toString).containsExactly("200002");
+	}
+
+	@Test
+	public void fromjsonOfADeeplyNestedValueIsNotBoundedByTheJavaStack() {
+		assertThat(run("reduce range(.) as $_ ([];[.]) | tojson | fromjson | tojson | length",
+				RuntimeOptions.newBuilder().build(), in("10000")))
+				.extracting(Object::toString).containsExactly("20002");
 	}
 
 	@Test
