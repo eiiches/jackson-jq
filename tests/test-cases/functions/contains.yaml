@@ -106,3 +106,23 @@
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
+
+- q: '[([1, [2,3]] | contains([[2]])), ([1, [2,3]] | contains([[4]])), ({a:{b:1},c:2} | contains({a:{b:1}})), ({a:{b:1}} | contains({a:{b:2}})), ({a:{b:1}} | contains({a:{missing:1}}))]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [true, false, true, false, false]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false

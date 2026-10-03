@@ -669,9 +669,13 @@
       output:
       - "Containment check too deep"
     jjq:
-    - v: '[1.8.0, )'
-      output: []
-      runtime_error: "Stack overflow during evaluation"
+    - v: '[1.5, 1.8.0)'
+      output:
+      - true
+      incompat_type: UNCLASSIFIED
+    - v: '[1.8.2, )'
+      output:
+      - true
       incompat_type: UNCLASSIFIED
   types:
   - v: '[1.5, )'
