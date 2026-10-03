@@ -2124,6 +2124,11 @@
     - v: '[1.8.2, )'
       output:
       - "Cannot index number with string (\"\")"
+    overrides:
+    - v: '[1.7, 1.8.0)'
+      os: MACOS
+      output:
+      - "Cannot index number with string \"\""
     jjq:
     - v: '[1.6, 1.8.0)'
       output:

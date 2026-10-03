@@ -90,9 +90,9 @@ public class VerifyTestCasesTest {
 		assertThat(result.errorPhase()).as("%s error phase (stderr: %s)", command, result.stderr()).isEqualTo(expectedPhase);
 
 		Comparator<JsonNode> comparator = new TestJsonNodeComparator<>(Jackson2JsonProvider.getInstance(), true, tc.floatTolerance);
-		assertThat(expected.output == null ? List.<JsonNode>of() : expected.values()).as("%s", command)
+		assertThat(result.values()).as("%s", command)
 				.usingElementComparator(comparator)
-				.isEqualTo(result.values());
+				.isEqualTo(expected.output == null ? List.<JsonNode>of() : expected.values());
 	}
 
 	public void test(String tcText) throws Throwable {
