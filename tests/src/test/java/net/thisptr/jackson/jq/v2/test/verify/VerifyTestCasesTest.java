@@ -86,7 +86,7 @@ public class VerifyTestCasesTest {
 			throw new AssertionError(String.format("jq completed instead of timing out after %s: %s", timeout, command));
 		Evaluator.ErrorPhase expectedPhase = expected.compileError != null ? Evaluator.ErrorPhase.COMPILE
 				: expected.runtimeError != null ? Evaluator.ErrorPhase.RUNTIME : null;
-		assertThat(result.errorPhase()).as("%s error phase", command).isEqualTo(expectedPhase);
+		assertThat(result.errorPhase()).as("%s error phase (stderr: %s)", command, result.stderr()).isEqualTo(expectedPhase);
 
 		Comparator<JsonNode> comparator = new TestJsonNodeComparator<>(Jackson2JsonProvider.getInstance(), true, tc.floatTolerance);
 		assertThat(expected.output == null ? List.<JsonNode>of() : expected.values()).as("%s", command)
