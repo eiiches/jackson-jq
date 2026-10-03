@@ -67,8 +67,9 @@ public class VerifyTestCasesTest {
 	}
 
 	private void verify(TestCase tc, JqExecutables.JqExecutable e, @Nullable Path moduleSearchPath) throws Throwable {
-		String command = String.format("%s '%s' <<< '%s'", e.executable(), tc.q, tc.input);
 		TestCase.AbstractExpectation expected = tc.expectations.resolve(e.jqVersion(), true, System.getProperty("os.name", ""), System.getProperty("os.arch", ""));
+		String command = String.format("%s '%s' <<< '%s' (configured jq %s, expectation %s)", e.executable(), tc.q, tc.input,
+				e.jqVersion(), expected.version);
 		if (expected.unstable())
 			return;
 		boolean timedOut = expected.timedOut();

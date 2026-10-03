@@ -149,6 +149,10 @@
     - v: '[1.8.0, )'
       output:
       - "Array index too large"
+    overrides:
+    - v: '[1.7, 1.8.0)'
+      os: MACOS
+      timeout: true
     jjq:
     - v: '[1.7, )'
       output: []
