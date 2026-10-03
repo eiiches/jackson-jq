@@ -386,6 +386,7 @@
     - v: '[1.7, )'
       os: MACOS
       output: []
+      runtime_error: "jq: error (at <stdin>:0): date \"  2023-11-14\" does not match format \"%Y-%m-%d\"\n"
   types:
   - v: '[1.5, )'
     input: 'ANY'
@@ -433,6 +434,7 @@
     - v: '[1.7, )'
       os: MACOS
       output: []
+      runtime_error: "jq: error (at <stdin>:0): date \"318\" does not match format \"%m%d\"\n"
   types:
   - v: '[1.5, )'
     input: 'ANY'
@@ -573,9 +575,22 @@
       output:
       - [1900, 0, 0, 0, 0, 0, 8, 317]
     overrides:
-    - v: '[1.7, )'
+    - v: '[1.7, 1.7.1)'
       os: MACOS
       output: []
+      runtime_error: "Assertion failed: (yday == tm->tm_yday || tm->tm_yday == 367), function set_tm_yday, file builtin.c, line 1418.\n"
+    - v: '[1.7.1, 1.8.0)'
+      os: MACOS
+      output: []
+      runtime_error: "Assertion failed: (yday == tm->tm_yday || tm->tm_yday == 367), function set_tm_yday, file builtin.c, line 1421.\n"
+    - v: '[1.8.0, 1.8.2)'
+      os: MACOS
+      output: []
+      runtime_error: "Assertion failed: (yday == tm->tm_yday || tm->tm_yday == 367), function set_tm_yday, file builtin.c, line 1549.\n"
+    - v: '[1.8.2, )'
+      os: MACOS
+      output: []
+      runtime_error: "Assertion failed: (yday == tm->tm_yday || tm->tm_yday == 367), function set_tm_yday, file builtin.c, line 1621.\n"
   types:
   - v: '[1.5, )'
     input: 'ANY'
