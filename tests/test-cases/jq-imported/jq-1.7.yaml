@@ -2384,12 +2384,8 @@
     input: '{x:INT}'
     output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
-  - v: '[1.6, 1.7)'
+  - v: '[1.6, )'
     cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  - v: '[1.7, )'
-    cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
@@ -2410,12 +2406,8 @@
     input: '{x:INT}'
     output: '1'
   properties:
-  - v: '[1.6, 1.7)'
+  - v: '[1.6, )'
     cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  - v: '[1.7, )'
-    cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 

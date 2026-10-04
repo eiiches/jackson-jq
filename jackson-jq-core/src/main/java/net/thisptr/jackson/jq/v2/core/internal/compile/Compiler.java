@@ -906,6 +906,7 @@ public class Compiler {
 			int tailCallSlot;
 			AnalyzedExpression<N> compiledBody;
 			ClosureSpec closureSpec;
+			Set<String> usedFilterParameters;
 			context.pushFunctionScope();
 			try {
 				for (String arg : fd.args()) {
@@ -918,6 +919,7 @@ public class Compiler {
 						paramSlots.add(context.getFunctionSlot(parameterSignature));
 					}
 				}
+				context.recordFilterParameters(fd.args());
 				// After the parameter slots are assigned, so a tail call back into this def knows where to
 				// write its new arguments -- which, besides jumping, is all such a call does.
 				context.markDefinitionScope(signature, paramSlots);
@@ -926,6 +928,7 @@ public class Compiler {
 				// and the call's frame is gone by the time anything downstream sees a value.
 				context.setTailPosition(true);
 				compiledBody = compileNonNull(env, context, scope, fd.body());
+				usedFilterParameters = context.currentScopeUsedFilterParameters();
 				fnSize = context.getSlotCount();
 				closureSpec = context.getClosureSpec();
 				tailCallSlot = context.currentScopeTailCallSlot();
@@ -963,7 +966,7 @@ public class Compiler {
 					|| !closureSpec.capturedFunctions().isEmpty()
 					|| (closureSpec.capturedVariables().isEmpty() && FreeVariables.dependsOnVariables(compiledBody));
 			context.recordFunctionDependsOnInfo(signature,
-					new FunctionDependsOnInfo(compiledBody.dependsOnInput(), compiledBody.dependsOnExternalState(), resolvedDef.freeLocalSlots(), hasOpaqueVariableReference));
+					new FunctionDependsOnInfo(compiledBody.getCardinality(), compiledBody.dependsOnInput(), compiledBody.dependsOnExternalState(), fd.args(), usedFilterParameters, resolvedDef.freeLocalSlots(), hasOpaqueVariableReference));
 			return resolvedDef;
 		}
 

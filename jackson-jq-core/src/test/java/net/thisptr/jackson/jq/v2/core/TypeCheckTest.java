@@ -309,7 +309,7 @@ class TypeCheckTest {
 	void arrayElementsUseDefinitionsAtTheirLexicalPosition() throws JsonQueryException {
 		Type output = environment.compile("def f: 1; [f, def f: 2; f]", strict(NullType.getInstance()))
 				.getType().outputType();
-		assertThat(output).isEqualTo(ArrayType.of(UnionType.of(NumericType.of(1), NumericType.of(2))));
+		assertThat(output).isEqualTo(ArrayType.of(List.of(NumericType.of(1), NumericType.of(2))));
 		Type captured = environment.compile(
 				"def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g; def f: 4; [f, def f: g; def g: 5; f, g]+[f,g]",
 				strict(NullType.getInstance())).getType().outputType();

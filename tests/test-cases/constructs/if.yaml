@@ -107,7 +107,7 @@
     output: '"outer"'
   properties:
   - v: '[1.5, )'
-    cardinality: UNKNOWN
+    cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
@@ -121,10 +121,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:"inner"|"outer"|0]'
+    output: '["inner"|0,"outer"]'
   - v: '[1.5, )'
     input: 'NULL'
-    output: '[*:"inner"|"outer"]'
+    output: '["inner","outer"]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -147,7 +147,7 @@
     output: '"outer"'
   properties:
   - v: '[1.5, )'
-    cardinality: UNKNOWN
+    cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
@@ -167,7 +167,7 @@
     output: '"outer"'
   properties:
   - v: '[1.5, )'
-    cardinality: UNKNOWN
+    cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
@@ -187,6 +187,6 @@
     output: '"outer"'
   properties:
   - v: '[1.5, )'
-    cardinality: UNKNOWN
+    cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false

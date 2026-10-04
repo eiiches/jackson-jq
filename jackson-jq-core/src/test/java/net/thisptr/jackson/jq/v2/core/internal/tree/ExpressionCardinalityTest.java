@@ -137,7 +137,7 @@ public class ExpressionCardinalityTest {
 		assertThat(new SemicolonOperator<JsonNode>(Collections.emptyList(), new int[0]).getCardinality()).isEqualTo(Cardinality.ZERO);
 		assertThat(new SemicolonOperator<>(Collections.singletonList(new ValueLiteral<>(Jackson2JsonProvider.getInstance().createNumber(1))), new int[0]).getCardinality()).isEqualTo(Cardinality.ONE);
 		assertThat(new SemicolonOperator<>(List.of(new ValueLiteral<>(Jackson2JsonProvider.getInstance().createNumber(1)), new BreakExpression<>("out")), new int[] { Memory.NO_OUTPUT_COUNTER }).getCardinality()).isEqualTo(Cardinality.ZERO);
-		assertThat(cardinalityOf("def f: 1; f")).isEqualTo(Cardinality.UNKNOWN);
+		assertThat(cardinalityOf("def f: 1; f")).isEqualTo(Cardinality.ONE);
 	}
 
 	@Test
@@ -211,8 +211,8 @@ public class ExpressionCardinalityTest {
 		assertThat(cardinalityOf("try 1")).isEqualTo(Cardinality.ONE);
 		assertThat(cardinalityOf("(empty, 1) // empty")).isEqualTo(Cardinality.ONE);
 		assertThat(cardinalityOf("try error(\"x\") catch 2")).isEqualTo(Cardinality.ONE);
-		// A `def` anywhere in the subtree blocks the fold, so this keeps the unfolded answer.
-		assertThat(cardinalityOf("def f: 1; f")).isEqualTo(Cardinality.UNKNOWN);
+		// A `def` blocks the fold, but the completed body still gives the call a precise cardinality.
+		assertThat(cardinalityOf("def f: 1; f")).isEqualTo(Cardinality.ONE);
 	}
 
 	@Test

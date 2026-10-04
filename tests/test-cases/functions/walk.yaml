@@ -18,12 +18,8 @@
     input: '{a:INT,b:INT}'
     output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
-  - v: '[1.6, 1.7)'
+  - v: '[1.6, )'
     cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  - v: '[1.7, )'
-    cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
   comment: 'jq rebuilds the object from keys_unsorted, so walk/1 keeps the input field order instead of sorting it.'
@@ -48,12 +44,8 @@
     input: '{a:[{m:INT,n:INT}],b:{x:INT,y:INT}}'
     output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
-  - v: '[1.6, 1.7)'
+  - v: '[1.6, )'
     cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  - v: '[1.7, )'
-    cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
@@ -77,12 +69,8 @@
     input: '{a:INT,b:INT}'
     output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
-  - v: '[1.6, 1.7)'
+  - v: '[1.6, )'
     cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  - v: '[1.7, )'
-    cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
@@ -96,18 +84,12 @@
       output:
       - [["b", "a"]]
   types:
-  - v: '[1.6, 1.7)'
+  - v: '[1.6, )'
     input: 'ANY'
     output: '[[*:INT]|[*:STRING]]'
-  - v: '[1.7, )'
-    input: 'ANY'
-    output: '[*:[*:INT]|[*:STRING]]'
-  - v: '[1.6, 1.7)'
+  - v: '[1.6, )'
     input: '{a:INT,b:INT}'
     output: '[ANY]'
-  - v: '[1.7, )'
-    input: '{a:INT,b:INT}'
-    output: '[*:ANY]'
   properties:
   - v: '[1.6, )'
     cardinality: ONE
@@ -134,12 +116,8 @@
     input: '[[INT,INT,INT],[INT,INT,INT],[INT,INT,INT]]'
     output: '[*:ANY]'
   properties:
-  - v: '[1.6, 1.7)'
+  - v: '[1.6, )'
     cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  - v: '[1.7, )'
-    cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
@@ -163,12 +141,8 @@
     input: '[INT,STRING,NULL,BOOLEAN]'
     output: '[*:ANY]'
   properties:
-  - v: '[1.6, 1.7)'
+  - v: '[1.6, )'
     cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  - v: '[1.7, )'
-    cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
@@ -188,12 +162,8 @@
     input: '{b:INT}'
     output: 'NEVER'
   properties:
-  - v: '[1.6, 1.7)'
+  - v: '[1.6, )'
     cardinality: ZERO
-    depends_on_input: true
-    depends_on_external_state: false
-  - v: '[1.7, )'
-    cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 

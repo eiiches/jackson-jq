@@ -51,6 +51,8 @@ public class CompileContext {
 		// call needs them because a `$name` parameter takes a value and a filter parameter takes a Function,
 		// and it has to produce the right one without the callee's bindAndApply to sort it out.
 		final Map<FunctionSignature, List<String>> functionParameterNames = new HashMap<>();
+		final Set<FunctionSignature> filterParameters = new HashSet<>();
+		final Set<String> usedFilterParameters = new HashSet<>();
 		// True only for a scope Compiler pushed for a `def` in the source it is lowering. The implicit root
 		// scope and a jq-library body are function boundaries too, but neither becomes a
 		// ResolvedFunctionDefinition, so neither gets the loop that runs tail calls -- and a call must not be
@@ -444,6 +446,18 @@ public class CompileContext {
 	 */
 	public void recordFunctionParameterNames(FunctionSignature signature, List<String> parameterNames) {
 		scopes.get(scopes.size() - 1).functionParameterNames.put(signature, parameterNames);
+	}
+
+	public void recordFilterParameters(List<String> parameterNames) {
+		ScopeFrame top = scopes.get(scopes.size() - 1);
+		for (String name : parameterNames) {
+			if (!name.startsWith("$"))
+				top.filterParameters.add(FunctionSignature.of(name, 0));
+		}
+	}
+
+	public Set<String> currentScopeUsedFilterParameters() {
+		return Set.copyOf(scopes.get(scopes.size() - 1).usedFilterParameters);
 	}
 
 	/**
@@ -842,6 +856,9 @@ public class CompileContext {
 		if (currentKey != null) {
 			Integer slot = current.functionSlots.get(currentKey);
 			if (slot != null) {
+				// A reference may invoke this filter, including from a nested def that is not always called.
+				if (current.filterParameters.contains(currentKey))
+					current.usedFilterParameters.add(currentKey.name());
 				BoundArgumentInfo boundArgumentInfo = current.functionBoundArguments.get(currentKey);
 				List<String> parameterNames = current.functionParameterNames.get(currentKey);
 				if (boundArgumentInfo != null)
@@ -866,6 +883,8 @@ public class CompileContext {
 			if (outerKey != null) {
 				Integer localSlot = outer.functionSlots.get(outerKey);
 				if (localSlot != null) {
+					if (outer.filterParameters.contains(outerKey))
+						outer.usedFilterParameters.add(outerKey.name());
 					BoundArgumentInfo boundArgumentInfo = outer.functionBoundArguments.get(outerKey);
 					List<String> parameterNames = outer.functionParameterNames.get(outerKey);
 					if (!crossedFunctionBoundary) {
