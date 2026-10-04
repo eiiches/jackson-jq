@@ -414,10 +414,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: 'NULL'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -607,10 +607,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '[STRING,STRING,STRING,STRING,STRING]'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -687,10 +687,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '[STRING,STRING,STRING,STRING,STRING]'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE

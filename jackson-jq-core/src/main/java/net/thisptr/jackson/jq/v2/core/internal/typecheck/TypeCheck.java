@@ -178,6 +178,7 @@ public final class TypeCheck {
 	private final @Nullable DiagnosticListener listener;
 	private final Map<AnalyzedExpression<?>, SourceLocation> locations;
 	private final Map<Integer, Type> variables = new HashMap<>();
+	private final Map<Integer, Integer> frameFunctions = new HashMap<>();
 	private final Map<Integer, List<TypeScheme<FunctionType>>> functions = new HashMap<>();
 	private final Map<Integer, ResolvedFunctionDefinition<?>> definitions = new HashMap<>();
 	// A call site's result, keyed by everything the body's analysis depends on, so a definition reached
@@ -213,6 +214,7 @@ public final class TypeCheck {
 	private final Map<AnalyzedExpression<?>, List<Frame>> argumentTraces = new IdentityHashMap<>();
 	private int errors;
 	private int freshVariables;
+	private int freshDefinitions;
 	// How many nested condition trials are in progress. A trial runs an expression the query already had
 	// analysed, against one alternative of its input, purely to see what it answers; the diagnostics it
 	// raises were raised once already, by the pass over the whole input type.
@@ -732,10 +734,11 @@ public final class TypeCheck {
 	private Type capturedCall(AnalyzedExpression<?> call, String name, int closureSlot,
 			List<? extends AnalyzedExpression<?>> args, Type input) {
 		Closures enclosing = closures.peek();
-		Integer slot = enclosing == null ? null : enclosing.functions().get(closureSlot);
-		if (slot == null)
+		FunctionTarget target = enclosing == null ? null : enclosing.functions().get(closureSlot);
+		if (target == null)
 			return opaqueCall(args, input);
-		return localCall(call, name, slot, args, input);
+		return target.parameter() ? localCall(call, name, target.id(), args, input)
+				: callDefinition(call, name, target.id(), args, input);
 	}
 
 	/**
@@ -752,36 +755,41 @@ public final class TypeCheck {
 			if (type != null)
 				capturedVariables.put(ref.targetSlot, type);
 		}
-		Map<Integer, Integer> capturedFunctions = new HashMap<>();
+		Map<Integer, FunctionTarget> capturedFunctions = new HashMap<>();
 		Map<Integer, Argument> capturedArguments = new HashMap<>();
 		for (ClosureSpec.CapturedFunctionRef ref : definition.closureSpec().capturedFunctions()) {
-			Integer slot;
+			FunctionTarget target;
 			if (ref.isLocalInParent) {
-				slot = ref.parentSlot;
+				Integer id = frameFunctions.get(ref.parentSlot);
+				target = id == null ? new FunctionTarget(ref.parentSlot, true) : new FunctionTarget(id, false);
 			} else {
-				slot = definer == null ? null : definer.functions().get(ref.parentSlot);
-				if (slot == null)
+				target = definer == null ? null : definer.functions().get(ref.parentSlot);
+				if (target == null)
 					continue;
 			}
-			capturedFunctions.put(ref.targetSlot, slot);
-			Argument argument = arguments.get(slot);
+			capturedFunctions.put(ref.targetSlot, target);
+			if (!target.parameter())
+				continue;
+			Argument argument = arguments.get(target.id());
 			if (argument != null)
-				capturedArguments.put(slot, argument);
-			else if (definer != null && definer.capturedArguments().containsKey(slot))
-				capturedArguments.put(slot, definer.capturedArguments().get(slot));
+				capturedArguments.put(target.id(), argument);
+			else if (definer != null && definer.capturedArguments().containsKey(target.id()))
+				capturedArguments.put(target.id(), definer.capturedArguments().get(target.id()));
 		}
 		return new Closures(capturedVariables, capturedFunctions, capturedArguments);
 	}
 
 	private Type define(ResolvedFunctionDefinition<?> definition) {
-		definitions.put(definition.slot(), definition);
-		definitionClosures.put(definition.slot(), closuresOf(definition));
+		int id = ++freshDefinitions;
+		frameFunctions.put(definition.slot(), id);
+		definitions.put(id, definition);
+		definitionClosures.put(id, closuresOf(definition));
 		// A definition that states its own signature is taken at its word: there is nothing left to
 		// infer, and inferring anyway would only produce findings against the unconstrained input the
 		// generic pass invents -- findings reportUncalledDefinitions then releases, since a call to such
 		// a definition never specializes its body and so never supersedes them.
 		if (!definition.typeSchemes().isEmpty()) {
-			functions.put(definition.slot(), definition.typeSchemes());
+			functions.put(id, definition.typeSchemes());
 			return NeverType.getInstance();
 		}
 		TypeVariable input = fresh("Input");
@@ -799,17 +807,21 @@ public final class TypeCheck {
 				previous.put(slot, variables.get(slot));
 			variables.put(slot, value);
 		}
-		functions.put(definition.slot(), dynamicFunction(definition.paramNames().size()));
+		functions.put(id, dynamicFunction(definition.paramNames().size()));
 		Type output;
 		boolean previousInferenceContext = inferenceContext;
+		Map<Integer, Integer> previousFunctions = new HashMap<>(frameFunctions);
+		frameFunctions.clear();
 		inferenceContext = true;
-		definitionsBeingInferred.push(definition.slot());
-		closures.push(definitionClosures.get(definition.slot()));
+		definitionsBeingInferred.push(id);
+		closures.push(definitionClosures.get(id));
 		try {
 			output = infer(definition.resolvedBody(), input);
 		} finally {
 			closures.pop();
 			definitionsBeingInferred.pop();
+			frameFunctions.clear();
+			frameFunctions.putAll(previousFunctions);
 			inferenceContext = previousInferenceContext;
 			for (int slot : definition.paramSlots()) {
 				if (previous.containsKey(slot))
@@ -818,7 +830,7 @@ public final class TypeCheck {
 					variables.remove(slot);
 			}
 		}
-		functions.put(definition.slot(),
+		functions.put(id,
 				List.of(TypeScheme.of(quantified, FunctionType.of(input, generalize(output, quantified.keySet()),
 						parameters.toArray(FilterType[]::new)))));
 		return NeverType.getInstance();
@@ -838,9 +850,17 @@ public final class TypeCheck {
 		Argument argument = arguments.get(slot);
 		if (argument != null && args.isEmpty())
 			return applyArgument(argument, input);
-		ResolvedFunctionDefinition<?> definition = definitions.get(slot);
+		Integer id = frameFunctions.get(slot);
+		if (id == null)
+			return applySchemes(call, name, args.size(), args, input, dynamicFunction(args.size()));
+		return callDefinition(call, name, id, args, input);
+	}
+
+	private Type callDefinition(AnalyzedExpression<?> call, String name, int id,
+			List<? extends AnalyzedExpression<?>> args, Type input) {
+		ResolvedFunctionDefinition<?> definition = definitions.get(id);
 		if (definition == null || definition.paramSlots().size() != args.size())
-			return applySchemes(call, name, args.size(), args, input, functions.getOrDefault(slot, dynamicFunction(args.size())));
+			return applySchemes(call, name, args.size(), args, input, functions.getOrDefault(id, dynamicFunction(args.size())));
 		// A definition that states what it accepts is checked against that statement rather than against
 		// the body it is about to run, so it rejects an input its body would only have failed on by
 		// accident -- and so a caller reads one signature instead of one per call site.
@@ -848,7 +868,7 @@ public final class TypeCheck {
 			return applySchemes(call, name, args.size(), args, input, definition.typeSchemes());
 		// A parameter is a filter, not a value: the body decides what input to run it on, so what travels
 		// here is the argument itself together with the bindings it was written under.
-		specializedDefinitions.add(slot);
+		specializedDefinitions.add(id);
 		Map<Integer, Argument> filters = new HashMap<>();
 		Map<Integer, Type> values = new HashMap<>();
 		for (int i = 0; i < args.size(); i++) {
@@ -861,9 +881,9 @@ public final class TypeCheck {
 		}
 		return inFrame(name, args.size(), call, /* opaqueBody */ false,
 				() -> specialize(definition.resolvedBody(), input, filters, values,
-						definitionClosures.getOrDefault(slot, Closures.EMPTY),
+						definitionClosures.getOrDefault(id, Closures.EMPTY),
 						() -> applySchemes(definition.resolvedBody(), name, args.size(), List.of(), input,
-								functions.getOrDefault(slot, dynamicFunction(0)))));
+								functions.getOrDefault(id, dynamicFunction(0)))));
 	}
 
 	/**
@@ -915,7 +935,7 @@ public final class TypeCheck {
 		// that key would split the memo by where a body was reached from, analysing it again -- and saying
 		// the same thing again -- for every call site that differs in nothing else.
 		argumentTraces.putIfAbsent(expression, List.copyOf(frames));
-		return new Argument(expression, Map.copyOf(variables), Map.copyOf(arguments));
+		return new Argument(expression, Map.copyOf(variables), Map.copyOf(arguments), Map.copyOf(frameFunctions));
 	}
 
 	/**
@@ -971,11 +991,13 @@ public final class TypeCheck {
 		// sound: the key says nothing about the caller's bindings, so nothing may depend on them.
 		Map<Integer, Argument> previousArguments = new HashMap<>(arguments);
 		Map<Integer, Type> previousVariables = new HashMap<>(variables);
+		Map<Integer, Integer> previousFunctions = new HashMap<>(frameFunctions);
 		arguments.clear();
 		arguments.putAll(bodyClosures.capturedArguments());
 		arguments.putAll(filters);
 		variables.clear();
 		variables.putAll(values);
+		frameFunctions.clear();
 		closures.push(bodyClosures);
 		try {
 			return infer(body, input);
@@ -985,6 +1007,8 @@ public final class TypeCheck {
 			arguments.putAll(previousArguments);
 			variables.clear();
 			variables.putAll(previousVariables);
+			frameFunctions.clear();
+			frameFunctions.putAll(previousFunctions);
 		}
 	}
 
@@ -995,11 +1019,14 @@ public final class TypeCheck {
 	private Type applyArgument(Argument argument, Type input) {
 		Map<Integer, Type> callerVariables = new HashMap<>(variables);
 		Map<Integer, Argument> callerArguments = new HashMap<>(arguments);
+		Map<Integer, Integer> callerFunctions = new HashMap<>(frameFunctions);
 		List<Frame> callerFrames = List.copyOf(frames);
 		variables.clear();
 		variables.putAll(argument.variables());
 		arguments.clear();
 		arguments.putAll(argument.arguments());
+		frameFunctions.clear();
+		frameFunctions.putAll(argument.functions());
 		installFrames(argumentTraces.getOrDefault(argument.expression(), List.of()));
 		try {
 			return infer(argument.expression(), input);
@@ -1009,6 +1036,8 @@ public final class TypeCheck {
 			variables.putAll(callerVariables);
 			arguments.clear();
 			arguments.putAll(callerArguments);
+			frameFunctions.clear();
+			frameFunctions.putAll(callerFunctions);
 		}
 	}
 
@@ -1420,6 +1449,7 @@ public final class TypeCheck {
 	}
 
 	private Type mutate(Type input, AnalyzedExpression<?> selector, Type replacement) {
+		assignments.reset();
 		return assignments.apply(input, selector, replacement);
 	}
 
@@ -1754,9 +1784,12 @@ public final class TypeCheck {
 	 * it. {@code recurse} is the standard shape: {@code def recurse(f): def r: ., (f | r); r;}, where
 	 * {@code r} reaches {@code f} only through its closure.
 	 */
-	private record Closures(Map<Integer, Type> variables, Map<Integer, Integer> functions,
+	private record Closures(Map<Integer, Type> variables, Map<Integer, FunctionTarget> functions,
 							Map<Integer, Argument> capturedArguments) {
 		static final Closures EMPTY = new Closures(Map.of(), Map.of(), Map.of());
+	}
+
+	private record FunctionTarget(int id, boolean parameter) {
 	}
 
 	/**
@@ -1764,7 +1797,7 @@ public final class TypeCheck {
 	 * {@code .a} inside map's body, but the user wrote it, so it is inferred under the caller's bindings.
 	 */
 	private record Argument(AnalyzedExpression<?> expression, Map<Integer, Type> variables,
-							Map<Integer, Argument> arguments) {
+							Map<Integer, Argument> arguments, Map<Integer, Integer> functions) {
 	}
 
 	/**

@@ -2,6 +2,7 @@ package net.thisptr.jackson.jq.v2.core.internal.builtins;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
@@ -26,15 +27,21 @@ import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
 import net.thisptr.jackson.jq.v2.spi.type.NullType;
 import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
 import net.thisptr.jackson.jq.v2.spi.type.NumericType;
+import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
 import net.thisptr.jackson.jq.v2.spi.type.StringType;
 import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
+import net.thisptr.jackson.jq.v2.spi.type.TypeVariable;
+import net.thisptr.jackson.jq.v2.spi.type.UnionType;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 @FunctionRegistration(name = "indices", nargs = 1)
 public class IndicesFunction implements Function {
+	private static final TypeVariable T = TypeVariable.of("T");
 	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
 			TypeScheme.of(FunctionType.of(StringType.getInstance(), ArrayType.of(NumericType.of(NumberKind.INT)), FilterType.of(StringType.getInstance(), StringType.getInstance()))),
 			TypeScheme.of(FunctionType.of(ArrayType.of(AnyType.getInstance()), ArrayType.of(NumericType.of(NumberKind.INT)), FilterType.of(ArrayType.of(AnyType.getInstance()), AnyType.getInstance()))),
+			TypeScheme.of(Map.of(T, AnyType.getInstance()), FunctionType.of(ObjectType.of(T),
+					UnionType.of(T, NullType.getInstance()), FilterType.of(ObjectType.of(T), StringType.getInstance()))),
 			TypeScheme.of(FunctionType.of(NullType.getInstance(), NullType.getInstance(), FilterType.of(NullType.getInstance(), AnyType.getInstance()))));
 
 	@Override

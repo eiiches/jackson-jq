@@ -342,10 +342,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:[*:NUMBER|STRING]]'
+    output: '[*:[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
   - v: '[1.5, )'
     input: '[INT,[[],{a:INT}]]'
-    output: '[*:[*:NUMBER|STRING]]'
+    output: '[*:[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -921,10 +921,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: 'NULL|{x:ANY,y:[ANY]}'
+    output: 'NULL|{x:ANY,y:[*:ANY]}'
   - v: '[1.5, )'
     input: '[{x:STRING,y:INT},{x:STRING,y:INT},{x:STRING,y:INT}]'
-    output: 'NULL|{x:STRING,y:[INT]}'
+    output: 'NULL|{x:STRING,y:[*:INT]}'
   properties:
   - v: '[1.5, )'
     cardinality: ONE

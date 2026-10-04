@@ -142,7 +142,7 @@
   types:
   - v: '[1.5, 1.8.0)'
     input: 'ANY'
-    output: '[*:STRING]'
+    output: '[*:BINARY|BOOLEAN|NULL|NUMBER|STRING|[*:ANY]|{*:ANY}]'
   - v: '[1.8.0, )'
     input: 'ANY'
     output: '[*:ANY]'
@@ -171,7 +171,7 @@
   types:
   - v: '[1.5, 1.8.0)'
     input: 'ANY'
-    output: '[*:STRING]'
+    output: '[*:BINARY|BOOLEAN|NULL|NUMBER|STRING|[*:ANY]|{*:ANY}]'
   - v: '[1.8.0, )'
     input: 'ANY'
     output: '[*:ANY]'

@@ -75,7 +75,7 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: 'NULL|[*:INT]'
+    output: 'ANY'
   - v: '[1.5, )'
     input: 'STRING'
     output: '[*:INT]'
@@ -95,10 +95,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: 'NULL|[*:INT]'
+    output: 'ANY'
   - v: '[1.5, )'
     input: '{a:INT}'
-    output: 'ANY'
+    output: 'INT|NULL'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -115,10 +115,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: 'NULL|[*:INT]'
+    output: 'ANY'
   - v: '[1.5, )'
     input: '{a:INT}'
-    output: 'ANY'
+    output: 'INT|NULL'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -135,10 +135,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: 'NULL|[*:INT]'
+    output: 'ANY'
   - v: '[1.5, )'
     input: '{foo:STRING,nameZm9v:STRING}'
-    output: 'ANY'
+    output: 'NULL|STRING'
   properties:
   - v: '[1.5, )'
     cardinality: ONE

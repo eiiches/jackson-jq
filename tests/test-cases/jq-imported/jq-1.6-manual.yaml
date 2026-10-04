@@ -250,7 +250,7 @@
     output: 'ANY'
   - v: '[1.6, 1.7)'
     input: '[{_a:{__b:INT}}]'
-    output: '[*:NULL|{*:INT}]'
+    output: '[*:NULL|{*:ANY}]'
   - v: '[1.7, )'
     input: '[{_a:{__b:INT}}]'
     output: '[*:ANY]'

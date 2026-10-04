@@ -8,10 +8,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:{key:STRING,value:ANY}]'
+    output: '[*:{key:INT,value:ANY}]|[*:{key:STRING,value:ANY}]'
   - v: '[1.5, )'
     input: '[INT,INT]'
-    output: 'ANY'
+    output: '[*:{key:INT,value:INT}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE

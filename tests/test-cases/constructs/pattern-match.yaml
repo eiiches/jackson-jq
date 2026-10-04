@@ -358,10 +358,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[[*:NUMBER|STRING]]'
+    output: '[[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
   - v: '[1.5, )'
     input: '{a:INT}'
-    output: '[[*:NUMBER|STRING]]'
+    output: '[[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -378,10 +378,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[[*:NUMBER|STRING]]'
+    output: '[[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
   - v: '[1.5, )'
     input: '{a:INT,k:STRING}'
-    output: '[[*:NUMBER|STRING]]'
+    output: '[[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE

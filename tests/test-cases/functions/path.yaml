@@ -7,10 +7,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: 'NULL'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -27,10 +27,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: 'NULL'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -48,10 +48,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:{b:[INT,INT]}}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: UNKNOWN
@@ -674,10 +674,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: 'INT'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -698,10 +698,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: 'INT'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -718,10 +718,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: 'INT'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -738,10 +738,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: 'BOOLEAN'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -758,10 +758,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: 'BOOLEAN'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -778,10 +778,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: 'BOOLEAN'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -798,10 +798,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: 'INT'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -818,10 +818,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: 'STRING'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -839,10 +839,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '[]'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -859,10 +859,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -879,10 +879,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: 'INT'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -900,10 +900,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:NULL}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -920,10 +920,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:BOOLEAN}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -940,10 +940,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:BOOLEAN}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -960,10 +960,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:STRING}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -983,10 +983,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:INT}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -1006,10 +1006,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:INT}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -1027,10 +1027,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:NULL}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -1047,10 +1047,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:NULL}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -1067,10 +1067,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:NULL}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -1087,10 +1087,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:NULL}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, 1.7)'
     cardinality: UNKNOWN
@@ -1119,10 +1119,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:NULL}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: UNKNOWN
@@ -1148,10 +1148,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:NULL}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: UNKNOWN
@@ -1169,10 +1169,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:NULL}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -1189,10 +1189,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:NULL}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -1209,10 +1209,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:NULL}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -1230,10 +1230,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:NULL}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -1250,10 +1250,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:NULL}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -1270,10 +1270,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:[*:NUMBER|STRING]]'
+    output: '[*:[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
   - v: '[1.5, )'
     input: '{a:NULL}'
-    output: '[*:[*:NUMBER|STRING]]'
+    output: '[*:[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -1299,10 +1299,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   - v: '[1.5, )'
     input: '{a:NULL}'
-    output: '[*:NUMBER|STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE

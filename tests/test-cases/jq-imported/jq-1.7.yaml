@@ -364,10 +364,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[*:4|5]'
+    output: '[*:1|2|3|4|5]'
   - v: '[1.5, )'
     input: 'NULL'
-    output: '[*:4|5]'
+    output: '[*:1|2|3|4|5]'
   properties:
   - v: '[1.5, )'
     cardinality: ONE
@@ -1097,7 +1097,7 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '[NULL|NUMBER,NULL|NUMBER,NULL|[*:INT]]'
+    output: '[NULL|NUMBER,NULL|NUMBER,ANY]'
   - v: '[1.5, )'
     input: 'STRING'
     output: '[NULL|NUMBER,NULL|NUMBER,[*:INT]]'

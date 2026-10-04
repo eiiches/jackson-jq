@@ -1,6 +1,7 @@
 package net.thisptr.jackson.jq.v2.core.internal.typecheck;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,10 +52,14 @@ final class AssignmentEffects {
 	private final TypeCheck check;
 	// One inference per selector node per assignment. Without it a chain re-infers each prefix on the way
 	// down and again on the way up, which reports the same diagnostic once per level.
-	private final Map<AnalyzedExpression<?>, Type> selected = new IdentityHashMap<>();
+	private final Map<AnalyzedExpression<?>, Map<Type, Type>> selected = new IdentityHashMap<>();
 
 	AssignmentEffects(TypeCheck check) {
 		this.check = check;
+	}
+
+	void reset() {
+		selected.clear();
 	}
 
 	/**
@@ -161,11 +166,12 @@ final class AssignmentEffects {
 	}
 
 	private Type select(AnalyzedExpression<?> expression, Type input) {
-		Type cached = selected.get(expression);
+		Map<Type, Type> byInput = selected.computeIfAbsent(expression, ignored -> new HashMap<>());
+		Type cached = byInput.get(input);
 		if (cached != null)
 			return cached;
 		Type value = check.infer(expression, input);
-		selected.put(expression, value);
+		byInput.put(input, value);
 		return value;
 	}
 

@@ -1087,7 +1087,7 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: 'NULL|[*:INT]'
+    output: 'ANY'
   - v: '[1.5, )'
     input: 'STRING'
     output: '[*:INT]'
@@ -1115,7 +1115,7 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: 'NULL|[*:INT]'
+    output: 'ANY'
   - v: '[1.5, )'
     input: 'STRING'
     output: '[*:INT]'
@@ -2195,14 +2195,11 @@
   types:
   - v: '[1.5, 1.8.0)'
     input: 'ANY'
-    output: '["ko",ANY]|["ok",STRING]'
+    output: '["ko",ANY]|["ok",BINARY|BOOLEAN|NULL|NUMBER|STRING|[*:ANY]|{*:ANY}]'
   - v: '[1.8.0, )'
     input: 'ANY'
     output: '["ko",ANY]|["ok",ANY]'
-  - v: '[1.5, 1.8.0)'
-    input: '[[STRING,INT],[INT,STRING],[STRING,STRING],[INT,INT]]'
-    output: '["ko",ANY]|[*:"ok"]'
-  - v: '[1.8.0, )'
+  - v: '[1.5, )'
     input: '[[STRING,INT],[INT,STRING],[STRING,STRING],[INT,INT]]'
     output: '["ko",ANY]|["ok",INT|STRING]'
   properties:
@@ -2230,14 +2227,11 @@
   types:
   - v: '[1.5, 1.8.0)'
     input: 'ANY'
-    output: '["ko",ANY]|["ok",STRING]'
+    output: '["ko",ANY]|["ok",BINARY|BOOLEAN|NULL|NUMBER|STRING|[*:ANY]|{*:ANY}]'
   - v: '[1.8.0, )'
     input: 'ANY'
     output: '["ko",ANY]|["ok",ANY]'
-  - v: '[1.5, 1.8.0)'
-    input: '[[STRING,INT],[INT,STRING],[STRING,STRING],[INT,INT]]'
-    output: '["ko",ANY]|[*:"ok"]'
-  - v: '[1.8.0, )'
+  - v: '[1.5, )'
     input: '[[STRING,INT],[INT,STRING],[STRING,STRING],[INT,INT]]'
     output: '["ko",ANY]|["ok",INT|STRING]'
   properties:
@@ -2256,10 +2250,10 @@
   types:
   - v: '[1.5, )'
     input: 'ANY'
-    output: '["KO",ANY]|[*:"OK"]'
+    output: '["KO",ANY]|["OK",ANY]'
   - v: '[1.5, )'
     input: '[]'
-    output: '["KO",ANY]|[*:"OK"]'
+    output: '["KO",ANY]|["OK",ANY]'
   properties:
   - v: '[1.5, )'
     cardinality: UNKNOWN

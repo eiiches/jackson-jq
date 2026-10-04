@@ -87,10 +87,10 @@ class TypeCheckTest {
 				.setTypeCheckMode(TypeCheckMode.WARN)
 				.setDiagnosticListener(diagnostics::add)
 				.build();
-		environment.compile("[1,2,3] | ltrimstr(\"1\")", options);
+		environment.compile("[1,2,3] | startswith(\"1\")", options);
 		assertThat(diagnostics).singleElement().satisfies(diagnostic ->
-				assertThat(diagnostic.message()).isEqualTo("No overload of ltrimstr/1 accepts input [1,2,3]"
-						+ "\nAccepted types:\n  Input: STRING -> ltrimstr(STRING -> STRING) -> Output: STRING"));
+				assertThat(diagnostic.message()).isEqualTo("No overload of startswith/1 accepts input [1,2,3]"
+						+ "\nAccepted types:\n  Input: STRING -> startswith(STRING -> STRING) -> Output: BOOLEAN"));
 	}
 
 	@Test
@@ -100,12 +100,12 @@ class TypeCheckTest {
 				.setTypeCheckMode(TypeCheckMode.WARN)
 				.setDiagnosticListener(diagnostics::add)
 				.build();
-		environment.compile("\"test\" | ltrimstr([1])", options);
+		environment.compile("\"test\" | startswith([1])", options);
 		assertThat(diagnostics).singleElement().satisfies(diagnostic -> {
-			assertThat(diagnostic.message()).isEqualTo("Argument 1 of ltrimstr/1 has type [1]; expected STRING"
-					+ "\nAccepted types:\n  Input: STRING -> ltrimstr(STRING -> STRING) -> Output: STRING");
+			assertThat(diagnostic.message()).isEqualTo("Argument 1 of startswith/1 has type [1]; expected STRING"
+					+ "\nAccepted types:\n  Input: STRING -> startswith(STRING -> STRING) -> Output: BOOLEAN");
 			assertThat(diagnostic.location()).isNotNull();
-			assertThat(Objects.requireNonNull(diagnostic.location()).beginColumn()).isEqualTo(19);
+			assertThat(Objects.requireNonNull(diagnostic.location()).beginColumn()).isEqualTo(21);
 		});
 	}
 
@@ -116,7 +116,7 @@ class TypeCheckTest {
 				.setTypeCheckMode(TypeCheckMode.STRICT)
 				.setDiagnosticListener(diagnostics::add)
 				.build();
-		assertThatThrownBy(() -> environment.compile("\"test\" | ltrimstr([1])", options))
+		assertThatThrownBy(() -> environment.compile("\"test\" | startswith([1])", options))
 				.isInstanceOf(JsonQueryException.class).hasMessageContaining("Type checking failed");
 		assertThat(diagnostics).singleElement().extracting(Diagnostic::severity).isEqualTo(Diagnostic.Severity.ERROR);
 	}
@@ -299,6 +299,25 @@ class TypeCheckTest {
 	}
 
 	@Test
+	void repeatedAssignmentsRecomputeSelectedTypesForEachAccumulator() throws JsonQueryException {
+		Type input = ArrayType.of(List.of(NumericType.of(NumberKind.INT), NumericType.of(NumberKind.INT)));
+		Type output = environment.compile("reduce .[] as $x (null; .items += [$x])", strict(input)).getType().outputType();
+		assertThat(output).isEqualTo(Type.valueOf("NULL|{items:[*:INT]}"));
+	}
+
+	@Test
+	void arrayElementsUseDefinitionsAtTheirLexicalPosition() throws JsonQueryException {
+		Type output = environment.compile("def f: 1; [f, def f: 2; f]", strict(NullType.getInstance()))
+				.getType().outputType();
+		assertThat(output).isEqualTo(ArrayType.of(UnionType.of(NumericType.of(1), NumericType.of(2))));
+		Type captured = environment.compile(
+				"def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g; def f: 4; [f, def f: g; def g: 5; f, g]+[f,g]",
+				strict(NullType.getInstance())).getType().outputType();
+		assertThat(captured).isEqualTo(ArrayType.of(UnionType.of(
+				NumericType.of(1), NumericType.of(2), NumericType.of(3), NumericType.of(4), NumericType.of(5))));
+	}
+
+	@Test
 	void preservesDynamicObjectValueAndKnownBracketTypes() throws JsonQueryException {
 		assertThat(environment.compile("{(.): 1}", strict(StringType.getInstance())).getType().outputType())
 				.isEqualTo(ObjectType.of(Map.of(), NumericType.of(1)));
@@ -453,7 +472,7 @@ class TypeCheckTest {
 	void aCallTheQueryWroteItselfCarriesNoTrace() throws JsonQueryException {
 		// The message already names the function, and the location is the call. There is nothing to trace.
 		ArrayList<Diagnostic> diagnostics = new ArrayList<>();
-		environment.compile("\"test\" | ltrimstr([1])", warn(diagnostics));
+		environment.compile("\"test\" | startswith([1])", warn(diagnostics));
 		assertThat(diagnostics).singleElement().satisfies(diagnostic ->
 				assertThat(diagnostic.message()).doesNotContain("\n  in "));
 	}
