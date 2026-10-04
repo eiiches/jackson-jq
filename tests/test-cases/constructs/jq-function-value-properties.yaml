@@ -1,0 +1,139 @@
+- q: 'def f($x): 7; f(empty)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output: []
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '7'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '7'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'def f($x): 7; f(1)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 7
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '7'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '7'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'def f($x): 7; f(1, 2)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 7
+      - 7
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '7'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '7'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'def f($x): 7; f(.)'
+  input: 42
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 7
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '7'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '7'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'def f($x): 7; f(now)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 7
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '7'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '7'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: true
+
+- q: 'def f(g): 7; f(1, 2)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 7
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '7'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '7'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'def f(g): 7; f(now)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 7
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '7'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '7'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: true
