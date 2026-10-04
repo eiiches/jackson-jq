@@ -1,104 +1,211 @@
 - q: 'map_values(select(.))'
-  in: {"key1": true, "key2": false}
-  out:
-  - null
+  input: {"key1": true, "key2": false}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - null
+    - v: '[1.6, )'
+      output:
+      - {"key1": true}
   types:
-  - input: 'ANY'
+  - v: '[1.5, 1.7)'
+    input: 'ANY'
     output: 'ANY'
-  - input: '{key1:BOOLEAN,key2:BOOLEAN}'
+  - v: '[1.7, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, 1.7)'
+    input: '{key1:BOOLEAN,key2:BOOLEAN}'
     output: 'ANY'
+  - v: '[1.7, )'
+    input: '{key1:BOOLEAN,key2:BOOLEAN}'
+    output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.6)'
 
 - q: 'map_values(select(.))'
-  in: {"key1": true, "key2": false}
-  out:
-  - {"key1": true}
+  input: {"key1": true, "key2": false}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - null
+    - v: '[1.6, )'
+      output:
+      - {"key1": true}
   types:
-  - input: 'ANY'
+  - v: '[1.5, 1.7)'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.7, )'
+    input: 'ANY'
     output: 'NULL|[*:ANY]|{*:ANY}'
-  - input: '{key1:BOOLEAN,key2:BOOLEAN}'
+  - v: '[1.5, 1.7)'
+    input: '{key1:BOOLEAN,key2:BOOLEAN}'
+    output: 'ANY'
+  - v: '[1.7, )'
+    input: '{key1:BOOLEAN,key2:BOOLEAN}'
     output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.6, )'
 
 - q: 'map_values(if . == 2 then empty else . end)'
-  in: [1, 2, 3]
-  out:
-  - [null, null, null]
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - [null, null, null]
+    - v: '[1.6, 1.7)'
+      output:
+      - [1, 3, null]
+    - v: '[1.7, )'
+      output:
+      - [1, 3]
   types:
-  - input: 'ANY'
+  - v: '[1.5, 1.7)'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT]'
-    output: 'ANY'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.5, 1.6)'
-
-- q: 'map_values(if . == 2 then empty else . end)'
-  in: [1, 2, 3]
-  out:
-  - [1, 3, null]
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: '[INT,INT,INT]'
-    output: 'ANY'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.6, 1.7)'
-
-- q: 'map_values(if . == 2 then empty else . end)'
-  in: [1, 2, 3]
-  out:
-  - [1, 3]
-  types:
-  - input: 'ANY'
+  - v: '[1.7, )'
+    input: 'ANY'
     output: 'NULL|[*:ANY]|{*:ANY}'
-  - input: '[INT,INT,INT]'
+  - v: '[1.5, 1.7)'
+    input: '[INT,INT,INT]'
+    output: 'ANY'
+  - v: '[1.7, )'
+    input: '[INT,INT,INT]'
     output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
+
+- q: 'map_values(if . == 2 then empty else . end)'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - [null, null, null]
+    - v: '[1.6, 1.7)'
+      output:
+      - [1, 3, null]
+    - v: '[1.7, )'
+      output:
+      - [1, 3]
+  types:
+  - v: '[1.5, 1.7)'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.7, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, 1.7)'
+    input: '[INT,INT,INT]'
+    output: 'ANY'
+  - v: '[1.7, )'
+    input: '[INT,INT,INT]'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'map_values(if . == 2 then empty else . end)'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - [null, null, null]
+    - v: '[1.6, 1.7)'
+      output:
+      - [1, 3, null]
+    - v: '[1.7, )'
+      output:
+      - [1, 3]
+  types:
+  - v: '[1.5, 1.7)'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.7, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, 1.7)'
+    input: '[INT,INT,INT]'
+    output: 'ANY'
+  - v: '[1.7, )'
+    input: '[INT,INT,INT]'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'map_values((., . + 10))'
-  in: {"a": 1, "b": 2}
-  out:
-  - {"a": 11, "b": 12}
+  input: {"a": 1, "b": 2}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - {"a": 11, "b": 12}
+    - v: '[1.6, )'
+      output:
+      - {"a": 1, "b": 2}
   types:
-  - input: 'ANY'
+  - v: '[1.5, 1.7)'
+    input: 'ANY'
     output: 'ANY'
-  - input: '{a:INT,b:INT}'
+  - v: '[1.7, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, 1.7)'
+    input: '{a:INT,b:INT}'
     output: 'ANY'
+  - v: '[1.7, )'
+    input: '{a:INT,b:INT}'
+    output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.6)'
 
 - q: 'map_values((., . + 10))'
-  in: {"a": 1, "b": 2}
-  out:
-  - {"a": 1, "b": 2}
+  input: {"a": 1, "b": 2}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - {"a": 11, "b": 12}
+    - v: '[1.6, )'
+      output:
+      - {"a": 1, "b": 2}
   types:
-  - input: 'ANY'
+  - v: '[1.5, 1.7)'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.7, )'
+    input: 'ANY'
     output: 'NULL|[*:ANY]|{*:ANY}'
-  - input: '{a:INT,b:INT}'
+  - v: '[1.5, 1.7)'
+    input: '{a:INT,b:INT}'
+    output: 'ANY'
+  - v: '[1.7, )'
+    input: '{a:INT,b:INT}'
     output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.6, )'

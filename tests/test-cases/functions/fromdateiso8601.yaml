@@ -1,27 +1,39 @@
 - q: 'fromdateiso8601'
-  in: "2023-09-30T00:00:00Z"
-  out:
-  - 1696032000
+  input: "2023-09-30T00:00:00Z"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1696032000
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NUMBER'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'NUMBER'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'try fromdateiso8601 catch .'
-  in: "2023-09-30T00:00:00.000Z"
-  out:
-  - "date \"2023-09-30T00:00:00.000Z\" does not match format \"%Y-%m-%dT%H:%M:%SZ\""
+  input: "2023-09-30T00:00:00.000Z"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "date \"2023-09-30T00:00:00.000Z\" does not match format \"%Y-%m-%dT%H:%M:%SZ\""
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false

@@ -8,224 +8,265 @@
 # The last two carry a -0 on through further arithmetic, where the integer fast paths of minus and
 # multiply would otherwise reduce it to a long and lose the sign.
 - q: '[0*-1, -1*0, 0.0*-1, 0/-1, -1e-300*1e-300, (1-1|-.), ([0,0]|add|-.), (0*-1)-0, (0*-1)*1] | map(tojson)'
-  types:
-  - input: 'ANY'
-    output: '[*:STRING]'
-  - input: 'NULL'
-    output: '[*:STRING]'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - ["-0", "-0", "-0", "-0", "-0", "-0", "-0", "-0", "-0"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[({}|length|-.), ([]|length|-.), (""|length|-.), ([1]|keys|.[0]|-.), ([1]|to_entries|.[0].key|-.), ("abc"|indices("a")|.[0]|-.), ([[0]]|[paths]|.[0]|.[0]|-.)] | map(tojson)'
-  types:
-  - input: 'ANY'
-    output: '[*:STRING]'
-  - input: 'NULL'
-    output: '[*:STRING]'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - ["-0", "-0", "-0", "-0", "-0", "-0", "-0"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[(""|utf8bytelength|-.), ("a"|match("a").offset|-.), ("a"|[splits("a")]|.[0]|length|-.)] | map(tojson)'
-  types:
-  - input: 'ANY'
-    output: '[*:STRING]'
-  - input: 'NULL'
-    output: '[*:STRING]'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: utf8bytelength/0 is not defined at <top-level>, line 1:\n[(\"\"|utf8bytelength|-.), (\"a\"|match(\"a\").offset|-.), (\"a\"|[splits(\"a\")]|.[0]|length|-.)] | map(tojson)     \njq: 1 compile error\n"
     - v: '[1.6, )'
-      out:
+      output:
       - ["-0", "-0", "-0"]
-
-- q: '[(0|floor|-.), (0|sqrt|-.), (0|todate|fromdate|-.), (0|gmtime|.[1]|-.)] | map(tojson)'
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: '[*:STRING]'
-  - input: 'NULL'
+  - v: '[1.6, )'
+    input: 'NULL'
     output: '[*:STRING]'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
+
+- q: '[(0|floor|-.), (0|sqrt|-.), (0|todate|fromdate|-.), (0|gmtime|.[1]|-.)] | map(tojson)'
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - ["-0", "-0", "-0", "-0"]
-
-- q: '[(0|ceil|-.), (-0.5|ceil), (-0.2|round), (-0.49999999999999994|round)] | map(tojson)'
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:STRING]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
+
+- q: '[(0|ceil|-.), (-0.5|ceil), (-0.2|round), (-0.49999999999999994|round)] | map(tojson)'
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: ceil/0 is not defined at <top-level>, line 1:\n[(0|ceil|-.), (-0.5|ceil), (-0.2|round), (-0.49999999999999994|round)] | map(tojson)    \njq: error: ceil/0 is not defined at <top-level>, line 1:\n[(0|ceil|-.), (-0.5|ceil), (-0.2|round), (-0.49999999999999994|round)] | map(tojson)                    \njq: error: round/0 is not defined at <top-level>, line 1:\n[(0|ceil|-.), (-0.5|ceil), (-0.2|round), (-0.49999999999999994|round)] | map(tojson)                                 \njq: error: round/0 is not defined at <top-level>, line 1:\n[(0|ceil|-.), (-0.5|ceil), (-0.2|round), (-0.49999999999999994|round)] | map(tojson)                                                               \njq: 4 compile errors\n"
     - v: '[1.6, )'
-      out:
+      output:
       - ["-0", "-0", "-0", "-0"]
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.6, )'
+    input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 # IEEE addition and subtraction give +0 here, and jq agrees.
 - q: '[0-0, 0+0, (0*-1)+0, ((0-5)%5|-.)] | map(tojson)'
-  types:
-  - input: 'ANY'
-    output: '[*:STRING]'
-  - input: 'NULL'
-    output: '[*:STRING]'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - ["0", "0", "0", "-0"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 # jq 1.8.0 changed unary minus on a number that still carries its decimal literal. From then on the
 # literal is negated as a decimal, keeping its scale -- 0.00 negates to 0.00, not to 0 or -0 -- which
 # is what tells that path apart from rebuilding the value as a double.
 - q: '[(0|-.), (0.0|-.), (0.00|-.), (-0.0|-.), ("0"|tonumber|-.), (0|tojson|fromjson|-.), ([0]|add|-.), ([0]|.[0]|-.)] | map(tojson)'
-  types:
-  - input: 'ANY'
-    output: '[*:STRING]'
-  - input: 'NULL'
-    output: '[*:STRING]'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
   expectations:
     default:
     - v: '[1.5, 1.8.0)'
-      out:
+      output:
       - ["-0", "-0", "-0", "0", "-0", "-0", "-0", "-0"]
     - v: '[1.8.0, )'
-      out:
+      output:
       - ["0", "0.0", "0.00", "0.0", "0", "0", "0", "0"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 # range emits the start value itself, literal and all; only the values after it are computed.
 - q: '[range(3)|-.] | map(tojson)'
-  types:
-  - input: 'ANY'
-    output: '[*:STRING]'
-  - input: 'NULL'
-    output: '[*:STRING]'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
   expectations:
     default:
     - v: '[1.5, 1.8.0)'
-      out:
+      output:
       - ["-0", "-1", "-2"]
     - v: '[1.8.0, )'
-      out:
+      output:
       - ["0", "-1", "-2"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 - q: '[range(0;3;1)|-.] | map(tojson)'
-  types:
-  - input: 'ANY'
-    output: '[*:STRING]'
-  - input: 'NULL'
-    output: '[*:STRING]'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
   expectations:
     default:
     - v: '[1.5, 1.8.0)'
-      out:
+      output:
       - ["-0", "-1", "-2"]
     - v: '[1.8.0, )'
-      out:
+      output:
       - ["0", "-1", "-2"]
-
-- q: '[range(-1;2)|-.] | map(tojson)'
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:STRING]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
+
+- q: '[range(-1;2)|-.] | map(tojson)'
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - ["1", "-0", "-1"]
-
-- q: '[range(0.00;1)] | map(tojson)'
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:STRING]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
+
+- q: '[range(0.00;1)] | map(tojson)'
   expectations:
     default:
     - v: '[1.5, 1.7)'
-      out:
+      output:
       - ["0"]
     - v: '[1.7, )'
-      out:
+      output:
       - ["0.00"]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 # Known divergence. Up to 1.7.1 jq's constant folder computed % with fmod, so a folded modulo with a
 # negative dividend yielded -0, while the same expression evaluated at run time yielded +0
 # ([-5][0]%5 is "0" on every version). jq 1.8.0 made the folded result agree with the runtime one.
 # This library folds by evaluating the very same modulo, so it cannot produce the old inconsistency.
 - q: '[-5%5, -5%5.0, -5.5%5] | map(tojson)'
-  types:
-  - input: 'ANY'
-    output: '[*:STRING]'
-  - input: 'NULL'
-    output: '[*:STRING]'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
   expectations:
     default:
     - v: '[1.5, 1.8.0)'
-      out:
+      output:
       - ["-0", "-0", "-0"]
     - v: '[1.8.0, )'
-      out:
+      output:
       - ["0", "0", "0"]
     jjq:
     - v: '[1.5, 1.8.0)'
-      out:
+      output:
       - ["0", "0", "0"]
+      incompat_type: INTENTIONAL
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 # Known divergence from 1.7 on, where a parsed number is held as a BigDecimal and that has no negative
 # zero, so the sign of a parsed -0.0 is lost while jq keeps it. Everything else about the literal
@@ -233,24 +274,28 @@
 # number model. Before 1.7 a parsed number is rounded to a double, which does carry the sign, so the
 # versions below 1.7 agree with jq here and need no override.
 - q: '["-0.0", "-0", "-0.00"] | map(fromjson|tojson)'
-  types:
-  - input: 'ANY'
-    output: '[*:STRING]'
-  - input: 'NULL'
-    output: '[*:STRING]'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
   expectations:
     default:
     - v: '[1.5, 1.7)'
-      out:
+      output:
       - ["-0", "-0", "-0"]
     - v: '[1.7, )'
-      out:
+      output:
       - ["-0.0", "-0", "-0.00"]
     jjq:
     - v: '[1.7, )'
-      out:
+      output:
       - ["0.0", "0", "0.00"]
+      incompat_type: INTENTIONAL
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:STRING]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false

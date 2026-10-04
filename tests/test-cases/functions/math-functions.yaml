@@ -1,396 +1,869 @@
 - q: 'map(log10)'
-  in: [10, 100, 1000]
-  out:
-  - [1, 2, 3]
+  input: [10, 100, 1000]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 3]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: '[INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'map(log2)'
-  in: [2, 4, 8]
-  out:
-  - [1, 2, 3]
+  input: [2, 4, 8]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 3]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: '[INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'map(log / (2|log))'
-  in: [2, 4, 8]
-  out:
-  - [1, 2, 3]
+  input: [2, 4, 8]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 3]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: '[INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'def log1p_: 1 + . | log; map(log1p_ == log1p)'
-  in: [4, 8, 16]
-  out:
-  - [true, true, true]
+  input: [4, 8, 16]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: log1p/0 is not defined at <top-level>, line 1:\ndef log1p_: 1 + . | log; map(log1p_ == log1p)                                       \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [true, true, true]
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: '[*:BOOLEAN]'
-  - input: '[INT,INT,INT]'
+  - v: '[1.6, )'
+    input: '[INT,INT,INT]'
     output: '[*:BOOLEAN]'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.6, )'
 
 - q: 'log'
-  in: 10
-  out:
-  - 2.302585092994046
+  input: 10
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 2.302585092994046
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NUMBER'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'NUMBER'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'exp'
-  in: 2
-  out:
-  - 7.38905609893065
+  input: 2
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 7.38905609893065
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NUMBER'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'NUMBER'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'expm1'
-  in: 2
-  out:
-  - 6.38905609893065
-  types:
-  - input: 'ANY'
-    output: 'NUMBER'
-  - input: 'INT'
-    output: 'NUMBER'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.6, )'
-
-- q: 'map(round)'
-  in: [1e300, -1e300, 1e18, -1e18, 1e17]
-  types:
-  - input: 'ANY'
-    output: '[*:NUMBER]'
-  - input: '[INT,INT,INT,INT,INT]'
-    output: '[*:NUMBER]'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: 2
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: expm1/0 is not defined at <top-level>, line 1:\nexpm1\njq: 1 compile error\n"
     - v: '[1.6, )'
-      out:
-      - [1e300, -1e300, 1e18, -1e18, 1e17]
-
-- q: 'map(round)'
-  in: [4503599627370495.5, -4503599627370495.5, 4503599627370496, -4503599627370496]
+      output:
+      - 6.38905609893065
   types:
-  - input: 'ANY'
-    output: '[*:NUMBER]'
-  - input: '[FLOAT,FLOAT,INT,INT]'
-    output: '[*:NUMBER]'
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.6, )'
+    input: 'INT'
+    output: 'NUMBER'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
+
+- q: 'map(round)'
+  input: [1.0e+300, -1.0e+300, 1.0e+18, -1.0e+18, 1.0e+17]
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: round/0 is not defined at <top-level>, line 1:\nmap(round)    \njq: 1 compile error\n"
     - v: '[1.6, )'
-      out:
+      output:
+      - [1.0e+300, -1.0e+300, 1.0e+18, -1.0e+18, 1.0e+17]
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.6, )'
+    input: '[INT,INT,INT,INT,INT]'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'map(round)'
+  input: [4503599627370495.5, -4503599627370495.5, 4503599627370496, -4503599627370496]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: round/0 is not defined at <top-level>, line 1:\nmap(round)    \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
       - [4503599627370496, -4503599627370496, 4503599627370496, -4503599627370496]
-
-- q: 'map(round)'
-  in: [0.5, -0.5, 0.49999999999999994, 1.5, -1.5]
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: '[FLOAT,FLOAT,FLOAT,FLOAT,FLOAT]'
+  - v: '[1.6, )'
+    input: '[FLOAT,FLOAT,INT,INT]'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
+
+- q: 'map(round)'
+  input: [0.5, -0.5, 0.49999999999999994, 1.5, -1.5]
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: round/0 is not defined at <top-level>, line 1:\nmap(round)    \njq: 1 compile error\n"
     - v: '[1.6, )'
-      out:
+      output:
       - [1, -1, 0, 2, -2]
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.6, )'
+    input: '[FLOAT,FLOAT,FLOAT,FLOAT,FLOAT]'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '[(nan | round | isnan), (infinite | round | isinfinite), (-infinite | round | isinfinite), ((-infinite | round) < 0)]'
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: round/0 is not defined at <top-level>, line 1:\n[(nan | round | isnan), (infinite | round | isinfinite), (-infinite | round | isinfinite), ((-infinite | round) < 0)]        \njq: error: round/0 is not defined at <top-level>, line 1:\n[(nan | round | isnan), (infinite | round | isinfinite), (-infinite | round | isinfinite), ((-infinite | round) < 0)]                                    \njq: error: round/0 is not defined at <top-level>, line 1:\n[(nan | round | isnan), (infinite | round | isinfinite), (-infinite | round | isinfinite), ((-infinite | round) < 0)]                                                                      \njq: error: round/0 is not defined at <top-level>, line 1:\n[(nan | round | isnan), (infinite | round | isinfinite), (-infinite | round | isinfinite), ((-infinite | round) < 0)]                                                                                                         \njq: 4 compile errors\n"
+    - v: '[1.6, )'
+      output:
+      - [true, true, true, true]
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: '[BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN]'
-  - input: 'NULL'
+  - v: '[1.6, )'
+    input: 'NULL'
     output: '[BOOLEAN,BOOLEAN,BOOLEAN,BOOLEAN]'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  expectations:
-    default:
-    - v: '[1.6, )'
-      out:
-      - [true, true, true, true]
 
 # The fuzz reproducer, asserted as a comparison rather than a printed value: jq 1.7 alone prints this
 # double as 3.162277660168379e+44, which reads back as a different double.
 - q: 'round == .'
-  in: 3.1622776601683794e44
-  types:
-  - input: 'ANY'
-    output: 'BOOLEAN'
-  - input: 'INT'
-    output: 'BOOLEAN'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: 3.1622776601683794e+44
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: round/0 is not defined at <top-level>, line 1:\nround == .\njq: 1 compile error\n"
     - v: '[1.6, )'
-      out:
+      output:
       - true
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.6, )'
+    input: 'INT'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: 'map(round)'
-  in: [2.49, 2.5, -2.49, -2.5]
-  out:
-  - [2, 3, -2, -3]
+  input: [2.49, 2.5, -2.49, -2.5]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: round/0 is not defined at <top-level>, line 1:\nmap(round)    \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [2, 3, -2, -3]
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: '[FLOAT,FLOAT,FLOAT,FLOAT]'
+  - v: '[1.6, )'
+    input: '[FLOAT,FLOAT,FLOAT,FLOAT]'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.6, )'
 
 - q: 'map(exp10)'
-  in: [-2, 2, 5.5]
-  out:
-  - [0.01, 100, 316227.76601683797]
+  input: [-2, 2, 5.5]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: exp10/0 is not defined at <top-level>, line 1:\nmap(exp10)    \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [0.01, 100, 316227.76601683797]
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: '[INT,INT,FLOAT]'
+  - v: '[1.6, )'
+    input: '[INT,INT,FLOAT]'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.6, )'
   float_tolerance:
     ulps: 4
 
 - q: 'map(exp2)'
-  in: [-2, 2, 2.1]
-  out:
-  - [0.25, 4, 4.2870938501451725]
+  input: [-2, 2, 2.1]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0.25, 4, 4.2870938501451725]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: '[INT,INT,FLOAT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,FLOAT]'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '[0, 1, nan, infinite | ., -. | normals]'
-  out:
-  - [1, -1]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, -1]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '[0, 2.2250738585072011e-308, 2.2250738585072014e-308, 1, nan, infinite | ., -. | normals]'
-  out:
-  - [1, -1]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [2.2250738585072014e-308, -2.2250738585072014e-308, 1, -1]
+    - v: '[1.7, 1.7.1)'
+      output:
+      - [1, -1]
+    - v: '[1.7.1, )'
+      output:
+      - [2.2250738585072014e-308, -2.2250738585072014e-308, 1, -1]
+    jjq:
+    - v: '[1.7, 1.7.1)'
+      output:
+      - [2.2250738585072014e-308, -2.2250738585072014e-308, 1, -1]
+      incompat_type: JACKSON_JQ_BUG
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.7, 1.7.1)'
-  failing: true
 
 - q: 'map(floor)'
-  in: [2.1, 2.7, -2.1, -2.7, 0, 42]
-  out:
-  - [2, 2, -3, -3, 0, 42]
+  input: [2.1, 2.7, -2.1, -2.7, 0, 42]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [2, 2, -3, -3, 0, 42]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: '[FLOAT,FLOAT,FLOAT,FLOAT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[FLOAT,FLOAT,FLOAT,FLOAT,INT,INT]'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'map(ceil)'
-  in: [2.1, 2.7, -2.1, -2.7, 0, 42]
-  out:
-  - [3, 3, -2, -2, 0, 42]
+  input: [2.1, 2.7, -2.1, -2.7, 0, 42]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: ceil/0 is not defined at <top-level>, line 1:\nmap(ceil)    \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - [3, 3, -2, -2, 0, 42]
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: '[FLOAT,FLOAT,FLOAT,FLOAT,INT,INT]'
+  - v: '[1.6, )'
+    input: '[FLOAT,FLOAT,FLOAT,FLOAT,INT,INT]'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.6, )'
 
 # Reduced from fuzzing seed -7375452986580138970 (jq 1.8.2).
 - q: 'try ceil catch .'
-  in: "1"
-  out:
-  - 'string ("1") number required'
+  input: "1"
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: ceil/0 is not defined at <top-level>, line 1:\ntry ceil catch .    \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - "string (\"1\") number required"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'ANY'
   properties:
+  - v: '[1.6, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.6, )'
 
 - q: 'try (ceil) catch (@html)'
-  in: "1"
-  out:
-  - 'string (&quot;1&quot;) number required'
+  input: "1"
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: ceil/0 is not defined at <top-level>, line 1:\ntry (ceil) catch (@html)     \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - "string (&quot;1&quot;) number required"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'NUMBER|STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.6, )'
 
 - q: 'try ceil catch .'
-  in: null
-  out:
-  - 'null (null) number required'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      compile_error: "jq: error: ceil/0 is not defined at <top-level>, line 1:\ntry ceil catch .    \njq: 1 compile error\n"
+    - v: '[1.6, )'
+      output:
+      - "null (null) number required"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.6, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.6, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.6, )'
 
 # jq evaluates the second argument first, so an empty stream skips gmtime.
 - q: 'pow(gmtime; empty)'
-  in: null
-  out: []
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output: []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  properties:
-    cardinality: ZERO
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.5, )'
-
-- q: 'atan2(gmtime; empty)'
-  in: null
-  out: []
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  properties:
-    cardinality: ZERO
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.5, )'
-
-- q: 'try pow(empty; gmtime) catch .'
-  in: null
-  out:
-  - 'gmtime() requires numeric inputs'
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  properties:
-    cardinality: UNKNOWN
-    depends_on_input: true
-    depends_on_external_state: false
-  v: '[1.5, )'
-
-- q: 'pow((2, 3); (2, 3))'
-  in: null
-  out: [4, 9, 8, 27]
-  types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NUMBER'
   properties:
-    cardinality: UNKNOWN
-    depends_on_input: false
+  - v: '[1.5, )'
+    cardinality: ZERO
+    depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
-- q: 'try pow((2, error("boom")); 3) catch .'
-  in: null
-  out: [8, "boom"]
+- q: 'atan2(gmtime; empty)'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output: []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ZERO
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try pow(empty; gmtime) catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "gmtime() requires numeric inputs"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'pow((2, 3); (2, 3))'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 4
+      - 9
+      - 8
+      - 27
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
+
+- q: 'try pow((2, error("boom")); 3) catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 8
+      - "boom"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+# Reduced from fuzzing seed -2028724035404052110 (jq 1.8.2), which caught the same
+# "number required" type error missing from the zero-argument math functions.
+- q: 'try sqrt catch .'
+  input: {}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "object ({}) number required"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{}'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try sqrt catch .'
+  input: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "array ([]) number required"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try sqrt catch .'
+  input: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "boolean (true) number required"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'BOOLEAN'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+# pow and atan2 take their operands as arguments, so they report the same error for an
+# operand in either position. jq never looks at the input's own type.
+- q: 'try pow(.;2) catch .'
+  input: {}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "object ({}) number required"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{}'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try pow(2;.) catch .'
+  input: {}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "object ({}) number required"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '{}'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try atan2(.;1) catch .'
+  input: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "array ([]) number required"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try atan2(1;.) catch .'
+  input: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "boolean (true) number required"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'BOOLEAN'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+# jq 1.5 names the input; jq 1.6 and later name the argument they rejected.
+- q: 'try pow(.[0];.[1]) catch .'
+  input: ["a", 2]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - "array ([\"a\",2]) number required"
+    - v: '[1.6, )'
+      output:
+      - "string (\"a\") number required"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[STRING,INT]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try pow(.[0];.[1]) catch .'
+  input: [2, "b"]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - "array ([2,\"b\"]) number required"
+    - v: '[1.6, )'
+      output:
+      - "string (\"b\") number required"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT,STRING]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+# Both arguments are rejected, and jq 1.6 and later report the first one.
+- q: 'try pow(.[0];.[1]) catch .'
+  input: ["a", "b"]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - "array ([\"a\",\"b\"]) number required"
+    - v: '[1.6, )'
+      output:
+      - "string (\"a\") number required"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[STRING,STRING]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try atan2(.[0];.[1]) catch .'
+  input: [2, "b"]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - "array ([2,\"b\"]) number required"
+    - v: '[1.6, )'
+      output:
+      - "string (\"b\") number required"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: '[INT,STRING]'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+# jq 1.8.2 widened the buffer it copies the described value into and closes the quote it cut.
+- q: 'try pow(.;2) catch .'
+  input: "abcdefghijklmnopqrstuvwxyz0123456789"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "string (\"abcdefghij...) number required"
+    - v: '[1.8.2, )'
+      output:
+      - "string (\"abcdefghijklmnopqrstuvwx...\") number required"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+# Kept by hand rather than imported: jq's own corpus asks only whether the round trip is exact
+# (`... == $powers`), which says nothing about what it produced when it is not. Comparing the values
+# needs a tolerance, since pow and log2 are libm's and neither jq nor this library promises the last
+# bit of a double.
+- q: '[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [-52, -51, -50, -49, -48, -47, -46, -45, -44, -43, -42, -41, -40, -39, -38, -37, -36, -35, -34, -33, -32, -31, -30, -29, -28, -27, -26, -25, -24, -23, -22, -21, -20, -19, -18, -17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+  float_tolerance:
+    ulps: 4

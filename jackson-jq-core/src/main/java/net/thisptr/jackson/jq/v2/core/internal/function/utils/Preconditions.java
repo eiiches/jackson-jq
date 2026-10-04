@@ -3,7 +3,6 @@ package net.thisptr.jackson.jq.v2.core.internal.function.utils;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import net.thisptr.jackson.jq.v2.core.internal.exception.IllegalJsonArgumentException;
 import net.thisptr.jackson.jq.v2.core.internal.exception.IllegalJsonInputException;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -31,20 +30,5 @@ public class Preconditions {
 		Iterator<JsonNode> iter = jsonProvider.getArrayElements(in);
 		while (iter.hasNext())
 			checkInputElementType(jsonProvider, fname, iter.next(), types);
-	}
-
-	public static <JsonNode> void checkArgumentType(JsonProvider<JsonNode> jsonProvider, String fname, int aindex, JsonNode value, JsonNodeType... types) throws IllegalJsonArgumentException {
-		JsonNodeType t = jsonProvider.getNodeType(value);
-		for (JsonNodeType type : types)
-			if (t == type)
-				return;
-
-		String indexText = switch (aindex) {
-			case 1 -> "1st";
-			case 2 -> "2nd";
-			case 3 -> "3rd";
-			default -> aindex + "th";
-		};
-		throw new IllegalJsonArgumentException(String.format("cannot accept %s as %s argument of %s; expected one of %s", jsonProvider.getNodeType(value), indexText, fname, Arrays.toString(types)));
 	}
 }

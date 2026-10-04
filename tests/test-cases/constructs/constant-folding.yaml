@@ -10,329 +10,442 @@
 # `path` hands its argument a tracked path, and a constant is not a path expression. The error has to
 # come from evaluation, not from the folder, and it has to name the folded value.
 - q: 'try path(1 + 1) catch .'
-  in: null
-  out:
-  - "Invalid path expression with result 2"
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "Invalid path expression with result 2"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'try path("a" + "b") catch .'
-  in: null
-  out:
-  - "Invalid path expression with result \"ab\""
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "Invalid path expression with result \"ab\""
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 # An update operator evaluates its left side for paths too.
 - q: 'try ((1, 2) |= . + 1) catch .'
-  in: null
-  out:
-  - "Invalid path expression with result 1"
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "Invalid path expression with result 1"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 # A constant subexpression inside a genuine path expression must leave the path alone.
 - q: 'try ([1, 2, 3] | path(.[0])) catch .'
-  in: null
-  out:
-  - [0]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
-  v: '[1.5, )'
-
-- q: '[1, 2, 3] | del(.[0])'
-  in: null
-  out:
-  - [2, 3]
-  types:
-  - input: 'ANY'
-    output: 'NULL|[*:ANY]|{*:ANY}'
-  - input: 'NULL'
-    output: 'NULL|[*:ANY]|{*:ANY}'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
-  v: '[1.5, )'
-
-- q: '[1, 2] | .[0:0] = [1, 2, 3]'
-  in: null
-  out:
-  - [1, 2, 3, 1, 2]
-  types:
-  - input: 'ANY'
-    output: '[*:1|2|3]'
-  - input: 'NULL'
-    output: '[*:1|2|3]'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
-  v: '[1.5, )'
-
-# A constant error still fails when the query runs, so a `catch` around it still sees it.
-- q: 'try error("x" + "y") catch .'
-  in: null
-  out:
-  - "xy"
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: 'NULL'
-    output: 'ANY'
-  properties:
-    cardinality: ONE
-    depends_on_input: false
-    depends_on_external_state: false
-  v: '[1.5, )'
-
-# Values emitted before a constant error remain visible, in order, before the error is caught.
-- q: 'try (1, 2, error("boom")) catch .'
-  in: null
-  out:
-  - 1
-  - 2
-  - "boom"
-  types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: 'NULL'
-    output: 'ANY'
-  properties:
+  - v: '[1.5, 1.7)'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
-
-- q: '[try (1, 2) catch .]'
-  in: null
-  out:
-  - [1, 2]
-  types:
-  - input: 'ANY'
-    output: '[*:ANY]'
-  - input: 'NULL'
-    output: '[*:ANY]'
-  properties:
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
+
+- q: '[1, 2, 3] | del(.[0])'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [2, 3]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[1, 2] | .[0:0] = [1, 2, 3]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2, 3, 1, 2]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:1|2|3]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:1|2|3]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+# A constant error still fails when the query runs, so a `catch` around it still sees it.
+- q: 'try error("x" + "y") catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "xy"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+# Values emitted before a constant error remain visible, in order, before the error is caught.
+- q: 'try (1, 2, error("boom")) catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+      - 2
+      - "boom"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '[try (1, 2) catch .]'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:ANY]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
 
 # A `def`'s function lands in the enclosing frame, and the call that reads it sits outside the
 # expression that installed it.
 - q: 'def f: 1 + 1; f'
-  in: null
-  out:
-  - 2
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 2
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NUMBER'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NUMBER'
   properties:
-    cardinality: UNKNOWN
+  - v: '[1.5, )'
+    cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '1 as $x | def f: $x + 1; f'
-  in: null
-  out:
-  - 2
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 2
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NUMBER'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NUMBER'
   properties:
-    cardinality: UNKNOWN
+  - v: '[1.5, )'
+    cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 # `break` unwinds past its consumer, so a folded `label` body must still stop the stream.
 - q: 'label $out | (1, 2, break $out, 3)'
-  in: null
-  out:
-  - 1
-  - 2
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+      - 2
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '1|2|3'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '1|2|3'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 # Generator count and order survive folding.
 - q: '[range(0; 3)]'
-  in: null
-  out:
-  - [0, 1, 2]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 1, 2]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '[limit(2; 1, 2, 3)]'
-  in: null
-  out:
-  - [1, 2]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:1|2|3]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:1|2|3]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '[first(1, 2, 3)]'
-  in: null
-  out:
-  - [1]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:1|2|3]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:1|2|3]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '(1, 2) as $x | $x + 1'
-  in: null
-  out:
-  - 2
-  - 3
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 2
+      - 3
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NUMBER'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NUMBER'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '"\(1 + 1)-\("a" + "b")"'
-  in: null
-  out:
-  - "2-ab"
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "2-ab"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '[{a: 1, b: 2} | to_entries[] | .key]'
-  in: null
-  out:
-  - ["a", "b"]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["a", "b"]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:STRING]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 # A constant inside an input-dependent expression folds on its own; the enclosing one does not.
 - q: '[.[] | 1 + 1]'
-  in: [1, 2]
-  out:
-  - [2, 2]
+  input: [1, 2]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [2, 2]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: '[INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT]'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '[paths]'
-  in: null
-  out:
-  - []
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - []
   types:
-  - input: 'ANY'
-    output: '[*:[*:NUMBER|STRING]]'
-  - input: 'NULL'
-    output: '[*:[*:NUMBER|STRING]]'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '[.[]?]'
-  in: null
-  out:
-  - []
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:ANY]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'

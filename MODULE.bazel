@@ -89,6 +89,14 @@ maven.artifact(
     group = "com.fasterxml.jackson.dataformat",
     version = JACKSON2_VERSION,
 )
+
+# The test-case formatter writes YAML through SnakeYAML's node API, which
+# jackson-dataformat-yaml brings in but does not expose.
+maven.artifact(
+    artifact = "snakeyaml",
+    group = "org.yaml",
+    version = "2.5",
+)
 maven.artifact(
     artifact = "jackson-databind",
     group = "tools.jackson.core",

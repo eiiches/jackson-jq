@@ -123,9 +123,8 @@ class BuiltinTypeSchemeTest {
 				.isEqualTo(ArrayType.of(ObjectType.of("key", StringType.getInstance(), "value", AnyType.getInstance())));
 		assertThat(outputOf("to_entries", ObjectType.of(NumericType.getInstance())))
 				.isEqualTo(ArrayType.of(ObjectType.of("key", StringType.getInstance(), "value", NumericType.getInstance())));
-		assertThatThrownBy(() -> outputOf("to_entries", ArrayType.of(AnyType.getInstance())))
-				.isInstanceOf(JsonQueryException.class)
-				.hasMessageContaining("Type checking failed");
+		assertThat(outputOf("to_entries", ArrayType.of(NumericType.getInstance())))
+				.isEqualTo(ArrayType.of(ObjectType.of("key", NumericType.of(NumberKind.INT), "value", NumericType.getInstance())));
 	}
 
 	@Test
@@ -210,27 +209,24 @@ class BuiltinTypeSchemeTest {
 	}
 
 	@Test
-	void trimStrRejectsNonStringInputs() throws JsonQueryException {
+	void trimStrPreservesNonStringInputs() throws JsonQueryException {
 		assertThat(outputOf("ltrimstr(\"a\")", StringType.getInstance())).isSameAs(StringType.getInstance());
 		assertThat(outputOf("rtrimstr(\"a\")", StringType.getInstance())).isSameAs(StringType.getInstance());
-		assertThatThrownBy(() -> outputOf("ltrimstr(\"a\")", NumericType.getInstance()))
-				.isInstanceOf(JsonQueryException.class)
-				.hasMessageContaining("Type checking failed");
-		assertThatThrownBy(() -> outputOf("rtrimstr(\"a\")", NumericType.getInstance()))
-				.isInstanceOf(JsonQueryException.class)
-				.hasMessageContaining("Type checking failed");
+		assertThat(outputOf("ltrimstr(\"a\")", NumericType.getInstance())).isSameAs(NumericType.getInstance());
+		assertThat(outputOf("rtrimstr(\"a\")", NumericType.getInstance())).isSameAs(NumericType.getInstance());
+		assertThat(outputOf("ltrimstr([1])", StringType.getInstance())).isSameAs(StringType.getInstance());
 	}
 
 	@Test
 	void pathBuiltinsAgreeOnTheShapeOfAPath() throws JsonQueryException {
-		Type path = ArrayType.of(UnionType.of(StringType.getInstance(), NumericType.getInstance()));
+		Type path = Type.valueOf("[*:NUMBER|STRING|[*:ANY]|{start:ANY,end:ANY}]");
 		assertThat(outputOf("path(.a)", ObjectType.of(AnyType.getInstance()))).isEqualTo(path);
 		assertThat(outputOf("[paths(type)]", ObjectType.of(AnyType.getInstance()))).isEqualTo(ArrayType.of(path));
 		assertThat(outputOf("getpath([\"a\"])", ObjectType.of(AnyType.getInstance()))).isSameAs(AnyType.getInstance());
 	}
 
 	@Test
-	void indexAndIndicesRejectObjectInputs() throws JsonQueryException {
+	void indicesReadsObjectFieldsWhileIndexAndRindexRequireSequences() throws JsonQueryException {
 		assertThat(outputOf("indices(\"a\")", ArrayType.of(AnyType.getInstance())))
 				.isEqualTo(ArrayType.of(NumericType.of(NumberKind.INT)));
 		assertThat(outputOf("index(\"a\")", ArrayType.of(AnyType.getInstance())))
@@ -238,9 +234,7 @@ class BuiltinTypeSchemeTest {
 		assertThat(outputOf("rindex(\"a\")", ArrayType.of(AnyType.getInstance())))
 				.isEqualTo(UnionType.of(NullType.getInstance(), NumericType.getInstance()));
 
-		assertThatThrownBy(() -> outputOf("indices(\"a\")", ObjectType.of(AnyType.getInstance())))
-				.isInstanceOf(JsonQueryException.class)
-				.hasMessageContaining("Type checking failed");
+		assertThat(outputOf("indices(\"a\")", ObjectType.of(AnyType.getInstance()))).isSameAs(AnyType.getInstance());
 		assertThatThrownBy(() -> outputOf("index(\"a\")", ObjectType.of(AnyType.getInstance())))
 				.isInstanceOf(JsonQueryException.class)
 				.hasMessageContaining("Type checking failed");

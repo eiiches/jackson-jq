@@ -1,25 +1,41 @@
 - q: 'empty or error("foo")'
-  out: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output: []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NEVER'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NEVER'
   properties:
+  - v: '[1.5, )'
     cardinality: ZERO
     depends_on_input: false
     depends_on_external_state: false
   comment: 'lhs is evaluated first'
 
 - q: 'try (error("foo") or empty) catch .'
-  out:
-  - "foo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "foo"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false

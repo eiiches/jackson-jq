@@ -1,54 +1,76 @@
 - q: 'startswith(empty)'
-  out: []
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output: []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'BOOLEAN'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: ZERO
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'startswith(.)'
-  in: "foo"
-  out:
-  - true
+  input: "foo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'BOOLEAN'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'BOOLEAN'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'try startswith("foo") catch .'
-  out:
-  - "startswith() requires string inputs"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "startswith() requires string inputs"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'try startswith(1) catch .'
-  in: "foo"
-  out:
-  - "startswith() requires string inputs"
+  input: "foo"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "startswith() requires string inputs"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false

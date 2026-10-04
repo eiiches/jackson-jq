@@ -1,606 +1,910 @@
-- q: '[1, 2][:]'
-  should_compile: false
-
 - q: '.[0.9:0.2]'
-  in: [42]
-  out:
-  - [42]
+  input: [42]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [42]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|STRING|[*:ANY]'
-  - input: '[INT]'
+  - v: '[1.5, )'
+    input: '[INT]'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '[.[0.9:0], .[-0.1:-0.9], .[1.9:1.2]]'
-  in: [0, 1, 2]
-  out:
-  - [[], [2], [1]]
+  input: [0, 1, 2]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[], [2], [1]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY]]'
-  - input: '[INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
     output: '[[*:INT],[*:INT],[*:INT]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[0.9:0.2] = [9]'
-  in: [0, 1, 2]
-  out:
-  - [9, 1, 2]
+  input: [0, 1, 2]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [9, 1, 2]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[0.9:0.2]'
-  in: abc
-  out:
-  - a
+  input: "abc"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "a"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|STRING|[*:ANY]'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[@base64 : "foo"]'
-  in: null
-  out:
-  - null
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '.["x":"y"]'
-  in: null
-  out:
-  - null
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '[0,1,2,3,4] | (.[1.5:2.5], .[1.5:-1.5], .[-1.5], .[1.5])'
-  out:
-  - [1, 2]
-  - [1, 2, 3]
-  - null
-  - null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [1, 2]
+      - [1, 2, 3]
+      - null
+      - null
+    - v: '[1.7, )'
+      output:
+      - [1, 2]
+      - [1, 2, 3]
+      - 4
+      - 1
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '0|1|2|3|4|NULL|[*:0|1|2|3|4]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '0|1|2|3|4|NULL|[*:0|1|2|3|4]'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
 
 - q: '[0,1,2,3,4] | (.[1.5:2.5], .[1.5:-1.5], .[-1.5], .[1.5])'
-  out:
-  - [1, 2]
-  - [1, 2, 3]
-  - 4
-  - 1
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [1, 2]
+      - [1, 2, 3]
+      - null
+      - null
+    - v: '[1.7, )'
+      output:
+      - [1, 2]
+      - [1, 2, 3]
+      - 4
+      - 1
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '0|1|2|3|4|NULL|[*:0|1|2|3|4]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '0|1|2|3|4|NULL|[*:0|1|2|3|4]'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: '[.[0:nan], .[2:nan], .[5:nan], .[-1:nan], .[-100:nan]]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [[], [], [], [], []]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [[], [], [], [], []]
+    - v: '[1.7, )'
+      output:
+      - [[0, 1, 2, 3, 4], [2, 3, 4], [], [4], [0, 1, 2, 3, 4]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY]]'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[[*:INT],[*:INT],[*:INT],[*:INT],[*:INT]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
 
 - q: '[.[0:nan], .[2:nan], .[5:nan], .[-1:nan], .[-100:nan]]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [[0, 1, 2, 3, 4], [2, 3, 4], [], [4], [0, 1, 2, 3, 4]]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [[], [], [], [], []]
+    - v: '[1.7, )'
+      output:
+      - [[0, 1, 2, 3, 4], [2, 3, 4], [], [4], [0, 1, 2, 3, 4]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY]]'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[[*:INT],[*:INT],[*:INT],[*:INT],[*:INT]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: '[.[nan:2], .[nan:nan], .[nan:0], .[nan:-1]]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [[0, 1], [0, 1, 2, 3, 4], [], [0, 1, 2, 3]]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv_aux.c:47: parse_slice: Assertion `0 <= start && start <= end && end <= len' failed.\n"
+    - v: '[1.6, 1.7)'
+      output: []
+      runtime_error: "jq-1.6: src/jv_aux.c:47: parse_slice: Assertion `0 <= start && start <= end && end <= len' failed.\n"
+    - v: '[1.7, )'
+      output:
+      - [[0, 1], [0, 1, 2, 3, 4], [], [0, 1, 2, 3]]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - [[0.0, 1.0], [], [], [0.0, 1.0, 2.0, 3.0]]
+      incompat_type: JACKSON_JQ_BUG
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY]]'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[[*:INT],[*:INT],[*:INT],[*:INT]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: '[.[null:nan], .[2:nan], .[-1:nan]]'
-  in: "abcde"
-  out:
-  - ["", "", ""]
+  input: "abcde"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - ["", "", ""]
+    - v: '[1.7, )'
+      output:
+      - ["abcde", "cde", "e"]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY]]'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: '[STRING,STRING,STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
 
 - q: '[.[null:nan], .[2:nan], .[-1:nan]]'
-  in: "abcde"
-  out:
-  - ["abcde", "cde", "e"]
+  input: "abcde"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - ["", "", ""]
+    - v: '[1.7, )'
+      output:
+      - ["abcde", "cde", "e"]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[NULL|STRING|[*:ANY],NULL|STRING|[*:ANY],NULL|STRING|[*:ANY]]'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: '[STRING,STRING,STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: '[.[nan:2], .[nan:nan]]'
-  in: "abcde"
-  out:
-  - ["ab", "abcde"]
+  input: "abcde"
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv_aux.c:47: parse_slice: Assertion `0 <= start && start <= end && end <= len' failed.\n"
+    - v: '[1.6, 1.7)'
+      output: []
+      runtime_error: "jq-1.6: src/jv_aux.c:47: parse_slice: Assertion `0 <= start && start <= end && end <= len' failed.\n"
+    - v: '[1.7, )'
+      output:
+      - ["ab", "abcde"]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - ["ab", ""]
+      incompat_type: JACKSON_JQ_BUG
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[NULL|STRING|[*:ANY],NULL|STRING|[*:ANY]]'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: '[STRING,STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: '.[2:nan] = [999]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [0, 1, 999, 2, 3, 4]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [0, 1, 999, 2, 3, 4]
+    - v: '[1.7, )'
+      output:
+      - [0, 1, 999]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
 
 - q: '.[2:nan] = [999]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [0, 1, 999]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [0, 1, 999, 2, 3, 4]
+    - v: '[1.7, )'
+      output:
+      - [0, 1, 999]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: '.[nan:2] = [999]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [999, 2, 3, 4]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv_aux.c:47: parse_slice: Assertion `0 <= start && start <= end && end <= len' failed.\n"
+    - v: '[1.6, 1.7)'
+      output: []
+      runtime_error: "jq-1.6: src/jv_aux.c:47: parse_slice: Assertion `0 <= start && start <= end && end <= len' failed.\n"
+    - v: '[1.7, )'
+      output:
+      - [999, 2, 3, 4]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - [999, 2.0, 3.0, 4.0]
+      incompat_type: JACKSON_JQ_BUG
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: '[] | path(.[3.5])'
-  out:
-  - [3.5]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [3.5]
   types:
-  - input: 'ANY'
-    output: '[*:NUMBER|STRING]'
-  - input: 'NULL'
-    output: '[*:NUMBER|STRING]'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '[] | .[3.5] = 3'
-  out:
-  - [null, null, null, 3]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [null, null, null, 3]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:3|NULL]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:3|NULL]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '[1,1,1,1,1] | .[-1.7] = 3'
-  out:
-  - [1, 1, 1, 1, 3]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 1, 1, 1, 3]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:1|3|NULL]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:1|3|NULL]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '[1,1,1,1,1] | .[-1.2] = 3'
-  out:
-  - [1, 1, 1, 1, 3]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 1, 1, 1, 3]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:1|3|NULL]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:1|3|NULL]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '.[]["a","b"]'
-  in: [{"a": 1, "b": 3}, {"a": 2, "b": 4}]
-  out:
-  - 1
-  - 2
-  - 3
-  - 4
+  input: [{"a": 1, "b": 3}, {"a": 2, "b": 4}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+      - 2
+      - 3
+      - 4
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[{a:INT,b:INT},{a:INT,b:INT}]'
+  - v: '[1.5, )'
+    input: '[{a:INT,b:INT},{a:INT,b:INT}]'
     output: 'INT|NULL'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[][0, 1]'
-  in: [[1, 3], [2, 4]]
-  out:
-  - 1
-  - 2
-  - 3
-  - 4
+  input: [[1, 3], [2, 4]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+      - 2
+      - 3
+      - 4
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[[INT,INT],[INT,INT]]'
+  - v: '[1.5, )'
+    input: '[[INT,INT],[INT,INT]]'
     output: 'INT'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[][0,1:1,2]'
-  in: [[1, 3], [2, 4]]
-  out:
-  - [1]
-  - [2]
-  - [1, 3]
-  - [2, 4]
-  - []
-  - []
-  - [3]
-  - [4]
+  input: [[1, 3], [2, 4]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1]
+      - [2]
+      - [1, 3]
+      - [2, 4]
+      - []
+      - []
+      - [3]
+      - [4]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|STRING|[*:ANY]'
-  - input: '[[INT,INT],[INT,INT]]'
+  - v: '[1.5, )'
+    input: '[[INT,INT],[INT,INT]]'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[]."\("a","b")"'
-  in: [{"a": 1, "b": 3}, {"a": 2, "b": 4}]
-  out:
-  - 1
-  - 2
-  - 3
-  - 4
+  input: [{"a": 1, "b": 3}, {"a": 2, "b": 4}]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+      - 2
+      - 3
+      - 4
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[{a:INT,b:INT},{a:INT,b:INT}]'
+  - v: '[1.5, )'
+    input: '[{a:INT,b:INT},{a:INT,b:INT}]'
     output: 'INT|NULL'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[["a","b"]]'
-  in: ["a", "b", "a", "a", "b"]
-  out:
-  - [0, 3]
+  input: ["a", "b", "a", "a", "b"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 3]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[STRING,STRING,STRING,STRING,STRING]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING]'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'path(.[["a","b"]])'
-  in: ["a", "b", "a", "a", "b"]
-  out:
-  - [["a", "b"]]
+  input: ["a", "b", "a", "a", "b"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [["a", "b"]]
   types:
-  - input: 'ANY'
-    output: '[*:NUMBER|STRING]'
-  - input: '[STRING,STRING,STRING,STRING,STRING]'
-    output: '[*:NUMBER|STRING]'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'getpath([["a","b"]])'
-  in: ["a", "b", "a", "a", "b"]
-  out:
-  - [0, 3]
+  input: ["a", "b", "a", "a", "b"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 3]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[STRING,STRING,STRING,STRING,STRING]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'try(.[["a","b"]] |= "c") catch .'
-  in: ["a", "b", "a", "a", "b"]
-  out:
-  - "Cannot update field at array index of array"
+  input: ["a", "b", "a", "a", "b"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "Cannot update field at array index of array"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[STRING,STRING,STRING,STRING,STRING]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[[]]'
-  in: ["a", "b", "a", "a", "b"]
-  out:
-  - []
+  input: ["a", "b", "a", "a", "b"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[STRING,STRING,STRING,STRING,STRING]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING]'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'path(.[[]])'
-  in: ["a", "b", "a", "a", "b"]
-  out:
-  - [[]]
+  input: ["a", "b", "a", "a", "b"]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[]]
   types:
-  - input: 'ANY'
-    output: '[*:NUMBER|STRING]'
-  - input: '[STRING,STRING,STRING,STRING,STRING]'
-    output: '[*:NUMBER|STRING]'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING,STRING,STRING]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[2:0] = [999]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [0, 1, 999, 2, 3, 4]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 1, 999, 2, 3, 4]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[2:2] = [999]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [0, 1, 999, 2, 3, 4]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 1, 999, 2, 3, 4]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[2:3] = [999]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [0, 1, 999, 3, 4]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 1, 999, 3, 4]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[2:-3] = [999]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [0, 1, 999, 2, 3, 4]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 1, 999, 2, 3, 4]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[2:-2] = [999]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [0, 1, 999, 3, 4]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 1, 999, 3, 4]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[2:-100] = [999]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [0, 1, 999, 2, 3, 4]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 1, 999, 2, 3, 4]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[-100:0] = [999]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [999, 0, 1, 2, 3, 4]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [999, 0, 1, 2, 3, 4]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '.[-100:1] = [999]'
-  in: [0, 1, 2, 3, 4]
-  out:
-  - [999, 1, 2, 3, 4]
+  input: [0, 1, 2, 3, 4]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [999, 1, 2, 3, 4]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT]'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'try ((try "x")["bad":0]) catch "__ERROR__"'
-  in: null
-  out: []
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output: []
+    - v: '[1.7, )'
+      output:
+      - "__ERROR__"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"__ERROR__"'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '"__ERROR__"'
   properties:
+  - v: '[1.5, 1.7)'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
-
-- q: 'try ((try "x")["bad":0]) catch "__ERROR__"'
-  in: null
-  out:
-  - "__ERROR__"
-  types:
-  - input: 'ANY'
-    output: '"__ERROR__"'
-  - input: 'NULL'
-    output: '"__ERROR__"'
-  properties:
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.7, )'
+
+- q: 'try ((try "x")["bad":0]) catch "__ERROR__"'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output: []
+    - v: '[1.7, )'
+      output:
+      - "__ERROR__"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '"__ERROR__"'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '"__ERROR__"'
+  properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false

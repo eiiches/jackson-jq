@@ -604,9 +604,9 @@ class MainTest {
 
 	@Test
 	void placesOverloadLocationBeforeAcceptedTypes() throws Exception {
-		assertThat(runStderr("null", "--compact", "\"test\" | ltrimstr([1])"))
-				.contains("jq: warning: Argument 1 of ltrimstr/1 has type [1]; expected STRING at line 1, column 19:")
-				.contains("\nAccepted types:\n  Input: STRING -> ltrimstr(STRING -> STRING) -> Output: STRING\n");
+		assertThat(runStderr("null", "--compact", "\"test\" | startswith([1])?"))
+				.contains("jq: warning: Argument 1 of startswith/1 has type [1]; expected STRING at line 1, column 21:")
+				.contains("\nAccepted types:\n  Input: STRING -> startswith(STRING -> STRING) -> Output: BOOLEAN\n");
 	}
 
 	// `map` is written in jq, so what fails is a `.[]` inside its body. The caller is told which call of

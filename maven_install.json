@@ -41,6 +41,7 @@
     "org.slf4j:slf4j-api": -2005163028,
     "org.slf4j:slf4j-simple": -1958526793,
     "org.springframework.boot:spring-boot-loader": 1893862725,
+    "org.yaml:snakeyaml": -2128220551,
     "repositories": -1949687017,
     "tools.jackson.core:jackson-core": 968794478,
     "tools.jackson.core:jackson-databind": 1559024550

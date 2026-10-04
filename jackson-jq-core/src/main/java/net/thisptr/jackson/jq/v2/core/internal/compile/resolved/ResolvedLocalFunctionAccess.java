@@ -14,6 +14,8 @@ import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
+import net.thisptr.jackson.jq.v2.spi.Cardinality;
+import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.Output;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
@@ -24,6 +26,7 @@ public class ResolvedLocalFunctionAccess<JsonNode> implements RewritableExpressi
 	private final String name;
 	private final int slot;
 	private final List<AnalyzedExpression<JsonNode>> args;
+	private final Cardinality cardinality;
 	private final boolean dependsOnInput;
 	private final boolean dependsOnExternalState;
 	private final Set<Integer> freeLocalSlots;
@@ -36,10 +39,11 @@ public class ResolvedLocalFunctionAccess<JsonNode> implements RewritableExpressi
 		this.slot = slot;
 		this.args = args;
 		this.info = info;
-		boolean ownInput = info != null && info.dependsOnInput();
-		boolean ownExternal = info != null && info.dependsOnExternalState();
-		this.dependsOnInput = ownInput || args.stream().anyMatch(AnalyzedExpression::dependsOnInput);
-		this.dependsOnExternalState = ownExternal || args.stream().anyMatch(AnalyzedExpression::dependsOnExternalState);
+		ExpressionProperties properties = info != null ? info.atCall(args) : new ExpressionProperties(Cardinality.UNKNOWN,
+				args.stream().anyMatch(AnalyzedExpression::dependsOnInput), args.stream().anyMatch(AnalyzedExpression::dependsOnExternalState));
+		this.cardinality = properties.cardinality();
+		this.dependsOnInput = properties.dependsOnInput();
+		this.dependsOnExternalState = properties.dependsOnExternalState();
 		// The callee lives in the same frame this call runs in. Its own slot is a dependency too: evaluating
 		// the call in the folder's empty frame would otherwise turn the speculative "not defined" failure
 		// into a folded jq error before the enclosing def has installed the function.
@@ -60,6 +64,11 @@ public class ResolvedLocalFunctionAccess<JsonNode> implements RewritableExpressi
 
 	public List<AnalyzedExpression<JsonNode>> args() {
 		return args;
+	}
+
+	@Override
+	public Cardinality getCardinality() {
+		return cardinality;
 	}
 
 	@Override

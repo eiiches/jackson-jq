@@ -22,6 +22,8 @@ import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
 import net.thisptr.jackson.jq.v2.spi.type.AnyType;
 import net.thisptr.jackson.jq.v2.spi.type.ArrayType;
 import net.thisptr.jackson.jq.v2.spi.type.FunctionType;
+import net.thisptr.jackson.jq.v2.spi.type.NumberKind;
+import net.thisptr.jackson.jq.v2.spi.type.NumericType;
 import net.thisptr.jackson.jq.v2.spi.type.ObjectType;
 import net.thisptr.jackson.jq.v2.spi.type.StringType;
 import net.thisptr.jackson.jq.v2.spi.type.TypeScheme;
@@ -34,7 +36,10 @@ public class ToEntriesFunction implements Function {
 	private static final List<TypeScheme<FunctionType>> TYPE_SCHEMES = List.of(
 			TypeScheme.of(Map.of(T, AnyType.getInstance()), FunctionType.of(
 					ObjectType.of(T),
-					ArrayType.of(ObjectType.of("key", StringType.getInstance(), "value", T)))));
+					ArrayType.of(ObjectType.of("key", StringType.getInstance(), "value", T)))),
+			TypeScheme.of(Map.of(T, AnyType.getInstance()), FunctionType.of(
+					ArrayType.of(T),
+					ArrayType.of(ObjectType.of("key", NumericType.of(NumberKind.INT), "value", T)))));
 
 	@Override
 	public List<TypeScheme<FunctionType>> types(Version jqVersion, int totalArguments) {

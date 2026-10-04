@@ -1,227 +1,576 @@
 - q: '{"x": 10} + . as {"a": $a} | {"y": $a}'
-  in: {"a": 1, "b": 2}
-  out:
-  - {"x": 10, "y": 1}
+  input: {"a": 1, "b": 2}
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - {"x": 10, "y": 1}
+    - v: '[1.8.0, )'
+      output:
+      - {"y": 1}
   types:
-  - input: 'ANY'
+  - v: '[1.5, 1.8.0)'
+    input: 'ANY'
     output: '{x:10,y:ANY}'
-  - input: '{a:INT,b:INT}'
+  - v: '[1.8.0, )'
+    input: 'ANY'
+    output: '{y:ANY}'
+  - v: '[1.5, 1.8.0)'
+    input: '{a:INT,b:INT}'
     output: '{x:10,y:INT}'
+  - v: '[1.8.0, )'
+    input: '{a:INT,b:INT}'
+    output: '{y:INT}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.8.0)'
 
 - q: '{"x": 10} + . as {"a": $a} | {"y": $a}'
-  in: {"a": 1, "b": 2}
-  out:
-  - {"y": 1}
+  input: {"a": 1, "b": 2}
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - {"x": 10, "y": 1}
+    - v: '[1.8.0, )'
+      output:
+      - {"y": 1}
   types:
-  - input: 'ANY'
+  - v: '[1.5, 1.8.0)'
+    input: 'ANY'
+    output: '{x:10,y:ANY}'
+  - v: '[1.8.0, )'
+    input: 'ANY'
     output: '{y:ANY}'
-  - input: '{a:INT,b:INT}'
+  - v: '[1.5, 1.8.0)'
+    input: '{a:INT,b:INT}'
+    output: '{x:10,y:INT}'
+  - v: '[1.8.0, )'
+    input: '{a:INT,b:INT}'
     output: '{y:INT}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.8.0, )'
 
 - q: '({"x": 10} + .) as {"a": $a} | {"y": $a}'
-  in: {"a": 1, "b": 2}
-  out:
-  - {"y": 1}
+  input: {"a": 1, "b": 2}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"y": 1}
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '{y:ANY}'
-  - input: '{a:INT,b:INT}'
+  - v: '[1.5, )'
+    input: '{a:INT,b:INT}'
     output: '{y:INT}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '{"x": 10} + (. as {"a": $a} | {"y": $a})'
-  in: {"a": 1, "b": 2}
-  out:
-  - {"x": 10, "y": 1}
+  input: {"a": 1, "b": 2}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"x": 10, "y": 1}
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '{x:10,y:ANY}'
-  - input: '{a:INT,b:INT}'
+  - v: '[1.5, )'
+    input: '{a:INT,b:INT}'
     output: '{x:10,y:INT}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '1 + 3 as $a | ($a * 2)'
-  in: null
-  out:
-  - 7
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - 7
+    - v: '[1.8.0, )'
+      output:
+      - 8
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NUMBER'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NUMBER'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, 1.8.0)'
 
 - q: '1 + 3 as $a | ($a * 2)'
-  in: null
-  out:
-  - 8
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - 7
+    - v: '[1.8.0, )'
+      output:
+      - 8
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NUMBER'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NUMBER'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.8.0, )'
 
 - q: '1 + 3 | (. * 2)'
-  in: null
-  out:
-  - 8
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 8
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NUMBER'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NUMBER'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '[1, 2 | . + 10]'
-  in: null
-  out:
-  - [11, 12]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [11, 12]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '[1 | . + 1, . + 2]'
-  in: null
-  out:
-  - [2, 3]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [2, 3]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '[1, 2 as $x | [$x, .]]'
-  in: 0
-  out:
-  - [1, [2, 0]]
+  input: 0
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, [2, 0]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[1,[2,ANY]]'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: '[1,[2,INT]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '[1 as $x | $x, $x + 1]'
-  in: null
-  out:
-  - [1, 2]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, 2]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:NUMBER]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:NUMBER]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '[1 | 2 as $x | [$x, .]]'
-  in: null
-  out:
-  - [[2, 1]]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[2, 1]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[[2,1]]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[[2,1]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '[1 as $x | 2 | [$x, .]]'
-  in: null
-  out:
-  - [[1, 2]]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[1, 2]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[[1,2]]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[[1,2]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '[1 as $x | 2 as $y | [$x, $y, .]]'
-  in: null
-  out:
-  - [[1, 2, null]]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[1, 2, null]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[[1,2,ANY]]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[[1,2,NULL]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '[1 | 2, 3 as $x | [$x, .]]'
-  in: null
-  out:
-  - [2, [3, 1]]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [2, [3, 1]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:2|[3,1]]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:2|[3,1]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: '[1, 2 as $x | 3, 4 | [$x, .]]'
-  in: null
-  out:
-  - [1, [2, 3], [2, 4]]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1, [2, 3], [2, 4]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:1|[2,3]|[2,4]]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:1|[2,3]|[2,4]]'
   properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+# The assignment operators bind tighter than //, so the alternative takes the whole assignment as its
+# left operand. Here that operand is an object, which is truthy, so the alternative keeps it.
+- q: '.a = false // "x"'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": false}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '"x"|{a:false}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+# An assignment whose right-hand side emits nothing emits nothing itself, and never evaluates the
+# path, so the alternative takes over even though the input cannot be indexed with a string.
+- q: '.foo = empty // "number"'
+  input: 21
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "number"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '"number"'
+  - v: '[1.5, )'
+    input: 'INT'
+    output: '"number"'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.a |= false // "x"'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": false}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '"x"|{a:false}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '.a //= false // "x"'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": false}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '"x"|{a:false}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+# The left operand of // stops before the assignment, so "x" is never asked to be a path expression.
+- q: '"x" // .a = 1'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "x"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '"x"|{a:1}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+# A comma stays looser than //, so only the second assignment gets an alternative.
+- q: '.a = 1, .b = 2 // 3'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": 1}
+      - {"b": 2}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '3|{a:1}|{b:2}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+# `or` stays tighter than the assignment, so it forms the assigned value rather than consuming it.
+- q: '.a = 1 or 2'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {"a": true}
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '{a:true}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+# All three levels at once: '(.a = empty) // (false or true)'.
+- q: '.a = empty // false or true'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'true'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'true'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+# `and` binds tighter than `or`, so this is 'true or (false and false)'.
+- q: 'true or false and false'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'true'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'true'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+# `or` short-circuits on a truthy left operand, so neither operand of `and` is reached and the
+# error is never raised.
+- q: 'true or error("boom") and false'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'true'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'true'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+# The comparisons stay tighter than `and`: '(1 < 2) and (2 < 1)'.
+- q: '1 < 2 and 2 < 1'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - false
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false

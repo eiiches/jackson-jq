@@ -1,180 +1,280 @@
 - q: 'delpaths(empty)'
-  in: true
-  out: []
+  input: true
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output: []
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|[*:ANY]|{*:ANY}'
-  - input: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'BOOLEAN'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: ZERO
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'delpaths([[{"start": "x", "end": "y"}]])'
-  in: null
-  out:
-  - null
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
   types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: 'NULL'
-    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'delpaths([["a",{"start":0,"end":2}]])'
-  in: {}
-  out:
-  - {}
+  input: {}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {}
   types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: '{}'
-    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '{}'
+    output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'delpaths([["a",[true]]])'
-  in: {}
-  out:
-  - {}
+  input: {}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - {}
   types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: '{}'
-    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '{}'
+    output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'try delpaths([[true]]) catch .'
-  in: {}
-  out:
-  - "Cannot delete boolean field of object"
+  input: {}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "Cannot delete boolean field of object"
+    jjq:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "Cannot index object with boolean"
+      incompat_type: JACKSON_JQ_BUG
+    - v: '[1.8.2, )'
+      output:
+      - "Cannot index object with boolean (true)"
+      incompat_type: JACKSON_JQ_BUG
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '{}'
+  - v: '[1.5, )'
+    input: '{}'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
-  failing: true
 
 - q: 'delpaths([[1.9], [1e20]])'
-  in: [0, 1, 2]
-  out:
-  - [0, 2]
+  input: [0, 1, 2]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0, 2]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|[*:ANY]|{*:ANY}'
-  - input: '[INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
     output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'try (delpaths([[{}]])) catch .'
-  in: [1, 2, 3]
-  out:
-  - "Start and end indices of an array slice must be numbers"
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "Start and end indices of an array slice must be numbers"
+    - v: '[1.7, )'
+      output:
+      - "Array/string slice indices must be integers"
+    jjq:
+    - v: '[1.7, )'
+      output:
+      - "Start and end indices of an array slice must be numbers"
+      incompat_type: INTENTIONAL
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
 
 - q: 'try (delpaths([[{}]])) catch .'
-  in: [1, 2, 3]
-  out:
-  - "Array/string slice indices must be integers"
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - "Start and end indices of an array slice must be numbers"
+    - v: '[1.7, )'
+      output:
+      - "Array/string slice indices must be integers"
+    jjq:
+    - v: '[1.7, )'
+      output:
+      - "Start and end indices of an array slice must be numbers"
+      incompat_type: JACKSON_JQ_BUG
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '[INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
-  failing: true
 
 - q: 'delpaths([[{"start": 1, "end": null}]])'
-  in: [1, 2, 3]
-  out:
-  - [1]
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [1]
   types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: '[INT,INT,INT]'
-    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'delpaths([[{"start": 2, "end": nan}]])'
-  in: [1, 2, 3]
-  out:
-  - [1, 2, 3]
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [1, 2, 3]
+    - v: '[1.7, )'
+      output:
+      - [1, 2]
   types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: '[INT,INT,INT]'
-    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.7)'
 
 - q: 'delpaths([[{"start": 2, "end": nan}]])'
-  in: [1, 2, 3]
-  out:
-  - [1, 2]
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      output:
+      - [1, 2, 3]
+    - v: '[1.7, )'
+      output:
+      - [1, 2]
   types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: '[INT,INT,INT]'
-    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: 'delpaths([[{"start": nan, "end": 2}]])'
-  in: [1, 2, 3]
-  out:
-  - [3]
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv_aux.c:47: parse_slice: Assertion `0 <= start && start <= end && end <= len' failed.\n"
+    - v: '[1.6, 1.7)'
+      output: []
+      runtime_error: "jq-1.6: src/jv_aux.c:47: parse_slice: Assertion `0 <= start && start <= end && end <= len' failed.\n"
+    - v: '[1.7, )'
+      output:
+      - [3]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - [3.0]
+      incompat_type: INTENTIONAL
   types:
-  - input: 'ANY'
-    output: 'ANY'
-  - input: '[INT,INT,INT]'
-    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'

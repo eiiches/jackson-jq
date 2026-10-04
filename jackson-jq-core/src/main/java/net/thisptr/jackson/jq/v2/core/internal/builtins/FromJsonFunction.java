@@ -6,15 +6,19 @@ import net.thisptr.jackson.jq.v2.core.internal.exception.ExceptionMessages;
 import net.thisptr.jackson.jq.v2.core.internal.exception.JsonQueryTypeException;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ExpressionPropertiesUtils;
 import net.thisptr.jackson.jq.v2.core.internal.json.JsonNodeUtils;
+import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
 import net.thisptr.jackson.jq.v2.json.internal.io.JsonException;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonSizeExceededException;
+import net.thisptr.jackson.jq.v2.json.internal.io.ParseOptions;
 import net.thisptr.jackson.jq.v2.spi.BindContext;
 import net.thisptr.jackson.jq.v2.spi.Cardinality;
 import net.thisptr.jackson.jq.v2.spi.Expression;
 import net.thisptr.jackson.jq.v2.spi.ExpressionProperties;
 import net.thisptr.jackson.jq.v2.spi.Function;
 import net.thisptr.jackson.jq.v2.spi.RuntimeContext;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
 import net.thisptr.jackson.jq.v2.spi.annotations.FunctionRegistration;
 import net.thisptr.jackson.jq.v2.spi.exception.JsonQueryException;
 import net.thisptr.jackson.jq.v2.spi.path.UntrackedPath;
@@ -48,9 +52,22 @@ public class FromJsonFunction implements Function {
 			if (!jsonProvider.isString(in))
 				throw new JsonQueryTypeException("%s only strings can be parsed", ExceptionMessages.describe(jsonProvider, version, in));
 
+			RuntimeLimits limits = scope.getRuntimeLimits();
+			String text = jsonProvider.getString(in);
+			RuntimeLimitChecks.checkStringLength(limits, text.length());
+			ParseOptions options = JsonNodeUtils.parseOptions(version).toBuilder()
+					.setMaxArrayLength(limits.getMaxArrayLength())
+					.setMaxObjectMemberCount(limits.getMaxObjectMemberCount())
+					.build();
 			JsonNode tree;
 			try {
-				tree = JsonCodec.parse(jsonProvider, jsonProvider.getString(in), JsonNodeUtils.parseOptions(version));
+				tree = JsonCodec.parse(jsonProvider, text, options);
+			} catch (JsonSizeExceededException tooLarge) {
+				if (tooLarge.getKind() == JsonSizeExceededException.Kind.ARRAY)
+					RuntimeLimitChecks.checkArraySize(limits, tooLarge.getSize());
+				else
+					RuntimeLimitChecks.checkObjectSize(limits, tooLarge.getSize());
+				throw tooLarge; // Unreachable: the parser only gives up once a limit has been breached.
 			} catch (JsonException e) {
 				throw new JsonQueryException(String.format("failed to parse %s as json", JsonCodec.format(jsonProvider, in)), e);
 			}

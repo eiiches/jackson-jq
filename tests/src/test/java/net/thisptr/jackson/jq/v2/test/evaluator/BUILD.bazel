@@ -5,6 +5,7 @@ jjq_java_library(
     name = "evaluator",
     testonly = True,
     srcs = [
+        "EvaluationLimits.java",
         "Evaluator.java",
         "JqExecutables.java",
         "JqRunner.java",
@@ -15,6 +16,7 @@ jjq_java_library(
         "//tests:__subpackages__",
     ],
     deps = [
+        "//jackson-jq-core",
         "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/version",
         "@maven//:com_fasterxml_jackson_core_jackson_core",
         "@maven//:com_fasterxml_jackson_core_jackson_databind",

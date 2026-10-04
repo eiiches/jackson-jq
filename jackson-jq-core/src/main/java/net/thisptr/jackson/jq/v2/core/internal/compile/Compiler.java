@@ -659,14 +659,32 @@ public class Compiler {
 			// most one value. A condition itself never does -- the branch still has to run after it.
 			@Var boolean conditionsEmitAtMostOne = true;
 			for (Pair<AstNode, AstNode> sw : cond.switches()) {
-				AnalyzedExpression<N> newIf = compileNonNull(env, context, scope, sw._1);
+				AnalyzedExpression<N> newIf;
+				context.pushLocalScope();
+				try {
+					newIf = compileNonNull(env, context, scope, sw._1);
+				} finally {
+					context.popScope();
+				}
 				conditionsEmitAtMostOne = conditionsEmitAtMostOne && newIf.getCardinality() != Cardinality.UNKNOWN;
-				context.setTailPosition(inTailPosition && conditionsEmitAtMostOne);
-				AnalyzedExpression<N> newThen = compileNonNull(env, context, scope, sw._2);
+				AnalyzedExpression<N> newThen;
+				context.pushLocalScope();
+				try {
+					context.setTailPosition(inTailPosition && conditionsEmitAtMostOne);
+					newThen = compileNonNull(env, context, scope, sw._2);
+				} finally {
+					context.popScope();
+				}
 				newSwitches.add(Pair.of(newIf, newThen));
 			}
-			context.setTailPosition(inTailPosition && conditionsEmitAtMostOne);
-			AnalyzedExpression<N> newElse = compileNonNull(env, context, scope, cond.otherwise());
+			AnalyzedExpression<N> newElse;
+			context.pushLocalScope();
+			try {
+				context.setTailPosition(inTailPosition && conditionsEmitAtMostOne);
+				newElse = compileNonNull(env, context, scope, cond.otherwise());
+			} finally {
+				context.popScope();
+			}
 			int[] conditionOutputIndices = new int[newSwitches.size()];
 			for (int i = 0; i < conditionOutputIndices.length; ++i)
 				conditionOutputIndices[i] = context.outputCounterOf(newSwitches.get(i)._1);
@@ -888,6 +906,7 @@ public class Compiler {
 			int tailCallSlot;
 			AnalyzedExpression<N> compiledBody;
 			ClosureSpec closureSpec;
+			Set<String> usedFilterParameters;
 			context.pushFunctionScope();
 			try {
 				for (String arg : fd.args()) {
@@ -900,6 +919,7 @@ public class Compiler {
 						paramSlots.add(context.getFunctionSlot(parameterSignature));
 					}
 				}
+				context.recordFilterParameters(fd.args());
 				// After the parameter slots are assigned, so a tail call back into this def knows where to
 				// write its new arguments -- which, besides jumping, is all such a call does.
 				context.markDefinitionScope(signature, paramSlots);
@@ -908,6 +928,7 @@ public class Compiler {
 				// and the call's frame is gone by the time anything downstream sees a value.
 				context.setTailPosition(true);
 				compiledBody = compileNonNull(env, context, scope, fd.body());
+				usedFilterParameters = context.currentScopeUsedFilterParameters();
 				fnSize = context.getSlotCount();
 				closureSpec = context.getClosureSpec();
 				tailCallSlot = context.currentScopeTailCallSlot();
@@ -945,7 +966,7 @@ public class Compiler {
 					|| !closureSpec.capturedFunctions().isEmpty()
 					|| (closureSpec.capturedVariables().isEmpty() && FreeVariables.dependsOnVariables(compiledBody));
 			context.recordFunctionDependsOnInfo(signature,
-					new FunctionDependsOnInfo(compiledBody.dependsOnInput(), compiledBody.dependsOnExternalState(), resolvedDef.freeLocalSlots(), hasOpaqueVariableReference));
+					new FunctionDependsOnInfo(compiledBody.getCardinality(), compiledBody.dependsOnInput(), compiledBody.dependsOnExternalState(), fd.args(), usedFilterParameters, resolvedDef.freeLocalSlots(), hasOpaqueVariableReference));
 			return resolvedDef;
 		}
 

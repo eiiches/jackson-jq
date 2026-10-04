@@ -4,7 +4,6 @@ jjq_java_library(
     name = "exception",
     srcs = [
         "ExceptionMessages.java",
-        "IllegalJsonArgumentException.java",
         "IllegalJsonInputException.java",
         "JsonQueryBreakException.java",
         "JsonQueryTypeException.java",

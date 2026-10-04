@@ -1,12 +1,18 @@
 - q: '[path(.)]'
-  out:
-  - [[]]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [[]]
   types:
-  - input: 'ANY'
-    output: '[[*:NUMBER|STRING]]'
-  - input: 'NULL'
-    output: '[[*:NUMBER|STRING]]'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false

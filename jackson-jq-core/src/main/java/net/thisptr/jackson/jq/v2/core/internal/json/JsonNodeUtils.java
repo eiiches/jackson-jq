@@ -4,15 +4,20 @@ import java.util.List;
 import java.util.Locale;
 
 import net.thisptr.jackson.jq.v2.core.internal.commons.collection.Lists;
+import net.thisptr.jackson.jq.v2.core.internal.misc.RuntimeLimitChecks;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonNodeType;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.internal.io.FormatOptions;
 import net.thisptr.jackson.jq.v2.json.internal.io.JsonCodec;
+import net.thisptr.jackson.jq.v2.json.internal.io.JsonSizeExceededException;
 import net.thisptr.jackson.jq.v2.json.internal.io.ParseOptions;
+import net.thisptr.jackson.jq.v2.spi.RuntimeLimits;
+import net.thisptr.jackson.jq.v2.spi.exception.RuntimeLimitExceededException;
 import net.thisptr.jackson.jq.v2.spi.version.Version;
 
 public class JsonNodeUtils {
+	private static final FormatOptions FORMAT_OPTIONS = FormatOptions.newBuilder().build();
 	private static final FormatOptions LEGACY_FORMAT_OPTIONS = FormatOptions.newBuilder()
 			.setRoundNumbersToDouble(true)
 			.build();
@@ -69,6 +74,37 @@ public class JsonNodeUtils {
 		if (version.compareTo(Versions.JQ_1_7) < 0)
 			return JsonCodec.format(jsonProvider, node, LEGACY_FORMAT_OPTIONS);
 		return JsonCodec.format(jsonProvider, node);
+	}
+
+	/**
+	 * Serializes a node as the given jq version writes it, giving up as soon as the text would breach
+	 * the invocation's string budget.
+	 * <p>
+	 * Checking as the text grows, rather than measuring it afterwards, is what keeps a value nobody
+	 * could use from being serialized in full first.
+	 *
+	 * @param <JsonNode> the JSON node type
+	 * @param jsonProvider the JSON provider that owns {@code node}
+	 * @param node the node to serialize
+	 * @param version the jq compatibility version, which selects how numbers are written
+	 * @param limits the invocation's limits
+	 * @return the serialized text
+	 * @throws RuntimeLimitExceededException if the text would exceed {@link RuntimeLimits#getMaxStringLength()}
+	 */
+	public static <JsonNode> String toString(JsonProvider<JsonNode> jsonProvider, JsonNode node, Version version, RuntimeLimits limits) {
+		try {
+			return JsonCodec.format(jsonProvider, node, formatOptions(version, limits.getMaxStringLength()));
+		} catch (JsonSizeExceededException tooLong) {
+			RuntimeLimitChecks.checkStringLength(limits, tooLong.getSize());
+			throw tooLong; // Unreachable: the formatter only gives up once the budget is already breached.
+		}
+	}
+
+	private static FormatOptions formatOptions(Version version, int maxLength) {
+		FormatOptions base = version.compareTo(Versions.JQ_1_7) < 0 ? LEGACY_FORMAT_OPTIONS : FORMAT_OPTIONS;
+		if (maxLength == Integer.MAX_VALUE)
+			return base;
+		return base.toBuilder().setMaxLength(maxLength).build();
 	}
 
 	/**

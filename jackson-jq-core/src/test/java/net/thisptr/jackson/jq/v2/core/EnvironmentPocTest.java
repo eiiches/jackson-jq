@@ -337,11 +337,12 @@ public class EnvironmentPocTest {
 		env.compile("probe(1 as $x | def f: $x; f)");
 		assertThat(isConstantExpression(captured.get(captured.size() - 1))).isTrue();
 
-		// A def that never references its own filter-typed parameter is still conservatively marked as
-		// depending on input once called, because the argument expression is composed in regardless of
-		// whether the body actually invokes it (mirrors testDependsOnExternalStateIsNotShielded's
-		// "deliberately not shielded" precedent for builtin calls).
+		// An unused filter parameter does not make the call depend on its argument's input.
 		env.compile("probe(def f(g): 1; f(. + 1))");
+		assertThat(AnalyzedExpression.propertiesOf(captured.get(captured.size() - 1)).dependsOnInput()).isFalse();
+
+		// An invoked filter parameter does contribute its argument's input dependency.
+		env.compile("probe(def f(g): g; f(. + 1))");
 		assertThat(AnalyzedExpression.propertiesOf(captured.get(captured.size() - 1)).dependsOnInput()).isTrue();
 
 		// A def whose body reads a *declared/global* variable stays conservative too -- that dependency

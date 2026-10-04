@@ -1,239 +1,298 @@
 - q: 'path(label $out | foreach .[] as $item (path(.); if $item == false then break $out else $item end; .))'
-  in: [1, 2, 3, false, 4]
-  out:
-  - [0]
-  - [1]
-  - [2]
+  input: [1, 2, 3, false, 4]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0]
+      - [1]
+      - [2]
   types:
-  - input: 'ANY'
-    output: '[*:NUMBER|STRING]'
-  - input: '[INT,INT,INT,BOOLEAN,INT]'
-    output: '[*:NUMBER|STRING]'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,BOOLEAN,INT]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'try (path(label $out | foreach [1,2,3][] as $item ([]; if $item == false then break $out else $item end; .))) catch .'
-  out:
-  - "Invalid path expression near attempt to iterate through [1,2,3]"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "Invalid path expression near attempt to iterate through [1,2,3]"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'try (path(label $out | foreach .[] as $item (path(.); if $item == false then break $out else $item end; .))) catch .'
-  out:
-  - "Cannot iterate over null (null)"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "Cannot iterate over null (null)"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'path(label $out | foreach .[] as $item ([]; if $item == false then break $out else 10 end; $item))'
-  in: [1, 2, 3, false, 4]
-  out:
-  - [0]
-  - [1]
-  - [2]
+  input: [1, 2, 3, false, 4]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0]
+      - [1]
+      - [2]
   types:
-  - input: 'ANY'
-    output: '[*:NUMBER|STRING]'
-  - input: '[INT,INT,INT,BOOLEAN,INT]'
-    output: '[*:NUMBER|STRING]'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,BOOLEAN,INT]'
+    output: '[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '[path(foreach .a[] as $x (1; null))]'
-  in: {"a": [null, null]}
+  input: {"a": [null, null]}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [["a", 0], ["a", 1]]
   types:
-  - input: 'ANY'
-    output: '[*:[*:NUMBER|STRING]]'
-  - input: '{a:[NULL,NULL]}'
-    output: '[*:[*:NUMBER|STRING]]'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
+  - v: '[1.5, )'
+    input: '{a:[NULL,NULL]}'
+    output: '[*:[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
   comment: 'only the source moves the traversal along; the accumulator is a value of its own'
-  expectations:
-    default:
-    - v: '[1.5, )'
-      out:
-      - [["a", 0], ["a", 1]]
 
 - q: '[path(foreach .[] as $x (.; .))]'
-  in: [1, 2, 3]
-  types:
-  - input: 'ANY'
-    output: '[*:[*:NUMBER|STRING]]'
-  - input: '[INT,INT,INT]'
-    output: '[*:[*:NUMBER|STRING]]'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: [1, 2, 3]
   expectations:
     default:
     - v: '[1.5, )'
-      out: []
-      error: true
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Invalid path expression with result [1,2,3]\n"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: '[*:[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '[path(foreach .a as $x (1; 2; null))]'
-  in: {"a": null}
-  types:
-  - input: 'ANY'
-    output: '[[*:NUMBER|STRING]]'
-  - input: '{a:NULL}'
-    output: '[[*:NUMBER|STRING]]'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: {"a": null}
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - [["a"]]
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
+  - v: '[1.5, )'
+    input: '{a:NULL}'
+    output: '[[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '[path(foreach empty as $x (1; null))]'
-  in: {"a": null}
-  types:
-  - input: 'ANY'
-    output: '[*:[*:NUMBER|STRING]]'
-  - input: '{a:NULL}'
-    output: '[*:[*:NUMBER|STRING]]'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
+  input: {"a": null}
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - []
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
+  - v: '[1.5, )'
+    input: '{a:NULL}'
+    output: '[*:[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
 
 - q: '[path(limit(1; .a[]))]'
-  in: {"a": [1, 2]}
+  input: {"a": [1, 2]}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Invalid path expression near attempt to access element 1 of [0,1]\n"
+    - v: '[1.6, )'
+      output:
+      - [["a", 0]]
+    jjq:
+    - v: '[1.5, 1.6)'
+      output:
+      - [["a", 0]]
+      incompat_type: INTENTIONAL
   types:
-  - input: 'ANY'
-    output: '[*:[*:NUMBER|STRING]]'
-  - input: '{a:[INT,INT]}'
-    output: '[*:[*:NUMBER|STRING]]'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
+  - v: '[1.5, )'
+    input: '{a:[INT,INT]}'
+    output: '[*:[*:NUMBER|STRING|[*:ANY]|{end:ANY,start:ANY}]]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
   comment: 'jq 1.5 does not keep the position across a label, so it loses a path jq 1.6 keeps; jackson-jq keeps it on every version'
-  expectations:
-    default:
-    - v: '[1.5, 1.6)'
-      out: []
-      error: true
-    - v: '[1.6, )'
-      out:
-      - [["a", 0]]
-    jjq:
-    - v: '[1.5, 1.6)'
-      out:
-      - [["a", 0]]
 
 - q: 'del(limit(1; .a[]))'
-  in: {"a": [1, 2]}
+  input: {"a": [1, 2]}
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Invalid path expression near attempt to access element 1 of [0,1]\n"
+    - v: '[1.6, )'
+      output:
+      - {"a": [2]}
+    jjq:
+    - v: '[1.5, 1.6)'
+      output:
+      - {"a": [2.0]}
+      incompat_type: INTENTIONAL
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|[*:ANY]|{*:ANY}'
-  - input: '{a:[INT,INT]}'
+  - v: '[1.5, )'
+    input: '{a:[INT,INT]}'
     output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
   comment: 'jq 1.5 does not keep the position across a label, so it loses a path jq 1.6 keeps; jackson-jq keeps it on every version'
-  expectations:
-    default:
-    - v: '[1.5, 1.6)'
-      out: []
-      error: true
-    - v: '[1.6, )'
-      out:
-      - {"a": [2]}
-    jjq:
-    - v: '[1.5, 1.6)'
-      out:
-      - {"a": [2]}
 
 - q: '[foreach . as $x (0, 9; $x)]'
-  in: "abc"
+  input: "abc"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - ["abc", null]
+    - v: '[1.8.0, )'
+      output:
+      - ["abc", "abc"]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:ANY]'
-  - input: 'STRING'
+  - v: '[1.5, 1.8.0)'
+    input: 'STRING'
+    output: '[*:NULL|STRING]'
+  - v: '[1.8.0, )'
+    input: 'STRING'
     output: '[*:STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
   comment: 'Before jq 1.8, foreach read `.` off the stack with DUPN when it entered the loop, which left a null behind: the source saw the real input only while the first init value ran, and null for every init value after it. jq 1.8.0 fixed foreach; reduce still does it.'
+
+- q: '[foreach . as $x (0, 9; $x; $x)]'
+  input: "abc"
   expectations:
     default:
     - v: '[1.5, 1.8.0)'
-      out:
+      output:
       - ["abc", null]
     - v: '[1.8.0, )'
-      out:
+      output:
       - ["abc", "abc"]
-
-- q: '[foreach . as $x (0, 9; $x; $x)]'
-  in: "abc"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:ANY]'
-  - input: 'STRING'
+  - v: '[1.5, 1.8.0)'
+    input: 'STRING'
+    output: '[*:NULL|STRING]'
+  - v: '[1.8.0, )'
+    input: 'STRING'
     output: '[*:STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
   comment: 'The extract form reads the same source, so it sees the same null.'
+
+- q: '[try ([path(foreach .a[] as $x (0, 9; $x))]) catch .]'
+  input: {"a": [1, 2]}
   expectations:
     default:
     - v: '[1.5, 1.8.0)'
-      out:
-      - ["abc", null]
+      output:
+      - ["Invalid path expression near attempt to access element \"a\" of null"]
     - v: '[1.8.0, )'
-      out:
-      - ["abc", "abc"]
-
-- q: '[try ([path(foreach .a[] as $x (0, 9; $x))]) catch .]'
-  in: {"a": [1, 2]}
+      output:
+      - [[["a", 0], ["a", 1], ["a", 0], ["a", 1]]]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:ANY]'
-  - input: '{a:[INT,INT]}'
+  - v: '[1.5, )'
+    input: '{a:[INT,INT]}'
     output: '[*:ANY]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
   comment: 'Under path tracking the null is a value the path no longer leads to, so before jq 1.8 the second init value cannot step off it.'
-  expectations:
-    default:
-    - v: '[1.5, 1.8.0)'
-      out:
-      - ["Invalid path expression near attempt to access element \"a\" of null"]
-    - v: '[1.8.0, )'
-      out:
-      - [[["a", 0], ["a", 1], ["a", 0], ["a", 1]]]

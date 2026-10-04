@@ -346,8 +346,13 @@ public class Main {
 		STATUS_MISMATCH,
 		COUNT_MISMATCH,
 		VALUE_MISMATCH,
+		INFERRED_TYPE_MISMATCH,
+		INFERRED_CARDINALITY_MISMATCH,
 		TIMEOUT,
 		EVALUATION_ERROR
+	}
+
+	private record Failure(Category category, String message) {
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)
@@ -454,7 +459,7 @@ public class Main {
 		};
 	}
 
-	private static <N> Evaluator createJacksonJqRunner(JsonProvider<N> jsonProvider, Version jqVersion) {
+	private static <N> JacksonJqRunner<N> createJacksonJqRunner(JsonProvider<N> jsonProvider, Version jqVersion) {
 		return new JacksonJqRunner<>(jsonProvider, jqVersion);
 	}
 
@@ -597,7 +602,7 @@ public class Main {
 				? new ToleranceJsonNodeComparator()
 				: new JsonNodeComparator<>(Jackson2JsonProvider.getInstance());
 
-		Evaluator actualEvaluator = createJacksonJqRunner(jsonProvider, version);
+		JacksonJqRunner<?> actualEvaluator = createJacksonJqRunner(jsonProvider, version);
 
 		for (int i = 0; i < iterations; ++i) {
 			Generator generator = generators.get(random.nextInt(generators.size()));
@@ -618,10 +623,14 @@ public class Main {
 			}
 
 			@Var Evaluator.Result actual = null;
+			@Var JacksonJqRunner.CheckedResult checked = null;
 			try {
-				actual = actualEvaluator.evaluate(expr.toString(), in, timeout);
+				checked = actualEvaluator.evaluateChecked(expr.toString(), in, timeout);
+				actual = checked.result();
 			} catch (Throwable e) {
-				actual = new Evaluator.Result(Collections.emptyList(), e);
+				Evaluator.ErrorPhase phase = e instanceof TimeoutException ? null
+						: e instanceof JsonQueryException ? Evaluator.ErrorPhase.COMPILE : Evaluator.ErrorPhase.RUNTIME;
+				actual = new Evaluator.Result(Collections.emptyList(), e, phase, e.getMessage());
 			}
 
 			@Var Category category = null;
@@ -657,7 +666,19 @@ public class Main {
 				}
 			}
 
-			if (category != null) {
+			List<Failure> failures = new ArrayList<>();
+			if (category != null)
+				failures.add(new Failure(category, message));
+			if (checked != null) {
+				for (JacksonJqRunner.InferenceViolation violation : checked.violations()) {
+					failures.add(new Failure(
+							violation.kind() == JacksonJqRunner.InferenceKind.TYPE
+									? Category.INFERRED_TYPE_MISMATCH : Category.INFERRED_CARDINALITY_MISMATCH,
+							violation.message()));
+				}
+			}
+
+			if (!failures.isEmpty()) {
 				TestCase testCase = new TestCase();
 				testCase.in = in;
 				testCase.version = VersionRange.of(version, true, null, false);
@@ -670,20 +691,22 @@ public class Main {
 					testCase.out = expected.values();
 				}
 
-				DiagnosticRecord record = new DiagnosticRecord();
-				record.iteration = i;
-				record.seed = seed;
-				record.version = version.toString();
-				record.category = category;
-				record.message = message;
-				record.expression = expr.toString();
-				record.in = in;
-				record.expected = toSummary(expected);
-				record.actual = toSummary(actual);
-				record.testCase = testCase;
+				for (Failure failure : failures) {
+					DiagnosticRecord record = new DiagnosticRecord();
+					record.iteration = i;
+					record.seed = seed;
+					record.version = version.toString();
+					record.category = failure.category();
+					record.message = failure.message();
+					record.expression = expr.toString();
+					record.in = in;
+					record.expected = toSummary(expected);
+					record.actual = toSummary(actual);
+					record.testCase = testCase;
 
-				System.err.println(MAPPER.writeValueAsString(record));
-				diagnostics.add(record);
+					System.err.println(MAPPER.writeValueAsString(record));
+					diagnostics.add(record);
+				}
 			} else {
 				passedCount++;
 				if (expected.error() == null && !expected.values().isEmpty()) {

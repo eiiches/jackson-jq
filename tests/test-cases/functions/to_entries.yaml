@@ -1,42 +1,71 @@
 - q: 'to_entries'
-  in: [61, 62]
-  out:
-  - [{"key": 0, "value": 61}, {"key": 1, "value": 62}]
+  input: [61, 62]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [{"key": 0, "value": 61}, {"key": 1, "value": 62}]
   types:
-  - input: 'ANY'
-    output: '[*:{key:STRING,value:ANY}]'
-  - input: '[INT,INT]'
-    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:{key:INT,value:ANY}]|[*:{key:STRING,value:ANY}]'
+  - v: '[1.5, )'
+    input: '[INT,INT]'
+    output: '[*:{key:INT,value:INT}]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'try ("abcdefghijklm" | to_entries) catch .'
-  out:
-  - "string (\"abcdefghij...) has no keys"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "string (\"abcdefghij...) has no keys"
+    - v: '[1.8.2, )'
+      output:
+      - "string (\"abcdefghijklm\") has no keys"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, 1.8.2)'
 
 - q: 'try ("abcdefghijklm" | to_entries) catch .'
-  out:
-  - "string (\"abcdefghijklm\") has no keys"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "string (\"abcdefghij...) has no keys"
+    - v: '[1.8.2, )'
+      output:
+      - "string (\"abcdefghijklm\") has no keys"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.8.2, )'

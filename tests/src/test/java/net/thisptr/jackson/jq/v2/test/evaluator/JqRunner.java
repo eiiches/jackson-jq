@@ -29,14 +29,20 @@ public class JqRunner implements Evaluator {
 
 	private final String executable;
 	private final @Nullable Path moduleSearchPath;
+	private final @Nullable String timezone;
 
 	public JqRunner(String executable) {
 		this(executable, null);
 	}
 
 	public JqRunner(String executable, @Nullable Path moduleSearchPath) {
+		this(executable, moduleSearchPath, null);
+	}
+
+	public JqRunner(String executable, @Nullable Path moduleSearchPath, @Nullable String timezone) {
 		this.executable = executable;
 		this.moduleSearchPath = moduleSearchPath;
+		this.timezone = timezone;
 	}
 
 	public static boolean hasJq(String executable) {
@@ -63,6 +69,8 @@ public class JqRunner implements Evaluator {
 		// Matches the ENV.PAGER jq variable AbstractJsonQueryTest sets up for the library's own
 		// implementation, so `env.PAGER`/`$ENV.PAGER` test cases agree between the two.
 		pb.environment().put("PAGER", "less");
+		if (timezone != null)
+			pb.environment().put("TZ", timezone);
 
 		Process p = pb.start();
 
@@ -84,17 +92,27 @@ public class JqRunner implements Evaluator {
 			while (iter.hasNextValue()) {
 				values.add(iter.nextValue());
 			}
+		} catch (IOException malformedOutput) {
+			if (p.exitValue() == 0)
+				throw malformedOutput;
+			values.clear();
 		}
 
 		@Var String error = null;
+		@Var String stderr = null;
+		@Var ErrorPhase errorPhase = null;
 		if (p.exitValue() != 0) {
-			try (InputStream stderr = p.getErrorStream()) {
-				String message = new String(ByteStreams.toByteArray(stderr), StandardCharsets.UTF_8);
+			errorPhase = p.exitValue() == 3 ? ErrorPhase.COMPILE : ErrorPhase.RUNTIME;
+			try (InputStream stderrStream = p.getErrorStream()) {
+				@Var String message = new String(ByteStreams.toByteArray(stderrStream), StandardCharsets.UTF_8);
+				if (message.isBlank())
+					message = "jq exited with status " + p.exitValue() + " without an error message";
 				String[] tokens = message.trim().split(": ", 3);
 				error = tokens.length == 3 ? tokens[2] : message.trim();
+				stderr = message;
 			}
 		}
 
-		return new Result(values, error != null ? new RuntimeException(error) : null);
+		return new Result(values, error != null ? new RuntimeException(error) : null, errorPhase, stderr);
 	}
 }

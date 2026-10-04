@@ -1,232 +1,290 @@
 - q: 'def f: "outer"; (def f: "inner"; f) | f'
-  in: null
+  input: null
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "outer"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"outer"'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '"outer"'
   properties:
-    cardinality: UNKNOWN
+  - v: '[1.5, )'
+    cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'def f: 1; . | (def f: 2; f) | f, .'
-  in: null
+  input: null
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - 1
       - 2
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '1|2'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '1|2'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'def f: 1; . | [def f: 2; f] | f, .'
-  in: null
+  input: null
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - 1
       - [2]
   types:
-  - input: 'ANY'
-    output: '1|[*:2]'
-  - input: 'NULL'
-    output: '1|[*:2]'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '1|[2]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '1|[2]'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'def f: 1; . | {(def f: "foo"; f): f}'
-  in: null
+  input: null
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - {"foo": 1}
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '{*:1}'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '{*:1}'
   properties:
-    cardinality: UNKNOWN
+  - v: '[1.5, )'
+    cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: 'def f: "outer"; [(def f: "inner"; f), f]'
-  in: null
+  input: null
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - ["inner", "outer"]
   types:
-  - input: 'ANY'
-    output: '[*:"inner"|"outer"]'
-  - input: 'NULL'
-    output: '[*:"inner"|"outer"]'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '["inner","outer"]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '["inner","outer"]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 - q: 'def f: "outer"; (def f: "left"; f) | (def f: "right"; f) | f'
-  in: null
+  input: null
   expectations:
     default:
     - v: '[1.5, )'
-      out:
+      output:
       - "outer"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"outer"'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '"outer"'
   properties:
-    cardinality: UNKNOWN
+  - v: '[1.5, )'
+    cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
 
 # A definition inside an interpolation is local to that interpolation.
 - q: 'def f: "outer"; "\(def f: "inner"; "x")" | f'
-  in: null
-  out:
-  - "outer"
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "outer"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"outer"'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '"outer"'
   properties:
-    cardinality: UNKNOWN
+  - v: '[1.5, )'
+    cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'def f: "outer"; "\(def f: "inner"; f)" | f'
-  in: null
-  out:
-  - "outer"
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "outer"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"outer"'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '"outer"'
   properties:
-    cardinality: UNKNOWN
+  - v: '[1.5, )'
+    cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'def f: "outer"; "\(def f: "inner"; "x")\(f)"'
-  in: null
-  out:
-  - "xouter"
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "xouter"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'STRING'
   properties:
-    cardinality: UNKNOWN
+  - v: '[1.5, )'
+    cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 # Fuzz iteration 4788: the inner arity-one definition must not replace the outer one.
 - q: 'def f(a): ("foo 0") as $x | $x; @json "foo \(def f(a): []; ("true") < (-1.5) | f(-1.0))" | f({})'
-  in: '"true"'
-  out:
-  - "foo 0"
+  input: "\"true\""
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "foo 0"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '"foo 0"'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: '"foo 0"'
   properties:
-    cardinality: UNKNOWN
+  - v: '[1.5, )'
+    cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '1, def f: 2; f | 4'
-  in: null
-  out:
-  - 1
-  - 4
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+      - 4
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '1|4'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '1|4'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '1, def f: 2; f, def f: 3; f | 4'
-  in: null
-  out:
-  - 1
-  - 2
-  - 4
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 1
+      - 2
+      - 4
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '1|2|4'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '1|2|4'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '@html, "foo \(0) bar", def f(a): "baz"; f(0.0), def f(a): "baz"; f(0.0) | "last"'
-  in: 0.5
-  out:
-  - "0.5"
-  - "foo 0 bar"
-  - "baz"
-  - "last"
+  input: 0.5
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "0.5"
+      - "foo 0 bar"
+      - "baz"
+      - "last"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'FLOAT'
+  - v: '[1.5, )'
+    input: 'FLOAT'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '1, (def f: 2; f) | 4'
-  in: null
-  out:
-  - 4
-  - 4
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 4
+      - 4
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '4'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '4'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'

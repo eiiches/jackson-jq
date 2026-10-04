@@ -1,17 +1,25 @@
+load("@rules_java//java:defs.bzl", "java_binary")
 load("//build-tools/bazel:defs.bzl", "jjq_java_library", "jjq_java_test_suite")
 
 jjq_java_library(
     name = "testcase",
     testonly = True,
     srcs = [
+        "ExpectationComparison.java",
+        "FormatTestCases.java",
         "ModuleFixtures.java",
         "TestCase.java",
+        "TestCaseFiles.java",
+        "TestCaseFormatter.java",
         "TestCaseLoader.java",
         "VersionRangeDeserializer.java",
+        "VersionSpelling.java",
+        "VersionedRows.java",
     ],
     release = 17,
     visibility = ["//tests:__subpackages__"],
     deps = [
+        "//jackson-jq-json-provider-impl-jackson2",
         "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi",
         "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/version",
         "//tests/src/test/java/net/thisptr/jackson/jq/v2/test/comparator",
@@ -19,15 +27,29 @@ jjq_java_library(
         "@maven//:com_fasterxml_jackson_core_jackson_core",
         "@maven//:com_fasterxml_jackson_core_jackson_databind",
         "@maven//:com_fasterxml_jackson_dataformat_jackson_dataformat_yaml",
+        "@maven//:org_yaml_snakeyaml",
     ],
 )
 
 jjq_java_test_suite(
-    srcs = ["ExpectationsTest.java"],
+    srcs = [
+        "ExpectationsTest.java",
+        "TestCaseFormatterTest.java",
+        "VersionedRowsTest.java",
+    ],
     release = 17,
     visibility = ["//tests:__pkg__"],
     deps = [
         ":testcase",
         "//jackson-jq-spi/src/main/java/net/thisptr/jackson/jq/v2/spi/version",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
     ],
+)
+
+java_binary(
+    name = "format-test-cases",
+    testonly = True,
+    main_class = "net.thisptr.jackson.jq.v2.test.testcase.FormatTestCases",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":testcase"],
 )

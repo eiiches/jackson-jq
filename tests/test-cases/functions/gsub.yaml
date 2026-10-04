@@ -1,46 +1,72 @@
 # The replacement is concatenated onto the text preceding the match, so null contributes
 # nothing and any other non-string is a type error.
 - q: '"abcabc" | gsub("b"; null)'
-  in: null
-  out:
-  - "acac"
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "acac"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'try ("abc" | gsub("b"; 1)) catch .'
-  in: null
-  out:
-  - "string (\"a\") and number (1) cannot be added"
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "string (\"a\") and number (1) cannot be added"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'ANY'
   properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: '[("abc" | gsub(""; "X")), ("" | gsub(""; "X")), ("abc" | gsub("(?=b)"; "X")), ("aaa" | gsub("a*"; "X"))]'
-  in: null
-  out:
-  - ["XaXbXcX", "X", "aXbc", "XX"]
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      timeout: true
+    - v: '[1.7, )'
+      output:
+      - ["XaXbXcX", "X", "aXbc", "XX"]
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - ["XaXbXcX", "X", "aXbc", "XX"]
+      incompat_type: UNCLASSIFIED
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:STRING]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: '[*:STRING]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: false
     depends_on_external_state: false
-  v: '[1.7, )'

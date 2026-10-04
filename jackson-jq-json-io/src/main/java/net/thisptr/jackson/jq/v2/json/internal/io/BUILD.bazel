@@ -9,6 +9,7 @@ jjq_java_library(
         "JsonCodec.java",
         "JsonException.java",
         "JsonParser.java",
+        "JsonSizeExceededException.java",
         "ParseOptions.java",
     ],
     release = 17,

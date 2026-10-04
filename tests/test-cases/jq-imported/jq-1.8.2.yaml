@@ -1,0 +1,748 @@
+# This file is generated from jqlang/jq files. Different license terms apply:
+#
+# jq is copyright (C) 2012 Stephen Dolan
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# jq's documentation (everything found under the docs/ subdirectory in
+# the source tree) is licensed under the Creative Commons CC BY 3.0
+# license, which can be found at:
+#
+#          https://creativecommons.org/licenses/by/3.0/
+#
+- q: '"123\u0000456" | try tonumber catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - 123
+    - v: '[1.8.2, )'
+      output:
+      - "string (\"123\\u0000456\") cannot be parsed as a number"
+    jjq:
+    - v: '[1.5, )'
+      output:
+      - "java.lang.NumberFormatException: For input string: \"123\0456\""
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, 1.7)'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+  - v: '[1.7, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: '"true\u0000x", "false\u0000" | try toboolean catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: toboolean/0 is not defined at <top-level>, line 1:\n\"true\\u0000x\", \"false\\u0000\" | try toboolean catch .                                   \njq: 1 compile error\n"
+    - v: '[1.8.0, 1.8.2)'
+      output:
+      - true
+      - false
+    - v: '[1.8.2, )'
+      output:
+      - "string (\"true\\u0000x\") cannot be parsed as a boolean"
+      - "string (\"false\\u0000\") cannot be parsed as a boolean"
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function toboolean/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: 'del(.[nan])'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      timeout: true
+    - v: '[1.8.2, )'
+      output:
+      - [1, 2, 3]
+    jjq:
+    - v: '[1.5, )'
+      output: []
+      runtime_error: "Cannot use nan as array index"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'del(.[nan,nan])'
+  input: [1, 2, 3]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      timeout: true
+    - v: '[1.8.2, )'
+      output:
+      - [1, 2, 3]
+    jjq:
+    - v: '[1.5, )'
+      output: []
+      runtime_error: "Cannot use nan as array index"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT]'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.[]|ltrimstr("")]'
+  input: ["a", "xx", ""]
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - ["a", "xx", ""]
+  types:
+  - v: '[1.5, 1.8.0)'
+    input: 'ANY'
+    output: '[*:BINARY|BOOLEAN|NULL|NUMBER|STRING|[*:ANY]|{*:ANY}]'
+  - v: '[1.8.0, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING]'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.[]|rtrimstr("")]'
+  input: ["a", "xx", ""]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - ["a", "xx", ""]
+    - v: '[1.8.0, 1.8.2)'
+      output:
+      - ["", "", ""]
+    - v: '[1.8.2, )'
+      output:
+      - ["a", "xx", ""]
+  types:
+  - v: '[1.5, 1.8.0)'
+    input: 'ANY'
+    output: '[*:BINARY|BOOLEAN|NULL|NUMBER|STRING|[*:ANY]|{*:ANY}]'
+  - v: '[1.8.0, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: '[STRING,STRING,STRING]'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: '[.[]|trimstr("")]'
+  input: ["a", "xx", ""]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: trimstr/1 is not defined at <top-level>, line 1:\n[.[]|trimstr(\"\")]     \njq: 1 compile error\n"
+    - v: '[1.8.0, 1.8.2)'
+      output:
+      - ["", "", ""]
+    - v: '[1.8.2, )'
+      output:
+      - ["a", "xx", ""]
+  types:
+  - v: '[1.8.0, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.8.0, )'
+    input: '[STRING,STRING,STRING]'
+    output: '[*:STRING]'
+  properties:
+  - v: '[1.8.0, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try _strindices("abc") catch .'
+  input: 123
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv.c:643: jv_string_indexes: Assertion `jv_get_kind(j) == JV_KIND_STRING' failed.\n"
+    - v: '[1.6, 1.7)'
+      output: []
+      runtime_error: "jq-1.6: src/jv.c:652: jv_string_indexes: Assertion `jv_get_kind(j) == JV_KIND_STRING' failed.\n"
+    - v: '[1.7, 1.7.1)'
+      output: []
+      runtime_error: "jq-1.7: src/jv.c:1279: jv_string_indexes: Assertion `JVP_HAS_KIND(j, JV_KIND_STRING)' failed.\n"
+    - v: '[1.7.1, 1.8.0)'
+      output: []
+      runtime_error: "jq-1.7.1: src/jv.c:1273: jv_string_indexes: Assertion `JVP_HAS_KIND(j, JV_KIND_STRING)' failed.\n"
+    - v: '[1.8.0, 1.8.1)'
+      output: []
+      runtime_error: "jq-1.8.0: src/jv.c:1312: jv_string_indexes: Assertion `JVP_HAS_KIND(j, JV_KIND_STRING)' failed.\n"
+    - v: '[1.8.1, 1.8.2)'
+      output: []
+      runtime_error: "jq-1.8.1: src/jv.c:1312: jv_string_indexes: Assertion `JVP_HAS_KIND(j, JV_KIND_STRING)' failed.\n"
+    - v: '[1.8.2, )'
+      output:
+      - "number (123) cannot be searched, as it is not a string"
+    jjq:
+    - v: '[1.8.2, )'
+      compile_error: "Function _strindices/1 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: 'try _strindices(123) catch .'
+  input: "abc"
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq-1.5: ../../../jv.c:644: jv_string_indexes: Assertion `jv_get_kind(k) == JV_KIND_STRING' failed.\n"
+    - v: '[1.6, 1.7)'
+      output: []
+      runtime_error: "jq-1.6: src/jv.c:653: jv_string_indexes: Assertion `jv_get_kind(k) == JV_KIND_STRING' failed.\n"
+    - v: '[1.7, 1.7.1)'
+      output: []
+      runtime_error: "jq-1.7: src/jv.c:1280: jv_string_indexes: Assertion `JVP_HAS_KIND(k, JV_KIND_STRING)' failed.\n"
+    - v: '[1.7.1, 1.8.0)'
+      output: []
+      runtime_error: "jq-1.7.1: src/jv.c:1274: jv_string_indexes: Assertion `JVP_HAS_KIND(k, JV_KIND_STRING)' failed.\n"
+    - v: '[1.8.0, 1.8.1)'
+      output: []
+      runtime_error: "jq-1.8.0: src/jv.c:1313: jv_string_indexes: Assertion `JVP_HAS_KIND(k, JV_KIND_STRING)' failed.\n"
+    - v: '[1.8.1, 1.8.2)'
+      output: []
+      runtime_error: "jq-1.8.1: src/jv.c:1313: jv_string_indexes: Assertion `JVP_HAS_KIND(k, JV_KIND_STRING)' failed.\n"
+    - v: '[1.8.2, )'
+      output:
+      - "number (123) is not a string"
+    jjq:
+    - v: '[1.8.2, )'
+      compile_error: "Function _strindices/1 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: 'gmtime[5]'
+  input: 1425599507.25
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 47.25
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: 'FLOAT'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try -. catch .'
+  input: "very-long-long-long-long-string"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "string (\"very-long-...) cannot be negated"
+    - v: '[1.8.2, )'
+      output:
+      - "string (\"very-long-long-long-long...\") cannot be negated"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try (.-.) catch .'
+  input: "very-long-long-long-long-string"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "string (\"very-long-...) and string (\"very-long-...) cannot be subtracted"
+    - v: '[1.8.2, )'
+      output:
+      - "string (\"very-long-long-long-long...\") and string (\"very-long-long-long-long...\") cannot be subtracted"
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: "\"x\" * range(0; 12; 2) + \"\u2606\" * 8 | try -. catch ."
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - "string (\"\u2606\u2606\u2606\ufffd...) cannot be negated"
+      - "string (\"xx\u2606\u2606\ufffd...) cannot be negated"
+      - "string (\"xxxx\u2606\u2606...) cannot be negated"
+      - "string (\"xxxxxx\u2606\ufffd...) cannot be negated"
+      - "string (\"xxxxxxxx\ufffd...) cannot be negated"
+      - "string (\"xxxxxxxxxx...) cannot be negated"
+    - v: '[1.8.0, 1.8.2)'
+      output:
+      - "string (\"\u2606\u2606\u2606...) cannot be negated"
+      - "string (\"xx\u2606\u2606...) cannot be negated"
+      - "string (\"xxxx\u2606\u2606...) cannot be negated"
+      - "string (\"xxxxxx\u2606...) cannot be negated"
+      - "string (\"xxxxxxxx...) cannot be negated"
+      - "string (\"xxxxxxxxxx...) cannot be negated"
+    - v: '[1.8.2, )'
+      output:
+      - "string (\"\u2606\u2606\u2606\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xx\u2606\u2606\u2606\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xxxx\u2606\u2606\u2606\u2606\u2606\u2606...\") cannot be negated"
+      - "string (\"xxxxxx\u2606\u2606\u2606\u2606\u2606\u2606...\") cannot be negated"
+      - "string (\"xxxxxxxx\u2606\u2606\u2606\u2606\u2606...\") cannot be negated"
+      - "string (\"xxxxxxxxxx\u2606\u2606\u2606\u2606...\") cannot be negated"
+    jjq:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "string (\"\u2606\u2606\u2606\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xx\u2606\u2606\u2606\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xxxx\u2606\u2606\u2606\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xxxxxx\u2606\u2606\u2606\u2606...) cannot be negated"
+      - "string (\"xxxxxxxx\u2606\u2606...) cannot be negated"
+      - "string (\"xxxxxxxxxx...) cannot be negated"
+      incompat_type: UNCLASSIFIED
+    - v: '[1.8.2, )'
+      output:
+      - "string (\"\u2606\u2606\u2606\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xx\u2606\u2606\u2606\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xxxx\u2606\u2606\u2606\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xxxxxx\u2606\u2606\u2606\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xxxxxxxx\u2606\u2606\u2606\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      - "string (\"xxxxxxxxxx\u2606\u2606\u2606\u2606\u2606\u2606\u2606\u2606\") cannot be negated"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'try (. + "x") catch . == if have_decnum then "number (12345678901234567890123456...) and string (\"x\") cannot be added" else "number (12345678901234568000000000...) and string (\"x\") cannot be added" end'
+  input: 123456789012345678901234567890
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: have_decnum/0 is not defined at <top-level>, line 1:\ntry (. + \"x\") catch . == if have_decnum then \"number (12345678901234567890123456...) and string (\\\"x\\\") cannot be added\" else \"number (12345678901234568000000000...) and string (\\\"x\\\") cannot be added\" end                            \njq: 1 compile error\n"
+    - v: '[1.8.0, 1.8.2)'
+      output:
+      - false
+    - v: '[1.8.2, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.8.0, )'
+      compile_error: "Function have_decnum/0 does not exist"
+      incompat_type: UNCLASSIFIED
+
+- q: 'reduce range(9999) as $_ ([];[.]) | tojson | fromjson | flatten'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - []
+    - v: '[1.6, 1.8.0)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Exceeds depth limit for parsing at line 1, column 257 (while parsing '[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[<skipped: too deep>]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]')\n"
+    - v: '[1.8.0, 1.8.2)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): Invalid numeric literal at line 1, column 266 (while parsing '[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[<skipped: too deep>]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]')\n"
+    - v: '[1.8.2, )'
+      output:
+      - []
+    jjq:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "Stack overflow during evaluation"
+      incompat_type: UNCLASSIFIED
+    - v: '[1.8.2, )'
+      output: []
+      runtime_error: "Stack overflow during evaluation"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:ANY]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'reduce range(10000) as $_ ([];[.]) | tojson | try (fromjson) catch . | (contains("<skipped: too deep>") | not) and contains("Exceeds depth limit for parsing")'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - false
+    - v: '[1.8.2, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.7, 1.8.2)'
+      output: []
+      runtime_error: "array ([[[[[[[[[[[...) and string (\"<skipped: ...) cannot have their containment checked"
+      incompat_type: UNCLASSIFIED
+    - v: '[1.8.2, )'
+      output: []
+      runtime_error: "array ([[[[[[[[[[[[[[[[[[[[[[[[[...]) and string (\"<skipped: too deep>\") cannot have their containment checked"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'reduce range(10001) as $_ ([];[.]) | tojson | contains("<skipped: too deep>")'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output:
+      - false
+    - v: '[1.6, )'
+      output:
+      - true
+    jjq:
+    - v: '[1.6, )'
+      output:
+      - false
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'setpath([range(10000) | 0]; 0) | flatten'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [0]
+    jjq:
+    - v: '[1.5, )'
+      output: []
+      runtime_error: "Stack overflow during evaluation"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: '[*:ANY]'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: '[*:ANY]'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'getpath([range(10000) | 0])'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
+    jjq:
+    - v: '[1.5, )'
+      output: []
+      runtime_error: "Stack overflow during evaluation"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try getpath([range(10001) | 0]) catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - null
+    - v: '[1.8.2, )'
+      output:
+      - "Path too deep"
+    jjq:
+    - v: '[1.5, )'
+      output: []
+      runtime_error: "Stack overflow during evaluation"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'delpaths([[range(10000) | 0]])'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NULL|[*:ANY]|{*:ANY}'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'try delpaths([[range(10001) | 0]]) catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - null
+    - v: '[1.8.2, )'
+      output:
+      - "Path too deep"
+    jjq:
+    - v: '[1.8.2, )'
+      output:
+      - null
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: true
+    depends_on_external_state: false
+
+- q: 'reduce range(10000) as $_ ([]; [.]) | contains([[]])'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - true
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'BOOLEAN'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'BOOLEAN'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'try (reduce range(10001) as $_ ([]; [.]) as $x | $x | contains($x)) catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: syntax error, unexpected as (Unix shell quoting issues?) at <top-level>, line 1:\ntry (reduce range(10001) as $_ ([]; [.]) as $x | $x | contains($x)) catch .                                         \njq: 1 compile error\n"
+    - v: '[1.8.0, 1.8.2)'
+      output:
+      - true
+    - v: '[1.8.2, )'
+      output:
+      - "Containment check too deep"
+    jjq:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - true
+      incompat_type: UNCLASSIFIED
+    - v: '[1.8.2, )'
+      output:
+      - true
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'reduce range(10000) as $_ ({}; {a: .}) as $x | $x * $x | length'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      compile_error: "jq: error: syntax error, unexpected as, expecting $end (Unix shell quoting issues?) at <top-level>, line 1:\nreduce range(10000) as $_ ({}; {a: .}) as $x | $x * $x | length                                       \njq: 1 compile error\n"
+    - v: '[1.7, 1.8.0)'
+      compile_error: "jq: error: syntax error, unexpected as, expecting end of file (Unix shell quoting issues?) at <top-level>, line 1:\nreduce range(10000) as $_ ({}; {a: .}) as $x | $x * $x | length                                       \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - 1
+    jjq:
+    - v: '[1.8.0, )'
+      output: []
+      runtime_error: "Stack overflow during evaluation"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'NUMBER'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NUMBER'
+  properties:
+  - v: '[1.5, )'
+    cardinality: ONE
+    depends_on_input: false
+    depends_on_external_state: false
+
+- q: 'try ((reduce range(10001) as $_ ([]; [.])) as $x | (reduce range(10001) as $_ ([]; [.])) as $y | $x == $y) catch .'
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - true
+    - v: '[1.8.2, )'
+      output:
+      - "Equality check too deep"
+    jjq:
+    - v: '[1.5, )'
+      output: []
+      runtime_error: "Stack overflow during evaluation"
+      incompat_type: UNCLASSIFIED
+  types:
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'ANY'
+  properties:
+  - v: '[1.5, )'
+    cardinality: UNKNOWN
+    depends_on_input: false
+    depends_on_external_state: false

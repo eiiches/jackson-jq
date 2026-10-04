@@ -3,6 +3,7 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 jjq_java_library(
     name = "math",
     srcs = [
+        "AbstractBinaryMathFunction.java",
         "Atan2Function.java",
         "MathFunctions.java",
         "PowFunction.java",
@@ -14,6 +15,7 @@ jjq_java_library(
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/exception",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/function/utils",
         "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/internal/json",
+        "//jackson-jq-core/src/main/java/net/thisptr/jackson/jq/v2/core/version",
         "//jackson-jq-json-provider",
         "//jackson-jq-spi",
     ],

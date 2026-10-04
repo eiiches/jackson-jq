@@ -1,385 +1,517 @@
 - q: '@base64d'
-  in: 720
+  input: 720
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
-      - "�"
+      output:
+      - "\ufffd"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'INT'
+  - v: '[1.6, )'
+    input: 'INT'
     output: 'ANY'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '@base64d'
-  in: 781
+  input: 781
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
-      - "�"
+      output:
+      - "\ufffd"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'INT'
+  - v: '[1.6, )'
+    input: 'INT'
     output: 'ANY'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '@base64d'
-  in: 528
+  input: 528
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
-      - "�"
+      output:
+      - "\ufffd"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'INT'
+  - v: '[1.6, )'
+    input: 'INT'
     output: 'ANY'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '@base64d'
-  in: 803
+  input: 803
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
-      - "�"
+      output:
+      - "\ufffd"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'INT'
+  - v: '[1.6, )'
+    input: 'INT'
     output: 'ANY'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '@base64d'
-  in: "8J+YgA=="
+  input: "8J+YgA=="
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
-      - "😀"
+      output:
+      - "\U0001f600"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '@base64d'
-  in: "4oI="
+  input: "4oI="
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
-      - "�"
+      output:
+      - "\ufffd"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '@base64d'
-  in: "4UFC"
+  input: "4UFC"
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
-      - "�AB"
+      output:
+      - "\ufffdAB"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '@base64d'
-  in: "7aCA"
+  input: "7aCA"
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
-      - "�"
+      output:
+      - "\ufffd"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '@base64d'
-  in: "4iih"
+  input: "4iih"
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
-      - "�(�"
+      output:
+      - "\ufffd(\ufffd"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '@base64d'
-  in: 'WyJiYXIiXQ=="name"'
-  comment: 'jq stops decoding at the first = and discards the rest of the input, so the quoted text after the padding is ignored rather than rejected'
+  input: "WyJiYXIiXQ==\"name\""
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
+      output:
       - "[\"bar\"]"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
+  comment: 'jq stops decoding at the first = and discards the rest of the input, so the quoted text after the padding is ignored rather than rejected'
 
 - q: '@base64d'
-  in: "YWJjZA=X"
+  input: "YWJjZA=X"
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
+    - v: '[1.6, )'
+      output:
+      - "abcd"
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   comment: 'a single = ends the input just as a full pad does'
+
+- q: '@base64d'
+  input: "YQ==YQ=="
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
-      - "abcd"
+      output:
+      - "a"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-
-- q: '@base64d'
-  in: "YQ==YQ=="
   comment: 'the second base64 chunk is past the padding and never read'
+
+- q: '@base64d'
+  input: "YQ="
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
+      output:
       - "a"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-
-- q: '@base64d'
-  in: "YQ="
   comment: 'one pad character where two are canonical'
-  expectations:
-    default:
-    - v: '[1.6, )'
-      out:
-      - "a"
-  types:
-  - input: 'ANY'
-    output: 'STRING'
-  - input: 'STRING'
-    output: 'STRING'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
 
 - q: '@base64d'
-  in: ""
+  input: ""
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
+      output:
       - ""
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
 
 - q: '@base64d'
-  in: "="
+  input: "="
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
+    - v: '[1.6, )'
+      output:
+      - ""
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   comment: 'an input that is nothing but padding decodes to nothing'
+
+- q: '@base64d'
+  input: "=abc"
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
+      output:
       - ""
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-
-- q: '@base64d'
-  in: "=abc"
   comment: 'leading padding discards the whole input'
-  expectations:
-    default:
-    - v: '[1.6, )'
-      out:
-      - ""
-  types:
-  - input: 'ANY'
-    output: 'STRING'
-  - input: 'STRING'
-    output: 'STRING'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
 
 - q: '@base64d'
-  in: "YWJjZA"
-  comment: 'unpadded input decodes from the trailing group'
+  input: "YWJjZA"
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
+      output:
       - "abcd"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
+  comment: 'unpadded input decodes from the trailing group'
 
 - q: '@base64d'
-  in: "+/+/"
+  input: "+/+/"
+  expectations:
+    default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
+    - v: '[1.6, )'
+      output:
+      - "\ufffd\ufffd\ufffd"
+  types:
+  - v: '[1.6, )'
+    input: 'ANY'
+    output: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
+    output: 'STRING'
+  properties:
+  - v: '[1.6, )'
+    cardinality: ONE
+    depends_on_input: true
+    depends_on_external_state: false
   comment: '+ and / are in the alphabet; the bytes they make are not valid UTF-8'
+
+- q: '@base64d'
+  input: "a"
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out:
-      - "���"
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): string (\"a\") trailing base64 byte found\n"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-
-- q: '@base64d'
-  in: "a"
   comment: 'a trailing group of one character carries too few bits to make a byte'
+
+- q: '@base64d'
+  input: "AAAAA"
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out: []
-      error: true
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): string (\"AAAAA\") trailing base64 byte found\n"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-
-- q: '@base64d'
-  in: "AAAAA"
   comment: 'the leftover character after a complete group is an error just the same'
+
+- q: '@base64d'
+  input: "ab!cd"
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out: []
-      error: true
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): string (\"ab!cd\") is not valid base64 data\n"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-
-- q: '@base64d'
-  in: "ab!cd"
   comment: 'a character outside the alphabet is rejected'
-  expectations:
-    default:
-    - v: '[1.6, )'
-      out: []
-      error: true
-  types:
-  - input: 'ANY'
-    output: 'STRING'
-  - input: 'STRING'
-    output: 'STRING'
-  properties:
-    cardinality: ONE
-    depends_on_input: true
-    depends_on_external_state: false
 
 - q: '@base64d'
-  in: "-_"
-  comment: 'the URL-safe alphabet is not the one jq decodes'
+  input: "-_"
   expectations:
     default:
+    - v: '[1.5, 1.6)'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): base64d is not a valid format\n"
     - v: '[1.6, )'
-      out: []
-      error: true
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): string (\"-_\") is not valid base64 data\n"
   types:
-  - input: 'ANY'
+  - v: '[1.6, )'
+    input: 'ANY'
     output: 'STRING'
-  - input: 'STRING'
+  - v: '[1.6, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.6, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
+  comment: 'the URL-safe alphabet is not the one jq decodes'

@@ -1,134 +1,192 @@
 - q: 'indices(-1.0)'
-  in: null
-  out:
-  - null
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|[*:INT]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NULL'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'indices({})'
-  in: null
-  out:
-  - null
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|[*:INT]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NULL'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'indices({"a": 1})'
-  in: null
-  out:
-  - null
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|[*:INT]'
-  - input: 'NULL'
+  - v: '[1.5, )'
+    input: 'NULL'
     output: 'NULL'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'indices("")'
-  in: "x"
-  out:
-  - []
+  input: "x"
+  expectations:
+    default:
+    - v: '[1.5, 1.7)'
+      timeout: true
+    - v: '[1.7, )'
+      output:
+      - []
+    jjq:
+    - v: '[1.5, 1.7)'
+      output:
+      - []
+      incompat_type: UNCLASSIFIED
   types:
-  - input: 'ANY'
-    output: 'NULL|[*:INT]'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'ANY'
+    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.7, )'
 
 - q: 'indices("a")'
-  in: {"a": 42}
-  out:
-  - 42
+  input: {"a": 42}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - 42
   types:
-  - input: 'ANY'
-    output: 'NULL|[*:INT]'
-  - input: '{a:INT}'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
+  - v: '[1.5, )'
+    input: '{a:INT}'
+    output: 'INT|NULL'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'indices("missing")'
-  in: {"a": 42}
-  out:
-  - null
+  input: {"a": 42}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - null
   types:
-  - input: 'ANY'
-    output: 'NULL|[*:INT]'
-  - input: '{a:INT}'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
+  - v: '[1.5, )'
+    input: '{a:INT}'
+    output: 'INT|NULL'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'indices(("name") + ("Zm9v"))'
-  in: {"foo": "foo -0.5 bar", "nameZm9v": "[]"}
-  out:
-  - "[]"
+  input: {"foo": "foo -0.5 bar", "nameZm9v": "[]"}
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "[]"
   types:
-  - input: 'ANY'
-    output: 'NULL|[*:INT]'
-  - input: '{foo:STRING,nameZm9v:STRING}'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
+  - v: '[1.5, )'
+    input: '{foo:STRING,nameZm9v:STRING}'
+    output: 'NULL|STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'try indices(0) catch .'
-  in: {"a": 42}
-  out:
-  - "Cannot index object with number"
+  input: {"a": 42}
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "Cannot index object with number"
+    - v: '[1.8.2, )'
+      output:
+      - "Cannot index object with number (0)"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '{a:INT}'
+  - v: '[1.5, )'
+    input: '{a:INT}'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.8.2)'
 
 - q: 'try indices(0) catch .'
-  in: {"a": 42}
-  out:
-  - "Cannot index object with number (0)"
+  input: {"a": 42}
+  expectations:
+    default:
+    - v: '[1.5, 1.8.2)'
+      output:
+      - "Cannot index object with number"
+    - v: '[1.8.2, )'
+      output:
+      - "Cannot index object with number (0)"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: '{a:INT}'
+  - v: '[1.5, )'
+    input: '{a:INT}'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.8.2, )'

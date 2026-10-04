@@ -43,6 +43,11 @@ public final class ExceptionMessages {
 		return String.format("%s (%s)", typeName(jsonProvider.getNodeType(node)), json);
 	}
 
+	public static <JsonNode> String cannotSort(JsonProvider<JsonNode> jsonProvider, Version version, JsonNode input, JsonNode keys) {
+		return String.format("%s and %s cannot be sorted, as they are not both arrays",
+				describe(jsonProvider, version, input), describe(jsonProvider, version, keys));
+	}
+
 	/**
 	 * Renders a node type as the lowercase name jq uses in error messages.
 	 *

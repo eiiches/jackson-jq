@@ -1,13 +1,19 @@
 - q: 'explode'
-  in: "\U0001F604"
-  out:
-  - [128516]
+  input: "\U0001f604"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - [128516]
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: '[*:INT]'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: '[*:INT]'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false

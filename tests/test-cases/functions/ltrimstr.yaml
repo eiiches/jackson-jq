@@ -1,121 +1,193 @@
 - q: 'ltrimstr(., .[0:1], [1,2,3])'
-  in: "foo"
-  out:
-  - ""
-  - "oo"
-  - "foo"
+  input: "foo"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - ""
+      - "oo"
+      - "foo"
+    - v: '[1.8.0, )'
+      output:
+      - ""
+      - "oo"
+      runtime_error: "jq: error (at <stdin>:0): startswith() requires string inputs\n"
   types:
-  - input: 'ANY'
+  - v: '[1.5, 1.8.0)'
+    input: 'ANY'
+    output: 'BINARY|BOOLEAN|NULL|NUMBER|STRING|[*:ANY]|{*:ANY}'
+  - v: '[1.8.0, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
-    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'STRING'
+    output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.8.0)'
 
 - q: 'del(ltrimstr(isnan))'
-  in: [91, 34, 45, 49, 46, 49, 48, 55, 49, 52, 56, 55, 49, 55, 55, 57, 52, 48, 57, 48, 52, 98, 97, 122, 34, 93]
-  out:
-  - null
+  input: [91, 34, 45, 49, 46, 49, 48, 55, 49, 52, 56, 55, 49, 55, 55, 57, 52, 48, 57, 48, 52, 98, 97, 122, 34, 93]
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - null
+    - v: '[1.8.0, )'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): startswith() requires string inputs\n"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'NULL|[*:ANY]|{*:ANY}'
-  - input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT]'
+  - v: '[1.5, )'
+    input: '[INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT]'
     output: 'NULL|[*:ANY]|{*:ANY}'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.8.0)'
 
 - q: 'ltrimstr(0.0)'
-  in: null
-  out:
-  - null
+  input: null
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - null
+    - v: '[1.8.0, )'
+      output: []
+      runtime_error: "jq: error (at <stdin>:0): startswith() requires string inputs\n"
   types:
-  - input: 'ANY'
+  - v: '[1.5, 1.8.0)'
+    input: 'ANY'
+    output: 'BINARY|BOOLEAN|NULL|NUMBER|STRING|[*:ANY]|{*:ANY}'
+  - v: '[1.8.0, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'NULL'
-    output: 'ANY'
+  - v: '[1.5, )'
+    input: 'NULL'
+    output: 'NULL'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, 1.8.0)'
 
 - q: 'try ltrimstr("foo") catch .'
-  in: 4
-  out:
-  - "startswith() requires string inputs"
+  input: 4
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - 4
+    - v: '[1.8.0, )'
+      output:
+      - "startswith() requires string inputs"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'INT'
+  - v: '[1.5, )'
+    input: 'INT'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.8.0, )'
 
 - q: 'try ltrimstr(123) catch .'
-  in: "abc"
-  out:
-  - "startswith() requires string inputs"
+  input: "abc"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      output:
+      - "abc"
+    - v: '[1.8.0, )'
+      output:
+      - "startswith() requires string inputs"
   types:
-  - input: 'ANY'
+  - v: '[1.5, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'ANY'
   properties:
+  - v: '[1.5, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.8.0, )'
 
 - q: 'ltrimstr("foo")'
-  in: "foobar"
-  out:
-  - "bar"
+  input: "foobar"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "bar"
   types:
-  - input: 'ANY'
+  - v: '[1.5, 1.8.0)'
+    input: 'ANY'
+    output: 'BINARY|BOOLEAN|NULL|NUMBER|STRING|[*:ANY]|{*:ANY}'
+  - v: '[1.8.0, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'ltrimstr("bar")'
-  in: "foobar"
-  out:
-  - "foobar"
+  input: "foobar"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "foobar"
   types:
-  - input: 'ANY'
+  - v: '[1.5, 1.8.0)'
+    input: 'ANY'
+    output: 'BINARY|BOOLEAN|NULL|NUMBER|STRING|[*:ANY]|{*:ANY}'
+  - v: '[1.8.0, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'
 
 - q: 'ltrimstr("")'
-  in: "foobar"
-  out:
-  - "foobar"
+  input: "foobar"
+  expectations:
+    default:
+    - v: '[1.5, )'
+      output:
+      - "foobar"
   types:
-  - input: 'ANY'
+  - v: '[1.5, 1.8.0)'
+    input: 'ANY'
+    output: 'BINARY|BOOLEAN|NULL|NUMBER|STRING|[*:ANY]|{*:ANY}'
+  - v: '[1.8.0, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.5, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.5, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.5, )'

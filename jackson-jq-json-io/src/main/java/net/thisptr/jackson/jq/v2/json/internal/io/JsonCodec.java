@@ -26,7 +26,9 @@ public final class JsonCodec {
 	}
 
 	/**
-	 * Serializes a node using the given number formatting options.
+	 * Serializes a node using the given formatting options.
+	 *
+	 * @throws JsonSizeExceededException if the output would grow past {@link FormatOptions#getMaxLength()}
 	 */
 	public static <N> String format(JsonProvider<N> provider, N node, FormatOptions options) {
 		return DefaultJsonFormatter.format(provider, node, options);

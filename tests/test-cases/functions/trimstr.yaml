@@ -1,89 +1,137 @@
 - q: 'try trimstr("foo") catch .'
-  in: 4
-  out:
-  - "startswith() requires string inputs"
+  input: 4
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: trimstr/1 is not defined at <top-level>, line 1:\ntry trimstr(\"foo\") catch .    \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - "startswith() requires string inputs"
   types:
-  - input: 'ANY'
+  - v: '[1.8.0, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'INT'
+  - v: '[1.8.0, )'
+    input: 'INT'
     output: 'ANY'
   properties:
+  - v: '[1.8.0, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.8.0, )'
 
 - q: 'try trimstr(123) catch .'
-  in: "abc"
-  out:
-  - "startswith() requires string inputs"
+  input: "abc"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: trimstr/1 is not defined at <top-level>, line 1:\ntry trimstr(123) catch .    \njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - "startswith() requires string inputs"
   types:
-  - input: 'ANY'
+  - v: '[1.8.0, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.8.0, )'
+    input: 'STRING'
     output: 'ANY'
   properties:
+  - v: '[1.8.0, )'
     cardinality: UNKNOWN
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.8.0, )'
 
 - q: 'trimstr("foo")'
-  in: "foobarfoo"
-  out:
-  - "bar"
+  input: "foobarfoo"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: trimstr/1 is not defined at <top-level>, line 1:\ntrimstr(\"foo\")\njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - "bar"
   types:
-  - input: 'ANY'
+  - v: '[1.8.0, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.8.0, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.8.0, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.8.0, )'
 
 - q: 'trimstr("a")'
-  in: "aba"
-  out:
-  - "b"
+  input: "aba"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: trimstr/1 is not defined at <top-level>, line 1:\ntrimstr(\"a\")\njq: 1 compile error\n"
+    - v: '[1.8.0, )'
+      output:
+      - "b"
   types:
-  - input: 'ANY'
+  - v: '[1.8.0, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.8.0, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.8.0, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.8.0, )'
 
 - q: 'trimstr("")'
-  in: "foobar"
-  out:
-  - ""
+  input: "foobar"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: trimstr/1 is not defined at <top-level>, line 1:\ntrimstr(\"\")\njq: 1 compile error\n"
+    - v: '[1.8.0, 1.8.2)'
+      output:
+      - ""
+    - v: '[1.8.2, )'
+      output:
+      - "foobar"
   types:
-  - input: 'ANY'
+  - v: '[1.8.0, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.8.0, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.8.0, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.8.0, 1.8.2)'
 
 - q: 'trimstr("")'
-  in: "foobar"
-  out:
-  - "foobar"
+  input: "foobar"
+  expectations:
+    default:
+    - v: '[1.5, 1.8.0)'
+      compile_error: "jq: error: trimstr/1 is not defined at <top-level>, line 1:\ntrimstr(\"\")\njq: 1 compile error\n"
+    - v: '[1.8.0, 1.8.2)'
+      output:
+      - ""
+    - v: '[1.8.2, )'
+      output:
+      - "foobar"
   types:
-  - input: 'ANY'
+  - v: '[1.8.0, )'
+    input: 'ANY'
     output: 'ANY'
-  - input: 'STRING'
+  - v: '[1.8.0, )'
+    input: 'STRING'
     output: 'STRING'
   properties:
+  - v: '[1.8.0, )'
     cardinality: ONE
     depends_on_input: true
     depends_on_external_state: false
-  v: '[1.8.2, )'

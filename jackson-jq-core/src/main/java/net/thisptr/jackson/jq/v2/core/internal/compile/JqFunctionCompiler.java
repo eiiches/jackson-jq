@@ -15,6 +15,7 @@ import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.compile.opt.FoldPlanner;
 import net.thisptr.jackson.jq.v2.core.internal.memory.StackFrame;
+import net.thisptr.jackson.jq.v2.core.internal.misc.CardinalityUtils;
 import net.thisptr.jackson.jq.v2.core.internal.tree.ExpressionRewriter;
 import net.thisptr.jackson.jq.v2.core.internal.tree.RewritableExpression;
 import net.thisptr.jackson.jq.v2.core.internal.utils.StackFrameValues;
@@ -329,17 +330,34 @@ final class JqFunctionCompiler {
 
 		@Override
 		public final Cardinality getCardinality() {
-			return resolved.body.getCardinality();
+			@Var Cardinality cardinality = resolved.body.getCardinality();
+			for (int i = 0; i < paramNames.size(); i++) {
+				if (paramNames.get(i).kind() == FunctionParameter.Kind.VALUE)
+					cardinality = CardinalityUtils.multiply(cardinality, args.get(i).getCardinality());
+			}
+			return cardinality;
 		}
 
 		@Override
 		public final boolean dependsOnInput() {
-			return resolved.body.dependsOnInput();
+			if (resolved.body.dependsOnInput())
+				return true;
+			for (int i = 0; i < paramNames.size(); i++) {
+				if (paramNames.get(i).kind() == FunctionParameter.Kind.VALUE && args.get(i).dependsOnInput())
+					return true;
+			}
+			return false;
 		}
 
 		@Override
 		public final boolean dependsOnExternalState() {
-			return resolved.body.dependsOnExternalState();
+			if (resolved.body.dependsOnExternalState())
+				return true;
+			for (int i = 0; i < paramNames.size(); i++) {
+				if (paramNames.get(i).kind() == FunctionParameter.Kind.VALUE && args.get(i).dependsOnExternalState())
+					return true;
+			}
+			return false;
 		}
 	}
 
