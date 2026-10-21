@@ -140,6 +140,7 @@ Documentation
 
 * [Compatibility with jq](docs/compatibility.md)
 * [Regex](docs/regex.md)
+* [Function filter](docs/function-filter.md)
 * [Extension modules](docs/modules/README.md)
 * [Git branching and versioning](docs/development.md)
 

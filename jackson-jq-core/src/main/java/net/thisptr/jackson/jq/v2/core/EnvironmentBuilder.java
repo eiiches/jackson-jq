@@ -9,12 +9,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import net.thisptr.jackson.jq.v2.core.function.FunctionFilter;
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
 import net.thisptr.jackson.jq.v2.core.function.loaders.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.env.ConstantImpl;
 import net.thisptr.jackson.jq.v2.core.internal.env.EnvironmentImpl;
 import net.thisptr.jackson.jq.v2.core.internal.env.VariableImpl;
 import net.thisptr.jackson.jq.v2.core.internal.function.loaders.CachedFunctionLoader;
+import net.thisptr.jackson.jq.v2.core.internal.function.loaders.FilteringFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.typecheck.ConstantTypes;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -41,6 +43,7 @@ public final class EnvironmentBuilder<JsonNode> {
 	private final List<ModuleLoader<JsonNode>> moduleLoaders = new ArrayList<>();
 	private final Map<String, Module> registeredModules = new HashMap<>();
 	private final List<FunctionLoader> functionLoaders = new ArrayList<>();
+	private FunctionFilter functionFilter = FunctionFilter.acceptAll();
 
 	private final Map<String, Type> declaredVariables = new HashMap<>();
 	private final Set<FunctionSignature> declaredFunctions = new HashSet<>();
@@ -141,7 +144,24 @@ public final class EnvironmentBuilder<JsonNode> {
 		// Already-memoized loaders -- what Environment.getFunctionLoaders() hands back, which is how
 		// the compiler passes a query's loaders down to an imported module -- are taken as they are,
 		// so that the module shares the caller's caches instead of starting cold behind a second layer.
-		functionLoaders.add(functionLoader instanceof CachedFunctionLoader ? functionLoader : new CachedFunctionLoader(functionLoader));
+		// The same goes for filtering loaders, which memoize their result themselves.
+		boolean memoized = functionLoader instanceof CachedFunctionLoader || functionLoader instanceof FilteringFunctionLoader;
+		functionLoaders.add(memoized ? functionLoader : new CachedFunctionLoader(functionLoader));
+		return this;
+	}
+
+	/**
+	 * Sets the filter deciding which functions supplied by this environment's {@link FunctionLoader}s and by
+	 * the modules it resolves are visible. It defaults to {@link FunctionFilter#acceptAll()}. The filter applies to
+	 * every function loader, whenever it was added, and is inherited by the environments the compiler derives
+	 * for jq-defined builtins and modules. Functions defined with {@link #defineFunction},
+	 * {@link #defineJqFunction} or {@link #declareFunction} are never filtered.
+	 * <p>
+	 * A filter also applies to the functions that other builtins and modules call. Excluding a function such
+	 * a caller depends on makes the caller fail, so what to exclude is the responsibility of the user.
+	 */
+	public EnvironmentBuilder<JsonNode> setFunctionFilter(FunctionFilter functionFilter) {
+		this.functionFilter = Objects.requireNonNull(functionFilter, "functionFilter");
 		return this;
 	}
 
@@ -326,7 +346,14 @@ public final class EnvironmentBuilder<JsonNode> {
 	}
 
 	public Environment<JsonNode> build() {
-		return new EnvironmentImpl<>(jsonProvider, jqVersion, moduleLoaders, registeredModules, functionLoaders,
+		List<FunctionLoader> filteredLoaders = new ArrayList<>(functionLoaders.size());
+		for (FunctionLoader loader : functionLoaders) {
+			// Loaders handed down from another environment already filter with the same filter.
+			boolean filtered = functionFilter == FunctionFilter.acceptAll()
+					|| (loader instanceof FilteringFunctionLoader filtering && filtering.getFilter() == functionFilter);
+			filteredLoaders.add(filtered ? loader : new FilteringFunctionLoader(loader, functionFilter));
+		}
+		return new EnvironmentImpl<>(jsonProvider, jqVersion, moduleLoaders, registeredModules, filteredLoaders, functionFilter,
 				declaredVariables, declaredFunctions, variables, functions, jqFunctions, constants, importedModules,
 				includedModules);
 	}

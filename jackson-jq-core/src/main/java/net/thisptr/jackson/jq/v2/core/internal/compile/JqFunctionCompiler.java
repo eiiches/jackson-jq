@@ -159,7 +159,8 @@ final class JqFunctionCompiler {
 			if (origin == Origin.ENVIRONMENT)
 				return callingEnvironment;
 			EnvironmentBuilder<N> builder = EnvironmentBuilder.withDefaultLoaders(callingEnvironment.getJsonProvider(), version)
-					.clearFunctionLoaders();
+					.clearFunctionLoaders()
+					.setFunctionFilter(callingEnvironment.getFunctionFilter());
 			callingEnvironment.getFunctionLoaders().forEach(builder::addFunctionLoader);
 			return builder.build();
 		}

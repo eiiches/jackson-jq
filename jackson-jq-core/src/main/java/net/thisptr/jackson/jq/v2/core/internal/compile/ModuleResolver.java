@@ -14,6 +14,7 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
+import net.thisptr.jackson.jq.v2.core.internal.module.FilteringJavaModule;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModule;
 import net.thisptr.jackson.jq.v2.core.internal.module.SimpleModuleMeta;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
@@ -133,10 +134,18 @@ public final class ModuleResolver<JsonNode> {
 	 * Makes a module usable: a {@link JavaModule} already is, a {@link JqModule} is compiled, and a
 	 * module implementing both has its Java and jq functions combined.
 	 * <p>
+	 * Only the functions the environment's {@link net.thisptr.jackson.jq.v2.core.function.FunctionFilter}
+	 * accepts are exported. A jq module still sees its own definitions, and its hybrid Java functions,
+	 * whatever the filter says: only what it exports to its importer is filtered.
+	 * <p>
 	 * Public because an {@code Environment} may be handed either kind, or a hybrid of both, through
 	 * {@code importModule}, and which one it got only matters here.
 	 */
 	public JavaModule materialize(Module module) throws JsonQueryException {
+		return FilteringJavaModule.of(materializeUnfiltered(module), env.getFunctionFilter());
+	}
+
+	private JavaModule materializeUnfiltered(Module module) throws JsonQueryException {
 		if (module instanceof JqModule jqModule)
 			return compile(jqModule);
 		if (module instanceof JavaModule javaModule)
@@ -242,7 +251,8 @@ public final class ModuleResolver<JsonNode> {
 	private EnvironmentBuilder<JsonNode> newModuleEnvironmentBuilder() {
 		EnvironmentBuilder<JsonNode> builder = EnvironmentBuilder.withDefaultLoaders(env.getJsonProvider(), env.getJqVersion())
 				.clearModuleLoaders()
-				.clearFunctionLoaders();
+				.clearFunctionLoaders()
+				.setFunctionFilter(env.getFunctionFilter());
 		env.getFunctionLoaders().forEach(builder::addFunctionLoader);
 		return builder;
 	}
