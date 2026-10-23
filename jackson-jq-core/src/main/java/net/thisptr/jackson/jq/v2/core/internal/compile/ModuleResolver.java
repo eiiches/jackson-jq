@@ -12,6 +12,7 @@ import org.jspecify.annotations.Nullable;
 import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
+import net.thisptr.jackson.jq.v2.core.function.FunctionOrigin;
 import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.ast.AstNode;
 import net.thisptr.jackson.jq.v2.core.internal.module.FilteringJavaModule;
@@ -66,7 +67,7 @@ public final class ModuleResolver<JsonNode> {
 	 * @param origin the module the import statement appears in, or {@code null} at the top level
 	 */
 	public JavaModule resolveModule(@Nullable JqModule origin, String path, Maybe<JsonNode> metadata) throws JsonQueryException {
-		return materialize(loadModule(origin, path, metadata));
+		return materialize(loadModule(origin, path, metadata), FunctionOrigin.PATH_IMPORT, path);
 	}
 
 	/**
@@ -141,8 +142,8 @@ public final class ModuleResolver<JsonNode> {
 	 * Public because an {@code Environment} may be handed either kind, or a hybrid of both, through
 	 * {@code importModule}, and which one it got only matters here.
 	 */
-	public JavaModule materialize(Module module) throws JsonQueryException {
-		return FilteringJavaModule.of(materializeUnfiltered(module), env.getFunctionFilter());
+	public JavaModule materialize(Module module, FunctionOrigin origin, String locator) throws JsonQueryException {
+		return FilteringJavaModule.of(materializeUnfiltered(module), env.getFunctionFilter(), origin, locator);
 	}
 
 	private JavaModule materializeUnfiltered(Module module) throws JsonQueryException {

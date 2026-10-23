@@ -15,7 +15,6 @@ import net.thisptr.jackson.jq.v2.core.function.loaders.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.env.ConstantImpl;
 import net.thisptr.jackson.jq.v2.core.internal.env.EnvironmentImpl;
 import net.thisptr.jackson.jq.v2.core.internal.env.VariableImpl;
-import net.thisptr.jackson.jq.v2.core.internal.function.loaders.CachedFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.function.loaders.FilteringFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.typecheck.ConstantTypes;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
@@ -139,14 +138,7 @@ public final class EnvironmentBuilder<JsonNode> {
 	 */
 	public EnvironmentBuilder<JsonNode> addFunctionLoader(FunctionLoader functionLoader) {
 		Objects.requireNonNull(functionLoader, "functionLoader");
-		// A loader is asked for a whole registry on every call it has to resolve, and discovering one
-		// can be expensive, so each gets memoized per jq version for as long as this environment lives.
-		// Already-memoized loaders -- what Environment.getFunctionLoaders() hands back, which is how
-		// the compiler passes a query's loaders down to an imported module -- are taken as they are,
-		// so that the module shares the caller's caches instead of starting cold behind a second layer.
-		// The same goes for filtering loaders, which memoize their result themselves.
-		boolean memoized = functionLoader instanceof CachedFunctionLoader || functionLoader instanceof FilteringFunctionLoader;
-		functionLoaders.add(memoized ? functionLoader : new CachedFunctionLoader(functionLoader));
+		functionLoaders.add(functionLoader);
 		return this;
 	}
 

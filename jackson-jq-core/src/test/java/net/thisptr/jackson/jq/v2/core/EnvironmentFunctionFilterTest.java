@@ -16,6 +16,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import net.thisptr.jackson.jq.v2.core.function.FunctionFilter;
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
+import net.thisptr.jackson.jq.v2.core.function.FunctionOrigin;
 import net.thisptr.jackson.jq.v2.core.function.loaders.ClassPathFunctionLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -193,7 +194,7 @@ public class EnvironmentFunctionFilterTest {
 		Set<String> allowed = Set.of("length", "greet");
 		Environment<JsonNode> env = builder()
 				.addFunctionLoader(javaLoader("greet", "hello"))
-				.setFunctionFilter(signature -> allowed.contains(signature.name()))
+				.setFunctionFilter(ctx -> allowed.contains(ctx.getSignature().name()))
 				.build();
 
 		assertThat(texts(env, "greet")).containsExactly("hello");
@@ -471,5 +472,44 @@ public class EnvironmentFunctionFilterTest {
 				.build();
 
 		assertThat(filtered.getFunctionLoaders()).hasSameSizeAs(open.getFunctionLoaders());
+	}
+
+	@Test
+	public void filterByModulePathRejectsOnlyFunctionsFromMatchingPath() {
+		Environment<JsonNode> env = builder()
+				.registerModule("blocked/mod", new SourceModule("def helper: \"blocked\";"))
+				.registerModule("allowed/mod", new SourceModule("def helper: \"allowed\";"))
+				.setFunctionFilter(ctx -> !(ctx.getOrigin() == FunctionOrigin.PATH_IMPORT && ctx.getLocator().equals("blocked/mod")))
+				.build();
+
+		assertThat(texts(env, "import \"allowed/mod\" as a; a::helper")).containsExactly("allowed");
+		assertThatThrownBy(() -> env.compile("import \"blocked/mod\" as b; b::helper"))
+				.hasMessageContaining("Function b::helper/0 " + DOES_NOT_EXIST);
+	}
+
+	@Test
+	public void filterDistinguishesPathlessFunctionsFromModuleFunctions() {
+		Environment<JsonNode> env = builder()
+				.addFunctionLoader(javaLoader("helper", "builtin_helper"))
+				.registerModule("my/mod", new SourceModule("def helper: \"mod_helper\";"))
+				.setFunctionFilter(ctx -> ctx.getOrigin() == FunctionOrigin.FUNCTION_LOADER)
+				.build();
+
+		assertThat(texts(env, "helper")).containsExactly("builtin_helper");
+		assertThatThrownBy(() -> env.compile("import \"my/mod\" as m; m::helper"))
+				.hasMessageContaining("Function m::helper/0 " + DOES_NOT_EXIST);
+	}
+
+	@Test
+	public void filterByEnvImportAlias() {
+		Environment<JsonNode> env = builder()
+				.importModule(new SourceModule("def fn: \"blocked\";"), "blocked_alias")
+				.importModule(new SourceModule("def fn: \"allowed\";"), "allowed_alias")
+				.setFunctionFilter(ctx -> !(ctx.getOrigin() == FunctionOrigin.ENV_IMPORT && ctx.getLocator().equals("blocked_alias")))
+				.build();
+
+		assertThat(texts(env, "allowed_alias::fn")).containsExactly("allowed");
+		assertThatThrownBy(() -> env.compile("blocked_alias::fn"))
+				.hasMessageContaining("Function blocked_alias::fn/0 " + DOES_NOT_EXIST);
 	}
 }

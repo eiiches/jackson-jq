@@ -4,8 +4,10 @@ jjq_java_library(
     name = "function",
     srcs = [
         "AcceptAll.java",
+        "FunctionContext.java",
         "FunctionFilter.java",
         "FunctionLoader.java",
+        "FunctionOrigin.java",
     ],
     release = 17,
     visibility = ["//jackson-jq-core:__subpackages__"],

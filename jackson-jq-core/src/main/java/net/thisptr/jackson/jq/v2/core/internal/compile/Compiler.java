@@ -20,6 +20,7 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.OptimizationOptions;
 import net.thisptr.jackson.jq.v2.core.diagnostic.DiagnosticListener;
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
+import net.thisptr.jackson.jq.v2.core.function.FunctionOrigin;
 import net.thisptr.jackson.jq.v2.core.internal.analysis.AnalyzedExpression;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayConstructionAstNode;
 import net.thisptr.jackson.jq.v2.core.internal.ast.ArrayMatcherAstNode;
@@ -206,7 +207,7 @@ public class Compiler {
 		// stripped environment ModuleResolver.moduleEnvironment() builds, which carries none of the
 		// caller's globals and includes nothing. A library resolves its own names against its own imports.
 		for (Module included : env.getIncludedModules())
-			context.addEnvironmentIncludedModule(scope.materialize(included));
+			context.addEnvironmentIncludedModule(scope.materialize(included, FunctionOrigin.ENV_INCLUDE, included.getClass().getName()));
 		FoldPlanner foldPlanner = context.foldPlanner();
 		boolean planFolds = meterRuntimeBudgets && foldPlanner.isEnabled();
 		if (planFolds)
@@ -341,7 +342,7 @@ public class Compiler {
 					// An environment may have been handed either kind of module or a hybrid;
 					// jq source is compiled here, the first time a query actually calls into it.
 					Module imported = env.getImportedModules().get(call.moduleName());
-					mod = imported != null ? scope.materialize(imported) : null;
+					mod = imported != null ? scope.materialize(imported, FunctionOrigin.ENV_IMPORT, call.moduleName()) : null;
 				}
 				Function factory = mod != null ? lookupFunction(mod.getFunctions(), call.signature()) : null;
 				if (factory == null) {
