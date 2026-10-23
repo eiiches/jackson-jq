@@ -2,7 +2,13 @@ load("//build-tools/bazel:defs.bzl", "jjq_java_library")
 
 jjq_java_library(
     name = "function",
-    srcs = ["FunctionLoader.java"],
+    srcs = [
+        "AcceptAll.java",
+        "FunctionContext.java",
+        "FunctionFilter.java",
+        "FunctionLoader.java",
+        "FunctionOrigin.java",
+    ],
     release = 17,
     visibility = ["//jackson-jq-core:__subpackages__"],
     deps = [

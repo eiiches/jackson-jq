@@ -19,6 +19,7 @@ import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.EnvironmentBuilder;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
 import net.thisptr.jackson.jq.v2.core.TypeCheckMode;
+import net.thisptr.jackson.jq.v2.core.function.FunctionOrigin;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.core.version.Versions;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -459,7 +460,7 @@ public class ModuleResolverTest {
 		assertThat(run(loaderEnvironment, "import \"hybrid\" as hybrid; [hybrid::java_helper, hybrid::from_jq]")).containsExactly("[7,7]");
 		assertThat(run(importedEnvironment, "[hybrid::java_helper, hybrid::from_jq]")).containsExactly("[7,7]");
 
-		JavaModule materialized = new ModuleResolver<>(loaderEnvironment).materialize(module);
+		JavaModule materialized = new ModuleResolver<>(loaderEnvironment).materialize(module, FunctionOrigin.PATH_IMPORT, "test/module");
 		assertThat(materialized.getModuleMeta().getMetadata(Jackson2JsonProvider.getInstance()))
 				.containsEntry("kind", Jackson2JsonProvider.getInstance().createString("hybrid"));
 	}
@@ -471,7 +472,7 @@ public class ModuleResolverTest {
 				"def duplicate: 1;",
 				Collections.singletonMap(duplicate, constantFunction(2)));
 
-		assertThatThrownBy(() -> new ModuleResolver<>(builder().build()).materialize(module))
+		assertThatThrownBy(() -> new ModuleResolver<>(builder().build()).materialize(module, FunctionOrigin.PATH_IMPORT, "test/module"))
 				.isInstanceOf(JsonQueryException.class)
 				.hasMessage("module hybrid defines function duplicate/0 in both Java and jq source");
 	}

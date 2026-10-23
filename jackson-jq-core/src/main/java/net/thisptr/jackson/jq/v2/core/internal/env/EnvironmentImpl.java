@@ -11,6 +11,7 @@ import java.util.Set;
 import net.thisptr.jackson.jq.v2.core.CompileOptions;
 import net.thisptr.jackson.jq.v2.core.Environment;
 import net.thisptr.jackson.jq.v2.core.JsonQuery;
+import net.thisptr.jackson.jq.v2.core.function.FunctionFilter;
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
 import net.thisptr.jackson.jq.v2.core.internal.compile.QueryCompiler;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
@@ -32,6 +33,7 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	private final List<ModuleLoader<JsonNode>> moduleLoaders;
 	private final Map<String, Module> registeredModules;
 	private final List<FunctionLoader> functionLoaders;
+	private final FunctionFilter functionFilter;
 	private final Map<String, Type> declaredVariables;
 	private final Set<FunctionSignature> declaredFunctions;
 	private final Map<String, Variable<JsonNode>> variables;
@@ -43,7 +45,7 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 
 	public EnvironmentImpl(JsonProvider<JsonNode> jsonProvider, Version jqVersion,
 			List<ModuleLoader<JsonNode>> moduleLoaders, Map<String, Module> registeredModules,
-			List<FunctionLoader> functionLoaders,
+			List<FunctionLoader> functionLoaders, FunctionFilter functionFilter,
 			Map<String, Type> declaredVariables, Set<FunctionSignature> declaredFunctions,
 			Map<String, Variable<JsonNode>> variables, Map<FunctionSignature, Function> functions,
 			Map<FunctionSignature, JqFunction> jqFunctions,
@@ -54,6 +56,7 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 		this.moduleLoaders = new ArrayList<>(moduleLoaders);
 		this.registeredModules = new HashMap<>(registeredModules);
 		this.functionLoaders = new ArrayList<>(functionLoaders);
+		this.functionFilter = functionFilter;
 		this.declaredVariables = new HashMap<>(declaredVariables);
 		this.declaredFunctions = new HashSet<>(declaredFunctions);
 		this.variables = new HashMap<>(variables);
@@ -87,6 +90,11 @@ public class EnvironmentImpl<JsonNode> implements Environment<JsonNode> {
 	@Override
 	public List<FunctionLoader> getFunctionLoaders() {
 		return Collections.unmodifiableList(functionLoaders);
+	}
+
+	@Override
+	public FunctionFilter getFunctionFilter() {
+		return functionFilter;
 	}
 
 	@Override

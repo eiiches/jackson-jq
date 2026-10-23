@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import net.thisptr.jackson.jq.v2.core.function.FunctionFilter;
 import net.thisptr.jackson.jq.v2.core.function.FunctionLoader;
 import net.thisptr.jackson.jq.v2.core.module.ModuleLoader;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
@@ -34,9 +35,17 @@ public interface Environment<JsonNode> {
 	 * <p>
 	 * These are not the instances handed to {@code EnvironmentBuilder.addFunctionLoader}: each is
 	 * wrapped in a memoizing decorator private to this environment, because a loader is asked for a
-	 * whole registry on every unresolved call and discovering one can be expensive.
+	 * whole registry on every unresolved call and discovering one can be expensive. If a
+	 * {@linkplain #getFunctionFilter() function filter} is set, the decorator also drops the functions
+	 * the filter rejects from both registries.
 	 */
 	List<FunctionLoader> getFunctionLoaders();
+
+	/**
+	 * The filter applied to the functions of this environment's function loaders and modules.
+	 * {@link FunctionFilter#acceptAll()} unless one was set with {@code EnvironmentBuilder.setFunctionFilter}.
+	 */
+	FunctionFilter getFunctionFilter();
 
 	/**
 	 * The variables this environment declares without a value, each with the type it was declared at.

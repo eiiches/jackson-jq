@@ -3,6 +3,7 @@ package net.thisptr.jackson.jq.v2.core.internal.compile;
 import org.jspecify.annotations.Nullable;
 
 import net.thisptr.jackson.jq.v2.core.Environment;
+import net.thisptr.jackson.jq.v2.core.function.FunctionOrigin;
 import net.thisptr.jackson.jq.v2.core.internal.function.utils.ModuleMetaLookup;
 import net.thisptr.jackson.jq.v2.json.JsonProvider;
 import net.thisptr.jackson.jq.v2.json.Maybe;
@@ -54,7 +55,7 @@ public final class ModuleScope<JsonNode> implements ModuleMetaLookup<JsonNode> {
 	/**
 	 * Makes a module an {@code Environment} was handed usable -- compiling it if it is jq source.
 	 */
-	public JavaModule materialize(Module module) throws JsonQueryException {
-		return resolver.materialize(module);
+	public JavaModule materialize(Module module, FunctionOrigin origin, String locator) throws JsonQueryException {
+		return resolver.materialize(module, origin, locator);
 	}
 }
